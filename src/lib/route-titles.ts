@@ -87,7 +87,7 @@ export const EXACT_ROUTE_TITLES: Record<string, RouteTitle> = {
   "/dashboards/partner":      { title: "Partner" },
   "/dashboards/cpl":          { title: "Main Dashboard" },
   "/dashboards/director":     { title: "Main Dashboard" },
-  "/dashboards/rvp":          { title: "Regional VP Dashboard" },
+  "/dashboards/rvp":          { title: "Main Dashboard" },
   "/dashboards/rvp/country-summary":            { title: "Country summary" },
   "/dashboards/director/weekly-debrief-reports": { title: "Weekly Debrief Reports" },
   "/dashboards/hr":           { title: "People & Performance Dashboard" },

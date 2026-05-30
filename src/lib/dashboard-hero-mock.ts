@@ -117,8 +117,8 @@ export const cplHeroContent: DashboardHeroContent = {
 // ────────── RVP — Regional VP ──────────
 
 export const rvpHeroContent: DashboardHeroContent = {
-  title:     "Regional VP Dashboard",
-  pillLabel: "Regional View",
+  title:     "Main Dashboard",
+  pillLabel: "Regional VP",
   filters: {
     month:          "May 2025",
     monthCaption:   "This Month",

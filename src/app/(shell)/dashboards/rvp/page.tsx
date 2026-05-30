@@ -32,6 +32,8 @@ import { insightsForRvp } from "@/lib/insights";
 import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { RvpMobileView } from "@/components/mobile/views/RvpMobileView";
 import { TrainingCoverageCard } from "@/components/director/TrainingCoverageCard";
+import { DonorImpactReachCard } from "@/components/director/DonorImpactReachCard";
+import { getDonorMetricSnapshot } from "@/lib/donor-metrics";
 import { allClusterTrainingPlans } from "@/lib/plan-builder-engine";
 import { PlanScheduleByWeek } from "@/components/planning/PlanScheduleByWeek";
 import { planItems, cceoPlanItems } from "@/lib/mobile-mock";
@@ -48,6 +50,15 @@ export default async function RVPDashboard() {
     redirect(ROLE_REDIRECT[rawUser.role]);
   }
   const currentUser = toCurrentUser(rawUser);
+
+  // Regional donor-reporting rollup — same builder as /donor-reporting,
+  // scoped to RVP so the readiness snapshot and the full report agree.
+  const donorSnapshot = getDonorMetricSnapshot({
+    role: "RVP",
+    userName: rawUser.name,
+    generatedBy: rawUser.name,
+  });
+
   const totalSchools = countryRollups.reduce((a, c) => a + c.schools, 0);
   const totalCommitted = countryRollups.reduce((a, c) => a + c.fundsCommittedUgxM, 0);
   const totalDisbursed = countryRollups.reduce((a, c) => a + c.fundsDisbursedUgxM, 0);
@@ -301,6 +312,17 @@ export default async function RVPDashboard() {
         </div>
       </section>
 
+      </section>
+
+      {/* IMPACT — donor-reporting readiness for the region. */}
+      <section className="space-y-3">
+        <SectionHeader
+          tier="strategic"
+          eyebrow="Impact"
+          title="Donor-reporting readiness across the region"
+          description="Reach, training, and improvement figures the region can report — deduplicated, scoped to RVP, verified or confirmed only. Each tile opens the full report."
+        />
+        <DonorImpactReachCard snapshot={donorSnapshot} />
       </section>
 
       {/* PLAN & CONTEXT — regional plan horizon + cycle/impact/recognition. */}
