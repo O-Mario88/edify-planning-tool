@@ -22,7 +22,7 @@ export type RouteTitle = {
 // ────────── Exact matches ──────────
 // Exported so the command palette can enumerate every reachable page.
 export const EXACT_ROUTE_TITLES: Record<string, RouteTitle> = {
-  "/dashboards/cceo":      { title: "Role Command Center" },
+  "/dashboards/cceo":      { title: "Main Dashboard" },
   "/today":                { title: "Today's Tasks", dateLabel: "Mon, May 12 · Wk 3" },
   "/my-plan":              { title: "My Plan" },
   "/my-targets":           { title: "My Targets" },
