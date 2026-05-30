@@ -1,10 +1,17 @@
-// SSA recommendation engine — turns SSA gaps into concrete next actions. The Planning page never asks the user to guess; this function decides what each card should propose based on the SSA result, the gap kind, and the SSA gate.
+// SSA recommendation engine — turns SSA gaps into concrete next actions. The
+// Planning page never asks the user to guess; this function decides what each
+// card should propose based on the SSA result, the gap kind, and the SSA gate.
+//
+// The returned object IS a PlanningRecommendation (gap-types.ts):
+//   { primaryAction, primaryLabel, secondaryActions, reason, purpose?, intervention? }
+// — primaryAction drives the card's primary button, primaryLabel is the
+// human "Recommended:" sentence, secondaryActions render as chips.
 
 import type {
   GapKind,
   PlanningActionKind,
   PlanningRecommendation,
-  SsaGateState,
+  PlanningGap,
 } from "./gap-types";
 
 // ────────── SSA intervention domain ──────────
@@ -84,237 +91,288 @@ function scoreLabel(score?: number): string {
   return typeof score === "number" ? `${score}/10` : "low score";
 }
 
-// ────────── Main entry: given a gap kind + SSA snapshot, produce the PlanningRecommendation ──────────
-export function recommendForGap(opts: {
-  kind: GapKind;
-  ssaGate: SsaGateState;
-  ssaWeakest?: string;
-  ssaSecondWeakest?: string;
-  ssaWeakestScore?: number;
-  schoolName?: string;
-  clusterName?: string;
+// Append the weakest-area focus to a base label when we know it.
+function withFocus(base: string, weakest?: string): string {
+  return weakest ? `${base} on ${weakest}` : base;
+}
+
+// The fields recommendForGap reads off a gap. Accepting a subset of
+// PlanningGap means gap-mock can pass the whole gap (minus recommendation).
+type RecommendInput = Pick<
+  PlanningGap,
+  | "kind"
+  | "ssaGate"
+  | "ssaWeakestArea"
+  | "ssaSecondWeakest"
+  | "ssaWeakestScore"
+  | "schoolName"
+  | "clusterName"
+>;
+
+// Convenience builder so every branch returns a complete, correctly-typed
+// PlanningRecommendation without repeating the field names.
+function rec(args: {
+  primaryAction: PlanningActionKind;
+  primaryLabel: string;
+  secondaryActions?: PlanningActionKind[];
+  reason: string;
+  purpose?: string;
+  intervention?: SsaIntervention;
 }): PlanningRecommendation {
+  return {
+    primaryAction: args.primaryAction,
+    primaryLabel: args.primaryLabel,
+    secondaryActions: args.secondaryActions ?? [],
+    reason: args.reason,
+    purpose: args.purpose,
+    intervention: args.intervention,
+  };
+}
+
+// ────────── Main entry: given a gap + SSA snapshot, produce the recommendation ──────────
+export function recommendForGap(input: RecommendInput): PlanningRecommendation {
   const {
     kind,
     ssaGate,
-    ssaWeakest,
+    ssaWeakestArea,
     ssaWeakestScore,
     schoolName,
     clusterName,
-  } = opts;
+  } = input;
 
-  // 1. SIT not done → schedule SIT, no secondary.
+  // 1. SIT not done → schedule SIT (SSA happens during SIT). No secondaries.
   if (ssaGate === "SIT_NOT_DONE") {
-    return {
-      primary: {
-        action: "SCHEDULE_SIT",
-        purpose:
-          "Schedule School Improvement Training (SSA happens during SIT)",
-      },
-      secondary: [],
-      reason:
-        "School Improvement Training has not been scheduled — SSA happens during SIT.",
-    } as PlanningRecommendation;
+    return rec({
+      primaryAction: "SCHEDULE_SIT",
+      primaryLabel: "Schedule School Improvement Training (SSA happens during SIT)",
+      reason: "School Improvement Training has not been scheduled — SSA happens during SIT.",
+      purpose: "Schedule School Improvement Training (SSA happens during SIT)",
+    });
   }
 
   // 2. SIT done but SSA missing → only COMPLETE_SSA is allowed.
   if (ssaGate === "SIT_DONE_SSA_MISSING") {
-    return {
-      primary: {
-        action: "COMPLETE_SSA",
-        purpose:
-          "Complete the School Self-Assessment so planning can be unlocked",
-      },
-      secondary: [],
-      allOtherActionsDisabled: true,
+    return rec({
+      primaryAction: "COMPLETE_SSA",
+      primaryLabel: "Complete the School Self-Assessment to unlock planning",
       reason: "Planning locked. SSA not completed.",
-    } as PlanningRecommendation;
+      purpose: "Complete the School Self-Assessment so planning can be unlocked",
+    });
   }
 
-  // From here on, SSA is complete. Build a weakest-intervention mapping
-  // we can reuse across gap kinds.
-  const weakestMap = interventionMapping(ssaWeakest);
+  // Gaps whose whole point is the SSA itself.
+  if (kind === "NO_SSA" || kind === "CORE_NO_SSA" || kind === "CLUSTER_SSA_MISSING") {
+    return rec({
+      primaryAction: "COMPLETE_SSA",
+      primaryLabel: "Complete the School Self-Assessment",
+      secondaryActions: ["VIEW_SCHOOL"],
+      reason: "SSA has not been completed for this entity yet.",
+    });
+  }
+
+  // From here on, SSA is complete. Build a weakest-intervention mapping we can
+  // reuse across gap kinds.
+  const weakestMap = interventionMapping(ssaWeakestArea);
+  const weakestReason = ssaWeakestArea
+    ? `Address weakest SSA area: ${ssaWeakestArea} (${scoreLabel(ssaWeakestScore)})`
+    : undefined;
 
   // 3. NO_VISIT (SSA complete) → drive off weakest intervention.
   if (kind === "NO_VISIT") {
     const action = weakestMap?.primaryAction ?? "SCHEDULE_VISIT";
-    const purpose =
-      weakestMap?.purpose ?? "Schedule a support visit for this school";
-    return {
-      primary: { action, purpose },
-      secondary: [{ action: "ASSIGN_TO_PARTNER" }, { action: "VIEW_SSA" }],
-      reason: ssaWeakest
-        ? `Address weakest SSA area: ${ssaWeakest} (${scoreLabel(ssaWeakestScore)})`
-        : "School has no recorded support visit — schedule one.",
+    return rec({
+      primaryAction: action,
+      primaryLabel: withFocus("Schedule a support visit", ssaWeakestArea),
+      secondaryActions: ["ASSIGN_TO_PARTNER", "VIEW_SSA"],
+      reason: weakestReason ?? "School has no recorded support visit — schedule one.",
+      purpose: weakestMap?.purpose ?? "Schedule a support visit for this school",
       intervention: weakestMap?.intervention,
-    } as PlanningRecommendation;
+    });
   }
 
   // 4. NO_TRAINING (SSA complete) → force a training action.
-  if (kind === "NO_TRAINING") {
-    // Force training, even if the weakest-intervention default is a visit.
+  if (kind === "NO_TRAINING" || kind === "CLUSTER_TRAINING_NEEDED") {
     const mapped = weakestMap?.primaryAction;
     const isTrainingAction =
       mapped === "SCHEDULE_IN_SCHOOL_TRAINING" ||
       mapped === "SCHEDULE_GROUP_TRAINING" ||
       mapped === "SCHEDULE_CLUSTER_TRAINING";
-    const action: PlanningActionKind = isTrainingAction
-      ? (mapped as PlanningActionKind)
-      : "SCHEDULE_IN_SCHOOL_TRAINING";
-    const purpose =
-      weakestMap?.purpose ??
-      "Schedule training aligned to the weakest SSA area";
-    return {
-      primary: { action, purpose },
-      secondary: [{ action: "ASSIGN_TO_PARTNER" }, { action: "VIEW_SSA" }],
-      reason: ssaWeakest
-        ? `Address weakest SSA area: ${ssaWeakest} (${scoreLabel(ssaWeakestScore)})`
-        : "School has no recorded training — schedule one.",
+    const action: PlanningActionKind =
+      kind === "CLUSTER_TRAINING_NEEDED"
+        ? "SCHEDULE_CLUSTER_TRAINING"
+        : isTrainingAction
+          ? (mapped as PlanningActionKind)
+          : "SCHEDULE_IN_SCHOOL_TRAINING";
+    return rec({
+      primaryAction: action,
+      primaryLabel: withFocus("Schedule training", ssaWeakestArea),
+      secondaryActions: ["ASSIGN_TO_PARTNER", "VIEW_SSA"],
+      reason: weakestReason ?? "No recorded training — schedule one aligned to the weakest SSA area.",
+      purpose: weakestMap?.purpose ?? "Schedule training aligned to the weakest SSA area",
       intervention: weakestMap?.intervention,
-    } as PlanningRecommendation;
+    });
   }
 
   // 5. Training done, no follow-up → embed practices.
   if (kind === "TRAINING_DONE_NO_FOLLOWUP") {
-    return {
-      primary: {
-        action: "SCHEDULE_FOLLOW_UP_VISIT",
-        purpose:
-          weakestMap?.purpose ??
-          "Follow-up visit to confirm training is embedded in practice",
-      },
-      secondary: [{ action: "ASSIGN_TO_PARTNER" }],
-      reason: "Training completed — schedule follow-up to embed practices",
+    return rec({
+      primaryAction: "SCHEDULE_FOLLOW_UP_VISIT",
+      primaryLabel: "Schedule a follow-up visit to embed the training",
+      secondaryActions: ["ASSIGN_TO_PARTNER"],
+      reason: "Training completed — schedule follow-up to embed practices.",
+      purpose: weakestMap?.purpose ?? "Follow-up visit to confirm training is embedded in practice",
       intervention: weakestMap?.intervention,
-    } as PlanningRecommendation;
+    });
   }
 
   // 6. No cluster → assign before scheduling cluster work.
   if (kind === "NO_CLUSTER") {
-    return {
-      primary: {
-        action: "ADD_TO_CLUSTER",
-        purpose: "Assign this school to a cluster before scheduling cluster work",
-      },
-      secondary: [{ action: "VIEW_SCHOOL" }],
-      reason: "School is unclustered — assign before scheduling cluster work",
+    return rec({
+      primaryAction: "ADD_TO_CLUSTER",
+      primaryLabel: "Add this school to a cluster",
+      secondaryActions: ["VIEW_SCHOOL"],
+      reason: "School is unclustered — assign before scheduling cluster work.",
       intervention: weakestMap?.intervention,
-    } as PlanningRecommendation;
+    });
   }
 
-  // 7. Cluster missing-meeting kinds.
+  // 7. SSA complete but nothing planned → propose the weakest-area action.
+  if (kind === "SSA_COMPLETE_NOT_PLANNED") {
+    const action = weakestMap?.primaryAction ?? "SCHEDULE_VISIT";
+    return rec({
+      primaryAction: action,
+      primaryLabel: withFocus("Plan the next support action", ssaWeakestArea),
+      secondaryActions: ["ASSIGN_TO_PARTNER", "ASSIGN_TO_SELF", "VIEW_SSA"],
+      reason: weakestReason ?? "SSA is complete but no support has been planned yet.",
+      purpose: weakestMap?.purpose ?? "Plan a support action aligned to the weakest SSA area",
+      intervention: weakestMap?.intervention,
+    });
+  }
+
+  // 8. Cluster meeting kinds.
   if (
     kind === "CLUSTER_NO_FIRST_MEETING" ||
     kind === "CLUSTER_NO_SECOND_MEETING" ||
     kind === "CLUSTER_NO_THIRD_MEETING"
   ) {
-    const meetingNumber =
+    const ordinal =
       kind === "CLUSTER_NO_FIRST_MEETING"
-        ? 1
+        ? "first"
         : kind === "CLUSTER_NO_SECOND_MEETING"
-          ? 2
-          : 3;
-    const ordinal = meetingNumber === 1 ? "first" : meetingNumber === 2 ? "second" : "third";
-    return {
-      primary: {
-        action: "SCHEDULE_CLUSTER_MEETING",
-        purpose: `Schedule the ${ordinal} cluster meeting${clusterName ? ` for ${clusterName}` : ""}`,
-        meetingNumber,
-      },
-      secondary: [{ action: "ASSIGN_TO_PARTNER" }],
+          ? "second"
+          : "third";
+    const where = clusterName ? ` for ${clusterName}` : "";
+    return rec({
+      primaryAction: "SCHEDULE_CLUSTER_MEETING",
+      primaryLabel: `Schedule the ${ordinal} cluster meeting${where}`,
+      secondaryActions: ["ASSIGN_TO_PARTNER"],
       reason: `Cluster${clusterName ? ` ${clusterName}` : ""} has no ${ordinal} meeting scheduled.`,
       intervention: weakestMap?.intervention,
-    } as PlanningRecommendation;
+    });
   }
 
-  // 8. Core school missing-visit kinds.
+  // 9. Cluster SIT.
+  if (kind === "CLUSTER_NO_SIT") {
+    return rec({
+      primaryAction: "SCHEDULE_SIT",
+      primaryLabel: `Schedule the cluster School Improvement Training${clusterName ? ` for ${clusterName}` : ""}`,
+      secondaryActions: ["VIEW_CLUSTER"],
+      reason: `Cluster${clusterName ? ` ${clusterName}` : ""} has no School Improvement Training scheduled.`,
+    });
+  }
+
+  // 10. Core school missing-visit kinds (visits 1–4 + package).
   if (
-    kind === "CORE_NO_VISIT" ||
-    kind === "CORE_MISSING_VISIT" ||
-    kind === "CORE_NO_RECENT_VISIT"
+    kind === "CORE_MISSING_VISIT_1" ||
+    kind === "CORE_MISSING_VISIT_2" ||
+    kind === "CORE_MISSING_VISIT_3" ||
+    kind === "CORE_MISSING_VISIT_4" ||
+    kind === "CORE_PACKAGE_INCOMPLETE"
   ) {
-    return {
-      primary: {
-        action: "SCHEDULE_VISIT",
-        purpose:
-          weakestMap?.purpose ??
-          "Schedule a support visit aligned to the weakest SSA area",
-      },
-      secondary: [{ action: "VIEW_SCHOOL" }],
-      reason: ssaWeakest
-        ? `Core school${schoolName ? ` ${schoolName}` : ""} needs a visit on ${ssaWeakest} (${scoreLabel(ssaWeakestScore)}).`
-        : `Core school${schoolName ? ` ${schoolName}` : ""} has no recent visit.`,
+    return rec({
+      primaryAction: "SCHEDULE_VISIT",
+      primaryLabel: withFocus("Schedule the next core-package support visit", ssaWeakestArea),
+      secondaryActions: ["VIEW_SCHOOL"],
+      reason: weakestReason
+        ? `Core school${schoolName ? ` ${schoolName}` : ""} needs a visit. ${weakestReason}.`
+        : `Core school${schoolName ? ` ${schoolName}` : ""} is missing a core-package visit.`,
+      purpose: weakestMap?.purpose ?? "Schedule a support visit aligned to the weakest SSA area",
       intervention: weakestMap?.intervention,
-    } as PlanningRecommendation;
+    });
   }
 
-  // 9. Core school missing-training kinds.
+  // 11. Core school missing-training kinds (trainings 1–4).
   if (
-    kind === "CORE_NO_TRAINING" ||
-    kind === "CORE_MISSING_TRAINING" ||
-    kind === "CORE_NO_RECENT_TRAINING"
+    kind === "CORE_MISSING_TRAINING_1" ||
+    kind === "CORE_MISSING_TRAINING_2" ||
+    kind === "CORE_MISSING_TRAINING_3" ||
+    kind === "CORE_MISSING_TRAINING_4"
   ) {
-    return {
-      primary: {
-        action: "SCHEDULE_GROUP_TRAINING",
-        purpose:
-          weakestMap?.purpose ??
-          "Schedule group training aligned to the weakest SSA area",
-      },
-      secondary: [{ action: "VIEW_SCHOOL" }],
-      reason: ssaWeakest
-        ? `Core school${schoolName ? ` ${schoolName}` : ""} needs training on ${ssaWeakest} (${scoreLabel(ssaWeakestScore)}).`
-        : `Core school${schoolName ? ` ${schoolName}` : ""} has no recent training.`,
+    return rec({
+      primaryAction: "SCHEDULE_GROUP_TRAINING",
+      primaryLabel: withFocus("Schedule the next core-package training", ssaWeakestArea),
+      secondaryActions: ["VIEW_SCHOOL"],
+      reason: weakestReason
+        ? `Core school${schoolName ? ` ${schoolName}` : ""} needs training. ${weakestReason}.`
+        : `Core school${schoolName ? ` ${schoolName}` : ""} is missing a core-package training.`,
+      purpose: weakestMap?.purpose ?? "Schedule group training aligned to the weakest SSA area",
       intervention: weakestMap?.intervention,
-    } as PlanningRecommendation;
+    });
   }
 
-  // 10. Partner kinds.
-  if (
-    kind === "PARTNER_UNASSIGNED" ||
-    kind === "PARTNER_NO_PARTNER" ||
-    kind === "NO_PARTNER"
-  ) {
-    return {
-      primary: {
-        action: "ASSIGN_TO_PARTNER",
-        purpose: "Assign a partner organisation to support this school",
-      },
-      secondary: [{ action: "VIEW_SCHOOL" }],
-      reason: schoolName
-        ? `${schoolName} has no partner assigned — assign one before scheduling partner-led work.`
-        : "No partner is assigned — assign one before scheduling partner-led work.",
-      intervention: weakestMap?.intervention,
-    } as PlanningRecommendation;
+  // 12. Core champion review.
+  if (kind === "CORE_CHAMPION_REVIEW") {
+    return rec({
+      primaryAction: "VIEW_SCHOOL",
+      primaryLabel: "Review this core school for champion potential",
+      secondaryActions: ["VIEW_SSA"],
+      reason: `Core school${schoolName ? ` ${schoolName}` : ""} is improving — review for champion-school status.`,
+    });
   }
 
-  if (
-    kind === "PARTNER_ASSIGNED_NOT_SCHEDULED" ||
-    kind === "ASSIGNED_NOT_SCHEDULED"
-  ) {
-    return {
-      primary: {
-        action: "SCHEDULE_VISIT",
-        purpose:
-          weakestMap?.purpose ??
-          "Partner assigned — schedule the first support visit",
-      },
-      secondary: [{ action: "ASSIGN_TO_PARTNER" }, { action: "VIEW_SCHOOL" }],
+  // 13. Partner assigned but not scheduled → schedule the first visit.
+  if (kind === "PARTNER_ASSIGNED_NOT_SCHEDULED") {
+    return rec({
+      primaryAction: "SCHEDULE_VISIT",
+      primaryLabel: "Schedule the partner's first support visit",
+      secondaryActions: ["ASSIGN_TO_PARTNER", "VIEW_SCHOOL"],
       reason: schoolName
         ? `Partner is assigned to ${schoolName} but no visit is scheduled.`
         : "Partner is assigned but no visit is scheduled.",
+      purpose: weakestMap?.purpose,
       intervention: weakestMap?.intervention,
-    } as PlanningRecommendation;
+    });
   }
 
-  // 11. Default fallback.
-  return {
-    primary: {
-      action: "VIEW_SCHOOL",
-      purpose: "Open the school to inspect its full record",
-    },
-    secondary: [],
+  // 14. Partner scheduled / delayed / rescheduled / evidence-pending →
+  // monitoring states; open the record to act.
+  if (
+    kind === "PARTNER_SCHEDULED" ||
+    kind === "PARTNER_DELAYED" ||
+    kind === "PARTNER_RESCHEDULED" ||
+    kind === "PARTNER_EVIDENCE_PENDING"
+  ) {
+    const reason =
+      kind === "PARTNER_DELAYED"
+        ? "Partner work is delayed — review and reschedule if needed."
+        : kind === "PARTNER_RESCHEDULED"
+          ? "Partner activity was rescheduled — confirm the new plan."
+          : kind === "PARTNER_EVIDENCE_PENDING"
+            ? "Partner submitted work — review the evidence."
+            : "Partner activity is scheduled — monitor progress.";
+    return rec({
+      primaryAction: "VIEW_SCHOOL",
+      primaryLabel: "Open the school to review partner progress",
+      secondaryActions: ["VIEW_SSA"],
+      reason,
+    });
+  }
+
+  // 15. Default fallback.
+  return rec({
+    primaryAction: "VIEW_SCHOOL",
+    primaryLabel: "Open the school to inspect its full record",
     reason: "No recommendation yet — open the school to inspect.",
     intervention: weakestMap?.intervention,
-  } as PlanningRecommendation;
+  });
 }

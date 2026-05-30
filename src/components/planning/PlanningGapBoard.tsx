@@ -3,14 +3,17 @@
 // Clusters, Core Schools, Partner Assignments) above a grid of
 // PlanningGapCard atoms.
 //
-// This board is intentionally read-only at this phase: onAction simply
-// logs to the console. Real routing — opening the schedule drawer,
-// pushing into MyPlan, assigning to partner — is wired in a later
-// integration phase.
+// Each gap-card action routes to the surface where that work continues:
+// VIEW_* open the entity record, ASSIGN_* move the work into the owner's
+// plan, and SCHEDULE_*/COMPLETE_SSA open the scheduling / SSA surface
+// (carrying the gap id as `?from=planning` context so the destination can
+// pre-scope). Persisted "gap disappears once acted on" state lands in the
+// later integration phase; this phase makes every button navigate.
 
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import {
   Lock,
   Sparkles,
@@ -88,7 +91,49 @@ function HealthTile({ label, value, icon: Icon, tone }: HealthTileProps) {
 
 // ─── Component ─────────────────────────────────────────────────────
 
+// Where each action takes the user. Owner-assignment actions move the
+// work into the relevant plan; schedule/SSA actions open the scheduling
+// surface; view actions open the entity record (resolved per-gap below).
+const ASSIGN_DEST: Partial<Record<PlanningActionKind, string>> = {
+  ASSIGN_TO_SELF: "/my-plan",
+  ASSIGN_TO_CCEO: "/my-targets",
+  ASSIGN_TO_PARTNER: "/partner/planning",
+};
+
+const SCHEDULE_DEST: ReadonlySet<PlanningActionKind> = new Set<PlanningActionKind>([
+  "COMPLETE_SSA",
+  "SCHEDULE_SIT",
+  "SCHEDULE_VISIT",
+  "SCHEDULE_FOLLOW_UP_VISIT",
+  "SCHEDULE_COACHING_VISIT",
+  "SCHEDULE_IN_SCHOOL_TRAINING",
+  "SCHEDULE_CLUSTER_TRAINING",
+  "SCHEDULE_CLUSTER_MEETING",
+  "SCHEDULE_GROUP_TRAINING",
+  "ADD_TO_CLUSTER",
+]);
+
+// Resolve the destination path for an action on a given gap, or null when
+// the gap lacks the context the destination needs (e.g. VIEW_SCHOOL with
+// no schoolId) — caller no-ops rather than navigating somewhere useless.
+function destinationFor(kind: PlanningActionKind, gap: PlanningGap): string | null {
+  const ctx = `?from=planning&gap=${encodeURIComponent(gap.id)}`;
+
+  if (kind === "VIEW_SCHOOL") return gap.schoolId ? `/schools/${gap.schoolId}` : null;
+  if (kind === "VIEW_CLUSTER") return gap.clusterId ? `/clusters/${gap.clusterId}` : null;
+  if (kind === "VIEW_SSA") return `/ssa${ctx}`;
+
+  if (kind === "COMPLETE_SSA") return `/ssa${ctx}`;
+  if (SCHEDULE_DEST.has(kind)) return `/my-plan${ctx}`;
+
+  const assign = ASSIGN_DEST[kind];
+  if (assign) return `${assign}${ctx}`;
+
+  return null;
+}
+
 export function PlanningGapBoard() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabKey>("clientSchools");
 
   const tabCounts = useMemo<Record<TabKey, number>>(
@@ -103,13 +148,13 @@ export function PlanningGapBoard() {
 
   const activeGaps: PlanningGap[] = planningTabs[activeTab];
 
-  const handleAction = (kind: PlanningActionKind, gap: PlanningGap) => {
-    // Placeholder: real routing arrives in a later phase. Logging keeps
-    // the contract observable in the dev console without surfacing a
-    // half-built drawer to the user.
-    // eslint-disable-next-line no-console
-    console.log("[PlanningGapBoard] action", kind, gap.id);
-  };
+  const handleAction = useCallback(
+    (kind: PlanningActionKind, gap: PlanningGap) => {
+      const dest = destinationFor(kind, gap);
+      if (dest) router.push(dest);
+    },
+    [router],
+  );
 
   return (
     <section

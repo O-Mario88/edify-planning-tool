@@ -198,14 +198,17 @@ export function CdFundApprovalQueue() {
                               </div>
                             )}
                             {!isPending && (
-                              <a
-                                href="#"
-                                onClick={(e) => e.preventDefault()}
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedId(r.id);
+                                }}
                                 className="inline-flex items-center gap-1 text-caption font-extrabold text-[var(--color-edify-primary)]"
                               >
                                 <Eye size={10} />
                                 View
-                              </a>
+                              </button>
                             )}
                           </div>
                         </div>

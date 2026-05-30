@@ -516,7 +516,14 @@ function TopFocusCard({ items }: { items: OperatingTargets["topFocus"] }) {
           </li>
         ))}
       </ul>
-      <a href="#" className="t-caption font-semibold text-[var(--color-edify-primary)] mt-3">View All insights</a>
+      <button
+        type="button"
+        disabled
+        title="The full insights view is coming soon"
+        className="t-caption font-semibold text-[var(--text-muted)] opacity-60 cursor-not-allowed mt-3 text-left"
+      >
+        View All insights
+      </button>
     </div>
   );
 }

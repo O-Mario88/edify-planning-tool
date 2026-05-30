@@ -181,10 +181,15 @@ function BudgetCard({
             Approved by <span className="text-slate-700 font-extrabold">{budget.approvedByRvpName}</span>
             {budget.approvedAt && <> · {budget.approvedAt.slice(0, 10)}</>}
           </span>
-          <a href="#" onClick={(e) => e.preventDefault()} className="inline-flex items-center gap-1 font-extrabold text-[var(--color-edify-primary)]">
+          <button
+            type="button"
+            disabled
+            title="Full envelope breakdown is coming soon"
+            className="inline-flex items-center gap-1 font-extrabold text-[var(--text-muted)] opacity-60 cursor-not-allowed"
+          >
             <Eye size={10} />
             View envelope
-          </a>
+          </button>
         </div>
       )}
 

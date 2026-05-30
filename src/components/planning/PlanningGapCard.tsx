@@ -120,11 +120,19 @@ function safeActionState(
 ): ActionState {
   // Defensive: if the engine doesn't recognize a kind for this gap,
   // treat as unavailable rather than throw — the card stays renderable.
+  // actionStateFor keys off the SSA gate, not the whole gap.
   try {
-    return actionStateFor(gap, kind);
+    return actionStateFor(gap.ssaGate, kind);
   } catch {
-    return "UNAVAILABLE" as ActionState;
+    return "DISABLED" as ActionState;
   }
+}
+
+// SSA is "complete enough to plan" once the gate has advanced past the
+// two SSA-missing states. Derived here so the card never reads a
+// non-existent `ssaCompleted` flag.
+function isSsaComplete(gap: PlanningGap): boolean {
+  return gap.ssaGate !== "SIT_NOT_DONE" && gap.ssaGate !== "SIT_DONE_SSA_MISSING";
 }
 
 // ─── Component ─────────────────────────────────────────────────────
@@ -132,7 +140,7 @@ function safeActionState(
 export function PlanningGapCard({
   gap,
   onAction,
-}: PlanningGapCardProps): JSX.Element {
+}: PlanningGapCardProps) {
   const locked = gap.ssaGate === "SIT_DONE_SSA_MISSING";
 
   // Locked render: SSA-missing-after-SIT. Hard gate — only Complete
@@ -206,13 +214,12 @@ export function PlanningGapCard({
 
   const priority = (gap.priority ?? "NORMAL") as PlanningPriority;
   const priorityClassName = priorityClass(priority);
-  const primaryKind = gap.primaryActionKind as PlanningActionKind;
+  const primaryKind = gap.recommendation.primaryAction;
   const primaryState = safeActionState(gap, primaryKind);
-  const secondaries: PlanningActionKind[] =
-    (gap.secondaryActionKinds as PlanningActionKind[] | undefined) ?? [];
+  const secondaries: PlanningActionKind[] = gap.recommendation.secondaryActions ?? [];
 
-  const ssaComplete = gap.ssaCompleted !== false;
-  const cceoName = gap.assignedCceo ?? gap.cceoName;
+  const ssaComplete = isSsaComplete(gap);
+  const cceoName = gap.assignedCceoName;
 
   return (
     <article
@@ -279,23 +286,23 @@ export function PlanningGapCard({
           <Sparkles size={11} aria-hidden /> Why
         </div>
 
-        {gap.weakestArea ? (
+        {gap.ssaWeakestArea ? (
           <div className="mt-1.5 text-[12.5px] leading-snug">
             <span className="muted">Weakest area: </span>
             <span className="font-semibold text-[var(--color-edify-text)]">
-              {gap.weakestArea.area}
+              {gap.ssaWeakestArea}
             </span>
-            {typeof gap.weakestArea.score === "number" ? (
-              <span className="muted"> ({gap.weakestArea.score}/10)</span>
+            {typeof gap.ssaWeakestScore === "number" ? (
+              <span className="muted"> ({gap.ssaWeakestScore}/10)</span>
             ) : null}
           </div>
         ) : null}
 
-        {gap.recommendedSentence ? (
+        {gap.recommendation.primaryLabel ? (
           <div className="mt-1 text-[12.5px] leading-snug">
             <span className="muted">Recommended: </span>
             <span className="text-[var(--color-edify-text)]">
-              {gap.recommendedSentence}
+              {gap.recommendation.primaryLabel}
             </span>
           </div>
         ) : null}
