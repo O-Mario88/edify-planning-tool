@@ -9,6 +9,29 @@
  * resolves whenever there's a `.dark` ancestor in the tree. */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* ─────── Weight discipline (reference benchmark) ───────────────────────
+ * The premium dark-dashboard reference reads calm because it relies on
+ * SIZE + COLOR for hierarchy, not heavy strokes — weights stay in the
+ * 400/500/600 register. The codebase, by contrast, leans on `font-extrabold`
+ * (2.6k uses) and `font-bold` (0.9k), which reads as "heavy admin dashboard".
+ *
+ * Rather than rewrite 500+ files, we re-target the two heavy weight
+ * UTILITIES so every existing `font-bold` / `font-extrabold` resolves to 600
+ * (semibold) — the cap the design system allows. Hierarchy still reads
+ * clearly: 400 body vs 600 headings is a strong, restrained contrast, exactly
+ * the reference's register. (`font-medium` 500 / `font-semibold` 600 unchanged.)
+ *
+ * These rules are intentionally UNLAYERED: per the CSS cascade, unlayered
+ * declarations win over anything in `@layer` (Tailwind emits its utilities
+ * into `@layer utilities`), so this overrides without `!important`. A
+ * Tailwind v4 `@theme { --font-weight-* }` override does NOT work here — the
+ * weight utilities don't resolve from those tokens in this build. Reverse by
+ * deleting this block. */
+.font-bold,
+.font-extrabold {
+  font-weight: 600;
+}
+
 @theme {
   /* ─────── Typography tokens (legacy — deprecated) ───────
    * DEPRECATED: The tokens below were the earlier migration scale. New
@@ -46,6 +69,7 @@
   --color-warn-soft:     #fbf3e3;
 
   --font-sans: var(--font-source-sans), Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
 }
 
 :root {
