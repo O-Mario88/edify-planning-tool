@@ -107,6 +107,44 @@ export const staffMonitorRows: StaffMonitorRow[] = [
     status: "EvidenceSubmitted",
     amountUgx: 180_000,
   },
+  // Payment pipeline — CCEO confirm → PL approval → IA verification →
+  // accountant. One row per stage so the staff can see exactly which
+  // approver a partner payment is waiting on.
+  {
+    id: "MON-009", school: "Riverside Primary", district: "Mukono",
+    partner: "Bright Future Education Partners",
+    activity: "Follow-Up Visit", activitySub: "Literacy support",
+    status: "ConfirmedByCceo",
+    amountUgx: 350_000,
+  },
+  {
+    id: "MON-010", school: "St. Andrew's Primary", district: "Kayunga",
+    partner: "Bright Future Education Partners",
+    activity: "In-School Training", activitySub: "Numeracy fluency",
+    status: "AwaitingPlApproval",
+    amountUgx: 420_000,
+  },
+  {
+    id: "MON-011", school: "Good Shepherd Primary", district: "Mukono",
+    partner: "Literacy Training Uganda",
+    activity: "Coaching Visit", activitySub: "Reading support",
+    status: "AwaitingIaVerification",
+    amountUgx: 310_000,
+  },
+  {
+    id: "MON-012", school: "Trinity Junior School", district: "Kayunga",
+    partner: "Bright Future Education Partners",
+    activity: "Classroom Observation", activitySub: "P4 Literacy",
+    status: "IaVerified",
+    amountUgx: 260_000,
+  },
+  {
+    id: "MON-013", school: "Canaan Primary School", district: "Mukono",
+    partner: "Numeracy First",
+    activity: "Follow-Up Visit", activitySub: "Leadership support",
+    status: "SentToAccountant",
+    amountUgx: 300_000,
+  },
 ];
 
 // Map a monitor row to its evidence summary so the CCEO sees the

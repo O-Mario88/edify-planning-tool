@@ -53,6 +53,7 @@ import {
   type DebriefStreak,
 } from "@/lib/cceo-execution-store";
 import { shortStatusLabel, fullStatusLabel } from "@/lib/status-labels";
+import { requiresParticipantCounts } from "@/lib/salesforce-id";
 import { closeAssignmentsBySchoolId } from "@/lib/assignment-store";
 import { AssignedByPLCard } from "@/components/my-targets/AssignedByPLCard";
 import { SalesforceCompletionModal } from "@/components/my-targets/SalesforceCompletionModal";
@@ -531,6 +532,8 @@ function TodoRow({
     !done &&
     a.status !== "Verified" &&
     a.status !== "Submitted for Verification";
+  const isTraining = requiresParticipantCounts(a.activityType);
+  const completeLabel = isTraining ? "Complete Training" : "Complete Visit";
 
   return (
     <li className="py-2.5 flex items-start gap-3 min-w-0">
@@ -586,6 +589,15 @@ function TodoRow({
             <span className="mx-1">·</span>
             <span>{completion.salesforceIdKind}:</span>{" "}
             <span className="font-mono font-extrabold">{completion.salesforceId}</span>
+            {completion.participants && (
+              <>
+                <span className="mx-1">·</span>
+                <span>
+                  {completion.participants.total} participants
+                  {" "}({completion.participants.teachers} teachers, {completion.participants.schoolLeaders} leaders)
+                </span>
+              </>
+            )}
             {completion.note && (
               <>
                 <span className="mx-1">·</span>
@@ -606,7 +618,7 @@ function TodoRow({
               className="h-8 px-2.5 rounded-md bg-emerald-500 hover:bg-emerald-600 text-white text-[11px] font-extrabold inline-flex items-center gap-1.5"
             >
               <CheckCircle2 size={11} />
-              Complete visit
+              {completeLabel}
             </button>
           )}
           {!done && (

@@ -11,7 +11,9 @@
 //   • Healthy  — every transition is gated (canTransition()) so no
 //                accidental skips (e.g. partner can't mark Paid).
 //   • Focused  — every Paid status must trace back through CCEO
-//                confirmation + PL approval, enforced by REQUIRED_PATH.
+//                confirmation, PL approval, AND IA verification,
+//                enforced by REQUIRED_PATH. Partner payment approvers are
+//                CCEO → PL → IA; only then does it reach the accountant.
 
 import type { EdifyRole } from "@/lib/auth-public";
 
@@ -28,6 +30,8 @@ export type PartnerWorkflowStatus =
   | "ConfirmedByCceo"         // CCEO has signed off — payment can move
   | "AwaitingPlApproval"      // PL needs to approve the payment request
   | "ApprovedByPl"            // PL has approved
+  | "AwaitingIaVerification"  // IA verifies the Salesforce entry before payment
+  | "IaVerified"              // IA has verified — payment can move to accountant
   | "SentToAccountant"        // Accountant queue
   | "Paid"                    // Accountant has cleared
   | "Closed"                  // Activity fully closed; school journey updated
@@ -50,6 +54,8 @@ export const HAPPY_PATH: PartnerWorkflowStatus[] = [
   "ConfirmedByCceo",
   "AwaitingPlApproval",
   "ApprovedByPl",
+  "AwaitingIaVerification",
+  "IaVerified",
   "SentToAccountant",
   "Paid",
   "Closed",
@@ -66,6 +72,8 @@ export const STATUS_LABEL: Record<PartnerWorkflowStatus, string> = {
   ConfirmedByCceo:          "Confirmed by CCEO",
   AwaitingPlApproval:       "Awaiting PL approval",
   ApprovedByPl:             "Approved by PL",
+  AwaitingIaVerification:   "Awaiting IA verification",
+  IaVerified:               "IA verified",
   SentToAccountant:         "Sent to accountant",
   Paid:                     "Paid / cleared",
   Closed:                   "Closed",
@@ -91,7 +99,9 @@ export const ROLE_NEXT_STEP: Record<PartnerWorkflowStatus, EdifyRole | "Staff" |
   AwaitingCceoConfirmation: "CCEO",                 // confirm
   ConfirmedByCceo:          "System",               // auto-routes to PL queue
   AwaitingPlApproval:       "CountryProgramLead",   // approve
-  ApprovedByPl:             "System",               // auto-routes to accountant queue
+  ApprovedByPl:             "System",               // auto-routes to IA queue
+  AwaitingIaVerification:   "ImpactAssessment",     // verify Salesforce entry
+  IaVerified:               "System",               // auto-routes to accountant queue
   SentToAccountant:         "ProgramAccountant",    // clear
   Paid:                     "System",               // auto-closes when school journey updates
   Closed:                   null,                   // terminal
@@ -120,6 +130,8 @@ export const STATUS_TONE: Record<PartnerWorkflowStatus, StatusTone> = {
   ConfirmedByCceo:          "success",
   AwaitingPlApproval:       "warn",
   ApprovedByPl:             "success",
+  AwaitingIaVerification:   "warn",
+  IaVerified:               "success",
   SentToAccountant:         "warn",
   Paid:                     "success",
   Closed:                   "muted",
@@ -154,7 +166,9 @@ export const TRANSITIONS: ReadonlyArray<Transition> = [
   { from: "AwaitingCceoConfirmation", to: "ConfirmedByCceo",          byRole: ["CCEO", "Admin"],                           label: "Confirm completed" },
   { from: "ConfirmedByCceo",          to: "AwaitingPlApproval",       byRole: ["System"],                                  label: "Route to PL" },
   { from: "AwaitingPlApproval",       to: "ApprovedByPl",             byRole: ["CountryProgramLead", "Admin"],             label: "Approve payment" },
-  { from: "ApprovedByPl",             to: "SentToAccountant",         byRole: ["System"],                                  label: "Route to accountant" },
+  { from: "ApprovedByPl",             to: "AwaitingIaVerification",   byRole: ["System"],                                  label: "Route to IA verification" },
+  { from: "AwaitingIaVerification",   to: "IaVerified",               byRole: ["ImpactAssessment", "Admin"],               label: "Verify Salesforce entry" },
+  { from: "IaVerified",               to: "SentToAccountant",         byRole: ["System"],                                  label: "Route to accountant" },
   { from: "SentToAccountant",         to: "Paid",                     byRole: ["ProgramAccountant", "Admin"],              label: "Clear payment" },
   { from: "Paid",                     to: "Closed",                   byRole: ["System", "CCEO", "Admin"],                 label: "Close activity" },
   // CCEO branches
@@ -165,6 +179,10 @@ export const TRANSITIONS: ReadonlyArray<Transition> = [
   { from: "AwaitingPlApproval",       to: "ReturnedToPartner",        byRole: ["CountryProgramLead", "Admin"],             label: "Return to partner" },
   { from: "AwaitingPlApproval",       to: "Rejected",                 byRole: ["CountryProgramLead", "Admin"],             label: "Reject payment" },
   { from: "AwaitingPlApproval",       to: "OnHold",                   byRole: ["CountryProgramLead", "Admin"],             label: "Hold payment" },
+  // IA branches
+  { from: "AwaitingIaVerification",   to: "ReturnedToPartner",        byRole: ["ImpactAssessment", "Admin"],               label: "Return for correction" },
+  { from: "AwaitingIaVerification",   to: "ReturnedToCceo",           byRole: ["ImpactAssessment", "Admin"],               label: "Return to CCEO" },
+  { from: "AwaitingIaVerification",   to: "Rejected",                 byRole: ["ImpactAssessment", "Admin"],               label: "Reject — Salesforce entry invalid" },
   // Accountant branches
   { from: "SentToAccountant",         to: "ReturnedToPartner",        byRole: ["ProgramAccountant", "Admin"],              label: "Return for correction" },
   { from: "SentToAccountant",         to: "OnHold",                   byRole: ["ProgramAccountant", "Admin"],              label: "Hold payment" },
@@ -220,7 +238,8 @@ export function progressPct(status: PartnerWorkflowStatus): number | null {
 // for the given step. Used by gates: "payment cannot move to PL
 // unless CCEO has confirmed".
 export const REQUIRED_PATH: Partial<Record<PartnerWorkflowStatus, PartnerWorkflowStatus[]>> = {
-  AwaitingPlApproval: ["EvidenceSubmitted", "ConfirmedByCceo"],
-  SentToAccountant:   ["EvidenceSubmitted", "ConfirmedByCceo", "ApprovedByPl"],
-  Paid:               ["EvidenceSubmitted", "ConfirmedByCceo", "ApprovedByPl", "SentToAccountant"],
+  AwaitingPlApproval:     ["EvidenceSubmitted", "ConfirmedByCceo"],
+  AwaitingIaVerification: ["EvidenceSubmitted", "ConfirmedByCceo", "ApprovedByPl"],
+  SentToAccountant:       ["EvidenceSubmitted", "ConfirmedByCceo", "ApprovedByPl", "IaVerified"],
+  Paid:                   ["EvidenceSubmitted", "ConfirmedByCceo", "ApprovedByPl", "IaVerified", "SentToAccountant"],
 };

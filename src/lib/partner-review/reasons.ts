@@ -9,6 +9,7 @@
 import type { RejectReason, ReturnReason } from "./types";
 
 export const RETURN_REASONS: ReturnReason[] = [
+  { key: "evidence.school_stamp_missing",      label: "School stamp missing" },
   { key: "evidence.attendance_missing",        label: "Attendance sheet missing" },
   { key: "evidence.photo_unclear",             label: "Photo unclear" },
   { key: "evidence.report_incomplete",         label: "Report incomplete" },

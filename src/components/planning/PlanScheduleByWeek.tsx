@@ -18,6 +18,7 @@ import {
   CalendarPlus,
   Upload,
   RotateCw,
+  Database,
   type LucideIcon,
 } from "lucide-react";
 import { SectionCard } from "@/components/ui/primitives";
@@ -34,6 +35,8 @@ import {
   RescheduleActivityDrawer,
   type ActivityRescheduleOutcome,
 } from "@/components/planning/RescheduleActivityDrawer";
+import { SalesforceCompletionModal } from "@/components/my-targets/SalesforceCompletionModal";
+import type { VisitCompletion } from "@/lib/cceo-execution-store";
 import { cn } from "@/lib/utils";
 
 // Weekly activity schedule with fund-need rollups.
@@ -140,6 +143,10 @@ export function PlanScheduleByWeek({
   const [openRows, setOpenRows] = useState<Set<string>>(new Set());
   // Activity-level reschedule modal — single instance, all rows share it.
   const [rescheduleItem, setRescheduleItem] = useState<PlanItem | null>(null);
+  // Salesforce completion modal — owner-only. Captures the SV-/TS- ID
+  // that flips an activity to "Submitted for Verification".
+  const [completeItem, setCompleteItem] = useState<PlanItem | null>(null);
+  const [completed, setCompleted] = useState<Record<string, VisitCompletion>>({});
   const [toast, setToast] = useState<string | null>(null);
 
   function handleRescheduleSubmit(outcome: ActivityRescheduleOutcome) {
@@ -147,6 +154,13 @@ export function PlanScheduleByWeek({
       `Rescheduled to ${outcome.newDate} — school contact + assigned staff notified. (${outcome.reason})`,
     );
     setRescheduleItem(null);
+    setTimeout(() => setToast(null), 4500);
+  }
+
+  function handleComplete(c: VisitCompletion) {
+    setCompleted((prev) => ({ ...prev, [c.activityId]: c }));
+    setCompleteItem(null);
+    setToast(`${c.salesforceIdKind} ${c.salesforceId} logged. Submitted for verification.`);
     setTimeout(() => setToast(null), 4500);
   }
 
@@ -230,6 +244,7 @@ export function PlanScheduleByWeek({
                     const cost = estimatedCostFor(r);
                     const rowOpen = openRows.has(r.id);
                     const moveCount = r.reschedules?.length ?? 0;
+                    const completion = completed[r.id];
                     return (
                       <li key={r.id}>
                         <button
@@ -284,10 +299,10 @@ export function PlanScheduleByWeek({
                               <span
                                 className={cn(
                                   "inline-flex items-center px-1.5 py-[2px] rounded-md text-[10px] font-extrabold whitespace-nowrap shrink-0",
-                                  STATUS_TONE[r.status],
+                                  completion ? "bg-violet-100 text-violet-700" : STATUS_TONE[r.status],
                                 )}
                               >
-                                {r.status}
+                                {completion ? "Awaiting verify" : r.status}
                               </span>
                               <span className="text-[11.5px] font-extrabold tabular tabular-nums w-[68px] sm:w-[78px] text-right shrink-0">
                                 {formatUgx(cost)}
@@ -300,7 +315,9 @@ export function PlanScheduleByWeek({
                           <ActivityDetail
                             item={r}
                             audience={audience}
+                            completion={completion}
                             onReschedule={() => setRescheduleItem(r)}
+                            onComplete={() => setCompleteItem(r)}
                           />
                         )}
                       </li>
@@ -329,6 +346,21 @@ export function PlanScheduleByWeek({
         onClose={() => setRescheduleItem(null)}
         onSubmit={handleRescheduleSubmit}
       />
+
+      {/* Single Salesforce completion modal — shared across every row. */}
+      {completeItem && (
+        <SalesforceCompletionModal
+          activity={{
+            id:           completeItem.id,
+            schoolName:   completeItem.title,
+            activityType: completeItem.type,
+            purpose:      completeItem.context,
+          }}
+          open
+          onClose={() => setCompleteItem(null)}
+          onComplete={handleComplete}
+        />
+      )}
 
       {toast && (
         <div className="fixed bottom-6 right-6 z-50 rounded-xl shadow-lg bg-emerald-600 text-white text-[12px] font-semibold px-4 py-3 max-w-[420px]">
@@ -374,11 +406,15 @@ const STATUS_NOTE: Record<PlanItemStatus, { icon: LucideIcon; tone: string; line
 function ActivityDetail({
   item,
   audience,
+  completion,
   onReschedule,
+  onComplete,
 }: {
   item: PlanItem;
   audience: Audience;
+  completion?: VisitCompletion;
   onReschedule: () => void;
+  onComplete: () => void;
 }) {
   const lines = costBreakdownFor(item);
   const total = lines.reduce((s, l) => s + l.amount, 0);
@@ -516,6 +552,21 @@ function ActivityDetail({
             {(item.status === "In Progress" || item.status === "Awaiting SF ID") && (
               <ActionLink href={`/partner/evidence?activity=${item.id}`} Icon={Upload} label="Submit Evidence" />
             )}
+            {completion ? (
+              <span className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-[11px] font-extrabold bg-violet-50 text-violet-700 border border-violet-200">
+                <CheckCircle2 size={11} />
+                {completion.salesforceIdKind} {completion.salesforceId} · submitted for verification
+              </span>
+            ) : (item.status === "In Progress" || item.status === "Awaiting SF ID") ? (
+              <button
+                type="button"
+                onClick={onComplete}
+                className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-md text-[11px] font-extrabold bg-emerald-600 text-white hover:bg-emerald-500 transition-colors"
+              >
+                <Database size={11} />
+                Complete · log SF ID
+              </button>
+            ) : null}
           </div>
         )}
 

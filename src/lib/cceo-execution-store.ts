@@ -11,22 +11,43 @@
 // Pure client-side — no "server-only", no imports from server modules.
 
 import type { DebriefBarrier } from "@/lib/field-intelligence-mock";
+import type { SalesforceIdKind } from "@/lib/salesforce-id";
+
+export type { SalesforceIdKind };
 
 // ────────── Types ──────────
 
 // Salesforce is the system of record for the actual evidence (photos,
 // attendance, signatures, scores). The dashboard only needs the SF ID to
-// confirm the activity was logged. Visit ID covers school / partner /
-// follow-up / SSA visits; Training ID covers cluster trainings + meetings.
-export type SalesforceIdKind = "Visit ID" | "Training ID";
+// confirm the activity was logged. Visit ID (SV-) covers school / partner
+// / follow-up / SSA visits; Training ID (TS-) covers cluster trainings,
+// cluster meetings, and in-school trainings.
+
+// Participant breakdown — required for trainings + cluster meetings so the
+// reach numbers flow into donor reporting and training analytics.
+export type ParticipantBreakdown = {
+  teachers:      number;
+  schoolLeaders: number;
+  other:         number;
+  total:         number;               // teachers + schoolLeaders + other
+};
 
 export type VisitCompletion = {
   schoolId:         string;
   activityId:       string;
   completedAt:      string;
-  salesforceId:     string;            // e.g. "SF-VST-2401" / "SF-TRN-1207"
+  salesforceId:     string;            // e.g. "SV-01230" / "TS-01234"
   salesforceIdKind: SalesforceIdKind;
   note:             string;            // optional one-liner from the CCEO
+  // Training / cluster-meeting completions carry a participant breakdown
+  // and an attendance confirmation; visit completions leave these unset.
+  participants?:    ParticipantBreakdown;
+  attendanceConfirmed?: boolean;
+  // Partner school-visit completions: the reviewer must confirm the
+  // school stamp on the visit form before the activity can be counted.
+  schoolStampConfirmed?: boolean;
+  // When the CCEO submitted the SF ID (kicks off the verification chain).
+  submittedAt?:     string;
 };
 
 export type RealtimeBlocker = {

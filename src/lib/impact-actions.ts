@@ -9,9 +9,21 @@
 // Next.js. It can be imported from client components (the body checks
 // `typeof window` before touching localStorage).
 
+import { kindFromId } from "@/lib/salesforce-id";
+
 export type VerifyResult =
   | { ok: true; activityId: string }
-  | { ok: false; reason: "FORBIDDEN" | "WRONG_STATUS" | "NOT_FOUND" };
+  | { ok: false; reason: "FORBIDDEN" | "WRONG_STATUS" | "NOT_FOUND" | "INVALID_SF_ID" };
+
+// The Salesforce ID gate: a completion can only be verified if it carries
+// a Salesforce ID with a recognised prefix (SV- for visits, TS- for
+// trainings). Missing ID ⇒ WRONG_STATUS; present-but-malformed ⇒
+// INVALID_SF_ID so the IA queue can flag a bad prefix distinctly.
+function sfIdGate(salesforceId: string | undefined): { reason: "WRONG_STATUS" | "INVALID_SF_ID" } | null {
+  if (!salesforceId) return { reason: "WRONG_STATUS" };
+  if (!kindFromId(salesforceId)) return { reason: "INVALID_SF_ID" };
+  return null;
+}
 
 type StoredCompletion = {
   schoolId?:        string;
@@ -52,7 +64,8 @@ export function verifyActivity(args: {
       const idx = parsed.findIndex((c) => c.activityId === args.activityId);
       if (idx === -1) return { ok: false, reason: "NOT_FOUND" };
       const c = parsed[idx];
-      if (!c.salesforceId) return { ok: false, reason: "WRONG_STATUS" };
+      const gate = sfIdGate(c.salesforceId);
+      if (gate) return { ok: false, reason: gate.reason };
       parsed[idx] = {
         ...c,
         verified: true,
@@ -65,7 +78,8 @@ export function verifyActivity(args: {
 
     const c = parsed[args.activityId];
     if (!c) return { ok: false, reason: "NOT_FOUND" };
-    if (!c.salesforceId) return { ok: false, reason: "WRONG_STATUS" };
+    const gate = sfIdGate(c.salesforceId);
+    if (gate) return { ok: false, reason: gate.reason };
     parsed[args.activityId] = {
       ...c,
       verified: true,

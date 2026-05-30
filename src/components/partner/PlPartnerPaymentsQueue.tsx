@@ -7,7 +7,9 @@
 // sees a request that hasn't been vetted.
 //
 // Actions:
-//   • Approve and Send to Accountant  — happy path
+//   • Approve and Send to IA          — happy path (IA verifies the
+//                                        Salesforce entry before the
+//                                        accountant can clear payment)
 //   • Return to CCEO                  — needs clarification
 //   • Return to Partner               — evidence weak
 //   • Reject                          — work invalid
@@ -30,7 +32,7 @@ export function PlPartnerPaymentsQueue() {
 
   function handleAction(req: PartnerPaymentRequest, action: "approve" | "returnCceo" | "returnPartner" | "reject" | "hold") {
     const labels = {
-      approve:       `Approved — ${req.partner} ${fmtUgx(req.totalUgx)} sent to accountant for clearance.`,
+      approve:       `Approved — ${req.partner} ${fmtUgx(req.totalUgx)} sent to IA for Salesforce verification.`,
       returnCceo:    `Returned to CCEO — ${req.confirmedBy} will receive a clarification request.`,
       returnPartner: `Returned to partner — ${req.partner} will receive an evidence-correction request.`,
       reject:        `Rejected — ${req.partner} request will not move forward.`,
@@ -53,7 +55,7 @@ export function PlPartnerPaymentsQueue() {
             <h3 className="text-[15px] font-extrabold tracking-tight">Partner Payments Awaiting Approval</h3>
           </div>
           <p className="text-[12px] muted mt-1">
-            CCEO-confirmed payment requests waiting on your approval before going to the accountant.
+            CCEO-confirmed payment requests waiting on your approval before going to IA for Salesforce verification.
           </p>
         </div>
         <div className="text-right shrink-0">

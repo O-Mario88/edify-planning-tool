@@ -6,6 +6,7 @@ import {
   Circle,
   CheckCircle2,
   ChevronRight,
+  Database,
 } from "lucide-react";
 import { MobileShell } from "@/components/mobile/MobileShell";
 import { MobileBottomNav } from "@/components/mobile/MobileBottomNav";
@@ -20,6 +21,9 @@ import {
 import type { EdifyRole } from "@/lib/auth-public";
 import { MyPlanCard } from "@/components/planning/MyPlanCard";
 import { PlanScheduleByWeek } from "@/components/planning/PlanScheduleByWeek";
+import { SalesforceCompletionModal } from "@/components/my-targets/SalesforceCompletionModal";
+import type { VisitCompletion } from "@/lib/cceo-execution-store";
+import { requiresParticipantCounts } from "@/lib/salesforce-id";
 import { cn } from "@/lib/utils";
 
 const FILTERS: { key: PlanFilter; label: string }[] = [
@@ -46,9 +50,18 @@ const STATUS_RADIO: Record<PlanItemStatus, string> = {
 export function PlanView({ role = "CountryProgramLead" }: { role?: EdifyRole }) {
   const { items: planItems, summary: monthSummary } = planDataForRole(role);
   const [filter, setFilter] = useState<PlanFilter>("all");
+  const [active, setActive] = useState<PlanItem | null>(null);
+  const [completed, setCompleted] = useState<Record<string, VisitCompletion>>({});
+  const [toast, setToast] = useState<string | null>(null);
   const visible = planItems.filter((i) =>
     filter === "all" ? true : i.filter === filter,
   );
+
+  function handleComplete(c: VisitCompletion) {
+    setCompleted((prev) => ({ ...prev, [c.activityId]: c }));
+    setToast(`${c.salesforceIdKind} ${c.salesforceId} logged. Submitted for verification.`);
+    setTimeout(() => setToast(null), 4000);
+  }
 
   return (
     <MobileShell>
@@ -169,42 +182,108 @@ export function PlanView({ role = "CountryProgramLead" }: { role?: EdifyRole }) 
           {visible.length === 0 ? (
             <div className="text-[12px] muted text-center py-6">No activities in this filter.</div>
           ) : (
-            visible.map((p) => <PlanRow key={p.id} item={p} />)
+            visible.map((p) => (
+              <PlanRow
+                key={p.id}
+                item={p}
+                completion={completed[p.id]}
+                onComplete={() => setActive(p)}
+              />
+            ))
           )}
         </div>
       </main>
+
+      {active && (
+        <SalesforceCompletionModal
+          activity={{
+            id:           active.id,
+            schoolName:   active.title,
+            activityType: active.type,
+            purpose:      active.context,
+          }}
+          open
+          onClose={() => setActive(null)}
+          onComplete={handleComplete}
+        />
+      )}
+
+      {toast && (
+        <div className="fixed bottom-20 inset-x-3 z-50 rounded-xl shadow-lg bg-emerald-600 text-white text-[12px] font-semibold px-4 py-3 text-center">
+          {toast}
+        </div>
+      )}
 
       <MobileBottomNav />
     </MobileShell>
   );
 }
 
-function PlanRow({ item }: { item: PlanItem }) {
+function PlanRow({
+  item,
+  completion,
+  onComplete,
+}: {
+  item:       PlanItem;
+  completion?: VisitCompletion;
+  onComplete: () => void;
+}) {
+  const done = !!completion;
+  // The SF-ID gate is the staff completion moment: a visit/training that's
+  // started ("In Progress") or already flagged "Awaiting SF ID" can be
+  // closed by capturing the Salesforce ID. Verified work is already done.
+  const completable = !done && (item.status === "In Progress" || item.status === "Awaiting SF ID");
+  const isTraining = requiresParticipantCounts(item.type);
+
   return (
-    <div className="flex items-center gap-3 px-3 py-2.5 active:bg-[var(--color-edify-soft)]/40">
-      <span
-        className={cn(
-          "w-5 h-5 rounded-full border-2 grid place-items-center shrink-0",
-          STATUS_RADIO[item.status],
-        )}
-      >
-        {item.status === "Verified" ? <CheckCircle2 size={12} /> : <Circle size={6} className="opacity-0" />}
-      </span>
-      <div className="flex-1 min-w-0">
-        <div className="text-body font-bold leading-tight">
-          {item.title} <span className="muted font-medium">— {item.context}</span>
+    <div className="px-3 py-2.5 active:bg-[var(--color-edify-soft)]/40">
+      <div className="flex items-center gap-3">
+        <span
+          className={cn(
+            "w-5 h-5 rounded-full border-2 grid place-items-center shrink-0",
+            done ? "bg-emerald-500 border-emerald-500 text-white" : STATUS_RADIO[item.status],
+          )}
+        >
+          {done || item.status === "Verified" ? <CheckCircle2 size={12} /> : <Circle size={6} className="opacity-0" />}
+        </span>
+        <div className="flex-1 min-w-0">
+          <div className="text-body font-bold leading-tight">
+            {item.title} <span className="muted font-medium">— {item.context}</span>
+          </div>
+          <div className="text-[11px] muted mt-0.5">{item.date}</div>
         </div>
-        <div className="text-[11px] muted mt-0.5">{item.date}</div>
+        <span
+          className={cn(
+            "shrink-0 inline-flex items-center px-2 py-[2px] rounded-md text-[11px] font-extrabold",
+            done ? "bg-violet-50 text-violet-700" : STATUS_PILL[item.status],
+          )}
+        >
+          {done ? "Awaiting verify" : item.status}
+        </span>
+        <ChevronRight size={14} className="text-[var(--color-edify-muted)] shrink-0" />
       </div>
-      <span
-        className={cn(
-          "shrink-0 inline-flex items-center px-2 py-[2px] rounded-md text-[11px] font-extrabold",
-          STATUS_PILL[item.status],
-        )}
-      >
-        {item.status}
-      </span>
-      <ChevronRight size={14} className="text-[var(--color-edify-muted)] shrink-0" />
+
+      {completion ? (
+        <div className="mt-2 ml-8 rounded-lg bg-emerald-50/80 border border-emerald-200 px-2.5 py-1.5 text-[11px] text-emerald-900 leading-snug">
+          <span className="font-extrabold">{completion.salesforceIdKind}:</span>{" "}
+          <span className="font-mono font-extrabold">{completion.salesforceId}</span>
+          {completion.participants && (
+            <> · {completion.participants.total} participants</>
+          )}
+          <> · submitted for verification</>
+        </div>
+      ) : completable ? (
+        <div className="mt-2 ml-8">
+          <button
+            type="button"
+            onClick={onComplete}
+            className="h-8 px-3 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-extrabold inline-flex items-center gap-1.5"
+          >
+            <Database size={11} />
+            {isTraining ? "Complete Training · log SF ID" : "Complete Visit · log SF ID"}
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }

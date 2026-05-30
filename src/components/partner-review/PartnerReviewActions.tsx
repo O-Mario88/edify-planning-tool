@@ -17,6 +17,7 @@ import {
   CheckCircle2,
   RotateCcw,
   Send,
+  Stamp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { REJECT_REASONS, RETURN_REASONS, rejectReasonByKey } from "@/lib/partner-review/reasons";
@@ -30,15 +31,21 @@ export function PartnerReviewActions({
   activityId,
   activityLabel,
   schoolName,
+  requireSchoolStamp = false,
   onSubmit,
 }: {
   activityId:    string;
   activityLabel: string;
   schoolName:    string;
+  /** Partner school visits: the visit form must carry the school stamp.
+   *  Confirm stays blocked until the reviewer attests the stamp is
+   *  present; no stamp ⇒ Return for Correction (spec section 6 + 9). */
+  requireSchoolStamp?: boolean;
   onSubmit:      (input: ReviewSubmitInput) => Promise<void> | void;
 }) {
   const [stage, setStage] = useState<Stage>("idle");
   const [submitting, setSubmitting] = useState(false);
+  const [stampConfirmed, setStampConfirmed] = useState(false);
 
   // Return-flow state
   const [returnReasonKey, setReturnReasonKey] = useState("");
@@ -62,6 +69,7 @@ export function PartnerReviewActions({
       });
       // Reset after success.
       setStage("idle");
+      setStampConfirmed(false);
       setReturnReasonKey(""); setReturnComment(""); setReturnDueDate("");
       setRejectReasonKey(""); setRejectComment(""); setRejectAction("");
     } catch (err) {
@@ -174,18 +182,57 @@ export function PartnerReviewActions({
   }
 
   // Idle — three buttons.
+  const confirmBlockedByStamp = requireSchoolStamp && !stampConfirmed;
   return (
     <section className="card p-3.5 lg:p-5">
       <h3 className="text-body-lg font-extrabold tracking-tight">Review Work</h3>
       <p className="text-caption text-muted mt-0.5">
         Confirm if the work is complete and the evidence holds up. Return if the evidence needs fixing. Reject if the work wasn't actually done.
       </p>
+
+      {requireSchoolStamp && (
+        <div className="mt-3">
+          <button
+            type="button"
+            onClick={() => setStampConfirmed((v) => !v)}
+            className={cn(
+              "w-full flex items-center gap-2.5 rounded-lg border px-3 py-2.5 text-left transition-colors",
+              stampConfirmed
+                ? "border-emerald-300 bg-emerald-50/70"
+                : "border-amber-300 bg-amber-50/40 hover:bg-amber-50",
+            )}
+          >
+            <span className={cn(
+              "h-5 w-5 rounded-md grid place-items-center shrink-0 border",
+              stampConfirmed ? "bg-emerald-500 border-emerald-500 text-white" : "border-amber-400 bg-white text-amber-700",
+            )}>
+              {stampConfirmed ? <CheckCircle2 size={13} /> : <Stamp size={12} />}
+            </span>
+            <span className="text-caption leading-snug">
+              <span className="font-extrabold">School stamp confirmed</span>
+              <span className="text-muted"> — the school visit form carries the school stamp.</span>
+            </span>
+          </button>
+          {confirmBlockedByStamp && (
+            <p className="mt-1.5 text-[11px] text-amber-800 font-semibold inline-flex items-start gap-1">
+              <AlertTriangle size={12} className="mt-[1px] shrink-0" />
+              No school stamp = evidence incomplete. Confirm the stamp, or Return for Correction (reason: School stamp missing). Payment stays blocked.
+            </p>
+          )}
+        </div>
+      )}
+
       <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2">
         <button
           type="button"
-          disabled={submitting}
-          onClick={() => fire("confirm", {})}
-          className="h-10 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-body font-extrabold inline-flex items-center justify-center gap-1.5 shadow-[0_1px_2px_rgba(15,23,32,0.06)]"
+          disabled={submitting || confirmBlockedByStamp}
+          onClick={() => fire("confirm", requireSchoolStamp ? { schoolStampConfirmed: true } : {})}
+          className={cn(
+            "h-10 px-4 rounded-lg text-white text-body font-extrabold inline-flex items-center justify-center gap-1.5 shadow-[0_1px_2px_rgba(15,23,32,0.06)]",
+            confirmBlockedByStamp
+              ? "bg-[var(--color-edify-muted)] cursor-not-allowed"
+              : "bg-emerald-600 hover:bg-emerald-500",
+          )}
         >
           <CheckCircle2 size={14} />
           Confirm work complete

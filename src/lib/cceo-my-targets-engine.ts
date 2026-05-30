@@ -214,6 +214,13 @@ function makeActivity(
   const c = missing ? { lat: null, lng: null } : coords(s.id, s.district);
   const isCore = type === "Core School Visit";
   const needsSf = status === "Completed" || status === "Salesforce ID Pending" || status === "Submitted for Verification";
+  // SV- for visits, TS- for trainings + cluster meetings (logged in
+  // Salesforce as trainings). Only Verified / Submitted activities carry a
+  // captured ID; everything earlier is still awaiting the SF ID.
+  const sfPrefix = type === "Cluster Training" || type === "Cluster Meeting" ? "TS-" : "SV-";
+  const sfId = status === "Verified" || status === "Submitted for Verification"
+    ? `${sfPrefix}${String(1200 + i * 7).padStart(5, "0")}`
+    : undefined;
   return {
     id:                `ACT-${String(i + 1).padStart(3, "0")}`,
     region:            regionForDistrict(s.district),
@@ -234,9 +241,7 @@ function makeActivity(
     week,
     scheduledDay:      DAY_NAMES[dayIdx % 5],
     status,
-    salesforceId:      status === "Verified" ? `SF-VST-${(2400 + i).toString(36).toUpperCase()}`
-                     : status === "Submitted for Verification" ? `SF-VST-${(2400 + i).toString(36).toUpperCase()}`
-                     : undefined,
+    salesforceId:      sfId,
     needsSalesforce:   needsSf,
     estimatedCost:     type === "Cluster Training"    ? 2_400_000
                      : type === "Cluster Meeting"     ?   480_000

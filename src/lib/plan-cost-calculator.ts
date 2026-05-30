@@ -173,7 +173,7 @@ export function buildEvidencePanel(
         provider: "Edify Field Team",
         facilitator: s.assignedCceo,
         daysSince,
-        salesforceId: `SF-TRN-${s.schoolId.replace(/[^0-9]/g, "")}`,
+        salesforceId: `TS-${s.schoolId.replace(/[^0-9]/g, "").padStart(5, "0")}`,
       };
     }
     case "Partner Follow-Up": {

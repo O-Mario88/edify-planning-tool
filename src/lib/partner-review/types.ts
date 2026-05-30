@@ -54,5 +54,8 @@ export type ReviewSubmission = {
   dueDate?:         string;
   /** Reject only: what the partner needs to do next. */
   requiredAction?:  string;
+  /** Confirm only, partner school visits: the reviewer attests the school
+   *  visit form carries the school stamp. No stamp ⇒ no confirm. */
+  schoolStampConfirmed?: boolean;
   createdAt:        string;
 };

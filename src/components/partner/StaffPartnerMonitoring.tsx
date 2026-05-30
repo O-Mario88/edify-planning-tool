@@ -12,9 +12,19 @@
 import { useState } from "react";
 import {
   AlertTriangle, Building2, Handshake, CheckCircle2, RotateCcw,
-  Flag, XCircle, MoreHorizontal, ArrowRight,
+  Flag, XCircle, MoreHorizontal, ArrowRight, Stamp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { ActivityType } from "@/lib/partner/partner-evidence";
+
+// Partner school-visit activity types — the visit form for these must
+// carry the school stamp before the work can be confirmed for payment
+// (spec section 6 + 9). Trainings prove delivery via attendance instead.
+const SCHOOL_VISIT_TYPES = new Set<ActivityType>([
+  "follow_up_visit",
+  "coaching_visit",
+  "classroom_observation",
+]);
 import {
   staffMonitorTabs,
   staffMonitorRows,
@@ -47,7 +57,10 @@ const TAB_STATUSES: Record<StaffMonitorTabKey, ReadonlyArray<string>> = {
   dueThisWeek:         ["ScheduledByPartner", "Delivered"],
   evidenceSubmitted:   ["EvidenceSubmitted", "AwaitingCceoConfirmation"],
   needsMyConfirmation: ["AwaitingCceoConfirmation"],
-  paymentPending:      ["ConfirmedByCceo", "AwaitingPlApproval", "ApprovedByPl", "SentToAccountant"],
+  // Payment pipeline: CCEO confirm → PL approval → IA verification →
+  // accountant. All three approver stages stay visible to the staff who
+  // assigned the work until it's paid.
+  paymentPending:      ["ConfirmedByCceo", "AwaitingPlApproval", "ApprovedByPl", "AwaitingIaVerification", "IaVerified", "SentToAccountant"],
   completed:           ["Paid", "Closed"],
 };
 
@@ -259,6 +272,7 @@ function RowActions({
   onAction: (row: StaffMonitorRow, action: "confirm" | "return" | "flag" | "reject") => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [stampConfirmed, setStampConfirmed] = useState(false);
   const showConfirm = row.status === "AwaitingCceoConfirmation" || row.status === "EvidenceSubmitted";
 
   // Evidence gate: pull the linked summary (if any) so the Confirm
@@ -269,27 +283,51 @@ function RowActions({
     ? evidenceSummaries.find((e) => e.activityId === evidenceId)
     : undefined;
   const evidenceBlocking = !!evidence && !evidence.isReadyForCceoConfirmation;
+  // School-stamp gate: partner school visits can't be confirmed until the
+  // reviewer attests the visit form carries the school stamp. No stamp ⇒
+  // evidence incomplete ⇒ payment stays blocked.
+  const requiresStamp = !!evidence && SCHOOL_VISIT_TYPES.has(evidence.activityType);
+  const stampBlocking = requiresStamp && !stampConfirmed;
+  const confirmBlocked = evidenceBlocking || stampBlocking;
   const tooltip = evidenceBlocking
     ? `Evidence ${evidence.completenessScore}% complete · ${evidence.criticalMissingCount} critical item${evidence.criticalMissingCount === 1 ? "" : "s"} missing. Return to partner for correction first.`
-    : undefined;
+    : stampBlocking
+      ? "Confirm the school stamp on the visit form first. No stamp = evidence incomplete; payment stays blocked."
+      : undefined;
 
   return (
     <div className="relative inline-flex items-center gap-1">
+      {showConfirm && !evidenceBlocking && requiresStamp && (
+        <button
+          type="button"
+          onClick={() => setStampConfirmed((v) => !v)}
+          title="The school visit form must carry the school stamp before you can confirm."
+          className={cn(
+            "inline-flex items-center justify-center gap-1 h-8 px-2.5 rounded-md text-[11px] font-extrabold whitespace-nowrap transition-colors border",
+            stampConfirmed
+              ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+              : "border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100",
+          )}
+        >
+          {stampConfirmed ? <CheckCircle2 size={11} /> : <Stamp size={11} />}
+          {stampConfirmed ? "Stamp confirmed" : "Confirm stamp"}
+        </button>
+      )}
       {showConfirm && (
         <button
           type="button"
-          onClick={() => !evidenceBlocking && onAction(row, "confirm")}
-          disabled={evidenceBlocking}
+          onClick={() => !confirmBlocked && onAction(row, "confirm")}
+          disabled={confirmBlocked}
           title={tooltip}
           className={cn(
             "inline-flex items-center justify-center h-8 px-3 rounded-md text-[11.5px] font-extrabold whitespace-nowrap transition-colors",
-            evidenceBlocking
+            confirmBlocked
               ? "bg-slate-100 text-slate-400 cursor-not-allowed"
               : "bg-[var(--color-edify-primary)] text-white hover:bg-[var(--color-edify-dark)]",
           )}
         >
-          {evidenceBlocking ? "Evidence Incomplete" : "Confirm"}
-          {!evidenceBlocking && <ArrowRight size={11} className="ml-1" />}
+          {evidenceBlocking ? "Evidence Incomplete" : stampBlocking ? "Stamp Required" : "Confirm"}
+          {!confirmBlocked && <ArrowRight size={11} className="ml-1" />}
         </button>
       )}
       {showConfirm && evidenceBlocking && (
