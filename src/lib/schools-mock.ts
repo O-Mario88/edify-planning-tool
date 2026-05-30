@@ -14,8 +14,10 @@ export type AppRole =
   | "CCEO"
   | "CountryProgramLead"
   | "CountryDirector"
+  | "RVP"
   | "ProgramAccountant"
   | "ImpactAssessment"
+  | "HumanResource"
   | "Admin";
 
 export type CurrentUser = {
@@ -26,7 +28,7 @@ export type CurrentUser = {
   initials: string;
   role: AppRole;
   country: "Uganda";
-  scope: "Planning Officer";
+  scope: string;
 };
 
 // The screenshot displays a country-wide view (512 schools, etc.); the
@@ -53,14 +55,14 @@ export type SchoolSegment = "Client" | "Core" | "New" | "Other";
 export type SchoolStatus = "Active" | "Inactive" | "Closed";
 export type SsaStatus = "Completed" | "Not Completed" | "Overdue";
 export type Priority = "Critical" | "High" | "Medium" | "Low";
-export type Region = "North Region" | "Central Region" | "Eastern Region" | "Western Region";
+export type Region = "North" | "East" | "West" | "Central";
 
 export type RecommendedAction =
   | "Re-engagement Visit"
   | "Cluster Training"
   | "SSA Support"
   | "In-School Coaching"
-  | "Follow-up by Partner"
+  | "Follow-Up by Partner"
   | "Monitoring & Review";
 
 export type District = "Central" | "East" | "West" | "Cluster";
@@ -112,21 +114,25 @@ export type SchoolRow = {
 
 // All Salesforce school records seen by the directory before access-control
 // filtering. In production this is an API call; here it's a static array.
-const allSchools: SchoolRow[] = [
+// Exported (aliased) so detail pages can resolve a school by its id without
+// re-implementing the visibility filter — those pages render server-side
+// after the access-control branch in `getVisibleSchools` already vetted
+// the row.
+export const schoolsMock: SchoolRow[] = [
   {
     schoolId: "SCH-001",
     salesforceSchoolId: "a01-001",
     schoolName: "Sunrise Primary School",
     country: "Uganda",
-    region: "North Region",
+    region: "North",
     district: "Central",
     shippingAddress: "Kampala Hub - Central",
     schoolType: "Primary",
     segment: "Core",
     schoolStatus: "Inactive",
-    assignedCceoId: "STF-DM-014",
-    assignedCceoName: "Daniel Mwangi",
-    assignedCceoEmail: "daniel.mwangi@edify.org",
+    assignedCceoId: "STF-PC-001",
+    assignedCceoName: "Paul Chinyama",
+    assignedCceoEmail: "paul.chinyama@edify.org",
     salesforceOwnerId: "0050X000009ABCD",
     ssaStatus: "Not Completed",
     ssaScore: 22,
@@ -142,15 +148,15 @@ const allSchools: SchoolRow[] = [
     salesforceSchoolId: "a01-002",
     schoolName: "Greenfield Secondary",
     country: "Uganda",
-    region: "North Region",
+    region: "North",
     district: "Central",
     shippingAddress: "Kampala Hub - Central",
     schoolType: "Secondary",
     segment: "Client",
     schoolStatus: "Active",
-    assignedCceoId: "STF-DM-014",
-    assignedCceoName: "Daniel Mwangi",
-    assignedCceoEmail: "daniel.mwangi@edify.org",
+    assignedCceoId: "STF-PC-001",
+    assignedCceoName: "Paul Chinyama",
+    assignedCceoEmail: "paul.chinyama@edify.org",
     salesforceOwnerId: "0050X000009ABCD",
     assignedPartnerId: "PRT-001",
     assignedPartnerName: "Partner",
@@ -168,15 +174,15 @@ const allSchools: SchoolRow[] = [
     salesforceSchoolId: "a01-003",
     schoolName: "Riverside Primary School",
     country: "Uganda",
-    region: "North Region",
+    region: "North",
     district: "Cluster",
     shippingAddress: "Mukono Hub - Central",
     schoolType: "Primary",
     segment: "Core",
     schoolStatus: "Active",
-    assignedCceoId: "STF-DM-014",
-    assignedCceoName: "Daniel Mwangi",
-    assignedCceoEmail: "daniel.mwangi@edify.org",
+    assignedCceoId: "STF-PC-001",
+    assignedCceoName: "Paul Chinyama",
+    assignedCceoEmail: "paul.chinyama@edify.org",
     salesforceOwnerId: "0050X000009ABCD",
     ssaStatus: "Not Completed",
     ssaScore: 33,
@@ -192,15 +198,15 @@ const allSchools: SchoolRow[] = [
     salesforceSchoolId: "a01-004",
     schoolName: "Hilltop Basic School",
     country: "Uganda",
-    region: "North Region",
+    region: "North",
     district: "Cluster",
     shippingAddress: "Mukono Hub - Central",
     schoolType: "Primary",
     segment: "Core",
     schoolStatus: "Active",
-    assignedCceoId: "STF-DM-014",
-    assignedCceoName: "Daniel Mwangi",
-    assignedCceoEmail: "daniel.mwangi@edify.org",
+    assignedCceoId: "STF-PC-001",
+    assignedCceoName: "Paul Chinyama",
+    assignedCceoEmail: "paul.chinyama@edify.org",
     salesforceOwnerId: "0050X000009ABCD",
     ssaStatus: "Not Completed",
     ssaScore: 41,
@@ -216,15 +222,15 @@ const allSchools: SchoolRow[] = [
     salesforceSchoolId: "a01-005",
     schoolName: "Eastview Junior School",
     country: "Uganda",
-    region: "North Region",
+    region: "North",
     district: "East",
     shippingAddress: "Jinja Hub - East",
     schoolType: "Primary",
     segment: "Core",
     schoolStatus: "Active",
-    assignedCceoId: "STF-DM-014",
-    assignedCceoName: "Daniel Mwangi",
-    assignedCceoEmail: "daniel.mwangi@edify.org",
+    assignedCceoId: "STF-PC-001",
+    assignedCceoName: "Paul Chinyama",
+    assignedCceoEmail: "paul.chinyama@edify.org",
     salesforceOwnerId: "0050X000009ABCD",
     assignedPartnerId: "PRT-002",
     assignedPartnerName: "Partner",
@@ -242,15 +248,15 @@ const allSchools: SchoolRow[] = [
     salesforceSchoolId: "a01-006",
     schoolName: "Maple Grove Primary",
     country: "Uganda",
-    region: "North Region",
+    region: "North",
     district: "Central",
     shippingAddress: "Kampala Hub - Central",
     schoolType: "Primary",
     segment: "Client",
     schoolStatus: "Active",
-    assignedCceoId: "STF-DM-014",
-    assignedCceoName: "Daniel Mwangi",
-    assignedCceoEmail: "daniel.mwangi@edify.org",
+    assignedCceoId: "STF-PC-001",
+    assignedCceoName: "Paul Chinyama",
+    assignedCceoEmail: "paul.chinyama@edify.org",
     salesforceOwnerId: "0050X000009ABCD",
     ssaStatus: "Completed",
     ssaScore: 64,
@@ -266,15 +272,15 @@ const allSchools: SchoolRow[] = [
     salesforceSchoolId: "a01-007",
     schoolName: "Northview Secondary",
     country: "Uganda",
-    region: "North Region",
+    region: "North",
     district: "East",
     shippingAddress: "Iganga Hub - East",
     schoolType: "Secondary",
     segment: "Core",
     schoolStatus: "Active",
-    assignedCceoId: "STF-DM-014",
-    assignedCceoName: "Daniel Mwangi",
-    assignedCceoEmail: "daniel.mwangi@edify.org",
+    assignedCceoId: "STF-PC-001",
+    assignedCceoName: "Paul Chinyama",
+    assignedCceoEmail: "paul.chinyama@edify.org",
     salesforceOwnerId: "0050X000009ABCD",
     assignedPartnerId: "PRT-003",
     assignedPartnerName: "Partner",
@@ -285,22 +291,22 @@ const allSchools: SchoolRow[] = [
     noVisit: false,
     noTraining: false,
     priority: "Low",
-    recommendedNextAction: "Follow-up by Partner",
+    recommendedNextAction: "Follow-Up by Partner",
   },
   {
     schoolId: "SCH-008",
     salesforceSchoolId: "a01-008",
     schoolName: "Bright Future School",
     country: "Uganda",
-    region: "North Region",
+    region: "North",
     district: "East",
     shippingAddress: "Jinja Hub - East",
     schoolType: "Primary",
     segment: "Client",
     schoolStatus: "Active",
-    assignedCceoId: "STF-DM-014",
-    assignedCceoName: "Daniel Mwangi",
-    assignedCceoEmail: "daniel.mwangi@edify.org",
+    assignedCceoId: "STF-PC-001",
+    assignedCceoName: "Paul Chinyama",
+    assignedCceoEmail: "paul.chinyama@edify.org",
     salesforceOwnerId: "0050X000009ABCD",
     ssaStatus: "Completed",
     ssaScore: 74,
@@ -316,15 +322,15 @@ const allSchools: SchoolRow[] = [
     salesforceSchoolId: "a01-009",
     schoolName: "Hope Academy",
     country: "Uganda",
-    region: "North Region",
+    region: "North",
     district: "Cluster",
     shippingAddress: "Mukono Hub - Central",
     schoolType: "Cluster",
     segment: "Client",
     schoolStatus: "Active",
-    assignedCceoId: "STF-DM-014",
-    assignedCceoName: "Daniel Mwangi",
-    assignedCceoEmail: "daniel.mwangi@edify.org",
+    assignedCceoId: "STF-PC-001",
+    assignedCceoName: "Paul Chinyama",
+    assignedCceoEmail: "paul.chinyama@edify.org",
     salesforceOwnerId: "0050X000009ABCD",
     ssaStatus: "Completed",
     ssaScore: 78,
@@ -343,7 +349,7 @@ const allSchools: SchoolRow[] = [
     salesforceSchoolId: "a01-x01",
     schoolName: "Other CCEO School A",
     country: "Uganda",
-    region: "Central Region",
+    region: "Central",
     district: "Central",
     shippingAddress: "Kampala Hub - Central",
     schoolType: "Primary",
@@ -367,7 +373,7 @@ const allSchools: SchoolRow[] = [
     salesforceSchoolId: "a01-x02",
     schoolName: "Other CCEO School B",
     country: "Uganda",
-    region: "Eastern Region",
+    region: "East",
     district: "East",
     shippingAddress: "Iganga Hub - East",
     schoolType: "Secondary",
@@ -398,14 +404,19 @@ const allSchools: SchoolRow[] = [
 //   3. assignedCceoEmail
 //   4. assignedCceoName (last resort)
 export function getVisibleSchools(user: CurrentUser): SchoolRow[] {
-  if (user.role === "Admin") return allSchools;
-  if (user.role === "CountryDirector") return allSchools.filter((s) => s.country === user.country);
-  if (user.role === "CountryProgramLead") return allSchools; // would filter by supervised CCEOs in real backend
+  if (user.role === "Admin") return schoolsMock;
+  if (user.role === "CountryDirector") return schoolsMock.filter((s) => s.country === user.country);
+  if (user.role === "CountryProgramLead") {
+    // Real backend will filter by `school.assignedCceoStaffId in supervisedCceos(user.staffId)`.
+    // Until that mapping exists, scope by country (the seed has only Uganda so
+    // this is effectively a no-op) but stop pretending the role is unrestricted.
+    return schoolsMock.filter((s) => s.country === user.country);
+  }
   if (user.role === "ImpactAssessment" || user.role === "ProgramAccountant") {
-    return allSchools.filter((s) => s.country === user.country);
+    return schoolsMock.filter((s) => s.country === user.country);
   }
   // CCEO: strict assignment match.
-  return allSchools.filter((s) => {
+  return schoolsMock.filter((s) => {
     if (s.assignedCceoId && s.assignedCceoId === user.staffId) return true;
     if (s.salesforceOwnerId && s.salesforceOwnerId === user.salesforceOwnerId) return true;
     if (s.assignedCceoEmail && s.assignedCceoEmail.toLowerCase() === user.email.toLowerCase()) return true;
@@ -568,7 +579,7 @@ export function computePlanningSignals(schools: SchoolRow[]): PlanningSignal[] {
     { key: "neither",      label: "Neither Visit Nor Training", value: neither, icon: "shieldOff",      tone: "violet" },
     { key: "low_ssa",      label: "Low SSA (<60%)",          value: lowSsa,     icon: "gauge",          tone: "rose"   },
     { key: "inactive",     label: "Inactive Schools",        value: inactive,   icon: "schoolOff",      tone: "red"    },
-    { key: "follow_up",    label: "Needs Follow-up",         value: followUp,   icon: "phone",          tone: "blue"   },
+    { key: "follow_up",    label: "Needs Follow-Up",         value: followUp,   icon: "phone",          tone: "blue"   },
   ];
 }
 
@@ -668,7 +679,7 @@ export const clustersMock: Cluster[] = [
     id: "CLT-001",
     name: "Kampala Hub – Term 2 Visits",
     ownerCceoId: "STF-DM-014",
-    region: "North Region",
+    region: "North",
     district: "Central",
     shippingAddress: "Kampala Hub - Central",
     schoolIds: ["SCH-001", "SCH-002", "SCH-006"],
@@ -679,7 +690,7 @@ export const clustersMock: Cluster[] = [
     id: "CLT-002",
     name: "Mukono Hub – Cluster Routes",
     ownerCceoId: "STF-DM-014",
-    region: "North Region",
+    region: "North",
     district: "Cluster",
     shippingAddress: "Mukono Hub - Central",
     schoolIds: ["SCH-003", "SCH-004", "SCH-009"],
@@ -690,7 +701,7 @@ export const clustersMock: Cluster[] = [
     id: "CLT-003",
     name: "Jinja & Iganga – East Loop",
     ownerCceoId: "STF-DM-014",
-    region: "North Region",
+    region: "North",
     district: "East",
     schoolIds: ["SCH-005", "SCH-007", "SCH-008"],
     createdAt: "2025-05-06",
@@ -739,7 +750,7 @@ export const schoolsHeader = {
     "Monitor school coverage, engagement, SSA completion and prioritize schools requiring urgent attention.",
   filters: {
     month: "May 2025",
-    region: "North Region",
+    region: "North",
   },
   searchPlaceholder: "Search schools, districts…",
 };
