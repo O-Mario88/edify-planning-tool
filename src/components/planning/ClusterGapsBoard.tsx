@@ -458,12 +458,19 @@ function ClusterRow({
           anywhere on the header to expand. The meeting chips remain
           tappable for reschedule — clicks inside them stop propagation
           via their own onClick. */}
-      <button
-        type="button"
+      <div
+        role="button"
+        tabIndex={0}
         onClick={() => setOpen((o) => !o)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setOpen((o) => !o);
+          }
+        }}
         aria-expanded={open}
         aria-controls={`cluster-${c.id}-detail`}
-        className="w-full p-3.5 flex items-start gap-3 text-left hover:bg-[var(--color-edify-soft)]/40 transition-colors"
+        className="w-full p-3.5 flex items-start gap-3 text-left cursor-pointer hover:bg-[var(--color-edify-soft)]/40 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-edify-primary)]/40"
       >
         <span className="grid place-items-center h-9 w-9 rounded-lg bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)] shrink-0">
           <Users size={15} />
@@ -514,7 +521,7 @@ function ClusterRow({
             open && "rotate-90",
           )}
         />
-      </button>
+      </div>
 
       {open && (
         <div id={`cluster-${c.id}-detail`} className="px-3.5 pb-3.5 -mt-1 space-y-3">
