@@ -493,3 +493,54 @@ export const cceoSidebarItems: CceoMenuItem[] = [
   { section: "Account",  label: "Resources",          href: "/resources",                     icon: "bookOpen" },
   { section: "Account",  label: "Leave & Holidays",   href: "/leave",                         icon: "calendarRange" },
 ];
+
+// ─────────── Verification & Payment funnel ───────────
+// The operations→finance pipeline: every completed activity must walk
+// Completed → Evidence → Salesforce ID → PL verify → IA verify →
+// Accountant → Paid. The biggest stage-to-stage drop is the bottleneck.
+export type CceoFunnelStage = {
+  key: string;
+  label: string;
+  count: number;
+  /** Where this stage's records live, so the row drills through. */
+  href: string;
+};
+
+export const cceoVerificationFunnel: CceoFunnelStage[] = [
+  { key: "completed", label: "Completed activities", count: 32, href: "/my-plan" },
+  { key: "evidence",  label: "Evidence uploaded",    count: 28, href: "/data-verification" },
+  { key: "sfid",      label: "Salesforce ID entered", count: 21, href: "/data-verification" },
+  { key: "pl",        label: "PL verified",          count: 18, href: "/approvals" },
+  { key: "ia",        label: "IA verified",          count: 16, href: "/approvals" },
+  { key: "accountant", label: "Sent to accountant",  count: 9,  href: "/disbursements" },
+  { key: "paid",      label: "Paid / cleared",       count: 6,  href: "/disbursements" },
+];
+
+// ─────────── Risk & bottleneck board ───────────
+// What needs attention, grouped by risk type. Each carries a count,
+// the reason, the owner, a recommended action, and a route to act on it.
+export type CceoRiskType =
+  | "Planning"
+  | "Execution"
+  | "Verification"
+  | "Partner"
+  | "Payment"
+  | "Performance";
+
+export type CceoRiskItem = {
+  type: CceoRiskType;
+  count: number;
+  reason: string;
+  owner: string;
+  action: string;
+  href: string;
+};
+
+export const cceoRiskBoard: CceoRiskItem[] = [
+  { type: "Planning",     count: 8, reason: "Schools stuck — current-cycle SSA is missing", owner: "CCEO",        action: "Complete SSA",        href: "/planning" },
+  { type: "Execution",    count: 6, reason: "Scheduled activities not started",             owner: "CCEO",        action: "Start activities",    href: "/my-plan" },
+  { type: "Verification", count: 7, reason: "Completed work missing a Salesforce ID",       owner: "CCEO / PL",   action: "Enter Salesforce IDs", href: "/data-verification" },
+  { type: "Partner",      count: 3, reason: "Partner activities returned for correction",   owner: "Partner",     action: "Review returns",      href: "/my-targets" },
+  { type: "Payment",      count: 4, reason: "Payments blocked at IA verification",          owner: "IA",          action: "Follow up IA",        href: "/approvals" },
+  { type: "Performance",  count: 2, reason: "Districts behind on this quarter's visit target", owner: "CCEO",     action: "Rebalance the plan",  href: "/my-targets" },
+];

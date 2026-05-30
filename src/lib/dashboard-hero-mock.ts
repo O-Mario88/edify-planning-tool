@@ -45,8 +45,8 @@ export type DashboardHeroContent = {
 // ────────── CCEO — Field Operating View ──────────
 
 export const cceoHeroContent: DashboardHeroContent = {
-  title:     "CCEO Dashboard",
-  pillLabel: "Operating View",
+  title:     "Role Command Center",
+  pillLabel: "CCEO",
   filters: {
     month:          "May 2025",
     monthCaption:   "This Month",
