@@ -548,10 +548,20 @@ export function OperatingTargetsPageHeader({ data }: { data: OperatingTargets })
       ]}
       actions={
         <>
-          <button className="inline-flex items-center gap-1.5 h-10 px-3 rounded-xl bg-white border border-[var(--color-edify-border)] t-body font-semibold hover:bg-[var(--color-edify-soft)]/40">
+          <button
+            type="button"
+            disabled
+            title="Filtering this view is coming soon"
+            className="inline-flex items-center gap-1.5 h-10 px-3 rounded-xl bg-white border border-[var(--color-edify-border)] t-body font-semibold opacity-50 cursor-not-allowed"
+          >
             <Filter size={13} className="text-[var(--color-edify-muted)]" /> Filters
           </button>
-          <button className="inline-flex items-center gap-1.5 h-10 px-3.5 rounded-xl bg-[var(--color-edify-primary)] text-white t-body font-semibold hover:opacity-95">
+          <button
+            type="button"
+            disabled
+            title="Report export is coming soon"
+            className="inline-flex items-center gap-1.5 h-10 px-3.5 rounded-xl bg-[var(--color-edify-primary)] text-white t-body font-semibold opacity-50 cursor-not-allowed"
+          >
             <Download size={13} /> Export Report
           </button>
         </>

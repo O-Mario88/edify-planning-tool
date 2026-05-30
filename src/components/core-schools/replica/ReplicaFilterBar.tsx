@@ -124,7 +124,9 @@ export function ReplicaFilterBar({ scope }: { scope: FilterScope }) {
         </button>
         <button
           type="button"
-          className="hidden xl:inline-flex items-center justify-center gap-1.5 h-11 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-white text-body font-extrabold transition-colors shadow-[0_8px_24px_-10px_rgba(16,185,129,0.55)]"
+          disabled
+          title="Report export is coming soon"
+          className="hidden xl:inline-flex items-center justify-center gap-1.5 h-11 px-4 rounded-xl bg-emerald-500 text-white text-body font-extrabold opacity-50 cursor-not-allowed shadow-[0_8px_24px_-10px_rgba(16,185,129,0.55)]"
         >
           <Download size={13} />
           Export Report
@@ -144,7 +146,9 @@ export function ReplicaFilterBar({ scope }: { scope: FilterScope }) {
         </button>
         <button
           type="button"
-          className="inline-flex items-center justify-center gap-1.5 h-10 sm:h-11 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-white text-body font-extrabold transition-colors flex-1 sm:flex-none shadow-[0_8px_24px_-10px_rgba(16,185,129,0.55)]"
+          disabled
+          title="Report export is coming soon"
+          className="inline-flex items-center justify-center gap-1.5 h-10 sm:h-11 px-4 rounded-xl bg-emerald-500 text-white text-body font-extrabold opacity-50 cursor-not-allowed flex-1 sm:flex-none shadow-[0_8px_24px_-10px_rgba(16,185,129,0.55)]"
         >
           <Download size={13} />
           Export Report
