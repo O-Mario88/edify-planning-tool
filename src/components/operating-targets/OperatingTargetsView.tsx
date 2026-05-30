@@ -272,7 +272,7 @@ export function OperatingTargetsView({ data }: { data: OperatingTargets }) {
           <h2 className="t-body-lg font-extrabold tracking-tight">Targets by Time Period</h2>
         </header>
         <div className="overflow-x-auto">
-          <table className="min-w-[920px] w-full t-caption">
+          <table className="min-w-[1160px] w-full t-caption">
             <thead className="bg-[var(--color-edify-soft)]/40">
               <tr>
                 <th className="text-left px-4 py-2 w-[180px]">
@@ -288,10 +288,10 @@ export function OperatingTargetsView({ data }: { data: OperatingTargets }) {
               <tr className="bg-[var(--color-edify-soft)]/20">
                 <th></th>
                 {PERIODS.map((p) => (
-                  <th key={p.key + "-sub"} className="px-3 py-1.5 border-l border-[var(--color-edify-divider)]">
-                    <div className="grid grid-cols-3 gap-1 t-tiny font-bold text-muted uppercase tracking-wide text-right">
-                      <span>Target</span>
-                      <span>Achieved</span>
+                  <th key={p.key + "-sub"} className="px-4 py-1.5 border-l border-[var(--color-edify-divider)]">
+                    <div className="grid grid-cols-3 gap-3 t-tiny font-semibold text-muted uppercase tracking-[0.08em] text-right tabular">
+                      <span title="Target">Tgt</span>
+                      <span title="Achieved">Ach</span>
                       <span>%</span>
                     </div>
                   </th>
@@ -314,11 +314,11 @@ export function OperatingTargetsView({ data }: { data: OperatingTargets }) {
                   {PERIODS.map((p) => {
                     const c = r.cells[p.key];
                     return (
-                      <td key={p.key} className="px-3 py-2 border-l border-[var(--color-edify-divider)]">
-                        <div className="grid grid-cols-3 gap-1 t-caption tabular text-right items-center">
-                          <span>{c.target}</span>
-                          <span>{c.achieved}</span>
-                          <span className={cn("font-extrabold inline-block px-1 rounded", STATUS_TEXT[c.status])}>{c.pct}%</span>
+                      <td key={p.key} className="px-4 py-2 border-l border-[var(--color-edify-divider)]">
+                        <div className="grid grid-cols-3 gap-3 t-caption tabular text-right items-center">
+                          <span className="text-muted">{c.target}</span>
+                          <span className="font-semibold">{c.achieved}</span>
+                          <span className={cn("font-semibold justify-self-end", STATUS_TEXT[c.status])}>{c.pct}%</span>
                         </div>
                       </td>
                     );
