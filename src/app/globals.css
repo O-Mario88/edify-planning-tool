@@ -284,9 +284,10 @@
    *
    * Signature: a near-black graphite page (#0a0e15) with one-step-up
    * cards (#161b22) that read as floating panels, not pasted-on
-   * rectangles. The accent is a vivid SaaS blue (#2962ff) reserved for
-   * active states (selected nav row, primary toggles, focus rings) so
-   * the chrome stays calm and the active element is unmistakable.
+   * rectangles. The accent is Edify teal (#14b8a6) reserved for active
+   * states (selected nav row, primary toggles, focus rings) so the chrome
+   * stays calm, the active element is unmistakable, and the brand reads
+   * through even on the graphite dark surface.
    *
    * Surface scale (perceptually-even graphite steps):
    *   page (#0a0e15) → card (#161b22) → elevated (#1c222c) → press (#232a36)
@@ -298,9 +299,9 @@
    * Borders — neutral white at low opacity. No coloured edges; the
    * cards group by space + soft shadow, not by drawn lines.
    *
-   * Brand-primary is the vivid dashboard blue (#2962ff) — used for
-   * active sidebar rows, the selected segmented-toggle pill, focus
-   * rings, and primary CTAs.
+   * Brand-primary is Edify teal (#14b8a6) — used for active sidebar rows,
+   * the selected segmented-toggle pill, focus rings, and primary CTAs.
+   * (Semantic `info` stays blue — submitted / informational states.)
    */
   --background: #0a0e15;
   --foreground: #f5f7fa;
@@ -318,7 +319,7 @@
   --surface-table:    #161b22;
   --surface-input:    #11161d;
   --surface-hover:    rgba(255,255,255,.04);
-  --surface-selected: rgba(41,98,255,.16);
+  --surface-selected: rgba(20,184,166,.16);
   --surface-row-hover: rgba(255,255,255,.025);
 
   /* Text — neutral cool-white scale, AA-compliant on the card fill */
@@ -333,7 +334,7 @@
   --border-subtle:  rgba(255,255,255,.04);
   --border-card:    rgba(255,255,255,.07);
   --border-strong:  rgba(255,255,255,.14);
-  --border-focus:   rgba(41,98,255,.65);
+  --border-focus:   rgba(20,184,166,.65);
   --border-success: rgba(34,197,94,.32);
   --border-warn:    rgba(251,191,36,.32);
   --border-danger:  rgba(239,68,68,.32);
@@ -346,16 +347,16 @@
   --row-hover:      var(--surface-row-hover);
   --tab-hover:      var(--surface-hover);
   --dropdown-hover: rgba(255,255,255,.05);
-  --focus-ring:     rgba(41,98,255,.40);
-  --focus-ring-strong: rgba(41,98,255,.70);
+  --focus-ring:     rgba(20,184,166,.45);
+  --focus-ring-strong: rgba(20,184,166,.70);
 
-  /* Brand — vivid SaaS blue. The dashboard's signature active colour:
+  /* Brand — Edify teal. The dashboard's signature active colour:
    * sidebar selected row, segmented-toggle active pill, focus ring,
    * primary CTA. Everything else stays graphite. */
-  --brand-primary:        #2962ff;
-  --brand-primary-hover:  #4276ff;
-  --brand-primary-press:  #1e4fe6;
-  --brand-deep:           #1437a8;
+  --brand-primary:        #14b8a6;
+  --brand-primary-hover:  #2dd4bf;
+  --brand-primary-press:  #0d9488;
+  --brand-deep:           #0f766e;
   --brand-accent:         #a78bfa;        /* violet — recommendations / secondary highlights */
   --brand-accent-hover:   #b9a0fb;
   --brand-success:        #22c55e;
@@ -367,14 +368,14 @@
   --brand-info:           #2962ff;
   --brand-info-hover:     #4276ff;
 
-  /* Legacy edify-* aliases — flow into the new graphite + blue palette
-   * so legacy classes (`.sidebar-bg`, `.menu-item.active`, etc.) pick
-   * it up without code changes. */
+  /* Legacy edify-* aliases — flow into the graphite + teal palette so
+   * legacy classes (`.sidebar-bg`, `.menu-item.active`, etc.) pick it up
+   * without code changes. */
   --color-edify-primary:    var(--brand-primary);
   --color-edify-dark:       var(--brand-primary-press);
   --color-edify-deep:       #11161d;
   --color-edify-darker:     #0a0e15;
-  --color-edify-soft:       rgba(41,98,255,.12);
+  --color-edify-soft:       rgba(20,184,166,.12);
   --color-edify-border:     var(--border-card);
   --color-edify-divider:    var(--border-subtle);
   --color-edify-muted:      var(--text-muted);
