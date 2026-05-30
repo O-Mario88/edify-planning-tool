@@ -32,7 +32,7 @@ import { getCurrentUser } from "@/lib/auth";
 //   2. THIS WEEK    — pace KPIs + service package
 //   3. ATTENTION    — Risk & bottleneck board (owner + action)
 //   4. IMPROVEMENT  — SSA intervention heatmap + quality drift
-//   5. AT RISK      — schools that need a CCEO this week
+//   5. AT RISK      — schools that need my attention this week
 //   6. PIPELINE     — Verification & payment funnel + Salesforce queue
 //   7. SCHEDULE     — month planner, activity mix, routes
 //   8. PRIORITY     — next priority school
@@ -117,12 +117,12 @@ export default async function CceoDashboardPage() {
           </div>
         </section>
 
-        {/* AT RISK — schools that need a CCEO visit / call. */}
+        {/* AT RISK — schools that need my attention this week. */}
         <section className="space-y-3">
           <SectionHeader
             tier="strategic"
             eyebrow="At risk"
-            title="Schools that need a CCEO this week"
+            title="Schools That Need My Attention This Week"
             description="Ranked by health-score drop, missed visits, and overdue SSA."
           />
           <CoreSchoolsNeedingAttentionCard />
