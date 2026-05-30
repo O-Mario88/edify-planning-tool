@@ -1,5 +1,7 @@
 import { CommandStack } from "@/components/actions/CommandStack";
 import { DashboardPageHeader } from "@/components/dashboards/DashboardPageHeader";
+import { DonorImpactReachCard } from "@/components/director/DonorImpactReachCard";
+import { getDonorMetricSnapshot } from "@/lib/donor-metrics";
 import { DebriefReviewInbox } from "@/components/messages/DebriefReviewInbox";
 import { CountryKpiRow } from "@/components/director/CountryKpiRow";
 import { LeadershipAttentionRow } from "@/components/director/LeadershipAttentionRow";
@@ -53,6 +55,14 @@ export default async function CountryDirectorDashboard() {
   if (!["CountryDirector", "Admin"].includes(user.role)) {
     redirect(ROLE_REDIRECT[user.role]);
   }
+
+  // National donor-reporting rollup — same builder as /donor-reporting,
+  // so the dashboard snapshot and the full report never disagree.
+  const donorSnapshot = getDonorMetricSnapshot({
+    role: "CountryDirector",
+    userName: user.name,
+    generatedBy: user.name,
+  });
 
   const body = (
     <>
@@ -147,6 +157,18 @@ export default async function CountryDirectorDashboard() {
               <FundedNotCompletedCard />
             </div>
           </section>
+        </section>
+
+        {/* IMPACT & DONOR REPORTING — what the country can report up to
+            donors this period, straight from verified workflow data. */}
+        <section className="space-y-3">
+          <SectionHeader
+            tier="strategic"
+            eyebrow="Impact"
+            title="What the country can report this period"
+            description="Donor-ready reach, training, and improvement figures — deduplicated and scoped to the country. Each tile opens the full report."
+          />
+          <DonorImpactReachCard snapshot={donorSnapshot} />
         </section>
 
         {/* Quick Leadership Actions — closing utility surface. */}

@@ -69,8 +69,8 @@ export const cceoHeroContent: DashboardHeroContent = {
 // ────────── Country Director — Executive ──────────
 
 export const directorHeroContent: DashboardHeroContent = {
-  title:     "Country Director Dashboard",
-  pillLabel: "Executive View",
+  title:     "Main Dashboard",
+  pillLabel: "Country Director",
   filters: {
     month:          "May 2025",
     monthCaption:   "This Month",
