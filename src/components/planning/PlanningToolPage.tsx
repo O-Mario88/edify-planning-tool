@@ -1,8 +1,6 @@
 import { PlanningTopHeader } from "./PlanningTopHeader";
 import { OperationalCycleBanner } from "./OperationalCycleBanner";
-import { SchoolGapsBoard } from "./SchoolGapsBoard";
-import { ClusterGapsBoard } from "./ClusterGapsBoard";
-import { CoreSchoolsGapPlanning } from "./CoreSchoolsGapPlanning";
+import { PlanningGapBoard } from "./PlanningGapBoard";
 import { PlanningOwnershipSections } from "./PlanningOwnershipSections";
 import { PlansFamilyNav } from "./PlansFamilyNav";
 
@@ -24,20 +22,17 @@ export function PlanningToolPage() {
             0. Operational cycle banner ← cycle context, sits directly
                under the header so the CCEO/PL sees which cycle they're
                planning into BEFORE looking at the gap counts below.
-            1. Client school gap card
-            2. Cluster gap card
-            3. Core Schools Gap Planning  ← SSA-driven section
-            4. Assigned to Me
-            5. Assigned to Partner
-            6. Awaiting Partner Schedule
-            7. Planned This Month
+            1. Gap board ← one tabbed switcher (Client Schools · Clusters ·
+               Core Schools), each a neat collapsible, detail-rich board.
+            2. Assigned to Me
+            3. Assigned to Partner
+            4. Awaiting Partner Schedule
+            5. Planned This Month
             (PlanningGapsHero retired per global hero removal pass.) */}
         <OperationalCycleBanner />
 
         <PlansFamilyNav current="planning" className="flex items-center gap-1" />
-        <SchoolGapsBoard />
-        <ClusterGapsBoard />
-        <CoreSchoolsGapPlanning />
+        <PlanningGapBoard />
 
         <PlanningOwnershipSections />
       </div>
