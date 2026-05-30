@@ -93,8 +93,8 @@ export const directorHeroContent: DashboardHeroContent = {
 // ────────── Country Program Lead ──────────
 
 export const cplHeroContent: DashboardHeroContent = {
-  title:     "Country Program Lead Dashboard",
-  pillLabel: "Field View",
+  title:     "Main Dashboard",
+  pillLabel: "Program Lead",
   filters: {
     month:          "May 2025",
     monthCaption:   "This Month",

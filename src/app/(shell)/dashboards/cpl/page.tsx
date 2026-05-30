@@ -1,6 +1,8 @@
 import { CommandStack } from "@/components/actions/CommandStack";
 import { DashboardPageHeader } from "@/components/dashboards/DashboardPageHeader";
 import { DebriefPromoterCard } from "@/components/debrief/DebriefPromoterCard";
+import { PlCommandLanes } from "@/components/cpl/PlCommandLanes";
+import { CplFieldWorkCard } from "@/components/cpl/CplFieldWorkCard";
 import { TeamKpiRow } from "@/components/cpl/TeamKpiRow";
 import { CplLeadershipAttentionRow } from "@/components/cpl/CplLeadershipAttentionRow";
 import { TeamPerformanceOverviewChart } from "@/components/ui/lazy-charts";
@@ -78,6 +80,23 @@ export default async function CountryProgramLeadDashboard() {
         {/* TODAY — 10-Second Command Stack carries its own strategic
             header internally; no outer chapter needed. */}
         <CommandStack user={user} hideMission />
+
+        {/* FIELD & TEAM — the player-coach split. Two command lanes
+            (My Field Work vs My Team Work) so the PL sees their own
+            implementation target AND what the CCEO team needs, before the
+            deeper field-work card. */}
+        <section className="space-y-3">
+          <SectionHeader
+            tier="strategic"
+            eyebrow="Field & team"
+            title="Your two jobs today"
+            description="You deliver field work and you lead a CCEO team — here's what each needs from you right now."
+          />
+          <PlCommandLanes />
+          <div id="my-field-work">
+            <CplFieldWorkCard />
+          </div>
+        </section>
 
         {/* TEAM PERFORMANCE — KPIs, attention alerts, monthly chart,
             personal targets. */}

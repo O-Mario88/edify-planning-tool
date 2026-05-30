@@ -766,3 +766,28 @@ export const cplTeamTargetBreakdown: CplTeamTargetBreakdown[] = [
     ],
   },
 ];
+
+// ─────────── Dual command lanes ───────────
+// PLs are player-coaches: they deliver field work AND manage CCEOs. The
+// command strip splits into two lanes so the PL sees both jobs at once —
+// "what I must deliver myself" vs "what my team needs from me".
+export type PlLaneItem = {
+  label: string;
+  href: string;
+  /** Optional urgency accent for the leading dot. */
+  tone?: "edify" | "amber" | "rose";
+};
+
+// My Field Work — the PL's own implementation target.
+export const cplFieldLane: PlLaneItem[] = [
+  { label: "Schedule 2 PL school visits this month", href: "/planning" },
+  { label: "Enter TS ID for 1 completed training", href: "/data-verification", tone: "amber" },
+  { label: "File today's program debrief", href: "/debriefs/new" },
+];
+
+// My Team Work — what the CCEO team needs the PL to act on.
+export const cplTeamLane: PlLaneItem[] = [
+  { label: "4 CCEOs have unplanned schools", href: "/my-team", tone: "amber" },
+  { label: "3 partner activities need PL approval", href: "/approvals", tone: "amber" },
+  { label: "2 monthly fund requests to review", href: "/fund-requests" },
+];
