@@ -1,0 +1,135 @@
+# Edify CI — runs on every PR and push to main.
+#
+# Four serial gates, each fast enough to give signal under a minute.
+# Fails on the first red. None of these are optional — they all live
+# in the required-checks list on the protected `main` branch.
+#
+#   1. typecheck  — strict tsc --noEmit, blocks broken types
+#   2. lint       — next-eslint rules + custom overrides
+#   3. test       — vitest engine suite (pure-fn coverage)
+#   4. build      — production next build, catches anything the dev
+#                   server papers over (server-component boundary,
+#                   missing exports, etc.)
+#
+# We run typecheck before lint because a tsc error is a higher-signal
+# failure than a stylistic one — fix the code, then fix the style.
+
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# Cancel any in-flight run for the same ref when a new commit lands.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm run test
+        env:
+          EDIFY_QUIET_BOOT: "1"
+
+      - name: Build (production)
+        run: npm run build
+        env:
+          # Build-time env stubs so the build doesn't fail on the
+          # absence of real secrets. Real values come from the Vercel
+          # / hosted environment.
+          DATABASE_URL: postgresql://stub@localhost:5432/stub
+          EDIFY_QUIET_BOOT: "1"
+
+      # ──────────────── Architectural invariants ────────────────
+      #
+      # These greps codify rules the human reviewer can't reliably
+      # catch every time. Each rule fails the build with a clear
+      # error line so the author can locate + fix locally.
+
+      - name: Invariant — every server action calls getCurrentUser
+        run: |
+          set -euo pipefail
+          fail=0
+          for f in src/lib/actions/*.ts; do
+            case "$(basename "$f")" in
+              audit.ts|store.ts|approval-safety.ts|action-types.ts|role-action-engine.ts|last-login.ts|demo-seed-actions.ts) continue;;
+            esac
+            if ! head -3 "$f" | grep -q '"use server"'; then continue; fi
+            if ! grep -q 'getCurrentUser' "$f"; then
+              echo "::error file=$f::server action file does not call getCurrentUser"
+              fail=1
+            fi
+          done
+          exit $fail
+
+      - name: Invariant — every server action emits an audit row
+        run: |
+          set -euo pipefail
+          fail=0
+          for f in src/lib/actions/*.ts; do
+            case "$(basename "$f")" in
+              audit.ts|store.ts|approval-safety.ts|action-types.ts|role-action-engine.ts|last-login.ts) continue;;
+            esac
+            if ! head -3 "$f" | grep -q '"use server"'; then continue; fi
+            if ! grep -q 'emitAudit' "$f"; then
+              echo "::error file=$f::server action file does not call emitAudit"
+              fail=1
+            fi
+          done
+          exit $fail
+
+      - name: Invariant — no rogue prisma writes outside src/lib/actions/
+        run: |
+          set -euo pipefail
+          if grep -rEn 'prisma\.[a-zA-Z]+\.(create|update|delete|upsert)' \
+              src --include="*.ts" --include="*.tsx" \
+              --exclude-dir=actions \
+              --exclude-dir=infra; then
+            echo "::error::Prisma writes outside src/lib/actions/ are not allowed."
+            exit 1
+          fi
+
+      - name: Invariant — server actions return discriminated unions
+        run: |
+          if grep -rEn '^export async function .*Promise<(any|unknown)>' \
+              src/lib/actions --include="*.ts"; then
+            echo "::error::Server actions must return discriminated unions, not any/unknown."
+            exit 1
+          fi
+
+      - name: Secret-leak scan
+        # Lightweight grep for credential patterns. Heavier scanners
+        # (truffleHog, gitleaks) can replace this once the team is
+        # ready to budget for a fuller pass on every PR.
+        run: |
+          set -euo pipefail
+          if grep -rEn '(AKIA[0-9A-Z]{16}|xox[baprs]-[0-9a-zA-Z-]+|-----BEGIN (RSA|EC|OPENSSH) PRIVATE KEY-----|SG\.[A-Za-z0-9_-]{20,})' \
+              --include="*.ts" --include="*.tsx" --include="*.js" --include="*.mjs" \
+              --include="*.json" --include="*.yml" --include="*.yaml" \
+              src .github 2>/dev/null; then
+            echo "::error::Possible secret committed."
+            exit 1
+          fi

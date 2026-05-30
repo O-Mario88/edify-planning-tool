@@ -1,0 +1,17 @@
+{
+  "_meta": {
+    "locale": "fr",
+    "name": "Français",
+    "_note": "Stub. Strings echo English until translators fill them in."
+  },
+  "common": {
+    "appName": "Edify",
+    "tagline": "Planifier intelligemment. Exécuter avec concentration. Diriger avec impact."
+  },
+  "auth": {
+    "login.signIn": "Se connecter"
+  },
+  "cpl": {
+    "hero.greeting": "Bonsoir, {name}."
+  }
+}

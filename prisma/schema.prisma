@@ -1,0 +1,1200 @@
+// Edify Planning Tool — Prisma schema.
+//
+// Models the production data layer the app will run against in Year 2,
+// once the mocks under src/lib/*-mock.ts are swapped for real queries.
+// Today the app is mock-backed; this schema is the contract for the
+// migration. Every mock has a corresponding table here so the swap
+// is a find-replace per surface, not a redesign.
+//
+// Conventions:
+//   • Cuid IDs everywhere — short, URL-safe, sortable enough.
+//   • `createdAt` / `updatedAt` on every mutable entity.
+//   • Soft-cascade deletes are explicit — no `onDelete: Cascade`
+//     except where a child entity is meaningless without its parent
+//     (e.g. PlannedActivity → Plan).
+//   • Indexes called out on every column used as a WHERE / ORDER BY
+//     in the app. The mocks show us the access patterns.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  // Prisma 7+: the connection URL is supplied via prisma.config.ts
+  // (or via PrismaClient `adapter`/`accelerateUrl`), not here.
+}
+
+// ──────────────────────────── Enums ──────────────────────────────────
+
+enum UserRole {
+  CCEO
+  CountryProgramLead
+  CountryDirector
+  RVP
+  ProgramAccountant
+  ImpactAssessment
+  HumanResource
+  Admin
+}
+
+enum AccountStatus {
+  Active
+  Invited
+  Suspended
+}
+
+enum ActivityKind {
+  CLUSTER_TRAINING
+  IN_SCHOOL_COACHING
+  SCHOOL_VISIT
+  SSA_FOLLOW_UP
+  HANDOVER_MEETING
+  LESSON_OBSERVATION
+  PARTNER_FOLLOW_UP
+  TRAINING_FOLLOW_UP
+  DATA_COLLECTION
+  COURTESY_VISIT
+}
+
+enum SalesforceMatchStatus {
+  SMART_MATCH
+  POSSIBLE_MATCH
+  NO_MATCH
+  VERIFIED
+}
+
+enum RiskTone {
+  RED
+  AMBER
+  GREEN
+}
+
+enum ClusterReadiness {
+  READY
+  IN_PROGRESS
+  PLANNED
+}
+
+enum PlanStatus {
+  Draft
+  SubmittedForApproval
+  Approved
+  Returned
+  Active
+  Closed
+}
+
+enum PlannedActivityStatus {
+  Planned
+  Draft
+  SubmittedForVerification
+  SalesforceIdPending
+  Completed
+  Verified
+  Returned
+  Cancelled
+}
+
+enum CostSettingStatus {
+  Draft
+  Active
+  Superseded
+}
+
+enum WeeklyFundRequestStatus {
+  AUTO_GENERATED
+  DRAFT
+  SUBMITTED
+  RETURNED_TO_STAFF
+  APPROVED
+  HOLD_NO_FUNDS_AVAILABLE
+  BLOCKED_PRIOR_OUTSTANDING
+  READY_TO_DISBURSE
+  DISBURSED
+  RECEIVED
+  IN_USE
+  ACCOUNTABILITY_SUBMITTED
+  ACCOUNTABILITY_RETURNED
+  ACCOUNTABILITY_APPROVED
+  CLOSED
+  CANCELLED
+  ARCHIVED
+}
+
+enum ReimbursementStatus {
+  Draft
+  Submitted
+  SupervisorReview
+  ApprovedForReimbursement
+  ReturnedForCorrection
+  QueuedForAccountant
+  Reimbursed
+  Closed
+}
+
+enum BalanceReturnStatus {
+  Pending
+  Confirmed
+  Disputed
+  Closed
+}
+
+enum LeaveStatus {
+  Pending
+  Approved
+  Rejected
+  Cancelled
+}
+
+enum LeaveKind {
+  Annual
+  Study
+  Compassionate
+  Sick
+}
+
+enum NotificationChannel {
+  Inbox
+  Email
+  SMS
+}
+
+enum ApprovalScope {
+  MonthlyPlan
+  WeeklyFundRequest
+  Reimbursement
+  CostSettings
+  CountryMonthlyBudget
+}
+
+enum ApprovalDecision {
+  Approved
+  Returned
+  Rejected
+}
+
+// ──────────────────────────── Core entities ──────────────────────────
+
+model User {
+  id                String        @id @default(cuid())
+  email             String        @unique
+  name              String
+  role              UserRole      @default(CCEO)
+  passwordHash      String
+  status            AccountStatus @default(Active)
+  district          String?
+  countryId         String?
+  /// Optional Salesforce User ID for reconciliation against external records.
+  salesforceOwnerId String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  lastLoginAt       DateTime?
+
+  // Inverse relations
+  visits           SchoolVisit[]
+  plansAuthored    Plan[]              @relation("PlanAuthor")
+  plansAssigned    PlannedActivity[]   @relation("ActivityAssignee")
+  fundRequests     WeeklyFundRequest[]
+  reimbursements   Reimbursement[]
+  balanceReturns   BalanceReturn[]
+  leaveRecords     LeaveRecord[]
+  approvalsActed   Approval[]          @relation("ApprovalActor")
+  messagesSent     Message[]           @relation("MessageSender")
+  messagesReceived Message[]           @relation("MessageRecipient")
+  notifications    Notification[]
+  auditEvents      AuditEvent[]
+  homeBase         StaffHomeBase?
+
+  @@index([role])
+  @@index([countryId, role])
+}
+
+model District {
+  id          String      @id @default(cuid())
+  name        String      @unique
+  region      String?
+  clusters    Cluster[]
+  schools     School[]
+  subCounties SubCounty[]
+}
+
+// ── Donor-reporting geography ─────────────────────────────────────────
+// District → SubCounty → Parish is the administrative chain MoE reports
+// against. Donor cuts drop down through this hierarchy, so each level
+// is its own table — sub-county / parish names repeat across districts.
+
+model SubCounty {
+  id         String   @id @default(cuid())
+  name       String
+  district   District @relation(fields: [districtId], references: [id])
+  districtId String
+  parishes   Parish[]
+  schools    School[]
+
+  @@unique([districtId, name])
+  @@index([districtId])
+}
+
+model Parish {
+  id          String    @id @default(cuid())
+  name        String
+  subCounty   SubCounty @relation(fields: [subCountyId], references: [id])
+  subCountyId String
+  schools     School[]
+
+  @@unique([subCountyId, name])
+  @@index([subCountyId])
+}
+
+model Cluster {
+  id         String                 @id @default(cuid())
+  name       String
+  district   District               @relation(fields: [districtId], references: [id])
+  districtId String
+  schools    School[]
+  schedule   ClusterScheduleEntry[]
+  createdAt  DateTime               @default(now())
+
+  @@index([districtId])
+}
+
+model School {
+  id           String     @id @default(cuid())
+  name         String
+  cluster      Cluster    @relation(fields: [clusterId], references: [id])
+  clusterId    String
+  district     District   @relation(fields: [districtId], references: [id])
+  districtId   String
+  // Geography below district — optional during back-fill, mandatory for
+  // donor reports that segment by sub-county / parish.
+  subCounty    SubCounty? @relation(fields: [subCountyId], references: [id])
+  subCountyId  String?
+  parish       Parish?    @relation(fields: [parishId], references: [id])
+  parishId     String?
+  ssaScore     Int?
+  lastVisit    DateTime?
+  riskReason   String?
+  riskTone     RiskTone   @default(AMBER)
+  contactName  String?
+  contactPhone String?
+  isCoreSchool Boolean    @default(false)
+
+  // Enrollment — drives the Students Impacted donor metric. Donor
+  // reporting reads `totalEnrollment` as the per-school contribution
+  // (deduplicated by schoolId across the period). Sex disaggregation is
+  // optional because some sources only publish totals; `enrollmentSource`
+  // and `enrollmentLastUpdated` are required so the donor report can
+  // cite provenance for every learner counted.
+  totalEnrollment       Int?
+  boysEnrollment        Int?
+  girlsEnrollment       Int?
+  enrollmentLastUpdated DateTime?
+  enrollmentSource      String?
+
+  visits               SchoolVisit[]
+  routes               RouteSchool[]
+  activities           PlannedActivity[]
+  distances            SchoolDistance[]
+  ssaSnapshots         SsaSnapshot[]
+  partnerActivities    PartnerActivity[]
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  trainingParticipants TrainingParticipant[]
+
+  @@index([clusterId])
+  @@index([districtId])
+  @@index([subCountyId])
+  @@index([parishId])
+  @@index([riskTone])
+}
+
+model SchoolVisit {
+  id                   String                 @id @default(cuid())
+  user                 User                   @relation(fields: [userId], references: [id])
+  userId               String
+  school               School                 @relation(fields: [schoolId], references: [id])
+  schoolId             String
+  kind                 ActivityKind
+  date                 DateTime
+  completed            Boolean                @default(false)
+  matchState           SalesforceMatchStatus?
+  salesforceActivityId String?
+
+  @@index([userId, date])
+  @@index([schoolId, date])
+}
+
+model Route {
+  id      String        @id @default(cuid())
+  name    String
+  weeks   String
+  impact  RiskTone      @default(AMBER)
+  open    Int           @default(0)
+  schools RouteSchool[]
+}
+
+model RouteSchool {
+  id       String @id @default(cuid())
+  route    Route  @relation(fields: [routeId], references: [id])
+  routeId  String
+  school   School @relation(fields: [schoolId], references: [id])
+  schoolId String
+
+  @@unique([routeId, schoolId])
+}
+
+model ClusterScheduleEntry {
+  id        String           @id @default(cuid())
+  cluster   Cluster          @relation(fields: [clusterId], references: [id])
+  clusterId String
+  date      DateTime
+  readiness ClusterReadiness @default(PLANNED)
+
+  @@index([clusterId, date])
+}
+
+// Static target snapshot — the FY target we measure pace against.
+model Target {
+  id         String @id @default(cuid())
+  userId     String
+  month      String // "2026-05"
+  activities Int
+  schools    Int
+  learners   Int
+  pace       Int // 0..100
+  quality    Int // 0..100
+
+  @@unique([userId, month])
+  @@index([userId])
+}
+
+// ──────────────────────────── Planning ───────────────────────────────
+
+model Plan {
+  id             String              @id @default(cuid())
+  /// CCEO who owns the plan. CountryProgramLeads can be authors too.
+  author         User                @relation("PlanAuthor", fields: [authorId], references: [id])
+  authorId       String
+  countryId      String
+  monthIso       String // "2026-05"
+  status         PlanStatus          @default(Draft)
+  submittedAt    DateTime?
+  approvedAt     DateTime?
+  approvedById   String?
+  returnedReason String?
+  /// Sum of estCost across activities — denormalised for fast list queries.
+  totalCostCents Int                 @default(0)
+  activities     PlannedActivity[]
+  approvals      Approval[]
+  weeklyRequests WeeklyFundRequest[]
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  @@unique([authorId, monthIso])
+  @@index([countryId, monthIso])
+  @@index([status])
+}
+
+model PlannedActivity {
+  id               String                 @id @default(cuid())
+  plan             Plan                   @relation(fields: [planId], references: [id], onDelete: Cascade)
+  planId           String
+  school           School?                @relation(fields: [schoolId], references: [id])
+  schoolId         String?
+  kind             ActivityKind
+  /// Free text — "In-School Coaching · Foundational Literacy" etc.
+  title            String
+  weekOfMonth      Int // 1..5
+  scheduledDate    DateTime?
+  /// User the activity is assigned to (may differ from plan author when a PL re-assigns).
+  assignee         User?                  @relation("ActivityAssignee", fields: [assigneeId], references: [id])
+  assigneeId       String?
+  estCostCents     Int                    @default(0)
+  status           PlannedActivityStatus  @default(Planned)
+  salesforceId     String?
+  matchStatus      SalesforceMatchStatus?
+  verifiedAt       DateTime?
+  /// Intervention area this activity advances. Required for donor
+  /// reporting cuts by intervention; back-fill nullable until existing
+  /// rows are migrated.
+  interventionArea InterventionArea?
+  participants     TrainingParticipant[]
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+
+  @@index([planId])
+  @@index([assigneeId, status])
+  @@index([schoolId, status])
+  @@index([interventionArea])
+}
+
+// ──────────────────────────── Cost settings ─────────────────────────
+
+model CostSetting {
+  id               String            @id @default(cuid())
+  countryId        String
+  activityKind     ActivityKind
+  /// Effective from this FY onwards. ("2026-FY")
+  effectiveFyIso   String
+  costPerUnitCents Int
+  status           CostSettingStatus @default(Draft)
+  approvedById     String?
+  approvedAt       DateTime?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@unique([countryId, activityKind, effectiveFyIso])
+  @@index([status])
+}
+
+// ──────────────────────────── Funds pipeline ────────────────────────
+
+model WeeklyFundRequest {
+  id           String                  @id @default(cuid())
+  /// FK to the Plan this request was auto-split from.
+  plan         Plan                    @relation(fields: [planId], references: [id])
+  planId       String
+  /// CCEO (or other requester) the money goes to.
+  requester    User                    @relation(fields: [requesterId], references: [id])
+  requesterId  String
+  countryId    String
+  monthIso     String // "2026-05"
+  weekOfMonth  Int // 1..5
+  weekStartIso String // "2026-05-09"
+  weekEndIso   String // "2026-05-15"
+  status       WeeklyFundRequestStatus @default(AUTO_GENERATED)
+
+  /// Plan-derived budget (immutable, sourced from approved monthly plan)
+  plannedAmountCents   Int
+  /// What's being requested in this slip (may diverge from planned via adjustments)
+  requestedAmountCents Int
+  disbursedAmountCents Int?
+  accountedAmountCents Int?
+  returnedAmountCents  Int?
+
+  /// Lifecycle stamps — populated as the request advances. Latest of each kind.
+  submittedAt               DateTime?
+  approvedAt                DateTime?
+  approvedByLeadId          String?
+  disbursedAt               DateTime?
+  disbursedByAccountantId   String?
+  receivedAt                DateTime?
+  accountabilitySubmittedAt DateTime?
+  accountabilityApprovedAt  DateTime?
+  closedAt                  DateTime?
+
+  notes  String?
+  source String  @default("AUTO_FROM_PLAN") // or "MANUAL_AD_HOC"
+
+  disbursements  Disbursement[]
+  reimbursements Reimbursement[]
+  balanceReturns BalanceReturn[]
+  approvals      Approval[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([requesterId, monthIso, weekOfMonth])
+  @@index([countryId, status])
+  @@index([planId])
+}
+
+model FundsReceived {
+  id                  String   @id @default(cuid())
+  countryId           String
+  receivedOnIso       String
+  fromSource          String // "RVP_OFFICE" | "HQ_TREASURY" | "PARTNER"
+  reference           String
+  totalReceivedCents  Int
+  totalAllocatedCents Int      @default(0)
+  monthLabel          String
+  notes               String?
+  confirmedAt         DateTime @default(now())
+  confirmedById       String
+
+  disbursements Disbursement[]
+
+  @@index([countryId, monthLabel])
+}
+
+model Disbursement {
+  id                      String            @id @default(cuid())
+  weeklyFundRequest       WeeklyFundRequest @relation(fields: [weeklyFundRequestId], references: [id])
+  weeklyFundRequestId     String
+  fundsReceived           FundsReceived     @relation(fields: [fundsReceivedId], references: [id])
+  fundsReceivedId         String
+  amountCents             Int
+  method                  String // "MobileMoney" | "Cash" | "BankTransfer"
+  reference               String
+  disbursedAt             DateTime          @default(now())
+  disbursedByAccountantId String
+  receiptConfirmedAt      DateTime?
+  receiptNote             String?
+  reversed                Boolean           @default(false)
+  reversedAt              DateTime?
+  reversedReason          String?
+
+  @@index([weeklyFundRequestId])
+  @@index([fundsReceivedId])
+}
+
+model Reimbursement {
+  id                             String              @id @default(cuid())
+  staff                          User                @relation(fields: [staffId], references: [id])
+  staffId                        String
+  weeklyFundRequest              WeeklyFundRequest?  @relation(fields: [weeklyFundRequestId], references: [id])
+  weeklyFundRequestId            String?
+  /// "ProgramLead" or "CountryDirector"
+  approvalRoute                  String
+  amountSpentCents               Int
+  amountPreviouslyDisbursedCents Int                 @default(0)
+  amountToReimburseCents         Int
+  reasonPersonalFundsUsed        String
+  netsuiteExpenseId              String
+  /// "PerDiemUnderEstimated" | "EmergencyTransport" | etc.
+  overspendReason                String?
+  /// "Normal" | "RequiresCDReview"
+  thresholdFlag                  String              @default("Normal")
+  status                         ReimbursementStatus @default(Submitted)
+  submittedAt                    DateTime            @default(now())
+  approvedAt                     DateTime?
+  approvedById                   String?
+  reimbursedAt                   DateTime?
+  reimbursedById                 String?
+  returnedReason                 String?
+  transactionReference           String?
+  autoCreated                    Boolean             @default(false)
+
+  @@index([staffId, status])
+  @@index([approvalRoute, status])
+}
+
+model BalanceReturn {
+  id                  String              @id @default(cuid())
+  weeklyFundRequest   WeeklyFundRequest   @relation(fields: [weeklyFundRequestId], references: [id])
+  weeklyFundRequestId String
+  staff               User                @relation(fields: [staffId], references: [id])
+  staffId             String
+  amountCents         Int
+  method              String?
+  reference           String?
+  status              BalanceReturnStatus @default(Pending)
+  createdAt           DateTime            @default(now())
+  confirmedAt         DateTime?
+  disputedReason      String?
+
+  @@index([staffId, status])
+}
+
+// ──────────────────────────── Approvals + Audit ────────────────────
+
+model Approval {
+  id                  String             @id @default(cuid())
+  scope               ApprovalScope
+  /// Subject IDs — only one is populated depending on `scope`.
+  planId              String?
+  plan                Plan?              @relation(fields: [planId], references: [id])
+  weeklyFundRequestId String?
+  weeklyFundRequest   WeeklyFundRequest? @relation(fields: [weeklyFundRequestId], references: [id])
+  actor               User               @relation("ApprovalActor", fields: [actorId], references: [id])
+  actorId             String
+  decision            ApprovalDecision
+  reason              String?
+  createdAt           DateTime           @default(now())
+
+  @@index([scope, planId])
+  @@index([scope, weeklyFundRequestId])
+  @@index([actorId, createdAt])
+}
+
+model AuditEvent {
+  id          String   @id @default(cuid())
+  /// "weeklyFundRequest.disbursed" / "plan.approved" / "user.login" etc.
+  action      String
+  /// Free-form subject ID (UUID/cuid of whatever entity this references).
+  subjectId   String?
+  /// Optional subject kind for indexing — "WeeklyFundRequest" / "Plan" / ...
+  subjectKind String?
+  actor       User?    @relation(fields: [actorId], references: [id])
+  actorId     String?
+  ip          String?
+  payload     Json?
+  createdAt   DateTime @default(now())
+
+  @@index([subjectKind, subjectId])
+  @@index([actorId, createdAt])
+  @@index([action, createdAt])
+}
+
+// ──────────────────────────── HR ─────────────────────────────────────
+
+model LeaveRecord {
+  id           String      @id @default(cuid())
+  staff        User        @relation(fields: [staffId], references: [id])
+  staffId      String
+  kind         LeaveKind
+  startDate    DateTime
+  endDate      DateTime
+  /// Inclusive day-count; cached so pace-status doesn't recompute every request.
+  days         Int
+  reason       String?
+  status       LeaveStatus @default(Pending)
+  approvedAt   DateTime?
+  approvedById String?
+  createdAt    DateTime    @default(now())
+
+  @@index([staffId, status])
+  @@index([startDate])
+}
+
+model PublicHoliday {
+  id        String   @id @default(cuid())
+  countryId String
+  date      DateTime
+  name      String
+
+  @@unique([countryId, date])
+}
+
+// ──────────────────────────── Comms ──────────────────────────────────
+
+model Notification {
+  id        String              @id @default(cuid())
+  user      User                @relation(fields: [userId], references: [id])
+  userId    String
+  /// Snake-case template key — keeps copy in one place.
+  template  String
+  channel   NotificationChannel @default(Inbox)
+  title     String
+  body      String
+  href      String?
+  read      Boolean             @default(false)
+  readAt    DateTime?
+  createdAt DateTime            @default(now())
+
+  @@index([userId, read, createdAt])
+}
+
+model Message {
+  id          String    @id @default(cuid())
+  sender      User      @relation("MessageSender", fields: [senderId], references: [id])
+  senderId    String
+  recipient   User      @relation("MessageRecipient", fields: [recipientId], references: [id])
+  recipientId String
+  threadKey   String // deterministic min(senderId, recipientId)+":"+max for 1:1 chat
+  body        String
+  read        Boolean   @default(false)
+  readAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([threadKey, createdAt])
+  @@index([recipientId, read])
+}
+
+// ──────────────────────────── Fair Workload Index ────────────────────
+//
+// The FWI subsystem measures performance against *load difficulty*,
+// not just against target completion. See src/lib/performance/fwi-engine.ts
+// for the math. These tables persist the inputs + outputs so:
+//   • The FWI is reproducible (auditable when staff appeal a rating)
+//   • Computation is cheap (engine reads stored rows, not raw activities)
+//   • Time-series comparisons work (FWI movement quarter over quarter)
+
+enum PerformanceBand {
+  TrueTopPerformer
+  Consistent
+  Overloaded
+  Concern
+  BusyLowImpact
+  HiddenLeader
+  Establishing // first 90 days; not yet scored
+}
+
+// Staff member's home base — drives primary/secondary district
+// classification + distance computations. One per staff (current).
+// Historical changes go into StaffHomeBaseHistory for audit.
+model StaffHomeBase {
+  id            String   @id @default(cuid())
+  staffId       String   @unique
+  staff         User     @relation(fields: [staffId], references: [id])
+  /// Primary district — where the staff sleeps at home. Visits here
+  /// score with the lowest workload weight.
+  districtId    String
+  /// Optional precise location for distance math. When null, the
+  /// engine falls back to district-centroid distance.
+  lat           Float?
+  lng           Float?
+  /// Free-text village/town for human reference (geocoded into lat/lng).
+  locationLabel String?
+  effectiveFrom DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([districtId])
+}
+
+// Cached distance from a staff member's home base to a school. Populated
+// at school onboarding / staff transfer via the google-maps integration.
+// Read at FWI compute time — NEVER hit Google from a request handler.
+model SchoolDistance {
+  id                String   @id @default(cuid())
+  staffId           String
+  schoolId          String
+  school            School   @relation(fields: [schoolId], references: [id])
+  /// Driving distance in km, traffic-aware where Google supplies it.
+  distanceKm        Float
+  /// Typical drive time in minutes (one-way, Monday 06:00 departure).
+  durationMin       Int
+  /// True when a one-way trip is realistically a hotel night, per
+  /// CountryPerformanceWeights thresholds.
+  hotelRequired     Boolean  @default(false)
+  /// Whether the school is in the staff's primary or secondary district.
+  isPrimaryDistrict Boolean  @default(false)
+  /// When Google produced this — used to schedule re-computation.
+  computedAt        DateTime @default(now())
+
+  @@unique([staffId, schoolId])
+  @@index([staffId])
+}
+
+// Per-staff, per-period snapshot of portfolio complexity. Computed by
+// fwi-engine.computePortfolioComplexity and persisted so the
+// performance review can be audited later ("what did the dashboard
+// look like when this rating was assigned?").
+model PortfolioComplexity {
+  id                     String   @id @default(cuid())
+  staffId                String
+  /// Period this snapshot covers — "2026-05" / "2026-Q2" / "FY2026".
+  periodIso              String
+  // ─── Raw counts (inputs to the score) ───
+  schoolCount            Int
+  partnerSchoolCount     Int
+  districtCount          Int
+  /// Subset of districtCount that are NOT the staff's primary.
+  secondaryDistrictCount Int
+  highRiskSchoolCount    Int
+  avgSsaWeakness         Float /// 0-10 inverse: 10 = weakest portfolio
+  avgDistanceKm          Float
+  /// Trips that crossed the hotel threshold in the period.
+  hotelTripsCount        Int      @default(0)
+  totalTravelKm          Float    @default(0)
+  partnersManaged        Int      @default(0)
+  specialProjectsActive  Int      @default(0)
+  /// Computed score (the single number that goes into Fair Matrix).
+  score                  Float
+  /// 0..100 percentile of `score` within the team for this period.
+  scorePercentile        Float
+  computedAt             DateTime @default(now())
+
+  @@unique([staffId, periodIso])
+  @@index([periodIso])
+}
+
+// Recommendations the engine produces when portfolio loads are
+// imbalanced across the team. Surfaces as a card on the CPL team-
+// targets page. `actedOn` lets us measure whether leadership uses
+// the recommendations — the hypothesis worth proving in this MVP.
+model RebalanceSuggestion {
+  id             String    @id @default(cuid())
+  fromStaffId    String
+  toStaffId      String
+  /// Schools the engine suggests moving (typically the ones nearest to
+  /// the receiving staff's home base).
+  schoolIds      String[]
+  /// Predicted loads after the move, for "before vs after" UI.
+  fromLoadBefore Float
+  fromLoadAfter  Float
+  toLoadBefore   Float
+  toLoadAfter    Float
+  /// Plain-English summary the UI renders verbatim.
+  reason         String
+  generatedAt    DateTime  @default(now())
+  actedOn        Boolean   @default(false)
+  actedAt        DateTime?
+  actedById      String?
+
+  @@index([fromStaffId, generatedAt])
+  @@index([actedOn, generatedAt])
+}
+
+// Per-country tunable weights for the FWI math. Different countries
+// + maturities + program stages should weight Target / Workload /
+// Portfolio / Impact / Team Support differently. Bake the tuning in
+// so it's a config change, not a code change.
+model CountryPerformanceWeights {
+  id                       String   @id @default(cuid())
+  countryId                String   @unique
+  // Five score weights, summing to 1.0. Enforced by the engine.
+  targetAchievement        Float    @default(0.30)
+  workloadDifficulty       Float    @default(0.25)
+  portfolioManagement      Float    @default(0.15)
+  impactQuality            Float    @default(0.20)
+  teamContribution         Float    @default(0.10)
+  // Coefficient that controls how much workload moves the pace score.
+  // 0 = no fairness effect; 1 = workload can fully compensate. 0.3
+  // is the recommended starting point.
+  adjustmentCoefficient    Float    @default(0.3)
+  // Hotel thresholds — when does a one-way trip become an overnight?
+  hotelDriveMinThreshold   Int      @default(120)
+  hotelDistanceKmThreshold Int      @default(90)
+  // Probationary window for new staff (days). FWI band is held at
+  // "Establishing" until this elapses to avoid cold-start bias.
+  probationaryDays         Int      @default(90)
+  updatedAt                DateTime @updatedAt
+}
+
+// ════════════════════════════════════════════════════════════════════
+// Donor Reporting Impact — schema additions
+// ════════════════════════════════════════════════════════════════════
+//
+// These tables back the Donor Reporting Impact analytics layer. They
+// answer donor-facing questions (who did we reach, where, with what
+// evidence, at what cost) with deduplicated, evidence-gated counts.
+// Every donor metric the UI shows is derived from rows in these
+// tables — never typed in by a user, never pulled from a free-text
+// field, never multiplied from a service count.
+
+enum DonorParticipantType {
+  Teacher
+  SchoolLeader // headteacher, deputy, director, administrator, SLT
+  Parent
+  Student
+  DistrictOfficial
+  PartnerStaff
+  Other
+}
+
+enum DonorEvidenceStatus {
+  None // attendance not yet captured
+  Captured // attendance captured but evidence pending upload
+  Uploaded // evidence (photo / signed sheet / form) uploaded
+  CceoConfirmed // CCEO has reviewed and confirmed
+  MeVerified // M&E (IA) has verified
+  Rejected // verification failed — excluded from donor counts
+}
+
+enum DonorCountStatus {
+  included_verified
+  included_confirmed
+  pending_evidence
+  pending_verification
+  excluded_duplicate
+  excluded_missing_data
+  excluded_out_of_period
+  excluded_not_eligible
+}
+
+enum InterventionArea {
+  TeachingAndLearning
+  FinancialHealth
+  ChristlikeBehaviour
+  ExposureToWordOfGod
+  GovernmentComplianceAndRequirements
+  Leadership
+  EducationTechnology
+  LearningEnvironment
+}
+
+enum SsaTrend {
+  Improved
+  Held
+  Declined
+  Inconclusive // baseline missing or area mismatched
+}
+
+enum PartnerStatus {
+  Active
+  Inactive
+  UnderReview
+}
+
+enum PartnerActivityStatus {
+  Planned
+  Delivered
+  CceoConfirmed
+  MeVerified
+  Rejected
+  Cancelled
+}
+
+enum DonorMetricKey {
+  teachersTrained
+  schoolLeadersTrained
+  studentsImpacted
+  schoolsReached
+  districtsCovered
+  subCountiesCovered
+  clustersReached
+  trainingsDelivered
+  visitsCompleted
+  ssaCompleted
+  schoolsImproved
+  partnerActivitiesConfirmed
+  totalInvestment
+  costPerSchoolReached
+  costPerTeacherTrained
+  costPerStudentImpacted
+  interventionsSupported
+}
+
+enum DonorRoleScope {
+  CCEO
+  ProgramLead
+  ImpactAssessment
+  CountryDirector
+  RVP
+  GlobalDonorReport
+}
+
+// ── Training participants ─────────────────────────────────────────
+//
+// One row per (training session, person). PlannedActivity is the
+// training session — typical kinds are CLUSTER_TRAINING and
+// IN_SCHOOL_COACHING. Donor counts pull DISTINCT identity from these
+// rows, scoped by `participantType` and gated on `evidenceStatus`:
+//
+//   Teachers Trained   = COUNT DISTINCT (teacherId fallback name+school+phone)
+//                        WHERE participantType = Teacher
+//                          AND evidenceStatus IN (CceoConfirmed, MeVerified)
+//                          AND date BETWEEN cycle.start AND cycle.end
+//
+// Identity preference (in order): identityKey (canonical hash) →
+// (participantName + schoolId + phone/email). The hash is computed
+// at write time so we don't re-do it in every query.
+
+model TrainingParticipant {
+  id         String          @id @default(cuid())
+  // The training event. PlannedActivity carries the date, intervention,
+  // facilitator, and school/cluster context — we don't repeat them here.
+  activity   PlannedActivity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  activityId String
+
+  participantType DonorParticipantType
+  participantName String
+  gender          String?
+  phone           String?
+  email           String?
+  /// Salesforce / external IDs go here when present.
+  externalId      String?
+  /// Stable canonical key for dedup. Set at write time from the
+  /// preferred identity hash so the dedup query is a GROUP BY.
+  identityKey     String
+
+  // Where the participant came from. School is the most common case;
+  // for district-officials / partner-staff the school link may be null.
+  school     School? @relation(fields: [schoolId], references: [id])
+  schoolId   String?
+  /// Optional role at the school (e.g. "Headteacher", "P3 Teacher").
+  schoolRole String?
+
+  evidenceStatus   DonorEvidenceStatus @default(None)
+  /// Pointer to evidence asset (signed attendance sheet, photo, form id).
+  evidenceUri      String?
+  evidenceNotes    String?
+  donorCountStatus DonorCountStatus    @default(pending_evidence)
+
+  // Verification audit trail.
+  cceoConfirmedAt   DateTime?
+  cceoConfirmedById String?
+  meVerifiedAt      DateTime?
+  meVerifiedById    String?
+  rejectedReason    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([activityId])
+  @@index([schoolId])
+  @@index([participantType, donorCountStatus])
+  @@index([identityKey])
+  @@index([evidenceStatus])
+}
+
+// ── SSA history ───────────────────────────────────────────────────
+//
+// School.ssaScore stores only the latest score. Donor reporting needs
+// the trajectory: a per-school, per-intervention-area, per-date series
+// so "Schools Improved" can compare latest vs previous in the same
+// area within the reporting period.
+//
+//   Schools Improved = COUNT DISTINCT schoolId WHERE EXISTS
+//     latest snapshot in period > previous snapshot in same area
+//     AND latest.completed = true AND latest.evidenceStatus IN (CceoConfirmed, MeVerified)
+
+model SsaSnapshot {
+  id               String              @id @default(cuid())
+  school           School              @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  schoolId         String
+  interventionArea InterventionArea
+  score            Int
+  /// Date the SSA was completed. We don't measure "submitted" or
+  /// "uploaded" because donors care about real assessment moments.
+  completedAt      DateTime
+  completed        Boolean             @default(true)
+  trend            SsaTrend            @default(Inconclusive)
+  /// Pointer to the previous snapshot in the same intervention area,
+  /// computed at write time so the trend cache is consistent.
+  previousId       String?
+  conductedById    String?
+  evidenceStatus   DonorEvidenceStatus @default(Uploaded)
+  donorCountStatus DonorCountStatus    @default(pending_verification)
+  notes            String?
+  createdAt        DateTime            @default(now())
+
+  @@index([schoolId, completedAt])
+  @@index([interventionArea])
+  @@index([donorCountStatus])
+}
+
+// ── Partner activities ─────────────────────────────────────────────
+//
+// Partners (faith-based orgs, local NGOs, district education offices,
+// content providers) deliver activities the program counts only when
+// CCEO has confirmed delivery — and, for high-stakes donor reports,
+// when M&E has independently verified. Both gates are first-class
+// timestamps so we can answer "what's the verification SLA".
+
+model Partner {
+  id           String            @id @default(cuid())
+  name         String            @unique
+  contactName  String?
+  contactEmail String?
+  contactPhone String?
+  countryId    String?
+  status       PartnerStatus     @default(Active)
+  activities   PartnerActivity[]
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@index([status])
+}
+
+model PartnerActivity {
+  id                String                @id @default(cuid())
+  partner           Partner               @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  partnerId         String
+  school            School                @relation(fields: [schoolId], references: [id])
+  schoolId          String
+  interventionArea  InterventionArea
+  /// Free-form activity title (e.g. "Phonics teacher workshop").
+  title             String
+  date              DateTime
+  status            PartnerActivityStatus @default(Planned)
+  /// Counts of who was reached, when known. These do NOT feed Teachers
+  /// Trained directly — that comes from TrainingParticipant. They feed
+  /// "Partner Activities Confirmed" and the cost-per-activity rollup.
+  teachersReached   Int?
+  leadersReached    Int?
+  studentsReached   Int?
+  evidenceUri       String?
+  evidenceNotes     String?
+  evidenceStatus    DonorEvidenceStatus   @default(None)
+  donorCountStatus  DonorCountStatus      @default(pending_verification)
+  cceoConfirmedAt   DateTime?
+  cceoConfirmedById String?
+  meVerifiedAt      DateTime?
+  meVerifiedById    String?
+  rejectedReason    String?
+  costUgx           Int?
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+
+  @@index([partnerId])
+  @@index([schoolId])
+  @@index([status])
+  @@index([donorCountStatus])
+}
+
+// ── Snapshot audit trail ──────────────────────────────────────────
+//
+// Every donor report that's generated writes its own DonorMetricSnapshot.
+// The shape mirrors the in-memory DonorMetricSnapshot the UI consumes,
+// but persists the filter context (filtersHash) so we can reproduce the
+// exact numbers later — e.g. "what did the Q4 letter to the foundation
+// say six months ago?". DonorMetricSourceItem lists, per metric, every
+// underlying record that contributed (or was excluded, with reason),
+// so an auditor can drill from "Teachers Trained: 1,248" down to the
+// specific TrainingParticipant rows that made up that 1,248.
+
+model DonorMetricSnapshot {
+  id               String         @id @default(cuid())
+  roleScope        DonorRoleScope
+  userId           String
+  scopeLabel       String // "Daniel Mwangi" / "Uganda" / "Central Cluster"
+  operationalCycle String // "FY 2025/26 · Q4"
+  dateRangeStart   DateTime
+  dateRangeEnd     DateTime
+  /// SHA-256 of the canonical filter JSON. Two snapshots with the same
+  /// filtersHash + scope + cycle should produce the same numbers.
+  filtersHash      String
+  filtersJson      Json
+
+  teachersTrained            Int?
+  schoolLeadersTrained       Int?
+  studentsImpacted           Int?
+  schoolsReached             Int?
+  districtsCovered           Int?
+  subCountiesCovered         Int?
+  clustersReached            Int?
+  trainingsDelivered         Int?
+  visitsCompleted            Int?
+  ssaCompleted               Int?
+  schoolsImproved            Int?
+  partnerActivitiesConfirmed Int?
+  totalInvestmentUgx         BigInt?
+  costPerSchoolReachedUgx    Int?
+  costPerTeacherTrainedUgx   Int?
+  costPerStudentImpactedUgx  Int?
+
+  verifiedCount            Int @default(0)
+  pendingEvidenceCount     Int @default(0)
+  pendingVerificationCount Int @default(0)
+  excludedCount            Int @default(0)
+
+  /// 0..100 weighted readiness score at generation time.
+  readinessScore Int   @default(0)
+  /// Cached readiness component breakdown (JSON keyed by component id).
+  readinessJson  Json?
+  /// Plain-language caveat text appended to the donor letter.
+  caveatsJson    Json?
+
+  items           DonorMetricSourceItem[]
+  generatedAt     DateTime                @default(now())
+  generatedByName String
+
+  @@index([roleScope, generatedAt])
+  @@index([userId, generatedAt])
+  @@index([filtersHash])
+}
+
+// One row per (snapshot, contributing record). Lets an auditor reconstruct
+// any headline number by filtering items for the snapshot + metricType
+// and re-counting by donorCountStatus.
+model DonorMetricSourceItem {
+  id                 String               @id @default(cuid())
+  snapshot           DonorMetricSnapshot  @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+  snapshotId         String
+  metricType         DonorMetricKey
+  /// Discriminator for sourceId (e.g. "TrainingParticipant", "SchoolVisit",
+  /// "PartnerActivity", "SsaSnapshot", "Disbursement"). Free-form so
+  /// future metric implementations don't require a schema change.
+  sourceType         String
+  sourceId           String
+  schoolId           String?
+  district           String?
+  subCounty          String?
+  parish             String?
+  participantId      String?
+  enrollmentCount    Int?
+  costUgx            Int?
+  verificationStatus DonorEvidenceStatus?
+  donorCountStatus   DonorCountStatus
+  includedInTotal    Boolean              @default(false)
+  /// Free-text reason when excluded (e.g. "duplicate of participant X").
+  reason             String?
+
+  @@index([snapshotId, metricType])
+  @@index([schoolId])
+  @@index([sourceType, sourceId])
+}

@@ -1,0 +1,330 @@
+// /dashboards/rvp — Regional VP cockpit.
+//
+// ─────────────────────────────────────────────────────────────────────
+// Every dashboard in this app must answer FOUR questions in this order.
+// If you can't point to where each one is answered, the page is a box
+// of widgets, not a cockpit. See /partner/today for the canonical
+// expression of this discipline.
+//
+//   1. WHAT TO DO NOW         → CommandStack (top, single most important block)
+//   2. WHAT'S HAPPENING       → KPI tiles (region-weighted scale + funds)
+//   3. WHAT CHANGED / RISKY   → InsightStrip + Country Comparison + Burn-risk rail
+//   4. WHAT'S NEXT (CONTEXT)  → Cycle/Impact/Performers context (deferred below)
+//
+// Reading order is enforced by section order — no callouts between the
+// KPI row and the comparison table. Regional context (BestPerformers,
+// AnnualCycle, LeadershipImpact, TeamTargets, Special Projects, SF
+// compliance) lives below the fold; it's reference material, not the
+// daily working surface.
+// ─────────────────────────────────────────────────────────────────────
+
+import { Globe, Wallet, Target, Sparkles, TrendingUp, AlertTriangle } from "lucide-react";
+import { CommandStack } from "@/components/actions/CommandStack";
+import { DashboardPageHeader } from "@/components/dashboards/DashboardPageHeader";
+import { KpiCard, SectionCard, StatusBadge, ProgressRing } from "@/components/ui/primitives";
+import { countryRollups, specialProjects } from "@/lib/workflow-mock";
+import { TeamTargetsCallout } from "@/components/team-targets/TeamTargetsCallout";
+import { BestPerformersCard } from "@/components/leaderboard/BestPerformersCard";
+import { LeadershipImpactSnapshot } from "@/components/impact/LeadershipImpactSnapshot";
+import { AnnualCycleCallout } from "@/components/fy/AnnualCycleCallout";
+import { InsightStrip } from "@/components/insights/InsightCard";
+import { insightsForRvp } from "@/lib/insights";
+import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
+import { RvpMobileView } from "@/components/mobile/views/RvpMobileView";
+import { TrainingCoverageCard } from "@/components/director/TrainingCoverageCard";
+import { allClusterTrainingPlans } from "@/lib/plan-builder-engine";
+import { PlanScheduleByWeek } from "@/components/planning/PlanScheduleByWeek";
+import { planItems, cceoPlanItems } from "@/lib/mobile-mock";
+import { getCurrentUser, toCurrentUser } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { ROLE_REDIRECT } from "@/lib/auth-public";
+import { SectionHeader } from "@/components/ui/SectionHeader";
+
+export default async function RVPDashboard() {
+  // Defense-in-depth: middleware already gates /dashboards/rvp, but the
+  // page re-checks so a guard gap can't expose the regional cockpit.
+  const rawUser = await getCurrentUser();
+  if (!["RVP", "Admin"].includes(rawUser.role)) {
+    redirect(ROLE_REDIRECT[rawUser.role]);
+  }
+  const currentUser = toCurrentUser(rawUser);
+  const totalSchools = countryRollups.reduce((a, c) => a + c.schools, 0);
+  const totalCommitted = countryRollups.reduce((a, c) => a + c.fundsCommittedUgxM, 0);
+  const totalDisbursed = countryRollups.reduce((a, c) => a + c.fundsDisbursedUgxM, 0);
+  const avg = (key: keyof typeof countryRollups[number]) =>
+    Math.round(
+      countryRollups.reduce((a, c) => a + (c[key] as number), 0) / countryRollups.length,
+    );
+
+  return (
+    <ResponsiveDashboard
+      mobile={
+        <>
+          <DashboardPageHeader role="RVP" />
+          <RvpMobileView />
+        </>
+      }
+      desktop={
+    <>
+      <DashboardPageHeader role="RVP" />
+      <div className="px-4 sm:px-5 md:px-6 pb-24 md:pb-6 pt-4 space-y-8 md:space-y-10">
+
+      {/* TODAY — CommandStack carries its own header. */}
+      <CommandStack user={rawUser} hideMission />
+
+      {/* REGIONAL SIGNALS — region-weighted KPIs, system insights, and
+          training coverage against SSA gaps. */}
+      <section className="space-y-3">
+        <SectionHeader
+          tier="strategic"
+          eyebrow="Regional signals"
+          title="What's happening across the region"
+          description="Region-weighted scale numbers, what the system is noticing this period, and whether training is covering the SSA gaps."
+        />
+      <section
+        aria-label="Region KPIs"
+        className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-6 gap-3"
+      >
+        <KpiCard
+          label="Schools in Region"
+          value={totalSchools.toString()}
+          caption={`${countryRollups.length} countries`}
+          icon={<Globe size={16} />}
+          iconTone="edify"
+        />
+        <KpiCard
+          label="Avg Monthly Target"
+          value={`${avg("monthlyTargetPct")}%`}
+          caption="Region-weighted"
+          icon={<Target size={16} />}
+          iconTone="amber"
+          spark={{ seed: 13, trend: "up" }}
+        />
+        <KpiCard
+          label="Avg Valid Visit"
+          value={`${avg("validVisitPct")}%`}
+          caption="Verified portion"
+          icon={<TrendingUp size={16} />}
+          iconTone="green"
+        />
+        <KpiCard
+          label="Avg SSA Done"
+          value={`${avg("ssaCompletedPct")}%`}
+          caption="Region"
+          icon={<TrendingUp size={16} />}
+          iconTone="edify"
+        />
+        <KpiCard
+          label="Funds Committed"
+          value={`UGX ${totalCommitted.toLocaleString()}M`}
+          caption="From approved plans"
+          icon={<Wallet size={16} />}
+          iconTone="amber"
+        />
+        <KpiCard
+          label="Funds Disbursed"
+          value={`UGX ${totalDisbursed.toLocaleString()}M`}
+          caption="Across countries"
+          icon={<Wallet size={16} />}
+          iconTone="green"
+        />
+      </section>
+
+      <InsightStrip insights={insightsForRvp()} />
+      <TrainingCoverageCard audience="rvp" clusterPlans={allClusterTrainingPlans()} />
+      </section>
+
+      {/* COUNTRIES & RISK — comparison table and burn-rate rail. */}
+      <section className="space-y-3">
+        <SectionHeader
+          tier="strategic"
+          eyebrow="Countries & risk"
+          title="Where the region is healthy and where money is parked"
+          description="Country-by-country performance side-by-side and the burn-rate rail showing which pipelines may slip the cycle."
+        />
+      <section
+        aria-label="Country comparison and burn risk"
+        className="grid grid-cols-12 gap-4 items-start"
+        id="compare"
+      >
+        <div className="col-span-12 md:col-span-8">
+          <SectionCard
+            icon={<Globe size={13} />}
+            title="Country Comparison"
+            subtitle="Targets, valid visits, SSA completion, and disbursement progress side-by-side."
+          >
+            <table className="w-full dtable">
+              <thead>
+                <tr>
+                  <th scope="col" className="text-left">Country</th>
+                  <th scope="col" className="text-left">Director</th>
+                  <th scope="col" className="text-right">Schools</th>
+                  <th scope="col" className="text-right">SSA Done</th>
+                  <th scope="col" className="text-right">Valid Visit</th>
+                  <th scope="col" className="text-right">Target</th>
+                  <th scope="col" className="text-right">Funds (Committed / Disbursed)</th>
+                  <th scope="col" className="text-right">Special Projects</th>
+                </tr>
+              </thead>
+              <tbody>
+                {countryRollups.map((c) => {
+                  const tone = c.monthlyTargetPct >= 80 ? "green" : c.monthlyTargetPct >= 72 ? "amber" : "red";
+                  return (
+                    <tr key={c.country}>
+                      <td className="text-body font-semibold">{c.country}</td>
+                      <td className="text-[12px] muted">{c.director}</td>
+                      <td className="text-right tabular text-body font-semibold">{c.schools}</td>
+                      <td className="text-right tabular text-[12px]">{c.ssaCompletedPct}%</td>
+                      <td className="text-right tabular text-[12px]">{c.validVisitPct}%</td>
+                      <td className="text-right">
+                        <StatusBadge tone={tone}>{c.monthlyTargetPct}%</StatusBadge>
+                      </td>
+                      <td className="text-right tabular text-[12px]">
+                        {c.fundsCommittedUgxM}M / {c.fundsDisbursedUgxM}M
+                      </td>
+                      <td className="text-right tabular text-body font-semibold">{c.specialProjects}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </SectionCard>
+        </div>
+        <div className="col-span-12 md:col-span-4">
+          <SectionCard
+            icon={<AlertTriangle size={13} />}
+            title="Burn-rate Risk"
+            subtitle="Where pipeline disbursement may slip the cycle. Red = below 65%, amber = 65–80%, green ≥ 80%."
+          >
+            <div className="space-y-3">
+              {countryRollups.map((c) => {
+                const burn = Math.round((c.fundsDisbursedUgxM / c.fundsCommittedUgxM) * 100);
+                const tone = burn >= 80 ? "green" : burn >= 65 ? "amber" : "red";
+                return (
+                  <div key={c.country} className="flex items-center gap-3">
+                    <div className="text-[12px] font-semibold w-[80px]">{c.country}</div>
+                    <div className="flex-1">
+                      <div className="pill-row">
+                        <span
+                          style={{
+                            width: `${burn}%`,
+                            background:
+                              tone === "green"
+                                ? "var(--color-success)"
+                                : tone === "amber"
+                                  ? "var(--color-edify-orange)"
+                                  : "var(--color-danger)",
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div className="text-[11.5px] tabular font-semibold w-[42px] text-right">{burn}%</div>
+                    <StatusBadge tone={tone}>burn</StatusBadge>
+                  </div>
+                );
+              })}
+            </div>
+          </SectionCard>
+        </div>
+      </section>
+
+      </section>
+
+      {/* DISCIPLINE — Salesforce logging compliance + special projects. */}
+      <section className="space-y-3">
+        <SectionHeader
+          tier="strategic"
+          eyebrow="Discipline"
+          title="Logging discipline and special-project progress"
+          description="Salesforce logging compliance by country and the special-project portfolio that sits outside SSA recommendations."
+        />
+      <section
+        aria-label="Regional discipline"
+        className="grid grid-cols-12 gap-4 items-start"
+      >
+        <div className="col-span-12 md:col-span-7">
+          <SectionCard
+            icon={<TrendingUp size={13} />}
+            title="Regional Salesforce Compliance"
+            subtitle="Logging discipline by country. Drives verified targets."
+          >
+            <div className="grid grid-cols-4 gap-3">
+              {countryRollups.map((c, i) => {
+                const pct = [92, 84, 96, 78][i] ?? 80;
+                return (
+                  <div
+                    key={c.country}
+                    className="rounded-xl border border-[var(--color-edify-border)] p-3 flex flex-col items-center text-center"
+                  >
+                    <div className="text-[11px] muted font-semibold">{c.country}</div>
+                    <div className="my-1.5">
+                      <ProgressRing pct={pct} size={68} stroke={6} label={`${pct}%`} />
+                    </div>
+                    <div className="text-caption muted">Logged ≤ 5 days</div>
+                  </div>
+                );
+              })}
+            </div>
+          </SectionCard>
+        </div>
+        <div className="col-span-12 md:col-span-5">
+          <SectionCard
+            icon={<Sparkles size={13} />}
+            title="Special Projects · Region"
+            subtitle="Excluded from SSA recommendations to avoid double-counting."
+          >
+            <div className="space-y-2">
+              {specialProjects.map((p) => (
+                <div
+                  key={p.key}
+                  className="rounded-lg border border-[var(--color-edify-border)] p-2.5 flex items-center gap-3"
+                >
+                  <span className="icon-tile icon-tile-violet" style={{ width: 28, height: 28 }}>
+                    <Sparkles size={13} />
+                  </span>
+                  <div className="leading-tight flex-1 min-w-0">
+                    <div className="text-body font-bold truncate">{p.name}</div>
+                    <div className="text-[11px] muted truncate">
+                      {p.cohort} · {p.schoolsImpacted} schools
+                    </div>
+                  </div>
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="w-14 h-1.5 rounded-full bg-[#eef2f4] overflow-hidden inline-block">
+                      <span className="block h-full bg-[var(--color-edify-primary)]" style={{ width: `${p.progressPct}%` }} />
+                    </span>
+                    <span className="text-[11.5px] tabular font-semibold">{p.progressPct}%</span>
+                  </span>
+                </div>
+              ))}
+            </div>
+          </SectionCard>
+        </div>
+      </section>
+
+      </section>
+
+      {/* PLAN & CONTEXT — regional plan horizon + cycle/impact/recognition. */}
+      <section className="space-y-3">
+        <SectionHeader
+          tier="strategic"
+          eyebrow="Plan & context"
+          title="What's coming and what's working"
+          description="Regional activity-plan horizon, the annual cycle, leadership-impact snapshot, top performers, and team-target rollups."
+        />
+        <PlanScheduleByWeek
+          items={[...planItems, ...cceoPlanItems]}
+          audience="leadership"
+          title="Regional plan horizon — activity wave"
+          initialExpanded="first"
+        />
+        <AnnualCycleCallout variant="rvp" />
+        <LeadershipImpactSnapshot variant="rvp" />
+        <BestPerformersCard audience="rvp" />
+        <TeamTargetsCallout variant="rvp" user={currentUser} />
+      </section>
+      </div>
+    </>
+      }
+    />
+  );
+}

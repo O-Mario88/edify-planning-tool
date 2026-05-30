@@ -1,0 +1,46 @@
+{
+  "_meta": {
+    "locale": "en",
+    "name": "English"
+  },
+  "common": {
+    "appName": "Edify",
+    "tagline": "Plan smart. Execute with focus. Lead with impact.",
+    "loading": "Loading…",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "approve": "Approve",
+    "review": "Review",
+    "export": "Export"
+  },
+  "auth": {
+    "login.title": "Welcome back",
+    "login.email": "Email",
+    "login.password": "Password",
+    "login.signIn": "Sign in",
+    "login.invalid": "Invalid email or password.",
+    "login.rateLimited": "Too many login attempts. Please wait and try again."
+  },
+  "cpl": {
+    "hero.greeting": "Good evening, {name}.",
+    "hero.tagline": "Coach the field. Close the gaps. Multiply the wins.",
+    "hero.subline": "Strong CCEOs build strong schools build a stronger country.",
+    "hero.cta.planWeek": "Plan This Week",
+    "hero.cta.openApprovals": "Open Approvals",
+    "leadership.title": "Where your attention earns the most",
+    "leadership.viewAll": "View all",
+    "kpi.teamTarget.human": "Of this month's plan, delivered.",
+    "kpi.cceosOnTrack.human": "Of your team is hitting pace.",
+    "kpi.plansAwaiting.human": "Plans need your eyes today.",
+    "kpi.childrenReached.human": "Children reached this week.",
+    "kpi.sfCompliance.human": "Of field work, formally logged.",
+    "kpi.teamBacklog.human": "Activities waiting to be picked up.",
+    "kpi.fundRequest.human": "Funds in the field, working.",
+    "kpi.highRisk.human": "Schools we're losing. Don't."
+  },
+  "errors": {
+    "network": "Network error. Please try again.",
+    "forbidden": "You don't have access to this.",
+    "notFound": "We couldn't find what you were looking for."
+  }
+}

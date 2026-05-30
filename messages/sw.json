@@ -1,0 +1,17 @@
+{
+  "_meta": {
+    "locale": "sw",
+    "name": "Swahili",
+    "_note": "Stub. Strings echo English until translators fill them in. The i18n helper falls back to en for any missing key, so adding partial translations is safe."
+  },
+  "common": {
+    "appName": "Edify",
+    "tagline": "Panga kwa busara. Tekeleza kwa umakini. Ongoza kwa athari."
+  },
+  "auth": {
+    "login.signIn": "Ingia"
+  },
+  "cpl": {
+    "hero.greeting": "Habari za jioni, {name}."
+  }
+}

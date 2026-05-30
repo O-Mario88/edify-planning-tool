@@ -1,0 +1,33 @@
+import { Handshake } from "lucide-react";
+import { EntityIndex } from "@/components/shell/EntityIndex";
+import { PartnersIndexClient } from "@/components/partners/PartnersIndexClient";
+import { partnerTargetPerformance } from "@/lib/team-targets-mock";
+import { getCurrentUser } from "@/lib/auth";
+
+// Partners index.
+//
+// Read access is open to everyone with shell access. ADD/EDIT is
+// limited to:
+//   • ImpactAssessment (M&E sets up the partnership + verifies scope)
+//   • CountryDirector  (signs off on partner canon for the country)
+//   • Admin            (system fallback)
+//
+// Each partner record carries the topics they train on — surfaced as
+// chips on both the seed delivery partners and any new partners that
+// IA/CD/Admin onboard through the form.
+export default async function PartnersIndex() {
+  const user = await getCurrentUser();
+  const seedCount = partnerTargetPerformance.length;
+
+  return (
+    <EntityIndex
+      title="Partners"
+      subtitle="Delivery partners executing schools, trainings, and projects under Edify oversight. Each partner record carries the topics they train on."
+      Icon={Handshake}
+      count={seedCount}
+      searchPlaceholder="Search partners"
+    >
+      <PartnersIndexClient role={user.role} userName={user.name} />
+    </EntityIndex>
+  );
+}

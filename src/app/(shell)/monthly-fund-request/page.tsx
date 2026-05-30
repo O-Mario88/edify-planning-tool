@@ -1,0 +1,84 @@
+import { redirect } from "next/navigation";
+import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
+import { RoleBottomNav } from "@/components/mobile/RoleBottomNav";
+import { MonthlyFundRequestView } from "@/components/funds/monthly-fund-request/MonthlyFundRequestView";
+import { MonthlyFundRequestPageHeader } from "@/components/funds/monthly-fund-request/MonthlyFundRequestPageHeader";
+import type { MfrViewerRole } from "@/components/funds/monthly-fund-request/MonthlyFundRequestHeader";
+import { currentMonthlyFundRequest } from "@/lib/funds/monthly-fund-request-mock";
+import { getCurrentUser } from "@/lib/auth";
+import { ROLE_REDIRECT, type EdifyRole } from "@/lib/auth-public";
+
+// Monthly Fund Request page.
+//
+// One country, one month. Auto-generated from approved monthly plans,
+// reviewed by PL, augmented + approved by CD, then routed to RVP.
+// Each role sees the same artefact through a different lens via the
+// `viewerRole` prop:
+//
+//   • PL  — review program lines, return draft if needed, submit to CD
+//   • CD  — review, add admin items, approve & submit to RVP
+//   • RVP — sees ONLY CD-approved requests; approve / return / hold
+//   • Accountant — prepares disbursement after RVP approval
+//
+// Middleware also restricts the route to these roles; the redirect
+// below is defense-in-depth.
+
+const ALLOWED: ReadonlySet<EdifyRole> = new Set([
+  "CountryProgramLead",
+  "CountryDirector",
+  "RVP",
+  "ProgramAccountant",
+  "Admin",
+]);
+
+const ROLE_VIEW: Record<string, MfrViewerRole> = {
+  CountryProgramLead: "PL",
+  CountryDirector:    "CD",
+  RVP:                "RVP",
+  ProgramAccountant:  "Accountant",
+  Admin:              "CD",
+};
+
+export default async function MonthlyFundRequestPage() {
+  const user = await getCurrentUser();
+  if (!ALLOWED.has(user.role)) {
+    redirect(ROLE_REDIRECT[user.role]);
+  }
+
+  const viewerRole: MfrViewerRole = ROLE_VIEW[user.role] ?? "PL";
+
+  // For demo purposes we start the request in a status appropriate to
+  // the viewer's role: PL sees a request awaiting their review, CD
+  // sees it post-PL-submit, RVP sees it post-CD-approval. In production
+  // this comes straight from the database with whatever status the
+  // request currently has.
+  const initialStatus: Record<MfrViewerRole, typeof currentMonthlyFundRequest.status> = {
+    PL:         "UNDER_PL_REVIEW",
+    CD:         "SUBMITTED_TO_CD",
+    RVP:        "SUBMITTED_TO_RVP",
+    Accountant: "RVP_APPROVED",
+  };
+  const initial = {
+    ...currentMonthlyFundRequest,
+    status: initialStatus[viewerRole],
+  };
+
+  const body = (
+    <>
+      {/* Canonical page chrome: title + subtitle + search + bell +
+          messages + avatar. Pulled in to match /approvals, /core-schools
+          etc. so the MFR page reads with the same edge-to-edge header. */}
+      <MonthlyFundRequestPageHeader
+        monthLabel={initial.monthLabel}
+        countryName={initial.countryName}
+      />
+
+      <div className="px-3 sm:px-4 lg:px-6 pb-24 lg:pb-6 pt-3 space-y-3 lg:space-y-4">
+        <MonthlyFundRequestView initial={initial} viewerRole={viewerRole} />
+      </div>
+      <RoleBottomNav />
+    </>
+  );
+
+  return <ResponsiveDashboard mobile={body} desktop={body} />;
+}
