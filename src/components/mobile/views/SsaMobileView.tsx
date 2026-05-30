@@ -25,7 +25,7 @@ import {
   ssaNotificationCount,
   interventionScores,
   districtSsaPerformance,
-  ssaYearlyTrend,
+  ssaQuarterlyTrend,
 } from "@/lib/ssa-mock";
 import { cn } from "@/lib/utils";
 
@@ -62,31 +62,32 @@ export function SsaMobileView() {
   }));
 
   const trendDelta = (
-    ssaYearlyTrend[ssaYearlyTrend.length - 1].score -
-    ssaYearlyTrend[0].score
+    ssaQuarterlyTrend[ssaQuarterlyTrend.length - 1].score -
+    ssaQuarterlyTrend[0].score
   ).toFixed(2);
 
   return (
     <MobileSubpageShell
       title="SSA Performance"
-      subtitle={`Country M&E · ${ssaYearlyTrend.length} years tracked`}
+      subtitle={`Country M&E · ${ssaQuarterlyTrend.length} quarters tracked`}
       initials={ssaUser.initials}
       notificationsCount={ssaNotificationCount}
     >
       <MobileKpiGrid tiles={tiles} cols={2} />
 
-      {/* Yearly trend mini-chart */}
+      {/* Quarterly trend mini-chart */}
       <MobileSectionCard
-        title="SSA Performance Trend by Year"
-        subtitle={`Annual average · ${trendDelta} pts since ${ssaYearlyTrend[0].year}`}
+        title="SSA Performance Trend by Quarter"
+        subtitle={`Quarterly average · ${trendDelta} pts since ${ssaQuarterlyTrend[0].q.split(" ")[0]}`}
       >
         <div className="px-3 pb-3">
           <ul className="space-y-1.5">
-            {ssaYearlyTrend.map((y) => {
+            {ssaQuarterlyTrend.map((y) => {
               const widthPct = (y.score / 10) * 100;
+              const shortQ = y.q.split(" ")[0];
               return (
-                <li key={y.year} className="flex items-center gap-2 text-[11px]">
-                  <span className="w-10 muted font-semibold tabular shrink-0">{y.year}</span>
+                <li key={y.q} className="flex items-center gap-2 text-[11px]">
+                  <span className="w-10 muted font-semibold tabular shrink-0" title={y.q}>{shortQ}</span>
                   <div className="flex-1 h-1.5 rounded-full bg-[#eef2f4] overflow-hidden">
                     <div
                       className="h-full rounded-full"

@@ -12,21 +12,21 @@ import {
   CartesianGrid,
 } from "recharts";
 import { SectionCard } from "@/components/ui/primitives";
-import { ssaYearlyTrend, ssaTrendTarget } from "@/lib/ssa-mock";
+import { ssaQuarterlyTrend, ssaTrendTarget } from "@/lib/ssa-mock";
 
 export function SsaTrendCard() {
   return (
     <SectionCard
       icon={<TrendingUp size={13} />}
-      title="SSA Performance Trend by Year"
-      subtitle="Annual SSA average — track each school's multi-year progress"
+      title="SSA Performance Trend by Quarter"
+      subtitle="Quarterly SSA average — track progress across recent quarters"
     >
       <div className="h-[220px]">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={ssaYearlyTrend} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
+          <LineChart data={ssaQuarterlyTrend} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
             <CartesianGrid stroke="#eef2f4" vertical={false} />
             <XAxis
-              dataKey="year"
+              dataKey="q"
               stroke="#647782"
               fontSize={11}
               tickLine={false}
@@ -77,7 +77,7 @@ export function SsaTrendCard() {
         </ResponsiveContainer>
       </div>
       <div className="text-caption muted text-right mt-1">
-        Annual average SSA score · Target line at 6.0
+        Quarterly average SSA score · Target line at 6.0
       </div>
     </SectionCard>
   );
