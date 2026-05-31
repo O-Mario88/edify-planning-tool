@@ -11,14 +11,17 @@
 import { useEffect, useRef, useState } from "react";
 import {
   Calendar, CalendarRange, MapPin, Building2, Users, UserCog, Handshake,
-  Package, ShieldCheck, Trophy, ChevronDown, Check, Lock, type LucideIcon,
+  Package, ShieldCheck, Trophy, ChevronDown, Check, Lock, SlidersHorizontal,
+  RotateCcw, type LucideIcon,
 } from "lucide-react";
 import { useFilterBar } from "@/hooks/use-filter-bar";
 import {
+  ALL_SENTINEL,
   type FilterKey,
   type FilterScope,
   type FilterScopeEntry,
   type FilterOption,
+  type FilterSelection,
 } from "@/lib/filters/types";
 import { cn } from "@/lib/utils";
 
@@ -35,22 +38,55 @@ const META: Record<FilterKey, { icon: LucideIcon; caption: string }> = {
   champion: { icon: Trophy,        caption: "Champion" },
 };
 
-// Header display order. Role visibility (from the scope) filters this
-// down further — HR never sees Partner, etc.
-const ORDER: FilterKey[] = [
-  "fy", "quarter", "region", "district", "cluster", "cceo", "partner",
-  "package", "ssa", "champion",
-];
+// Primary filters live inline in the header; everything else moves into
+// the Advanced Filters drawer so the header stays to ~4 chips. Role
+// visibility (from the scope) filters both lists down further.
+const PRIMARY: FilterKey[] = ["fy", "quarter", "region", "district"];
+const ADVANCED: FilterKey[] = ["cluster", "cceo", "partner", "package", "ssa", "champion"];
+
+// A filter dimension is "active" when it carries a real, non-default
+// value. FY always has a value, so it's only active when moved off the
+// current (newest) FY; everything else is active when off ALL_SENTINEL.
+function isActive(key: FilterKey, selection: FilterSelection, scope: FilterScope): boolean {
+  const v = selection[key];
+  if (key === "fy") return v !== (scope.fy.options[0]?.id ?? ALL_SENTINEL);
+  return v !== ALL_SENTINEL;
+}
 
 export function HeaderFilterBar({ scope }: { scope: FilterScope }) {
-  const { selection, narrowedScope, setFilter } = useFilterBar(scope);
+  const { selection, narrowedScope, setFilter, resetAll } = useFilterBar(scope);
   const [openKey, setOpenKey] = useState<FilterKey | null>(null);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const advRef = useRef<HTMLDivElement | null>(null);
 
-  const keys = ORDER.filter((k) => narrowedScope[k].visible);
+  const primaryKeys = PRIMARY.filter((k) => narrowedScope[k].visible);
+  const advancedKeys = ADVANCED.filter((k) => narrowedScope[k].visible);
+
+  const activeAdvanced = advancedKeys.filter((k) => isActive(k, selection, scope)).length;
+  const anyActive =
+    activeAdvanced > 0 ||
+    PRIMARY.some((k) => narrowedScope[k].visible && isActive(k, selection, scope));
+
+  // Outside-click + Esc close for the advanced panel.
+  useEffect(() => {
+    if (!advancedOpen) return;
+    function onDoc(e: MouseEvent) {
+      if (advRef.current && !advRef.current.contains(e.target as Node)) setAdvancedOpen(false);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setAdvancedOpen(false);
+    }
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [advancedOpen]);
 
   return (
     <div className="flex items-center gap-2 flex-wrap min-w-0" role="group" aria-label="Filters">
-      {keys.map((k) => (
+      {primaryKeys.map((k) => (
         <FilterChip
           key={k}
           filterKey={k}
@@ -65,12 +101,98 @@ export function HeaderFilterBar({ scope }: { scope: FilterScope }) {
           }}
         />
       ))}
+
+      {/* Advanced Filters — the rest of the dimensions behind one button. */}
+      {advancedKeys.length > 0 && (
+        <div ref={advRef} className="relative">
+          <button
+            type="button"
+            aria-haspopup="dialog"
+            aria-expanded={advancedOpen}
+            onClick={() => setAdvancedOpen((o) => !o)}
+            className={cn(
+              "h-10 px-3 rounded-xl border inline-flex items-center gap-1.5 transition-colors",
+              "bg-[var(--color-card)] border-[var(--color-edify-border)] text-[var(--color-edify-text)]",
+              "hover:bg-[var(--color-edify-soft)]/40 shadow-[0_1px_2px_rgba(15,23,32,0.04)]",
+              advancedOpen && "ring-2 ring-[var(--color-edify-primary)]/35 border-[var(--color-edify-primary)]/50",
+            )}
+          >
+            <SlidersHorizontal size={13} className="text-[var(--color-edify-muted)]" />
+            <span className="text-body font-semibold">Filters</span>
+            {activeAdvanced > 0 && (
+              <span className="grid place-items-center min-w-[16px] h-[16px] px-1 rounded-full bg-[var(--color-edify-primary)] text-white text-[10px] font-bold tabular">
+                {activeAdvanced}
+              </span>
+            )}
+          </button>
+
+          {advancedOpen && (
+            <div
+              role="dialog"
+              aria-label="Advanced filters"
+              className={cn(
+                "absolute right-0 top-[calc(100%+6px)] z-50 w-[300px] max-w-[90vw]",
+                "premium-popover rounded-2xl overflow-hidden flex flex-col",
+                "shadow-[0_24px_64px_-12px_rgba(15,23,32,0.30),0_4px_10px_rgba(15,23,32,0.10)]",
+              )}
+            >
+              <div className="px-3.5 py-2.5 border-b border-[var(--color-edify-border)] flex items-center justify-between">
+                <span className="text-[12px] font-extrabold tracking-tight text-[var(--text-primary)]">
+                  Advanced filters
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    resetAll();
+                    setAdvancedOpen(false);
+                  }}
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-[var(--color-edify-primary)] hover:underline"
+                >
+                  <RotateCcw size={11} />
+                  Reset all
+                </button>
+              </div>
+              <div className="p-2.5 space-y-2 max-h-[60vh] overflow-y-auto">
+                {advancedKeys.map((k) => (
+                  <FilterChip
+                    key={k}
+                    filterKey={k}
+                    entry={narrowedScope[k]}
+                    selectedId={selection[k]}
+                    isOpen={openKey === k}
+                    onToggle={() => setOpenKey((o) => (o === k ? null : k))}
+                    onClose={() => setOpenKey(null)}
+                    onSelect={(id) => {
+                      setFilter(k, id);
+                      setOpenKey(null);
+                    }}
+                    fullWidth
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Top-level reset — visible whenever any dimension is off-default. */}
+      {anyActive && (
+        <button
+          type="button"
+          onClick={resetAll}
+          className="inline-flex items-center gap-1 h-10 px-2.5 rounded-xl text-[12px] font-semibold text-[var(--color-edify-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--color-edify-soft)]/40 transition-colors"
+          title="Reset all filters"
+        >
+          <RotateCcw size={12} />
+          Reset
+        </button>
+      )}
     </div>
   );
 }
 
 function FilterChip({
-  filterKey, entry, selectedId, isOpen, onToggle, onClose, onSelect,
+  filterKey, entry, selectedId, isOpen, onToggle, onClose, onSelect, fullWidth,
 }: {
   filterKey: FilterKey;
   entry: FilterScopeEntry;
@@ -79,6 +201,8 @@ function FilterChip({
   onToggle: () => void;
   onClose: () => void;
   onSelect: (id: string) => void;
+  /** Stretch to the container width — used inside the Advanced drawer. */
+  fullWidth?: boolean;
 }) {
   const { icon: Icon, caption } = META[filterKey];
   const selected = entry.options.find((o) => o.id === selectedId) ?? entry.options[0];
@@ -104,7 +228,7 @@ function FilterChip({
   }, [isOpen, onClose]);
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className={cn("relative", fullWidth && "w-full")}>
       <button
         type="button"
         aria-haspopup="listbox"
@@ -114,6 +238,7 @@ function FilterChip({
         onClick={onToggle}
         className={cn(
           "h-10 px-3 rounded-xl border inline-flex items-center gap-1.5 transition-colors",
+          fullWidth && "w-full justify-between",
           "bg-[var(--color-card)] border-[var(--color-edify-border)] text-[var(--color-edify-text)]",
           "hover:bg-[var(--color-edify-soft)]/40",
           "shadow-[0_1px_2px_rgba(15,23,32,0.04)]",
