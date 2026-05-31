@@ -13,10 +13,7 @@
 import { useRef, useState } from "react";
 import { Bell } from "lucide-react";
 import { NotificationDrawer } from "./NotificationDrawer";
-import {
-  unreadNotificationCount,
-  urgentNotificationCount,
-} from "@/lib/notifications-mock";
+import { useNotifications } from "@/lib/notifications-store";
 import { cn } from "@/lib/utils";
 
 type Variant = "today" | "default" | "dark";
@@ -28,6 +25,11 @@ export function NotificationBell({
 }) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
+  // Live counts from the shared store, so marking a notification read in
+  // the drawer updates this badge immediately.
+  const { counts } = useNotifications();
+  const unreadNotificationCount = counts.unread;
+  const urgentNotificationCount = counts.urgent;
 
   const trigger =
     variant === "today"

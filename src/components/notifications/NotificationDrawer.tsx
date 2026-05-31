@@ -6,11 +6,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { CheckCheck, AlertTriangle, Inbox, ArrowRight, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { StatusBadge } from "@/components/ui/primitives";
+import type { Notification, NotificationPriority } from "@/lib/notifications-mock";
 import {
-  NOTIFICATIONS,
-  type Notification,
-  type NotificationPriority,
-} from "@/lib/notifications-mock";
+  useNotifications,
+  markNotificationRead,
+  markAllNotificationsRead,
+} from "@/lib/notifications-store";
 import { cn } from "@/lib/utils";
 
 // NotificationDrawer — anchored floating popover the bell opens.
@@ -28,6 +29,8 @@ import { cn } from "@/lib/utils";
 // Outside-click + Esc + focus-restore are handled here; the bell
 // passes `triggerRef` so we can ignore clicks on the trigger itself.
 
+// Read state + counts come from the shared notifications-store so the
+// bell badge stays in sync with what's marked read here.
 type Filter = "All" | "Unread" | "Action" | "Urgent";
 
 const FILTERS: Filter[] = ["All", "Unread", "Action", "Urgent"];
@@ -59,7 +62,7 @@ export function NotificationDrawer({
   triggerRef?: React.RefObject<HTMLElement | null>;
 }) {
   const router = useRouter();
-  const [readIds, setReadIds] = useState<Set<string>>(new Set());
+  const { list: notifications, counts } = useNotifications();
   const [filter, setFilter] = useState<Filter>("All");
   const panelRef = useRef<HTMLDivElement | null>(null);
 
@@ -84,24 +87,6 @@ export function NotificationDrawer({
     };
   }, [open, onClose, triggerRef]);
 
-  const notifications = useMemo(
-    () =>
-      NOTIFICATIONS.map((n) => ({
-        ...n,
-        unread: n.unread && !readIds.has(n.id),
-      })),
-    [readIds],
-  );
-
-  const counts = useMemo(() => ({
-    all:     notifications.length,
-    unread:  notifications.filter((n) => n.unread).length,
-    action:  notifications.filter((n) => n.unread && n.actionRequired).length,
-    urgent:  notifications.filter((n) =>
-      n.unread && (n.priority === "urgent" || n.priority === "critical")
-    ).length,
-  }), [notifications]);
-
   const visible = useMemo(() => {
     if (filter === "Unread")  return notifications.filter((n) => n.unread);
     if (filter === "Action")  return notifications.filter((n) => n.unread && n.actionRequired);
@@ -112,17 +97,13 @@ export function NotificationDrawer({
   }, [filter, notifications]);
 
   function handleSelect(n: Notification) {
-    setReadIds((prev) => {
-      const next = new Set(prev);
-      next.add(n.id);
-      return next;
-    });
+    markNotificationRead(n.id);
     onClose();
     setTimeout(() => router.push(n.href), 100);
   }
 
   function markAllRead() {
-    setReadIds(new Set(NOTIFICATIONS.map((n) => n.id)));
+    markAllNotificationsRead();
   }
 
   return (
@@ -337,6 +318,17 @@ function NotificationRow({
               </span>
             )}
           </div>
+        )}
+
+        {/* Action affordance — when the notification requires the user to
+            act, surface the concrete action it routes to (e.g. "Review
+            Queue", "Submit Debrief") so the row reads as a task, not just
+            an FYI. Selecting the row already navigates to n.href. */}
+        {n.actionRequired && n.actionLabel && (
+          <span className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-semibold text-[var(--color-edify-primary)] group-hover:gap-1.5 transition-all">
+            {n.actionLabel}
+            <ArrowRight size={11} />
+          </span>
         )}
       </div>
     </button>
