@@ -26,14 +26,18 @@ export function FundApprovalsHeader() {
           <button
             type="button"
             aria-label="Export"
-            className="inline-flex items-center justify-center gap-1.5 h-10 px-3.5 rounded-xl bg-white border border-[var(--color-edify-border)] hover:bg-slate-50 text-body font-semibold text-slate-700 transition-colors"
+            disabled
+            title="Export is coming soon"
+            className="inline-flex items-center justify-center gap-1.5 h-10 px-3.5 rounded-xl bg-white border border-[var(--color-edify-border)] text-body font-semibold text-slate-700 opacity-50 cursor-not-allowed"
           >
             <Download size={13} />
             <span className="hidden sm:inline">Export</span>
           </button>
           <button
             type="button"
-            className="btn btn-primary inline-flex items-center justify-center gap-1.5 h-10 px-3.5 rounded-xl text-body font-extrabold"
+            disabled
+            title="Bulk approval is coming soon — approve requests individually from the queue below"
+            className="btn btn-primary inline-flex items-center justify-center gap-1.5 h-10 px-3.5 rounded-xl text-body font-extrabold opacity-50 cursor-not-allowed"
           >
             <CheckCircle2 size={13} />
             <span className="truncate">Approve All Valid</span>
@@ -41,7 +45,9 @@ export function FundApprovalsHeader() {
           <button
             type="button"
             aria-label="Filters"
-            className="inline-flex items-center justify-center gap-1.5 h-10 px-3.5 rounded-xl bg-white border border-[var(--color-edify-border)] hover:bg-slate-50 text-body font-semibold text-slate-700 transition-colors"
+            disabled
+            title="Advanced filtering is coming soon"
+            className="inline-flex items-center justify-center gap-1.5 h-10 px-3.5 rounded-xl bg-white border border-[var(--color-edify-border)] text-body font-semibold text-slate-700 opacity-50 cursor-not-allowed"
           >
             <Filter size={13} />
             <span className="hidden sm:inline">Filters</span>

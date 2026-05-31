@@ -274,10 +274,10 @@ export function CountryAnalytics({
             <button className="flex items-center gap-1.5 h-10 px-3 rounded-xl bg-[#1f2733] text-white text-body font-semibold hover:bg-[#28323f]">
               <FileText size={14} /> Generate Country Report
             </button>
-            <button className="flex items-center gap-1.5 h-10 px-3 rounded-xl border border-[var(--color-edify-divider)] bg-white text-body font-semibold text-[#3a4753] hover:bg-[#f8fafb]">
+            <button disabled title="Excel export is coming soon" className="flex items-center gap-1.5 h-10 px-3 rounded-xl border border-[var(--color-edify-divider)] bg-white text-body font-semibold text-[#3a4753] opacity-50 cursor-not-allowed">
               <FileSpreadsheet size={14} className="text-[#6b7785]" /> Export Excel
             </button>
-            <button className="flex items-center gap-1.5 h-10 px-3 rounded-xl border border-[var(--color-edify-divider)] bg-white text-body font-semibold text-[#3a4753] hover:bg-[#f8fafb]">
+            <button disabled title="PDF download is coming soon" className="flex items-center gap-1.5 h-10 px-3 rounded-xl border border-[var(--color-edify-divider)] bg-white text-body font-semibold text-[#3a4753] opacity-50 cursor-not-allowed">
               <Download size={14} className="text-[#6b7785]" /> Download PDF
             </button>
             <button className="grid place-items-center h-10 w-10 rounded-xl border border-[var(--color-edify-divider)] bg-white text-[#6b7785] hover:bg-[#f8fafb]">
@@ -301,7 +301,7 @@ export function CountryAnalytics({
               vs Apr 14 – May 11
               <ChevronDown size={13} className="text-muted" />
             </button>
-            <button className="flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-[var(--color-edify-divider)] bg-white text-[11.5px] font-semibold text-[#3a4753] hover:bg-[#f8fafb] ml-auto">
+            <button disabled title="Advanced filtering is coming soon" className="flex items-center gap-1.5 h-9 px-3.5 rounded-lg border border-[var(--color-edify-divider)] bg-white text-[11.5px] font-semibold text-[#3a4753] opacity-50 cursor-not-allowed ml-auto">
               <Filter size={13} className="text-[#6b7785]" /> Filters
             </button>
           </div>

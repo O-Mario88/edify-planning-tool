@@ -245,11 +245,11 @@ export function PlannedActivitiesCard() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button type="button" className="btn">
+          <button type="button" disabled title="Filtering this list is coming soon" className="btn opacity-50 cursor-not-allowed">
             <FilterIcon size={14} />
             Filters
           </button>
-          <button type="button" className="btn">
+          <button type="button" disabled title="Column options are coming soon" className="btn opacity-50 cursor-not-allowed">
             <Columns3 size={14} />
             Columns
           </button>

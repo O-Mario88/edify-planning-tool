@@ -71,15 +71,30 @@ export function SchoolsOverviewTable({
       actions={
         toolbar ?? (
           <div className="flex items-center gap-2">
-            <button type="button" className="btn btn-sm">
+            <button
+              type="button"
+              disabled
+              title="Filtering this table is coming soon"
+              className="btn btn-sm opacity-50 cursor-not-allowed"
+            >
               <ListFilter size={12} />
               Filters
             </button>
-            <button type="button" className="btn btn-sm">
+            <button
+              type="button"
+              disabled
+              title="Column options are coming soon"
+              className="btn btn-sm opacity-50 cursor-not-allowed"
+            >
               <Columns3 size={12} />
               Columns
             </button>
-            <button type="button" className="btn btn-sm">
+            <button
+              type="button"
+              disabled
+              title="Export is coming soon"
+              className="btn btn-sm opacity-50 cursor-not-allowed"
+            >
               <Download size={12} />
               Export
             </button>
