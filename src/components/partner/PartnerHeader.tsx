@@ -1,31 +1,23 @@
-"use client";
+// PartnerHeader — async SERVER adapter over PageHeader for the partner
+// dashboard. Resolves the signed-in partner, computes their scoped
+// FilterScope, and renders the live <HeaderFilterBar> (FY/Quarter + the
+// geography the partner is allowed to see). The old decorative pills and
+// the dead "Filters" button are gone — the filter bar carries its own
+// Advanced drawer.
 
-// PartnerHeader — client-side wrapper around PageHeader so the partner
-// route (a server component) can pass icon-typed filters without
-// tripping the "Functions cannot be passed to Client Components"
-// boundary. All chrome — title + subtitle + filters + Filters button
-// + identity — flows through here.
-
-import { Calendar, Filter } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { HeaderFilterBar } from "@/components/shell/HeaderFilterBar";
+import { getCurrentUser } from "@/lib/auth";
+import { getFilterScope } from "@/lib/filters/scope-service";
 
-export function PartnerHeader() {
+export async function PartnerHeader() {
+  const user = await getCurrentUser();
+  const scope = getFilterScope({ user });
   return (
     <PageHeader
       title="Partner"
       subtitle="Schedule assigned school support, submit evidence, track confirmation, and follow payment progress."
-      filters={[
-        { Icon: Calendar, label: "FY 2026" },
-        { Icon: Calendar, label: "Week 3 · May 12 - May 18" },
-      ]}
-      actions={
-        <button
-          type="button"
-          className="inline-flex items-center gap-1.5 h-10 px-3 rounded-xl bg-white border border-[var(--color-edify-border)] text-body font-semibold hover:bg-[var(--color-edify-soft)]/40"
-        >
-          <Filter size={13} className="text-[var(--color-edify-muted)]" /> Filters
-        </button>
-      }
+      filterBar={<HeaderFilterBar scope={scope} />}
     />
   );
 }
