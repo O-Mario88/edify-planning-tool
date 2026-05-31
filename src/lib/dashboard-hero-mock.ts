@@ -165,8 +165,8 @@ export const accountantHeroContent: DashboardHeroContent = {
 // ────────── Impact Assessment — M&E ──────────
 
 export const impactHeroContent: DashboardHeroContent = {
-  title:     "Impact & M&E Dashboard",
-  pillLabel: "Impact View",
+  title:     "Main Dashboard",
+  pillLabel: "Impact & M&E",
   filters: {
     month:          "May 2025",
     monthCaption:   "This Month",

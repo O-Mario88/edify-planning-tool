@@ -1,5 +1,7 @@
 import { CommandStack } from "@/components/actions/CommandStack";
 import { DashboardPageHeader } from "@/components/dashboards/DashboardPageHeader";
+import { DonorImpactReachCard } from "@/components/director/DonorImpactReachCard";
+import { getDonorMetricSnapshot } from "@/lib/donor-metrics";
 import { ImpactKpiRow } from "@/components/impact/ImpactKpiRow";
 import { ProgramOverviewCard } from "@/components/impact/ProgramOverviewCard";
 import { DataVerificationFunnelCard } from "@/components/impact/DataVerificationFunnelCard";
@@ -27,6 +29,15 @@ export default async function ImpactDashboard() {
   if (!["ImpactAssessment", "Admin"].includes(user.role)) {
     redirect(ROLE_REDIRECT[user.role]);
   }
+
+  // The verification-first donor cut: which reach/training/impact figures
+  // are donor-ready vs still pending M&E verification. Same builder as
+  // /donor-reporting so IA's count and the published report never diverge.
+  const donorSnapshot = getDonorMetricSnapshot({
+    role: "ImpactAssessment",
+    userName: user.name,
+    generatedBy: user.name,
+  });
 
   return (
     <ResponsiveDashboard
@@ -78,6 +89,18 @@ export default async function ImpactDashboard() {
                   <DataVerificationFunnelCard />
                 </div>
               </div>
+            </section>
+
+            {/* Section 3b — Donor-ready counts.  The verified output of
+                the pipeline above: what M&E can sign off for donors. */}
+            <section className="space-y-3">
+              <SectionHeader
+                tier="strategic"
+                eyebrow="Donor-ready"
+                title="What's Cleared for Donor Reporting"
+                description="The reach, training, and improvement figures verification has signed off — pending records stay flagged and out of the headline totals. Each tile opens the full report."
+              />
+              <DonorImpactReachCard snapshot={donorSnapshot} />
             </section>
 
             {/* Section 4 — Quality & partners.  Operational rhythm.
