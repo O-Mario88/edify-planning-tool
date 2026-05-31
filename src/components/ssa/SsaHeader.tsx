@@ -1,68 +1,26 @@
-"use client";
+// SsaHeader — SSA page chrome on the CANONICAL PageHeader (migrated off
+// the EntityHeader system). Async server component: resolves the user,
+// computes the role-scoped FilterScope, and renders a live
+// <HeaderFilterBar> (FY/Quarter/Region/District + Advanced drawer) plus
+// the page identity. Its bespoke decorative LabeledPills + dead Reset are
+// retired — the live bar carries real, URL-synced filters and its own Reset.
 
-import {
-  Calendar,
-  CalendarRange,
-  CalendarClock,
-  ChevronDown,
-  MapPin,
-  Building2,
-} from "lucide-react";
-import { EntityHeader } from "@/components/ui/EntityHeader";
-import { ssaHeader, ssaUser, ssaNotificationCount } from "@/lib/ssa-mock";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { HeaderFilterBar } from "@/components/shell/HeaderFilterBar";
+import { ssaHeader } from "@/lib/ssa-mock";
+import { getCurrentUser } from "@/lib/auth";
+import { getFilterScope } from "@/lib/filters/scope-service";
 
-// Thin adapter over <EntityHeader/>. SsaHero used to own the title, but
-// it's been retired in the global hero removal pass — the header now
-// carries the page identity (title + subtitle) and full chrome
-// (filters, search, mail, notifications, profile).
-export function SsaHeader() {
+export async function SsaHeader() {
+  const user = await getCurrentUser();
+  const scope = getFilterScope({ user });
+
   return (
-    <EntityHeader
+    <PageHeader
       title={ssaHeader.title}
       subtitle={ssaHeader.subtitle}
-      filters={
-        <>
-          <LabeledPill label="Financial Year" value={ssaHeader.filters.financialYear} Icon={CalendarClock} />
-          <LabeledPill label="Quarter"        value={ssaHeader.filters.quarter}       Icon={CalendarRange} />
-          <LabeledPill label="Region"         value={ssaHeader.filters.region}        Icon={MapPin} />
-          <LabeledPill label="District"       value={ssaHeader.filters.district}      Icon={Building2} />
-          <button
-            type="button"
-            className="text-[11.5px] font-semibold text-[var(--color-edify-primary)] hover:underline inline-flex items-center gap-1"
-          >
-            <Calendar size={11} />
-            Reset
-          </button>
-        </>
-      }
-      search={{ placeholder: ssaHeader.searchPlaceholder }}
-      messages={{ count: 3 }}
-      notifications={{ count: ssaNotificationCount }}
-      profile={{ name: ssaUser.name, initials: ssaUser.initials }}
+      filterBar={<HeaderFilterBar scope={scope} />}
+      searchPlaceholder={ssaHeader.searchPlaceholder}
     />
-  );
-}
-
-function LabeledPill({
-  label,
-  value,
-  Icon,
-}: {
-  label: string;
-  value: string;
-  Icon: React.ComponentType<{ size?: number; className?: string }>;
-}) {
-  return (
-    <button
-      type="button"
-      className="h-10 pl-3 pr-3 rounded-xl border border-[var(--color-edify-border)] bg-white flex items-center gap-2 text-[13px] min-w-[150px]"
-    >
-      <Icon size={14} className="text-[var(--color-edify-muted)]" />
-      <span className="leading-tight text-left flex-1">
-        <span className="block text-[10px] text-[var(--color-edify-muted)] font-medium">{label}</span>
-        <span className="block font-semibold -mt-[1px]">{value}</span>
-      </span>
-      <ChevronDown size={12} className="text-[var(--color-edify-muted)]" />
-    </button>
   );
 }
