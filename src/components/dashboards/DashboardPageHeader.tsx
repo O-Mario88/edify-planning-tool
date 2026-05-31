@@ -1,33 +1,25 @@
-"use client";
-
-// DashboardPageHeader — thin role-aware adapter over the canonical
-// PageHeader.
+// DashboardPageHeader — role-aware adapter over the canonical PageHeader.
 //
-// Replaces the chrome half of DashboardHeroServer (title · filters ·
-// MessageBell · NotificationBell · Avatar) after the global hero
-// removal pass retired DashboardHero. The hero data lives in
-// dashboard-hero-mock.ts; we read just the title + filter labels and
-// hand them to PageHeader so every dashboard keeps its standard top
-// chrome without re-rendering the dark gradient hero band.
+// Now a SERVER component: it resolves the signed-in user and computes the
+// role-scoped FilterScope, then hands a live <HeaderFilterBar> to
+// PageHeader. The decorative static filter pills from dashboard-hero-mock
+// are gone — every dashboard's FY/Quarter/Region/District/… filters are
+// real, role-scoped, and URL-synced.
 
-import { Calendar, GitCompare, MapPin } from "lucide-react";
-import { PageHeader, type PageHeaderFilter } from "@/components/ui/PageHeader";
-import {
-  heroContentForRole,
-  type HeroRole,
-} from "@/lib/dashboard-hero-mock";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { HeaderFilterBar } from "@/components/shell/HeaderFilterBar";
+import { heroContentForRole, type HeroRole } from "@/lib/dashboard-hero-mock";
+import { getCurrentUser } from "@/lib/auth";
+import { getFilterScope } from "@/lib/filters/scope-service";
 
-export function DashboardPageHeader({ role }: { role: HeroRole }) {
+export async function DashboardPageHeader({ role }: { role: HeroRole }) {
   const hero = heroContentForRole(role);
-  const filters: PageHeaderFilter[] = [
-    { Icon: Calendar,   label: hero.filters.month   },
-    { Icon: GitCompare, label: hero.filters.compare },
-    { Icon: MapPin,     label: hero.filters.region  },
-  ];
+  const user = await getCurrentUser();
+  const scope = getFilterScope({ user });
   return (
     <PageHeader
       title={hero.title}
-      filters={filters}
+      filterBar={<HeaderFilterBar scope={scope} />}
       searchPlaceholder="Search everything…"
     />
   );

@@ -55,8 +55,13 @@ export type PageHeaderProps = {
   titleBadge?: ReactNode;
   /** Date / period label surfaced to the MobileTopBar. */
   dateLabel?: string;
-  /** Pill-shaped filter chips on the right side. */
+  /** Pill-shaped filter chips on the right side. Decorative/legacy —
+   *  prefer `filterBar` for live, URL-synced filters. */
   filters?:  PageHeaderFilter[];
+  /** Live filter bar (e.g. <HeaderFilterBar scope={…} />). Rendered in
+   *  the right cluster before search; supersedes the decorative
+   *  `filters` pills when provided. */
+  filterBar?: ReactNode;
   /** When set, a search input is rendered with this placeholder. */
   searchPlaceholder?: string;
   /** Custom actions appended *after* filters/search but before the
@@ -97,6 +102,7 @@ export function PageHeader({
   titleBadge,
   dateLabel,
   filters,
+  filterBar,
   searchPlaceholder,
   actions,
   meta,
@@ -113,6 +119,7 @@ export function PageHeader({
   useSetPageTitle(title, dateLabel);
 
   const hasRightCluster =
+    Boolean(filterBar) ||
     (filters && filters.length > 0) ||
     Boolean(searchPlaceholder) ||
     Boolean(actions) ||
@@ -192,9 +199,12 @@ export function PageHeader({
             avatar/bell/message always sit at the far edge. */}
         {hasRightCluster && (
           <div className="flex items-center gap-2 flex-wrap shrink-0 w-full lg:w-auto lg:ml-auto">
-            {filters?.map((f, i) => (
-              <FilterPill key={`${f.label}-${i}`} {...f} />
-            ))}
+            {/* Live filter bar supersedes the decorative pills. */}
+            {filterBar
+              ? filterBar
+              : filters?.map((f, i) => (
+                  <FilterPill key={`${f.label}-${i}`} {...f} />
+                ))}
 
             {/* Search slot — *always* present on desktop, so every page
                 gets the same premium chrome (filters + long search +
