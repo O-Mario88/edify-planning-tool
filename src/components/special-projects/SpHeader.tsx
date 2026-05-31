@@ -1,49 +1,25 @@
-"use client";
+// SpHeader — Special Projects chrome on the CANONICAL PageHeader
+// (migrated off the EntityHeader system — the last consumer). Async
+// server component: resolves the user, computes the role-scoped
+// FilterScope, and renders the live <HeaderFilterBar> instead of the old
+// decorative month/region/projectType/partner pills.
 
-import { Calendar, MapPin, Layers, Handshake, ChevronDown } from "lucide-react";
-import { EntityHeader } from "@/components/ui/EntityHeader";
-import {
-  specialProjectsHeader,
-  specialProjectsHeaderUser,
-  specialProjectsNotificationCount,
-} from "@/lib/special-projects-mock";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { HeaderFilterBar } from "@/components/shell/HeaderFilterBar";
+import { specialProjectsHeader } from "@/lib/special-projects-mock";
+import { getCurrentUser } from "@/lib/auth";
+import { getFilterScope } from "@/lib/filters/scope-service";
 
-export function SpHeader() {
+export async function SpHeader() {
+  const user = await getCurrentUser();
+  const scope = getFilterScope({ user });
+
   return (
-    <EntityHeader
+    <PageHeader
       title={specialProjectsHeader.title}
       subtitle={specialProjectsHeader.subtitle}
-      filters={
-        <>
-          <FilterPill value={specialProjectsHeader.filters.month}       Icon={Calendar} />
-          <FilterPill value={specialProjectsHeader.filters.region}      Icon={MapPin} />
-          <FilterPill value={specialProjectsHeader.filters.projectType} Icon={Layers} />
-          <FilterPill value={specialProjectsHeader.filters.partner}     Icon={Handshake} />
-        </>
-      }
-      search={{ placeholder: specialProjectsHeader.searchPlaceholder }}
-      messages={{ count: 3 }}
-      notifications={{ count: specialProjectsNotificationCount }}
-      profile={{ name: specialProjectsHeaderUser.name, initials: specialProjectsHeaderUser.initials }}
+      filterBar={<HeaderFilterBar scope={scope} />}
+      searchPlaceholder={specialProjectsHeader.searchPlaceholder}
     />
-  );
-}
-
-function FilterPill({
-  value,
-  Icon,
-}: {
-  value: string;
-  Icon: React.ComponentType<{ size?: number; className?: string }>;
-}) {
-  return (
-    <button
-      type="button"
-      className="h-10 pl-3 pr-3 rounded-xl border border-[var(--color-edify-border)] bg-white flex items-center gap-2 text-[13px] min-w-[150px]"
-    >
-      <Icon size={14} className="text-[var(--color-edify-muted)]" />
-      <span className="font-semibold flex-1 text-left whitespace-nowrap">{value}</span>
-      <ChevronDown size={12} className="text-[var(--color-edify-muted)]" />
-    </button>
   );
 }
