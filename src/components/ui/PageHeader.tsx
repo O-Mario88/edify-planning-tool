@@ -1,7 +1,8 @@
 "use client";
 
 // PageHeader — premium full-width page chrome. The visual lead of
-// every page.
+// every page. Identity chrome (message · notification · avatar) is
+// rendered via the shared <IdentityCluster>.
 //
 // Built to match the multi-billion design reference: big extrabold
 // title, single-line subtitle, right cluster of filter pills + search
@@ -21,18 +22,14 @@
 // Pages compose this with their own `filters` + `actions` rather than
 // re-rolling chrome.
 
-import Link from "next/link";
 import { type ReactNode } from "react";
 import {
   Search,
   ChevronDown,
-  MessageSquare,
   type LucideIcon,
 } from "lucide-react";
 import { BackButton } from "@/components/ui/BackButton";
-import { NotificationBell } from "@/components/notifications/NotificationBell";
-import { MessageBell } from "@/components/messages/MessageBell";
-import { AvatarMenu } from "@/components/shell/AvatarMenu";
+import { IdentityCluster } from "@/components/shell/IdentityCluster";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import {
   useSetPageTitle,
@@ -247,11 +244,7 @@ export function PageHeader({
                 the row so message · bell · avatar always anchor right
                 regardless of filter / search width. */}
             {!hideIdentityChrome && (
-              <div className="hidden lg:flex items-center gap-2.5 shrink-0 ml-auto">
-                <MessageBell variant="default" />
-                <NotificationBell variant="default" />
-                <AvatarMenu variant="default" />
-              </div>
+              <IdentityCluster variant="default" className="hidden lg:flex ml-auto" />
             )}
           </div>
         )}

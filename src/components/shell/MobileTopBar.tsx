@@ -22,11 +22,9 @@
 // in-page PageHeader.
 
 import { useState, useEffect } from "react";
-import { Menu, ChevronDown, Search, type LucideIcon } from "lucide-react";
+import { Menu, ChevronDown, type LucideIcon } from "lucide-react";
 import { usePageTitle } from "@/components/shell/PageTitleContext";
-import { AvatarMenu } from "@/components/shell/AvatarMenu";
-import { NotificationBell } from "@/components/notifications/NotificationBell";
-import { MessageBell } from "@/components/messages/MessageBell";
+import { IdentityCluster } from "@/components/shell/IdentityCluster";
 import { cn } from "@/lib/utils";
 
 export function MobileTopBar({
@@ -123,31 +121,12 @@ export function MobileTopBar({
         </button>
       )}
 
-      {/* Magnifier opens the universal ⌘K command palette on mobile —
-          dispatches a custom event the CommandPalette listens for so
-          we don't have to thread state across the shell. Tightened
-          to h-9 w-9 (36px) so the title gets more breathing room. */}
-      <button
-        type="button"
-        aria-label="Search"
-        onClick={() => window.dispatchEvent(new CustomEvent("edify:open-command-palette"))}
-        className="grid place-items-center h-9 w-9 rounded-xl text-white hover:bg-white/10 active:bg-white/[0.14] transition-colors shrink-0 pressable"
-      >
-        <Search size={16} />
-      </button>
-
-      {/* Messages — completes the canonical chrome cluster (avatar +
-          bell + message + search) on every authenticated mobile page.
-          Hidden on the narrowest viewports (<sm) to keep the title
-          breathable; appears at 360px+ where there's room.  Opens the
-          floating MessageDrawer instead of navigating away. */}
-      <div className="hidden sm:block">
-        <MessageBell variant="dark" />
-      </div>
-
-      <NotificationBell variant="dark" />
-
-      <AvatarMenu variant="dark" />
+      {/* Identity chrome — message · notification · avatar, from the one
+          shared cluster. The standalone search magnifier was removed: the
+          page's full-width search bar (PageHeader, below this dark bar) is
+          the single search entry on mobile/tablet, per the spec's
+          "one search entry point" rule. */}
+      <IdentityCluster variant="dark" />
     </header>
   );
 }
