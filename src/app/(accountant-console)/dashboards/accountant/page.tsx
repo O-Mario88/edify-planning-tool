@@ -2,8 +2,21 @@ import { redirect } from "next/navigation";
 import { AccountantConsoleDashboard } from "@/components/accountant-console/AccountantConsoleDashboard";
 import { CommandStack } from "@/components/actions/CommandStack";
 import { AccountantPartnerPaymentsQueue } from "@/components/partner/AccountantPartnerPaymentsQueue";
+import { VerificationPaymentFunnel } from "@/components/cceo/VerificationPaymentFunnel";
+import type { CceoFunnelStage } from "@/lib/cceo-mock";
 import { getCurrentUser } from "@/lib/auth";
 import { ROLE_REDIRECT } from "@/lib/auth-public";
+
+// The finance leg of the workflow — where cleared money is on its way to
+// paid. Largest stage-to-stage drop (here: Cleared → Netsuite ID) is the
+// bottleneck the funnel calls out, matching the spec's Netsuite emphasis.
+const ACCOUNTANT_PAYMENT_STAGES: CceoFunnelStage[] = [
+  { key: "iaVerified",   label: "IA verified",         count: 18, href: "/approvals" },
+  { key: "toAccountant", label: "Sent to accountant",  count: 15, href: "/disbursements" },
+  { key: "cleared",      label: "Cleared",             count: 13, href: "/disbursements" },
+  { key: "netsuite",     label: "Netsuite ID entered", count: 8,  href: "/disbursements" },
+  { key: "paid",         label: "Paid",                count: 7,  href: "/disbursements" },
+];
 
 // /dashboards/accountant — Program Accountant Console.
 //
@@ -22,6 +35,13 @@ export default async function AccountantConsolePage() {
           workflow. Only PL-approved requests appear here (gate
           enforced in partner-workflow.REQUIRED_PATH). */}
       <AccountantPartnerPaymentsQueue />
+      {/* Payment pipeline — IA verified → accountant → cleared → Netsuite
+          ID → paid. Surfaces where money is stuck before the queues. */}
+      <VerificationPaymentFunnel
+        stages={ACCOUNTANT_PAYMENT_STAGES}
+        title="Payment Pipeline"
+        subtitle="IA verified → Sent to accountant → Cleared → Netsuite ID → Paid"
+      />
       <AccountantConsoleDashboard />
     </div>
   );

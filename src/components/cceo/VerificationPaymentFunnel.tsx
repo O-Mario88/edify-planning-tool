@@ -9,11 +9,22 @@
 import Link from "next/link";
 import { ArrowRight, AlertTriangle, GitMerge } from "lucide-react";
 import { SectionCard } from "@/components/ui/primitives";
-import { cceoVerificationFunnel } from "@/lib/cceo-mock";
+import { cceoVerificationFunnel, type CceoFunnelStage } from "@/lib/cceo-mock";
 import { cn } from "@/lib/utils";
 
-export function VerificationPaymentFunnel() {
-  const stages = cceoVerificationFunnel;
+// Defaults to the CCEO verification→payment chain, but any role can pass
+// its own ordered stages (e.g. the accountant's finance leg) plus a
+// title/subtitle. The bottleneck (largest drop) is computed from whatever
+// stages are supplied.
+export function VerificationPaymentFunnel({
+  stages = cceoVerificationFunnel,
+  title = "Verification & Payment Pipeline",
+  subtitle = "Completed → Evidence → Salesforce ID → PL → IA → Accountant → Paid",
+}: {
+  stages?: CceoFunnelStage[];
+  title?: string;
+  subtitle?: string;
+} = {}) {
   const max = stages[0]?.count || 1;
 
   // Bottleneck = the largest drop between consecutive stages.
@@ -31,8 +42,8 @@ export function VerificationPaymentFunnel() {
 
   return (
     <SectionCard
-      title="Verification & Payment Pipeline"
-      subtitle="Completed → Evidence → Salesforce ID → PL → IA → Accountant → Paid"
+      title={title}
+      subtitle={subtitle}
       icon={<GitMerge size={13} />}
     >
       <div className="space-y-1.5">

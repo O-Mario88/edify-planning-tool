@@ -141,8 +141,8 @@ export const rvpHeroContent: DashboardHeroContent = {
 // ────────── Program Accountant — Finance ──────────
 
 export const accountantHeroContent: DashboardHeroContent = {
-  title:     "Finance Dashboard",
-  pillLabel: "Finance View",
+  title:     "Main Dashboard",
+  pillLabel: "Finance",
   filters: {
     month:          "May 2025",
     monthCaption:   "This Month",
