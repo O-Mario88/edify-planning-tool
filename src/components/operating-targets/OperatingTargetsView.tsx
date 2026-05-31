@@ -3,8 +3,6 @@
 import { useMemo } from "react";
 import {
   ChevronRight,
-  Calendar,
-  Filter,
   Download,
   Info,
   Building2,
@@ -37,6 +35,8 @@ import {
 } from "@/lib/operating-targets-mock";
 import { HealthPill } from "@/components/ui/Pill";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { HeaderFilterBar } from "@/components/shell/HeaderFilterBar";
+import type { FilterScope } from "@/lib/filters/types";
 import { cn } from "@/lib/utils";
 
 // Resolve the icon key (a plain string carried across the
@@ -537,34 +537,30 @@ function TopFocusCard({ items }: { items: OperatingTargets["topFocus"] }) {
 // which removes the duplicate narrow-title-with-wide-chrome strip
 // that previously appeared mid-page.
 
-export function OperatingTargetsPageHeader({ data }: { data: OperatingTargets }) {
+export function OperatingTargetsPageHeader({
+  data,
+  scope,
+}: {
+  data: OperatingTargets;
+  /** Role-scoped filter options, computed server-side by the route and
+   *  passed down (this component is client). When omitted, the header
+   *  renders without the filter bar. */
+  scope?: FilterScope;
+}) {
   return (
     <PageHeader
       title={data.scope}
       subtitle="Track your performance across all time periods. Monthly progress rolls up to Quarterly, Mid Year, and FY targets."
-      filters={[
-        { Icon: Calendar, label: data.fiscalYearLabel },
-        { Icon: Calendar, label: data.periodLabel },
-      ]}
+      filterBar={scope ? <HeaderFilterBar scope={scope} /> : undefined}
       actions={
-        <>
-          <button
-            type="button"
-            disabled
-            title="Filtering this view is coming soon"
-            className="inline-flex items-center gap-1.5 h-10 px-3 rounded-xl bg-white border border-[var(--color-edify-border)] t-body font-semibold opacity-50 cursor-not-allowed"
-          >
-            <Filter size={13} className="text-[var(--color-edify-muted)]" /> Filters
-          </button>
-          <button
-            type="button"
-            disabled
-            title="Report export is coming soon"
-            className="inline-flex items-center gap-1.5 h-10 px-3.5 rounded-xl bg-[var(--color-edify-primary)] text-white t-body font-semibold opacity-50 cursor-not-allowed"
-          >
-            <Download size={13} /> Export Report
-          </button>
-        </>
+        <button
+          type="button"
+          disabled
+          title="Report export is coming soon"
+          className="inline-flex items-center gap-1.5 h-10 px-3.5 rounded-xl bg-[var(--color-edify-primary)] text-white t-body font-semibold opacity-50 cursor-not-allowed"
+        >
+          <Download size={13} /> Export Report
+        </button>
       }
     />
   );

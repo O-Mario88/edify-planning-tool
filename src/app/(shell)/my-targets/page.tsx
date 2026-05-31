@@ -6,6 +6,7 @@ import { CommandStack } from "@/components/actions/CommandStack";
 import { StaffPartnerMonitoring } from "@/components/partner/StaffPartnerMonitoring";
 import { cceoOperatingTargets, plOperatingTargets } from "@/lib/operating-targets-mock";
 import { getCurrentUser } from "@/lib/auth";
+import { getFilterScope } from "@/lib/filters/scope-service";
 import { WorkloadContextCallout } from "@/components/performance/WorkloadContextCallout";
 import { buildFairMatrix, computePortfolioComplexity } from "@/lib/performance/fwi-engine";
 import { fairMatrixInputsForTeam } from "@/lib/performance/fwi-mock";
@@ -20,6 +21,8 @@ import { fairMatrixInputsForTeam } from "@/lib/performance/fwi-mock";
 //   • Other roles → CPL-style My Targets view, unchanged.
 export default async function MyTargetsPage() {
   const user = await getCurrentUser();
+  // Role-scoped filter options for the live header filter bar.
+  const scope = getFilterScope({ user });
 
   if (user.role === "CCEO") {
     // Look up this staff member's FWI row from the team matrix so the
@@ -39,7 +42,7 @@ export default async function MyTargetsPage() {
             Lives ABOVE the welcome hero so title · period filters ·
             Export · search · message · bell · avatar all sit in one
             row, not a duplicate mid-page strip. */}
-        <OperatingTargetsPageHeader data={cceoOperatingTargets} />
+        <OperatingTargetsPageHeader data={cceoOperatingTargets} scope={scope} />
         <div className="px-4 sm:px-5 md:px-6 pb-24 md:pb-6 space-y-4">
           <CommandStack user={user} />
           {me && contributions ? (
@@ -65,7 +68,7 @@ export default async function MyTargetsPage() {
   if (user.role === "CountryProgramLead") {
     return (
       <>
-        <OperatingTargetsPageHeader data={plOperatingTargets} />
+        <OperatingTargetsPageHeader data={plOperatingTargets} scope={scope} />
         <div className="px-4 sm:px-5 md:px-6 pb-24 md:pb-6 space-y-4">
           <CommandStack user={user} />
           <StaffPartnerMonitoring />
