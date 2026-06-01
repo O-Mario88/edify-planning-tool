@@ -9,6 +9,7 @@ import { labelForRole } from "@/lib/intake/staff-creation-core";
 import { intakeSchools } from "@/lib/intake/intake-mock";
 import { AddStaffControl } from "@/components/admin/AddStaffControl";
 import { AssignSchoolsControl } from "@/components/admin/AssignSchoolsControl";
+import { PrimaryDistrictControl } from "@/components/admin/PrimaryDistrictControl";
 
 // CD / HR own staff onboarding; Admin retained for the demo.
 const STAFF_ADMIN_ROLES = ["CountryDirector", "HumanResource", "Admin"];
@@ -21,6 +22,7 @@ export default async function AdminUsersIndex() {
   const me = await getCurrentUser();
   const canAdd = STAFF_ADMIN_ROLES.includes(me.role);
   const canAssignSchools = ["ImpactAssessment", "Admin"].includes(me.role);
+  const canSetPrimaryDistrict = STAFF_ADMIN_ROLES.includes(me.role);
   const assignableSchools = intakeSchools.map((s) => ({
     schoolId: s.schoolId, schoolName: s.schoolName, district: s.district, assignedCceo: s.assignedCceo,
   }));
@@ -77,6 +79,9 @@ export default async function AdminUsersIndex() {
                 </div>
                 {canAssignSchools && s.role === "CCEO" && r.met.schools !== true && (
                   <AssignSchoolsControl staffId={s.staffId} staffName={s.name} schools={assignableSchools} />
+                )}
+                {canSetPrimaryDistrict && r.met.schools === true && r.met.primaryDistrict !== true && (
+                  <PrimaryDistrictControl staffId={s.staffId} staffName={s.name} region={s.region} defaultDistrict={s.district} />
                 )}
               </div>
             );

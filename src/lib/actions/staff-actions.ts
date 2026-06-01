@@ -15,6 +15,7 @@ import {
   addOrgStaff,
   createdOrgStaff,
   orgStaff,
+  setStaffPrimaryDistrict,
   supervisorRoleFor,
   type OrgStaff,
   type StaffStatus,
@@ -100,4 +101,37 @@ export async function createStaff(input: NewStaffInput): Promise<StaffActionResu
 
   revalidatePath("/admin/users");
   return { ok: true, id: staffId, status };
+}
+
+// ─── setPrimaryDistrict (Phase 5 — clears the primary-district gate) ──
+//
+// The home/base district (no accommodation). Setting it auto-classifies every
+// other assigned district as secondary and unblocks budget calculation. Settable
+// by CD / HR / Admin or the staff member themselves.
+
+export type SetPrimaryDistrictResult =
+  | { ok: false; reason: "FORBIDDEN" | "STAFF_NOT_FOUND" | "INVALID_INPUT" }
+  | { ok: true; staffId: string };
+
+export async function setPrimaryDistrict(staffId: string, districtId: string): Promise<SetPrimaryDistrictResult> {
+  const user = await getCurrentUser();
+  const isSelf = user.staffId === staffId;
+  if (!STAFF_ADMIN_ROLES.has(user.role) && !isSelf) return { ok: false, reason: "FORBIDDEN" };
+  if (!districtId?.trim()) return { ok: false, reason: "INVALID_INPUT" };
+
+  const staff = setStaffPrimaryDistrict(staffId, districtId.trim());
+  if (!staff) return { ok: false, reason: "STAFF_NOT_FOUND" };
+
+  emitAudit({
+    action: "staff.primaryDistrictSet",
+    subjectKind: "Staff",
+    subjectId: staffId,
+    actorId: user.staffId,
+    actorRole: user.role,
+    actorName: user.name,
+    payload: { staffName: staff.name, primaryDistrictId: districtId.trim() },
+  });
+  revalidatePath("/admin/users");
+  revalidatePath("/planning");
+  return { ok: true, staffId };
 }

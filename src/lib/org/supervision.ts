@@ -35,6 +35,9 @@ export type OrgStaff = {
   // ── Optional fields populated for runtime-created staff (CD/HR Add Staff) ──
   email?: string;
   district?: string;
+  /** Home/base district — no accommodation; all other assigned districts are
+   *  secondary. Gates budget calculation. */
+  primaryDistrictId?: string;
   jobTitle?: string;
   status?: StaffStatus;
   createdBy?: string;
@@ -99,6 +102,20 @@ export function addOrgStaff(s: OrgStaff): OrgStaff {
 /** Staff created at runtime (newest first) — for the directory + onboarding views. */
 export function createdOrgStaff(): OrgStaff[] {
   return [...RUNTIME_STAFF].reverse();
+}
+
+/** Set a (created) staff member's primary/home district. */
+export function setStaffPrimaryDistrict(staffId: string, districtId: string): OrgStaff | undefined {
+  const s = BY_ID.get(staffId);
+  if (s) s.primaryDistrictId = districtId;
+  return s;
+}
+
+/** Set a (created) staff member's supervisor. */
+export function setStaffSupervisor(staffId: string, supervisorId: string | null): OrgStaff | undefined {
+  const s = BY_ID.get(staffId);
+  if (s) s.supervisorId = supervisorId;
+  return s;
 }
 
 export function orgStaff(staffId: string): OrgStaff | undefined {

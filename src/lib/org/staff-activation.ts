@@ -53,7 +53,7 @@ function requirementMet(key: RequirementKey, staffId: string, staffName: string)
   switch (key) {
     case "supervisor": return !!orgStaff(staffId)?.supervisorId;
     case "schools": return schoolsAssignedToName(staffName) > 0;
-    case "primaryDistrict": return !!getStaffProfile(staffId)?.primaryDistrictId;
+    case "primaryDistrict": return !!(orgStaff(staffId)?.primaryDistrictId || getStaffProfile(staffId)?.primaryDistrictId);
     case "targetProfile": return hasTargetProfile(staffId);
   }
 }
