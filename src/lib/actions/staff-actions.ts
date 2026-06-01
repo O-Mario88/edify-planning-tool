@@ -16,11 +16,12 @@ import {
   createdOrgStaff,
   orgStaff,
   setStaffPrimaryDistrict,
+  setStaffSupervisor,
   supervisorRoleFor,
   type OrgStaff,
   type StaffStatus,
 } from "@/lib/org/supervision";
-import { validateNewStaff, type NewStaffInput } from "@/lib/intake/staff-creation-core";
+import { validateNewStaff, labelForRole, type NewStaffInput } from "@/lib/intake/staff-creation-core";
 import { addStaffTargetProfile } from "@/lib/targets/staff-target-profile";
 import { canActivateStaff } from "@/lib/org/staff-activation";
 import type { EdifyRole } from "@/lib/auth";
@@ -199,4 +200,66 @@ export async function assignTargetProfile(
 
   revalidatePath("/admin/users");
   return { ok: true, staffId, activated };
+}
+
+// ─── assignSupervisor (Phase 3 — standalone re-assignment + audit/history) ──
+//
+// Supervisor is captured at creation; this changes it later (transfer, workload
+// balancing, restructuring). CD / RVP / HR / Admin only. The new supervisor must
+// hold the role one step up the chain. Audit captures old→new + reason so the
+// supervision-change history is reconstructable from the audit log.
+
+const SUPERVISOR_ASSIGN_ROLES = new Set<string>(["CountryDirector", "RVP", "HumanResource", "Admin"]);
+
+export type AssignSupervisorResult =
+  | { ok: false; reason: "FORBIDDEN" | "STAFF_NOT_FOUND" | "INVALID_INPUT" | "WRONG_LEVEL" }
+  | { ok: true; staffId: string };
+
+export async function assignSupervisor(
+  input: { staffId: string; newSupervisorId: string; reason: string; effectiveDate?: string },
+): Promise<AssignSupervisorResult> {
+  const user = await getCurrentUser();
+  if (!SUPERVISOR_ASSIGN_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+
+  const staff = orgStaff(input.staffId);
+  if (!staff) return { ok: false, reason: "STAFF_NOT_FOUND" };
+  if (!input.newSupervisorId?.trim() || !input.reason?.trim() || input.reason.trim().length < 4) {
+    return { ok: false, reason: "INVALID_INPUT" };
+  }
+
+  const needed = supervisorRoleFor(staff.role);
+  const candidate = orgStaff(input.newSupervisorId);
+  if (!candidate || (needed && candidate.role !== needed)) return { ok: false, reason: "WRONG_LEVEL" };
+
+  const oldSupervisorId = staff.supervisorId;
+  setStaffSupervisor(input.staffId, input.newSupervisorId);
+
+  emitAudit({
+    action: "staffSupervision.assigned",
+    subjectKind: "StaffSupervision",
+    subjectId: input.staffId,
+    actorId: user.staffId,
+    actorRole: user.role,
+    actorName: user.name,
+    payload: {
+      staffName: staff.name,
+      oldSupervisorId,
+      oldSupervisorName: oldSupervisorId ? orgStaff(oldSupervisorId)?.name : undefined,
+      newSupervisorId: input.newSupervisorId,
+      newSupervisorName: candidate.name,
+      reason: input.reason.trim(),
+      effectiveDate: input.effectiveDate ?? new Date().toISOString().slice(0, 10),
+    },
+  });
+  // Notify the staff + both supervisors.
+  emitNotificationFanOut(["CCEO", "PROGRAM_LEAD"], {
+    template: "staffSupervision.changed",
+    channel: "Inbox",
+    title: `${staff.name} reassigned to ${candidate.name}`,
+    body: `${user.name} reassigned ${staff.name} (${labelForRole(staff.role)}) to ${candidate.name}. Reason: ${input.reason.trim()}.`,
+    href: "/admin/users",
+  });
+
+  revalidatePath("/admin/users");
+  return { ok: true, staffId: input.staffId };
 }

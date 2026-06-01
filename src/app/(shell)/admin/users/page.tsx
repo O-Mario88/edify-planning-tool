@@ -11,6 +11,7 @@ import { AddStaffControl } from "@/components/admin/AddStaffControl";
 import { AssignSchoolsControl } from "@/components/admin/AssignSchoolsControl";
 import { PrimaryDistrictControl } from "@/components/admin/PrimaryDistrictControl";
 import { AssignTargetProfileControl } from "@/components/admin/AssignTargetProfileControl";
+import { ChangeSupervisorControl } from "@/components/admin/ChangeSupervisorControl";
 import { defaultTargetProfileFor } from "@/lib/targets/staff-target-profile";
 import { activeFinancialYear } from "@/lib/fy-engine";
 
@@ -87,6 +88,9 @@ export default async function AdminUsersIndex() {
                 )}
                 {canSetPrimaryDistrict && r.met.schools === true && r.met.primaryDistrict !== true && (
                   <PrimaryDistrictControl staffId={s.staffId} staffName={s.name} region={s.region} defaultDistrict={s.district} />
+                )}
+                {canAdd && (
+                  <ChangeSupervisorControl staffId={s.staffId} staffName={s.name} role={s.role} currentSupervisorId={s.supervisorId} />
                 )}
                 {canAssignTargets && r.met.primaryDistrict === true && r.met.targetProfile !== true && (
                   <AssignTargetProfileControl
