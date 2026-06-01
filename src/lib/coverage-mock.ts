@@ -17,11 +17,13 @@
 
 import "server-only";
 import { activeFinancialYear } from "@/lib/fy-engine";
+import { CCEO_ANNUAL_TARGET, PL_ANNUAL_TARGET } from "@/lib/targets/role-targets";
 
 // ────────── Constants ──────────
 
-export const CCEO_ANNUAL_TARGET    = 560; // client schools per FY
-export const PL_ANNUAL_TARGET      = 280; // supervisory visits per FY
+// Per-role FY targets come from the client-safe single source (imported at top
+// for local use); re-exported so existing importers of coverage-mock keep working.
+export { CCEO_ANNUAL_TARGET, PL_ANNUAL_TARGET };
 export const MIN_DAILY_VISITS      = 5;   // CCEO minimum per planning day
 export const MAX_DAILY_GROUP_TRAININGS = 1;
 

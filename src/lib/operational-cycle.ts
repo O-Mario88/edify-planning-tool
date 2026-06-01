@@ -11,6 +11,13 @@
 // React context populated at the layout level; the function shapes
 // stay the same so call sites don't change.
 
+import {
+  generateFinancialYears,
+  activeFinancialYear as coreActiveFinancialYear,
+  previousFinancialYear as corePreviousFinancialYear,
+  type FinancialYear,
+} from "@/lib/fy/fy-core";
+
 export type OperationalCycle = {
   id:        string;
   label:     string;
@@ -18,24 +25,21 @@ export type OperationalCycle = {
   endIso:    string;  // "YYYY-09-30"
 };
 
-/**
- * Canonical operational cycles. Mirrors the Active + Locked rows in
- * fy-engine.financialYears. Keep these in sync with the server-side
- * ledger — they're the load-bearing source for client-side cycle math.
- */
-export const ACTIVE_OPERATIONAL_CYCLE: OperationalCycle = {
-  id:       "fy-2025-26",
-  label:    "FY 2025/26",
-  startIso: "2025-10-01",
-  endIso:   "2026-09-30",
-};
+// Derived from the single generated FY ledger (fy-core) — no duplicate ledger.
+// Labels follow the single-year convention ("FY 2026") automatically.
+const _years = generateFinancialYears();
+const _active = coreActiveFinancialYear(_years);
+const _previous = corePreviousFinancialYear(_years);
 
-export const PREVIOUS_OPERATIONAL_CYCLE: OperationalCycle = {
-  id:       "fy-2024-25",
-  label:    "FY 2024/25",
-  startIso: "2024-10-01",
-  endIso:   "2025-09-30",
-};
+function toOperationalCycle(fy: FinancialYear): OperationalCycle {
+  return { id: fy.id, label: fy.label, startIso: fy.startDate, endIso: fy.endDate };
+}
+
+export const ACTIVE_OPERATIONAL_CYCLE: OperationalCycle = toOperationalCycle(_active);
+
+export const PREVIOUS_OPERATIONAL_CYCLE: OperationalCycle = _previous
+  ? toOperationalCycle(_previous)
+  : { id: "2024", label: "FY 2024", startIso: "2023-10-01", endIso: "2024-09-30" };
 
 // ────────── Status type + helpers ──────────
 

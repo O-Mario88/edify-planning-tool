@@ -1,4 +1,4 @@
-// Edify Annual Operating Cycle Engine.
+// Edify Annual Operating Cycle Engine (server-only).
 //
 // Contract (non-negotiable):
 //   • Financial year runs October 1 – September 30.
@@ -7,75 +7,57 @@
 //   • All active schools enter School Improvement Training Gateway.
 //   • SSA becomes due only AFTER School Improvement Training is completed.
 //   • Full SSA-informed planning requires current-FY SSA Completed + Verified.
-//   • Historical data is preserved across every entity (visits, trainings,
-//     SSAs, exam results, MSC stories, budgets, fund requests, evidence).
+//   • Historical data is preserved across every entity.
 //
-// This module exposes the data models, status enums, current-vs-previous FY
-// references, the per-school FY summary mock, and the named server-side
-// utilities the spec requires. Utilities operate on the in-memory mock as a
-// stand-in for the database; the contracts and return shapes match what the
-// production implementation will commit through Prisma.
+// The pure FY/quarter/cycle math now lives in `@/lib/fy/fy-core` (client-safe).
+// This module is the server-only wrapper: it binds the generated ledger and
+// keeps the `schoolsMock`-dependent FY summaries + Oct-1 lifecycle utilities.
+// Existing zero-arg call sites (activeFinancialYear(), fyForDate(iso), …) are
+// preserved.
 
 import "server-only";
 import { schoolsMock } from "@/lib/schools-mock";
+import {
+  generateFinancialYears,
+  activeFinancialYear as coreActiveFinancialYear,
+  previousFinancialYear as corePreviousFinancialYear,
+  nextFinancialYear as coreNextFinancialYear,
+  fyForDate as coreFyForDate,
+  isInActiveFy as coreIsInActiveFy,
+  cycleStatusFor as coreCycleStatusFor,
+  cycleLabelFor as coreCycleLabelFor,
+  daysSinceCycleStart as coreDaysSinceCycleStart,
+  daysUntilCycleEnd as coreDaysUntilCycleEnd,
+  cycleRangeLabel as coreCycleRangeLabel,
+  ymd,
+  addDays,
+  type FinancialYear,
+  type FinancialYearStatus,
+  type CycleStatus,
+} from "@/lib/fy/fy-core";
 
-// ────────── Financial Year ──────────
+export type { FinancialYear, FinancialYearStatus, CycleStatus };
 
-export type FinancialYearStatus =
-  | "Draft Setup"
-  | "Readiness Review"
-  | "Ready to Open"
-  | "Active"
-  | "Locked"
-  | "Archived";
-
-export type FinancialYear = {
-  id:          string;
-  label:       string;        // "FY 2025/26"
-  startDate:   string;        // ISO "YYYY-10-01"
-  endDate:     string;        // ISO "YYYY-09-30"
-  status:      FinancialYearStatus;
-  openedAt?:   string;
-  closedAt?:   string;
-  openedBy?:   string;
-  closedBy?:   string;
-};
-
-// Stable demo ledger. ENGINE_TODAY anchors to 2025-11-15 (refresh-and-followup),
-// so FY 2025/26 is Active and FY 2024/25 is Locked.
-export const financialYears: FinancialYear[] = [
-  { id: "fy-2023-24", label: "FY 2023/24", startDate: "2023-10-01", endDate: "2024-09-30", status: "Archived", openedAt: "2023-10-01T00:00:00Z", closedAt: "2024-09-30T23:59:59Z", openedBy: "Edify HQ", closedBy: "Edify HQ" },
-  { id: "fy-2024-25", label: "FY 2024/25", startDate: "2024-10-01", endDate: "2025-09-30", status: "Locked",   openedAt: "2024-10-01T00:00:00Z", closedAt: "2025-09-30T23:59:59Z", openedBy: "Edify HQ", closedBy: "Edify HQ" },
-  { id: "fy-2025-26", label: "FY 2025/26", startDate: "2025-10-01", endDate: "2026-09-30", status: "Active",   openedAt: "2025-10-01T00:00:00Z", openedBy: "Sarah Okello" },
-  { id: "fy-2026-27", label: "FY 2026/27", startDate: "2026-10-01", endDate: "2027-09-30", status: "Draft Setup" },
-];
+// ────────── Financial Year ledger (generated, not hardcoded) ──────────
+// FY 2025 floor → current operational FY (from engine "now") + one trailing
+// Draft FY. With the frozen now (2025-11-15): FY 2025 (Locked), FY 2026
+// (Active), FY 2027 (Draft Setup).
+export const financialYears: FinancialYear[] = generateFinancialYears();
 
 export function activeFinancialYear(): FinancialYear {
-  const active = financialYears.find((y) => y.status === "Active");
-  if (!active) throw new Error("No active financial year");
-  return active;
+  return coreActiveFinancialYear(financialYears);
 }
-
 export function previousFinancialYear(): FinancialYear | undefined {
-  const active = activeFinancialYear();
-  const idx = financialYears.findIndex((y) => y.id === active.id);
-  return financialYears[idx - 1];
+  return corePreviousFinancialYear(financialYears);
 }
-
 export function nextFinancialYear(): FinancialYear | undefined {
-  const active = activeFinancialYear();
-  const idx = financialYears.findIndex((y) => y.id === active.id);
-  return financialYears[idx + 1];
+  return coreNextFinancialYear(financialYears);
 }
-
-// FY for any ISO date — October flips the year.
 export function fyForDate(iso: string): FinancialYear | undefined {
-  return financialYears.find((y) => iso >= y.startDate && iso <= y.endDate);
+  return coreFyForDate(iso, financialYears);
 }
-
 export function isInActiveFy(iso: string): boolean {
-  const active = activeFinancialYear();
-  return iso >= active.startDate && iso <= active.endDate;
+  return coreIsInActiveFy(iso, financialYears);
 }
 
 // ────────── Per-school FY summary ──────────
@@ -121,13 +103,10 @@ export type SchoolFinancialYearSummary = {
   coreTrainingsCompleted:   number;
 };
 
-// Demo: pre-seed the active FY summary with realistic mid-November state —
-// most schools have completed the gateway, SSAs are in flight, a handful
-// are still blocked.
+// Demo: pre-seed the active FY summary with realistic mid-November state.
 function seedSchoolFySummary(activeFyId: string): SchoolFinancialYearSummary[] {
   return schoolsMock.map((s, i) => {
     const mode = i % 7;
-    // 0–2: Full Planning, 3–4: Limited, 5: Gateway Required, 6: Gateway Catch-Up
     if (mode === 0) {
       return {
         id: `sfys-${s.schoolId}-${activeFyId}`, schoolId: s.schoolId, financialYearId: activeFyId,
@@ -218,8 +197,6 @@ export function detectSchoolsNeedingAnnualSsa(
 
 // ────────── Server-side utilities (named per spec) ──────────
 
-// initializeNewFinancialYear — flips the next FY into Active and seeds a
-// summary row for every active school. Returns the new active FY.
 export function initializeNewFinancialYear(
   openedBy: string,
   now: Date = new Date(),
@@ -232,7 +209,6 @@ export function initializeNewFinancialYear(
   return next;
 }
 
-// lockPreviousFinancialYear — closes the currently-active FY and marks it Locked.
 export function lockPreviousFinancialYear(
   closedBy: string,
   now: Date = new Date(),
@@ -244,9 +220,6 @@ export function lockPreviousFinancialYear(
   return active;
 }
 
-// resetAnnualCountersForNewFy — produces a fresh zeroed FY summary for every
-// active school. NEVER touches historical records — those live on prior FY
-// rows already.
 export function resetAnnualCountersForNewFy(
   fyId: string,
 ): SchoolFinancialYearSummary[] {
@@ -272,8 +245,6 @@ export function resetAnnualCountersForNewFy(
 // createFinancialYearActivitySummaries — alias preserved for the API spec.
 export const createFinancialYearActivitySummaries = resetAnnualCountersForNewFy;
 
-// generateSchoolImprovementTrainingGateway — every active school starts
-// the new FY with Gateway Required. Returns the per-school list.
 export function generateSchoolImprovementTrainingGateway(
   fyId: string = ACTIVE.id,
 ): { schoolId: string; gatewayStatus: GatewayStatus }[] {
@@ -286,9 +257,6 @@ export function generateSchoolImprovementTrainingGateway(
   });
 }
 
-// createAnnualSsaTodos — for each school in detectSchoolsNeedingAnnualSsa,
-// returns a CCEO-actionable todo descriptor. Production wires this into the
-// staff todo table.
 export function createAnnualSsaTodos(schoolIds: string[]): {
   schoolId: string; title: string; dueBefore: string;
 }[] {
@@ -300,8 +268,6 @@ export function createAnnualSsaTodos(schoolIds: string[]): {
   }));
 }
 
-// "What changed from last year" — diff active FY vs previous FY along the
-// dimensions leadership reviews on Oct 1.
 export function generateWhatChangedFromLastYear(): {
   schoolsAdded: number;
   schoolsRemoved: number;
@@ -314,7 +280,6 @@ export function generateWhatChangedFromLastYear(): {
   targetChanges: number;
   budgetChanges: number;
 } {
-  // Mock-driven numbers; production reads from FY-scoped change events.
   return {
     schoolsAdded:       8,
     schoolsRemoved:     2,
@@ -329,56 +294,20 @@ export function generateWhatChangedFromLastYear(): {
   };
 }
 
-// ────────── Operational cycle status ──────────
-//
-// The operational year runs Oct 1 → Sep 30. On Oct 1, every activity
-// counter (visits, trainings, SSA, cluster meetings, SIT) resets for
-// the new cycle. Historical records stay on the prior FY rows and are
-// never deleted — they just stop counting toward "what's outstanding
-// this cycle." These helpers translate a date into its cycle bucket
-// so the planning UI can label a row "Historical Only" vs "Current
-// Cycle Required" without UI code having to do the date math itself.
+// ────────── Operational cycle status (bound wrappers over fy-core) ──────────
 
-export type CycleStatus =
-  | "current_cycle"   // entered on/after Oct 1 of the active FY, ≤ Sep 30 of next year
-  | "previous_cycle"  // entered in the immediately prior FY
-  | "older"           // entered before the previous FY
-  | "future"          // dated after the active FY end (planned for a future cycle)
-  | "no_entry";       // no date recorded
-
-/**
- * Bucket a date (ISO `YYYY-MM-DD` or `undefined`) into a cycle status
- * relative to the active financial year. Pure — feed `nowIso` to test
- * historical or future states.
- */
 export function cycleStatusFor(
   iso: string | undefined,
   active: FinancialYear = activeFinancialYear(),
 ): CycleStatus {
-  if (!iso) return "no_entry";
-  if (iso >= active.startDate && iso <= active.endDate) return "current_cycle";
-  if (iso < active.startDate) {
-    const prev = financialYears.find((y) =>
-      y.endDate === ymd(addDays(new Date(active.startDate), -1)),
-    );
-    if (prev && iso >= prev.startDate && iso <= prev.endDate) return "previous_cycle";
-    return "older";
-  }
-  return "future";
+  const previous = financialYears.find((y) =>
+    y.endDate === ymd(addDays(new Date(active.startDate), -1)),
+  );
+  return coreCycleStatusFor(iso, active, previous);
 }
 
-/** Short user-facing label for a CycleStatus. */
-export function cycleLabelFor(status: CycleStatus): string {
-  switch (status) {
-    case "current_cycle":  return "Completed This Cycle";
-    case "previous_cycle": return "Completed Last Cycle";
-    case "older":          return "Historical Only";
-    case "future":         return "Scheduled Future Cycle";
-    case "no_entry":       return "Current Cycle Required";
-  }
-}
+export const cycleLabelFor = coreCycleLabelFor;
 
-/** True when the date sits in the active operational year. */
 export function isInCurrentCycle(
   iso: string | undefined,
   active: FinancialYear = activeFinancialYear(),
@@ -386,54 +315,20 @@ export function isInCurrentCycle(
   return cycleStatusFor(iso, active) === "current_cycle";
 }
 
-/** Days elapsed since the active cycle started — used by the "fresh cycle"
- *  notice on planning surfaces. Returns 0 if today is before cycle start. */
 export function daysSinceCycleStart(
   todayIso: string,
   active: FinancialYear = activeFinancialYear(),
 ): number {
-  if (todayIso < active.startDate) return 0;
-  return daysBetween(active.startDate, todayIso);
+  return coreDaysSinceCycleStart(todayIso, active);
 }
 
-/** Days until the active cycle ends. Returns 0 once the cycle has closed. */
 export function daysUntilCycleEnd(
   todayIso: string,
   active: FinancialYear = activeFinancialYear(),
 ): number {
-  if (todayIso > active.endDate) return 0;
-  return daysBetween(todayIso, active.endDate);
+  return coreDaysUntilCycleEnd(todayIso, active);
 }
 
-/** Human-readable cycle label — "Oct 1, 2025 – Sep 30, 2026". */
 export function cycleRangeLabel(active: FinancialYear = activeFinancialYear()): string {
-  return `${prettyDate(active.startDate)} – ${prettyDate(active.endDate)}`;
-}
-
-// ────────── Helpers ──────────
-
-function addDays(d: Date, n: number): Date {
-  const r = new Date(d);
-  r.setDate(r.getDate() + n);
-  return r;
-}
-
-function ymd(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
-function daysBetween(fromIso: string, toIso: string): number {
-  const ms = new Date(toIso).getTime() - new Date(fromIso).getTime();
-  return Math.max(0, Math.floor(ms / 86_400_000));
-}
-
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-function prettyDate(iso: string): string {
-  const [y, m, d] = iso.split("-").map(Number);
-  if (!y || !m || !d) return iso;
-  return `${MONTHS[m - 1]} ${d}, ${y}`;
+  return coreCycleRangeLabel(active);
 }
