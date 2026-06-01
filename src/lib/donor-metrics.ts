@@ -248,6 +248,11 @@ interface BuildOptions {
   userName?: string;
   filters?: DonorReportingFilters;
   generatedBy?: string;
+  /** Filter-aware metric values from the analytics engine (computeAnalytics),
+   *  keyed by donor metric key. When present they override the role-scope-shape
+   *  defaults so the donor section responds to the FY/region/district filters
+   *  exactly like the rest of analytics (record-derived, not fabricated). */
+  overrides?: Record<string, number>;
 }
 
 export function getDonorMetricSnapshot(opts: BuildOptions): DonorMetricSnapshot {
@@ -705,6 +710,20 @@ export function getDonorMetricSnapshot(opts: BuildOptions): DonorMetricSnapshot 
       affectedMetricKeys: ["partnerActivitiesConfirmed", "schoolsReached"],
     },
   ].filter(Boolean) as DonorMetricSnapshot["warnings"];
+
+  // Apply engine-derived, filter-aware overrides (geography/period scoped).
+  if (opts.overrides) {
+    for (const m of metrics) {
+      const ov = opts.overrides[m.key];
+      if (ov === undefined) continue;
+      m.value = ov;
+      if (m.breakdown) {
+        m.breakdown.donorReady = ov;
+        m.breakdown.confirmed = ov;
+        m.breakdown.total = Math.max(ov, m.breakdown.total ?? ov);
+      }
+    }
+  }
 
   return {
     roleScope: role,
