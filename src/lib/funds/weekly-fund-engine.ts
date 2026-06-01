@@ -47,6 +47,7 @@ import type {
   WeeklyFundRequestStatus,
   WeekOfMonth,
 } from "./weekly-fund-types";
+import { isValidId, ID_FORMATS } from "@/lib/intake/id-formats";
 
 // ────────── Allowed transitions ───────────────────────────────────────
 //
@@ -975,8 +976,8 @@ export function submitAccountability(
     return fail("Only the staff owner can submit accountability");
   }
   const id = payload.netsuiteExpenseId?.trim();
-  if (!id || !/^NS-?EXP-?[A-Z0-9-]+$/i.test(id)) {
-    return fail("NetSuite Expense ID required (e.g. NS-EXP-2026-004812)");
+  if (!id || !isValidId("expense", id)) {
+    return fail(`NetSuite Expense ID required (${ID_FORMATS.expense.hint})`);
   }
   if (!Number.isFinite(payload.amountSpentUgx) || payload.amountSpentUgx < 0) {
     return fail("Amount spent must be a non-negative number");
@@ -1155,8 +1156,8 @@ export function reconcileAccountability(
 ): EngineResult<ReconciliationResult> {
   // ── Validation ────────────────────────────────────────────────────
   const id = input.netsuiteExpenseId?.trim();
-  if (!id || !/^NS-?EXP-?[A-Z0-9-]+$/i.test(id)) {
-    return fail("NetSuite Expense ID required (e.g. NS-EXP-2026-004812)");
+  if (!id || !isValidId("expense", id)) {
+    return fail(`NetSuite Expense ID required (${ID_FORMATS.expense.hint})`);
   }
   if (!Number.isFinite(input.amountSpentUgx) || input.amountSpentUgx < 0) {
     return fail("Amount spent must be a non-negative number");
@@ -1374,8 +1375,8 @@ export function submitReimbursementClaim(
   payload: ReimbursementClaimPayload,
 ): EngineResult<ReimbursementClaim> {
   const id = payload.netsuiteExpenseId?.trim();
-  if (!id || !/^NS-?EXP-?[A-Z0-9-]+$/i.test(id)) {
-    return fail("NetSuite Expense ID required for reimbursement claims");
+  if (!id || !isValidId("expense", id)) {
+    return fail(`NetSuite Expense ID required for reimbursement claims (${ID_FORMATS.expense.hint})`);
   }
   if (!Number.isFinite(payload.amountSpentUgx) || payload.amountSpentUgx <= 0) {
     return fail("Amount spent must be greater than zero");

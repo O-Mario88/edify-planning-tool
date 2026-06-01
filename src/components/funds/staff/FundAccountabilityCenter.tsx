@@ -18,6 +18,7 @@ import {
   formatMoney,
   OVERSPEND_HIGH_THRESHOLD_PCT,
 } from "@/lib/funds/weekly-fund-engine";
+import { isValidId, ID_FORMATS } from "@/lib/intake/id-formats";
 import { cn } from "@/lib/utils";
 import {
   OVERSPEND_REASON_LABEL,
@@ -330,7 +331,7 @@ function AccountabilityForm({
   const [overspendReason, setOverspendReason] = useState<OverspendReason | "">("");
   const [overspendNote, setOverspendNote] = useState("");
 
-  const idOk = /^NS-?EXP-?[A-Z0-9-]+$/i.test(netsuiteId.trim());
+  const idOk = isValidId("expense", netsuiteId);
   const diff = amountSpent - disbursedAmount;
   const fullyAccounted = diff === 0;
   const isUnderspend = diff < 0;
@@ -394,12 +395,12 @@ function AccountabilityForm({
           type="text"
           value={netsuiteId}
           onChange={(e) => setNetsuiteId(e.target.value)}
-          placeholder="e.g. NS-EXP-2026-004812"
+          placeholder={`e.g. ${ID_FORMATS.expense.example}`}
           className="w-full h-10 px-3 rounded-lg border border-[var(--color-edify-border)] bg-white text-[12px] font-extrabold tabular text-slate-900 outline-none focus:ring-2 focus:ring-emerald-500/25 focus:border-emerald-300"
         />
         {netsuiteId.length > 0 && !idOk && (
           <div className="text-[10px] text-rose-600 font-semibold mt-1">
-            Format should look like NS-EXP-2026-004812
+            Expense ID must be {ID_FORMATS.expense.hint}
           </div>
         )}
       </div>

@@ -9,6 +9,7 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isValidId, ID_FORMATS } from "@/lib/intake/id-formats";
 
 // Reimbursement Claim modal (Personal Funds Claim).
 //
@@ -22,7 +23,7 @@ import { cn } from "@/lib/utils";
 //   • Amount spent
 //   • Amount previously disbursed (auto-filled when known)
 //   • Reason personal funds were used
-//   • NetSuite Expense ID       (validated NS-EXP- pattern)
+//   • NetSuite Expense ID       (validated digits-only, e.g. 6161)
 //   • Supporting note
 //
 // Auto-computed: Amount to Reimburse = Spent − Previously Disbursed.
@@ -94,7 +95,7 @@ function Inner({
   const [netsuiteId, setNetsuiteId] = useState("");
   const [note, setNote] = useState("");
 
-  const idOk = /^NS-?EXP-?[A-Z0-9-]+$/i.test(netsuiteId.trim());
+  const idOk = isValidId("expense", netsuiteId);
   const previously = path === "personalFirst" ? 0 : amountPreviouslyDisbursed;
   const toReimburse = Math.max(amountSpent - previously, 0);
   const overReason = reason.trim().length >= 5;
@@ -246,7 +247,7 @@ function Inner({
             type="text"
             value={netsuiteId}
             onChange={(e) => setNetsuiteId(e.target.value)}
-            placeholder="e.g. NS-EXP-2026-004812"
+            placeholder={`e.g. ${ID_FORMATS.expense.example}`}
             className="w-full h-10 px-3 rounded-lg border border-[var(--color-edify-border)] bg-white text-body font-extrabold tabular text-slate-900 outline-none focus:ring-2 focus:ring-violet-500/25 focus:border-violet-300"
           />
           <div className="flex items-center justify-between gap-2 mt-1">
@@ -264,7 +265,7 @@ function Inner({
             </a>
           </div>
           {netsuiteId.length > 0 && !idOk && (
-            <Hint tone="rose">Format should look like NS-EXP-2026-004812</Hint>
+            <Hint tone="rose">Expense ID must be {ID_FORMATS.expense.hint}</Hint>
           )}
         </section>
 

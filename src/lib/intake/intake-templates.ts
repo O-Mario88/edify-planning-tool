@@ -74,37 +74,6 @@ export const INTAKE_TEMPLATES: IntakeTemplate[] = [
     ],
   },
   {
-    id: "tpl-school-visits",
-    name: "School Visits",
-    // Visits are logged into Salesforce by the partner or staff who made them;
-    // in the planning tool the IA/Admin just CONFIRMS the visit happened.
-    description: "Confirm a visit already recorded in Salesforce — its ID, when it happened, why, and who visited.",
-    schoolLinked: true,
-    ownIdField: "Visit ID",
-    fields: [
-      { key: "Visit ID", label: "Visit ID", type: "id", idKind: "visit", required: true, example: "SVE-88273" },
-      schoolIdField,
-      { key: "Visit Date", label: "Date the visit happened", type: "date", required: true, example: "2026-03-05" },
-      { key: "Reason", label: "Reason", type: "select", required: true, options: ["Routine Monitoring", "Coaching", "Courtesy Visit", "Follow-up", "SSA Assessment"], example: "Coaching" },
-      { key: "Visited By", label: "Visited By", type: "select", required: true, options: ["Partner", "CCEO", "Program Lead", "Impact Assessment"], example: "CCEO" },
-    ],
-  },
-  {
-    id: "tpl-trainings",
-    name: "Trainings",
-    // A training is an event with attendance counts — not tied to one school.
-    description: "A training event delivered — its name, what it covered, and how many teachers and leaders attended.",
-    schoolLinked: false,
-    ownIdField: "Training ID",
-    fields: [
-      { key: "Training ID", label: "Training ID", type: "id", idKind: "training", required: true, example: "TS-50294" },
-      { key: "Training Name", label: "Training Name", type: "text", required: true, example: "Term 1 Leadership Institute" },
-      { key: "Description", label: "Description", type: "text", example: "Two-day leadership best-practice workshop" },
-      { key: "Teachers Trained", label: "# Teachers Trained", type: "number", min: 0, required: true, example: 24 },
-      { key: "School Leaders Trained", label: "# School Leaders Trained", type: "number", min: 0, required: true, example: 6 },
-    ],
-  },
-  {
     id: "tpl-exam-results",
     name: "Exam Results",
     description: "Exam outcomes for a school. One row per subject/sitting.",
@@ -118,22 +87,12 @@ export const INTAKE_TEMPLATES: IntakeTemplate[] = [
       { key: "Pass Rate", label: "Pass Rate (%)", type: "number", min: 0, max: 100, example: 74 },
     ],
   },
-  {
-    id: "tpl-expenses",
-    name: "Expenses",
-    description: "Spend recorded against a school. One row per expense.",
-    schoolLinked: true,
-    ownIdField: "Expense ID",
-    fields: [
-      { key: "Expense ID", label: "Expense ID", type: "id", idKind: "expense", required: true, example: "6161" },
-      schoolIdField,
-      { key: "Date", label: "Date", type: "date", required: true, example: "2026-02-18" },
-      { key: "Category", label: "Category", type: "select", required: true, options: ["Training", "Materials", "Transport", "Stipend", "Other"], example: "Materials" },
-      { key: "Amount", label: "Amount", type: "number", min: 0, required: true, example: 250000 },
-      { key: "Paid By", label: "Paid By", type: "text", example: "Grace Alimo" },
-    ],
-  },
 ];
+
+// Visits, Trainings, and Expenses are NOT uploaded here — they're confirmed
+// inside existing workflows (visits/trainings in Salesforce; expenses in the
+// fund-accountability workflow, reconciled against NetSuite). See
+// FundAccountabilityCenter for the expense/NetSuite-ID capture.
 
 export function getIntakeTemplate(id: string): IntakeTemplate | undefined {
   return INTAKE_TEMPLATES.find((t) => t.id === id);

@@ -437,7 +437,7 @@ describe("reconcileAccountability", () => {
     staffId: STAFF.id,
     staffName: STAFF.name,
     staffRole: "CCEO" as const,
-    netsuiteExpenseId: "NS-EXP-2026-0001",
+    netsuiteExpenseId: "4001",
     advancedAmountUgx: 100_000,
   };
 
@@ -533,7 +533,7 @@ describe("submitReimbursementClaim", () => {
     amountSpentUgx: 80_000,
     amountPreviouslyDisbursedUgx: 50_000,
     reasonPersonalFundsUsed: "Vendor wouldn't take mobile money",
-    netsuiteExpenseId: "NS-EXP-2026-9999",
+    netsuiteExpenseId: "9999",
   };
 
   it("accepts a valid claim and computes the difference", () => {
@@ -664,7 +664,7 @@ describe("postDisbursementGateOpen", () => {
       amountPreviouslyDisbursedUgx: 30_000,
       amountToReimburseUgx: 10_000,
       reasonPersonalFundsUsed: "n/a",
-      netsuiteExpenseId: "NS-EXP-1",
+      netsuiteExpenseId: "5001",
       approvalRoute: "ProgramLead",
       status,
     } as ReimbursementClaim;

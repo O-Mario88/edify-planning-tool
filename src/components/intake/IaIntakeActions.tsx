@@ -37,10 +37,7 @@ const UPLOADS: UploadKind[] = [
   { id: "tpl-school-onboarding", name: "School Onboarding", sub: "Create schools (ID 32791)" },
   { id: "tpl-ssa-performance",   name: "SSA Performance",   sub: "8 area scores + enrolment" },
   { id: "tpl-activity-tracker",  name: "Activity & Engagement", sub: "Last training/visit/exam — FY cycle" },
-  { id: "tpl-school-visits",     name: "School Visits",     sub: "Visit records (SVE-88273)" },
-  { id: "tpl-trainings",         name: "Trainings",         sub: "Training records (TS-50294)" },
   { id: "tpl-exam-results",      name: "Exam Results",      sub: "Scores & pass rates" },
-  { id: "tpl-expenses",          name: "Expenses",          sub: "Spend per school (6161)" },
 ];
 
 export type IntakeSchoolLite = {

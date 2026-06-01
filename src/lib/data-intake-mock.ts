@@ -205,10 +205,7 @@ export const dataTemplates: DataTemplate[] = [
 // derive their catalog/CSV entries here so the Template Builder + CSV download
 // route stay one list with the rest.
 const GENERATED_DATA_TYPE: Record<string, DataType> = {
-  "tpl-school-visits": "Visit Records",
-  "tpl-trainings":     "Training Records",
-  "tpl-exam-results":  "Exam Results",
-  "tpl-expenses":      "Expenses",
+  "tpl-exam-results": "Exam Results",
 };
 
 function buildDataTemplate(t: IntakeTemplate, dataType: DataType): DataTemplate {

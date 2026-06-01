@@ -74,6 +74,7 @@ import type {
   WeeklyFundNotification,
 } from "@/lib/funds/weekly-fund-types";
 import { activities as activitiesStore } from "./store";
+import { isValidId } from "@/lib/intake/id-formats";
 
 // ─── Result types ──────────────────────────────────────────────────
 
@@ -609,7 +610,7 @@ export async function submitAccountability(input: AccountabilityInput): Promise<
   if (req.staffId !== user.staffId && user.role !== "Admin") {
     return { ok: false, reason: "FORBIDDEN" };
   }
-  if (!/^NS-?EXP-?[A-Z0-9-]+$/i.test(input.netsuiteId.trim())) {
+  if (!isValidId("expense", input.netsuiteId)) {
     return { ok: false, reason: "INVALID_INPUT", field: "netsuiteId" };
   }
   // Idempotency on (request, netsuiteId).
