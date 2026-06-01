@@ -16,6 +16,7 @@ import { mscMock } from "@/lib/analytics/sources/msc-mock";
 import { historyFor, SSA_INTERVENTIONS } from "@/lib/planning/ssa-performance-mock";
 import { analyticsSchoolById } from "./school-directory";
 import { isCompleted, isVerified, isDonorReady, isPaid } from "./status-maps";
+import { sfRecordForActivity } from "@/lib/analytics/sources/salesforce-verification-mock";
 import { selectedFyId, selectedCycleTag, selectedQuarterRange, schoolInGeoScope, dateInRange } from "./scope";
 import { computePeriodTarget } from "@/lib/targets/period-target";
 import { fyTargetForRole } from "@/lib/targets/role-targets";
@@ -187,6 +188,22 @@ export function computeAnalytics(input: ComputeInput): AnalyticsSnapshot {
   const examDeclined = examCollected.filter((e) => e.prevScore !== undefined && e.score < e.prevScore).length;
   const mscDonorReady = stories.filter((m) => m.status === "DonorReady").length;
 
+  // ── Verification / evidence / payment (from the activity spine) ──
+  const actRecords = (list: SchoolActivityTimelineItem[], statusOf: (a: SchoolActivityTimelineItem) => string): DrilldownRecord[] =>
+    list.map((a) => ({ id: a.id, entityType: "activity", title: a.title, subtitle: `${ACTIVITY_TYPE_LABEL[a.activityType]} · ${analyticsSchoolById(a.schoolId)?.schoolName ?? a.schoolId} · ${a.date}`, schoolId: a.schoolId, date: a.date, status: statusOf(a), contributesToCount: true }));
+  const evUploaded = acts.filter((a) => a.evidenceStatus !== "missing" && a.evidenceStatus !== "not_required");
+  const evAccepted = acts.filter((a) => a.evidenceStatus === "complete" || a.evidenceStatus === "verified");
+  const evReturned = acts.filter((a) => a.evidenceStatus === "returned");
+  const evMissing = acts.filter((a) => a.evidenceStatus === "missing");
+  const sfEntered = acts.filter((a) => !!sfRecordForActivity(a.id));
+  const sfMissing = acts.filter((a) => !sfRecordForActivity(a.id));
+  const iaVerifiedActs = acts.filter(isVerified);
+  const payAwaitingPl = acts.filter((a) => a.paymentStatus === "awaiting_pl_approval");
+  const paySentAcct = acts.filter((a) => a.paymentStatus === "sent_to_accountant");
+  const payPaid = acts.filter(isPaid);
+  // Blocked: evidence is done but the activity still fails the Salesforce gate.
+  const payBlocked = acts.filter((a) => (a.evidenceStatus === "complete" || a.evidenceStatus === "verified") && !isCompleted(a));
+
   // ── Target context for the completed-activities headline ──
   const completedCount = pipeline[1].count;
   const fyTarget = fyTargetForRole(input.role ?? "CCEO");
@@ -245,6 +262,49 @@ export function computeAnalytics(input: ComputeInput): AnalyticsSnapshot {
     metric("mscDonorReady", "MSC Stories — Donor-Ready", "impact", mscDonorReady,
       "Most-Significant-Change stories that reached the Donor-Ready workflow state.",
       { ...zero, donorReady: mscDonorReady }, stories.map((m) => ({ id: m.id, entityType: "school", title: m.title, subtitle: `${m.district} · ${m.status}`, schoolId: m.schoolId, district: m.district, status: m.status, contributesToCount: m.status === "DonorReady" }))),
+
+    // Evidence (§13)
+    metric("evidenceUploaded", "Evidence Uploaded", "evidence", evUploaded.length,
+      "Activities in scope with evidence uploaded (partial/complete/returned/verified).",
+      { ...zero, completed: evUploaded.length }, actRecords(evUploaded, (a) => a.evidenceStatus)),
+    metric("evidenceAccepted", "Evidence Accepted", "evidence", evAccepted.length,
+      "Activities whose evidence is complete or verified.",
+      { ...zero, completed: evAccepted.length, verified: acts.filter((a) => a.evidenceStatus === "verified").length }, actRecords(evAccepted, (a) => a.evidenceStatus)),
+    metric("evidenceReturned", "Evidence Returned", "evidence", evReturned.length,
+      "Activities whose evidence was returned for correction.",
+      { ...zero, completed: evReturned.length }, actRecords(evReturned, (a) => a.evidenceStatus),
+      "derived", { level: evReturned.length > 0 ? "caveat" : "ok", notes: [] }),
+    metric("evidenceMissing", "Evidence Missing", "evidence", evMissing.length,
+      "Activities in scope with no evidence uploaded.",
+      { ...zero, completed: evMissing.length }, actRecords(evMissing, (a) => a.evidenceStatus),
+      "derived", { level: evMissing.length > 0 ? "caveat" : "ok", notes: [] }),
+
+    // Salesforce verification (§12)
+    metric("sfEntered", "Salesforce IDs Entered", "verification", sfEntered.length,
+      "Activities with a Salesforce ID entered (SV- for visits, TS- for trainings/cluster).",
+      { ...zero, completed: sfEntered.length }, actRecords(sfEntered, (a) => sfRecordForActivity(a.id)?.salesforceId ?? "")),
+    metric("iaVerified", "IA Verified", "verification", iaVerifiedActs.length,
+      "Activities verified by Impact Assessment.",
+      { ...zero, verified: iaVerifiedActs.length }, actRecords(iaVerifiedActs, (a) => a.verificationStatus)),
+    metric("sfMissing", "Missing Salesforce ID", "verification", sfMissing.length,
+      "Activities with no Salesforce ID entered — blocked at the completion gate.",
+      { ...zero, completed: sfMissing.length }, actRecords(sfMissing, () => "missing"),
+      "derived", { level: sfMissing.length > 0 ? "caveat" : "ok", notes: [] }),
+
+    // Payment (§14)
+    metric("paymentsAwaitingPl", "Awaiting PL Approval", "finance", payAwaitingPl.length,
+      "Activities whose payment is waiting on Program Lead approval.",
+      { ...zero, completed: payAwaitingPl.length }, actRecords(payAwaitingPl, (a) => a.paymentStatus ?? "")),
+    metric("paymentsSentToAccountant", "Sent to Accountant", "finance", paySentAcct.length,
+      "Activities whose payment has been routed to the accountant.",
+      { ...zero, completed: paySentAcct.length }, actRecords(paySentAcct, (a) => a.paymentStatus ?? "")),
+    metric("paymentsPaid", "Payments Cleared", "finance", payPaid.length,
+      "Activities whose payment is paid and cleared.",
+      { ...zero, completed: payPaid.length, donorReady: payPaid.length }, actRecords(payPaid, (a) => a.paymentStatus ?? "")),
+    metric("paymentsBlocked", "Payments Blocked", "finance", payBlocked.length,
+      "Activities with evidence done but blocked by the Salesforce completion gate.",
+      { ...zero, completed: payBlocked.length }, actRecords(payBlocked, () => "blocked"),
+      "derived", { level: payBlocked.length > 0 ? "caveat" : "ok", notes: [] }),
   ];
 
   void best; void worst; void examDeclined; // surfaced via heatmap / future cards

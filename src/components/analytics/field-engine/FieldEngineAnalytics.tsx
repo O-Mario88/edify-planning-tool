@@ -24,6 +24,8 @@ import type { DonorMetricSnapshot } from "@/lib/donor-metrics-types";
 
 const REACH_KEYS = ["schoolsReached", "learnersImpacted", "teachersTrained", "schoolLeadersTrained", "districtsCovered", "clustersCovered"];
 const IMPACT_KEYS = ["activitiesCompleted", "ssaImproved", "ssaDeclined", "examImproved", "mscDonorReady"];
+const VERIFY_KEYS = ["evidenceUploaded", "evidenceAccepted", "evidenceReturned", "evidenceMissing", "sfEntered", "iaVerified", "sfMissing"];
+const PAYMENT_KEYS = ["paymentsAwaitingPl", "paymentsSentToAccountant", "paymentsPaid", "paymentsBlocked"];
 
 // SSA cell tone (spec §8): 0–4 Critical, 5–6 Needs Support, 7–8 Good, 9–10 Strong.
 function cellTone(score: number | undefined): { bg: string; fg: string } {
@@ -114,6 +116,10 @@ export function FieldEngineAnalytics({
 
       {/* Impact + SSA KPIs */}
       <MetricGrid title="Activity & Improvement" keys={IMPACT_KEYS} byKey={byKey} isActive={isActive} onSelect={setTileFilter} />
+
+      {/* Verification & evidence + payment */}
+      <MetricGrid title="Verification & Evidence" keys={VERIFY_KEYS} byKey={byKey} isActive={isActive} onSelect={setTileFilter} />
+      <MetricGrid title="Payment" keys={PAYMENT_KEYS} byKey={byKey} isActive={isActive} onSelect={setTileFilter} />
 
       {/* SSA intervention heatmap */}
       <SsaHeatmap interventions={snapshot.ssaHeatmap.interventions} rows={snapshot.ssaHeatmap.rows} />

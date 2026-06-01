@@ -16,4 +16,17 @@ export const FIELD_ANALYTICS_TILES: TileFilterSpec[] = [
   { id: "ssaDeclined",        label: "Schools Declined (SSA)", description: "Reached schools whose latest SSA fell.",                                entityType: "ssa" },
   { id: "examImproved",       label: "Exam — Improved",       description: "Schools whose collected exam score beat last year.",                    entityType: "school" },
   { id: "mscDonorReady",      label: "MSC — Donor-Ready",     description: "Most-Significant-Change stories cleared for donor reporting.",          entityType: "school" },
+  // Verification & evidence
+  { id: "evidenceUploaded",   label: "Evidence Uploaded",     description: "Activities with evidence uploaded.",                                    entityType: "evidence" },
+  { id: "evidenceAccepted",   label: "Evidence Accepted",     description: "Activities whose evidence is complete or verified.",                    entityType: "evidence" },
+  { id: "evidenceReturned",   label: "Evidence Returned",     description: "Activities whose evidence was returned for correction.",                entityType: "evidence" },
+  { id: "evidenceMissing",    label: "Evidence Missing",      description: "Activities with no evidence uploaded.",                                 entityType: "evidence" },
+  { id: "sfEntered",          label: "Salesforce IDs Entered", description: "Activities with a Salesforce ID entered.",                             entityType: "activity" },
+  { id: "iaVerified",         label: "IA Verified",           description: "Activities verified by Impact Assessment.",                             entityType: "activity" },
+  { id: "sfMissing",          label: "Missing Salesforce ID", description: "Activities blocked at the Salesforce completion gate.",                 entityType: "activity" },
+  // Payment
+  { id: "paymentsAwaitingPl", label: "Awaiting PL Approval",  description: "Payments waiting on Program Lead approval.",                            entityType: "payment" },
+  { id: "paymentsSentToAccountant", label: "Sent to Accountant", description: "Payments routed to the accountant.",                                entityType: "payment" },
+  { id: "paymentsPaid",       label: "Payments Cleared",      description: "Payments paid and cleared.",                                            entityType: "payment" },
+  { id: "paymentsBlocked",    label: "Payments Blocked",      description: "Payments blocked by the Salesforce completion gate.",                   entityType: "payment" },
 ];

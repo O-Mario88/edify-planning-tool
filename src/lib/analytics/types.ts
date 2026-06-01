@@ -8,7 +8,15 @@
 
 import type { TileFilterEntityType } from "@/components/tile-filter/types";
 
-export type AnalyticsMetricGroup = "reach" | "pipeline" | "ssa" | "geography" | "impact" | "finance";
+export type AnalyticsMetricGroup =
+  | "reach"
+  | "pipeline"
+  | "ssa"
+  | "geography"
+  | "impact"
+  | "finance"
+  | "verification"
+  | "evidence";
 
 export type MetricSource = "derived" | "estimated" | "pending_schema";
 
