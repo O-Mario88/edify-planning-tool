@@ -26,6 +26,7 @@ const REACH_KEYS = ["schoolsReached", "learnersImpacted", "teachersTrained", "sc
 const IMPACT_KEYS = ["activitiesCompleted", "ssaImproved", "ssaDeclined", "examImproved", "mscDonorReady"];
 const VERIFY_KEYS = ["evidenceUploaded", "evidenceAccepted", "evidenceReturned", "evidenceMissing", "sfEntered", "iaVerified", "sfMissing"];
 const PAYMENT_KEYS = ["paymentsAwaitingPl", "paymentsSentToAccountant", "paymentsPaid", "paymentsBlocked"];
+const EXAM_MSC_KEYS = ["examResultsCollected", "examMissing", "examCollectionRate", "mscSubmitted", "mscPendingReview", "mscDonorReady"];
 
 // SSA cell tone (spec §8): 0–4 Critical, 5–6 Needs Support, 7–8 Good, 9–10 Strong.
 function cellTone(score: number | undefined): { bg: string; fg: string } {
@@ -112,7 +113,7 @@ export function FieldEngineAnalytics({
       )}
 
       {/* Activity pipeline funnel */}
-      <PipelineFunnel stages={snapshot.pipeline} />
+      <PipelineFunnel title="Activity pipeline" subtitle="Planned → Completed (Salesforce gate) → IA Verified → Paid." stages={snapshot.pipeline} />
 
       {/* Impact + SSA KPIs */}
       <MetricGrid title="Activity & Improvement" keys={IMPACT_KEYS} byKey={byKey} isActive={isActive} onSelect={setTileFilter} />
@@ -123,6 +124,10 @@ export function FieldEngineAnalytics({
 
       {/* SSA intervention heatmap */}
       <SsaHeatmap interventions={snapshot.ssaHeatmap.interventions} rows={snapshot.ssaHeatmap.rows} />
+
+      {/* Exam + MSC */}
+      <MetricGrid title="Exam & Most Significant Change" keys={EXAM_MSC_KEYS} byKey={byKey} isActive={isActive} onSelect={setTileFilter} />
+      <PipelineFunnel title="MSC story workflow" subtitle="Submitted → PL Reviewed → Verified → Donor-Ready." stages={snapshot.mscFunnel} />
 
       {/* Donor reporting — evidence-gated, role-scoped (computed server-side) */}
       {donorSnapshot && <DonorReportingImpact snapshot={donorSnapshot} />}
@@ -164,12 +169,12 @@ function MetricGrid({
   );
 }
 
-function PipelineFunnel({ stages }: { stages: FunnelStage[] }) {
+function PipelineFunnel({ title, subtitle, stages }: { title: string; subtitle: string; stages: FunnelStage[] }) {
   const max = Math.max(1, ...stages.map((s) => s.count));
   return (
     <section className="card p-3.5">
-      <h2 className="t-body-lg font-extrabold tracking-tight">Activity pipeline</h2>
-      <p className="t-caption muted">Planned → Completed (Salesforce gate) → IA Verified → Paid.</p>
+      <h2 className="t-body-lg font-extrabold tracking-tight">{title}</h2>
+      <p className="t-caption muted">{subtitle}</p>
       <div className="mt-3 space-y-2">
         {stages.map((s) => (
           <div key={s.key} className="flex items-center gap-3">

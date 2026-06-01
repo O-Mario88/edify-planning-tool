@@ -29,4 +29,10 @@ export const FIELD_ANALYTICS_TILES: TileFilterSpec[] = [
   { id: "paymentsSentToAccountant", label: "Sent to Accountant", description: "Payments routed to the accountant.",                                entityType: "payment" },
   { id: "paymentsPaid",       label: "Payments Cleared",      description: "Payments paid and cleared.",                                            entityType: "payment" },
   { id: "paymentsBlocked",    label: "Payments Blocked",      description: "Payments blocked by the Salesforce completion gate.",                   entityType: "payment" },
+  // Exam + MSC
+  { id: "examResultsCollected", label: "Exam Results Collected", description: "Schools with collected exam results this FY.",                       entityType: "school" },
+  { id: "examMissing",        label: "Exam Results Missing",  description: "Schools with no exam results collected.",                               entityType: "school" },
+  { id: "examCollectionRate", label: "Exam Collection Rate",  description: "Percent of in-scope schools with collected exam results.",              entityType: "school" },
+  { id: "mscSubmitted",       label: "MSC Stories Submitted", description: "Most-Significant-Change stories submitted in scope.",                   entityType: "school" },
+  { id: "mscPendingReview",   label: "MSC Pending Review",    description: "MSC stories awaiting PL review.",                                       entityType: "school" },
 ];

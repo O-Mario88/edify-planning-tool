@@ -99,6 +99,8 @@ export type AnalyticsSnapshot = {
   metrics: AnalyticsMetric[];
   pipeline: FunnelStage[];
   ssaHeatmap: { interventions: string[]; rows: HeatmapRow[] };
+  /** MSC workflow funnel: Submitted → PL Reviewed → Verified → Donor-Ready. */
+  mscFunnel: FunnelStage[];
   trend: TrendPoint[];
   dataQuality: DataQuality;
 };

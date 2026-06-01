@@ -204,6 +204,19 @@ export function computeAnalytics(input: ComputeInput): AnalyticsSnapshot {
   // Blocked: evidence is done but the activity still fails the Salesforce gate.
   const payBlocked = acts.filter((a) => (a.evidenceStatus === "complete" || a.evidenceStatus === "verified") && !isCompleted(a));
 
+  // ── Exam (§18) + MSC (§19) ──
+  const examMissingCount = exams.filter((e) => !e.collected).length;
+  const examCollectionRate = exams.length > 0 ? Math.round((examCollected.length / exams.length) * 100) : 0;
+  const mscRec = (list: typeof stories): DrilldownRecord[] =>
+    list.map((m) => ({ id: m.id, entityType: "school", title: m.title, subtitle: `${m.district} · ${m.status}`, schoolId: m.schoolId, district: m.district, status: m.status, contributesToCount: true }));
+  const mscPendingReview = stories.filter((m) => m.status === "Submitted");
+  const mscFunnel: FunnelStage[] = [
+    { key: "submitted", label: "Submitted", count: stories.length, records: mscRec(stories) },
+    { key: "plReviewed", label: "PL Reviewed", count: stories.filter((m) => m.status !== "Submitted").length, records: mscRec(stories.filter((m) => m.status !== "Submitted")) },
+    { key: "verified", label: "Verified", count: stories.filter((m) => m.status === "Verified" || m.status === "DonorReady").length, records: mscRec(stories.filter((m) => m.status === "Verified" || m.status === "DonorReady")) },
+    { key: "donorReady", label: "Donor-Ready", count: mscDonorReady, records: mscRec(stories.filter((m) => m.status === "DonorReady")) },
+  ];
+
   // ── Target context for the completed-activities headline ──
   const completedCount = pipeline[1].count;
   const fyTarget = fyTargetForRole(input.role ?? "CCEO");
@@ -305,6 +318,27 @@ export function computeAnalytics(input: ComputeInput): AnalyticsSnapshot {
       "Activities with evidence done but blocked by the Salesforce completion gate.",
       { ...zero, completed: payBlocked.length }, actRecords(payBlocked, () => "blocked"),
       "derived", { level: payBlocked.length > 0 ? "caveat" : "ok", notes: [] }),
+
+    // Exam (§18)
+    metric("examResultsCollected", "Exam Results Collected", "impact", examCollected.length,
+      "Schools in scope with collected exam results this FY.",
+      { ...zero, completed: examCollected.length }, examCollected.map((e) => ({ id: e.id, entityType: "school", title: analyticsSchoolById(e.schoolId)?.schoolName ?? e.schoolId, subtitle: `Score ${e.score}`, schoolId: e.schoolId, value: e.score, contributesToCount: true }))),
+    metric("examMissing", "Exam Results Missing", "impact", examMissingCount,
+      "Schools in scope with no exam results collected.",
+      { ...zero, completed: examMissingCount }, exams.filter((e) => !e.collected).map((e) => ({ id: e.id, entityType: "school", title: analyticsSchoolById(e.schoolId)?.schoolName ?? e.schoolId, subtitle: "Not collected", schoolId: e.schoolId, contributesToCount: false })),
+      "derived", { level: examMissingCount > 0 ? "caveat" : "ok", notes: [] }),
+    metric("examCollectionRate", "Exam Collection Rate", "impact", examCollectionRate,
+      "Percent of in-scope schools with collected exam results.",
+      { ...zero, completed: examCollectionRate }, []),
+
+    // MSC (§19)
+    metric("mscSubmitted", "MSC Stories Submitted", "impact", stories.length,
+      "Most-Significant-Change stories submitted in scope.",
+      { ...zero, completed: stories.length }, mscRec(stories)),
+    metric("mscPendingReview", "MSC Pending Review", "impact", mscPendingReview.length,
+      "MSC stories submitted but not yet PL-reviewed.",
+      { ...zero, completed: mscPendingReview.length }, mscRec(mscPendingReview),
+      "derived", { level: mscPendingReview.length > 0 ? "caveat" : "ok", notes: [] }),
   ];
 
   void best; void worst; void examDeclined; // surfaced via heatmap / future cards
@@ -316,6 +350,7 @@ export function computeAnalytics(input: ComputeInput): AnalyticsSnapshot {
     metrics,
     pipeline,
     ssaHeatmap: { interventions: [...interventions], rows: heatRows },
+    mscFunnel,
     trend,
     dataQuality,
   };
