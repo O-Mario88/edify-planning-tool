@@ -421,7 +421,7 @@ export { statusFor as ssaStatusFor };
 // 2026-10-01 → 2027-09-30. Prior-cycle items are dated 2026-04 / 2025-12
 // etc. so the cycle-toggle has something to switch between.
 
-const rawActivities: SchoolActivityTimelineItem[] = [
+export const rawActivities: SchoolActivityTimelineItem[] = [
   // ============================================================
   // GAP-NSSA-1 — locked, no SSA done. Only an SSA attempt this cycle.
   // ============================================================
