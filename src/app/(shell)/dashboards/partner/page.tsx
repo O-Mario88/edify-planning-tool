@@ -37,7 +37,7 @@ import { PartnerReturnedCorrections } from "@/components/partner/PartnerReturned
 import { PartnerEvidenceQualityPanel } from "@/components/partner/PartnerEvidenceQualityPanel";
 import { PartnerSchoolImpactSummary } from "@/components/partner/PartnerSchoolImpactSummary";
 import { PartnerDashboardMobileView } from "@/components/mobile/views/PartnerDashboardMobileView";
-import { SectionHeader } from "@/components/ui/SectionHeader";
+import { CollapsibleCard } from "@/components/ui/CollapsibleCard";
 import {
   partnerPriorityActions,
   doneForTodayItems,
@@ -95,56 +95,64 @@ export default async function PartnerCommandCenter({
         <DebriefPromoterCard submitterRole="Partner" />
 
         {/* PIPELINE — the 8-step workflow tracker. */}
-        <section className="space-y-3">
-          <SectionHeader
-            tier="strategic"
-            eyebrow="Pipeline"
-            title="Your work, from assigned to paid"
-            description="Every activity moves through these eight stages — counts update live as you and Edify clear each gate."
-          />
+        <CollapsibleCard
+          surface="bare"
+          bodyClassName="space-y-3"
+          id="partner-pipeline"
+          tier="strategic"
+          eyebrow="Pipeline"
+          title="Your work, from assigned to paid"
+          description="Every activity moves through these eight stages — counts update live as you and Edify clear each gate."
+        >
           <PartnerWorkflowTracker counts={trackerCounts} />
-        </section>
+        </CollapsibleCard>
 
         {/* TODAY — priorities, daily habit, inbox, evidence, corrections. */}
-        <section className="space-y-3">
-          <SectionHeader
-            tier="strategic"
-            eyebrow="Today"
-            title="What's in your hands right now"
-            description="Top priorities, daily-habit checklist, action inbox, the evidence still owed, and anything Edify returned for fixing."
-          />
+        <CollapsibleCard
+          surface="bare"
+          bodyClassName="space-y-3"
+          id="partner-today"
+          tier="strategic"
+          eyebrow="Today"
+          title="What's in your hands right now"
+          description="Top priorities, daily-habit checklist, action inbox, the evidence still owed, and anything Edify returned for fixing."
+        >
           <PartnerPriorityActions actions={partnerPriorityActions} />
           <PartnerDoneForToday items={doneForTodayItems} />
           <PartnerActionInbox tabs={partnerInboxTabs} rows={partnerInboxRows} />
           <PartnerEvidenceRequired />
           <PartnerReturnedCorrections />
-        </section>
+        </CollapsibleCard>
 
         {/* SCHOOLS & SCHEDULE — the field-ops view. */}
-        <section className="space-y-3">
-          <SectionHeader
-            tier="strategic"
-            eyebrow="Schools & schedule"
-            title="Where and when you're going"
-            description="Schools needing support this week and the activity schedule for today, tomorrow, and beyond."
-          />
+        <CollapsibleCard
+          surface="bare"
+          bodyClassName="space-y-3"
+          id="partner-schools-schedule"
+          tier="strategic"
+          eyebrow="Schools & schedule"
+          title="Where and when you're going"
+          description="Schools needing support this week and the activity schedule for today, tomorrow, and beyond."
+        >
           <PartnerAssignedSchools schools={partnerAssignedSchools} />
           <PartnerUpcoming items={partnerUpcoming} />
-        </section>
+        </CollapsibleCard>
 
         {/* STATUS & PAYMENT — the closing intelligence panel. */}
-        <section className="space-y-3">
-          <SectionHeader
-            tier="strategic"
-            eyebrow="Status & payment"
-            title="How everything is tracking"
-            description="Evidence snapshot, payment pipeline, 30-day evidence-quality trend, and the school-improvement contribution that all this work adds up to."
-          />
+        <CollapsibleCard
+          surface="bare"
+          bodyClassName="space-y-3"
+          id="partner-status-payment"
+          tier="strategic"
+          eyebrow="Status & payment"
+          title="How everything is tracking"
+          description="Evidence snapshot, payment pipeline, 30-day evidence-quality trend, and the school-improvement contribution that all this work adds up to."
+        >
           <PartnerStatusGrid buckets={partnerStatusBuckets} />
           <PartnerPaymentStatusCard />
           <PartnerEvidenceQualityPanel />
           <PartnerSchoolImpactSummary />
-        </section>
+        </CollapsibleCard>
 
         {/* Thank-you footer */}
         <footer className="card rounded-2xl px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">

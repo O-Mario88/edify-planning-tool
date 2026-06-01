@@ -21,7 +21,7 @@ import { QuickActionsRow } from "@/components/cpl/QuickActionsRow";
 import { BestPerformersCard } from "@/components/leaderboard/BestPerformersCard";
 import { MyPlanCard } from "@/components/planning/MyPlanCard";
 import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
-import { SectionHeader } from "@/components/ui/SectionHeader";
+import { CollapsibleCard } from "@/components/ui/CollapsibleCard";
 import { redirect } from "next/navigation";
 import { getCurrentUser, toCurrentUser } from "@/lib/auth";
 import { ROLE_REDIRECT } from "@/lib/auth-public";
@@ -85,28 +85,32 @@ export default async function CountryProgramLeadDashboard() {
             (My Field Work vs My Team Work) so the PL sees their own
             implementation target AND what the CCEO team needs, before the
             deeper field-work card. */}
-        <section className="space-y-3">
-          <SectionHeader
-            tier="strategic"
-            eyebrow="Field & team"
-            title="Your two jobs today"
-            description="You deliver field work and you lead a CCEO team — here's what each needs from you right now."
-          />
+        <CollapsibleCard
+          surface="bare"
+          bodyClassName="space-y-3"
+          id="cpl-field-team"
+          tier="strategic"
+          eyebrow="Field & team"
+          title="Your two jobs today"
+          description="You deliver field work and you lead a CCEO team — here's what each needs from you right now."
+        >
           <PlCommandLanes />
           <div id="my-field-work">
             <CplFieldWorkCard />
           </div>
-        </section>
+        </CollapsibleCard>
 
         {/* TEAM PERFORMANCE — KPIs, attention alerts, monthly chart,
             personal targets. */}
-        <section className="space-y-3">
-          <SectionHeader
-            tier="strategic"
-            eyebrow="Team performance"
-            title="How your team is tracking"
-            description="Eight KPIs, leadership-attention alerts, and the monthly performance picture next to your own targets."
-          />
+        <CollapsibleCard
+          surface="bare"
+          bodyClassName="space-y-3"
+          id="cpl-team-performance"
+          tier="strategic"
+          eyebrow="Team performance"
+          title="How your team is tracking"
+          description="Eight KPIs, leadership-attention alerts, and the monthly performance picture next to your own targets."
+        >
           <TeamKpiRow />
           <CplLeadershipAttentionRow />
           <section className="grid grid-cols-12 gap-3 md:gap-4 items-stretch">
@@ -117,17 +121,19 @@ export default async function CountryProgramLeadDashboard() {
               <PersonalTargetsCard />
             </div>
           </section>
-        </section>
+        </CollapsibleCard>
 
         {/* APPROVALS & PEOPLE — CCEO table, approval queue, best
             performers, partner payments, the team plan. */}
-        <section className="space-y-3">
-          <SectionHeader
-            tier="strategic"
-            eyebrow="Approvals & people"
-            title="What needs your sign-off"
-            description="CCEO performance, the approval queue, recognition, partner-payment gate, and the team field plan."
-          />
+        <CollapsibleCard
+          surface="bare"
+          bodyClassName="space-y-3"
+          id="cpl-approvals-people"
+          tier="strategic"
+          eyebrow="Approvals & people"
+          title="What needs your sign-off"
+          description="CCEO performance, the approval queue, recognition, partner-payment gate, and the team field plan."
+        >
           <section className="grid grid-cols-12 gap-3 md:gap-4 items-stretch" id="cceo-performance">
             <div className="col-span-12 lg:col-span-7">
               <CceoPerformanceTable />
@@ -145,17 +151,19 @@ export default async function CountryProgramLeadDashboard() {
           <div id="my-plan">
             <MyPlanCard role="cpl" />
           </div>
-        </section>
+        </CollapsibleCard>
 
         {/* OPERATIONS — Team backlog, intervention heatmap, funding,
             urgent schools. */}
-        <section className="space-y-3">
-          <SectionHeader
-            tier="strategic"
-            eyebrow="Operations"
-            title="Where execution is slipping"
-            description="Team backlog, intervention performance by cluster, funding execution, and schools needing urgent attention."
-          />
+        <CollapsibleCard
+          surface="bare"
+          bodyClassName="space-y-3"
+          id="cpl-operations"
+          tier="strategic"
+          eyebrow="Operations"
+          title="Where execution is slipping"
+          description="Team backlog, intervention performance by cluster, funding execution, and schools needing urgent attention."
+        >
           <div id="backlog-snapshot">
             <TeamBacklogSnapshotCard />
           </div>
@@ -170,20 +178,22 @@ export default async function CountryProgramLeadDashboard() {
           <div id="urgent-schools">
             <SchoolsNeedingUrgentAttentionCard />
           </div>
-        </section>
+        </CollapsibleCard>
 
         {/* ROUTES — Smart routing + capacity. */}
-        <section className="space-y-3">
-          <SectionHeader
-            tier="strategic"
-            eyebrow="Routes"
-            title="Capacity and route quality"
-            description="Where the team can pick up more visits and which routes are degrading."
-          />
+        <CollapsibleCard
+          surface="bare"
+          bodyClassName="space-y-3"
+          id="cpl-routes"
+          tier="strategic"
+          eyebrow="Routes"
+          title="Capacity and route quality"
+          description="Where the team can pick up more visits and which routes are degrading."
+        >
           <div id="smart-route">
             <SmartRouteCapacityCard />
           </div>
-        </section>
+        </CollapsibleCard>
 
         {/* Quick Actions — its own self-contained card, no chapter. */}
         <QuickActionsRow />

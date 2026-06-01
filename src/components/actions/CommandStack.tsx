@@ -33,7 +33,7 @@ import { NextThreeActionsRow } from "./NextThreeActionsRow";
 import { ChangedSinceCard } from "./ChangedSinceCard";
 import { DoneForTodayChecklist } from "./DoneForTodayChecklist";
 import { UnifiedInbox } from "./UnifiedInbox";
-import { SectionHeader } from "@/components/ui/SectionHeader";
+import { CollapsibleCard } from "@/components/ui/CollapsibleCard";
 
 export async function CommandStack({
   user,
@@ -67,26 +67,26 @@ export async function CommandStack({
       {!hideMission && <MissionHeader header={board.header} />}
       <NextThreeActionsRow items={board.nextThree} />
 
-      {/* Today rail — one card, two columns. */}
-      <section className="card p-3.5">
-        <SectionHeader
-          tier="strategic"
-          eyebrow="Today"
-          title={hideMission ? "Your Queue" : `${user.name.split(" ")[0]}'s queue`}
-          description="Everything that needs you, what changed while you were gone, and what's left to clear today."
-          icon={
-            <span className="w-9 h-9 rounded-xl bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)] grid place-items-center">
-              <Inbox size={16} />
-            </span>
-          }
-          meta={
-            <span className="t-caption text-secondary tabular">
-              {inboxOpen} open · {board.changedSince.length} changes · {board.doneToday.filter((d) => d.done).length}/{board.doneToday.length} done
-            </span>
-          }
-        />
-
-        <div className="mt-4 grid grid-cols-12 gap-6">
+      {/* Today rail — one collapsible card, two columns. Folds to its
+          header (with the live counts in `meta`) to de-crowd the page. */}
+      <CollapsibleCard
+        id="today-queue"
+        tier="strategic"
+        eyebrow="Today"
+        title={hideMission ? "Your Queue" : `${user.name.split(" ")[0]}'s queue`}
+        description="Everything that needs you, what changed while you were gone, and what's left to clear today."
+        icon={
+          <span className="w-9 h-9 rounded-xl bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)] grid place-items-center">
+            <Inbox size={16} />
+          </span>
+        }
+        meta={
+          <span className="t-caption text-secondary tabular">
+            {inboxOpen} open · {board.changedSince.length} changes · {board.doneToday.filter((d) => d.done).length}/{board.doneToday.length} done
+          </span>
+        }
+      >
+        <div className="grid grid-cols-12 gap-6">
           {/* Primary surface — the inbox where work happens. The tabs
               are the inbox's own self-label; no title row needed. */}
           <div className="col-span-12 lg:col-span-8">
@@ -103,7 +103,7 @@ export async function CommandStack({
             <DoneForTodayChecklist items={board.doneToday} embedded />
           </aside>
         </div>
-      </section>
+      </CollapsibleCard>
     </div>
   );
 }

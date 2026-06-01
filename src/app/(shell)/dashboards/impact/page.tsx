@@ -16,7 +16,7 @@ import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { QueueView } from "@/components/mobile/views/QueueView";
 import { InsightStrip } from "@/components/insights/InsightCard";
 import { IaPlanCard } from "@/components/planning/PlanCascadeCards";
-import { SectionHeader } from "@/components/ui/SectionHeader";
+import { CollapsibleCard } from "@/components/ui/CollapsibleCard";
 import { insightsForImpactAssessment } from "@/lib/insights";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
@@ -55,27 +55,31 @@ export default async function ImpactDashboard() {
             <CommandStack user={user} hideMission />
 
             {/* Section 2 — Vital signs.  Five KPIs + system insights. */}
-            <section className="space-y-3">
-              <SectionHeader
-                tier="strategic"
-                eyebrow="This Period"
-                title="Vital Signs"
-                description="The five numbers leadership reads first, plus what the system is noticing right now."
-              />
+            <CollapsibleCard
+              surface="bare"
+              bodyClassName="space-y-3"
+              id="ia-vital-signs"
+              tier="strategic"
+              eyebrow="This Period"
+              title="Vital Signs"
+              description="The five numbers leadership reads first, plus what the system is noticing right now."
+            >
               <ImpactKpiRow />
               <InsightStrip insights={insightsForImpactAssessment()} />
-            </section>
+            </CollapsibleCard>
 
             {/* Section 3 — Verification.  The strategic #2.
                 Plan card (what's expected) + Program Overview (counts
                 by program) + Verification Funnel (terminal states). */}
-            <section className="space-y-3">
-              <SectionHeader
-                tier="strategic"
-                eyebrow="Verification"
-                title="What's Flowing Through the Pipe"
-                description="From plan to upload to verification — where every record sits today."
-              />
+            <CollapsibleCard
+              surface="bare"
+              bodyClassName="space-y-3"
+              id="ia-verification"
+              tier="strategic"
+              eyebrow="Verification"
+              title="What's Flowing Through the Pipe"
+              description="From plan to upload to verification — where every record sits today."
+            >
               <IaPlanCard />
               <div className="grid grid-cols-12 gap-4 items-stretch">
                 {/* `flex flex-col` (not `flex` alone) is critical at tablet:
@@ -89,19 +93,21 @@ export default async function ImpactDashboard() {
                   <DataVerificationFunnelCard />
                 </div>
               </div>
-            </section>
+            </CollapsibleCard>
 
             {/* Section 3b — Donor-ready counts.  The verified output of
                 the pipeline above: what M&E can sign off for donors. */}
-            <section className="space-y-3">
-              <SectionHeader
-                tier="strategic"
-                eyebrow="Donor-ready"
-                title="What's Cleared for Donor Reporting"
-                description="The reach, training, and improvement figures verification has signed off — pending records stay flagged and out of the headline totals. Each tile opens the full report."
-              />
+            <CollapsibleCard
+              surface="bare"
+              bodyClassName="space-y-3"
+              id="ia-donor-ready"
+              tier="strategic"
+              eyebrow="Donor-ready"
+              title="What's Cleared for Donor Reporting"
+              description="The reach, training, and improvement figures verification has signed off — pending records stay flagged and out of the headline totals. Each tile opens the full report."
+            >
               <DonorImpactReachCard snapshot={donorSnapshot} />
-            </section>
+            </CollapsibleCard>
 
             {/* Section 4 — Quality & partners.  Operational rhythm.
                 Columns rebalanced to eliminate the ~660px gap that the
@@ -110,13 +116,15 @@ export default async function ImpactDashboard() {
                   • RIGHT (4 cols): Quality issues → Training → Top issues
                 Heights now match within ~30px so the section reads as
                 two parallel rails of equivalent weight. */}
-            <section className="space-y-3">
-              <SectionHeader
-                tier="strategic"
-                eyebrow="Quality & Partners"
-                title="Where Attention Is Needed"
-                description="Data-quality drift, partner performance, and the training evidence backing every reported metric."
-              />
+            <CollapsibleCard
+              surface="bare"
+              bodyClassName="space-y-3"
+              id="ia-quality-partners"
+              tier="strategic"
+              eyebrow="Quality & Partners"
+              title="Where Attention Is Needed"
+              description="Data-quality drift, partner performance, and the training evidence backing every reported metric."
+            >
               <div className="grid grid-cols-12 gap-4 items-start">
                 <div className="col-span-12 lg:col-span-8 space-y-4">
                   <DataQualityTrendChart />
@@ -129,7 +137,7 @@ export default async function ImpactDashboard() {
                   <TopIssuesCard />
                 </div>
               </div>
-            </section>
+            </CollapsibleCard>
 
             {/* Section 5 — Page tools.  Demoted utility footer. */}
             <ImpactQuickActionsRow />
