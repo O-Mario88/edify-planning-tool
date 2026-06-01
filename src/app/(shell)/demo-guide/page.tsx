@@ -138,8 +138,8 @@ const SCENARIOS: Scenario[] = [
     roleIcon: ShieldCheck,
     tone: "sky",
     steps: [
-      { say: "Templates are system-generated. Users don't invent columns.",                                open: { label: "Template Builder", href: "/data-intake/templates" }, expect: "19 templates with required + optional columns + validation rules" },
-      { say: "Each template downloads as a CSV with headers + an example row.",                            open: { label: "Open School Register", href: "/data-intake/templates/tpl-school-register" }, expect: "Schema, validation rules, downloadable CSV" },
+      { say: "Templates are system-generated. Users don't invent columns.",                                open: { label: "Template Builder", href: "/data-intake/templates" }, expect: "3 consolidated templates with required + optional columns + validation rules" },
+      { say: "Each template downloads as a CSV with headers + an example row.",                            open: { label: "Open School Onboarding", href: "/data-intake/templates/tpl-school-onboarding" }, expect: "Schema, validation rules, downloadable CSV" },
       { say: "Uploads are validated, errors flagged, and only approved batches feed the planning engine.", open: { label: "Validation queue", href: "/data-intake/queue" }, expect: "Row counts: valid · errors · warnings per batch" },
       { say: "Readiness gates the FY opening + planning engine.",                                          open: { label: "Planning Readiness", href: "/data-intake/readiness" }, expect: "Blocked / Needs Attention / Ready verdict" },
     ],

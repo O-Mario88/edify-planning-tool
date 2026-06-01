@@ -106,7 +106,7 @@ export default async function DataIntakeHubPage() {
 
       {/* Section nav */}
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-        <Tile href="/data-intake/templates" Icon={FileSpreadsheet} title="Template Builder"        body="System-generated upload templates for 19 data types." />
+        <Tile href="/data-intake/templates" Icon={FileSpreadsheet} title="Template Builder"        body="Three consolidated upload templates — school, SSA, and activity." />
         <Tile href="/data-intake/upload"    Icon={Upload}          title="Upload Center"           body="Download a template, upload, validate, correct, submit." />
         <Tile href="/data-intake/queue"     Icon={ListChecks}      title="Validation Queue"        body="Per-batch error / warning counts, review actions." />
         <Tile href="/data-intake/readiness" Icon={ShieldCheck}     title="Planning Data Readiness" body="Traffic-light gate the planning engine reads." />
