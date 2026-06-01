@@ -19,6 +19,8 @@ import { ActiveTileFilterHeader } from "@/components/tile-filter/ActiveTileFilte
 import { computeAnalytics } from "@/lib/analytics/compute-analytics";
 import { FIELD_ANALYTICS_TILES } from "./tile-registry";
 import type { AnalyticsMetric, FunnelStage, HeatmapRow } from "@/lib/analytics/types";
+import { DonorReportingImpact } from "@/components/donor-reporting/DonorReportingImpact";
+import type { DonorMetricSnapshot } from "@/lib/donor-metrics-types";
 
 const REACH_KEYS = ["schoolsReached", "learnersImpacted", "teachersTrained", "schoolLeadersTrained", "districtsCovered", "clustersCovered"];
 const IMPACT_KEYS = ["activitiesCompleted", "ssaImproved", "ssaDeclined", "examImproved", "mscDonorReady"];
@@ -36,10 +38,13 @@ export function FieldEngineAnalytics({
   filterScope,
   role,
   scopeLabel,
+  donorSnapshot,
 }: {
   filterScope: FilterScope;
   role: string;
   scopeLabel: string;
+  /** Role-scoped donor snapshot computed server-side; rendered below. */
+  donorSnapshot?: DonorMetricSnapshot;
 }) {
   const selection = useActiveFilters();
   const { activeFilter, isActive, setTileFilter, resetTileFilter } = useTileFilter(FIELD_ANALYTICS_TILES);
@@ -112,6 +117,9 @@ export function FieldEngineAnalytics({
 
       {/* SSA intervention heatmap */}
       <SsaHeatmap interventions={snapshot.ssaHeatmap.interventions} rows={snapshot.ssaHeatmap.rows} />
+
+      {/* Donor reporting — evidence-gated, role-scoped (computed server-side) */}
+      {donorSnapshot && <DonorReportingImpact snapshot={donorSnapshot} />}
     </div>
   );
 }
