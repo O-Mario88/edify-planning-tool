@@ -1,14 +1,14 @@
-// Salesforce verification records — the SV-/TS- ID layer + IA verification.
+// Salesforce verification records — the SVE-/TS- ID layer + IA verification.
 //
 // Built by iterating the activity spine so prefixes obey salesforceKindFor by
-// construction (visits SV-, trainings/cluster TS-). A couple of activities have
+// construction (visits SVE-, trainings/cluster TS-). A couple of activities have
 // NO record (the Salesforce Completion Gate blocks them) and one carries the
 // WRONG prefix (invalid → excluded from verified counts). Pure & client-safe.
 
 import { rawActivities, ACTIVITY_TYPE_LABEL } from "@/lib/planning/school-activity-mock";
 import { salesforceKindFor, SF_PREFIX } from "@/lib/salesforce-id";
 
-export type SfPrefix = "SV-" | "TS-";
+export type SfPrefix = string; // derived from SF_PREFIX (e.g. "SVE-" | "TS-")
 export type SfIaStatus = "not_submitted" | "awaiting_review" | "verified" | "rejected";
 
 export type SalesforceVerificationRecord = {
@@ -39,8 +39,8 @@ export const salesforceVerificationMock: SalesforceVerificationRecord[] = rawAct
   .filter((a) => !NO_SF_ID.has(a.id))
   .map((a, i) => {
     const kind = salesforceKindFor(ACTIVITY_TYPE_LABEL[a.activityType]); // "visit" | "training"
-    const correct = SF_PREFIX[kind] as SfPrefix; // "SV-" | "TS-"
-    const wrong: SfPrefix = correct === "SV-" ? "TS-" : "SV-";
+    const correct = SF_PREFIX[kind]; // e.g. "SVE-" | "TS-"
+    const wrong = SF_PREFIX[kind === "training" ? "visit" : "training"]; // the other object's prefix
     const isWrong = WRONG_PREFIX.has(a.id);
     const prefix = isWrong ? wrong : correct;
     return {

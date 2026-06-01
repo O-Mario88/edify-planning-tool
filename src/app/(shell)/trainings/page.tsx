@@ -7,6 +7,7 @@ import { EntityIndex } from "@/components/shell/EntityIndex";
 import { StatusBadge, type ChipTone } from "@/components/ui/primitives";
 import { TRAININGS, type TrainingStatus } from "@/lib/training-mock";
 import { shortStatusLabel, fullStatusLabel } from "@/lib/status-labels";
+import { ConfirmCompletionButton } from "@/components/my-targets/ConfirmCompletionButton";
 import { cn } from "@/lib/utils";
 
 // Training status → ChipTone. "In Progress" / "Scheduled" / "Cancelled"
@@ -135,13 +136,26 @@ export default function TrainingsIndex() {
                       </StatusBadge>
                     </td>
                     <td className="text-right whitespace-nowrap">
-                      <Link
-                        href={`/trainings/${t.id}`}
-                        className="btn btn-sm"
-                        aria-label={`View training ${t.title}`}
-                      >
-                        View
-                      </Link>
+                      <div className="inline-flex items-center gap-1.5">
+                        {t.status !== "Completed" && t.status !== "Cancelled" && (
+                          <ConfirmCompletionButton
+                            activity={{
+                              id: t.id,
+                              schoolName: t.title,
+                              activityType: "Training",
+                              purpose: t.cluster,
+                              intervention: t.intervention,
+                            }}
+                          />
+                        )}
+                        <Link
+                          href={`/trainings/${t.id}`}
+                          className="btn btn-sm"
+                          aria-label={`View training ${t.title}`}
+                        >
+                          View
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 ))

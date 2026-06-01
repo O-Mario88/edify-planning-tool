@@ -36,7 +36,7 @@ export type VisitCompletion = {
   schoolId:         string;
   activityId:       string;
   completedAt:      string;
-  salesforceId:     string;            // e.g. "SV-01230" / "TS-01234"
+  salesforceId:     string;            // e.g. "SVE-88273" / "TS-50294"
   salesforceIdKind: SalesforceIdKind;
   note:             string;            // optional one-liner from the CCEO
   // Training / cluster-meeting completions carry a participant breakdown

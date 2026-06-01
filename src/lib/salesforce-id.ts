@@ -7,11 +7,11 @@
 //
 // Two ID formats — one per Salesforce object the activity is logged as:
 //
-//   • School Visit ID  → must start with "SV-"   e.g. SV-01230
+//   • School Visit ID  → must start with "SVE-"  e.g. SVE-88273
 //       school visit / follow-up / coaching / classroom observation /
 //       partner school visit
 //
-//   • Training ID      → must start with "TS-"   e.g. TS-01234
+//   • Training ID      → must start with "TS-"   e.g. TS-50294
 //       training / in-school training / cluster meeting / SIT /
 //       cluster training
 //
@@ -29,13 +29,13 @@ export type SalesforceActivityKind = "visit" | "training";
 export type SalesforceIdKind = "Visit ID" | "Training ID";
 
 export const SF_PREFIX: Record<SalesforceActivityKind, string> = {
-  visit:    "SV-",
+  visit:    "SVE-",
   training: "TS-",
 };
 
 export const SF_EXAMPLE: Record<SalesforceActivityKind, string> = {
-  visit:    "SV-01230",
-  training: "TS-01234",
+  visit:    "SVE-88273",
+  training: "TS-50294",
 };
 
 // Activity types that are logged in Salesforce as a TRAINING (TS-).
@@ -71,17 +71,17 @@ export function requiresParticipantCounts(activityType: string): boolean {
 export type SfIdValidation = { ok: boolean; message?: string };
 
 const VISIT_MESSAGE =
-  "School visit Salesforce ID must start with SV-, for example SV-01230.";
+  "School visit Salesforce ID must start with SVE-, for example SVE-88273.";
 const TRAINING_MESSAGE =
-  "Training Salesforce ID must start with TS-, for example TS-01234.";
+  "Training Salesforce ID must start with TS-, for example TS-50294.";
 
 export function sfPrefixMessage(kind: SalesforceActivityKind): string {
   return kind === "training" ? TRAINING_MESSAGE : VISIT_MESSAGE;
 }
 
 // A valid ID is the required prefix followed by at least one more
-// character (the org's running number, e.g. SV-01230). Case-insensitive
-// on the prefix so "sv-01230" pasted from elsewhere still validates; the
+// character (the org's running number, e.g. SVE-88273). Case-insensitive
+// on the prefix so "sve-88273" pasted from elsewhere still validates; the
 // canonical stored form is upper-cased by `normalizeSalesforceId`.
 export function isValidSalesforceId(raw: string, kind: SalesforceActivityKind): boolean {
   const trimmed = raw.trim();
