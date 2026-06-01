@@ -25,6 +25,7 @@ export default function DataVerificationPage() {
       planId: a.planId,
       assigneeName: a.assigneeId,
       weekOfMonth: a.weekOfMonth,
+      salesforceId: a.salesforceId,
     }));
   const participantRows = trainingParticipants()
     .filter((p) => p.evidenceStatus === "CceoConfirmed" || p.evidenceStatus === "Uploaded")

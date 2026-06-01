@@ -131,7 +131,9 @@ export async function seedSamplePlan(): Promise<SeedResult> {
     const a0 = activityIds[0];
     const mc = await markActivityCompleted(a0, "Completed during seed run");
     if (!mc.ok) return { ok: false, reason: "FAILED", step: "markActivityCompleted", detail: mc.reason };
-    const sv = await submitActivityForVerification(a0);
+    // a0 is a SCHOOL_VISIT → enters a Salesforce Visit ID (SVE-). The IA queue
+    // shows this exact value for the IA to paste into Salesforce.
+    const sv = await submitActivityForVerification(a0, "SVE-88273");
     if (!sv.ok) return { ok: false, reason: "FAILED", step: "submitActivityForVerification", detail: sv.reason };
 
     const drafts = [

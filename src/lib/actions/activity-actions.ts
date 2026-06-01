@@ -93,6 +93,7 @@ export async function markActivityCompleted(
 
 export async function submitActivityForVerification(
   activityId: string,
+  salesforceId?: string,
 ): Promise<ActivityActionResult> {
   const user = await getCurrentUser();
   const a = findActivity(activityId);
@@ -101,7 +102,12 @@ export async function submitActivityForVerification(
   if (a.status !== "Completed") {
     return { ok: false, reason: "INVALID_STATE", current: a.status };
   }
-  updateActivity(activityId, { status: "SubmittedForVerification" });
+  // Store the exact Salesforce ID the staff entered so the IA verification
+  // queue shows the same value they'll paste into Salesforce to confirm.
+  updateActivity(activityId, {
+    status: "SubmittedForVerification",
+    ...(salesforceId?.trim() ? { salesforceId: salesforceId.trim() } : {}),
+  });
   emitAudit({
     action: "activity.submittedForVerification",
     subjectKind: "PlannedActivity",

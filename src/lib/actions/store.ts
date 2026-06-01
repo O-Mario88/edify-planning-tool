@@ -75,6 +75,10 @@ export type PlannedActivityRecord = {
   estCostCents:     number;
   status:           PlannedActivityStatus;
   interventionArea?: string;
+  /** The exact Salesforce Activity ID the staff entered on completion (SVE-/TS-).
+   *  Single source of truth for the verification queue — the IA copies THIS into
+   *  Salesforce to confirm. */
+  salesforceId?:    string;
   createdAt:        string;
   updatedAt:        string;
 };

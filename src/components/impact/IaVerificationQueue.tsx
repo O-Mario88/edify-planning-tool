@@ -16,9 +16,9 @@
 // the same useTransition + pushToast + router.refresh pattern as the
 // canonical FundPlanActionRow.
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Loader2, RotateCcw } from "lucide-react";
+import { CheckCircle2, Loader2, RotateCcw, Copy, Check } from "lucide-react";
 import { useDemoStore } from "@/components/demo/DemoStore";
 import {
   rejectEvidence,
@@ -40,6 +40,8 @@ type ActivityRow = {
   planId?: string;
   assigneeName?: string;
   weekOfMonth: number;
+  /** Exact Salesforce ID the staff entered — the IA copies this to confirm. */
+  salesforceId?: string;
 };
 
 type ParticipantRow = {
@@ -189,6 +191,7 @@ function ActivityRowView({ row }: { row: ActivityRow }) {
   return <RowChrome
     title={row.title}
     subtitle={`Week ${row.weekOfMonth} · ${row.assigneeName ?? "Unassigned"} · ${row.status}`}
+    sfId={row.salesforceId}
     pending={pending}
     onApprove={runApprove}
     onReturn={runReturn}
@@ -263,12 +266,36 @@ function PartnerRowView({ row }: { row: PartnerRow }) {
   />;
 }
 
+// The exact Salesforce ID the IA pastes into Salesforce to confirm — shown
+// mono with a one-click copy so the entered value is never re-typed.
+function SalesforceIdChip({ sfId }: { sfId: string }) {
+  const [copied, setCopied] = useState(false);
+  function copy() {
+    void navigator.clipboard?.writeText(sfId);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1500);
+  }
+  return (
+    <button
+      type="button"
+      onClick={copy}
+      title="Copy Salesforce ID"
+      className="mt-1 inline-flex items-center gap-1 rounded-md border border-[var(--color-edify-border)] bg-[var(--color-edify-soft)]/50 px-1.5 py-[2px] text-[10.5px] font-extrabold hover:bg-[var(--color-edify-soft)]"
+    >
+      <span className="muted font-bold">SF:</span>
+      <span className="font-mono">{sfId}</span>
+      {copied ? <Check size={11} className="text-emerald-600" /> : <Copy size={11} className="text-[var(--color-edify-muted)]" />}
+    </button>
+  );
+}
+
 function RowChrome({
-  title, subtitle, pending, onApprove, onReturn,
+  title, subtitle, sfId, pending, onApprove, onReturn,
   approveLabel = "Verify", returnLabel = "Return",
 }: {
   title: string;
   subtitle: string;
+  sfId?: string;
   pending: boolean;
   onApprove: () => void;
   onReturn: () => void;
@@ -280,6 +307,7 @@ function RowChrome({
       <div className="flex-1 min-w-0">
         <div className="text-body font-extrabold tracking-tight truncate">{title}</div>
         <div className="text-caption muted mt-0.5 truncate">{subtitle}</div>
+        {sfId && <SalesforceIdChip sfId={sfId} />}
       </div>
       <div className="flex items-center gap-1.5">
         <button
