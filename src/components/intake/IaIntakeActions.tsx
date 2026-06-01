@@ -28,7 +28,20 @@ import {
 } from "@/lib/intake/intake-core";
 import { ID_FORMATS } from "@/lib/intake/id-formats";
 import { mapSchoolCsv, type SchoolCsvResult } from "@/lib/intake/school-csv";
+import { getIntakeTemplate } from "@/lib/intake/intake-templates";
 import { createSchool, createSchoolsBulk, uploadSsaPerformance } from "@/lib/actions/intake-actions";
+import { IntakeUploadDrawer } from "./IntakeUploadDrawer";
+
+type UploadKind = { id: string; name: string; sub: string };
+const UPLOADS: UploadKind[] = [
+  { id: "tpl-school-onboarding", name: "School Onboarding", sub: "Create schools (ID 32791)" },
+  { id: "tpl-ssa-performance",   name: "SSA Performance",   sub: "8 area scores + enrolment" },
+  { id: "tpl-activity-tracker",  name: "Activity & Engagement", sub: "Last training/visit/exam — FY cycle" },
+  { id: "tpl-school-visits",     name: "School Visits",     sub: "Visit records (SVE-88273)" },
+  { id: "tpl-trainings",         name: "Trainings",         sub: "Training records (TS-50294)" },
+  { id: "tpl-exam-results",      name: "Exam Results",      sub: "Scores & pass rates" },
+  { id: "tpl-expenses",          name: "Expenses",          sub: "Spend per school (6161)" },
+];
 
 export type IntakeSchoolLite = {
   schoolId: string;
@@ -46,67 +59,103 @@ const SCHOOL_TYPES: SchoolType[] = ["Client", "Core", "Potential Core", "Other"]
 const EMPTY_SCORES = Object.fromEntries(SSA_INTERVENTION_AREAS.map((a) => [a, ""])) as Record<SsaInterventionArea, string>;
 
 export function IaIntakeActions({ schools, existingIds }: { schools: IntakeSchoolLite[]; existingIds: string[] }) {
-  const [open, setOpen] = useState<"school" | "ssa" | null>(null);
+  const [active, setActive] = useState<{ id: string; mode: "manual" | "csv" } | null>(null);
+  const close = () => setActive(null);
+
   return (
     <>
       <section className="card p-3.5">
-        <div className="flex items-start justify-between gap-3 flex-wrap">
-          <div className="min-w-0">
-            <h2 className="text-body-lg font-extrabold tracking-tight">Data intake actions</h2>
-            <p className="text-[11.5px] muted">
-              Add a new school to the planning engine, or upload an SSA performance assessment. A new school is
-              planning-locked until its first SSA is uploaded.
-            </p>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <Button variant="secondary" size="sm" Icon={Upload} onClick={() => setOpen("ssa")}>
-              Upload SSA performance
-            </Button>
-            <Button variant="primary" size="sm" Icon={Plus} onClick={() => setOpen("school")}>
-              Add school
-            </Button>
-          </div>
+        <div className="min-w-0 mb-3">
+          <h2 className="text-body-lg font-extrabold tracking-tight">Data uploads</h2>
+          <p className="text-[11.5px] muted">
+            Every upload supports manual entry (one or two) and CSV (a long list). Data about a school must carry its
+            School ID to link it. New schools are planning-locked until their first SSA.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+          {UPLOADS.map((u) => (
+            <div key={u.id} className="rounded-lg border border-[var(--color-edify-divider)] p-3 flex flex-col gap-2">
+              <div className="min-w-0">
+                <div className="text-[12.5px] font-extrabold tracking-tight truncate">{u.name}</div>
+                <div className="text-[10.5px] muted truncate">{u.sub}</div>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Button variant="secondary" size="sm" Icon={Plus} onClick={() => setActive({ id: u.id, mode: "manual" })}>
+                  Manual
+                </Button>
+                <Button variant="ghost" size="sm" Icon={FileUp} onClick={() => setActive({ id: u.id, mode: "csv" })}>
+                  CSV
+                </Button>
+              </div>
+            </div>
+          ))}
         </div>
 
         {schools.length > 0 && (
-          <ul className="divide-y divide-[var(--color-edify-divider)] mt-3">
-            {schools.slice(0, 6).map((s) => (
-              <li key={s.schoolId} className="py-2.5 flex items-center gap-3">
-                <span className="h-9 w-9 rounded-md bg-[var(--color-edify-soft)]/80 text-[var(--color-edify-primary)] grid place-items-center shrink-0 text-[10px] font-extrabold">
-                  {s.schoolType.slice(0, 2).toUpperCase()}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <div className="text-body font-extrabold tracking-tight truncate">{s.schoolName}</div>
-                  <div className="text-caption muted truncate">
-                    {s.schoolId} · {s.district}, {s.region} · added {s.dateAdded} · {s.addedBy}
+          <>
+            <h3 className="text-[12px] font-extrabold tracking-tight mt-4 mb-1">Recently added schools</h3>
+            <ul className="divide-y divide-[var(--color-edify-divider)]">
+              {schools.slice(0, 6).map((s) => (
+                <li key={s.schoolId} className="py-2.5 flex items-center gap-3">
+                  <span className="h-9 w-9 rounded-md bg-[var(--color-edify-soft)]/80 text-[var(--color-edify-primary)] grid place-items-center shrink-0 text-[10px] font-extrabold">
+                    {s.schoolType.slice(0, 2).toUpperCase()}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-body font-extrabold tracking-tight truncate">{s.schoolName}</div>
+                    <div className="text-caption muted truncate">
+                      {s.schoolId} · {s.district}, {s.region} · added {s.dateAdded} · {s.addedBy}
+                    </div>
                   </div>
-                </div>
-                {s.planningLocked ? (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-[2px] rounded-md text-[10px] font-extrabold bg-amber-100 text-amber-700 whitespace-nowrap">
-                    <Lock size={10} /> SSA pending
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1 px-1.5 py-[2px] rounded-md text-[10px] font-extrabold bg-emerald-100 text-emerald-700 whitespace-nowrap">
-                    <CheckCircle2 size={10} /> Planning open
-                  </span>
-                )}
-              </li>
-            ))}
-          </ul>
+                  {s.planningLocked ? (
+                    <span className="inline-flex items-center gap-1 px-1.5 py-[2px] rounded-md text-[10px] font-extrabold bg-amber-100 text-amber-700 whitespace-nowrap">
+                      <Lock size={10} /> SSA pending
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-1.5 py-[2px] rounded-md text-[10px] font-extrabold bg-emerald-100 text-emerald-700 whitespace-nowrap">
+                      <CheckCircle2 size={10} /> Planning open
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </>
         )}
       </section>
 
-      <NewSchoolDrawer open={open === "school"} onClose={() => setOpen(null)} existingIds={existingIds} />
-      <SsaUploadDrawer open={open === "ssa"} onClose={() => setOpen(null)} schools={schools} />
+      {/* School onboarding has its own geography-aware drawer (manual + CSV). */}
+      <NewSchoolDrawer
+        key={`school-${active?.id === "tpl-school-onboarding" ? active.mode : "m"}`}
+        open={active?.id === "tpl-school-onboarding"}
+        initialMode={active?.id === "tpl-school-onboarding" ? active.mode : "manual"}
+        onClose={close}
+        existingIds={existingIds}
+      />
+      {/* SSA manual uses the score-grid drawer with live FY/quarter derivation. */}
+      <SsaUploadDrawer
+        open={active?.id === "tpl-ssa-performance" && active.mode === "manual"}
+        onClose={close}
+        schools={schools}
+      />
+      {/* Everything else (incl. SSA-by-CSV) uses the generic engine. */}
+      <IntakeUploadDrawer
+        key={`gen-${active && !(active.id === "tpl-school-onboarding") && !(active.id === "tpl-ssa-performance" && active.mode === "manual") ? `${active.id}-${active.mode}` : "none"}`}
+        open={!!active && !(active.id === "tpl-school-onboarding") && !(active.id === "tpl-ssa-performance" && active.mode === "manual")}
+        mode={active?.mode ?? "manual"}
+        template={active ? getIntakeTemplate(active.id) ?? null : null}
+        schools={schools}
+        existingIds={existingIds}
+        onClose={close}
+      />
     </>
   );
 }
 
 // ─── Add School ────────────────────────────────────────────────────
 
-function NewSchoolDrawer({ open, onClose, existingIds }: { open: boolean; onClose: () => void; existingIds: string[] }) {
+function NewSchoolDrawer({ open, onClose, existingIds, initialMode = "manual" }: { open: boolean; onClose: () => void; existingIds: string[]; initialMode?: "manual" | "csv" }) {
   const router = useRouter();
-  const [mode, setMode] = useState<"manual" | "csv">("manual");
+  const [mode, setMode] = useState<"manual" | "csv">(initialMode);
   const [pending, start] = useTransition();
 
   // Manual form state

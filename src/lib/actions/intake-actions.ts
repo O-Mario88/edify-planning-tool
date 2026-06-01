@@ -13,6 +13,7 @@ import { emitAudit, emitNotificationFanOut } from "./audit";
 import { newId } from "./store";
 import {
   DATA_INTAKE_ROLES,
+  SSA_INTERVENTION_AREAS,
   deriveFyFromDate,
   deriveQuarterFromDate,
   ssaAverage,
@@ -23,6 +24,9 @@ import {
   type SsaUploadInput,
 } from "@/lib/intake/intake-core";
 import { addIntakeSchool, addSsaUpload, intakeSchoolIds } from "@/lib/intake/intake-mock";
+import { getIntakeTemplate } from "@/lib/intake/intake-templates";
+import { validateIntakeValues } from "@/lib/intake/intake-validate";
+import { addIntakeRecords } from "@/lib/intake/intake-records-mock";
 
 export type IntakeResult<T = { id: string }> =
   | ({ ok: true } & T)
@@ -193,6 +197,73 @@ export async function uploadSsaPerformance(input: SsaUploadInput): Promise<
 
   revalidateIntakeSurfaces(input.schoolId);
   return { ok: true, id: row.id, fy, quarter, averageScore };
+}
+
+// ─── 3. submitIntakeRecords (generic — manual single row OR CSV bulk) ──
+//
+// One action for every field-described template (visits, trainings, exam
+// results, expenses, activity, and SSA-via-CSV). Re-validates each row
+// server-side, then stores. SSA rows are routed through uploadSsaPerformance so
+// the planning-unlock + FY/quarter derivation still fire.
+
+export type IntakeRecordsResult =
+  | { ok: false; reason: "FORBIDDEN" | "UNKNOWN_TEMPLATE" }
+  | { ok: true; created: number; failed: Array<{ row: number; errors: Record<string, string> }> };
+
+export async function submitIntakeRecords(
+  templateId: string,
+  rows: Array<Record<string, string>>,
+): Promise<IntakeRecordsResult> {
+  const user = await getCurrentUser();
+  if (!INTAKE_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+
+  const template = getIntakeTemplate(templateId);
+  if (!template) return { ok: false, reason: "UNKNOWN_TEMPLATE" };
+
+  const failed: Array<{ row: number; errors: Record<string, string> }> = [];
+
+  // SSA gets special handling: reuse the unlock + FY-derive path per row.
+  if (templateId === "tpl-ssa-performance") {
+    let created = 0;
+    for (let i = 0; i < rows.length; i++) {
+      const v = validateIntakeValues(template, rows[i], intakeSchoolIds());
+      if (Object.keys(v).length > 0) { failed.push({ row: i + 1, errors: v }); continue; }
+      const scores: Partial<Record<SsaInterventionArea, number | string>> = {};
+      for (const area of SSA_INTERVENTION_AREAS) scores[area] = rows[i][area];
+      const res = await uploadSsaPerformance({
+        schoolId: rows[i]["School ID"],
+        ssaDate: rows[i]["SSA Date"],
+        newEnrollment: rows[i]["Enrolment"],
+        scores,
+      });
+      if (res.ok) created += 1;
+      else failed.push({ row: i + 1, errors: res.reason === "INVALID_INPUT" ? res.errors : { _: "Rejected." } });
+    }
+    return { ok: true, created, failed };
+  }
+
+  const valid: Array<Record<string, string>> = [];
+  for (let i = 0; i < rows.length; i++) {
+    const v = validateIntakeValues(template, rows[i], intakeSchoolIds());
+    if (Object.keys(v).length > 0) failed.push({ row: i + 1, errors: v });
+    else valid.push(rows[i]);
+  }
+
+  if (valid.length > 0) {
+    addIntakeRecords(templateId, valid, user.name);
+    emitAudit({
+      action: "intake.recordsSubmitted",
+      subjectKind: "IntakeRecord",
+      subjectId: `${templateId}:${valid.length}`,
+      actorId: user.staffId,
+      actorRole: user.role,
+      actorName: user.name,
+      payload: { templateId, created: valid.length, failed: failed.length },
+    });
+    revalidateIntakeSurfaces();
+  }
+
+  return { ok: true, created: valid.length, failed };
 }
 
 function revalidateIntakeSurfaces(schoolId?: string) {

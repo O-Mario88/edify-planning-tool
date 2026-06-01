@@ -13,6 +13,12 @@
 import "server-only";
 import { activeFinancialYear } from "@/lib/fy-engine";
 import { validateCountryCostSettings } from "@/lib/cost-settings-mock";
+import {
+  getIntakeTemplate,
+  requiredColumns as reqCols,
+  optionalColumns as optCols,
+  type IntakeTemplate,
+} from "@/lib/intake/intake-templates";
 
 // ────────── Template data type ──────────
 
@@ -36,7 +42,8 @@ export type DataType =
   | "Leave Blackout Dates"
   | "Salesforce Verification"
   | "Evidence Records"
-  | "Activity Tracker";
+  | "Activity Tracker"
+  | "Expenses";
 
 export const ALL_DATA_TYPES: DataType[] = [
   "School Register", "Staff Register", "Partner Register",
@@ -192,6 +199,54 @@ export const dataTemplates: DataTemplate[] = [
     updatedAt: "2026-06-01",
   },
 ];
+
+// The school-linked record templates (visits, trainings, exams, expenses) are
+// field-described in intake-templates.ts so ONE engine can do manual + CSV. We
+// derive their catalog/CSV entries here so the Template Builder + CSV download
+// route stay one list with the rest.
+const GENERATED_DATA_TYPE: Record<string, DataType> = {
+  "tpl-school-visits": "Visit Records",
+  "tpl-trainings":     "Training Records",
+  "tpl-exam-results":  "Exam Results",
+  "tpl-expenses":      "Expenses",
+};
+
+function buildDataTemplate(t: IntakeTemplate, dataType: DataType): DataTemplate {
+  const dropdownColumns: Record<string, string[]> = {};
+  for (const f of t.fields) if (f.type === "select" && f.options) dropdownColumns[f.key] = [...f.options];
+  const exampleRow: Record<string, string | number> = {};
+  for (const f of t.fields) if (f.example !== undefined) exampleRow[f.key] = f.example;
+  const rules: string[] = [];
+  if (t.schoolLinked) rules.push("School ID must be digits only, e.g. 32791, and exist in the School Onboarding Register");
+  if (t.ownIdField) {
+    const idf = t.fields.find((f) => f.key === t.ownIdField);
+    if (idf?.example) rules.push(`${t.ownIdField} must follow its format, e.g. ${idf.example}, and be unique in the file`);
+  }
+  for (const f of t.fields) {
+    if (f.type === "select" && f.options) rules.push(`${f.label} must be one of: ${f.options.join(" / ")}`);
+    if ((f.type === "number" || f.type === "score") && (f.min !== undefined || f.max !== undefined)) {
+      rules.push(`${f.label} must be ${f.min ?? 0}–${f.max ?? "∞"}`);
+    }
+  }
+  return {
+    id: t.id,
+    name: t.name,
+    dataType,
+    description: t.description,
+    requiredColumns: reqCols(t),
+    optionalColumns: optCols(t),
+    dropdownColumns,
+    exampleRows: Object.keys(exampleRow).length ? [exampleRow] : [],
+    validationRules: rules,
+    createdBy: "Edify HQ",
+    updatedAt: "2026-06-01",
+  };
+}
+
+for (const [id, dataType] of Object.entries(GENERATED_DATA_TYPE)) {
+  const t = getIntakeTemplate(id);
+  if (t) dataTemplates.push(buildDataTemplate(t, dataType));
+}
 
 export function getTemplate(id: string): DataTemplate | undefined {
   return dataTemplates.find((t) => t.id === id);
