@@ -14,6 +14,17 @@
 
 import type { EdifyRole } from "@/lib/auth";
 
+/** Staff onboarding status — Active only when all prerequisites are connected. */
+export type StaffStatus =
+  | "Draft"
+  | "PendingSupervisor"
+  | "PendingSchoolAssignment"
+  | "PendingPrimaryDistrict"
+  | "PendingTargetProfile"
+  | "Active"
+  | "Suspended"
+  | "Inactive";
+
 export type OrgStaff = {
   staffId: string;
   name: string;
@@ -21,6 +32,13 @@ export type OrgStaff = {
   region?: string;
   /** Direct supervisor's staffId, or null at the top of the chain. */
   supervisorId: string | null;
+  // ── Optional fields populated for runtime-created staff (CD/HR Add Staff) ──
+  email?: string;
+  district?: string;
+  jobTitle?: string;
+  status?: StaffStatus;
+  createdBy?: string;
+  createdAt?: string;
 };
 
 /** Which role a given role reports up to. Drives validation of assignments. */
@@ -64,6 +82,24 @@ export const ORG_STAFF: OrgStaff[] = [
 ];
 
 const BY_ID = new Map(ORG_STAFF.map((s) => [s.staffId, s]));
+
+// Runtime-created staff (CD/HR "Add Staff"). Kept as part of the live roster so
+// supervisor lookups, scoping, and the activation engine treat them as
+// first-class. Mock mode persists for the server session; Year-2 = StaffProfile.
+const RUNTIME_STAFF: OrgStaff[] = [];
+
+export function addOrgStaff(s: OrgStaff): OrgStaff {
+  RUNTIME_STAFF.push(s);
+  ORG_STAFF.push(s);
+  BY_ID.set(s.staffId, s);
+  BY_NAME.set(s.name.trim().toLowerCase(), s.staffId);
+  return s;
+}
+
+/** Staff created at runtime (newest first) — for the directory + onboarding views. */
+export function createdOrgStaff(): OrgStaff[] {
+  return [...RUNTIME_STAFF].reverse();
+}
 
 export function orgStaff(staffId: string): OrgStaff | undefined {
   return BY_ID.get(staffId);
