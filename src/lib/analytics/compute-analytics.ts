@@ -229,7 +229,6 @@ export function computeAnalytics(input: ComputeInput): AnalyticsSnapshot {
   if (examMissing > 0) dqNotes.push(`${examMissing} school${examMissing === 1 ? "" : "s"} missing exam results.`);
   const noSf = acts.filter((a) => (a.evidenceStatus === "complete" || a.evidenceStatus === "verified") && !isCompleted(a)).length;
   if (noSf > 0) dqNotes.push(`${noSf} activit${noSf === 1 ? "y" : "ies"} have evidence but no valid Salesforce ID (not counted complete).`);
-  const dataQuality: DataQuality = { level: dqNotes.length === 0 ? "ok" : "caveat", notes: dqNotes };
 
   // ── Assemble metrics ──
   const metric = (
@@ -343,6 +342,17 @@ export function computeAnalytics(input: ComputeInput): AnalyticsSnapshot {
 
   void best; void worst; void examDeclined; // surfaced via heatmap / future cards
 
+  // ── Data-quality center: aggregate engine + per-metric caveats ──
+  const metricNotes = metrics.flatMap((mx) => mx.dataQuality.notes);
+  const allNotes = [...new Set([...dqNotes, ...metricNotes])];
+  const caveatCount = allNotes.length;
+  const dataQualityScore: AnalyticsSnapshot["dataQualityScore"] =
+    caveatCount === 0 ? "Excellent" : caveatCount <= 2 ? "Good" : caveatCount <= 4 ? "Needs Attention" : "Critical";
+  const dataQuality: DataQuality = {
+    level: caveatCount === 0 ? "ok" : caveatCount <= 4 ? "caveat" : "blocked",
+    notes: allNotes,
+  };
+
   return {
     scopeLabel: input.scopeLabel ?? "All in scope",
     fyId,
@@ -353,5 +363,6 @@ export function computeAnalytics(input: ComputeInput): AnalyticsSnapshot {
     mscFunnel,
     trend,
     dataQuality,
+    dataQualityScore,
   };
 }

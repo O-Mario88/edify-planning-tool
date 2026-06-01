@@ -69,22 +69,8 @@ export function FieldEngineAnalytics({
     <div className="space-y-4">
       <HeaderFilterBar scope={filterScope} />
 
-      {/* Data quality */}
-      {snapshot.dataQuality.notes.length > 0 && (
-        <section className="rounded-xl border border-amber-200 bg-amber-50/70 px-3.5 py-2.5">
-          <div className="flex items-start gap-2">
-            <AlertTriangle size={14} className="text-amber-600 mt-0.5 shrink-0" />
-            <div className="min-w-0">
-              <div className="t-caption font-bold uppercase tracking-wide text-amber-800">Data quality · {snapshot.dataQuality.level}</div>
-              <ul className="mt-0.5 space-y-0.5">
-                {snapshot.dataQuality.notes.map((n) => (
-                  <li key={n} className="t-caption text-amber-900">{n}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </section>
-      )}
+      {/* Data quality center */}
+      <DataQualityCenter score={snapshot.dataQualityScore} notes={snapshot.dataQuality.notes} />
 
       {/* Reach KPIs */}
       <MetricGrid title="Reach" keys={REACH_KEYS} byKey={byKey} isActive={isActive} onSelect={setTileFilter} />
@@ -132,6 +118,32 @@ export function FieldEngineAnalytics({
       {/* Donor reporting — evidence-gated, role-scoped (computed server-side) */}
       {donorSnapshot && <DonorReportingImpact snapshot={donorSnapshot} />}
     </div>
+  );
+}
+
+function DataQualityCenter({ score, notes }: { score: string; notes: string[] }) {
+  const tone =
+    score === "Excellent" ? { bg: "var(--color-success-soft)", fg: "var(--color-success)", bd: "#bfe6d4" }
+    : score === "Good" ? { bg: "var(--color-edify-soft)", fg: "var(--color-edify-primary)", bd: "var(--color-edify-border)" }
+    : score === "Needs Attention" ? { bg: "var(--color-warn-soft)", fg: "#92400e", bd: "#f5d99a" }
+    : { bg: "var(--color-danger-soft)", fg: "var(--color-danger)", bd: "#f3b7be" };
+  return (
+    <section className="card p-3.5" style={{ borderColor: tone.bd }}>
+      <div className="flex items-center gap-2">
+        <AlertTriangle size={14} style={{ color: tone.fg }} />
+        <h2 className="t-body-lg font-extrabold tracking-tight">Data quality</h2>
+        <span className="ml-auto t-caption font-bold uppercase tracking-wide px-2 py-0.5 rounded-full" style={{ backgroundColor: tone.bg, color: tone.fg }}>{score}</span>
+      </div>
+      {notes.length === 0 ? (
+        <p className="t-caption muted mt-1.5">No data-quality issues in the current scope. Every metric is fully sourced.</p>
+      ) : (
+        <ul className="mt-2 space-y-1">
+          {notes.map((n) => (
+            <li key={n} className="t-caption flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: tone.fg }} />{n}</li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
 

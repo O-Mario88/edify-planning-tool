@@ -50,6 +50,8 @@ export type DataQuality = {
   notes: string[];
 };
 
+export type DataQualityScore = "Excellent" | "Good" | "Needs Attention" | "Critical";
+
 export type AnalyticsMetric = {
   key: string;
   label: string;
@@ -103,4 +105,6 @@ export type AnalyticsSnapshot = {
   mscFunnel: FunnelStage[];
   trend: TrendPoint[];
   dataQuality: DataQuality;
+  /** Aggregate verdict across all metric-level caveats. */
+  dataQualityScore: DataQualityScore;
 };
