@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "edify-web",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeExecutable": "/usr/local/Cellar/node@22/22.22.0/bin/node",
+      "runtimeArgs": ["node_modules/next/dist/bin/next", "dev"],
       "port": 3000,
       "autoPort": true
     }

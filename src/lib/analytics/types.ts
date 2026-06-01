@@ -103,6 +103,14 @@ export type DistrictComparisonRow = {
   avgSsa?: number;
 };
 
+/** Core-vs-Client SSA performance comparison (per intervention + overall). */
+export type SsaSegmentComparison = {
+  rows: { intervention: string; core?: number; client?: number }[];
+  overall: { core?: number; client?: number };
+  coreSchools: number;
+  clientSchools: number;
+};
+
 export type AnalyticsSnapshot = {
   scopeLabel: string;
   fyId: string;
@@ -114,6 +122,8 @@ export type AnalyticsSnapshot = {
   mscFunnel: FunnelStage[];
   /** District-vs-district comparison (the §21 ranking table). */
   districtComparison: DistrictComparisonRow[];
+  /** Core-vs-Client SSA performance comparison. */
+  ssaSegmentComparison: SsaSegmentComparison;
   trend: TrendPoint[];
   dataQuality: DataQuality;
   /** Aggregate verdict across all metric-level caveats. */

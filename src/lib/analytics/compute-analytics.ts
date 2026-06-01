@@ -359,6 +359,31 @@ export function computeAnalytics(input: ComputeInput): AnalyticsSnapshot {
     })
     .sort((a, b) => b.schoolsReached - a.schoolsReached);
 
+  // ── Core vs Client SSA performance comparison ──
+  const segAvg = (seg: "core" | "client") => {
+    const ids = reachedSchools.filter((s) => s!.segment === seg).map((s) => s!.schoolId);
+    const snaps = ids.map((id) => historyFor(id)[0]).filter(Boolean);
+    const per: Record<string, number | undefined> = {};
+    let allSum = 0, allN = 0;
+    for (const a of interventions) {
+      let sum = 0, n = 0;
+      for (const rec of snaps) {
+        const sc = rec.scores.find((x) => x.intervention === a);
+        if (sc) { sum += sc.score; n += 1; allSum += sc.score; allN += 1; }
+      }
+      per[a] = n > 0 ? Math.round((sum / n) * 10) / 10 : undefined;
+    }
+    return { per, overall: allN > 0 ? Math.round((allSum / allN) * 10) / 10 : undefined, count: ids.length };
+  };
+  const coreSeg = segAvg("core");
+  const clientSeg = segAvg("client");
+  const ssaSegmentComparison = {
+    rows: interventions.map((a) => ({ intervention: a, core: coreSeg.per[a], client: clientSeg.per[a] })),
+    overall: { core: coreSeg.overall, client: clientSeg.overall },
+    coreSchools: coreSeg.count,
+    clientSchools: clientSeg.count,
+  };
+
   void best; void worst; void examDeclined; // surfaced via heatmap / future cards
 
   // ── Data-quality center: aggregate engine + per-metric caveats ──
@@ -381,6 +406,7 @@ export function computeAnalytics(input: ComputeInput): AnalyticsSnapshot {
     ssaHeatmap: { interventions: [...interventions], rows: heatRows },
     mscFunnel,
     districtComparison,
+    ssaSegmentComparison,
     trend,
     dataQuality,
     dataQualityScore,

@@ -18,6 +18,7 @@ import { useTileFilter } from "@/components/tile-filter/use-tile-filter";
 import { InteractiveTile } from "@/components/tile-filter/InteractiveTile";
 import { ActiveTileFilterHeader } from "@/components/tile-filter/ActiveTileFilterHeader";
 import { computeAnalytics } from "@/lib/analytics/compute-analytics";
+import { SsaComparisonCard } from "./SsaComparisonCard";
 import { FIELD_ANALYTICS_TILES } from "./tile-registry";
 import type { AnalyticsMetric, FunnelStage, HeatmapRow } from "@/lib/analytics/types";
 import { DonorReportingImpact } from "@/components/donor-reporting/DonorReportingImpact";
@@ -123,6 +124,9 @@ export function FieldEngineAnalytics({
 
       {/* SSA intervention heatmap */}
       <SsaHeatmap interventions={snapshot.ssaHeatmap.interventions} rows={snapshot.ssaHeatmap.rows} />
+
+      {/* Core vs Client SSA performance — segments kept separate, role-gated dims */}
+      <SsaComparisonCard role={role} />
 
       {/* Exam + MSC */}
       <MetricGrid title="Exam & Most Significant Change" keys={EXAM_MSC_KEYS} byKey={byKey} isActive={isActive} onSelect={setTileFilter} />
