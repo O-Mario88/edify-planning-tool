@@ -17,15 +17,18 @@ import {
 import { activeFinancialYear } from "@/lib/fy-engine";
 import { getCurrentUser } from "@/lib/auth";
 import { cn } from "@/lib/utils";
+import { IaIntakeActions } from "@/components/intake/IaIntakeActions";
+import { intakeSchools } from "@/lib/intake/intake-mock";
 
 export default async function DataIntakeHubPage() {
   const me   = await getCurrentUser();
   const fy   = activeFinancialYear();
   const r    = planningDataReadiness();
 
-  // Role gate per spec — only Impact Assessment, Admin, CD, Accountant may
-  // see master-data intake. CCEOs land on a polite "no access" panel.
-  const allowed = ["ImpactAssessment", "Admin", "CountryDirector", "ProgramAccountant"].includes(me.role);
+  // Role gate — data intake (school + SSA master data) is the Impact
+  // Assessment + Admin job. Country Director sets cost/price only, not master
+  // data, so CD (and everyone else) lands on a polite "no access" panel.
+  const allowed = ["ImpactAssessment", "Admin"].includes(me.role);
 
   const pendingBatches = dataImportBatches.filter((b) => b.status !== "Imported" && b.status !== "Rejected").length;
   const importedCount  = dataImportBatches.filter((b) => b.status === "Imported").length;
@@ -41,10 +44,28 @@ export default async function DataIntakeHubPage() {
         <section className="card p-3.5 border-amber-200 bg-amber-50/60">
           <h2 className="text-[13px] font-extrabold tracking-tight">Master data upload is restricted</h2>
           <p className="text-[11.5px] muted">
-            Only Impact Assessment, Admin, Country Director, and Program Accountant may upload master data. CCEOs and
-            field staff submit Salesforce IDs + evidence via the regular activity flow.
+            Only Impact Assessment and Admin upload master data (schools + SSA performance). The Country Director sets
+            cost / price, not master data; CCEOs and field staff submit Salesforce IDs + evidence via the regular
+            activity flow.
           </p>
         </section>
+      )}
+
+      {allowed && (
+        <IaIntakeActions
+          existingIds={intakeSchools.map((s) => s.schoolId)}
+          schools={intakeSchools.map((s) => ({
+            schoolId: s.schoolId,
+            schoolName: s.schoolName,
+            district: s.district,
+            region: s.region,
+            schoolType: s.schoolType,
+            ssaStatus: s.ssaStatus,
+            planningLocked: s.planningLocked,
+            dateAdded: s.dateAdded,
+            addedBy: s.addedBy,
+          }))}
+        />
       )}
 
       {/* KPIs */}

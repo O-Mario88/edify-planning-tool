@@ -3,7 +3,7 @@
   "configurations": [
     {
       "name": "edify-web",
-      "runtimeExecutable": "/usr/local/Cellar/node@22/22.22.0/bin/node",
+      "runtimeExecutable": "/Users/omario/.nvm/versions/node/v24.14.0/bin/node",
       "runtimeArgs": ["node_modules/next/dist/bin/next", "dev"],
       "port": 3000,
       "autoPort": true
