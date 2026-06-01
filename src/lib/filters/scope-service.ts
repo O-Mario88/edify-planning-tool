@@ -19,6 +19,13 @@ import "server-only";
 
 import type { DemoUser } from "@/lib/auth";
 import { schoolsMock, clustersMock, type SchoolRow } from "@/lib/schools-mock";
+import {
+  REGIONS,
+  DISTRICTS,
+  regionLabel,
+  regionForDistrict,
+  type UgandaRegion,
+} from "@/lib/geography";
 import { buildFyOptions, buildQuarterOptions } from "./fy-options";
 import {
   ALL_SENTINEL,
@@ -63,47 +70,76 @@ function entry(visible: boolean, options: FilterOption[]): FilterScopeEntry {
 }
 
 // ────────── Region / District / Cluster / CCEO / Partner ──────────
+//
+// Region + district options come from the geography source of truth
+// (@/lib/geography), NOT from whatever districts happen to be in the mock
+// schools — so every Ugandan region/district is selectable and the
+// region→district cascade is complete. School counts are layered on from
+// the visible schools where present. `allowed` scopes the list: null =
+// country-wide (all 4 regions / 136 districts); a Set = the district names
+// a scoped role (CCEO / Partner) may see.
 
-function regionOptions(schools: SchoolRow[]): FilterOption[] {
+// District names a role is allowed to filter by. null = the whole country.
+function scopedDistrictNames(user: DemoUser, schools: SchoolRow[]): Set<string> | null {
+  if (
+    user.role === "CCEO" ||
+    user.role === "PartnerAdmin" ||
+    user.role === "PartnerFieldOfficer" ||
+    user.role === "PartnerViewer"
+  ) {
+    return new Set(schools.map((s) => s.district));
+  }
+  return null; // PL / CD / RVP / IA / Accountant / HR / Admin — country-wide
+}
+
+function regionOptions(schools: SchoolRow[], allowed: Set<string> | null): FilterOption[] {
   const counts = new Map<string, number>();
   for (const s of schools) counts.set(s.region, (counts.get(s.region) ?? 0) + 1);
-  const sorted = Array.from(counts.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+
+  const keys: UgandaRegion[] =
+    allowed === null
+      ? REGIONS.map((r) => r.key)
+      : Array.from(
+          new Set(
+            Array.from(allowed)
+              .map((d) => regionForDistrict(d))
+              .filter((r): r is UgandaRegion => Boolean(r)),
+          ),
+        );
+
+  const sorted = keys.slice().sort((a, b) => a.localeCompare(b));
   return withAll(
     "All Regions",
-    sorted.map(([region, n]) => ({
-      id: region,
-      label: `${region} Region`,
-      caption: `${n} ${n === 1 ? "school" : "schools"}`,
-    })),
+    sorted.map((key) => {
+      const n = counts.get(key) ?? 0;
+      return {
+        id: key,
+        label: regionLabel(key),
+        caption: n ? `${n} ${n === 1 ? "school" : "schools"}` : undefined,
+      };
+    }),
   );
 }
 
-function districtOptions(schools: SchoolRow[]): FilterOption[] {
-  // The current mock has the same district name across multiple regions
-  // (the Salesforce enum doesn't carry region-scope), so track the SET
-  // of regions a district appears in. The cascade narrowing matches any
-  // region in the set. When the real schema lands each district will
-  // belong to a single region and the set will collapse to one item.
-  const byDistrict = new Map<string, { regions: Set<string>; count: number }>();
-  for (const s of schools) {
-    const cur = byDistrict.get(s.district);
-    if (cur) {
-      cur.count += 1;
-      cur.regions.add(s.region);
-    } else {
-      byDistrict.set(s.district, { regions: new Set([s.region]), count: 1 });
-    }
-  }
-  const sorted = Array.from(byDistrict.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+function districtOptions(schools: SchoolRow[], allowed: Set<string> | null): FilterOption[] {
+  const counts = new Map<string, number>();
+  for (const s of schools) counts.set(s.district, (counts.get(s.district) ?? 0) + 1);
+
+  // Each district belongs to exactly one region now, so parentKey is a single
+  // region key and the region→district cascade resolves cleanly.
+  const list = allowed === null ? DISTRICTS : DISTRICTS.filter((d) => allowed.has(d.name));
+  const sorted = list.slice().sort((a, b) => a.name.localeCompare(b.name));
   return withAll(
     "All Districts",
-    sorted.map(([district, { regions, count }]) => {
-      const regionList = Array.from(regions).sort();
+    sorted.map((d) => {
+      const n = counts.get(d.name) ?? 0;
       return {
-        id: district,
-        label: district,
-        caption: `${regionList.join(", ")} · ${count} ${count === 1 ? "school" : "schools"}`,
-        parentKey: regionList,
+        id: d.name,
+        label: d.name,
+        caption: n
+          ? `${regionLabel(d.region)} · ${n} ${n === 1 ? "school" : "schools"}`
+          : regionLabel(d.region),
+        parentKey: d.region,
       };
     }),
   );
@@ -230,14 +266,15 @@ export type GetFilterScopeArgs = {
 export function getFilterScope({ user }: GetFilterScopeArgs): FilterScope {
   const vis = visibilityFor(user.role);
   const schools = visibleSchoolsFor(user);
+  const allowed = scopedDistrictNames(user, schools);
   const fyOpts = buildFyOptions();
   const activeFyId = fyOpts[0]?.id ?? "";
 
   return {
     fy:       entry(vis.fy,       fyOpts),
     quarter:  entry(vis.quarter,  buildQuarterOptions(activeFyId)),
-    region:   entry(vis.region,   regionOptions(schools)),
-    district: entry(vis.district, districtOptions(schools)),
+    region:   entry(vis.region,   regionOptions(schools, allowed)),
+    district: entry(vis.district, districtOptions(schools, allowed)),
     cluster:  entry(vis.cluster,  clusterOptions(schools)),
     cceo:     entry(vis.cceo,     cceoOptions(schools, user)),
     partner:  entry(vis.partner,  partnerOptions(schools)),
