@@ -1,43 +1,46 @@
 "use client";
 
-// Engine-backed analytics surface (Phase 1 reference).
+// Engine-backed analytics surface — the data-room.
 //
-// The first analytics page where every number is computed live from the
-// workflow records, changes with the filter bar, and drills into the exact
-// records behind it. Proves the pattern the rest of the analytics rollout
-// follows. Uses the shared filter engine + computeAnalytics + the existing
-// tile-filter drilldown primitives.
+// Every number is computed live from the workflow records (computeAnalytics),
+// changes with the filter bar, and drills into the exact records behind it.
+// Layout: a hero KPI band → a charts grid (line / donut / funnel / bar) → the
+// SSA heatmap + core/client comparison → compact grouped operational panels →
+// district ranking + MSC funnel → donor reporting. Premium, dense, organized.
 
 import { useMemo } from "react";
-import { AlertTriangle, Inbox, Download } from "lucide-react";
+import { AlertTriangle, Inbox, Download, School, Users, GraduationCap, CheckCircle2, TrendingUp, MapPin } from "lucide-react";
 import { ALL_SENTINEL, type FilterScope, type FilterSelection } from "@/lib/filters/types";
-import type { AnalyticsSnapshot } from "@/lib/analytics/types";
+import type { AnalyticsSnapshot, AnalyticsMetric } from "@/lib/analytics/types";
 import { HeaderFilterBar } from "@/components/shell/HeaderFilterBar";
 import { useActiveFilters } from "@/hooks/use-active-filters";
 import { useTileFilter } from "@/components/tile-filter/use-tile-filter";
-import { InteractiveTile } from "@/components/tile-filter/InteractiveTile";
 import { ActiveTileFilterHeader } from "@/components/tile-filter/ActiveTileFilterHeader";
 import { computeAnalytics } from "@/lib/analytics/compute-analytics";
 import { SsaComparisonCard } from "./SsaComparisonCard";
 import { FIELD_ANALYTICS_TILES } from "./tile-registry";
-import type { AnalyticsMetric, FunnelStage, HeatmapRow } from "@/lib/analytics/types";
+import { MomentumChart, VerificationDonut, PipelineFunnel, InterventionRankBar, SsaHeatmap } from "./charts";
 import { DonorReportingImpact } from "@/components/donor-reporting/DonorReportingImpact";
 import type { DonorMetricSnapshot } from "@/lib/donor-metrics-types";
+import { cn } from "@/lib/utils";
 
-const REACH_KEYS = ["schoolsReached", "coreSchoolsReached", "learnersImpacted", "teachersTrained", "schoolLeadersTrained", "districtsCovered", "clustersCovered"];
-const IMPACT_KEYS = ["activitiesCompleted", "ssaImproved", "ssaDeclined", "examImproved", "mscDonorReady"];
-const VERIFY_KEYS = ["evidenceUploaded", "evidenceAccepted", "evidenceReturned", "evidenceMissing", "sfEntered", "iaVerified", "sfMissing"];
-const PAYMENT_KEYS = ["paymentsAwaitingPl", "paymentsSentToAccountant", "paymentsPaid", "paymentsBlocked"];
-const EXAM_MSC_KEYS = ["examResultsCollected", "examMissing", "examCollectionRate", "mscSubmitted", "mscPendingReview", "mscDonorReady"];
+// Hero metrics + their icons. The headline numbers leadership reads first.
+const HERO: { key: string; Icon: typeof School }[] = [
+  { key: "schoolsReached", Icon: School },
+  { key: "learnersImpacted", Icon: Users },
+  { key: "teachersTrained", Icon: GraduationCap },
+  { key: "activitiesCompleted", Icon: CheckCircle2 },
+  { key: "ssaImproved", Icon: TrendingUp },
+  { key: "districtsCovered", Icon: MapPin },
+];
 
-// SSA cell tone (spec §8): 0–4 Critical, 5–6 Needs Support, 7–8 Good, 9–10 Strong.
-function cellTone(score: number | undefined): { bg: string; fg: string } {
-  if (score === undefined) return { bg: "var(--surface-2)", fg: "var(--text-muted)" };
-  if (score >= 9) return { bg: "#0f8a5f", fg: "#ffffff" };
-  if (score >= 7) return { bg: "#a7f3d0", fg: "#065f46" };
-  if (score >= 5) return { bg: "#fde68a", fg: "#78350f" };
-  return { bg: "#fecaca", fg: "#991b1b" };
-}
+// Compact grouped panels — replaces the flat tile-wall with organized lists.
+const PANELS: { title: string; keys: string[] }[] = [
+  { title: "Reach & improvement", keys: ["coreSchoolsReached", "schoolLeadersTrained", "clustersCovered", "ssaDeclined", "examImproved", "mscDonorReady"] },
+  { title: "Verification & evidence", keys: ["evidenceUploaded", "evidenceAccepted", "evidenceReturned", "evidenceMissing", "sfEntered", "iaVerified", "sfMissing"] },
+  { title: "Payment", keys: ["paymentsAwaitingPl", "paymentsSentToAccountant", "paymentsPaid", "paymentsBlocked"] },
+  { title: "Exam & MSC", keys: ["examResultsCollected", "examMissing", "examCollectionRate", "mscSubmitted", "mscPendingReview"] },
+];
 
 export function FieldEngineAnalytics({
   filterScope,
@@ -48,7 +51,6 @@ export function FieldEngineAnalytics({
   filterScope: FilterScope;
   role: string;
   scopeLabel: string;
-  /** Role-scoped donor snapshot computed server-side; rendered below. */
   donorSnapshot?: DonorMetricSnapshot;
 }) {
   const selection = useActiveFilters();
@@ -58,7 +60,6 @@ export function FieldEngineAnalytics({
     () => computeAnalytics({ selection, role, scopeLabel }),
     [selection, role, scopeLabel],
   );
-
   const byKey = useMemo(() => {
     const m = new Map<string, AnalyticsMetric>();
     for (const metric of snapshot.metrics) m.set(metric.key, metric);
@@ -66,9 +67,12 @@ export function FieldEngineAnalytics({
   }, [snapshot]);
 
   const activeMetric = activeFilter ? byKey.get(activeFilter.id) : undefined;
+  const toggle = (key: string) => setTileFilter(isActive(key) ? null : key);
+  const reachMetric = byKey.get("schoolsReached");
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3.5">
+      {/* Toolbar */}
       <div className="flex items-center gap-2">
         <div className="flex-1 min-w-0"><HeaderFilterBar scope={filterScope} /></div>
         <button
@@ -76,69 +80,237 @@ export function FieldEngineAnalytics({
           onClick={() => exportSnapshotCsv(snapshot, selection, scopeLabel)}
           className="h-9 px-3 rounded-xl border border-[var(--color-edify-border)] text-[12px] font-semibold inline-flex items-center gap-1.5 hover:bg-[var(--color-edify-soft)]/40 shrink-0"
         >
-          <Download size={13} /> Export CSV
+          <Download size={13} /> Export
         </button>
       </div>
 
-      {/* Data quality center */}
-      <DataQualityCenter score={snapshot.dataQualityScore} notes={snapshot.dataQuality.notes} />
+      {/* Data-quality strip (slim) */}
+      <DataQualityStrip score={snapshot.dataQualityScore} notes={snapshot.dataQuality.notes} />
 
-      {/* Reach KPIs */}
-      <MetricGrid title="Reach" keys={REACH_KEYS} byKey={byKey} isActive={isActive} onSelect={setTileFilter} />
+      {/* Hero KPI band */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2.5">
+        {HERO.map(({ key, Icon }) => {
+          const metric = byKey.get(key);
+          if (!metric) return null;
+          return <HeroStat key={key} metric={metric} Icon={Icon} active={isActive(key)} onClick={() => toggle(key)} />;
+        })}
+      </div>
 
-      {/* Drilldown — the records behind the active number */}
+      {/* Drilldown — records behind the active number */}
       {activeFilter && activeMetric && (
-        <section className="card p-3.5">
-          <ActiveTileFilterHeader filter={activeFilter} count={activeMetric.records.length} onReset={resetTileFilter} />
-          <p className="t-caption muted mt-1">{activeMetric.definition}</p>
-          <ul className="mt-3 divide-y divide-[var(--color-edify-divider)]">
-            {activeMetric.records.length === 0 && (
-              <li className="py-6 text-center t-caption muted inline-flex items-center gap-2 justify-center w-full"><Inbox size={14} /> No records behind this number for the current filters.</li>
-            )}
-            {activeMetric.records.map((r) => (
-              <li key={r.id} className="py-2 flex items-center gap-3">
-                <span className={"h-1.5 w-1.5 rounded-full shrink-0 " + (r.contributesToCount ? "bg-[var(--color-success)]" : "bg-[var(--text-muted)]")} />
-                <div className="min-w-0 flex-1">
-                  <div className="t-body font-semibold truncate">{r.title}</div>
-                  {r.subtitle && <div className="t-caption muted truncate">{r.subtitle}</div>}
-                </div>
-                {!r.contributesToCount && <span className="t-tiny uppercase tracking-wide text-[var(--text-muted)]">excluded</span>}
-              </li>
-            ))}
-          </ul>
-        </section>
+        <DrilldownPanel metric={activeMetric} filter={activeFilter} onReset={resetTileFilter} />
       )}
 
-      {/* Activity pipeline funnel */}
-      <PipelineFunnel title="Activity pipeline" subtitle="Planned → Completed (Salesforce gate) → IA Verified → Paid." stages={snapshot.pipeline} />
+      {/* Charts — row A */}
+      <div className="grid grid-cols-12 gap-3.5">
+        <ChartCard className="col-span-12 lg:col-span-7" title="Activity momentum" subtitle="Completed activities by month (Salesforce-gated).">
+          <MomentumChart data={snapshot.trend} height={236} />
+        </ChartCard>
+        <ChartCard className="col-span-12 lg:col-span-5" title="Reach → verification" subtitle="Where reached schools sit in the evidence funnel.">
+          {reachMetric ? <VerificationDonut breakdown={reachMetric.breakdown} height={236} /> : null}
+        </ChartCard>
+      </div>
 
-      {/* Impact + SSA KPIs */}
-      <MetricGrid title="Activity & Improvement" keys={IMPACT_KEYS} byKey={byKey} isActive={isActive} onSelect={setTileFilter} />
+      {/* Charts — row B */}
+      <div className="grid grid-cols-12 gap-3.5">
+        <ChartCard className="col-span-12 lg:col-span-5" title="Activity pipeline" subtitle="Planned → Completed → IA Verified → Paid.">
+          <PipelineFunnel stages={snapshot.pipeline} />
+        </ChartCard>
+        <ChartCard className="col-span-12 lg:col-span-7" title="SSA by intervention" subtitle="Average score across reached schools, ranked.">
+          <InterventionRankBar interventions={snapshot.ssaHeatmap.interventions} rows={snapshot.ssaHeatmap.rows} height={260} />
+        </ChartCard>
+      </div>
 
-      {/* Verification & evidence + payment */}
-      <MetricGrid title="Verification & Evidence" keys={VERIFY_KEYS} byKey={byKey} isActive={isActive} onSelect={setTileFilter} />
-      <MetricGrid title="Payment" keys={PAYMENT_KEYS} byKey={byKey} isActive={isActive} onSelect={setTileFilter} />
+      {/* SSA heatmap (premium grid) */}
+      <ChartCard title="SSA performance heatmap" subtitle="Average score · district × intervention. Darker green is stronger.">
+        <SsaHeatmap interventions={snapshot.ssaHeatmap.interventions} rows={snapshot.ssaHeatmap.rows} />
+      </ChartCard>
 
-      {/* District comparison / ranking */}
-      <DistrictComparison rows={snapshot.districtComparison} />
-
-      {/* SSA intervention heatmap */}
-      <SsaHeatmap interventions={snapshot.ssaHeatmap.interventions} rows={snapshot.ssaHeatmap.rows} />
-
-      {/* Core vs Client SSA performance — segments kept separate, role-gated dims */}
+      {/* Core vs Client SSA performance — segments separate, role-gated */}
       <SsaComparisonCard role={role} />
 
-      {/* Exam + MSC */}
-      <MetricGrid title="Exam & Most Significant Change" keys={EXAM_MSC_KEYS} byKey={byKey} isActive={isActive} onSelect={setTileFilter} />
-      <PipelineFunnel title="MSC story workflow" subtitle="Submitted → PL Reviewed → Verified → Donor-Ready." stages={snapshot.mscFunnel} />
+      {/* Operational metrics — compact grouped panels (drillable) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3.5">
+        {PANELS.map((p) => (
+          <StatPanel key={p.title} title={p.title} metrics={p.keys.map((k) => byKey.get(k)).filter(Boolean) as AnalyticsMetric[]} isActive={isActive} onSelect={toggle} />
+        ))}
+      </div>
 
-      {/* Donor reporting — evidence-gated, role-scoped (computed server-side) */}
+      {/* District ranking + MSC funnel */}
+      <div className="grid grid-cols-12 gap-3.5">
+        <div className="col-span-12 lg:col-span-7"><DistrictComparison rows={snapshot.districtComparison} /></div>
+        <ChartCard className="col-span-12 lg:col-span-5" title="MSC story workflow" subtitle="Submitted → PL Reviewed → Verified → Donor-Ready.">
+          <PipelineFunnel stages={snapshot.mscFunnel} />
+        </ChartCard>
+      </div>
+
+      {/* Donor reporting */}
       {donorSnapshot && <DonorReportingImpact snapshot={donorSnapshot} />}
     </div>
   );
 }
 
-// Filter-respecting CSV export — reflects exactly the on-screen snapshot.
+// ── Hero stat card ──
+function HeroStat({ metric, Icon, active, onClick }: { metric: AnalyticsMetric; Icon: typeof School; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={cn(
+        "card p-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-md",
+        active && "ring-2 ring-[var(--color-edify-primary)]/40 border-[var(--color-edify-primary)]",
+      )}
+    >
+      <div className="flex items-center gap-1.5 mb-1.5">
+        <span className="h-6 w-6 rounded-md bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)] grid place-items-center shrink-0">
+          <Icon size={13} />
+        </span>
+        <span className="t-tiny uppercase tracking-wide muted font-bold leading-tight truncate">{metric.label}</span>
+      </div>
+      <div className="num-hero tabular text-[24px] font-extrabold leading-none">{metric.value.toLocaleString()}</div>
+      <div className="t-tiny muted mt-1 truncate">
+        {metric.target
+          ? <span className={paceTone(metric.target.paceStatus)}>{metric.target.paceStatus} · exp {metric.target.expectedCumulative.toLocaleString()}</span>
+          : metric.breakdown.verified > 0 ? `${metric.breakdown.verified.toLocaleString()} verified` : "Tap to drill"}
+      </div>
+    </button>
+  );
+}
+
+function paceTone(pace: string): string {
+  if (pace === "Ahead" || pace === "On Track") return "text-[var(--color-success)] font-semibold";
+  if (pace === "Slightly Behind") return "text-amber-600 font-semibold";
+  return "text-[var(--color-danger)] font-semibold";
+}
+
+// ── Compact grouped stat panel ──
+function StatPanel({ title, metrics, isActive, onSelect }: { title: string; metrics: AnalyticsMetric[]; isActive: (k: string) => boolean; onSelect: (k: string) => void }) {
+  if (metrics.length === 0) return null;
+  return (
+    <section className="card p-3">
+      <h3 className="t-tiny uppercase tracking-wide muted font-bold mb-1.5">{title}</h3>
+      <ul className="divide-y divide-[var(--color-edify-divider)]">
+        {metrics.map((m) => (
+          <li key={m.key}>
+            <button
+              type="button"
+              onClick={() => onSelect(m.key)}
+              aria-pressed={isActive(m.key)}
+              className={cn(
+                "w-full flex items-center justify-between gap-2 py-1.5 px-1 -mx-1 rounded-md transition-colors text-left hover:bg-[var(--color-edify-soft)]/40",
+                isActive(m.key) && "bg-[var(--color-edify-soft)]/60",
+              )}
+            >
+              <span className="t-caption font-medium truncate">{m.label}</span>
+              <span className="t-caption font-extrabold tabular shrink-0">{m.value.toLocaleString()}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+// ── Chart card wrapper ──
+function ChartCard({ title, subtitle, className, children }: { title: string; subtitle?: string; className?: string; children: React.ReactNode }) {
+  return (
+    <section className={cn("card p-3.5 flex flex-col", className)}>
+      <div className="mb-2.5">
+        <h2 className="t-body-lg font-extrabold tracking-tight leading-tight">{title}</h2>
+        {subtitle && <p className="t-caption muted leading-tight">{subtitle}</p>}
+      </div>
+      <div className="flex-1 min-h-0">{children}</div>
+    </section>
+  );
+}
+
+// ── Drilldown panel ──
+function DrilldownPanel({ metric, filter, onReset }: { metric: AnalyticsMetric; filter: (typeof FIELD_ANALYTICS_TILES)[number]; onReset: () => void }) {
+  return (
+    <section className="card p-3.5 ring-1 ring-[var(--color-edify-primary)]/15">
+      <ActiveTileFilterHeader filter={filter} count={metric.records.length} onReset={onReset} />
+      <p className="t-caption muted mt-1">{metric.definition}</p>
+      <ul className="mt-2.5 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-0">
+        {metric.records.length === 0 && (
+          <li className="py-6 text-center t-caption muted inline-flex items-center gap-2 justify-center w-full col-span-full"><Inbox size={14} /> No records behind this number for the current filters.</li>
+        )}
+        {metric.records.map((r) => (
+          <li key={r.id} className="py-1.5 flex items-center gap-3 border-b border-[var(--color-edify-divider)]">
+            <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", r.contributesToCount ? "bg-[var(--color-success)]" : "bg-[var(--text-muted)]")} />
+            <div className="min-w-0 flex-1">
+              <div className="t-caption font-semibold truncate">{r.title}</div>
+              {r.subtitle && <div className="t-tiny muted truncate">{r.subtitle}</div>}
+            </div>
+            {!r.contributesToCount && <span className="t-tiny uppercase tracking-wide text-[var(--text-muted)] shrink-0">excluded</span>}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+// ── Data-quality strip ──
+function DataQualityStrip({ score, notes }: { score: string; notes: string[] }) {
+  const tone =
+    score === "Excellent" ? { fg: "var(--color-success)", bg: "var(--color-success-soft)" }
+    : score === "Good" ? { fg: "var(--color-edify-primary)", bg: "var(--color-edify-soft)" }
+    : score === "Needs Attention" ? { fg: "#92400e", bg: "var(--color-warn-soft)" }
+    : { fg: "var(--color-danger)", bg: "var(--color-danger-soft)" };
+  return (
+    <div className="card px-3.5 py-2 flex items-center gap-2.5">
+      <AlertTriangle size={13} style={{ color: tone.fg }} className="shrink-0" />
+      <span className="t-caption font-bold uppercase tracking-wide shrink-0" style={{ color: tone.fg }}>Data quality</span>
+      <span className="t-caption font-bold px-2 py-0.5 rounded-full shrink-0" style={{ backgroundColor: tone.bg, color: tone.fg }}>{score}</span>
+      <span className="t-caption muted truncate">{notes.length === 0 ? "Every metric is fully sourced in this scope." : notes[0]}{notes.length > 1 ? ` · +${notes.length - 1} more` : ""}</span>
+    </div>
+  );
+}
+
+// ── District ranking table ──
+function DistrictComparison({ rows }: { rows: AnalyticsSnapshot["districtComparison"] }) {
+  if (rows.length === 0) return <ChartCard title="District comparison"><p className="t-caption muted">No districts in scope.</p></ChartCard>;
+  const maxReach = Math.max(1, ...rows.map((r) => r.schoolsReached));
+  return (
+    <section className="card p-3.5 h-full">
+      <div className="mb-2.5">
+        <h2 className="t-body-lg font-extrabold tracking-tight leading-tight">District comparison</h2>
+        <p className="t-caption muted leading-tight">Ranked by schools reached in the current scope.</p>
+      </div>
+      <table className="w-full border-collapse text-left">
+        <thead>
+          <tr className="border-b border-[var(--color-edify-divider)]">
+            <th className="t-tiny uppercase tracking-wide muted font-bold py-1.5 pr-3">District</th>
+            <th className="t-tiny uppercase tracking-wide muted font-bold py-1.5 px-2">Reach</th>
+            <th className="t-tiny uppercase tracking-wide muted font-bold py-1.5 px-2 text-right">Learners</th>
+            <th className="t-tiny uppercase tracking-wide muted font-bold py-1.5 px-2 text-right">Teachers</th>
+            <th className="t-tiny uppercase tracking-wide muted font-bold py-1.5 pl-2 text-right">Avg SSA</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.district} className="border-b border-[var(--color-edify-divider)] last:border-0">
+              <td className="t-caption font-semibold py-2 pr-3 whitespace-nowrap">{r.district}</td>
+              <td className="py-2 px-2 w-[40%]">
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-2 rounded-full bg-[var(--surface-2)] overflow-hidden">
+                    <div className="h-full rounded-full bg-[var(--color-edify-primary)]" style={{ width: `${(r.schoolsReached / maxReach) * 100}%` }} />
+                  </div>
+                  <span className="t-caption tabular font-bold w-6 text-right">{r.schoolsReached}</span>
+                </div>
+              </td>
+              <td className="t-caption tabular py-2 px-2 text-right">{r.learnersImpacted.toLocaleString()}</td>
+              <td className="t-caption tabular py-2 px-2 text-right">{r.teachersTrained}</td>
+              <td className="t-caption tabular py-2 pl-2 text-right font-semibold">{r.avgSsa ?? "—"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+  );
+}
+
+// ── Filter-respecting CSV export ──
 function exportSnapshotCsv(snapshot: AnalyticsSnapshot, selection: FilterSelection, generatedBy: string) {
   const esc = (v: string | number) => {
     const s = String(v);
@@ -165,156 +337,4 @@ function exportSnapshotCsv(snapshot: AnalyticsSnapshot, selection: FilterSelecti
   a.download = `analytics-FY${snapshot.fyId}-${show(selection.district)}.csv`;
   a.click();
   URL.revokeObjectURL(url);
-}
-
-function DataQualityCenter({ score, notes }: { score: string; notes: string[] }) {
-  const tone =
-    score === "Excellent" ? { bg: "var(--color-success-soft)", fg: "var(--color-success)", bd: "#bfe6d4" }
-    : score === "Good" ? { bg: "var(--color-edify-soft)", fg: "var(--color-edify-primary)", bd: "var(--color-edify-border)" }
-    : score === "Needs Attention" ? { bg: "var(--color-warn-soft)", fg: "#92400e", bd: "#f5d99a" }
-    : { bg: "var(--color-danger-soft)", fg: "var(--color-danger)", bd: "#f3b7be" };
-  return (
-    <section className="card p-3.5" style={{ borderColor: tone.bd }}>
-      <div className="flex items-center gap-2">
-        <AlertTriangle size={14} style={{ color: tone.fg }} />
-        <h2 className="t-body-lg font-extrabold tracking-tight">Data quality</h2>
-        <span className="ml-auto t-caption font-bold uppercase tracking-wide px-2 py-0.5 rounded-full" style={{ backgroundColor: tone.bg, color: tone.fg }}>{score}</span>
-      </div>
-      {notes.length === 0 ? (
-        <p className="t-caption muted mt-1.5">No data-quality issues in the current scope. Every metric is fully sourced.</p>
-      ) : (
-        <ul className="mt-2 space-y-1">
-          {notes.map((n) => (
-            <li key={n} className="t-caption flex items-start gap-2"><span className="mt-1 h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: tone.fg }} />{n}</li>
-          ))}
-        </ul>
-      )}
-    </section>
-  );
-}
-
-function MetricGrid({
-  title, keys, byKey, isActive, onSelect,
-}: {
-  title: string;
-  keys: string[];
-  byKey: Map<string, AnalyticsMetric>;
-  isActive: (id: string) => boolean;
-  onSelect: (id: string | null) => void;
-}) {
-  const metrics = keys.map((k) => byKey.get(k)).filter(Boolean) as AnalyticsMetric[];
-  return (
-    <section className="space-y-2">
-      <h2 className="t-tiny uppercase tracking-wide muted font-bold">{title}</h2>
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2.5">
-        {metrics.map((metric) => (
-          <InteractiveTile
-            key={metric.key}
-            active={isActive(metric.key)}
-            onClick={() => onSelect(isActive(metric.key) ? null : metric.key)}
-            className="card p-3 text-left"
-          >
-            <div className="t-caption muted font-semibold leading-tight">{metric.label}</div>
-            <div className="num-hero tabular text-[22px] font-extrabold leading-none mt-1">{metric.value.toLocaleString()}</div>
-            <div className="t-tiny muted mt-1">
-              {metric.breakdown.verified > 0 ? `${metric.breakdown.verified.toLocaleString()} verified` : "click to drill"}
-              {metric.target ? ` · exp ${metric.target.expectedCumulative.toLocaleString()} · ${metric.target.paceStatus}` : ""}
-            </div>
-          </InteractiveTile>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function PipelineFunnel({ title, subtitle, stages }: { title: string; subtitle: string; stages: FunnelStage[] }) {
-  const max = Math.max(1, ...stages.map((s) => s.count));
-  return (
-    <section className="card p-3.5">
-      <h2 className="t-body-lg font-extrabold tracking-tight">{title}</h2>
-      <p className="t-caption muted">{subtitle}</p>
-      <div className="mt-3 space-y-2">
-        {stages.map((s) => (
-          <div key={s.key} className="flex items-center gap-3">
-            <div className="w-24 shrink-0 t-caption font-semibold">{s.label}</div>
-            <div className="flex-1 h-6 rounded-md bg-[var(--surface-2)] overflow-hidden">
-              <div className="h-full rounded-md bg-[var(--color-edify-primary)]/85 flex items-center justify-end pr-2" style={{ width: `${Math.max(6, (s.count / max) * 100)}%` }}>
-                <span className="t-caption font-bold text-white tabular">{s.count}</span>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function DistrictComparison({ rows }: { rows: AnalyticsSnapshot["districtComparison"] }) {
-  if (rows.length === 0) return null;
-  return (
-    <section className="card p-3.5 overflow-x-auto">
-      <h2 className="t-body-lg font-extrabold tracking-tight">District comparison</h2>
-      <p className="t-caption muted">Ranked by schools reached in the current scope.</p>
-      <table className="mt-3 w-full border-collapse text-left">
-        <thead>
-          <tr className="border-b border-[var(--color-edify-divider)]">
-            <th className="t-tiny uppercase tracking-wide muted font-bold py-1.5 pr-3">District</th>
-            <th className="t-tiny uppercase tracking-wide muted font-bold py-1.5 px-2 text-right">Schools</th>
-            <th className="t-tiny uppercase tracking-wide muted font-bold py-1.5 px-2 text-right">Learners</th>
-            <th className="t-tiny uppercase tracking-wide muted font-bold py-1.5 px-2 text-right">Teachers</th>
-            <th className="t-tiny uppercase tracking-wide muted font-bold py-1.5 pl-2 text-right">Avg SSA</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={r.district} className="border-b border-[var(--color-edify-divider)] last:border-0">
-              <td className="t-caption font-semibold py-1.5 pr-3">{r.district}</td>
-              <td className="t-caption tabular py-1.5 px-2 text-right">{r.schoolsReached}</td>
-              <td className="t-caption tabular py-1.5 px-2 text-right">{r.learnersImpacted.toLocaleString()}</td>
-              <td className="t-caption tabular py-1.5 px-2 text-right">{r.teachersTrained}</td>
-              <td className="t-caption tabular py-1.5 pl-2 text-right">{r.avgSsa ?? "—"}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </section>
-  );
-}
-
-function SsaHeatmap({ interventions, rows }: { interventions: string[]; rows: HeatmapRow[] }) {
-  if (rows.length === 0) return null;
-  return (
-    <section className="card p-3.5 overflow-x-auto">
-      <h2 className="t-body-lg font-extrabold tracking-tight">SSA intervention heatmap</h2>
-      <p className="t-caption muted">Average SSA score per intervention, by district (reached schools).</p>
-      <table className="mt-3 w-full border-collapse text-left">
-        <thead>
-          <tr>
-            <th className="t-tiny uppercase tracking-wide muted font-bold py-1.5 pr-3">District</th>
-            {interventions.map((a) => (
-              <th key={a} className="t-tiny muted font-semibold px-1.5 py-1.5 text-center align-bottom" style={{ writingMode: "vertical-rl", transform: "rotate(180deg)", maxHeight: 110 }}>{a}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.key}>
-              <td className="t-caption font-semibold py-1 pr-3 whitespace-nowrap">{row.label}</td>
-              {interventions.map((a) => {
-                const v = row.scores[a];
-                const tone = cellTone(v);
-                return (
-                  <td key={a} className="px-1 py-1 text-center">
-                    <span className="inline-flex items-center justify-center w-9 h-7 rounded-md t-caption font-bold tabular" style={{ backgroundColor: tone.bg, color: tone.fg }}>
-                      {v ?? "—"}
-                    </span>
-                  </td>
-                );
-              })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </section>
-  );
 }
