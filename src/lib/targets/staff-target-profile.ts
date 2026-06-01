@@ -3,6 +3,7 @@
 // "target profile assigned" gate resolves. Pure & client-safe.
 
 import type { EdifyRole } from "@/lib/auth";
+import { fyTargetForRole } from "./role-targets";
 
 export type StaffTargetProfile = {
   staffId: string;
@@ -32,4 +33,21 @@ export function targetProfileFor(staffId: string): StaffTargetProfile | undefine
 /** True when a staff member has an active target profile (the final activation gate). */
 export function hasTargetProfile(staffId: string): boolean {
   return !!targetProfileFor(staffId);
+}
+
+/** Role-default target profile (CCEO 560 / PL 280 FY visit target) — the
+ *  starting point a Program Lead reviews + approves at onboarding. */
+export function defaultTargetProfileFor(staffId: string, role: EdifyRole, fy: string): StaffTargetProfile {
+  const visit = fyTargetForRole(role);
+  return {
+    staffId,
+    role,
+    fy,
+    visitTarget: visit,
+    trainingTarget: Math.round(visit * 0.15),
+    ssaTarget: Math.round(visit * 0.5),
+    clusterMeetingTarget: role === "CCEO" ? 12 : 8,
+    partnerMonitoringTarget: role === "CCEO" ? 24 : 12,
+    isActive: false,
+  };
 }

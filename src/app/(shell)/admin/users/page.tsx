@@ -10,6 +10,9 @@ import { intakeSchools } from "@/lib/intake/intake-mock";
 import { AddStaffControl } from "@/components/admin/AddStaffControl";
 import { AssignSchoolsControl } from "@/components/admin/AssignSchoolsControl";
 import { PrimaryDistrictControl } from "@/components/admin/PrimaryDistrictControl";
+import { AssignTargetProfileControl } from "@/components/admin/AssignTargetProfileControl";
+import { defaultTargetProfileFor } from "@/lib/targets/staff-target-profile";
+import { activeFinancialYear } from "@/lib/fy-engine";
 
 // CD / HR own staff onboarding; Admin retained for the demo.
 const STAFF_ADMIN_ROLES = ["CountryDirector", "HumanResource", "Admin"];
@@ -23,6 +26,8 @@ export default async function AdminUsersIndex() {
   const canAdd = STAFF_ADMIN_ROLES.includes(me.role);
   const canAssignSchools = ["ImpactAssessment", "Admin"].includes(me.role);
   const canSetPrimaryDistrict = STAFF_ADMIN_ROLES.includes(me.role);
+  const canAssignTargets = ["CountryProgramLead", "CountryDirector", "HumanResource", "Admin"].includes(me.role);
+  const fy = activeFinancialYear().id;
   const assignableSchools = intakeSchools.map((s) => ({
     schoolId: s.schoolId, schoolName: s.schoolName, district: s.district, assignedCceo: s.assignedCceo,
   }));
@@ -82,6 +87,13 @@ export default async function AdminUsersIndex() {
                 )}
                 {canSetPrimaryDistrict && r.met.schools === true && r.met.primaryDistrict !== true && (
                   <PrimaryDistrictControl staffId={s.staffId} staffName={s.name} region={s.region} defaultDistrict={s.district} />
+                )}
+                {canAssignTargets && r.met.primaryDistrict === true && r.met.targetProfile !== true && (
+                  <AssignTargetProfileControl
+                    staffId={s.staffId}
+                    staffName={s.name}
+                    defaults={(() => { const d = defaultTargetProfileFor(s.staffId, s.role, fy); return { fy, visitTarget: d.visitTarget, trainingTarget: d.trainingTarget, ssaTarget: d.ssaTarget, clusterMeetingTarget: d.clusterMeetingTarget, partnerMonitoringTarget: d.partnerMonitoringTarget }; })()}
+                  />
                 )}
               </div>
             );

@@ -21,6 +21,8 @@ import {
   type StaffStatus,
 } from "@/lib/org/supervision";
 import { validateNewStaff, type NewStaffInput } from "@/lib/intake/staff-creation-core";
+import { addStaffTargetProfile } from "@/lib/targets/staff-target-profile";
+import { canActivateStaff } from "@/lib/org/staff-activation";
 import type { EdifyRole } from "@/lib/auth";
 
 /** Roles allowed to create/onboard staff. CD + HR own the workflow; Admin kept. */
@@ -134,4 +136,67 @@ export async function setPrimaryDistrict(staffId: string, districtId: string): P
   revalidatePath("/admin/users");
   revalidatePath("/planning");
   return { ok: true, staffId };
+}
+
+// ─── assignTargetProfile (Phase 6 — final gate → Active) ─────────────
+//
+// A Program Lead (or CD/HR/Admin) assigns + approves the staff member's FY
+// target profile. This is the last onboarding prerequisite; once set, the
+// activation engine flips the staff to Active.
+
+const TARGET_APPROVER_ROLES = new Set<string>(["CountryProgramLead", "CountryDirector", "HumanResource", "Admin"]);
+
+export type AssignTargetResult =
+  | { ok: false; reason: "FORBIDDEN" | "STAFF_NOT_FOUND" | "INVALID_INPUT" }
+  | { ok: true; staffId: string; activated: boolean };
+
+export async function assignTargetProfile(
+  staffId: string,
+  input: { fy: string; visitTarget: number; trainingTarget?: number; ssaTarget?: number; clusterMeetingTarget?: number; partnerMonitoringTarget?: number },
+): Promise<AssignTargetResult> {
+  const user = await getCurrentUser();
+  if (!TARGET_APPROVER_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+
+  const staff = orgStaff(staffId);
+  if (!staff) return { ok: false, reason: "STAFF_NOT_FOUND" };
+  if (!input.fy?.trim() || !Number.isFinite(input.visitTarget) || input.visitTarget <= 0) {
+    return { ok: false, reason: "INVALID_INPUT" };
+  }
+
+  addStaffTargetProfile({
+    staffId,
+    role: staff.role,
+    fy: input.fy.trim(),
+    visitTarget: input.visitTarget,
+    trainingTarget: input.trainingTarget,
+    ssaTarget: input.ssaTarget,
+    clusterMeetingTarget: input.clusterMeetingTarget,
+    partnerMonitoringTarget: input.partnerMonitoringTarget,
+    approvedBy: user.name,
+    isActive: true,
+  });
+
+  const activated = canActivateStaff(staffId);
+
+  emitAudit({
+    action: "staff.targetProfileAssigned",
+    subjectKind: "Staff",
+    subjectId: staffId,
+    actorId: user.staffId,
+    actorRole: user.role,
+    actorName: user.name,
+    payload: { staffName: staff.name, fy: input.fy, visitTarget: input.visitTarget, approvedBy: user.name, activated },
+  });
+  if (activated) {
+    emitNotificationFanOut(["CCEO", "PROGRAM_LEAD"], {
+      template: "staff.activated",
+      channel: "Inbox",
+      title: `${staff.name} is now active`,
+      body: `${staff.name} (${staff.role}) completed onboarding — planning scope, targets, dashboard, and filters are live.`,
+      href: "/admin/users",
+    });
+  }
+
+  revalidatePath("/admin/users");
+  return { ok: true, staffId, activated };
 }
