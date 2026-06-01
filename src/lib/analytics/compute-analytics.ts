@@ -123,6 +123,7 @@ export function computeAnalytics(input: ComputeInput): AnalyticsSnapshot {
   const reachedSchools = reachedIds.map((id) => analyticsSchoolById(id)).filter(Boolean);
   const districts = [...new Set(reachedSchools.map((s) => s!.district))];
   const clusters = [...new Set(reachedSchools.map((s) => s!.clusterName).filter(Boolean) as string[])];
+  const coreReached = reachedSchools.filter((s) => s!.segment === "core");
 
   // ── Activity pipeline funnel ──
   const stage = (key: string, label: string, pred: (a: SchoolActivityTimelineItem) => boolean): FunnelStage => {
@@ -256,6 +257,9 @@ export function computeAnalytics(input: ComputeInput): AnalyticsSnapshot {
     metric("clustersCovered", "Clusters Covered", "geography", clusters.length,
       "Distinct clusters with ≥1 reached school in scope.",
       { ...zero, completed: clusters.length }, clusters.map((c) => ({ id: c, entityType: "cluster", title: c, contributesToCount: true }))),
+    metric("coreSchoolsReached", "Core Schools Reached", "reach", coreReached.length,
+      "Reached schools on the Core track (4 visits + 4 trainings package).",
+      { ...zero, completed: coreReached.length }, coreReached.map((s) => schoolRecord(s!.schoolId, "Core"))),
     {
       ...metric("activitiesCompleted", "Activities Completed", "pipeline", completedCount,
         "Activities with evidence complete AND a valid Salesforce ID (the Salesforce completion gate).",

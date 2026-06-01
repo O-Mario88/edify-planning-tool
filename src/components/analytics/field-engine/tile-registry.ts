@@ -11,6 +11,7 @@ export const FIELD_ANALYTICS_TILES: TileFilterSpec[] = [
   { id: "schoolLeadersTrained", label: "School Leaders Trained", description: "Unique school leaders from verified trainings.",                     entityType: "training" },
   { id: "districtsCovered",   label: "Districts Covered",     description: "Distinct districts with a reached school.",                              entityType: "school" },
   { id: "clustersCovered",    label: "Clusters Covered",      description: "Distinct clusters with a reached school.",                               entityType: "cluster" },
+  { id: "coreSchoolsReached", label: "Core Schools Reached",  description: "Reached schools on the Core track.",                                    entityType: "school" },
   { id: "activitiesCompleted", label: "Activities Completed", description: "Activities past the Salesforce completion gate.",                       entityType: "activity" },
   { id: "ssaImproved",        label: "Schools Improved (SSA)", description: "Reached schools whose latest SSA beats the previous.",                  entityType: "ssa" },
   { id: "ssaDeclined",        label: "Schools Declined (SSA)", description: "Reached schools whose latest SSA fell.",                                entityType: "ssa" },

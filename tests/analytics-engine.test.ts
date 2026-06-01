@@ -46,6 +46,9 @@ describe("default scope (active FY 2026 cycle)", () => {
   it("districts covered = 2 (Mukono + Kayunga)", () => {
     expect(m(snap.metrics, "districtsCovered").value).toBe(2);
   });
+  it("core schools reached = 3 (the NTR core-track schools)", () => {
+    expect(m(snap.metrics, "coreSchoolsReached").value).toBe(3);
+  });
   it("activity pipeline is monotonic (planned ≥ completed ≥ verified ≥ paid)", () => {
     const [planned, completed, verified, paid] = snap.pipeline.map((s) => s.count);
     expect(planned).toBeGreaterThanOrEqual(completed);
