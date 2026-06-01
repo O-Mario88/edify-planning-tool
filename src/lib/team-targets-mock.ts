@@ -14,6 +14,7 @@
 
 import type { CurrentUser, AppRole } from "./schools-mock";
 import { ENGINE_TODAY } from "./refresh-and-followup-mock";
+import { cceosSupervisedBy } from "./org/supervision";
 
 // ────────── Pacing + risk ──────────
 
@@ -296,7 +297,7 @@ const staffTargetPerformanceRaw: Omit<StaffTargetRow,
 >[] = [
   {
     staffId: "STF-GN-007", staffName: "Grace Njeri", initials: "GN", role: "CCEO",
-    region: "East", supervisorId: "PL-001",
+    region: "East", supervisorId: "STF-DM-014",
     monthlyTargetActivities: 64, completedActivities: 52, remainingActivities: 12,
     quarterlyTargetActivities: 192, achievementPercent: 81, salesforceCompliancePercent: 92, coreSchoolProgressPercent: 85,
     targetCategoryProgress: { trainingsCompleted: 88, validVisits: 84, ssaCompletion: 78, salesforceLogging: 92, coreSchoolTargets: 85 },
@@ -305,7 +306,7 @@ const staffTargetPerformanceRaw: Omit<StaffTargetRow,
   },
   {
     staffId: "STF-JO-022", staffName: "James Otieno", initials: "JO", role: "CCEO",
-    region: "Central", supervisorId: "PL-001",
+    region: "Central", supervisorId: "STF-DM-014",
     monthlyTargetActivities: 58, completedActivities: 36, remainingActivities: 22,
     quarterlyTargetActivities: 174, achievementPercent: 62, salesforceCompliancePercent: 78, coreSchoolProgressPercent: 78,
     targetCategoryProgress: { trainingsCompleted: 72, validVisits: 64, ssaCompletion: 60, salesforceLogging: 78, coreSchoolTargets: 78 },
@@ -314,7 +315,7 @@ const staffTargetPerformanceRaw: Omit<StaffTargetRow,
   },
   {
     staffId: "STF-PM-031", staffName: "Purity Muthoni", initials: "PM", role: "CCEO",
-    region: "West", supervisorId: "PL-001",
+    region: "West", supervisorId: "STF-DM-014",
     monthlyTargetActivities: 61, completedActivities: 28, remainingActivities: 33,
     quarterlyTargetActivities: 183, achievementPercent: 46, salesforceCompliancePercent: 65, coreSchoolProgressPercent: 65,
     targetCategoryProgress: { trainingsCompleted: 56, validVisits: 50, ssaCompletion: 48, salesforceLogging: 65, coreSchoolTargets: 65 },
@@ -323,7 +324,7 @@ const staffTargetPerformanceRaw: Omit<StaffTargetRow,
   },
   {
     staffId: "STF-AH-044", staffName: "Abdi Hassan", initials: "AH", role: "CCEO",
-    region: "North", supervisorId: "PL-002",
+    region: "North", supervisorId: "STF-AD-021",
     monthlyTargetActivities: 55, completedActivities: 18, remainingActivities: 37,
     quarterlyTargetActivities: 165, achievementPercent: 33, salesforceCompliancePercent: 54, coreSchoolProgressPercent: 54,
     targetCategoryProgress: { trainingsCompleted: 32, validVisits: 30, ssaCompletion: 28, salesforceLogging: 54, coreSchoolTargets: 54 },
@@ -332,7 +333,7 @@ const staffTargetPerformanceRaw: Omit<StaffTargetRow,
   },
   {
     staffId: "STF-PM-052", staffName: "Peter Mutua", initials: "PM", role: "CCEO",
-    region: "East", supervisorId: "PL-002",
+    region: "East", supervisorId: "STF-AD-021",
     monthlyTargetActivities: 60, completedActivities: 21, remainingActivities: 39,
     quarterlyTargetActivities: 180, achievementPercent: 35, salesforceCompliancePercent: 47, coreSchoolProgressPercent: 47,
     targetCategoryProgress: { trainingsCompleted: 30, validVisits: 28, ssaCompletion: 32, salesforceLogging: 47, coreSchoolTargets: 47 },
@@ -497,8 +498,12 @@ export const supportReviewCases: SupportReviewCase[] = [
 // ────────── Role-aware filters + rollups ──────────
 
 export function filterStaffForUser(user: CurrentUser): StaffTargetRow[] {
-  if (user.role === "Admin" || user.role === "CountryDirector") return staffTargetPerformance;
-  if (user.role === "CountryProgramLead") return staffTargetPerformance; // demo: supervises all
+  if (user.role === "Admin" || user.role === "CountryDirector" || user.role === "RVP") return staffTargetPerformance;
+  // A Program Lead sees the CCEOs they actually supervise (real chain, not all).
+  if (user.role === "CountryProgramLead") {
+    const mine = new Set(cceosSupervisedBy(user.staffId).map((c) => c.staffId));
+    return staffTargetPerformance.filter((s) => mine.has(s.staffId) || s.supervisorId === user.staffId);
+  }
   return staffTargetPerformance.filter((s) => s.staffId === user.staffId);
 }
 
