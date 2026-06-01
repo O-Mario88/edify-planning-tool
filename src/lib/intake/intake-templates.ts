@@ -76,31 +76,32 @@ export const INTAKE_TEMPLATES: IntakeTemplate[] = [
   {
     id: "tpl-school-visits",
     name: "School Visits",
-    description: "A field visit to a school. One row per visit.",
+    // Visits are logged into Salesforce by the partner or staff who made them;
+    // in the planning tool the IA/Admin just CONFIRMS the visit happened.
+    description: "Confirm a visit already recorded in Salesforce — its ID, when it happened, why, and who visited.",
     schoolLinked: true,
     ownIdField: "Visit ID",
     fields: [
       { key: "Visit ID", label: "Visit ID", type: "id", idKind: "visit", required: true, example: "SVE-88273" },
       schoolIdField,
-      { key: "Visit Date", label: "Visit Date", type: "date", required: true, example: "2026-03-05" },
-      { key: "Visit Type", label: "Visit Type", type: "select", required: true, options: ["Routine", "Coaching", "Courtesy", "Follow-up"], example: "Coaching" },
-      { key: "Officer", label: "Officer", type: "text", required: true, example: "Aisha Dar" },
-      { key: "Outcome", label: "Outcome / Notes", type: "text", example: "Reviewed teaching practice" },
+      { key: "Visit Date", label: "Date the visit happened", type: "date", required: true, example: "2026-03-05" },
+      { key: "Reason", label: "Reason", type: "select", required: true, options: ["Routine Monitoring", "Coaching", "Courtesy Visit", "Follow-up", "SSA Assessment"], example: "Coaching" },
+      { key: "Visited By", label: "Visited By", type: "select", required: true, options: ["Partner", "CCEO", "Program Lead", "Impact Assessment"], example: "CCEO" },
     ],
   },
   {
     id: "tpl-trainings",
     name: "Trainings",
-    description: "A training event delivered to a school. One row per training.",
-    schoolLinked: true,
+    // A training is an event with attendance counts — not tied to one school.
+    description: "A training event delivered — its name, what it covered, and how many teachers and leaders attended.",
+    schoolLinked: false,
     ownIdField: "Training ID",
     fields: [
       { key: "Training ID", label: "Training ID", type: "id", idKind: "training", required: true, example: "TS-50294" },
-      schoolIdField,
-      { key: "Training Date", label: "Training Date", type: "date", required: true, example: "2026-01-20" },
-      { key: "Topic", label: "Topic", type: "text", required: true, example: "Leadership Best Practice" },
-      { key: "Facilitator", label: "Facilitator", type: "text", required: true, example: "Daniel Mwangi" },
-      { key: "Participants", label: "# Participants", type: "number", min: 0, example: 24 },
+      { key: "Training Name", label: "Training Name", type: "text", required: true, example: "Term 1 Leadership Institute" },
+      { key: "Description", label: "Description", type: "text", example: "Two-day leadership best-practice workshop" },
+      { key: "Teachers Trained", label: "# Teachers Trained", type: "number", min: 0, required: true, example: 24 },
+      { key: "School Leaders Trained", label: "# School Leaders Trained", type: "number", min: 0, required: true, example: 6 },
     ],
   },
   {

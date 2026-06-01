@@ -14,9 +14,9 @@ describe("templates", () => {
   });
 });
 
-describe("School Visits — School-ID linkage + own ID format", () => {
+describe("School Visits — School-ID linkage + own ID format (confirm a Salesforce visit)", () => {
   const t = getIntakeTemplate("tpl-school-visits")!;
-  const good = { "Visit ID": "SVE-88273", "School ID": "32791", "Visit Date": "2026-03-05", "Visit Type": "Coaching", "Officer": "Aisha Dar", "Outcome": "ok" };
+  const good = { "Visit ID": "SVE-88273", "School ID": "32791", "Visit Date": "2026-03-05", "Reason": "Coaching", "Visited By": "CCEO" };
   it("accepts a complete row linked to an onboarded school", () => {
     expect(validateIntakeValues(t, good, onboarded)).toEqual({});
   });
@@ -28,18 +28,19 @@ describe("School Visits — School-ID linkage + own ID format", () => {
     const e = validateIntakeValues(t, { ...good, "Visit ID": "88273" }, onboarded);
     expect(e["Visit ID"]).toMatch(/SVE-/);
   });
-  it("rejects a Visit Type outside the option list", () => {
-    const e = validateIntakeValues(t, { ...good, "Visit Type": "Party" }, onboarded);
-    expect(e["Visit Type"]).toMatch(/one of/);
+  it("rejects a Reason / Visited By outside the option list", () => {
+    expect(validateIntakeValues(t, { ...good, "Reason": "Party" }, onboarded)["Reason"]).toMatch(/one of/);
+    expect(validateIntakeValues(t, { ...good, "Visited By": "Robot" }, onboarded)["Visited By"]).toMatch(/one of/);
   });
 });
 
-describe("Trainings + Expenses own-ID formats", () => {
-  it("Training ID must be TS-#####", () => {
+describe("Trainings (event counts, not school-linked) + Expenses own-ID formats", () => {
+  it("Training ID must be TS-##### and Trainings is NOT school-linked", () => {
     const t = getIntakeTemplate("tpl-trainings")!;
-    const e = validateIntakeValues(t, { "Training ID": "TS-50294", "School ID": "32791", "Training Date": "2026-01-20", "Topic": "X", "Facilitator": "Y" }, onboarded);
+    expect(t.schoolLinked).toBe(false);
+    const e = validateIntakeValues(t, { "Training ID": "TS-50294", "Training Name": "Inst", "Teachers Trained": "24", "School Leaders Trained": "6" }, onboarded);
     expect(e).toEqual({});
-    expect(validateIntakeValues(t, { "Training ID": "50294", "School ID": "32791", "Training Date": "2026-01-20", "Topic": "X", "Facilitator": "Y" }, onboarded)["Training ID"]).toMatch(/TS-/);
+    expect(validateIntakeValues(t, { "Training ID": "50294", "Training Name": "Inst", "Teachers Trained": "24", "School Leaders Trained": "6" }, onboarded)["Training ID"]).toMatch(/TS-/);
   });
   it("Expense ID must be digits; Amount required", () => {
     const t = getIntakeTemplate("tpl-expenses")!;
@@ -65,13 +66,13 @@ describe("Exam Results score bounds + Activity requireAnyOf", () => {
 
 describe("mapIntakeCsv — visits", () => {
   const t = getIntakeTemplate("tpl-school-visits")!;
-  const HEADER = "Visit ID,School ID,Visit Date,Visit Type,Officer,Outcome";
+  const HEADER = "Visit ID,School ID,Visit Date,Reason,Visited By";
   it("validates each row and flags in-file duplicate Visit IDs", () => {
     const csv = [
       HEADER,
-      "SVE-10001,32791,2026-03-05,Coaching,Aisha,ok",
-      "SVE-10001,40118,2026-03-06,Routine,Dan,ok",   // dup visit id
-      "SVE-10002,99999,2026-03-07,Routine,Sam,ok",   // unknown school
+      "SVE-10001,32791,2026-03-05,Coaching,CCEO",
+      "SVE-10001,40118,2026-03-06,Routine Monitoring,Partner",   // dup visit id
+      "SVE-10002,99999,2026-03-07,Routine Monitoring,Partner",   // unknown school
     ].join("\n");
     const r = mapIntakeCsv(t, csv, onboarded);
     expect(r.rows).toHaveLength(3);
