@@ -3,6 +3,7 @@ import { EntityIndex, IndexRow } from "@/components/shell/EntityIndex";
 import { DEMO_USERS } from "@/lib/auth-public";
 import { getCurrentUser } from "@/lib/auth";
 import { createdOrgStaff } from "@/lib/org/supervision";
+import { computeActivationReadiness } from "@/lib/org/staff-activation";
 import { labelForRole } from "@/lib/intake/staff-creation-core";
 import { AddStaffControl } from "@/components/admin/AddStaffControl";
 
@@ -42,16 +43,23 @@ export default async function AdminUsersIndex() {
           <header className="px-4 py-2.5 text-[12px] font-extrabold tracking-tight bg-[var(--color-edify-soft)]/40">
             Recently added — in onboarding
           </header>
-          {created.map((s) => (
-            <IndexRow
-              key={s.staffId}
-              href="/admin/users"
-              Icon={Users}
-              title={s.name}
-              subtitle={`${s.email ?? ""} · ${labelForRole(s.role)}${s.district ? ` · ${s.district}` : ""}`}
-              badges={[{ label: (s.status ?? "Draft").replace(/([A-Z])/g, " $1").trim(), tone: STATUS_TONE[s.status ?? "Draft"] ?? "amber" }]}
-            />
-          ))}
+          {created.map((s) => {
+            // Status is COMPUTED by the activation engine, so it advances as
+            // each later phase (schools, primary district, targets) lands.
+            const r = computeActivationReadiness(s.staffId);
+            const nextGap = r.gaps[0];
+            return (
+              <IndexRow
+                key={s.staffId}
+                href="/admin/users"
+                Icon={Users}
+                title={s.name}
+                subtitle={`${s.email ?? ""} · ${labelForRole(s.role)}${s.district ? ` · ${s.district}` : ""}${nextGap ? ` · Next: ${nextGap}` : ""}`}
+                meta={r.requiredCount > 0 ? `Onboarding ${r.metCount}/${r.requiredCount}` : undefined}
+                badges={[{ label: r.status.replace(/([A-Z])/g, " $1").trim(), tone: STATUS_TONE[r.status] ?? "amber" }]}
+              />
+            );
+          })}
         </section>
       )}
 
