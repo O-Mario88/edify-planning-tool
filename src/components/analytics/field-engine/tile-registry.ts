@@ -25,6 +25,7 @@ export const FIELD_ANALYTICS_TILES: TileFilterSpec[] = [
   { id: "sfEntered",          label: "Salesforce IDs Entered", description: "Activities with a Salesforce ID entered.",                             entityType: "activity" },
   { id: "iaVerified",         label: "IA Verified",           description: "Activities verified by Impact Assessment.",                             entityType: "activity" },
   { id: "sfMissing",          label: "Missing Salesforce ID", description: "Activities blocked at the Salesforce completion gate.",                 entityType: "activity" },
+  { id: "selfVerification",   label: "Self-Verification (10%)", description: "Staff self-verified Client schools — 10% portfolio quota.",            entityType: "school" },
   // Payment
   { id: "paymentsAwaitingPl", label: "Awaiting PL Approval",  description: "Payments waiting on Program Lead approval.",                            entityType: "payment" },
   { id: "paymentsSentToAccountant", label: "Sent to Accountant", description: "Payments routed to the accountant.",                                entityType: "payment" },

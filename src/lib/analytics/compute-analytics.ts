@@ -17,6 +17,7 @@ import { historyFor, SSA_INTERVENTIONS } from "@/lib/planning/ssa-performance-mo
 import { analyticsSchoolById } from "./school-directory";
 import { isCompleted, isVerified, isDonorReady, isPaid } from "./status-maps";
 import { sfRecordForActivity } from "@/lib/analytics/sources/salesforce-verification-mock";
+import { isSelfVerified } from "@/lib/analytics/sources/self-verification-mock";
 import { selectedFyId, selectedCycleTag, selectedQuarterRange, schoolInGeoScope, dateInRange } from "./scope";
 import { computePeriodTarget } from "@/lib/targets/period-target";
 import { fyTargetForRole } from "@/lib/targets/role-targets";
@@ -205,6 +206,18 @@ export function computeAnalytics(input: ComputeInput): AnalyticsSnapshot {
   // Blocked: evidence is done but the activity still fails the Salesforce gate.
   const payBlocked = acts.filter((a) => (a.evidenceStatus === "complete" || a.evidenceStatus === "verified") && !isCompleted(a));
 
+  // ── Portfolio self-verification: 10% of in-scope Client (non-core) reached schools ──
+  const clientReached = reachedSchools.filter((s) => s!.segment !== "core");
+  const selfVerifyQuota = Math.ceil(0.1 * clientReached.length);
+  const selfVerifiedSchools = clientReached.filter((s) => isSelfVerified(s!.schoolId));
+  const svPt = computePeriodTarget({
+    fyTarget: Math.max(1, selfVerifyQuota),
+    selectedFy: fyId,
+    selectedQuarter: selection.quarter,
+    achieved: selfVerifiedSchools.length,
+    now,
+  });
+
   // ── Exam (§18) + MSC (§19) ──
   const examMissingCount = exams.filter((e) => !e.collected).length;
   const examCollectionRate = exams.length > 0 ? Math.round((examCollected.length / exams.length) * 100) : 0;
@@ -306,6 +319,12 @@ export function computeAnalytics(input: ComputeInput): AnalyticsSnapshot {
       "Activities with no Salesforce ID entered — blocked at the completion gate.",
       { ...zero, completed: sfMissing.length }, actRecords(sfMissing, () => "missing"),
       "derived", { level: sfMissing.length > 0 ? "caveat" : "ok", notes: [] }),
+    {
+      ...metric("selfVerification", "Self-Verification (10%)", "verification", selfVerifiedSchools.length,
+        "Staff self-verified Client schools in scope. Quota = 10% of in-scope Client (non-core) reached schools.",
+        { ...zero, verified: selfVerifiedSchools.length }, selfVerifiedSchools.map((s) => schoolRecord(s!.schoolId, "self-verified"))),
+      target: { expectedCumulative: svPt.expectedCumulative, paceStatus: svPt.paceStatus, gapToExpected: svPt.gapToExpected },
+    },
 
     // Payment (§14)
     metric("paymentsAwaitingPl", "Awaiting PL Approval", "finance", payAwaitingPl.length,

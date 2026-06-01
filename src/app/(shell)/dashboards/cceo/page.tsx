@@ -19,6 +19,7 @@ import { CceoNextPrioritySchoolStrip } from "@/components/cceo/CceoNextPriorityS
 import { CceoQuickActionsRow } from "@/components/cceo/CceoQuickActionsRow";
 import { CceoMomentumBanner } from "@/components/cceo/CceoMomentumBanner";
 import { SectionHeader } from "@/components/ui/SectionHeader";
+import { ClientVerificationCard } from "@/components/ssa/ClientVerificationCard";
 import { getCurrentUser } from "@/lib/auth";
 
 // CCEO Role Command Center.
@@ -144,6 +145,8 @@ export default async function CceoDashboardPage() {
               <CceoSalesforceQueueCard />
             </div>
           </div>
+          {/* Portfolio self-verification — your 10% Client-school quota this cycle. */}
+          <ClientVerificationCard highlightStaffId={user.staffId} />
         </section>
 
         {/* SCHEDULE — month planner + activity breakdown + routes. */}

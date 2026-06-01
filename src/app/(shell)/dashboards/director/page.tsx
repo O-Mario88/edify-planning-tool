@@ -23,6 +23,7 @@ import { SchoolSsaIntelligenceCard } from "@/components/director/SchoolSsaIntell
 import { PrioritySchoolsUrgentAttentionCard } from "@/components/director/PrioritySchoolsAttention";
 import { QuickLeadershipActions } from "@/components/director/QuickLeadershipActions";
 import { BestPerformersCard } from "@/components/leaderboard/BestPerformersCard";
+import { ClientVerificationCard } from "@/components/ssa/ClientVerificationCard";
 import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { redirect } from "next/navigation";
@@ -114,6 +115,8 @@ export default async function CountryDirectorDashboard() {
           <div id="best-performers">
             <BestPerformersCard audience="cd" />
           </div>
+          {/* Portfolio self-verification — country rollup of the 10% quota. */}
+          <ClientVerificationCard />
         </section>
 
         {/* OPERATIONS & PLAN — risk backlog, SSA intelligence, plan

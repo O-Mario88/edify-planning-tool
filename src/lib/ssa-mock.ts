@@ -12,6 +12,20 @@
 //   ⇒ verification required → on verification, Potential Core School
 //   ⇒ recommend October onboarding (October = month 1 of FY)
 
+// ────────── Portfolio self-verification (the 10% quota) ──────────
+// The "every CCEO/PL self-verifies 10% of their Client schools" feature lives
+// in src/lib/verification; re-exported here so the existing card + staff page +
+// CPL home (which import from @/lib/ssa-mock) resolve. Client-safe.
+export {
+  CLIENT_SSA_VERIFICATION_RATE,
+  rollupPortfolioVerification as clientVerificationRollup,
+  type ClientVerificationProgress,
+} from "@/lib/verification/portfolio-verification";
+export {
+  clientVerificationProgress,
+  getClientVerificationFor,
+} from "@/lib/verification/portfolio-verification-mock";
+
 // ────────── Intervention areas (the 8) ──────────
 
 export const SSA_EIGHT = [

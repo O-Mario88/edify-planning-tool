@@ -37,7 +37,7 @@ const HERO: { key: string; Icon: typeof School }[] = [
 // Compact grouped panels — replaces the flat tile-wall with organized lists.
 const PANELS: { title: string; keys: string[] }[] = [
   { title: "Reach & improvement", keys: ["coreSchoolsReached", "schoolLeadersTrained", "clustersCovered", "ssaDeclined", "examImproved", "mscDonorReady"] },
-  { title: "Verification & evidence", keys: ["evidenceUploaded", "evidenceAccepted", "evidenceReturned", "evidenceMissing", "sfEntered", "iaVerified", "sfMissing"] },
+  { title: "Verification & evidence", keys: ["evidenceUploaded", "evidenceAccepted", "evidenceReturned", "evidenceMissing", "sfEntered", "iaVerified", "sfMissing", "selfVerification"] },
   { title: "Payment", keys: ["paymentsAwaitingPl", "paymentsSentToAccountant", "paymentsPaid", "paymentsBlocked"] },
   { title: "Exam & MSC", keys: ["examResultsCollected", "examMissing", "examCollectionRate", "mscSubmitted", "mscPendingReview"] },
 ];

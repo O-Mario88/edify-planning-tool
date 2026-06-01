@@ -20,6 +20,7 @@ import { FundingExecutionCard } from "@/components/cpl/FundingExecutionCard";
 import { QuickActionsRow } from "@/components/cpl/QuickActionsRow";
 import { BestPerformersCard } from "@/components/leaderboard/BestPerformersCard";
 import { MyPlanCard } from "@/components/planning/MyPlanCard";
+import { ClientVerificationCard } from "@/components/ssa/ClientVerificationCard";
 import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { redirect } from "next/navigation";
@@ -145,6 +146,8 @@ export default async function CountryProgramLeadDashboard() {
           <div id="my-plan">
             <MyPlanCard role="cpl" />
           </div>
+          {/* Portfolio self-verification — own quota + the whole CCEO team's 10%. */}
+          <ClientVerificationCard highlightStaffId={user.staffId} />
         </section>
 
         {/* OPERATIONS — Team backlog, intervention heatmap, funding,
