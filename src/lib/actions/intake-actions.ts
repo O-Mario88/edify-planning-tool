@@ -81,6 +81,69 @@ export async function createSchool(input: NewSchoolInput): Promise<IntakeResult>
   return { ok: true, id: row.schoolId };
 }
 
+// ─── 1b. createSchoolsBulk (CSV upload) ────────────────────────────
+
+export type BulkSchoolResult =
+  | { ok: false; reason: "FORBIDDEN" }
+  | { ok: true; created: number; createdIds: string[]; failed: Array<{ schoolId: string; errors: Record<string, string> }> };
+
+export async function createSchoolsBulk(inputs: NewSchoolInput[]): Promise<BulkSchoolResult> {
+  const user = await getCurrentUser();
+  if (!INTAKE_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+
+  const createdIds: string[] = [];
+  const failed: Array<{ schoolId: string; errors: Record<string, string> }> = [];
+  const today = new Date().toISOString().slice(0, 10);
+
+  for (const input of inputs) {
+    // Re-validate server-side against the live id set (incl. rows just created).
+    const v = validateNewSchool(input, intakeSchoolIds());
+    if (!v.ok) {
+      failed.push({ schoolId: input.schoolId, errors: v.errors });
+      continue;
+    }
+    const enrollment =
+      input.enrollment === undefined || input.enrollment === "" ? undefined : Number(input.enrollment);
+    const row = addIntakeSchool({
+      schoolId: input.schoolId.trim(),
+      schoolName: input.schoolName.trim(),
+      region: input.region,
+      district: input.district,
+      subCounty: input.subCounty,
+      parish: input.parish,
+      schoolType: input.schoolType,
+      enrollment,
+      assignedCceo: input.assignedCceo,
+      cluster: input.cluster,
+      dateAdded: today,
+      addedBy: user.name,
+    });
+    createdIds.push(row.schoolId);
+  }
+
+  if (createdIds.length > 0) {
+    emitAudit({
+      action: "intake.schoolsBulkCreated",
+      subjectKind: "School",
+      subjectId: `bulk:${createdIds.length}`,
+      actorId: user.staffId,
+      actorRole: user.role,
+      actorName: user.name,
+      payload: { created: createdIds.length, failed: failed.length, ids: createdIds.slice(0, 50) },
+    });
+    emitNotificationFanOut(["IMPACT_ASSESSMENT", "CCEO"], {
+      template: "intake.schoolsBulkAdded",
+      channel: "Inbox",
+      title: `${createdIds.length} schools added by CSV`,
+      body: `${createdIds.length} new schools are active but planning-locked until each gets its first SSA.`,
+      href: "/data-intake",
+    });
+    revalidateIntakeSurfaces();
+  }
+
+  return { ok: true, created: createdIds.length, createdIds, failed };
+}
+
 // ─── 2. uploadSsaPerformance ───────────────────────────────────────
 
 export async function uploadSsaPerformance(input: SsaUploadInput): Promise<

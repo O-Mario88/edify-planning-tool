@@ -6,6 +6,7 @@
 // cost/price, not master data.
 
 import { endYearForDate } from "@/lib/fy/fy-core";
+import { isValidId, ID_FORMATS } from "./id-formats";
 
 /** Roles allowed to upload master data (schools, SSA). IA + Admin only. */
 export const DATA_INTAKE_ROLES = ["ImpactAssessment", "Admin"] as const;
@@ -71,6 +72,7 @@ function isNumericOk(v: string | number | undefined): boolean {
 export function validateNewSchool(input: NewSchoolInput, existingIds: ReadonlySet<string>): ValidationResult {
   const errors: Record<string, string> = {};
   if (!input.schoolId?.trim()) errors.schoolId = "School ID is required.";
+  else if (!isValidId("school", input.schoolId)) errors.schoolId = `School ID must be ${ID_FORMATS.school.hint}.`;
   else if (existingIds.has(input.schoolId.trim())) errors.schoolId = "A school with this ID already exists.";
   if (!input.schoolName?.trim()) errors.schoolName = "School name is required.";
   if (!input.region?.trim()) errors.region = "Region is required.";

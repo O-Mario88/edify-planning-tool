@@ -58,13 +58,18 @@ describe("ssaAverage", () => {
 });
 
 describe("validateNewSchool", () => {
-  const existing = new Set(["SCH-IA-2001"]);
-  const base = { schoolId: "SCH-IA-9", schoolName: "X", region: "Central", district: "Wakiso", schoolType: "Client" as const };
+  const existing = new Set(["32791"]);
+  const base = { schoolId: "51230", schoolName: "X", region: "Central", district: "Wakiso", schoolType: "Client" as const };
   it("passes a complete unique submission", () => {
     expect(validateNewSchool(base, existing).ok).toBe(true);
   });
+  it("flags a bad School ID format (must be digits)", () => {
+    const r = validateNewSchool({ ...base, schoolId: "SCH-IA-9" }, existing);
+    expect(r.ok).toBe(false);
+    expect(r.errors.schoolId).toMatch(/digits/);
+  });
   it("flags a duplicate id", () => {
-    const r = validateNewSchool({ ...base, schoolId: "SCH-IA-2001" }, existing);
+    const r = validateNewSchool({ ...base, schoolId: "32791" }, existing);
     expect(r.ok).toBe(false);
     expect(r.errors.schoolId).toBeTruthy();
   });

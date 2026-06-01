@@ -40,12 +40,12 @@ export type SsaUpload = {
 // A couple of seed rows so the surface isn't empty on first load.
 export const intakeSchools: IntakeSchool[] = [
   {
-    schoolId: "SCH-IA-2001", schoolName: "Nakaseke Hill Primary", region: "Central", district: "Nakaseke",
+    schoolId: "32791", schoolName: "Nakaseke Hill Primary", region: "Central Region", district: "Nakaseke",
     subCounty: "Nakaseke TC", schoolType: "Client", enrollment: 318, assignedCceo: "Aisha Dar",
     status: "Active", ssaStatus: "SSA Not Done", planningLocked: true, dateAdded: "2026-02-08", addedBy: "Grace Alimo",
   },
   {
-    schoolId: "SCH-IA-2002", schoolName: "Soroti Faith Junior", region: "East", district: "Soroti",
+    schoolId: "40118", schoolName: "Soroti Faith Junior", region: "Eastern Region", district: "Soroti",
     subCounty: "Soroti East", schoolType: "Client", enrollment: 402, status: "Active",
     ssaStatus: "SSA Done", planningLocked: false, dateAdded: "2026-03-14", addedBy: "Grace Alimo",
   },

@@ -95,7 +95,7 @@ export const dataTemplates: DataTemplate[] = [
     exampleRows: [
       {
         "Account Owner": "Aisha Dar",
-        "School ID": "SCH-IA-2003",
+        "School ID": "51230",
         "School Name": "St. Mary Primary School",
         "District": "Wakiso",
         "Current Partner Type": "Client",
@@ -107,6 +107,7 @@ export const dataTemplates: DataTemplate[] = [
       },
     ],
     validationRules: [
+      "School ID must be digits only, e.g. 32791",
       "School ID is unique across the file",
       "Account Owner must match an active CCEO or Program Lead",
       "Current Partner Type must be Client or Core",
@@ -138,7 +139,7 @@ export const dataTemplates: DataTemplate[] = [
     dropdownColumns: {},
     exampleRows: [
       {
-        "School ID": "SCH-IA-2003",
+        "School ID": "32791",
         "SSA Date": "2026-02-10",
         "Christlike Behaviour": 7,
         "Exposure to the Word of God": 8,
@@ -175,15 +176,16 @@ export const dataTemplates: DataTemplate[] = [
     dropdownColumns: {},
     exampleRows: [
       {
-        "School ID": "SCH-IA-2003",
+        "School ID": "32791",
         "Last Date of Training": "2026-01-20",
         "Last Date of Visit": "2026-03-05",
         "Last Date of Exam Result": "2026-04-12",
       },
     ],
     validationRules: [
-      "School ID must exist in the School Onboarding Register",
+      "School ID must be digits only, e.g. 32791, and exist in the School Onboarding Register",
       "All dates must be valid and not in the future",
+      "Linked IDs follow their formats — Visit SVE-88273, Training TS-50294, Expense 6161",
       "At least one date must be present per row",
     ],
     createdBy: "Edify HQ",
