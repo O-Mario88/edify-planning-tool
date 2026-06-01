@@ -19,6 +19,7 @@ import { Building2, UsersRound, Briefcase, type LucideIcon } from "lucide-react"
 import { SchoolGapsBoard } from "./SchoolGapsBoard";
 import { ClusterGapsBoard } from "./ClusterGapsBoard";
 import { CoreSchoolsGapPlanning } from "./CoreSchoolsGapPlanning";
+import type { SchoolGap } from "@/lib/planning/planning-gaps-mock";
 import { cn } from "@/lib/utils";
 
 type TabKey = "clientSchools" | "clusters" | "coreSchools";
@@ -31,7 +32,7 @@ const TABS: ReadonlyArray<TabDef> = [
   { key: "coreSchools", label: "Core Schools", icon: Briefcase },
 ];
 
-export function PlanningGapBoard() {
+export function PlanningGapBoard({ extraGaps = [] }: { extraGaps?: SchoolGap[] } = {}) {
   const [activeTab, setActiveTab] = useState<TabKey>("clientSchools");
 
   return (
@@ -70,7 +71,7 @@ export function PlanningGapBoard() {
 
       {/* Active board — each renders its own collapsible, detail-rich card. */}
       <div role="tabpanel" aria-label={`${TABS.find((t) => t.key === activeTab)?.label} gaps`}>
-        {activeTab === "clientSchools" && <SchoolGapsBoard />}
+        {activeTab === "clientSchools" && <SchoolGapsBoard extraGaps={extraGaps} />}
         {activeTab === "clusters" && <ClusterGapsBoard />}
         {activeTab === "coreSchools" && <CoreSchoolsGapPlanning />}
       </div>

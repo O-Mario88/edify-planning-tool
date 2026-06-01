@@ -95,6 +95,7 @@ const ACTION_LABEL: Record<SchoolGapAction, string> = {
 
 export function SchoolGapsBoard({
   assigningUserRole = "CountryProgramLead",
+  extraGaps = [],
 }: {
   /**
    * Role of the user viewing the planning page. Forwarded to the
@@ -102,6 +103,12 @@ export function SchoolGapsBoard({
    * operating-model permissions. Defaults to PL.
    */
   assigningUserRole?: "CCEO" | "CountryProgramLead" | "ImpactAssessment" | "CountryDirector" | "Admin";
+  /**
+   * Onboarded-school gaps computed server-side from uploaded schools + SSA
+   * (already scoped to the viewer's supervision chain). Merged in so uploaded
+   * data drives the planner alongside the static seed gaps.
+   */
+  extraGaps?: SchoolGap[];
 } = {}) {
   const [collapsed, setCollapsed] = useState<Record<SchoolGapCategory, boolean>>({
     no_ssa: false, no_training: false, no_visit: false, no_cluster: true,
@@ -154,12 +161,12 @@ export function SchoolGapsBoard({
     // filtered out so the gap counts and lists reflect "what still
     // needs CCEO/PL action right now", not "what was on the table when
     // the page loaded".
-    for (const s of schoolGaps) {
+    for (const s of [...extraGaps, ...schoolGaps]) {
       if (dismissedIds.has(s.id)) continue;
       map[s.gapCategory].push(s);
     }
     return map;
-  }, [dismissedIds]);
+  }, [dismissedIds, extraGaps]);
 
   function handleClusterSubmit(outcome: AddToClusterOutcome) {
     const copy =

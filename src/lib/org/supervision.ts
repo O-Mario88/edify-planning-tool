@@ -69,6 +69,14 @@ export function orgStaff(staffId: string): OrgStaff | undefined {
   return BY_ID.get(staffId);
 }
 
+const BY_NAME = new Map(ORG_STAFF.map((s) => [s.name.trim().toLowerCase(), s.staffId]));
+
+/** Reverse lookup: a staff member's name → staffId (onboarding stores names). */
+export function staffIdByName(name: string | undefined | null): string | undefined {
+  if (!name) return undefined;
+  return BY_NAME.get(name.trim().toLowerCase());
+}
+
 export function supervisorOf(staffId: string): OrgStaff | undefined {
   const sid = BY_ID.get(staffId)?.supervisorId;
   return sid ? BY_ID.get(sid) : undefined;

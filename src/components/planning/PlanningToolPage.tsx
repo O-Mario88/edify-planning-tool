@@ -3,6 +3,8 @@ import { OperationalCycleBanner } from "./OperationalCycleBanner";
 import { PlanningGapBoard } from "./PlanningGapBoard";
 import { PlanningOwnershipSections } from "./PlanningOwnershipSections";
 import { PlansFamilyNav } from "./PlansFamilyNav";
+import { getCurrentUser } from "@/lib/auth";
+import { onboardedSchoolGaps, scopeGapsToViewer } from "@/lib/planning/onboarded-gaps";
 
 // PlanningToolPage no longer renders its own sidebar — the (shell)
 // route-group layout mounts <EdifySidebarServer /> once for every
@@ -13,7 +15,12 @@ import { PlansFamilyNav } from "./PlansFamilyNav";
 // "as of {date} · refresh" footer have been retired: the banner copy now
 // lives in the header's HelpCircle tooltip, and the refresh signal lives
 // in the header's "Snapshot · <timestamp>" badge.
-export function PlanningToolPage() {
+export async function PlanningToolPage() {
+  // Onboarded schools (+ their uploaded SSA) become planner gaps, scoped to the
+  // viewer's supervision chain. Computed server-side so runtime uploads show.
+  const user = await getCurrentUser();
+  const onboardedGaps = scopeGapsToViewer(onboardedSchoolGaps(), user.staffId, user.role);
+
   return (
     <>
       <PlanningTopHeader />
@@ -32,7 +39,7 @@ export function PlanningToolPage() {
         <OperationalCycleBanner />
 
         <PlansFamilyNav current="planning" className="flex items-center gap-1" />
-        <PlanningGapBoard />
+        <PlanningGapBoard extraGaps={onboardedGaps} />
 
         <PlanningOwnershipSections />
       </div>
