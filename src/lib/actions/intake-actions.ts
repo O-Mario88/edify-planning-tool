@@ -23,7 +23,8 @@ import {
   type SsaInterventionArea,
   type SsaUploadInput,
 } from "@/lib/intake/intake-core";
-import { addIntakeSchool, addSsaUpload, intakeSchoolIds } from "@/lib/intake/intake-mock";
+import { addIntakeSchool, addSsaUpload, assignSchoolToCceo, intakeSchoolIds } from "@/lib/intake/intake-mock";
+import { orgStaff } from "@/lib/org/supervision";
 import { getIntakeTemplate } from "@/lib/intake/intake-templates";
 import { validateIntakeValues } from "@/lib/intake/intake-validate";
 import { addIntakeRecords } from "@/lib/intake/intake-records-mock";
@@ -264,6 +265,54 @@ export async function submitIntakeRecords(
   }
 
   return { ok: true, created: valid.length, failed };
+}
+
+// ─── 4. assignSchoolsToStaff (IA school assignment → clears the activation gate) ──
+//
+// IA assigns onboarded schools to a staff member (their Account Owner). This is
+// what moves a newly-created CCEO from "Pending School Assignment" forward: the
+// schools land in their portfolio + planning scope, and the activation engine
+// recomputes their status.
+
+export type AssignSchoolsResult =
+  | { ok: false; reason: "FORBIDDEN" | "STAFF_NOT_FOUND" | "INVALID_INPUT" }
+  | { ok: true; assigned: number; staffName: string };
+
+export async function assignSchoolsToStaff(staffId: string, schoolIds: string[]): Promise<AssignSchoolsResult> {
+  const user = await getCurrentUser();
+  if (!INTAKE_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+
+  const staff = orgStaff(staffId);
+  if (!staff) return { ok: false, reason: "STAFF_NOT_FOUND" };
+  if (!schoolIds.length) return { ok: false, reason: "INVALID_INPUT" };
+
+  let assigned = 0;
+  for (const id of schoolIds) {
+    if (assignSchoolToCceo(id, staff.name)) assigned += 1;
+  }
+
+  if (assigned > 0) {
+    emitAudit({
+      action: "intake.schoolsAssignedToStaff",
+      subjectKind: "Staff",
+      subjectId: staffId,
+      actorId: user.staffId,
+      actorRole: user.role,
+      actorName: user.name,
+      payload: { staffName: staff.name, role: staff.role, assigned, schoolIds: schoolIds.slice(0, 50) },
+    });
+    emitNotificationFanOut(["CCEO"], {
+      template: "intake.schoolsAssigned",
+      channel: "Inbox",
+      title: `${assigned} schools assigned to ${staff.name}`,
+      body: `${staff.name} now owns ${assigned} school(s). Their planning scope, targets, and dashboard activate as onboarding completes.`,
+      href: "/admin/users",
+    });
+    revalidateIntakeSurfaces();
+    try { revalidatePath("/admin/users"); revalidatePath("/planning"); } catch { /* outside request */ }
+  }
+
+  return { ok: true, assigned, staffName: staff.name };
 }
 
 function revalidateIntakeSurfaces(schoolId?: string) {

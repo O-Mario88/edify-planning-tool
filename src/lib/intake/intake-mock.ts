@@ -59,6 +59,13 @@ export function intakeSchoolIds(): Set<string> {
   return new Set(intakeSchools.map((s) => s.schoolId));
 }
 
+/** Set a school's Account Owner (assigned CCEO). IA school-assignment workflow. */
+export function assignSchoolToCceo(schoolId: string, cceoName: string): IntakeSchool | undefined {
+  const s = intakeSchools.find((x) => x.schoolId === schoolId);
+  if (s) s.assignedCceo = cceoName;
+  return s;
+}
+
 export function addIntakeSchool(s: Omit<IntakeSchool, "status" | "ssaStatus" | "planningLocked">): IntakeSchool {
   const row: IntakeSchool = { ...s, status: "Active", ssaStatus: "SSA Not Done", planningLocked: true };
   intakeSchools.unshift(row);
