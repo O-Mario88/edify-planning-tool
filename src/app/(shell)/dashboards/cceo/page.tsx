@@ -18,7 +18,7 @@ import { CceoClusterScheduleCard } from "@/components/cceo/CceoClusterScheduleCa
 import { CceoNextPrioritySchoolStrip } from "@/components/cceo/CceoNextPrioritySchoolStrip";
 import { CceoQuickActionsRow } from "@/components/cceo/CceoQuickActionsRow";
 import { CceoMomentumBanner } from "@/components/cceo/CceoMomentumBanner";
-import { CollapsibleCard } from "@/components/ui/CollapsibleCard";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { getCurrentUser } from "@/lib/auth";
 
 // CCEO Role Command Center.
@@ -76,43 +76,37 @@ export default async function CceoDashboardPage() {
         <DebriefPromoterCard submitterRole="CCEO" />
 
         {/* THIS WEEK — vital signs.  KPI tiles + health funnel + service. */}
-        <CollapsibleCard
-          surface="bare"
-          bodyClassName="space-y-3"
-          id="cceo-this-week"
-          tier="strategic"
-          eyebrow="This Week"
-          title="Where you are"
-          description="Headline KPIs, school-health distribution, and your service-package progress at a glance."
-        >
+        <section className="space-y-3">
+          <SectionHeader
+            tier="strategic"
+            eyebrow="This Week"
+            title="Where you are"
+            description="Headline KPIs, school-health distribution, and your service-package progress at a glance."
+          />
           <CceoSixKpiRow />
           <CceoKpiStrip />
           <CoreServicePackageCard />
-        </CollapsibleCard>
+        </section>
 
         {/* ATTENTION — risks grouped by type, each with owner + action. */}
-        <CollapsibleCard
-          surface="bare"
-          bodyClassName="space-y-3"
-          id="cceo-attention"
-          tier="strategic"
-          eyebrow="Attention"
-          title="What needs attention"
-          description="Planning, execution, verification, partner, and payment risks — each with an owner and the next action."
-        >
+        <section className="space-y-3">
+          <SectionHeader
+            tier="strategic"
+            eyebrow="Attention"
+            title="What needs attention"
+            description="Planning, execution, verification, partner, and payment risks — each with an owner and the next action."
+          />
           <RiskBottleneckBoard />
-        </CollapsibleCard>
+        </section>
 
         {/* IMPROVEMENT — SSA intervention intelligence. */}
-        <CollapsibleCard
-          surface="bare"
-          bodyClassName="space-y-3"
-          id="cceo-improvement"
-          tier="strategic"
-          eyebrow="Improvement"
-          title="Where schools are struggling"
-          description="SSA performance by intervention, plus quality drift across recent assessments."
-        >
+        <section className="space-y-3">
+          <SectionHeader
+            tier="strategic"
+            eyebrow="Improvement"
+            title="Where schools are struggling"
+            description="SSA performance by intervention, plus quality drift across recent assessments."
+          />
           <div className="grid grid-cols-12 gap-3 lg:gap-4 items-stretch">
             <div className="col-span-12 lg:col-span-8">
               <CoreSsaHeatmapCard />
@@ -121,31 +115,27 @@ export default async function CceoDashboardPage() {
               <SsaQualityCard />
             </div>
           </div>
-        </CollapsibleCard>
+        </section>
 
         {/* AT RISK — schools that need my attention this week. */}
-        <CollapsibleCard
-          surface="bare"
-          bodyClassName="space-y-3"
-          id="cceo-at-risk"
-          tier="strategic"
-          eyebrow="At risk"
-          title="Schools That Need My Attention This Week"
-          description="Ranked by health-score drop, missed visits, and overdue SSA."
-        >
+        <section className="space-y-3">
+          <SectionHeader
+            tier="strategic"
+            eyebrow="At risk"
+            title="Schools That Need My Attention This Week"
+            description="Ranked by health-score drop, missed visits, and overdue SSA."
+          />
           <CoreSchoolsNeedingAttentionCard />
-        </CollapsibleCard>
+        </section>
 
         {/* PIPELINE — verification & payment, plus the Salesforce queue. */}
-        <CollapsibleCard
-          surface="bare"
-          bodyClassName="space-y-3"
-          id="cceo-pipeline"
-          tier="strategic"
-          eyebrow="Pipeline"
-          title="Verification & payment"
-          description="Where completed work is stuck on its way from evidence to cleared payment."
-        >
+        <section className="space-y-3">
+          <SectionHeader
+            tier="strategic"
+            eyebrow="Pipeline"
+            title="Verification & payment"
+            description="Where completed work is stuck on its way from evidence to cleared payment."
+          />
           <div className="grid grid-cols-12 gap-3 lg:gap-4 items-stretch">
             <div className="col-span-12 lg:col-span-7">
               <VerificationPaymentFunnel />
@@ -154,18 +144,16 @@ export default async function CceoDashboardPage() {
               <CceoSalesforceQueueCard />
             </div>
           </div>
-        </CollapsibleCard>
+        </section>
 
         {/* SCHEDULE — month planner + activity breakdown + routes. */}
-        <CollapsibleCard
-          surface="bare"
-          bodyClassName="space-y-3"
-          id="cceo-schedule"
-          tier="strategic"
-          eyebrow="Schedule"
-          title="What's planned across the month"
-          description="Visit cadence, activity mix, and route opportunities for the days ahead."
-        >
+        <section className="space-y-3">
+          <SectionHeader
+            tier="strategic"
+            eyebrow="Schedule"
+            title="What's planned across the month"
+            description="Visit cadence, activity mix, and route opportunities for the days ahead."
+          />
           <div className="grid grid-cols-12 gap-3 lg:gap-4 items-stretch">
             <div className="col-span-12 lg:col-span-4">
               <CceoMonthPlannerCard />
@@ -177,20 +165,18 @@ export default async function CceoDashboardPage() {
               <CceoRouteOpportunitiesCard />
             </div>
           </div>
-        </CollapsibleCard>
+        </section>
 
         {/* PRIORITY — next priority school spotlight. */}
-        <CollapsibleCard
-          surface="bare"
-          bodyClassName="space-y-3"
-          id="cceo-priority"
-          tier="strategic"
-          eyebrow="Priority"
-          title="Next priority school"
-          description="The school the system thinks unlocks the most downstream this week."
-        >
+        <section className="space-y-3">
+          <SectionHeader
+            tier="strategic"
+            eyebrow="Priority"
+            title="Next priority school"
+            description="The school the system thinks unlocks the most downstream this week."
+          />
           <CceoNextPrioritySchoolStrip />
-        </CollapsibleCard>
+        </section>
 
         {/* Quick Actions + Momentum banner — closing surfaces. */}
         <CceoQuickActionsRow />

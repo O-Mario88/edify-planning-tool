@@ -18,7 +18,7 @@ import { CommandStack } from "@/components/actions/CommandStack";
 import { DashboardPageHeader } from "@/components/dashboards/DashboardPageHeader";
 import { DebriefReviewInbox } from "@/components/messages/DebriefReviewInbox";
 import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
-import { CollapsibleCard } from "@/components/ui/CollapsibleCard";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Tile, type TileTone } from "@/components/ui/Tile";
 import { HrMobileView } from "@/components/mobile/views/HrMobileView";
 import { getCurrentUser } from "@/lib/auth";
@@ -59,53 +59,47 @@ export default async function HrFieldContextPage() {
 
         {/* ATTENTION — HR decisions, flagged staff, reviews due, plus
             the four working-queue KPIs. */}
-        <CollapsibleCard
-          surface="bare"
-          bodyClassName="space-y-3"
-          id="hr-attention"
-          tier="strategic"
-          eyebrow="Attention"
-          title="HR decisions and flags this week"
-          description="Escalations routed from CD/RVP, staff flagged for support, performance reviews due, and the active queues underneath."
-        >
+        <section className="space-y-3">
+          <SectionHeader
+            tier="strategic"
+            eyebrow="Attention"
+            title="HR decisions and flags this week"
+            description="Escalations routed from CD/RVP, staff flagged for support, performance reviews due, and the active queues underneath."
+          />
           <HrAttentionRow />
           <section className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             {HR_KPIS.map((k, i) => (
               <KpiLinkCard key={k.label} kpi={k} index={i} />
             ))}
           </section>
-        </CollapsibleCard>
+        </section>
 
         {/* PEOPLE — routed debriefs + recognition. */}
-        <CollapsibleCard
-          surface="bare"
-          bodyClassName="space-y-3"
-          id="hr-people"
-          tier="strategic"
-          eyebrow="People"
-          title="Performance signals and recognition"
-          description="Debriefs the routing engine flagged for HR, plus the period's top performers across program leads and CCEOs."
-        >
+        <section className="space-y-3">
+          <SectionHeader
+            tier="strategic"
+            eyebrow="People"
+            title="Performance signals and recognition"
+            description="Debriefs the routing engine flagged for HR, plus the period's top performers across program leads and CCEOs."
+          />
           <DebriefReviewInbox user={user} audience="hr" />
           <BestPerformersCard audience="hr" />
-        </CollapsibleCard>
+        </section>
 
         {/* FIELD — aggregated intelligence. */}
-        <CollapsibleCard
-          surface="bare"
-          bodyClassName="space-y-3"
-          id="hr-field"
-          tier="strategic"
-          eyebrow="Field"
-          title="What's coming back from the field"
-          description="Aggregated barriers, support themes, and team-health signals — no individual staff names, by design."
-        >
+        <section className="space-y-3">
+          <SectionHeader
+            tier="strategic"
+            eyebrow="Field"
+            title="What's coming back from the field"
+            description="Aggregated barriers, support themes, and team-health signals — no individual staff names, by design."
+          />
           <AggregatedFieldContextCard
             ctx={ctx}
             title="Country field intelligence (HR view)"
             subtitle="Aggregated barriers · support themes · team health · open decisions in the leadership pipeline."
           />
-        </CollapsibleCard>
+        </section>
 
         {/* Closing utility row — three shortcut cards. */}
         <section className="grid grid-cols-1 sm:grid-cols-3 gap-3">

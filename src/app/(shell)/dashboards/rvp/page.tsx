@@ -40,7 +40,7 @@ import { planItems, cceoPlanItems } from "@/lib/mobile-mock";
 import { getCurrentUser, toCurrentUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { ROLE_REDIRECT } from "@/lib/auth-public";
-import { CollapsibleCard } from "@/components/ui/CollapsibleCard";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 
 export default async function RVPDashboard() {
   // Defense-in-depth: middleware already gates /dashboards/rvp, but the
@@ -85,15 +85,13 @@ export default async function RVPDashboard() {
 
       {/* REGIONAL SIGNALS — region-weighted KPIs, system insights, and
           training coverage against SSA gaps. */}
-      <CollapsibleCard
-        surface="bare"
-        bodyClassName="space-y-3"
-        id="rvp-regional-signals"
-        tier="strategic"
-        eyebrow="Regional signals"
-        title="What's happening across the region"
-        description="Region-weighted scale numbers, what the system is noticing this period, and whether training is covering the SSA gaps."
-      >
+      <section className="space-y-3">
+        <SectionHeader
+          tier="strategic"
+          eyebrow="Regional signals"
+          title="What's happening across the region"
+          description="Region-weighted scale numbers, what the system is noticing this period, and whether training is covering the SSA gaps."
+        />
       <section
         aria-label="Region KPIs"
         className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-6 gap-3"
@@ -145,18 +143,16 @@ export default async function RVPDashboard() {
 
       <InsightStrip insights={insightsForRvp()} />
       <TrainingCoverageCard audience="rvp" clusterPlans={allClusterTrainingPlans()} />
-      </CollapsibleCard>
+      </section>
 
       {/* COUNTRIES & RISK — comparison table and burn-rate rail. */}
-      <CollapsibleCard
-        surface="bare"
-        bodyClassName="space-y-3"
-        id="rvp-countries-risk"
-        tier="strategic"
-        eyebrow="Countries & risk"
-        title="Where the region is healthy and where money is parked"
-        description="Country-by-country performance side-by-side and the burn-rate rail showing which pipelines may slip the cycle."
-      >
+      <section className="space-y-3">
+        <SectionHeader
+          tier="strategic"
+          eyebrow="Countries & risk"
+          title="Where the region is healthy and where money is parked"
+          description="Country-by-country performance side-by-side and the burn-rate rail showing which pipelines may slip the cycle."
+        />
       <section
         aria-label="Country comparison and burn risk"
         className="grid grid-cols-12 gap-4 items-start"
@@ -243,18 +239,16 @@ export default async function RVPDashboard() {
         </div>
       </section>
 
-      </CollapsibleCard>
+      </section>
 
       {/* DISCIPLINE — Salesforce logging compliance + special projects. */}
-      <CollapsibleCard
-        surface="bare"
-        bodyClassName="space-y-3"
-        id="rvp-discipline"
-        tier="strategic"
-        eyebrow="Discipline"
-        title="Logging discipline and special-project progress"
-        description="Salesforce logging compliance by country and the special-project portfolio that sits outside SSA recommendations."
-      >
+      <section className="space-y-3">
+        <SectionHeader
+          tier="strategic"
+          eyebrow="Discipline"
+          title="Logging discipline and special-project progress"
+          description="Salesforce logging compliance by country and the special-project portfolio that sits outside SSA recommendations."
+        />
       <section
         aria-label="Regional discipline"
         className="grid grid-cols-12 gap-4 items-start"
@@ -318,31 +312,27 @@ export default async function RVPDashboard() {
         </div>
       </section>
 
-      </CollapsibleCard>
+      </section>
 
       {/* IMPACT — donor-reporting readiness for the region. */}
-      <CollapsibleCard
-        surface="bare"
-        bodyClassName="space-y-3"
-        id="rvp-impact"
-        tier="strategic"
-        eyebrow="Impact"
-        title="Donor-reporting readiness across the region"
-        description="Reach, training, and improvement figures the region can report — deduplicated, scoped to RVP, verified or confirmed only. Each tile opens the full report."
-      >
+      <section className="space-y-3">
+        <SectionHeader
+          tier="strategic"
+          eyebrow="Impact"
+          title="Donor-reporting readiness across the region"
+          description="Reach, training, and improvement figures the region can report — deduplicated, scoped to RVP, verified or confirmed only. Each tile opens the full report."
+        />
         <DonorImpactReachCard snapshot={donorSnapshot} />
-      </CollapsibleCard>
+      </section>
 
       {/* PLAN & CONTEXT — regional plan horizon + cycle/impact/recognition. */}
-      <CollapsibleCard
-        surface="bare"
-        bodyClassName="space-y-3"
-        id="rvp-plan-context"
-        tier="strategic"
-        eyebrow="Plan & context"
-        title="What's coming and what's working"
-        description="Regional activity-plan horizon, the annual cycle, leadership-impact snapshot, top performers, and team-target rollups."
-      >
+      <section className="space-y-3">
+        <SectionHeader
+          tier="strategic"
+          eyebrow="Plan & context"
+          title="What's coming and what's working"
+          description="Regional activity-plan horizon, the annual cycle, leadership-impact snapshot, top performers, and team-target rollups."
+        />
         <PlanScheduleByWeek
           items={[...planItems, ...cceoPlanItems]}
           audience="leadership"
@@ -353,7 +343,7 @@ export default async function RVPDashboard() {
         <LeadershipImpactSnapshot variant="rvp" />
         <BestPerformersCard audience="rvp" />
         <TeamTargetsCallout variant="rvp" user={currentUser} />
-      </CollapsibleCard>
+      </section>
       </div>
     </>
       }

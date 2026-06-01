@@ -24,7 +24,7 @@ import { PrioritySchoolsUrgentAttentionCard } from "@/components/director/Priori
 import { QuickLeadershipActions } from "@/components/director/QuickLeadershipActions";
 import { BestPerformersCard } from "@/components/leaderboard/BestPerformersCard";
 import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
-import { CollapsibleCard } from "@/components/ui/CollapsibleCard";
+import { SectionHeader } from "@/components/ui/SectionHeader";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { ROLE_REDIRECT } from "@/lib/auth-public";
@@ -73,32 +73,28 @@ export default async function CountryDirectorDashboard() {
 
         {/* COUNTRY HEALTH — KPIs, attention banners, debrief routing,
             training coverage. */}
-        <CollapsibleCard
-          surface="bare"
-          bodyClassName="space-y-3"
-          id="cd-country-health"
-          tier="strategic"
-          eyebrow="Country health"
-          title="The state of the country this period"
-          description="Eight headline KPIs, leadership-attention alerts, debriefs routed up to you, and training-coverage against SSA gaps."
-        >
+        <section className="space-y-3">
+          <SectionHeader
+            tier="strategic"
+            eyebrow="Country health"
+            title="The state of the country this period"
+            description="Eight headline KPIs, leadership-attention alerts, debriefs routed up to you, and training-coverage against SSA gaps."
+          />
           <CountryKpiRow />
           <LeadershipAttentionRow />
           <DebriefReviewInbox user={user} audience="cd" />
           <TrainingCoverageCard audience="cd" clusterPlans={allClusterTrainingPlans()} />
-        </CollapsibleCard>
+        </section>
 
         {/* PERFORMANCE — country chart, regional rail, PL table,
             priority schools, recognition. */}
-        <CollapsibleCard
-          surface="bare"
-          bodyClassName="space-y-3"
-          id="cd-performance"
-          tier="strategic"
-          eyebrow="Performance"
-          title="How regions and program leads are tracking"
-          description="Country-wide trend, regional comparison, PL performance, schools needing attention, and the period's top performers."
-        >
+        <section className="space-y-3">
+          <SectionHeader
+            tier="strategic"
+            eyebrow="Performance"
+            title="How regions and program leads are tracking"
+            description="Country-wide trend, regional comparison, PL performance, schools needing attention, and the period's top performers."
+          />
           <section className="grid grid-cols-12 gap-3 items-stretch">
             <div className="col-span-12 lg:col-span-8">
               <CountryPerformanceChart />
@@ -118,19 +114,17 @@ export default async function CountryDirectorDashboard() {
           <div id="best-performers">
             <BestPerformersCard audience="cd" />
           </div>
-        </CollapsibleCard>
+        </section>
 
         {/* OPERATIONS & PLAN — risk backlog, SSA intelligence, plan
             horizon. */}
-        <CollapsibleCard
-          surface="bare"
-          bodyClassName="space-y-3"
-          id="cd-operations-plan"
-          tier="strategic"
-          eyebrow="Operations & plan"
-          title="Where execution is at risk"
-          description="Operational risk + SSA intelligence today, then the 30-day plan horizon for what's coming."
-        >
+        <section className="space-y-3">
+          <SectionHeader
+            tier="strategic"
+            eyebrow="Operations & plan"
+            title="Where execution is at risk"
+            description="Operational risk + SSA intelligence today, then the 30-day plan horizon for what's coming."
+          />
           <section className="grid grid-cols-12 gap-3 items-stretch" id="operational-risk">
             <div className="col-span-12 lg:col-span-5">
               <OperationalRiskBacklogRow />
@@ -145,18 +139,16 @@ export default async function CountryDirectorDashboard() {
             title="30-day plan horizon — country"
             initialExpanded="first"
           />
-        </CollapsibleCard>
+        </section>
 
         {/* FINANCE — fund approvals + funded-not-completed. */}
-        <CollapsibleCard
-          surface="bare"
-          bodyClassName="space-y-3"
-          id="cd-finance"
-          tier="strategic"
-          eyebrow="Finance"
-          title="What's in approval and where money is parked"
-          description="Fund approvals awaiting your sign-off and disbursements that haven't yet converted to delivery."
-        >
+        <section className="space-y-3">
+          <SectionHeader
+            tier="strategic"
+            eyebrow="Finance"
+            title="What's in approval and where money is parked"
+            description="Fund approvals awaiting your sign-off and disbursements that haven't yet converted to delivery."
+          />
           <section className="grid grid-cols-12 gap-3 items-stretch" id="fund-approvals">
             <div className="col-span-12 lg:col-span-8">
               <FundApprovalFinanceSnapshot />
@@ -165,21 +157,19 @@ export default async function CountryDirectorDashboard() {
               <FundedNotCompletedCard />
             </div>
           </section>
-        </CollapsibleCard>
+        </section>
 
         {/* IMPACT & DONOR REPORTING — what the country can report up to
             donors this period, straight from verified workflow data. */}
-        <CollapsibleCard
-          surface="bare"
-          bodyClassName="space-y-3"
-          id="cd-impact"
-          tier="strategic"
-          eyebrow="Impact"
-          title="What the country can report this period"
-          description="Donor-ready reach, training, and improvement figures — deduplicated and scoped to the country. Each tile opens the full report."
-        >
+        <section className="space-y-3">
+          <SectionHeader
+            tier="strategic"
+            eyebrow="Impact"
+            title="What the country can report this period"
+            description="Donor-ready reach, training, and improvement figures — deduplicated and scoped to the country. Each tile opens the full report."
+          />
           <DonorImpactReachCard snapshot={donorSnapshot} />
-        </CollapsibleCard>
+        </section>
 
         {/* Quick Leadership Actions — closing utility surface. */}
         <QuickLeadershipActions />
