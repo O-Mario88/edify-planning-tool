@@ -14,16 +14,18 @@ export function canIntakeData(role: string): boolean {
   return (DATA_INTAKE_ROLES as readonly string[]).includes(role);
 }
 
-/** The 8 SSA intervention areas (canonical, matches the geography/spec list). */
+/** The 8 SSA performance areas captured on upload — field wording, matches the
+ *  SSA Performance template column headers (7 performance areas + Education
+ *  Technology). Enrolment is captured separately, not as a performance area. */
 export const SSA_INTERVENTION_AREAS = [
-  "Teaching & Learning",
-  "Financial Health",
   "Christlike Behaviour",
   "Exposure to the Word of God",
-  "Government Requirements & Compliance",
-  "Leadership",
-  "Education Technology",
+  "Fees/Budget and Accounts",
+  "Government Requirement",
+  "Leadership Best Practice",
   "Learning Environment",
+  "Teaching Environment",
+  "Education Technology",
 ] as const;
 
 export type SsaInterventionArea = (typeof SSA_INTERVENTION_AREAS)[number];

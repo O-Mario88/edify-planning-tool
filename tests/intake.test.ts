@@ -52,7 +52,7 @@ const fullScores = (v: number) =>
 describe("ssaAverage", () => {
   it("averages the 8 areas to 1dp", () => {
     expect(ssaAverage(fullScores(8))).toBe(8);
-    expect(ssaAverage({ ...fullScores(8), "Leadership": 6 })).toBe(7.8);
+    expect(ssaAverage({ ...fullScores(8), "Leadership Best Practice": 6 })).toBe(7.8);
     expect(ssaAverage({})).toBe(0);
   });
 });
@@ -91,12 +91,12 @@ describe("validateSsaUpload", () => {
     expect(r.errors.ssaDate).toBeTruthy();
   });
   it("requires every intervention score", () => {
-    const r = validateSsaUpload({ ...base, scores: { "Leadership": 5 } });
+    const r = validateSsaUpload({ ...base, scores: { "Leadership Best Practice": 5 } });
     expect(r.ok).toBe(false);
-    expect(r.errors["Teaching & Learning"]).toBeTruthy();
+    expect(r.errors["Teaching Environment"]).toBeTruthy();
   });
   it("rejects scores outside 0–10", () => {
-    expect(validateSsaUpload({ ...base, scores: { ...fullScores(7), "Leadership": 11 } }).errors["Leadership"]).toBeTruthy();
-    expect(validateSsaUpload({ ...base, scores: { ...fullScores(7), "Leadership": -1 } }).errors["Leadership"]).toBeTruthy();
+    expect(validateSsaUpload({ ...base, scores: { ...fullScores(7), "Leadership Best Practice": 11 } }).errors["Leadership Best Practice"]).toBeTruthy();
+    expect(validateSsaUpload({ ...base, scores: { ...fullScores(7), "Leadership Best Practice": -1 } }).errors["Leadership Best Practice"]).toBeTruthy();
   });
 });
