@@ -27,7 +27,7 @@ import {
   regionForDistrict,
   isKnownDistrict,
   type UgandaRegion,
-} from "@/lib/uganda-districts";
+} from "@/lib/geography";
 
 // ────────── Capacity formula defaults ──────────
 

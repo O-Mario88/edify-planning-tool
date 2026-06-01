@@ -19,6 +19,28 @@
 //   • staging environment refreshes
 
 import bcrypt from "bcryptjs";
+// Pure, dependency-free name↔region table. Imported directly (relative, with
+// extension) because the seed runs under `node --experimental-strip-types`,
+// which does not resolve the `@/` path alias the geography package uses.
+import {
+  UGANDA_REGIONS,
+  ALL_DISTRICTS,
+  regionForDistrict,
+  type UgandaRegion,
+} from "../src/lib/uganda-districts.ts";
+
+// Region id/label + district id/slug derivation — mirrors src/lib/geography.
+// (No district-name list is duplicated here; names come from the table above.)
+const REGION_META: Record<UgandaRegion, { id: string; label: string }> = {
+  Central: { id: "R-CENTRAL", label: "Central Region" },
+  East: { id: "R-EAST", label: "Eastern Region" },
+  North: { id: "R-NORTH", label: "Northern Region" },
+  West: { id: "R-WEST", label: "Western Region" },
+};
+const districtSlug = (name: string): string =>
+  name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+const districtIdFor = (name: string): string => `UG-D-${districtSlug(name).toUpperCase()}`;
+const MUKONO_ID = districtIdFor("Mukono");
 
 // We import @prisma/client lazily so a clone without `prisma generate`
 // run still passes typecheck.
@@ -37,6 +59,7 @@ async function main(): Promise<void> {
   const { prisma } = await loadPrisma() as {
     prisma: {
       user: { upsert: (a: unknown) => Promise<unknown> };
+      region: { upsert: (a: unknown) => Promise<unknown> };
       district: { upsert: (a: unknown) => Promise<unknown> };
       cluster: { upsert: (a: unknown) => Promise<unknown> };
       school: { upsert: (a: unknown) => Promise<unknown> };
@@ -80,18 +103,48 @@ async function main(): Promise<void> {
   // eslint-disable-next-line no-console
   console.log(`✓ Seeded ${users.length} users`);
 
-  await prisma.district.upsert({
-    where: { name: "Mukono" },
-    update: {},
-    create: { id: "dist_mukono", name: "Mukono", region: "Central" },
-  });
+  // Seed all 4 regions, then every district from the canonical table —
+  // this is the geography source of truth landing in the DB.
+  for (const key of UGANDA_REGIONS) {
+    const meta = REGION_META[key];
+    await prisma.region.upsert({
+      where: { name: key },
+      update: { label: meta.label },
+      create: { id: meta.id, name: key, label: meta.label, countryCode: "UG" },
+    });
+  }
   // eslint-disable-next-line no-console
-  console.log("✓ Seeded 1 district");
+  console.log(`✓ Seeded ${UGANDA_REGIONS.length} regions`);
+
+  for (const name of ALL_DISTRICTS) {
+    const regionKey = regionForDistrict(name);
+    if (!regionKey) continue;
+    await prisma.district.upsert({
+      where: { name },
+      update: {
+        regionId: REGION_META[regionKey].id,
+        region: regionKey,
+        slug: districtSlug(name),
+        isActive: true,
+      },
+      create: {
+        id: districtIdFor(name),
+        name,
+        region: regionKey,
+        regionId: REGION_META[regionKey].id,
+        slug: districtSlug(name),
+        countryCode: "UG",
+        isActive: true,
+      },
+    });
+  }
+  // eslint-disable-next-line no-console
+  console.log(`✓ Seeded ${ALL_DISTRICTS.length} districts`);
 
   await prisma.cluster.upsert({
     where: { id: "cluster_mukono_a" },
     update: {},
-    create: { id: "cluster_mukono_a", name: "Mukono Cluster A", districtId: "dist_mukono" },
+    create: { id: "cluster_mukono_a", name: "Mukono Cluster A", districtId: MUKONO_ID },
   });
   // eslint-disable-next-line no-console
   console.log("✓ Seeded 1 cluster");
@@ -105,7 +158,7 @@ async function main(): Promise<void> {
         id,
         name: `Demo Primary School ${i + 1}`,
         clusterId: "cluster_mukono_a",
-        districtId: "dist_mukono",
+        districtId: MUKONO_ID,
         isCoreSchool: i < 3,
         totalEnrollment: 250 + i * 60,
         enrollmentSource: "Seed",

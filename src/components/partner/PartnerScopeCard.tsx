@@ -4,6 +4,7 @@
 
 import { MapPin, CheckCircle2, Calendar, Layers } from "lucide-react";
 import type { PartnerScope } from "@/lib/partner/partner-types";
+import { districtNameOf } from "@/lib/geography";
 
 export function PartnerScopeCard({ scopes }: { scopes: PartnerScope[] }) {
   if (scopes.length === 0) return null;
@@ -31,7 +32,7 @@ export function PartnerScopeCard({ scopes }: { scopes: PartnerScope[] }) {
               <div className="text-body font-extrabold leading-tight">{s.contractName}</div>
             </div>
             <div className="grid grid-cols-2 gap-2 mt-2">
-              <Detail Icon={MapPin}  label="Districts"  value={s.districtIds.length > 0 ? s.districtIds.map(stripDst).join(" · ") : (s.schoolIds.length > 0 ? `${s.schoolIds.length} schools` : "—")} />
+              <Detail Icon={MapPin}  label="Districts"  value={s.districtIds.length > 0 ? s.districtIds.map(districtNameOf).join(" · ") : (s.schoolIds.length > 0 ? `${s.schoolIds.length} schools` : "—")} />
               <Detail Icon={Calendar} label="Window"    value={`${s.startDate.slice(0, 10)} → ${s.endDate.slice(0, 10)}`} />
             </div>
             <div className="mt-2">
@@ -75,10 +76,6 @@ function Detail({ Icon, label, value }: { Icon: typeof MapPin; label: string; va
       <div className="text-[11.5px] font-semibold text-[var(--color-edify-text)]">{value}</div>
     </div>
   );
-}
-
-function stripDst(d: string): string {
-  return d.startsWith("DST-") ? d.slice(4) : d;
 }
 
 function humaniseKind(k: string): string {

@@ -8,6 +8,8 @@
 //
 // Shapes mirror the Salesforce import contract so backend swap is a no-op.
 
+import { regionForDistrict, districtIdFor, type DistrictId } from "@/lib/geography";
+
 // ────────── Auth / current user ──────────
 
 export type AppRole =
@@ -65,11 +67,16 @@ export type RecommendedAction =
   | "Follow-Up by Partner"
   | "Monitoring & Review";
 
-export type District = "Central" | "East" | "West" | "Cluster";
+// A district is a canonical Ugandan district NAME (see @/lib/geography). The
+// old "Central|East|West|Cluster" union actually stored regions — it was wrong
+// and is gone. Geography is derived from the shipping hub on export (region is
+// never hand-typed), so `district`/`region`/`districtId` always agree.
+export type District = string;
 
 // Shipping address is the school's postal/distribution hub. Staff use it as
 // the primary clustering dimension because routes, deliveries, and
-// in-person visits naturally group around it.
+// in-person visits naturally group around it. Each hub maps to one canonical
+// district via HUB_TO_DISTRICT below.
 export type ShippingAddress =
   | "Kampala Hub - Central"
   | "Mukono Hub - Central"
@@ -79,13 +86,39 @@ export type ShippingAddress =
   | "Hoima Hub - West"
   | "Arua Cluster Hub";
 
+// Hub → canonical district. The single mapping that turns a distribution hub
+// into real geography; region is then derived from the district.
+const HUB_TO_DISTRICT: Record<ShippingAddress, string> = {
+  "Kampala Hub - Central": "Kampala",
+  "Mukono Hub - Central": "Mukono",
+  "Jinja Hub - East": "Jinja",
+  "Iganga Hub - East": "Iganga",
+  "Mbarara Hub - West": "Mbarara",
+  "Hoima Hub - West": "Hoima",
+  "Arua Cluster Hub": "Arua",
+};
+
+function geoFromHub(hub: ShippingAddress): {
+  district: string;
+  districtId: DistrictId;
+  region: Region;
+} {
+  const district = HUB_TO_DISTRICT[hub];
+  return {
+    district,
+    districtId: districtIdFor(district),
+    region: (regionForDistrict(district) ?? "Central") as Region,
+  };
+}
+
 export type SchoolRow = {
   schoolId: string;
   salesforceSchoolId: string;
   schoolName: string;
   country: "Uganda";
   region: Region;
-  district: District;
+  district: District;       // canonical district name — derived from the hub
+  districtId: DistrictId;   // canonical UG-D-* id — derived from the hub
   shippingAddress: ShippingAddress;
   schoolType: SchoolType;
   segment: SchoolSegment;
@@ -118,7 +151,10 @@ export type SchoolRow = {
 // re-implementing the visibility filter — those pages render server-side
 // after the access-control branch in `getVisibleSchools` already vetted
 // the row.
-export const schoolsMock: SchoolRow[] = [
+// Raw rows. `region`/`district` literals below are placeholders — they are
+// OVERRIDDEN on export by geoFromHub(shippingAddress), so the source of truth
+// is the hub, not the hand-typed value. `districtId` is added on export.
+const RAW_SCHOOLS: Array<Omit<SchoolRow, "districtId">> = [
   {
     schoolId: "SCH-001",
     salesforceSchoolId: "a01-001",
@@ -393,6 +429,13 @@ export const schoolsMock: SchoolRow[] = [
     recommendedNextAction: "Monitoring & Review",
   },
 ];
+
+// Normalise geography from the shipping hub. region/district/districtId always
+// agree because they're all derived from one source (the hub → district map).
+export const schoolsMock: SchoolRow[] = RAW_SCHOOLS.map((s) => {
+  const { district, districtId, region } = geoFromHub(s.shippingAddress);
+  return { ...s, region, district, districtId };
+});
 
 // Server-side access control. The CCEO sees ONLY schools where
 // assigned_cceo_id matches their staff_id. Higher roles widen scope; admins
@@ -674,7 +717,9 @@ export type Cluster = {
   description?: string;
 };
 
-export const clustersMock: Cluster[] = [
+// Raw clusters — region/district below are placeholders, derived on export
+// from the hub (or, for multi-hub loops with no hub, the first member school).
+const RAW_CLUSTERS: Cluster[] = [
   {
     id: "CLT-001",
     name: "Kampala Hub – Term 2 Visits",
@@ -708,6 +753,16 @@ export const clustersMock: Cluster[] = [
     description: "Two-shipping-hub combined route.",
   },
 ];
+
+export const clustersMock: Cluster[] = RAW_CLUSTERS.map((c) => {
+  if (c.shippingAddress) {
+    const { district, region } = geoFromHub(c.shippingAddress);
+    return { ...c, district, region };
+  }
+  // No single hub (multi-hub loop) — anchor on the first member school.
+  const first = schoolsMock.find((s) => c.schoolIds.includes(s.schoolId));
+  return first ? { ...c, district: first.district, region: first.region } : c;
+});
 
 export function getClustersFor(user: CurrentUser): Cluster[] {
   if (user.role === "Admin" || user.role === "CountryDirector" || user.role === "CountryProgramLead") {

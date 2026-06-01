@@ -205,18 +205,81 @@ model User {
   notifications    Notification[]
   auditEvents      AuditEvent[]
   homeBase         StaffHomeBase?
+  assignedDistricts StaffAssignedDistrict[]
+  assignedRegions   StaffAssignedRegion[]
 
   @@index([role])
   @@index([countryId, role])
 }
 
+// Staff ↔ district assignment. `isPrimary` marks the home/base district
+// (mirrors StaffHomeBase + StaffProfile.primaryDistrictId in the mock layer);
+// every other row is a secondary district for budget classification.
+model StaffAssignedDistrict {
+  id         String   @id @default(cuid())
+  staff      User     @relation(fields: [staffId], references: [id])
+  staffId    String
+  district   District @relation(fields: [districtId], references: [id])
+  districtId String
+  isPrimary  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@unique([staffId, districtId])
+  @@index([staffId])
+  @@index([districtId])
+}
+
+model StaffAssignedRegion {
+  id        String   @id @default(cuid())
+  staff     User     @relation(fields: [staffId], references: [id])
+  staffId   String
+  region    Region   @relation(fields: [regionId], references: [id])
+  regionId  String
+  createdAt DateTime @default(now())
+
+  @@unique([staffId, regionId])
+  @@index([regionId])
+}
+
+// ── Geography source of truth ─────────────────────────────────────────
+// Region → District → SubCounty → Parish is the administrative chain. The
+// canonical name↔region table + ids live in src/lib/geography; this schema
+// is the Year-2 contract that table seeds into (see prisma/seed.ts).
+
+model Region {
+  id          String   @id // "R-CENTRAL" — matches geography RegionId
+  name        String   @unique // "Central"
+  label       String // "Central Region"
+  countryCode String   @default("UG")
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  districts        District[]
+  staffAssignments StaffAssignedRegion[]
+  partnerCoverage  PartnerCoverageRegion[]
+}
+
 model District {
-  id          String      @id @default(cuid())
+  id          String      @id @default(cuid()) // canonical "UG-D-*" set explicitly at seed
   name        String      @unique
+  // Transitional: legacy free-text region kept while `regionId` is back-filled.
   region      String?
+  regionId    String?
+  regionRef   Region?     @relation(fields: [regionId], references: [id])
+  slug        String?     @unique
+  countryCode String      @default("UG")
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
   clusters    Cluster[]
   schools     School[]
   subCounties SubCounty[]
+
+  staffAssignments StaffAssignedDistrict[]
+  partnerCoverage  PartnerCoverageDistrict[]
+
+  @@index([regionId])
 }
 
 // ── Donor-reporting geography ─────────────────────────────────────────
@@ -225,12 +288,13 @@ model District {
 // is its own table — sub-county / parish names repeat across districts.
 
 model SubCounty {
-  id         String   @id @default(cuid())
+  id         String    @id @default(cuid())
   name       String
-  district   District @relation(fields: [districtId], references: [id])
+  district   District  @relation(fields: [districtId], references: [id])
   districtId String
   parishes   Parish[]
   schools    School[]
+  clusters   Cluster[]
 
   @@unique([districtId, name])
   @@index([districtId])
@@ -248,15 +312,20 @@ model Parish {
 }
 
 model Cluster {
-  id         String                 @id @default(cuid())
-  name       String
-  district   District               @relation(fields: [districtId], references: [id])
-  districtId String
-  schools    School[]
-  schedule   ClusterScheduleEntry[]
-  createdAt  DateTime               @default(now())
+  id          String                 @id @default(cuid())
+  name        String
+  district    District               @relation(fields: [districtId], references: [id])
+  districtId  String
+  // Optional sub-county anchor — set when a cluster is created against a
+  // specific sub-county (see AddToClusterDrawer create flow).
+  subCounty   SubCounty?             @relation(fields: [subCountyId], references: [id])
+  subCountyId String?
+  schools     School[]
+  schedule    ClusterScheduleEntry[]
+  createdAt   DateTime               @default(now())
 
   @@index([districtId])
+  @@index([subCountyId])
 }
 
 model School {
@@ -1067,7 +1136,36 @@ model Partner {
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
 
+  coverageDistricts PartnerCoverageDistrict[]
+  coverageRegions   PartnerCoverageRegion[]
+
   @@index([status])
+}
+
+// Partner geography coverage — the schema analogue of PartnerScope's
+// districtIds/regionIds. Activity scope is enforced against these.
+model PartnerCoverageDistrict {
+  id         String   @id @default(cuid())
+  partner    Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  partnerId  String
+  district   District @relation(fields: [districtId], references: [id])
+  districtId String
+  createdAt  DateTime @default(now())
+
+  @@unique([partnerId, districtId])
+  @@index([districtId])
+}
+
+model PartnerCoverageRegion {
+  id        String   @id @default(cuid())
+  partner   Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  partnerId String
+  region    Region   @relation(fields: [regionId], references: [id])
+  regionId  String
+  createdAt DateTime @default(now())
+
+  @@unique([partnerId, regionId])
+  @@index([regionId])
 }
 
 model PartnerActivity {

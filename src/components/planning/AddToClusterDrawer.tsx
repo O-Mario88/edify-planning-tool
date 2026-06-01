@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { clusterGaps, type ClusterGap } from "@/lib/planning/planning-gaps-mock";
+import { subCountiesOf, SUBCOUNTIES } from "@/lib/geography";
 import { cn } from "@/lib/utils";
 
 // Dedicated drawer for the "Add to Cluster" action.
@@ -34,26 +35,13 @@ export type AddToClusterContext = {
   cceoName?:   string;
 };
 
-// District + sub-county catalog used by the Create-new path. Production
-// reads this from the school directory's geography service; the demo
-// hard-codes the districts the seed mocks already use so the dropdown
-// stays consistent with the rest of the planning surface.
-const DISTRICT_SUBCOUNTIES: Record<string, string[]> = {
-  Kayunga:  ["Bbaale", "Galiraaya", "Kayunga Central", "Kayunga Town", "Kitimbwa"],
-  Mukono:   ["Mukono Central", "Ntenjeru", "Nakifuma", "Kireka", "Nsumba", "Bukoto", "Namilyango"],
-  Pader:    ["Atanga", "Laguti", "Pader Town", "Lapul"],
-  Kitgum:   ["Kitgum Central", "Mucwini", "Orom", "Lagoro"],
-  Lamwo:    ["Padibe East", "Padibe West", "Palabek Gem", "Lokung"],
-  Agago:    ["Agago Hub", "Patongo", "Kalongo", "Lira-Palwo"],
-  Gulu:     ["Gulu Municipality", "Bardege", "Pece", "Layibi"],
-  Wakiso:   ["Wakiso Central", "Nansana", "Kira", "Kasanje"],
-  Kampala:  ["Kampala Central", "Nakawa", "Rubaga", "Makindye"],
-  Mbarara:  ["Mbarara East", "Kakoba", "Nyamitanga", "Biharwe"],
-  Hoima:    ["Hoima Central", "Buseruka", "Kigorobya", "Kyabigambire"],
-  Omoro:    ["Omoro West", "Bobi", "Lakwana", "Tochi"],
-};
-
-const DISTRICT_OPTIONS = Object.keys(DISTRICT_SUBCOUNTIES).map((d) => ({ value: d, label: d }));
+// District + sub-county options come from the single geography source of
+// truth (@/lib/geography) — no hard-coded district lists here. The district
+// dropdown lists the districts that have a sub-county catalogue; the
+// sub-county dropdown filters by the selected district.
+const DISTRICT_OPTIONS = Array.from(new Set(SUBCOUNTIES.map((s) => s.districtName)))
+  .sort()
+  .map((d) => ({ value: d, label: d }));
 
 export function AddToClusterDrawer({
   open, context, onClose, onSubmit,
@@ -94,8 +82,8 @@ export function AddToClusterDrawer({
     }
   }, [open, eligibleClusters]);
 
-  // Sub-counties depend on district.
-  const subCountyOptions = (DISTRICT_SUBCOUNTIES[district] ?? []).map((s) => ({ value: s, label: s }));
+  // Sub-counties depend on district — sourced from the geography service.
+  const subCountyOptions = subCountiesOf(district).map((s) => ({ value: s.name, label: s.name }));
 
   if (!context) return null;
 

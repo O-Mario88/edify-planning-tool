@@ -2,6 +2,13 @@
 // (no accommodation); everything else is secondary (transport + full meals +
 // accommodation by default). Budget engine cannot compute for a staff without
 // primaryDistrictId.
+//
+// District ids are the canonical `UG-D-*` ids from `@/lib/geography`. The raw
+// profiles below are authored with the legacy `DIST-*` codes for readability;
+// they're normalised to canonical ids (and canonical region keys) on export so
+// the whole app shares one district-id scheme.
+
+import { resolveDistrictId, normalizeRegion } from "@/lib/geography";
 
 export type DistrictType = "PRIMARY" | "SECONDARY";
 
@@ -51,7 +58,7 @@ export function secondaryDistrictsOf(
   );
 }
 
-export const STAFF_PROFILES: StaffProfile[] = [
+const RAW_STAFF_PROFILES: StaffProfile[] = [
   // East team (5)
   {
     staffId: "STF-PC-001",
@@ -317,6 +324,20 @@ export const STAFF_PROFILES: StaffProfile[] = [
     ],
   },
 ];
+
+// Normalise the raw profiles onto the canonical district-id scheme + region
+// keys. Legacy `DIST-*` codes resolve via the geography alias table; the
+// classify/budgetable helpers compare strings, so this swap is transparent.
+export const STAFF_PROFILES: StaffProfile[] = RAW_STAFF_PROFILES.map((s) => ({
+  ...s,
+  region: normalizeRegion(s.region) ?? s.region,
+  primaryDistrictId:
+    s.primaryDistrictId === null ? null : resolveDistrictId(s.primaryDistrictId),
+  assignedDistricts: s.assignedDistricts.map((d) => ({
+    districtId: resolveDistrictId(d.districtId),
+    districtName: d.districtName,
+  })),
+}));
 
 export function getStaffProfile(id: string): StaffProfile | undefined {
   return STAFF_PROFILES.find((s) => s.staffId === id);

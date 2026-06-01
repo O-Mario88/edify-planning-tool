@@ -1,22 +1,16 @@
 import Link from "next/link";
 import { MapPin, Building2, Filter, Map as MapIcon } from "lucide-react";
 import { StubPage } from "@/components/shell/StubPage";
-import { schoolsMock } from "@/lib/schools-mock";
+import { schoolsMock, distinctShippingAddresses } from "@/lib/schools-mock";
 import { cn } from "@/lib/utils";
 
 // Schools across the country, grouped by shipping hub. Until a real
 // Leaflet/Mapbox layer is wired up, the top of the page is a subtle
 // ambient banner — the hub list below is the primary surface.
-
-const HUBS = [
-  "Kampala Hub - Central",
-  "Mukono Hub - Central",
-  "Jinja Hub - East",
-  "Iganga Hub - East",
-  "Mbarara Hub - West",
-  "Hoima Hub - West",
-  "Arua Cluster Hub",
-] as const;
+//
+// Hubs are derived from the school data itself rather than re-listed here,
+// so there is no second copy of the shipping-address list to drift.
+const HUBS = distinctShippingAddresses(schoolsMock);
 
 export default function MapPage() {
   const totalSchools = schoolsMock.length;

@@ -22,6 +22,7 @@ import type {
   JointWorkAssignment,
 } from "./partner-types";
 import { computePartnerHealth } from "./partner-health";
+import { resolveDistrictId } from "@/lib/geography";
 
 // ────────── Organisations ──────────
 
@@ -67,7 +68,7 @@ export const partnerUsers: PartnerUser[] = [
 
 // ────────── Scopes ──────────
 
-export const partnerScopes: PartnerScope[] = [
+const RAW_PARTNER_SCOPES: PartnerScope[] = [
   {
     id: "SC-LTU-1",
     partnerId: "P-LIT",
@@ -132,9 +133,16 @@ export const partnerScopes: PartnerScope[] = [
   },
 ];
 
+// Normalise scope district ids onto the canonical `UG-D-*` scheme. Legacy
+// `DST-*` codes resolve via the geography alias table.
+export const partnerScopes: PartnerScope[] = RAW_PARTNER_SCOPES.map((s) => ({
+  ...s,
+  districtIds: s.districtIds.map(resolveDistrictId),
+}));
+
 // ────────── Activities ──────────
 
-export const partnerActivities: PartnerActivity[] = [
+const RAW_PARTNER_ACTIVITIES: PartnerActivity[] = [
   {
     id: "PA-LTU-001",
     partnerId: "P-LIT", scopeId: "SC-LTU-1",
@@ -259,6 +267,12 @@ export const partnerActivities: PartnerActivity[] = [
     createdAt: "2026-05-21T10:00:00Z", createdById: "U-PA-NF-JM", updatedAt: "2026-05-23T10:00:00Z",
   },
 ];
+
+// Normalise activity district ids onto the canonical `UG-D-*` scheme.
+export const partnerActivities: PartnerActivity[] = RAW_PARTNER_ACTIVITIES.map((a) => ({
+  ...a,
+  districtId: a.districtId ? resolveDistrictId(a.districtId) : a.districtId,
+}));
 
 // ────────── Joint work assignment ──────────
 
