@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Upload, Download, ChevronRight, FileSpreadsheet } from "lucide-react";
 import { StubPage } from "@/components/shell/StubPage";
 import { ActionButton } from "@/components/ui/ActionButton";
+import { StopClickLink } from "@/components/ui/StopClickLink";
 import { dataTemplates, dataImportBatches } from "@/lib/data-intake-mock";
 import { cn } from "@/lib/utils";
 
@@ -34,27 +35,28 @@ export default function UploadCenterPage() {
         </header>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
           {dataTemplates.slice(0, 9).map((t) => (
-            <Link
+            <div
               key={t.id}
-              href={`/data-intake/templates/${t.id}`}
-              className="rounded-xl border border-[var(--color-edify-border)] p-3 flex items-start gap-2 hover:bg-[var(--color-edify-soft)]/40"
+              className="relative rounded-xl border border-[var(--color-edify-border)] p-3 flex items-start gap-2 hover:bg-[var(--color-edify-soft)]/40"
             >
               <span className="h-8 w-8 rounded-md bg-[var(--color-edify-soft)]/80 text-[var(--color-edify-primary)] grid place-items-center shrink-0">
                 <FileSpreadsheet size={13} />
               </span>
               <div className="flex-1 min-w-0">
-                <div className="text-[12px] font-extrabold tracking-tight truncate">{t.name}</div>
+                {/* Stretched link — covers the whole card without nesting the download anchor. */}
+                <Link href={`/data-intake/templates/${t.id}`} className="after:absolute after:inset-0">
+                  <span className="block text-[12px] font-extrabold tracking-tight truncate">{t.name}</span>
+                </Link>
                 <div className="text-caption muted truncate">{t.requiredColumns.length} required cols</div>
               </div>
-              <a
+              <StopClickLink
                 href={`/api/templates/${t.id}/csv`}
-                className="h-7 w-7 rounded-md border border-[var(--color-edify-border)] grid place-items-center hover:bg-white shrink-0"
-                aria-label={`Download ${t.name}`}
-                onClick={(e) => e.stopPropagation()}
+                className="relative z-10 h-7 w-7 rounded-md border border-[var(--color-edify-border)] grid place-items-center hover:bg-white shrink-0"
+                ariaLabel={`Download ${t.name}`}
               >
                 <Download size={11} className="text-[var(--color-edify-muted)]" />
-              </a>
-            </Link>
+              </StopClickLink>
+            </div>
           ))}
         </div>
       </section>
@@ -70,7 +72,7 @@ export default function UploadCenterPage() {
           template, run every validation rule, and surface errors before anything reaches the queue.
         </p>
         <ActionButton
-          Icon={Upload}
+          icon="Upload"
           label="Choose file"
           className="mt-3 h-9 px-4 rounded-xl bg-[var(--color-edify-primary)] text-white text-body font-semibold hover:brightness-110"
           toast={{

@@ -94,7 +94,7 @@ export default async function WeeklyDebriefReportCenterPage() {
                   {country.status}
                 </span>
                 <ActionButton
-                  Icon={Download}
+                  icon="Download"
                   label="Download PDF"
                   className="h-8 px-2.5 rounded-md border border-[var(--color-edify-border)] bg-white text-[11px] font-extrabold"
                   toast={{

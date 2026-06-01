@@ -1,9 +1,22 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Loader2 } from "lucide-react";
+import {
+  Loader2, Upload, Download, Plus, Send, Check, CheckCircle2,
+  FileSpreadsheet, RefreshCw, Save, Pencil, Trash2, Bell,
+} from "lucide-react";
 import { useDemoStore, type Toast } from "@/components/demo/DemoStore";
 import { cn } from "@/lib/utils";
+
+// Serializable icon registry. Server components must pass `icon="Upload"` (a
+// string) rather than `Icon={Upload}` (a component) — a lucide component is a
+// {$$typeof, render} object and can't cross the Server→Client boundary.
+const ICON_MAP = {
+  Upload, Download, Plus, Send, Check, CheckCircle2,
+  FileSpreadsheet, RefreshCw, Save, Pencil, Trash2, Bell,
+} satisfies Record<string, React.ComponentType<{ size?: number; className?: string }>>;
+
+export type ActionButtonIcon = keyof typeof ICON_MAP;
 
 // Tiny client-side action button. Drop-in replacement for the inert
 // <button> placeholders scattered across server pages. Shows a loading
@@ -31,6 +44,7 @@ export function ActionButton({
   oneShotClassName,
   ariaLabel,
   Icon,
+  icon,
 }: {
   label: ReactNode;
   toast: Omit<Toast, "id">;
@@ -41,8 +55,12 @@ export function ActionButton({
   oneShotLabel?: ReactNode;
   oneShotClassName?: string;
   ariaLabel?: string;
+  /** Component form — for CLIENT-component callers only (not serializable). */
   Icon?: React.ComponentType<{ size?: number; className?: string }>;
+  /** Name form — safe for SERVER-component callers (serializable). */
+  icon?: ActionButtonIcon;
 }) {
+  const ResolvedIcon = Icon ?? (icon ? ICON_MAP[icon] : undefined);
   const { pushToast } = useDemoStore();
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
@@ -81,7 +99,7 @@ export function ActionButton({
         className,
       )}
     >
-      {busy ? <Loader2 size={12} className="animate-spin" /> : Icon ? <Icon size={12} /> : null}
+      {busy ? <Loader2 size={12} className="animate-spin" /> : ResolvedIcon ? <ResolvedIcon size={12} /> : null}
       {label}
     </button>
   );

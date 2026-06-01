@@ -1,4 +1,3 @@
-import { Plus } from "lucide-react";
 import { StubPage } from "@/components/shell/StubPage";
 import { QualityCheckStatusCard } from "@/components/ui/lazy-charts";
 import { TopIssuesCard } from "@/components/impact/TopIssuesCard";
@@ -17,7 +16,7 @@ export default function QualityChecksPage() {
           <p className="text-[11.5px] muted">Status breakdown and the top issues blocking impact verification.</p>
         </div>
         <ActionButton
-          Icon={Plus}
+          icon="Plus"
           label="Run Quality Check"
           className="h-9 px-3 rounded-xl bg-[var(--color-edify-primary)] text-white text-body font-semibold hover:brightness-110"
           toast={{
