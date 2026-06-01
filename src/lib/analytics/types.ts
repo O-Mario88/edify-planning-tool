@@ -94,6 +94,15 @@ export type TrendPoint = {
   value: number;
 };
 
+/** One row of the district comparison / ranking table (§21). */
+export type DistrictComparisonRow = {
+  district: string;
+  schoolsReached: number;
+  learnersImpacted: number;
+  teachersTrained: number;
+  avgSsa?: number;
+};
+
 export type AnalyticsSnapshot = {
   scopeLabel: string;
   fyId: string;
@@ -103,6 +112,8 @@ export type AnalyticsSnapshot = {
   ssaHeatmap: { interventions: string[]; rows: HeatmapRow[] };
   /** MSC workflow funnel: Submitted → PL Reviewed → Verified → Donor-Ready. */
   mscFunnel: FunnelStage[];
+  /** District-vs-district comparison (the §21 ranking table). */
+  districtComparison: DistrictComparisonRow[];
   trend: TrendPoint[];
   dataQuality: DataQuality;
   /** Aggregate verdict across all metric-level caveats. */

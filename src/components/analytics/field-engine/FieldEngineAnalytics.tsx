@@ -118,6 +118,9 @@ export function FieldEngineAnalytics({
       <MetricGrid title="Verification & Evidence" keys={VERIFY_KEYS} byKey={byKey} isActive={isActive} onSelect={setTileFilter} />
       <MetricGrid title="Payment" keys={PAYMENT_KEYS} byKey={byKey} isActive={isActive} onSelect={setTileFilter} />
 
+      {/* District comparison / ranking */}
+      <DistrictComparison rows={snapshot.districtComparison} />
+
       {/* SSA intervention heatmap */}
       <SsaHeatmap interventions={snapshot.ssaHeatmap.interventions} rows={snapshot.ssaHeatmap.rows} />
 
@@ -238,6 +241,38 @@ function PipelineFunnel({ title, subtitle, stages }: { title: string; subtitle: 
           </div>
         ))}
       </div>
+    </section>
+  );
+}
+
+function DistrictComparison({ rows }: { rows: AnalyticsSnapshot["districtComparison"] }) {
+  if (rows.length === 0) return null;
+  return (
+    <section className="card p-3.5 overflow-x-auto">
+      <h2 className="t-body-lg font-extrabold tracking-tight">District comparison</h2>
+      <p className="t-caption muted">Ranked by schools reached in the current scope.</p>
+      <table className="mt-3 w-full border-collapse text-left">
+        <thead>
+          <tr className="border-b border-[var(--color-edify-divider)]">
+            <th className="t-tiny uppercase tracking-wide muted font-bold py-1.5 pr-3">District</th>
+            <th className="t-tiny uppercase tracking-wide muted font-bold py-1.5 px-2 text-right">Schools</th>
+            <th className="t-tiny uppercase tracking-wide muted font-bold py-1.5 px-2 text-right">Learners</th>
+            <th className="t-tiny uppercase tracking-wide muted font-bold py-1.5 px-2 text-right">Teachers</th>
+            <th className="t-tiny uppercase tracking-wide muted font-bold py-1.5 pl-2 text-right">Avg SSA</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.district} className="border-b border-[var(--color-edify-divider)] last:border-0">
+              <td className="t-caption font-semibold py-1.5 pr-3">{r.district}</td>
+              <td className="t-caption tabular py-1.5 px-2 text-right">{r.schoolsReached}</td>
+              <td className="t-caption tabular py-1.5 px-2 text-right">{r.learnersImpacted.toLocaleString()}</td>
+              <td className="t-caption tabular py-1.5 px-2 text-right">{r.teachersTrained}</td>
+              <td className="t-caption tabular py-1.5 pl-2 text-right">{r.avgSsa ?? "—"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </section>
   );
 }

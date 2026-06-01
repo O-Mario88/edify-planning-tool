@@ -49,6 +49,14 @@ describe("default scope (active FY 2026 cycle)", () => {
   it("core schools reached = 3 (the NTR core-track schools)", () => {
     expect(m(snap.metrics, "coreSchoolsReached").value).toBe(3);
   });
+  it("district comparison ranks Mukono (5) above Kayunga (1)", () => {
+    const dc = snap.districtComparison;
+    expect(dc.map((r) => r.district)).toEqual(["Mukono", "Kayunga"]);
+    expect(dc[0].schoolsReached).toBe(5);
+    expect(dc[0].teachersTrained).toBe(8);
+    expect(dc[1].district).toBe("Kayunga");
+    expect(dc[1].learnersImpacted).toBe(412);
+  });
   it("activity pipeline is monotonic (planned ≥ completed ≥ verified ≥ paid)", () => {
     const [planned, completed, verified, paid] = snap.pipeline.map((s) => s.count);
     expect(planned).toBeGreaterThanOrEqual(completed);

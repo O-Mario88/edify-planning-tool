@@ -344,6 +344,21 @@ export function computeAnalytics(input: ComputeInput): AnalyticsSnapshot {
       "derived", { level: mscPendingReview.length > 0 ? "caveat" : "ok", notes: [] }),
   ];
 
+  // ── District comparison / ranking (§21) ──
+  const districtComparison = districts
+    .map((d) => {
+      const ids = reachedSchools.filter((s) => s!.district === d).map((s) => s!.schoolId);
+      const idset = new Set(ids);
+      const learnersInD = ids.reduce((sum, id) => sum + (latestEnrollmentFor(id)?.enrollmentValue ?? 0), 0);
+      const teachersInD = new Set(
+        verifiedParticipants.filter((p) => p.participantType === "Teacher" && idset.has(p.schoolId)).map((p) => p.identityKey),
+      ).size;
+      const ssaScores = ids.map((id) => historyFor(id)[0]?.averageScore).filter((x): x is number => typeof x === "number");
+      const avgSsa = ssaScores.length ? Math.round((ssaScores.reduce((a, b) => a + b, 0) / ssaScores.length) * 10) / 10 : undefined;
+      return { district: d, schoolsReached: ids.length, learnersImpacted: learnersInD, teachersTrained: teachersInD, avgSsa };
+    })
+    .sort((a, b) => b.schoolsReached - a.schoolsReached);
+
   void best; void worst; void examDeclined; // surfaced via heatmap / future cards
 
   // ── Data-quality center: aggregate engine + per-metric caveats ──
@@ -365,6 +380,7 @@ export function computeAnalytics(input: ComputeInput): AnalyticsSnapshot {
     pipeline,
     ssaHeatmap: { interventions: [...interventions], rows: heatRows },
     mscFunnel,
+    districtComparison,
     trend,
     dataQuality,
     dataQualityScore,
