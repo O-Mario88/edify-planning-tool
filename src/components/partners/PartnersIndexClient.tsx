@@ -11,8 +11,10 @@ import {
   CheckCircle2,
   AlertTriangle,
   GraduationCap,
+  ChevronRight,
 } from "lucide-react";
 import type { EdifyRole } from "@/lib/auth-public";
+import { cn } from "@/lib/utils";
 import {
   SEED_PARTNER_TRAINS_ON,
   addPartner,
@@ -34,12 +36,22 @@ const CERT_TONE: Record<PartnerTargetRow["certificationStatus"], PillTone> = {
   "Not Certified": "danger",
 };
 
+// Severity ramp green → amber → deep-amber → red. Critical is the strongest
+// (red); High sits above Medium. (Previously Critical rendered yellow and High
+// rendered red — the ladder was inverted.)
 const RISK_TONE: Record<PartnerTargetRow["risk"], PillTone> = {
   Low:      "success",
   Medium:   "warning",
-  High:     "danger",
-  Critical: "amber",
+  High:     "amber",
+  Critical: "danger",
 };
+
+// Achievement-percent colour, by how close the partner is to target.
+function pctTone(pct: number): { text: string; bar: string } {
+  if (pct >= 70) return { text: "text-emerald-600", bar: "bg-emerald-500" };
+  if (pct >= 50) return { text: "text-amber-600",   bar: "bg-amber-500"   };
+  return { text: "text-rose-600", bar: "bg-rose-500" };
+}
 
 export function PartnersIndexClient({ role, userName }: { role: EdifyRole; userName: string }) {
   const [added, setAdded] = useState<AddedPartner[]>([]);
@@ -103,31 +115,34 @@ export function PartnersIndexClient({ role, userName }: { role: EdifyRole; userN
       )}
       {added.length > 0 && (
         <section className="card rounded-2xl overflow-hidden">
-          <header className="px-4 py-3 border-b border-[var(--color-edify-divider)] flex items-center justify-between">
-            <h3 className="text-body font-extrabold tracking-tight">Recently Added</h3>
-            <span className="text-[11px] muted">{added.length} record{added.length === 1 ? "" : "s"}</span>
+          <header className="px-4 sm:px-5 py-3.5 border-b border-[var(--color-edify-divider)] flex items-center justify-between gap-3">
+            <h3 className="text-body font-extrabold tracking-tight flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-violet-500" />
+              Recently Added
+            </h3>
+            <span className="text-[11px] muted shrink-0">{added.length} record{added.length === 1 ? "" : "s"}</span>
           </header>
           <ul className="divide-y divide-[var(--color-edify-divider)]">
             {added.map((p) => (
-              <li key={p.id} className="px-4 py-3.5 flex items-start gap-3 hover:bg-[var(--color-edify-soft)]/40">
-                <span className="h-10 w-10 rounded-xl bg-violet-100 text-violet-700 grid place-items-center shrink-0">
-                  <Handshake size={16} />
+              <li key={p.id} className="px-4 sm:px-5 py-4 flex items-start gap-3 sm:gap-4 hover:bg-[var(--color-edify-soft)]/40 transition-colors">
+                <span className="h-11 w-11 rounded-xl bg-gradient-to-br from-violet-500/20 to-violet-500/5 text-violet-600 grid place-items-center shrink-0 ring-1 ring-violet-200/60">
+                  <Handshake size={17} />
                 </span>
                 <div className="flex-1 min-w-0">
-                  <div className="text-[13px] font-extrabold tracking-tight truncate">{p.name}</div>
+                  <div className="text-[13.5px] font-extrabold tracking-tight truncate">{p.name}</div>
                   <div className="text-[11.5px] muted truncate">{p.region}</div>
                   {p.trainsOn.length > 0 && (
-                    <div className="mt-1.5 flex items-center gap-1 flex-wrap">
-                      <GraduationCap size={11} className="text-muted" />
+                    <div className="mt-2 flex items-center gap-1.5 flex-wrap">
+                      <GraduationCap size={12} className="text-muted shrink-0" />
                       {p.trainsOn.map((t) => (
-                        <span key={t} className="px-2 h-[20px] inline-flex items-center rounded-full bg-violet-50 text-violet-700 text-caption font-semibold border border-violet-100">
+                        <span key={t} className="px-2 h-[22px] inline-flex items-center rounded-full bg-violet-50 text-violet-700 text-[11px] font-semibold border border-violet-100">
                           {t}
                         </span>
                       ))}
                     </div>
                   )}
-                  {p.notes && <div className="text-[11px] text-muted mt-1 line-clamp-2">{p.notes}</div>}
-                  <div className="text-caption text-muted mt-1">
+                  {p.notes && <div className="text-[11px] text-muted mt-1.5 line-clamp-2">{p.notes}</div>}
+                  <div className="text-caption text-muted mt-1.5">
                     Added by {p.addedByName} · {formatRelative(p.addedAt)}
                   </div>
                 </div>
@@ -138,7 +153,7 @@ export function PartnersIndexClient({ role, userName }: { role: EdifyRole; userN
                       if (confirm(`Remove "${p.name}"?`)) removePartner(p.id);
                     }}
                     aria-label={`Remove ${p.name}`}
-                    className="grid place-items-center h-8 w-8 rounded-md text-[#b3bcc5] hover:text-[#b42318] hover:bg-rose-50 shrink-0 self-center"
+                    className="grid place-items-center h-8 w-8 rounded-md text-[var(--color-edify-muted)] hover:text-[#b42318] hover:bg-rose-50 dark:hover:bg-rose-500/10 shrink-0 self-center transition-colors"
                   >
                     <Trash2 size={14} />
                   </button>
@@ -153,37 +168,51 @@ export function PartnersIndexClient({ role, userName }: { role: EdifyRole; userN
           enriched with the topics they train on so the read matches the
           shape of newly added partners. */}
       <section className="card rounded-2xl overflow-hidden">
-        <header className="px-4 py-3 border-b border-[var(--color-edify-divider)]">
+        <header className="px-4 sm:px-5 py-3.5 border-b border-[var(--color-edify-divider)] flex items-center justify-between gap-3">
           <h3 className="text-body font-extrabold tracking-tight">Established Delivery Partners</h3>
+          <span className="text-[11px] muted shrink-0">{partnerTargetPerformance.length} partners</span>
         </header>
         <ul className="divide-y divide-[var(--color-edify-divider)]">
           {partnerTargetPerformance.map((p) => {
             const trainsOn = SEED_PARTNER_TRAINS_ON[p.partnerId] ?? [];
+            const pct = p.achievementPercent;
+            const tone = pctTone(pct);
             return (
-              <li key={p.partnerId} className="px-4 py-3.5 hover:bg-[var(--color-edify-soft)]/40">
-                <Link href={`/partners/${p.partnerId}`} className="flex items-start gap-3">
-                  <span className="h-10 w-10 rounded-xl bg-[var(--color-edify-soft)]/80 text-[var(--color-edify-primary)] grid place-items-center shrink-0">
-                    <Handshake size={16} />
+              <li key={p.partnerId} className="group relative">
+                <Link
+                  href={`/partners/${p.partnerId}`}
+                  className="flex items-start gap-3 sm:gap-4 px-4 sm:px-5 py-4 hover:bg-[var(--color-edify-soft)]/40 transition-colors"
+                >
+                  <span className="h-11 w-11 rounded-xl bg-gradient-to-br from-violet-500/15 to-[var(--color-edify-primary)]/15 text-[var(--color-edify-primary)] grid place-items-center shrink-0 ring-1 ring-[var(--color-edify-divider)] group-hover:ring-[var(--color-edify-primary)]/30 transition-[box-shadow]">
+                    <Handshake size={17} />
                   </span>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-baseline justify-between gap-2">
-                      <div className="text-[13px] font-extrabold tracking-tight truncate">{p.partner}</div>
-                      <div className="text-[12px] font-extrabold tabular shrink-0">{p.achievementPercent}%</div>
+                    <div className="flex items-baseline justify-between gap-3">
+                      <div className="text-[13.5px] font-extrabold tracking-tight truncate">{p.partner}</div>
+                      <div className={cn("text-[15px] font-extrabold tabular shrink-0 leading-none", tone.text)}>{pct}%</div>
                     </div>
-                    <div className="text-[11.5px] muted truncate">
+
+                    {/* Achievement bar — premium progress visualization. */}
+                    <div className="mt-2 h-1.5 rounded-full bg-[var(--color-edify-soft)]/70 overflow-hidden">
+                      <div className={cn("h-full rounded-full transition-[width] duration-500", tone.bar)} style={{ width: `${Math.min(100, Math.max(0, pct))}%` }} />
+                    </div>
+
+                    <div className="text-[11.5px] muted truncate mt-2">
                       {p.region} · {p.assignedActivities} assigned · {p.completedActivities} completed · {p.validVisits} valid visits
                     </div>
+
                     {trainsOn.length > 0 && (
-                      <div className="mt-1.5 flex items-center gap-1 flex-wrap">
-                        <GraduationCap size={11} className="text-muted" />
+                      <div className="mt-2 flex items-center gap-1.5 flex-wrap">
+                        <GraduationCap size={12} className="text-muted shrink-0" />
                         {trainsOn.map((t) => (
-                          <span key={t} className="px-2 h-[20px] inline-flex items-center rounded-full bg-violet-50 text-violet-700 text-caption font-semibold border border-violet-100">
+                          <span key={t} className="px-2 h-[22px] inline-flex items-center rounded-full bg-violet-50 text-violet-700 text-[11px] font-semibold border border-violet-100">
                             {t}
                           </span>
                         ))}
                       </div>
                     )}
-                    <div className="mt-1.5 flex items-center gap-1 flex-wrap">
+
+                    <div className="mt-2 flex items-center gap-1.5 flex-wrap">
                       <Pill tone={CERT_TONE[p.certificationStatus]} size="xs" icon={CheckCircle2}>
                         {p.certificationStatus}
                       </Pill>
@@ -192,6 +221,8 @@ export function PartnersIndexClient({ role, userName }: { role: EdifyRole; userN
                       </Pill>
                     </div>
                   </div>
+
+                  <ChevronRight size={16} className="text-[var(--color-edify-muted)] shrink-0 self-center opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
                 </Link>
               </li>
             );

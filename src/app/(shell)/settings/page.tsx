@@ -65,12 +65,12 @@ export default async function SettingsPage() {
           {user.initials}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-body-lg font-extrabold tracking-tight">{user.name}</div>
-          <div className="text-[11.5px] muted">
+          <div className="text-body-lg font-extrabold tracking-tight truncate">{user.name}</div>
+          <div className="text-[11.5px] muted truncate">
             {user.email} · {user.scope} · {user.role.replace(/([A-Z])/g, " $1").trim()}
           </div>
         </div>
-        <SignOutButton variant="light" />
+        <SignOutButton variant="light" fullWidth={false} className="shrink-0" />
       </section>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
