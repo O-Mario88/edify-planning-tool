@@ -26,6 +26,9 @@ import {
 import { addIntakeSchool, addSsaUpload, assignSchoolToCceo, intakeSchoolIds, intakeSchools, updateIntakeSchool, type IntakeSchoolEditable } from "@/lib/intake/intake-mock";
 import { orgStaff } from "@/lib/org/supervision";
 import { resolveOwner } from "@/lib/portfolio/portfolio";
+import { findDuplicateCandidates } from "@/lib/intake/duplicate-detection";
+import { addDuplicateCandidate, resolveDuplicateCandidate } from "@/lib/intake/duplicate-candidates-mock";
+import type { IntakeSchool } from "@/lib/intake/intake-mock";
 import { getIntakeTemplate } from "@/lib/intake/intake-templates";
 import { validateIntakeValues } from "@/lib/intake/intake-validate";
 import { addIntakeRecords } from "@/lib/intake/intake-records-mock";
@@ -36,6 +39,26 @@ export type IntakeResult<T = { id: string }> =
   | { ok: false; reason: "INVALID_INPUT"; errors: Record<string, string> };
 
 const INTAKE_ROLES = new Set<string>(DATA_INTAKE_ROLES);
+
+// Flag (never block) a freshly-created school against the existing roster.
+// Records a SchoolDuplicateCandidate per potential/strong match for the IA
+// Duplicate Review Queue. Returns the number of flags raised.
+function flagDuplicatesFor(school: IntakeSchool, others: IntakeSchool[], flaggedBy: string): number {
+  const matches = findDuplicateCandidates(school, others.filter((o) => o.schoolId !== school.schoolId));
+  for (const m of matches) {
+    addDuplicateCandidate({
+      schoolId: school.schoolId,
+      schoolName: school.schoolName,
+      matchSchoolId: m.matchSchoolId,
+      matchSchoolName: m.matchSchoolName,
+      score: m.score,
+      band: m.band,
+      reasons: m.reasons,
+      flaggedBy,
+    });
+  }
+  return matches.length;
+}
 
 // ─── 1. createSchool ───────────────────────────────────────────────
 
@@ -73,6 +96,29 @@ export async function createSchool(input: NewSchoolInput): Promise<IntakeResult>
     actorName: user.name,
     payload: { schoolName: row.schoolName, district: row.district, region: row.region, schoolType: row.schoolType },
   });
+
+  // Duplicate detection — flag (never block) potential/strong matches for the
+  // IA Duplicate Review Queue. The school stays live regardless.
+  const flagged = flagDuplicatesFor(row, intakeSchools, user.name);
+  if (flagged > 0) {
+    emitAudit({
+      action: "intake.duplicateFlagged",
+      subjectKind: "School",
+      subjectId: row.schoolId,
+      actorId: user.staffId,
+      actorRole: user.role,
+      actorName: user.name,
+      payload: { schoolName: row.schoolName, flags: flagged },
+    });
+    emitNotificationFanOut(["IMPACT_ASSESSMENT"], {
+      template: "intake.duplicateFlagged",
+      channel: "Inbox",
+      title: "Possible duplicate school flagged",
+      body: `${row.schoolName} looks similar to ${flagged} existing school${flagged === 1 ? "" : "s"}. Review in the duplicate queue.`,
+      href: "/data-intake/duplicates",
+    });
+  }
+
   // A new school with no SSA is planning-locked — nudge the assigned CCEO /
   // IA team that an SSA is owed before planning can begin.
   emitNotificationFanOut(["IMPACT_ASSESSMENT", "CCEO"], {
@@ -98,6 +144,7 @@ export async function createSchoolsBulk(inputs: NewSchoolInput[]): Promise<BulkS
   if (!INTAKE_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
 
   const createdIds: string[] = [];
+  const createdRows: IntakeSchool[] = [];
   const failed: Array<{ schoolId: string; errors: Record<string, string> }> = [];
   const today = new Date().toISOString().slice(0, 10);
 
@@ -125,7 +172,13 @@ export async function createSchoolsBulk(inputs: NewSchoolInput[]): Promise<BulkS
       addedBy: user.name,
     });
     createdIds.push(row.schoolId);
+    createdRows.push(row);
   }
+
+  // Duplicate detection — flag (never block) each created school. Compared
+  // against the full live roster so cross-batch look-alikes are caught too.
+  let flaggedTotal = 0;
+  for (const row of createdRows) flaggedTotal += flagDuplicatesFor(row, intakeSchools, user.name);
 
   if (createdIds.length > 0) {
     emitAudit({
@@ -144,6 +197,24 @@ export async function createSchoolsBulk(inputs: NewSchoolInput[]): Promise<BulkS
       body: `${createdIds.length} new schools are active but planning-locked until each gets its first SSA.`,
       href: "/data-intake",
     });
+    if (flaggedTotal > 0) {
+      emitAudit({
+        action: "intake.duplicateFlagged",
+        subjectKind: "School",
+        subjectId: `bulk:${createdIds.length}`,
+        actorId: user.staffId,
+        actorRole: user.role,
+        actorName: user.name,
+        payload: { flags: flaggedTotal, created: createdIds.length },
+      });
+      emitNotificationFanOut(["IMPACT_ASSESSMENT"], {
+        template: "intake.duplicateFlagged",
+        channel: "Inbox",
+        title: "Possible duplicate schools flagged",
+        body: `${flaggedTotal} possible duplicate${flaggedTotal === 1 ? "" : "s"} from this CSV need review.`,
+        href: "/data-intake/duplicates",
+      });
+    }
     revalidateIntakeSurfaces();
   }
 
@@ -395,6 +466,41 @@ export async function mapUnmatchedOwner(enteredName: string, staffId: string): P
   revalidateIntakeSurfaces();
   revalidatePath("/portfolio");
   return { ok: true, mapped: schools.length, staffName: staff.name };
+}
+
+// ─── 7. resolveDuplicate (IA Duplicate Review Queue) ────────────────
+//
+// Flag-not-block means a human always decides. IA either dismisses the flag
+// ("Not a duplicate") or confirms it ("Confirmed duplicate" — acknowledged for
+// follow-up). We never auto-delete or auto-merge; both schools stay live and
+// the resolution is recorded for the audit trail.
+
+export type ResolveDuplicateResult =
+  | { ok: false; reason: "FORBIDDEN" | "NOT_FOUND" }
+  | { ok: true; id: string; status: "Dismissed" | "Confirmed" };
+
+export async function resolveDuplicate(
+  id: string,
+  status: "Dismissed" | "Confirmed",
+  note?: string,
+): Promise<ResolveDuplicateResult> {
+  const user = await getCurrentUser();
+  if (!INTAKE_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+  const row = resolveDuplicateCandidate(id, status, user.name, note);
+  if (!row) return { ok: false, reason: "NOT_FOUND" };
+
+  emitAudit({
+    action: status === "Dismissed" ? "intake.duplicateDismissed" : "intake.duplicateConfirmed",
+    subjectKind: "School",
+    subjectId: row.schoolId,
+    actorId: user.staffId,
+    actorRole: user.role,
+    actorName: user.name,
+    payload: { matchSchoolId: row.matchSchoolId, score: row.score, band: row.band, note },
+  });
+  revalidatePath("/data-intake/duplicates");
+  revalidatePath("/data-intake");
+  return { ok: true, id, status };
 }
 
 function revalidateIntakeSurfaces(schoolId?: string) {

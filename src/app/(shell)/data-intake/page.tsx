@@ -23,6 +23,7 @@ import { OwnerMappingQueue } from "@/components/intake/OwnerMappingQueue";
 import { intakeSchools } from "@/lib/intake/intake-mock";
 import { ownerDistribution, unmatchedOwners } from "@/lib/portfolio/portfolio";
 import { ORG_STAFF } from "@/lib/org/supervision";
+import { openDuplicateCandidates } from "@/lib/intake/duplicate-candidates-mock";
 
 export default async function DataIntakeHubPage() {
   const me   = await getCurrentUser();
@@ -41,6 +42,8 @@ export default async function DataIntakeHubPage() {
   const mappableStaff = ORG_STAFF
     .filter((s) => s.role === "CCEO" || s.role === "CountryProgramLead")
     .map((s) => ({ staffId: s.staffId, name: s.name, role: s.role }));
+
+  const openDuplicates = openDuplicateCandidates();
 
   const pendingBatches = dataImportBatches.filter((b) => b.status !== "Imported" && b.status !== "Rejected").length;
   const importedCount  = dataImportBatches.filter((b) => b.status === "Imported").length;
@@ -97,6 +100,22 @@ export default async function DataIntakeHubPage() {
             <Kpi label="Owner unmatched"     value={String(ownership.unmatched)}  sub="Need IA mapping"  tone={ownership.unmatched > 0 ? "amber" : "green"} />
             <Kpi label="No owner set"        value={String(ownership.unassigned)} sub="Awaiting assignment" tone={ownership.unassigned > 0 ? "rose" : "green"} />
           </section>
+
+          {openDuplicates.length > 0 && (
+            <Link href="/data-intake/duplicates"
+              className="flex items-center gap-3 card p-3.5 border-amber-200 bg-amber-50/60 hover:bg-amber-50 transition-colors">
+              <ShieldAlert size={18} className="text-amber-600 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="text-[12.5px] font-extrabold tracking-tight">
+                  {openDuplicates.length} possible duplicate{openDuplicates.length === 1 ? "" : "s"} to review
+                </div>
+                <div className="text-[11px] muted">
+                  Schools were flagged on upload as look-alikes — review and confirm or dismiss. Nothing is blocked.
+                </div>
+              </div>
+              <ChevronRight size={16} className="text-amber-600 shrink-0" />
+            </Link>
+          )}
 
           <OwnerMappingQueue
             unmatched={unmatchedOwnerList.map((u) => ({

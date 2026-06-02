@@ -88,6 +88,13 @@ export const intakeSchools: IntakeSchool[] = [
     schoolType: "Client", enrollment: 365, assignedCceo: "James Okot",
     status: "Active", ssaStatus: "SSA Not Done", planningLocked: true, dateAdded: "2026-05-22", addedBy: "Grace Alimo",
   },
+  // Near-duplicate of "Nakaseke Hill Primary" (32791) — same district, almost
+  // identical name. Both stay live; the duplicate review queue flags it.
+  {
+    schoolId: "32815", schoolName: "Nakaseke Hills Primary School", region: "Central Region", district: "Nakaseke",
+    subCounty: "Nakaseke TC", schoolType: "Client", enrollment: 322, assignedCceo: "Paul Chinyama",
+    status: "Active", ssaStatus: "SSA Not Done", planningLocked: true, dateAdded: "2026-05-29", addedBy: "Grace Alimo",
+  },
 ];
 
 export const ssaUploads: SsaUpload[] = [];

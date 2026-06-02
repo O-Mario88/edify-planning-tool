@@ -77,6 +77,7 @@ export const EXACT_ROUTE_TITLES: Record<string, RouteTitle> = {
   "/fy/whats-changed":     { title: "What's changed" },
   "/data-intake":          { title: "Data Intake" },
   "/data-intake/queue":    { title: "Data intake queue" },
+  "/data-intake/duplicates":{ title: "Duplicate Review Queue" },
   "/data-intake/readiness":{ title: "Data intake readiness" },
   "/data-intake/templates":{ title: "Data intake templates" },
   "/data-intake/upload":   { title: "Upload Center" },
