@@ -3,6 +3,7 @@
 import { CheckCircle2, FileText, RotateCcw } from "lucide-react";
 import { countryBudgetMix, countryRecentActivity, type CountryRecentActivity } from "@/lib/country-fund-approvals-mock";
 import { cn } from "@/lib/utils";
+import { readableInk } from "@/lib/color";
 
 const ACTION_ICON: Record<CountryRecentActivity["action"], { icon: typeof CheckCircle2; tone: string }> = {
   approved:      { icon: CheckCircle2, tone: "bg-emerald-100 text-emerald-700" },
@@ -26,8 +27,8 @@ export function CountryBudgetMixCard() {
         {countryBudgetMix.map((s) => (
           <div
             key={s.key}
-            className="grid place-items-center text-white text-caption font-extrabold tabular"
-            style={{ width: `${s.pct}%`, backgroundColor: s.color }}
+            className="grid place-items-center text-caption font-extrabold tabular"
+            style={{ width: `${s.pct}%`, backgroundColor: s.color, color: readableInk(s.color) }}
           >
             {s.pct}%
           </div>
@@ -43,7 +44,7 @@ export function CountryBudgetMixCard() {
                 <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
                 <span className="truncate">{s.label}</span>
               </span>
-              <span className="text-[12px] font-extrabold tabular text-slate-900 leading-tight num-hero">
+              <span className="text-[12px] font-extrabold tabular text-[var(--color-edify-text)] leading-tight num-hero">
                 {s.amount}
               </span>
             </li>

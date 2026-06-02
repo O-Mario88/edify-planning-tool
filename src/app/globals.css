@@ -303,21 +303,21 @@
    * the selected segmented-toggle pill, focus rings, and primary CTAs.
    * (Semantic `info` stays blue — submitted / informational states.)
    */
-  --background: #0a0e15;
+  --background: #0b0c0e;
   --foreground: #f5f7fa;
 
-  /* Surfaces — graphite scale, evenly stepped */
-  --bg-app:           #07090e;
-  --bg-page:          #0a0e15;
-  --surface-1:        #161b22;
-  --surface-2:        #1c222c;
-  --surface-3:        #232a36;
-  --surface-glass:    rgba(22, 27, 34, .82);
-  --surface-drawer:   #11161d;
-  --surface-modal:    #161b22;
-  --surface-popover:  #1c222c;
-  --surface-table:    #161b22;
-  --surface-input:    #11161d;
+  /* Surfaces — neutral black → charcoal scale (no blue tint), evenly stepped */
+  --bg-app:           #060708;
+  --bg-page:          #0b0c0e;
+  --surface-1:        #17181b;
+  --surface-2:        #202125;
+  --surface-3:        #292b30;
+  --surface-glass:    rgba(23, 24, 27, .82);
+  --surface-drawer:   #121316;
+  --surface-modal:    #17181b;
+  --surface-popover:  #202125;
+  --surface-table:    #17181b;
+  --surface-input:    #121316;
   --surface-hover:    rgba(255,255,255,.04);
   --surface-selected: rgba(20,184,166,.16);
   --surface-row-hover: rgba(255,255,255,.025);
@@ -342,8 +342,8 @@
 
   /* Interaction */
   --button-hover:   rgba(255,255,255,.06);
-  --card-hover:     #1c222c;
-  --tile-hover:     #232a36;
+  --card-hover:     #202125;
+  --tile-hover:     #292b30;
   --row-hover:      var(--surface-row-hover);
   --tab-hover:      var(--surface-hover);
   --dropdown-hover: rgba(255,255,255,.05);
@@ -373,8 +373,8 @@
    * without code changes. */
   --color-edify-primary:    var(--brand-primary);
   --color-edify-dark:       var(--brand-primary-press);
-  --color-edify-deep:       #11161d;
-  --color-edify-darker:     #0a0e15;
+  --color-edify-deep:       #121316;
+  --color-edify-darker:     #0b0c0e;
   --color-edify-soft:       rgba(20,184,166,.12);
   --color-edify-border:     var(--border-card);
   --color-edify-divider:    var(--border-subtle);
@@ -444,17 +444,17 @@
    *   • surface-3 (press)     → ~72% — pressed / row hover
    *   • drawer / modal        → 90-94% — full-page chrome stays solid
    */
-  --bg-app:            #0f1622;
+  --bg-app:            #16171a;
   --bg-page:           transparent;
-  --surface-1:         rgba(28, 36, 52, .48);
-  --surface-2:         rgba(34, 44, 64, .62);
-  --surface-3:         rgba(42, 54, 76, .72);
-  --surface-glass:     rgba(28, 36, 52, .46);
-  --surface-drawer:    rgba(18, 24, 36, .90);
-  --surface-modal:     rgba(20, 26, 40, .94);
-  --surface-popover:   rgba(26, 33, 48, .94);
-  --surface-table:     rgba(28, 36, 52, .56);
-  --surface-input:     rgba(30, 38, 54, .58);
+  --surface-1:         rgba(42, 44, 48, .52);
+  --surface-2:         rgba(50, 52, 57, .64);
+  --surface-3:         rgba(58, 60, 66, .74);
+  --surface-glass:     rgba(42, 44, 48, .50);
+  --surface-drawer:    rgba(22, 23, 26, .90);
+  --surface-modal:     rgba(24, 25, 28, .94);
+  --surface-popover:   rgba(30, 31, 35, .94);
+  --surface-table:     rgba(42, 44, 48, .58);
+  --surface-input:     rgba(44, 46, 50, .60);
   --surface-hover:     rgba(255, 255, 255, .085);
   --surface-selected:  rgba(255, 255, 255, .115);
   --surface-row-hover: rgba(255, 255, 255, .055);
@@ -515,9 +515,9 @@
   /* Legacy edify-* aliases */
   --color-edify-primary:    var(--brand-accent);
   --color-edify-dark:       var(--brand-accent-hover);
-  --color-edify-deep:       #2a3550;
-  --color-edify-darker:     #1a2138;
-  --color-edify-soft:       rgba(170, 185, 255, .12);
+  --color-edify-deep:       #2c2e33;
+  --color-edify-darker:     #1c1d21;
+  --color-edify-soft:       rgba(255, 255, 255, .10);
   --color-edify-border:     var(--border-card);
   --color-edify-divider:    var(--border-subtle);
   --color-edify-muted:      var(--text-muted);
@@ -553,11 +553,11 @@
  * inherits it automatically. */
 html.glass body,
 html.glass {
-  background-color: #0f1622;
+  background-color: #16171a;
   background-image:
-    radial-gradient(circle at 20% 8%,   rgba(180, 195, 230, 0.14), transparent 35%),
-    radial-gradient(circle at 78% 82%,  rgba(70, 90, 140, 0.22),  transparent 42%),
-    radial-gradient(circle at 50% 55%,  rgba(8, 12, 22, 0.32),    transparent 70%);
+    radial-gradient(circle at 20% 8%,   rgba(230, 232, 236, 0.10), transparent 35%),
+    radial-gradient(circle at 78% 82%,  rgba(120, 122, 128, 0.16), transparent 42%),
+    radial-gradient(circle at 50% 55%,  rgba(6, 7, 9, 0.34),       transparent 70%);
   background-attachment: fixed;
 }
 
@@ -1304,9 +1304,9 @@ html.theme-fade [class*="border"] {
 /* Sidebar — deep navy rail with a cyan-accented right edge that says
  * "this is the boundary of the command center". */
 .dark .sidebar-bg {
-  background: linear-gradient(180deg, #081320 0%, #060f1a 100%);
+  background: linear-gradient(180deg, #0e0f12 0%, #08090b 100%);
   border-right: 1px solid var(--border-card);
-  box-shadow: inset -1px 0 0 rgba(77,208,225,.06);
+  box-shadow: inset -1px 0 0 rgba(255,255,255,.04);
 }
 
 /* Active sidebar item — cyan accent rail + soft cyan-tinted bg.
@@ -2033,7 +2033,7 @@ html.theme-fade [class*="border"] {
  * cyan border, no glow halo. */
 .glass .sidebar-bg {
   background:
-    linear-gradient(180deg, rgba(14, 18, 26, .82) 0%, rgba(10, 14, 22, .90) 100%);
+    linear-gradient(180deg, rgba(30, 31, 35, .72) 0%, rgba(22, 23, 26, .82) 100%);
   backdrop-filter: blur(28px) saturate(140%);
   -webkit-backdrop-filter: blur(28px) saturate(140%);
   border-right: 1px solid rgba(255, 255, 255, .08);

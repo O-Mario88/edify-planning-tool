@@ -3,6 +3,7 @@
 import { ArrowUpRight, CheckCircle2, RotateCcw } from "lucide-react";
 import { budgetMixThisMonth, recentApprovalActivity } from "@/lib/fund-approvals-mock";
 import { cn } from "@/lib/utils";
+import { readableInk } from "@/lib/color";
 
 // Footer row — Approval Insights / Budget Mix (left, wider) + Recent
 // Approval Activity (right, narrower).
@@ -32,8 +33,8 @@ function BudgetMixCard() {
         {budgetMixThisMonth.map((s) => (
           <div
             key={s.key}
-            className="grid place-items-center text-white text-caption font-extrabold tabular"
-            style={{ width: `${s.pct}%`, backgroundColor: s.color }}
+            className="grid place-items-center text-caption font-extrabold tabular"
+            style={{ width: `${s.pct}%`, backgroundColor: s.color, color: readableInk(s.color) }}
           >
             {s.pct}%
           </div>
@@ -54,7 +55,7 @@ function BudgetMixCard() {
                 <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
                 <span className="truncate">{s.label}</span>
               </span>
-              <span className="text-[12px] font-extrabold tabular text-slate-900 leading-tight num-hero">
+              <span className="text-[12px] font-extrabold tabular text-[var(--color-edify-text)] leading-tight num-hero">
                 {s.amount}
               </span>
             </li>
