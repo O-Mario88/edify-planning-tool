@@ -20,6 +20,7 @@ import { CceoQuickActionsRow } from "@/components/cceo/CceoQuickActionsRow";
 import { CceoMomentumBanner } from "@/components/cceo/CceoMomentumBanner";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { ClientVerificationCard } from "@/components/ssa/ClientVerificationCard";
+import { PortfolioSummaryCard } from "@/components/portfolio/PortfolioSummaryCard";
 import { getCurrentUser } from "@/lib/auth";
 
 // CCEO Role Command Center.
@@ -47,6 +48,7 @@ export default async function CceoDashboardPage() {
       <main className="flex-1 px-3 sm:px-4 pt-3 pb-28 space-y-3">
         <CommandStack user={user} />
         <DebriefPromoterCard submitterRole="CCEO" />
+        <PortfolioSummaryCard staffId={user.staffId} />
         <CceoSixKpiRow />
         <CceoKpiStrip />
         <CoreServicePackageCard />
@@ -84,6 +86,7 @@ export default async function CceoDashboardPage() {
             title="Where you are"
             description="Headline KPIs, school-health distribution, and your service-package progress at a glance."
           />
+          <PortfolioSummaryCard staffId={user.staffId} />
           <CceoSixKpiRow />
           <CceoKpiStrip />
           <CoreServicePackageCard />
