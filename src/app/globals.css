@@ -444,17 +444,20 @@
    *   • surface-3 (press)     → ~72% — pressed / row hover
    *   • drawer / modal        → 90-94% — full-page chrome stays solid
    */
-  --bg-app:            #16171a;
+  /* Calm frosted-graphite ("Mail card") direction: near-solid charcoal slabs
+   * on a quiet near-black backdrop. Surfaces are deliberately opaque so dense
+   * data never shimmers — the frost is a texture, not a window. */
+  --bg-app:            #0e0f11;
   --bg-page:           transparent;
-  --surface-1:         rgba(42, 44, 48, .52);
-  --surface-2:         rgba(50, 52, 57, .64);
-  --surface-3:         rgba(58, 60, 66, .74);
-  --surface-glass:     rgba(42, 44, 48, .50);
-  --surface-drawer:    rgba(22, 23, 26, .90);
-  --surface-modal:     rgba(24, 25, 28, .94);
-  --surface-popover:   rgba(30, 31, 35, .94);
-  --surface-table:     rgba(42, 44, 48, .58);
-  --surface-input:     rgba(44, 46, 50, .60);
+  --surface-1:         rgba(44, 45, 49, .66);
+  --surface-2:         rgba(54, 55, 60, .74);
+  --surface-3:         rgba(64, 65, 70, .80);
+  --surface-glass:     rgba(44, 45, 49, .62);
+  --surface-drawer:    rgba(26, 27, 30, .92);
+  --surface-modal:     rgba(28, 29, 33, .95);
+  --surface-popover:   rgba(32, 33, 37, .96);
+  --surface-table:     rgba(48, 49, 53, .70);
+  --surface-input:     rgba(50, 51, 55, .66);
   --surface-hover:     rgba(255, 255, 255, .085);
   --surface-selected:  rgba(255, 255, 255, .115);
   --surface-row-hover: rgba(255, 255, 255, .055);
@@ -551,13 +554,16 @@
  * lower-right, and a central darkening to keep the focal area
  * grounded.  Applied at the <html> level so every (shell) page
  * inherits it automatically. */
+/* Calm near-black atmosphere — a quiet vertical graphite gradient with one
+ * faint top-centre light, mirroring the "Coffee?" mail card backdrop. No
+ * colour, no busy blooms: the frosted slabs do the talking, the bg just
+ * grounds them. */
 html.glass body,
 html.glass {
-  background-color: #16171a;
+  background-color: #0e0f11;
   background-image:
-    radial-gradient(circle at 20% 8%,   rgba(230, 232, 236, 0.10), transparent 35%),
-    radial-gradient(circle at 78% 82%,  rgba(120, 122, 128, 0.16), transparent 42%),
-    radial-gradient(circle at 50% 55%,  rgba(6, 7, 9, 0.34),       transparent 70%);
+    radial-gradient(120% 80% at 50% -10%, rgba(255, 255, 255, 0.035), transparent 55%),
+    linear-gradient(180deg, #17181b 0%, #101113 55%, #0a0b0d 100%);
   background-attachment: fixed;
 }
 
@@ -1725,23 +1731,20 @@ html.theme-fade [class*="border"] {
 .glass .premium-popover,
 .glass .premium-modal,
 .glass .premium-drawer {
-  /* Heavier blur per the snowstorm reference — atmosphere clearly
-   * blooms through the card material. */
-  backdrop-filter: blur(28px) saturate(140%);
-  -webkit-backdrop-filter: blur(28px) saturate(140%);
+  /* Calm desaturated frost — the slab is near-solid, so the blur is a quiet
+   * texture rather than a window. Lower saturation keeps it graphite, not tinted. */
+  backdrop-filter: blur(26px) saturate(112%);
+  -webkit-backdrop-filter: blur(26px) saturate(112%);
   border-color: transparent !important;
   box-shadow:
-    /* Thin luminous rim — slightly brighter than v2 to read as a
-     * visible "lit glass edge" instead of a whisper.  Matches the
-     * snowstorm card's clear material boundary. */
-    inset 0 0 0 1px rgba(255, 255, 255, .18),
-    /* Soft inner top-edge specular highlight. */
-    inset 0 1px 0 rgba(255, 255, 255, .10),
-    /* Deep diffused shadow — pulls the card forward off the
-     * atmospheric background. */
-    0 1px 2px rgba(0, 0, 0, .40),
-    0 24px 56px -14px rgba(0, 0, 0, .55),
-    0 40px 96px -28px rgba(0, 0, 0, .45);
+    /* Subtle full rim — a hairline material boundary, not a bright outline. */
+    inset 0 0 0 1px rgba(255, 255, 255, .075),
+    /* Top-edge specular — the "lit glass edge" that sells the material. */
+    inset 0 1.5px 0 rgba(255, 255, 255, .13),
+    /* Deep diffused shadow — pulls the slab forward off the calm backdrop. */
+    0 1px 2px rgba(0, 0, 0, .45),
+    0 22px 50px -14px rgba(0, 0, 0, .58),
+    0 44px 100px -30px rgba(0, 0, 0, .48);
   transition: box-shadow 240ms cubic-bezier(.2,.6,.2,1),
               transform 220ms cubic-bezier(.2,.6,.2,1),
               background-color 200ms ease;
@@ -1763,7 +1766,7 @@ html.theme-fade [class*="border"] {
 .glass .premium-drawer {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-  background: rgba(22, 30, 46, .96);
+  background: rgba(28, 29, 33, .97);
 }
 
 /* Hover lifts the card and brightens the rim.  Restrained — the
@@ -1772,11 +1775,11 @@ html.theme-fade [class*="border"] {
 .glass .card-elevated.card-lift:hover,
 .glass .premium-card-hover:hover {
   box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, .28),
-    inset 0 1px 0 rgba(255, 255, 255, .14),
-    0 2px 4px rgba(0, 0, 0, .45),
-    0 30px 64px -16px rgba(0, 0, 0, .65),
-    0 48px 112px -32px rgba(0, 0, 0, .55);
+    inset 0 0 0 1px rgba(255, 255, 255, .12),
+    inset 0 1.5px 0 rgba(255, 255, 255, .17),
+    0 2px 4px rgba(0, 0, 0, .50),
+    0 30px 64px -16px rgba(0, 0, 0, .66),
+    0 52px 120px -34px rgba(0, 0, 0, .56);
   transform: translateY(-2px);
 }
 
