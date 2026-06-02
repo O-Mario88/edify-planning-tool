@@ -79,7 +79,6 @@ const PROTECTED_PREFIXES = [
   "/visits",
   "/today",
   "/trainings",
-  "/leaderboard",
   "/notifications",
   "/messages",
   "/budget",

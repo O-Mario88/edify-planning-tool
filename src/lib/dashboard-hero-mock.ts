@@ -206,7 +206,7 @@ export const hrHeroContent: DashboardHeroContent = {
     { key: "leave",      tone: "info", label: "214 On Leave",      caption: "or conflicts"      },
     { key: "review",     tone: "warn", label: "6 Performance",     caption: "reviews due"       },
   ],
-  primaryCta:   { label: "Open Leaderboard", href: "/leaderboard" },
+  primaryCta:   { label: "Team Performance", href: "/team-targets" },
   secondaryCta: { label: "Review Leave",     href: "/leave"       },
 };
 

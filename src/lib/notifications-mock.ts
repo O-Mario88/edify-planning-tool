@@ -129,7 +129,7 @@ export const NOTIFICATIONS: Notification[] = [
     id: "n-5",
     title: "You moved to #2 on the verified leaderboard",
     body: "Sarah Okello overtook Daniel Mwangi this cycle.",
-    href: "/leaderboard",
+    href: "/team-targets",
     unread: false,
     ago: "Yesterday",
     Icon: Trophy,

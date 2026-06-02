@@ -22,7 +22,7 @@ export function TopTeamPerformerCard() {
       title="Top Team Performer"
       actions={
         <Link
-          href="/leaderboard"
+          href="/team-targets"
           className="inline-flex items-center gap-1 text-[12px] font-semibold text-[var(--color-edify-primary)] whitespace-nowrap"
         >
           View Leaderboard

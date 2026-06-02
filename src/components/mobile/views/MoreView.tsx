@@ -7,7 +7,6 @@ import {
   Database,
   Map,
   ClipboardList,
-  Trophy,
   CalendarRange,
   ShieldCheck,
   FileText,
@@ -81,15 +80,6 @@ export function MoreView() {
     {
       title: "Performance",
       items: [
-        {
-          key: "leaderboard",
-          label: "Leaderboard",
-          caption: "Verified Impact rankings",
-          href: "/leaderboard",
-          Icon: Trophy,
-          iconBg: "bg-orange-100",
-          iconText: "text-orange-700",
-        },
         {
           key: "ssa",
           label: "SSA Performance",

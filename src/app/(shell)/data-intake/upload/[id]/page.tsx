@@ -52,7 +52,6 @@ export default async function DataUploadDetail({ params }: { params: Promise<{ i
         <ul className="divide-y divide-[var(--color-edify-divider)] -my-1">
           <Step href="/data-verification?status=pending" label="Move to verification queue" />
           <Step href="/quality-checks"                   label="Run a fresh quality check" />
-          <Step href="/activity-log"                     label="See related activity"      />
         </ul>
       </article>
     </StubPage>

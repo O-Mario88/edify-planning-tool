@@ -18,13 +18,12 @@ import {
 import { SmartRouteCapacityCard } from "@/components/cpl/SmartRouteCapacityCard";
 import { FundingExecutionCard } from "@/components/cpl/FundingExecutionCard";
 import { QuickActionsRow } from "@/components/cpl/QuickActionsRow";
-import { BestPerformersCard } from "@/components/leaderboard/BestPerformersCard";
 import { MyPlanCard } from "@/components/planning/MyPlanCard";
 import { ClientVerificationCard } from "@/components/ssa/ClientVerificationCard";
 import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { redirect } from "next/navigation";
-import { getCurrentUser, toCurrentUser } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
 import { ROLE_REDIRECT } from "@/lib/auth-public";
 
 // Country Program Lead Dashboard — replica of the SIPA reference.
@@ -137,9 +136,6 @@ export default async function CountryProgramLeadDashboard() {
               <ApprovalQueueCard />
             </div>
           </section>
-          <div id="best-performers">
-            <BestPerformersCard audience="cpl" user={toCurrentUser(user)} />
-          </div>
           <div id="partner-payments">
             <PlPartnerPaymentsQueue />
           </div>

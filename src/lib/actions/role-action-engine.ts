@@ -1053,7 +1053,7 @@ function stubInboxFor(role: EdifyRole, now: Date): ActionItem[] {
           description: "Met or exceeded targets under above-average portfolio load. Shortlist ready for your review.",
           affectedEntity: { kind: "System", id: "hr-recog", label: "May recognition shortlist" },
           approvalSafety: "SafeToApprove",
-          primaryAction: { label: "Review shortlist", intent: "approve", href: "/leaderboard" },
+          primaryAction: { label: "Review shortlist", intent: "approve", href: "/team-targets" },
           inboxTab: "NeedsApproval" } as ActionItem,
         { ...base(2), id: "hr-3", priority: 3, category: "StaffSupport",
           title: "James Otieno leave May 18–20 — pace impact noted",
@@ -1087,7 +1087,7 @@ function stubInboxFor(role: EdifyRole, now: Date): ActionItem[] {
           description: "Worth a glance — usually a tester running through roles, but the system surfaces it just in case.",
           affectedEntity: { kind: "System", id: "audit-spike", label: "Role-switch endpoint" },
           riskLevel: "Low", approvalSafety: "SafeToApprove",
-          primaryAction: { label: "Open activity log", intent: "open", href: "/activity-log" },
+          primaryAction: { label: "Open activity log", intent: "open", href: "/admin/audit-log" },
           inboxTab: "NeedsFollowUp" } as ActionItem,
       ];
     default:

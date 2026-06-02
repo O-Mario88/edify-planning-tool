@@ -15,7 +15,6 @@ import { MobileShell } from "@/components/mobile/MobileShell";
 import { MobileBottomNav } from "@/components/mobile/MobileBottomNav";
 import { MobileTopBar } from "@/components/mobile/MobileTopBar";
 import { ProgressRing } from "@/components/ui/primitives";
-import { BestPerformersCard } from "@/components/leaderboard/BestPerformersCard";
 import { countryRollups, specialProjects } from "@/lib/workflow-mock";
 import { cn } from "@/lib/utils";
 
@@ -73,9 +72,6 @@ export function RvpMobileView() {
           <KpiTile Icon={TrendingUp}  label="Avg Valid Visit"    value={`${avgValidVisit}%`}  caption="Verified portion"  tone="green" />
           <KpiTile Icon={Wallet}      label="Avg SSA Done"       value={`${avgSsa}%`}         caption="Region"            tone="violet" />
         </section>
-
-        {/* Best performing — Country Director, Program Lead, CCEO */}
-        <BestPerformersCard audience="rvp" />
 
         {/* Country rollups */}
         <section className="rounded-2xl bg-white border border-[var(--color-edify-border)] shadow-sm">

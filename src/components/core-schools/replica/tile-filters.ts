@@ -165,7 +165,7 @@ export const CORE_TILE_FILTERS: CoreSchoolTileFilterSpec[] = [
     label: "Full Core Package (4 Visits + 4 Trainings)",
     description: "Schools that have completed the full core service package.",
     entityType: "school",
-    primaryAction: { label: "Review for Champion", href: "/leaderboard" },
+    primaryAction: { label: "Review for Champion", href: "/core-schools" },
   },
   {
     id: "pkg-champ",
@@ -173,7 +173,7 @@ export const CORE_TILE_FILTERS: CoreSchoolTileFilterSpec[] = [
     label: "Potential Champion Schools",
     description: "Schools that have completed the package and qualify for champion review.",
     entityType: "school",
-    primaryAction: { label: "Open Champion Pipeline", href: "/leaderboard" },
+    primaryAction: { label: "Open Champion Pipeline", href: "/core-schools" },
   },
 
   // ── Visit / training granularity (derived from completion strings)

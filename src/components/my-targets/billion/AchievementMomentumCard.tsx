@@ -24,7 +24,7 @@ export function AchievementMomentumCard() {
       title="Achievement & Momentum"
       actions={
         <Link
-          href="/leaderboard"
+          href="/team-targets"
           className="inline-flex items-center gap-1 text-[12px] font-semibold text-[var(--color-edify-primary)] whitespace-nowrap"
         >
           View Leaderboard

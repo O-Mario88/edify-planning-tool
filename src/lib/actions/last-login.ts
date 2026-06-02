@@ -87,12 +87,12 @@ const SEED_BY_ROLE: Record<EdifyRole, Seed[]> = {
   HumanResource: [
     { id: "h1", kind: "Staff fairness flag",       subject: "Purity Muthoni",         context: "low pace under very high load", hoursAgo: 4, tone: "warn", href: "/team-targets" },
     { id: "h2", kind: "Leave approved",            subject: "James Otieno · 3 days",  context: "May 18–20",            hoursAgo: 7, tone: "info",  href: "/leave" },
-    { id: "h3", kind: "Coaching session logged",   subject: "Daniel Mwangi → Grace",  context: "30 min · Salesforce flow", hoursAgo: 19, tone: "success", href: "/leaderboard" },
+    { id: "h3", kind: "Coaching session logged",   subject: "Daniel Mwangi → Grace",  context: "30 min · Salesforce flow", hoursAgo: 19, tone: "success", href: "/team-targets" },
   ],
   Admin: [
     { id: "ad1", kind: "User signup",              subject: "new.cceo@edify.org",     context: "pending role assignment", hoursAgo: 2, tone: "warn", href: "/admin" },
     { id: "ad2", kind: "Failed import",            subject: "school-roster.csv",      context: "3 rows rejected",        hoursAgo: 14, tone: "danger", href: "/admin" },
-    { id: "ad3", kind: "Audit log spike",          subject: "Role-switch endpoint",   context: "12 calls in last hour",  hoursAgo: 5, tone: "info", href: "/activity-log" },
+    { id: "ad3", kind: "Audit log spike",          subject: "Role-switch endpoint",   context: "12 calls in last hour",  hoursAgo: 5, tone: "info", href: "/admin/audit-log" },
   ],
   // Partner Operating Layer — change streams per partner user type.
   PartnerAdmin: [

@@ -13,7 +13,6 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { AggregatedFieldContextCard } from "@/components/field-intelligence/AggregatedFieldContextCard";
-import { BestPerformersCard } from "@/components/leaderboard/BestPerformersCard";
 import { CommandStack } from "@/components/actions/CommandStack";
 import { DashboardPageHeader } from "@/components/dashboards/DashboardPageHeader";
 import { DebriefReviewInbox } from "@/components/messages/DebriefReviewInbox";
@@ -83,7 +82,6 @@ export default async function HrFieldContextPage() {
             description="Debriefs the routing engine flagged for HR, plus the period's top performers across program leads and CCEOs."
           />
           <DebriefReviewInbox user={user} audience="hr" />
-          <BestPerformersCard audience="hr" />
         </section>
 
         {/* FIELD — aggregated intelligence. */}

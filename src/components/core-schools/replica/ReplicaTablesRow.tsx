@@ -54,7 +54,7 @@ function BestPerformingTable() {
       <header className="flex items-center justify-between gap-2 mb-2">
         <h3 className="text-body-lg font-extrabold tracking-tight">Best Performing Core Schools</h3>
         <Link
-          href="/leaderboard"
+          href="/core-schools"
           className="text-[11.5px] font-semibold text-[var(--color-edify-primary)] inline-flex items-center gap-0.5 whitespace-nowrap"
         >
           View All <ArrowUpRight size={11} />
@@ -148,7 +148,7 @@ function BestPerformingTable() {
 
                   <div className="flex items-center gap-2 flex-wrap">
                     <Link
-                      href="/leaderboard"
+                      href="/core-schools"
                       className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-[var(--color-edify-primary)] text-white text-[12px] font-bold hover:bg-[var(--color-edify-dark)] transition-colors whitespace-nowrap"
                     >
                       <Trophy size={12} />

@@ -15,7 +15,6 @@ import {
 import { useSetPageTitle } from "@/components/shell/PageTitleContext";
 import { MobileCollapsibleSection } from "@/components/mobile/views/MobileSubpageShell";
 import { AggregatedFieldContextCard } from "@/components/field-intelligence/AggregatedFieldContextCard";
-import { BestPerformersCard } from "@/components/leaderboard/BestPerformersCard";
 import type { AggregatedFieldContext } from "@/lib/field-intelligence-mock";
 
 type HrAlert = {
@@ -150,10 +149,6 @@ export function HrMobileView({ ctx }: { ctx: AggregatedFieldContext }) {
           </Link>
         ))}
       </section>
-
-      <MobileCollapsibleSection title="Best performers" defaultOpen={false}>
-        <BestPerformersCard audience="hr" />
-      </MobileCollapsibleSection>
 
       <MobileCollapsibleSection title="Field intelligence (aggregated)" defaultOpen={false}>
         <AggregatedFieldContextCard

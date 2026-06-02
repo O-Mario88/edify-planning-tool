@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { Target, Users, Trophy, AlertTriangle, RotateCcw, type LucideIcon } from "lucide-react";
+import { Target, Users, AlertTriangle, RotateCcw, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Tab strip that swaps the visible panel for /team-targets.
@@ -17,14 +17,12 @@ import { cn } from "@/lib/utils";
 export type TeamTargetsTab =
   | "my"
   | "team"
-  | "leaderboard"
   | "support"
   | "recovery";
 
 const TABS: { key: TeamTargetsTab; label: string; Icon: LucideIcon }[] = [
   { key: "my",          label: "My Targets",       Icon: Target },
   { key: "team",        label: "Team Targets",     Icon: Users },
-  { key: "leaderboard", label: "Leaderboard",      Icon: Trophy },
   { key: "support",     label: "Support Needed",   Icon: AlertTriangle },
   { key: "recovery",    label: "Target Recovery",  Icon: RotateCcw },
 ];
@@ -33,14 +31,12 @@ export function TeamTargetsTabs({
   defaultTab,
   myTargets,
   teamTargets,
-  leaderboard,
   supportNeeded,
   targetRecovery,
 }: {
   defaultTab: TeamTargetsTab;
   myTargets:      ReactNode;
   teamTargets:    ReactNode;
-  leaderboard:    ReactNode;
   supportNeeded:  ReactNode;
   targetRecovery: ReactNode;
 }) {
@@ -71,7 +67,6 @@ export function TeamTargetsTabs({
       <div className="mt-3 space-y-3 md:space-y-4">
         {tab === "my"          && myTargets}
         {tab === "team"        && teamTargets}
-        {tab === "leaderboard" && leaderboard}
         {tab === "support"     && supportNeeded}
         {tab === "recovery"    && targetRecovery}
       </div>

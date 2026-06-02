@@ -150,7 +150,6 @@ function buildRvpMenu(dashboardHref: string): MenuSection[] {
     {
       label: "Insights",
       items: [
-        { label: "Best Performing",   href: "/leaderboard",   Icon: Award          },
         { label: "Analytics",         href: "/analytics",     Icon: BarChart3      },
         { label: "Reports",           href: "/reports",       Icon: FileText       },
       ],
@@ -200,7 +199,6 @@ function buildCdMenu(dashboardHref: string): MenuSection[] {
         { label: "Planning",         href: "/planning",             Icon: ClipboardList      },
         { label: "Schools",          href: "/schools",              Icon: Building2          },
         { label: "SSA Performance",  href: "/ssa",                  Icon: Activity           },
-        { label: "Best Performing",  href: "/leaderboard",          Icon: Trophy             },
         { label: "Analytics",        href: "/analytics",            Icon: BarChart3          },
         { label: "Reports",          href: "/reports",              Icon: FileText           },
         { label: "Special Projects", href: "/special-projects",     Icon: Sparkles           },
@@ -261,7 +259,6 @@ function buildCplMenu(dashboardHref: string): MenuSection[] {
         // "My Team" was removed — it pointed to the same surface as
         // "Team Targets" and the duplication just bloated the menu.
         { label: "Team Targets",    href: "/team-targets",  Icon: Target    },
-        { label: "Best Performing", href: "/leaderboard",   Icon: Trophy    },
         { label: "Partners",        href: "/partners",      Icon: Handshake },
       ],
     },
@@ -379,7 +376,6 @@ function buildImpactMenu(dashboardHref: string): MenuSection[] {
       items: [
         { label: "Team Targets",     href: "/team-targets",  Icon: Target },
         { label: "Partners",         href: "/partners",      Icon: Handshake },
-        { label: "Leaderboard",      href: "/leaderboard",   Icon: Trophy },
       ],
     },
     {
@@ -436,7 +432,6 @@ function buildHrMenu(dashboardHref: string): MenuSection[] {
       label: "Team",
       items: [
         { label: "Team Targets",     href: "/team-targets",  Icon: Target },
-        { label: "Best Performing",  href: "/leaderboard",   Icon: Trophy },
         { label: "Staff",            href: "/staff",         Icon: UserCog },
       ],
     },
@@ -497,7 +492,6 @@ function buildAdminMenu(dashboardHref: string): MenuSection[] {
       items: [
         { label: "Staff",            href: "/staff",         Icon: UserCog },
         { label: "Partners",         href: "/partners",      Icon: Handshake },
-        { label: "Leaderboard",      href: "/leaderboard",   Icon: Trophy },
       ],
     },
     {

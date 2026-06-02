@@ -24,7 +24,6 @@ import { DashboardPageHeader } from "@/components/dashboards/DashboardPageHeader
 import { KpiCard, SectionCard, StatusBadge, ProgressRing } from "@/components/ui/primitives";
 import { countryRollups, specialProjects } from "@/lib/workflow-mock";
 import { TeamTargetsCallout } from "@/components/team-targets/TeamTargetsCallout";
-import { BestPerformersCard } from "@/components/leaderboard/BestPerformersCard";
 import { LeadershipImpactSnapshot } from "@/components/impact/LeadershipImpactSnapshot";
 import { AnnualCycleCallout } from "@/components/fy/AnnualCycleCallout";
 import { InsightStrip } from "@/components/insights/InsightCard";
@@ -341,7 +340,6 @@ export default async function RVPDashboard() {
         />
         <AnnualCycleCallout variant="rvp" />
         <LeadershipImpactSnapshot variant="rvp" />
-        <BestPerformersCard audience="rvp" />
         <TeamTargetsCallout variant="rvp" user={currentUser} />
       </section>
       </div>

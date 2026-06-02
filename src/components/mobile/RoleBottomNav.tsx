@@ -83,7 +83,6 @@ const RVP_LAYOUT: Layout = {
     { key: "home",     label: "Home",     href: "/dashboards/rvp",  Icon: Home,           match: ["/dashboards/rvp"] },
     { key: "region",   label: "Region",   href: "/special-projects",Icon: Globe,          match: ["/special-projects"] },
     { key: "team",     label: "Team",     href: "/team-targets",    Icon: Users,          match: ["/team-targets"] },
-    { key: "leaders",  label: "Leaders",  href: "/leaderboard",     Icon: Target,         match: ["/leaderboard"] },
     { key: "more",     label: "More",     href: "/more",          Icon: MoreHorizontal, match: ["/more"] },
   ],
 };
@@ -114,7 +113,6 @@ const HR_LAYOUT: Layout = {
   kind: "flat",
   tabs: [
     { key: "home",     label: "Home",     href: "/team-targets",    Icon: Home,           match: ["/team-targets"] },
-    { key: "leaders",  label: "Leaders",  href: "/leaderboard",     Icon: Target,         match: ["/leaderboard"] },
     { key: "field",    label: "Field",    href: "/field-intelligence", Icon: Activity,    match: ["/field-intelligence"] },
     { key: "leave",    label: "Leave",    href: "/leave",           Icon: ClipboardList,  match: ["/leave"] },
     { key: "more",     label: "More",     href: "/more",          Icon: MoreHorizontal, match: ["/more"] },

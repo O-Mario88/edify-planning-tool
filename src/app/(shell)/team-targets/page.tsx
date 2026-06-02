@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Trophy, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { TeamTargetsMobileView } from "@/components/mobile/views/TeamTargetsMobileView";
 import { TeamTargetsHeader } from "@/components/team-targets/TeamTargetsHeader";
@@ -126,23 +126,6 @@ export default async function TeamTargetsDashboard() {
     </>
   );
 
-  const leaderboardSlot = (
-    <section className="card p-3.5">
-      <h2 className="text-body-lg font-extrabold tracking-tight inline-flex items-center gap-2 mb-1">
-        <Trophy size={14} className="text-amber-600" />
-        Leaderboard
-      </h2>
-      <p className="text-body muted">
-        Full team standings, badges, and trends live on the dedicated Leaderboard page.
-      </p>
-      <Link
-        href="/leaderboard"
-        className="mt-2 inline-flex items-center gap-1.5 h-9 px-3 rounded-xl bg-[var(--color-edify-primary)] text-white text-body font-extrabold"
-      >
-        Open Leaderboard <ExternalLink size={12} />
-      </Link>
-    </section>
-  );
 
   const supportNeededSlot = (
     <>
@@ -162,7 +145,6 @@ export default async function TeamTargetsDashboard() {
             defaultTab={defaultTab}
             myTargets={myTargetsSlot}
             teamTargets={teamTargetsSlot}
-            leaderboard={leaderboardSlot}
             supportNeeded={supportNeededSlot}
             targetRecovery={targetRecoverySlot}
           />

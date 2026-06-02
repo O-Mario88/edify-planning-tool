@@ -279,5 +279,5 @@ export const impactQuickActions: ImpactQuickAction[] = [
   { key: "verify",      label: "Verify Records",     icon: "check",          tone: "green",  href: "/data-verification?status=pending" },
   { key: "report",      label: "Generate Report",    icon: "fileText",       tone: "blue",   href: "/reports"                     },
   { key: "issues",      label: "View Issues",        icon: "alertTriangle",  tone: "rose",   href: "/alerts",     badge: 12       },
-  { key: "activity",    label: "Activity Log",       icon: "activity",       tone: "amber",  href: "/activity-log"                },
+  { key: "activity",    label: "Activity Log",       icon: "activity",       tone: "amber",  href: "/admin/audit-log"                },
 ];
