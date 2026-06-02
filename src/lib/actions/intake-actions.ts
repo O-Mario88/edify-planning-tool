@@ -23,7 +23,7 @@ import {
   type SsaInterventionArea,
   type SsaUploadInput,
 } from "@/lib/intake/intake-core";
-import { addIntakeSchool, addSsaUpload, assignSchoolToCceo, intakeSchoolIds } from "@/lib/intake/intake-mock";
+import { addIntakeSchool, addSsaUpload, assignSchoolToCceo, intakeSchoolIds, updateIntakeSchool, type IntakeSchoolEditable } from "@/lib/intake/intake-mock";
 import { orgStaff } from "@/lib/org/supervision";
 import { getIntakeTemplate } from "@/lib/intake/intake-templates";
 import { validateIntakeValues } from "@/lib/intake/intake-validate";
@@ -313,6 +313,39 @@ export async function assignSchoolsToStaff(staffId: string, schoolIds: string[])
   }
 
   return { ok: true, assigned, staffName: staff.name };
+}
+
+// ─── 5. updateSchoolDetails (complete optional fields after upload) ──
+//
+// A school is created with only the 4 required fields; staff/IA fill the rest
+// (enrolment, contact, phone, address, owner, cluster) here, any time later.
+
+export type UpdateSchoolResult =
+  | { ok: false; reason: "FORBIDDEN" | "NOT_FOUND" | "INVALID_INPUT"; field?: string }
+  | { ok: true; schoolId: string };
+
+export async function updateSchoolDetails(schoolId: string, patch: IntakeSchoolEditable): Promise<UpdateSchoolResult> {
+  const user = await getCurrentUser();
+  if (!INTAKE_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+  if (patch.enrollment !== undefined && patch.enrollment !== null) {
+    const n = Number(patch.enrollment);
+    if (!Number.isFinite(n) || n < 0) return { ok: false, reason: "INVALID_INPUT", field: "enrollment" };
+    patch.enrollment = n;
+  }
+  const row = updateIntakeSchool(schoolId, patch);
+  if (!row) return { ok: false, reason: "NOT_FOUND" };
+
+  emitAudit({
+    action: "intake.schoolDetailsUpdated",
+    subjectKind: "School",
+    subjectId: schoolId,
+    actorId: user.staffId,
+    actorRole: user.role,
+    actorName: user.name,
+    payload: { fields: Object.keys(patch), schoolName: row.schoolName },
+  });
+  revalidateIntakeSurfaces(schoolId);
+  return { ok: true, schoolId };
 }
 
 function revalidateIntakeSurfaces(schoolId?: string) {

@@ -17,12 +17,33 @@ export type IntakeSchool = {
   enrollment?: number;
   assignedCceo?: string;
   cluster?: string;
+  // Optional detail fields — completed at create or later via "Edit details".
+  phone?: string;
+  primaryContact?: string;
+  shippingAddress?: string;
+  lastEnrollmentDate?: string;
   status: "Active";
   ssaStatus: "SSA Not Done" | "SSA Done";
   planningLocked: boolean;
   dateAdded: string;
   addedBy: string;
 };
+
+/** Fields a staff/IA member can complete after upload (none block creation). */
+export type IntakeSchoolEditable = Partial<Pick<IntakeSchool,
+  "enrollment" | "assignedCceo" | "cluster" | "subCounty" | "phone" | "primaryContact" | "shippingAddress" | "lastEnrollmentDate"
+>>;
+
+/** Patch a school's optional detail fields. Returns the updated row. */
+export function updateIntakeSchool(schoolId: string, patch: IntakeSchoolEditable): IntakeSchool | undefined {
+  const s = intakeSchools.find((x) => x.schoolId === schoolId);
+  if (!s) return undefined;
+  for (const [k, v] of Object.entries(patch)) {
+    if (v === undefined) continue;
+    (s as Record<string, unknown>)[k] = v === "" ? undefined : v;
+  }
+  return s;
+}
 
 export type SsaUpload = {
   id: string;

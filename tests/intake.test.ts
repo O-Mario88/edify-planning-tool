@@ -105,3 +105,43 @@ describe("validateSsaUpload", () => {
     expect(validateSsaUpload({ ...base, scores: { ...fullScores(7), "Leadership Best Practice": -1 } }).errors["Leadership Best Practice"]).toBeTruthy();
   });
 });
+
+describe("updateIntakeSchool — complete optional details after upload", () => {
+  it("patches only the supplied optional fields and leaves the rest intact", async () => {
+    const { addIntakeSchool, updateIntakeSchool } = await import("@/lib/intake/intake-mock");
+    addIntakeSchool({
+      schoolId: "59001", schoolName: "Edit Target Primary", region: "Central Region",
+      district: "Wakiso", schoolType: "Client", dateAdded: "2026-06-02", addedBy: "Test",
+    });
+
+    const updated = updateIntakeSchool("59001", {
+      phone: "+256 700 000000", primaryContact: "Head Teacher", shippingAddress: "P.O. Box 1",
+      enrollment: 410, assignedCceo: "Paul Chinyama",
+    });
+
+    expect(updated).toBeDefined();
+    expect(updated!.phone).toBe("+256 700 000000");
+    expect(updated!.primaryContact).toBe("Head Teacher");
+    expect(updated!.shippingAddress).toBe("P.O. Box 1");
+    expect(updated!.enrollment).toBe(410);
+    expect(updated!.assignedCceo).toBe("Paul Chinyama");
+    // Untouched required fields preserved.
+    expect(updated!.schoolName).toBe("Edit Target Primary");
+    expect(updated!.district).toBe("Wakiso");
+  });
+
+  it("treats empty-string patches as clearing the field, ignores undefined", async () => {
+    const { addIntakeSchool, updateIntakeSchool } = await import("@/lib/intake/intake-mock");
+    addIntakeSchool({
+      schoolId: "59002", schoolName: "Clear Target", region: "Central Region",
+      district: "Wakiso", schoolType: "Client", cluster: "C-1", dateAdded: "2026-06-02", addedBy: "Test",
+    });
+    const updated = updateIntakeSchool("59002", { cluster: "" });
+    expect(updated!.cluster).toBeUndefined();
+  });
+
+  it("returns undefined for an unknown school id", async () => {
+    const { updateIntakeSchool } = await import("@/lib/intake/intake-mock");
+    expect(updateIntakeSchool("000000", { phone: "x" })).toBeUndefined();
+  });
+});

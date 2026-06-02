@@ -9,7 +9,7 @@
 
 import { useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Upload, CheckCircle2, Lock, FileUp, AlertCircle, Download } from "lucide-react";
+import { Plus, Upload, CheckCircle2, Lock, FileUp, AlertCircle, Download, Pencil } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
@@ -29,7 +29,7 @@ import {
 import { ID_FORMATS } from "@/lib/intake/id-formats";
 import { mapSchoolCsv, type SchoolCsvResult } from "@/lib/intake/school-csv";
 import { getIntakeTemplate } from "@/lib/intake/intake-templates";
-import { createSchool, createSchoolsBulk, uploadSsaPerformance } from "@/lib/actions/intake-actions";
+import { createSchool, createSchoolsBulk, uploadSsaPerformance, updateSchoolDetails } from "@/lib/actions/intake-actions";
 import { IntakeUploadDrawer } from "./IntakeUploadDrawer";
 
 type UploadKind = { id: string; name: string; sub: string };
@@ -50,6 +50,15 @@ export type IntakeSchoolLite = {
   planningLocked: boolean;
   dateAdded: string;
   addedBy: string;
+  // Optional detail fields (prefill the Edit-details drawer).
+  subCounty?: string;
+  enrollment?: number;
+  assignedCceo?: string;
+  cluster?: string;
+  phone?: string;
+  primaryContact?: string;
+  shippingAddress?: string;
+  lastEnrollmentDate?: string;
 };
 
 const SCHOOL_TYPES: SchoolType[] = ["Client", "Core", "Potential Core", "Other"];
@@ -58,6 +67,7 @@ const EMPTY_SCORES = Object.fromEntries(SSA_INTERVENTION_AREAS.map((a) => [a, ""
 export function IaIntakeActions({ schools, existingIds }: { schools: IntakeSchoolLite[]; existingIds: string[] }) {
   const [active, setActive] = useState<{ id: string; mode: "manual" | "csv" } | null>(null);
   const close = () => setActive(null);
+  const [editing, setEditing] = useState<IntakeSchoolLite | null>(null);
 
   return (
     <>
@@ -92,8 +102,11 @@ export function IaIntakeActions({ schools, existingIds }: { schools: IntakeSchoo
         {schools.length > 0 && (
           <>
             <h3 className="text-[12px] font-extrabold tracking-tight mt-4 mb-1">Recently added schools</h3>
+            <p className="text-[10.5px] muted mb-1">Use <span className="font-extrabold">Edit details</span> to complete optional fields (owner, enrolment, contact, phone, address) any time after upload.</p>
             <ul className="divide-y divide-[var(--color-edify-divider)]">
-              {schools.slice(0, 6).map((s) => (
+              {schools.slice(0, 6).map((s) => {
+                const missing = missingDetailCount(s);
+                return (
                 <li key={s.schoolId} className="py-2.5 flex items-center gap-3">
                   <span className="h-9 w-9 rounded-md bg-[var(--color-edify-soft)]/80 text-[var(--color-edify-primary)] grid place-items-center shrink-0 text-[10px] font-extrabold">
                     {s.schoolType.slice(0, 2).toUpperCase()}
@@ -104,6 +117,11 @@ export function IaIntakeActions({ schools, existingIds }: { schools: IntakeSchoo
                       {s.schoolId} · {s.district}, {s.region} · added {s.dateAdded} · {s.addedBy}
                     </div>
                   </div>
+                  {missing > 0 && (
+                    <span className="hidden sm:inline-flex items-center gap-1 px-1.5 py-[2px] rounded-md text-[10px] font-extrabold bg-slate-100 text-slate-600 whitespace-nowrap">
+                      {missing} field{missing === 1 ? "" : "s"} to add
+                    </span>
+                  )}
                   {s.planningLocked ? (
                     <span className="inline-flex items-center gap-1 px-1.5 py-[2px] rounded-md text-[10px] font-extrabold bg-amber-100 text-amber-700 whitespace-nowrap">
                       <Lock size={10} /> SSA pending
@@ -113,8 +131,12 @@ export function IaIntakeActions({ schools, existingIds }: { schools: IntakeSchoo
                       <CheckCircle2 size={10} /> Planning open
                     </span>
                   )}
+                  <Button variant="ghost" size="sm" Icon={Pencil} onClick={() => setEditing(s)}>
+                    Edit details
+                  </Button>
                 </li>
-              ))}
+                );
+              })}
             </ul>
           </>
         )}
@@ -144,8 +166,25 @@ export function IaIntakeActions({ schools, existingIds }: { schools: IntakeSchoo
         existingIds={existingIds}
         onClose={close}
       />
+      {/* Edit / complete optional details for an already-uploaded school. */}
+      <EditSchoolDrawer
+        key={`edit-${editing?.schoolId ?? "none"}`}
+        school={editing}
+        onClose={() => setEditing(null)}
+      />
     </>
   );
+}
+
+// Count of the optional detail fields not yet filled (display hint only).
+const DETAIL_FIELDS: (keyof IntakeSchoolLite)[] = [
+  "assignedCceo", "enrollment", "subCounty", "cluster", "phone", "primaryContact", "shippingAddress",
+];
+function missingDetailCount(s: IntakeSchoolLite): number {
+  return DETAIL_FIELDS.filter((k) => {
+    const v = s[k];
+    return v === undefined || v === null || v === "";
+  }).length;
 }
 
 // ─── Add School ────────────────────────────────────────────────────
@@ -419,6 +458,139 @@ function CsvUploadPanel({
         </div>
       )}
     </div>
+  );
+}
+
+// ─── Edit / complete school details ────────────────────────────────
+//
+// A school is created with only the 4 required fields. Here IA/staff fill the
+// optional ones (owner, enrolment, sub-county, cluster, contact, phone, address)
+// any time later. Nothing here is required — Save patches only what changed.
+
+function EditSchoolDrawer({ school, onClose }: { school: IntakeSchoolLite | null; onClose: () => void }) {
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  const [form, setForm] = useState({
+    assignedCceo: school?.assignedCceo ?? "",
+    enrollment: school?.enrollment != null ? String(school.enrollment) : "",
+    lastEnrollmentDate: school?.lastEnrollmentDate ?? "",
+    subCounty: school?.subCounty ?? "",
+    cluster: school?.cluster ?? "",
+    primaryContact: school?.primaryContact ?? "",
+    phone: school?.phone ?? "",
+    shippingAddress: school?.shippingAddress ?? "",
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [serverMsg, setServerMsg] = useState<string | null>(null);
+
+  const district = school?.district;
+  const subCountyOptions = useMemo(
+    () => (district ? subCountiesOf(district).map((s) => ({ value: s.name, label: s.name })) : []),
+    [district],
+  );
+
+  function set<K extends keyof typeof form>(k: K, v: string) {
+    setForm((f) => ({ ...f, [k]: v }));
+  }
+
+  function submit() {
+    if (!school) return;
+    setServerMsg(null);
+    setErrors({});
+    const patch = {
+      assignedCceo: form.assignedCceo.trim() || undefined,
+      enrollment: form.enrollment.trim() === "" ? undefined : Number(form.enrollment),
+      lastEnrollmentDate: form.lastEnrollmentDate.trim() || undefined,
+      subCounty: form.subCounty.trim() || undefined,
+      cluster: form.cluster.trim() || undefined,
+      primaryContact: form.primaryContact.trim() || undefined,
+      phone: form.phone.trim() || undefined,
+      shippingAddress: form.shippingAddress.trim() || undefined,
+    };
+    if (patch.enrollment !== undefined && (!Number.isFinite(patch.enrollment) || patch.enrollment < 0)) {
+      setErrors({ enrollment: "Enter a valid number." });
+      return;
+    }
+    start(async () => {
+      const res = await updateSchoolDetails(school.schoolId, patch);
+      if (res.ok) {
+        setServerMsg("Details saved.");
+        router.refresh();
+        setTimeout(onClose, 800);
+      } else if (res.reason === "INVALID_INPUT") {
+        setErrors({ [res.field ?? "enrollment"]: "Invalid value." });
+      } else if (res.reason === "NOT_FOUND") {
+        setServerMsg("That school no longer exists.");
+      } else {
+        setServerMsg("You don't have permission to edit school details.");
+      }
+    });
+  }
+
+  return (
+    <Modal
+      open={!!school}
+      onClose={onClose}
+      title={school ? `Edit details · ${school.schoolName}` : "Edit details"}
+      description="Complete the optional fields for this school. Everything here can be filled now or later — nothing is required."
+      variant="drawer-right"
+      size="md"
+      footer={
+        <div className="flex items-center justify-between gap-3 w-full">
+          <span className="text-[11px] muted truncate">{serverMsg}</span>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button variant="ghost" size="sm" onClick={onClose} disabled={pending}>Cancel</Button>
+            <Button variant="primary" size="sm" onClick={submit} disabled={pending} Icon={CheckCircle2}>
+              {pending ? "Saving…" : "Save details"}
+            </Button>
+          </div>
+        </div>
+      }
+    >
+      {school && (
+        <div className="space-y-4">
+          <div className="rounded-lg border border-[var(--color-edify-divider)] bg-[var(--color-edify-soft)]/40 px-3 py-2 text-[11px] leading-snug">
+            <span className="font-extrabold text-[var(--color-edify-text)]">{school.schoolId}</span> · {school.district}, {school.region} · {school.schoolType}
+          </div>
+
+          <div>
+            <h4 className="text-[10.5px] font-extrabold uppercase tracking-[0.08em] text-[var(--color-edify-muted)] mb-2">Ownership &amp; enrolment</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Input label="Account Owner (CCEO)" placeholder="Aisha Dar" value={form.assignedCceo}
+                helper="Who this school's portfolio belongs to." onChange={(e) => set("assignedCceo", e.target.value)} />
+              <Input label="Enrolment" type="number" placeholder="320" value={form.enrollment} error={errors.enrollment}
+                onChange={(e) => set("enrollment", e.target.value)} />
+              <Input label="Last date of enrolment" type="date" value={form.lastEnrollmentDate}
+                onChange={(e) => set("lastEnrollmentDate", e.target.value)} />
+            </div>
+          </div>
+
+          <div>
+            <h4 className="text-[10.5px] font-extrabold uppercase tracking-[0.08em] text-[var(--color-edify-muted)] mb-2">Location</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Select label="Sub-county" placeholder="Select sub-county" value={form.subCounty} options={subCountyOptions}
+                onChange={(e) => set("subCounty", e.target.value)} />
+              <Input label="Cluster" placeholder="Central Cluster 3" value={form.cluster}
+                onChange={(e) => set("cluster", e.target.value)} />
+            </div>
+          </div>
+
+          <div>
+            <h4 className="text-[10.5px] font-extrabold uppercase tracking-[0.08em] text-[var(--color-edify-muted)] mb-2">Contact &amp; delivery</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Input label="Primary contact" placeholder="Head teacher name" value={form.primaryContact}
+                onChange={(e) => set("primaryContact", e.target.value)} />
+              <Input label="Phone" placeholder="+256 7xx xxx xxx" value={form.phone}
+                onChange={(e) => set("phone", e.target.value)} />
+            </div>
+            <div className="mt-3">
+              <Input label="School shipping address" placeholder="P.O. Box / physical address" value={form.shippingAddress}
+                onChange={(e) => set("shippingAddress", e.target.value)} />
+            </div>
+          </div>
+        </div>
+      )}
+    </Modal>
   );
 }
 

@@ -65,6 +65,14 @@ export default async function DataIntakeHubPage() {
             planningLocked: s.planningLocked,
             dateAdded: s.dateAdded,
             addedBy: s.addedBy,
+            subCounty: s.subCounty,
+            enrollment: s.enrollment,
+            assignedCceo: s.assignedCceo,
+            cluster: s.cluster,
+            phone: s.phone,
+            primaryContact: s.primaryContact,
+            shippingAddress: s.shippingAddress,
+            lastEnrollmentDate: s.lastEnrollmentDate,
           }))}
         />
       )}
