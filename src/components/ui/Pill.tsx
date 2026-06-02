@@ -24,13 +24,13 @@ export type PillTone =
 export type PillSize = "xs" | "sm" | "md";
 
 const TONE: Record<PillTone, { bg: string; text: string; border: string; dot: string }> = {
-  success: { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200", dot: "bg-emerald-500" },
-  warning: { bg: "bg-amber-50",   text: "text-amber-700",   border: "border-amber-200",   dot: "bg-amber-500"   },
-  danger:  { bg: "bg-rose-50",    text: "text-rose-700",    border: "border-rose-200",    dot: "bg-rose-500"    },
-  info:    { bg: "bg-blue-50",    text: "text-blue-700",    border: "border-blue-200",    dot: "bg-blue-500"    },
-  neutral: { bg: "bg-slate-100",  text: "text-slate-600",   border: "border-slate-200",   dot: "bg-slate-400"   },
-  violet:  { bg: "bg-violet-50",  text: "text-violet-700",  border: "border-violet-200",  dot: "bg-violet-500"  },
-  amber:   { bg: "bg-amber-100",  text: "text-amber-800",   border: "border-amber-300",   dot: "bg-amber-600"   },
+  success: { bg: "bg-emerald-50", text: "text-emerald-700 dark:text-emerald-300", border: "border-emerald-200 dark:border-emerald-500/30", dot: "bg-emerald-500" },
+  warning: { bg: "bg-amber-50",   text: "text-amber-700 dark:text-amber-300",     border: "border-amber-200 dark:border-amber-500/30",     dot: "bg-amber-500"   },
+  danger:  { bg: "bg-rose-50",    text: "text-rose-700 dark:text-rose-300",       border: "border-rose-200 dark:border-rose-500/30",       dot: "bg-rose-500"    },
+  info:    { bg: "bg-blue-50",    text: "text-blue-700 dark:text-sky-300",        border: "border-blue-200 dark:border-sky-500/30",        dot: "bg-blue-500"    },
+  neutral: { bg: "bg-slate-100",  text: "text-slate-600",                         border: "border-slate-200",                              dot: "bg-slate-400"   },
+  violet:  { bg: "bg-violet-50",  text: "text-violet-700 dark:text-violet-300",   border: "border-violet-200 dark:border-violet-500/30",   dot: "bg-violet-500"  },
+  amber:   { bg: "bg-amber-100",  text: "text-amber-800 dark:text-amber-300",     border: "border-amber-300 dark:border-amber-500/30",     dot: "bg-amber-600"   },
 };
 
 const SIZE: Record<PillSize, { h: string; px: string; text: string; gap: string }> = {

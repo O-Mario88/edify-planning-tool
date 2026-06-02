@@ -21,11 +21,11 @@ export type EmptyStateTone =
 
 const TONE: Record<EmptyStateTone, { halo: string; iconBg: string; iconText: string }> = {
   neutral: { halo: "from-slate-50",   iconBg: "bg-slate-100",   iconText: "text-slate-500"   },
-  violet:  { halo: "from-violet-50",  iconBg: "bg-violet-100",  iconText: "text-violet-600"  },
-  emerald: { halo: "from-emerald-50", iconBg: "bg-emerald-100", iconText: "text-emerald-600" },
-  amber:   { halo: "from-amber-50",   iconBg: "bg-amber-100",   iconText: "text-amber-600"   },
-  rose:    { halo: "from-rose-50",    iconBg: "bg-rose-100",    iconText: "text-rose-600"    },
-  sky:     { halo: "from-sky-50",     iconBg: "bg-sky-100",     iconText: "text-sky-600"     },
+  violet:  { halo: "from-violet-50",  iconBg: "bg-violet-100",  iconText: "text-violet-600 dark:text-violet-300"  },
+  emerald: { halo: "from-emerald-50", iconBg: "bg-emerald-100", iconText: "text-emerald-600 dark:text-emerald-300" },
+  amber:   { halo: "from-amber-50",   iconBg: "bg-amber-100",   iconText: "text-amber-600 dark:text-amber-300"   },
+  rose:    { halo: "from-rose-50",    iconBg: "bg-rose-100",    iconText: "text-rose-600 dark:text-rose-300"    },
+  sky:     { halo: "from-sky-50",     iconBg: "bg-sky-100",     iconText: "text-sky-600 dark:text-sky-300"     },
 };
 
 export function EmptyState({
