@@ -56,8 +56,10 @@ export function SidebarBrand({
     </span>
   );
 
+  // Generous space above the logo, then the brand tucks close to the divider
+  // below — an elegant, breathing brand zone.
   const wrapper = cn(
-    "block px-5 pt-4 lg:pt-5 pb-4 border-b border-white/10 lg:border-b-0",
+    "block px-5 pt-6 lg:pt-7 pb-3 border-b border-white/10 lg:border-b-0",
     className,
   );
 
