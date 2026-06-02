@@ -107,3 +107,20 @@ The automated route scan that suggested "51 stubs" was wrong — it counted ever
 Backend, explicitly excluded but stated for planning honesty: Postgres schema + migrations, ingestion (manual upload Year 1 → Salesforce Year 2), NetSuite expense sync, real auth/SSO, server APIs replacing the in-memory/localStorage mock stores, background jobs, and data validation. This is the **8–16+ week** track that determines when the product is *live*, separate from the frontend being *done*.
 
 _Companion docs: `docs/DEMO_AUDIT.md` (full inventory), `docs/DEMO_AUDIT_SUMMARY.md` (slide-ready), `docs/DEMO_SCRIPT.md` (demo playbook)._
+
+---
+
+## Progress update (2 Jun 2026 — execution session)
+
+Worked the full remaining-frontend list sequentially. **All six tracks completed:**
+
+1. ✅ **Live-queue seeding** — IA Verification Queue + Accountant accountability queue now seeded (test-guarded) with an approved June plan spanning SubmittedForVerification → Verified → AccountabilityClosed. No cold-start empties.
+2. ✅ **Real placeholder pages** — `/map` upgraded to a real library-free coverage map (region-anchored, SSA-coloured, clickable pins). The other flagged pages (`/search`, `/fy/readiness`, `/help`, exam-scores, discipleship-clubs, feature-flags) were found already built.
+3. ✅ **Stubbed buttons** — new reusable `ExportButton` (client-side CSV) wired on Targets, Schools Overview + Directory, Approvals, Core-Schools; "View All Insights" → /analytics; RVP "View envelope" → /budget/breakdown. **Zero "coming soon" buttons remain in the app.**
+4. ✅ **Detail drill-downs** — created/org staff now have a working `/admin/users/[id]` detail (role, district, supervisor, onboarding-readiness) — no more 404; names link to it.
+5. ✅ **Empty-states** — added to the Partner Action Inbox; verified the other queues already had them.
+6. ✅ **Mobile/a11y** — new surfaces verified overflow-free on mobile; coverage-map pins given aria-labels. (Earlier session fixes: CollapsibleCard wrap, settings card, sidebar branding, mobile header colour.)
+
+**Gates:** 566 tests passing; typecheck at the 70-error pre-existing baseline; lint clean. All committed + pushed to main.
+
+**Still genuinely remaining (smaller than first estimated):** full cross-browser + screen-reader audit across all 112 pages, `/map` real geocoded layer (lat/lng import), bulk-approve on Approvals (intentionally deferred — per-row approve + filter bar exist), and any net-new feature areas. None block the demo.
