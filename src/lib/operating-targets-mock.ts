@@ -62,13 +62,13 @@ export function classify(pct: number, started: boolean): Status {
 // ────────── Period metadata ──────────
 
 export const PERIODS: { key: PeriodKey; label: string; sub: string; band: string; tone: string }[] = [
-  { key: "monthly", label: "May 2025",   sub: "MONTHLY",    band: "bg-slate-50",  tone: "text-slate-700" },
-  { key: "q1",      label: "Q1 (Apr–Jun)", sub: "QUARTER 1", band: "bg-emerald-50/50", tone: "text-emerald-700" },
-  { key: "q2",      label: "Q2 (Jul–Sep)", sub: "QUARTER 2", band: "bg-blue-50/50",    tone: "text-blue-700" },
-  { key: "midYear", label: "MID YEAR",     sub: "Apr – Sep", band: "bg-violet-50/60",  tone: "text-violet-700" },
-  { key: "q3",      label: "Q3 (Oct–Dec)", sub: "QUARTER 3", band: "bg-amber-50/40",   tone: "text-amber-700" },
-  { key: "q4",      label: "Q4 (Jan–Mar)", sub: "QUARTER 4", band: "bg-rose-50/40",    tone: "text-rose-700" },
-  { key: "fy",      label: "FY 2024/25",   sub: "FULL YEAR", band: "bg-indigo-50/40",  tone: "text-indigo-700" },
+  { key: "monthly", label: "Nov 2025",   sub: "MONTHLY",    band: "bg-slate-50",  tone: "text-slate-700" },
+  { key: "q1",      label: "Q1 (Oct–Dec)", sub: "QUARTER 1", band: "bg-emerald-50/50", tone: "text-emerald-700" },
+  { key: "q2",      label: "Q2 (Jan–Mar)", sub: "QUARTER 2", band: "bg-blue-50/50",    tone: "text-blue-700" },
+  { key: "midYear", label: "MID YEAR",     sub: "Oct – Mar", band: "bg-violet-50/60",  tone: "text-violet-700" },
+  { key: "q3",      label: "Q3 (Apr–Jun)", sub: "QUARTER 3", band: "bg-amber-50/40",   tone: "text-amber-700" },
+  { key: "q4",      label: "Q4 (Jul–Sep)", sub: "QUARTER 4", band: "bg-rose-50/40",    tone: "text-rose-700" },
+  { key: "fy",      label: "FY 2025/26",   sub: "FULL YEAR", band: "bg-indigo-50/40",  tone: "text-indigo-700" },
 ];
 
 // ────────── Compute ──────────
@@ -101,9 +101,9 @@ export function computeRow(m: MetricRow, startedPeriods: Record<PeriodKey, boole
 export type OperatingTargets = {
   scope:           string;        // e.g. "My Targets" / "Team Targets"
   audience:        string;        // e.g. "Country Program Lead" / "CCEO"
-  fiscalYearLabel: string;        // "FY 2024/25"
-  periodLabel:    string;         // "May 1 – May 31, 2025"
-  lastUpdated:    string;         // "May 12, 2025 8:30 AM"
+  fiscalYearLabel: string;        // "FY 2025/26"
+  periodLabel:    string;         // "Nov 1 – Nov 30, 2025"
+  lastUpdated:    string;         // "Nov 14, 2025 8:30 AM"
   daysCompleted: { done: number; total: number };
   /** Which periods have started (drives status classification). */
   startedPeriods: Record<PeriodKey, boolean>;
@@ -150,27 +150,29 @@ const startedPeriods: Record<PeriodKey, boolean> = {
   fy:      true,
 };
 
+// FY runs Oct → Sep. The cumulative ramp rises through the year; values track
+// month 1..12 of the FY (Oct = month 1).
 const trendByMonth: OperatingTargets["trend"] = [
-  { label: "Apr", actual: 18,  target: 12 },
-  { label: "May", actual: 30,  target: 24 },
-  { label: "Jun", actual: 45,  target: 36 },
-  { label: "Jul", actual: 50,  target: 48 },
-  { label: "Aug", actual: 52,  target: 60 },
-  { label: "Sep", actual: 55,  target: 72 },
-  { label: "Oct", actual: 56,  target: 80 },
-  { label: "Nov", actual: 56,  target: 86 },
-  { label: "Dec", actual: 56,  target: 90 },
-  { label: "Jan", actual: 56,  target: 94 },
-  { label: "Feb", actual: 56,  target: 97 },
-  { label: "Mar", actual: 56,  target: 100 },
+  { label: "Oct", actual: 18,  target: 12 },
+  { label: "Nov", actual: 30,  target: 24 },
+  { label: "Dec", actual: 45,  target: 36 },
+  { label: "Jan", actual: 50,  target: 48 },
+  { label: "Feb", actual: 52,  target: 60 },
+  { label: "Mar", actual: 55,  target: 72 },
+  { label: "Apr", actual: 56,  target: 80 },
+  { label: "May", actual: 56,  target: 86 },
+  { label: "Jun", actual: 56,  target: 90 },
+  { label: "Jul", actual: 56,  target: 94 },
+  { label: "Aug", actual: 56,  target: 97 },
+  { label: "Sep", actual: 56,  target: 100 },
 ];
 
 export const cceoOperatingTargets: OperatingTargets = {
   scope:           "My Targets",
   audience:        "CCEO",
-  fiscalYearLabel: "FY 2024/25",
-  periodLabel:    "May 1 – May 31, 2025",
-  lastUpdated:    "May 12, 2025 8:30 AM",
+  fiscalYearLabel: "FY 2025/26",
+  periodLabel:    "Nov 1 – Nov 30, 2025",
+  lastUpdated:    "Nov 14, 2025 8:30 AM",
   daysCompleted:  { done: 21, total: 31 },
   startedPeriods,
   metrics:         cceoMetrics,
@@ -210,9 +212,9 @@ const plMetrics: MetricRow[] = [
 export const plOperatingTargets: OperatingTargets = {
   scope:           "My Targets",
   audience:        "Country Program Lead",
-  fiscalYearLabel: "FY 2024/25",
-  periodLabel:    "May 1 – May 31, 2025",
-  lastUpdated:    "May 12, 2025 8:30 AM",
+  fiscalYearLabel: "FY 2025/26",
+  periodLabel:    "Nov 1 – Nov 30, 2025",
+  lastUpdated:    "Nov 14, 2025 8:30 AM",
   daysCompleted:  { done: 21, total: 31 },
   startedPeriods,
   metrics:         plMetrics,
@@ -261,9 +263,9 @@ export function teamOperatingTargets({
   return {
     scope:           scope    ?? "Team Targets",
     audience:        audience ?? "Country Program Lead",
-    fiscalYearLabel: "FY 2024/25",
-    periodLabel:    "May 1 – May 31, 2025",
-    lastUpdated:    "May 12, 2025 8:30 AM",
+    fiscalYearLabel: "FY 2025/26",
+    periodLabel:    "Nov 1 – Nov 30, 2025",
+    lastUpdated:    "Nov 14, 2025 8:30 AM",
     daysCompleted:  { done: 21, total: 31 },
     startedPeriods,
     metrics:         aggMetrics,

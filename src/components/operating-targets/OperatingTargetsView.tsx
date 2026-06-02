@@ -394,12 +394,12 @@ function ProgressTrendCard({ data }: { data: OperatingTargets["trend"] }) {
 function ContributionCard({ rows, periodAgg }: { rows: ComputedRow[]; periodAgg: Record<PeriodKey, { pct: number }> }) {
   void rows;
   const items: { label: string; pct: number; color: string }[] = [
-    { label: "Monthly (May)",     pct: periodAgg.monthly.pct, color: "bg-blue-500"    },
-    { label: "+ Q1 (Apr–Jun)",    pct: periodAgg.q1.pct,      color: "bg-emerald-500" },
-    { label: "+ Q2 (Jul–Sep)",    pct: periodAgg.q2.pct,      color: "bg-blue-400"    },
-    { label: "= Mid Year (Apr–Sep)", pct: periodAgg.midYear.pct, color: "bg-violet-500" },
-    { label: "+ Q3 (Oct–Dec)",    pct: periodAgg.q3.pct,      color: "bg-amber-500"   },
-    { label: "+ Q4 (Jan–Mar)",    pct: periodAgg.q4.pct,      color: "bg-rose-500"    },
+    { label: "Monthly (Nov)",     pct: periodAgg.monthly.pct, color: "bg-blue-500"    },
+    { label: "+ Q1 (Oct–Dec)",    pct: periodAgg.q1.pct,      color: "bg-emerald-500" },
+    { label: "+ Q2 (Jan–Mar)",    pct: periodAgg.q2.pct,      color: "bg-blue-400"    },
+    { label: "= Mid Year (Oct–Mar)", pct: periodAgg.midYear.pct, color: "bg-violet-500" },
+    { label: "+ Q3 (Apr–Jun)",    pct: periodAgg.q3.pct,      color: "bg-amber-500"   },
+    { label: "+ Q4 (Jul–Sep)",    pct: periodAgg.q4.pct,      color: "bg-rose-500"    },
     { label: "= Full Year",       pct: periodAgg.fy.pct,      color: "bg-indigo-500"  },
   ];
   return (

@@ -17,7 +17,7 @@ export const teamTargetsBillionHeader = {
   staffCount: 144,
   filters: {
     financialYear: "FY 2025/26",
-    quarter:       "Q4 (Apr–Jun)",
+    quarter:       "Q3 (Apr–Jun)",
     month:         "May 2026",
     region:        "All Regions",
   },

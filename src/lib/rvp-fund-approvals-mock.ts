@@ -166,6 +166,6 @@ export const rvpApprovalComments: RvpApprovalComment[] = [
 
 export const rvpFundFilters = {
   fy:       "FY 2026",
-  quarter:  "Q2 (Apr–Jun)",
+  quarter:  "Q3 (Apr–Jun)",
   status:   "All Status",
 };

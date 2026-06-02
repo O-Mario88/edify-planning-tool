@@ -231,7 +231,7 @@ export const ssaHeader = {
     "Track school self-assessment performance across all 8 interventions and compare district performance.",
   filters: {
     financialYear: "2024/2025",
-    quarter: "Q4 (Apr–Jun 2025)",
+    quarter: "Q3 (Apr–Jun 2025)",
     region: "North Region",
     district: "All Districts",
   },
@@ -431,15 +431,16 @@ export const urgentInterventionSchools: UrgentInterventionSchool[] = [
 
 // ────────── Quarterly trend ──────────
 
+// FY runs Oct → Sep: Q1 Oct–Dec · Q2 Jan–Mar · Q3 Apr–Jun · Q4 Jul–Sep.
 export const ssaQuarterlyTrend = [
-  { q: "Q1 (Jul–Sep 2023)", score: 5.42 },
-  { q: "Q2 (Oct–Dec 2023)", score: 5.68 },
-  { q: "Q3 (Jan–Mar 2024)", score: 5.81 },
-  { q: "Q4 (Apr–Jun 2024)", score: 6.02 },
-  { q: "Q1 (Jul–Sep 2024)", score: 6.11 },
-  { q: "Q2 (Oct–Dec 2024)", score: 6.18 },
-  { q: "Q3 (Jan–Mar 2025)", score: 5.94 },
-  { q: "Q4 (Apr–Jun 2025)", score: 6.42 },
+  { q: "Q4 (Jul–Sep 2023)", score: 5.42 },
+  { q: "Q1 (Oct–Dec 2023)", score: 5.68 },
+  { q: "Q2 (Jan–Mar 2024)", score: 5.81 },
+  { q: "Q3 (Apr–Jun 2024)", score: 6.02 },
+  { q: "Q4 (Jul–Sep 2024)", score: 6.11 },
+  { q: "Q1 (Oct–Dec 2024)", score: 6.18 },
+  { q: "Q2 (Jan–Mar 2025)", score: 5.94 },
+  { q: "Q3 (Apr–Jun 2025)", score: 6.42 },
 ];
 
 export const ssaTrendTarget = 6.0;
