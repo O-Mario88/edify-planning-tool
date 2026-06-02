@@ -15,6 +15,7 @@ import {
 } from "@/lib/funds/weekly-fund-mock";
 import { formatMoney } from "@/lib/funds/weekly-fund-engine";
 import { cn } from "@/lib/utils";
+import { KPI_ICON_BG, KPI_ICON_FG, KPI_GLOW, kpiTone } from "@/components/ui/kpi-tokens";
 
 // 6 KPI tiles for the Lead — counts + UGX values for each pipeline stage.
 export function LeadWeeklyKpiRow() {
@@ -98,15 +99,6 @@ export function LeadWeeklyKpiRow() {
   );
 }
 
-const TONE: Record<string, { bg: string; fg: string; glow: string }> = {
-  emerald: { bg: "bg-emerald-100", fg: "text-emerald-700", glow: "glow-emerald" },
-  amber:   { bg: "bg-amber-100",   fg: "text-amber-700",   glow: "glow-amber" },
-  blue:    { bg: "bg-sky-100",     fg: "text-sky-700",     glow: "" },
-  violet:  { bg: "bg-violet-100",  fg: "text-violet-700",  glow: "" },
-  rose:    { bg: "bg-rose-100",    fg: "text-rose-700",    glow: "glow-rose" },
-  slate:   { bg: "bg-slate-100",   fg: "text-slate-700",   glow: "" },
-};
-
 function Tile({
   label, value, caption, Icon, tone, stagger,
 }: {
@@ -114,21 +106,21 @@ function Tile({
   value: string;
   caption: string;
   Icon: typeof Clock;
-  tone: keyof typeof TONE;
+  tone: string;
   stagger: string;
 }) {
-  const t = TONE[tone];
+  const tk = kpiTone(tone);
   return (
     <div className={cn("card card-lift cursor-default tile-in p-3 flex flex-col gap-1.5", stagger)}>
       <div className="flex items-start justify-between gap-2">
         <div className="text-[10px] muted font-bold uppercase tracking-wide leading-tight line-clamp-2 min-h-[24px] flex-1">
           {label}
         </div>
-        <span className={cn("w-7 h-7 rounded-lg grid place-items-center shrink-0", t.bg)}>
-          <Icon size={13} className={t.fg} />
+        <span className={cn("w-7 h-7 rounded-lg grid place-items-center shrink-0", KPI_ICON_BG[tk])}>
+          <Icon size={13} className={KPI_ICON_FG[tk]} />
         </span>
       </div>
-      <div className={cn("text-[20px] font-extrabold tabular leading-none text-slate-900 num-hero", t.glow)}>
+      <div className={cn("text-[20px] font-extrabold tabular leading-none text-[var(--text-primary)] num-hero", KPI_GLOW[tk])}>
         {value}
       </div>
       <div className="text-caption muted font-semibold truncate">

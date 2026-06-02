@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { cceoOperatingKpis, type CceoOperatingKpi } from "@/lib/cceo-mock";
 import { cn } from "@/lib/utils";
+import { KPI_ICON_BG, KPI_ICON_FG, KPI_RING_STROKE, kpiTone } from "@/components/ui/kpi-tokens";
 
 const ICON_MAP: Record<CceoOperatingKpi["icon"], LucideIcon> = {
   school:      School,
@@ -26,24 +27,6 @@ const ICON_MAP: Record<CceoOperatingKpi["icon"], LucideIcon> = {
 // Each tone is a coordinated trio: icon tile bg / icon color / ring
 // stroke. The ring colour follows the tile's accent so the eye reads
 // the progress with the icon, not as a separate element.
-const ICON_TONE: Record<
-  CceoOperatingKpi["iconTone"],
-  { iconBg: string; iconColor: string }
-> = {
-  edify:   { iconBg: "bg-[var(--color-edify-soft)]", iconColor: "text-[var(--color-edify-primary)]" },
-  emerald: { iconBg: "bg-emerald-100",               iconColor: "text-emerald-700"                  },
-  violet:  { iconBg: "bg-violet-100",                iconColor: "text-violet-700"                   },
-  amber:   { iconBg: "bg-amber-100",                 iconColor: "text-amber-700"                    },
-  rose:    { iconBg: "bg-rose-100",                  iconColor: "text-rose-700"                     },
-  blue:    { iconBg: "bg-sky-100",                   iconColor: "text-sky-700"                      },
-};
-
-const RING_STROKE: Record<NonNullable<CceoOperatingKpi["ringTone"]>, string> = {
-  emerald: "#10b981",
-  amber:   "#f59e0b",
-  rose:    "#ef4444",
-};
-
 export function CceoSixKpiRow() {
   return (
     <section className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2.5 lg:gap-3">
@@ -56,7 +39,7 @@ export function CceoSixKpiRow() {
 
 function KpiTile({ k, idx }: { k: CceoOperatingKpi; idx: number }) {
   const Icon = ICON_MAP[k.icon];
-  const tone = ICON_TONE[k.iconTone];
+  const tk = kpiTone(k.iconTone);
   const up = k.deltaTone === "up";
   const DeltaIcon = up ? ArrowUpRight : ArrowDownRight;
   const staggerCls = ["stagger-1","stagger-2","stagger-3","stagger-4","stagger-5","stagger-6"][idx] ?? "";
@@ -70,10 +53,10 @@ function KpiTile({ k, idx }: { k: CceoOperatingKpi; idx: number }) {
         <span
           className={cn(
             "w-9 h-9 rounded-xl grid place-items-center shrink-0",
-            tone.iconBg,
+            KPI_ICON_BG[tk],
           )}
         >
-          <Icon size={15} className={tone.iconColor} />
+          <Icon size={15} className={KPI_ICON_FG[tk]} />
         </span>
         <div className="min-w-0 flex-1">
           <div className="text-caption muted font-semibold leading-tight line-clamp-2 min-h-[26px]">
@@ -97,7 +80,7 @@ function KpiTile({ k, idx }: { k: CceoOperatingKpi; idx: number }) {
 
         {/* Donut ring — only renders for KPIs that opted in. */}
         {typeof k.ringPct === "number" && k.ringTone && (
-          <ProgressRing pct={k.ringPct} stroke={RING_STROKE[k.ringTone]} />
+          <ProgressRing pct={k.ringPct} stroke={KPI_RING_STROKE[k.ringTone]} />
         )}
       </div>
 

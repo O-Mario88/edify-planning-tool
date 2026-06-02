@@ -1,81 +1,53 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  KPI_ICON_BG,
+  KPI_ICON_FG,
+  KPI_GLOW,
+  kpiStagger,
+  kpiTone,
+  type KpiTone,
+} from "@/components/ui/kpi-tokens";
 
 // Tile — the canonical KPI / stat / metric tile.
 //
 // Codifies the /approvals page's KPI tile pattern so every role's
-// dashboard uses the same surface for its headline metrics. Before
-// this, each dashboard had a slightly different KPI tile (different
-// padding, different hover treatment, different number sizing). After
-// this, they share one definition.
+// dashboard uses the same surface for its headline metrics. Visual
+// tokens (tone → bg/fg/glow, stagger) come from `kpi-tokens` so every
+// tile across the app stays in lockstep — including in dark / glass.
 //
-// Visual contract (matches /approvals FundApprovalsKpiRow exactly):
+// Optional extras (render only when passed, so existing callers are
+// unaffected):
+//   • `unit`      — small muted unit beside the value ("%", "schools")
+//   • `delta`     — the standard up/down/flat trend chip + caption
+//   • `accessory` — a node to the right of the value (progress ring, …)
 //
-//   .card                       — base white surface + border + shadow
-//   .card-lift                  — lift + shadow + brand-tinted border on hover
-//   .tile-in + .stagger-N       — fade-rise entrance, delayed per index
-//   p-3                         — tight padding (vs the older p-4)
-//   icon: w-9 h-9 rounded-full  — tinted circle, lucide icon size=15
-//   label: 10px / muted / bold / uppercase tracking-wide / line-clamp-2
-//   value: 18px / extrabold / tabular / num-hero / optional .glow-*
-//   trend: 11.5px / colored arrow + delta
-//
-// Use `href` for clickable tiles (renders a Link, cursor-pointer);
-// omit for static stat tiles (cursor-default).
-//
-// To match the stagger-animation rhythm, pass `index` (0-based) and
-// the component picks the matching `.stagger-N` class. Tiles past
-// index 7 fall back to no delay.
+// Use `href` for clickable tiles (renders a Link); omit for static.
 
-export type TileTone =
-  | "edify"
-  | "emerald"
-  | "amber"
-  | "rose"
-  | "violet"
-  | "sky"
-  | "slate";
+export type TileTone = KpiTone;
 
-const TONE_BG: Record<TileTone, string> = {
-  edify:   "bg-[var(--color-edify-soft)]",
-  emerald: "bg-emerald-100 dark:bg-emerald-500/15",
-  amber:   "bg-amber-100   dark:bg-amber-500/15",
-  rose:    "bg-rose-100    dark:bg-rose-500/15",
-  violet:  "bg-violet-100  dark:bg-violet-500/15",
-  sky:     "bg-sky-100     dark:bg-sky-500/15",
-  slate:   "bg-slate-100   dark:bg-slate-500/15",
+export type TileDelta = {
+  dir: "up" | "down" | "flat";
+  text: ReactNode;
+  caption?: ReactNode;
 };
 
-const TONE_FG: Record<TileTone, string> = {
-  edify:   "text-[var(--color-edify-primary)]",
-  emerald: "text-emerald-700 dark:text-emerald-300",
-  amber:   "text-amber-700   dark:text-amber-300",
-  rose:    "text-rose-600    dark:text-rose-300",
-  violet:  "text-violet-700  dark:text-violet-300",
-  sky:     "text-sky-700     dark:text-sky-300",
-  slate:   "text-slate-600   dark:text-slate-300",
+const DELTA_ICON = { up: ArrowUpRight, down: ArrowDownRight, flat: Minus };
+const DELTA_FG = {
+  up:   "text-emerald-700 dark:text-emerald-300",
+  down: "text-rose-700 dark:text-rose-300",
+  flat: "text-slate-500 dark:text-slate-400",
 };
-
-const TONE_GLOW: Record<TileTone, string> = {
-  edify:   "glow-slate",
-  emerald: "glow-emerald",
-  amber:   "glow-amber",
-  rose:    "glow-rose",
-  violet:  "glow-slate",
-  sky:     "glow-slate",
-  slate:   "glow-slate",
-};
-
-const STAGGER = [
-  "stagger-1", "stagger-2", "stagger-3", "stagger-4",
-  "stagger-5", "stagger-6", "stagger-7", "stagger-8",
-];
 
 export function Tile({
   label,
   value,
+  unit,
   trend,
+  delta,
+  accessory,
   icon,
   tone = "edify",
   href,
@@ -84,41 +56,41 @@ export function Tile({
 }: {
   label:    ReactNode;
   value:    ReactNode;
-  /** Optional trailing line under the value (e.g. "+6.6% vs Apr"). */
+  /** Small muted unit rendered beside the value. */
+  unit?:    ReactNode;
+  /** Optional trailing line under the value (free-form). */
   trend?:   ReactNode;
+  /** Structured trend chip (takes precedence over `trend`). */
+  delta?:   TileDelta;
+  /** Node rendered to the right of the value (e.g. a progress ring). */
+  accessory?: ReactNode;
   /** Lucide icon node, rendered inside the tinted circle. */
   icon?:    ReactNode;
-  tone?:    TileTone;
+  tone?:    string;
   /** Pass an href to make the tile clickable (renders as <Link>). */
   href?:    string;
   /** Stagger-animation index. Omit for no delay. */
   index?:   number;
   className?: string;
 }) {
-  const Inner = href ? Link : "div";
-  const innerProps = href
-    ? { href, className: "block" }
-    : ({} as Record<string, never>);
-
+  const t = kpiTone(tone);
   const cursor = href ? "cursor-pointer" : "cursor-default";
-  const stagger = typeof index === "number" ? STAGGER[index] ?? "" : "";
+  const DeltaIcon = delta ? DELTA_ICON[delta.dir] : null;
+  const rootClass = cn(
+    "card card-lift tile-in p-3",
+    cursor,
+    kpiStagger(index),
+    className,
+  );
 
-  return (
-    <Inner
-      {...innerProps}
-      className={cn(
-        "card card-lift tile-in p-3",
-        cursor,
-        stagger,
-        className,
-      )}
-    >
+  const body = (
+    <>
       <div className="flex items-start gap-2.5">
         {icon ? (
           <span className={cn(
             "w-9 h-9 rounded-full grid place-items-center shrink-0",
-            TONE_BG[tone],
-            TONE_FG[tone],
+            KPI_ICON_BG[t],
+            KPI_ICON_FG[t],
           )}>
             {icon}
           </span>
@@ -130,18 +102,45 @@ export function Tile({
         </div>
       </div>
 
-      <div className={cn(
-        "text-[18px] font-extrabold tabular leading-none mt-2.5 text-[var(--text-primary)] num-hero",
-        TONE_GLOW[tone],
-      )}>
-        {value}
+      <div className="flex items-center justify-between gap-2 mt-2.5 min-w-0">
+        <div className="flex items-baseline gap-1 min-w-0">
+          <span className={cn(
+            "text-[18px] font-extrabold tabular leading-none text-[var(--text-primary)] num-hero",
+            KPI_GLOW[t],
+          )}>
+            {value}
+          </span>
+          {unit ? (
+            <span className="text-[13px] muted font-semibold leading-none">{unit}</span>
+          ) : null}
+        </div>
+        {accessory ?? null}
       </div>
 
-      {trend ? (
+      {delta ? (
+        <div className="flex items-center gap-1.5 min-w-0 mt-1.5">
+          <span className={cn(
+            "inline-flex items-center gap-0.5 text-caption font-bold tabular shrink-0",
+            DELTA_FG[delta.dir],
+          )}>
+            {DeltaIcon ? <DeltaIcon size={11} /> : null}
+            {delta.text}
+          </span>
+          {delta.caption ? (
+            <span className="text-[10px] muted font-semibold truncate">{delta.caption}</span>
+          ) : null}
+        </div>
+      ) : trend ? (
         <div className="t-caption font-semibold mt-1.5 leading-snug">
           {trend}
         </div>
       ) : null}
-    </Inner>
+    </>
+  );
+
+  return href ? (
+    <Link href={href} className={rootClass}>{body}</Link>
+  ) : (
+    <div className={rootClass}>{body}</div>
   );
 }
