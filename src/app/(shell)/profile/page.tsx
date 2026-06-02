@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ChevronDown, KeyRound, Pencil } from "lucide-react";
 import { StubPage } from "@/components/shell/StubPage";
 import { SectionCard, StatusBadge } from "@/components/ui/primitives";
+import { ProfilePhotoEditor } from "@/components/profile/ProfilePhotoEditor";
 import { getCurrentUser } from "@/lib/auth";
 import type { EdifyRole } from "@/lib/auth";
 
@@ -31,14 +32,9 @@ export default async function ProfilePage() {
       title="Profile"
       subtitle="Your Edify identity and account preferences."
     >
-      {/* Hero block */}
+      {/* Hero block — upload/replace/remove your headshot (every role). */}
       <section className="card p-3.5 flex items-center gap-4">
-        <div
-          className="h-14 w-14 rounded-2xl bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)] text-[18px] font-extrabold grid place-items-center shrink-0"
-          aria-hidden
-        >
-          {user.initials}
-        </div>
+        <ProfilePhotoEditor staffId={user.staffId} name={user.name} initials={user.initials} />
         <div className="flex-1 min-w-0">
           <div className="text-[18px] font-extrabold tracking-tight truncate">{user.name}</div>
           <div className="text-body muted truncate">{ROLE_LABEL[user.role]}</div>

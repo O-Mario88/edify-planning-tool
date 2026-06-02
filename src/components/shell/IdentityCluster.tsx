@@ -15,7 +15,6 @@
 
 import { MessageBell } from "@/components/messages/MessageBell";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
-import { AvatarMenu } from "@/components/shell/AvatarMenu";
 import { cn } from "@/lib/utils";
 
 export function IdentityCluster({
@@ -31,7 +30,8 @@ export function IdentityCluster({
         <MessageBell variant={variant} />
       </div>
       <NotificationBell variant={variant} />
-      <AvatarMenu variant={variant} />
+      {/* The account avatar/menu lives in the sidebar profile (SidebarProfile),
+          the single identity surface — intentionally not duplicated here. */}
     </div>
   );
 }

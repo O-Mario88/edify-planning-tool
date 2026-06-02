@@ -136,7 +136,7 @@ export function AvatarMenu({ variant = "default" }: { variant?: AvatarMenuVarian
 
 // ────────── Sub-items ──────────
 
-function MenuLink({
+export function MenuLink({
   Icon,
   label,
   href,
@@ -159,7 +159,7 @@ function MenuLink({
   );
 }
 
-function RoleSwitchButton({ onClose }: { onClose: () => void }) {
+export function RoleSwitchButton({ onClose }: { onClose: () => void }) {
   // The full role picker is a separate component (RoleSwitcher) used
   // by the floating chip at the bottom-right. We trigger it by
   // dispatching a custom event the picker listens for, so we don't
@@ -186,7 +186,7 @@ function RoleSwitchButton({ onClose }: { onClose: () => void }) {
 // button. The active option fills with the card-elevated surface so
 // the rail itself signals "this is what's in effect right now". Pure
 // keyboard-accessible (real <button>s in a role="radiogroup").
-function ThemeToggle() {
+export function ThemeToggle() {
   const { mode, setMode } = useTheme();
   const options: Array<{ value: ThemeMode; label: string; Icon: LucideIcon }> = [
     { value: "light",  label: "Light",  Icon: Sun      },

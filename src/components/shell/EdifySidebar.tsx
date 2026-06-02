@@ -21,7 +21,6 @@ import {
   FileText,
   Settings,
   Database,
-  ExternalLink,
   CalendarCheck,
   Award,
   AlertOctagon,
@@ -40,13 +39,12 @@ import {
   Send,
   Globe,
   Upload,
-  PanelLeftClose,
   type LucideIcon,
 } from "lucide-react";
-import { cceoSidebarItems, cceoUser as cceoUserMock } from "@/lib/cceo-mock";
+import { cceoSidebarItems } from "@/lib/cceo-mock";
 import { ROLE_REDIRECT, type EdifyRole as PublicEdifyRole } from "@/lib/auth-public";
 import { cn } from "@/lib/utils";
-import { SignOutButton } from "@/components/auth/SignOutButton";
+import { SidebarProfile } from "@/components/shell/SidebarProfile";
 import { useMobileDrawer } from "@/components/auth/MobileDrawerShell";
 
 // ────────── Role-aware Dashboard target ──────────
@@ -584,10 +582,17 @@ function buildPartnerMenu(dashboardHref: string): MenuSection[] {
 
 export function EdifySidebar({
   role = "CountryProgramLead",
-  user = { name: "Daniel Mwangi", initials: "DM", online: true },
+  user = { staffId: "STF-DM-014", name: "Daniel Mwangi", initials: "DM", color: "#10b981", district: "Wakiso", online: true },
 }: {
   role?: EdifyRole;
-  user?: { name: string; initials: string; online?: boolean };
+  user?: {
+    staffId: string;
+    name: string;
+    initials: string;
+    color?: string;
+    district?: string;
+    online?: boolean;
+  };
 }) {
   const pathname = usePathname();
   const { setOpen, asideClassName, hamburger, backdrop, closeButton } = useMobileDrawer();
@@ -691,84 +696,18 @@ export function EdifySidebar({
           ))}
         </nav>
 
-        {/* Profile + sign out (or CCEO foot block: profile → quote → collapse) */}
-        <div className="mt-auto px-3 pb-4 space-y-3 border-t border-white/10 pt-3">
-          {isCceo ? (
-            <>
-              {/* Compact CCEO profile row (matches reference). */}
-              <div className="flex items-center gap-3 px-1">
-                <div className="relative shrink-0">
-                  <div className="w-10 h-10 rounded-full bg-emerald-500 text-white font-extrabold flex items-center justify-center text-[13px]">
-                    {cceoUserMock.initials}
-                  </div>
-                  <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-[var(--color-edify-deep)]" />
-                </div>
-                <div className="leading-tight min-w-0 flex-1">
-                  <div className="text-[13px] font-extrabold truncate">{cceoUserMock.name}</div>
-                  <div className="text-caption text-white/70 font-semibold truncate">{cceoUserMock.role}</div>
-                  <div className="text-caption text-white/60 truncate">{cceoUserMock.cluster}</div>
-                  <div className="mt-0.5 flex items-center gap-1.5 text-[10px] text-white/80">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
-                    Online
-                  </div>
-                </div>
-              </div>
-
-              {/* Inspirational quote — italicised, attribution dimmed. */}
-              <blockquote className="px-1 pt-2 border-t border-white/10">
-                <p className="text-[12px] italic text-white/85 leading-snug">
-                  &ldquo;{cceoUserMock.quote}&rdquo;
-                </p>
-                <footer className="mt-1 text-[11px] text-white/55 font-semibold">
-                  — {cceoUserMock.quoteAttribution}
-                </footer>
-              </blockquote>
-
-              {/* Collapse rail — visual affordance only; sign-out kept reachable. */}
-              <div className="pt-2 border-t border-white/10 flex items-center justify-between gap-2">
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-white/75 hover:text-white px-1 py-1"
-                >
-                  <PanelLeftClose size={13} />
-                  Collapse
-                </button>
-                <SignOutButton variant="dark" />
-              </div>
-            </>
-          ) : (
-            <div className="rounded-xl bg-white/[.06] border border-white/10 p-3">
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <div className="w-10 h-10 rounded-full bg-[var(--color-edify-primary)] text-white font-bold flex items-center justify-center shrink-0">
-                    {user.initials}
-                  </div>
-                  {user.online && (
-                    <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-[var(--color-edify-deep)]" />
-                  )}
-                </div>
-                <div className="leading-tight min-w-0 flex-1">
-                  <div className="text-[13px] font-bold truncate">{user.name}</div>
-                  <div className="text-[11px] text-white/70 truncate">{role.replace(/([A-Z])/g, " $1").trim()}</div>
-                  <div className="mt-0.5 flex items-center gap-1.5 text-caption text-white/80">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
-                    {user.online ? "Online" : "Offline"}
-                  </div>
-                </div>
-              </div>
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <Link
-                  href="/profile"
-                  onClick={() => setOpen(false)}
-                  className="h-8 rounded-md border border-white/15 text-[12px] font-semibold text-white/90 hover:bg-white/10 flex items-center justify-center gap-1.5"
-                >
-                  Profile
-                  <ExternalLink size={11} />
-                </Link>
-                <SignOutButton variant="dark" />
-              </div>
-            </div>
-          )}
+        {/* Account — the single identity surface (photo-frame avatar + menu). */}
+        <div className="mt-auto px-3 pb-4 border-t border-white/10 pt-3">
+          <SidebarProfile
+            staffId={user.staffId}
+            name={user.name}
+            initials={user.initials}
+            color={user.color}
+            role={role}
+            district={user.district}
+            online={user.online}
+            onNavigate={() => setOpen(false)}
+          />
         </div>
       </aside>
     </>
