@@ -3,14 +3,13 @@
 import { useMemo, useState } from "react";
 import {
   ListFilter,
-  Columns3,
-  Download,
   ChevronDown,
   Plus,
   Layers,
   MapPin,
 } from "lucide-react";
 import { SchoolsOverviewTable } from "./SchoolsOverviewTable";
+import { ExportButton } from "@/components/ui/ExportButton";
 import {
   applyFilters,
   groupSchools,
@@ -81,14 +80,14 @@ export function SchoolsDirectorySection({
       totalAssignedCount={totalAssignedCount}
       toolbar={
         <div className="flex items-center gap-2">
-          <button type="button" disabled title="Column options are coming soon" className="btn btn-sm opacity-50 cursor-not-allowed">
-            <Columns3 size={12} />
-            Columns
-          </button>
-          <button type="button" disabled title="Export is coming soon" className="btn btn-sm opacity-50 cursor-not-allowed">
-            <Download size={12} />
-            Export
-          </button>
+          <ExportButton
+            rows={filtered.map((s) => ({
+              School: s.schoolName, District: s.district, Region: s.region,
+              Type: s.schoolType ?? s.segment ?? "", SSA_status: s.ssaStatus,
+              SSA_score: s.ssaScore, CCEO: s.assignedCceoName ?? "",
+            }))}
+            filename="schools-directory"
+          />
           <button
             type="button"
             onClick={handleCreateCluster}

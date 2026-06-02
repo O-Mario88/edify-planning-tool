@@ -5,7 +5,6 @@ import {
   Building2,
   CalendarRange,
   ChevronDown,
-  Download,
   Filter,
   GitCompareArrows,
   Globe2,
@@ -20,6 +19,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFilterBar } from "@/hooks/use-filter-bar";
+import { ExportButton } from "@/components/ui/ExportButton";
+import { replicaBestPerforming, replicaAttention } from "@/lib/core-school-replica-mock";
 import {
   ALL_SENTINEL,
   type FilterKey,
@@ -27,6 +28,13 @@ import {
   type FilterScope,
   type FilterScopeEntry,
 } from "@/lib/filters/types";
+
+// Core-schools export rows — best-performing + needs-attention, the two lists
+// that make up the core-schools report.
+const CORE_EXPORT_ROWS: Record<string, unknown>[] = [
+  ...replicaBestPerforming.map((r) => ({ Category: "Best performing", ...(r as Record<string, unknown>) })),
+  ...replicaAttention.map((r) => ({ Category: "Needs attention", ...(r as Record<string, unknown>) })),
+];
 
 // Filter bar — 10 dropdown pills on phones (sm-) become a single
 // horizontal scroll strip with snap-to-pill; from md up they sit in a
@@ -122,15 +130,12 @@ export function ReplicaFilterBar({ scope }: { scope: FilterScope }) {
           <Filter size={13} />
           Filters
         </button>
-        <button
-          type="button"
-          disabled
-          title="Report export is coming soon"
-          className="hidden xl:inline-flex items-center justify-center gap-1.5 h-11 px-4 rounded-xl bg-emerald-500 text-white text-body font-extrabold opacity-50 cursor-not-allowed shadow-[0_8px_24px_-10px_rgba(16,185,129,0.55)]"
-        >
-          <Download size={13} />
-          Export Report
-        </button>
+        <ExportButton
+          rows={CORE_EXPORT_ROWS}
+          filename="core-schools-report"
+          label="Export Report"
+          className="hidden xl:inline-flex !h-11 !px-4 !rounded-xl !bg-emerald-500 !text-white !border-transparent !font-extrabold hover:!opacity-95 shadow-[0_8px_24px_-10px_rgba(16,185,129,0.55)]"
+        />
       </div>
 
       {/* Filters + Export — below the strip on phones, below the grid
@@ -144,15 +149,12 @@ export function ReplicaFilterBar({ scope }: { scope: FilterScope }) {
           <Filter size={13} />
           Filters
         </button>
-        <button
-          type="button"
-          disabled
-          title="Report export is coming soon"
-          className="inline-flex items-center justify-center gap-1.5 h-10 sm:h-11 px-4 rounded-xl bg-emerald-500 text-white text-body font-extrabold opacity-50 cursor-not-allowed flex-1 sm:flex-none shadow-[0_8px_24px_-10px_rgba(16,185,129,0.55)]"
-        >
-          <Download size={13} />
-          Export Report
-        </button>
+        <ExportButton
+          rows={CORE_EXPORT_ROWS}
+          filename="core-schools-report"
+          label="Export Report"
+          className="!h-10 sm:!h-11 !px-4 !rounded-xl !bg-emerald-500 !text-white !border-transparent !font-extrabold hover:!opacity-95 flex-1 sm:flex-none shadow-[0_8px_24px_-10px_rgba(16,185,129,0.55)]"
+        />
       </div>
     </section>
   );

@@ -72,9 +72,16 @@ export default async function FundApprovalsPage() {
     return <ResponsiveDashboard mobile={<CountryFundApprovalsView />} desktop={<CountryFundApprovalsView />} />;
   }
 
+  const approvalExportRows = fundApprovalQueue.map((f) => ({
+    CCEO: f.cceoName, District: f.district, Region: f.region,
+    Amount: f.amount, Status: f.status,
+    Visits: f.counts.visits, Partners: f.counts.partners,
+    Clusters: f.counts.clusters, Trainings: f.counts.trainings,
+  }));
+
   const plBody = (
     <>
-      <FundApprovalsHeader />
+      <FundApprovalsHeader exportRows={approvalExportRows} />
       <FundApprovalsFilterBar />
       <FundApprovalsKpiRow />
 

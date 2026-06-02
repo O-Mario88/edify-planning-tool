@@ -3,7 +3,6 @@
 import { useMemo } from "react";
 import {
   ChevronRight,
-  Download,
   Info,
   Building2,
   GraduationCap,
@@ -33,8 +32,10 @@ import {
   type PeriodKey,
   type Status,
 } from "@/lib/operating-targets-mock";
+import Link from "next/link";
 import { quarterLabel, MID_YEAR_MONTH_RANGE } from "@/lib/fy/fy-core";
 import { HealthPill } from "@/components/ui/Pill";
+import { ExportButton } from "@/components/ui/ExportButton";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { HeaderFilterBar } from "@/components/shell/HeaderFilterBar";
 import type { FilterScope } from "@/lib/filters/types";
@@ -517,14 +518,12 @@ function TopFocusCard({ items }: { items: OperatingTargets["topFocus"] }) {
           </li>
         ))}
       </ul>
-      <button
-        type="button"
-        disabled
-        title="The full insights view is coming soon"
-        className="t-caption font-semibold text-[var(--text-muted)] opacity-60 cursor-not-allowed mt-3 text-left"
+      <Link
+        href="/analytics"
+        className="t-caption font-semibold text-[var(--color-edify-primary)] hover:underline mt-3 text-left inline-flex items-center gap-1"
       >
-        View All insights
-      </button>
+        View all insights →
+      </Link>
     </div>
   );
 }
@@ -548,20 +547,31 @@ export function OperatingTargetsPageHeader({
    *  renders without the filter bar. */
   scope?: FilterScope;
 }) {
+  const exportRows = data.metrics.map((m) => {
+    const c = computeRow(m, data.startedPeriods).cells;
+    return {
+      Metric: m.label,
+      Monthly_target: c.monthly.target, Monthly_achieved: c.monthly.achieved,
+      Q1_target: c.q1.target, Q1_achieved: c.q1.achieved,
+      Q2_target: c.q2.target, Q2_achieved: c.q2.achieved,
+      MidYear_target: c.midYear.target, MidYear_achieved: c.midYear.achieved,
+      Q3_target: c.q3.target, Q3_achieved: c.q3.achieved,
+      Q4_target: c.q4.target, Q4_achieved: c.q4.achieved,
+      FY_target: c.fy.target, FY_achieved: c.fy.achieved, FY_pct: c.fy.pct,
+    };
+  });
   return (
     <PageHeader
       title={data.scope}
       subtitle="Track your performance across all time periods. Monthly progress rolls up to Quarterly, Mid Year, and FY targets."
       filterBar={scope ? <HeaderFilterBar scope={scope} /> : undefined}
       actions={
-        <button
-          type="button"
-          disabled
-          title="Report export is coming soon"
-          className="inline-flex items-center gap-1.5 h-10 px-3.5 rounded-xl bg-[var(--color-edify-primary)] text-white t-body font-semibold opacity-50 cursor-not-allowed"
-        >
-          <Download size={13} /> Export Report
-        </button>
+        <ExportButton
+          rows={exportRows}
+          filename={`${data.scope.replace(/\s+/g, "-").toLowerCase()}-targets-${data.fiscalYearLabel.replace(/\s+/g, "")}`}
+          label="Export Report"
+          className="!h-10 !px-3.5 !rounded-xl !bg-[var(--color-edify-primary)] !text-white !border-transparent hover:!opacity-95 t-body"
+        />
       }
     />
   );

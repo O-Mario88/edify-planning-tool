@@ -3,13 +3,11 @@
 import Link from "next/link";
 import {
   Building2,
-  ListFilter,
-  Columns3,
-  Download,
   MoreVertical,
   MapPin,
 } from "lucide-react";
 import { SectionCard, StatusBadge, TableEmptyRow } from "@/components/ui/primitives";
+import { ExportButton } from "@/components/ui/ExportButton";
 import {
   formatDate,
   type SchoolRow,
@@ -71,33 +69,14 @@ export function SchoolsOverviewTable({
       actions={
         toolbar ?? (
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              disabled
-              title="Filtering this table is coming soon"
-              className="btn btn-sm opacity-50 cursor-not-allowed"
-            >
-              <ListFilter size={12} />
-              Filters
-            </button>
-            <button
-              type="button"
-              disabled
-              title="Column options are coming soon"
-              className="btn btn-sm opacity-50 cursor-not-allowed"
-            >
-              <Columns3 size={12} />
-              Columns
-            </button>
-            <button
-              type="button"
-              disabled
-              title="Export is coming soon"
-              className="btn btn-sm opacity-50 cursor-not-allowed"
-            >
-              <Download size={12} />
-              Export
-            </button>
+            <ExportButton
+              rows={renderGroups.flatMap((g) => g.schools).map((s) => ({
+                School: s.schoolName, District: s.district, Region: s.region,
+                Type: s.schoolType ?? s.segment ?? "", SSA_status: s.ssaStatus,
+                SSA_score: s.ssaScore, CCEO: s.assignedCceoName ?? "",
+              }))}
+              filename="schools-overview"
+            />
           </div>
         )
       }
