@@ -43,12 +43,13 @@ export function SidebarBrand({
   );
 
   // items-start stops the flex column from stretching the logo to the full
-  // sidebar width (which would distort the wordmark).
+  // sidebar width (which would distort the wordmark). w-full lets the subtitle
+  // use the padded container width so it wraps instead of overflowing the rail.
   const inner = (
-    <span className="flex flex-col items-start gap-1.5 min-w-0">
+    <span className="flex flex-col items-start gap-1.5 w-full min-w-0">
       {logo}
       {!compact && (
-        <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/65 leading-tight truncate">
+        <span className="block w-full text-[10.5px] font-semibold uppercase tracking-[0.1em] text-white/60 leading-snug break-words">
           {SUBTITLE}
         </span>
       )}
