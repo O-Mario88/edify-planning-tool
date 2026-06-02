@@ -7,7 +7,7 @@
 // report / verification), and a context-aware action button.
 
 import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Inbox } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type {
   PartnerInboxRow,
@@ -233,6 +233,19 @@ export function PartnerActionInbox({
                 </tr>
               );
             })}
+            {pageRows.length === 0 && (
+              <tr>
+                <td colSpan={7} className="py-10 text-center">
+                  <span className="inline-flex flex-col items-center gap-1.5 text-[var(--color-edify-muted)]">
+                    <span className="h-9 w-9 rounded-full bg-[var(--color-edify-soft)] grid place-items-center">
+                      <Inbox size={16} />
+                    </span>
+                    <span className="text-[12.5px] font-extrabold text-[var(--color-edify-text)]">All clear in this queue</span>
+                    <span className="text-[11px]">Nothing needs you here right now — new items appear as work moves through the pipeline.</span>
+                  </span>
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
