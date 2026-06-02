@@ -215,9 +215,10 @@ export function VerificationDonut({
             />
           </PieChart>
         </ResponsiveContainer>
-        <div className="absolute inset-0 flex flex-col items-center justify-center leading-none pointer-events-none">
-          <div className="num-hero text-[26px] font-extrabold tabular">{verifiedPct}%</div>
-          <div className="t-tiny muted mt-0.5">IA-verified</div>
+        {/* Center label scales with the donut so it always fits the inner hole. */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center leading-none pointer-events-none px-2 text-center">
+          <div className="num-hero font-extrabold tabular" style={{ fontSize: Math.max(15, Math.round(height * 0.15)) }}>{verifiedPct}%</div>
+          <div className="muted" style={{ fontSize: Math.max(9, Math.round(height * 0.05)), marginTop: 2 }}>IA-verified</div>
         </div>
       </div>
       <ul className="flex-1 min-w-0 space-y-1.5">

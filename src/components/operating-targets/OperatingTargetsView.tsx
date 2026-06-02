@@ -88,7 +88,7 @@ function Donut({
   const dash = (Math.min(pct, 100) / 100) * c;
   return (
     <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size}>
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#eef2f4" strokeWidth={stroke} />
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--color-edify-divider)" strokeWidth={stroke} />
       <circle
         cx={size / 2}
         cy={size / 2}
@@ -211,7 +211,7 @@ export function OperatingTargetsView({ data }: { data: OperatingTargets }) {
                     <div className="relative shrink-0">
                       <Donut pct={c.pct} color={cellTone.primary} />
                       <div className="absolute inset-0 grid place-items-center">
-                        <span className="t-body font-extrabold text-[#0f1720]">{c.pct}%</span>
+                        <span className="t-body font-extrabold text-[var(--color-edify-text)]">{c.pct}%</span>
                       </div>
                     </div>
                     <div className="min-w-0">
@@ -374,7 +374,7 @@ function ProgressTrendCard({ data }: { data: OperatingTargets["trend"] }) {
       <div className="h-[200px]">
         <ResponsiveContainer>
           <LineChart data={data} margin={{ top: 4, right: 8, bottom: 0, left: -16 }}>
-            <CartesianGrid stroke="#eef2f4" vertical={false} />
+            <CartesianGrid stroke="var(--color-edify-divider)" vertical={false} />
             <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#8a96a1" }} tickLine={false} axisLine={{ stroke: "#eef2f4" }} />
             <YAxis tick={{ fontSize: 10, fill: "#8a96a1" }} tickLine={false} axisLine={false} tickFormatter={(v) => `${v}%`} domain={[0, 100]} />
             <Tooltip
@@ -450,7 +450,7 @@ function PerformanceDistributionCard({
       <div className="flex items-center gap-3">
         <div className="relative shrink-0" style={{ width: size, height: size }}>
           <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size}>
-            <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#eef2f4" strokeWidth={stroke} />
+            <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--color-edify-divider)" strokeWidth={stroke} />
             {segs.map((s, i) => {
               const dash = s.len;
               const offset = -acc;
