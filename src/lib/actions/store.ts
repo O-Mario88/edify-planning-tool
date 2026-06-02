@@ -369,6 +369,36 @@ type EntityStore = {
 const STORE_KEY = "__edify_entity_store__";
 type GlobalWithStore = typeof globalThis & { [STORE_KEY]?: EntityStore };
 
+// Demo seed — populates the LIVE action store so the IA Verification Queue
+// (/data-verification: SubmittedForVerification|Completed) and the Accountant
+// accountability queue (/dashboards/accountant: Verified) aren't empty on a cold
+// start. Guarded to non-test env so the test suite keeps its empty-store
+// assumptions. Activities sit in Paul Chinyama's (STF-PC-001) approved June plan
+// across his portfolio schools, spanning the verification → accountability tail
+// of the activity workflow.
+function seedDemoStore(s: EntityStore) {
+  if (process.env.NODE_ENV === "test") return;
+  if (s.activities.length > 0 || s.plans.length > 0) return;
+  const now = new Date().toISOString();
+  s.plans.push({
+    id: "PLAN-DEMO-PC-2606", authorId: "STF-PC-001", authorName: "Paul Chinyama",
+    countryId: "UG", monthIso: "2026-06", status: "Approved", totalCostCents: 0,
+    approvedAt: now, approvedById: "STF-DM-014", createdAt: now, updatedAt: now,
+  });
+  const base = (over: Partial<PlannedActivityRecord> & Pick<PlannedActivityRecord, "id" | "title" | "status">): PlannedActivityRecord => ({
+    planId: "PLAN-DEMO-PC-2606", schoolId: "32791", kind: "IN_SCHOOL_COACHING",
+    weekOfMonth: 1, assigneeId: "STF-PC-001", estCostCents: 18_000_000,
+    createdAt: now, updatedAt: now, ...over,
+  });
+  s.activities.push(
+    base({ id: "ACT-DEMO-1", schoolId: "32791", kind: "IN_SCHOOL_COACHING", title: "Coaching visit — Nakaseke Hill Primary", status: "SubmittedForVerification", salesforceId: "SVE-40231", interventionArea: "Teaching Environment" }),
+    base({ id: "ACT-DEMO-2", schoolId: "52910", kind: "IN_SCHOOL_COACHING", title: "Support visit — Mukono Light Primary", status: "SubmittedForVerification", salesforceId: "SVE-40232", interventionArea: "Leadership Best Practice" }),
+    base({ id: "ACT-DEMO-3", schoolId: "51884", kind: "CLUSTER_TRAINING", title: "Cluster training — Wakiso Grace Academy", status: "Verified", salesforceId: "TS-50294", interventionArea: "Learning Environment" }),
+    base({ id: "ACT-DEMO-4", schoolId: "32791", kind: "IN_SCHOOL_COACHING", title: "Follow-up visit — Nakaseke Hill Primary", status: "Verified", salesforceId: "SVE-40233", interventionArea: "Christlike Behaviour" }),
+    base({ id: "ACT-DEMO-5", schoolId: "51884", kind: "IN_SCHOOL_COACHING", title: "Closed — Wakiso Grace Academy coaching", status: "AccountabilityClosed", salesforceId: "SVE-40180", netsuiteExpenseId: "6161", interventionArea: "Teaching Environment" }),
+  );
+}
+
 function getStore(): EntityStore {
   const g = globalThis as GlobalWithStore;
   if (!g[STORE_KEY]) {
@@ -389,6 +419,7 @@ function getStore(): EntityStore {
       donorSnapshots:      [],
       seenIdempotencyKeys: new Set(),
     };
+    seedDemoStore(g[STORE_KEY]!);
   }
   // Lazy migration: any field added in a later version is back-filled
   // here so an older cached store (held across HMR) doesn't break new
