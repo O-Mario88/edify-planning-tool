@@ -13,6 +13,7 @@ import { PrimaryDistrictControl } from "@/components/admin/PrimaryDistrictContro
 import { AssignTargetProfileControl } from "@/components/admin/AssignTargetProfileControl";
 import { ChangeSupervisorControl } from "@/components/admin/ChangeSupervisorControl";
 import { defaultTargetProfileFor } from "@/lib/targets/staff-target-profile";
+import { staffOnboardingHealth } from "@/lib/org/staff-health";
 import { activeFinancialYear } from "@/lib/fy-engine";
 
 // CD / HR own staff onboarding; Admin retained for the demo.
@@ -21,6 +22,34 @@ const STAFF_ADMIN_ROLES = ["CountryDirector", "HumanResource", "Admin"];
 const STATUS_TONE: Record<string, "green" | "amber" | "slate"> = {
   Active: "green", Suspended: "slate", Inactive: "slate",
 };
+
+// Onboarding system-health summary — pending activation + the gaps to clear.
+function StaffHealthStrip() {
+  const h = staffOnboardingHealth();
+  if (h.totalCreated === 0) return <div className="text-[11.5px] muted">No staff added through onboarding yet.</div>;
+  const chips: Array<{ label: string; value: number; tone: "amber" | "rose" | "green" | "slate" }> = [
+    { label: "Active", value: h.active, tone: "green" },
+    { label: "In onboarding", value: h.pendingActivation, tone: h.pendingActivation > 0 ? "amber" : "slate" },
+    { label: "No supervisor", value: h.missingSupervisor, tone: h.missingSupervisor > 0 ? "rose" : "slate" },
+    { label: "Unassigned schools", value: h.unassignedSchools, tone: h.unassignedSchools > 0 ? "amber" : "slate" },
+    { label: "Duplicate emails", value: h.duplicateEmails.length, tone: h.duplicateEmails.length > 0 ? "rose" : "slate" },
+  ];
+  const TONE = {
+    green: "bg-emerald-100 text-emerald-700",
+    amber: "bg-amber-100 text-amber-700",
+    rose: "bg-rose-100 text-rose-700",
+    slate: "bg-slate-100 text-slate-600",
+  } as const;
+  return (
+    <div className="flex items-center gap-1.5 flex-wrap">
+      {chips.map((c) => (
+        <span key={c.label} className={cn("inline-flex items-center gap-1 px-2 py-[3px] rounded-md text-[11px] font-extrabold", TONE[c.tone])}>
+          {c.value} <span className="font-semibold opacity-80">{c.label}</span>
+        </span>
+      ))}
+    </div>
+  );
+}
 
 export default async function AdminUsersIndex() {
   const me = await getCurrentUser();
@@ -48,7 +77,8 @@ export default async function AdminUsersIndex() {
       searchPlaceholder="Search users"
     >
       {canAdd && (
-        <div className="flex justify-end">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <StaffHealthStrip />
           <AddStaffControl existingEmails={existingEmails} />
         </div>
       )}
