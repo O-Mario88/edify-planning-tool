@@ -49,18 +49,15 @@ becoming *derived views*, not separate stores.
 
 ---
 
-## 🟡 NEEDS YOUR PRODUCT DECISION — not safe for me to delete unilaterally
+## 🟡 PRODUCT DECISIONS — RESOLVED (executed 2026-06)
 
-These have **live routes and working UI**. Removing them deletes a feature, so it's a
-scope call, not cleanup. Each is currently in-vision-adjacent:
-
-| Surface | Route | Question |
-|---|---|---|
-| Leaderboard | `/leaderboard` | Staff gamification/rankings. Phase-1 backend, or defer? |
-| Field intelligence | `/field-intelligence` | Weekly debrief narratives. Required reporting layer, or exploratory? |
-| Leave management | `/leave` | HR staff-leave approvals. In scope for the planning tool's backend, or a separate HR concern? |
-| Special projects | `/special-projects` | CD one-off allocations. Integrate with the fund workflow, or separate? |
-| Changelog / activity-log | `/changelog`, `/activity-log` | Meta pages (release notes / audit). Keep, or drop pre-launch? |
+| Surface | Route | Decision | Action taken |
+|---|---|---|---|
+| **Leaderboard** | `/leaderboard` | **Retire** | Removed route + 6 components + mobile view + the team-targets "Leaderboard" tab + all nav entries. Repointed inbound links by intent: champion-pipeline → `/core-schools`, recognition/gamification → `/team-targets`. Kept `calculateCategoryLeaderboard` (powers the login-hero stat). |
+| **Field intelligence** | `/field-intelligence` | **Keep in full** | Discovered it's the daily-debrief + decisions backbone feeding ~10 live surfaces (`/decisions`, `/debriefs`, weekly reports, HR/RVP/Director dashboards). Not an edge feature — left untouched. |
+| **Meta pages** | `/changelog`, `/activity-log` | **Retire** | Removed both routes; repointed activity-log links → canonical `/admin/audit-log`; dropped the data-intake "see related activity" step. |
+| Leave management | `/leave` | **Keep** | Left in place. |
+| Special projects | `/special-projects` | **Keep** | Left in place. |
 
 ---
 
