@@ -30,7 +30,6 @@ export function FundsReceivedTable() {
               <th scope="col" className="text-left  py-2.5 pr-3">Source</th>
               <th scope="col" className="text-left  py-2.5 pr-3">Description</th>
               <th scope="col" className="text-right py-2.5 pr-3">Amount (UGX)</th>
-              <th scope="col" className="text-left  py-2.5 pr-3">Reference</th>
               <th scope="col" className="text-left  py-2.5">Received By</th>
             </tr>
           </thead>
@@ -57,9 +56,6 @@ export function FundsReceivedTable() {
                     <ArrowDownLeft size={11} strokeWidth={2.4} className="text-emerald-500" />
                     {r.amountUgx.toLocaleString()}
                   </span>
-                </td>
-                <td className="py-3 pr-3 text-[11px] font-extrabold tabular text-sky-700 whitespace-nowrap">
-                  {r.reference}
                 </td>
                 <td className="py-3 text-[11.5px] font-semibold text-slate-700 whitespace-nowrap">
                   {r.receivedBy}
