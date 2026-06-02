@@ -48,7 +48,7 @@ export function SidebarBrand({
     <span className="flex flex-col items-start gap-1.5 min-w-0">
       {logo}
       {!compact && (
-        <span className="text-[12px] font-semibold tracking-wide text-white/65 leading-tight truncate">
+        <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/65 leading-tight truncate">
           {SUBTITLE}
         </span>
       )}
