@@ -26,9 +26,7 @@ export function IdentityCluster({
 }) {
   return (
     <div className={cn("flex items-center gap-2.5 shrink-0", className)}>
-      <div className="hidden sm:block">
-        <MessageBell variant={variant} />
-      </div>
+      <MessageBell variant={variant} />
       <NotificationBell variant={variant} />
       {/* The account avatar/menu lives in the sidebar profile (SidebarProfile),
           the single identity surface — intentionally not duplicated here. */}

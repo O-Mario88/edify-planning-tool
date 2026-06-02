@@ -125,8 +125,11 @@ export function CollapsibleCard({
           {description ? (
             <p className="t-body text-secondary mt-1">{description}</p>
           ) : null}
+          {/* On narrow screens the meta drops below the title so it never
+              starves the title column into a one-word-per-line wrap. */}
+          {meta ? <span className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 sm:hidden">{meta}</span> : null}
         </div>
-        {meta ? <span className="shrink-0 self-center mr-1">{meta}</span> : null}
+        {meta ? <span className="hidden sm:inline-flex shrink-0 self-center mr-1">{meta}</span> : null}
         <ChevronDown
           size={18}
           aria-hidden

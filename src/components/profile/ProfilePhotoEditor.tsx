@@ -8,7 +8,7 @@
 // avatar everywhere (sidebar profile, profile hero).
 
 import { useEffect, useRef, useState } from "react";
-import { Camera, Upload, Trash2 } from "lucide-react";
+import { Camera, Trash2 } from "lucide-react";
 import { ProfileAvatar } from "@/components/ui/ProfileAvatar";
 import { getProfilePhoto, setProfilePhoto, clearProfilePhoto } from "@/lib/profile-photo-store";
 
@@ -73,10 +73,13 @@ export function ProfilePhotoEditor({
 
   return (
     <div className="flex items-center gap-4">
+      {/* The camera badge IS the upload control — click the avatar to pick a
+          photo. No separate "Upload photo" button. */}
       <button
         type="button"
         onClick={pick}
-        aria-label="Upload a profile photo"
+        aria-label={hasPhoto ? "Replace your profile photo" : "Upload a profile photo"}
+        title={hasPhoto ? "Replace photo" : "Upload photo"}
         className="relative group rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-edify-primary)] focus-visible:ring-offset-2"
       >
         <ProfileAvatar key={bump} staffId={staffId} name={name} initials={initials} color={color} size={64} rounded="full" ring />
@@ -87,25 +90,16 @@ export function ProfilePhotoEditor({
 
       <div className="min-w-0">
         <div className="text-body font-semibold">Profile photo</div>
-        <div className="text-[11px] muted leading-snug">JPG, PNG, or WebP · up to 3 MB. Used as your avatar across Edify.</div>
-        <div className="mt-2 flex items-center gap-2">
+        <div className="text-[11px] muted leading-snug">Tap the camera to {hasPhoto ? "replace" : "upload"} your headshot. JPG, PNG, or WebP · up to 3 MB.</div>
+        {hasPhoto && (
           <button
             type="button"
-            onClick={pick}
-            className="h-8 px-3 rounded-md bg-[var(--color-edify-primary)] text-white text-[12px] font-semibold inline-flex items-center gap-1.5 hover:opacity-95"
+            onClick={remove}
+            className="mt-2 inline-flex items-center gap-1.5 text-[12px] font-semibold text-rose-600 hover:underline"
           >
-            <Upload size={13} /> {hasPhoto ? "Replace" : "Upload photo"}
+            <Trash2 size={13} /> Remove photo
           </button>
-          {hasPhoto && (
-            <button
-              type="button"
-              onClick={remove}
-              className="h-8 px-3 rounded-md border border-[var(--color-edify-border)] text-[var(--color-edify-text)] text-[12px] font-semibold inline-flex items-center gap-1.5 hover:bg-[var(--color-edify-soft)]/60"
-            >
-              <Trash2 size={13} /> Remove
-            </button>
-          )}
-        </div>
+        )}
         {error && <div className="mt-1.5 text-[11px] text-rose-600">{error}</div>}
       </div>
 

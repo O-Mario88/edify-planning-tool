@@ -87,11 +87,9 @@ export function MobileTopBar({
         // the pinned sidebar + in-page PageHeader.
         "lg:hidden sticky top-0 z-30",
         "flex items-center gap-2 px-3 sm:px-4 h-14",
-        // Premium gradient instead of a flat dark fill — a subtle
-        // top→bottom tint plus a warm radial accent in the top-right
-        // gives the chrome material the same depth the .hero-mobile
-        // surface has. The shadow strengthens on scroll.
-        "bg-gradient-to-b from-[#15263a] via-[#0e1c2c] to-[#0a1623] text-white",
+        // Match the sidebar exactly (same `.sidebar-bg` token) so the mobile/
+        // tablet chrome reads as one continuous surface across every theme.
+        "sidebar-bg text-white",
         "border-b border-white/10",
         "transition-shadow duration-300",
         scrolled

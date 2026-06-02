@@ -56,8 +56,11 @@ export function SectionHeader({
         {description ? (
           <p className="t-body text-secondary mt-1">{description}</p>
         ) : null}
+        {/* Narrow screens: meta drops below the title so it never squeezes the
+            title column into a per-word wrap. */}
+        {meta ? <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 sm:hidden">{meta}</div> : null}
       </div>
-      {meta ? <div className="shrink-0 ml-auto">{meta}</div> : null}
+      {meta ? <div className="hidden sm:block shrink-0 ml-auto">{meta}</div> : null}
     </header>
   );
 }
