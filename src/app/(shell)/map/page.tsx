@@ -104,6 +104,7 @@ export default function MapPage() {
               key={p.id}
               href={`/schools/${p.id}`}
               title={`${p.name} · ${p.district} · SSA ${p.score}%`}
+              aria-label={`${p.name}, ${p.district}, SSA ${p.score} percent — open school`}
               className="absolute -translate-x-1/2 -translate-y-1/2 h-2.5 w-2.5 rounded-full ring-1 ring-white/80 shadow-[0_1px_2px_rgba(0,0,0,0.25)] hover:h-3.5 hover:w-3.5 hover:z-10 transition-all"
               style={{ left: `${p.x}%`, top: `${p.y}%`, backgroundColor: p.color }}
             />
