@@ -272,29 +272,53 @@ function NewSchoolDrawer({ open, onClose, existingIds, initialMode = "manual" }:
       </div>
 
       {mode === "manual" ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Input label="School ID" placeholder={ID_FORMATS.school.example} helper={ID_FORMATS.school.hint}
-            value={form.schoolId} error={errors.schoolId} onChange={(e) => set("schoolId", e.target.value)} />
-          <Input label="School name" placeholder="St. Mary Primary" value={form.schoolName} error={errors.schoolName}
-            onChange={(e) => set("schoolName", e.target.value)} />
-          <Select label="Region" placeholder="Select region" value={form.region} error={errors.region}
-            options={REGIONS.map((r) => ({ value: r.key, label: r.label }))}
-            onChange={(e) => { set("region", e.target.value); set("district", ""); set("subCounty", ""); }} />
-          <Select label="District" placeholder={form.region ? "Select district" : "Pick a region first"} value={form.district}
-            error={errors.district} disabled={!form.region} options={districtOptions}
-            onChange={(e) => { set("district", e.target.value); set("subCounty", ""); }} />
-          <Select label="Sub-county (optional)" placeholder={form.district ? "Select sub-county" : "Pick a district first"}
-            value={form.subCounty} disabled={!form.district} options={subCountyOptions}
-            onChange={(e) => set("subCounty", e.target.value)} />
-          <Select label="School type" value={form.schoolType}
-            options={SCHOOL_TYPES.map((t) => ({ value: t, label: t }))}
-            onChange={(e) => set("schoolType", e.target.value as SchoolType)} />
-          <Input label="Enrollment (optional)" type="number" placeholder="320" value={form.enrollment} error={errors.enrollment}
-            onChange={(e) => set("enrollment", e.target.value)} />
-          <Input label="Assigned CCEO (optional)" placeholder="Aisha Dar" value={form.assignedCceo}
-            onChange={(e) => set("assignedCceo", e.target.value)} />
-          <Input label="Cluster (optional)" placeholder="Central Cluster 3" value={form.cluster}
-            onChange={(e) => set("cluster", e.target.value)} />
+        <div className="space-y-4">
+          <div className="rounded-lg border border-[var(--color-edify-divider)] bg-[var(--color-edify-soft)]/40 px-3 py-2 text-[11px] leading-snug">
+            <span className="font-extrabold text-[var(--color-edify-text)]">Only 4 fields are required</span> to create a school —
+            School ID, School Name, District, and Partner Type. Everything else (owner, enrolment, contact, address) can be
+            <span className="font-extrabold text-[var(--color-edify-text)]"> added later by IA or staff</span>.
+          </div>
+
+          {/* Required */}
+          <div>
+            <h4 className="text-[10.5px] font-extrabold uppercase tracking-[0.08em] text-[var(--color-edify-muted)] mb-2">Required</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Input label="School ID *" placeholder={ID_FORMATS.school.example} helper={ID_FORMATS.school.hint}
+                value={form.schoolId} error={errors.schoolId} onChange={(e) => set("schoolId", e.target.value)} />
+              <Input label="School name *" placeholder="St. Mary Primary" value={form.schoolName} error={errors.schoolName}
+                onChange={(e) => set("schoolName", e.target.value)} />
+              <Select label="Region *" placeholder="Select region" value={form.region} error={errors.region}
+                options={REGIONS.map((r) => ({ value: r.key, label: r.label }))}
+                onChange={(e) => { set("region", e.target.value); set("district", ""); set("subCounty", ""); }} />
+              <Select label="District *" placeholder={form.region ? "Select district" : "Pick a region first"} value={form.district}
+                error={errors.district} disabled={!form.region} options={districtOptions}
+                onChange={(e) => { set("district", e.target.value); set("subCounty", ""); }} />
+              <Select label="Partner type *" value={form.schoolType}
+                options={SCHOOL_TYPES.map((t) => ({ value: t, label: t }))}
+                onChange={(e) => set("schoolType", e.target.value as SchoolType)} />
+            </div>
+          </div>
+
+          {/* Optional — add now or later */}
+          <div>
+            <h4 className="text-[10.5px] font-extrabold uppercase tracking-[0.08em] text-[var(--color-edify-muted)] mb-2">
+              Optional — add now or later
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Input label="Enrolment" type="number" placeholder="320" value={form.enrollment} error={errors.enrollment}
+                helper="Or it arrives with the first SSA upload." onChange={(e) => set("enrollment", e.target.value)} />
+              <Input label="Account Owner (CCEO)" placeholder="Aisha Dar" value={form.assignedCceo}
+                helper="IA can assign the school to a CCEO later." onChange={(e) => set("assignedCceo", e.target.value)} />
+              <Select label="Sub-county" placeholder={form.district ? "Select sub-county" : "Pick a district first"}
+                value={form.subCounty} disabled={!form.district} options={subCountyOptions}
+                onChange={(e) => set("subCounty", e.target.value)} />
+              <Input label="Cluster" placeholder="Central Cluster 3" value={form.cluster}
+                onChange={(e) => set("cluster", e.target.value)} />
+            </div>
+            <p className="text-[10.5px] muted mt-2">
+              Phone, primary contact, and shipping address are also optional — include them in the CSV when available, or leave blank.
+            </p>
+          </div>
         </div>
       ) : (
         <CsvUploadPanel
@@ -325,7 +349,10 @@ function CsvUploadPanel({
       <div className="rounded-lg border border-dashed border-[var(--color-edify-divider)] p-4 text-center">
         <FileUp size={20} className="mx-auto text-[var(--color-edify-muted)]" />
         <p className="text-[12px] font-extrabold mt-1.5">Upload the School Onboarding CSV</p>
-        <p className="text-[11px] muted">Use the template headers. School ID must be {ID_FORMATS.school.hint}.</p>
+        <p className="text-[11px] muted">
+          Required columns: <span className="font-extrabold text-[var(--color-edify-text)]">School ID, School Name, District, Current Partner Type</span>.
+          Owner, enrolment, contact &amp; address are optional — leave blank if unknown. School ID must be {ID_FORMATS.school.hint}.
+        </p>
         <div className="flex items-center justify-center gap-2 mt-2.5">
           <input ref={fileRef} type="file" accept=".csv,text/csv" className="hidden" onChange={onPickFile} />
           <Button variant="secondary" size="sm" Icon={FileUp} onClick={() => fileRef.current?.click()}>
