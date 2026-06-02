@@ -86,6 +86,9 @@ export type PlanBuilderProps = {
   recommendationsByPartner:  Record<string, PartnerFollowUpRecommendation[]>;
   defaultPartnerId:          string;
   costRates:                 PlanCostRates;
+  /** Step-1 District Gateway card, rendered under the page header as the
+   *  first section (not floating above the page chrome). */
+  gateway?:                  React.ReactNode;
 };
 
 // Per-school overrides for Staff Visit tab.
@@ -115,6 +118,7 @@ export function PlanBuilderDesktopView({
   recommendationsByPartner,
   defaultPartnerId,
   costRates,
+  gateway,
 }: PlanBuilderProps) {
   const [tab, setTab] = useState<Tab>("staff");
   const [schoolQuery, setSchoolQuery]     = useState("");
@@ -513,6 +517,9 @@ export function PlanBuilderDesktopView({
       />
 
       <div className="px-4 sm:px-5 md:px-6 pb-10 md:pb-6 space-y-4">
+        {/* Step 1 — District Gateway, the first section under the page header. */}
+        {gateway}
+
         {/* Submitted-batches strip */}
         {submittedBatches.length > 0 && (
           <SubmittedBatchesStrip

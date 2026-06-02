@@ -58,25 +58,25 @@ export default async function PlanBuilderPage() {
   return (
     <>
       <TitleRegister title="Create / Edit Plan" dateLabel="May 2025" />
-      {/* Step 1 — district gateway. Renders above the existing PlanBuilder
-          on every viewport. Auto-populates cost from the CD's rates so the
-          planner sees the price tier *before* they assemble a full plan. */}
-      <div className="px-3 sm:px-4 md:px-5 lg:px-6 pt-3 md:pt-4">
+      {/* Step 1 — District Gateway. On MOBILE it's the first content under the
+          MobileTopBar (so it's gated to mobile here); on DESKTOP it renders
+          INSIDE the builder, just below the in-page page header (passed as the
+          `gateway` slot) — no longer floating above the page chrome. */}
+      <div className="md:hidden px-3 sm:px-4 pt-3">
         <DistrictGatewayCard homeDistrict={homeDistrict} rates={visitCostRates} />
       </div>
       <ResponsiveDashboard
         mobile={<PlanBuilderView />}
         desktop={
-          <>
-            <PlanBuilderDesktopView
-                highPrioritySchoolVisits={highPrioritySchoolVisits}
-                highPriorityClusters={highPriorityClusters}
-                partnerCapacityProfiles={partnerCapacityProfiles}
-                recommendationsByPartner={recommendationsByPartner}
-                defaultPartnerId={defaultPartnerId}
-                costRates={costRates}
-              />
-            </>
+          <PlanBuilderDesktopView
+            highPrioritySchoolVisits={highPrioritySchoolVisits}
+            highPriorityClusters={highPriorityClusters}
+            partnerCapacityProfiles={partnerCapacityProfiles}
+            recommendationsByPartner={recommendationsByPartner}
+            defaultPartnerId={defaultPartnerId}
+            costRates={costRates}
+            gateway={<DistrictGatewayCard homeDistrict={homeDistrict} rates={visitCostRates} />}
+          />
         }
       />
     </>
