@@ -8,11 +8,14 @@
 //      from the staff member as proof of accountability. NetSuite is
 //      the system of record for ledger + reconciliation.
 
+// Single canonical accountant identity for the demo — matches the signed-in
+// Program Accountant (Moses Tindi) so the console header and the CommandStack
+// hero never show two different names on the same page.
 export const accountantUser = {
-  name: "Angela Mukasa",
-  shortName: "Angela",
-  firstName: "Angela",
-  initials: "AM",
+  name: "Moses Tindi",
+  shortName: "Moses",
+  firstName: "Moses",
+  initials: "MT",
   role: "Program Accountant",
   online: true,
   country: "Uganda",
@@ -316,11 +319,11 @@ export type FundsReceivedRow = {
 };
 
 export const fundsReceivedRows: FundsReceivedRow[] = [
-  { date: "May 05, 2025", source: "RVP / HQ Transfer",       description: "May 2025 Country Budget Transfer",      amountUgx: 250_000_000, reference: "TRF-2505-0001", receivedBy: "Angela M." },
-  { date: "May 12, 2025", source: "RVP / HQ Transfer",       description: "Discipleship Clubs grant — Q2 tranche", amountUgx:  48_400_000, reference: "TRF-2505-0003", receivedBy: "Angela M." },
-  { date: "May 18, 2025", source: "Bank Interest",           description: "USD account quarterly interest",        amountUgx:   1_600_000, reference: "INT-2505-0014", receivedBy: "Angela M." },
-  { date: "May 20, 2025", source: "Additional Funding",      description: "Cluster Training Top-up",               amountUgx: 135_600_000, reference: "TRF-2505-0002", receivedBy: "Angela M." },
-  { date: "May 24, 2025", source: "Field Balance Return",    description: "Week 19 unused field funds returned",   amountUgx:     780_000, reference: "BAL-2505-0021", receivedBy: "Angela M." },
+  { date: "May 05, 2025", source: "RVP / HQ Transfer",       description: "May 2025 Country Budget Transfer",      amountUgx: 250_000_000, reference: "TRF-2505-0001", receivedBy: "Moses T." },
+  { date: "May 12, 2025", source: "RVP / HQ Transfer",       description: "Discipleship Clubs grant — Q2 tranche", amountUgx:  48_400_000, reference: "TRF-2505-0003", receivedBy: "Moses T." },
+  { date: "May 18, 2025", source: "Bank Interest",           description: "USD account quarterly interest",        amountUgx:   1_600_000, reference: "INT-2505-0014", receivedBy: "Moses T." },
+  { date: "May 20, 2025", source: "Additional Funding",      description: "Cluster Training Top-up",               amountUgx: 135_600_000, reference: "TRF-2505-0002", receivedBy: "Moses T." },
+  { date: "May 24, 2025", source: "Field Balance Return",    description: "Week 19 unused field funds returned",   amountUgx:     780_000, reference: "BAL-2505-0021", receivedBy: "Moses T." },
 ];
 
 // ────────── Recent Disbursements ──────────────────────────────────────
