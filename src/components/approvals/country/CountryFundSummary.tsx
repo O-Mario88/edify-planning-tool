@@ -88,9 +88,8 @@ function ApprovalRateCard() {
               </Pie>
             </PieChart>
           </ResponsiveContainer>
-          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            <span className="text-[16px] font-extrabold tabular leading-none num-hero glow-emerald">{countryApprovalRate.rate}%</span>
-            <span className="text-[8.5px] muted font-bold uppercase tracking-wide mt-0.5">Approval Rate</span>
+          <div className="absolute inset-0 grid place-items-center pointer-events-none">
+            <span className="text-[19px] font-extrabold tabular leading-none num-hero glow-emerald text-[var(--color-edify-text)]">{countryApprovalRate.rate}%</span>
           </div>
         </div>
         <ul className="flex-1 min-w-0 flex flex-col gap-1.5">
