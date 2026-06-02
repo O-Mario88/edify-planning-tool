@@ -3,9 +3,13 @@ import { Lock, CheckCircle2, Handshake, Building2, GraduationCap } from "lucide-
 import { StubPage } from "@/components/shell/StubPage";
 import { getCurrentUser } from "@/lib/auth";
 import { portfolioForStaffId } from "@/lib/portfolio/portfolio";
-import { activePartnerAssignmentsForSchool } from "@/lib/portfolio/partner-assignments";
+import { activePartnerAssignmentsForSchool, schoolIdsWithActivePartner } from "@/lib/portfolio/partner-assignments";
 import { SchoolPartnerControl } from "@/components/portfolio/SchoolPartnerControl";
-import { SSA_INTERVENTION_AREAS } from "@/lib/intake/intake-core";
+import { TargetsByTimePeriodCard } from "@/components/portfolio/TargetsByTimePeriodCard";
+import { SSA_INTERVENTION_AREAS, deriveQuarterFromDate } from "@/lib/intake/intake-core";
+import { computePeriodTarget } from "@/lib/targets/period-target";
+import { activeFinancialYear } from "@/lib/fy-engine";
+import { engineNowIso } from "@/lib/clock";
 import { cn } from "@/lib/utils";
 
 const PARTNER_SUGGESTIONS = [
@@ -22,6 +26,22 @@ export default async function MyPortfolioPage() {
   const portfolio = portfolioForStaffId(me.staffId);
   const c = portfolio.counts;
 
+  // Targets by time period — cumulative against the portfolio (Q1 25% · Q2 50%
+  // /Mid-Year · Q3 75% · Q4 100%). A school counts as "supported" once its first
+  // SSA is done OR a partner is actively delivering there — so partner-supported
+  // schools count toward the target while ownership stays with the staff.
+  const fy = activeFinancialYear();
+  const withPartner = schoolIdsWithActivePartner();
+  const supported = portfolio.schools.filter(
+    (s) => s.ssaStatus === "SSA Done" || withPartner.has(s.schoolId),
+  ).length;
+  const currentQuarter = deriveQuarterFromDate(engineNowIso());
+  const periodTarget = computePeriodTarget({
+    fyTarget: c.total,
+    achieved: supported,
+    selectedQuarter: currentQuarter,
+  });
+
   return (
     <StubPage
       title="My School Portfolio"
@@ -35,6 +55,18 @@ export default async function MyPortfolioPage() {
         <Stat label="Awaiting first SSA" value={c.missingSsa}     tone={c.missingSsa > 0 ? "amber" : "green"} Icon={Lock} />
         <Stat label="Partner-delegated"  value={c.partnerAssigned} tone="sky" Icon={Handshake} />
       </section>
+
+      {portfolio.schools.length > 0 && (
+        <TargetsByTimePeriodCard
+          fyLabel={fy.label}
+          fyTarget={c.total}
+          achieved={supported}
+          partnerSupported={c.partnerAssigned}
+          currentQuarter={currentQuarter}
+          expectedCumulative={periodTarget.expectedCumulative}
+          paceStatus={periodTarget.paceStatus}
+        />
+      )}
 
       {portfolio.schools.length === 0 ? (
         <section className="card p-6 text-center">
