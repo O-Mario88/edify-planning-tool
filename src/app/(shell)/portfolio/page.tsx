@@ -1,10 +1,9 @@
-import Link from "next/link";
-import { Lock, CheckCircle2, Handshake, Building2, GraduationCap } from "lucide-react";
+import { Lock, Handshake, Building2, GraduationCap } from "lucide-react";
 import { StubPage } from "@/components/shell/StubPage";
 import { getCurrentUser } from "@/lib/auth";
 import { portfolioForStaffId } from "@/lib/portfolio/portfolio";
 import { activePartnerAssignmentsForSchool, schoolIdsWithActivePartner } from "@/lib/portfolio/partner-assignments";
-import { SchoolPartnerControl } from "@/components/portfolio/SchoolPartnerControl";
+import { PortfolioSchoolList } from "@/components/portfolio/PortfolioSchoolList";
 import { TargetsByTimePeriodCard } from "@/components/portfolio/TargetsByTimePeriodCard";
 import { SSA_INTERVENTION_AREAS, deriveQuarterFromDate } from "@/lib/intake/intake-core";
 import { computePeriodTarget } from "@/lib/targets/period-target";
@@ -78,52 +77,22 @@ export default async function MyPortfolioPage() {
           </p>
         </section>
       ) : (
-        <section className="card p-0 overflow-hidden">
-          <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-[var(--color-edify-divider)]">
-            <h2 className="text-[12.5px] font-extrabold tracking-tight">Schools you own ({portfolio.schools.length})</h2>
-            <span className="text-[10.5px] muted">Ownership stays with you even when work is delegated.</span>
-          </div>
-          <ul className="divide-y divide-[var(--color-edify-divider)]">
-            {portfolio.schools.map((s) => {
-              const partners = activePartnerAssignmentsForSchool(s.schoolId);
-              return (
-                <li key={s.schoolId} className="px-3.5 py-3 flex items-center gap-3">
-                  <span className="h-9 w-9 rounded-md bg-[var(--color-edify-soft)]/80 text-[var(--color-edify-primary)] grid place-items-center shrink-0 text-[10px] font-extrabold">
-                    {s.schoolType.slice(0, 2).toUpperCase()}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-body font-extrabold tracking-tight truncate">{s.schoolName}</div>
-                    <div className="text-caption muted truncate">
-                      {s.schoolId} · {s.district}, {s.region} · {s.schoolType}
-                      {s.enrollment != null ? ` · ${s.enrollment} learners` : ""}
-                    </div>
-                    <div className="mt-1.5">
-                      <SchoolPartnerControl
-                        schoolId={s.schoolId}
-                        schoolName={s.schoolName}
-                        delegations={partners.map((p) => ({ id: p.id, partnerName: p.partnerName, interventionArea: p.interventionArea }))}
-                        partnerOptions={PARTNER_SUGGESTIONS}
-                        interventionAreas={[...SSA_INTERVENTION_AREAS]}
-                      />
-                    </div>
-                  </div>
-                  {s.planningLocked ? (
-                    <span className="inline-flex items-center gap-1 px-1.5 py-[2px] rounded-md text-[10px] font-extrabold bg-amber-100 text-amber-700 whitespace-nowrap">
-                      <Lock size={10} /> SSA pending
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 px-1.5 py-[2px] rounded-md text-[10px] font-extrabold bg-emerald-100 text-emerald-700 whitespace-nowrap">
-                      <CheckCircle2 size={10} /> Planning open
-                    </span>
-                  )}
-                  <Link href="/planning" className="text-[11px] font-semibold text-[var(--color-edify-primary)] hover:underline whitespace-nowrap">
-                    Plan →
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
+        <PortfolioSchoolList
+          partnerOptions={PARTNER_SUGGESTIONS}
+          interventionAreas={[...SSA_INTERVENTION_AREAS]}
+          schools={portfolio.schools.map((s) => ({
+            schoolId: s.schoolId,
+            schoolName: s.schoolName,
+            schoolType: s.schoolType,
+            district: s.district,
+            region: s.region,
+            enrollment: s.enrollment,
+            planningLocked: s.planningLocked,
+            delegations: activePartnerAssignmentsForSchool(s.schoolId).map((p) => ({
+              id: p.id, partnerName: p.partnerName, interventionArea: p.interventionArea,
+            })),
+          }))}
+        />
       )}
 
       <section className="card p-3.5 text-[11.5px] muted">
