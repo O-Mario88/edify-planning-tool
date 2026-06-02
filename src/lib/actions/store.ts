@@ -60,6 +60,7 @@ export type PlannedActivityStatus =
   | "SalesforceIdPending"
   | "Completed"
   | "Verified"
+  | "AccountabilityClosed"
   | "Returned"
   | "Cancelled";
 
@@ -79,6 +80,8 @@ export type PlannedActivityRecord = {
    *  Single source of truth for the verification queue — the IA copies THIS into
    *  Salesforce to confirm. */
   salesforceId?:    string;
+  /** The exact NetSuite Expense ID the accountant entered to close accountability. */
+  netsuiteExpenseId?: string;
   createdAt:        string;
   updatedAt:        string;
 };

@@ -18,6 +18,7 @@ import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/auth";
 import { storage } from "@/lib/infra";
 import { emitAudit, emitNotificationFanOut } from "./audit";
+import { isValidId } from "@/lib/intake/id-formats";
 import {
   type ActivityKind,
   type DonorCountStatus,
@@ -53,6 +54,7 @@ export type ActivityActionResult<T = { id: string }> =
 
 const ASSIGNEE_ROLES = new Set(["CCEO", "Admin"]);
 const ME_ROLES       = new Set(["ImpactAssessment", "Admin"]);
+const ACCOUNTANT_ROLES = new Set(["ProgramAccountant", "Admin"]);
 
 // ─── 1. markActivityCompleted ──────────────────────────────────────
 
@@ -164,7 +166,61 @@ export async function verifyActivity(
       href: `/plans/${a.planId}`,
     });
   }
+  // Phase 8 hand-off: IA confirmation done → the accountant now owns NetSuite
+  // accountability closure. They see this in the accountant console with the
+  // staff-entered Salesforce ID as verified proof.
+  emitNotificationFanOut(["ProgramAccountant"], {
+    template: "activity.awaitingAccountability",
+    channel: "Inbox",
+    title: `Accountability required: ${a.title}`,
+    body: `IA confirmed Salesforce ${a.salesforceId ?? ""}. Confirm NetSuite accountability to close.`,
+    href: "/dashboards/accountant",
+  });
   revalidateActivitySurfaces(a.planId);
+  try { revalidatePath("/dashboards/accountant"); } catch { /* outside request */ }
+  return { ok: true, id: activityId };
+}
+
+// ─── 3b. confirmActivityAccountability (accountant closes after IA) ──
+//
+// After IA confirmation, the accountant enters the NetSuite Expense ID (digits)
+// to close staff accountability. Cannot act before IA confirmation (status must
+// be Verified). This is the finance end of the chain — staff progress ended at
+// IA; accountability closes here.
+
+export async function confirmActivityAccountability(
+  activityId: string,
+  netsuiteExpenseId: string,
+): Promise<ActivityActionResult> {
+  const user = await getCurrentUser();
+  if (!ACCOUNTANT_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+  const a = findActivity(activityId);
+  if (!a) return { ok: false, reason: "NOT_FOUND" };
+  if (a.status !== "Verified") return { ok: false, reason: "INVALID_STATE", current: a.status };
+  if (!isValidId("expense", netsuiteExpenseId)) {
+    return { ok: false, reason: "INVALID_INPUT", field: "netsuiteExpenseId" };
+  }
+  updateActivity(activityId, { status: "AccountabilityClosed", netsuiteExpenseId: netsuiteExpenseId.trim() });
+  emitAudit({
+    action: "activity.accountabilityClosed",
+    subjectKind: "PlannedActivity",
+    subjectId: activityId,
+    actorId: user.staffId,
+    actorRole: user.role,
+    actorName: user.name,
+    payload: { netsuiteExpenseId: netsuiteExpenseId.trim(), salesforceId: a.salesforceId, planId: a.planId },
+  });
+  if (a.assigneeId) {
+    emitNotificationFanOut([a.assigneeId], {
+      template: "activity.accountabilityClosed",
+      channel: "Inbox",
+      title: `Accountability closed: ${a.title}`,
+      body: `NetSuite ${netsuiteExpenseId.trim()} recorded. This activity is fully closed.`,
+      href: `/plans/${a.planId}`,
+    });
+  }
+  revalidateActivitySurfaces(a.planId);
+  try { revalidatePath("/dashboards/accountant"); } catch { /* outside request */ }
   return { ok: true, id: activityId };
 }
 

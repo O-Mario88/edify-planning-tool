@@ -3,9 +3,11 @@ import { AccountantConsoleDashboard } from "@/components/accountant-console/Acco
 import { CommandStack } from "@/components/actions/CommandStack";
 import { AccountantPartnerPaymentsQueue } from "@/components/partner/AccountantPartnerPaymentsQueue";
 import { VerificationPaymentFunnel } from "@/components/cceo/VerificationPaymentFunnel";
+import { StaffAccountabilityQueue } from "@/components/accountant-console/StaffAccountabilityQueue";
 import type { CceoFunnelStage } from "@/lib/cceo-mock";
 import { getCurrentUser } from "@/lib/auth";
 import { ROLE_REDIRECT } from "@/lib/auth-public";
+import { activities } from "@/lib/actions/store";
 
 // The finance leg of the workflow — where cleared money is on its way to
 // paid. Largest stage-to-stage drop (here: Cleared → Netsuite ID) is the
@@ -28,9 +30,18 @@ export default async function AccountantConsolePage() {
   if (!allowed) {
     redirect(ROLE_REDIRECT[user.role]);
   }
+  // Phase 8: staff activities the IA has confirmed (status Verified) await
+  // NetSuite accountability closure here — with the staff-entered Salesforce ID
+  // as verified proof.
+  const accountabilityRows = activities()
+    .filter((a) => a.status === "Verified")
+    .map((a) => ({ id: a.id, title: a.title, salesforceId: a.salesforceId, assigneeName: a.assigneeId }));
+
   return (
     <div className="space-y-4 px-4 sm:px-5 md:px-6 pt-4 pb-24">
       <CommandStack user={user} />
+      {/* Staff NetSuite Accountability — IA-confirmed activities to close. */}
+      <StaffAccountabilityQueue rows={accountabilityRows} />
       {/* Partner Payments Ready to Clear — final leg of the partner
           workflow. Only PL-approved requests appear here (gate
           enforced in partner-workflow.REQUIRED_PATH). */}
