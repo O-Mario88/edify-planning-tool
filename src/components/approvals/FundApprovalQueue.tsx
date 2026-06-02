@@ -1,10 +1,14 @@
 "use client";
 
-import { Building2, ChevronDown, ChevronLeft, ChevronRight as ChevronRightIcon, Layers, Users, GraduationCap } from "lucide-react";
+import { useState } from "react";
+import { Building2, ChevronDown, ChevronLeft, ChevronRight as ChevronRightIcon, Layers, Users, GraduationCap, CheckCircle2 } from "lucide-react";
 import { type FundApprovalItem } from "@/lib/fund-approvals-mock";
 import { cn } from "@/lib/utils";
 import { useUrlState } from "@/hooks/use-url-state";
 import { FundPlanInlineDetail } from "./FundPlanInlineDetail";
+
+// "Valid" = ready to approve in bulk (not returned / still in review).
+const BULK_APPROVABLE = new Set<FundApprovalItem["status"]>(["Awaiting Approval", "Ready"]);
 
 const STATUS_TONE: Record<FundApprovalItem["status"], string> = {
   "Awaiting Approval": "bg-amber-100   text-amber-700",
@@ -39,28 +43,61 @@ export function FundApprovalQueue({ queue }: { queue: FundApprovalItem[] }) {
     setOpenPlanId(openPlanId === id ? "" : id);
   };
 
+  const [approved, setApproved] = useState<Set<string>>(new Set());
+  const [toast, setToast] = useState<string | null>(null);
+  const pendingValid = queue.filter((q) => BULK_APPROVABLE.has(q.status) && !approved.has(q.id));
+
+  const approveAllValid = () => {
+    if (pendingValid.length === 0) return;
+    setApproved((prev) => {
+      const next = new Set(prev);
+      pendingValid.forEach((q) => next.add(q.id));
+      return next;
+    });
+    setToast(`Approved ${pendingValid.length} valid request${pendingValid.length === 1 ? "" : "s"} — funds released to disbursement.`);
+    setTimeout(() => setToast(null), 4000);
+  };
+
   return (
     <article className="card p-3.5 flex flex-col h-full">
-      <header className="flex items-center justify-between gap-2 mb-3">
+      <header className="flex items-center justify-between gap-2 mb-3 flex-wrap">
         <div className="flex items-center gap-2">
           <h3 className="text-body-lg font-extrabold tracking-tight">CCEO Fund Approval Queue</h3>
           <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-slate-100 text-caption font-extrabold tabular text-slate-700">
             {queue.length}
           </span>
         </div>
-        <button
-          type="button"
-          className="inline-flex items-center gap-1 text-[11.5px] font-semibold muted whitespace-nowrap"
-        >
-          Sort by: <span className="text-slate-700 font-bold">Amount</span>
-        </button>
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={approveAllValid}
+            disabled={pendingValid.length === 0}
+            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-emerald-600 text-white text-[12px] font-extrabold hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            <CheckCircle2 size={13} />
+            Approve all valid{pendingValid.length > 0 ? ` (${pendingValid.length})` : ""}
+          </button>
+          <button
+            type="button"
+            className="inline-flex items-center gap-1 text-[11.5px] font-semibold muted whitespace-nowrap"
+          >
+            Sort by: <span className="text-slate-700 font-bold">Amount</span>
+          </button>
+        </div>
       </header>
+
+      {toast && (
+        <div className="mb-2.5 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-[12px] font-semibold text-emerald-800">
+          <CheckCircle2 size={14} className="shrink-0" /> {toast}
+        </div>
+      )}
 
       <ul className="flex flex-col gap-2 flex-1">
         {queue.map((q, i) => (
           <QueueRow
             key={q.id}
             q={q}
+            approved={approved.has(q.id)}
             isOpen={q.id === openPlanId}
             onToggle={() => toggle(q.id)}
             stagger={["stagger-1","stagger-2","stagger-3","stagger-4","stagger-5","stagger-6"][i] ?? ""}
@@ -85,11 +122,13 @@ export function FundApprovalQueue({ queue }: { queue: FundApprovalItem[] }) {
 
 function QueueRow({
   q,
+  approved,
   isOpen,
   onToggle,
   stagger,
 }: {
   q: FundApprovalItem;
+  approved?: boolean;
   isOpen: boolean;
   onToggle: () => void;
   stagger: string;
@@ -133,10 +172,11 @@ function QueueRow({
           </div>
           <div className="flex flex-col items-end gap-1.5 shrink-0">
             <span className={cn(
-              "inline-flex items-center px-2 py-[2px] rounded-md text-[9.5px] font-extrabold whitespace-nowrap",
-              STATUS_TONE[q.status],
+              "inline-flex items-center gap-1 px-2 py-[2px] rounded-md text-[9.5px] font-extrabold whitespace-nowrap",
+              approved ? "bg-emerald-100 text-emerald-700" : STATUS_TONE[q.status],
             )}>
-              {q.status}
+              {approved && <CheckCircle2 size={10} />}
+              {approved ? "Approved" : q.status}
             </span>
             <span className="text-body-lg font-extrabold tabular text-slate-900 num-hero">
               {q.amount}
