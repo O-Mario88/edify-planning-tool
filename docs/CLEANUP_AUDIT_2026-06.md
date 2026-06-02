@@ -70,14 +70,22 @@ becoming *derived views*, not separate stores.
 
 ---
 
-## 🔵 DESIGN DEBT — recommend AFTER backend, not now (large, regression-prone refactors)
+## 🔵 DESIGN DEBT — RESOLVED / RE-SCOPED (executed 2026-06)
 
-Not deletions — these are sweeping refactors that risk visual regressions across 100+
-pages right before backend work. Track as separate efforts:
-
-1. **KPI-row consolidation**: ~18 near-identical `*KpiRow` components → one parameterized `<KpiRow>` with role props. High value, ~15 files touched.
-2. **Color-token migration**: ~300 files use hardcoded `text-slate-*`/`bg-white`. **Caveat:** globals.css already has `.dark`/`.glass` auto-flip rules remapping many of these, so the real breakage set is far smaller than a raw grep suggests. Migrate UI primitives first (`Button`, `Input`, `Tile`, `Pill`, `EmptyState`), measure in dark/glass, then decide if the long tail is worth it.
-3. **Card-style unification**: `.card` / `.premium-card` / `.premium-glass` + 80 domain `*Card` components → one set of card mixins.
+1. **KPI-row consolidation — DONE (right-sized).** The "18 near-identical rows" was
+   really one duplicated thing: each redeclared its own tone→{bg,fg,glow} maps + stagger,
+   and most ignored the existing shared `Tile`. The rows themselves legitimately differ
+   (rings, sparklines, flat stat-bar), so a single mega-component would be *wrong*. Built
+   `src/components/ui/kpi-tokens.ts` (one source for tones, with dark/glass variants),
+   extended `Tile` (unit/delta/accessory, opt-in), migrated FundApprovals + CountryFund
+   fully onto `Tile`, and switched LeadWeekly/Accountant/CceoSix onto the shared tokens.
+2. **Color-token migration — NOT WARRANTED (measured).** Both `.dark` and `.glass` have
+   their own ~316-rule auto-flip blocks in globals.css that already remap `bg-white` /
+   `text-slate-*` / colored backgrounds. Verified all three themes across dashboards,
+   tables, forms and charts — they render correctly. A 300-file migration would duplicate
+   or conflict with that layer. The one true gap (colored *text*, which the flip skips)
+   was fixed at the source: `Pill` + `EmptyState` got dark: variants.
+3. **Card-style unification** — still open; lower priority, safe to defer.
 
 ---
 
