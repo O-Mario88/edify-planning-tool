@@ -19,7 +19,10 @@ import { activeFinancialYear } from "@/lib/fy-engine";
 import { getCurrentUser } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { IaIntakeActions } from "@/components/intake/IaIntakeActions";
+import { OwnerMappingQueue } from "@/components/intake/OwnerMappingQueue";
 import { intakeSchools } from "@/lib/intake/intake-mock";
+import { ownerDistribution, unmatchedOwners } from "@/lib/portfolio/portfolio";
+import { ORG_STAFF } from "@/lib/org/supervision";
 
 export default async function DataIntakeHubPage() {
   const me   = await getCurrentUser();
@@ -30,6 +33,14 @@ export default async function DataIntakeHubPage() {
   // Assessment + Admin job. Country Director sets cost/price only, not master
   // data, so CD (and everyone else) lands on a polite "no access" panel.
   const allowed = ["ImpactAssessment", "Admin"].includes(me.role);
+
+  // School-ownership distribution + the IA owner-mapping queue (unmatched owners).
+  const ownership = ownerDistribution();
+  const unmatchedOwnerList = unmatchedOwners();
+  // Account owners are field staff (CCEO) and program leads who hold portfolios.
+  const mappableStaff = ORG_STAFF
+    .filter((s) => s.role === "CCEO" || s.role === "CountryProgramLead")
+    .map((s) => ({ staffId: s.staffId, name: s.name, role: s.role }));
 
   const pendingBatches = dataImportBatches.filter((b) => b.status !== "Imported" && b.status !== "Rejected").length;
   const importedCount  = dataImportBatches.filter((b) => b.status === "Imported").length;
@@ -75,6 +86,27 @@ export default async function DataIntakeHubPage() {
             lastEnrollmentDate: s.lastEnrollmentDate,
           }))}
         />
+      )}
+
+      {allowed && (
+        <>
+          {/* School ownership distribution — auto-distribution health. */}
+          <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <Kpi label="Owners with schools" value={String(ownership.owners)}     sub="Registered account owners" />
+            <Kpi label="Schools matched"     value={String(ownership.matched)}    sub="Auto-distributed to portfolios" tone="green" />
+            <Kpi label="Owner unmatched"     value={String(ownership.unmatched)}  sub="Need IA mapping"  tone={ownership.unmatched > 0 ? "amber" : "green"} />
+            <Kpi label="No owner set"        value={String(ownership.unassigned)} sub="Awaiting assignment" tone={ownership.unassigned > 0 ? "rose" : "green"} />
+          </section>
+
+          <OwnerMappingQueue
+            unmatched={unmatchedOwnerList.map((u) => ({
+              name: u.name,
+              count: u.count,
+              schoolNames: u.schools.map((s) => `${s.schoolName} (${s.schoolId})`),
+            }))}
+            staff={mappableStaff}
+          />
+        </>
       )}
 
       {/* KPIs */}

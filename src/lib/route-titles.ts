@@ -31,6 +31,7 @@ export const EXACT_ROUTE_TITLES: Record<string, RouteTitle> = {
   "/route":                { title: "Routes" },
   "/calendar":             { title: "Calendar" },
   "/core-schools":         { title: "Core Schools" },
+  "/portfolio":            { title: "My School Portfolio" },
   "/schools":              { title: "Schools" },
   "/ssa":                  { title: "SSA Performance" },
   "/ssa/core-candidates":  { title: "Champion Pipeline" },

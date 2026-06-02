@@ -475,6 +475,7 @@ export const cceoSidebarItems: CceoMenuItem[] = [
   { section: "My Work",  label: "My Targets",         href: "/my-targets",                    icon: "target" },
 
   // Schools — the field of play
+  { section: "Schools",  label: "My Portfolio",       href: "/portfolio",                     icon: "school" },
   { section: "Schools",  label: "Core Schools",       href: "/core-schools",                  icon: "school" },
   { section: "Schools",  label: "SSA Performance",    href: "/ssa",                           icon: "activity" },
   { section: "Schools",  label: "Visits & Trainings", href: "/trainings",                     icon: "calendarCheck" },

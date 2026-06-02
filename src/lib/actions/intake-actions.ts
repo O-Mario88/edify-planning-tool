@@ -23,8 +23,9 @@ import {
   type SsaInterventionArea,
   type SsaUploadInput,
 } from "@/lib/intake/intake-core";
-import { addIntakeSchool, addSsaUpload, assignSchoolToCceo, intakeSchoolIds, updateIntakeSchool, type IntakeSchoolEditable } from "@/lib/intake/intake-mock";
+import { addIntakeSchool, addSsaUpload, assignSchoolToCceo, intakeSchoolIds, intakeSchools, updateIntakeSchool, type IntakeSchoolEditable } from "@/lib/intake/intake-mock";
 import { orgStaff } from "@/lib/org/supervision";
+import { resolveOwner } from "@/lib/portfolio/portfolio";
 import { getIntakeTemplate } from "@/lib/intake/intake-templates";
 import { validateIntakeValues } from "@/lib/intake/intake-validate";
 import { addIntakeRecords } from "@/lib/intake/intake-records-mock";
@@ -346,6 +347,54 @@ export async function updateSchoolDetails(schoolId: string, patch: IntakeSchoolE
   });
   revalidateIntakeSurfaces(schoolId);
   return { ok: true, schoolId };
+}
+
+// ─── 6. mapUnmatchedOwner (IA owner-mapping queue) ──────────────────
+//
+// When a school is uploaded with an Account Owner whose name doesn't resolve to
+// a registered staff member, it surfaces in the IA owner-mapping queue. Here IA
+// maps that exact entered name to a real staff member — rewriting those schools'
+// owner to the staff's canonical name so they auto-distribute into the right
+// portfolio. This is mapping, never deletion.
+
+export type MapOwnerResult =
+  | { ok: false; reason: "FORBIDDEN" | "STAFF_NOT_FOUND" | "NO_MATCH" }
+  | { ok: true; mapped: number; staffName: string };
+
+export async function mapUnmatchedOwner(enteredName: string, staffId: string): Promise<MapOwnerResult> {
+  const user = await getCurrentUser();
+  if (!INTAKE_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+  const staff = orgStaff(staffId);
+  if (!staff) return { ok: false, reason: "STAFF_NOT_FOUND" };
+
+  const target = enteredName.trim().toLowerCase();
+  const schools = intakeSchools.filter((s) => {
+    const r = resolveOwner(s.assignedCceo);
+    return r.status === "unmatched" && r.name.trim().toLowerCase() === target;
+  });
+  if (schools.length === 0) return { ok: false, reason: "NO_MATCH" };
+
+  for (const s of schools) updateIntakeSchool(s.schoolId, { assignedCceo: staff.name });
+
+  emitAudit({
+    action: "intake.ownerMapped",
+    subjectKind: "Staff",
+    subjectId: staffId,
+    actorId: user.staffId,
+    actorRole: user.role,
+    actorName: user.name,
+    payload: { enteredName, mappedTo: staff.name, schoolIds: schools.map((s) => s.schoolId) },
+  });
+  emitNotificationFanOut([staffId], {
+    template: "portfolio.schoolsMappedToYou",
+    channel: "Inbox",
+    title: "Schools added to your portfolio",
+    body: `${schools.length} school${schools.length === 1 ? "" : "s"} previously uploaded under "${enteredName}" ${schools.length === 1 ? "was" : "were"} mapped to you.`,
+    href: "/portfolio",
+  });
+  revalidateIntakeSurfaces();
+  revalidatePath("/portfolio");
+  return { ok: true, mapped: schools.length, staffName: staff.name };
 }
 
 function revalidateIntakeSurfaces(schoolId?: string) {

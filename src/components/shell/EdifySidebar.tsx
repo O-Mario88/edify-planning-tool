@@ -264,6 +264,7 @@ function buildCplMenu(dashboardHref: string): MenuSection[] {
     {
       label: "Schools",
       items: [
+        { label: "My Portfolio",    href: "/portfolio",     Icon: Building2 },
         { label: "Schools",         href: "/schools",       Icon: Building2 },
         { label: "SSA Performance", href: "/ssa",           Icon: Activity  },
         { label: "Core Schools",    href: "/core-schools",  Icon: Star      },
