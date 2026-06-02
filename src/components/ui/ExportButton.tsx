@@ -31,6 +31,8 @@ export function ExportButton({
   label = "Export",
   className,
   size = "sm",
+  iconOnly = false,
+  ariaLabel,
 }: {
   /** Plain objects — keys become CSV columns. */
   rows: Record<string, unknown>[];
@@ -38,6 +40,9 @@ export function ExportButton({
   label?: string;
   className?: string;
   size?: "sm" | "md";
+  /** Render just the download icon (square button) — for dense rows. */
+  iconOnly?: boolean;
+  ariaLabel?: string;
 }) {
   const [done, setDone] = useState(false);
 
@@ -56,21 +61,24 @@ export function ExportButton({
     setTimeout(() => setDone(false), 1800);
   }
 
-  const h = size === "md" ? "h-9 px-3.5 text-[12.5px]" : "h-8 px-3 text-[12px]";
+  const h = iconOnly
+    ? "h-8 w-8 grid place-items-center"
+    : size === "md" ? "h-9 px-3.5 text-[12.5px]" : "h-8 px-3 text-[12px]";
   return (
     <button
       type="button"
       onClick={download}
       disabled={rows.length === 0}
-      title={rows.length === 0 ? "Nothing to export" : `Export ${rows.length} rows to CSV`}
+      aria-label={ariaLabel ?? (iconOnly ? `${label} (CSV)` : undefined)}
+      title={rows.length === 0 ? "Nothing to export" : `Export ${rows.length} row${rows.length === 1 ? "" : "s"} to CSV`}
       className={cn(
         "inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-edify-border)] font-semibold transition-colors",
         "hover:bg-[var(--color-edify-soft)]/60 disabled:opacity-50 disabled:cursor-not-allowed",
         h, className,
       )}
     >
-      {done ? <Check size={13} className="text-emerald-600" /> : <Download size={13} />}
-      {done ? "Downloaded" : label}
+      {done ? <Check size={13} className="text-emerald-600" /> : <Download size={13} className={iconOnly ? "text-[var(--color-edify-muted)]" : ""} />}
+      {!iconOnly && (done ? "Downloaded" : label)}
     </button>
   );
 }
