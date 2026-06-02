@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -29,6 +28,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SignOutButton } from "@/components/auth/SignOutButton";
+import { SidebarBrand } from "@/components/shell/SidebarBrand";
 import { ROLE_REDIRECT, type EdifyRole } from "@/lib/auth-public";
 
 // Self-contained mobile menu drawer. Renders its own hamburger trigger
@@ -155,22 +155,14 @@ export function MobileMenuSheet({
           open ? "translate-x-0 shadow-2xl" : "-translate-x-full",
         )}
       >
-        {/* Brand header */}
-        <div className="flex items-center gap-3 px-5 pt-4 pb-3 border-b border-white/10">
-          <div className="w-9 h-9 rounded-xl bg-white grid place-items-center shadow shrink-0">
-            <Image src="/edify-logo.png" alt="Edify" width={28} height={11} className="object-contain" style={{ width: "auto", height: "auto" }} priority />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-[16px] font-extrabold tracking-tight leading-tight">EDIFY</div>
-            <div className="text-caption tracking-wide text-white/60 font-medium leading-tight truncate">
-              Field Operations
-            </div>
-          </div>
+        {/* Brand header — shared SidebarBrand + close affordance */}
+        <div className="relative border-b border-white/10">
+          <SidebarBrand href={desktopHref} className="border-b-0 pb-3" />
           <button
             type="button"
             onClick={() => setOpen(false)}
             aria-label="Close menu"
-            className="h-8 w-8 rounded-md border border-white/15 grid place-items-center text-white/85 hover:bg-white/10"
+            className="absolute top-4 right-4 h-8 w-8 rounded-md border border-white/15 grid place-items-center text-white/85 hover:bg-white/10"
           >
             <X size={14} />
           </button>

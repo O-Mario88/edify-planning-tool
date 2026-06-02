@@ -22,12 +22,17 @@ export default async function PartnersIndex() {
   return (
     <EntityIndex
       title="Partners"
-      subtitle="Delivery partners executing schools, trainings, and projects under Edify oversight. Each partner record carries the topics they train on."
       Icon={Handshake}
       count={seedCount}
       searchPlaceholder="Search partners"
     >
       <PartnersIndexClient role={user.role} userName={user.name} />
+
+      {/* Context note — moved to the foot of the page so the list leads. */}
+      <p className="text-[11.5px] muted leading-relaxed pt-1">
+        Delivery partners executing schools, trainings, and projects under Edify oversight. Each partner record
+        carries the topics they train on.
+      </p>
     </EntityIndex>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { SidebarBrand } from "@/components/shell/SidebarBrand";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
@@ -57,20 +57,6 @@ import { useMobileDrawer } from "@/components/auth/MobileDrawerShell";
 // stay in lockstep.
 
 export type EdifyRole = PublicEdifyRole;
-
-const SUBTITLE_BY_ROLE: Record<EdifyRole, string> = {
-  CCEO:                "Field Operations Console",
-  CountryProgramLead:  "Country Program Lead Console",
-  CountryDirector:     "Country Director Console",
-  RVP:                 "Regional VP Console",
-  ProgramAccountant:   "Finance Console",
-  ImpactAssessment:    "M&E / Impact Console",
-  HumanResource:       "People & Performance",
-  Admin:               "Admin Console",
-  PartnerAdmin:        "Partner Command Center",
-  PartnerFieldOfficer: "Partner Command Center",
-  PartnerViewer:       "Partner Command Center",
-};
 
 // ────────── Menu structure (sectioned for clarity) ──────────
 
@@ -641,41 +627,6 @@ export function EdifySidebar({
                   ? buildPartnerMenu(ROLE_REDIRECT[role])
                   : buildAdminMenu(ROLE_REDIRECT[role]);
 
-  // CCEO sidebar uses the persona-specific brand block from the
-  // reference ("CCEO / CORE SCHOOLS" with a gold ribbon mark) and
-  // shows the Sarah Okello profile, an inspirational quote, and a
-  // Collapse affordance at the foot of the rail.
-  const cceoBrand = (
-    <div className="flex items-center gap-3 px-5 pt-4 lg:pt-5 pb-4 border-b border-white/10 lg:border-b-0">
-      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-300 to-amber-500 flex items-center justify-center shadow shrink-0 text-[10px] font-extrabold text-amber-900 tracking-wider">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden>
-          <path d="M12 2l2.39 4.84L20 7.74l-4 3.9.94 5.5L12 14.77l-4.94 2.37L8 11.64l-4-3.9 5.61-.9L12 2z" fill="#7c5314" stroke="#7c5314" strokeWidth="0.5" strokeLinejoin="round" />
-          <rect x="6" y="17" width="12" height="5" rx="1" fill="#7c5314" />
-        </svg>
-      </div>
-      <div className="leading-tight min-w-0">
-        <div className="text-[19px] font-extrabold tracking-tight">CCEO</div>
-        <div className="text-[10px] tracking-[0.18em] text-white/70 font-bold leading-tight uppercase">
-          Core Schools
-        </div>
-      </div>
-    </div>
-  );
-
-  const edifyBrand = (
-    <div className="flex items-center gap-3 px-5 pt-4 lg:pt-5 pb-4 border-b border-white/10 lg:border-b-0">
-      <div className="w-9 h-9 lg:w-10 lg:h-10 rounded-xl bg-white flex items-center justify-center shadow shrink-0">
-        <Image src="/edify-logo.png" alt="Edify" width={32} height={13} className="object-contain" style={{ width: "auto", height: "auto" }} priority />
-      </div>
-      <div className="leading-tight min-w-0">
-        <div className="text-[16px] lg:text-[19px] font-extrabold tracking-tight">EDIFY</div>
-        <div className="text-caption lg:text-[10px] tracking-wide text-white/70 font-medium leading-tight max-w-[200px] truncate">
-          {SUBTITLE_BY_ROLE[role]}
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <>
       {hamburger}
@@ -690,8 +641,8 @@ export function EdifySidebar({
       )}>
         {closeButton}
 
-        {/* Brand */}
-        {isCceo ? cceoBrand : edifyBrand}
+        {/* Brand — one shared block for every role. */}
+        <SidebarBrand href={ROLE_REDIRECT[role]} />
 
         {/* Menu */}
         <nav className="px-3 mt-1 space-y-3 text-[13px] flex-1 overflow-y-auto pb-3">
