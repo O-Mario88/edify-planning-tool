@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EntityIndex, IndexRow } from "@/components/shell/EntityIndex";
@@ -101,7 +102,7 @@ export default async function AdminUsersIndex() {
                 </span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-body font-extrabold tracking-tight truncate">{s.name}</span>
+                    <Link href={`/admin/users/${encodeURIComponent(s.staffId)}`} className="text-body font-extrabold tracking-tight truncate hover:text-[var(--color-edify-primary)] hover:underline">{s.name}</Link>
                     <span className={cn(
                       "inline-flex px-1.5 py-[2px] rounded-md text-[9.5px] font-extrabold whitespace-nowrap shrink-0",
                       tone === "green" ? "bg-emerald-100 text-emerald-700" : tone === "slate" ? "bg-slate-100 text-slate-700" : "bg-amber-100 text-amber-700",
