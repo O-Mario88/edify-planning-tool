@@ -108,10 +108,10 @@ export function FundApprovalQueue({ queue }: { queue: FundApprovalItem[] }) {
       <footer className="mt-3 pt-3 border-t border-[#eef2f4] flex items-center justify-between text-[11px] muted">
         <span>Showing 1–{queue.length} of {queue.length}</span>
         <div className="flex items-center gap-1">
-          <button type="button" disabled className="w-6 h-6 rounded-md border border-[var(--color-edify-border)] grid place-items-center disabled:opacity-40">
+          <button type="button" disabled aria-label="Previous page" className="w-6 h-6 rounded-md border border-[var(--color-edify-border)] grid place-items-center disabled:opacity-40">
             <ChevronLeft size={12} />
           </button>
-          <button type="button" disabled className="w-6 h-6 rounded-md border border-[var(--color-edify-border)] grid place-items-center disabled:opacity-40">
+          <button type="button" disabled aria-label="Next page" className="w-6 h-6 rounded-md border border-[var(--color-edify-border)] grid place-items-center disabled:opacity-40">
             <ChevronRightIcon size={12} />
           </button>
         </div>
