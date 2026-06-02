@@ -4,7 +4,18 @@ import { StubPage } from "@/components/shell/StubPage";
 import { getCurrentUser } from "@/lib/auth";
 import { portfolioForStaffId } from "@/lib/portfolio/portfolio";
 import { activePartnerAssignmentsForSchool } from "@/lib/portfolio/partner-assignments";
+import { SchoolPartnerControl } from "@/components/portfolio/SchoolPartnerControl";
+import { SSA_INTERVENTION_AREAS } from "@/lib/intake/intake-core";
 import { cn } from "@/lib/utils";
+
+const PARTNER_SUGGESTIONS = [
+  "Hope Education Partners",
+  "Bright Future Education Partners",
+  "Literacy Training Uganda",
+  "Numeracy First",
+  "Northern Education Trust",
+  "Mastercard Foundation",
+];
 
 export default async function MyPortfolioPage() {
   const me = await getCurrentUser();
@@ -54,15 +65,15 @@ export default async function MyPortfolioPage() {
                       {s.schoolId} · {s.district}, {s.region} · {s.schoolType}
                       {s.enrollment != null ? ` · ${s.enrollment} learners` : ""}
                     </div>
-                    {partners.length > 0 && (
-                      <div className="mt-1 flex flex-wrap gap-1">
-                        {partners.map((p) => (
-                          <span key={p.id} className="inline-flex items-center gap-1 px-1.5 py-[2px] rounded-md text-[10px] font-extrabold bg-sky-100 text-sky-700">
-                            <Handshake size={10} /> {p.partnerName}{p.interventionArea ? ` · ${p.interventionArea}` : ""}
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                    <div className="mt-1.5">
+                      <SchoolPartnerControl
+                        schoolId={s.schoolId}
+                        schoolName={s.schoolName}
+                        delegations={partners.map((p) => ({ id: p.id, partnerName: p.partnerName, interventionArea: p.interventionArea }))}
+                        partnerOptions={PARTNER_SUGGESTIONS}
+                        interventionAreas={[...SSA_INTERVENTION_AREAS]}
+                      />
+                    </div>
                   </div>
                   {s.planningLocked ? (
                     <span className="inline-flex items-center gap-1 px-1.5 py-[2px] rounded-md text-[10px] font-extrabold bg-amber-100 text-amber-700 whitespace-nowrap">
