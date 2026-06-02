@@ -11,6 +11,8 @@
 // so this module is safe to import from server components — the view
 // resolves the key against an icon map on the client side.
 
+import { quarterLabel, MID_YEAR_MONTH_RANGE } from "@/lib/fy/fy-core";
+
 export type PeriodKey = "monthly" | "q1" | "q2" | "midYear" | "q3" | "q4" | "fy";
 
 export type Status = "On Track" | "At Risk" | "Off Track" | "Not Started";
@@ -62,13 +64,13 @@ export function classify(pct: number, started: boolean): Status {
 // ────────── Period metadata ──────────
 
 export const PERIODS: { key: PeriodKey; label: string; sub: string; band: string; tone: string }[] = [
-  { key: "monthly", label: "Nov 2025",   sub: "MONTHLY",    band: "bg-slate-50",  tone: "text-slate-700" },
-  { key: "q1",      label: "Q1 (Oct–Dec)", sub: "QUARTER 1", band: "bg-emerald-50/50", tone: "text-emerald-700" },
-  { key: "q2",      label: "Q2 (Jan–Mar)", sub: "QUARTER 2", band: "bg-blue-50/50",    tone: "text-blue-700" },
-  { key: "midYear", label: "MID YEAR",     sub: "Oct – Mar", band: "bg-violet-50/60",  tone: "text-violet-700" },
-  { key: "q3",      label: "Q3 (Apr–Jun)", sub: "QUARTER 3", band: "bg-amber-50/40",   tone: "text-amber-700" },
-  { key: "q4",      label: "Q4 (Jul–Sep)", sub: "QUARTER 4", band: "bg-rose-50/40",    tone: "text-rose-700" },
-  { key: "fy",      label: "FY 2025/26",   sub: "FULL YEAR", band: "bg-indigo-50/40",  tone: "text-indigo-700" },
+  { key: "monthly", label: "Nov 2025",       sub: "MONTHLY",   band: "bg-slate-50",      tone: "text-slate-700" },
+  { key: "q1",      label: quarterLabel("Q1"), sub: "QUARTER 1", band: "bg-emerald-50/50", tone: "text-emerald-700" },
+  { key: "q2",      label: quarterLabel("Q2"), sub: "QUARTER 2", band: "bg-blue-50/50",    tone: "text-blue-700" },
+  { key: "midYear", label: "MID YEAR",         sub: MID_YEAR_MONTH_RANGE, band: "bg-violet-50/60", tone: "text-violet-700" },
+  { key: "q3",      label: quarterLabel("Q3"), sub: "QUARTER 3", band: "bg-amber-50/40",   tone: "text-amber-700" },
+  { key: "q4",      label: quarterLabel("Q4"), sub: "QUARTER 4", band: "bg-rose-50/40",    tone: "text-rose-700" },
+  { key: "fy",      label: "FY 2025/26",       sub: "FULL YEAR", band: "bg-indigo-50/40",  tone: "text-indigo-700" },
 ];
 
 // ────────── Compute ──────────

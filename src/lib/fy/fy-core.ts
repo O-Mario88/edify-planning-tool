@@ -162,6 +162,44 @@ export function isInActiveFy(iso: string, years: FinancialYear[]): boolean {
 
 // ────────── Quarter ranges ──────────
 // Q1 = Oct–Dec (start year), Q2 = Jan–Mar, Q3 = Apr–Jun, Q4 = Jul–Sep (end year).
+//
+// SINGLE SOURCE OF TRUTH for quarter → month labels. Every surface that shows a
+// quarter (period selectors, target cards, SSA trends, fund filters, …) must
+// derive its label from these helpers so the calendar can never drift again.
+
+export type QuarterId = "Q1" | "Q2" | "Q3" | "Q4";
+
+/** Month span of each quarter, en-dash, no spaces — for inline parentheticals. */
+export const QUARTER_MONTH_RANGE: Record<QuarterId, string> = {
+  Q1: "Oct–Dec",
+  Q2: "Jan–Mar",
+  Q3: "Apr–Jun",
+  Q4: "Jul–Sep",
+};
+
+/** Mid-Year = end of Q2 → cumulative Oct–Mar. Full-Year = Oct–Sep. */
+export const MID_YEAR_MONTH_RANGE = "Oct–Mar";
+export const FULL_YEAR_MONTH_RANGE = "Oct–Sep";
+
+/** "Oct–Dec" for a quarter id (empty for an unknown id). */
+export function quarterMonthRange(quarterId: string): string {
+  return QUARTER_MONTH_RANGE[quarterId as QuarterId] ?? "";
+}
+
+/** "Q1 (Oct–Dec)" — the canonical quarter label used across the app. */
+export function quarterLabel(quarterId: string): string {
+  const range = QUARTER_MONTH_RANGE[quarterId as QuarterId];
+  return range ? `${quarterId} (${range})` : quarterId;
+}
+
+/** Which quarter a date falls in (FY is Oct-start). */
+export function quarterIdForDate(iso: string): QuarterId {
+  const m = Number(iso.slice(5, 7));
+  if (m >= 10 && m <= 12) return "Q1";
+  if (m >= 1 && m <= 3) return "Q2";
+  if (m >= 4 && m <= 6) return "Q3";
+  return "Q4";
+}
 
 export function quarterDateRangeForFy(
   fy: FinancialYear,

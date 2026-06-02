@@ -5,7 +5,7 @@
 // actions). Data intake is restricted to Impact Assessment + Admin — CD sets
 // cost/price, not master data.
 
-import { endYearForDate } from "@/lib/fy/fy-core";
+import { endYearForDate, quarterIdForDate } from "@/lib/fy/fy-core";
 import { isValidId, ID_FORMATS } from "./id-formats";
 
 /** Roles allowed to upload master data (schools, SSA). IA + Admin only. */
@@ -40,11 +40,8 @@ export function deriveFyFromDate(iso: string): string {
 
 /** Quarter ("Q1".."Q4") for a date — Q1 Oct-Dec, Q2 Jan-Mar, Q3 Apr-Jun, Q4 Jul-Sep. */
 export function deriveQuarterFromDate(iso: string): "Q1" | "Q2" | "Q3" | "Q4" {
-  const m = Number(iso.slice(5, 7));
-  if (m >= 10 && m <= 12) return "Q1";
-  if (m >= 1 && m <= 3) return "Q2";
-  if (m >= 4 && m <= 6) return "Q3";
-  return "Q4";
+  // Delegates to the single FY source of truth so quarter math never diverges.
+  return quarterIdForDate(iso);
 }
 
 export type NewSchoolInput = {

@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import type { PeriodPaceStatus } from "@/lib/pace-status";
+import { QUARTER_MONTH_RANGE } from "@/lib/fy/fy-core";
 
 // Targets by Time Period — the cumulative FY schedule, against the staff's
 // portfolio (which INCLUDES schools delivered by partners — partner work counts
@@ -11,11 +12,12 @@ import type { PeriodPaceStatus } from "@/lib/pace-status";
 
 type QuarterId = "Q1" | "Q2" | "Q3" | "Q4";
 
+// Month spans come from the single FY source of truth (fy-core).
 const QUARTERS: { id: QuarterId; months: string; pct: number; midYear?: boolean }[] = [
-  { id: "Q1", months: "Oct – Dec", pct: 0.25 },
-  { id: "Q2", months: "Jan – Mar", pct: 0.5, midYear: true },
-  { id: "Q3", months: "Apr – Jun", pct: 0.75 },
-  { id: "Q4", months: "Jul – Sep", pct: 1.0 },
+  { id: "Q1", months: QUARTER_MONTH_RANGE.Q1, pct: 0.25 },
+  { id: "Q2", months: QUARTER_MONTH_RANGE.Q2, pct: 0.5, midYear: true },
+  { id: "Q3", months: QUARTER_MONTH_RANGE.Q3, pct: 0.75 },
+  { id: "Q4", months: QUARTER_MONTH_RANGE.Q4, pct: 1.0 },
 ];
 
 const PACE_TONE: Record<PeriodPaceStatus, { text: string; bg: string }> = {
