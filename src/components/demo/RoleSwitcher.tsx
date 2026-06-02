@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   Sparkles,
   UserCog,
+  Handshake,
   type LucideIcon,
 } from "lucide-react";
 import type { EdifyRole } from "@/lib/auth-public";
@@ -40,6 +41,7 @@ const DEMO_ROLES: DemoRole[] = [
   { role: "ImpactAssessment",   email: "grace.alimo@edify.org",    name: "Grace Alimo",    initials: "GA", blurb: "M&E — verification queue + data intake",            Icon: ShieldCheck,  tone: "sky"    },
   { role: "HumanResource",      email: "anne.wairimu@edify.org",   name: "Anne Wairimu",   initials: "AW", blurb: "HR — fair performance, support reviews",            Icon: Users,        tone: "rose"   },
   { role: "Admin",              email: "admin@edify.org",          name: "Edify Admin",    initials: "EA", blurb: "Admin — tenant controls + cost settings",           Icon: UserCog,      tone: "slate"  },
+  { role: "PartnerAdmin",       email: "daniel.mwangi@brightfuture.org", name: "Daniel Mwangi (BFEP)", initials: "DM", blurb: "Delivery Partner — command center, evidence, payments", Icon: Handshake, tone: "green" },
 ];
 
 const TONE = {
@@ -194,8 +196,8 @@ const LANDING_BY_ROLE: Record<EdifyRole, string> = {
   RVP:                 "/dashboards/rvp",
   ProgramAccountant:   "/dashboards/accountant",
   ImpactAssessment:    "/dashboards/impact",
-  HumanResource:       "/team-targets",
-  Admin:               "/admin",
+  HumanResource:       "/dashboards/hr",
+  Admin:               "/dashboards/director",
   PartnerAdmin:        "/dashboards/partner",
   PartnerFieldOfficer: "/dashboards/partner",
   PartnerViewer:       "/dashboards/partner",
