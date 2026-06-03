@@ -81,6 +81,15 @@ const CATEGORY_TONE: Record<"danger" | "warn" | "info", { bg: string; text: stri
   info:   { bg: "bg-blue-50",   text: "text-blue-700"   },
 };
 
+// The three SSA-activation methods available to a clustered, no-SSA school
+// (plus view) — SIT completes the SSA, a partner can run it, or staff do it.
+const SSA_ACTIVATION_ACTIONS: SchoolGapAction[] = [
+  "schedule_training",
+  "assign_partner",
+  "schedule_ssa",
+  "view_school",
+];
+
 const ACTION_LABEL: Record<SchoolGapAction, string> = {
   schedule_ssa:           "Schedule SSA",
   schedule_support_visit: "Schedule Support Visit",
@@ -257,7 +266,7 @@ export function SchoolGapsBoard({
         <div className="min-w-0">
           <h2 className="text-[16px] font-extrabold tracking-tight">Client school gaps</h2>
           <p className="text-[12px] muted mt-0.5">
-            Schools listed by gap, urgent first. No-SSA schools only show the SSA action — intervention buttons unlock once SSA completes.
+            Schools listed by gap, urgent first. Unclustered schools must join a cluster; clustered no-SSA schools activate SSA via SIT, a partner, or themselves — full planning unlocks once SSA completes.
           </p>
         </div>
         {clusterOptions.length > 0 && (
@@ -477,10 +486,12 @@ function SchoolRow({
   const contact = primaryContactOf(s);
 
   // The action buttons surfaced per row. Order: primary first.
+  // SSA-required (clustered, no SSA) offers the three activation methods —
+  // SIT, partner, or self — and nothing else until the SSA completes.
   const buttons: SchoolGapAction[] = clusterBlocked
     ? ["add_to_cluster", "view_school"]
     : ssaBlocked
-      ? ["schedule_ssa", "view_school"]
+      ? ["schedule_training", "assign_partner", "schedule_ssa", "view_school"]
       : rec.allowedActions;
 
   return (
@@ -588,8 +599,7 @@ function SchoolRow({
                   const disabled = clusterBlocked
                     ? action !== "add_to_cluster" && action !== "view_school"
                     : ssaBlocked &&
-                      action !== "schedule_ssa" &&
-                      action !== "view_school";
+                      !SSA_ACTIVATION_ACTIONS.includes(action);
                   return (
                     <ActionButton
                       key={action}

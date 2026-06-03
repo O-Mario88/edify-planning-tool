@@ -175,17 +175,21 @@ export function recommendFor(g: SchoolGap): RecommendedAction {
     };
   }
 
-  // No SSA → all intervention-based planning blocked.
+  // Clustered but no current-FY SSA → the SSA-activation state. SSA can be
+  // completed three ways: during School Improvement Training (SIT), by a
+  // partner, or by the staff member. All other support planning stays locked
+  // until the SSA is complete (and IA-confirmed).
   if (g.gapCategory === "no_ssa" || !g.ssaCompleted) {
     return {
-      headline: `Schedule / request SSA for ${g.schoolName}`,
+      headline: `Activate SSA for ${g.schoolName} — via SIT, a partner, or yourself`,
       purpose:
-        `Without a current SSA, the system can't identify ${g.schoolName}'s priority intervention area. ` +
-        `Schedule the SSA first — intervention-based planning unlocks after the SSA completes.`,
-      primaryAction: "schedule_ssa",
-      primaryLabel: "Schedule SSA",
-      allowedActions: ["schedule_ssa", "view_school"],
-      disabledReason: "Complete SSA first to identify the school's priority intervention area.",
+        `${g.schoolName} is clustered but has no current-FY SSA, so support planning stays locked. ` +
+        `Complete the SSA one of three ways: schedule School Improvement Training (the SSA is done during SIT), ` +
+        `assign the SSA to a partner, or schedule it yourself. Planning unlocks once the SSA is confirmed.`,
+      primaryAction: "schedule_training",
+      primaryLabel: "Schedule SIT (completes SSA)",
+      allowedActions: ["schedule_training", "assign_partner", "schedule_ssa", "view_school"],
+      disabledReason: "Complete the current-FY SSA (via SIT, partner, or yourself) to unlock support planning.",
     };
   }
 
