@@ -144,6 +144,16 @@ export function SchoolGapsBoard({
   // a backed-by-server dismissal on the gap-list query.
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
   const [toast, setToast] = useState<string | null>(null);
+  // Cluster filter — narrows every bucket to one cluster ("" = all clusters).
+  const [clusterFilter, setClusterFilter] = useState<string>("");
+
+  // Distinct clusters present across the current gaps (for the filter select).
+  const clusterOptions = useMemo(
+    () =>
+      [...new Set([...extraGaps, ...schoolGaps].map((s) => s.clusterName).filter(Boolean) as string[])]
+        .sort((a, b) => a.localeCompare(b)),
+    [extraGaps],
+  );
 
   function dismiss(schoolId: string) {
     setDismissedIds((prev) => {
@@ -163,10 +173,11 @@ export function SchoolGapsBoard({
     // the page loaded".
     for (const s of [...extraGaps, ...schoolGaps]) {
       if (dismissedIds.has(s.id)) continue;
+      if (clusterFilter && s.clusterName !== clusterFilter) continue;
       map[s.gapCategory].push(s);
     }
     return map;
-  }, [dismissedIds, extraGaps]);
+  }, [dismissedIds, extraGaps, clusterFilter]);
 
   function handleClusterSubmit(outcome: AddToClusterOutcome) {
     const copy =
@@ -242,11 +253,34 @@ export function SchoolGapsBoard({
 
   return (
     <section className="card p-3.5">
-      <header className="mb-3">
-        <h2 className="text-[16px] font-extrabold tracking-tight">Client school gaps</h2>
-        <p className="text-[12px] muted mt-0.5">
-          Schools listed by gap, urgent first. No-SSA schools only show the SSA action — intervention buttons unlock once SSA completes.
-        </p>
+      <header className="mb-3 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-[16px] font-extrabold tracking-tight">Client school gaps</h2>
+          <p className="text-[12px] muted mt-0.5">
+            Schools listed by gap, urgent first. No-SSA schools only show the SSA action — intervention buttons unlock once SSA completes.
+          </p>
+        </div>
+        {clusterOptions.length > 0 && (
+          <label className="shrink-0 inline-flex items-center gap-1.5 text-[11px] font-semibold muted">
+            <Users size={12} className="text-[var(--color-edify-primary)]" />
+            <select
+              value={clusterFilter}
+              onChange={(e) => setClusterFilter(e.target.value)}
+              aria-label="Filter by cluster"
+              className={cn(
+                "h-8 px-2 rounded-lg border text-[11.5px] bg-white",
+                clusterFilter
+                  ? "border-[var(--color-edify-primary)] text-[var(--color-edify-primary)] font-semibold"
+                  : "border-[var(--color-edify-border)] text-[var(--color-edify-text)]",
+              )}
+            >
+              <option value="">All clusters</option>
+              {clusterOptions.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </label>
+        )}
       </header>
 
       <div className="space-y-3">
