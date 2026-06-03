@@ -1374,6 +1374,69 @@ export function feedbackForCluster(clusterId: string): ClusterFeedback[] {
   return clusterFeedback.filter((f) => f.clusterId === clusterId);
 }
 
+// ── Verified cluster impact (donor reporting) ──────────────────────
+//
+// Only IA-confirmed activities (IA Confirmed / Paid / Closed) count as verified
+// donor-ready. Every number traces back to a Salesforce TS- id + cluster.
+
+export type VerifiedActivityRow = {
+  id: string;
+  clusterId: string;
+  clusterName: string;
+  district: string;
+  label: string;
+  date: string;
+  organizer: ClusterMeetingOrganizer;
+  salesforceTrainingId?: string;
+  teachers: number;
+  schoolLeaders: number;
+  total: number;
+  iaConfirmedAt?: string;
+};
+
+export type VerifiedClusterImpact = {
+  verifiedMeetings: number;
+  teachersReached: number;
+  schoolLeadersReached: number;
+  attendanceTotal: number;
+  clustersWithVerified: number;
+  schoolsInClusters: number;
+  rows: VerifiedActivityRow[];
+};
+
+export function verifiedClusterImpact(): VerifiedClusterImpact {
+  const verified = clusterMeetings.filter(
+    (m) => m.status === "IA Confirmed" || m.status === "Paid" || m.status === "Closed",
+  );
+  const rows: VerifiedActivityRow[] = verified.map((m) => {
+    const c = clusterById(m.clusterId);
+    return {
+      id: m.id,
+      clusterId: m.clusterId,
+      clusterName: c?.name ?? "Unknown cluster",
+      district: c?.district ?? "—",
+      label: CLUSTER_MEETING_LABEL[m.kind],
+      date: m.date,
+      organizer: m.organizer,
+      salesforceTrainingId: m.salesforceTrainingId,
+      teachers: m.teachersCount ?? 0,
+      schoolLeaders: m.schoolLeadersCount ?? 0,
+      total: m.totalParticipants ?? 0,
+      iaConfirmedAt: m.iaConfirmedAt,
+    };
+  }).sort((a, b) => b.date.localeCompare(a.date));
+
+  return {
+    verifiedMeetings: verified.length,
+    teachersReached: rows.reduce((n, r) => n + r.teachers, 0),
+    schoolLeadersReached: rows.reduce((n, r) => n + r.schoolLeaders, 0),
+    attendanceTotal: rows.reduce((n, r) => n + r.total, 0),
+    clustersWithVerified: new Set(verified.map((m) => m.clusterId)).size,
+    schoolsInClusters: intakeSchools.filter((s) => clusterStatusOf(s) === "clustered").length,
+    rows,
+  };
+}
+
 // ── Cluster performance (computed from member schools + activities) ─
 
 export type ClusterProfile = {
