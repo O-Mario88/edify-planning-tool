@@ -150,6 +150,7 @@ async function EngineClusterProfile({ clusterId }: { clusterId: string }) {
       organizer: a.organizer, status: a.status, salesforceTrainingId: a.salesforceTrainingId,
       teachers: a.teachersCount, leaders: a.schoolLeadersCount, total: a.totalParticipants,
       iaConfirmedAt: a.iaConfirmedAt, paidAt: a.accountantPaidAt, returnedReason: a.returnedReason,
+      nextMeetingDate: a.nextMeetingDate, minutesText: a.minutesText, resolutionsText: a.resolutionsText,
     })),
   };
 

@@ -19,6 +19,7 @@ import {
   updateClusterLeader,
   scheduleClusterMeeting,
   recordClusterActivitySalesforce,
+  completeClusterMeeting,
   iaConfirmClusterActivity,
   accountantPayClusterActivity,
   returnClusterActivity,
@@ -332,6 +333,46 @@ export async function recordClusterActivityAction(
   });
   revalidateClusterSurfaces();
   return { ok: true };
+}
+
+/** Executor completes the full meeting (attendance + evidence + minutes +
+ *  resolutions + TS + next date → Awaiting IA; auto-schedules the next meeting). */
+export async function completeClusterMeetingAction(
+  activityId: string,
+  input: {
+    salesforceTrainingId: string; teachersCount: number; schoolLeadersCount: number; otherCount?: number;
+    attendanceFileName: string; minutesText: string; minutesFileName?: string;
+    resolutionsText?: string; resolutionsFileName?: string; nextMeetingDate?: string; notes?: string;
+  },
+): Promise<ClusterActionResult<{ nextScheduled?: string }>> {
+  const a = clusterActivityById(activityId);
+  if (!a) return { ok: false, reason: "FAILED", message: "Activity not found." };
+  const partner = await getCurrentPartner();
+  let actor: ClusterActor;
+  if (partner) {
+    const cluster = clusterById(a.clusterId);
+    if (cluster?.managedByPartnerId !== partner.id) return { ok: false, reason: "FORBIDDEN" };
+    actor = { name: partner.name, role: "Partner" };
+  } else {
+    const staff = await actorOrForbidden();
+    if (!staff) return { ok: false, reason: "FORBIDDEN" };
+    actor = staff;
+  }
+  const res = completeClusterMeeting(activityId, input, actor);
+  if (!res.ok) return { ok: false, reason: "FAILED", message: res.reason };
+  emitAudit({
+    action: "cluster.meetingCompleted", subjectKind: "Cluster", subjectId: a.clusterId,
+    actorId: actor.name, actorRole: actor.role, actorName: actor.name,
+    payload: { activityId, salesforceTrainingId: input.salesforceTrainingId, total: res.activity.totalParticipants, nextScheduled: res.nextActivity?.date },
+  });
+  emitNotificationFanOut(["IMPACT_ASSESSMENT"], {
+    template: "cluster.awaitingIa", channel: "Inbox",
+    title: "Cluster meeting awaiting Salesforce confirmation",
+    body: `${CLUSTER_MEETING_LABEL[a.kind]} (${input.salesforceTrainingId}) completed — ${res.activity.totalParticipants} attended. Needs IA confirmation.`,
+    href: "/data-intake/clusters",
+  });
+  revalidateClusterSurfaces();
+  return { ok: true, nextScheduled: res.nextActivity?.date };
 }
 
 const IA_ROLES = new Set<string>(["ImpactAssessment", "Admin"]);

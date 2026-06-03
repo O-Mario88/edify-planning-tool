@@ -9,21 +9,22 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   Network, MapPin, UserCheck, Building2, CalendarDays, ShieldCheck, Wallet,
-  Handshake, Check, AlertTriangle, GraduationCap, Users2,
+  Handshake, Check, AlertTriangle, GraduationCap, Users2, FileText, ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
-  recordClusterActivityAction,
   iaConfirmClusterActivityAction,
   payClusterActivityAction,
   returnClusterActivityAction,
 } from "@/lib/actions/cluster-actions";
+import { CompleteClusterMeetingDrawer, type CompleteMeetingTarget } from "./CompleteClusterMeetingDrawer";
 
 export type ActivityVM = {
   id: string; kind: string; label: string; date: string;
   organizer: "partner" | "edify"; status: string;
   salesforceTrainingId?: string; teachers?: number; leaders?: number; total?: number;
   iaConfirmedAt?: string; paidAt?: string; returnedReason?: string;
+  nextMeetingDate?: string; minutesText?: string; resolutionsText?: string;
 };
 export type SchoolVM = { schoolId: string; schoolName: string; schoolType: string; ssaStatus: string };
 export type ClusterProfileVM = {
@@ -94,7 +95,7 @@ export function ClusterProfileView({ profile, flags }: { profile: ClusterProfile
             {profile.activities.length === 0 ? (
               <li className="px-4 py-6 text-center text-[12px] muted">No meetings scheduled yet.</li>
             ) : profile.activities.map((a) => (
-              <ActivityRow key={a.id} a={a} flags={flags} />
+              <ActivityRow key={a.id} a={a} flags={flags} cluster={{ name: profile.name, district: profile.district, subCounty: profile.subCounties[0] }} />
             ))}
           </ul>
         </section>
@@ -131,13 +132,10 @@ export function ClusterProfileView({ profile, flags }: { profile: ClusterProfile
   );
 }
 
-function ActivityRow({ a, flags }: { a: ActivityVM; flags: ProfileFlags }) {
+function ActivityRow({ a, flags, cluster }: { a: ActivityVM; flags: ProfileFlags; cluster: { name: string; district: string; subCounty?: string } }) {
   const router = useRouter();
   const [pending, start] = useTransition();
-  const [recording, setRecording] = useState(false);
-  const [ts, setTs] = useState("");
-  const [teachers, setTeachers] = useState("");
-  const [leaders, setLeaders] = useState("");
+  const [completing, setCompleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   function run(fn: () => Promise<{ ok: boolean; reason?: string; message?: string }>) {
@@ -145,9 +143,15 @@ function ActivityRow({ a, flags }: { a: ActivityVM; flags: ProfileFlags }) {
     start(async () => {
       const res = await fn();
       if (!res.ok) { setError(res.reason === "FORBIDDEN" ? "Not permitted for your role." : (res.message ?? "Failed.")); return; }
-      setRecording(false); router.refresh();
+      router.refresh();
     });
   }
+
+  const target: CompleteMeetingTarget = {
+    id: a.id, label: a.label, date: a.date, organizer: a.organizer,
+    clusterName: cluster.name, district: cluster.district, subCounty: cluster.subCounty,
+    nextRequired: a.kind === "first_meeting" || a.kind === "second_meeting",
+  };
 
   return (
     <li className="px-4 py-3">
@@ -162,12 +166,19 @@ function ActivityRow({ a, flags }: { a: ActivityVM; flags: ProfileFlags }) {
       {(a.total != null) && (
         <p className="text-[11px] muted mt-1">{a.total} participants · {a.teachers ?? 0} teachers · {a.leaders ?? 0} school leaders{a.iaConfirmedAt ? " · IA confirmed" : ""}{a.paidAt ? " · paid" : ""}</p>
       )}
+      {(a.minutesText || a.resolutionsText) && (
+        <p className="text-[11px] muted mt-0.5 inline-flex items-center gap-2 flex-wrap">
+          {a.minutesText && <span className="inline-flex items-center gap-1"><FileText size={10} /> Minutes</span>}
+          {a.resolutionsText && <span className="inline-flex items-center gap-1"><ClipboardList size={10} /> Resolutions</span>}
+        </p>
+      )}
+      {a.nextMeetingDate && <p className="text-[11px] muted mt-0.5">Next meeting auto-scheduled: <span className="font-semibold text-[var(--color-edify-text)]">{a.nextMeetingDate}</span></p>}
       {a.returnedReason && <p className="text-[11px] text-rose-600 mt-1">Returned: {a.returnedReason}</p>}
 
       {/* Actions by status + role */}
       <div className="mt-2 flex items-center gap-1.5 flex-wrap">
-        {(a.status === "Scheduled" || a.status === "Returned") && flags.canRecord && !recording && (
-          <button type="button" onClick={() => setRecording(true)} className={btnGhost}>Record Salesforce + attendance</button>
+        {(a.status === "Scheduled" || a.status === "Returned") && flags.canRecord && (
+          <button type="button" onClick={() => setCompleting(true)} className={btnPrimary}><Check size={12} /> Complete Cluster Meeting</button>
         )}
         {a.status === "Awaiting IA" && flags.canIa && (
           <>
@@ -182,15 +193,7 @@ function ActivityRow({ a, flags }: { a: ActivityVM; flags: ProfileFlags }) {
         {a.status === "IA Confirmed" && a.organizer === "partner" && !flags.canPay && <span className="text-[10.5px] muted inline-flex items-center gap-1"><Wallet size={11} /> Ready for accountant payment</span>}
       </div>
 
-      {recording && (
-        <div className="mt-2 flex flex-wrap items-center gap-1.5 rounded-lg border border-[var(--color-edify-primary)]/40 bg-[var(--color-edify-soft)]/30 p-1.5">
-          <input value={ts} onChange={(e) => setTs(e.target.value)} placeholder="TS-01234" className={inp + " w-28"} />
-          <input value={teachers} onChange={(e) => setTeachers(e.target.value.replace(/\D/g, ""))} placeholder="Teachers" className={inp + " w-24"} />
-          <input value={leaders} onChange={(e) => setLeaders(e.target.value.replace(/\D/g, ""))} placeholder="Leaders" className={inp + " w-24"} />
-          <button type="button" disabled={pending} onClick={() => run(() => recordClusterActivityAction(a.id, ts, Number(teachers || 0), Number(leaders || 0)))} className={btnPrimary}><Check size={12} /> Save</button>
-          <button type="button" onClick={() => { setRecording(false); setError(null); }} className="text-[var(--color-edify-muted)] text-[11px]">Cancel</button>
-        </div>
-      )}
+      <CompleteClusterMeetingDrawer open={completing} target={completing ? target : null} onClose={() => setCompleting(false)} />
       {error && <p className="text-[10.5px] text-rose-600 mt-1 inline-flex items-center gap-1"><AlertTriangle size={10} /> {error}</p>}
     </li>
   );
@@ -198,7 +201,6 @@ function ActivityRow({ a, flags }: { a: ActivityVM; flags: ProfileFlags }) {
 
 const btnPrimary = "inline-flex items-center gap-1 h-8 px-2.5 rounded-md bg-[var(--color-edify-primary)] text-white text-[11.5px] font-semibold disabled:opacity-50 hover:bg-[var(--color-edify-dark)]";
 const btnGhost = "inline-flex items-center gap-1 h-8 px-2.5 rounded-md border border-[var(--color-edify-border)] bg-white text-[11.5px] font-semibold text-[var(--color-edify-text)] hover:bg-[var(--color-edify-soft)]/60";
-const inp = "h-8 px-2 rounded-md border border-[var(--color-edify-border)] bg-white text-[11.5px]";
 
 function Kpi({ label, value, sub, Icon }: { label: string; value: string | number; sub?: string; Icon: typeof Network }) {
   return (

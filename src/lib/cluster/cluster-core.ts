@@ -182,6 +182,7 @@ export type ClusterMeetingKind =
   | "first_meeting"
   | "second_meeting"
   | "third_meeting"
+  | "follow_up"
   | "sit"
   | "training";
 
@@ -189,9 +190,21 @@ export const CLUSTER_MEETING_LABEL: Record<ClusterMeetingKind, string> = {
   first_meeting: "1st Cluster Meeting",
   second_meeting: "2nd Cluster Meeting",
   third_meeting: "3rd Cluster Meeting",
+  follow_up: "Follow-up Cluster Meeting",
   sit: "School Improvement Training",
   training: "Cluster Training",
 };
+
+/** The meeting that auto-schedules after this one completes (null = end of cycle). */
+export function nextMeetingKind(kind: ClusterMeetingKind): ClusterMeetingKind | null {
+  switch (kind) {
+    case "first_meeting": return "second_meeting";
+    case "second_meeting": return "third_meeting";
+    case "third_meeting": return "follow_up";
+    case "follow_up": return "follow_up";
+    default: return null; // sit / training don't chain
+  }
+}
 
 /** Who organises the meeting: the delegated partner, or Edify (staff). */
 export type ClusterMeetingOrganizer = "partner" | "edify";
@@ -233,6 +246,18 @@ export type ClusterMeeting = {
   iaConfirmedBy?: string;
   accountantPaidAt?: string;
   returnedReason?: string;
+  // ── Completion record ──
+  actualDate?: string;
+  completedBy?: string;
+  completedAt?: string;
+  attendanceFileName?: string;
+  minutesText?: string;
+  minutesFileName?: string;
+  resolutionsText?: string;
+  resolutionsFileName?: string;
+  nextMeetingDate?: string;
+  nextActivityId?: string;
+  linkedPreviousMeetingId?: string;
 };
 
 /** Salesforce training ids must be TS-#### (cluster meetings/trainings). */
@@ -1063,6 +1088,105 @@ export function recordClusterActivitySalesforce(
   a.returnedReason = undefined;
   a.status = "Awaiting IA";
   return { ok: true, activity: a };
+}
+
+export type CompleteMeetingInput = {
+  salesforceTrainingId: string;
+  teachersCount: number;
+  schoolLeadersCount: number;
+  otherCount?: number;
+  attendanceFileName: string;
+  minutesText: string;
+  minutesFileName?: string;
+  resolutionsText?: string;
+  resolutionsFileName?: string;
+  nextMeetingDate?: string;
+  notes?: string;
+};
+
+export type CompleteMeetingResult =
+  | { ok: true; activity: ClusterMeeting; nextActivity?: ClusterMeeting }
+  | { ok: false; reason: string };
+
+/**
+ * Complete a cluster meeting — the full gate. A meeting isn't complete until
+ * attendance + evidence + typed minutes + resolutions + a valid TS- id are in,
+ * and (for early meetings) the next meeting date is set, which auto-schedules
+ * the next meeting. Moves the activity to "Awaiting IA".
+ */
+export function completeClusterMeeting(
+  activityId: string,
+  input: CompleteMeetingInput,
+  actor: ClusterActor,
+): CompleteMeetingResult {
+  const a = clusterActivityById(activityId);
+  if (!a) return { ok: false, reason: "Activity not found." };
+  if (!isValidTsId(input.salesforceTrainingId)) return { ok: false, reason: "Salesforce training id must look like TS-01234." };
+  if (!input.attendanceFileName?.trim()) return { ok: false, reason: "Attendance evidence is required." };
+  if (!input.minutesText?.trim()) return { ok: false, reason: "Meeting minutes are required." };
+  if (!input.resolutionsText?.trim() && !input.resolutionsFileName?.trim()) {
+    return { ok: false, reason: "Capture at least one resolution (text or upload)." };
+  }
+  const teachers = Math.max(0, Math.floor(input.teachersCount || 0));
+  const leaders = Math.max(0, Math.floor(input.schoolLeadersCount || 0));
+  const other = Math.max(0, Math.floor(input.otherCount || 0));
+  if (teachers + leaders + other === 0) return { ok: false, reason: "Enter the actual attendance." };
+
+  const next = nextMeetingKind(a.kind);
+  const nextRequired = a.kind === "first_meeting" || a.kind === "second_meeting";
+  if (nextRequired && !input.nextMeetingDate) return { ok: false, reason: "Confirm the next meeting date." };
+
+  // Write the completion record.
+  a.salesforceTrainingId = input.salesforceTrainingId.trim().toUpperCase();
+  a.teachersCount = teachers;
+  a.schoolLeadersCount = leaders;
+  a.otherCount = other;
+  a.totalParticipants = teachers + leaders + other;
+  a.participants = a.totalParticipants;
+  a.attendanceFileName = input.attendanceFileName.trim();
+  a.minutesText = input.minutesText.trim();
+  a.minutesFileName = input.minutesFileName?.trim() || undefined;
+  a.resolutionsText = input.resolutionsText?.trim() || undefined;
+  a.resolutionsFileName = input.resolutionsFileName?.trim() || undefined;
+  a.nextMeetingDate = input.nextMeetingDate || undefined;
+  a.notes = input.notes?.trim() || a.notes;
+  a.evidenceUploaded = true;
+  a.completedBy = actor.name;
+  a.completedAt = new Date().toISOString();
+  a.actualDate = new Date().toISOString().slice(0, 10);
+  a.returnedReason = undefined;
+  a.status = "Awaiting IA";
+
+  // Auto-schedule the next meeting from the confirmed date.
+  let nextActivity: ClusterMeeting | undefined;
+  if (input.nextMeetingDate && next) {
+    nextActivity = {
+      id: nextMeetingId(),
+      clusterId: a.clusterId,
+      kind: next,
+      date: input.nextMeetingDate,
+      organizer: a.organizer,
+      scheduledBy: actor.name,
+      scheduledByRole: actor.role,
+      createdAt: new Date().toISOString(),
+      status: "Scheduled",
+      linkedPreviousMeetingId: a.id,
+    };
+    clusterMeetings.unshift(nextActivity);
+    a.nextActivityId = nextActivity.id;
+    const cluster = clusterById(a.clusterId);
+    logAudit({
+      action: "meeting_scheduled",
+      user: actor.name,
+      role: actor.role,
+      newClusterId: a.clusterId,
+      reason: `Auto-scheduled ${CLUSTER_MEETING_LABEL[next]} on ${input.nextMeetingDate} from the completed ${CLUSTER_MEETING_LABEL[a.kind]}`,
+      district: cluster?.district,
+      subCounty: cluster?.subCounty,
+    });
+  }
+
+  return { ok: true, activity: a, nextActivity };
 }
 
 /** IA confirms the Salesforce record — the only thing that makes it "count". */
