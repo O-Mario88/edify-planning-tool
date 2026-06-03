@@ -11,6 +11,7 @@ import { CalendarDays, Check, AlertTriangle, Upload, ShieldCheck } from "lucide-
 import { Modal } from "@/components/ui/Modal";
 import { cn } from "@/lib/utils";
 import { completeClusterMeetingAction } from "@/lib/actions/cluster-actions";
+import { GlassDatePicker } from "@/components/ui/GlassDatePicker";
 
 export type CompleteMeetingTarget = {
   id: string;
@@ -158,7 +159,7 @@ export function CompleteClusterMeetingDrawer({
         {/* Next meeting */}
         <Field label="Next meeting date" required={target.nextRequired}
           hint={target.nextRequired ? "Confirming this auto-schedules the next cluster meeting." : "Optional for this meeting — set it to schedule a follow-up."}>
-          <input type="date" value={nextDate} onChange={(e) => setNextDate(e.target.value)} className={cn(inp, "w-48")} />
+          <GlassDatePicker value={nextDate} onChange={setNextDate} />
         </Field>
 
         {/* Notes */}

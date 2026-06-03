@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { CalendarPlus, Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { scheduleClusterMeetingAction } from "@/lib/actions/cluster-actions";
+import { GlassDatePicker } from "@/components/ui/GlassDatePicker";
 
 const KIND_OPTIONS: { value: string; label: string }[] = [
   { value: "first_meeting", label: "1st Cluster Meeting" },
@@ -83,12 +84,7 @@ export function ClusterMeetingScheduler({
           {KIND_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
       )}
-      <input
-        type="date"
-        value={date}
-        onChange={(e) => setDate(e.target.value)}
-        className="h-8 px-2 rounded-md border border-[var(--color-edify-border)] bg-white text-[11.5px]"
-      />
+      <GlassDatePicker value={date} onChange={setDate} />
       <input
         value={participants}
         onChange={(e) => setParticipants(e.target.value.replace(/\D/g, ""))}

@@ -317,6 +317,7 @@ function buildAccountantMenu(dashboardHref: string): MenuSection[] {
         { label: "Fund Approvals",    href: "/approvals",            Icon: ClipboardCheckIcon },
         { label: "Monthly Request",   href: "/monthly-fund-request", Icon: ClipboardCheckIcon },
         { label: "Disbursements",     href: "/disbursements",        Icon: Send               },
+        { label: "Cluster Payments",  href: "/disbursements/cluster-payments", Icon: Network    },
         { label: "Weekly Funds",      href: "/weekly-funds",         Icon: Wallet             },
         { label: "Fund Requests",     href: "/fund-requests",        Icon: Wallet             },
         { label: "Budget",            href: "/budget",        Icon: Calculator         },
