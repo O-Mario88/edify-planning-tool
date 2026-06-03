@@ -12,6 +12,7 @@ import {
   Minus,
   CalendarCheck,
   Lightbulb,
+  LineChart,
 } from "lucide-react";
 import { EntityDetail, DetailKpi, DetailFacts } from "@/components/shell/EntityDetail";
 import { SectionCard, StatusBadge } from "@/components/ui/primitives";
@@ -70,6 +71,9 @@ export default async function ProjectDetail({ params }: { params: Promise<{ id: 
           This project is a targeted initiative — not one of the 8 SSA interventions. It is designed to
           close the gap in the interventions below, and its impact is measured against them.
         </p>
+        <Link href={`/projects/${project.projectId}/impact`} className="float-right inline-flex items-center gap-1 h-8 px-3 rounded-lg bg-[var(--color-edify-primary)] text-white text-[12px] font-bold hover:bg-[var(--color-edify-dark)]">
+          <LineChart size={13} /> Impact analytics
+        </Link>
         <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
           <span className="text-[11px] font-bold muted">Primary:</span>
           <span className="inline-flex items-center gap-1 px-2 py-[3px] rounded-md text-[11.5px] font-extrabold bg-[var(--color-edify-primary)]/10 text-[var(--color-edify-primary)]">

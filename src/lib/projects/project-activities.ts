@@ -46,6 +46,11 @@ export type ProjectActivity = {
   plannedMonth?: string;
   participantEstimate?: number;
   topic?: string;
+  // Attendance breakdown (actuals, captured at completion — not estimates).
+  // Used by project reach analytics; never counted for planned activities.
+  teachersTrained?: number;
+  schoolLeadersTrained?: number;
+  attendanceVerified?: boolean;
   status: ProjectActivityStatus;
   evidenceStatus: ProjectEvidenceStatus;
   salesforceActivityId?: string;
@@ -95,6 +100,7 @@ export const projectActivities: ProjectActivity[] = [
     activityType: "Project Training", interventionId: "Education Technology",
     deliveryType: "partner", partnerId: "PRT-WV", partnerName: "World Vision",
     scheduledDate: "2025-06-18", participantEstimate: 22, topic: "Classroom tablet integration",
+    teachersTrained: 18, schoolLeadersTrained: 3, attendanceVerified: true,
     status: "Completed", evidenceStatus: "Verified",
     salesforceActivityId: "TS-2025-04471", salesforceActivityType: "training",
     iaVerificationStatus: "Confirmed", createdAt: "2025-06-01", updatedAt: "2025-06-20",
@@ -113,6 +119,7 @@ export const projectActivities: ProjectActivity[] = [
     activityType: "Project Training", interventionId: "Christlike Behaviour",
     deliveryType: "partner", partnerId: "PRT-CI", partnerName: "Compassion Int.",
     scheduledDate: "2025-07-09", participantEstimate: 18, topic: "Christ-centred SEL facilitation",
+    teachersTrained: 14, schoolLeadersTrained: 2, attendanceVerified: true,
     status: "Completed", evidenceStatus: "Verified",
     salesforceActivityId: "TS-2025-04822", salesforceActivityType: "training",
     iaVerificationStatus: "Confirmed", createdAt: "2025-06-25", updatedAt: "2025-07-12",
@@ -145,6 +152,8 @@ export type CreateProjectActivityInput = {
   plannedMonth?: string;
   participantEstimate?: number;
   topic?: string;
+  teachersTrained?: number;
+  schoolLeadersTrained?: number;
   salesforceActivityId?: string;
   now?: string;
 };
@@ -179,6 +188,8 @@ export function createProjectActivity(
     plannedMonth: input.plannedMonth,
     participantEstimate: input.participantEstimate,
     topic: input.topic,
+    teachersTrained: input.teachersTrained,
+    schoolLeadersTrained: input.schoolLeadersTrained,
     status: "Planned",
     evidenceStatus: "Pending",
     salesforceActivityId: input.salesforceActivityId,

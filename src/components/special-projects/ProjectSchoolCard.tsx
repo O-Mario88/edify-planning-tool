@@ -9,7 +9,7 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import {
   Sparkles, ChevronDown, ChevronRight, MapPin, User, TrendingUp, TrendingDown, Minus,
-  Handshake, Building2, ArrowRight, Plus,
+  Handshake, Building2, ArrowRight, Plus, LineChart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StatusBadge } from "@/components/ui/primitives";
@@ -145,6 +145,9 @@ export function ProjectSchoolCard({
           </button>
           <Link href={`/projects/${project.projectId}`} className="inline-flex items-center gap-1 h-8 px-3 rounded-lg border border-[var(--color-edify-border)] bg-white text-[12px] font-semibold hover:bg-[var(--color-edify-soft)]/60">
             View project <ArrowRight size={12} />
+          </Link>
+          <Link href={`/projects/${project.projectId}/impact`} className="inline-flex items-center gap-1 h-8 px-3 rounded-lg border border-[var(--color-edify-border)] bg-white text-[12px] font-semibold hover:bg-[var(--color-edify-soft)]/60">
+            <LineChart size={12} /> Impact
           </Link>
           {canManage && (
             <Link href="/schools" className="inline-flex items-center gap-1 h-8 px-3 rounded-lg border border-[var(--color-edify-border)] bg-white text-[12px] font-semibold hover:bg-[var(--color-edify-soft)]/60">
