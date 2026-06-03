@@ -1,5 +1,6 @@
 import { PlanningTopHeader } from "./PlanningTopHeader";
 import { OperationalCycleBanner } from "./OperationalCycleBanner";
+import { UnclusteredSchoolsBanner } from "./UnclusteredSchoolsBanner";
 import { PlanningGapBoard } from "./PlanningGapBoard";
 import { PlanningOwnershipSections } from "./PlanningOwnershipSections";
 import { PlansFamilyNav } from "./PlansFamilyNav";
@@ -20,6 +21,9 @@ export async function PlanningToolPage() {
   // viewer's supervision chain. Computed server-side so runtime uploads show.
   const user = await getCurrentUser();
   const onboardedGaps = scopeGapsToViewer(onboardedSchoolGaps(), user.staffId, user.role);
+  // Cluster-first: count the viewer's unclustered schools so the Planning Tool
+  // leads with the cluster-assignment call to action when any are outstanding.
+  const unclusteredCount = onboardedGaps.filter((g) => g.gapCategory === "no_cluster").length;
 
   return (
     <>
@@ -37,6 +41,8 @@ export async function PlanningToolPage() {
             5. Planned This Month
             (PlanningGapsHero retired per global hero removal pass.) */}
         <OperationalCycleBanner />
+
+        <UnclusteredSchoolsBanner count={unclusteredCount} />
 
         <PlansFamilyNav current="planning" className="flex items-center gap-1" />
         <PlanningGapBoard extraGaps={onboardedGaps} />

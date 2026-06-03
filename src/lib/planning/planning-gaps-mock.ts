@@ -156,6 +156,25 @@ export type RecommendedAction = {
 };
 
 export function recommendFor(g: SchoolGap): RecommendedAction {
+  // Cluster-first gate (the mandatory Cluster Assignment Gate): an
+  // unclustered school's only setup action is to join a cluster — even
+  // before SSA. Clusters drive SIT, SSA, cluster meetings, partner
+  // assignment, travel, and reporting, so full support planning stays
+  // limited until the school is clustered.
+  if (g.gapCategory === "no_cluster" || !g.inCluster) {
+    return {
+      headline: `Assign ${g.schoolName} to a cluster`,
+      purpose:
+        `${g.schoolName} isn't in a cluster yet. Cluster assignment is the next required setup step ` +
+        `after upload — it unlocks School Improvement Training, SSA, cluster meetings, partner ` +
+        `assignment, and reporting. Full support planning stays limited until the school is clustered.`,
+      primaryAction: "add_to_cluster",
+      primaryLabel: "Assign to Cluster",
+      allowedActions: ["add_to_cluster", "view_school"],
+      disabledReason: "Assign this school to a cluster to unlock SSA / SIT and full planning.",
+    };
+  }
+
   // No SSA → all intervention-based planning blocked.
   if (g.gapCategory === "no_ssa" || !g.ssaCompleted) {
     return {
@@ -207,17 +226,17 @@ export function recommendFor(g: SchoolGap): RecommendedAction {
           "view_ssa",
         ],
       };
-    case "no_cluster":
-      return {
-        headline: `Add ${g.schoolName} to a cluster`,
-        purpose:
-          `${g.schoolName} isn't part of a peer-learning cluster yet. Add to the nearest cluster ` +
-          `or invite to the next cluster meeting so the school gets shared-learning support.`,
-        primaryAction: "add_to_cluster",
-        primaryLabel: "Add to Cluster",
-        allowedActions: ["add_to_cluster", "view_school"],
-      };
   }
+
+  // no_cluster is handled by the cluster-first early return above; this is the
+  // exhaustiveness fallback (clustered, SSA done, no specific gap).
+  return {
+    headline: `Review ${g.schoolName}`,
+    purpose: "No outstanding setup gap — review the school or schedule follow-up support.",
+    primaryAction: "view_school",
+    primaryLabel: "View School",
+    allowedActions: ["view_school", "view_ssa"],
+  };
 }
 
 export type ClusterRecommendedAction = {
@@ -638,9 +657,11 @@ export function planningSummary() {
   };
 }
 
+// Cluster-first: an unclustered school is the most "not-ready" — clustering
+// is the required setup step after upload, so it leads the gap order.
 export const GAP_SORT_ORDER: SchoolGapCategory[] = [
+  "no_cluster",
   "no_ssa",
   "no_training",
   "no_visit",
-  "no_cluster",
 ];

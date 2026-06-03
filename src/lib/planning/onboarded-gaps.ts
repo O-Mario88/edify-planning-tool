@@ -11,6 +11,7 @@
 
 import type { EdifyRole } from "@/lib/auth";
 import { intakeSchools, ssaUploads } from "@/lib/intake/intake-mock";
+import { clusterStatusOf } from "@/lib/cluster/cluster-core";
 import { staffIdByName, visibleStaffIds } from "@/lib/org/supervision";
 import type { SchoolGap, SsaInterventionArea, SchoolGapCategory } from "./planning-gaps-mock";
 
@@ -45,15 +46,19 @@ export function onboardedSchoolGaps(): SchoolGap[] {
     const up = latestUploadFor(s.schoolId);
     const weak = up ? weakAreas(up.scores) : [];
     const done = s.ssaStatus === "SSA Done";
+    const clustered = clusterStatusOf(s) === "clustered";
     const worst = weak[0]?.score;
+    // Cluster-first: an unclustered school is the required setup gap. SSA
+    // risk only applies once the school is in a cluster.
     const riskLevel: SchoolGap["riskLevel"] =
-      !done ? "Critical"
+      !clustered ? "High"
+      : !done ? "Critical"
       : worst == null ? "Medium"
       : worst <= 3 ? "Critical"
       : worst <= 5 ? "High"
       : worst <= 7 ? "Medium" : "Low";
     const gapCategory: SchoolGapCategory =
-      !done ? "no_ssa" : !s.cluster ? "no_cluster" : "no_training";
+      !clustered ? "no_cluster" : !done ? "no_ssa" : "no_training";
     return {
       id: `onb-${s.schoolId}`,
       schoolName: s.schoolName,
@@ -66,7 +71,7 @@ export function onboardedSchoolGaps(): SchoolGap[] {
       ssaDate: up?.ssaDate,
       weakestArea: weak[0],
       secondWeakArea: weak[1],
-      inCluster: !!s.cluster,
+      inCluster: clustered,
       riskLevel,
       gapCategory,
     };

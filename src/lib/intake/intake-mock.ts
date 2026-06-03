@@ -16,7 +16,18 @@ export type IntakeSchool = {
   schoolType: SchoolType;
   enrollment?: number;
   assignedCceo?: string;
+  /** Cluster display name — kept in sync with `clusterId` by the cluster engine. */
   cluster?: string;
+  /** Canonical cluster id (source of truth for the cluster gate). */
+  clusterId?: string;
+  /**
+   * Cluster setup state. Drives the mandatory Cluster Assignment Gate:
+   *   unclustered  → not yet in a cluster (next required setup action)
+   *   clustered    → assigned to a cluster (cluster gate cleared)
+   *   needs_review → IA flagged the cluster as wrong/inconsistent
+   * Absent rows are treated as "unclustered".
+   */
+  clusterStatus?: "unclustered" | "clustered" | "needs_review";
   // Optional detail fields — completed at create or later via "Edit details".
   phone?: string;
   primaryContact?: string;
@@ -112,8 +123,19 @@ export function assignSchoolToCceo(schoolId: string, cceoName: string): IntakeSc
   return s;
 }
 
-export function addIntakeSchool(s: Omit<IntakeSchool, "status" | "ssaStatus" | "planningLocked">): IntakeSchool {
-  const row: IntakeSchool = { ...s, status: "Active", ssaStatus: "SSA Not Done", planningLocked: true };
+export function addIntakeSchool(
+  s: Omit<IntakeSchool, "status" | "ssaStatus" | "planningLocked" | "clusterStatus">,
+): IntakeSchool {
+  // A freshly uploaded school is unclustered until staff assigns it to a
+  // cluster — this is what surfaces it in the Unclustered Schools queue and
+  // makes "assign to cluster" the next required setup action after upload.
+  const row: IntakeSchool = {
+    ...s,
+    status: "Active",
+    ssaStatus: "SSA Not Done",
+    planningLocked: true,
+    clusterStatus: s.clusterId ? "clustered" : "unclustered",
+  };
   intakeSchools.unshift(row);
   return row;
 }

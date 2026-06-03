@@ -49,19 +49,27 @@ export type PortfolioCounts = {
   partnerAssigned: number;
   /** Schools whose planning is open (first SSA done). */
   planningOpen: number;
+  /** Schools assigned to a cluster (cluster gate cleared). */
+  clustered: number;
+  /** Schools still awaiting cluster assignment (next setup action). */
+  unclustered: number;
 };
 
 function countSchools(schools: IntakeSchool[]): PortfolioCounts {
   const withPartner = schoolIdsWithActivePartner();
   let client = 0, core = 0, missingSsa = 0, partnerAssigned = 0, planningOpen = 0;
+  let clustered = 0, unclustered = 0;
   for (const s of schools) {
     if (s.schoolType === "Client") client += 1;
     else if (s.schoolType === "Core") core += 1;
     if (s.ssaStatus === "SSA Not Done") missingSsa += 1;
     if (!s.planningLocked) planningOpen += 1;
     if (withPartner.has(s.schoolId)) partnerAssigned += 1;
+    // Cluster status: absent rows are treated as unclustered.
+    if (s.clusterStatus === "clustered") clustered += 1;
+    else unclustered += 1;
   }
-  return { total: schools.length, client, core, missingSsa, partnerAssigned, planningOpen };
+  return { total: schools.length, client, core, missingSsa, partnerAssigned, planningOpen, clustered, unclustered };
 }
 
 // ── Per-staff portfolio ────────────────────────────────────────────

@@ -69,10 +69,10 @@ function buildSchoolTrainingContext(s: SchoolGap): ScheduleActivityContext {
 }
 
 const CATEGORY_META: Record<SchoolGapCategory, { label: string; Icon: LucideIcon; tone: "danger" | "warn" | "info"; helper: string }> = {
-  no_ssa:      { label: "No SSA",      Icon: AlertOctagon, tone: "danger", helper: "Blocking intervention planning. Schedule SSA first." },
+  no_cluster:  { label: "Unclustered — assign first", Icon: Users, tone: "danger", helper: "Cluster assignment is the required setup step after upload. Planning stays limited until clustered." },
+  no_ssa:      { label: "No SSA",      Icon: AlertOctagon, tone: "danger", helper: "Clustered, SSA pending — schedule SIT, assign SSA to a partner, or do it yourself." },
   no_training: { label: "No Training", Icon: GraduationCap, tone: "warn",  helper: "SSA completed — pick School Improvement Training from the weakest area." },
   no_visit:    { label: "No Visit",    Icon: Footprints,   tone: "warn",   helper: "First support visit missing — purpose comes from the weakest SSA area." },
-  no_cluster:  { label: "No Cluster",  Icon: Users,        tone: "info",   helper: "Add the school to a peer cluster." },
 };
 
 const CATEGORY_TONE: Record<"danger" | "warn" | "info", { bg: string; text: string }> = {
@@ -111,7 +111,7 @@ export function SchoolGapsBoard({
   extraGaps?: SchoolGap[];
 } = {}) {
   const [collapsed, setCollapsed] = useState<Record<SchoolGapCategory, boolean>>({
-    no_ssa: false, no_training: false, no_visit: false, no_cluster: true,
+    no_cluster: false, no_ssa: false, no_training: false, no_visit: true,
   });
   const [assign, setAssign] = useState<{ school: SchoolGap; action: SchoolGapAction } | null>(null);
   // Add-to-cluster has its own drawer because the inputs are different
@@ -434,14 +434,19 @@ function SchoolRow({
   onAction: (action: SchoolGapAction) => void;
 }) {
   const rec = recommendFor(s);
-  const ssaBlocked = !s.ssaCompleted;
+  // Cluster-first gate takes precedence over the SSA gate: an unclustered
+  // school can only be assigned to a cluster (or viewed) until it is clustered.
+  const clusterBlocked = s.gapCategory === "no_cluster" || !s.inCluster;
+  const ssaBlocked = !clusterBlocked && !s.ssaCompleted;
   const [open, setOpen] = useState(false);
   const contact = primaryContactOf(s);
 
   // The action buttons surfaced per row. Order: primary first.
-  const buttons: SchoolGapAction[] = ssaBlocked
-    ? ["schedule_ssa", "view_school"]
-    : rec.allowedActions;
+  const buttons: SchoolGapAction[] = clusterBlocked
+    ? ["add_to_cluster", "view_school"]
+    : ssaBlocked
+      ? ["schedule_ssa", "view_school"]
+      : rec.allowedActions;
 
   return (
     <li className={cn(open && "bg-[var(--color-edify-soft)]/30 transition-colors")}>
@@ -535,7 +540,7 @@ function SchoolRow({
               onClick={() => onAction(rec.primaryAction)}
               disabled={false}
             />
-            {ssaBlocked && rec.disabledReason && (
+            {(clusterBlocked || ssaBlocked) && rec.disabledReason && (
               <div className="text-[11px] muted leading-snug flex items-start gap-1.5 px-1">
                 <Lock size={10} className="mt-0.5 text-rose-500 shrink-0" />
                 <span>{rec.disabledReason}</span>
@@ -545,9 +550,11 @@ function SchoolRow({
               {buttons
                 .filter((a) => a !== rec.primaryAction)
                 .map((action) => {
-                  const disabled = ssaBlocked &&
-                    action !== "schedule_ssa" &&
-                    action !== "view_school";
+                  const disabled = clusterBlocked
+                    ? action !== "add_to_cluster" && action !== "view_school"
+                    : ssaBlocked &&
+                      action !== "schedule_ssa" &&
+                      action !== "view_school";
                   return (
                     <ActionButton
                       key={action}
@@ -555,6 +562,7 @@ function SchoolRow({
                       label={ACTION_LABEL[action]}
                       onClick={() => onAction(action)}
                       disabled={disabled}
+                      lockReason={rec.disabledReason}
                     />
                   );
                 })}
@@ -610,13 +618,14 @@ function StatusChip({ ok, label }: { ok: boolean; label: string }) {
 }
 
 function ActionButton({
-  action, label, primary, onClick, disabled,
+  action, label, primary, onClick, disabled, lockReason,
 }: {
   action: SchoolGapAction;
   label: string;
   primary?: boolean;
   onClick: () => void;
   disabled?: boolean;
+  lockReason?: string;
 }) {
   void action;
   const isView = label.startsWith("View");
@@ -625,7 +634,7 @@ function ActionButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      title={disabled ? "Complete SSA first to identify the school's priority intervention area." : undefined}
+      title={disabled ? (lockReason ?? "Complete the required setup step first.") : undefined}
       className={cn(
         "inline-flex items-center justify-center gap-1 h-9 px-3 rounded-md text-[11px] font-semibold transition-colors whitespace-nowrap",
         disabled
