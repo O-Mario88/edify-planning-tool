@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { Network, BarChart3, History, ShieldCheck } from "lucide-react";
-import { EntityIndex, IndexRow } from "@/components/shell/EntityIndex";
+import { EntityIndex } from "@/components/shell/EntityIndex";
 import { UnclusteredSchoolsBanner } from "@/components/planning/UnclusteredSchoolsBanner";
 import { ClusterReadinessCard } from "@/components/cluster/ClusterReadinessCard";
 import { CreateClusterButton } from "@/components/cluster/CreateClusterButton";
+import { ClusterManageList } from "@/components/cluster/ClusterManageList";
 import { getCurrentUser } from "@/lib/auth";
 import { clusterCountsFor, activeClusters, schoolsInCluster } from "@/lib/cluster/cluster-core";
 import { intakeSchools } from "@/lib/intake/intake-mock";
+import { partners } from "@/lib/partner/partner-mock";
 import { resolveOwner } from "@/lib/portfolio/portfolio";
 import { visibleStaffIds } from "@/lib/org/supervision";
 
@@ -30,9 +32,17 @@ export default async function ClustersIndex() {
   // The hub lists the live engine clusters (the ones the "New cluster" button
   // creates + that schools are assigned to), each with its current school count.
   const clusterList = activeClusters().map((c) => ({
-    ...c,
+    id: c.id,
+    name: c.name,
+    district: c.district,
+    subCounties: c.subCounties ?? [],
     schoolCount: schoolsInCluster(c.id).length,
+    clusterLeaderName: c.clusterLeaderName,
+    clusterLeaderPhone: c.clusterLeaderPhone,
+    managedByPartnerId: c.managedByPartnerId,
+    managedByPartnerName: c.managedByPartnerName,
   }));
+  const partnerOptions = partners.map((p) => ({ id: p.id, name: p.name }));
 
   return (
     <EntityIndex
@@ -67,20 +77,7 @@ export default async function ClustersIndex() {
           <p className="text-[12px] muted mt-1">Use “New cluster” to create one, then assign schools from the workspace.</p>
         </div>
       ) : (
-        <section className="card rounded-2xl divide-y divide-[var(--color-edify-divider)] overflow-hidden">
-          {clusterList.map((c) => (
-            <IndexRow
-              key={c.id}
-              href="/clusters/assign"
-              Icon={Network}
-              title={c.name}
-              subtitle={`${c.schoolCount} school${c.schoolCount === 1 ? "" : "s"} · ${c.district}${c.subCounty ? ` / ${c.subCounty}` : ""} · ${c.clusterType}`}
-              meta={c.coordinator ? `Coordinator: ${c.coordinator}` : undefined}
-              rightTop={c.schoolCount === 0 ? "Needs schools" : `${c.schoolCount} assigned`}
-              rightBottom={`Created by ${c.createdBy}`}
-            />
-          ))}
-        </section>
+        <ClusterManageList clusters={clusterList} partners={partnerOptions} />
       )}
     </EntityIndex>
   );

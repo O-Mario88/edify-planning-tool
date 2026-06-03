@@ -59,7 +59,6 @@ export default async function ClusterAssignmentPage() {
     name: c.name,
     district: c.district,
     subCounty: c.subCounty,
-    clusterType: c.clusterType,
     schoolCount: schoolsInCluster(c.id).length,
   }));
 

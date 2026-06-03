@@ -41,7 +41,6 @@ export type WorkspaceCluster = {
   name: string;
   district: string;
   subCounty?: string;
-  clusterType: string;
   schoolCount: number;
 };
 
@@ -69,8 +68,6 @@ export function ClusterAssignmentWorkspace({
   const [mode, setMode] = useState<"existing" | "create">("existing");
   const [existingClusterId, setExistingClusterId] = useState("");
   const [newName, setNewName] = useState("");
-  const [newSubCounty, setNewSubCounty] = useState("");
-  const [newType, setNewType] = useState("Client");
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -171,15 +168,13 @@ export function ClusterAssignmentWorkspace({
     if (!oneDistrict) { setError("Selected schools belong to different districts. Create separate clusters."); return; }
     const ids = [...selected];
     const region = selectedSchools[0]?.region;
-    const subCounty = newSubCounty || (selectionSubCounties.length === 1 ? selectionSubCounties[0] : "");
-    if (!subCounty) { setError("Pick a sub-county (selection spans more than one)."); return; }
+    // The new cluster covers every sub-county the selected schools sit in.
     startTransition(async () => {
       const res = await createClusterAndAssignAction(ids, {
         name: newName.trim(),
         region,
         district: oneDistrict,
-        subCounty,
-        clusterType: newType as "Client" | "Core" | "Mixed",
+        subCounties: selectionSubCounties,
       });
       if (!res.ok) {
         if (res.reason === "INVALID_INPUT") setError(Object.values(res.errors)[0] ?? "Invalid cluster.");
@@ -190,7 +185,6 @@ export function ClusterAssignmentWorkspace({
       flash(`Cluster ${res.clusterName} created in ${oneDistrict}. ${res.assigned} school${res.assigned === 1 ? "" : "s"} attached.`);
       setSelected(new Set());
       setNewName("");
-      setNewSubCounty("");
       router.refresh();
     });
   }
@@ -397,22 +391,12 @@ export function ClusterAssignmentWorkspace({
                         <Field label="District (from selection)">
                           <input value={oneDistrict} readOnly className="w-full h-9 px-2 rounded-lg border border-[var(--color-edify-border)] bg-[var(--color-edify-soft)]/40 text-[12px] text-[var(--color-edify-muted)]" />
                         </Field>
-                        <Field label="Sub-county">
-                          {selectionSubCounties.length === 1 ? (
-                            <input value={selectionSubCounties[0]} readOnly className="w-full h-9 px-2 rounded-lg border border-[var(--color-edify-border)] bg-[var(--color-edify-soft)]/40 text-[12px] text-[var(--color-edify-muted)]" />
-                          ) : (
-                            <select value={newSubCounty} onChange={(e) => setNewSubCounty(e.target.value)} className="w-full h-9 px-2 rounded-lg border border-[var(--color-edify-border)] bg-white text-[12px]">
-                              <option value="">Select sub-county…</option>
-                              {selectionSubCounties.map((sc) => <option key={sc} value={sc}>{sc}</option>)}
-                            </select>
-                          )}
-                        </Field>
-                        <Field label="Cluster type">
-                          <select value={newType} onChange={(e) => setNewType(e.target.value)} className="w-full h-9 px-2 rounded-lg border border-[var(--color-edify-border)] bg-white text-[12px]">
-                            <option>Client</option>
-                            <option>Core</option>
-                            <option>Mixed</option>
-                          </select>
+                        <Field label={`Sub-counties covered (${selectionSubCounties.length || 0})`}>
+                          <input
+                            value={selectionSubCounties.length ? selectionSubCounties.join(", ") : "—"}
+                            readOnly
+                            className="w-full h-9 px-2 rounded-lg border border-[var(--color-edify-border)] bg-[var(--color-edify-soft)]/40 text-[12px] text-[var(--color-edify-muted)]"
+                          />
                         </Field>
                         <button
                           type="button"

@@ -24,13 +24,13 @@ import {
 import {
   districtByName,
   regionIdFor,
+  regionForDistrict,
   subCountiesOf,
 } from "@/lib/geography";
 
 // ── Types ──────────────────────────────────────────────────────────
 
 export type ClusterStatus = NonNullable<IntakeSchool["clusterStatus"]>;
-export type ClusterType = "Client" | "Core" | "Mixed";
 export type AssignmentSource =
   | "upload"
   | "staff_assignment"
@@ -48,10 +48,19 @@ export type ClusterRecord = {
   districtId?: string;
   /** Display district name (the operational key). */
   district: string;
+  /** Primary sub-county (= subCounties[0]) — kept for matching/recommendation. */
   subCounty?: string;
+  /** All sub-counties this cluster covers (a cluster may span several). */
+  subCounties: string[];
   parish?: string;
-  clusterType: ClusterType;
-  coordinator?: string;
+  /** Cluster leader — a school leader from one of the cluster's schools. */
+  clusterLeaderName?: string;
+  clusterLeaderPhone?: string;
+  /** School the cluster leader leads (for traceability). */
+  clusterLeaderSchoolId?: string;
+  /** Partner this cluster is delegated to manage (staff stays the owner). */
+  managedByPartnerId?: string;
+  managedByPartnerName?: string;
   meetingLocation?: string;
   notes?: string;
   expectedSchools?: number;
@@ -81,6 +90,7 @@ export type ClusterAuditAction =
   | "school_reassigned"
   | "ia_corrected"
   | "duplicate_assigned"
+  | "partner_assigned"
   | "cluster_archived";
 
 export type ClusterAuditEntry = {
@@ -134,8 +144,9 @@ export const clusters: ClusterRecord[] = [
     regionId: regionIdFor("Mukono"),
     district: "Mukono",
     subCounty: "Mukono Central",
-    clusterType: "Client",
-    coordinator: "Paul Chinyama",
+    subCounties: ["Mukono Central"],
+    clusterLeaderName: "Esther Naluwu",
+    clusterLeaderPhone: "+256 772 100 200",
     expectedSchools: 6,
     createdBy: "Paul Chinyama",
     createdByRole: "CCEO",
@@ -150,8 +161,9 @@ export const clusters: ClusterRecord[] = [
     regionId: regionIdFor("Nakaseke"),
     district: "Nakaseke",
     subCounty: "Nakaseke TC",
-    clusterType: "Client",
-    coordinator: "Paul Chinyama",
+    subCounties: ["Nakaseke TC"],
+    clusterLeaderName: "John Mubiru",
+    clusterLeaderPhone: "+256 701 555 110",
     expectedSchools: 5,
     createdBy: "Paul Chinyama",
     createdByRole: "CCEO",
@@ -189,11 +201,8 @@ export function clustersForLocation(district: string, subCounty?: string): Clust
   );
   if (!subCounty) return inDistrict;
   const sc = subCounty.trim().toLowerCase();
-  return [...inDistrict].sort((a, b) => {
-    const am = a.subCounty?.toLowerCase() === sc ? 0 : 1;
-    const bm = b.subCounty?.toLowerCase() === sc ? 0 : 1;
-    return am - bm;
-  });
+  const covers = (c: ClusterRecord) => (c.subCounties ?? []).some((s) => s.toLowerCase() === sc);
+  return [...inDistrict].sort((a, b) => (covers(a) ? 0 : 1) - (covers(b) ? 0 : 1));
 }
 
 export function schoolsInCluster(clusterId: string): IntakeSchool[] {
@@ -221,10 +230,13 @@ export type NewClusterInput = {
   name: string;
   region?: string;
   district: string;
-  subCounty?: string;
+  /** One or more sub-counties the cluster covers (≥1 required). */
+  subCounties: string[];
   parish?: string;
-  clusterType?: ClusterType;
-  coordinator?: string;
+  /** Cluster leader — a school leader from one of the cluster's schools. */
+  clusterLeaderName?: string;
+  clusterLeaderPhone?: string;
+  clusterLeaderSchoolId?: string;
   meetingLocation?: string;
   notes?: string;
   expectedSchools?: number;
@@ -233,8 +245,9 @@ export type NewClusterInput = {
 export type ClusterValidation = { ok: boolean; errors: Record<string, string>; warning?: string };
 
 /**
- * Validate a new cluster. Name must be unique within district+sub-county; an
- * exact match is a hard error (admin/IA may override via `allowDuplicate`).
+ * Validate a new cluster. Requires a district + at least one sub-county; name
+ * must be unique within the district (an exact match is a hard error, which
+ * admin/IA may override via `allowDuplicate`).
  */
 export function validateNewCluster(
   input: NewClusterInput,
@@ -242,19 +255,19 @@ export function validateNewCluster(
 ): ClusterValidation {
   const errors: Record<string, string> = {};
   if (!input.name?.trim()) errors.name = "Cluster name is required.";
-  if (!input.region?.trim()) errors.region = "Region is required.";
   if (!input.district?.trim()) errors.district = "District is required.";
-  if (!input.subCounty?.trim()) errors.subCounty = "Sub-county is required.";
+  if (!input.subCounties || input.subCounties.filter((s) => s?.trim()).length === 0) {
+    errors.subCounties = "Select at least one sub-county.";
+  }
 
   if (input.name && input.district) {
     const dup = activeClusters().find(
       (c) =>
         c.name.trim().toLowerCase() === input.name.trim().toLowerCase() &&
-        c.district.trim().toLowerCase() === input.district.trim().toLowerCase() &&
-        (c.subCounty ?? "").trim().toLowerCase() === (input.subCounty ?? "").trim().toLowerCase(),
+        c.district.trim().toLowerCase() === input.district.trim().toLowerCase(),
     );
     if (dup && !opts.allowDuplicate) {
-      errors.name = "A cluster with this name already exists in this district / sub-county.";
+      errors.name = "A cluster with this name already exists in this district.";
     }
   }
   return { ok: Object.keys(errors).length === 0, errors };
@@ -262,17 +275,20 @@ export function validateNewCluster(
 
 export function createCluster(input: NewClusterInput, actor: ClusterActor): ClusterRecord {
   const district = input.district.trim();
+  const subCounties = (input.subCounties ?? []).map((s) => s.trim()).filter(Boolean);
   const rec: ClusterRecord = {
     id: nextClusterId(district),
     name: input.name.trim(),
-    region: input.region?.trim(),
+    region: input.region?.trim() || regionForDistrict(district),
     regionId: regionIdFor(district),
     districtId: districtByName(district)?.id,
     district,
-    subCounty: input.subCounty?.trim() || undefined,
+    subCounty: subCounties[0],
+    subCounties,
     parish: input.parish?.trim() || undefined,
-    clusterType: input.clusterType ?? "Client",
-    coordinator: input.coordinator?.trim() || undefined,
+    clusterLeaderName: input.clusterLeaderName?.trim() || undefined,
+    clusterLeaderPhone: input.clusterLeaderPhone?.trim() || undefined,
+    clusterLeaderSchoolId: input.clusterLeaderSchoolId || undefined,
     meetingLocation: input.meetingLocation?.trim() || undefined,
     notes: input.notes?.trim() || undefined,
     expectedSchools: input.expectedSchools,
@@ -414,19 +430,21 @@ export function createClusterAndAssign(
   }
   const district = input.district ?? [...districts][0];
   const region = input.region ?? schools[0].region;
-  // Auto-fill sub-county only when the whole selection agrees.
-  const subCounties = new Set(schools.map((s) => s.subCounty).filter(Boolean));
-  const subCounty = input.subCounty ?? (subCounties.size === 1 ? [...subCounties][0] : undefined);
+  // Cover every sub-county the selected schools sit in (a cluster may span
+  // several), unless the caller passed an explicit set.
+  const derivedSubCounties = [...new Set(schools.map((s) => s.subCounty).filter(Boolean) as string[])];
+  const subCounties = input.subCounties && input.subCounties.length > 0 ? input.subCounties : derivedSubCounties;
 
   const cluster = createCluster(
     {
       name: input.name,
       region,
       district,
-      subCounty,
+      subCounties,
       parish: input.parish,
-      clusterType: input.clusterType,
-      coordinator: input.coordinator,
+      clusterLeaderName: input.clusterLeaderName,
+      clusterLeaderPhone: input.clusterLeaderPhone,
+      clusterLeaderSchoolId: input.clusterLeaderSchoolId,
       meetingLocation: input.meetingLocation,
       notes: input.notes,
       expectedSchools: input.expectedSchools ?? schools.length,
@@ -500,8 +518,9 @@ export type ClusterRecommendation =
  */
 export function recommendClusterFor(school: IntakeSchool): ClusterRecommendation {
   const candidates = clustersForLocation(school.district, school.subCounty);
+  const sc = school.subCounty?.trim().toLowerCase();
   const sameSub = candidates.find(
-    (c) => school.subCounty && c.subCounty?.toLowerCase() === school.subCounty.trim().toLowerCase(),
+    (c) => sc && (c.subCounties ?? []).some((s) => s.toLowerCase() === sc),
   );
   if (sameSub) {
     const n = schoolsInCluster(sameSub.id).length;
@@ -751,6 +770,75 @@ export function clusterHealthChecks(): ClusterHealthIssue[] {
     });
   }
   return issues;
+}
+
+// ── Partner management (staff delegates a cluster to a partner) ─────
+
+export type ClusterPartnerResult =
+  | { ok: true; cluster: ClusterRecord }
+  | { ok: false; reason: string };
+
+/**
+ * Delegate a cluster to a partner to manage (or clear the delegation when
+ * partnerId is empty). Staff stays the owner; the partner becomes the
+ * executor — mirrors per-school partner delegation at the cluster level.
+ */
+export function assignClusterToPartner(
+  clusterId: string,
+  partnerId: string,
+  partnerName: string,
+  actor: ClusterActor,
+): ClusterPartnerResult {
+  const cluster = clusterById(clusterId);
+  if (!cluster) return { ok: false, reason: "Cluster not found." };
+  if (!partnerId) {
+    cluster.managedByPartnerId = undefined;
+    cluster.managedByPartnerName = undefined;
+  } else {
+    cluster.managedByPartnerId = partnerId;
+    cluster.managedByPartnerName = partnerName;
+  }
+  logAudit({
+    action: "partner_assigned",
+    user: actor.name,
+    role: actor.role,
+    newClusterId: clusterId,
+    reason: partnerId ? `Delegated to ${partnerName}` : "Partner delegation cleared",
+    district: cluster.district,
+    subCounty: cluster.subCounty,
+  });
+  return { ok: true, cluster };
+}
+
+// ── Cluster-leader candidates ──────────────────────────────────────
+
+export type ClusterLeaderCandidate = {
+  schoolId: string;
+  schoolName: string;
+  leaderName: string;
+  phone?: string;
+  subCounty?: string;
+};
+
+/**
+ * Candidate cluster leaders for the create form — school leaders (a school's
+ * primary contact) from schools in the chosen district + sub-counties. The
+ * cluster leader should be a school leader from one of the cluster's schools.
+ */
+export function candidateClusterLeaders(district: string, subCounties: string[] = []): ClusterLeaderCandidate[] {
+  const d = district.trim().toLowerCase();
+  const subs = subCounties.map((s) => s.trim().toLowerCase()).filter(Boolean);
+  return intakeSchools
+    .filter((s) => s.district.trim().toLowerCase() === d)
+    .filter((s) => subs.length === 0 || (s.subCounty != null && subs.includes(s.subCounty.trim().toLowerCase())))
+    .filter((s) => !!s.primaryContact)
+    .map((s) => ({
+      schoolId: s.schoolId,
+      schoolName: s.schoolName,
+      leaderName: s.primaryContact as string,
+      phone: s.phone,
+      subCounty: s.subCounty,
+    }));
 }
 
 // ── Geography helpers for the Workspace pickers ────────────────────

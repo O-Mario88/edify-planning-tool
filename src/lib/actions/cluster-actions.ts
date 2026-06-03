@@ -15,6 +15,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { emitAudit, emitNotificationFanOut } from "./audit";
 import {
   assignSchoolToCluster,
+  assignClusterToPartner,
   bulkAssign,
   createCluster,
   createClusterAndAssign,
@@ -23,6 +24,7 @@ import {
   type ClusterActor,
   type NewClusterInput,
 } from "@/lib/cluster/cluster-core";
+import { partners } from "@/lib/partner/partner-mock";
 
 const CLUSTER_ROLES = new Set<string>([
   "CCEO",
@@ -100,11 +102,12 @@ export async function createClusterAndAssignAction(
   if (!actor) return { ok: false, reason: "FORBIDDEN" };
 
   // Validate the cluster shell first (name uniqueness, required geography).
+  // Sub-counties are derived from the selected schools when not supplied.
   const v = validateNewCluster({
     name: input.name,
     region: input.region ?? "",
     district: input.district ?? "",
-    subCounty: input.subCounty ?? "",
+    subCounties: input.subCounties ?? ["—"],
   });
   if (!v.ok) return { ok: false, reason: "INVALID_INPUT", errors: v.errors };
 
@@ -157,6 +160,44 @@ export async function createEmptyClusterAction(
   });
   revalidateClusterSurfaces();
   return { ok: true, clusterId: cluster.id, clusterName: cluster.name };
+}
+
+// ─── Delegate a cluster to a partner to manage ──────────────────────
+
+export async function assignClusterToPartnerAction(
+  clusterId: string,
+  partnerId: string,
+): Promise<ClusterActionResult<{ partnerName: string }>> {
+  const actor = await actorOrForbidden();
+  if (!actor) return { ok: false, reason: "FORBIDDEN" };
+
+  // Empty partnerId clears the delegation; otherwise resolve the partner name.
+  const partner = partnerId ? partners.find((p) => p.id === partnerId) : undefined;
+  if (partnerId && !partner) return { ok: false, reason: "FAILED", message: "Partner not found." };
+
+  const res = assignClusterToPartner(clusterId, partnerId, partner?.name ?? "", actor);
+  if (!res.ok) return { ok: false, reason: "FAILED", message: res.reason };
+
+  emitAudit({
+    action: partnerId ? "cluster.delegatedToPartner" : "cluster.partnerCleared",
+    subjectKind: "Cluster",
+    subjectId: clusterId,
+    actorId: actor.name,
+    actorRole: actor.role,
+    actorName: actor.name,
+    payload: { partnerId, partnerName: partner?.name },
+  });
+  if (partnerId) {
+    emitNotificationFanOut(["CCEO", "PROGRAM_LEAD"], {
+      template: "cluster.delegatedToPartner",
+      channel: "Inbox",
+      title: `${res.cluster.name} delegated to ${partner!.name}`,
+      body: `${partner!.name} will manage ${res.cluster.name} (${res.cluster.district}). Account ownership stays with the staff member.`,
+      href: "/clusters",
+    });
+  }
+  revalidateClusterSurfaces();
+  return { ok: true, partnerName: partner?.name ?? "" };
 }
 
 // ─── Single-school assign / remove (row actions + IA correction) ────

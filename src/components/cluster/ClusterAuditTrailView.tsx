@@ -6,6 +6,7 @@ import {
   ShieldCheck,
   Copy,
   Archive,
+  Handshake,
   History,
   type LucideIcon,
 } from "lucide-react";
@@ -55,6 +56,11 @@ const ACTION_META: Record<ClusterAuditEntry["action"], ActionMeta> = {
     label: "Duplicate-risk school assigned",
     Icon: Copy,
     tone: "text-orange-400",
+  },
+  partner_assigned: {
+    label: "Delegated to partner",
+    Icon: Handshake,
+    tone: "text-violet-400",
   },
   cluster_archived: {
     label: "Cluster archived",
