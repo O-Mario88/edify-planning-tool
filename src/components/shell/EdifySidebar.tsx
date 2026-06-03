@@ -83,6 +83,7 @@ const CCEO_ICON: Record<string, LucideIcon> = {
   bookOpen:        BookOpen,
   wallet:          Wallet,
   network:         Network,
+  sparkles:        Sparkles,
 };
 
 function buildCceoMenu(): MenuSection[] {
@@ -204,6 +205,7 @@ function buildCdMenu(dashboardHref: string): MenuSection[] {
         { label: "Analytics",        href: "/analytics",            Icon: BarChart3          },
         { label: "Reports",          href: "/reports",              Icon: FileText           },
         { label: "Special Projects", href: "/special-projects",     Icon: Sparkles           },
+        { label: "Project Schools",  href: "/special-projects/schools", Icon: GraduationCap  },
         { label: "Finance",          href: "/budget",               Icon: Calculator         },
         { label: "Weekly Funds",     href: "/weekly-funds",         Icon: Wallet             },
         { label: "Disbursements",    href: "/disbursements",        Icon: Send               },
@@ -227,6 +229,7 @@ function buildProjectCoordinatorMenu(dashboardHref: string): MenuSection[] {
       items: [
         { label: "Dashboard",        href: dashboardHref,       Icon: LayoutDashboard },
         { label: "Special Projects", href: "/special-projects", Icon: Sparkles        },
+        { label: "Project Schools",  href: "/special-projects/schools", Icon: GraduationCap },
         { label: "Schools",          href: "/schools",          Icon: Building2       },
         { label: "Clusters",         href: "/clusters",         Icon: Network         },
         { label: "SSA Performance",  href: "/ssa",              Icon: Activity        },
@@ -277,6 +280,7 @@ function buildCplMenu(dashboardHref: string): MenuSection[] {
         { label: "Clusters",        href: "/clusters",      Icon: Network   },
         { label: "SSA Performance", href: "/ssa",           Icon: Activity  },
         { label: "Core Schools",    href: "/core-schools",  Icon: Star      },
+        { label: "Project Schools", href: "/special-projects/schools", Icon: Sparkles },
       ],
     },
     {

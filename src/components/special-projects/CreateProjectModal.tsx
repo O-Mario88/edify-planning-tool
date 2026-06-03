@@ -16,7 +16,9 @@ import { cn } from "@/lib/utils";
 import {
   PROJECT_TYPES,
   PROJECT_INTERVENTIONS,
+  PROJECT_CATEGORIES,
   type ProjectScopeKind,
+  type ProjectCategory,
 } from "@/lib/special-projects-mock";
 import type { SsaInterventionArea } from "@/lib/planning/planning-gaps-mock";
 import { createProjectAction } from "@/lib/actions/special-project-actions";
@@ -35,6 +37,7 @@ export function CreateProjectModal({ open, onClose }: { open: boolean; onClose: 
   const [error, setError] = useState<string | null>(null);
 
   const [name, setName] = useState("");
+  const [category, setCategory] = useState<ProjectCategory>("intervention_specific");
   const [type, setType] = useState<string>("Targeted Intervention");
   const [primary, setPrimary] = useState<SsaInterventionArea | "">("");
   const [secondary, setSecondary] = useState<SsaInterventionArea[]>([]);
@@ -44,8 +47,11 @@ export function CreateProjectModal({ open, onClose }: { open: boolean; onClose: 
   const [coordinatorName, setCoordinatorName] = useState("");
   const [scopeKind, setScopeKind] = useState<ProjectScopeKind>("country");
 
+  const categoryMeta = PROJECT_CATEGORIES.find((c) => c.value === category);
+
   function reset() {
-    setName(""); setType("Targeted Intervention"); setPrimary(""); setSecondary([]);
+    setName(""); setCategory("intervention_specific"); setType("Targeted Intervention");
+    setPrimary(""); setSecondary([]);
     setStartDate(""); setEndDate(""); setAbout(""); setCoordinatorName("");
     setScopeKind("country"); setError(null);
   }
@@ -66,6 +72,7 @@ export function CreateProjectModal({ open, onClose }: { open: boolean; onClose: 
     startTransition(async () => {
       const res = await createProjectAction({
         projectName: name.trim(),
+        projectCategory: category,
         projectType: type,
         primaryInterventionId: primary,
         secondaryInterventionIds: secondary.filter((a) => a !== primary),
@@ -98,6 +105,17 @@ export function CreateProjectModal({ open, onClose }: { open: boolean; onClose: 
     >
       <form onSubmit={submit} className="space-y-3.5">
         <Input label="Project name" required value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Literacy & Numeracy" />
+
+        <div>
+          <Select
+            label="Project category" required value={category}
+            onChange={(e) => setCategory(e.target.value as ProjectCategory)}
+            options={PROJECT_CATEGORIES.map((c) => ({ value: c.value, label: c.label }))}
+          />
+          {categoryMeta && (
+            <p className="text-[10.5px] muted mt-1 leading-snug">{categoryMeta.blurb} <span className="font-semibold">{categoryMeta.managedBy}.</span></p>
+          )}
+        </div>
 
         <div className="grid grid-cols-2 gap-3">
           <Select

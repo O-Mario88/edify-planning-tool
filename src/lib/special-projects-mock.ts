@@ -73,6 +73,58 @@ export const CCEO_ALLOWED_PROJECT_TYPES = new Set<string>([
   "Targeted Intervention",
   "Local Staff Initiative",
 ]);
+
+/** Project category — decides WHO manages the project and how schools join.
+ *  • intervention_specific: a direct SSA-gap response run as normal school
+ *    improvement work — managed by CCEO/PL.
+ *  • pilot: tested in selected schools before wider rollout — coordinator/CD.
+ *  • selective_limited: special criteria / donor / faith / readiness scope, so
+ *    not every school participates — coordinator/CD. */
+export type ProjectCategory = "intervention_specific" | "pilot" | "selective_limited";
+
+export const PROJECT_CATEGORIES: {
+  value: ProjectCategory;
+  label: string;
+  blurb: string;
+  managedBy: string;
+}[] = [
+  {
+    value: "intervention_specific",
+    label: "Intervention-Specific Project",
+    blurb: "Direct response to an SSA gap, run as normal school-improvement work.",
+    managedBy: "Managed by CCEO / Program Lead",
+  },
+  {
+    value: "pilot",
+    label: "Pilot Project",
+    blurb: "Tested in selected schools before wider rollout.",
+    managedBy: "Managed by Project Coordinator / Country Director",
+  },
+  {
+    value: "selective_limited",
+    label: "Selective / Limited Participation",
+    blurb: "Special criteria, donor, faith, or readiness scope — not every school participates.",
+    managedBy: "Managed by Project Coordinator / Country Director",
+  },
+];
+
+export const PROJECT_CATEGORY_LABEL: Record<ProjectCategory, string> = {
+  intervention_specific: "Intervention-Specific",
+  pilot: "Pilot",
+  selective_limited: "Selective",
+};
+
+/** Can this role create/manage a project of the given category?
+ *  Intervention-specific projects are CCEO/PL school-improvement work; pilot &
+ *  selective projects require coordination scope, so CCEO is excluded. */
+export function canManageProjectCategory(role: string, category: ProjectCategory): boolean {
+  if (role === "Admin") return true;
+  if (category === "intervention_specific") {
+    return ["CCEO", "CountryProgramLead", "CountryDirector", "ProjectCoordinator"].includes(role);
+  }
+  // pilot + selective_limited
+  return ["ProjectCoordinator", "CountryDirector", "CountryProgramLead"].includes(role);
+}
 export type ImpactMeasurementType = "Schools" | "Teachers" | "Participants" | "Sessions";
 export type PartnerCertificationStatus = "Certified" | "Not Certified" | "Needs Review";
 export type PartnerCapacityStatus = "Available" | "Capacity Full" | "Needs Review";
@@ -92,6 +144,9 @@ export type SpecialProject = {
   // the diagnostic gap it is designed to close, but stays a separate record).
   primaryInterventionId: SsaInterventionArea;
   secondaryInterventionIds?: SsaInterventionArea[];
+
+  // Category decides who manages the project + how schools join (spec).
+  projectCategory: ProjectCategory;
 
   // Ownership / scope (spec §2). Scope decides which schools a coordinator
   // can reach — projects are NOT global by default.
@@ -156,6 +211,7 @@ export const specialProjects: SpecialProject[] = [
     endDate: "2025-12-31",
     primaryInterventionId: "Education Technology",
     secondaryInterventionIds: ["Learning Environment"],
+    projectCategory: "pilot",
     scopeKind: "country",
     assignedPartnerId: "PRT-WV",
     assignedPartnerName: "World Vision",
@@ -184,6 +240,7 @@ export const specialProjects: SpecialProject[] = [
     endDate: "2025-11-22",
     primaryInterventionId: "Christlike Behaviour",
     secondaryInterventionIds: ["Exposure to the Word of God"],
+    projectCategory: "selective_limited",
     scopeKind: "country",
     assignedPartnerId: "PRT-CI",
     assignedPartnerName: "Compassion Int.",
@@ -212,6 +269,7 @@ export const specialProjects: SpecialProject[] = [
     endDate: "2026-02-28",
     primaryInterventionId: "Teaching & Learning",
     secondaryInterventionIds: ["Leadership"],
+    projectCategory: "selective_limited",
     scopeKind: "country",
     assignedPartnerId: "PRT-ACSI",
     assignedPartnerName: "ACSI",
@@ -240,6 +298,7 @@ export const specialProjects: SpecialProject[] = [
     endDate: "2025-12-20",
     primaryInterventionId: "Learning Environment",
     secondaryInterventionIds: ["Teaching & Learning"],
+    projectCategory: "intervention_specific",
     scopeKind: "country",
     assignedPartnerId: "PRT-TB",
     assignedPartnerName: "Teach Beyond",
@@ -268,6 +327,7 @@ export const specialProjects: SpecialProject[] = [
     startDate: "2025-02-10",
     endDate: "2025-12-10",
     primaryInterventionId: "Teaching & Learning",
+    projectCategory: "selective_limited",
     scopeKind: "country",
     assignedPartnerId: "PRT-UCU",
     assignedPartnerName: "UCU",
@@ -297,6 +357,7 @@ export type CreateProjectInput = {
   projectShortName?: string;
   projectType: string;
   description?: string;
+  projectCategory: ProjectCategory;
   primaryInterventionId: SsaInterventionArea;
   secondaryInterventionIds?: SsaInterventionArea[];
   financialYear?: string;
@@ -331,6 +392,7 @@ export function createProject(
     financialYear: input.financialYear ?? "FY 2025/26",
     startDate: input.startDate,
     endDate: input.endDate,
+    projectCategory: input.projectCategory,
     primaryInterventionId: input.primaryInterventionId,
     secondaryInterventionIds: input.secondaryInterventionIds?.length
       ? input.secondaryInterventionIds

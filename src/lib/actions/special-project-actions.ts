@@ -16,7 +16,7 @@ import {
   createProject,
   projectById,
   specialProjects,
-  CCEO_ALLOWED_PROJECT_TYPES,
+  canManageProjectCategory,
   type CreateProjectInput,
 } from "@/lib/special-projects-mock";
 import {
@@ -33,14 +33,15 @@ const PROJECT_ROLES = new Set<string>([
   "Admin",
 ]);
 
-// Who may create / manage projects. CCEO is allowed only for local targeted
-// interventions (spec §9) — enforced per-type in createProjectAction.
-const PROJECT_CREATE_ROLES = new Set<string>([
-  "ProjectCoordinator",
-  "CountryDirector",
-  "CountryProgramLead",
-  "Admin",
-]);
+// Management is gated by PROJECT CATEGORY (spec): CCEO/PL run intervention-
+// specific projects; pilot & selective projects need coordination scope.
+// Returns FORBIDDEN-style false when the role may not manage the project's
+// category, or when the project can't be found.
+function canManageProjectById(role: string, projectId: string): boolean {
+  const project = projectById(projectId);
+  if (!project) return false;
+  return canManageProjectCategory(role, project.projectCategory);
+}
 
 export type ProjectActionResult<T = Record<string, unknown>> =
   | ({ ok: true } & T)
@@ -66,6 +67,7 @@ export async function assignSchoolToProjectAction(
 ): Promise<ProjectActionResult<{ projectName: string }>> {
   const user = await getCurrentUser();
   if (!PROJECT_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+  if (!canManageProjectById(user.role, projectId)) return { ok: false, reason: "FORBIDDEN" };
 
   const res = assignSchoolToProject({
     schoolId,
@@ -97,6 +99,7 @@ export async function assignSchoolsToProjectAction(
 ): Promise<ProjectActionResult<{ assigned: number; skipped: number }>> {
   const user = await getCurrentUser();
   if (!PROJECT_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+  if (!canManageProjectById(user.role, projectId)) return { ok: false, reason: "FORBIDDEN" };
   if (!schoolIds.length) return { ok: false, reason: "FAILED", message: "Select at least one school." };
 
   let assigned = 0;
@@ -136,6 +139,7 @@ export async function removeSchoolFromProjectAction(
 ): Promise<ProjectActionResult> {
   const user = await getCurrentUser();
   if (!PROJECT_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+  if (!canManageProjectById(user.role, projectId)) return { ok: false, reason: "FORBIDDEN" };
   const ok = removeSchoolFromProject(schoolId, projectId);
   if (!ok) return { ok: false, reason: "FAILED", message: "Membership not found." };
   emitAudit({
@@ -157,11 +161,10 @@ export async function createProjectAction(
   input: CreateProjectInput,
 ): Promise<ProjectActionResult<{ projectId: string; projectName: string }>> {
   const user = await getCurrentUser();
-  const canCreate =
-    PROJECT_CREATE_ROLES.has(user.role) ||
-    // CCEO may create local targeted interventions only.
-    (user.role === "CCEO" && CCEO_ALLOWED_PROJECT_TYPES.has(input.projectType));
-  if (!canCreate) return { ok: false, reason: "FORBIDDEN" };
+  // Category decides who may create: intervention-specific → CCEO/PL/CD/coord;
+  // pilot & selective → coordinator/CD/PL (CCEO excluded).
+  if (!input.projectCategory) return { ok: false, reason: "FAILED", message: "Choose a project category." };
+  if (!canManageProjectCategory(user.role, input.projectCategory)) return { ok: false, reason: "FORBIDDEN" };
 
   if (!input.projectName?.trim()) return { ok: false, reason: "FAILED", message: "Project name is required." };
   if (!input.primaryInterventionId) return { ok: false, reason: "FAILED", message: "Pick a primary SSA intervention." };
@@ -192,6 +195,7 @@ export async function scheduleProjectActivityAction(
 ): Promise<ProjectActionResult<{ activityId: string }>> {
   const user = await getCurrentUser();
   if (!PROJECT_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+  if (!canManageProjectById(user.role, input.projectId)) return { ok: false, reason: "FORBIDDEN" };
 
   const res = createProjectActivity(input);
   if (!res.ok) return { ok: false, reason: "FAILED", message: res.reason };
@@ -218,6 +222,7 @@ export async function assignProjectToPartnerAction(
 ): Promise<ProjectActionResult<{ partnerName: string }>> {
   const user = await getCurrentUser();
   if (!PROJECT_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+  if (!canManageProjectById(user.role, projectId)) return { ok: false, reason: "FORBIDDEN" };
   if (!partnerName.trim()) return { ok: false, reason: "FAILED", message: "Enter a partner name." };
 
   const project = projectById(projectId);
