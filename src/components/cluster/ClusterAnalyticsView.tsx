@@ -21,6 +21,7 @@ import {
   staffVsPartnerClusterComparison,
 } from "@/lib/cluster/cluster-core";
 import { clusterAcquisitionMetrics } from "@/lib/cluster/cluster-join-source";
+import { ClusterSsaHeatmapCard } from "./ClusterSsaHeatmapCard";
 import { cn } from "@/lib/utils";
 
 type Kpi = { label: string; value: number; Icon: LucideIcon };
@@ -132,6 +133,9 @@ export function ClusterAnalyticsView() {
           ))}
         </div>
       </section>
+
+      {/* SSA performance heatmap by cluster */}
+      <ClusterSsaHeatmapCard />
 
       {/* Staff vs partner cluster management */}
       <section className="card rounded-2xl p-4">

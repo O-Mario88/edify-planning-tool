@@ -19,8 +19,10 @@
 
 import {
   intakeSchools,
+  ssaUploads,
   type IntakeSchool,
 } from "@/lib/intake/intake-mock";
+import { SSA_INTERVENTION_AREAS } from "@/lib/intake/intake-core";
 import {
   districtByName,
   regionIdFor,
@@ -833,6 +835,42 @@ export function clusterAnalytics(): ClusterAnalytics {
       ? Math.round((counts.clustered / active.length) * 10) / 10
       : 0,
   };
+}
+
+// ── Cluster SSA intervention heatmap ───────────────────────────────
+
+export type ClusterSsaHeatmapRow = {
+  clusterId: string;
+  clusterName: string;
+  district: string;
+  schoolsWithSsa: number;
+  /** Average score per intervention (same order as `interventions`); null if no data. */
+  cells: (number | null)[];
+};
+export type ClusterSsaHeatmap = {
+  interventions: string[];
+  rows: ClusterSsaHeatmapRow[];
+};
+
+function latestSsaUploadFor(schoolId: string) {
+  return ssaUploads
+    .filter((u) => u.schoolId === schoolId)
+    .sort((a, b) => b.ssaDate.localeCompare(a.ssaDate))[0];
+}
+
+/** SSA intervention scores averaged per cluster (rows) × intervention (cols). */
+export function clusterSsaHeatmap(): ClusterSsaHeatmap {
+  const interventions = [...SSA_INTERVENTION_AREAS] as string[];
+  const rows: ClusterSsaHeatmapRow[] = activeClusters().map((c) => {
+    const schools = schoolsInCluster(c.id);
+    const uploads = schools.map((s) => latestSsaUploadFor(s.schoolId)).filter(Boolean);
+    const cells = interventions.map((area) => {
+      const vals = uploads.map((u) => Number(u!.scores[area])).filter((n) => Number.isFinite(n));
+      return vals.length ? Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10 : null;
+    });
+    return { clusterId: c.id, clusterName: c.name, district: c.district, schoolsWithSsa: uploads.length, cells };
+  });
+  return { interventions, rows };
 }
 
 // ── System health checks ───────────────────────────────────────────
