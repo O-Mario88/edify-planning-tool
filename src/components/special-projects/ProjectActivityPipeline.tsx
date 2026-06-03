@@ -8,10 +8,12 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Sparkles, MapPin, AlertTriangle, Handshake } from "lucide-react";
+import { Sparkles, MapPin, AlertTriangle, Handshake, Wallet, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StatusBadge } from "@/components/ui/primitives";
-import { runProjectWorkflowAction } from "@/lib/actions/project-partner-actions";
+import { runProjectWorkflowAction, setProjectCostRateAction } from "@/lib/actions/project-partner-actions";
+import { formatUgx } from "@/lib/projects/project-cost-rates";
+import type { ProjectActivityType } from "@/lib/projects/project-activities";
 import {
   availableActions,
   ACTION_LABEL,
@@ -37,8 +39,11 @@ export type PipelineRowVM = {
   evidenceNote?: string;
   returnReason?: string;
   paymentRef?: string;
+  paymentAmount?: number;
   workflowStatus: ProjectWorkflowStatus;
 };
+
+export type RateRow = { activityType: ProjectActivityType; rate: number };
 
 const BRANCH_STATUSES: ProjectWorkflowStatus[] = ["ReturnedForCorrection", "Rejected", "ReturnedByIA", "OnHold"];
 
@@ -48,7 +53,14 @@ const ACTION_BTN_TONE: Partial<Record<ProjectWorkflowAction, string>> = {
   iaReturn: "border-amber-300 text-amber-700 hover:bg-amber-50",
 };
 
-export function ProjectActivityPipeline({ rows, userRole }: { rows: PipelineRowVM[]; userRole: string }) {
+export function ProjectActivityPipeline({
+  rows, userRole, rates = [], canEditRates = false,
+}: {
+  rows: PipelineRowVM[];
+  userRole: string;
+  rates?: RateRow[];
+  canEditRates?: boolean;
+}) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -101,7 +113,8 @@ export function ProjectActivityPipeline({ rows, userRole }: { rows: PipelineRowV
               {row.schoolId ? <Link href={`/schools/${row.schoolId}`} className="hover:underline inline-flex items-center gap-1"><MapPin size={9} />{row.schoolName}</Link> : <span>{row.schoolName}</span>}
               {row.partnerName && <span className="inline-flex items-center gap-1"><Handshake size={9} />{row.partnerName}</span>}
               {row.salesforceActivityId && <span className="tabular">SF: {row.salesforceActivityId}</span>}
-              {row.paymentRef && <span className="tabular text-emerald-700">{row.paymentRef}</span>}
+              {row.workflowStatus === "IAVerified" && row.paymentAmount ? <span className="tabular text-[var(--color-edify-primary)] font-bold">{formatUgx(row.paymentAmount)} due</span> : null}
+              {row.workflowStatus === "Paid" && <span className="tabular text-emerald-700 font-bold">{formatUgx(row.paymentAmount ?? 0)} paid{row.paymentRef ? ` · ${row.paymentRef}` : ""}</span>}
             </div>
             {row.returnReason && <div className="mt-1 text-[11px] text-amber-700 inline-flex items-start gap-1"><AlertTriangle size={11} className="mt-0.5" />{row.returnReason}</div>}
           </div>
@@ -145,6 +158,7 @@ export function ProjectActivityPipeline({ rows, userRole }: { rows: PipelineRowV
           <AlertTriangle size={12} className="mt-0.5 shrink-0" />{error}
         </div>
       )}
+      {rates.length > 0 && <RatesPanel rates={rates} canEdit={canEditRates} />}
       {needsAttention.length > 0 && (
         <section className="card rounded-2xl p-3.5 border-amber-200">
           <h2 className="text-[13px] font-extrabold tracking-tight inline-flex items-center gap-1.5 text-amber-800">
@@ -167,5 +181,62 @@ export function ProjectActivityPipeline({ rows, userRole }: { rows: PipelineRowV
         </section>
       ))}
     </div>
+  );
+}
+
+// Project payment rates — read-only for most roles; Admin/CD/Accountant can
+// adjust the flat facilitation/visit rate per activity type.
+function RatesPanel({ rates, canEdit }: { rates: RateRow[]; canEdit: boolean }) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState<Record<string, string>>({});
+  const [savedKey, setSavedKey] = useState<string | null>(null);
+
+  function save(activityType: ProjectActivityType) {
+    const raw = draft[activityType];
+    if (raw === undefined) return;
+    const rate = Number(raw);
+    if (!Number.isFinite(rate) || rate < 0) return;
+    startTransition(async () => {
+      const res = await setProjectCostRateAction(activityType, rate);
+      if (res.ok) { setSavedKey(activityType); router.refresh(); }
+    });
+  }
+
+  return (
+    <section className="card rounded-2xl p-3.5">
+      <button type="button" onClick={() => setOpen((v) => !v)} className="w-full flex items-center justify-between">
+        <span className="text-[13px] font-extrabold tracking-tight inline-flex items-center gap-1.5">
+          <Wallet size={14} className="text-[var(--color-edify-primary)]" /> Project payment rates
+        </span>
+        <span className="text-[11px] muted">{canEdit ? "Editable" : "Read-only"} · {open ? "hide" : "show"}</span>
+      </button>
+      {open && (
+        <div className="mt-2.5 grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {rates.map((r) => (
+            <div key={r.activityType} className="flex items-center justify-between gap-2 rounded-lg border border-[var(--color-edify-border)] px-2.5 py-1.5">
+              <span className="text-[11.5px] font-semibold">{r.activityType}</span>
+              {canEdit ? (
+                <span className="inline-flex items-center gap-1">
+                  <span className="text-[10.5px] muted">UGX</span>
+                  <input
+                    type="number"
+                    defaultValue={r.rate}
+                    onChange={(e) => setDraft((d) => ({ ...d, [r.activityType]: e.target.value }))}
+                    className="w-24 h-7 px-2 text-[12px] tabular rounded border border-[var(--color-edify-border)] outline-none focus:outline-2 focus:outline-[var(--color-edify-primary)]"
+                  />
+                  <button type="button" disabled={pending} onClick={() => save(r.activityType)} className="h-7 w-7 grid place-items-center rounded bg-[var(--color-edify-primary)] text-white hover:bg-[var(--color-edify-dark)]" aria-label="Save rate">
+                    {savedKey === r.activityType && !pending ? <Check size={13} /> : "↵"}
+                  </button>
+                </span>
+              ) : (
+                <span className="text-[12px] tabular font-bold">{formatUgx(r.rate)}</span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }

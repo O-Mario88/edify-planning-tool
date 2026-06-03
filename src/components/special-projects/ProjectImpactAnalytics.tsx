@@ -7,9 +7,10 @@
 import { useState } from "react";
 import {
   School, GraduationCap, Users, Baby, MapPin, Map as MapIcon, TrendingUp, TrendingDown, Minus,
-  ShieldCheck, Handshake, AlertTriangle, ChevronDown, ChevronRight,
+  ShieldCheck, Handshake, AlertTriangle, Search,
 } from "lucide-react";
 import { SectionCard, StatusBadge } from "@/components/ui/primitives";
+import { Modal } from "@/components/ui/Modal";
 import { PipelineFunnel, InterventionRankBar, SsaHeatmap } from "@/components/analytics/field-engine/charts";
 import { cn } from "@/lib/utils";
 import type { ProjectAnalyticsSnapshot } from "@/lib/projects/project-analytics";
@@ -25,7 +26,7 @@ const QUALITY_TONE: Record<string, "green" | "blue" | "amber" | "red"> = {
   Excellent: "green", Good: "blue", "Needs Attention": "amber", Critical: "red",
 };
 
-/** A reach KPI whose value reveals its source rows on click. */
+/** A reach KPI whose value opens a modal drilldown of its source rows. */
 function ReachStat({
   label, value, caption, Icon, tone, records,
 }: {
@@ -34,28 +35,44 @@ function ReachStat({
 }) {
   const [open, setOpen] = useState(false);
   const hasDrill = (records?.length ?? 0) > 0;
+  const counted = records?.filter((r) => r.contributesToCount).length ?? 0;
   return (
-    <div className="card rounded-2xl p-3">
-      <button type="button" disabled={!hasDrill} onClick={() => setOpen((v) => !v)} className={cn("w-full flex items-start gap-2.5 text-left", hasDrill && "cursor-pointer")}>
+    <>
+      <button
+        type="button" disabled={!hasDrill} onClick={() => setOpen(true)}
+        className={cn("card rounded-2xl p-3 w-full flex items-start gap-2.5 text-left", hasDrill && "cursor-pointer hover:ring-1 hover:ring-[var(--color-edify-primary)]/30 transition-shadow")}
+      >
         <span className={`h-9 w-9 rounded-xl grid place-items-center shrink-0 ${tone}`}><Icon size={16} /></span>
         <span className="min-w-0 flex-1">
           <span className="text-[20px] font-extrabold tabular leading-none">{value}</span>
           <span className="block text-[11px] muted leading-tight mt-0.5">{label}</span>
           {caption && <span className="block text-[10.5px] muted mt-0.5">{caption}</span>}
         </span>
-        {hasDrill && (open ? <ChevronDown size={13} className="muted mt-1" /> : <ChevronRight size={13} className="muted mt-1" />)}
+        {hasDrill && <Search size={12} className="muted mt-1 shrink-0" />}
       </button>
-      {open && hasDrill && (
-        <ul className="mt-2 pt-2 border-t border-[var(--color-edify-divider)] space-y-1 max-h-48 overflow-y-auto">
-          {records!.map((r) => (
-            <li key={r.id} className={cn("text-[11.5px] flex items-center justify-between gap-2", !r.contributesToCount && "opacity-50")}>
-              <span className="truncate">{r.title}</span>
-              <span className="muted shrink-0">{r.status}</span>
-            </li>
-          ))}
-        </ul>
+      {hasDrill && (
+        <Modal
+          open={open}
+          onClose={() => setOpen(false)}
+          title={label}
+          description={`${counted} of ${records!.length} school${records!.length === 1 ? "" : "s"} counted toward this metric. Dimmed rows are assigned but not yet counted.`}
+          size="md"
+          variant="sheet"
+        >
+          <ul className="divide-y divide-[var(--color-edify-divider)] max-h-[60vh] overflow-y-auto">
+            {records!.map((r) => (
+              <li key={r.id} className={cn("py-2 flex items-center justify-between gap-3 text-[12px]", !r.contributesToCount && "opacity-50")}>
+                <span className="min-w-0">
+                  <span className="font-semibold truncate">{r.title}</span>
+                  {r.subtitle && <span className="block text-[11px] muted truncate">{r.subtitle}</span>}
+                </span>
+                <span className="muted shrink-0 text-[11px]">{r.status}</span>
+              </li>
+            ))}
+          </ul>
+        </Modal>
       )}
-    </div>
+    </>
   );
 }
 

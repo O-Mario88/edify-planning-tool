@@ -4,6 +4,7 @@ import { ProjectActivityPipeline, type PipelineRowVM } from "@/components/specia
 import { partnerPipelineActivities } from "@/lib/projects/project-activities";
 import { projectById } from "@/lib/special-projects-mock";
 import { intakeSchools } from "@/lib/intake/intake-mock";
+import { projectRates, paymentAmountFor } from "@/lib/projects/project-cost-rates";
 
 // Project Activity Pipeline — the consolidated, role-aware queue for partner-
 // delivered project work moving Assigned → Scheduled → Evidence → Salesforce
@@ -30,9 +31,13 @@ export default async function ProjectPipelinePage() {
       evidenceNote: a.evidenceNote,
       returnReason: a.returnReason,
       paymentRef: a.paymentRef,
+      paymentAmount: a.paymentAmount ?? paymentAmountFor(a),
       workflowStatus: a.workflowStatus!,
     };
   });
+
+  const canEditRates = ["Admin", "CountryDirector", "ProgramAccountant"].includes(user.role);
+  const rates = projectRates();
 
   return (
     <>
@@ -42,7 +47,7 @@ export default async function ProjectPipelinePage() {
           <h1 className="text-[17px] font-extrabold tracking-tight">Project Activity Pipeline</h1>
           <p className="text-[12px] muted">Partner-delivered project work — assigned → scheduled → evidence → Salesforce → IA verification → payment. You can act on the stages your role owns.</p>
         </header>
-        <ProjectActivityPipeline rows={rows} userRole={user.role} />
+        <ProjectActivityPipeline rows={rows} userRole={user.role} rates={rates} canEditRates={canEditRates} />
       </div>
     </>
   );

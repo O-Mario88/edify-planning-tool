@@ -68,6 +68,7 @@ export type ProjectActivity = {
   evidenceNote?: string;
   returnReason?: string;
   paymentRef?: string;
+  paymentAmount?: number;
   createdAt: string;
   updatedAt: string;
 };
@@ -136,7 +137,7 @@ export const projectActivities: ProjectActivity[] = [
     status: "Completed", evidenceStatus: "Verified",
     salesforceActivityId: "TS-2025-04822", salesforceActivityType: "training",
     iaVerificationStatus: "Confirmed", workflowStatus: "Paid", assignedToPartnerId: "PRT-CI",
-    paymentRef: "PMT-CCSEL-0007", createdAt: "2025-06-25", updatedAt: "2025-07-12",
+    paymentRef: "PMT-CCSEL-0007", paymentAmount: 250_000, createdAt: "2025-06-25", updatedAt: "2025-07-12",
   },
   {
     id: "PAC-0004", projectId: "SP-CCSEL", schoolId: "32791",
@@ -252,6 +253,7 @@ export type WorkflowPatch = {
   returnReason?: string;
   salesforceActivityId?: string;
   paymentRef?: string;
+  paymentAmount?: number;
   now?: string;
 };
 
@@ -308,6 +310,7 @@ export function applyProjectWorkflowAction(
       break;
     case "clearPayment":
       a.paymentRef = patch.paymentRef;
+      if (patch.paymentAmount !== undefined) a.paymentAmount = patch.paymentAmount;
       break;
     default:
       break;

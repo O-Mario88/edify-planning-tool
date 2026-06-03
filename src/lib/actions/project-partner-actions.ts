@@ -26,6 +26,8 @@ import {
   type ActorKind,
 } from "@/lib/projects/project-partner-workflow";
 import { projectById } from "@/lib/special-projects-mock";
+import { paymentAmountFor, setProjectRate, formatUgx } from "@/lib/projects/project-cost-rates";
+import type { ProjectActivityType } from "@/lib/projects/project-activities";
 
 export type WorkflowActionResult =
   | { ok: true; status: string }
@@ -80,9 +82,13 @@ export async function runProjectWorkflowAction(
   if (action === "returnEvidence" || action === "rejectWork" || action === "iaReturn") {
     if (!patch.returnReason?.trim()) return { ok: false, reason: "FAILED", message: "A reason is required." };
   }
-  // Auto-generate a payment reference at clearance when none supplied.
-  if (action === "clearPayment" && !patch.paymentRef) {
-    patch = { ...patch, paymentRef: `PMT-${activity.projectId}-${activity.id}` };
+  // At clearance: stamp the payment reference + amount from the rate table.
+  if (action === "clearPayment") {
+    patch = {
+      ...patch,
+      paymentRef: patch.paymentRef ?? `PMT-${activity.projectId}-${activity.id}`,
+      paymentAmount: patch.paymentAmount ?? paymentAmountFor(activity),
+    };
   }
 
   const res = applyProjectWorkflowAction(activityId, action, patch);
@@ -121,6 +127,45 @@ export async function runProjectWorkflowAction(
     });
   }
 
+  // Multi-channel: partner-facing milestones also reach the partner by Email
+  // (and SMS for payment) outside the app. Mock — emitted to the store, no
+  // real send; the channel field is what a production gateway would dispatch.
+  const partnerId = updated.assignedToPartnerId ?? updated.partnerId;
+  const partnerFacing: Partial<Record<ProjectWorkflowAction, { title: string; body: string; sms?: boolean }>> = {
+    returnEvidence: { title: "Project evidence returned for correction", body: `${updated.activityType}: ${updated.returnReason ?? "please review and resubmit."}` },
+    rejectWork: { title: "Project work rejected", body: `${updated.activityType}: ${updated.returnReason ?? "work must be redone."}` },
+    iaReturn: { title: "Returned by IA — data correction needed", body: `${updated.activityType}: ${updated.returnReason ?? "Salesforce/data correction required."}` },
+    clearPayment: { title: "Payment cleared", body: `${formatUgx(updated.paymentAmount ?? 0)} for ${updated.activityType} (${updated.paymentRef}).`, sms: true },
+  };
+  const pf = partnerFacing[action];
+  if (partnerId && pf) {
+    emitNotificationFanOut([partnerId], { template: `projectActivity.${action}.email`, channel: "Email", title: pf.title, body: pf.body, href: "/special-projects/pipeline" });
+    if (pf.sms) emitNotificationFanOut([partnerId], { template: `projectActivity.${action}.sms`, channel: "SMS", title: pf.title, body: pf.body });
+  }
+
   revalidatePipelineSurfaces();
   return { ok: true, status: updated.workflowStatus ?? "" };
+}
+
+// ─── Configure a project payment rate (Admin / CD / Accountant) ─────
+const RATE_ROLES = new Set<string>(["Admin", "CountryDirector", "ProgramAccountant"]);
+
+export async function setProjectCostRateAction(
+  activityType: ProjectActivityType,
+  rate: number,
+): Promise<WorkflowActionResult> {
+  const user = await getCurrentUser();
+  if (!RATE_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+  if (!setProjectRate(activityType, rate)) return { ok: false, reason: "FAILED", message: "Invalid rate." };
+  emitAudit({
+    action: "projectActivity.rateSet",
+    subjectKind: "ProjectCostRate",
+    subjectId: activityType,
+    actorId: user.staffId,
+    actorRole: user.role,
+    actorName: user.name,
+    payload: { activityType, rate },
+  });
+  revalidatePipelineSurfaces();
+  return { ok: true, status: String(rate) };
 }
