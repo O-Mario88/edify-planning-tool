@@ -17,15 +17,21 @@ import {
   assignSchoolToCluster,
   assignClusterToPartner,
   updateClusterLeader,
+  scheduleClusterMeeting,
+  clusterById,
   bulkAssign,
   createCluster,
   createClusterAndAssign,
   removeFromCluster,
   validateNewCluster,
+  CLUSTER_MEETING_LABEL,
   type ClusterActor,
+  type ClusterMeetingKind,
+  type ClusterMeetingOrganizer,
   type NewClusterInput,
 } from "@/lib/cluster/cluster-core";
 import { partners } from "@/lib/partner/partner-mock";
+import { getCurrentPartner } from "@/lib/partner/partner-identity";
 
 const CLUSTER_ROLES = new Set<string>([
   "CCEO",
@@ -224,6 +230,63 @@ export async function updateClusterLeaderAction(
   });
   revalidateClusterSurfaces();
   return { ok: true };
+}
+
+// ─── Schedule a cluster meeting (partner OR Edify staff) ────────────
+
+export async function scheduleClusterMeetingAction(
+  clusterId: string,
+  kind: ClusterMeetingKind,
+  isoDate: string,
+  participants?: number,
+  notes?: string,
+): Promise<ClusterActionResult<{ label: string; organizer: ClusterMeetingOrganizer }>> {
+  const cluster = clusterById(clusterId);
+  if (!cluster) return { ok: false, reason: "FAILED", message: "Cluster not found." };
+
+  // A delegated partner manages their own clusters; staff schedule Edify activities.
+  const partner = await getCurrentPartner();
+  let actor: ClusterActor;
+  let organizer: ClusterMeetingOrganizer;
+  if (partner) {
+    if (cluster.managedByPartnerId !== partner.id) {
+      return { ok: false, reason: "FORBIDDEN" };
+    }
+    actor = { name: partner.name, role: "Partner" };
+    organizer = "partner";
+  } else {
+    const staff = await actorOrForbidden();
+    if (!staff) return { ok: false, reason: "FORBIDDEN" };
+    actor = staff;
+    organizer = "edify";
+  }
+
+  const res = scheduleClusterMeeting(clusterId, { kind, date: isoDate, participants, notes }, actor, organizer);
+  if (!res.ok) return { ok: false, reason: "FAILED", message: res.reason };
+
+  emitAudit({
+    action: "cluster.meetingScheduled",
+    subjectKind: "Cluster",
+    subjectId: clusterId,
+    actorId: actor.name,
+    actorRole: actor.role,
+    actorName: actor.name,
+    payload: { kind, date: isoDate, organizer, participants },
+  });
+  // Cross-notify the other side: partner → CCEO/PL; Edify staff → the partner.
+  emitNotificationFanOut(organizer === "partner" ? ["CCEO", "PROGRAM_LEAD"] : ["PARTNER"], {
+    template: "cluster.meetingScheduled",
+    channel: "Inbox",
+    title: `${CLUSTER_MEETING_LABEL[kind]} scheduled — ${cluster.name}`,
+    body: `${actor.name} scheduled ${CLUSTER_MEETING_LABEL[kind]} for ${cluster.name} on ${isoDate}.`,
+    href: organizer === "partner" ? "/clusters" : "/partner/clusters",
+  });
+  try {
+    revalidatePath("/partner/clusters");
+    revalidatePath("/partner/today");
+  } catch { /* outside request */ }
+  revalidateClusterSurfaces();
+  return { ok: true, label: CLUSTER_MEETING_LABEL[kind], organizer };
 }
 
 // ─── Single-school assign / remove (row actions + IA correction) ────

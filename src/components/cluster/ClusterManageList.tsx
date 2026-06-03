@@ -6,10 +6,11 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Network, MapPin, UserCheck, Handshake, ChevronRight, X, Pencil, Check } from "lucide-react";
+import { Network, MapPin, UserCheck, Handshake, ChevronRight, X, Pencil, Check, CalendarDays } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { assignClusterToPartnerAction, updateClusterLeaderAction } from "@/lib/actions/cluster-actions";
+import { ClusterMeetingScheduler } from "./ClusterMeetingScheduler";
 
 export type ManagedCluster = {
   id: string;
@@ -21,6 +22,7 @@ export type ManagedCluster = {
   clusterLeaderPhone?: string;
   managedByPartnerId?: string;
   managedByPartnerName?: string;
+  meetingCount?: number;
 };
 
 export function ClusterManageList({
@@ -182,6 +184,16 @@ function ClusterRow({ cluster: c, partners }: { cluster: ManagedCluster; partner
           )}
           {error && <p className="text-[10px] text-rose-600 mt-1">{error}</p>}
         </div>
+      </div>
+
+      {/* Footer — Edify staff can run their own activities (esp. training)
+          on the cluster regardless of partner delegation. */}
+      <div className="mt-2.5 flex items-center gap-2 flex-wrap">
+        <span className="text-[10.5px] muted inline-flex items-center gap-1">
+          <CalendarDays size={11} className="text-[var(--color-edify-primary)]" />
+          {c.meetingCount ? `${c.meetingCount} meeting${c.meetingCount === 1 ? "" : "s"} scheduled` : "No meetings yet"}
+        </span>
+        <ClusterMeetingScheduler clusterId={c.id} buttonLabel="Schedule Edify training" defaultKind="training" />
       </div>
     </div>
   );

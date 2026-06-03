@@ -6,7 +6,7 @@ import { ClusterReadinessCard } from "@/components/cluster/ClusterReadinessCard"
 import { CreateClusterButton } from "@/components/cluster/CreateClusterButton";
 import { ClusterManageList } from "@/components/cluster/ClusterManageList";
 import { getCurrentUser } from "@/lib/auth";
-import { clusterCountsFor, activeClusters, schoolsInCluster } from "@/lib/cluster/cluster-core";
+import { clusterCountsFor, activeClusters, schoolsInCluster, meetingsForCluster } from "@/lib/cluster/cluster-core";
 import { intakeSchools } from "@/lib/intake/intake-mock";
 import { partners } from "@/lib/partner/partner-mock";
 import { resolveOwner } from "@/lib/portfolio/portfolio";
@@ -41,6 +41,7 @@ export default async function ClustersIndex() {
     clusterLeaderPhone: c.clusterLeaderPhone,
     managedByPartnerId: c.managedByPartnerId,
     managedByPartnerName: c.managedByPartnerName,
+    meetingCount: meetingsForCluster(c.id).length,
   }));
   const partnerOptions = partners.map((p) => ({ id: p.id, name: p.name }));
 

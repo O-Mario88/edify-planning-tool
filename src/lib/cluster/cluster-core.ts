@@ -92,6 +92,7 @@ export type ClusterAuditAction =
   | "duplicate_assigned"
   | "partner_assigned"
   | "leader_changed"
+  | "meeting_scheduled"
   | "cluster_archived";
 
 export type ClusterAuditEntry = {
@@ -175,6 +176,45 @@ export const clusters: ClusterRecord[] = [
 
 export const clusterAssignments: SchoolClusterAssignment[] = [];
 export const clusterAudit: ClusterAuditEntry[] = [];
+
+// ── Cluster meetings (scheduled by the partner OR by Edify staff) ──
+export type ClusterMeetingKind =
+  | "first_meeting"
+  | "second_meeting"
+  | "third_meeting"
+  | "sit"
+  | "training";
+
+export const CLUSTER_MEETING_LABEL: Record<ClusterMeetingKind, string> = {
+  first_meeting: "1st Cluster Meeting",
+  second_meeting: "2nd Cluster Meeting",
+  third_meeting: "3rd Cluster Meeting",
+  sit: "School Improvement Training",
+  training: "Cluster Training",
+};
+
+/** Who organises the meeting: the delegated partner, or Edify (staff). */
+export type ClusterMeetingOrganizer = "partner" | "edify";
+
+export type ClusterMeeting = {
+  id: string;
+  clusterId: string;
+  kind: ClusterMeetingKind;
+  date: string; // ISO date
+  organizer: ClusterMeetingOrganizer;
+  scheduledBy: string;
+  scheduledByRole: string;
+  participants?: number;
+  notes?: string;
+  createdAt: string;
+};
+
+export const clusterMeetings: ClusterMeeting[] = [];
+let meetingSeq = 0;
+function nextMeetingId(): string {
+  meetingSeq += 1;
+  return `CMT-${String(meetingSeq).padStart(4, "0")}`;
+}
 
 function logAudit(entry: Omit<ClusterAuditEntry, "id" | "timestamp">): void {
   clusterAudit.unshift({
@@ -838,6 +878,63 @@ export function updateClusterLeader(
     subCounty: cluster.subCounty,
   });
   return { ok: true, cluster };
+}
+
+/** Clusters delegated to a given partner to manage. */
+export function clustersManagedByPartner(partnerId: string): ClusterRecord[] {
+  return activeClusters().filter((c) => c.managedByPartnerId === partnerId);
+}
+
+// ── Cluster meetings ───────────────────────────────────────────────
+
+export type ScheduleMeetingResult =
+  | { ok: true; meeting: ClusterMeeting }
+  | { ok: false; reason: string };
+
+/**
+ * Schedule a cluster meeting / training. Used by BOTH the delegated partner
+ * (organizer "partner") and Edify staff (organizer "edify") — delegation never
+ * blocks staff from running Edify-organised activities on the same cluster.
+ */
+export function scheduleClusterMeeting(
+  clusterId: string,
+  input: { kind: ClusterMeetingKind; date: string; participants?: number; notes?: string },
+  actor: ClusterActor,
+  organizer: ClusterMeetingOrganizer,
+): ScheduleMeetingResult {
+  const cluster = clusterById(clusterId);
+  if (!cluster) return { ok: false, reason: "Cluster not found." };
+  if (!input.date) return { ok: false, reason: "Pick a date." };
+  const meeting: ClusterMeeting = {
+    id: nextMeetingId(),
+    clusterId,
+    kind: input.kind,
+    date: input.date,
+    organizer,
+    scheduledBy: actor.name,
+    scheduledByRole: actor.role,
+    participants: input.participants,
+    notes: input.notes?.trim() || undefined,
+    createdAt: new Date().toISOString(),
+  };
+  clusterMeetings.unshift(meeting);
+  logAudit({
+    action: "meeting_scheduled",
+    user: actor.name,
+    role: actor.role,
+    newClusterId: clusterId,
+    reason: `${organizer === "partner" ? "Partner" : "Edify"} scheduled ${CLUSTER_MEETING_LABEL[input.kind]} on ${input.date}`,
+    district: cluster.district,
+    subCounty: cluster.subCounty,
+  });
+  return { ok: true, meeting };
+}
+
+/** Scheduled meetings for a cluster, soonest first. */
+export function meetingsForCluster(clusterId: string): ClusterMeeting[] {
+  return clusterMeetings
+    .filter((m) => m.clusterId === clusterId)
+    .sort((a, b) => a.date.localeCompare(b.date));
 }
 
 // ── Cluster-leader candidates ──────────────────────────────────────

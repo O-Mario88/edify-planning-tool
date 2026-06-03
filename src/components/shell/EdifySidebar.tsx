@@ -565,6 +565,7 @@ function buildPartnerMenu(dashboardHref: string): MenuSection[] {
         { label: "Corrections",     href: "/partner/corrections",       Icon: AlertOctagon,       badge: 3  },
         { label: "Payments",        href: "/partner/payments",          Icon: Wallet,             badge: 4  },
         { label: "Schools",         href: "/partner/schools",           Icon: Building2 },
+        { label: "Clusters",        href: "/partner/clusters",          Icon: Network },
         { label: "Support Journey", href: "/partner/support-journey",   Icon: ClipboardCheckIcon },
         { label: "Impact",          href: "/partner/impact",            Icon: TrendingUp },
         { label: "Reports",         href: "/partner/reports",           Icon: FileText },

@@ -8,6 +8,7 @@ import {
   Archive,
   Handshake,
   UserCog,
+  CalendarDays,
   History,
   type LucideIcon,
 } from "lucide-react";
@@ -67,6 +68,11 @@ const ACTION_META: Record<ClusterAuditEntry["action"], ActionMeta> = {
     label: "Cluster leader changed",
     Icon: UserCog,
     tone: "text-sky-400",
+  },
+  meeting_scheduled: {
+    label: "Cluster meeting scheduled",
+    Icon: CalendarDays,
+    tone: "text-emerald-400",
   },
   cluster_archived: {
     label: "Cluster archived",
