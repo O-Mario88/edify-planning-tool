@@ -20,9 +20,22 @@ import { schoolsCatalog, salesforceMatches, validVisitRules } from "@/lib/workfl
 import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { SchoolDetailMobileView } from "@/components/mobile/views/SchoolDetailMobileView";
 import { SchoolPartnerJourney, sampleJourneyForHope } from "@/components/partner/SchoolPartnerJourney";
+import { TitleRegister } from "@/components/shell/TitleRegister";
+import { School360View } from "@/components/cluster/School360View";
+import { intakeSchools } from "@/lib/intake/intake-mock";
+import { schoolWorkflowState, schoolLinkedActivities } from "@/lib/school-directory/school-state";
+import { recommendClustersFor, type ClusterMatch } from "@/lib/cluster/cluster-core";
+import { openDuplicateCandidates } from "@/lib/intake/duplicate-candidates-mock";
+import type { DirectorySchoolVM, DirectoryClusterMatch } from "@/components/cluster/DirectoryClusterDrawer";
 
 export default async function School360({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+
+  // Source of truth: an uploaded School Directory record. Render the School 360
+  // for it; fall back to the legacy catalogue for old ids.
+  const intake = intakeSchools.find((x) => x.schoolId === id);
+  if (intake) return <IntakeSchool360 schoolId={id} />;
+
   const s = schoolsCatalog.find((x) => x.id === id);
   if (!s) return notFound();
 
@@ -321,5 +334,50 @@ export default async function School360({ params }: { params: Promise<{ id: stri
       </section>
     </AppShell>
     } />
+  );
+}
+
+// ── School 360 for an uploaded (intake) school — the source-of-truth record ──
+async function IntakeSchool360({ schoolId }: { schoolId: string }) {
+  const s = intakeSchools.find((x) => x.schoolId === schoolId)!;
+  const state = schoolWorkflowState(s);
+  const activities = schoolLinkedActivities(s);
+  const dupe = openDuplicateCandidates().some((d) => d.schoolId === s.schoolId);
+
+  // Recommendations so "Add to Cluster" works straight from the 360.
+  const g = recommendClustersFor(s);
+  const toVM = (m: ClusterMatch): DirectoryClusterMatch => ({
+    id: m.cluster.id, name: m.cluster.name, district: m.cluster.district,
+    subCounties: m.cluster.subCounties ?? [], schoolCount: m.schoolCount,
+    ssaRate: m.ssaRate, tier: m.tier, leaderName: m.cluster.clusterLeaderName,
+  });
+  const addToClusterVM: DirectorySchoolVM | null = state.stage === "unclustered" ? {
+    schoolId: s.schoolId, schoolName: s.schoolName, schoolType: s.schoolType,
+    region: s.region, district: s.district, subCounty: s.subCounty, parish: s.parish,
+    assignedCceo: s.assignedCceo, ssaStatus: s.ssaStatus, duplicate: dupe,
+    clusterStatus: "unclustered",
+    matches: { strong: g.strong.map(toVM), district: g.district.map(toVM), region: g.region.map(toVM) },
+  } : null;
+
+  return (
+    <>
+      <TitleRegister title={s.schoolName} dateLabel="School 360" />
+      <School360View
+        record={{
+          schoolId: s.schoolId, schoolName: s.schoolName, schoolType: s.schoolType,
+          region: s.region, district: s.district, subCounty: s.subCounty, parish: s.parish,
+          assignedCceo: s.assignedCceo, enrollment: s.enrollment, phone: s.phone,
+          primaryContact: s.primaryContact, shippingAddress: s.shippingAddress,
+          dateAdded: s.dateAdded, addedBy: s.addedBy,
+        }}
+        state={{
+          stage: state.stage, stageLabel: state.stageLabel, blocker: state.blocker,
+          flags: state.flags, clusterId: state.clusterId, clusterName: state.clusterName,
+          ssaDone: state.ssaDone, nextActions: state.nextActions,
+        }}
+        activities={activities}
+        addToClusterVM={addToClusterVM}
+      />
+    </>
   );
 }

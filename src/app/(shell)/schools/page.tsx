@@ -16,6 +16,7 @@ import {
   recommendClustersFor,
   type ClusterMatch,
 } from "@/lib/cluster/cluster-core";
+import { schoolWorkflowState } from "@/lib/school-directory/school-state";
 import { resolveOwner } from "@/lib/portfolio/portfolio";
 import { visibleStaffIds } from "@/lib/org/supervision";
 import { openDuplicateCandidates } from "@/lib/intake/duplicate-candidates-mock";
@@ -130,6 +131,7 @@ export default async function SchoolsDashboard() {
         clusterStatus: clusterStatusOf(s),
         clusterId: s.clusterId,
         clusterName: s.cluster,
+        stage: schoolWorkflowState(s).stage,
         matches: { strong: g.strong.map(toMatchVM), district: g.district.map(toMatchVM), region: g.region.map(toMatchVM) },
       };
     });

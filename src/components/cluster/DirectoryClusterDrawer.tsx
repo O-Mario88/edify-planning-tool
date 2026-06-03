@@ -40,6 +40,8 @@ export type DirectorySchoolVM = {
   clusterStatus: "unclustered" | "clustered" | "needs_review";
   clusterId?: string;
   clusterName?: string;
+  /** Canonical workflow stage (set by the directory; the drawer ignores it). */
+  stage?: "needs_owner" | "unclustered" | "ssa_required" | "planning_ready";
   matches: { strong: DirectoryClusterMatch[]; district: DirectoryClusterMatch[]; region: DirectoryClusterMatch[] };
 };
 
