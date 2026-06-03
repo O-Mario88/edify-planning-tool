@@ -5,6 +5,7 @@
 // the "recently added" lists without a round-trip.
 
 import { ssaAverage, type SchoolType, type SsaInterventionArea } from "./intake-core";
+import { clearSsaActivation } from "@/lib/school-directory/ssa-activation";
 
 export type IntakeSchool = {
   schoolId: string;
@@ -169,6 +170,8 @@ export function addSsaUpload(input: {
     s.ssaStatus = "SSA Done";
     s.planningLocked = false;
     if (input.newEnrollment !== undefined) s.enrollment = input.newEnrollment;
+    // The SSA is now uploaded — any in-progress SSA activation is fulfilled.
+    clearSsaActivation(input.schoolId);
   }
   return row;
 }

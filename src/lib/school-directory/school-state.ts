@@ -11,6 +11,7 @@ import { intakeSchools, ssaUploads, type IntakeSchool } from "@/lib/intake/intak
 import { resolveOwner } from "@/lib/portfolio/portfolio";
 import { clusterStatusOf, clusterById, meetingsForCluster, CLUSTER_MEETING_LABEL, type ClusterMeeting } from "@/lib/cluster/cluster-core";
 import { openDuplicateCandidates } from "@/lib/intake/duplicate-candidates-mock";
+import { ssaActivationFor, SSA_METHOD_LABEL } from "./ssa-activation";
 
 export type SchoolStage =
   | "needs_owner"
@@ -77,13 +78,21 @@ export function schoolWorkflowState(s: IntakeSchool): SchoolWorkflowState {
     nextActions.push({ key: "add_to_cluster", label: "Add to Cluster", primary: true });
   } else if (!ssaDone) {
     stage = "ssa_required";
-    blocker = "No current-FY SSA — complete it via SIT, a partner, or yourself.";
-    nextActions.push(
-      { key: "schedule_sit", label: "Schedule SIT", href: s.clusterId ? `/clusters/${s.clusterId}` : undefined, primary: true },
-      { key: "assign_ssa_partner", label: "Assign SSA to partner", href: "/planning" },
-      { key: "schedule_ssa_self", label: "Schedule SSA myself", href: "/planning" },
-      { key: "upload_ssa", label: "Upload SSA (IA)", href: "/data-intake/upload" },
-    );
+    const activation = ssaActivationFor(s.schoolId);
+    if (activation) {
+      // SSA is in motion — show the chosen method; still locked until IA uploads.
+      flags.push(SSA_METHOD_LABEL[activation.method]);
+      blocker = `SSA in progress (${SSA_METHOD_LABEL[activation.method].toLowerCase()}) — planning unlocks when IA uploads the SSA.`;
+      nextActions.push({ key: "upload_ssa", label: "Upload SSA (IA)", href: "/data-intake/upload", primary: true });
+    } else {
+      blocker = "No current-FY SSA — complete it via SIT, a partner, or yourself.";
+      nextActions.push(
+        { key: "schedule_sit", label: "Schedule SIT", href: s.clusterId ? `/clusters/${s.clusterId}` : undefined, primary: true },
+        { key: "assign_ssa_partner", label: "Assign SSA to partner", href: "/planning" },
+        { key: "schedule_ssa_self", label: "Schedule SSA myself", href: "/planning" },
+        { key: "upload_ssa", label: "Upload SSA (IA)", href: "/data-intake/upload" },
+      );
+    }
   } else {
     stage = "planning_ready";
     nextActions.push({ key: "plan_support", label: "Plan support", href: "/planning", primary: true });

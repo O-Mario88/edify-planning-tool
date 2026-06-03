@@ -5,7 +5,8 @@
 // with the next action launched FROM here, the linked cluster, and every
 // activity that links back to this school.
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Building2, MapPin, User, Phone, Network, CalendarDays, ShieldCheck, ArrowRight,
@@ -13,6 +14,14 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DirectoryClusterDrawer, type DirectorySchoolVM } from "./DirectoryClusterDrawer";
+import { activateSsaAction } from "@/lib/actions/ssa-activation-actions";
+import type { SsaActivationMethod } from "@/lib/school-directory/ssa-activation";
+
+const SSA_ACTION_METHOD: Record<string, SsaActivationMethod> = {
+  schedule_sit: "sit",
+  assign_ssa_partner: "partner",
+  schedule_ssa_self: "self",
+};
 
 export type School360Record = {
   schoolId: string;
@@ -60,6 +69,15 @@ export function School360View({
   addToClusterVM: DirectorySchoolVM | null;
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+
+  function activate(method: SsaActivationMethod) {
+    startTransition(async () => {
+      const res = await activateSsaAction(record.schoolId, method);
+      if (res.ok) router.refresh();
+    });
+  }
 
   return (
     <div className="px-4 sm:px-5 md:px-6 pt-4 pb-12 space-y-4">
@@ -103,6 +121,14 @@ export function School360View({
                   return (
                     <button key={a.key} type="button" onClick={() => setDrawerOpen(true)}
                       className={a.primary ? btnPrimary : btnGhost}>
+                      {a.label} <ArrowRight size={12} />
+                    </button>
+                  );
+                }
+                if (SSA_ACTION_METHOD[a.key]) {
+                  return (
+                    <button key={a.key} type="button" disabled={pending} onClick={() => activate(SSA_ACTION_METHOD[a.key])}
+                      className={cn(a.primary ? btnPrimary : btnGhost, pending && "opacity-60")}>
                       {a.label} <ArrowRight size={12} />
                     </button>
                   );

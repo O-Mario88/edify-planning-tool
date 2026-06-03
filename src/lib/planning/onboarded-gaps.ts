@@ -12,6 +12,7 @@
 import type { EdifyRole } from "@/lib/auth";
 import { intakeSchools, ssaUploads } from "@/lib/intake/intake-mock";
 import { clusterStatusOf } from "@/lib/cluster/cluster-core";
+import { schoolWorkflowState } from "@/lib/school-directory/school-state";
 import { staffIdByName, visibleStaffIds } from "@/lib/org/supervision";
 import type { SchoolGap, SsaInterventionArea, SchoolGapCategory } from "./planning-gaps-mock";
 
@@ -48,17 +49,19 @@ export function onboardedSchoolGaps(): SchoolGap[] {
     const done = s.ssaStatus === "SSA Done";
     const clustered = clusterStatusOf(s) === "clustered";
     const worst = weak[0]?.score;
-    // Cluster-first: an unclustered school is the required setup gap. SSA
-    // risk only applies once the school is in a cluster.
+    // Single source of truth: the canonical pipeline stage drives the gap.
+    const stage = schoolWorkflowState(s).stage;
+    const gapCategory: SchoolGapCategory =
+      stage === "needs_owner" || stage === "unclustered" ? "no_cluster"
+      : stage === "ssa_required" ? "no_ssa"
+      : "no_training";
     const riskLevel: SchoolGap["riskLevel"] =
-      !clustered ? "High"
-      : !done ? "Critical"
+      gapCategory === "no_cluster" ? "High"
+      : gapCategory === "no_ssa" ? "Critical"
       : worst == null ? "Medium"
       : worst <= 3 ? "Critical"
       : worst <= 5 ? "High"
       : worst <= 7 ? "Medium" : "Low";
-    const gapCategory: SchoolGapCategory =
-      !clustered ? "no_cluster" : !done ? "no_ssa" : "no_training";
     return {
       id: `onb-${s.schoolId}`,
       schoolName: s.schoolName,
