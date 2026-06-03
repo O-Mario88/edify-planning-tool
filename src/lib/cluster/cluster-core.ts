@@ -219,7 +219,8 @@ export type ClusterActivityStatus =
   | "Scheduled"
   | "Awaiting IA"
   | "IA Confirmed"
-  | "Paid"
+  | "Paid"      // partner payment cleared
+  | "Closed"    // staff Netsuite accountability recorded
   | "Returned";
 
 export type ClusterMeeting = {
@@ -245,6 +246,9 @@ export type ClusterMeeting = {
   iaConfirmedAt?: string;
   iaConfirmedBy?: string;
   accountantPaidAt?: string;
+  /** Staff path: Netsuite accountability. */
+  netsuiteExpenseId?: string;
+  accountabilityClosedAt?: string;
   returnedReason?: string;
   // ── Completion record ──
   actualDate?: string;
@@ -1212,6 +1216,24 @@ export function accountantPayClusterActivity(activityId: string, actor: ClusterA
   return { ok: true, activity: a };
 }
 
+/** Staff (Edify-managed) cluster activities IA-confirmed, awaiting Netsuite accountability. */
+export function staffClusterAccountabilityPending(): ClusterMeeting[] {
+  return clusterMeetings.filter((m) => m.organizer === "edify" && m.status === "IA Confirmed");
+}
+
+/** Accountant records Netsuite accountability for a staff-managed activity — only after IA confirmation. */
+export function recordStaffAccountability(activityId: string, netsuiteExpenseId: string, actor: ClusterActor): ActivityResult {
+  const a = clusterActivityById(activityId);
+  if (!a) return { ok: false, reason: "Activity not found." };
+  if (a.organizer !== "edify") return { ok: false, reason: "Only staff-managed activities use Netsuite accountability." };
+  if (a.status !== "IA Confirmed") return { ok: false, reason: "Accountability is blocked until IA confirms the Salesforce record." };
+  if (!netsuiteExpenseId.trim()) return { ok: false, reason: "Enter the Netsuite Expense ID." };
+  a.netsuiteExpenseId = netsuiteExpenseId.trim();
+  a.accountabilityClosedAt = new Date().toISOString();
+  a.status = "Closed";
+  return { ok: true, activity: a };
+}
+
 /** Return an activity for correction (IA or staff). */
 export function returnClusterActivity(activityId: string, reason: string, actor: ClusterActor): ActivityResult {
   const a = clusterActivityById(activityId);
@@ -1244,7 +1266,7 @@ export type ClusterMeetingMetrics = {
 
 /** Roll-up of cluster-meeting lifecycle for dashboards. */
 export function clusterMeetingMetrics(): ClusterMeetingMetrics {
-  const confirmedList = clusterMeetings.filter((m) => m.status === "IA Confirmed" || m.status === "Paid");
+  const confirmedList = clusterMeetings.filter((m) => m.status === "IA Confirmed" || m.status === "Paid" || m.status === "Closed");
   return {
     scheduled: clusterMeetings.filter((m) => m.status === "Scheduled").length,
     awaitingIa: clusterMeetings.filter((m) => m.status === "Awaiting IA").length,
@@ -1285,7 +1307,7 @@ export function clusterProfile(clusterId: string): ClusterProfile | undefined {
   const schools = schoolsInCluster(clusterId);
   const activities = meetingsForCluster(clusterId);
   const ssaDone = schools.filter((s) => s.ssaStatus === "SSA Done").length;
-  const confirmed = activities.filter((a) => a.status === "IA Confirmed" || a.status === "Paid");
+  const confirmed = activities.filter((a) => a.status === "IA Confirmed" || a.status === "Paid" || a.status === "Closed");
   const teachersReached = confirmed.reduce((n, a) => n + (a.teachersCount ?? 0), 0);
   const schoolLeadersReached = confirmed.reduce((n, a) => n + (a.schoolLeadersCount ?? 0), 0);
   const attendanceTotal = confirmed.reduce((n, a) => n + (a.totalParticipants ?? 0), 0);

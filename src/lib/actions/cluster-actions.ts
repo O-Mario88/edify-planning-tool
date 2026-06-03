@@ -19,6 +19,7 @@ import {
   updateClusterLeader,
   scheduleClusterMeeting,
   recordClusterActivitySalesforce,
+  recordStaffAccountability,
   completeClusterMeeting,
   iaConfirmClusterActivity,
   accountantPayClusterActivity,
@@ -389,14 +390,19 @@ export async function iaConfirmClusterActivityAction(activityId: string): Promis
     actorId: user.staffId, actorRole: user.role, actorName: user.name,
     payload: { activityId, salesforceTrainingId: res.activity.salesforceTrainingId },
   });
-  if (res.activity.organizer === "partner") {
-    emitNotificationFanOut(["PROGRAM_ACCOUNTANT"], {
-      template: "cluster.paymentReady", channel: "Inbox",
-      title: "Partner cluster payment ready",
-      body: `${CLUSTER_MEETING_LABEL[res.activity.kind]} confirmed — partner payment can be cleared.`,
-      href: "/disbursements",
-    });
-  }
+  emitNotificationFanOut(["PROGRAM_ACCOUNTANT"], res.activity.organizer === "partner"
+    ? {
+        template: "cluster.paymentReady", channel: "Inbox",
+        title: "Partner cluster payment ready",
+        body: `${CLUSTER_MEETING_LABEL[res.activity.kind]} confirmed — partner payment can be cleared.`,
+        href: "/disbursements/cluster-payments",
+      }
+    : {
+        template: "cluster.accountabilityReady", channel: "Inbox",
+        title: "Staff cluster accountability ready",
+        body: `${CLUSTER_MEETING_LABEL[res.activity.kind]} confirmed — record Netsuite accountability.`,
+        href: "/disbursements/cluster-payments",
+      });
   revalidateClusterSurfaces();
   return { ok: true };
 }
@@ -411,6 +417,21 @@ export async function payClusterActivityAction(activityId: string): Promise<Clus
     action: "cluster.activityPaid", subjectKind: "Cluster", subjectId: res.activity.clusterId,
     actorId: user.staffId, actorRole: user.role, actorName: user.name,
     payload: { activityId },
+  });
+  revalidateClusterSurfaces();
+  return { ok: true };
+}
+
+/** Accountant records Netsuite accountability for a staff-managed activity (only after IA confirm). */
+export async function recordStaffAccountabilityAction(activityId: string, netsuiteExpenseId: string): Promise<ClusterActionResult> {
+  const user = await getCurrentUser();
+  if (!ACCOUNTANT_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+  const res = recordStaffAccountability(activityId, netsuiteExpenseId, { name: user.name, role: user.role });
+  if (!res.ok) return { ok: false, reason: "FAILED", message: res.reason };
+  emitAudit({
+    action: "cluster.staffAccountabilityRecorded", subjectKind: "Cluster", subjectId: res.activity.clusterId,
+    actorId: user.staffId, actorRole: user.role, actorName: user.name,
+    payload: { activityId, netsuiteExpenseId },
   });
   revalidateClusterSurfaces();
   return { ok: true };

@@ -151,6 +151,7 @@ async function EngineClusterProfile({ clusterId }: { clusterId: string }) {
       teachers: a.teachersCount, leaders: a.schoolLeadersCount, total: a.totalParticipants,
       iaConfirmedAt: a.iaConfirmedAt, paidAt: a.accountantPaidAt, returnedReason: a.returnedReason,
       nextMeetingDate: a.nextMeetingDate, minutesText: a.minutesText, resolutionsText: a.resolutionsText,
+      netsuiteExpenseId: a.netsuiteExpenseId,
     })),
   };
 

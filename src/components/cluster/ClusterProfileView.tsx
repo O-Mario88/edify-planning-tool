@@ -16,6 +16,7 @@ import {
   iaConfirmClusterActivityAction,
   payClusterActivityAction,
   returnClusterActivityAction,
+  recordStaffAccountabilityAction,
 } from "@/lib/actions/cluster-actions";
 import { CompleteClusterMeetingDrawer, type CompleteMeetingTarget } from "./CompleteClusterMeetingDrawer";
 
@@ -25,6 +26,7 @@ export type ActivityVM = {
   salesforceTrainingId?: string; teachers?: number; leaders?: number; total?: number;
   iaConfirmedAt?: string; paidAt?: string; returnedReason?: string;
   nextMeetingDate?: string; minutesText?: string; resolutionsText?: string;
+  netsuiteExpenseId?: string;
 };
 export type SchoolVM = { schoolId: string; schoolName: string; schoolType: string; ssaStatus: string };
 export type ClusterProfileVM = {
@@ -45,6 +47,7 @@ const STATUS_TONE: Record<string, string> = {
   "Awaiting IA": "bg-amber-50 text-amber-700",
   "IA Confirmed": "bg-emerald-50 text-emerald-700",
   Paid: "bg-violet-50 text-violet-700",
+  Closed: "bg-slate-100 text-slate-600",
   Returned: "bg-rose-50 text-rose-700",
 };
 
@@ -136,6 +139,7 @@ function ActivityRow({ a, flags, cluster }: { a: ActivityVM; flags: ProfileFlags
   const router = useRouter();
   const [pending, start] = useTransition();
   const [completing, setCompleting] = useState(false);
+  const [netsuite, setNetsuite] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   function run(fn: () => Promise<{ ok: boolean; reason?: string; message?: string }>) {
@@ -191,6 +195,15 @@ function ActivityRow({ a, flags, cluster }: { a: ActivityVM; flags: ProfileFlags
         )}
         {a.status === "Awaiting IA" && !flags.canIa && <span className="text-[10.5px] muted inline-flex items-center gap-1"><ShieldCheck size={11} /> Awaiting IA Salesforce confirmation</span>}
         {a.status === "IA Confirmed" && a.organizer === "partner" && !flags.canPay && <span className="text-[10.5px] muted inline-flex items-center gap-1"><Wallet size={11} /> Ready for accountant payment</span>}
+        {/* Staff (Edify) path → Netsuite accountability after IA confirm */}
+        {a.status === "IA Confirmed" && a.organizer === "edify" && flags.canPay && (
+          <span className="inline-flex items-center gap-1.5">
+            <input value={netsuite} onChange={(e) => setNetsuite(e.target.value)} placeholder="Netsuite Expense ID" className="h-8 px-2 w-44 rounded-md border border-[var(--color-edify-border)] bg-[var(--surface-1,#fff)] text-[11.5px]" />
+            <button type="button" disabled={pending || !netsuite.trim()} onClick={() => run(() => recordStaffAccountabilityAction(a.id, netsuite.trim()))} className={btnPrimary}><Wallet size={12} /> Record accountability</button>
+          </span>
+        )}
+        {a.status === "IA Confirmed" && a.organizer === "edify" && !flags.canPay && <span className="text-[10.5px] muted inline-flex items-center gap-1"><Wallet size={11} /> Awaiting Netsuite accountability</span>}
+        {a.status === "Closed" && a.netsuiteExpenseId && <span className="text-[10.5px] muted inline-flex items-center gap-1"><Wallet size={11} /> Accountability closed · {a.netsuiteExpenseId}</span>}
       </div>
 
       <CompleteClusterMeetingDrawer open={completing} target={completing ? target : null} onClose={() => setCompleting(false)} />
