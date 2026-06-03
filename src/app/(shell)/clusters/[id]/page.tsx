@@ -14,7 +14,7 @@ import { clustersMock, schoolsMock } from "@/lib/schools-mock";
 import { orgStaff } from "@/lib/org/supervision";
 import { TitleRegister } from "@/components/shell/TitleRegister";
 import { ClusterProfileView } from "@/components/cluster/ClusterProfileView";
-import { clusterProfile, clusterById, CLUSTER_MEETING_LABEL } from "@/lib/cluster/cluster-core";
+import { clusterProfile, clusterById, CLUSTER_MEETING_LABEL, feedbackForCluster, CLUSTER_FEEDBACK_LABEL } from "@/lib/cluster/cluster-core";
 import { getCurrentUser } from "@/lib/auth";
 import { getCurrentPartner } from "@/lib/partner/partner-identity";
 
@@ -152,6 +152,16 @@ async function EngineClusterProfile({ clusterId }: { clusterId: string }) {
       iaConfirmedAt: a.iaConfirmedAt, paidAt: a.accountantPaidAt, returnedReason: a.returnedReason,
       nextMeetingDate: a.nextMeetingDate, minutesText: a.minutesText, resolutionsText: a.resolutionsText,
       netsuiteExpenseId: a.netsuiteExpenseId,
+    })),
+    feedback: feedbackForCluster(profile.cluster.id).map((f) => ({
+      id: f.id,
+      label: CLUSTER_FEEDBACK_LABEL[f.feedbackType],
+      by: `${f.submittedBy} (${f.submittedByRole})`,
+      date: f.createdAt,
+      whatWentWell: f.whatWentWell,
+      challenges: f.challenges,
+      recommendations: f.recommendations,
+      rating: f.rating,
     })),
   };
 

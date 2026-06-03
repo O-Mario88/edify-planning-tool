@@ -19,6 +19,7 @@ import {
   recordStaffAccountabilityAction,
 } from "@/lib/actions/cluster-actions";
 import { CompleteClusterMeetingDrawer, type CompleteMeetingTarget } from "./CompleteClusterMeetingDrawer";
+import { ClusterFeedbackSection, type ClusterFeedbackVM } from "./ClusterFeedbackSection";
 
 export type ActivityVM = {
   id: string; kind: string; label: string; date: string;
@@ -39,6 +40,7 @@ export type ClusterProfileVM = {
   attendanceTotal: number; teachersReached: number; schoolLeadersReached: number;
   paymentsReady: number; paymentsPaid: number;
   schools: SchoolVM[]; activities: ActivityVM[];
+  feedback: ClusterFeedbackVM[];
 };
 export type ProfileFlags = { canRecord: boolean; canIa: boolean; canPay: boolean; canReturn: boolean };
 
@@ -129,6 +131,7 @@ export function ClusterProfileView({ profile, flags }: { profile: ClusterProfile
             </div>
             <p className="text-[12px] muted mt-1.5">{profile.ssaDone} of {profile.schoolCount} schools have a current SSA ({profile.ssaCompletionRate}%). {profile.ssaMissing} still pending.</p>
           </section>
+          <ClusterFeedbackSection clusterId={profile.id} feedback={profile.feedback} />
         </aside>
       </div>
     </div>

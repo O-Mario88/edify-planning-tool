@@ -1279,6 +1279,63 @@ export function clusterMeetingMetrics(): ClusterMeetingMetrics {
   };
 }
 
+// ── Cluster feedback ───────────────────────────────────────────────
+
+export type ClusterFeedbackType = "partner" | "staff" | "ia";
+export const CLUSTER_FEEDBACK_LABEL: Record<ClusterFeedbackType, string> = {
+  partner: "Partner feedback",
+  staff: "Staff feedback",
+  ia: "IA verification feedback",
+};
+
+export type ClusterFeedback = {
+  id: string;
+  clusterId: string;
+  activityId?: string;
+  submittedBy: string;
+  submittedByRole: string;
+  feedbackType: ClusterFeedbackType;
+  whatWentWell?: string;
+  challenges?: string;
+  recommendations?: string;
+  rating?: number; // 1–5
+  createdAt: string;
+};
+
+export const clusterFeedback: ClusterFeedback[] = [];
+let feedbackSeq = 0;
+
+export function addClusterFeedback(
+  clusterId: string,
+  input: { feedbackType: ClusterFeedbackType; whatWentWell?: string; challenges?: string; recommendations?: string; rating?: number; activityId?: string },
+  actor: ClusterActor,
+): ClusterFeedback | { error: string } {
+  if (!clusterById(clusterId)) return { error: "Cluster not found." };
+  if (!input.whatWentWell?.trim() && !input.challenges?.trim() && !input.recommendations?.trim()) {
+    return { error: "Add at least one note." };
+  }
+  feedbackSeq += 1;
+  const rec: ClusterFeedback = {
+    id: `CFB-${String(feedbackSeq).padStart(4, "0")}`,
+    clusterId,
+    activityId: input.activityId,
+    submittedBy: actor.name,
+    submittedByRole: actor.role,
+    feedbackType: input.feedbackType,
+    whatWentWell: input.whatWentWell?.trim() || undefined,
+    challenges: input.challenges?.trim() || undefined,
+    recommendations: input.recommendations?.trim() || undefined,
+    rating: input.rating,
+    createdAt: new Date().toISOString(),
+  };
+  clusterFeedback.unshift(rec);
+  return rec;
+}
+
+export function feedbackForCluster(clusterId: string): ClusterFeedback[] {
+  return clusterFeedback.filter((f) => f.clusterId === clusterId);
+}
+
 // ── Cluster performance (computed from member schools + activities) ─
 
 export type ClusterProfile = {

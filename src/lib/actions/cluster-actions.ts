@@ -30,6 +30,7 @@ import {
   createCluster,
   createClusterAndAssign,
   removeFromCluster,
+  addClusterFeedback,
   validateNewCluster,
   CLUSTER_MEETING_LABEL,
   type ClusterActor,
@@ -294,6 +295,36 @@ export async function scheduleClusterMeetingAction(
   } catch { /* outside request */ }
   revalidateClusterSurfaces();
   return { ok: true, label: CLUSTER_MEETING_LABEL[kind], organizer };
+}
+
+// ─── Cluster feedback ───────────────────────────────────────────────
+
+export async function addClusterFeedbackAction(
+  clusterId: string,
+  input: { whatWentWell?: string; challenges?: string; recommendations?: string; rating?: number },
+): Promise<ClusterActionResult> {
+  // Feedback type follows the submitter: partner user → partner; IA → ia; else staff.
+  const partner = await getCurrentPartner();
+  let actor: ClusterActor;
+  let feedbackType: "partner" | "staff" | "ia";
+  if (partner) {
+    actor = { name: partner.name, role: "Partner" };
+    feedbackType = "partner";
+  } else {
+    const user = await getCurrentUser();
+    if (!CLUSTER_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+    actor = { name: user.name, role: user.role };
+    feedbackType = user.role === "ImpactAssessment" ? "ia" : "staff";
+  }
+  const res = addClusterFeedback(clusterId, { ...input, feedbackType }, actor);
+  if ("error" in res) return { ok: false, reason: "FAILED", message: res.error };
+  emitAudit({
+    action: "cluster.feedbackAdded", subjectKind: "Cluster", subjectId: clusterId,
+    actorId: actor.name, actorRole: actor.role, actorName: actor.name,
+    payload: { feedbackType, rating: input.rating },
+  });
+  revalidateClusterSurfaces();
+  return { ok: true };
 }
 
 // ─── Cluster-activity lifecycle (TS- → IA confirm → accountant pay) ─
