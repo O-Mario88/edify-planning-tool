@@ -91,6 +91,7 @@ export type ClusterAuditAction =
   | "ia_corrected"
   | "duplicate_assigned"
   | "partner_assigned"
+  | "leader_changed"
   | "cluster_archived";
 
 export type ClusterAuditEntry = {
@@ -804,6 +805,35 @@ export function assignClusterToPartner(
     role: actor.role,
     newClusterId: clusterId,
     reason: partnerId ? `Delegated to ${partnerName}` : "Partner delegation cleared",
+    district: cluster.district,
+    subCounty: cluster.subCounty,
+  });
+  return { ok: true, cluster };
+}
+
+// ── Edit cluster leader ────────────────────────────────────────────
+
+/**
+ * Change a cluster's leader (name + phone, optionally the school they lead) —
+ * so staff can update leadership when it changes. Empty name clears the leader.
+ */
+export function updateClusterLeader(
+  clusterId: string,
+  leader: { name?: string; phone?: string; schoolId?: string },
+  actor: ClusterActor,
+): ClusterPartnerResult {
+  const cluster = clusterById(clusterId);
+  if (!cluster) return { ok: false, reason: "Cluster not found." };
+  const name = leader.name?.trim();
+  cluster.clusterLeaderName = name || undefined;
+  cluster.clusterLeaderPhone = leader.phone?.trim() || undefined;
+  cluster.clusterLeaderSchoolId = leader.schoolId || undefined;
+  logAudit({
+    action: "leader_changed",
+    user: actor.name,
+    role: actor.role,
+    newClusterId: clusterId,
+    reason: name ? `Leader set to ${name}` : "Leader cleared",
     district: cluster.district,
     subCounty: cluster.subCounty,
   });

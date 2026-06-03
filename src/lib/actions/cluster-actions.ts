@@ -16,6 +16,7 @@ import { emitAudit, emitNotificationFanOut } from "./audit";
 import {
   assignSchoolToCluster,
   assignClusterToPartner,
+  updateClusterLeader,
   bulkAssign,
   createCluster,
   createClusterAndAssign,
@@ -198,6 +199,31 @@ export async function assignClusterToPartnerAction(
   }
   revalidateClusterSurfaces();
   return { ok: true, partnerName: partner?.name ?? "" };
+}
+
+// ─── Edit a cluster's leader ────────────────────────────────────────
+
+export async function updateClusterLeaderAction(
+  clusterId: string,
+  name: string,
+  phone: string,
+  schoolId?: string,
+): Promise<ClusterActionResult> {
+  const actor = await actorOrForbidden();
+  if (!actor) return { ok: false, reason: "FORBIDDEN" };
+  const res = updateClusterLeader(clusterId, { name, phone, schoolId }, actor);
+  if (!res.ok) return { ok: false, reason: "FAILED", message: res.reason };
+  emitAudit({
+    action: "cluster.leaderChanged",
+    subjectKind: "Cluster",
+    subjectId: clusterId,
+    actorId: actor.name,
+    actorRole: actor.role,
+    actorName: actor.name,
+    payload: { name, phone },
+  });
+  revalidateClusterSurfaces();
+  return { ok: true };
 }
 
 // ─── Single-school assign / remove (row actions + IA correction) ────
