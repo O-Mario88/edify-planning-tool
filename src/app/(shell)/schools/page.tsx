@@ -1,8 +1,5 @@
 import { SchoolsHeader } from "@/components/schools/SchoolsHeader";
 import { SchoolKpiRow } from "@/components/schools/SchoolKpiRow";
-import { SchoolsIntelligence } from "@/components/schools/SchoolsIntelligence";
-import { SchoolsDirectorySection } from "@/components/schools/SchoolsDirectorySection";
-import { ClustersCard } from "@/components/schools/ClustersCard";
 import { SchoolStatusSnapshot } from "@/components/schools/SchoolStatusSnapshot";
 import { PlanningReviewSignals } from "@/components/schools/PlanningReviewSignals";
 import { SchoolQuickActions } from "@/components/schools/SchoolQuickActions";
@@ -10,94 +7,39 @@ import { SchoolsClusterDirectory } from "@/components/cluster/SchoolsClusterDire
 import type { DirectorySchoolVM, DirectoryClusterMatch } from "@/components/cluster/DirectoryClusterDrawer";
 import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { SchoolsView } from "@/components/mobile/views/SchoolsView";
-import { intakeSchools } from "@/lib/intake/intake-mock";
 import {
   clusterStatusOf,
   recommendClustersFor,
   type ClusterMatch,
 } from "@/lib/cluster/cluster-core";
 import { schoolWorkflowState } from "@/lib/school-directory/school-state";
-import { resolveOwner } from "@/lib/portfolio/portfolio";
-import { visibleStaffIds } from "@/lib/org/supervision";
-import { openDuplicateCandidates } from "@/lib/intake/duplicate-candidates-mock";
 import {
-  getVisibleSchools,
-  getClustersFor,
-  computeKpisFor,
-  computeStatusSnapshot,
-  computePlanningSignals,
-  countryKpiOverrides,
-  countryPlanningSignalOverrides,
-  priorityOrder,
-  type SchoolKpi,
-  type StatusSnapshotTile,
-  type PlanningSignal,
-} from "@/lib/schools-mock";
+  directoryRecords,
+  directoryKpis,
+  directoryStatusSnapshot,
+  directoryPlanningSignals,
+} from "@/lib/school-directory/directory";
+import { openDuplicateCandidates } from "@/lib/intake/duplicate-candidates-mock";
+import { getVisibleSchools, priorityOrder } from "@/lib/schools-mock";
 import { getCurrentUser, toCurrentUser } from "@/lib/auth";
 
-// Server-side access control: the "all schools" array exists at the data
-// layer, but only the rows owned by currentUser ever reach the page.
-// In production this is a parameterized SQL query; getVisibleSchools()
-// preserves that intent in mock form.
-//
-// Country-wide values (512 / 436 / etc.) shown in the screenshot are kept
-// for visual fidelity by the override branch — they only render for
-// non-CCEO roles. A CCEO sees aggregates of their own assigned set.
-function applyCountryOverrideKpis(kpis: SchoolKpi[]): SchoolKpi[] {
-  return kpis.map((k) => ({
-    ...k,
-    value: countryKpiOverrides[k.key] ?? k.value,
-  }));
-}
-
-function applyCountryOverrideSnapshot(tiles: StatusSnapshotTile[]): StatusSnapshotTile[] {
-  return tiles.map((t) => {
-    const v = countryKpiOverrides[t.key] ?? t.value;
-    const total = countryKpiOverrides.total ?? 1;
-    return { ...t, value: v, pct: Math.round((v / total) * 1000) / 10 };
-  });
-}
-
-function applyCountryOverrideSignals(signals: PlanningSignal[]): PlanningSignal[] {
-  return signals.map((s) => ({
-    ...s,
-    value: countryPlanningSignalOverrides[s.key] ?? s.value,
-  }));
-}
-
+// School Directory = source of truth. KPIs, snapshot, signals and the directory
+// itself are all computed from the uploaded schools (intakeSchools) via the
+// canonical directory accessor — no separate schoolsMock universe on desktop.
+// (The mobile view still renders the legacy SchoolRow set for now.)
 export default async function SchoolsDashboard() {
   const currentUser = toCurrentUser(await getCurrentUser());
-  // 1. ENFORCE access control. CCEO sees only their assigned schools.
-  const visible = getVisibleSchools(currentUser);
 
-  // 2. SSA-first priority ordering for table + urgent panel.
-  const ordered = [...visible].sort(priorityOrder);
-  const clusters = getClustersFor(currentUser);
+  // Canonical directory: the viewer's uploaded schools (scoped to their chain).
+  const records = directoryRecords(currentUser.staffId, currentUser.role);
+  const kpis = directoryKpis(records);
+  const snapshot = directoryStatusSnapshot(records);
+  const signals = directoryPlanningSignals(records);
 
-  // 3. Compute aggregates from the visible set (CCEO-scoped) or country
-  //    overrides (when role widens to country-level dashboards).
-  const useCountry = currentUser.role !== "CCEO";
+  // Mobile view still uses the legacy SchoolRow set (separate migration).
+  const ordered = [...getVisibleSchools(currentUser)].sort(priorityOrder);
 
-  const kpis = useCountry
-    ? applyCountryOverrideKpis(computeKpisFor(visible))
-    : computeKpisFor(visible);
-
-  const snapshot = useCountry
-    ? applyCountryOverrideSnapshot(computeStatusSnapshot(visible))
-    : computeStatusSnapshot(visible);
-
-  const signals = useCountry
-    ? applyCountryOverrideSignals(computePlanningSignals(visible))
-    : computePlanningSignals(visible);
-
-  const totalAssignedCount = useCountry ? countryKpiOverrides.total : visible.length;
-
-  // ── Cluster-setup directory (on the uploaded/intake schools — the cluster
-  //    workflow universe), scoped to the viewer's supervision chain. ──
-  const seesAll =
-    currentUser.role === "Admin" || currentUser.role === "CountryDirector" ||
-    currentUser.role === "RVP" || currentUser.role === "ImpactAssessment";
-  const staffScope = seesAll ? null : visibleStaffIds(currentUser.staffId, currentUser.role);
+  // ── Cluster-setup directory rows (same master, enriched with workflow state). ──
   const dupeIds = new Set(openDuplicateCandidates().map((d) => d.schoolId));
   const toMatchVM = (m: ClusterMatch): DirectoryClusterMatch => ({
     id: m.cluster.id,
@@ -109,12 +51,7 @@ export default async function SchoolsDashboard() {
     tier: m.tier,
     leaderName: m.cluster.clusterLeaderName,
   });
-  const clusterDirectorySchools: DirectorySchoolVM[] = intakeSchools
-    .filter((s) => {
-      if (seesAll) return true;
-      const r = resolveOwner(s.assignedCceo);
-      return r.status === "matched" ? staffScope!.has(r.staffId) : true;
-    })
+  const clusterDirectorySchools: DirectorySchoolVM[] = records
     .map((s) => {
       const g = recommendClustersFor(s);
       return {
@@ -148,31 +85,11 @@ export default async function SchoolsDashboard() {
           {/* KPI Row — 9 cards (CCEO-scoped or country-scoped per role) */}
           <SchoolKpiRow kpis={kpis} />
 
-          {/* Cluster setup — the next required step after upload. Every
-              unclustered school can be added to a cluster right here. */}
+          {/* The directory itself — the uploaded schools (source of truth),
+              with their workflow stage + the next action launched from here. */}
           <SchoolsClusterDirectory schools={clusterDirectorySchools} canManage={canManageClusters} />
 
-          {/* Intelligence hero — Priority / Most Improved / Struggling
-              tabs. Replaces the old directory-table-with-side-panel
-              layout because the questions CDs / PLs / IAs / CCEOs open
-              this page to ask are intelligence questions, not browsing
-              questions. The full directory table still lives below for
-              power-users who need it. */}
-          <SchoolsIntelligence schools={ordered} />
-
-          {/* Full directory — kept below the intelligence tabs for
-              cases where the user already knows the school name and
-              wants the raw row. Spans full width now that the urgent
-              panel folded into the Priority tab above. */}
-          <SchoolsDirectorySection
-            schools={ordered}
-            totalAssignedCount={totalAssignedCount}
-          />
-
-          {/* Saved clusters — created from the directory above, consumed by Planning */}
-          <ClustersCard clusters={clusters} />
-
-          {/* Status snapshot + Planning signals */}
+          {/* Status snapshot + Planning signals — from the master */}
           <section className="grid grid-cols-12 gap-4 items-start">
             <div className="col-span-12 md:col-span-7">
               <SchoolStatusSnapshot tiles={snapshot} />
