@@ -377,8 +377,18 @@ function genMonth(monthIso: string): PlannedActivity[] {
       scheduledDateIso: day(w2), plannedMonthIso: monthIso, plannedWeek: w2, nights: i % 5 === 0 ? 1 : 0,
       status: "Approved Plan",
     });
-    // Every 3rd staff hosts a cluster meeting (W3); every 4th a training (W4).
-    if (i % 3 === 0) {
+    // A third in-school support / coaching visit so the program plan reflects a
+    // real field cadence (program cost should dominate admin overhead).
+    const sc3 = schoolFor(s.districtName, 3);
+    out.push({
+      id: nextId("PA"), kind: i % 2 === 0 ? "coaching_visit" : "ssa_visit", deliveryOwner: "STAFF", facilitatorType: "STAFF",
+      staffId: s.staffId, schoolId: sc3.id, schoolName: sc3.name,
+      districtId: s.districtId, districtName: s.districtName,
+      scheduledDateIso: day(((i + 1) % 4 + 1) as 1 | 2 | 3 | 4), plannedMonthIso: monthIso,
+      plannedWeek: ((i + 1) % 4 + 1) as 1 | 2 | 3 | 4, nights: 0, status: "Scheduled",
+    });
+    // Most staff host a cluster meeting (W3); half host a training (W4).
+    if (i % 2 === 0) {
       out.push({
         id: nextId("PA"), kind: "cluster_meeting", deliveryOwner: "STAFF", facilitatorType: "STAFF",
         staffId: s.staffId, clusterId: `CL-${s.districtName.slice(0, 3).toUpperCase()}-01`,
@@ -387,9 +397,9 @@ function genMonth(monthIso: string): PlannedActivity[] {
         participantCount: 18 + (i % 6), schoolCount: 4 + (i % 3), status: "Approved Plan",
       });
     }
-    if (i % 4 === 0) {
+    if (i % 2 === 0) {
       out.push({
-        id: nextId("PA"), kind: i % 8 === 0 ? "cluster_training" : "school_improvement_training",
+        id: nextId("PA"), kind: i % 4 === 0 ? "cluster_training" : "school_improvement_training",
         deliveryOwner: "STAFF", facilitatorType: "STAFF", staffId: s.staffId,
         districtId: s.districtId, districtName: s.districtName,
         scheduledDateIso: day(4), plannedMonthIso: monthIso, plannedWeek: 4, nights: i % 8 === 0 ? 1 : 0,

@@ -46,12 +46,14 @@ function regionFor(districtName: string): string {
 }
 
 // Monthly recurring admin items (CD-approved overhead) — costed each month.
+// Admin overhead is a minority of a healthy budget (program should dominate
+// ~80%+). Kept lean so the program-vs-admin split reads realistically.
 const MONTHLY_ADMIN: { id: string; name: string; quantity: number; unitCost: number; week: "Monthly" }[] = [
-  { id: "ADM-RENT", name: "Office rent", quantity: 1, unitCost: 8_000_000, week: "Monthly" },
-  { id: "ADM-NET", name: "Internet", quantity: 1, unitCost: 1_200_000, week: "Monthly" },
-  { id: "ADM-AIR", name: "Airtime", quantity: 1, unitCost: 600_000, week: "Monthly" },
-  { id: "ADM-UTIL", name: "Office utilities", quantity: 1, unitCost: 900_000, week: "Monthly" },
-  { id: "ADM-PRINT", name: "Printing & stationery", quantity: 1, unitCost: 450_000, week: "Monthly" },
+  { id: "ADM-RENT", name: "Office rent", quantity: 1, unitCost: 1_000_000, week: "Monthly" },
+  { id: "ADM-NET", name: "Internet", quantity: 1, unitCost: 400_000, week: "Monthly" },
+  { id: "ADM-AIR", name: "Airtime", quantity: 1, unitCost: 200_000, week: "Monthly" },
+  { id: "ADM-UTIL", name: "Office utilities", quantity: 1, unitCost: 200_000, week: "Monthly" },
+  { id: "ADM-PRINT", name: "Printing & stationery", quantity: 1, unitCost: 100_000, week: "Monthly" },
 ];
 
 export type FundRequestStatus = "Draft" | "Under Review" | "Approved" | "Released" | "Reconciled";

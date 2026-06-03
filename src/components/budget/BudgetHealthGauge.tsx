@@ -39,7 +39,8 @@ export function BudgetHealthGauge({
 
   return (
     <div className="flex flex-col items-center">
-      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Budget health ${score} of 100`}>
+      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Budget health ${score} of 100`}
+        style={{ width: "100%", maxWidth: W, height: "auto" }}>
         {bands.map((b, i) => (
           <path
             key={i}
@@ -65,7 +66,7 @@ export function BudgetHealthGauge({
         <text x={cx} y={cy} textAnchor="middle" className="fill-[var(--color-edify-muted)]" style={{ fontSize: 12, fontWeight: 700 }}>{label}</text>
       </svg>
       {split && (
-        <div className="flex items-center gap-4 text-[11px] mt-1">
+        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[10.5px] mt-1">
           <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500" /> On Track <b>{split.onTrack}%</b></span>
           <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500" /> At Risk <b>{split.atRisk}%</b></span>
           <span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-rose-500" /> Critical <b>{split.critical}%</b></span>
