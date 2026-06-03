@@ -200,6 +200,97 @@ export const specialProjects: SpecialProject[] = [
   },
 ];
 
+// ────────── School ↔ Special-project membership ──────────
+//
+// A school can participate in any number of special projects (a project sits
+// OUTSIDE the SSA interventions but still counts toward staff capacity, funding,
+// and School-360 participation). Assignment happens from the School Directory /
+// Portfolio — the same surface as cluster assignment. Membership NEVER changes
+// ownership; it tags the school into a program.
+//
+// Mutable, client-safe in-memory store (Year-1 mock; Year-2 = project_schools).
+
+export type SchoolProjectMembership = {
+  id: string;
+  schoolId: string;
+  projectId: string;
+  assignedByName: string;
+  assignedByStaffId: string;
+  assignedAt: string; // ISO date
+  status: "Active" | "Removed";
+};
+
+// Seed a couple so the directory shows project chips in the demo.
+export const schoolProjectMemberships: SchoolProjectMembership[] = [
+  { id: "SPM-0001", schoolId: "40118", projectId: "SP-EDTECH", assignedByName: "Aisha Dar",     assignedByStaffId: "STF-AD-021", assignedAt: "2026-04-05", status: "Active" },
+  { id: "SPM-0002", schoolId: "32791", projectId: "SP-CCSEL",  assignedByName: "Paul Chinyama", assignedByStaffId: "STF-PC-001", assignedAt: "2026-04-11", status: "Active" },
+];
+
+let membershipSeq = schoolProjectMemberships.length;
+
+/** Assign a school to a special project (idempotent — re-activates if removed). */
+export function assignSchoolToProject(input: {
+  schoolId: string;
+  projectId: string;
+  assignedByName: string;
+  assignedByStaffId: string;
+  assignedAt?: string;
+}): { ok: true; membership: SchoolProjectMembership } | { ok: false; reason: string } {
+  const project = specialProjects.find((p) => p.projectId === input.projectId);
+  if (!project) return { ok: false, reason: "Project not found." };
+  const existing = schoolProjectMemberships.find(
+    (m) => m.schoolId === input.schoolId && m.projectId === input.projectId,
+  );
+  if (existing) {
+    if (existing.status === "Active") return { ok: false, reason: "School is already in this project." };
+    existing.status = "Active";
+    existing.assignedByName = input.assignedByName;
+    existing.assignedByStaffId = input.assignedByStaffId;
+    existing.assignedAt = input.assignedAt ?? existing.assignedAt;
+    return { ok: true, membership: existing };
+  }
+  membershipSeq += 1;
+  const row: SchoolProjectMembership = {
+    id: `SPM-${String(membershipSeq).padStart(4, "0")}`,
+    schoolId: input.schoolId,
+    projectId: input.projectId,
+    assignedByName: input.assignedByName,
+    assignedByStaffId: input.assignedByStaffId,
+    assignedAt: input.assignedAt ?? "2026-06-03",
+    status: "Active",
+  };
+  schoolProjectMemberships.unshift(row);
+  return { ok: true, membership: row };
+}
+
+/** Remove (deactivate) a school's membership in a project. */
+export function removeSchoolFromProject(schoolId: string, projectId: string): boolean {
+  const row = schoolProjectMemberships.find(
+    (m) => m.schoolId === schoolId && m.projectId === projectId && m.status === "Active",
+  );
+  if (!row) return false;
+  row.status = "Removed";
+  return true;
+}
+
+export type SchoolProjectTag = { projectId: string; projectShortName: string; projectType: string };
+
+/** Active special projects a school participates in (light shape for chips). */
+export function projectsForSchool(schoolId: string): SchoolProjectTag[] {
+  return schoolProjectMemberships
+    .filter((m) => m.schoolId === schoolId && m.status === "Active")
+    .map((m) => specialProjects.find((p) => p.projectId === m.projectId))
+    .filter((p): p is SpecialProject => Boolean(p))
+    .map((p) => ({ projectId: p.projectId, projectShortName: p.projectShortName, projectType: p.projectType }));
+}
+
+/** Set of schoolIds with at least one active project membership. */
+export function schoolIdsInAnyProject(): Set<string> {
+  return new Set(
+    schoolProjectMemberships.filter((m) => m.status === "Active").map((m) => m.schoolId),
+  );
+}
+
 // ────────── Role-aware visibility ──────────
 //
 // Country-level roles see all projects in their country. CCEOs see only

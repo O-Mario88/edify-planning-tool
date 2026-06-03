@@ -65,7 +65,7 @@ async function actorOrForbidden(): Promise<ClusterActor | null> {
 function revalidateClusterSurfaces() {
   try {
     revalidatePath("/clusters");
-    revalidatePath("/clusters/assign");
+    revalidatePath("/schools");
     revalidatePath("/planning");
     revalidatePath("/portfolio");
     revalidatePath("/analytics");
@@ -101,7 +101,7 @@ export async function assignToExistingClusterAction(
       channel: "Inbox",
       title: `${assigned.length} school${assigned.length === 1 ? "" : "s"} clustered`,
       body: `${assigned.length} school${assigned.length === 1 ? "" : "s"} assigned to a cluster — SSA / SIT planning is now unlocked.`,
-      href: "/clusters/assign",
+      href: "/schools",
     });
     revalidateClusterSurfaces();
   }
@@ -149,7 +149,7 @@ export async function createClusterAndAssignAction(
     channel: "Inbox",
     title: `Cluster ${res.cluster.name} created`,
     body: `${res.result.assigned.length} school${res.result.assigned.length === 1 ? "" : "s"} attached to ${res.cluster.name} (${res.cluster.district}). SSA / SIT planning unlocked.`,
-    href: "/clusters/assign",
+    href: "/schools",
   });
   revalidateClusterSurfaces();
   return { ok: true, clusterId: res.cluster.id, clusterName: res.cluster.name, assigned: res.result.assigned.length };

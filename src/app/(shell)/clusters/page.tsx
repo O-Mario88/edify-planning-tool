@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Network, BarChart3, History, ShieldCheck, FileText } from "lucide-react";
+import { Network, BarChart3, History, ShieldCheck, FileText, Building2 } from "lucide-react";
 import { EntityIndex } from "@/components/shell/EntityIndex";
 import { UnclusteredSchoolsBanner } from "@/components/planning/UnclusteredSchoolsBanner";
 import { ClusterReadinessCard } from "@/components/cluster/ClusterReadinessCard";
@@ -64,7 +64,7 @@ export default async function ClustersIndex() {
           />
           <nav className="card rounded-2xl p-3 flex md:flex-col gap-2 justify-center">
             <div className="md:mb-1"><CreateClusterButton /></div>
-            <ClusterHubLink href="/clusters/assign" Icon={Network} label="Assign workspace" />
+            <ClusterHubLink href="/schools" Icon={Building2} label="School directory" />
             <ClusterHubLink href="/clusters/analytics" Icon={BarChart3} label="Cluster analytics" />
             <ClusterHubLink href="/clusters/reports" Icon={FileText} label="Impact report" />
             <ClusterHubLink href="/clusters/audit" Icon={History} label="Audit trail" />

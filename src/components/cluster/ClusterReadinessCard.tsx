@@ -6,7 +6,7 @@ export function ClusterReadinessCard({
   clustered,
   unclustered,
   needsReview,
-  hrefAll = "/clusters/assign",
+  hrefAll = "/schools",
   title = "Cluster setup",
 }: {
   clustered: number;

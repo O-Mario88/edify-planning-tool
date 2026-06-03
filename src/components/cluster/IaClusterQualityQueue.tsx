@@ -43,7 +43,7 @@ function SchoolRow({
 }) {
   return (
     <Link
-      href="/clusters/assign"
+      href="/schools"
       className={cn(
         "flex items-center justify-between gap-3 rounded-xl px-3 py-2.5",
         "border border-[var(--color-edify-border)] hover:bg-[var(--color-edify-soft)]",

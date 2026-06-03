@@ -9,7 +9,7 @@ export function UnclusteredSchoolsBanner({ count }: { count: number }) {
   if (count <= 0) return null;
   return (
     <Link
-      href="/clusters/assign"
+      href="/schools"
       className="group flex items-center gap-3 rounded-2xl border border-rose-200 bg-rose-50/70 px-4 py-3 hover:bg-rose-50 transition-colors"
     >
       <span className="grid place-items-center h-10 w-10 rounded-xl bg-white text-rose-600 shrink-0 shadow-sm">
