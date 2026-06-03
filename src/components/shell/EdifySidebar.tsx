@@ -84,6 +84,7 @@ const CCEO_ICON: Record<string, LucideIcon> = {
   wallet:          Wallet,
   network:         Network,
   sparkles:        Sparkles,
+  handshake:       Handshake,
 };
 
 function buildCceoMenu(): MenuSection[] {
@@ -230,6 +231,7 @@ function buildProjectCoordinatorMenu(dashboardHref: string): MenuSection[] {
         { label: "Dashboard",        href: dashboardHref,       Icon: LayoutDashboard },
         { label: "Special Projects", href: "/special-projects", Icon: Sparkles        },
         { label: "Project Schools",  href: "/special-projects/schools", Icon: GraduationCap },
+        { label: "Project Pipeline", href: "/special-projects/pipeline", Icon: Handshake },
         { label: "Schools",          href: "/schools",          Icon: Building2       },
         { label: "Clusters",         href: "/clusters",         Icon: Network         },
         { label: "SSA Performance",  href: "/ssa",              Icon: Activity        },
@@ -281,6 +283,7 @@ function buildCplMenu(dashboardHref: string): MenuSection[] {
         { label: "SSA Performance", href: "/ssa",           Icon: Activity  },
         { label: "Core Schools",    href: "/core-schools",  Icon: Star      },
         { label: "Project Schools", href: "/special-projects/schools", Icon: Sparkles },
+        { label: "Project Pipeline", href: "/special-projects/pipeline", Icon: Handshake },
       ],
     },
     {
@@ -349,6 +352,7 @@ function buildAccountantMenu(dashboardHref: string): MenuSection[] {
         { label: "Fund Requests",     href: "/fund-requests",        Icon: Wallet             },
         { label: "Budget",            href: "/budget",        Icon: Calculator         },
         { label: "Cost Settings",     href: "/cost-settings", Icon: ShieldCheck        },
+        { label: "Project Pipeline",  href: "/special-projects/pipeline", Icon: Handshake },
       ],
     },
     {
@@ -414,6 +418,7 @@ function buildImpactMenu(dashboardHref: string): MenuSection[] {
       items: [
         { label: "Field Intelligence", href: "/field-intelligence", Icon: Brain },
         { label: "Special Projects", href: "/special-projects",   Icon: Sparkles },
+        { label: "Project Pipeline", href: "/special-projects/pipeline", Icon: Handshake },
       ],
     },
     {

@@ -479,6 +479,7 @@ export const cceoSidebarItems: CceoMenuItem[] = [
   { section: "Schools",  label: "Clusters",           href: "/clusters",                      icon: "network" },
   { section: "Schools",  label: "Core Schools",       href: "/core-schools",                  icon: "school" },
   { section: "Schools",  label: "Project Schools",    href: "/special-projects/schools",      icon: "sparkles" },
+  { section: "Schools",  label: "Project Pipeline",   href: "/special-projects/pipeline",     icon: "handshake" },
   { section: "Schools",  label: "SSA Performance",    href: "/ssa",                           icon: "activity" },
   { section: "Schools",  label: "Visits & Trainings", href: "/trainings",                     icon: "calendarCheck" },
 

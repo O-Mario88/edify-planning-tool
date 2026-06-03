@@ -10,6 +10,11 @@
 // TS-. Mutable in-memory store; Year-2 backend swap = project_activities table.
 
 import type { SsaInterventionArea } from "@/lib/planning/planning-gaps-mock";
+import {
+  transition as wfTransition,
+  type ProjectWorkflowStatus,
+  type ProjectWorkflowAction,
+} from "./project-partner-workflow";
 
 export type ProjectActivityType =
   | "Project Training"
@@ -57,6 +62,12 @@ export type ProjectActivity = {
   salesforceActivityType?: SalesforceActivityType;
   iaVerificationStatus: ProjectIaStatus;
   paymentRequestId?: string;
+  // Partner execution→payment pipeline (only set on partner-delivered work).
+  workflowStatus?: ProjectWorkflowStatus;
+  assignedToPartnerId?: string;
+  evidenceNote?: string;
+  returnReason?: string;
+  paymentRef?: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -103,7 +114,8 @@ export const projectActivities: ProjectActivity[] = [
     teachersTrained: 18, schoolLeadersTrained: 3, attendanceVerified: true,
     status: "Completed", evidenceStatus: "Verified",
     salesforceActivityId: "TS-2025-04471", salesforceActivityType: "training",
-    iaVerificationStatus: "Confirmed", createdAt: "2025-06-01", updatedAt: "2025-06-20",
+    iaVerificationStatus: "Confirmed", workflowStatus: "IAVerified", assignedToPartnerId: "PRT-WV",
+    createdAt: "2025-06-01", updatedAt: "2025-06-20",
   },
   {
     id: "PAC-0002", projectId: "SP-EDTECH", schoolId: "40118",
@@ -112,7 +124,8 @@ export const projectActivities: ProjectActivity[] = [
     plannedMonth: "2026-05", topic: "Post-training usage check",
     status: "Completed", evidenceStatus: "Submitted",
     salesforceActivityId: "SV-2026-01180", salesforceActivityType: "visit",
-    iaVerificationStatus: "Submitted", createdAt: "2026-04-20", updatedAt: "2026-05-21",
+    iaVerificationStatus: "Submitted", workflowStatus: "SubmittedToIA", assignedToPartnerId: "PRT-WV",
+    createdAt: "2026-04-20", updatedAt: "2026-05-21",
   },
   {
     id: "PAC-0003", projectId: "SP-CCSEL", schoolId: "32791",
@@ -122,7 +135,8 @@ export const projectActivities: ProjectActivity[] = [
     teachersTrained: 14, schoolLeadersTrained: 2, attendanceVerified: true,
     status: "Completed", evidenceStatus: "Verified",
     salesforceActivityId: "TS-2025-04822", salesforceActivityType: "training",
-    iaVerificationStatus: "Confirmed", createdAt: "2025-06-25", updatedAt: "2025-07-12",
+    iaVerificationStatus: "Confirmed", workflowStatus: "Paid", assignedToPartnerId: "PRT-CI",
+    paymentRef: "PMT-CCSEL-0007", createdAt: "2025-06-25", updatedAt: "2025-07-12",
   },
   {
     id: "PAC-0004", projectId: "SP-CCSEL", schoolId: "32791",
@@ -131,6 +145,16 @@ export const projectActivities: ProjectActivity[] = [
     plannedMonth: "2026-05",
     status: "Planned", evidenceStatus: "Pending",
     iaVerificationStatus: "Not Submitted", createdAt: "2026-04-30", updatedAt: "2026-04-30",
+  },
+  {
+    // Freshly assigned to a partner — walks the full pipeline in the demo.
+    id: "PAC-0005", projectId: "SP-EDTECH", schoolId: "40118",
+    activityType: "Project Follow-Up Visit", interventionId: "Education Technology",
+    deliveryType: "partner", partnerId: "PRT-WV", partnerName: "World Vision",
+    plannedMonth: "2026-06", topic: "Device maintenance check",
+    status: "Planned", evidenceStatus: "Pending",
+    iaVerificationStatus: "Not Submitted", workflowStatus: "AssignedToPartner", assignedToPartnerId: "PRT-WV",
+    createdAt: "2026-06-01", updatedAt: "2026-06-01",
   },
 ];
 
@@ -212,4 +236,84 @@ export function activitiesForSchool(schoolId: string): ProjectActivity[] {
 
 export function activitiesForProjectSchool(projectId: string, schoolId: string): ProjectActivity[] {
   return projectActivities.filter((a) => a.projectId === projectId && a.schoolId === schoolId);
+}
+
+export function projectActivityById(id: string): ProjectActivity | undefined {
+  return projectActivities.find((a) => a.id === id);
+}
+
+/** Project activities that are in the partner execution→payment pipeline. */
+export function partnerPipelineActivities(): ProjectActivity[] {
+  return projectActivities.filter((a) => a.deliveryType === "partner" && a.workflowStatus);
+}
+
+export type WorkflowPatch = {
+  evidenceNote?: string;
+  returnReason?: string;
+  salesforceActivityId?: string;
+  paymentRef?: string;
+  now?: string;
+};
+
+/**
+ * Apply a workflow action to a project activity, mutating its workflowStatus
+ * and the side-effect fields each transition implies (evidence/SF/IA/payment).
+ * Pure transition validity is enforced by project-partner-workflow.transition.
+ */
+export function applyProjectWorkflowAction(
+  activityId: string,
+  action: ProjectWorkflowAction,
+  patch: WorkflowPatch = {},
+): { ok: true; activity: ProjectActivity } | { ok: false; reason: string } {
+  const a = projectActivityById(activityId);
+  if (!a) return { ok: false, reason: "Activity not found." };
+  if (!a.workflowStatus) return { ok: false, reason: "Activity is not in the partner pipeline." };
+
+  const next = wfTransition(a.workflowStatus, action);
+  if (!next) return { ok: false, reason: `Cannot ${action} from ${a.workflowStatus}.` };
+
+  // Salesforce id is validated by the caller (prefix rules); store it here.
+  if (action === "enterSalesforceId") {
+    if (!patch.salesforceActivityId) return { ok: false, reason: "Salesforce ID is required." };
+    a.salesforceActivityId = patch.salesforceActivityId;
+    a.salesforceActivityType = salesforceTypeFor(a.activityType);
+    a.iaVerificationStatus = "Submitted";
+  }
+
+  switch (action) {
+    case "submitEvidence":
+    case "resubmitEvidence":
+      a.evidenceStatus = "Submitted";
+      a.status = "Completed";
+      if (patch.evidenceNote) a.evidenceNote = patch.evidenceNote;
+      a.returnReason = undefined;
+      break;
+    case "acceptEvidence":
+      a.evidenceStatus = "Verified";
+      break;
+    case "returnEvidence":
+      a.evidenceStatus = "Returned";
+      a.returnReason = patch.returnReason;
+      break;
+    case "rejectWork":
+      a.status = "Cancelled";
+      a.returnReason = patch.returnReason;
+      break;
+    case "iaVerify":
+      a.iaVerificationStatus = "Confirmed";
+      break;
+    case "iaReturn":
+      a.iaVerificationStatus = "Returned";
+      a.returnReason = patch.returnReason;
+      break;
+    case "clearPayment":
+      a.paymentRef = patch.paymentRef;
+      break;
+    default:
+      break;
+  }
+
+  a.workflowStatus = next;
+  a.updatedAt = patch.now ?? "2026-06-03";
+  return { ok: true, activity: a };
 }
