@@ -585,6 +585,64 @@ export function recommendClusterFor(school: IntakeSchool): ClusterRecommendation
   };
 }
 
+// ── Grouped recommendations (Schools Directory "Add to Cluster") ───
+
+export type ClusterMatchTier = "strong" | "district" | "region";
+
+export type ClusterMatch = {
+  cluster: ClusterRecord;
+  schoolCount: number;
+  ssaRate: number; // % of cluster schools with SSA done (0 when empty)
+  tier: ClusterMatchTier;
+};
+
+export type GroupedClusterMatches = {
+  /** Same district AND same sub-county — the primary recommendation. */
+  strong: ClusterMatch[];
+  /** Same district (different/any sub-county). */
+  district: ClusterMatch[];
+  /** Same region, different district — fallback (override only). */
+  region: ClusterMatch[];
+};
+
+function toMatch(cluster: ClusterRecord, tier: ClusterMatchTier): ClusterMatch {
+  const schools = schoolsInCluster(cluster.id);
+  const done = schools.filter((s) => s.ssaStatus === "SSA Done").length;
+  return {
+    cluster,
+    schoolCount: schools.length,
+    ssaRate: schools.length ? Math.round((done / schools.length) * 100) : 0,
+    tier,
+  };
+}
+
+/**
+ * Geography-ranked cluster matches for a school: strong (same district + sub-
+ * county) → district → region fallback. Powers the directory "Add to Cluster"
+ * drawer. Never returns clusters outside the school's region.
+ */
+export function recommendClustersFor(school: IntakeSchool): GroupedClusterMatches {
+  const district = school.district.trim().toLowerCase();
+  const sc = school.subCounty?.trim().toLowerCase();
+  const schoolRegionId = regionIdFor(school.district);
+
+  const strong: ClusterMatch[] = [];
+  const district2: ClusterMatch[] = [];
+  const region: ClusterMatch[] = [];
+
+  for (const c of activeClusters()) {
+    const sameDistrict = c.district.trim().toLowerCase() === district;
+    if (sameDistrict) {
+      const sameSub = !!sc && (c.subCounties ?? []).some((s) => s.toLowerCase() === sc);
+      if (sameSub) strong.push(toMatch(c, "strong"));
+      else district2.push(toMatch(c, "district"));
+    } else if (schoolRegionId && c.regionId === schoolRegionId) {
+      region.push(toMatch(c, "region"));
+    }
+  }
+  return { strong, district: district2, region };
+}
+
 // ── Cluster-first planning gate ────────────────────────────────────
 
 export type GateAction =
