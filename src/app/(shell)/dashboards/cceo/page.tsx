@@ -21,6 +21,8 @@ import { CceoMomentumBanner } from "@/components/cceo/CceoMomentumBanner";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { ClientVerificationCard } from "@/components/ssa/ClientVerificationCard";
 import { PortfolioSummaryCard } from "@/components/portfolio/PortfolioSummaryCard";
+import { ClusterReadinessCard } from "@/components/cluster/ClusterReadinessCard";
+import { scopedClusterCounts } from "@/lib/cluster/cluster-scope";
 import { getCurrentUser } from "@/lib/auth";
 
 // CCEO Role Command Center.
@@ -41,6 +43,7 @@ import { getCurrentUser } from "@/lib/auth";
 //   9. (no header)  — quick actions + momentum
 export default async function CceoDashboardPage() {
   const user = await getCurrentUser();
+  const clusterCounts = scopedClusterCounts(user.staffId, user.role);
 
   const mobile = (
     <div className="min-h-screen bg-[var(--color-page)] flex flex-col">
@@ -49,6 +52,7 @@ export default async function CceoDashboardPage() {
         <CommandStack user={user} />
         <DebriefPromoterCard submitterRole="CCEO" />
         <PortfolioSummaryCard staffId={user.staffId} />
+        <ClusterReadinessCard clustered={clusterCounts.clustered} unclustered={clusterCounts.unclustered} needsReview={clusterCounts.needsReview} title="Cluster setup readiness" />
         <CceoSixKpiRow />
         <CceoKpiStrip />
         <CoreServicePackageCard />
@@ -86,7 +90,14 @@ export default async function CceoDashboardPage() {
             title="Where you are"
             description="Headline KPIs, school-health distribution, and your service-package progress at a glance."
           />
-          <PortfolioSummaryCard staffId={user.staffId} />
+          <div className="grid grid-cols-12 gap-3 lg:gap-4 items-stretch">
+            <div className="col-span-12 lg:col-span-7">
+              <PortfolioSummaryCard staffId={user.staffId} />
+            </div>
+            <div className="col-span-12 lg:col-span-5">
+              <ClusterReadinessCard clustered={clusterCounts.clustered} unclustered={clusterCounts.unclustered} needsReview={clusterCounts.needsReview} title="Cluster setup readiness" />
+            </div>
+          </div>
           <CceoSixKpiRow />
           <CceoKpiStrip />
           <CoreServicePackageCard />

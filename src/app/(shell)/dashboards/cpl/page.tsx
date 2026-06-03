@@ -20,6 +20,8 @@ import { FundingExecutionCard } from "@/components/cpl/FundingExecutionCard";
 import { QuickActionsRow } from "@/components/cpl/QuickActionsRow";
 import { MyPlanCard } from "@/components/planning/MyPlanCard";
 import { ClientVerificationCard } from "@/components/ssa/ClientVerificationCard";
+import { ClusterReadinessCard } from "@/components/cluster/ClusterReadinessCard";
+import { scopedClusterCounts } from "@/lib/cluster/cluster-scope";
 import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { redirect } from "next/navigation";
@@ -54,6 +56,7 @@ export default async function CountryProgramLeadDashboard() {
   if (!["CountryProgramLead", "Admin"].includes(user.role)) {
     redirect(ROLE_REDIRECT[user.role]);
   }
+  const clusterCounts = scopedClusterCounts(user.staffId, user.role);
 
   const body = (
     <>
@@ -93,6 +96,7 @@ export default async function CountryProgramLeadDashboard() {
             description="You deliver field work and you lead a CCEO team — here's what each needs from you right now."
           />
           <PlCommandLanes />
+          <ClusterReadinessCard clustered={clusterCounts.clustered} unclustered={clusterCounts.unclustered} needsReview={clusterCounts.needsReview} title="Team cluster setup" />
           <div id="my-field-work">
             <CplFieldWorkCard />
           </div>

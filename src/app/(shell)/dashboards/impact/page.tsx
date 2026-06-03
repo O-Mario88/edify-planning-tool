@@ -16,6 +16,8 @@ import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { QueueView } from "@/components/mobile/views/QueueView";
 import { InsightStrip } from "@/components/insights/InsightCard";
 import { IaPlanCard } from "@/components/planning/PlanCascadeCards";
+import { ClusterReadinessCard } from "@/components/cluster/ClusterReadinessCard";
+import { scopedClusterCounts } from "@/lib/cluster/cluster-scope";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { insightsForImpactAssessment } from "@/lib/insights";
 import { redirect } from "next/navigation";
@@ -38,6 +40,7 @@ export default async function ImpactDashboard() {
     userName: user.name,
     generatedBy: user.name,
   });
+  const clusterCounts = scopedClusterCounts(user.staffId, user.role);
 
   return (
     <ResponsiveDashboard
@@ -63,6 +66,7 @@ export default async function ImpactDashboard() {
                 description="The five numbers leadership reads first, plus what the system is noticing right now."
               />
               <ImpactKpiRow />
+              <ClusterReadinessCard clustered={clusterCounts.clustered} unclustered={clusterCounts.unclustered} needsReview={clusterCounts.needsReview} title="Cluster setup quality" hrefAll="/data-intake/clusters" />
               <InsightStrip insights={insightsForImpactAssessment()} />
             </section>
 

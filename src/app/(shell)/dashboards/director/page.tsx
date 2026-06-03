@@ -23,6 +23,8 @@ import { SchoolSsaIntelligenceCard } from "@/components/director/SchoolSsaIntell
 import { PrioritySchoolsUrgentAttentionCard } from "@/components/director/PrioritySchoolsAttention";
 import { QuickLeadershipActions } from "@/components/director/QuickLeadershipActions";
 import { ClientVerificationCard } from "@/components/ssa/ClientVerificationCard";
+import { ClusterReadinessCard } from "@/components/cluster/ClusterReadinessCard";
+import { scopedClusterCounts } from "@/lib/cluster/cluster-scope";
 import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { redirect } from "next/navigation";
@@ -63,6 +65,7 @@ export default async function CountryDirectorDashboard() {
     userName: user.name,
     generatedBy: user.name,
   });
+  const clusterCounts = scopedClusterCounts(user.staffId, user.role);
 
   const body = (
     <>
@@ -81,6 +84,7 @@ export default async function CountryDirectorDashboard() {
             description="Eight headline KPIs, leadership-attention alerts, debriefs routed up to you, and training-coverage against SSA gaps."
           />
           <CountryKpiRow />
+          <ClusterReadinessCard clustered={clusterCounts.clustered} unclustered={clusterCounts.unclustered} needsReview={clusterCounts.needsReview} title="National cluster setup" />
           <LeadershipAttentionRow />
           <DebriefReviewInbox user={user} audience="cd" />
           <TrainingCoverageCard audience="cd" clusterPlans={allClusterTrainingPlans()} />
