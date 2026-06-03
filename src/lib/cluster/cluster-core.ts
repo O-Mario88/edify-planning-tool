@@ -173,6 +173,10 @@ export const clusters: ClusterRecord[] = [
     createdByRole: "CCEO",
     createdAt: "2026-04-09",
     isActive: true,
+    // Delegated to a partner so the partner dashboard + partner payment path
+    // have a live cluster to operate on.
+    managedByPartnerId: "P-LIT",
+    managedByPartnerName: "Literacy Training Uganda",
   },
 ];
 
@@ -271,7 +275,107 @@ export function isValidTsId(id: string | undefined | null): boolean {
   return !!id && /^TS-\d{3,}$/i.test(id.trim());
 }
 
-export const clusterMeetings: ClusterMeeting[] = [];
+// Demo seed — representative cluster activities across the lifecycle so the
+// role-gated surfaces (IA confirmation queue, accountant partner payments +
+// staff Netsuite accountability, partner dashboard, role-dashboard cluster
+// cards) all render real data. Replaced by Salesforce/DB reads in year 2.
+export const clusterMeetings: ClusterMeeting[] = [
+  {
+    // Staff-organised training, completed → awaiting IA confirmation.
+    id: "CMT-S001",
+    clusterId: "CLU-mukono-001",
+    kind: "training",
+    date: "2026-05-20",
+    organizer: "edify",
+    scheduledBy: "Paul Chinyama",
+    scheduledByRole: "CCEO",
+    participants: 30,
+    createdAt: "2026-05-10",
+    status: "Awaiting IA",
+    salesforceTrainingId: "TS-50121",
+    teachersCount: 22,
+    schoolLeadersCount: 6,
+    otherCount: 2,
+    totalParticipants: 30,
+    evidenceUploaded: true,
+    actualDate: "2026-05-20",
+    completedBy: "Paul Chinyama",
+    completedAt: "2026-05-20",
+    attendanceFileName: "mukono-training-attendance.pdf",
+    minutesText:
+      "Reviewed term-2 literacy results across the cluster; agreed a shared lesson-observation rubric for all 6 schools.",
+    minutesFileName: "mukono-training-minutes.pdf",
+    resolutionsText:
+      "1) Every school runs weekly paired reading. 2) Next cluster activity hosts a joint School Improvement Training.",
+    resolutionsFileName: "mukono-training-resolutions.pdf",
+    nextMeetingDate: "2026-06-24",
+  },
+  {
+    // Partner-organised 1st cluster meeting, IA-confirmed → awaiting finance.
+    id: "CMT-S002",
+    clusterId: "CLU-nakaseke-001",
+    kind: "first_meeting",
+    date: "2026-05-12",
+    organizer: "partner",
+    scheduledBy: "Sarah Kanyi",
+    scheduledByRole: "PartnerAdmin",
+    participants: 28,
+    createdAt: "2026-05-02",
+    status: "IA Confirmed",
+    salesforceTrainingId: "TS-50088",
+    teachersCount: 20,
+    schoolLeadersCount: 5,
+    otherCount: 3,
+    totalParticipants: 28,
+    evidenceUploaded: true,
+    actualDate: "2026-05-12",
+    completedBy: "Sarah Kanyi",
+    completedAt: "2026-05-12",
+    attendanceFileName: "nakaseke-m1-attendance.pdf",
+    minutesText:
+      "Introduced the cluster, mapped member schools and set the term meeting calendar.",
+    minutesFileName: "nakaseke-m1-minutes.pdf",
+    resolutionsText:
+      "1) Confirm cluster leader contact list. 2) Each school nominates a literacy lead before the 2nd meeting.",
+    resolutionsFileName: "nakaseke-m1-resolutions.pdf",
+    iaConfirmedAt: "2026-05-15",
+    iaConfirmedBy: "Grace Alimo",
+    nextMeetingDate: "2026-06-16",
+  },
+  {
+    // Staff-organised 2nd cluster meeting, IA-confirmed → awaiting Netsuite
+    // accountability (the staff finance-close path).
+    id: "CMT-S003",
+    clusterId: "CLU-mukono-001",
+    kind: "second_meeting",
+    date: "2026-04-28",
+    organizer: "edify",
+    scheduledBy: "Paul Chinyama",
+    scheduledByRole: "CCEO",
+    participants: 26,
+    createdAt: "2026-04-18",
+    status: "IA Confirmed",
+    salesforceTrainingId: "TS-49977",
+    teachersCount: 18,
+    schoolLeadersCount: 6,
+    otherCount: 2,
+    totalParticipants: 26,
+    evidenceUploaded: true,
+    actualDate: "2026-04-28",
+    completedBy: "Paul Chinyama",
+    completedAt: "2026-04-28",
+    attendanceFileName: "mukono-m2-attendance.pdf",
+    minutesText:
+      "Shared classroom-observation findings; agreed remediation focus for struggling readers.",
+    minutesFileName: "mukono-m2-minutes.pdf",
+    resolutionsText:
+      "1) Run a cluster-wide reading assessment. 2) Pair strong and weak schools for peer support.",
+    resolutionsFileName: "mukono-m2-resolutions.pdf",
+    iaConfirmedAt: "2026-05-02",
+    iaConfirmedBy: "Grace Alimo",
+    nextMeetingDate: "2026-05-26",
+  },
+];
 let meetingSeq = 0;
 function nextMeetingId(): string {
   meetingSeq += 1;
