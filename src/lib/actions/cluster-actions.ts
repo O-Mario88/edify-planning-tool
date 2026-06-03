@@ -40,6 +40,7 @@ import {
 } from "@/lib/cluster/cluster-core";
 import { partners } from "@/lib/partner/partner-mock";
 import { getCurrentPartner } from "@/lib/partner/partner-identity";
+import { markJoinedThroughCluster, type ClusterJoinSourceType } from "@/lib/cluster/cluster-join-source";
 
 const CLUSTER_ROLES = new Set<string>([
   "CCEO",
@@ -295,6 +296,26 @@ export async function scheduleClusterMeetingAction(
   } catch { /* outside request */ }
   revalidateClusterSurfaces();
   return { ok: true, label: CLUSTER_MEETING_LABEL[kind], organizer };
+}
+
+// ─── New school joined through cluster ──────────────────────────────
+
+export async function markJoinedThroughClusterAction(
+  schoolId: string,
+  clusterId: string,
+  sourceType: ClusterJoinSourceType = "cluster_referral",
+): Promise<ClusterActionResult> {
+  const actor = await actorOrForbidden();
+  if (!actor) return { ok: false, reason: "FORBIDDEN" };
+  const res = markJoinedThroughCluster(schoolId, clusterId, sourceType, actor);
+  if ("error" in res) return { ok: false, reason: "FAILED", message: res.error };
+  emitAudit({
+    action: "cluster.schoolJoinedThroughCluster", subjectKind: "School", subjectId: schoolId,
+    actorId: actor.name, actorRole: actor.role, actorName: actor.name,
+    payload: { clusterId, sourceType, partnerInfluenced: res.partnerInfluenced },
+  });
+  revalidateClusterSurfaces();
+  return { ok: true };
 }
 
 // ─── Cluster feedback ───────────────────────────────────────────────

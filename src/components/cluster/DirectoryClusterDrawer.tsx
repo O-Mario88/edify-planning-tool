@@ -13,7 +13,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
-import { assignSchoolAction, createClusterAndAssignAction } from "@/lib/actions/cluster-actions";
+import { assignSchoolAction, createClusterAndAssignAction, markJoinedThroughClusterAction } from "@/lib/actions/cluster-actions";
 
 export type DirectoryClusterMatch = {
   id: string;
@@ -56,6 +56,7 @@ export function DirectoryClusterDrawer({
   const [mode, setMode] = useState<"existing" | "create">("existing");
   const [selected, setSelected] = useState<string>("");
   const [newName, setNewName] = useState("");
+  const [joinedVia, setJoinedVia] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -73,11 +74,13 @@ export function DirectoryClusterDrawer({
     if (!selected) { flashError("Pick a cluster."); return; }
     setBusy(true);
     const res = await assignSchoolAction(school!.schoolId, selected);
-    setBusy(false);
     if (!res.ok) {
+      setBusy(false);
       flashError(res.reason === "FORBIDDEN" ? "You don't have permission." : res.reason === "FAILED" ? res.message : "Failed.");
       return;
     }
+    if (joinedVia) await markJoinedThroughClusterAction(school!.schoolId, selected, "cluster_referral");
+    setBusy(false);
     router.refresh();
     onClose(true);
   }
@@ -93,11 +96,13 @@ export function DirectoryClusterDrawer({
       district: school!.district,
       subCounties: school!.subCounty ? [school!.subCounty] : [],
     });
-    setBusy(false);
     if (!res.ok) {
+      setBusy(false);
       flashError(res.reason === "INVALID_INPUT" ? (Object.values(res.errors)[0] ?? "Invalid.") : res.reason === "FAILED" ? res.message : "Failed.");
       return;
     }
+    if (joinedVia) await markJoinedThroughClusterAction(school!.schoolId, res.clusterId, "cluster_onboarding");
+    setBusy(false);
     router.refresh();
     onClose(true);
   }
@@ -125,6 +130,10 @@ export function DirectoryClusterDrawer({
           </div>
           <div className="muted inline-flex items-center gap-1"><MapPin size={10} className="text-[var(--color-edify-primary)]" />{school.district}{school.subCounty ? ` · ${school.subCounty}` : ""}{school.parish ? ` · ${school.parish}` : ""}</div>
           <div className="muted inline-flex items-center gap-1"><User size={10} />{school.assignedCceo ?? "Unassigned"}</div>
+          <label className="mt-1.5 flex items-center gap-2 cursor-pointer text-[11px]">
+            <input type="checkbox" checked={joinedVia} onChange={(e) => setJoinedVia(e.target.checked)} className="h-3.5 w-3.5 accent-[var(--color-edify-primary)]" />
+            This school joined Edify <span className="font-semibold">through this cluster</span> (onboarding / referral)
+          </label>
         </div>
 
         {/* Mode toggle */}

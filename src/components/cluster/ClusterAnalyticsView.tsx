@@ -20,6 +20,7 @@ import {
   schoolsInCluster,
   staffVsPartnerClusterComparison,
 } from "@/lib/cluster/cluster-core";
+import { clusterAcquisitionMetrics } from "@/lib/cluster/cluster-join-source";
 import { cn } from "@/lib/utils";
 
 type Kpi = { label: string; value: number; Icon: LucideIcon };
@@ -48,6 +49,7 @@ export function ClusterAnalyticsView() {
   const health = clusterHealthChecks();
   const rollups = districtRollups();
   const cmp = staffVsPartnerClusterComparison();
+  const acq = clusterAcquisitionMetrics();
 
   const kpis: Kpi[] = [
     { label: "Total clusters", value: a.totalClusters, Icon: Boxes },
@@ -106,6 +108,28 @@ export function ClusterAnalyticsView() {
               </div>
             ))
           )}
+        </div>
+      </section>
+
+      {/* New schools joined through cluster */}
+      <section className="card rounded-2xl p-4">
+        <h2 className="text-[16px] font-extrabold tracking-tight text-[var(--color-edify-text)]">
+          New schools joined through cluster
+        </h2>
+        <p className="muted text-[12px] mt-0.5">Schools acquired via cluster onboarding/referral. Partner-facilitated clusters count as partner-influenced (ownership stays with staff).</p>
+        <div className="mt-3 grid grid-cols-2 md:grid-cols-5 gap-2 tabular">
+          {[
+            ["Schools joined", acq.schoolsJoined],
+            ["Client", acq.clientJoined],
+            ["Core", acq.coreJoined],
+            ["Learners added", acq.learnersAdded],
+            ["Partner-influenced", acq.partnerInfluenced],
+          ].map(([label, value]) => (
+            <div key={String(label)} className="rounded-xl border border-[var(--color-edify-border)] px-3 py-2.5">
+              <div className="text-[20px] font-extrabold tracking-tight">{value}</div>
+              <div className="muted text-[11px]">{label}</div>
+            </div>
+          ))}
         </div>
       </section>
 
