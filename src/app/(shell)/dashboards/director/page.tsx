@@ -71,7 +71,7 @@ export default async function CountryDirectorDashboard() {
   const body = (
     <>
       <DashboardPageHeader role="CountryDirector" />
-      <div className="px-3 sm:px-4 md:px-5 pb-24 md:pb-5 pt-3 md:pt-4 space-y-8 md:space-y-10">
+      <div className="px-3 sm:px-4 md:px-5 pb-24 md:pb-5 pt-3 md:pt-4 space-y-4 md:space-y-5">
         {/* TODAY — CommandStack carries its own header. */}
         <CommandStack user={user} hideMission />
 

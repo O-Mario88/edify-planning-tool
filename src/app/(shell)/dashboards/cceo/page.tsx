@@ -78,7 +78,7 @@ export default async function CceoDashboardPage() {
   const desktop = (
     <>
       <DashboardPageHeader role="CCEO" />
-      <div className="px-4 sm:px-5 lg:px-6 pb-24 lg:pb-6 pt-3 lg:pt-4 space-y-8 lg:space-y-10">
+      <div className="px-4 sm:px-5 lg:px-6 pb-24 lg:pb-6 pt-3 lg:pt-4 space-y-4 lg:space-y-5">
         {/* COMMAND — actions before everything else. What to do next. */}
         <CommandStack user={user} />
 

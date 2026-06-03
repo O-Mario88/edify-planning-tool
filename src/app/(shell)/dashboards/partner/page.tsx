@@ -90,7 +90,7 @@ export default async function PartnerCommandCenter({
     <>
       <PartnerHeader />
 
-      <div className="px-4 sm:px-5 md:px-6 pb-24 md:pb-6 space-y-8 md:space-y-10">
+      <div className="px-4 sm:px-5 md:px-6 pb-24 md:pb-6 space-y-4 md:space-y-5">
         {/* PartnerMissionHero retired per global hero removal pass. */}
         <DebriefPromoterCard submitterRole="Partner" />
 

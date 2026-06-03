@@ -77,7 +77,7 @@ export default async function CountryProgramLeadDashboard() {
       />
 
       <DashboardPageHeader role="CountryProgramLead" />
-      <div className="px-3 sm:px-4 md:px-5 lg:px-6 pb-24 lg:pb-6 pt-3 md:pt-4 space-y-8 md:space-y-10">
+      <div className="px-3 sm:px-4 md:px-5 lg:px-6 pb-24 lg:pb-6 pt-3 md:pt-4 space-y-4 md:space-y-5">
         {/* Today's Program Debrief promoter sits above CommandStack so
             the PL is reminded to file before they review queues. */}
         <DebriefPromoterCard submitterRole="CountryProgramLead" />

@@ -583,13 +583,13 @@ html.glass {
 .premium-card {
   background: var(--surface-1);
   border: 1px solid var(--border-card);
-  border-radius: 20px;
+  border-radius: 16px;
   color: var(--text-primary);
   box-shadow:
     inset 0 1px 0 var(--color-card-highlight),
     0 1px 2px var(--shadow-card-contact),
-    0 4px 10px -2px var(--shadow-card-mid),
-    0 16px 32px -12px var(--shadow-card-ambient);
+    0 2px 6px -2px var(--shadow-card-mid),
+    0 10px 22px -12px var(--shadow-card-ambient);
   transition: border-color 200ms ease, background-color 200ms ease,
               box-shadow 280ms cubic-bezier(.2,.6,.2,1),
               transform 220ms cubic-bezier(.2,.6,.2,1);
@@ -601,9 +601,9 @@ html.glass {
   box-shadow:
     inset 0 1px 0 var(--color-card-highlight),
     0 2px 4px var(--shadow-card-contact),
-    0 10px 18px -4px var(--shadow-card-mid),
-    0 28px 48px -16px var(--shadow-card-lift);
-  transform: translateY(-2px);
+    0 8px 16px -6px var(--shadow-card-mid),
+    0 18px 34px -16px var(--shadow-card-lift);
+  transform: translateY(-1.5px);
 }
 .premium-card-hover:active {
   transform: translateY(0);
@@ -622,8 +622,8 @@ html.glass {
   box-shadow:
     inset 0 1px 0 var(--color-card-highlight),
     0 1px 2px var(--shadow-card-contact),
-    0 4px 10px -2px var(--shadow-card-mid),
-    0 16px 32px -12px var(--shadow-card-ambient);
+    0 2px 6px -2px var(--shadow-card-mid),
+    0 10px 22px -12px var(--shadow-card-ambient);
 }
 
 /* Glass — translucent, with backdrop blur. Used by drawer triggers,
@@ -656,7 +656,7 @@ html.glass {
 .premium-modal {
   background: var(--surface-modal);
   border: 1px solid var(--border-card);
-  border-radius: 18px;
+  border-radius: 16px;
   color: var(--text-primary);
   box-shadow: 0 32px 96px -24px var(--shadow-card-ambient);
 }
@@ -1778,9 +1778,9 @@ html.theme-fade [class*="border"] {
     inset 0 0 0 1px rgba(255, 255, 255, .12),
     inset 0 1.5px 0 rgba(255, 255, 255, .17),
     0 2px 4px rgba(0, 0, 0, .50),
-    0 30px 64px -16px rgba(0, 0, 0, .66),
-    0 52px 120px -34px rgba(0, 0, 0, .56);
-  transform: translateY(-2px);
+    0 18px 40px -16px rgba(0, 0, 0, .62),
+    0 32px 72px -34px rgba(0, 0, 0, .54);
+  transform: translateY(-1.5px);
 }
 
 /* Sub-section / nested panel — recessed area inside a glass card.
@@ -2969,15 +2969,15 @@ html, body {
 .card {
   background: var(--color-card);
   border: 1px solid var(--color-edify-border);
-  /* Premium radius — matches the Schedule-send reference's softly
-   * rounded cards. Up from 16px to 20px for the calmer "Apple panel"
-   * feel; modals/drawers go further still via .premium-modal. */
-  border-radius: 20px;
+  /* Compact-premium radius — 16px reads tighter and more "enterprise
+   * command-center" than the previous 20px, and matches the rounded-2xl
+   * utilities components already add (so the chrome stops fighting itself). */
+  border-radius: 16px;
   box-shadow:
     inset 0 1px 0 var(--color-card-highlight),
     0 1px 2px var(--shadow-card-contact),
-    0 4px 10px -2px var(--shadow-card-mid),
-    0 16px 32px -12px var(--shadow-card-ambient);
+    0 2px 6px -2px var(--shadow-card-mid),
+    0 10px 22px -12px var(--shadow-card-ambient);
   transform: translateZ(0);
   transition: box-shadow 280ms cubic-bezier(.2,.6,.2,1),
               border-color 280ms cubic-bezier(.2,.6,.2,1),
@@ -3004,12 +3004,12 @@ html, body {
     radial-gradient(120% 80% at 0% 0%, var(--color-edify-soft) 0%, transparent 55%),
     linear-gradient(180deg, var(--color-card) 0%, var(--color-card-elevated) 100%);
   border: 1px solid var(--color-edify-border);
-  border-radius: 20px;
+  border-radius: 16px;
   box-shadow:
     inset 0 1px 0 var(--color-card-highlight),
     0 1px 2px var(--shadow-card-contact),
-    0 4px 10px -2px var(--shadow-card-mid),
-    0 16px 32px -12px var(--shadow-card-ambient);
+    0 2px 6px -2px var(--shadow-card-mid),
+    0 10px 22px -12px var(--shadow-card-ambient);
   transform: translateZ(0);
   will-change: transform, box-shadow;
   transition: box-shadow 280ms cubic-bezier(.2,.6,.2,1),
@@ -3042,9 +3042,9 @@ html, body {
   box-shadow:
     inset 0 1px 0 var(--color-card-highlight),
     0 2px 4px var(--shadow-card-contact),
-    0 10px 18px -4px var(--shadow-card-mid),
-    0 28px 48px -16px var(--shadow-card-lift);
-  transform: translateY(-2px);
+    0 8px 16px -6px var(--shadow-card-mid),
+    0 18px 34px -16px var(--shadow-card-lift);
+  transform: translateY(-1.5px);
 }
 .card-lift:active {
   transform: translateY(0);

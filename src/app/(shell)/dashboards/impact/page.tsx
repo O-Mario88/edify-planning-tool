@@ -53,7 +53,7 @@ export default async function ImpactDashboard() {
       desktop={
         <>
           <DashboardPageHeader role="ImpactAssessment" />
-          <div className="px-6 pb-24 md:pb-6 pt-4 space-y-10">
+          <div className="px-6 pb-24 md:pb-6 pt-4 space-y-5">
             {/* Section 1 — Today.  The unified action surface. */}
             <CommandStack user={user} hideMission />
 
