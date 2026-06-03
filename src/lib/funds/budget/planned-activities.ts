@@ -52,6 +52,8 @@ export type PlannedActivity = {
   nights?: number;
   participantCount?: number;
   schoolCount?: number;
+  projectId?: string;
+  projectName?: string;
   status: ActivityStatus;
   notes?: string;
 };
@@ -329,6 +331,103 @@ ALL.push(
     notes: "Partner draft — awaiting submission",
   }),
 );
+
+// ---------------------------------------------------------------------------
+// Full-FY annual plan (FY 2026 = Oct 2025 → Sep 2026)
+// ---------------------------------------------------------------------------
+// The detailed April month above exercises the engine's edge cases. To make
+// the budget genuinely an ANNUAL plan, we generate a representative set for
+// the other 11 FY months so quarter/month/week breakdowns are real (every
+// figure still flows through the same per-activity calculators).
+
+const FY2026_MONTHS = [
+  "2025-10", "2025-11", "2025-12",
+  "2026-01", "2026-02", "2026-03",
+  "2026-04", "2026-05", "2026-06",
+  "2026-07", "2026-08", "2026-09",
+];
+// Day per week-of-month (engine derives week via ceil(day/7)).
+const WEEK_DAY: Record<1 | 2 | 3 | 4, string> = { 1: "05", 2: "12", 3: "19", 4: "26" };
+
+const SPECIAL_PROJECTS = [
+  { id: "SP-EDTECH", name: "EdTech" },
+  { id: "SP-CCSEL", name: "Christ-Centered SEL" },
+];
+
+function genMonth(monthIso: string): PlannedActivity[] {
+  const out: PlannedActivity[] = [];
+  const day = (w: 1 | 2 | 3 | 4) => `${monthIso}-${WEEK_DAY[w]}`;
+  STAFF.forEach((s, i) => {
+    const sc1 = schoolFor(s.districtName, 1);
+    const sc2 = schoolFor(s.districtName, 2);
+    const w1: 1 | 2 | 3 | 4 = ((i % 4) + 1) as 1 | 2 | 3 | 4;
+    const w2: 1 | 2 | 3 | 4 = (((i + 2) % 4) + 1) as 1 | 2 | 3 | 4;
+    // Two school/follow-up visits per staff per month.
+    out.push({
+      id: nextId("PA"), kind: "staff_visit", deliveryOwner: "STAFF", facilitatorType: "STAFF",
+      staffId: s.staffId, schoolId: sc1.id, schoolName: sc1.name,
+      districtId: s.districtId, districtName: s.districtName,
+      scheduledDateIso: day(w1), plannedMonthIso: monthIso, plannedWeek: w1, nights: 0,
+      status: "Scheduled",
+    });
+    out.push({
+      id: nextId("PA"), kind: i % 3 === 0 ? "core_visit" : "follow_up_visit", deliveryOwner: "STAFF", facilitatorType: "STAFF",
+      staffId: s.staffId, schoolId: sc2.id, schoolName: sc2.name,
+      districtId: s.districtId, districtName: s.districtName,
+      scheduledDateIso: day(w2), plannedMonthIso: monthIso, plannedWeek: w2, nights: i % 5 === 0 ? 1 : 0,
+      status: "Approved Plan",
+    });
+    // Every 3rd staff hosts a cluster meeting (W3); every 4th a training (W4).
+    if (i % 3 === 0) {
+      out.push({
+        id: nextId("PA"), kind: "cluster_meeting", deliveryOwner: "STAFF", facilitatorType: "STAFF",
+        staffId: s.staffId, clusterId: `CL-${s.districtName.slice(0, 3).toUpperCase()}-01`,
+        clusterName: `${s.districtName} Cluster A`, districtId: s.districtId, districtName: s.districtName,
+        scheduledDateIso: day(3), plannedMonthIso: monthIso, plannedWeek: 3, nights: 0,
+        participantCount: 18 + (i % 6), schoolCount: 4 + (i % 3), status: "Approved Plan",
+      });
+    }
+    if (i % 4 === 0) {
+      out.push({
+        id: nextId("PA"), kind: i % 8 === 0 ? "cluster_training" : "school_improvement_training",
+        deliveryOwner: "STAFF", facilitatorType: "STAFF", staffId: s.staffId,
+        districtId: s.districtId, districtName: s.districtName,
+        scheduledDateIso: day(4), plannedMonthIso: monthIso, plannedWeek: 4, nights: i % 8 === 0 ? 1 : 0,
+        participantCount: 24 + (i % 8), schoolCount: 6 + (i % 4), status: "Ready for Funds",
+      });
+    }
+  });
+  // A few partner activities each month.
+  for (let p = 0; p < 4; p += 1) {
+    const d = PARTNER_DISTRICTS[p % PARTNER_DISTRICTS.length];
+    const sc = schoolFor(d.districtName, 50 + p);
+    out.push({
+      id: nextId("PA"), kind: p % 2 === 0 ? "partner_visit" : "partner_follow_up",
+      deliveryOwner: "PARTNER", facilitatorType: "PARTNER",
+      partnerId: `PRT-${String((p % 5) + 1).padStart(3, "0")}`, partnerName: `Partner Org ${(p % 5) + 1}`,
+      schoolId: sc.id, schoolName: sc.name, districtId: d.districtId, districtName: d.districtName,
+      scheduledDateIso: day(((p % 4) + 1) as 1 | 2 | 3 | 4), plannedMonthIso: monthIso,
+      plannedWeek: ((p % 4) + 1) as 1 | 2 | 3 | 4, nights: 0, status: "Partner Planned",
+    });
+  }
+  // One special-project activity per month (alternating project), partner-delivered.
+  const proj = SPECIAL_PROJECTS[FY2026_MONTHS.indexOf(monthIso) % SPECIAL_PROJECTS.length];
+  const psc = schoolFor("Kampala", 60);
+  out.push({
+    id: nextId("PA"), kind: "special_project", deliveryOwner: "PARTNER", facilitatorType: "PARTNER",
+    partnerId: "PRT-001", partnerName: "Partner Org 1", projectId: proj.id, projectName: proj.name,
+    schoolId: psc.id, schoolName: psc.name, districtId: "UG-KAM", districtName: "Kampala",
+    scheduledDateIso: day(2), plannedMonthIso: monthIso, plannedWeek: 2, nights: 0,
+    participantCount: 22, schoolCount: 5, status: "Approved Plan",
+  });
+  return out;
+}
+
+// Generate the other 11 months (April already built in detail above).
+for (const m of FY2026_MONTHS) {
+  if (m === MONTH) continue;
+  ALL.push(...genMonth(m));
+}
 
 export const PLANNED_ACTIVITIES: PlannedActivity[] = ALL;
 

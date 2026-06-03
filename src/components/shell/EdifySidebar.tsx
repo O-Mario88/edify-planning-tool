@@ -300,6 +300,7 @@ function buildCplMenu(dashboardHref: string): MenuSection[] {
     {
       label: "Activity",
       items: [
+        { label: "Budget",           href: "/budget",               Icon: Calculator         },
         { label: "Approvals",        href: "/approvals",            Icon: ClipboardCheckIcon },
         { label: "Monthly Request",  href: "/monthly-fund-request", Icon: ClipboardCheckIcon },
         { label: "Weekly Funds",     href: "/weekly-funds",         Icon: Wallet             },
