@@ -48,7 +48,8 @@ const PARTNER_SUGGESTIONS = [
 // page, one universe. The old separate /portfolio + /clusters/assign surfaces
 // fold in here. (The mobile view still renders the legacy SchoolRow set.)
 export default async function SchoolsDashboard() {
-  const currentUser = toCurrentUser(await getCurrentUser());
+  const me = await getCurrentUser();
+  const currentUser = toCurrentUser(me);
 
   // Canonical directory: the viewer's uploaded schools (scoped to their chain).
   const records = directoryRecords(currentUser.staffId, currentUser.role);
@@ -118,8 +119,11 @@ export default async function SchoolsDashboard() {
     };
   });
   // Partner/HR cannot assign; everyone else with directory access can (server re-checks).
-  const canManageClusters = ["CCEO", "CountryProgramLead", "CountryDirector", "ImpactAssessment", "Admin"]
+  const canManageDirectory = ["CCEO", "CountryProgramLead", "CountryDirector", "ImpactAssessment", "Admin"]
     .includes(currentUser.role);
+  // Cluster assignment is a CCEO/PL responsibility — the Project Coordinator
+  // (whose appRole projects to CountryProgramLead) only views clusters.
+  const canManageClusters = canManageDirectory && me.role !== "ProjectCoordinator";
 
   return (
     <ResponsiveDashboard mobile={<SchoolsView intelligenceSchools={ordered} />} desktop={
@@ -146,7 +150,8 @@ export default async function SchoolsDashboard() {
               their workflow stage + every assignment launched from here. */}
           <SchoolsClusterDirectory
             schools={directorySchools}
-            canManage={canManageClusters}
+            canManage={canManageDirectory}
+            canManageClusters={canManageClusters}
             clusterOptions={clusterOptions}
             projectOptions={projectOptions}
             partnerOptions={PARTNER_SUGGESTIONS}

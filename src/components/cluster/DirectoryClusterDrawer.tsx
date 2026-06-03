@@ -67,6 +67,7 @@ type Tab = "cluster" | "project" | "partner";
 
 export function DirectoryClusterDrawer({
   open, school, onClose, projectOptions = [], partnerOptions = [], interventionAreas = [], initialTab = "cluster",
+  canManageClusters = true,
 }: {
   open: boolean;
   school: DirectorySchoolVM | null;
@@ -75,6 +76,9 @@ export function DirectoryClusterDrawer({
   partnerOptions?: string[];
   interventionAreas?: string[];
   initialTab?: Tab;
+  /** When false, the Cluster tab is read-only — cluster assignment is a
+   *  CCEO/PL responsibility (e.g. the Project Coordinator only views it). */
+  canManageClusters?: boolean;
 }) {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>(initialTab);
@@ -237,7 +241,20 @@ export function DirectoryClusterDrawer({
 
         {/* ── CLUSTER TAB ── */}
         {tab === "cluster" && (
-          school.clusterStatus === "clustered" ? (
+          !canManageClusters ? (
+            // Read-only — cluster assignment is a CCEO / Program Lead responsibility.
+            school.clusterStatus === "clustered" ? (
+              <div className="rounded-lg border border-[var(--color-edify-border)] bg-[var(--color-edify-soft)]/40 px-3 py-2.5 text-[12px] inline-flex items-start gap-1.5">
+                <Network size={13} className="mt-0.5 shrink-0 text-[var(--color-edify-primary)]" />
+                In <b className="mx-1">{school.clusterName}</b>. Cluster assignment is managed by the CCEO / Program Lead.
+              </div>
+            ) : (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-[12px] text-amber-800 inline-flex items-start gap-1.5">
+                <AlertTriangle size={13} className="mt-0.5 shrink-0" />
+                Not yet clustered. Cluster assignment is handled by the CCEO / Program Lead.
+              </div>
+            )
+          ) : school.clusterStatus === "clustered" ? (
             <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-[12px] text-emerald-800 inline-flex items-start gap-1.5">
               <CheckCircle2 size={13} className="mt-0.5 shrink-0" />
               Already in <b className="mx-1">{school.clusterName}</b>. Manage member schools from the cluster page.

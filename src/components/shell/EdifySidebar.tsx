@@ -233,7 +233,9 @@ function buildProjectCoordinatorMenu(dashboardHref: string): MenuSection[] {
         { label: "Project Schools",  href: "/special-projects/schools", Icon: GraduationCap },
         { label: "Project Pipeline", href: "/special-projects/pipeline", Icon: Handshake },
         { label: "Schools",          href: "/schools",          Icon: Building2       },
-        { label: "Clusters",         href: "/clusters",         Icon: Network         },
+        // No "Clusters" workspace — cluster assignment is a CCEO/PL
+        // responsibility; the coordinator only views a school's cluster on the
+        // project surfaces (read-only).
         { label: "SSA Performance",  href: "/ssa",              Icon: Activity        },
         { label: "Partners",         href: "/partners",         Icon: Handshake       },
         { label: "Analytics",        href: "/analytics",        Icon: BarChart3       },

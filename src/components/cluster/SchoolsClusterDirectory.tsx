@@ -38,6 +38,7 @@ function stageOf(s: DirectorySchoolVM): Stage {
 export function SchoolsClusterDirectory({
   schools,
   canManage,
+  canManageClusters = true,
   clusterOptions = [],
   projectOptions = [],
   partnerOptions = [],
@@ -45,6 +46,9 @@ export function SchoolsClusterDirectory({
 }: {
   schools: DirectorySchoolVM[];
   canManage: boolean;
+  /** Cluster assignment is a CCEO/PL responsibility; when false (e.g. Project
+   *  Coordinator) cluster controls are hidden and the drawer shows it read-only. */
+  canManageClusters?: boolean;
   clusterOptions?: DirectoryClusterOption[];
   projectOptions?: DirectoryProjectTag[];
   partnerOptions?: string[];
@@ -191,17 +195,21 @@ export function SchoolsClusterDirectory({
           <span className="text-[12px] font-extrabold inline-flex items-center gap-1.5">
             <CheckCircle2 size={13} className="text-[var(--color-edify-primary)]" /> {selected.size} selected
           </span>
-          <span className="mx-1 h-4 w-px bg-[var(--color-edify-border)]" />
-          {/* Cluster */}
-          <select value={bulkCluster} onChange={(e) => setBulkCluster(e.target.value)}
-            className="h-8 px-2 rounded-lg border border-[var(--color-edify-border)] bg-white text-[11.5px]">
-            <option value="">Assign to cluster…</option>
-            {clusterOptions.map((c) => <option key={c.id} value={c.id}>{c.name} · {c.district}</option>)}
-          </select>
-          <button type="button" disabled={pending || !bulkCluster} onClick={bulkAssignCluster}
-            className="h-8 px-3 rounded-lg bg-[var(--color-edify-primary)] text-white text-[11.5px] font-extrabold disabled:opacity-40 inline-flex items-center gap-1.5">
-            <Network size={12} /> Assign
-          </button>
+          {canManageClusters && (
+            <>
+              <span className="mx-1 h-4 w-px bg-[var(--color-edify-border)]" />
+              {/* Cluster */}
+              <select value={bulkCluster} onChange={(e) => setBulkCluster(e.target.value)}
+                className="h-8 px-2 rounded-lg border border-[var(--color-edify-border)] bg-white text-[11.5px]">
+                <option value="">Assign to cluster…</option>
+                {clusterOptions.map((c) => <option key={c.id} value={c.id}>{c.name} · {c.district}</option>)}
+              </select>
+              <button type="button" disabled={pending || !bulkCluster} onClick={bulkAssignCluster}
+                className="h-8 px-3 rounded-lg bg-[var(--color-edify-primary)] text-white text-[11.5px] font-extrabold disabled:opacity-40 inline-flex items-center gap-1.5">
+                <Network size={12} /> Assign
+              </button>
+            </>
+          )}
           <span className="mx-1 h-4 w-px bg-[var(--color-edify-border)]" />
           {/* Project */}
           <select value={bulkProject} onChange={(e) => setBulkProject(e.target.value)}
@@ -277,7 +285,7 @@ export function SchoolsClusterDirectory({
               </div>
               {/* Actions */}
               <div className="shrink-0 flex flex-col items-end gap-1.5">
-                {stage === "unclustered" && canManage ? (
+                {stage === "unclustered" && canManage && canManageClusters ? (
                   <button type="button" onClick={() => openDrawer(s, "cluster")}
                     className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-[var(--color-edify-primary)] text-white text-[11.5px] font-extrabold hover:bg-[var(--color-edify-dark)] transition-colors">
                     Add to Cluster <ArrowRight size={12} />
@@ -296,7 +304,7 @@ export function SchoolsClusterDirectory({
                   </Link>
                 ) : null}
                 {canManage && (
-                  <button type="button" onClick={() => openDrawer(s, s.clusterStatus === "unclustered" ? "project" : "cluster")}
+                  <button type="button" onClick={() => openDrawer(s, (s.clusterStatus === "unclustered" || !canManageClusters) ? "project" : "cluster")}
                     className="inline-flex items-center gap-1 text-[11px] font-semibold muted hover:text-[var(--color-edify-text)]">
                     <Settings2 size={11} /> Manage
                   </button>
@@ -313,6 +321,7 @@ export function SchoolsClusterDirectory({
         school={drawerSchool}
         onClose={onDrawerClose}
         initialTab={drawerTab}
+        canManageClusters={canManageClusters}
         projectOptions={projectOptions}
         partnerOptions={partnerOptions}
         interventionAreas={interventionAreas}
