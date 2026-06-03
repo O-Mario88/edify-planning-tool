@@ -87,7 +87,7 @@ function ClusterRow({ cluster: c, partners }: { cluster: ManagedCluster; partner
           <Network size={15} />
         </span>
         <div className="min-w-0 flex-1">
-          <Link href="/clusters/assign" className="text-[13px] font-extrabold tracking-tight hover:underline inline-flex items-center gap-1">
+          <Link href={`/clusters/${c.id}`} className="text-[13px] font-extrabold tracking-tight hover:underline inline-flex items-center gap-1">
             {c.name} <ChevronRight size={12} className="text-[var(--color-edify-muted)]" />
           </Link>
           <p className="text-[11px] muted inline-flex items-center gap-1 mt-0.5">

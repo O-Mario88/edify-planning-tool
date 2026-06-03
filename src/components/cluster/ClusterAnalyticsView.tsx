@@ -18,6 +18,7 @@ import {
   clusterAnalytics,
   clusterHealthChecks,
   schoolsInCluster,
+  staffVsPartnerClusterComparison,
 } from "@/lib/cluster/cluster-core";
 import { cn } from "@/lib/utils";
 
@@ -46,6 +47,7 @@ export function ClusterAnalyticsView() {
   const a = clusterAnalytics();
   const health = clusterHealthChecks();
   const rollups = districtRollups();
+  const cmp = staffVsPartnerClusterComparison();
 
   const kpis: Kpi[] = [
     { label: "Total clusters", value: a.totalClusters, Icon: Boxes },
@@ -104,6 +106,42 @@ export function ClusterAnalyticsView() {
               </div>
             ))
           )}
+        </div>
+      </section>
+
+      {/* Staff vs partner cluster management */}
+      <section className="card rounded-2xl p-4">
+        <h2 className="text-[16px] font-extrabold tracking-tight text-[var(--color-edify-text)]">
+          Staff vs partner cluster management
+        </h2>
+        <p className="muted text-[12px] mt-0.5">How staff-managed and partner-managed clusters compare on delivery, attendance, and SSA.</p>
+        <div className="mt-3 overflow-x-auto">
+          <table className="w-full text-[12.5px]">
+            <thead>
+              <tr className="text-left muted border-b border-[var(--color-edify-divider)]">
+                <th className="py-1.5 pr-3 font-semibold">Metric</th>
+                <th className="py-1.5 px-3 font-semibold text-sky-700">Staff-managed</th>
+                <th className="py-1.5 px-3 font-semibold text-violet-700">Partner-managed</th>
+              </tr>
+            </thead>
+            <tbody className="tabular">
+              {[
+                ["Clusters", cmp.staff.clusters, cmp.partner.clusters],
+                ["Meetings scheduled", cmp.staff.meetingsScheduled, cmp.partner.meetingsScheduled],
+                ["Meetings IA-confirmed", cmp.staff.meetingsConfirmed, cmp.partner.meetingsConfirmed],
+                ["Attendance total", cmp.staff.attendanceTotal, cmp.partner.attendanceTotal],
+                ["Teachers reached", cmp.staff.teachersReached, cmp.partner.teachersReached],
+                ["School leaders reached", cmp.staff.schoolLeadersReached, cmp.partner.schoolLeadersReached],
+                ["Avg SSA completion", `${cmp.staff.avgSsaCompletion}%`, `${cmp.partner.avgSsaCompletion}%`],
+              ].map(([label, s, p]) => (
+                <tr key={String(label)} className="border-b border-[var(--color-edify-divider)] last:border-0">
+                  <td className="py-1.5 pr-3 text-[var(--color-edify-text)]">{label}</td>
+                  <td className="py-1.5 px-3 font-extrabold">{s}</td>
+                  <td className="py-1.5 px-3 font-extrabold">{p}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </section>
 

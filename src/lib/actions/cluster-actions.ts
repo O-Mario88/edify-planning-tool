@@ -18,6 +18,11 @@ import {
   assignClusterToPartner,
   updateClusterLeader,
   scheduleClusterMeeting,
+  recordClusterActivitySalesforce,
+  iaConfirmClusterActivity,
+  accountantPayClusterActivity,
+  returnClusterActivity,
+  clusterActivityById,
   clusterById,
   bulkAssign,
   createCluster,
@@ -287,6 +292,101 @@ export async function scheduleClusterMeetingAction(
   } catch { /* outside request */ }
   revalidateClusterSurfaces();
   return { ok: true, label: CLUSTER_MEETING_LABEL[kind], organizer };
+}
+
+// ─── Cluster-activity lifecycle (TS- → IA confirm → accountant pay) ─
+
+/** Executor (partner managing the cluster OR Edify staff) records TS + attendance. */
+export async function recordClusterActivityAction(
+  activityId: string,
+  salesforceTrainingId: string,
+  teachersCount: number,
+  schoolLeadersCount: number,
+  otherCount?: number,
+): Promise<ClusterActionResult> {
+  const a = clusterActivityById(activityId);
+  if (!a) return { ok: false, reason: "FAILED", message: "Activity not found." };
+  const partner = await getCurrentPartner();
+  let actor: ClusterActor;
+  if (partner) {
+    const cluster = clusterById(a.clusterId);
+    if (cluster?.managedByPartnerId !== partner.id) return { ok: false, reason: "FORBIDDEN" };
+    actor = { name: partner.name, role: "Partner" };
+  } else {
+    const staff = await actorOrForbidden();
+    if (!staff) return { ok: false, reason: "FORBIDDEN" };
+    actor = staff;
+  }
+  const res = recordClusterActivitySalesforce(activityId, { salesforceTrainingId, teachersCount, schoolLeadersCount, otherCount }, actor);
+  if (!res.ok) return { ok: false, reason: "FAILED", message: res.reason };
+  emitAudit({
+    action: "cluster.activitySalesforceRecorded", subjectKind: "Cluster", subjectId: a.clusterId,
+    actorId: actor.name, actorRole: actor.role, actorName: actor.name,
+    payload: { activityId, salesforceTrainingId, total: res.activity.totalParticipants },
+  });
+  emitNotificationFanOut(["IMPACT_ASSESSMENT"], {
+    template: "cluster.awaitingIa", channel: "Inbox",
+    title: "Cluster activity awaiting Salesforce confirmation",
+    body: `${CLUSTER_MEETING_LABEL[a.kind]} (${salesforceTrainingId}) needs IA confirmation.`,
+    href: "/data-intake/clusters",
+  });
+  revalidateClusterSurfaces();
+  return { ok: true };
+}
+
+const IA_ROLES = new Set<string>(["ImpactAssessment", "Admin"]);
+const ACCOUNTANT_ROLES = new Set<string>(["ProgramAccountant", "Admin"]);
+
+/** IA confirms the Salesforce training record — makes the activity count. */
+export async function iaConfirmClusterActivityAction(activityId: string): Promise<ClusterActionResult> {
+  const user = await getCurrentUser();
+  if (!IA_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+  const res = iaConfirmClusterActivity(activityId, { name: user.name, role: user.role });
+  if (!res.ok) return { ok: false, reason: "FAILED", message: res.reason };
+  emitAudit({
+    action: "cluster.activityIaConfirmed", subjectKind: "Cluster", subjectId: res.activity.clusterId,
+    actorId: user.staffId, actorRole: user.role, actorName: user.name,
+    payload: { activityId, salesforceTrainingId: res.activity.salesforceTrainingId },
+  });
+  if (res.activity.organizer === "partner") {
+    emitNotificationFanOut(["PROGRAM_ACCOUNTANT"], {
+      template: "cluster.paymentReady", channel: "Inbox",
+      title: "Partner cluster payment ready",
+      body: `${CLUSTER_MEETING_LABEL[res.activity.kind]} confirmed — partner payment can be cleared.`,
+      href: "/disbursements",
+    });
+  }
+  revalidateClusterSurfaces();
+  return { ok: true };
+}
+
+/** Accountant clears partner payment — only after IA confirmation. */
+export async function payClusterActivityAction(activityId: string): Promise<ClusterActionResult> {
+  const user = await getCurrentUser();
+  if (!ACCOUNTANT_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+  const res = accountantPayClusterActivity(activityId, { name: user.name, role: user.role });
+  if (!res.ok) return { ok: false, reason: "FAILED", message: res.reason };
+  emitAudit({
+    action: "cluster.activityPaid", subjectKind: "Cluster", subjectId: res.activity.clusterId,
+    actorId: user.staffId, actorRole: user.role, actorName: user.name,
+    payload: { activityId },
+  });
+  revalidateClusterSurfaces();
+  return { ok: true };
+}
+
+/** Return an activity for correction (IA / PL / CD / Admin). */
+export async function returnClusterActivityAction(activityId: string, reason: string): Promise<ClusterActionResult> {
+  const actor = await actorOrForbidden();
+  if (!actor) return { ok: false, reason: "FORBIDDEN" };
+  const res = returnClusterActivity(activityId, reason, actor);
+  if (!res.ok) return { ok: false, reason: "FAILED", message: res.reason };
+  emitAudit({
+    action: "cluster.activityReturned", subjectKind: "Cluster", subjectId: res.activity.clusterId,
+    actorId: actor.name, actorRole: actor.role, actorName: actor.name, payload: { activityId, reason },
+  });
+  revalidateClusterSurfaces();
+  return { ok: true };
 }
 
 // ─── Single-school assign / remove (row actions + IA correction) ────

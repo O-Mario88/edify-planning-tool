@@ -196,6 +196,19 @@ export const CLUSTER_MEETING_LABEL: Record<ClusterMeetingKind, string> = {
 /** Who organises the meeting: the delegated partner, or Edify (staff). */
 export type ClusterMeetingOrganizer = "partner" | "edify";
 
+/**
+ * Cluster-activity lifecycle. A meeting/training only COUNTS once IA has
+ * confirmed its Salesforce training record; partner payment only clears after
+ * that. Scheduled → Awaiting IA (Salesforce TS- + attendance entered) →
+ * IA Confirmed → Paid. Returned is a correction loop.
+ */
+export type ClusterActivityStatus =
+  | "Scheduled"
+  | "Awaiting IA"
+  | "IA Confirmed"
+  | "Paid"
+  | "Returned";
+
 export type ClusterMeeting = {
   id: string;
   clusterId: string;
@@ -207,7 +220,25 @@ export type ClusterMeeting = {
   participants?: number;
   notes?: string;
   createdAt: string;
+  // ── Lifecycle ──
+  status: ClusterActivityStatus;
+  /** Salesforce training record id — must be TS-#####. */
+  salesforceTrainingId?: string;
+  teachersCount?: number;
+  schoolLeadersCount?: number;
+  otherCount?: number;
+  totalParticipants?: number;
+  evidenceUploaded?: boolean;
+  iaConfirmedAt?: string;
+  iaConfirmedBy?: string;
+  accountantPaidAt?: string;
+  returnedReason?: string;
 };
+
+/** Salesforce training ids must be TS-#### (cluster meetings/trainings). */
+export function isValidTsId(id: string | undefined | null): boolean {
+  return !!id && /^TS-\d{3,}$/i.test(id.trim());
+}
 
 export const clusterMeetings: ClusterMeeting[] = [];
 let meetingSeq = 0;
@@ -974,6 +1005,7 @@ export function scheduleClusterMeeting(
     participants: input.participants,
     notes: input.notes?.trim() || undefined,
     createdAt: new Date().toISOString(),
+    status: "Scheduled",
   };
   clusterMeetings.unshift(meeting);
   logAudit({
@@ -993,6 +1025,185 @@ export function meetingsForCluster(clusterId: string): ClusterMeeting[] {
   return clusterMeetings
     .filter((m) => m.clusterId === clusterId)
     .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+export function clusterActivityById(id: string): ClusterMeeting | undefined {
+  return clusterMeetings.find((m) => m.id === id);
+}
+
+export type ActivityResult =
+  | { ok: true; activity: ClusterMeeting }
+  | { ok: false; reason: string };
+
+/**
+ * Record the Salesforce training id + attendance for a held activity. Validates
+ * the TS- id, totals participants, marks evidence uploaded, and moves the
+ * activity to "Awaiting IA". Done by the executor (partner or staff).
+ */
+export function recordClusterActivitySalesforce(
+  activityId: string,
+  input: { salesforceTrainingId: string; teachersCount: number; schoolLeadersCount: number; otherCount?: number },
+  actor: ClusterActor,
+): ActivityResult {
+  const a = clusterActivityById(activityId);
+  if (!a) return { ok: false, reason: "Activity not found." };
+  if (!isValidTsId(input.salesforceTrainingId)) {
+    return { ok: false, reason: "Salesforce training id must look like TS-01234." };
+  }
+  const teachers = Math.max(0, Math.floor(input.teachersCount || 0));
+  const leaders = Math.max(0, Math.floor(input.schoolLeadersCount || 0));
+  const other = Math.max(0, Math.floor(input.otherCount || 0));
+  a.salesforceTrainingId = input.salesforceTrainingId.trim().toUpperCase();
+  a.teachersCount = teachers;
+  a.schoolLeadersCount = leaders;
+  a.otherCount = other;
+  a.totalParticipants = teachers + leaders + other;
+  a.participants = a.totalParticipants;
+  a.evidenceUploaded = true;
+  a.returnedReason = undefined;
+  a.status = "Awaiting IA";
+  return { ok: true, activity: a };
+}
+
+/** IA confirms the Salesforce record — the only thing that makes it "count". */
+export function iaConfirmClusterActivity(activityId: string, actor: ClusterActor): ActivityResult {
+  const a = clusterActivityById(activityId);
+  if (!a) return { ok: false, reason: "Activity not found." };
+  if (!isValidTsId(a.salesforceTrainingId)) return { ok: false, reason: "No valid TS- Salesforce id to confirm." };
+  if (a.status !== "Awaiting IA") return { ok: false, reason: "Activity is not awaiting IA confirmation." };
+  a.status = "IA Confirmed";
+  a.iaConfirmedAt = new Date().toISOString();
+  a.iaConfirmedBy = actor.name;
+  return { ok: true, activity: a };
+}
+
+/** Accountant clears partner payment — only after IA confirmation. */
+export function accountantPayClusterActivity(activityId: string, actor: ClusterActor): ActivityResult {
+  const a = clusterActivityById(activityId);
+  if (!a) return { ok: false, reason: "Activity not found." };
+  if (a.organizer !== "partner") return { ok: false, reason: "Only partner-managed activities are paid." };
+  if (a.status !== "IA Confirmed") return { ok: false, reason: "Payment is blocked until IA confirms the Salesforce record." };
+  a.status = "Paid";
+  a.accountantPaidAt = new Date().toISOString();
+  return { ok: true, activity: a };
+}
+
+/** Return an activity for correction (IA or staff). */
+export function returnClusterActivity(activityId: string, reason: string, actor: ClusterActor): ActivityResult {
+  const a = clusterActivityById(activityId);
+  if (!a) return { ok: false, reason: "Activity not found." };
+  a.status = "Returned";
+  a.returnedReason = reason || "Returned for correction";
+  return { ok: true, activity: a };
+}
+
+/** Cluster activities awaiting IA Salesforce confirmation (IA queue). */
+export function clusterActivitiesAwaitingIa(): ClusterMeeting[] {
+  return clusterMeetings.filter((m) => m.status === "Awaiting IA");
+}
+
+/** Partner cluster activities IA-confirmed and ready for accountant payment. */
+export function partnerClusterPaymentsReady(): ClusterMeeting[] {
+  return clusterMeetings.filter((m) => m.organizer === "partner" && m.status === "IA Confirmed");
+}
+
+// ── Cluster performance (computed from member schools + activities) ─
+
+export type ClusterProfile = {
+  cluster: ClusterRecord;
+  managementType: "staff" | "partner" | "mixed";
+  schools: IntakeSchool[];
+  clientCount: number;
+  coreCount: number;
+  ssaDone: number;
+  ssaMissing: number;
+  ssaCompletionRate: number; // %
+  activities: ClusterMeeting[];
+  meetingsCompleted: number;   // IA-confirmed
+  meetingsScheduled: number;
+  attendanceTotal: number;
+  teachersReached: number;
+  schoolLeadersReached: number;
+  paymentsReady: number;       // partner, IA-confirmed, unpaid
+  paymentsPaid: number;
+};
+
+/** Full cluster profile — the cluster's truth is its schools + activities. */
+export function clusterProfile(clusterId: string): ClusterProfile | undefined {
+  const cluster = clusterById(clusterId);
+  if (!cluster) return undefined;
+  const schools = schoolsInCluster(clusterId);
+  const activities = meetingsForCluster(clusterId);
+  const ssaDone = schools.filter((s) => s.ssaStatus === "SSA Done").length;
+  const confirmed = activities.filter((a) => a.status === "IA Confirmed" || a.status === "Paid");
+  const teachersReached = confirmed.reduce((n, a) => n + (a.teachersCount ?? 0), 0);
+  const schoolLeadersReached = confirmed.reduce((n, a) => n + (a.schoolLeadersCount ?? 0), 0);
+  const attendanceTotal = confirmed.reduce((n, a) => n + (a.totalParticipants ?? 0), 0);
+
+  // Management type = derived from who runs the activities + delegation.
+  const hasPartner = !!cluster.managedByPartnerId || activities.some((a) => a.organizer === "partner");
+  const hasStaff = activities.some((a) => a.organizer === "edify");
+  const managementType: ClusterProfile["managementType"] =
+    hasPartner && hasStaff ? "mixed" : hasPartner ? "partner" : "staff";
+
+  return {
+    cluster,
+    managementType,
+    schools,
+    clientCount: schools.filter((s) => s.schoolType === "Client").length,
+    coreCount: schools.filter((s) => s.schoolType === "Core").length,
+    ssaDone,
+    ssaMissing: schools.length - ssaDone,
+    ssaCompletionRate: schools.length ? Math.round((ssaDone / schools.length) * 100) : 0,
+    activities,
+    meetingsCompleted: confirmed.length,
+    meetingsScheduled: activities.length,
+    attendanceTotal,
+    teachersReached,
+    schoolLeadersReached,
+    paymentsReady: activities.filter((a) => a.organizer === "partner" && a.status === "IA Confirmed").length,
+    paymentsPaid: activities.filter((a) => a.status === "Paid").length,
+  };
+}
+
+// ── Staff vs partner comparison ────────────────────────────────────
+
+export type ManagementComparisonRow = {
+  managementType: "staff" | "partner";
+  clusters: number;
+  meetingsScheduled: number;
+  meetingsConfirmed: number;
+  attendanceTotal: number;
+  teachersReached: number;
+  schoolLeadersReached: number;
+  avgSsaCompletion: number; // % across those clusters
+};
+
+export function staffVsPartnerClusterComparison(): { staff: ManagementComparisonRow; partner: ManagementComparisonRow } {
+  const mk = (type: "staff" | "partner"): ManagementComparisonRow => ({
+    managementType: type, clusters: 0, meetingsScheduled: 0, meetingsConfirmed: 0,
+    attendanceTotal: 0, teachersReached: 0, schoolLeadersReached: 0, avgSsaCompletion: 0,
+  });
+  const staff = mk("staff");
+  const partner = mk("partner");
+  const ssaAcc = { staff: [] as number[], partner: [] as number[] };
+
+  for (const c of activeClusters()) {
+    const p = clusterProfile(c.id);
+    if (!p) continue;
+    const bucket = p.managementType === "partner" ? partner : staff; // mixed counts as staff oversight here
+    bucket.clusters += 1;
+    bucket.meetingsScheduled += p.meetingsScheduled;
+    bucket.meetingsConfirmed += p.meetingsCompleted;
+    bucket.attendanceTotal += p.attendanceTotal;
+    bucket.teachersReached += p.teachersReached;
+    bucket.schoolLeadersReached += p.schoolLeadersReached;
+    (p.managementType === "partner" ? ssaAcc.partner : ssaAcc.staff).push(p.ssaCompletionRate);
+  }
+  const avg = (xs: number[]) => (xs.length ? Math.round(xs.reduce((a, b) => a + b, 0) / xs.length) : 0);
+  staff.avgSsaCompletion = avg(ssaAcc.staff);
+  partner.avgSsaCompletion = avg(ssaAcc.partner);
+  return { staff, partner };
 }
 
 // ── Cluster-leader candidates ──────────────────────────────────────

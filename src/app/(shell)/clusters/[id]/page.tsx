@@ -12,9 +12,21 @@ import {
 import { EntityDetail, DetailKpi, DetailFacts } from "@/components/shell/EntityDetail";
 import { clustersMock, schoolsMock } from "@/lib/schools-mock";
 import { orgStaff } from "@/lib/org/supervision";
+import { TitleRegister } from "@/components/shell/TitleRegister";
+import { ClusterProfileView } from "@/components/cluster/ClusterProfileView";
+import { clusterProfile, clusterById, CLUSTER_MEETING_LABEL } from "@/lib/cluster/cluster-core";
+import { getCurrentUser } from "@/lib/auth";
+import { getCurrentPartner } from "@/lib/partner/partner-identity";
 
 export default async function ClusterDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+
+  // Engine cluster (CLU-*) → the real, performance-computed profile. Falls
+  // through to the legacy clustersMock detail for old saved-group ids.
+  if (clusterById(id)) {
+    return <EngineClusterProfile clusterId={id} />;
+  }
+
   const cluster = clustersMock.find((c) => c.id === id);
   if (!cluster) return notFound();
 
@@ -90,5 +102,61 @@ export default async function ClusterDetail({ params }: { params: Promise<{ id: 
         </div>
       </section>
     </EntityDetail>
+  );
+}
+
+// ── Engine cluster profile (the location-based school group) ────────
+async function EngineClusterProfile({ clusterId }: { clusterId: string }) {
+  const profile = clusterProfile(clusterId);
+  if (!profile) return notFound();
+  const user = await getCurrentUser();
+  const partner = await getCurrentPartner();
+
+  const staffRole = ["CCEO", "CountryProgramLead", "CountryDirector", "ImpactAssessment", "Admin"].includes(user.role);
+  const isManagingPartner = !!partner && profile.cluster.managedByPartnerId === partner.id;
+  const flags = {
+    canRecord: staffRole || isManagingPartner,
+    canIa: ["ImpactAssessment", "Admin"].includes(user.role),
+    canPay: ["ProgramAccountant", "Admin"].includes(user.role),
+    canReturn: staffRole,
+  };
+
+  const vm = {
+    id: profile.cluster.id,
+    name: profile.cluster.name,
+    district: profile.cluster.district,
+    subCounties: profile.cluster.subCounties ?? [],
+    region: profile.cluster.region,
+    managementType: profile.managementType,
+    partnerName: profile.cluster.managedByPartnerName,
+    leaderName: profile.cluster.clusterLeaderName,
+    leaderPhone: profile.cluster.clusterLeaderPhone,
+    clientCount: profile.clientCount,
+    coreCount: profile.coreCount,
+    schoolCount: profile.schools.length,
+    ssaDone: profile.ssaDone,
+    ssaMissing: profile.ssaMissing,
+    ssaCompletionRate: profile.ssaCompletionRate,
+    meetingsCompleted: profile.meetingsCompleted,
+    meetingsScheduled: profile.meetingsScheduled,
+    attendanceTotal: profile.attendanceTotal,
+    teachersReached: profile.teachersReached,
+    schoolLeadersReached: profile.schoolLeadersReached,
+    paymentsReady: profile.paymentsReady,
+    paymentsPaid: profile.paymentsPaid,
+    schools: profile.schools.map((s) => ({ schoolId: s.schoolId, schoolName: s.schoolName, schoolType: s.schoolType, ssaStatus: s.ssaStatus })),
+    activities: profile.activities.map((a) => ({
+      id: a.id, kind: a.kind, label: CLUSTER_MEETING_LABEL[a.kind], date: a.date,
+      organizer: a.organizer, status: a.status, salesforceTrainingId: a.salesforceTrainingId,
+      teachers: a.teachersCount, leaders: a.schoolLeadersCount, total: a.totalParticipants,
+      iaConfirmedAt: a.iaConfirmedAt, paidAt: a.accountantPaidAt, returnedReason: a.returnedReason,
+    })),
+  };
+
+  return (
+    <>
+      <TitleRegister title={profile.cluster.name} dateLabel="Cluster" />
+      <ClusterProfileView profile={vm} flags={flags} />
+    </>
   );
 }
