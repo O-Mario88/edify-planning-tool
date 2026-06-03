@@ -211,7 +211,7 @@ function lineDistrictId(line: BudgetLine): string | undefined {
   const staffId = lineStaffId(line);
   if (!staffId) return undefined;
   const profile = getStaffProfile(staffId);
-  return profile?.districtId;
+  return profile?.primaryDistrictId ?? undefined;
 }
 
 function activityMonthIso(activity: PlannedActivity): string | undefined {
@@ -254,7 +254,7 @@ export function generateBudget(opts: GenerateBudgetOpts): BudgetRollup {
   const budgetable = activities.filter((activity) => {
     const status = activityStatus(activity);
     // BUDGETABLE_STATUSES is a ReadonlySet — use .has(), not .includes().
-    if (!BUDGETABLE_STATUSES.has(status)) {
+    if (!(BUDGETABLE_STATUSES as ReadonlySet<string>).has(status)) {
       return false;
     }
     const month = activityMonthIso(activity);
@@ -332,7 +332,7 @@ export function generateBudget(opts: GenerateBudgetOpts): BudgetRollup {
   // 5. Admin items live outside the activity feed (office rent, internet,
   //    fuel, etc.). Each gets its own line via the admin calculator.
   for (const item of adminItems) {
-    const result = calculateAdminBudget(item, settings);
+    const result = calculateAdminBudget({ ...item, monthIso }, settings);
     if (Array.isArray(result)) lines.push(...result);
     else if (result) lines.push(result as BudgetLine);
   }

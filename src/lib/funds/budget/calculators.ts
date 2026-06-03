@@ -90,7 +90,7 @@ function pickQuarter(v: unknown): "Q1" | "Q2" | "Q3" | "Q4" {
   return "Q1";
 }
 
-function totalOf(parts: Partial<typeof ZERO_COST_FIELDS>): number {
+function totalOf(parts: Partial<Record<keyof typeof ZERO_COST_FIELDS, number>>): number {
   return (
     num(parts.transport) +
     num(parts.breakfast) +

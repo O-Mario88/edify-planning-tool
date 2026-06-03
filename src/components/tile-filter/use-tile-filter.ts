@@ -15,7 +15,7 @@ import { useCallback, useMemo } from "react";
 import { useUrlState } from "@/hooks/use-url-state";
 import type { TileFilterSpec } from "./types";
 
-const NONE = "";
+const NONE: string = "";
 
 export type UseTileFilterReturn = {
   activeFilterId: string | null;

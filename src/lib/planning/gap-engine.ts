@@ -176,7 +176,9 @@ export function gapsSummary(gaps: PlanningGap[]): {
   for (const g of gaps) {
     const k = String(g.kind);
     byKind[k] = (byKind[k] ?? 0) + 1;
-    if (g.ssaGate === "LOCKED" || g.ssaGate === "SSA_LOCKED") {
+    // SSA gate blocks planning until the SSA is complete — i.e. SIT not yet
+    // held, or SIT done but SSA still missing.
+    if (g.ssaGate === "SIT_NOT_DONE" || g.ssaGate === "SIT_DONE_SSA_MISSING") {
       ssaLocked += 1;
     }
   }

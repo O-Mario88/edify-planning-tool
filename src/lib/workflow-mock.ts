@@ -275,6 +275,42 @@ export function fundRequestTotal(fr: FundRequest) {
   return fr.lineItems.reduce((acc, li) => acc + li.qty * li.rate, 0);
 }
 
+// Fund-request approval chain. `approve` advances one stage, `return` steps
+// back one stage, `disburse` finalises from the last approval stage. Returns
+// the mutated request, or undefined when the action is invalid for the
+// current status (callers surface this as WRONG_STATUS).
+const FUND_REQUEST_CHAIN: FundRequest["status"][] = [
+  "Pending Accountant",
+  "Pending Director",
+  "Pending RVP",
+  "Disbursed",
+];
+
+export function transitionFundRequest(
+  id: string,
+  action: "approve" | "return" | "disburse",
+  _note?: string,
+): FundRequest | undefined {
+  const fr = fundRequests.find((f) => f.id === id);
+  if (!fr) return undefined;
+  const i = FUND_REQUEST_CHAIN.indexOf(fr.status);
+
+  if (action === "disburse") {
+    if (fr.status !== "Pending RVP") return undefined;
+    fr.status = "Disbursed";
+    return fr;
+  }
+  if (action === "approve") {
+    if (i < 0 || i >= FUND_REQUEST_CHAIN.length - 1) return undefined;
+    fr.status = FUND_REQUEST_CHAIN[i + 1];
+    return fr;
+  }
+  // "return" — step back one approval stage (not valid once disbursed).
+  if (i <= 0 || fr.status === "Disbursed") return undefined;
+  fr.status = FUND_REQUEST_CHAIN[i - 1];
+  return fr;
+}
+
 // ────────── Salesforce match queue (CCEO + Impact Assessment) ──────────
 
 export type SalesforceMatchRow = {
