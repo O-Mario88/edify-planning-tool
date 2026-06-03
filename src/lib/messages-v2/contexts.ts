@@ -191,6 +191,7 @@ export function categoriesForRole(role: EdifyRole): MessageCategory[] {
     case "CountryDirector":
     case "ProgramAccountant":
     case "ImpactAssessment":
+    case "ProjectCoordinator":
     case "Admin":           return STAFF_CATEGORIES;
   }
 }

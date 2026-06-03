@@ -67,6 +67,7 @@ export const ROLE_CHIP_LABEL: Record<EdifyRole, string> = {
   HumanResource:      "HR",
   ProgramAccountant:  "Finance",
   ImpactAssessment:   "Impact",
+  ProjectCoordinator: "Projects",
   PartnerAdmin:       "Partner",
   PartnerFieldOfficer:"Partner",
   PartnerViewer:      "Partner",

@@ -9,11 +9,15 @@ import {
 } from "@/lib/special-projects-mock";
 
 const statusTone: Record<ProjectStatus, "green" | "amber" | "red" | "blue" | "grey"> = {
-  Planning:  "blue",
-  Active:    "green",
-  "At Risk": "amber",
-  Completed: "grey",
-  Delayed:   "red",
+  Draft:                   "grey",
+  Active:                  "green",
+  "School Selection Open": "blue",
+  "Training Planned":      "blue",
+  "Follow-Up Active":      "blue",
+  Monitoring:              "amber",
+  Completed:               "grey",
+  Paused:                  "amber",
+  Closed:                  "grey",
 };
 
 function shortDate(iso: string): string {
@@ -55,6 +59,7 @@ export function ProjectPortfolioTable({ projects }: { projects: SpecialProject[]
             <tr>
               <th scope="col" className="text-left">Project Name</th>
               <th scope="col" className="text-left">Project Type</th>
+              <th scope="col" className="text-left">Primary SSA Intervention</th>
               <th scope="col" className="text-left">Assigned Partner</th>
               <th scope="col" className="text-right">Schools Enrolled</th>
               <th scope="col" className="text-right">Teachers Impacted</th>
@@ -87,6 +92,14 @@ export function ProjectPortfolioTable({ projects }: { projects: SpecialProject[]
                     <span className={`inline-flex items-center px-2 py-[2px] rounded-md text-[11px] font-semibold ${typeChip}`}>
                       {p.projectType}
                     </span>
+                  </td>
+                  <td>
+                    <span className="inline-flex items-center px-2 py-[2px] rounded-md text-[11px] font-semibold bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)] whitespace-nowrap">
+                      {p.primaryInterventionId}
+                    </span>
+                    {p.secondaryInterventionIds?.length ? (
+                      <span className="ml-1 text-[10.5px] muted">+{p.secondaryInterventionIds.length}</span>
+                    ) : null}
                   </td>
                   <td className="text-[12px] muted">{p.assignedPartnerName ?? "—"}</td>
                   <td className="text-right tabular text-body font-semibold">

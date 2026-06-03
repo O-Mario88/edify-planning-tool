@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Building2, MapPin, User, Phone, Network, CalendarDays, ShieldCheck, ArrowRight,
-  AlertTriangle, CheckCircle2, Users2, ClipboardList,
+  AlertTriangle, CheckCircle2, Users2, ClipboardList, Sparkles, TrendingUp, TrendingDown, Minus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DirectoryClusterDrawer, type DirectorySchoolVM } from "./DirectoryClusterDrawer";
@@ -53,6 +53,18 @@ export type School360State = {
 
 export type School360Activity = { kind: string; label: string; date: string; status: string; ref?: string };
 
+export type School360ProjectVM = {
+  projectId: string;
+  projectShortName: string;
+  projectType: string;
+  primaryInterventionId: string;
+  status: string;
+  partnerName?: string;
+  trainings: number;
+  followUps: number;
+  interventionChange?: number;
+};
+
 const STAGE_TONE: Record<string, string> = {
   needs_owner: "bg-rose-50 text-rose-700",
   unclustered: "bg-rose-50 text-rose-700",
@@ -61,12 +73,13 @@ const STAGE_TONE: Record<string, string> = {
 };
 
 export function School360View({
-  record, state, activities, addToClusterVM,
+  record, state, activities, addToClusterVM, projects = [],
 }: {
   record: School360Record;
   state: School360State;
   activities: School360Activity[];
   addToClusterVM: DirectorySchoolVM | null;
+  projects?: School360ProjectVM[];
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const router = useRouter();
@@ -164,6 +177,41 @@ export function School360View({
                 </li>
               ))}
             </ul>
+          </section>
+
+          {/* Special projects — targeted initiatives this school is in */}
+          <section className="card rounded-2xl overflow-hidden">
+            <header className="px-4 pt-3.5 pb-2">
+              <h2 className="text-[14px] font-extrabold tracking-tight inline-flex items-center gap-1.5">
+                <Sparkles size={14} className="text-[var(--color-edify-primary)]" /> Special projects
+              </h2>
+              <p className="text-[11.5px] muted mt-0.5">Targeted initiatives mapped to SSA interventions. Separate from the 8 interventions; ownership stays with the account owner.</p>
+            </header>
+            {projects.length === 0 ? (
+              <p className="px-4 py-5 text-center text-[12px] muted border-t border-[var(--color-edify-divider)]">Not enrolled in any special project.</p>
+            ) : (
+              <ul className="divide-y divide-[var(--color-edify-divider)] border-t border-[var(--color-edify-divider)]">
+                {projects.map((p) => (
+                  <li key={p.projectId} className="px-4 py-2.5">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Link href={`/projects/${p.projectId}`} className="text-[12.5px] font-extrabold hover:text-[var(--color-edify-primary)] hover:underline">{p.projectShortName}</Link>
+                      <span className="px-1.5 py-[1px] rounded text-[10px] font-bold bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)]">{p.primaryInterventionId}</span>
+                      <span className="px-1.5 py-[1px] rounded text-[10px] font-bold bg-slate-100 text-slate-600">{p.status}</span>
+                      {p.interventionChange !== undefined && (
+                        <span className="ml-auto inline-flex items-center gap-1 text-[11.5px] font-bold">
+                          {p.interventionChange > 0 ? <TrendingUp size={12} className="text-emerald-600" /> : p.interventionChange < 0 ? <TrendingDown size={12} className="text-rose-600" /> : <Minus size={12} className="text-slate-400" />}
+                          {p.interventionChange > 0 ? "+" : ""}{p.interventionChange.toFixed(1)} on {p.primaryInterventionId}
+                        </span>
+                      )}
+                    </div>
+                    <div className="mt-0.5 text-[11px] muted">
+                      {p.trainings} training{p.trainings === 1 ? "" : "s"} · {p.followUps} follow-up{p.followUps === 1 ? "" : "s"}
+                      {p.partnerName ? ` · Partner: ${p.partnerName}` : ""}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
           </section>
         </div>
 

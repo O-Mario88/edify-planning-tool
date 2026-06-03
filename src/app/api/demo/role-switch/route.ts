@@ -25,6 +25,7 @@ const FALLBACK_BY_ROLE: Record<EdifyRole, string> = {
   ProgramAccountant:   "moses.tindi@edify.org",
   ImpactAssessment:    "grace.alimo@edify.org",
   HumanResource:       "anne.wairimu@edify.org",
+  ProjectCoordinator:  "rachel.apio@edify.org",
   Admin:               "demo@edify.org",
   // Partner default flips to BFEP — the org showcased in the
   // partner Command Center mock data. The LTU accounts still exist

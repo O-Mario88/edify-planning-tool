@@ -610,6 +610,7 @@ const TODAY_BY_ROLE: Record<EdifyRole, TodayData> = {
   ProgramAccountant:   accountantToday,
   ImpactAssessment:    impactToday,
   HumanResource:       hrToday,
+  ProjectCoordinator:  programLeadToday,
   Admin:               adminToday,
   // Partner sub-types reuse the program-lead "today" view as a sane
   // default — the proper partner-today data lives on the Partner

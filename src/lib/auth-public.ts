@@ -13,6 +13,9 @@ export type EdifyRole =
   | "ProgramAccountant"
   | "ImpactAssessment"
   | "HumanResource"
+  // Project Coordinator — owns special projects & targeted interventions
+  // (maps initiatives to SSA interventions, assigns schools, monitors impact).
+  | "ProjectCoordinator"
   | "Admin"
   // Partner Operating Layer — three permission-distinct user types
   // inside a partner organisation. All three land on the same
@@ -35,6 +38,7 @@ export const ROLE_REDIRECT: Record<EdifyRole, string> = {
   // recognition board. /team-targets is one tab in their menu but no
   // longer the primary landing page.
   HumanResource:      "/dashboards/hr",
+  ProjectCoordinator: "/dashboards/project-coordinator",
   Admin:              "/dashboards/director",
   // Partners land on Today first — a calm to-do, not a dashboard
   // full of analytics. Overview stays reachable from the sidebar
@@ -63,6 +67,7 @@ export const DEMO_USERS: Record<string, ClientDemoUser> = {
   "moses.tindi@edify.org":    { email: "moses.tindi@edify.org",    password: "edify", role: "ProgramAccountant",  name: "Moses Tindi"    },
   "grace.alimo@edify.org":    { email: "grace.alimo@edify.org",    password: "edify", role: "ImpactAssessment",   name: "Grace Alimo"    },
   "admin@edify.org":          { email: "admin@edify.org",          password: "edify", role: "Admin",              name: "Edify Admin"    },
+  "rachel.apio@edify.org":    { email: "rachel.apio@edify.org",    password: "edify", role: "ProjectCoordinator", name: "Rachel Apio"    },
   "demo@edify.org":           { email: "demo@edify.org",           password: "demo",  role: "CountryDirector",    name: "Edify Demo"     },
   // ─── Partner demo accounts ───
   // PartnerAdmin — Sarah Kanyi at Literacy Training Uganda. Sees all

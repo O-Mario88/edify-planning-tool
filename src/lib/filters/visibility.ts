@@ -51,6 +51,10 @@ export const FILTER_VISIBILITY: VisibilityMatrix = {
   // slot is harmless to keep visible.
   HumanResource: { ...FULL, partner: false },
 
+  // Project Coordinator — full slice bar across projects, schools,
+  // geography, partners (partners deliver project activities).
+  ProjectCoordinator: { ...FULL },
+
   // Partner roles — see only their own org. The Partner filter slot
   // resolves to the user's partner organisation (single option), and
   // CCEO is hidden because partners don't filter by staff CCEO.

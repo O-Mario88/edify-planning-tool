@@ -27,6 +27,7 @@ import { getCurrentUser, toCurrentUser } from "@/lib/auth";
 import { portfolioForStaffId } from "@/lib/portfolio/portfolio";
 import { activePartnerAssignmentsForSchool, schoolIdsWithActivePartner } from "@/lib/portfolio/partner-assignments";
 import { getVisibleProjects, projectsForSchool } from "@/lib/special-projects-mock";
+import { evaluateEligibility } from "@/lib/projects/project-eligibility";
 import { SSA_INTERVENTION_AREAS, deriveQuarterFromDate } from "@/lib/intake/intake-core";
 import { computePeriodTarget } from "@/lib/targets/period-target";
 import { activeFinancialYear } from "@/lib/fy-engine";
@@ -75,7 +76,8 @@ export default async function SchoolsDashboard() {
 
   // Assignment option lists for the directory drawer + bulk bar.
   const clusterOptions: DirectoryClusterOption[] = activeClusters().map((c) => ({ id: c.id, name: c.name, district: c.district }));
-  const projectOptions = getVisibleProjects(currentUser).map((p) => ({ projectId: p.projectId, projectShortName: p.projectShortName, projectType: p.projectType }));
+  const visibleProjects = getVisibleProjects(currentUser);
+  const projectOptions = visibleProjects.map((p) => ({ projectId: p.projectId, projectShortName: p.projectShortName, projectType: p.projectType, primaryInterventionId: p.primaryInterventionId }));
   const interventionAreas = [...SSA_INTERVENTION_AREAS];
 
   // ── Directory rows (same master, enriched with workflow state + memberships). ──
@@ -109,6 +111,9 @@ export default async function SchoolsDashboard() {
       stage: schoolWorkflowState(s).stage,
       matches: { strong: g.strong.map(toMatchVM), district: g.district.map(toMatchVM), region: g.region.map(toMatchVM) },
       projects: projectsForSchool(s.schoolId),
+      recommendedProjectIds: visibleProjects
+        .filter((p) => evaluateEligibility(s, p).recommended)
+        .map((p) => p.projectId),
       delegations: activePartnerAssignmentsForSchool(s.schoolId).map((p) => ({ id: p.id, partnerName: p.partnerName, interventionArea: p.interventionArea })),
     };
   });

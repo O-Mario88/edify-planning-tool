@@ -89,6 +89,11 @@ const SEED_BY_ROLE: Record<EdifyRole, Seed[]> = {
     { id: "h2", kind: "Leave approved",            subject: "James Otieno · 3 days",  context: "May 18–20",            hoursAgo: 7, tone: "info",  href: "/leave" },
     { id: "h3", kind: "Coaching session logged",   subject: "Daniel Mwangi → Grace",  context: "30 min · Salesforce flow", hoursAgo: 19, tone: "success", href: "/team-targets" },
   ],
+  ProjectCoordinator: [
+    { id: "pc1", kind: "Project school assigned",  subject: "Soroti Faith Junior",    context: "EdTech project",          hoursAgo: 3,  tone: "info",    href: "/special-projects" },
+    { id: "pc2", kind: "Partner evidence uploaded",subject: "World Vision · EdTech",  context: "follow-up visit form",    hoursAgo: 9,  tone: "success", href: "/special-projects" },
+    { id: "pc3", kind: "Project impact available", subject: "Christ-Centered SEL",    context: "+3.0 on Christlike Behaviour", hoursAgo: 20, tone: "success", href: "/special-projects" },
+  ],
   Admin: [
     { id: "ad1", kind: "User signup",              subject: "new.cceo@edify.org",     context: "pending role assignment", hoursAgo: 2, tone: "warn", href: "/admin" },
     { id: "ad2", kind: "Failed import",            subject: "school-roster.csv",      context: "3 rows rejected",        hoursAgo: 14, tone: "danger", href: "/admin" },

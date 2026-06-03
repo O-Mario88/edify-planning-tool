@@ -13,14 +13,32 @@ import { emitAudit } from "./audit";
 import {
   assignSchoolToProject,
   removeSchoolFromProject,
+  createProject,
+  projectById,
   specialProjects,
+  CCEO_ALLOWED_PROJECT_TYPES,
+  type CreateProjectInput,
 } from "@/lib/special-projects-mock";
+import {
+  createProjectActivity,
+  type CreateProjectActivityInput,
+} from "@/lib/projects/project-activities";
 
 const PROJECT_ROLES = new Set<string>([
   "CCEO",
   "CountryProgramLead",
   "CountryDirector",
   "ImpactAssessment",
+  "ProjectCoordinator",
+  "Admin",
+]);
+
+// Who may create / manage projects. CCEO is allowed only for local targeted
+// interventions (spec §9) — enforced per-type in createProjectAction.
+const PROJECT_CREATE_ROLES = new Set<string>([
+  "ProjectCoordinator",
+  "CountryDirector",
+  "CountryProgramLead",
   "Admin",
 ]);
 
@@ -131,4 +149,90 @@ export async function removeSchoolFromProjectAction(
   });
   revalidateProjectSurfaces();
   return { ok: true };
+}
+
+// ─── Create a special project (spec §3/§9) ──────────────────────────
+
+export async function createProjectAction(
+  input: CreateProjectInput,
+): Promise<ProjectActionResult<{ projectId: string; projectName: string }>> {
+  const user = await getCurrentUser();
+  const canCreate =
+    PROJECT_CREATE_ROLES.has(user.role) ||
+    // CCEO may create local targeted interventions only.
+    (user.role === "CCEO" && CCEO_ALLOWED_PROJECT_TYPES.has(input.projectType));
+  if (!canCreate) return { ok: false, reason: "FORBIDDEN" };
+
+  if (!input.projectName?.trim()) return { ok: false, reason: "FAILED", message: "Project name is required." };
+  if (!input.primaryInterventionId) return { ok: false, reason: "FAILED", message: "Pick a primary SSA intervention." };
+  if (!input.startDate || !input.endDate) return { ok: false, reason: "FAILED", message: "Set a start and end date." };
+
+  const project = createProject(input, { staffId: user.staffId, role: user.role, name: user.name });
+  emitAudit({
+    action: "specialProject.created",
+    subjectKind: "Project",
+    subjectId: project.projectId,
+    actorId: user.staffId,
+    actorRole: user.role,
+    actorName: user.name,
+    payload: {
+      projectName: project.projectName,
+      projectType: project.projectType,
+      primaryInterventionId: project.primaryInterventionId,
+    },
+  });
+  revalidateProjectSurfaces();
+  return { ok: true, projectId: project.projectId, projectName: project.projectName };
+}
+
+// ─── Schedule a project activity (training / follow-up / etc.) ──────
+
+export async function scheduleProjectActivityAction(
+  input: CreateProjectActivityInput,
+): Promise<ProjectActionResult<{ activityId: string }>> {
+  const user = await getCurrentUser();
+  if (!PROJECT_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+
+  const res = createProjectActivity(input);
+  if (!res.ok) return { ok: false, reason: "FAILED", message: res.reason };
+
+  emitAudit({
+    action: "specialProject.activityScheduled",
+    subjectKind: "Project",
+    subjectId: input.projectId,
+    actorId: user.staffId,
+    actorRole: user.role,
+    actorName: user.name,
+    payload: { activityType: input.activityType, schoolId: input.schoolId },
+  });
+  revalidateProjectSurfaces();
+  return { ok: true, activityId: res.activity.id };
+}
+
+// ─── Assign a project to a partner (execution only; ownership unchanged) ─
+
+export async function assignProjectToPartnerAction(
+  projectId: string,
+  partnerName: string,
+  scope?: string,
+): Promise<ProjectActionResult<{ partnerName: string }>> {
+  const user = await getCurrentUser();
+  if (!PROJECT_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+  if (!partnerName.trim()) return { ok: false, reason: "FAILED", message: "Enter a partner name." };
+
+  const project = projectById(projectId);
+  if (!project) return { ok: false, reason: "FAILED", message: "Project not found." };
+  project.assignedPartnerName = partnerName.trim();
+
+  emitAudit({
+    action: "specialProject.partnerAssigned",
+    subjectKind: "Project",
+    subjectId: projectId,
+    actorId: user.staffId,
+    actorRole: user.role,
+    actorName: user.name,
+    payload: { partnerName: partnerName.trim(), scope },
+  });
+  revalidateProjectSurfaces();
+  return { ok: true, partnerName: partnerName.trim() };
 }

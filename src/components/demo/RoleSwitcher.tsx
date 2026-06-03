@@ -40,6 +40,7 @@ const DEMO_ROLES: DemoRole[] = [
   { role: "ProgramAccountant",  email: "moses.tindi@edify.org",    name: "Moses Tindi",    initials: "MT", blurb: "Accountant — fund review, disbursement, variance",  Icon: Wallet,       tone: "green"  },
   { role: "ImpactAssessment",   email: "grace.alimo@edify.org",    name: "Grace Alimo",    initials: "GA", blurb: "M&E — verification queue + data intake",            Icon: ShieldCheck,  tone: "sky"    },
   { role: "HumanResource",      email: "anne.wairimu@edify.org",   name: "Anne Wairimu",   initials: "AW", blurb: "HR — fair performance, support reviews",            Icon: Users,        tone: "rose"   },
+  { role: "ProjectCoordinator", email: "rachel.apio@edify.org",    name: "Rachel Apio",    initials: "RA", blurb: "Projects — special initiatives mapped to SSA gaps",   Icon: Sparkles,     tone: "violet" },
   { role: "Admin",              email: "admin@edify.org",          name: "Edify Admin",    initials: "EA", blurb: "Admin — tenant controls + cost settings",           Icon: UserCog,      tone: "slate"  },
   { role: "PartnerAdmin",       email: "daniel.mwangi@brightfuture.org", name: "Daniel Mwangi (BFEP)", initials: "DM", blurb: "Delivery Partner — command center, evidence, payments", Icon: Handshake, tone: "green" },
 ];
@@ -183,6 +184,7 @@ const LABEL_BY_ROLE: Record<EdifyRole, string> = {
   ProgramAccountant:   "Accountant",
   ImpactAssessment:    "Impact Assessment",
   HumanResource:       "Human Resource",
+  ProjectCoordinator:  "Project Coordinator",
   Admin:               "Admin",
   PartnerAdmin:        "Partner Admin",
   PartnerFieldOfficer: "Partner Field Officer",
@@ -197,6 +199,7 @@ const LANDING_BY_ROLE: Record<EdifyRole, string> = {
   ProgramAccountant:   "/dashboards/accountant",
   ImpactAssessment:    "/dashboards/impact",
   HumanResource:       "/dashboards/hr",
+  ProjectCoordinator:  "/dashboards/project-coordinator",
   Admin:               "/dashboards/director",
   PartnerAdmin:        "/dashboards/partner",
   PartnerFieldOfficer: "/dashboards/partner",

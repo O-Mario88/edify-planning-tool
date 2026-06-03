@@ -13,14 +13,66 @@
 // same access pattern used for the school directory.
 
 import type { AppRole, CurrentUser } from "./schools-mock";
+import type { SsaInterventionArea } from "./planning/planning-gaps-mock";
+import { SSA_INTERVENTIONS } from "./planning/ssa-performance-mock";
 
 // ────────── Project type — extensible ──────────
 //
 // The product doc lists initial types but requires the module to allow
 // adding more without code changes. Here the type is `string` so the
 // backend can drive the option list at runtime.
+//
+// CORE PRINCIPLE: a project is NOT one of the 8 SSA interventions. The 8
+// interventions are the diagnostic (what is weak); a project is a targeted
+// initiative mapped to one or more of them (what we are doing about it).
+// Every project carries a primaryInterventionId so impact can be measured
+// against the gap it was designed to close. See project-impact.ts.
 
-export type ProjectStatus = "Planning" | "Active" | "At Risk" | "Completed" | "Delayed";
+// Full lifecycle per spec §4. A project only enters planning / school
+// selection once it reaches "Active" or "School Selection Open" —
+// see isPlannable().
+export type ProjectStatus =
+  | "Draft"
+  | "Active"
+  | "School Selection Open"
+  | "Training Planned"
+  | "Follow-Up Active"
+  | "Monitoring"
+  | "Completed"
+  | "Paused"
+  | "Closed";
+
+/** Health flag — distinct from lifecycle status (was previously overloaded
+ *  onto ProjectStatus). Drives the priority / needs-attention surfaces. */
+export type ProjectHealthFlag = "On Track" | "At Risk" | "Delayed";
+
+/** Who a project is visible to / scoped against (spec §2 Project Scope). */
+export type ProjectScopeKind = "country" | "region" | "district" | "project" | "partner";
+
+/** Project Type options (spec §3). String-typed so the backend can extend
+ *  the option list without a code change; this const drives the form. */
+export const PROJECT_TYPES = [
+  "Special Project",
+  "Pilot Project",
+  "Targeted Intervention",
+  "Donor-Funded Project",
+  "Local Staff Initiative",
+  "Partner-Led Project",
+  "Learning Outcome Project",
+  "Faith Formation Project",
+  "EdTech Project",
+  "Other",
+] as const;
+
+/** The 8 SSA interventions a project can map to (re-exported for the form). */
+export const PROJECT_INTERVENTIONS = SSA_INTERVENTIONS;
+
+/** Project types a CCEO is allowed to create on their own (spec §9 — local
+ *  targeted interventions). Everything else is CD/PL/Coordinator/Admin. */
+export const CCEO_ALLOWED_PROJECT_TYPES = new Set<string>([
+  "Targeted Intervention",
+  "Local Staff Initiative",
+]);
 export type ImpactMeasurementType = "Schools" | "Teachers" | "Participants" | "Sessions";
 export type PartnerCertificationStatus = "Certified" | "Not Certified" | "Needs Review";
 export type PartnerCapacityStatus = "Available" | "Capacity Full" | "Needs Review";
@@ -35,6 +87,27 @@ export type SpecialProject = {
   financialYear: string;
   startDate: string;
   endDate: string;
+
+  // SSA intervention mapping (the heart of the model — a project links to
+  // the diagnostic gap it is designed to close, but stays a separate record).
+  primaryInterventionId: SsaInterventionArea;
+  secondaryInterventionIds?: SsaInterventionArea[];
+
+  // Ownership / scope (spec §2). Scope decides which schools a coordinator
+  // can reach — projects are NOT global by default.
+  coordinatorId?: string;
+  coordinatorName?: string;
+  scopeKind?: ProjectScopeKind;
+  scopeRegionIds?: string[];
+  scopeDistrictIds?: string[];
+
+  // Provenance
+  createdBy?: string;
+  createdByRole?: string;
+  createdAt?: string;
+
+  // Health flag (lifecycle now lives on `status`).
+  healthFlag?: ProjectHealthFlag;
 
   // Partner
   assignedPartnerId?: string;
@@ -81,6 +154,9 @@ export const specialProjects: SpecialProject[] = [
     financialYear: "FY 2024/25",
     startDate: "2025-01-15",
     endDate: "2025-12-31",
+    primaryInterventionId: "Education Technology",
+    secondaryInterventionIds: ["Learning Environment"],
+    scopeKind: "country",
     assignedPartnerId: "PRT-WV",
     assignedPartnerName: "World Vision",
     partnerCertificationStatus: "Certified",
@@ -106,6 +182,9 @@ export const specialProjects: SpecialProject[] = [
     financialYear: "FY 2024/25",
     startDate: "2025-02-01",
     endDate: "2025-11-22",
+    primaryInterventionId: "Christlike Behaviour",
+    secondaryInterventionIds: ["Exposure to the Word of God"],
+    scopeKind: "country",
     assignedPartnerId: "PRT-CI",
     assignedPartnerName: "Compassion Int.",
     partnerCertificationStatus: "Certified",
@@ -131,6 +210,9 @@ export const specialProjects: SpecialProject[] = [
     financialYear: "FY 2024/25",
     startDate: "2025-03-01",
     endDate: "2026-02-28",
+    primaryInterventionId: "Teaching & Learning",
+    secondaryInterventionIds: ["Leadership"],
+    scopeKind: "country",
     assignedPartnerId: "PRT-ACSI",
     assignedPartnerName: "ACSI",
     partnerCertificationStatus: "Certified",
@@ -156,6 +238,9 @@ export const specialProjects: SpecialProject[] = [
     financialYear: "FY 2024/25",
     startDate: "2025-01-20",
     endDate: "2025-12-20",
+    primaryInterventionId: "Learning Environment",
+    secondaryInterventionIds: ["Teaching & Learning"],
+    scopeKind: "country",
     assignedPartnerId: "PRT-TB",
     assignedPartnerName: "Teach Beyond",
     partnerCertificationStatus: "Needs Review",
@@ -166,7 +251,8 @@ export const specialProjects: SpecialProject[] = [
     teachersImpacted: 732,
     totalAllocation: 460_000_000,
     budgetUtilizationPct: 56,
-    status: "At Risk",
+    status: "Monitoring",
+    healthFlag: "At Risk",
     healthScore: 3.6,
     salesforceLoggingRequired: true,
     verificationStatus: "Returned",
@@ -181,6 +267,8 @@ export const specialProjects: SpecialProject[] = [
     financialYear: "FY 2024/25",
     startDate: "2025-02-10",
     endDate: "2025-12-10",
+    primaryInterventionId: "Teaching & Learning",
+    scopeKind: "country",
     assignedPartnerId: "PRT-UCU",
     assignedPartnerName: "UCU",
     partnerCertificationStatus: "Certified",
@@ -199,6 +287,92 @@ export const specialProjects: SpecialProject[] = [
     ownerCountry: "Uganda",
   },
 ];
+
+// ────────── Create / lookup / lifecycle ──────────
+
+let projectSeq = specialProjects.length;
+
+export type CreateProjectInput = {
+  projectName: string;
+  projectShortName?: string;
+  projectType: string;
+  description?: string;
+  primaryInterventionId: SsaInterventionArea;
+  secondaryInterventionIds?: SsaInterventionArea[];
+  financialYear?: string;
+  startDate: string;
+  endDate: string;
+  coordinatorId?: string;
+  coordinatorName?: string;
+  scopeKind?: ProjectScopeKind;
+  scopeRegionIds?: string[];
+  scopeDistrictIds?: string[];
+  status?: ProjectStatus;
+  impactMeasurementType?: ImpactMeasurementType;
+  targetNumber?: number;
+  assignedPartnerName?: string;
+};
+
+/** Create a special project. New records start in Draft unless told
+ *  otherwise and carry no impact counts yet — those accrue from activities
+ *  and SSA comparison. Mirrors the cluster-core create pattern. */
+export function createProject(
+  input: CreateProjectInput,
+  actor: { staffId: string; role: string; name: string; now?: string },
+): SpecialProject {
+  projectSeq += 1;
+  const shortName = input.projectShortName?.trim() || input.projectName.trim();
+  const project: SpecialProject = {
+    projectId: `SP-${String(projectSeq).padStart(4, "0")}`,
+    projectName: input.projectName.trim(),
+    projectShortName: shortName,
+    projectType: input.projectType,
+    description: input.description?.trim() || undefined,
+    financialYear: input.financialYear ?? "FY 2025/26",
+    startDate: input.startDate,
+    endDate: input.endDate,
+    primaryInterventionId: input.primaryInterventionId,
+    secondaryInterventionIds: input.secondaryInterventionIds?.length
+      ? input.secondaryInterventionIds
+      : undefined,
+    coordinatorId: input.coordinatorId,
+    coordinatorName: input.coordinatorName,
+    scopeKind: input.scopeKind ?? "country",
+    scopeRegionIds: input.scopeRegionIds,
+    scopeDistrictIds: input.scopeDistrictIds,
+    createdBy: actor.staffId,
+    createdByRole: actor.role,
+    createdAt: actor.now ?? "2026-06-03",
+    assignedPartnerName: input.assignedPartnerName,
+    impactMeasurementType: input.impactMeasurementType ?? "Schools",
+    targetNumber: input.targetNumber ?? 0,
+    status: input.status ?? "Draft",
+    healthFlag: "On Track",
+    healthScore: 0,
+    salesforceLoggingRequired: true,
+    excludedFromSsaRecommendations: true,
+    ownerCountry: "Uganda",
+  };
+  specialProjects.unshift(project);
+  return project;
+}
+
+export function projectById(id: string): SpecialProject | undefined {
+  return specialProjects.find((p) => p.projectId === id);
+}
+
+/** A project is open for school selection / planning only once it reaches
+ *  Active or School Selection Open (spec §4). */
+const PLANNABLE_STATUSES = new Set<ProjectStatus>([
+  "Active",
+  "School Selection Open",
+  "Training Planned",
+  "Follow-Up Active",
+  "Monitoring",
+]);
+export function isPlannable(p: Pick<SpecialProject, "status">): boolean {
+  return PLANNABLE_STATUSES.has(p.status);
+}
 
 // ────────── School ↔ Special-project membership ──────────
 //
@@ -369,7 +543,7 @@ export type SpecialProjectAction = {
 };
 
 export const specialProjectActions: SpecialProjectAction[] = [
-  { key: "new",           label: "New Project",          icon: "plus",      primary: true, href: "#new",            requiresRole: ["Admin", "CountryDirector"] },
+  { key: "new",           label: "New Project",          icon: "plus",      primary: true, href: "#new",            requiresRole: ["Admin", "CountryDirector", "CountryProgramLead"] },
   { key: "import",        label: "Import Schools",       icon: "import",    href: "#import",         requiresRole: ["Admin", "CountryDirector", "CountryProgramLead"] },
   { key: "assign_part",   label: "Assign Partner",       icon: "handshake", href: "#assign-partner", requiresRole: ["Admin", "CountryDirector"] },
   { key: "add_schools",   label: "Add Schools to Project", icon: "userPlus", href: "#add-schools",   requiresRole: ["Admin", "CountryDirector", "CountryProgramLead"] },

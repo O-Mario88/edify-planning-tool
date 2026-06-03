@@ -21,8 +21,11 @@ import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { SchoolDetailMobileView } from "@/components/mobile/views/SchoolDetailMobileView";
 import { SchoolPartnerJourney, sampleJourneyForHope } from "@/components/partner/SchoolPartnerJourney";
 import { TitleRegister } from "@/components/shell/TitleRegister";
-import { School360View } from "@/components/cluster/School360View";
+import { School360View, type School360ProjectVM } from "@/components/cluster/School360View";
 import { intakeSchools } from "@/lib/intake/intake-mock";
+import { projectsForSchool, projectById } from "@/lib/special-projects-mock";
+import { activitiesForProjectSchool } from "@/lib/projects/project-activities";
+import { ssaForSchool } from "@/lib/projects/project-school-ssa";
 import { schoolWorkflowState, schoolLinkedActivities } from "@/lib/school-directory/school-state";
 import { recommendClustersFor, type ClusterMatch } from "@/lib/cluster/cluster-core";
 import { openDuplicateCandidates } from "@/lib/intake/duplicate-candidates-mock";
@@ -344,6 +347,29 @@ async function IntakeSchool360({ schoolId }: { schoolId: string }) {
   const activities = schoolLinkedActivities(s);
   const dupe = openDuplicateCandidates().some((d) => d.schoolId === s.schoolId);
 
+  // Special-project participation (separate from SSA interventions).
+  const projectVMs: School360ProjectVM[] = projectsForSchool(s.schoolId)
+    .map((tag) => projectById(tag.projectId))
+    .filter((p): p is NonNullable<typeof p> => Boolean(p))
+    .map((p) => {
+      const acts = activitiesForProjectSchool(p.projectId, s.schoolId);
+      const ssa = ssaForSchool(s.schoolId);
+      const change = ssa
+        ? Math.round((ssa.current[p.primaryInterventionId] - ssa.baseline[p.primaryInterventionId]) * 10) / 10
+        : undefined;
+      return {
+        projectId: p.projectId,
+        projectShortName: p.projectShortName,
+        projectType: p.projectType,
+        primaryInterventionId: p.primaryInterventionId,
+        status: p.status,
+        partnerName: p.assignedPartnerName,
+        trainings: acts.filter((a) => a.activityType === "Project Training").length,
+        followUps: acts.filter((a) => a.activityType === "Project Follow-Up Visit").length,
+        interventionChange: change,
+      };
+    });
+
   // Recommendations so "Add to Cluster" works straight from the 360.
   const g = recommendClustersFor(s);
   const toVM = (m: ClusterMatch): DirectoryClusterMatch => ({
@@ -377,6 +403,7 @@ async function IntakeSchool360({ schoolId }: { schoolId: string }) {
         }}
         activities={activities}
         addToClusterVM={addToClusterVM}
+        projects={projectVMs}
       />
     </>
   );

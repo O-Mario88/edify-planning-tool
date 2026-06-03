@@ -215,6 +215,30 @@ function buildCdMenu(dashboardHref: string): MenuSection[] {
   ];
 }
 
+// ────────── Project Coordinator menu ──────────
+//
+// Owns special projects & targeted interventions. Their day job: create
+// projects, map them to SSA interventions, assign schools from the
+// directory, monitor project delivery + impact, coordinate partners.
+function buildProjectCoordinatorMenu(dashboardHref: string): MenuSection[] {
+  return [
+    {
+      label: "Main Navigation",
+      items: [
+        { label: "Dashboard",        href: dashboardHref,       Icon: LayoutDashboard },
+        { label: "Special Projects", href: "/special-projects", Icon: Sparkles        },
+        { label: "Schools",          href: "/schools",          Icon: Building2       },
+        { label: "Clusters",         href: "/clusters",         Icon: Network         },
+        { label: "SSA Performance",  href: "/ssa",              Icon: Activity        },
+        { label: "Partners",         href: "/partners",         Icon: Handshake       },
+        { label: "Analytics",        href: "/analytics",        Icon: BarChart3       },
+        { label: "Reports",          href: "/reports",          Icon: FileText        },
+        { label: "Messages",         href: "/messages",         Icon: MessageSquare   },
+      ],
+    },
+  ];
+}
+
 // ────────── CPL menu (Program Lead specific) ──────────
 //
 // The PL gets a deliberately narrow menu. They DO NOT see:
@@ -612,6 +636,7 @@ export function EdifySidebar({
   const isAcct = role === "ProgramAccountant";
   const isImpact = role === "ImpactAssessment";
   const isHr   = role === "HumanResource";
+  const isProjectCoord = role === "ProjectCoordinator";
   const isPartner = role === "PartnerAdmin" || role === "PartnerFieldOfficer" || role === "PartnerViewer";
   const sections = isCceo
     ? buildCceoMenu()
@@ -627,9 +652,11 @@ export function EdifySidebar({
               ? buildImpactMenu(ROLE_REDIRECT[role])
               : isHr
                 ? buildHrMenu(ROLE_REDIRECT[role])
-                : isPartner
-                  ? buildPartnerMenu(ROLE_REDIRECT[role])
-                  : buildAdminMenu(ROLE_REDIRECT[role]);
+                : isProjectCoord
+                  ? buildProjectCoordinatorMenu(ROLE_REDIRECT[role])
+                  : isPartner
+                    ? buildPartnerMenu(ROLE_REDIRECT[role])
+                    : buildAdminMenu(ROLE_REDIRECT[role]);
 
   return (
     <>

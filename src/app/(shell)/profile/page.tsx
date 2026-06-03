@@ -18,6 +18,7 @@ const ROLE_LABEL: Record<EdifyRole, string> = {
   ProgramAccountant:   "Program Accountant",
   ImpactAssessment:    "M&E / Impact Assessment",
   HumanResource:       "Human Resource",
+  ProjectCoordinator:  "Project Coordinator",
   Admin:               "Administrator",
   PartnerAdmin:        "Partner Admin",
   PartnerFieldOfficer: "Partner Field Officer",

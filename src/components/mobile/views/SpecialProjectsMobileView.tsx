@@ -15,11 +15,15 @@ import {
 import { cn } from "@/lib/utils";
 
 const STATUS_TONE: Record<ProjectStatus, KpiTone> = {
-  "Active":     "green",
-  "Planning":   "blue",
-  "At Risk":    "amber",
-  "Delayed":    "rose",
-  "Completed":  "violet",
+  "Draft":                 "blue",
+  "Active":                "green",
+  "School Selection Open": "blue",
+  "Training Planned":      "blue",
+  "Follow-Up Active":      "blue",
+  "Monitoring":            "amber",
+  "Completed":             "violet",
+  "Paused":                "amber",
+  "Closed":                "violet",
 };
 
 function utilizationTone(pct: number): KpiTone {

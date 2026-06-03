@@ -34,6 +34,7 @@ const ROLE_LABEL: Record<EdifyRole, string> = {
   ProgramAccountant:  "Program Accountant",
   ImpactAssessment:   "Impact Assessment",
   HumanResource:      "Human Resources",
+  ProjectCoordinator: "Project Coordinator",
   Admin:              "Admin",
   // Partner Operating Layer — three sub-types render distinct labels
   // so partner users can identify themselves in the topbar.

@@ -127,6 +127,7 @@ const LAYOUT_BY_ROLE: Record<EdifyRole, Layout> = {
   ProgramAccountant:   ACCOUNTANT_LAYOUT,
   ImpactAssessment:    IMPACT_LAYOUT,
   HumanResource:       HR_LAYOUT,
+  ProjectCoordinator:  CPL_LAYOUT,
   Admin:               DIRECTOR_LAYOUT,
   // Partner sub-types share the CCEO field-officer layout — the
   // bottom nav is centred on Home / activities / submission, which

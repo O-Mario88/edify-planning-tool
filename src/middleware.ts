@@ -35,7 +35,7 @@ import { CSRF_COOKIE_NAME, generateCsrfToken } from "@/lib/csrf";
 // usual and the request is treated as anonymous if those are absent.
 const KNOWN_ROLES = new Set<EdifyRole>([
   "CCEO", "CountryProgramLead", "CountryDirector", "RVP",
-  "ProgramAccountant", "ImpactAssessment", "HumanResource", "Admin",
+  "ProgramAccountant", "ImpactAssessment", "HumanResource", "ProjectCoordinator", "Admin",
   "PartnerAdmin", "PartnerFieldOfficer", "PartnerViewer",
 ]);
 
@@ -118,6 +118,7 @@ const ROLE_RESTRICTED: Array<{ prefix: string; allow: EdifyRole[] }> = [
   { prefix: "/dashboards/hr",         allow: ["HumanResource", "Admin"] },
   { prefix: "/dashboards/accountant", allow: ["ProgramAccountant", "Admin"] },
   { prefix: "/dashboards/impact",     allow: ["ImpactAssessment", "Admin"] },
+  { prefix: "/dashboards/project-coordinator", allow: ["ProjectCoordinator", "Admin"] },
   // Partner Operating Layer — partner users land here; Admin can also
   // view for support purposes. Edify staff are NOT allowed in (the
   // page enforces partner-scoped reads, which would surface nothing

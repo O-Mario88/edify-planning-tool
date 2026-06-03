@@ -9,6 +9,7 @@ import { ProjectImpactOverviewCard } from "@/components/special-projects/Project
 import { SchoolsInProjectsCard } from "@/components/special-projects/SchoolsInProjectsCard";
 import { PartnerDeliveryCard } from "@/components/special-projects/PartnerDeliveryCard";
 import { TeacherImpactTrackerCard } from "@/components/special-projects/TeacherImpactTrackerCard";
+import { ProjectImpactComparisonCard } from "@/components/special-projects/ProjectImpactComparisonCard";
 import { UpcomingMilestonesCalendar } from "@/components/special-projects/UpcomingMilestonesCalendar";
 import {
   computeSpecialProjectKpis,
@@ -51,6 +52,9 @@ export default async function SpecialProjectsDashboard() {
 
           {/* Project Impact Overview (full width) */}
           <ProjectImpactOverviewCard />
+
+          {/* Project vs. SSA-intervention impact comparison (full width) */}
+          <ProjectImpactComparisonCard projects={visible} />
 
           {/* Schools in Projects + Partner Delivery + Teacher Impact Tracker */}
           <section className="grid grid-cols-12 gap-4 items-start">

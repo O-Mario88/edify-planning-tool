@@ -66,17 +66,19 @@ export function userById(userId: string): DirectoryUser | undefined {
 //     scope — CCEO/PL under their org, CD if allowed, IA on evidence.
 //   • CD can reach everyone in country scope including partners.
 const ALLOWED_BY_SENDER: Record<EdifyRole, EdifyRole[]> = {
-  CCEO:               ["CountryProgramLead", "PartnerAdmin", "PartnerFieldOfficer", "ImpactAssessment", "CountryDirector", "ProgramAccountant"],
-  CountryProgramLead: ["CCEO", "PartnerAdmin", "PartnerFieldOfficer", "ImpactAssessment", "CountryDirector", "HumanResource", "ProgramAccountant"],
-  PartnerAdmin:        ["CCEO", "CountryProgramLead", "CountryDirector", "ImpactAssessment"],
-  PartnerFieldOfficer: ["CCEO", "CountryProgramLead", "CountryDirector", "ImpactAssessment"],
+  CCEO:               ["CountryProgramLead", "PartnerAdmin", "PartnerFieldOfficer", "ImpactAssessment", "CountryDirector", "ProgramAccountant", "ProjectCoordinator"],
+  CountryProgramLead: ["CCEO", "PartnerAdmin", "PartnerFieldOfficer", "ImpactAssessment", "CountryDirector", "HumanResource", "ProgramAccountant", "ProjectCoordinator"],
+  PartnerAdmin:        ["CCEO", "CountryProgramLead", "CountryDirector", "ImpactAssessment", "ProjectCoordinator"],
+  PartnerFieldOfficer: ["CCEO", "CountryProgramLead", "CountryDirector", "ImpactAssessment", "ProjectCoordinator"],
   PartnerViewer:       ["CCEO", "CountryProgramLead"],
-  CountryDirector:    ["CCEO", "CountryProgramLead", "PartnerAdmin", "PartnerFieldOfficer", "PartnerViewer", "HumanResource", "ProgramAccountant", "ImpactAssessment", "RVP"],
+  CountryDirector:    ["CCEO", "CountryProgramLead", "PartnerAdmin", "PartnerFieldOfficer", "PartnerViewer", "HumanResource", "ProgramAccountant", "ImpactAssessment", "RVP", "ProjectCoordinator"],
   HumanResource:      ["CCEO", "CountryProgramLead", "CountryDirector", "ProgramAccountant", "ImpactAssessment"], // ← NO partners
-  ProgramAccountant:  ["CCEO", "CountryProgramLead", "PartnerAdmin", "PartnerFieldOfficer", "CountryDirector"],
-  ImpactAssessment:   ["CCEO", "CountryProgramLead", "PartnerAdmin", "PartnerFieldOfficer", "CountryDirector"],
+  ProgramAccountant:  ["CCEO", "CountryProgramLead", "PartnerAdmin", "PartnerFieldOfficer", "CountryDirector", "ProjectCoordinator"],
+  ImpactAssessment:   ["CCEO", "CountryProgramLead", "PartnerAdmin", "PartnerFieldOfficer", "CountryDirector", "ProjectCoordinator"],
   RVP:                ["CountryDirector", "CountryProgramLead", "HumanResource", "ProgramAccountant", "ImpactAssessment"], // ← NO partners, NO direct CCEO
-  Admin:              ["CCEO", "CountryProgramLead", "PartnerAdmin", "PartnerFieldOfficer", "PartnerViewer", "CountryDirector", "HumanResource", "ProgramAccountant", "ImpactAssessment", "RVP", "Admin"],
+  // Project Coordinator coordinates delivery across staff + partners.
+  ProjectCoordinator: ["CCEO", "CountryProgramLead", "CountryDirector", "PartnerAdmin", "PartnerFieldOfficer", "ImpactAssessment", "ProgramAccountant"],
+  Admin:              ["CCEO", "CountryProgramLead", "PartnerAdmin", "PartnerFieldOfficer", "PartnerViewer", "CountryDirector", "HumanResource", "ProgramAccountant", "ImpactAssessment", "RVP", "Admin", "ProjectCoordinator"],
 };
 
 export function recipientsForSender(senderRole: EdifyRole): DirectoryUser[] {

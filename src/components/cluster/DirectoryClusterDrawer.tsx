@@ -34,7 +34,7 @@ export type DirectoryClusterMatch = {
   leaderName?: string;
 };
 
-export type DirectoryProjectTag = { projectId: string; projectShortName: string; projectType: string };
+export type DirectoryProjectTag = { projectId: string; projectShortName: string; projectType: string; primaryInterventionId?: string };
 export type DirectoryDelegation = { id: string; partnerName: string; interventionArea?: string };
 
 export type DirectorySchoolVM = {
@@ -56,6 +56,9 @@ export type DirectorySchoolVM = {
   matches: { strong: DirectoryClusterMatch[]; district: DirectoryClusterMatch[]; region: DirectoryClusterMatch[] };
   /** Active special-project memberships. */
   projects?: DirectoryProjectTag[];
+  /** Project ids recommended for this school (SSA weakness matches the
+   *  project's mapped intervention). Drives the "Recommended" badge. */
+  recommendedProjectIds?: string[];
   /** Active partner delegations (execution only). */
   delegations?: DirectoryDelegation[];
 };
@@ -102,6 +105,14 @@ export function DirectoryClusterDrawer({
     () => projectOptions.filter((p) => !joinedProjectIds.has(p.projectId)),
     [projectOptions, joinedProjectIds],
   );
+  const recommendedSet = useMemo(
+    () => new Set(school?.recommendedProjectIds ?? []),
+    [school],
+  );
+  const recommendedAvailable = useMemo(
+    () => availableProjects.filter((p) => recommendedSet.has(p.projectId)),
+    [availableProjects, recommendedSet],
+  );
 
   if (!school) return null;
   function flashError(msg: string) { setError(msg); }
@@ -147,17 +158,18 @@ export function DirectoryClusterDrawer({
   }
 
   // ── Special project ──
-  function addToProject() {
+  function addProject(projectId: string) {
     setError(null);
-    if (!projectChoice) { flashError("Pick a project."); return; }
+    if (!projectId) { flashError("Pick a project."); return; }
     startTransition(async () => {
-      const res = await assignSchoolToProjectAction(school!.schoolId, projectChoice);
+      const res = await assignSchoolToProjectAction(school!.schoolId, projectId);
       if (!res.ok) { flashError(res.reason === "FORBIDDEN" ? "You don't have permission." : res.message); return; }
       setProjectChoice("");
       setChanged(true);
       router.refresh();
     });
   }
+  function addToProject() { addProject(projectChoice); }
   function removeFromProject(projectId: string) {
     startTransition(async () => {
       await removeSchoolFromProjectAction(school!.schoolId, projectId);
@@ -322,11 +334,32 @@ export function DirectoryClusterDrawer({
               <p className="text-[11.5px] muted">Not in any special project yet. Special projects sit outside the SSA interventions but still count toward capacity, funding, and reporting.</p>
             )}
 
+            {recommendedAvailable.length > 0 && (
+              <div className="space-y-1.5">
+                <p className="text-[11px] font-bold inline-flex items-center gap-1 text-amber-700">
+                  <Sparkles size={11} /> Recommended — SSA weakness matches the project focus
+                </p>
+                <ul className="space-y-1.5">
+                  {recommendedAvailable.map((p) => (
+                    <li key={p.projectId} className="flex items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50/60 px-2.5 py-2">
+                      <span className="min-w-0">
+                        <span className="text-[12px] font-extrabold">{p.projectShortName}</span>
+                        {p.primaryInterventionId && (
+                          <span className="block text-[10.5px] muted truncate">{p.primaryInterventionId}</span>
+                        )}
+                      </span>
+                      <Button size="sm" Icon={Plus} disabled={pending} onClick={() => addProject(p.projectId)}>{pending ? "Adding…" : "Add"}</Button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             {availableProjects.length > 0 ? (
               <div className="flex items-end gap-2">
                 <div className="flex-1">
                   <Select label="Add to special project" placeholder="Choose a project…" value={projectChoice}
-                    options={availableProjects.map((p) => ({ value: p.projectId, label: `${p.projectShortName} · ${p.projectType}` }))}
+                    options={availableProjects.map((p) => ({ value: p.projectId, label: `${p.projectShortName}${p.primaryInterventionId ? ` · ${p.primaryInterventionId}` : ` · ${p.projectType}`}${recommendedSet.has(p.projectId) ? " · ★ recommended" : ""}` }))}
                     onChange={(e) => setProjectChoice(e.target.value)} />
                 </div>
                 <Button size="sm" Icon={Plus} disabled={pending || !projectChoice} onClick={addToProject}>{pending ? "Adding…" : "Add"}</Button>

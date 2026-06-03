@@ -26,6 +26,7 @@ export type EdifyRole =
   | "ProgramAccountant"
   | "ImpactAssessment"
   | "HumanResource"
+  | "ProjectCoordinator"
   | "Admin"
   | "PartnerAdmin"
   | "PartnerFieldOfficer"
@@ -44,6 +45,7 @@ export const SUBTITLE_BY_ROLE: Record<EdifyRole, string> = {
   ProgramAccountant:   "Finance Console",
   ImpactAssessment:    "M&E / Impact Console",
   HumanResource:       "People & Performance",
+  ProjectCoordinator:  "Special Projects Console",
   Admin:               "Admin Console",
   PartnerAdmin:        "Partner Command Center",
   PartnerFieldOfficer: "Partner Command Center",
@@ -87,6 +89,10 @@ export const DEMO_USERS: Record<string, DemoUser> = {
   "moses.tindi@edify.org":    { email: "moses.tindi@edify.org",    password: "edify", staffId: "STF-MT-031", salesforceOwnerId: "0050X000009ABCJ", name: "Moses Tindi",    initials: "MT", role: "ProgramAccountant",  appRole: "ProgramAccountant",  scope: "Finance Console" },
   "grace.alimo@edify.org":    { email: "grace.alimo@edify.org",    password: "edify", staffId: "STF-GA-042", salesforceOwnerId: "0050X000009ABCK", name: "Grace Alimo",    initials: "GA", role: "ImpactAssessment",   appRole: "ImpactAssessment",   scope: "M&E / Impact"      },
   "admin@edify.org":          { email: "admin@edify.org",          password: "edify", staffId: "STF-AD-001", salesforceOwnerId: "0050X000009ABCL", name: "Edify Admin",    initials: "EA", role: "Admin",              appRole: "Admin",              scope: "Admin Console"     },
+  // Project Coordinator — owns special projects. appRole stays CountryProgramLead
+  // so the AppRole-keyed data layer (getVisibleProjects, etc.) keeps working;
+  // the ProjectCoordinator identity lives on the EdifyRole side (auth/sidebar/UI).
+  "rachel.apio@edify.org":    { email: "rachel.apio@edify.org",    password: "edify", staffId: "STF-RA-051", salesforceOwnerId: "0050X000009ABCM", name: "Rachel Apio",    initials: "RA", role: "ProjectCoordinator",  appRole: "CountryProgramLead", scope: "Special Projects Coordinator" },
   "demo@edify.org":           { email: "demo@edify.org",           password: "demo",  staffId: "STF-DD-099", salesforceOwnerId: "0050X000009ABCI", name: "Edify Demo",     initials: "ED", role: "CountryDirector",    appRole: "CountryDirector",    scope: "Country Director" },
   // ─── LTU partner demo accounts (Literacy Training Uganda) ───
   "sarah.kanyi@ltu.org":      { email: "sarah.kanyi@ltu.org",      password: "edify", staffId: "PSF-SK-001", salesforceOwnerId: "0050X000009LTU1", name: "Sarah Kanyi",   initials: "SK", role: "PartnerAdmin",        appRole: "CCEO", scope: "Partner Admin"        },
