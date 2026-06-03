@@ -193,6 +193,7 @@ export function PlanningMobileView() {
         context={clusterAssign}
         onClose={() => setClusterAssign(null)}
         onSubmit={handleClusterSubmit}
+        allowCreate={false}
       />
 
       <PlanningAssignDrawer

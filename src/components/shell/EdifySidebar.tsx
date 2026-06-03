@@ -39,6 +39,7 @@ import {
   Send,
   Globe,
   Upload,
+  Network,
   type LucideIcon,
 } from "lucide-react";
 import { cceoSidebarItems } from "@/lib/cceo-mock";
@@ -81,6 +82,7 @@ const CCEO_ICON: Record<string, LucideIcon> = {
   messageSquare:   MessageSquare,
   bookOpen:        BookOpen,
   wallet:          Wallet,
+  network:         Network,
 };
 
 function buildCceoMenu(): MenuSection[] {
@@ -249,6 +251,7 @@ function buildCplMenu(dashboardHref: string): MenuSection[] {
       items: [
         { label: "My Portfolio",    href: "/portfolio",     Icon: Building2 },
         { label: "Schools",         href: "/schools",       Icon: Building2 },
+        { label: "Clusters",        href: "/clusters",      Icon: Network   },
         { label: "SSA Performance", href: "/ssa",           Icon: Activity  },
         { label: "Core Schools",    href: "/core-schools",  Icon: Star      },
       ],

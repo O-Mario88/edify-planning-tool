@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { Users, Plus, MapPin, AlertTriangle, CheckCircle2 } from "lucide-react";
+import Link from "next/link";
+import { Users, Plus, MapPin, AlertTriangle, CheckCircle2, Network } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
@@ -44,12 +45,18 @@ const DISTRICT_OPTIONS = Array.from(new Set(SUBCOUNTIES.map((s) => s.districtNam
   .map((d) => ({ value: d, label: d }));
 
 export function AddToClusterDrawer({
-  open, context, onClose, onSubmit,
+  open, context, onClose, onSubmit, allowCreate = true,
 }: {
   open: boolean;
   context: AddToClusterContext | null;
   onClose: () => void;
   onSubmit: (outcome: AddToClusterOutcome) => void;
+  /**
+   * Whether the "Create new cluster" mode is offered. Clusters are created
+   * centrally from the Clusters page, so the planning surfaces pass `false` —
+   * here you only attach a school to a cluster that already exists.
+   */
+  allowCreate?: boolean;
 }) {
   const [mode, setMode] = useState<"existing" | "create">("existing");
 
@@ -73,7 +80,7 @@ export function AddToClusterDrawer({
   // Re-seed state on open.
   useEffect(() => {
     if (open) {
-      setMode("existing");
+      setMode("existing"); // always start (and, when allowCreate is false, stay) on existing
       setClusterId(eligibleClusters[0]?.id ?? "");
       setDistrict(DISTRICT_OPTIONS[0]?.value ?? "");
       setSubCounty("");
@@ -153,7 +160,9 @@ export function AddToClusterDrawer({
       open={open}
       onClose={onClose}
       title={`Add ${context.schoolName} to a cluster`}
-      description="Pick an existing cluster or create a new one. The school is attached to the chosen cluster on save."
+      description={allowCreate
+        ? "Pick an existing cluster or create a new one. The school is attached to the chosen cluster on save."
+        : "Attach this school to an existing cluster. New clusters are created on the Clusters page."}
       size="md"
       variant="sheet"
       footer={
@@ -162,6 +171,7 @@ export function AddToClusterDrawer({
           <Button
             size="sm"
             Icon={mode === "existing" ? Users : Plus}
+            disabled={mode === "existing" && eligibleClusters.length === 0}
             onClick={() => {
               const form = document.getElementById("add-to-cluster-form") as HTMLFormElement | null;
               form?.requestSubmit();
@@ -174,23 +184,26 @@ export function AddToClusterDrawer({
     >
       <form id="add-to-cluster-form" onSubmit={handleSubmit} className="space-y-4">
 
-        {/* Mode toggle */}
-        <div role="tablist" aria-label="Cluster mode" className="grid grid-cols-2 gap-1.5 rounded-lg border border-[var(--color-edify-border)] p-1 bg-[var(--color-edify-soft)]/40">
-          <ModeTab
-            label="Existing cluster"
-            sub={`${eligibleClusters.length} on your books`}
-            Icon={Users}
-            active={mode === "existing"}
-            onClick={() => setMode("existing")}
-          />
-          <ModeTab
-            label="Create new"
-            sub="District → sub-county → name"
-            Icon={Plus}
-            active={mode === "create"}
-            onClick={() => setMode("create")}
-          />
-        </div>
+        {/* Mode toggle — hidden when cluster creation is centralised on the
+            Clusters page (allowCreate=false); the drawer is then existing-only. */}
+        {allowCreate && (
+          <div role="tablist" aria-label="Cluster mode" className="grid grid-cols-2 gap-1.5 rounded-lg border border-[var(--color-edify-border)] p-1 bg-[var(--color-edify-soft)]/40">
+            <ModeTab
+              label="Existing cluster"
+              sub={`${eligibleClusters.length} on your books`}
+              Icon={Users}
+              active={mode === "existing"}
+              onClick={() => setMode("existing")}
+            />
+            <ModeTab
+              label="Create new"
+              sub="District → sub-county → name"
+              Icon={Plus}
+              active={mode === "create"}
+              onClick={() => setMode("create")}
+            />
+          </div>
+        )}
 
         {/* Existing path */}
         {mode === "existing" && (
@@ -198,7 +211,16 @@ export function AddToClusterDrawer({
             {eligibleClusters.length === 0 ? (
               <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-3 text-[12px] text-amber-800 flex items-start gap-2">
                 <AlertTriangle size={13} className="mt-0.5 shrink-0" />
-                <span>No clusters yet on your books. Switch to <span className="font-extrabold">Create new</span> to define one.</span>
+                {allowCreate ? (
+                  <span>No clusters yet on your books. Switch to <span className="font-extrabold">Create new</span> to define one.</span>
+                ) : (
+                  <span className="inline-flex flex-col gap-1.5">
+                    <span>No clusters available here yet. Clusters are created on the Clusters page.</span>
+                    <Link href="/clusters" className="inline-flex items-center gap-1 font-extrabold text-[var(--color-edify-primary)] hover:underline">
+                      <Network size={12} /> Go to Clusters to create one →
+                    </Link>
+                  </span>
+                )}
               </div>
             ) : (
               <Select

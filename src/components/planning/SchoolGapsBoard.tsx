@@ -390,6 +390,7 @@ export function SchoolGapsBoard({
         context={clusterAssign}
         onClose={() => setClusterAssign(null)}
         onSubmit={handleClusterSubmit}
+        allowCreate={false}
       />
 
       <ScheduleActivityDrawer
