@@ -11,11 +11,16 @@ import {
 } from "lucide-react";
 import { EntityDetail, DetailKpi, DetailFacts } from "@/components/shell/EntityDetail";
 import { clustersMock, schoolsMock } from "@/lib/schools-mock";
+import { orgStaff } from "@/lib/org/supervision";
 
 export default async function ClusterDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const cluster = clustersMock.find((c) => c.id === id);
   if (!cluster) return notFound();
+
+  // Account owner is a CCEO — show the name, not the raw staffId. Falls back
+  // to the stored value if the id isn't on the roster.
+  const ownerName = orgStaff(cluster.ownerCceoId)?.name ?? cluster.ownerCceoId;
 
   const schools = cluster.schoolIds
     .map((sid) => schoolsMock.find((s) => s.schoolId === sid))
@@ -40,7 +45,7 @@ export default async function ClusterDetail({ params }: { params: Promise<{ id: 
         <DetailKpi label="Member Schools" value={String(schools.length)} caption="In this cluster" Icon={School}   tone="edify"  />
         <DetailKpi label="Avg SSA"        value={`${avgSsa}%`}            caption="Across members" Icon={Calendar} tone={avgSsa >= 70 ? "green" : avgSsa >= 50 ? "amber" : "rose"} />
         <DetailKpi label="SSA Completed"  value={`${verified}/${schools.length}`} caption="Verified"   Icon={Building2} tone="violet" />
-        <DetailKpi label="Owner"           value={cluster.ownerCceoId} caption="Assigned CCEO" Icon={User} tone="edify" />
+        <DetailKpi label="Owner"           value={ownerName} caption="Assigned CCEO" Icon={User} tone="edify" />
       </section>
 
       <section className="grid grid-cols-12 gap-3 md:gap-4 items-start">
