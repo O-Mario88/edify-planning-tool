@@ -1,4 +1,5 @@
 import { CommandStack } from "@/components/actions/CommandStack";
+import { ProjectWorkCard } from "@/components/special-projects/ProjectWorkCard";
 import { DashboardPageHeader } from "@/components/dashboards/DashboardPageHeader";
 import { DebriefPromoterCard } from "@/components/debrief/DebriefPromoterCard";
 import { PlCommandLanes } from "@/components/cpl/PlCommandLanes";
@@ -99,6 +100,7 @@ export default async function CountryProgramLeadDashboard() {
           <PlCommandLanes />
           <ClusterReadinessCard clustered={clusterCounts.clustered} unclustered={clusterCounts.unclustered} needsReview={clusterCounts.needsReview} title="Team cluster setup" />
           <ClusterOperationsCard scope="team" />
+          <ProjectWorkCard user={user} />
           <div id="my-field-work">
             <CplFieldWorkCard />
           </div>

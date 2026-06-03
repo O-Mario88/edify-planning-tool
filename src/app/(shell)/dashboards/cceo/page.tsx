@@ -21,6 +21,7 @@ import { CceoMomentumBanner } from "@/components/cceo/CceoMomentumBanner";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { ClientVerificationCard } from "@/components/ssa/ClientVerificationCard";
 import { PortfolioSummaryCard } from "@/components/portfolio/PortfolioSummaryCard";
+import { ProjectWorkCard } from "@/components/special-projects/ProjectWorkCard";
 import { ClusterReadinessCard } from "@/components/cluster/ClusterReadinessCard";
 import { scopedClusterCounts } from "@/lib/cluster/cluster-scope";
 import { getCurrentUser } from "@/lib/auth";
@@ -53,6 +54,7 @@ export default async function CceoDashboardPage() {
         <DebriefPromoterCard submitterRole="CCEO" />
         <PortfolioSummaryCard staffId={user.staffId} />
         <ClusterReadinessCard clustered={clusterCounts.clustered} unclustered={clusterCounts.unclustered} needsReview={clusterCounts.needsReview} title="Cluster setup readiness" />
+        <ProjectWorkCard user={user} />
         <CceoSixKpiRow />
         <CceoKpiStrip />
         <CoreServicePackageCard />

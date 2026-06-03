@@ -4,9 +4,12 @@ import { UnclusteredSchoolsBanner } from "./UnclusteredSchoolsBanner";
 import { PlanningGapBoard } from "./PlanningGapBoard";
 import { PlanningOwnershipSections } from "./PlanningOwnershipSections";
 import { PlansFamilyNav } from "./PlansFamilyNav";
-import { getCurrentUser } from "@/lib/auth";
+import { ProjectPlanningGaps } from "@/components/special-projects/ProjectPlanningGaps";
+import { getCurrentUser, toCurrentUser } from "@/lib/auth";
 import { onboardedSchoolGaps, scopeGapsToViewer } from "@/lib/planning/onboarded-gaps";
 import { engineClusterGaps } from "@/lib/planning/engine-cluster-gaps";
+import { directoryRecords } from "@/lib/school-directory/directory";
+import { computeProjectPlanningGaps } from "@/lib/projects/project-planning-gaps";
 
 // PlanningToolPage no longer renders its own sidebar — the (shell)
 // route-group layout mounts <EdifySidebarServer /> once for every
@@ -28,6 +31,14 @@ export async function PlanningToolPage() {
   // Cluster gaps now come from the real cluster engine (clusters + their
   // scheduled/completed meetings), so the planning board reflects live truth.
   const clusterGaps = engineClusterGaps();
+
+  // Project follow-up gaps, scoped like the directory: CCEO/PL see their
+  // portfolio/team schools; broader roles see all in-scope project schools.
+  const scoped: Set<string> | "all" =
+    user.role === "CCEO" || user.role === "CountryProgramLead"
+      ? new Set(directoryRecords(user.staffId, user.role).map((s) => s.schoolId))
+      : "all";
+  const projectGaps = computeProjectPlanningGaps(toCurrentUser(user), scoped);
 
   return (
     <>
@@ -52,6 +63,8 @@ export async function PlanningToolPage() {
         <PlanningGapBoard extraGaps={onboardedGaps} clusterGaps={clusterGaps} />
 
         <PlanningOwnershipSections />
+
+        <ProjectPlanningGaps categories={projectGaps} />
       </div>
     </>
   );

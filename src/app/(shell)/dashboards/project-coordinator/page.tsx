@@ -8,6 +8,7 @@ import { SpActionBar } from "@/components/special-projects/SpActionBar";
 import { ProjectPortfolioTable } from "@/components/special-projects/ProjectPortfolioTable";
 import { PartnerDeliveryCard } from "@/components/special-projects/PartnerDeliveryCard";
 import { ProjectImpactComparisonCard } from "@/components/special-projects/ProjectImpactComparisonCard";
+import { ProjectWorkCard } from "@/components/special-projects/ProjectWorkCard";
 import { computeSpecialProjectKpis, getVisibleProjects } from "@/lib/special-projects-mock";
 
 // Project Coordinator console — the home for special projects & targeted
@@ -37,7 +38,8 @@ export default async function ProjectCoordinatorDashboard() {
           <div className="col-span-12 md:col-span-8">
             <ProjectPortfolioTable projects={visible} />
           </div>
-          <div className="col-span-12 md:col-span-4">
+          <div className="col-span-12 md:col-span-4 space-y-4">
+            <ProjectWorkCard user={user} />
             <PartnerDeliveryCard />
           </div>
         </section>
