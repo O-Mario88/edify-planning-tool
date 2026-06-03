@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isValidId, ID_FORMATS } from "@/lib/intake/id-formats";
+import { GlassDatePicker } from "@/components/ui/GlassDatePicker";
 
 // Reimbursement Claim modal (Personal Funds Claim).
 //
@@ -172,12 +173,7 @@ function Inner({
         {/* Date */}
         <section className="mb-3">
           <Label>Date spent</Label>
-          <input
-            type="date"
-            value={dateSpent}
-            onChange={(e) => setDateSpent(e.target.value)}
-            className="w-full h-10 px-3 rounded-lg border border-[var(--color-edify-border)] bg-white text-[12px] font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-violet-500/25 focus:border-violet-300"
-          />
+          <GlassDatePicker value={dateSpent} onChange={setDateSpent} />
         </section>
 
         {/* Amounts */}

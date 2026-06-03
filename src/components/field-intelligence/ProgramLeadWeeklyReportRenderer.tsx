@@ -46,6 +46,7 @@ import type {
 import { DECISION_ROUTING, canRouteDecision } from "@/lib/field-intelligence-mock";
 import { prettyRole } from "@/components/decisions/DecisionActionsCard";
 import { cn } from "@/lib/utils";
+import { GlassDatePicker } from "@/components/ui/GlassDatePicker";
 
 const STATUS_TONE: Record<string, string> = {
   "Generated":                  "bg-slate-100   text-slate-700",
@@ -488,13 +489,7 @@ function DecisionLine({
             </select>
           </Field>
           <Field label="Deadline">
-            <input
-              type="date"
-              aria-label="Deadline"
-              value={deadline}
-              onChange={(e) => setDeadline(e.target.value)}
-              className="w-full h-9 rounded-md border border-[var(--color-edify-border)] bg-white px-2 font-semibold"
-            />
+            <GlassDatePicker value={deadline} onChange={setDeadline} />
           </Field>
           <div className="md:col-span-2 flex items-center gap-2">
             <button

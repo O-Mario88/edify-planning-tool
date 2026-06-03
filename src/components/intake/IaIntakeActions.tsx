@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { Plus, Upload, CheckCircle2, Lock, FileUp, AlertCircle, Download, Pencil } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
+import { GlassDatePicker } from "@/components/ui/GlassDatePicker";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
@@ -560,8 +561,10 @@ function EditSchoolDrawer({ school, onClose }: { school: IntakeSchoolLite | null
                 helper="Who this school's portfolio belongs to." onChange={(e) => set("assignedCceo", e.target.value)} />
               <Input label="Enrolment" type="number" placeholder="320" value={form.enrollment} error={errors.enrollment}
                 onChange={(e) => set("enrollment", e.target.value)} />
-              <Input label="Last date of enrolment" type="date" value={form.lastEnrollmentDate}
-                onChange={(e) => set("lastEnrollmentDate", e.target.value)} />
+              <div className="space-y-1">
+                <label className="block text-[12px] font-semibold text-[var(--color-edify-text)]">Last date of enrolment</label>
+                <GlassDatePicker value={form.lastEnrollmentDate} onChange={(iso) => set("lastEnrollmentDate", iso)} />
+              </div>
             </div>
           </div>
 
@@ -660,8 +663,11 @@ function SsaUploadDrawer({ open, onClose, schools }: { open: boolean; onClose: (
         <Select label="School" placeholder="Select a school" value={schoolId} error={errors.schoolId}
           options={schools.map((s) => ({ value: s.schoolId, label: `${s.schoolName} (${s.schoolId})` }))}
           onChange={(e) => setSchoolId(e.target.value)} />
-        <Input label="Date of SSA" type="date" value={ssaDate} error={errors.ssaDate}
-          onChange={(e) => setSsaDate(e.target.value)} />
+        <div className="space-y-1">
+          <label className="block text-[12px] font-semibold text-[var(--color-edify-text)]">Date of SSA</label>
+          <GlassDatePicker value={ssaDate} onChange={setSsaDate} />
+          {errors.ssaDate && <p className="text-[11px] text-[var(--color-edify-danger)]">{errors.ssaDate}</p>}
+        </div>
       </div>
 
       {derived && (

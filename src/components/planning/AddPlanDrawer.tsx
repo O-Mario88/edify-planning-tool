@@ -17,6 +17,7 @@ import {
   Sparkles,
   CheckCircle2,
 } from "lucide-react";
+import { GlassDatePicker } from "@/components/ui/GlassDatePicker";
 import { schoolsCatalog, type SchoolRow } from "@/lib/workflow-mock";
 import type { PlannedActivityRow, PlanStatus, DeliveryMode, AssignedTo } from "@/lib/planning-mock";
 import { cn } from "@/lib/utils";
@@ -471,13 +472,10 @@ export function AddPlanDrawer({
                         />
                       </Field>
                       <Field label="Exact date">
-                        <input
-                          aria-label="Exact date"
-                          placeholder="YYYY-MM-DD"
-                          type="date"
-                          className={inputCls}
+                        <GlassDatePicker
                           value={clusterDate}
-                          onChange={(e) => setClusterDate(e.target.value)}
+                          onChange={setClusterDate}
+                          placeholder="dd/mm/yyyy"
                         />
                       </Field>
                     </div>

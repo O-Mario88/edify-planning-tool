@@ -17,6 +17,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { CalendarClock, ChevronDown, MapPin, UserCheck } from "lucide-react";
 import { AccessibleDialog } from "@/components/ui/AccessibleDialog";
 import { cn } from "@/lib/utils";
+import { GlassDatePicker } from "@/components/ui/GlassDatePicker";
 
 export type TeamCceo = {
   staffId: string;
@@ -216,14 +217,7 @@ export function AssignFollowUpDialog({
             <CalendarClock size={11} />
             Deadline
           </label>
-          <input
-            id="assign-deadline"
-            type="date"
-            min={todayIso}
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-            className="block w-full h-10 px-3 rounded-lg border border-[var(--color-edify-border)] bg-white text-[var(--text-body)] font-semibold focus:outline-none focus:ring-2 focus:ring-[var(--color-edify-primary)]/30"
-          />
+          <GlassDatePicker value={dueDate} onChange={setDueDate} min={todayIso} />
           <p className="text-[var(--text-tiny)] muted mt-1">
             Default: 7 working days from today. The CCEO sees a red chip when overdue.
           </p>

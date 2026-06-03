@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { CalendarPlus, History, User, AlertTriangle, ChevronRight } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
+import { GlassDatePicker } from "@/components/ui/GlassDatePicker";
 import { Select } from "@/components/ui/Select";
 import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
@@ -147,14 +148,16 @@ export function RescheduleActivityDrawer({
 
         {/* New date form */}
         <section className="space-y-3">
-          <Input
-            label="New date"
-            type="date"
-            required
-            value={newDate}
-            onChange={(e) => setNewDate(e.target.value)}
-            helper="Pick the date the school + field team have agreed on."
-          />
+          <div className="flex flex-col gap-1">
+            <label className="text-[11.5px] font-semibold text-[var(--color-edify-text)]">
+              New date
+              <span className="text-rose-600 ml-0.5">*</span>
+            </label>
+            <GlassDatePicker value={newDate} onChange={setNewDate} placeholder="dd/mm/yyyy" />
+            <p className="text-[11px] text-[var(--color-edify-muted)]">
+              Pick the date the school + field team have agreed on.
+            </p>
+          </div>
 
           <Select
             label="Reason"

@@ -22,6 +22,7 @@ import {
 } from "@/lib/accountant-console-mock";
 import { cn } from "@/lib/utils";
 import { useUrlState } from "@/hooks/use-url-state";
+import { GlassDatePicker } from "@/components/ui/GlassDatePicker";
 
 const PRIORITY_TONE: Record<QueueRow["priority"], { pill: string; dot: string }> = {
   High:   { pill: "bg-rose-50   text-rose-700   ring-1 ring-rose-200/70",   dot: "bg-rose-500" },
@@ -380,12 +381,7 @@ function DisburseInlinePanel({ r, onConfirm }: { r: QueueRow; onConfirm: () => v
             )}
           </Field>
           <Field label="Date">
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="w-full h-10 px-2.5 rounded-lg border border-[var(--color-edify-border)] bg-white text-[12px] font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-slate-400"
-            />
+            <GlassDatePicker value={date} onChange={setDate} />
           </Field>
           <Field label="Payment method" fullWidth>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">

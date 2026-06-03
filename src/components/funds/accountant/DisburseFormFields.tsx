@@ -28,6 +28,7 @@ import {
 import { fundsReceived } from "@/lib/funds/weekly-fund-mock";
 import { formatMoney } from "@/lib/funds/weekly-fund-engine";
 import { cn } from "@/lib/utils";
+import { GlassDatePicker } from "@/components/ui/GlassDatePicker";
 import type {
   DisbursementMethod,
   WeeklyFundRequest,
@@ -149,12 +150,7 @@ export function DisburseFormFields({
 
         {/* Date */}
         <Field label="Date">
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="w-full h-10 px-2.5 rounded-lg border border-[var(--color-edify-border)] bg-white text-[12px] font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-[var(--color-edify-primary)]/30"
-          />
+          <GlassDatePicker value={date} onChange={setDate} />
         </Field>
 
         {/* Notes — full width */}

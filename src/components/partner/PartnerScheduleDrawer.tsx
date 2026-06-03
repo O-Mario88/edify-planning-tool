@@ -11,6 +11,7 @@ import { useState } from "react";
 import { X, Calendar, Clock, User as UserIcon, MapPin, FileText, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
+import { GlassDatePicker } from "@/components/ui/GlassDatePicker";
 
 export type ScheduleDraft = {
   weekKey: string;
@@ -156,11 +157,9 @@ export function PartnerScheduleDrawer({
                     </select>
                   </Field>
                   <Field label="Preferred date (optional)" Icon={Calendar}>
-                    <input
-                      type="date"
-                      className={inputCls}
+                    <GlassDatePicker
                       value={draft.preferredDate}
-                      onChange={(e) => setDraft({ ...draft, preferredDate: e.target.value })}
+                      onChange={(iso) => setDraft({ ...draft, preferredDate: iso })}
                     />
                   </Field>
                   <Field label="Facilitator" Icon={UserIcon}>

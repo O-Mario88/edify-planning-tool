@@ -6,6 +6,7 @@ import { useDemoStore } from "@/components/demo/DemoStore";
 import { X, AlertTriangle, CalendarDays, Save, CheckCircle2, UserCheck } from "lucide-react";
 import { leaveRequests, type LeaveType } from "@/lib/leave-mock";
 import { plannedActivities as seedPlannedActivities, type PlannedActivityRow } from "@/lib/planning-mock";
+import { GlassDatePicker } from "@/components/ui/GlassDatePicker";
 import { cn } from "@/lib/utils";
 
 // May/June 2025 week dates lookup map for accurate conflict matching
@@ -236,21 +237,18 @@ export function AddLeaveDrawer({
               >
                 <div className="grid grid-cols-2 gap-3 mt-2">
                   <Field label="Start date">
-                    <input
-                      aria-label="Start date"
-                      type="date"
-                      className={inputCls}
+                    <GlassDatePicker
                       value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
+                      onChange={setStartDate}
+                      placeholder="dd/mm/yyyy"
                     />
                   </Field>
                   <Field label="End date">
-                    <input
-                      aria-label="End date"
-                      type="date"
-                      className={inputCls}
+                    <GlassDatePicker
                       value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
+                      onChange={setEndDate}
+                      min={startDate}
+                      placeholder="dd/mm/yyyy"
                     />
                   </Field>
                 </div>
