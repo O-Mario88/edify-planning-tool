@@ -24,6 +24,7 @@ import { PrioritySchoolsUrgentAttentionCard } from "@/components/director/Priori
 import { QuickLeadershipActions } from "@/components/director/QuickLeadershipActions";
 import { ClientVerificationCard } from "@/components/ssa/ClientVerificationCard";
 import { ClusterReadinessCard } from "@/components/cluster/ClusterReadinessCard";
+import { ClusterOperationsCard } from "@/components/cluster/ClusterOperationsCard";
 import { scopedClusterCounts } from "@/lib/cluster/cluster-scope";
 import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
@@ -85,6 +86,7 @@ export default async function CountryDirectorDashboard() {
           />
           <CountryKpiRow />
           <ClusterReadinessCard clustered={clusterCounts.clustered} unclustered={clusterCounts.unclustered} needsReview={clusterCounts.needsReview} title="National cluster setup" />
+          <ClusterOperationsCard scope="country" />
           <LeadershipAttentionRow />
           <DebriefReviewInbox user={user} audience="cd" />
           <TrainingCoverageCard audience="cd" clusterPlans={allClusterTrainingPlans()} />

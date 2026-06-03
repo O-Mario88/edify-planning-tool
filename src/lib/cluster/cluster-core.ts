@@ -1231,6 +1231,32 @@ export function partnerClusterPaymentsReady(): ClusterMeeting[] {
   return clusterMeetings.filter((m) => m.organizer === "partner" && m.status === "IA Confirmed");
 }
 
+export type ClusterMeetingMetrics = {
+  scheduled: number;
+  awaitingIa: number;
+  confirmed: number; // IA Confirmed or Paid
+  attendanceTotal: number;
+  teachersReached: number;
+  schoolLeadersReached: number;
+  partnerPaymentsReady: number;
+  nextScheduled: number; // future-dated, still Scheduled
+};
+
+/** Roll-up of cluster-meeting lifecycle for dashboards. */
+export function clusterMeetingMetrics(): ClusterMeetingMetrics {
+  const confirmedList = clusterMeetings.filter((m) => m.status === "IA Confirmed" || m.status === "Paid");
+  return {
+    scheduled: clusterMeetings.filter((m) => m.status === "Scheduled").length,
+    awaitingIa: clusterMeetings.filter((m) => m.status === "Awaiting IA").length,
+    confirmed: confirmedList.length,
+    attendanceTotal: confirmedList.reduce((n, m) => n + (m.totalParticipants ?? 0), 0),
+    teachersReached: confirmedList.reduce((n, m) => n + (m.teachersCount ?? 0), 0),
+    schoolLeadersReached: confirmedList.reduce((n, m) => n + (m.schoolLeadersCount ?? 0), 0),
+    partnerPaymentsReady: partnerClusterPaymentsReady().length,
+    nextScheduled: clusterMeetings.filter((m) => m.status === "Scheduled").length,
+  };
+}
+
 // ── Cluster performance (computed from member schools + activities) ─
 
 export type ClusterProfile = {
