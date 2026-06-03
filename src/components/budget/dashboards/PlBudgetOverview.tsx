@@ -101,20 +101,24 @@ export function PlBudgetOverview({ rollup, operational }: { rollup: AnnualBudget
         </div>
       </section>
 
+      {/* Operational trend (wide) + health gauge — 2-up. */}
       <section className="grid grid-cols-12 gap-4 items-start">
-        <div className="col-span-12 md:col-span-6"><SectionCard title="Annual Operational Budget Trend (UGX)"><AnnualOverviewLines data={overview} /></SectionCard></div>
-        <div className="col-span-12 md:col-span-3"><SectionCard title="Operational Budget Health"><BudgetHealthGauge score={rollup.healthScore} split={rollup.healthSplit} /></SectionCard></div>
-        <div className="col-span-12 md:col-span-3"><SectionCard title="Budget Mix by Source"><BudgetMixDonut data={mix} centerPct="100%" centerLabel="Operational" /></SectionCard></div>
+        <div className="col-span-12 lg:col-span-8"><SectionCard title="Annual Operational Budget Trend (UGX)"><AnnualOverviewLines data={overview} /></SectionCard></div>
+        <div className="col-span-12 lg:col-span-4"><SectionCard title="Operational Budget Health"><BudgetHealthGauge score={rollup.healthScore} split={rollup.healthSplit} /></SectionCard></div>
       </section>
 
       <section className="grid grid-cols-12 gap-4 items-start">
-        <div className="col-span-12 md:col-span-6"><SectionCard title="Quarterly Budget Performance (UGX)"><BudgetByQuarterBars data={rollup.byQuarter} /></SectionCard></div>
-        <div className="col-span-12 md:col-span-6"><SectionCard title="Monthly Burn & Releases (UGX)"><MonthlyBurnReleases data={rollup.byMonth} /></SectionCard></div>
+        <div className="col-span-12 lg:col-span-6"><SectionCard title="Quarterly Budget Performance (UGX)"><BudgetByQuarterBars data={rollup.byQuarter} /></SectionCard></div>
+        <div className="col-span-12 lg:col-span-6"><SectionCard title="Monthly Burn & Releases (UGX)"><MonthlyBurnReleases data={rollup.byMonth} /></SectionCard></div>
       </section>
 
+      {/* Region bars (wide) + a compact rail (budget mix by source + risk). */}
       <section className="grid grid-cols-12 gap-4 items-start">
-        <div className="col-span-12 md:col-span-4"><BudgetRiskAlerts alerts={rollup.riskAlerts} title="Budget Risk Alerts" /></div>
-        <div className="col-span-12 md:col-span-8"><SectionCard title="Budget by Region (by Approved Budget)"><BudgetByDimensionBars data={rollup.byRegion} /></SectionCard></div>
+        <div className="col-span-12 lg:col-span-8"><SectionCard title="Budget by Region (by Approved Budget)"><BudgetByDimensionBars data={rollup.byRegion} height={320} /></SectionCard></div>
+        <div className="col-span-12 lg:col-span-4 space-y-4">
+          <SectionCard title="Budget Mix by Source"><BudgetMixDonut data={mix} centerPct="100%" centerLabel="Operational" /></SectionCard>
+          <BudgetRiskAlerts alerts={rollup.riskAlerts} title="Budget Risk Alerts" />
+        </div>
       </section>
 
       <BudgetSnapshots rollup={rollup} />

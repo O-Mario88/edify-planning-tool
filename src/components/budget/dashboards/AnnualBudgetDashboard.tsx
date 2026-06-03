@@ -102,22 +102,23 @@ export function AnnualBudgetDashboard({ rollup }: { rollup: AnnualBudgetRollup }
       ) : (
         <>
           {/* Charts */}
+          {/* Time-series charts — 2-up so the 12-month + quarterly series get
+              room to breathe (no squeezed 3-up). */}
           <section className="grid grid-cols-12 gap-4 items-start">
-            <div className="col-span-12 md:col-span-4">
+            <div className="col-span-12 lg:col-span-6">
               <SectionCard title="Budget by Quarter (UGX)"><BudgetByQuarterBars data={rollup.byQuarter} /></SectionCard>
             </div>
-            <div className="col-span-12 md:col-span-4">
+            <div className="col-span-12 lg:col-span-6">
               <SectionCard title="Monthly Burn & Releases (UGX)"><MonthlyBurnReleases data={rollup.byMonth} /></SectionCard>
-            </div>
-            <div className="col-span-12 md:col-span-4">
-              <SectionCard title="Budget by District (Top 8) (UGX)"><BudgetByDimensionBars data={rollup.byDistrict} /></SectionCard>
             </div>
           </section>
 
-          {/* Program/admin + fund status + risk + health — 2-up on tablet,
-              balanced 4-up on desktop so nothing truncates / overflows. */}
+          {/* District bars (wide) + a compact rail (cost mix + health). */}
           <section className="grid grid-cols-12 gap-4 items-start">
-            <div className="col-span-12 sm:col-span-6 xl:col-span-3">
+            <div className="col-span-12 lg:col-span-8">
+              <SectionCard title="Budget by District (Top 8) (UGX)"><BudgetByDimensionBars data={rollup.byDistrict} height={320} /></SectionCard>
+            </div>
+            <div className="col-span-12 lg:col-span-4 space-y-4">
               <SectionCard title="Program vs Admin Cost (UGX)">
                 <ProgramAdminDonut program={rollup.programCost} admin={rollup.adminCost} centerPct={`${programPct}%`} centerLabel="Program Cost" />
                 <div className="mt-2 space-y-1 text-[11.5px]">
@@ -125,15 +126,17 @@ export function AnnualBudgetDashboard({ rollup }: { rollup: AnnualBudgetRollup }
                   <div className="flex items-center justify-between"><span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ background: "#ea8c2f" }} />Admin</span><b>{fmtUgxShort(rollup.adminCost)}</b></div>
                 </div>
               </SectionCard>
+              <SectionCard title="Budget Health"><BudgetHealthGauge score={rollup.healthScore} split={rollup.healthSplit} /></SectionCard>
             </div>
-            <div className="col-span-12 sm:col-span-6 xl:col-span-4">
+          </section>
+
+          {/* Fund-request status (wide strip) + risk alerts. */}
+          <section className="grid grid-cols-12 gap-4 items-start">
+            <div className="col-span-12 lg:col-span-8">
               <FundRequestStatusRow counts={rollup.fundRequestStatusCounts} />
             </div>
-            <div className="col-span-12 sm:col-span-6 xl:col-span-3">
+            <div className="col-span-12 lg:col-span-4">
               <BudgetRiskAlerts alerts={rollup.riskAlerts} />
-            </div>
-            <div className="col-span-12 sm:col-span-6 xl:col-span-2">
-              <SectionCard title="Budget Health"><BudgetHealthGauge score={rollup.healthScore} split={rollup.healthSplit} /></SectionCard>
             </div>
           </section>
 

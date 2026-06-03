@@ -98,20 +98,24 @@ export function RvpBudgetSummary({ rollup }: { rollup: AnnualBudgetRollup }) {
         </div>
       </section>
 
+      {/* Overview trend (wide) + health gauge — 2-up. */}
       <section className="grid grid-cols-12 gap-4 items-start">
-        <div className="col-span-12 md:col-span-6"><SectionCard title="Annual Budget Overview (UGX)"><AnnualOverviewLines data={overview} /></SectionCard></div>
-        <div className="col-span-12 md:col-span-3"><SectionCard title="Annual Budget Health"><BudgetHealthGauge score={rollup.healthScore} split={rollup.healthSplit} /></SectionCard></div>
-        <div className="col-span-12 md:col-span-3"><SectionCard title="Annual Budget Mix"><ProgramAdminDonut program={rollup.programCost} admin={rollup.adminCost} centerPct={`${programPct}%`} centerLabel="Program Cost" /></SectionCard></div>
+        <div className="col-span-12 lg:col-span-8"><SectionCard title="Annual Budget Overview (UGX)"><AnnualOverviewLines data={overview} /></SectionCard></div>
+        <div className="col-span-12 lg:col-span-4"><SectionCard title="Annual Budget Health"><BudgetHealthGauge score={rollup.healthScore} split={rollup.healthSplit} /></SectionCard></div>
       </section>
 
       <section className="grid grid-cols-12 gap-4 items-start">
-        <div className="col-span-12 md:col-span-6"><SectionCard title="Quarterly Budget Performance (UGX)"><BudgetByQuarterBars data={rollup.byQuarter} /></SectionCard></div>
-        <div className="col-span-12 md:col-span-6"><SectionCard title="Monthly Burn & Releases (UGX)"><MonthlyBurnReleases data={rollup.byMonth} /></SectionCard></div>
+        <div className="col-span-12 lg:col-span-6"><SectionCard title="Quarterly Budget Performance (UGX)"><BudgetByQuarterBars data={rollup.byQuarter} /></SectionCard></div>
+        <div className="col-span-12 lg:col-span-6"><SectionCard title="Monthly Burn & Releases (UGX)"><MonthlyBurnReleases data={rollup.byMonth} /></SectionCard></div>
       </section>
 
+      {/* Regional bars (wide) + a compact rail (budget mix + risk). */}
       <section className="grid grid-cols-12 gap-4 items-start">
-        <div className="col-span-12 md:col-span-4"><BudgetRiskAlerts alerts={rollup.riskAlerts} title="Budget Risk Alerts" /></div>
-        <div className="col-span-12 md:col-span-8"><SectionCard title="Regional Budget Health (by Approved Budget)"><BudgetByDimensionBars data={rollup.byRegion} /></SectionCard></div>
+        <div className="col-span-12 lg:col-span-8"><SectionCard title="Regional Budget Health (by Approved Budget)"><BudgetByDimensionBars data={rollup.byRegion} height={320} /></SectionCard></div>
+        <div className="col-span-12 lg:col-span-4 space-y-4">
+          <SectionCard title="Annual Budget Mix"><ProgramAdminDonut program={rollup.programCost} admin={rollup.adminCost} centerPct={`${programPct}%`} centerLabel="Program Cost" /></SectionCard>
+          <BudgetRiskAlerts alerts={rollup.riskAlerts} title="Budget Risk Alerts" />
+        </div>
       </section>
 
       <BudgetSnapshots rollup={rollup} />
