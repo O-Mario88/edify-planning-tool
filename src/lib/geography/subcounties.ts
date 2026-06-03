@@ -1,41 +1,22 @@
 // Sub-county layer.
 //
-// Consolidates the sub-county lists that were previously hard-coded inside
-// `AddToClusterDrawer.tsx` (DISTRICT_SUBCOUNTIES), keyed by canonical district
-// name. Demo-grade and intentionally partial — production reads the full
-// administrative-units table; the shape and lookups stay identical.
+// The full district -> sub-county register, mapped from the official Uganda
+// General Elections 2015-2016 sub-county statistics (see subcounties-data.ts,
+// auto-generated from the source PDF). 106 districts, ~1,300 sub-counties.
+// Keyed by canonical district name; the shape and lookups are unchanged.
 
 import {
   districtByName,
   districtSlug,
   type DistrictId,
 } from "./districts";
+import { SUBCOUNTY_NAMES_BY_DISTRICT } from "./subcounties-data";
 
 export type SubCounty = {
   id: string; // `UG-SC-<district-slug>-<subcounty-slug>`
   name: string;
   districtId: DistrictId;
   districtName: string;
-};
-
-const SUBCOUNTY_NAMES_BY_DISTRICT: Record<string, string[]> = {
-  Kayunga: ["Bbaale", "Galiraaya", "Kayunga Central", "Kayunga Town", "Kitimbwa"],
-  Mukono: ["Mukono Central", "Ntenjeru", "Nakifuma", "Kireka", "Nsumba", "Bukoto", "Namilyango"],
-  Pader: ["Atanga", "Laguti", "Pader Town", "Lapul"],
-  Kitgum: ["Kitgum Central", "Mucwini", "Orom", "Lagoro"],
-  Lamwo: ["Padibe East", "Padibe West", "Palabek Gem", "Lokung"],
-  Agago: ["Agago Hub", "Patongo", "Kalongo", "Lira-Palwo"],
-  Gulu: ["Gulu Municipality", "Bardege", "Pece", "Layibi"],
-  Wakiso: ["Wakiso Central", "Nansana", "Kira", "Kasanje"],
-  Kampala: ["Kampala Central", "Nakawa", "Rubaga", "Makindye"],
-  Mbarara: ["Mbarara East", "Kakoba", "Nyamitanga", "Biharwe"],
-  Hoima: ["Hoima Central", "Buseruka", "Kigorobya", "Kyabigambire"],
-  Omoro: ["Omoro West", "Bobi", "Lakwana", "Tochi"],
-  // School-hub districts not previously covered, added so every hub district
-  // the planning surface touches has at least a demo sub-county set.
-  Jinja: ["Jinja Central", "Mafubira", "Budondo", "Buwenge"],
-  Iganga: ["Iganga Central", "Nakigo", "Nambale", "Bulamagi"],
-  Arua: ["Arua Hill", "Dadamu", "Adumi", "Vurra"],
 };
 
 function subCountyId(districtName: string, subCountyName: string): string {
@@ -59,21 +40,23 @@ export const SUBCOUNTIES: SubCounty[] = Object.entries(SUBCOUNTY_NAMES_BY_DISTRI
 const BY_DISTRICT_NAME = new Map<string, SubCounty[]>();
 const BY_DISTRICT_ID = new Map<string, SubCounty[]>();
 for (const sc of SUBCOUNTIES) {
-  const byName = BY_DISTRICT_NAME.get(sc.districtName) ?? [];
+  const byName = BY_DISTRICT_NAME.get(sc.districtName.toLowerCase()) ?? [];
   byName.push(sc);
-  BY_DISTRICT_NAME.set(sc.districtName, byName);
+  BY_DISTRICT_NAME.set(sc.districtName.toLowerCase(), byName);
   const byId = BY_DISTRICT_ID.get(sc.districtId) ?? [];
   byId.push(sc);
   BY_DISTRICT_ID.set(sc.districtId, byId);
 }
 
-/** Sub-counties for a district, addressed by canonical id OR district name. */
+/** Sub-counties for a district, addressed by canonical id OR district name
+ *  (case-insensitive on the name). */
 export function subCountiesOf(districtIdOrName: string): SubCounty[] {
   if (!districtIdOrName) return [];
+  const key = districtIdOrName.toLowerCase();
   return (
     BY_DISTRICT_ID.get(districtIdOrName) ??
-    BY_DISTRICT_NAME.get(districtIdOrName) ??
-    BY_DISTRICT_NAME.get(districtByName(districtIdOrName)?.name ?? "") ??
+    BY_DISTRICT_NAME.get(key) ??
+    BY_DISTRICT_NAME.get((districtByName(districtIdOrName)?.name ?? "").toLowerCase()) ??
     []
   );
 }
