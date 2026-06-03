@@ -119,14 +119,15 @@ export async function createSchool(input: NewSchoolInput): Promise<IntakeResult>
     });
   }
 
-  // A new school with no SSA is planning-locked — nudge the assigned CCEO /
-  // IA team that an SSA is owed before planning can begin.
+  // Cluster-first: a freshly uploaded school is unclustered. The required next
+  // setup step is cluster assignment (it unlocks SSA / SIT and planning), so
+  // nudge the assigned CCEO / IA team to the Cluster Assignment Workspace.
   emitNotificationFanOut(["IMPACT_ASSESSMENT", "CCEO"], {
-    template: "intake.schoolAddedNeedsSsa",
+    template: "intake.schoolAddedNeedsCluster",
     channel: "Inbox",
-    title: "New school added — SSA required",
-    body: `${row.schoolName} (${row.district}) is active but planning-locked until its first SSA is uploaded.`,
-    href: "/data-intake",
+    title: "New school added — assign to a cluster",
+    body: `${row.schoolName} (${row.district}) is active and in its owner's portfolio. Assign it to a cluster — the next setup step — before planning support.`,
+    href: "/clusters/assign",
   });
 
   revalidateIntakeSurfaces();
@@ -194,8 +195,8 @@ export async function createSchoolsBulk(inputs: NewSchoolInput[]): Promise<BulkS
       template: "intake.schoolsBulkAdded",
       channel: "Inbox",
       title: `${createdIds.length} schools added by CSV`,
-      body: `${createdIds.length} new schools are active but planning-locked until each gets its first SSA.`,
-      href: "/data-intake",
+      body: `${createdIds.length} new schools are active and in their owners' portfolios. Assign them to clusters (the next setup step) before planning support.`,
+      href: "/clusters/assign",
     });
     if (flaggedTotal > 0) {
       emitAudit({
