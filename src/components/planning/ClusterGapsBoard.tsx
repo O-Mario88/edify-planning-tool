@@ -75,10 +75,17 @@ const MEETING_TONE: Record<ClusterMeetingStatus, { bg: string; text: string; Ico
 
 export function ClusterGapsBoard({
   assigningUserRole = "CountryProgramLead",
+  gaps,
 }: {
   /** Role threaded to the assign drawer for owner-option gating. */
   assigningUserRole?: "CCEO" | "CountryProgramLead" | "ImpactAssessment" | "CountryDirector" | "Admin";
+  /** Engine-derived cluster gaps (from the real cluster engine). Falls back to
+   *  the seed mock only when not provided (standalone/storybook use). */
+  gaps?: ClusterGap[];
 } = {}) {
+  // Source of truth = engine-derived gaps passed by the Planning page; the
+  // imported seed list is only a standalone fallback.
+  const data = gaps ?? clusterGaps;
   const [assign, setAssign] = useState<{ cluster: ClusterGap; label: string; purpose: string; isTraining: boolean } | null>(null);
   const [reschedule, setReschedule] = useState<RescheduleContext | null>(null);
   // Initial scheduling for a cluster meeting / SIT — opens the unified
@@ -191,7 +198,7 @@ export function ClusterGapsBoard({
     }> = [];
     for (const [key, value] of scheduleOverlay.entries()) {
       const [clusterId, slot] = key.split(":") as [string, ClusterMeetingSlot];
-      const cluster = clusterGaps.find((cg) => cg.id === clusterId);
+      const cluster = data.find((cg) => cg.id === clusterId);
       if (!cluster) continue;
       const slotLabel =
         slot === "first"  ? "1st cluster meeting" :
@@ -242,7 +249,7 @@ export function ClusterGapsBoard({
           <h2 className="text-[16px] font-extrabold tracking-tight inline-flex items-center gap-2">
             Cluster gaps
             <span className="inline-flex items-center px-1.5 py-[2px] rounded-md bg-[var(--color-edify-soft)] text-[var(--color-edify-text)] text-[10px] font-extrabold tabular">
-              {clusterGaps.length}
+              {data.length}
             </span>
           </h2>
           <p className="text-[12px] muted mt-0.5">
@@ -296,7 +303,7 @@ export function ClusterGapsBoard({
                   <button
                     type="button"
                     onClick={() => {
-                      const cluster = clusterGaps.find((cg) => cg.id === item.clusterId);
+                      const cluster = data.find((cg) => cg.id === item.clusterId);
                       if (cluster) setReschedule({ cluster, slot: item.slot });
                     }}
                     className="h-7 px-2.5 rounded-md border border-emerald-200 bg-white text-emerald-700 text-caption font-extrabold hover:bg-emerald-50 transition-colors inline-flex items-center gap-1"
@@ -313,7 +320,7 @@ export function ClusterGapsBoard({
 
       {open && (
         <ul className="space-y-2.5 mt-3">
-          {clusterGaps.map((c) => (
+          {data.map((c) => (
             <ClusterRow
               key={c.id}
               cluster={c}

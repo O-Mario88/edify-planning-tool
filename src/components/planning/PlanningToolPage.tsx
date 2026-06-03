@@ -6,6 +6,7 @@ import { PlanningOwnershipSections } from "./PlanningOwnershipSections";
 import { PlansFamilyNav } from "./PlansFamilyNav";
 import { getCurrentUser } from "@/lib/auth";
 import { onboardedSchoolGaps, scopeGapsToViewer } from "@/lib/planning/onboarded-gaps";
+import { engineClusterGaps } from "@/lib/planning/engine-cluster-gaps";
 
 // PlanningToolPage no longer renders its own sidebar — the (shell)
 // route-group layout mounts <EdifySidebarServer /> once for every
@@ -24,6 +25,9 @@ export async function PlanningToolPage() {
   // Cluster-first: count the viewer's unclustered schools so the Planning Tool
   // leads with the cluster-assignment call to action when any are outstanding.
   const unclusteredCount = onboardedGaps.filter((g) => g.gapCategory === "no_cluster").length;
+  // Cluster gaps now come from the real cluster engine (clusters + their
+  // scheduled/completed meetings), so the planning board reflects live truth.
+  const clusterGaps = engineClusterGaps();
 
   return (
     <>
@@ -45,7 +49,7 @@ export async function PlanningToolPage() {
         <UnclusteredSchoolsBanner count={unclusteredCount} />
 
         <PlansFamilyNav current="planning" className="flex items-center gap-1" />
-        <PlanningGapBoard extraGaps={onboardedGaps} />
+        <PlanningGapBoard extraGaps={onboardedGaps} clusterGaps={clusterGaps} />
 
         <PlanningOwnershipSections />
       </div>
