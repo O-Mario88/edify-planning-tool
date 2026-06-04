@@ -4,7 +4,7 @@ import { RoleBottomNav } from "@/components/mobile/RoleBottomNav";
 import { MonthlyFundRequestView } from "@/components/funds/monthly-fund-request/MonthlyFundRequestView";
 import { MonthlyFundRequestPageHeader } from "@/components/funds/monthly-fund-request/MonthlyFundRequestPageHeader";
 import type { MfrViewerRole } from "@/components/funds/monthly-fund-request/MonthlyFundRequestHeader";
-import { currentMonthlyFundRequest } from "@/lib/funds/monthly-fund-request-mock";
+import { generateMonthlyFundRequest } from "@/lib/funds/monthly-fund-request-mock";
 import { getCurrentUser } from "@/lib/auth";
 import { ROLE_REDIRECT, type EdifyRole } from "@/lib/auth-public";
 
@@ -46,6 +46,10 @@ export default async function MonthlyFundRequestPage() {
   }
 
   const viewerRole: MfrViewerRole = ROLE_VIEW[user.role] ?? "PL";
+
+  // Computed fresh each render so CD admin-item edits (which mutate the
+  // server-side overlay) flow into the budget rollup + grand total.
+  const currentMonthlyFundRequest = generateMonthlyFundRequest();
 
   // For demo purposes we start the request in a status appropriate to
   // the viewer's role: PL sees a request awaiting their review, CD

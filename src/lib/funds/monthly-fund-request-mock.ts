@@ -52,7 +52,7 @@ import type {
 // calculateAdminBudget via generateBudget(adminItems), then echoed out
 // to the UI as MfrAdminItem rows.
 
-type SeedAdminItem = {
+export type SeedAdminItem = {
   id: string;
   category: AdminBudgetCategory;
   name: string;
@@ -71,6 +71,54 @@ export const SEEDED_ADMIN_ITEMS: SeedAdminItem[] = [
   { id: "adm-6", category: "BankCharges",             name: "Monthly bank charges",                         quantity: 1,  unitCost: 220_000,   week: "Monthly", justification: "Standard country banking fees" },
   { id: "adm-7", category: "AdministrationTransport", name: "Admin transport — week 2 country visit",       quantity: 1,  unitCost: 480_000,   week: 2,         justification: "CD field assurance visit" },
 ];
+
+// ────────── Admin-item overlay (CD-editable, persisted) ──────────────
+//
+// SEEDED_ADMIN_ITEMS is the immutable baseline. The CD's add/edit/remove
+// operations mutate this globalThis-backed overlay (seeded from the
+// baseline on first read), and the request engine reads `effectiveAdminItems()`
+// so changes flow into the budget rollup + grand total. Shaped like a future
+// Prisma `MfrAdminItem` table; the swap replaces the array ops with Prisma.
+
+const ADMIN_OVERLAY_KEY = "__edify_mfr_admin_items__";
+type GlobalWithAdminOverlay = typeof globalThis & { [ADMIN_OVERLAY_KEY]?: SeedAdminItem[] };
+
+function adminOverlay(): SeedAdminItem[] {
+  const g = globalThis as GlobalWithAdminOverlay;
+  if (!g[ADMIN_OVERLAY_KEY]) g[ADMIN_OVERLAY_KEY] = SEEDED_ADMIN_ITEMS.map((x) => ({ ...x }));
+  return g[ADMIN_OVERLAY_KEY]!;
+}
+
+export function effectiveAdminItems(): SeedAdminItem[] {
+  return adminOverlay();
+}
+
+export function addAdminItemRecord(input: Omit<SeedAdminItem, "id">): SeedAdminItem {
+  const rec: SeedAdminItem = { ...input, id: `adm-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}` };
+  adminOverlay().push(rec);
+  return rec;
+}
+
+export function updateAdminItemRecord(id: string, patch: Partial<Omit<SeedAdminItem, "id">>): SeedAdminItem | undefined {
+  const a = adminOverlay();
+  const i = a.findIndex((x) => x.id === id);
+  if (i === -1) return undefined;
+  a[i] = { ...a[i], ...patch };
+  return a[i];
+}
+
+export function removeAdminItemRecord(id: string): boolean {
+  const a = adminOverlay();
+  const i = a.findIndex((x) => x.id === id);
+  if (i === -1) return false;
+  a.splice(i, 1);
+  return true;
+}
+
+export function __resetAdminItemOverlay() {
+  const g = globalThis as GlobalWithAdminOverlay;
+  g[ADMIN_OVERLAY_KEY] = undefined;
+}
 
 // ────────── Cost-settings snapshot shim ──────────────────────────────
 //
@@ -470,7 +518,7 @@ function buildAdminItems(fundRequestId: string): MfrAdminItem[] {
   const cdId   = "STF-CD-001";
   const cdName = "Christine Atim";
   let i = 0;
-  return SEEDED_ADMIN_ITEMS.map((s) => {
+  return effectiveAdminItems().map((s) => {
     i += 1;
     return {
       id:            s.id,
@@ -510,7 +558,7 @@ export function generateMonthlyFundRequest(opts?: {
     monthIso,
     activities,
     settings: ENGINE_COST_SETTINGS,
-    adminItems: SEEDED_ADMIN_ITEMS.map((s) => ({
+    adminItems: effectiveAdminItems().map((s) => ({
       id:       s.id,
       quantity: s.quantity,
       unitCost: s.unitCost,
@@ -525,7 +573,7 @@ export function generateMonthlyFundRequest(opts?: {
   const partnerAcc = new Map<string, PartnerAccumulator>();
   const specialAcc = new Map<string, SpecialAccumulator>();
   const sources: MfrSourceRecord[] = [];
-  const adminLineIds = new Set(SEEDED_ADMIN_ITEMS.map((s) => s.id));
+  const adminLineIds = new Set(effectiveAdminItems().map((s) => s.id));
 
   for (const line of rollup.lines) {
     // Admin lines are handled separately via SEEDED_ADMIN_ITEMS echo.

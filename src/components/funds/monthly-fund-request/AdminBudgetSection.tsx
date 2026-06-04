@@ -10,13 +10,16 @@
 // Local state only — when the real backend lands, swap `addItem` /
 // `removeItem` to server actions that revalidate the page.
 
-import { useState } from "react";
-import { Building2, Plus, Trash2, Wallet } from "lucide-react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { Building2, Plus, Trash2, Wallet, Loader2 } from "lucide-react";
 import {
   ADMIN_BUDGET_LABEL,
   type AdminBudgetCategory,
   type MfrAdminItem,
 } from "@/lib/funds/monthly-fund-request-types";
+import { useDemoStore } from "@/components/demo/DemoStore";
+import { addAdminItem, removeAdminItem } from "@/lib/actions/admin-item-actions";
 import { cn } from "@/lib/utils";
 
 const CATEGORIES = Object.keys(ADMIN_BUDGET_LABEL) as AdminBudgetCategory[];
@@ -42,31 +45,53 @@ export function AdminBudgetSection({
     week:        "Monthly"   as MfrAdminItem["week"],
     justification: "",
   });
+  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
+  const { pushToast } = useDemoStore();
 
   const subtotal = items.reduce((s, i) => s + i.totalCost, 0);
 
+  // Persist to the server overlay (so the item survives reload + feeds the
+  // budget rollup), then optimistically reflect it in the local view.
   const addItem = () => {
     if (!draft.itemName.trim() || draft.unitCost <= 0) return;
-    const next: MfrAdminItem = {
-      id:           `adm-${Date.now()}`,
-      fundRequestId,
-      category:     draft.category,
-      itemName:     draft.itemName.trim(),
-      quantity:     draft.quantity,
-      unitCost:     draft.unitCost,
-      totalCost:    draft.quantity * draft.unitCost,
-      week:         draft.week,
-      justification:draft.justification.trim() || undefined,
-      addedByCdId:  "STF-CD-001",
-      addedByCdName:cdName,
-      createdAt:    new Date().toISOString(),
-    };
-    onItemsChange?.([...items, next]);
-    setDraft({ category: "Rent", itemName: "", quantity: 1, unitCost: 0, week: "Monthly", justification: "" });
+    startTransition(async () => {
+      const res = await addAdminItem(fundRequestId, {
+        category: draft.category,
+        itemName: draft.itemName.trim(),
+        quantity: draft.quantity,
+        unitCost: draft.unitCost,
+        week: draft.week,
+        justification: draft.justification.trim() || undefined,
+      });
+      if (res.ok) {
+        onItemsChange?.([...items, res.item]);
+        setDraft({ category: "Rent", itemName: "", quantity: 1, unitCost: 0, week: "Monthly", justification: "" });
+        router.refresh();
+      } else {
+        pushToast({
+          tone: "warning",
+          title: "Couldn't add item",
+          body: res.reason === "FORBIDDEN" ? "Only the Country Director can add admin items." : "Check the name and unit cost.",
+        });
+      }
+    });
   };
 
   const removeItem = (id: string) => {
-    onItemsChange?.(items.filter((i) => i.id !== id));
+    startTransition(async () => {
+      const res = await removeAdminItem(id);
+      if (res.ok) {
+        onItemsChange?.(items.filter((i) => i.id !== id));
+        router.refresh();
+      } else {
+        pushToast({
+          tone: "warning",
+          title: "Couldn't remove item",
+          body: res.reason === "FORBIDDEN" ? "Only the Country Director can remove admin items." : "Item no longer exists — refresh.",
+        });
+      }
+    });
   };
 
   return (
@@ -227,15 +252,15 @@ export function AdminBudgetSection({
             <button
               type="button"
               onClick={addItem}
-              disabled={!draft.itemName.trim() || draft.unitCost <= 0}
+              disabled={!draft.itemName.trim() || draft.unitCost <= 0 || isPending}
               className={cn(
                 "inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-[12px] font-extrabold transition-colors",
-                draft.itemName.trim() && draft.unitCost > 0
+                draft.itemName.trim() && draft.unitCost > 0 && !isPending
                   ? "bg-amber-600 hover:bg-amber-700 text-white shadow-[0_10px_28px_-12px_rgba(217,119,6,0.45)]"
                   : "bg-slate-100 text-slate-400 cursor-not-allowed",
               )}
             >
-              <Plus size={12} />
+              {isPending ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
               Add item
             </button>
           </div>
