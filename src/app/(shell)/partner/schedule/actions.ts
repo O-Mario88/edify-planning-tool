@@ -13,8 +13,21 @@ import {
   emitWorkRejected,
   emitWorkReturned,
 } from "@/lib/messages-v2/system-events";
+import { emitAudit, emitNotificationFanOut } from "@/lib/actions/audit";
 import { reviewerPlan } from "@/lib/reschedule/routing";
 import type { RescheduleActor } from "@/lib/reschedule/types";
+
+// Month + week-of-month bucket for a date string, or null if unparseable.
+// A reschedule that crosses a bucket boundary shifts cost between budget
+// periods, so it should trigger a budget / MFR regeneration downstream.
+function periodBucket(dateStr: string): { monthIso: string; week: number } | null {
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return null;
+  return {
+    monthIso: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
+    week: Math.ceil(d.getDate() / 7),
+  };
+}
 
 export async function submitRescheduleAction(formData: FormData): Promise<void> {
   const user = await getCurrentUser();
@@ -52,6 +65,46 @@ export async function submitRescheduleAction(formData: FormData): Promise<void> 
     newDate,
     recipientUserIds: plan.userIds,
   });
+
+  // Cross-workflow contract: if the new date lands in a different budget
+  // period (month or week) than the original, the cost moves between buckets
+  // — fire a recalc event so the budget + Monthly Fund Request regenerate.
+  // (In the mock the budget reads a deterministic generator, so the numbers
+  //  are stable; this is the event/notification + revalidation seam a real
+  //  recalc job hooks into.)
+  const from = periodBucket(originalDate);
+  const to = periodBucket(newDate);
+  const periodChanged = !from || !to || from.monthIso !== to.monthIso || from.week !== to.week;
+
+  if (periodChanged) {
+    emitAudit({
+      action: "budget.recalcRequested",
+      subjectKind: "PlannedActivity",
+      subjectId: activityLabel,
+      actorId: user.staffId,
+      actorRole: user.role,
+      actorName: user.name,
+      payload: {
+        reason: "reschedule",
+        activityType,
+        fromPeriod: from ? `${from.monthIso} W${from.week}` : originalDate,
+        toPeriod: to ? `${to.monthIso} W${to.week}` : newDate,
+      },
+    });
+    emitNotificationFanOut(["PROGRAM_LEAD", "PROGRAM_ACCOUNTANT", "COUNTRY_DIRECTOR"], {
+      template: "budget.recalcRequested",
+      channel: "Inbox",
+      title: "Budget impact: activity rescheduled across a period",
+      body: `"${activityLabel}" moved to ${newDate}. Regenerate the affected month's budget + fund request.`,
+      href: "/monthly-fund-request",
+    });
+    try {
+      revalidatePath("/budget");
+      revalidatePath("/monthly-fund-request");
+    } catch {
+      /* outside request scope — fine */
+    }
+  }
 
   revalidatePath("/messages");
   revalidatePath("/partner/schedule");
