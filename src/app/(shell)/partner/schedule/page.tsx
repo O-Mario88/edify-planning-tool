@@ -12,6 +12,7 @@
 
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
+import { isPlanStarted } from "@/lib/scheduled-plan/started-overlay";
 import { ROLE_REDIRECT } from "@/lib/auth-public";
 import { PartnerSubPageHeader } from "@/components/partner/PartnerSubPageHeader";
 import { PartnerUnscheduledList } from "@/components/partner/PartnerUnscheduledList";
@@ -57,14 +58,19 @@ export default async function PartnerSchedulePage({
             with the routing preview) and Start Activity (opens the
             confirmation drawer + transitions status to In Progress).
             On mobile, Start fills the row and Reschedule wraps below. */}
-        {DEMO_PLANS.map((plan) => (
-          <ScheduledPlanCard
-            key={plan.id}
-            plan={plan}
-            rescheduleAction={submitRescheduleAction}
-            startAction={startActivityAction}
-          />
-        ))}
+        {DEMO_PLANS.map((demo) => {
+          // Apply the started-plan overlay so a started activity stays
+          // In Progress across reloads (its Start button is then retired).
+          const plan = isPlanStarted(demo.id) ? { ...demo, status: "in_progress" as const } : demo;
+          return (
+            <ScheduledPlanCard
+              key={plan.id}
+              plan={plan}
+              rescheduleAction={submitRescheduleAction}
+              startAction={startActivityAction}
+            />
+          );
+        })}
 
         {/* 1. Full list of unscheduled assignments — the partner's
             primary action on this page. */}

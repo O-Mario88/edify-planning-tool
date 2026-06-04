@@ -14,6 +14,7 @@ import {
   emitWorkReturned,
 } from "@/lib/messages-v2/system-events";
 import { emitAudit, emitNotificationFanOut } from "@/lib/actions/audit";
+import { markPlanStarted } from "@/lib/scheduled-plan/started-overlay";
 import { reviewerPlan } from "@/lib/reschedule/routing";
 import type { RescheduleActor } from "@/lib/reschedule/types";
 
@@ -110,17 +111,27 @@ export async function submitRescheduleAction(formData: FormData): Promise<void> 
   revalidatePath("/partner/schedule");
 }
 
-// Start Activity. Flips the scheduled-plan status to In Progress.
-// Mock today — Phase 4 swaps the body for a real DB write. The
-// revalidate ensures the card flips from "Reschedule + Start" to
-// "Complete Activity" on the next render.
+// Start Activity. Flips the scheduled-plan status to In Progress by recording
+// the start in the started-plan overlay (the schedule page applies it onto the
+// plan list), and emits an audit row. The revalidate then re-renders the card
+// from "Reschedule + Start" to its in-progress affordances.
 export async function startActivityAction(formData: FormData): Promise<void> {
+  const user = await getCurrentUser();
   const activityId    = String(formData.get("activityId") ?? "");
   const activityLabel = String(formData.get("activityLabel") ?? "");
   if (!activityId) return;
 
-  // eslint-disable-next-line no-console
-  console.info("[start-activity] in-progress", { activityId, activityLabel, at: new Date().toISOString() });
+  markPlanStarted(activityId, { id: user.staffId, name: user.name });
+
+  emitAudit({
+    action: "scheduledPlan.started",
+    subjectKind: "ScheduledPlan",
+    subjectId: activityId,
+    actorId: user.staffId,
+    actorRole: user.role,
+    actorName: user.name,
+    payload: { activityLabel },
+  });
 
   revalidatePath("/partner/schedule");
   revalidatePath("/partner/assignments");
