@@ -11,6 +11,7 @@ import { recordGapAssignment, type GapAssignmentOwner } from "@/lib/planning/ass
 import { emitAudit, emitNotification } from "./audit";
 
 export type AssignGapInput = {
+  gapId?: string;
   title: string;
   schoolOrCluster: string;
   owner: GapAssignmentOwner;
@@ -36,6 +37,7 @@ export async function assignGapActivity(input: AssignGapInput): Promise<AssignGa
   const ownerName = input.ownerName?.trim() || (input.owner === "myself" ? user.name : undefined);
 
   const rec = recordGapAssignment({
+    gapId: input.gapId,
     title: input.title.trim(),
     schoolOrCluster: input.schoolOrCluster,
     owner: input.owner,

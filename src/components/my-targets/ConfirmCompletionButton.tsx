@@ -18,18 +18,22 @@ import { cn } from "@/lib/utils";
 export function ConfirmCompletionButton({
   activity,
   className,
+  confirmed = false,
 }: {
   activity: CompletionActivity;
   className?: string;
+  /** Server-confirmed state (from the completion overlay) so the badge shows
+   *  for everyone, not just the browser that confirmed it. */
+  confirmed?: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const [done, setDone] = useState(false);
+  const [done, setDone] = useState(confirmed);
   const [, startConfirm] = useTransition();
   const { pushToast } = useDemoStore();
 
   useEffect(() => {
-    setDone(!!loadCompletions()[activity.id]);
-  }, [activity.id]);
+    setDone(confirmed || !!loadCompletions()[activity.id]);
+  }, [activity.id, confirmed]);
 
   if (done) {
     return (

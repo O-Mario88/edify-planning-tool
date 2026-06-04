@@ -7,6 +7,7 @@ import { PlansFamilyNav } from "./PlansFamilyNav";
 import { ProjectPlanningGaps } from "@/components/special-projects/ProjectPlanningGaps";
 import { getCurrentUser, toCurrentUser } from "@/lib/auth";
 import { onboardedSchoolGaps, scopeGapsToViewer } from "@/lib/planning/onboarded-gaps";
+import { assignedGapIds } from "@/lib/planning/assignment-overlay";
 import { engineClusterGaps } from "@/lib/planning/engine-cluster-gaps";
 import { directoryRecords } from "@/lib/school-directory/directory";
 import { computeProjectPlanningGaps } from "@/lib/projects/project-planning-gaps";
@@ -24,7 +25,11 @@ export async function PlanningToolPage() {
   // Onboarded schools (+ their uploaded SSA) become planner gaps, scoped to the
   // viewer's supervision chain. Computed server-side so runtime uploads show.
   const user = await getCurrentUser();
-  const onboardedGaps = scopeGapsToViewer(onboardedSchoolGaps(), user.staffId, user.role);
+  // Drop gaps that have already been assigned this session so an actioned gap
+  // disappears from the board on reload (the assignment lives in the overlay).
+  const assigned = assignedGapIds();
+  const onboardedGaps = scopeGapsToViewer(onboardedSchoolGaps(), user.staffId, user.role)
+    .filter((g) => !assigned.has(g.id));
   // Cluster-first: count the viewer's unclustered schools so the Planning Tool
   // leads with the cluster-assignment call to action when any are outstanding.
   const unclusteredCount = onboardedGaps.filter((g) => g.gapCategory === "no_cluster").length;

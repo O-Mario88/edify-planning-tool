@@ -51,6 +51,9 @@ export type PlanningAssignContext = {
   title: string;             // "Schedule School Improvement Training"
   schoolOrCluster: string;   // "Hope Primary School" or "Bbaale Cluster"
   purpose: string;           // generated purpose text
+  /** Stable id of the gap-board item being resolved, when known. Persisted
+   *  with the assignment so server-owned gap lists can drop it on reload. */
+  gapId?: string;
   /// Training assignments allow Partner-as-facilitator; visits don't.
   /// Set true for training/cluster meetings so the facilitator option
   /// renders.
@@ -223,6 +226,7 @@ export function PlanningAssignDrawer({
     const payloadNotes = notes || undefined;
     startAssign(async () => {
       const res = await assignGapActivity({
+        gapId: context.gapId,
         title: payloadTitle,
         schoolOrCluster: payloadSchool,
         owner,

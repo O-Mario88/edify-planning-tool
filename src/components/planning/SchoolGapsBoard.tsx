@@ -244,6 +244,7 @@ export function SchoolGapsBoard({
     const s = assign.school;
     const rec = recommendFor(s);
     return {
+      gapId: s.id,
       title: ACTION_LABEL[assign.action],
       schoolOrCluster: s.schoolName,
       purpose: rec.purpose,
