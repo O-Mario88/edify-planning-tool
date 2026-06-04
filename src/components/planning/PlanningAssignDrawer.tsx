@@ -22,13 +22,15 @@
 // overlay click, body scroll lock, and portal rendering all come from
 // the primitive; this component only owns the form state.
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import {
   User as UserIcon, Users, Handshake, ArrowRight, CheckCircle2,
   ChevronLeft, Calendar,
 } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
+import { useDemoStore } from "@/components/demo/DemoStore";
+import { assignGapActivity } from "@/lib/actions/gap-assign-actions";
 import { cn } from "@/lib/utils";
 
 export type AssignOwner = "myself" | "staff" | "partner" | "partner_facilitator";
@@ -174,6 +176,8 @@ export function PlanningAssignDrawer({
   const [notes, setNotes] = useState("");
   const [monthValue, setMonthValue] = useState<string>(defaultMonthValue());
   const [week, setWeek] = useState<1 | 2 | 3 | 4 | 5>(2);
+  const [, startAssign] = useTransition();
+  const { pushToast } = useDemoStore();
 
   function reset() {
     setStep("owner");
@@ -197,6 +201,12 @@ export function PlanningAssignDrawer({
   function handleSubmit() {
     if (!context) return;
     const monthLabel = CYCLE_MONTHS.find((m) => m.value === monthValue)?.label;
+    const ownerName =
+      owner === "staff" ? staffName :
+      owner === "partner" ? partnerName :
+      owner === "partner_facilitator" ? facilitator : undefined;
+
+    // Caller updates its optimistic local view first.
     onSubmit({
       owner,
       staffName:       owner === "staff" ? staffName : undefined,
@@ -206,6 +216,30 @@ export function PlanningAssignDrawer({
       month:           owner === "myself" ? monthLabel : undefined,
       week:            owner === "myself" ? week : undefined,
     });
+
+    // Persist the assignment as a real, auditable action + notify the assignee.
+    const payloadTitle = context.title;
+    const payloadSchool = context.schoolOrCluster;
+    const payloadNotes = notes || undefined;
+    startAssign(async () => {
+      const res = await assignGapActivity({
+        title: payloadTitle,
+        schoolOrCluster: payloadSchool,
+        owner,
+        ownerName,
+        monthLabel: owner === "myself" ? monthLabel : undefined,
+        week: owner === "myself" ? week : undefined,
+        notes: payloadNotes,
+      });
+      if (!res.ok) {
+        pushToast({
+          tone: "warning",
+          title: "Assignment not recorded",
+          body: res.reason === "FORBIDDEN" ? "Your role can't assign this activity." : "Couldn't record the assignment — try again.",
+        });
+      }
+    });
+
     handleClose();
   }
 
