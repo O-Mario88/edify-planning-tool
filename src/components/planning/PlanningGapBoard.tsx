@@ -32,7 +32,7 @@ const TABS: ReadonlyArray<TabDef> = [
   { key: "coreSchools", label: "Core Schools", icon: Briefcase },
 ];
 
-export function PlanningGapBoard({ extraGaps = [], clusterGaps }: { extraGaps?: SchoolGap[]; clusterGaps?: ClusterGap[] } = {}) {
+export function PlanningGapBoard({ extraGaps = [], clusterGaps, assignedGapIds = [] }: { extraGaps?: SchoolGap[]; clusterGaps?: ClusterGap[]; assignedGapIds?: string[] } = {}) {
   const [activeTab, setActiveTab] = useState<TabKey>("clientSchools");
 
   return (
@@ -73,7 +73,7 @@ export function PlanningGapBoard({ extraGaps = [], clusterGaps }: { extraGaps?: 
       <div role="tabpanel" aria-label={`${TABS.find((t) => t.key === activeTab)?.label} gaps`}>
         {activeTab === "clientSchools" && <SchoolGapsBoard extraGaps={extraGaps} />}
         {activeTab === "clusters" && <ClusterGapsBoard gaps={clusterGaps} />}
-        {activeTab === "coreSchools" && <CoreSchoolsGapPlanning />}
+        {activeTab === "coreSchools" && <CoreSchoolsGapPlanning assignedGapIds={assignedGapIds} />}
       </div>
     </section>
   );

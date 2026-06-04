@@ -65,7 +65,7 @@ export async function PlanningToolPage() {
         <UnclusteredSchoolsBanner count={unclusteredCount} />
 
         <PlansFamilyNav current="planning" className="flex items-center gap-1" />
-        <PlanningGapBoard extraGaps={onboardedGaps} clusterGaps={clusterGaps} />
+        <PlanningGapBoard extraGaps={onboardedGaps} clusterGaps={clusterGaps} assignedGapIds={[...assigned]} />
 
         <PlanningOwnershipSections />
 

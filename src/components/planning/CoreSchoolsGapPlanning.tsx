@@ -67,6 +67,7 @@ const TILE_TONE: Record<TileTone, { bg: string; text: string; ring: string }> = 
 
 export function CoreSchoolsGapPlanning({
   assigningUserRole = "CountryProgramLead",
+  assignedGapIds = [],
 }: {
   /**
    * Role of the user viewing the planning page. Threaded through to
@@ -75,6 +76,9 @@ export function CoreSchoolsGapPlanning({
    * planning operator.
    */
   assigningUserRole?: "CCEO" | "CountryProgramLead" | "ImpactAssessment" | "CountryDirector" | "Admin";
+  /** Plan ids already assigned (from the server assignment overlay) — seeded
+   *  into the dismissed set so an assigned core gap stays gone across reloads. */
+  assignedGapIds?: string[];
 } = {}) {
   const s = coreSchoolSummary();
   const [activeTab, setActiveTab] = useState<CorePlanningTab>("no_ssa");
@@ -82,7 +86,7 @@ export function CoreSchoolsGapPlanning({
   // Confirmed-assigned plans drop off the gap list per the operating
   // contract. Local state for the demo; production routes through a
   // gap-list query that excludes assigned-to-partner / partner-planned.
-  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(() => new Set(assignedGapIds));
   const [toast, setToast] = useState<string | null>(null);
   // Section-level collapse mirrors the School Gaps + Cluster Gaps cards
   // so the whole planning page collapses to a clean outline.
@@ -126,6 +130,7 @@ export function CoreSchoolsGapPlanning({
   }
 
   const drawerContext: PlanningAssignContext | null = assign && {
+    gapId: assign.plan.id,
     title: assign.label,
     schoolOrCluster: assign.plan.schoolName,
     purpose: assign.purpose,
