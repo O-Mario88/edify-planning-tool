@@ -36,8 +36,12 @@ import { cn } from "@/lib/utils";
 // confirmation lives in the same place.
 export function DisbursementQueue({
   onDisburse,
+  iaPendingByStaff = {},
 }: {
   onDisburse?: (id: string, form: DisburseForm, mode: "full" | "partial") => void;
+  /** Per-staff count of activities still awaiting IA verification — keyed by
+   *  staffId. A non-zero count gates further advances to that staffer. */
+  iaPendingByStaff?: Record<string, number>;
 }) {
   const [tab, setTab] = useState<"weekly" | "monthly" | "partial">("weekly");
   // Open row state: `null` collapsed, else { id, mode } open inline. We
@@ -51,9 +55,13 @@ export function DisbursementQueue({
       const priorClosed = priorWeekClosedFor(r, weeklyFundRequests);
       const blockers: string[] = [];
       if (!priorClosed) blockers.push("Prior week open");
+      // IA-verification gate: don't advance more cash to a staffer whose
+      // delivered work is still awaiting IA verification.
+      const iaPending = iaPendingByStaff[r.staffId] ?? 0;
+      if (iaPending > 0) blockers.push(`Awaiting IA verification (${iaPending})`);
       return { r, priorClosed, blockers };
     });
-  }, [all]);
+  }, [all, iaPendingByStaff]);
 
   const cleared = rows.filter((row) => row.blockers.length === 0).length;
 
@@ -67,7 +75,7 @@ export function DisbursementQueue({
         <div className="min-w-0">
           <h3 className="text-[13px] font-extrabold tracking-tight">Weekly Disbursement Queue</h3>
           <p className="text-caption muted font-semibold leading-tight">
-            {cleared} of {rows.length} cleared for release · prior-week gate enforced
+            {cleared} of {rows.length} cleared for release · prior-week + IA-verification gates enforced
           </p>
         </div>
         <div className="flex items-center gap-1">

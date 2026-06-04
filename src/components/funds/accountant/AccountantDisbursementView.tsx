@@ -19,7 +19,11 @@ import { planItems, cceoPlanItems } from "@/lib/mobile-mock";
 //   3. Row A      — Funds Received (4) + Disbursement Queue (8)
 //   4. Row B      — Staff Balance (5) + Accountability Tracker (7)
 //   5. Row C      — Disbursement History (7) + Audit Trail (5)
-export function AccountantDisbursementView() {
+export function AccountantDisbursementView({
+  iaPendingByStaff = {},
+}: {
+  iaPendingByStaff?: Record<string, number>;
+}) {
   // Country-wide activity wave: PL + CCEO field plans combined. The
   // accountant uses this forward-looking view to time fund readiness
   // — each week's cost total is the cash that must clear by Monday
@@ -49,7 +53,7 @@ export function AccountantDisbursementView() {
             <FundsReceivedPanel />
           </div>
           <div className="col-span-12 lg:col-span-8">
-            <DisbursementQueue />
+            <DisbursementQueue iaPendingByStaff={iaPendingByStaff} />
           </div>
         </section>
 
