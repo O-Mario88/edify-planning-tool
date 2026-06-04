@@ -23,7 +23,7 @@ export default function CoreCandidateQueuePage() {
   const summary = coreCandidateSummary();
 
   return (
-    <ResponsiveDashboard mobile={<SsaCoreCandidatesMobileView />} desktop={
+    <ResponsiveDashboard mobile={<SsaCoreCandidatesMobileView candidates={candidates} summary={summary} />} desktop={
     <>
       <SsaHeader />
       <div className="px-3 sm:px-4 md:px-6 pb-24 md:pb-6 space-y-3 md:space-y-4">

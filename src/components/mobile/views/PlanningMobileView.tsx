@@ -46,12 +46,22 @@ import {
   type AddToClusterOutcome,
   type AddToClusterContext,
 } from "@/components/planning/AddToClusterDrawer";
-import { CoreSchoolsGapPlanningMobile } from "@/components/planning/CoreSchoolsGapPlanningMobile";
+import { CorePlanBoard } from "@/components/core/CorePlanBoard";
+import type { SlotViewer } from "@/components/core/CoreSlotActions";
+import type { CorePlanCardVM } from "@/lib/core/core-board";
 import { PlanningOwnershipSectionsMobile } from "@/components/planning/PlanningOwnershipSectionsMobile";
 
 // ────────── Mobile view ──────────
 
-export function PlanningMobileView() {
+export function PlanningMobileView({
+  coreCards = [],
+  coreViewer = { canAssign: false, canExec: false, canIa: false },
+  canChampion = false,
+}: {
+  coreCards?: CorePlanCardVM[];
+  coreViewer?: SlotViewer;
+  canChampion?: boolean;
+} = {}) {
   useSetPageTitle("Planning");
 
   // Shared assign state for both school + cluster flows.
@@ -160,8 +170,8 @@ export function PlanningMobileView() {
             setAssign({ kind: "cluster", cluster, label, purpose, isTraining })}
         />
 
-        {/* ── Core Schools Gap Planning ─────────────────── */}
-        <CoreSchoolsGapPlanningMobile />
+        {/* ── Core Schools (unified CorePlan model) ─────── */}
+        <CorePlanBoard cards={coreCards} viewer={coreViewer} canChampion={canChampion} />
 
         {/* ── Ownership sections (Me / Partner / Awaiting / This Month) ── */}
         <PlanningOwnershipSectionsMobile />

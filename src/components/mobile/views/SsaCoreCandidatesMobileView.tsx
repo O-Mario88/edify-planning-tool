@@ -1,106 +1,81 @@
 "use client";
 
-import { ShieldCheck, Clock, BadgeCheck, AlertCircle, Star } from "lucide-react";
-import {
-  MobileSubpageShell,
-  MobileKpiGrid,
-  MobileSectionCard,
-  MobileListRows,
-  type MobileKpiTile,
-  type ListRow,
-  type KpiTone,
-} from "@/components/mobile/views/MobileSubpageShell";
-import {
-  coreSchoolCandidates,
-  ssaCoreCandidateSummary,
-  ssaVerificationTodos,
-  ssaUser,
-  type CoreCandidateStatus,
-} from "@/lib/ssa-mock";
+import Link from "next/link";
+import { MobileSubpageShell } from "@/components/mobile/views/MobileSubpageShell";
+import { CoreCandidateVerifyCell } from "@/components/core/CoreCandidateVerifyCell";
+import type { CoreCandidate, CoreCandidateStatus } from "@/lib/core/core-types";
 
-const STATUS_TONE: Record<CoreCandidateStatus, KpiTone> = {
-  "Awaiting Verification":               "amber",
-  "Awaiting SSA Verification ID":        "amber",
-  "Verified — Potential Core":           "green",
-  "Verified — Not Core Ready":           "rose",
-  "Recommended for October Onboarding":  "blue",
-  "Scheduled for Core Onboarding":       "green",
+const STATUS_TONE: Record<CoreCandidateStatus, string> = {
+  "Candidate":               "bg-sky-100 text-sky-700",
+  "Verification Pending":    "bg-amber-100 text-amber-700",
+  "Verification Submitted":  "bg-amber-100 text-amber-700",
+  "Verified Potential Core": "bg-emerald-100 text-emerald-700",
+  "Rejected Candidate":      "bg-rose-100 text-rose-700",
+  "Onboarding Pending":      "bg-violet-100 text-violet-700",
+  "Onboarded as Core":       "bg-violet-100 text-violet-700",
 };
 
-const STATUS_SHORT: Record<CoreCandidateStatus, string> = {
-  "Awaiting Verification":               "Awaiting",
-  "Awaiting SSA Verification ID":        "Awaiting ID",
-  "Verified — Potential Core":           "Potential",
-  "Verified — Not Core Ready":           "Not Ready",
-  "Recommended for October Onboarding":  "Oct Onboarding",
-  "Scheduled for Core Onboarding":       "Scheduled",
-};
-
-export function SsaCoreCandidatesMobileView() {
-  const summary = ssaCoreCandidateSummary();
-
-  const tiles: MobileKpiTile[] = [
-    { key: "eligible",      Icon: Star,        label: "Eligible Clients", value: summary.eligibleClients.toString(),      caption: "in pipeline",     tone: "edify" },
-    { key: "awaiting",      Icon: Clock,       label: "Awaiting Verification",  value: summary.awaitingVerification.toString(), caption: "needs SSA verify", tone: "amber" },
-    { key: "october",       Icon: ShieldCheck, label: "Oct Onboarding",         value: summary.octoberRecommended.toString(), caption: "recommended",     tone: "green" },
-    { key: "flagged",       Icon: BadgeCheck,  label: "Flagged Core",           value: summary.flaggedPotential.toString(),      caption: "potentialCoreFlag", tone: "violet" },
-  ];
-
-  const candidateRows: ListRow[] = coreSchoolCandidates.slice(0, 8).map((c) => ({
-    key: c.candidateId,
-    title: c.schoolName,
-    subtitle: `${c.district} · ${c.assignedCceoName}`,
-    meta: c.verifiedSsaAverage
-      ? `Verified SSA ${c.verifiedSsaAverage.toFixed(1)} · original ${c.originalSsaAverage.toFixed(1)}`
-      : `Original SSA ${c.originalSsaAverage.toFixed(1)}`,
-    pill: { label: STATUS_SHORT[c.verificationStatus], tone: STATUS_TONE[c.verificationStatus] },
-  }));
-
-  const todoRows: ListRow[] = ssaVerificationTodos.slice(0, 8).map((t) => ({
-    key: t.todoId,
-    title: t.schoolName,
-    subtitle: t.assignedStaffId,
-    meta: `Original SSA ${t.originalSsaId} · due ${t.dueDate ?? "—"}`,
-    pill: {
-      label: t.status,
-      tone:
-        t.status === "Verified" || t.status === "Closed" ? "green" :
-        t.status === "Submitted for Review"               ? "blue"  :
-        t.status === "Potential Core School"              ? "violet":
-        t.status === "Recommended"                        ? "amber" :
-                                                            "rose"  ,
-    },
-  }));
-
+export function SsaCoreCandidatesMobileView({
+  candidates = [],
+  summary = { total: 0, candidate: 0, verified: 0, rejected: 0 },
+}: {
+  candidates?: CoreCandidate[];
+  summary?: { total: number; candidate: number; verified: number; rejected: number };
+}) {
   return (
     <MobileSubpageShell
       title="Core Candidates"
-      subtitle={`${summary.eligibleClients} potential core schools · ${summary.awaitingVerification} awaiting verification`}
-      initials={ssaUser.initials}
+      subtitle="Directory schools with SSA ≥ 7.5 — verify to onboard."
     >
-      <MobileKpiGrid tiles={tiles} cols={2} />
+      <div className="grid grid-cols-3 gap-2 px-3">
+        <Kpi label="Candidates" value={summary.total} />
+        <Kpi label="To verify" value={summary.candidate} />
+        <Kpi label="Verified" value={summary.verified} />
+      </div>
 
-      <MobileSectionCard
-        title="Candidate Pipeline"
-        subtitle="Client schools at SSA 7.5+ across all 8 interventions"
-        ctaLabel="View All"
-        ctaHref="#all"
-      >
-        <MobileListRows rows={candidateRows} />
-      </MobileSectionCard>
-
-      <MobileSectionCard
-        title="SSA Verification Todos"
-        subtitle="Auto-created by the recommendation engine"
-      >
-        <MobileListRows rows={todoRows} />
-        <div className="px-3 py-2 border-t border-[#eef2f4]">
-          <div className="flex items-center gap-2 text-caption muted">
-            <AlertCircle size={11} />
-            Duplicate todos prevented per (school, originalSsaId).
-          </div>
+      {summary.verified > 0 && (
+        <div className="px-3">
+          <Link href="/core-onboarding" className="block text-center rounded-lg bg-[var(--color-edify-primary)] text-white text-[12px] font-bold py-2">
+            Onboarding Queue ({summary.verified}) →
+          </Link>
         </div>
-      </MobileSectionCard>
+      )}
+
+      <div className="px-3 flex flex-col gap-2 pb-4">
+        {candidates.length === 0 && (
+          <p className="text-center text-[12px] muted italic py-6">No core candidates yet.</p>
+        )}
+        {candidates.map((c) => (
+          <div key={c.schoolId} className="card p-3">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <div className="text-[13px] font-extrabold tracking-tight truncate">{c.schoolName}</div>
+                <div className="text-[11px] muted truncate">{c.district} · {c.accountOwnerName ?? "—"} · SSA {c.averageScore.toFixed(1)}</div>
+              </div>
+              <span className={`inline-flex items-center px-1.5 py-[2px] rounded text-[10px] font-bold whitespace-nowrap ${STATUS_TONE[c.candidateStatus]}`}>
+                {c.candidateStatus}
+              </span>
+            </div>
+            <div className="mt-2 flex items-center justify-between gap-2">
+              <span className="text-[10.5px] muted truncate">Weakest: {c.weakestInterventions.slice(0, 2).map((w) => w.area).join(", ")}</span>
+              {c.candidateStatus === "Candidate" ? (
+                <CoreCandidateVerifyCell schoolId={c.schoolId} schoolName={c.schoolName} />
+              ) : c.candidateStatus === "Verified Potential Core" ? (
+                <Link href="/core-onboarding" className="text-[11px] font-bold text-[var(--color-edify-primary)]">Onboard →</Link>
+              ) : null}
+            </div>
+          </div>
+        ))}
+      </div>
     </MobileSubpageShell>
+  );
+}
+
+function Kpi({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="card px-2.5 py-2 text-center">
+      <div className="text-[16px] font-extrabold tabular leading-none">{value}</div>
+      <div className="text-[9.5px] muted mt-0.5">{label}</div>
+    </div>
   );
 }
