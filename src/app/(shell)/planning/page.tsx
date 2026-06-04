@@ -1,7 +1,7 @@
 import { PlanningToolPage } from "@/components/planning/PlanningToolPage";
 import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { PlanningMobileView } from "@/components/mobile/views/PlanningMobileView";
-import { coreBoardData } from "@/lib/core/core-board";
+import { coreBoardData, coreOwnershipRows } from "@/lib/core/core-board";
 import { getCurrentUser } from "@/lib/auth";
 
 // The gap-based planning board now lives inside PlanningToolPage as a
@@ -17,11 +17,12 @@ export default async function Page() {
     canIa: ["ImpactAssessment", "Admin"].includes(user.role),
   };
   const canChampion = ["ImpactAssessment", "CountryProgramLead", "CountryDirector", "Admin"].includes(user.role);
+  const coreOwnership = coreOwnershipRows(user.staffId, user.role);
 
   return (
     <ResponsiveDashboard
       desktop={<PlanningToolPage />}
-      mobile={<PlanningMobileView coreCards={coreCards} coreViewer={coreViewer} canChampion={canChampion} />}
+      mobile={<PlanningMobileView coreCards={coreCards} coreViewer={coreViewer} canChampion={canChampion} coreOwnership={coreOwnership} />}
     />
   );
 }

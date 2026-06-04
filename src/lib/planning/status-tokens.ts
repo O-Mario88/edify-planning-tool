@@ -14,7 +14,10 @@
 // axis is "how urgent is this gap?" which is orthogonal to pipeline
 // state. It keeps its own colour scale.
 
-import type { CoreActivityStatus } from "@/lib/planning/core-school-plan-mock";
+// Per-activity status taxonomy (was core-school-plan-mock's CoreActivityStatus;
+// localized here so this module has no mock dependency).
+export type CoreActivityStatus =
+  | "blocked" | "not_started" | "scheduled" | "delivered" | "verified" | "completed";
 
 // ────────── Canonical pipeline status ──────────
 

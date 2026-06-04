@@ -67,6 +67,71 @@ function impactBaseline(p: CorePlan): number | undefined {
   return Math.round((interventions.reduce((s, i) => s + i.baselineScore, 0) / interventions.length) * 10) / 10;
 }
 
+// ─── My-Plan ownership rows (derived from CoreActivitySlots) ────────
+
+import type { PlanningStatus } from "@/lib/planning/status-tokens";
+import type { CoreActivitySlotStatus } from "./core-types";
+
+export type CoreOwnershipRow = {
+  schoolId: string;
+  schoolName: string;
+  kind: "visit" | "training";
+  number: number;
+  intervention: string;
+  planningStatus: PlanningStatus;
+  scheduledFor?: string;
+  ownerName?: string;
+};
+
+export type CoreOwnership = {
+  assignedToMe: CoreOwnershipRow[];
+  assignedToPartner: CoreOwnershipRow[];
+  awaitingPartner: CoreOwnershipRow[];
+  plannedThisMonth: CoreOwnershipRow[];
+};
+
+function slotPlanningStatus(s: CoreActivitySlotStatus): PlanningStatus {
+  switch (s) {
+    case "Not Planned": return "pending";
+    case "Planned": case "Scheduled": case "Rescheduled": case "Assigned to Partner": return "scheduled";
+    case "In Progress": case "Evidence Uploaded": case "Salesforce ID Required": case "Awaiting IA Verification": return "in_flight";
+    case "IA Verified": case "Accountant Confirmed": return "verified";
+    case "Completed": return "done";
+    case "Returned": case "Rejected": return "blocked";
+  }
+}
+
+export function coreOwnershipRows(staffId: string, role: EdifyRole): CoreOwnership {
+  const cards = coreBoardData(staffId, role);
+  const assignedToMe: CoreOwnershipRow[] = [];
+  const assignedToPartner: CoreOwnershipRow[] = [];
+  const awaitingPartner: CoreOwnershipRow[] = [];
+  const plannedThisMonth: CoreOwnershipRow[] = [];
+
+  for (const card of cards) {
+    for (const s of card.slots) {
+      const row: CoreOwnershipRow = {
+        schoolId: s.schoolId,
+        schoolName: card.schoolName,
+        kind: s.activityType,
+        number: s.sequenceNumber,
+        intervention: s.intervention,
+        planningStatus: slotPlanningStatus(s.status),
+        scheduledFor: s.scheduledFor,
+        ownerName: s.assignedStaffName ?? s.assignedPartnerName,
+      };
+      const isPartner = s.owner === "partner" || s.owner === "partner_facilitator" || !!s.assignedPartnerId;
+      if (s.assignedStaffId === staffId || s.owner === "myself") assignedToMe.push(row);
+      if (isPartner) {
+        assignedToPartner.push(row);
+        if (s.status === "Assigned to Partner") awaitingPartner.push(row);
+      }
+      if (s.scheduledFor && s.status !== "Completed" && s.status !== "Returned" && s.status !== "Rejected") plannedThisMonth.push(row);
+    }
+  }
+  return { assignedToMe, assignedToPartner, awaitingPartner, plannedThisMonth };
+}
+
 export function coreBoardSummary(cards: CorePlanCardVM[]) {
   return {
     plans: cards.length,

@@ -48,19 +48,23 @@ import {
 } from "@/components/planning/AddToClusterDrawer";
 import { CorePlanBoard } from "@/components/core/CorePlanBoard";
 import type { SlotViewer } from "@/components/core/CoreSlotActions";
-import type { CorePlanCardVM } from "@/lib/core/core-board";
+import type { CorePlanCardVM, CoreOwnership } from "@/lib/core/core-board";
 import { PlanningOwnershipSectionsMobile } from "@/components/planning/PlanningOwnershipSectionsMobile";
 
 // ────────── Mobile view ──────────
+
+const EMPTY_OWNERSHIP: CoreOwnership = { assignedToMe: [], assignedToPartner: [], awaitingPartner: [], plannedThisMonth: [] };
 
 export function PlanningMobileView({
   coreCards = [],
   coreViewer = { canAssign: false, canExec: false, canIa: false },
   canChampion = false,
+  coreOwnership = EMPTY_OWNERSHIP,
 }: {
   coreCards?: CorePlanCardVM[];
   coreViewer?: SlotViewer;
   canChampion?: boolean;
+  coreOwnership?: CoreOwnership;
 } = {}) {
   useSetPageTitle("Planning");
 
@@ -174,7 +178,7 @@ export function PlanningMobileView({
         <CorePlanBoard cards={coreCards} viewer={coreViewer} canChampion={canChampion} />
 
         {/* ── Ownership sections (Me / Partner / Awaiting / This Month) ── */}
-        <PlanningOwnershipSectionsMobile />
+        <PlanningOwnershipSectionsMobile ownership={coreOwnership} />
 
         {/* ── Scheduling-only banner ────────────────────── */}
         <Link

@@ -19,14 +19,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { CoreOwnership, CoreOwnershipRow } from "@/lib/core/core-board";
 import {
-  coreActivitiesAssignedTo,
-  corePlanningThisMonth,
-  INTERVENTION_LABEL,
-  type CoreActivityWithSchool,
-} from "@/lib/planning/core-school-plan-mock";
-import {
-  toPlanningStatus,
   PLANNING_STATUS_LABEL,
   PLANNING_STATUS_TONE,
 } from "@/lib/planning/status-tokens";
@@ -35,11 +29,13 @@ import { BumpPartnerButton } from "@/components/planning/BumpPartnerButton";
 
 const ACTIVITY_LIMIT = 5;
 
-export function PlanningOwnershipSections() {
-  const assignedToMe   = coreActivitiesAssignedTo("myself");
-  const assignedToPart = coreActivitiesAssignedTo("any_partner");
-  const awaitingPart   = assignedToPart.filter((a) => a.status === "not_started");
-  const plannedMonth   = corePlanningThisMonth();
+const EMPTY_OWNERSHIP: CoreOwnership = { assignedToMe: [], assignedToPartner: [], awaitingPartner: [], plannedThisMonth: [] };
+
+export function PlanningOwnershipSections({ ownership = EMPTY_OWNERSHIP }: { ownership?: CoreOwnership } = {}) {
+  const assignedToMe   = ownership.assignedToMe;
+  const assignedToPart = ownership.assignedToPartner;
+  const awaitingPart   = ownership.awaitingPartner;
+  const plannedMonth   = ownership.plannedThisMonth;
 
   return (
     <>
@@ -107,7 +103,7 @@ function OwnershipSection({
   subtitle:     string;
   Icon:         LucideIcon;
   tone:         keyof typeof TONE;
-  rows:         CoreActivityWithSchool[];
+  rows:         CoreOwnershipRow[];
   emptyTitle:   string;
   emptyBody:    string;
   emptyVariant: "calm" | "good";
@@ -166,9 +162,9 @@ function OwnershipSection({
   );
 }
 
-function ActivityRow({ row, showBump = false }: { row: CoreActivityWithSchool; showBump?: boolean }) {
+function ActivityRow({ row, showBump = false }: { row: CoreOwnershipRow; showBump?: boolean }) {
   const KindIcon = row.kind === "visit" ? Footprints : GraduationCap;
-  const canonical = toPlanningStatus(row.status);
+  const canonical = row.planningStatus;
   const tone      = PLANNING_STATUS_TONE[canonical];
   return (
     <li
@@ -185,7 +181,7 @@ function ActivityRow({ row, showBump = false }: { row: CoreActivityWithSchool; s
         <div className="min-w-0">
           <div className="text-[12px] font-extrabold tracking-tight truncate">{row.schoolName}</div>
           <div className="text-[11px] muted truncate">
-            {row.kind === "visit" ? "Visit" : "Training"} {row.number} · {INTERVENTION_LABEL[row.intervention]}
+            {row.kind === "visit" ? "Visit" : "Training"} {row.number} · {row.intervention}
           </div>
         </div>
       </div>

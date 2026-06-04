@@ -8,7 +8,7 @@ import { ProjectPlanningGaps } from "@/components/special-projects/ProjectPlanni
 import { getCurrentUser, toCurrentUser } from "@/lib/auth";
 import { onboardedSchoolGaps, scopeGapsToViewer } from "@/lib/planning/onboarded-gaps";
 import { assignedGapIds } from "@/lib/planning/assignment-overlay";
-import { coreBoardData } from "@/lib/core/core-board";
+import { coreBoardData, coreOwnershipRows } from "@/lib/core/core-board";
 import { engineClusterGaps } from "@/lib/planning/engine-cluster-gaps";
 import { directoryRecords } from "@/lib/school-directory/directory";
 import { computeProjectPlanningGaps } from "@/lib/projects/project-planning-gaps";
@@ -55,6 +55,7 @@ export async function PlanningToolPage() {
     canIa: ["ImpactAssessment", "Admin"].includes(user.role),
   };
   const canChampion = ["ImpactAssessment", "CountryProgramLead", "CountryDirector", "Admin"].includes(user.role);
+  const coreOwnership = coreOwnershipRows(user.staffId, user.role);
 
   return (
     <>
@@ -78,7 +79,7 @@ export async function PlanningToolPage() {
         <PlansFamilyNav current="planning" className="flex items-center gap-1" />
         <PlanningGapBoard extraGaps={onboardedGaps} clusterGaps={clusterGaps} coreCards={coreCards} coreViewer={coreViewer} canChampion={canChampion} />
 
-        <PlanningOwnershipSections />
+        <PlanningOwnershipSections ownership={coreOwnership} />
 
         <ProjectPlanningGaps categories={projectGaps} />
       </div>

@@ -9,14 +9,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { CoreOwnership, CoreOwnershipRow } from "@/lib/core/core-board";
 import {
-  coreActivitiesAssignedTo,
-  corePlanningThisMonth,
-  INTERVENTION_LABEL,
-  type CoreActivityWithSchool,
-} from "@/lib/planning/core-school-plan-mock";
-import {
-  toPlanningStatus,
   PLANNING_STATUS_LABEL,
   PLANNING_STATUS_TONE,
 } from "@/lib/planning/status-tokens";
@@ -24,11 +18,13 @@ import { PlanningEmptyState } from "@/components/planning/PlanningEmptyState";
 
 const ROW_LIMIT = 4;
 
-export function PlanningOwnershipSectionsMobile() {
-  const me      = coreActivitiesAssignedTo("myself");
-  const partner = coreActivitiesAssignedTo("any_partner");
-  const waiting = partner.filter((a) => a.status === "not_started");
-  const month   = corePlanningThisMonth();
+const EMPTY_OWNERSHIP: CoreOwnership = { assignedToMe: [], assignedToPartner: [], awaitingPartner: [], plannedThisMonth: [] };
+
+export function PlanningOwnershipSectionsMobile({ ownership = EMPTY_OWNERSHIP }: { ownership?: CoreOwnership } = {}) {
+  const me      = ownership.assignedToMe;
+  const partner = ownership.assignedToPartner;
+  const waiting = ownership.awaitingPartner;
+  const month   = ownership.plannedThisMonth;
 
   return (
     <>
@@ -52,7 +48,7 @@ function CompactSection({
   title: string;
   Icon:  LucideIcon;
   tone:  keyof typeof TONE;
-  rows:  CoreActivityWithSchool[];
+  rows:  CoreOwnershipRow[];
   href:  string;
 }) {
   const t = TONE[tone];
@@ -104,9 +100,9 @@ function CompactSection({
   );
 }
 
-function ActivityRow({ row }: { row: CoreActivityWithSchool }) {
+function ActivityRow({ row }: { row: CoreOwnershipRow }) {
   const KindIcon = row.kind === "visit" ? Footprints : GraduationCap;
-  const canonical = toPlanningStatus(row.status);
+  const canonical = row.planningStatus;
   const tone      = PLANNING_STATUS_TONE[canonical];
   return (
     <li className="relative px-3 py-2 flex items-start gap-2">
@@ -118,7 +114,7 @@ function ActivityRow({ row }: { row: CoreActivityWithSchool }) {
       <div className="flex-1 min-w-0">
         <div className="text-[12px] font-extrabold tracking-tight truncate">{row.schoolName}</div>
         <div className="text-[11px] muted truncate">
-          {row.kind === "visit" ? "Visit" : "Training"} {row.number} · {INTERVENTION_LABEL[row.intervention]}
+          {row.kind === "visit" ? "Visit" : "Training"} {row.number} · {row.intervention}
         </div>
         {row.scheduledFor && (
           <div className="text-[11px] muted truncate">{row.scheduledFor}</div>
