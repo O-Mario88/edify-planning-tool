@@ -178,9 +178,7 @@ function ActivityRowView({ row }: { row: ActivityRow }) {
       router.refresh();
     });
   }
-  function runReturn() {
-    const reason = prompt(`Return ${row.title}? Add a short reason (5+ chars):`)?.trim() ?? "";
-    if (reason.length < 5) return;
+  function runReturn(reason: string) {
     startTransition(async () => {
       const res = await returnActivity(row.id, reason);
       if (res.ok) pushToast({ tone: "info", title: "Returned for correction", body: row.title });
@@ -211,9 +209,7 @@ function ParticipantRowView({ row }: { row: ParticipantRow }) {
       router.refresh();
     });
   }
-  function runReject() {
-    const reason = prompt(`Reject evidence for ${row.participantName}? Add a short reason (5+ chars):`)?.trim() ?? "";
-    if (reason.length < 5) return;
+  function runReject(reason: string) {
     startTransition(async () => {
       const res = await rejectEvidence(row.id, reason);
       if (res.ok) pushToast({ tone: "info", title: "Evidence rejected", body: row.participantName });
@@ -245,9 +241,7 @@ function PartnerRowView({ row }: { row: PartnerRow }) {
       router.refresh();
     });
   }
-  function runReject() {
-    const reason = prompt(`Reject ${row.title}? Add a short reason (5+ chars):`)?.trim() ?? "";
-    if (reason.length < 5) return;
+  function runReject(reason: string) {
     startTransition(async () => {
       const res = await rejectPartnerActivity(row.id, reason);
       if (res.ok) pushToast({ tone: "info", title: "Activity rejected", body: row.title });
@@ -298,36 +292,65 @@ function RowChrome({
   sfId?: string;
   pending: boolean;
   onApprove: () => void;
-  onReturn: () => void;
+  onReturn: (reason: string) => void;
   approveLabel?: string;
   returnLabel?: string;
 }) {
+  const [returnOpen, setReturnOpen] = useState(false);
+  const [reason, setReason] = useState("");
+  const valid = reason.trim().length >= 5;
+
   return (
-    <div className="rounded-xl border border-[var(--color-edify-border)] bg-white p-3 flex items-center gap-3 flex-wrap">
-      <div className="flex-1 min-w-0">
-        <div className="text-body font-extrabold tracking-tight truncate">{title}</div>
-        <div className="text-caption muted mt-0.5 truncate">{subtitle}</div>
-        {sfId && <SalesforceIdChip sfId={sfId} />}
+    <div className="rounded-xl border border-[var(--color-edify-border)] bg-white p-3">
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex-1 min-w-0">
+          <div className="text-body font-extrabold tracking-tight truncate">{title}</div>
+          <div className="text-caption muted mt-0.5 truncate">{subtitle}</div>
+          {sfId && <SalesforceIdChip sfId={sfId} />}
+        </div>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setReturnOpen((v) => !v)}
+            disabled={pending}
+            aria-expanded={returnOpen}
+            className="inline-flex items-center gap-1 h-8 px-2.5 rounded-md bg-white border border-rose-200 hover:bg-rose-50 text-[11.5px] font-extrabold text-rose-700 disabled:opacity-50"
+          >
+            <RotateCcw size={11} /> {returnLabel}
+          </button>
+          <button
+            type="button"
+            onClick={onApprove}
+            disabled={pending}
+            className="inline-flex items-center gap-1 h-8 px-2.5 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-[11.5px] font-extrabold disabled:opacity-50 shadow-[0_4px_10px_-4px_rgba(15,23,32,0.45)]"
+          >
+            {pending ? <Loader2 size={11} className="animate-spin" /> : <CheckCircle2 size={11} />}
+            {approveLabel}
+          </button>
+        </div>
       </div>
-      <div className="flex items-center gap-1.5">
-        <button
-          type="button"
-          onClick={onReturn}
-          disabled={pending}
-          className="inline-flex items-center gap-1 h-8 px-2.5 rounded-md bg-white border border-rose-200 hover:bg-rose-50 text-[11.5px] font-extrabold text-rose-700 disabled:opacity-50"
-        >
-          <RotateCcw size={11} /> {returnLabel}
-        </button>
-        <button
-          type="button"
-          onClick={onApprove}
-          disabled={pending}
-          className="inline-flex items-center gap-1 h-8 px-2.5 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-[11.5px] font-extrabold disabled:opacity-50 shadow-[0_4px_10px_-4px_rgba(15,23,32,0.45)]"
-        >
-          {pending ? <Loader2 size={11} className="animate-spin" /> : <CheckCircle2 size={11} />}
-          {approveLabel}
-        </button>
-      </div>
+
+      {/* Inline reason — required for return/reject, mirrors FundPlanActionRow. */}
+      {returnOpen && (
+        <div className="mt-2.5 rounded-lg border border-rose-200 bg-rose-50/40 p-2.5 flex items-center gap-2 flex-wrap">
+          <input
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder={`Reason for ${returnLabel.toLowerCase()} (5+ chars)`}
+            aria-label="Return reason"
+            className="flex-1 min-w-[200px] h-8 rounded-md border border-rose-200 bg-white text-[12px] px-2 focus:outline-none focus:ring-2 focus:ring-rose-300"
+            onKeyDown={(e) => { if (e.key === "Enter" && valid) { onReturn(reason.trim()); setReturnOpen(false); setReason(""); } }}
+          />
+          <button
+            type="button"
+            onClick={() => { onReturn(reason.trim()); setReturnOpen(false); setReason(""); }}
+            disabled={pending || !valid}
+            className="inline-flex items-center gap-1 h-8 px-3 rounded-md bg-rose-600 hover:bg-rose-700 text-white text-[11.5px] font-extrabold disabled:opacity-50"
+          >
+            Send {returnLabel.toLowerCase()}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
