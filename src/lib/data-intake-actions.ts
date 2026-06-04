@@ -2,53 +2,99 @@
 
 // Server actions for the Data Validation queue. The underlying
 // `dataImportBatches` array is server-only (see `data-intake-mock.ts`),
-// so any state change has to happen on the server. The queue page
-// re-reads `dataImportBatches` on each request, so a successful
-// `approveImport` will be reflected on the next reload.
+// so any state change happens on the server; the queue page re-reads the
+// array each request so a successful transition shows on the next render.
 //
-// Authorisation: only the listed roles may approve. The role check is
-// soft — it relies on the caller passing the actor; production would
-// derive this from the session.
+// Canonical Bucket-C shape: resolve the actor via getCurrentUser (never
+// trust a client-passed actor), gate by role, validate the source status,
+// mutate, emit one audit row, revalidate, return a discriminated union.
+//
+// Batch lifecycle:
+//   Uploaded → Validated → Ready for Review → Approved for Import → Imported
+//        ↘ Needs Correction          ↘ Rejected (terminal, with reason)
 
 import { revalidatePath } from "next/cache";
-import { dataImportBatches } from "@/lib/data-intake-mock";
+import { dataImportBatches, type DataImportBatch } from "@/lib/data-intake-mock";
+import { getCurrentUser } from "@/lib/auth";
+import { emitAudit } from "./actions/audit";
 
-export type ApproveImportResult =
-  | { ok: true; batchId: string }
-  | { ok: false; reason: "FORBIDDEN" | "NOT_FOUND" | "WRONG_STATUS" };
+type Status = DataImportBatch["status"];
 
-const ALLOWED_ROLES = [
-  "ImpactAssessment",
-  "Admin",
-  "CountryDirector",
-  "ProgramAccountant",
-];
+export type BatchActionResult =
+  | { ok: true; batchId: string; newStatus: Status }
+  | { ok: false; reason: "FORBIDDEN" | "NOT_FOUND" | "WRONG_STATUS" | "INVALID_INPUT" };
 
-export async function approveImport(
+const REVIEW_ROLES = new Set(["ImpactAssessment", "Admin", "CountryDirector", "ProgramAccountant"]);
+
+function stamp(): string {
+  return new Date().toISOString().replace("T", " · ").slice(0, 16);
+}
+
+async function transition(
   batchId: string,
-  actor: { role: string; name?: string },
-): Promise<ApproveImportResult> {
-  if (!ALLOWED_ROLES.includes(actor.role)) {
-    return { ok: false, reason: "FORBIDDEN" };
-  }
+  from: ReadonlySet<Status>,
+  to: Status,
+  auditAction: string,
+  extra: Partial<DataImportBatch> = {},
+  payload: Record<string, unknown> = {},
+): Promise<BatchActionResult> {
+  const user = await getCurrentUser();
+  if (!REVIEW_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
   const idx = dataImportBatches.findIndex((b) => b.id === batchId);
   if (idx === -1) return { ok: false, reason: "NOT_FOUND" };
   const b = dataImportBatches[idx];
-  if (b.status !== "Ready for Review" && b.status !== "Validated") {
-    return { ok: false, reason: "WRONG_STATUS" };
-  }
-  const now = new Date().toISOString().replace("T", " · ").slice(0, 16);
-  dataImportBatches[idx] = {
-    ...b,
-    status: "Approved for Import",
-    reviewedBy: actor.name ?? actor.role,
-    reviewedAt: now,
-  };
-  // Refresh the queue page so the new status is visible.
+  if (!from.has(b.status)) return { ok: false, reason: "WRONG_STATUS" };
+
+  dataImportBatches[idx] = { ...b, status: to, ...extra };
+
+  emitAudit({
+    action: auditAction,
+    subjectKind: "DataImportBatch",
+    subjectId: batchId,
+    actorId: user.staffId,
+    actorRole: user.role,
+    actorName: user.name,
+    payload: { from: b.status, to, file: b.sourceFileName, ...payload },
+  });
+
   try {
     revalidatePath("/data-intake/queue");
+    revalidatePath("/data-intake");
   } catch {
-    // Outside a request scope (e.g. unit test) — ignore.
+    /* outside request scope — fine */
   }
-  return { ok: true, batchId };
+  return { ok: true, batchId, newStatus: to };
+}
+
+export async function validateBatch(batchId: string): Promise<BatchActionResult> {
+  return transition(batchId, new Set<Status>(["Uploaded"]), "Validated", "dataImport.validated");
+}
+
+export async function sendBatchForReview(batchId: string): Promise<BatchActionResult> {
+  return transition(batchId, new Set<Status>(["Validated"]), "Ready for Review", "dataImport.sentForReview");
+}
+
+export async function approveImport(batchId: string): Promise<BatchActionResult> {
+  const user = await getCurrentUser();
+  return transition(
+    batchId,
+    new Set<Status>(["Ready for Review", "Validated"]),
+    "Approved for Import",
+    "dataImport.approved",
+    { reviewedBy: user.name, reviewedAt: stamp() },
+  );
+}
+
+export async function rejectImport(batchId: string, reason: string): Promise<BatchActionResult> {
+  const trimmed = reason?.trim() ?? "";
+  if (trimmed.length < 5) return { ok: false, reason: "INVALID_INPUT" };
+  const user = await getCurrentUser();
+  return transition(
+    batchId,
+    new Set<Status>(["Uploaded", "Validated", "Ready for Review", "Needs Correction"]),
+    "Rejected",
+    "dataImport.rejected",
+    { reviewedBy: user.name, reviewedAt: stamp(), notes: trimmed },
+    { reason: trimmed },
+  );
 }

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { StubPage } from "@/components/shell/StubPage";
 import { ActionButton } from "@/components/ui/ActionButton";
 import { ApproveImportButton } from "./ApproveImportButton";
+import { ValidateBatchButton, SendForReviewButton, RejectBatchButton } from "./BatchActions";
 import { dataImportBatches, type DataImportBatch } from "@/lib/data-intake-mock";
 import { cn } from "@/lib/utils";
 
@@ -16,20 +17,33 @@ const STATUS_TONE = {
 } as const;
 
 // Status-driven action — shared by the mobile cards and the desktop table.
+// Each control is a real server-action island (Validate / Send for review /
+// Approve / Reject) so the batch genuinely advances state.
 function batchAction(b: DataImportBatch) {
-  if (b.status === "Ready for Review") return <ApproveImportButton batchId={b.id} fileName={b.sourceFileName} />;
+  if (b.status === "Ready for Review") return (
+    <span className="inline-flex items-center gap-2.5">
+      <ApproveImportButton batchId={b.id} fileName={b.sourceFileName} />
+      <RejectBatchButton batchId={b.id} />
+    </span>
+  );
   if (b.status === "Needs Correction") return (
-    <ActionButton label="View errors →" className="text-[11px] font-semibold text-rose-700 hover:underline"
-      toast={{ tone: "warning", title: "Opening error log", body: `${b.errorRows} validation errors across ${b.totalRows} rows.` }} />
+    <span className="inline-flex items-center gap-2.5">
+      <ActionButton label="View errors →" className="text-[11px] font-semibold text-rose-700 hover:underline"
+        toast={{ tone: "warning", title: "Opening error log", body: `${b.errorRows} validation errors across ${b.totalRows} rows.` }} />
+      <RejectBatchButton batchId={b.id} />
+    </span>
   );
   if (b.status === "Uploaded") return (
-    <ActionButton label="Validate →" className="text-[11px] font-semibold text-[var(--color-edify-primary)] hover:underline"
-      toast={{ tone: "info", title: "Validating rows", body: "Running schema + business rule checks." }} />
+    <span className="inline-flex items-center gap-2.5">
+      <ValidateBatchButton batchId={b.id} />
+      <RejectBatchButton batchId={b.id} />
+    </span>
   );
   if (b.status === "Validated") return (
-    <ActionButton label="Send for review →" className="text-[11px] font-semibold text-[var(--color-edify-primary)] hover:underline"
-      oneShot oneShotLabel="Sent" oneShotClassName="!bg-transparent !text-sky-700 !font-bold"
-      toast={{ tone: "success", title: "Sent to reviewer", body: `${b.sourceFileName} routed for approval.` }} />
+    <span className="inline-flex items-center gap-2.5">
+      <SendForReviewButton batchId={b.id} />
+      <RejectBatchButton batchId={b.id} />
+    </span>
   );
   if (b.status === "Imported") return <Link href="/data-intake/readiness" className="text-[11px] font-semibold text-emerald-700 hover:underline">In planning engine</Link>;
   return null;

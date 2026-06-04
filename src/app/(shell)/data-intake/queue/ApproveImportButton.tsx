@@ -23,7 +23,7 @@ export function ApproveImportButton({
 
   function go() {
     startTransition(async () => {
-      const res = await approveImport(batchId, { role: "ImpactAssessment", name: "Robert Otim" });
+      const res = await approveImport(batchId);
       if (!res.ok) {
         pushToast({
           tone: "warning",
