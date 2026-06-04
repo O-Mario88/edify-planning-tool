@@ -31,6 +31,7 @@ import {
   PLANNING_STATUS_TONE,
 } from "@/lib/planning/status-tokens";
 import { PlanningEmptyState } from "@/components/planning/PlanningEmptyState";
+import { BumpPartnerButton } from "@/components/planning/BumpPartnerButton";
 
 const ACTIVITY_LIMIT = 5;
 
@@ -70,6 +71,7 @@ export function PlanningOwnershipSections() {
         Icon={Clock}
         tone="warn"
         rows={awaitingPart}
+        showBump
         emptyTitle="Every partner activity has a date."
         emptyBody="When a partner-owned activity is overdue for scheduling it will surface here so you can bump them."
         emptyVariant="good"
@@ -99,7 +101,7 @@ const TONE: Record<"info" | "warn" | "good", { bg: string; text: string; ring: s
 };
 
 function OwnershipSection({
-  title, subtitle, Icon, tone, rows, emptyTitle, emptyBody, emptyVariant, viewAllHref,
+  title, subtitle, Icon, tone, rows, emptyTitle, emptyBody, emptyVariant, viewAllHref, showBump = false,
 }: {
   title:        string;
   subtitle:     string;
@@ -110,6 +112,7 @@ function OwnershipSection({
   emptyBody:    string;
   emptyVariant: "calm" | "good";
   viewAllHref:  string;
+  showBump?:    boolean;
 }) {
   const t = TONE[tone];
   const visible = rows.slice(0, ACTIVITY_LIMIT);
@@ -150,7 +153,7 @@ function OwnershipSection({
       ) : (
         <>
           <ul className="divide-y divide-[var(--color-edify-divider)] rounded-xl border border-[var(--color-edify-divider)] overflow-hidden">
-            {visible.map((row) => <ActivityRow key={`${row.schoolId}-${row.kind}-${row.number}`} row={row} />)}
+            {visible.map((row) => <ActivityRow key={`${row.schoolId}-${row.kind}-${row.number}`} row={row} showBump={showBump} />)}
           </ul>
           {overflow > 0 && (
             <div className="text-[11px] muted italic mt-2 text-center">
@@ -163,7 +166,7 @@ function OwnershipSection({
   );
 }
 
-function ActivityRow({ row }: { row: CoreActivityWithSchool }) {
+function ActivityRow({ row, showBump = false }: { row: CoreActivityWithSchool; showBump?: boolean }) {
   const KindIcon = row.kind === "visit" ? Footprints : GraduationCap;
   const canonical = toPlanningStatus(row.status);
   const tone      = PLANNING_STATUS_TONE[canonical];
@@ -189,8 +192,17 @@ function ActivityRow({ row }: { row: CoreActivityWithSchool }) {
       <div className="col-span-6 sm:col-span-3 text-[11px] muted truncate">
         {row.ownerName ?? "—"}
       </div>
-      <div className="col-span-6 sm:col-span-2 text-[11px] muted truncate">
-        {row.scheduledFor ?? "Unscheduled"}
+      <div className="col-span-6 sm:col-span-2 text-[11px] muted flex items-center gap-2 min-w-0">
+        <span className="truncate">{row.scheduledFor ?? "Unscheduled"}</span>
+        {showBump && (
+          <BumpPartnerButton
+            schoolId={row.schoolId}
+            schoolName={row.schoolName}
+            kind={row.kind}
+            activityNumber={row.number}
+            partnerName={row.ownerName}
+          />
+        )}
       </div>
       <div className="col-span-12 sm:col-span-1 flex sm:justify-end">
         <span className={cn(
