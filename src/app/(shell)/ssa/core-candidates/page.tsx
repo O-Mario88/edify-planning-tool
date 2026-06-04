@@ -5,6 +5,8 @@ import { CoreCandidateSummaryCards } from "@/components/ssa/CoreCandidateSummary
 import { CoreCandidateTable } from "@/components/ssa/CoreCandidateTable";
 import { SectionCard } from "@/components/ui/primitives";
 import { ssaVerificationTodos } from "@/lib/ssa-mock";
+import { ssaTodoCompletionFor } from "@/lib/ssa/verification-todos";
+import { SsaTodoCompleteCell } from "@/components/ssa/SsaTodoCompleteCell";
 
 export default function CoreCandidateQueuePage() {
   return (
@@ -26,35 +28,60 @@ export default function CoreCandidateQueuePage() {
                   <th scope="col" className="text-left">Todo</th>
                   <th scope="col" className="text-left">School</th>
                   <th scope="col" className="text-left">Assigned Staff</th>
-                  <th scope="col" className="text-left">Reason</th>
                   <th scope="col" className="text-left">Status</th>
-                  <th scope="col" className="text-left">Original SSA ID</th>
+                  <th scope="col" className="text-left">SSA ID</th>
                   <th scope="col" className="text-left">Due</th>
+                  <th scope="col" className="text-left">Action</th>
                 </tr>
               </thead>
               <tbody>
-                {ssaVerificationTodos.map((t) => (
-                  <tr key={t.todoId}>
-                    <td className="text-body font-semibold whitespace-nowrap">
-                      Verify SSA for Potential Core School Review
-                    </td>
-                    <td className="text-[12px]">{t.schoolName}</td>
-                    <td className="text-[12px] muted">{t.assignedStaffId}</td>
-                    <td className="text-[11.5px] muted">{t.reason}</td>
-                    <td>
-                      <span className="inline-flex items-center px-2 py-[2px] rounded-md text-[11px] font-bold bg-amber-100 text-amber-700">
-                        {t.status}
-                      </span>
-                    </td>
-                    <td className="text-[11.5px] tabular muted">{t.originalSsaId}</td>
-                    <td className="text-[12px] muted">{t.dueDate ?? "—"}</td>
-                  </tr>
-                ))}
+                {ssaVerificationTodos.map((t) => {
+                  const done = ssaTodoCompletionFor(t.todoId);
+                  return (
+                    <tr key={t.todoId}>
+                      <td className="text-body font-semibold whitespace-nowrap">
+                        Verify SSA for Potential Core School Review
+                      </td>
+                      <td className="text-[12px]">{t.schoolName}</td>
+                      <td className="text-[12px] muted">{t.assignedStaffId}</td>
+                      <td>
+                        {done ? (
+                          <span className="inline-flex items-center px-2 py-[2px] rounded-md text-[11px] font-bold bg-emerald-100 text-emerald-700">
+                            {done.newStatus} · {done.flag}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-[2px] rounded-md text-[11px] font-bold bg-amber-100 text-amber-700">
+                            {t.status}
+                          </span>
+                        )}
+                      </td>
+                      <td className="text-[11.5px] tabular muted">
+                        {done ? (
+                          /* ID-consistency: show the EXACT entered verification id. */
+                          <span title="Verification ID entered by staff">
+                            <b className="text-[var(--color-edify-text)]">{done.ssaVerificationId}</b>
+                            <span className="block text-[10px] muted">was {t.originalSsaId}</span>
+                          </span>
+                        ) : (
+                          t.originalSsaId
+                        )}
+                      </td>
+                      <td className="text-[12px] muted">{t.dueDate ?? "—"}</td>
+                      <td>
+                        {done ? (
+                          <span className="text-[11px] muted">Verified by {done.completedByName}</span>
+                        ) : (
+                          <SsaTodoCompleteCell todoId={t.todoId} schoolName={t.schoolName} />
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
             <div className="mt-3 pt-3 border-t border-[#eef2f4] text-[11px] muted">
               Duplicate todos are prevented per (school, originalSsaId). Marking done requires
-              the new SSA Verification ID.
+              the new SSA Verification ID — the queue then shows that exact ID back.
             </div>
           </SectionCard>
         </div>
