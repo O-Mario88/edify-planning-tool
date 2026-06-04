@@ -13,7 +13,7 @@ import { BudgetKpiRow, type BudgetKpi } from "../BudgetKpiRow";
 import { ApprovalWorkflowStepper, type WorkflowStep } from "../ApprovalWorkflowStepper";
 import { BudgetHealthGauge } from "../BudgetHealthGauge";
 import { BudgetByQuarterBars, MonthlyBurnReleases, BudgetByDimensionBars, ProgramAdminDonut } from "../BudgetCharts";
-import { BudgetRiskAlerts, FundRequestStatusRow, RecentFundRequestsCard, type RecentFundRequest } from "../BudgetCards";
+import { BudgetRiskAlerts, FundRequestStatusRow, RecentFundRequestsCard, SectionEyebrow, type RecentFundRequest } from "../BudgetCards";
 import { BudgetLedgerTable } from "../BudgetLedgerTable";
 import { fmtUgxShort, fmtPct } from "@/lib/funds/budget/budget-format";
 import type { AnnualBudgetRollup } from "@/lib/funds/budget/annual-rollup";
@@ -89,6 +89,8 @@ export function AnnualBudgetDashboard({ rollup }: { rollup: AnnualBudgetRollup }
 
       <BudgetKpiRow items={kpis} />
 
+      <SectionEyebrow>Approval &amp; Activity</SectionEyebrow>
+
       {/* Workflow + recent requests */}
       <section className="grid grid-cols-12 gap-4 items-stretch">
         <div className="col-span-12 lg:col-span-8">
@@ -118,6 +120,8 @@ export function AnnualBudgetDashboard({ rollup }: { rollup: AnnualBudgetRollup }
       ) : (
         <>
           {/* Charts */}
+          <SectionEyebrow>Budget Performance</SectionEyebrow>
+
           {/* Time-series charts — 2-up so the 12-month + quarterly series get
               room to breathe (no squeezed 3-up). */}
           <section className="grid grid-cols-12 gap-4 items-start">
@@ -128,6 +132,8 @@ export function AnnualBudgetDashboard({ rollup }: { rollup: AnnualBudgetRollup }
               <SectionCard title="Monthly Burn & Releases (UGX)"><MonthlyBurnReleases data={rollup.byMonth} /></SectionCard>
             </div>
           </section>
+
+          <SectionEyebrow>Allocation &amp; Health</SectionEyebrow>
 
           {/* District bars (wide) + a compact rail (cost mix + health). */}
           <section className="grid grid-cols-12 gap-4 items-start">
@@ -145,6 +151,8 @@ export function AnnualBudgetDashboard({ rollup }: { rollup: AnnualBudgetRollup }
               <SectionCard title="Budget Health"><BudgetHealthGauge score={rollup.healthScore} split={rollup.healthSplit} /></SectionCard>
             </div>
           </section>
+
+          <SectionEyebrow>Fund Requests &amp; Risk</SectionEyebrow>
 
           {/* Fund-request status (wide strip) + risk alerts. */}
           <section className="grid grid-cols-12 gap-4 items-start">

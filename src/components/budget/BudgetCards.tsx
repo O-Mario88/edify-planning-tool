@@ -9,6 +9,19 @@ import { SectionCard, StatusBadge } from "@/components/ui/primitives";
 import { fmtUgx, fmtUgxShort, fmtPct } from "@/lib/funds/budget/budget-format";
 import type { AnnualBudgetRollup } from "@/lib/funds/budget/annual-rollup";
 
+// Zone divider — segments the dashboard body into labeled groups so the page
+// reads as ordered sections (Approval → Performance → Allocation) instead of a
+// flat stack of equal-weight cards. Optional right-aligned note for context.
+export function SectionEyebrow({ children, note }: { children: React.ReactNode; note?: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-3 pt-1">
+      <h2 className="text-[11px] font-bold uppercase tracking-[0.09em] text-[var(--color-edify-muted)] shrink-0">{children}</h2>
+      <span className="flex-1 h-px bg-[var(--color-edify-border)]" />
+      {note && <span className="text-[10.5px] muted shrink-0">{note}</span>}
+    </div>
+  );
+}
+
 export function BudgetRiskAlerts({ alerts, title = "Variance / Risk Alerts" }: {
   alerts: AnnualBudgetRollup["riskAlerts"];
   title?: string;

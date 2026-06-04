@@ -12,7 +12,7 @@ import { BudgetKpiRow, type BudgetKpi } from "../BudgetKpiRow";
 import { ApprovalWorkflowStepper, type WorkflowStep } from "../ApprovalWorkflowStepper";
 import { BudgetHealthGauge } from "../BudgetHealthGauge";
 import { AnnualOverviewLines, BudgetByQuarterBars, MonthlyBurnReleases, BudgetMixDonut, BudgetByDimensionBars } from "../BudgetCharts";
-import { BudgetRiskAlerts, BudgetSnapshots } from "../BudgetCards";
+import { BudgetRiskAlerts, BudgetSnapshots, SectionEyebrow } from "../BudgetCards";
 import { fmtUgxShort, fmtPct } from "@/lib/funds/budget/budget-format";
 import type { AnnualBudgetRollup } from "@/lib/funds/budget/annual-rollup";
 import type { OperationalTotals } from "@/lib/funds/budget/budget-summary";
@@ -92,6 +92,8 @@ export function PlBudgetOverview({ rollup, operational }: { rollup: AnnualBudget
 
       <BudgetKpiRow items={kpis} />
 
+      <SectionEyebrow>Approval &amp; Status</SectionEyebrow>
+
       <section className="grid grid-cols-12 gap-4 items-stretch">
         <div className="col-span-12 lg:col-span-8">
           <SectionCard title="Plan & Budget Approval Workflow">
@@ -121,6 +123,8 @@ export function PlBudgetOverview({ rollup, operational }: { rollup: AnnualBudget
         </div>
       </section>
 
+      <SectionEyebrow>Budget Performance</SectionEyebrow>
+
       {/* Operational trend (wide) + health gauge — 2-up. */}
       <section className="grid grid-cols-12 gap-4 items-start">
         <div className="col-span-12 lg:col-span-8"><SectionCard title="Annual Operational Budget Trend (UGX)"><AnnualOverviewLines data={overview} /></SectionCard></div>
@@ -131,6 +135,8 @@ export function PlBudgetOverview({ rollup, operational }: { rollup: AnnualBudget
         <div className="col-span-12 lg:col-span-6"><SectionCard title="Quarterly Budget Performance (UGX)"><BudgetByQuarterBars data={rollup.byQuarter} /></SectionCard></div>
         <div className="col-span-12 lg:col-span-6"><SectionCard title="Monthly Burn & Releases (UGX)"><MonthlyBurnReleases data={rollup.byMonth} /></SectionCard></div>
       </section>
+
+      <SectionEyebrow>Regional Allocation</SectionEyebrow>
 
       {/* Region bars (wide) + a compact rail (budget mix by source + risk). */}
       <section className="grid grid-cols-12 gap-4 items-start">
