@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import {
   Building2,
   GraduationCap,
@@ -16,7 +17,12 @@ import {
   Award,
   MapPin,
   Lock,
+  Loader2,
+  Send,
+  Save,
 } from "lucide-react";
+import { useDemoStore } from "@/components/demo/DemoStore";
+import { createPlanWithActivities, type DraftActivity } from "@/lib/actions/plan-actions";
 import type {
   SchoolVisitRecommendation,
   ClusterRecommendation,
@@ -179,6 +185,12 @@ export function PlanBuilderDesktopView({
   const [drafts, setDrafts] = useState<Drafts>({});
   const [pendingTab, setPendingTab] = useState<Tab | null>(null);
   const [hydrated, setHydrated] = useState(false);
+
+  // Finalize wiring — persists the accumulated batches as a real PlanRecord
+  // via the createPlanWithActivities server action.
+  const router = useRouter();
+  const { pushToast } = useDemoStore();
+  const [isFinalizing, startFinalize] = useTransition();
 
   // Hydrate from localStorage on mount; persist on change. Migrate to
   // useSyncExternalStore during the React-19 sweep.
@@ -432,6 +444,52 @@ export function PlanBuilderDesktopView({
   const submittedTotal       = submittedBatches.reduce((a, b) => a + b.totalCost,   0);
   const submittedActivities  = submittedBatches.reduce((a, b) => a + b.activities, 0);
 
+  // Map the per-tab batch summaries into persistable plan activities. One
+  // activity per batch carrying the batch's true total cost — the granular
+  // per-school rows live in the scheduler that opens after approval.
+  const TAB_KIND: Record<Tab, DraftActivity["kind"]> = {
+    staff:    "SCHOOL_VISIT",
+    training: "CLUSTER_TRAINING",
+    meeting:  "HANDOVER_MEETING",
+    partner:  "PARTNER_FOLLOW_UP",
+  };
+
+  function finalizePlan(submit: boolean) {
+    if (submittedBatches.length === 0) return;
+    // Planning targets the next calendar month. new Date() is fine in an
+    // event handler (not render), so this stays SSR-safe.
+    // eslint-disable-next-line react-hooks/purity
+    const d = new Date();
+    d.setMonth(d.getMonth() + 1);
+    const monthIso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const planDrafts: DraftActivity[] = submittedBatches.map((b) => ({
+      kind: TAB_KIND[b.tab],
+      title: `${b.label} — ${b.summary}`.slice(0, 120),
+      weekOfMonth: 1,
+      estCostCents: Math.max(0, Math.round(b.totalCost * 100)),
+    }));
+    startFinalize(async () => {
+      const res = await createPlanWithActivities(monthIso, planDrafts, { submit });
+      if (res.ok) {
+        pushToast({
+          tone: "success",
+          title: submit ? "Plan submitted for approval" : "Plan saved as draft",
+          body: `${res.activityCount} activities for ${monthIso}${submit ? " — your Program Lead has been notified." : "."}`,
+        });
+        setSubmittedBatches([]);
+        try { localStorage.removeItem("planBuilder.submittedBatches"); } catch {}
+        router.push(`/plans/${res.id}`);
+      } else {
+        const copy =
+          res.reason === "FORBIDDEN" ? "Only CCEOs can finalize a plan."
+          : res.reason === "DUPLICATE" ? `A plan for ${monthIso} is already submitted/approved — it can't be appended.`
+          : res.reason === "INVALID_INPUT" ? "Add at least one activity batch before finalizing."
+          : "Could not finalize the plan. Try again.";
+        pushToast({ tone: "warning", title: "Couldn't finalize", body: copy });
+      }
+    });
+  }
+
   // ────────── Toggles ──────────
 
   function toggleSchool(s: SchoolVisitRecommendation) {
@@ -528,6 +586,41 @@ export function PlanBuilderDesktopView({
             totalActivities={submittedActivities}
             onClear={() => setSubmittedBatches([])}
           />
+        )}
+
+        {/* Finalize bar — persists the accumulated batches as a real plan. */}
+        {submittedBatches.length > 0 && (
+          <div className="card rounded-2xl p-3.5 flex items-center justify-between gap-3 flex-wrap border-[var(--color-edify-primary)]/30 bg-[var(--color-edify-soft)]/30">
+            <div className="min-w-0">
+              <div className="text-[13px] font-extrabold tracking-tight inline-flex items-center gap-1.5">
+                <CheckCircle2 size={14} className="text-[var(--color-edify-primary)]" />
+                Ready to finalize
+              </div>
+              <p className="text-[11.5px] muted leading-snug">
+                {submittedBatches.length} batch{submittedBatches.length === 1 ? "" : "es"} · {submittedActivities} activities · UGX {formatM(submittedTotal)}. Finalizing creates next month&apos;s plan.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => finalizePlan(false)}
+                disabled={isFinalizing}
+                className="h-9 px-3 rounded-xl bg-white border border-[var(--color-edify-border)] text-[12px] font-semibold inline-flex items-center gap-1.5 hover:bg-[var(--color-edify-soft)]/40 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isFinalizing ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
+                Save as draft
+              </button>
+              <button
+                type="button"
+                onClick={() => finalizePlan(true)}
+                disabled={isFinalizing}
+                className="h-9 px-3.5 rounded-xl bg-[var(--color-edify-primary)] text-white text-[12px] font-extrabold inline-flex items-center gap-1.5 hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isFinalizing ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
+                Submit for approval
+              </button>
+            </div>
+          </div>
         )}
 
         {/* Activity counts — 4 cards across */}

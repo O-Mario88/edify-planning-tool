@@ -174,6 +174,128 @@ export async function addActivityToPlan(
   return { ok: true, id: activity.id };
 }
 
+// ─── 2b. createPlanWithActivities (Plan Builder finalize) ───────────
+//
+// One-shot used by the Plan Builder "Finalize plan" CTA: take the
+// accumulated activity batches, create (or reuse this author's open
+// Draft/Returned plan for the month), persist every activity, recompute
+// the cached total, and optionally submit for approval. Wrapping it in a
+// single action keeps the builder from orchestrating N round-trips and
+// gives one audit trail per finalize. In production this is one
+// `prisma.$transaction([...])`.
+
+export async function createPlanWithActivities(
+  monthIso: string,
+  drafts: DraftActivity[],
+  opts?: { submit?: boolean },
+): Promise<PlanActionResult & { activityCount?: number; submitted?: boolean }> {
+  const user = await getCurrentUser();
+  if (!CCEO_OWN_PLAN_ROLES.has(user.role)) {
+    return { ok: false, reason: "FORBIDDEN" };
+  }
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(monthIso)) {
+    return { ok: false, reason: "INVALID_INPUT", field: "monthIso" };
+  }
+  if (!Array.isArray(drafts) || drafts.length === 0) {
+    return { ok: false, reason: "INVALID_INPUT", field: "drafts" };
+  }
+
+  // A submitted/approved plan for this month is locked — can't append.
+  const locked = plansStore().some(
+    (p) => p.authorId === user.staffId && p.monthIso === monthIso && p.status !== "Draft" && p.status !== "Returned",
+  );
+  if (locked) return { ok: false, reason: "DUPLICATE" };
+
+  const now = new Date().toISOString();
+  let plan = plansStore().find(
+    (p) => p.authorId === user.staffId && p.monthIso === monthIso && (p.status === "Draft" || p.status === "Returned"),
+  );
+  if (!plan) {
+    plan = {
+      id: newId("plan"),
+      authorId: user.staffId,
+      authorName: user.name,
+      countryId: "Uganda",
+      monthIso,
+      status: "Draft",
+      totalCostCents: 0,
+      createdAt: now,
+      updatedAt: now,
+    };
+    plansStore().push(plan);
+    emitAudit({
+      action: "plan.created",
+      subjectKind: "Plan",
+      subjectId: plan.id,
+      actorId: user.staffId,
+      actorRole: user.role,
+      actorName: user.name,
+      payload: { monthIso, via: "planBuilder" },
+    });
+  }
+
+  let added = 0;
+  for (const d of drafts) {
+    if (!d.title || d.title.trim().length < 3) continue;
+    const week = d.weekOfMonth >= 1 && d.weekOfMonth <= 5 ? d.weekOfMonth : 1;
+    activitiesStore().push({
+      id: newId("act"),
+      planId: plan.id,
+      kind: d.kind,
+      title: d.title.trim(),
+      weekOfMonth: week,
+      scheduledDate: d.scheduledDate,
+      schoolId: d.schoolId,
+      assigneeId: d.assigneeId ?? user.staffId,
+      estCostCents: Math.max(0, Math.round(d.estCostCents)),
+      status: "Planned",
+      interventionArea: d.interventionArea,
+      createdAt: now,
+      updatedAt: now,
+    });
+    added++;
+  }
+  if (added === 0) return { ok: false, reason: "INVALID_INPUT", field: "drafts" };
+  recomputePlanTotal(plan.id);
+
+  emitAudit({
+    action: "plan.activities.bulkAdded",
+    subjectKind: "Plan",
+    subjectId: plan.id,
+    actorId: user.staffId,
+    actorRole: user.role,
+    actorName: user.name,
+    payload: { count: added, monthIso, via: "planBuilder" },
+  });
+
+  let submitted = false;
+  if (opts?.submit && (plan.status === "Draft" || plan.status === "Returned")) {
+    updatePlan(plan.id, { status: "SubmittedForApproval", submittedAt: now });
+    submitted = true;
+    const fresh = findPlan(plan.id);
+    emitAudit({
+      action: "plan.submitted",
+      subjectKind: "Plan",
+      subjectId: plan.id,
+      actorId: user.staffId,
+      actorRole: user.role,
+      actorName: user.name,
+      payload: { totalCostCents: fresh?.totalCostCents ?? 0, via: "planBuilder" },
+    });
+    emitNotification({
+      userId: "PROGRAM_LEAD",
+      template: "plan.submitted",
+      channel: "Inbox",
+      title: `${user.name} submitted ${monthIso} plan for approval`,
+      body: `${added} activities · total ${((fresh?.totalCostCents ?? 0) / 100).toLocaleString()} UGX.`,
+      href: `/approvals?plan=${plan.id}`,
+    });
+  }
+
+  revalidatePlanSurfaces(plan.id);
+  return { ok: true, id: plan.id, activityCount: added, submitted };
+}
+
 // ─── 3. updateActivity ──────────────────────────────────────────────
 
 export async function updateActivity(
