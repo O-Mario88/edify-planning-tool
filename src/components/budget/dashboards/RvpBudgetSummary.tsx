@@ -32,11 +32,11 @@ export function RvpBudgetSummary({ rollup }: { rollup: AnnualBudgetRollup }) {
   const [tab, setTab] = useState<Tab>("Annual Summary");
 
   const kpis: BudgetKpi[] = [
-    { key: "approved", label: "Annual Approved Budget", value: fmtUgxShort(rollup.approved), caption: "Total approved budget", delta: "8.7%", deltaTone: "up", Icon: Shield, tone: "bg-emerald-50 text-emerald-700" },
+    { key: "approved", label: "Annual Approved Budget", value: fmtUgxShort(rollup.approved), caption: "Total approved budget", delta: "8.7%", deltaTone: "up", Icon: Shield, tone: "bg-emerald-50 text-emerald-700", hero: true },
     { key: "requested", label: "Annual Requested Funds", value: fmtUgxShort(rollup.requested), caption: "Total requested", delta: "9.2%", deltaTone: "up", Icon: FileText, tone: "bg-blue-50 text-blue-700" },
-    { key: "released", label: "Annual Released Funds", value: fmtUgxShort(rollup.released), caption: "Total released", delta: "12.6%", deltaTone: "up", Icon: Send, tone: "bg-violet-50 text-violet-700" },
-    { key: "remaining", label: "Remaining Annual Balance", value: fmtUgxShort(rollup.remaining), caption: "Unspent balance", delta: "5.4%", deltaTone: "down", Icon: Wallet, tone: "bg-teal-50 text-teal-700" },
-    { key: "burn", label: "Burn Rate", value: fmtPct(rollup.burnRatePct), caption: "Spend vs approved", delta: "3.2 pp", deltaTone: "up", Icon: Flame, tone: "bg-rose-50 text-rose-700" },
+    { key: "released", label: "Annual Released Funds", value: fmtUgxShort(rollup.released), caption: "Total released", delta: "12.6%", deltaTone: "up", Icon: Send, tone: "bg-violet-50 text-violet-700", hero: true },
+    { key: "remaining", label: "Remaining Annual Balance", value: fmtUgxShort(rollup.remaining), caption: "Unspent balance", delta: "5.4%", deltaTone: "down", Icon: Wallet, tone: "bg-teal-50 text-teal-700", hero: true },
+    { key: "burn", label: "Burn Rate", value: fmtPct(rollup.burnRatePct), caption: "Spend vs approved", delta: "3.2 pp", deltaTone: "up", Icon: Flame, tone: "bg-rose-50 text-rose-700", hero: true },
     { key: "util", label: "Budget Utilization", value: fmtPct(rollup.utilizationPct), caption: "Released vs approved", delta: "3.6 pp", deltaTone: "up", Icon: BarChart3, tone: "bg-emerald-50 text-emerald-700" },
     { key: "spent", label: "Current Month Burn", value: fmtUgxShort(rollup.spent / 8), caption: "Burn this month", delta: "7.3%", deltaTone: "up", Icon: Flame, tone: "bg-orange-50 text-orange-700" },
     { key: "pending", label: "Pending Final Approvals", value: String(rollup.pendingFundRequests.count), caption: "Awaiting your approval", Icon: Clock, tone: "bg-amber-50 text-amber-700" },
@@ -57,6 +57,10 @@ export function RvpBudgetSummary({ rollup }: { rollup: AnnualBudgetRollup }) {
   });
 
   const programPct = rollup.fyTotalBudget ? Math.round((rollup.programCost / rollup.fyTotalBudget) * 1000) / 10 : 0;
+
+  const stepsDone = STEPS.filter((s) => s.status === "done").length;
+  const currentStep = STEPS.find((s) => s.status === "current");
+  const stagePct = Math.round((stepsDone / STEPS.length) * 100);
 
   return (
     <div className="px-3 sm:px-4 md:px-6 pb-24 md:pb-6 space-y-3 md:space-y-4">
@@ -83,9 +87,23 @@ export function RvpBudgetSummary({ rollup }: { rollup: AnnualBudgetRollup }) {
 
       <BudgetKpiRow items={kpis} />
 
-      <section className="grid grid-cols-12 gap-4 items-start">
+      <section className="grid grid-cols-12 gap-4 items-stretch">
         <div className="col-span-12 lg:col-span-8">
-          <SectionCard title="Budget Approval Workflow"><ApprovalWorkflowStepper steps={STEPS} /></SectionCard>
+          <SectionCard title="Budget Approval Workflow">
+            <div className="flex-1 flex items-center"><ApprovalWorkflowStepper steps={STEPS} /></div>
+            <div className="pt-3 space-y-2">
+              <div className="h-1.5 rounded-full bg-[var(--color-edify-soft)] overflow-hidden">
+                <div className="h-full rounded-full bg-[var(--color-edify-primary)] transition-all" style={{ width: `${stagePct}%` }} />
+              </div>
+              <div className="flex items-center justify-between gap-3 text-[11px]">
+                <span className="muted">
+                  Current stage: <b style={{ color: "var(--color-edify-orange,#ea8c2f)" }}>{currentStep?.label ?? "Complete"}</b>
+                  {currentStep?.statusLabel ? ` · ${currentStep.statusLabel}` : ""}
+                </span>
+                <span className="muted font-semibold tabular">{stepsDone} of {STEPS.length} stages complete</span>
+              </div>
+            </div>
+          </SectionCard>
         </div>
         <div className="col-span-12 lg:col-span-4">
           <SectionCard title="RVP Approval Status" actions={<StatusBadge tone="amber">In Progress</StatusBadge>}>

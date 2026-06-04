@@ -35,15 +35,19 @@ export function PlBudgetOverview({ rollup, operational }: { rollup: AnnualBudget
   const find = (k: string) => mix.find((m) => m.key === k)?.amount ?? 0;
 
   const kpis: BudgetKpi[] = [
-    { key: "total", label: "Total Operational Budget", value: fmtUgxShort(operational.approved), caption: "Across all operational plans", delta: "8.4%", deltaTone: "up", Icon: Shield, tone: "bg-emerald-50 text-emerald-700" },
+    { key: "total", label: "Total Operational Budget", value: fmtUgxShort(operational.approved), caption: "Across all operational plans", delta: "8.4%", deltaTone: "up", Icon: Shield, tone: "bg-emerald-50 text-emerald-700", hero: true },
     { key: "cceo", label: "CCEO Planned Budget", value: fmtUgxShort(find("cceo")), caption: "From CCEO staff plans", delta: "9.1%", deltaTone: "up", Icon: FileText, tone: "bg-blue-50 text-blue-700" },
     { key: "pl", label: "PL Planned Budget", value: fmtUgxShort(find("pl")), caption: "From PL-led plans", delta: "6.7%", deltaTone: "up", Icon: MapPin, tone: "bg-violet-50 text-violet-700" },
     { key: "proj", label: "Special Project Budget", value: fmtUgxShort(find("project")), caption: "From special projects", delta: "7.3%", deltaTone: "up", Icon: Rocket, tone: "bg-orange-50 text-orange-700" },
     { key: "requested", label: "Requested Funds", value: fmtUgxShort(operational.requested), caption: "Total fund requests", delta: "11.2%", deltaTone: "up", Icon: Send, tone: "bg-sky-50 text-sky-700" },
-    { key: "released", label: "Released Funds", value: fmtUgxShort(operational.released), caption: "Funds released", delta: "8.6%", deltaTone: "up", Icon: ArrowUp, tone: "bg-blue-50 text-blue-700" },
-    { key: "remaining", label: "Remaining Balance", value: fmtUgxShort(operational.remaining), caption: "Unspent balance", delta: "4.8%", deltaTone: "down", Icon: Wallet, tone: "bg-teal-50 text-teal-700" },
-    { key: "burn", label: "Current Month Burn", value: fmtUgxShort(operational.spent / 8), caption: "Burn this month", delta: "7.1%", deltaTone: "up", Icon: Flame, tone: "bg-orange-50 text-orange-700" },
+    { key: "released", label: "Released Funds", value: fmtUgxShort(operational.released), caption: "Funds released", delta: "8.6%", deltaTone: "up", Icon: ArrowUp, tone: "bg-blue-50 text-blue-700", hero: true },
+    { key: "remaining", label: "Remaining Balance", value: fmtUgxShort(operational.remaining), caption: "Unspent balance", delta: "4.8%", deltaTone: "down", Icon: Wallet, tone: "bg-teal-50 text-teal-700", hero: true },
+    { key: "burn", label: "Current Month Burn", value: fmtUgxShort(operational.spent / 8), caption: "Burn this month", delta: "7.1%", deltaTone: "up", Icon: Flame, tone: "bg-orange-50 text-orange-700", hero: true },
   ];
+
+  const stepsDone = STEPS.filter((s) => s.status === "done").length;
+  const currentStep = STEPS.find((s) => s.status === "current");
+  const stagePct = Math.round((stepsDone / STEPS.length) * 100);
 
   const ratio = rollup.released ? operational.released / rollup.released : 1;
   let relCum = 0;
@@ -88,8 +92,24 @@ export function PlBudgetOverview({ rollup, operational }: { rollup: AnnualBudget
 
       <BudgetKpiRow items={kpis} />
 
-      <section className="grid grid-cols-12 gap-4 items-start">
-        <div className="col-span-12 lg:col-span-8"><SectionCard title="Plan & Budget Approval Workflow"><ApprovalWorkflowStepper steps={STEPS} /></SectionCard></div>
+      <section className="grid grid-cols-12 gap-4 items-stretch">
+        <div className="col-span-12 lg:col-span-8">
+          <SectionCard title="Plan & Budget Approval Workflow">
+            <div className="flex-1 flex items-center"><ApprovalWorkflowStepper steps={STEPS} /></div>
+            <div className="pt-3 space-y-2">
+              <div className="h-1.5 rounded-full bg-[var(--color-edify-soft)] overflow-hidden">
+                <div className="h-full rounded-full bg-[var(--color-edify-primary)] transition-all" style={{ width: `${stagePct}%` }} />
+              </div>
+              <div className="flex items-center justify-between gap-3 text-[11px]">
+                <span className="muted">
+                  Current stage: <b style={{ color: "var(--color-edify-orange,#ea8c2f)" }}>{currentStep?.label ?? "Complete"}</b>
+                  {currentStep?.statusLabel ? ` · ${currentStep.statusLabel}` : ""}
+                </span>
+                <span className="muted font-semibold tabular">{stepsDone} of {STEPS.length} stages complete</span>
+              </div>
+            </div>
+          </SectionCard>
+        </div>
         <div className="col-span-12 lg:col-span-4">
           <SectionCard title="PL Review Status">
             <div className="grid grid-cols-2 gap-3 text-center">
