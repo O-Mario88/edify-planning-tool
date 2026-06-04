@@ -20,6 +20,7 @@ import {
 } from "@/lib/actions/cluster-actions";
 import { CompleteClusterMeetingDrawer, type CompleteMeetingTarget } from "./CompleteClusterMeetingDrawer";
 import { ClusterFeedbackSection, type ClusterFeedbackVM } from "./ClusterFeedbackSection";
+import { ReassignSchoolButton, type ReassignTarget } from "./ReassignSchoolButton";
 
 export type ActivityVM = {
   id: string; kind: string; label: string; date: string;
@@ -53,7 +54,17 @@ const STATUS_TONE: Record<string, string> = {
   Returned: "bg-rose-50 text-rose-700",
 };
 
-export function ClusterProfileView({ profile, flags }: { profile: ClusterProfileVM; flags: ProfileFlags }) {
+export function ClusterProfileView({
+  profile,
+  flags,
+  reassignTargets = [],
+  canReassign = false,
+}: {
+  profile: ClusterProfileVM;
+  flags: ProfileFlags;
+  reassignTargets?: ReassignTarget[];
+  canReassign?: boolean;
+}) {
   return (
     <div className="px-4 sm:px-5 md:px-6 pt-4 pb-12 space-y-4">
       {/* Header */}
@@ -119,6 +130,14 @@ export function ClusterProfileView({ profile, flags }: { profile: ClusterProfile
                     <span className="font-semibold truncate">{s.schoolName}</span>
                     <span className={cn("ml-auto px-1.5 py-[1px] rounded text-[10px] font-bold shrink-0", s.schoolType === "Core" ? "bg-violet-50 text-violet-700" : "bg-blue-50 text-blue-700")}>{s.schoolType}</span>
                     <span className={cn("px-1.5 py-[1px] rounded text-[10px] font-bold shrink-0", s.ssaStatus === "SSA Done" ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500")}>{s.ssaStatus === "SSA Done" ? "SSA" : "no SSA"}</span>
+                    {canReassign && (
+                      <ReassignSchoolButton
+                        schoolId={s.schoolId}
+                        schoolName={s.schoolName}
+                        currentClusterId={profile.id}
+                        targets={reassignTargets}
+                      />
+                    )}
                   </li>
                 ))}
               </ul>

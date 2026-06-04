@@ -14,7 +14,7 @@ import { clustersMock, schoolsMock } from "@/lib/schools-mock";
 import { orgStaff } from "@/lib/org/supervision";
 import { TitleRegister } from "@/components/shell/TitleRegister";
 import { ClusterProfileView } from "@/components/cluster/ClusterProfileView";
-import { clusterProfile, clusterById, CLUSTER_MEETING_LABEL, feedbackForCluster, CLUSTER_FEEDBACK_LABEL } from "@/lib/cluster/cluster-core";
+import { clusterProfile, clusterById, activeClusters, CLUSTER_MEETING_LABEL, feedbackForCluster, CLUSTER_FEEDBACK_LABEL } from "@/lib/cluster/cluster-core";
 import { getCurrentUser } from "@/lib/auth";
 import { getCurrentPartner } from "@/lib/partner/partner-identity";
 
@@ -165,10 +165,16 @@ async function EngineClusterProfile({ clusterId }: { clusterId: string }) {
     })),
   };
 
+  // Reassignment targets: every other active cluster. CCEO/PL own cluster
+  // assignment; IA/CD/Admin may correct it.
+  const reassignTargets = activeClusters()
+    .filter((c) => c.id !== clusterId)
+    .map((c) => ({ id: c.id, name: c.name, district: c.district }));
+
   return (
     <>
       <TitleRegister title={profile.cluster.name} dateLabel="Cluster" />
-      <ClusterProfileView profile={vm} flags={flags} />
+      <ClusterProfileView profile={vm} flags={flags} reassignTargets={reassignTargets} canReassign={staffRole} />
     </>
   );
 }
