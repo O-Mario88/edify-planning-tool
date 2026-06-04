@@ -23,7 +23,20 @@ export type AccountabilityRow = {
   assigneeName?: string;
 };
 
-export function StaffAccountabilityQueue({ rows }: { rows: AccountabilityRow[] }) {
+export type ClosedAccountabilityRow = {
+  id: string;
+  title: string;
+  netsuiteExpenseId?: string;
+  assigneeName?: string;
+};
+
+export function StaffAccountabilityQueue({
+  rows,
+  closed = [],
+}: {
+  rows: AccountabilityRow[];
+  closed?: ClosedAccountabilityRow[];
+}) {
   return (
     <section className="card rounded-2xl overflow-hidden">
       <header className="px-4 py-3 border-b border-[var(--color-edify-divider)]">
@@ -41,7 +54,47 @@ export function StaffAccountabilityQueue({ rows }: { rows: AccountabilityRow[] }
           </ul>
         )}
       </div>
+
+      {/* Closed — echoes the EXACT NetSuite Expense ID the accountant entered
+          (ID-consistency: the console shows back precisely what closed each
+          activity, never a re-typed value). */}
+      {closed.length > 0 && (
+        <div className="border-t border-[var(--color-edify-divider)] bg-[var(--color-edify-soft)]/30 p-3">
+          <div className="text-[11px] font-extrabold uppercase tracking-wide muted mb-2 px-1">Recently closed · NetSuite</div>
+          <ul className="flex flex-col gap-1.5">
+            {closed.map((r) => (
+              <li key={r.id} className="flex items-center gap-2 rounded-lg border border-[var(--color-edify-border)] bg-white px-3 py-2">
+                <CheckCircle2 size={13} className="text-emerald-600 shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <div className="text-[12px] font-bold truncate">{r.title}</div>
+                  <div className="text-[10.5px] muted truncate">{r.assigneeName ?? "Unassigned"} · accountability closed</div>
+                </div>
+                {r.netsuiteExpenseId && <NetsuiteIdChip id={r.netsuiteExpenseId} />}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </section>
+  );
+}
+
+// Echo + one-click copy of the exact NetSuite Expense ID that closed an
+// activity — the single source of truth, never re-typed.
+function NetsuiteIdChip({ id }: { id: string }) {
+  const [copied, setCopied] = useState(false);
+  function copy() {
+    void navigator.clipboard?.writeText(id);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1500);
+  }
+  return (
+    <button type="button" onClick={copy} title="Copy NetSuite Expense ID"
+      className="inline-flex items-center gap-1 rounded-md border border-[var(--color-edify-border)] bg-[var(--color-edify-soft)]/50 px-1.5 py-[2px] text-[10.5px] font-extrabold hover:bg-[var(--color-edify-soft)] shrink-0">
+      <span className="muted font-bold">NS:</span>
+      <span className="font-mono">{id}</span>
+      {copied ? <Check size={11} className="text-emerald-600" /> : <Copy size={11} className="text-[var(--color-edify-muted)]" />}
+    </button>
   );
 }
 

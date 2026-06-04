@@ -36,12 +36,16 @@ export default async function AccountantConsolePage() {
   const accountabilityRows = activities()
     .filter((a) => a.status === "Verified")
     .map((a) => ({ id: a.id, title: a.title, salesforceId: a.salesforceId, assigneeName: a.assigneeId }));
+  // Closed activities echo back the EXACT NetSuite Expense ID that closed them.
+  const closedRows = activities()
+    .filter((a) => a.status === "AccountabilityClosed" && a.netsuiteExpenseId)
+    .map((a) => ({ id: a.id, title: a.title, netsuiteExpenseId: a.netsuiteExpenseId, assigneeName: a.assigneeId }));
 
   return (
     <div className="space-y-4 px-4 sm:px-5 md:px-6 pt-4 pb-24">
       <CommandStack user={user} />
       {/* Staff NetSuite Accountability — IA-confirmed activities to close. */}
-      <StaffAccountabilityQueue rows={accountabilityRows} />
+      <StaffAccountabilityQueue rows={accountabilityRows} closed={closedRows} />
       {/* Partner Payments Ready to Clear — final leg of the partner
           workflow. Only PL-approved requests appear here (gate
           enforced in partner-workflow.REQUIRED_PATH). */}
