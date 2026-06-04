@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { CheckCircle2 } from "lucide-react";
 import { SalesforceCompletionModal, type CompletionActivity } from "./SalesforceCompletionModal";
 import { loadCompletions, saveCompletion } from "@/lib/cceo-execution-store";
+import { useDemoStore } from "@/components/demo/DemoStore";
+import { confirmActivityCompletion } from "@/lib/actions/completion-actions";
 import { cn } from "@/lib/utils";
 
 // Reusable "Confirm" action for the /visits and /trainings index pages.
@@ -22,6 +24,8 @@ export function ConfirmCompletionButton({
 }) {
   const [open, setOpen] = useState(false);
   const [done, setDone] = useState(false);
+  const [, startConfirm] = useTransition();
+  const { pushToast } = useDemoStore();
 
   useEffect(() => {
     setDone(!!loadCompletions()[activity.id]);
@@ -48,7 +52,31 @@ export function ConfirmCompletionButton({
         activity={activity}
         open={open}
         onClose={() => setOpen(false)}
-        onComplete={(c) => { saveCompletion(c); setDone(true); }}
+        onComplete={(c) => {
+          // Optimistic client store keeps the row "Confirmed" instantly + across
+          // reloads; the server action records it durably, audits it, and hands
+          // the Salesforce ID to IA for verification.
+          saveCompletion(c);
+          setDone(true);
+          startConfirm(async () => {
+            const res = await confirmActivityCompletion({
+              activityId:       c.activityId,
+              activityType:     activity.activityType,
+              schoolName:       activity.schoolName,
+              salesforceId:     c.salesforceId,
+              salesforceIdKind: c.salesforceIdKind,
+              teachers:         c.participants?.teachers,
+              leaders:          c.participants?.schoolLeaders,
+            });
+            if (!res.ok) {
+              pushToast({
+                tone: "warning",
+                title: "Completion not recorded",
+                body: res.reason === "FORBIDDEN" ? "Your role can't confirm this completion." : "Check the Salesforce ID and try again.",
+              });
+            }
+          });
+        }}
       />
     </>
   );
