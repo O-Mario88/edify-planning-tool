@@ -135,7 +135,8 @@ function seedCoreSchool(
 
   s.profiles.push({
     id: `cprof-${schoolId}`, schoolId, activeCorePlanId: planId, coreStartFy: fy,
-    championStatus: "Not Eligible", status: "Active",
+    // A completed package with a strong follow-up SSA enters the champion pipeline.
+    championStatus: opts.followUp ? "Potential Champion" : "Not Eligible", status: "Active",
   });
 
   // 4 priority interventions = the 4 weakest baseline areas.
