@@ -5,6 +5,7 @@ import { MonthlyFundRequestView } from "@/components/funds/monthly-fund-request/
 import { MonthlyFundRequestPageHeader } from "@/components/funds/monthly-fund-request/MonthlyFundRequestPageHeader";
 import type { MfrViewerRole } from "@/components/funds/monthly-fund-request/MonthlyFundRequestHeader";
 import { generateMonthlyFundRequest } from "@/lib/funds/monthly-fund-request-mock";
+import { mfrStatus } from "@/lib/funds/mfr-status-store";
 import { getCurrentUser } from "@/lib/auth";
 import { ROLE_REDIRECT, type EdifyRole } from "@/lib/auth-public";
 
@@ -51,20 +52,14 @@ export default async function MonthlyFundRequestPage() {
   // server-side overlay) flow into the budget rollup + grand total.
   const currentMonthlyFundRequest = generateMonthlyFundRequest();
 
-  // For demo purposes we start the request in a status appropriate to
-  // the viewer's role: PL sees a request awaiting their review, CD
-  // sees it post-PL-submit, RVP sees it post-CD-approval. In production
-  // this comes straight from the database with whatever status the
-  // request currently has.
-  const initialStatus: Record<MfrViewerRole, typeof currentMonthlyFundRequest.status> = {
-    PL:         "UNDER_PL_REVIEW",
-    CD:         "SUBMITTED_TO_CD",
-    RVP:        "SUBMITTED_TO_RVP",
-    Accountant: "RVP_APPROVED",
-  };
+  // The artifact carries one real, shared status that the approval-chain
+  // actions advance (PL→CD→RVP→Accountant). We read the persisted status;
+  // if it's never been acted on this session it starts at the chain head so
+  // the full chain can be walked by acting as each role in order.
+  const persistedStatus = mfrStatus(currentMonthlyFundRequest.id);
   const initial = {
     ...currentMonthlyFundRequest,
-    status: initialStatus[viewerRole],
+    status: persistedStatus ?? "UNDER_PL_REVIEW",
   };
 
   const body = (

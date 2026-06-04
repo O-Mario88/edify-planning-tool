@@ -23,8 +23,11 @@
 //   • Staff filter selection.
 //   • Selected-week filter shared between the strip + summary table.
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { CalendarDays, Table } from "lucide-react";
+import { useDemoStore } from "@/components/demo/DemoStore";
+import { transitionMonthlyFundRequest } from "@/lib/actions/mfr-actions";
 import { MobileMonthlyFundRequest } from "./MobileMonthlyFundRequest";
 import {
   MonthlyFundRequestHeader,
@@ -45,6 +48,7 @@ import { CellDrilldownDrawer } from "./CellDrilldownDrawer";
 import { MfrStaffFilter } from "./MfrStaffFilter";
 import {
   POST_CD_APPROVAL_STATUSES,
+  MFR_STATUS_LABEL,
   type MfrAdminItem,
   type MonthlyFundRequest,
   type MonthlyFundRequestStatus,
@@ -72,6 +76,9 @@ export function MonthlyFundRequestView({
   const [target, setTarget] = useState<MfrCellTarget | null>(null);
   const [selectedWeek, setSelectedWeek] = useState<WeekSelection>(null);
   const [selectedStaffIds, setSelectedStaffIds] = useState<string[]>([]);
+  const [isTransitioning, startTransition] = useTransition();
+  const router = useRouter();
+  const { pushToast } = useDemoStore();
 
   const [viewMode, setViewMode] = useState<ViewMode>(
     viewerRole === "PL" ? "detail" : "summary",
@@ -117,8 +124,27 @@ export function MonthlyFundRequestView({
 
   const activityMatrix = useMemo(() => computeActivityWeekMatrix(viewMfr), [viewMfr]);
 
+  // Persist the approval-chain transition (PL→CD→RVP) via the server action,
+  // then optimistically reflect the new status. The action gates role+current
+  // →target server-side, so an illegal click is rejected with a toast.
   const onAction = (next: MonthlyFundRequestStatus) => {
-    setMfr({ ...mfr, status: next });
+    if (isTransitioning) return;
+    const prev = mfr.status;
+    startTransition(async () => {
+      const res = await transitionMonthlyFundRequest(mfr.id, next);
+      if (res.ok) {
+        setMfr({ ...mfr, status: res.newStatus });
+        pushToast({ tone: "success", title: "Request updated", body: `Status is now ${MFR_STATUS_LABEL[res.newStatus]}.` });
+        router.refresh();
+      } else {
+        setMfr({ ...mfr, status: prev });
+        const body =
+          res.reason === "FORBIDDEN" ? "Your role can't act on this request at this stage."
+          : res.reason === "INVALID_STATE" ? `Someone already moved it to ${MFR_STATUS_LABEL[res.current]}. Refresh.`
+          : "That isn't a valid next step for this request.";
+        pushToast({ tone: "warning", title: "Couldn't update", body });
+      }
+    });
   };
 
   const onAdminItemsChange = (items: MfrAdminItem[]) => {
