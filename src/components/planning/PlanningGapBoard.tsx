@@ -18,7 +18,9 @@ import { useState } from "react";
 import { Building2, UsersRound, Briefcase, type LucideIcon } from "lucide-react";
 import { SchoolGapsBoard } from "./SchoolGapsBoard";
 import { ClusterGapsBoard } from "./ClusterGapsBoard";
-import { CoreSchoolsGapPlanning } from "./CoreSchoolsGapPlanning";
+import { CorePlanBoard } from "@/components/core/CorePlanBoard";
+import type { SlotViewer } from "@/components/core/CoreSlotActions";
+import type { CorePlanCardVM } from "@/lib/core/core-board";
 import type { SchoolGap, ClusterGap } from "@/lib/planning/planning-gaps-mock";
 import { cn } from "@/lib/utils";
 
@@ -32,7 +34,19 @@ const TABS: ReadonlyArray<TabDef> = [
   { key: "coreSchools", label: "Core Schools", icon: Briefcase },
 ];
 
-export function PlanningGapBoard({ extraGaps = [], clusterGaps, assignedGapIds = [] }: { extraGaps?: SchoolGap[]; clusterGaps?: ClusterGap[]; assignedGapIds?: string[] } = {}) {
+export function PlanningGapBoard({
+  extraGaps = [],
+  clusterGaps,
+  coreCards = [],
+  coreViewer = { canAssign: false, canExec: false, canIa: false },
+  canChampion = false,
+}: {
+  extraGaps?: SchoolGap[];
+  clusterGaps?: ClusterGap[];
+  coreCards?: CorePlanCardVM[];
+  coreViewer?: SlotViewer;
+  canChampion?: boolean;
+} = {}) {
   const [activeTab, setActiveTab] = useState<TabKey>("clientSchools");
 
   return (
@@ -73,7 +87,7 @@ export function PlanningGapBoard({ extraGaps = [], clusterGaps, assignedGapIds =
       <div role="tabpanel" aria-label={`${TABS.find((t) => t.key === activeTab)?.label} gaps`}>
         {activeTab === "clientSchools" && <SchoolGapsBoard extraGaps={extraGaps} />}
         {activeTab === "clusters" && <ClusterGapsBoard gaps={clusterGaps} />}
-        {activeTab === "coreSchools" && <CoreSchoolsGapPlanning assignedGapIds={assignedGapIds} />}
+        {activeTab === "coreSchools" && <CorePlanBoard cards={coreCards} viewer={coreViewer} canChampion={canChampion} />}
       </div>
     </section>
   );

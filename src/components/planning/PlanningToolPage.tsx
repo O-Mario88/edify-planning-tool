@@ -8,6 +8,7 @@ import { ProjectPlanningGaps } from "@/components/special-projects/ProjectPlanni
 import { getCurrentUser, toCurrentUser } from "@/lib/auth";
 import { onboardedSchoolGaps, scopeGapsToViewer } from "@/lib/planning/onboarded-gaps";
 import { assignedGapIds } from "@/lib/planning/assignment-overlay";
+import { coreBoardData } from "@/lib/core/core-board";
 import { engineClusterGaps } from "@/lib/planning/engine-cluster-gaps";
 import { directoryRecords } from "@/lib/school-directory/directory";
 import { computeProjectPlanningGaps } from "@/lib/projects/project-planning-gaps";
@@ -45,6 +46,16 @@ export async function PlanningToolPage() {
       : "all";
   const projectGaps = computeProjectPlanningGaps(toCurrentUser(user), scoped);
 
+  // Core Schools tab consumes the unified CorePlan model (same as the
+  // dedicated /planning/core-schools console).
+  const coreCards = coreBoardData(user.staffId, user.role);
+  const coreViewer = {
+    canAssign: ["CCEO", "CountryProgramLead", "CountryDirector", "ImpactAssessment", "Admin"].includes(user.role),
+    canExec: ["CCEO", "CountryProgramLead", "PartnerAdmin", "PartnerFieldOfficer", "Admin"].includes(user.role),
+    canIa: ["ImpactAssessment", "Admin"].includes(user.role),
+  };
+  const canChampion = ["ImpactAssessment", "CountryProgramLead", "CountryDirector", "Admin"].includes(user.role);
+
   return (
     <>
       <PlanningTopHeader />
@@ -65,7 +76,7 @@ export async function PlanningToolPage() {
         <UnclusteredSchoolsBanner count={unclusteredCount} />
 
         <PlansFamilyNav current="planning" className="flex items-center gap-1" />
-        <PlanningGapBoard extraGaps={onboardedGaps} clusterGaps={clusterGaps} assignedGapIds={[...assigned]} />
+        <PlanningGapBoard extraGaps={onboardedGaps} clusterGaps={clusterGaps} coreCards={coreCards} coreViewer={coreViewer} canChampion={canChampion} />
 
         <PlanningOwnershipSections />
 
