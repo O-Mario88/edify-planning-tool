@@ -163,19 +163,25 @@ function seedCoreSchool(
   });
 
   // 8 activity slots (4 visits + 4 trainings), each tied to a priority area.
+  // The package is pre-split per the 2-staff / 2-partner rule (§11): sequence
+  // 1–2 are staff-delivered, 3–4 are partner-delivered, on both visits and
+  // trainings. Completion (n ≤ done) flips status to Completed.
   (["visit", "training"] as const).forEach((type) => {
     const done = type === "visit" ? opts.visitsDone : opts.trainingsDone;
     for (let n = 1; n <= 4; n++) {
       const seq = n as 1 | 2 | 3 | 4;
       const inter = ranked[(n - 1) % ranked.length].area;
       const isDone = n <= done;
+      const isPartner = n >= 3; // 2 staff (1,2) + 2 partner (3,4)
       s.slots.push({
         id: `cslot-${schoolId}-${type[0]}${n}`, corePlanId: planId, schoolId,
         intervention: inter, activityType: type, sequenceNumber: seq,
-        status: isDone ? "Completed" : "Not Planned",
-        owner: isDone ? "myself" : "unassigned",
-        assignedStaffId: isDone ? "STF-PC-001" : undefined,
-        assignedStaffName: isDone ? "Paul Chinyama" : undefined,
+        status: isDone ? "Completed" : isPartner ? "Assigned to Partner" : "Planned",
+        owner: isPartner ? "partner" : "myself",
+        assignedStaffId: isPartner ? undefined : "STF-PC-001",
+        assignedStaffName: isPartner ? undefined : "Paul Chinyama",
+        assignedPartnerId: isPartner ? "PTR-HEP-001" : undefined,
+        assignedPartnerName: isPartner ? "Hope Education Partners" : undefined,
         salesforceId: isDone ? (type === "visit" ? `SVE-${5000 + n}` : `TS-${6000 + n}`) : undefined,
         activityId: isDone ? `cact-seed-${schoolId}-${type[0]}${n}` : undefined,
         iaVerificationStatus: isDone ? "Verified" : undefined,

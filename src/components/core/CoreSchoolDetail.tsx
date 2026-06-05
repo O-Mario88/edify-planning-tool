@@ -68,25 +68,76 @@ function Field({ label, value }: { label: string; value: React.ReactNode }) {
 
 function Overview({ vm }: { vm: CoreSchoolDetailVM }) {
   return (
-    <Card title="Why this school is Core">
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-        <Field label="School" value={vm.schoolName} />
-        <Field label="School ID" value={<span className="tabular">{vm.schoolId}</span>} />
-        <Field label="District" value={vm.district} />
-        <Field label="Region" value={vm.region} />
-        <Field label="Cluster" value={vm.cluster ?? "—"} />
-        <Field label="Account owner" value={vm.owner ?? "—"} />
-        <Field label="Enrollment" value={vm.enrollment ?? "—"} />
-        <Field label="Core plan FY" value={vm.plan?.fy ?? "—"} />
-        <Field label="Baseline SSA" value={vm.baseline ? vm.baseline.average.toFixed(1) : "—"} />
-        <Field label="Plan status" value={vm.plan?.status ?? "Not a core plan"} />
-        <Field label="Package" value={vm.progress ? `${vm.progress.packageCompletionPercent}%` : "—"} />
-        <Field label="Champion" value={vm.profile?.championStatus ?? "—"} />
+    <div className="space-y-3">
+      <Card title="Why this school is Core">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          <Field label="School" value={vm.schoolName} />
+          <Field label="School ID" value={<span className="tabular">{vm.schoolId}</span>} />
+          <Field label="District" value={vm.district} />
+          <Field label="Region" value={vm.region} />
+          <Field label="Cluster" value={vm.cluster ?? "—"} />
+          <Field label="Account owner" value={vm.owner ?? "—"} />
+          <Field label="Enrollment" value={vm.enrollment ?? "—"} />
+          <Field label="Core plan FY" value={vm.plan?.fy ?? "—"} />
+          <Field label="Baseline SSA" value={vm.baseline ? vm.baseline.average.toFixed(1) : "—"} />
+          <Field label="Plan status" value={vm.plan?.status ?? "Not a core plan"} />
+          <Field label="Package" value={vm.progress ? `${vm.progress.packageCompletionPercent}%` : "—"} />
+          <Field label="Champion" value={vm.profile?.championStatus ?? "—"} />
+        </div>
+        {vm.onboarding?.onboardingReason && (
+          <p className="text-[11.5px] muted mt-3 pt-3 border-t border-[var(--color-edify-divider)]">
+            <span className="font-bold text-[var(--color-edify-text)]">Onboarding reason:</span> {vm.onboarding.onboardingReason}
+          </p>
+        )}
+      </Card>
+      {vm.deliverySplit && <DeliverySplit vm={vm} />}
+    </div>
+  );
+}
+
+// Package delivery split — 2 staff + 2 partner across the 4 visits + 4 trainings.
+function DeliverySplit({ vm }: { vm: CoreSchoolDetailVM }) {
+  const d = vm.deliverySplit!;
+  const cells = [
+    { label: "Staff Visits",     cell: d.staffVisits,     tone: "blue"   as const },
+    { label: "Partner Visits",   cell: d.partnerVisits,   tone: "violet" as const },
+    { label: "Staff Trainings",  cell: d.staffTrainings,  tone: "blue"   as const },
+    { label: "Partner Trainings", cell: d.partnerTrainings, tone: "violet" as const },
+  ];
+  return (
+    <Card title="Package delivery split — 2 staff + 2 partner">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {cells.map((c) => {
+          const over = c.cell.assigned > c.cell.target;
+          return (
+            <div key={c.label} className={cn(
+              "rounded-lg border px-2.5 py-2",
+              over ? "border-rose-300 bg-rose-50/50" : "border-[var(--color-edify-divider)]",
+            )}>
+              <div className="text-[10px] muted leading-tight">{c.label}</div>
+              <div className="flex items-baseline gap-1 mt-0.5">
+                <span className={cn("text-[17px] font-extrabold tabular", c.tone === "violet" ? "text-violet-700" : "text-blue-700")}>{c.cell.assigned}</span>
+                <span className="text-[12px] font-bold muted">/ {c.cell.target}</span>
+              </div>
+              <div className="text-[10px] muted mt-0.5">{c.cell.completed} completed</div>
+            </div>
+          );
+        })}
       </div>
-      {vm.onboarding?.onboardingReason && (
-        <p className="text-[11.5px] muted mt-3 pt-3 border-t border-[var(--color-edify-divider)]">
-          <span className="font-bold text-[var(--color-edify-text)]">Onboarding reason:</span> {vm.onboarding.onboardingReason}
-        </p>
+      <div className="flex items-center gap-3 mt-2.5 pt-2.5 border-t border-[var(--color-edify-divider)] text-[11.5px]">
+        <span className="font-bold">Total Visits <span className="tabular">{d.totalVisits.completed}/{d.totalVisits.target}</span></span>
+        <span className="font-bold">Total Trainings <span className="tabular">{d.totalTrainings.completed}/{d.totalTrainings.target}</span></span>
+        <span className={cn("ml-auto px-2 py-0.5 rounded-lg text-[11px] font-extrabold",
+          d.balanced ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700")}>
+          {d.balanced ? "Split balanced" : "Split incomplete"}
+        </span>
+      </div>
+      {d.warnings.length > 0 && (
+        <ul className="mt-2 space-y-1">
+          {d.warnings.map((w) => (
+            <li key={w} className="text-[11px] text-rose-700 font-semibold">⚠ {w}</li>
+          ))}
+        </ul>
       )}
     </Card>
   );

@@ -12,6 +12,7 @@ import {
   effectiveSchoolType,
 } from "./core-store";
 import { corePlanProgress, type CorePlanProgress } from "./core-progress";
+import { coreDeliverySplit, type CoreDeliverySplit } from "./core-split";
 import { coreImpactFor } from "./core-impact";
 import type {
   CorePlan, CorePlanIntervention, CoreActivitySlot, CoreSsaSnapshot,
@@ -35,6 +36,8 @@ export type CoreSchoolDetailVM = {
   verification?: CoreCandidateVerification;
   plan?: CorePlan;
   progress?: CorePlanProgress;
+  /** 2-staff / 2-partner delivery split across the 4 visits + 4 trainings. */
+  deliverySplit?: CoreDeliverySplit;
   baseline?: CoreSsaSnapshot;
   interventions: CorePlanIntervention[];
   visits: CoreActivitySlot[];
@@ -82,6 +85,7 @@ export function coreSchoolDetail(schoolId: string): CoreSchoolDetailVM | undefin
     verification,
     plan,
     progress: plan ? corePlanProgress(plan.id) : undefined,
+    deliverySplit: plan ? coreDeliverySplit(slots) : undefined,
     baseline,
     interventions: plan ? interventionsForPlan(plan.id) : [],
     visits: slots.filter((s) => s.activityType === "visit").sort((a, b) => a.sequenceNumber - b.sequenceNumber),
