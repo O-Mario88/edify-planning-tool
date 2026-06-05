@@ -13,6 +13,7 @@ import { useDemoStore } from "@/components/demo/DemoStore";
 import { advanceChampion } from "@/lib/actions/core-actions";
 import { CoreSlotActions, type SlotViewer } from "./CoreSlotActions";
 import { CoreFollowUpSsaButton } from "./CoreFollowUpSsaButton";
+import { CoreFollowUpScheduleButton } from "./CoreFollowUpScheduleButton";
 import type { CorePlanCardVM } from "@/lib/core/core-board";
 import type { CoreActivitySlot } from "@/lib/core/core-types";
 
@@ -20,6 +21,7 @@ const PLAN_TONE: Record<string, string> = {
   "Active": "bg-sky-100 text-sky-700",
   "In Progress": "bg-amber-100 text-amber-700",
   "Completed Pending Follow-Up SSA": "bg-violet-100 text-violet-700",
+  "Follow-Up SSA Scheduled": "bg-violet-100 text-violet-700",
   "Impact Measured": "bg-emerald-100 text-emerald-700",
   "Champion Candidate": "bg-emerald-100 text-emerald-700",
   "Champion Verified": "bg-emerald-100 text-emerald-700",
@@ -89,11 +91,16 @@ function PlanCard({ c, viewer, canChampion }: { c: CorePlanCardVM; viewer: SlotV
         <SlotColumn title="Trainings" Icon={GraduationCap} slots={trainings} viewer={viewer} />
       </div>
 
-      {/* Follow-up SSA gate */}
-      {c.plan.status === "Completed Pending Follow-Up SSA" && (
-        <div className="mt-3 pt-3 border-t border-[var(--color-edify-divider)]">
-          {viewer.canIa ? <CoreFollowUpSsaButton planId={c.plan.id} />
-            : <p className="text-[11.5px] muted">Package complete — awaiting IA follow-up SSA to measure impact.</p>}
+      {/* Follow-up SSA gate: schedule (staff) → record scores (IA) */}
+      {(c.plan.status === "Completed Pending Follow-Up SSA" || c.plan.status === "Follow-Up SSA Scheduled") && (
+        <div className="mt-3 pt-3 border-t border-[var(--color-edify-divider)] flex flex-wrap items-center gap-2">
+          {c.plan.followUpScheduledFor && (
+            <span className="text-[11px] muted">Follow-Up SSA: <b className="text-[var(--color-edify-text)]">{c.plan.followUpScheduledFor}</b>{c.plan.followUpAssignee ? ` · ${c.plan.followUpAssignee}` : ""}</span>
+          )}
+          {c.plan.status === "Completed Pending Follow-Up SSA" && <CoreFollowUpScheduleButton planId={c.plan.id} />}
+          {viewer.canIa
+            ? <CoreFollowUpSsaButton planId={c.plan.id} />
+            : !c.plan.followUpScheduledFor && <span className="text-[11.5px] muted">Package complete — schedule the follow-up SSA; IA records the scores.</span>}
         </div>
       )}
 
@@ -106,7 +113,7 @@ function PlanCard({ c, viewer, canChampion }: { c: CorePlanCardVM; viewer: SlotV
               Impact: baseline {c.impact.baselineAverage.toFixed(1)} → follow-up {c.impact.followUpAverage.toFixed(1)}
               <span className={cn("tabular", c.impact.averageChange >= 0 ? "text-emerald-700" : "text-rose-700")}>({c.impact.averageChange >= 0 ? "+" : ""}{c.impact.averageChange})</span>
             </div>
-            {canChampion && c.championStatus !== "Not Eligible" && c.championStatus !== "Verified Champion" && (
+            {canChampion && c.championStatus !== "Not Eligible" && c.championStatus !== "Champion Mentor School" && (
               <ChampionAdvance schoolId={c.plan.schoolId} status={c.championStatus} />
             )}
           </div>

@@ -243,7 +243,7 @@ function Impact({ vm }: { vm: CoreSchoolDetailVM }) {
 
 function Champion({ vm }: { vm: CoreSchoolDetailVM }) {
   const status = vm.profile?.championStatus ?? "Not Eligible";
-  const stages = ["Potential Champion", "IA Verified", "PL Recommended", "CD Approved", "Verified Champion"];
+  const stages = ["Potential Champion", "Under Review", "IA Verified", "PL Recommended", "CD Approved", "Verified Champion", "Champion Mentor School"];
   const reached = stages.indexOf(status);
   return (
     <Card title="Champion review">

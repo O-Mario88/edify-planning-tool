@@ -110,7 +110,8 @@ export type ChampionStatus =
   | "IA Verified"
   | "PL Recommended"
   | "CD Approved"
-  | "Verified Champion";
+  | "Verified Champion"
+  | "Champion Mentor School";
 
 export type CoreSchoolProfile = {
   id: string;
@@ -128,6 +129,7 @@ export type CorePlanStatus =
   | "Active"
   | "In Progress"
   | "Completed Pending Follow-Up SSA"
+  | "Follow-Up SSA Scheduled"
   | "Impact Measured"
   | "Champion Candidate"
   | "Champion Verified"
@@ -145,6 +147,9 @@ export type CorePlan = {
   visitsCompleted: number;
   trainingsCompleted: number;
   packageCompletionPercent: number;
+  /** Follow-Up SSA scheduling (set before IA uploads the follow-up). */
+  followUpScheduledFor?: string;
+  followUpAssignee?: string; // "myself" | partner org name
   createdById: string;
   createdByName: string;
   createdAt: string;
@@ -171,8 +176,10 @@ export type CoreActivitySlotStatus =
   | "Planned"
   | "Scheduled"
   | "Assigned to Partner"
+  | "Partner Scheduled"
   | "In Progress"
   | "Evidence Uploaded"
+  | "Evidence Accepted"
   | "Salesforce ID Required"
   | "Awaiting IA Verification"
   | "IA Verified"

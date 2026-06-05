@@ -23,7 +23,7 @@ export function coreCardGaps(c: CorePlanCardVM): CoreGapTab[] {
     if (!done("visit", n)) gaps.push(VISIT_GAP[n - 1]);
     if (!done("training", n)) gaps.push(TRAINING_GAP[n - 1]);
   }
-  if (c.plan.status === "Completed Pending Follow-Up SSA") gaps.push("Follow-Up SSA Due");
+  if (c.plan.status === "Completed Pending Follow-Up SSA" || c.plan.status === "Follow-Up SSA Scheduled") gaps.push("Follow-Up SSA Due");
   if (c.progress.readyForFollowUpSSA && !c.impact) gaps.push("Impact Not Measured");
   if (c.championStatus !== "Not Eligible" && c.championStatus !== "Verified Champion") gaps.push("Champion Review");
   return gaps;

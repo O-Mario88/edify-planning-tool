@@ -46,6 +46,7 @@ const IA_ROLES = new Set(["ImpactAssessment", "Admin"]);
 const EXEC_ROLES = new Set(["CCEO", "CountryProgramLead", "PartnerAdmin", "PartnerFieldOfficer", "Admin"]);
 const PL_ROLES = new Set(["CountryProgramLead", "Admin"]);
 const ACCOUNTANT_ROLES = new Set(["ProgramAccountant", "Admin"]);
+const REVIEW_ROLES = new Set(["CCEO", "CountryProgramLead", "CountryDirector", "ProjectCoordinator", "Admin"]);
 
 const id = (p: string) => `${p}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
 
@@ -244,7 +245,37 @@ export async function uploadCoreEvidence(slotId: string, evidenceUri: string, no
   if (!evidenceUri?.trim()) return { ok: false, reason: "INVALID_INPUT" };
   updateSlot(slotId, { status: "Evidence Uploaded", evidenceUri: evidenceUri.trim(), evidenceNotes: notes?.trim() || undefined });
   emitAudit({ action: "core.evidenceUploaded", subjectKind: "CoreActivitySlot", subjectId: slotId, actorId: user.staffId, actorRole: user.role, actorName: user.name });
-  emitNotification({ userId: "CCEO", template: "core.evidenceUploaded", channel: "Inbox", title: "Core evidence to review", body: `Evidence uploaded for a core ${slot.activityType}. Confirm + enter the Salesforce ID.`, href: "/planning/core-schools" });
+  emitNotification({ userId: "CCEO", template: "core.evidenceUploaded", channel: "Inbox", title: "Core evidence to review", body: `Evidence uploaded for a core ${slot.activityType}. Review it, then enter the Salesforce ID.`, href: "/planning/core-schools" });
+  rev(...CORE_SURFACES);
+  return { ok: true, slotId };
+}
+
+// CCEO/PL accepts partner-delivered evidence before the Salesforce ID is entered
+// (§12 partner path: partner uploads → staff/CCEO accepts → SF ID → IA → pay).
+export async function acceptCoreEvidence(slotId: string): Promise<CoreSlotResult> {
+  const user = await getCurrentUser();
+  if (!REVIEW_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+  const slot = slotById(slotId);
+  if (!slot) return { ok: false, reason: "NOT_FOUND" };
+  if (slot.status !== "Evidence Uploaded") return { ok: false, reason: "INVALID_STATE" };
+  updateSlot(slotId, { status: "Evidence Accepted" });
+  emitAudit({ action: "core.evidenceAccepted", subjectKind: "CoreActivitySlot", subjectId: slotId, actorId: user.staffId, actorRole: user.role, actorName: user.name, payload: { planId: slot.corePlanId } });
+  emitNotification({ userId: "CCEO", template: "core.evidenceAccepted", channel: "Inbox", title: "Evidence accepted — enter Salesforce ID", body: `Partner evidence accepted for a core ${slot.activityType}. Enter the ${slot.activityType === "visit" ? "SVE-" : "TS-"} Salesforce ID.`, href: "/planning/core-schools" });
+  rev(...CORE_SURFACES);
+  return { ok: true, slotId };
+}
+
+// Reviewer returns partner evidence for rework (back to In Progress).
+export async function returnCoreEvidence(slotId: string, reason: string): Promise<CoreSlotResult> {
+  const user = await getCurrentUser();
+  if (!REVIEW_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+  const slot = slotById(slotId);
+  if (!slot) return { ok: false, reason: "NOT_FOUND" };
+  if (slot.status !== "Evidence Uploaded") return { ok: false, reason: "INVALID_STATE" };
+  if ((reason?.trim() ?? "").length < 5) return { ok: false, reason: "INVALID_INPUT" };
+  updateSlot(slotId, { status: "In Progress", evidenceNotes: `Returned: ${reason.trim()}` });
+  emitAudit({ action: "core.evidenceReturned", subjectKind: "CoreActivitySlot", subjectId: slotId, actorId: user.staffId, actorRole: user.role, actorName: user.name, payload: { reason: reason.trim() } });
+  emitNotification({ userId: "PARTNER", template: "core.evidenceReturned", channel: "Inbox", title: "Core evidence returned", body: `Re-upload evidence: ${reason.trim()}`, href: "/partner/assignments" });
   rev(...CORE_SURFACES);
   return { ok: true, slotId };
 }
@@ -268,6 +299,9 @@ export async function completeCoreSlot(slotId: string, input: CoreCompleteInput)
   const wantPrefix = slot.activityType === "visit" ? "SVE" : "TS";
   if (sf.length < 4 || !sf.toUpperCase().startsWith(wantPrefix)) return { ok: false, reason: "INVALID_INPUT" };
   if (slot.activityType === "training" && (!input.teachers || !input.leaders)) return { ok: false, reason: "INVALID_INPUT" };
+  // Partner-delivered work must have its evidence accepted before the staff
+  // enters the Salesforce ID (§12 partner path).
+  if (slot.assignedPartnerId && slot.status !== "Evidence Accepted") return { ok: false, reason: "INVALID_STATE" };
 
   // A completed slot is a real activity ledger record — keep the FK so the
   // "completed slot without Activity record" invariant holds (§22).
@@ -357,7 +391,7 @@ export async function returnCoreSlot(slotId: string, reason: string): Promise<Co
 
 export async function accountantConfirmCoreSlot(slotId: string, netsuiteExpenseId?: string): Promise<CoreSlotResult> {
   const user = await getCurrentUser();
-  if (!new Set(["ProgramAccountant", "Admin"]).has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+  if (!ACCOUNTANT_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
   const slot = slotById(slotId);
   if (!slot) return { ok: false, reason: "NOT_FOUND" };
   updateSlot(slotId, { accountantStatus: "Confirmed" });
@@ -366,7 +400,33 @@ export async function accountantConfirmCoreSlot(slotId: string, netsuiteExpenseI
   return { ok: true, slotId };
 }
 
-// ─── 6. Follow-up SSA → impact + champion ───────────────────────────
+// ─── 6. Follow-up SSA: schedule/assign → IA upload → impact + champion ─
+
+// Staff schedule the Follow-Up SSA (or assign it to a partner) once the package
+// is complete. IA still records the actual follow-up scores afterward.
+export async function scheduleCoreFollowUpSsa(
+  planId: string,
+  input: { assignee: "myself" | "partner"; partnerName?: string; monthLabel: string; week?: number },
+): Promise<CoreSlotResult> {
+  const user = await getCurrentUser();
+  if (!ASSIGN_ROLES.has(user.role) && !EXEC_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+  const plan = planById(planId);
+  if (!plan) return { ok: false, reason: "NOT_FOUND" };
+  if (plan.status !== "Completed Pending Follow-Up SSA" && plan.status !== "Follow-Up SSA Scheduled") return { ok: false, reason: "INVALID_STATE" };
+  if (plan.followUpSSARecordId) return { ok: false, reason: "INVALID_STATE" };
+  const assigneeLabel = input.assignee === "partner" ? (input.partnerName?.trim() || "Partner team") : user.name;
+  const when = `${input.monthLabel}${input.week ? ` · Wk ${input.week}` : ""}`;
+  updatePlan(planId, { status: "Follow-Up SSA Scheduled", followUpScheduledFor: when, followUpAssignee: assigneeLabel });
+  emitAudit({ action: "core.followUpScheduled", subjectKind: "CorePlan", subjectId: planId, actorId: user.staffId, actorRole: user.role, actorName: user.name, payload: { assignee: assigneeLabel, when } });
+  emitNotificationFanOut(["IMPACT_ASSESSMENT", "CCEO", "PROGRAM_LEAD"], {
+    template: "core.followUpScheduled", channel: "Inbox",
+    title: "Follow-Up SSA scheduled",
+    body: `Follow-Up SSA set for ${when} (${assigneeLabel}). IA records the scores when done.`,
+    href: "/planning/core-schools",
+  });
+  rev(...CORE_SURFACES);
+  return { ok: true, slotId: planId };
+}
 
 export type CoreFollowUpResult =
   | { ok: true; planId: string; averageChange: number; championCandidate: boolean }
@@ -409,10 +469,12 @@ export async function uploadCoreFollowUpSsa(planId: string, scores: CoreSsaScore
 // ─── 7. Champion pipeline transition ────────────────────────────────
 
 const CHAMPION_FLOW: Record<string, { roles: Set<string>; next: string }> = {
-  "Potential Champion": { roles: IA_ROLES, next: "IA Verified" },
+  "Potential Champion": { roles: IA_ROLES, next: "Under Review" },
+  "Under Review": { roles: IA_ROLES, next: "IA Verified" },
   "IA Verified": { roles: new Set(["CountryProgramLead", "Admin"]), next: "PL Recommended" },
   "PL Recommended": { roles: new Set(["CountryDirector", "Admin"]), next: "CD Approved" },
   "CD Approved": { roles: new Set(["CountryDirector", "Admin"]), next: "Verified Champion" },
+  "Verified Champion": { roles: new Set(["CountryDirector", "Admin"]), next: "Champion Mentor School" },
 };
 
 export type ChampionResult = { ok: true; schoolId: string; status: string } | { ok: false; reason: "FORBIDDEN" | "NOT_FOUND" | "INVALID_STATE" };

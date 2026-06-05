@@ -103,8 +103,8 @@ export type CoreOwnership = {
 function slotPlanningStatus(s: CoreActivitySlotStatus): PlanningStatus {
   switch (s) {
     case "Not Planned": return "pending";
-    case "Planned": case "Scheduled": case "Rescheduled": case "Assigned to Partner": return "scheduled";
-    case "In Progress": case "Evidence Uploaded": case "Salesforce ID Required": case "Awaiting IA Verification": return "in_flight";
+    case "Planned": case "Scheduled": case "Rescheduled": case "Assigned to Partner": case "Partner Scheduled": return "scheduled";
+    case "In Progress": case "Evidence Uploaded": case "Evidence Accepted": case "Salesforce ID Required": case "Awaiting IA Verification": return "in_flight";
     case "IA Verified": case "Accountant Confirmed": return "verified";
     case "Completed": return "done";
     case "Returned": case "Rejected": return "blocked";
