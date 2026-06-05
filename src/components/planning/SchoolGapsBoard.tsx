@@ -7,7 +7,9 @@
 // surfaces the next valid action; intervention-based actions are
 // disabled until SSA completes (with a tooltip explaining why).
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { assignToExistingClusterAction, createClusterAndAssignAction } from "@/lib/actions/cluster-actions";
 import {
   AlertOctagon, Footprints, GraduationCap, Users, Building2, MapPin,
   ChevronDown, ChevronRight, ChevronUp, ArrowRight, Eye, User, Phone,
@@ -128,6 +130,8 @@ export function SchoolGapsBoard({
   // Routed by SchoolRow's onAction handler — add_to_cluster diverts here
   // instead of through PlanningAssignDrawer.
   const [clusterAssign, setClusterAssign] = useState<AddToClusterContext | null>(null);
+  const router = useRouter();
+  const [, startClusterTx] = useTransition();
   // Schedule-training also has its own calendar drawer (date + participants
   // + projected cost + optional partner facilitator). Routed in the same
   // way as add_to_cluster so we never bounce trainings through the owner
@@ -189,15 +193,24 @@ export function SchoolGapsBoard({
   }, [dismissedIds, extraGaps, clusterFilter]);
 
   function handleClusterSubmit(outcome: AddToClusterOutcome) {
-    const copy =
-      outcome.mode === "existing"
-        ? `${outcome.schoolName} added to ${outcome.clusterName}.`
-        : `New cluster ${outcome.clusterName} created in ${outcome.district} · ${outcome.subCounty}. ${outcome.schoolName} attached as the first school.`;
-    setToast(copy);
+    // Connect to the real cluster workflow: assign to an existing cluster, or
+    // create the sub-county's cluster and attach the school as its first member.
     setClusterAssign(null);
-    // School is now in a cluster — remove it from the No Cluster gap.
-    dismiss(outcome.schoolId);
-    setTimeout(() => setToast(null), 4500);
+    startClusterTx(async () => {
+      const res = outcome.mode === "existing"
+        ? await assignToExistingClusterAction([outcome.schoolId], outcome.clusterId)
+        : await createClusterAndAssignAction([outcome.schoolId], { name: outcome.clusterName, district: outcome.district, subCounties: [outcome.subCounty] });
+      if (res.ok) {
+        setToast(outcome.mode === "existing"
+          ? `${outcome.schoolName} added to ${outcome.clusterName}. SSA / planning unlocked.`
+          : `Cluster ${outcome.clusterName} created in ${outcome.district} · ${outcome.subCounty}. ${outcome.schoolName} attached.`);
+        dismiss(outcome.schoolId); // leaves the No Cluster bucket immediately
+        router.refresh();          // re-pull cluster/planning surfaces from the engine
+      } else {
+        setToast(res.reason === "FORBIDDEN" ? "Not permitted for your role." : "errors" in res ? "Check the cluster details." : `Couldn't update the cluster${"message" in res && res.message ? `: ${res.message}` : "."}`);
+      }
+      setTimeout(() => setToast(null), 4500);
+    });
   }
 
   function handleSchoolTrainingSubmit(outcome: ScheduleActivityOutcome) {
@@ -344,6 +357,8 @@ export function SchoolGapsBoard({
                             setClusterAssign({
                               schoolId:   s.id,
                               schoolName: s.schoolName,
+                              district:   s.district,
+                              subCounty:  s.subCounty,
                               cceoName:   s.assignedCceo,
                             });
                             return;
@@ -400,7 +415,6 @@ export function SchoolGapsBoard({
         context={clusterAssign}
         onClose={() => setClusterAssign(null)}
         onSubmit={handleClusterSubmit}
-        allowCreate={false}
       />
 
       <ScheduleActivityDrawer

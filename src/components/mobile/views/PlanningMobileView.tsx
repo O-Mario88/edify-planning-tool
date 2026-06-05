@@ -160,6 +160,8 @@ export function PlanningMobileView({
               setClusterAssign({
                 schoolId:   school.id,
                 schoolName: school.schoolName,
+                district:   school.district,
+                subCounty:  school.subCounty,
                 cceoName:   school.assignedCceo,
               });
               return;
@@ -207,7 +209,6 @@ export function PlanningMobileView({
         context={clusterAssign}
         onClose={() => setClusterAssign(null)}
         onSubmit={handleClusterSubmit}
-        allowCreate={false}
       />
 
       <PlanningAssignDrawer
