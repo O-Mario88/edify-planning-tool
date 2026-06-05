@@ -47,8 +47,18 @@ function scoresOf(partial: Partial<Record<SsaInterventionArea, number>>, fill: n
 
 // ─── Seed ───────────────────────────────────────────────────────────
 
+// Dev/demo seed gating. Production must NOT carry mock core-school data: a real
+// deployment fills the lifecycle through the live workflow (verify → onboard →
+// plan → execute → follow-up). Staging can opt back in with EDIFY_SEED_CORE=1.
+// See coreSeedActive() — surfaced as a health-check ("production mock active").
+export function coreSeedActive(): boolean {
+  if (process.env.NODE_ENV === "test") return false;
+  if (process.env.NODE_ENV === "production") return process.env.EDIFY_SEED_CORE === "1";
+  return true;
+}
+
 function seed(s: CoreStore) {
-  if (process.env.NODE_ENV === "test") return;
+  if (!coreSeedActive()) return;
 
   // 1. Candidate SSA snapshots (avg ≥ 7.5) for Client schools with SSA done —
   //    makes them Potential Core candidates derived from the directory.
@@ -167,6 +177,7 @@ function seedCoreSchool(
         assignedStaffId: isDone ? "STF-PC-001" : undefined,
         assignedStaffName: isDone ? "Paul Chinyama" : undefined,
         salesforceId: isDone ? (type === "visit" ? `SVE-${5000 + n}` : `TS-${6000 + n}`) : undefined,
+        activityId: isDone ? `cact-seed-${schoolId}-${type[0]}${n}` : undefined,
         iaVerificationStatus: isDone ? "Verified" : undefined,
         completedAt: isDone ? opts.onboardedAt : undefined,
         createdAt: opts.onboardedAt, updatedAt: opts.onboardedAt,

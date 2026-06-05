@@ -7,7 +7,7 @@
 import Link from "next/link";
 import { ArrowLeft, Calendar, MapPin, User, GraduationCap, Filter } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { CorePlanBoard } from "@/components/core/CorePlanBoard";
+import { CoreGapTabs } from "@/components/core/CoreGapTabs";
 import { coreBoardData, coreBoardSummary } from "@/lib/core/core-board";
 import { getCurrentUser } from "@/lib/auth";
 
@@ -22,6 +22,8 @@ export default async function Page() {
     canAssign: ["CCEO", "CountryProgramLead", "CountryDirector", "ImpactAssessment", "Admin"].includes(user.role),
     canExec: ["CCEO", "CountryProgramLead", "PartnerAdmin", "PartnerFieldOfficer", "Admin"].includes(user.role),
     canIa: ["ImpactAssessment", "Admin"].includes(user.role),
+    canPl: ["CountryProgramLead", "Admin"].includes(user.role),
+    canAccountant: ["ProgramAccountant", "Admin"].includes(user.role),
   };
   const canChampion = ["ImpactAssessment", "CountryProgramLead", "CountryDirector", "Admin"].includes(user.role);
 
@@ -51,7 +53,7 @@ export default async function Page() {
       </div>
 
       <div className="px-4 sm:px-5 md:px-6 pb-24 md:pb-8 pt-4">
-        <CorePlanBoard cards={cards} viewer={viewer} canChampion={canChampion} />
+        <CoreGapTabs cards={cards} viewer={viewer} canChampion={canChampion} />
       </div>
     </>
   );

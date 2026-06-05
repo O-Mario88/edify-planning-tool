@@ -44,6 +44,8 @@ const ONBOARD_ROLES = new Set(["CountryDirector", "CountryProgramLead", "ImpactA
 const ASSIGN_ROLES = new Set(["CCEO", "CountryProgramLead", "CountryDirector", "ImpactAssessment", "Admin"]);
 const IA_ROLES = new Set(["ImpactAssessment", "Admin"]);
 const EXEC_ROLES = new Set(["CCEO", "CountryProgramLead", "PartnerAdmin", "PartnerFieldOfficer", "Admin"]);
+const PL_ROLES = new Set(["CountryProgramLead", "Admin"]);
+const ACCOUNTANT_ROLES = new Set(["ProgramAccountant", "Admin"]);
 
 const id = (p: string) => `${p}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
 
@@ -181,7 +183,7 @@ function notifyPlanRefresh(planId: string) {
 
 export async function assignCoreSlot(
   slotId: string,
-  input: { owner: CoreSlotOwner; ownerName?: string; monthLabel?: string; week?: number },
+  input: { owner: CoreSlotOwner; ownerName?: string; partnerId?: string; monthLabel?: string; week?: number },
 ): Promise<CoreSlotResult> {
   const user = await getCurrentUser();
   if (!ASSIGN_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
@@ -189,12 +191,17 @@ export async function assignCoreSlot(
   if (!slot) return { ok: false, reason: "NOT_FOUND" };
 
   const isPartner = input.owner === "partner" || input.owner === "partner_facilitator";
+  // Real partner identity: use the chosen partner's id, falling back to a slug
+  // of the name (never the literal "PARTNER" placeholder).
+  const partnerId = isPartner
+    ? (input.partnerId || `pt-${(input.ownerName ?? "partner").toLowerCase().replace(/[^a-z0-9]+/g, "-")}`)
+    : undefined;
   updateSlot(slotId, {
     owner: input.owner,
     assignedStaffId: !isPartner ? user.staffId : undefined,
     assignedStaffName: input.owner === "myself" ? user.name : input.owner === "staff" ? input.ownerName : undefined,
     assignedPartnerName: isPartner ? input.ownerName : undefined,
-    assignedPartnerId: isPartner ? "PARTNER" : undefined,
+    assignedPartnerId: partnerId,
     status: isPartner ? "Assigned to Partner" : input.monthLabel ? "Scheduled" : "Planned",
     scheduledMonth: input.monthLabel,
     scheduledWeek: input.week,
@@ -262,15 +269,42 @@ export async function completeCoreSlot(slotId: string, input: CoreCompleteInput)
   if (sf.length < 4 || !sf.toUpperCase().startsWith(wantPrefix)) return { ok: false, reason: "INVALID_INPUT" };
   if (slot.activityType === "training" && (!input.teachers || !input.leaders)) return { ok: false, reason: "INVALID_INPUT" };
 
+  // A completed slot is a real activity ledger record — keep the FK so the
+  // "completed slot without Activity record" invariant holds (§22).
+  const activityId = slot.activityId ?? `cact-${slotId}-${Date.now().toString(36)}`;
+  // CCEO field visits need PL sign-off before IA verification (§12).
+  const needsPl = user.role === "CCEO" && slot.activityType === "visit";
+
   updateSlot(slotId, {
     status: "Awaiting IA Verification",
     salesforceId: sf,
+    activityId,
+    plVerificationStatus: needsPl ? "Pending" : undefined,
     teachers: input.teachers,
     leaders: input.leaders,
     participants: input.participants ?? ((input.teachers ?? 0) + (input.leaders ?? 0)),
   });
-  emitAudit({ action: "core.slotCompleted", subjectKind: "CoreActivitySlot", subjectId: slotId, actorId: user.staffId, actorRole: user.role, actorName: user.name, payload: { salesforceId: sf, planId: slot.corePlanId } });
-  emitNotification({ userId: "IMPACT_ASSESSMENT", template: "core.slotCompleted", channel: "Inbox", title: `Core ${slot.activityType} to verify`, body: `Salesforce ID ${sf} entered — verify the core ${slot.activityType}.`, href: "/data-verification" });
+  emitAudit({ action: "core.slotCompleted", subjectKind: "CoreActivitySlot", subjectId: slotId, actorId: user.staffId, actorRole: user.role, actorName: user.name, payload: { salesforceId: sf, activityId, planId: slot.corePlanId } });
+  if (needsPl) {
+    emitNotification({ userId: "PROGRAM_LEAD", template: "core.slotPlReview", channel: "Inbox", title: "CCEO core visit needs your sign-off", body: `Verify the CCEO core visit (${slot.intervention}) before it goes to IA.`, href: "/planning/core-schools" });
+  } else {
+    emitNotification({ userId: "IMPACT_ASSESSMENT", template: "core.slotCompleted", channel: "Inbox", title: `Core ${slot.activityType} to verify`, body: `Salesforce ID ${sf} entered — verify the core ${slot.activityType}.`, href: "/data-verification" });
+  }
+  rev(...CORE_SURFACES, "/data-verification");
+  return { ok: true, slotId };
+}
+
+// ─── 4b. PL sign-off for CCEO visits (before IA) ────────────────────
+
+export async function plVerifyCoreSlot(slotId: string): Promise<CoreSlotResult> {
+  const user = await getCurrentUser();
+  if (!PL_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+  const slot = slotById(slotId);
+  if (!slot) return { ok: false, reason: "NOT_FOUND" };
+  if (slot.plVerificationStatus !== "Pending") return { ok: false, reason: "INVALID_STATE" };
+  updateSlot(slotId, { plVerificationStatus: "Verified" });
+  emitAudit({ action: "core.slotPlVerified", subjectKind: "CoreActivitySlot", subjectId: slotId, actorId: user.staffId, actorRole: user.role, actorName: user.name, payload: { planId: slot.corePlanId } });
+  emitNotification({ userId: "IMPACT_ASSESSMENT", template: "core.slotCompleted", channel: "Inbox", title: "CCEO core visit ready for IA", body: `PL signed off — verify the core visit (${slot.salesforceId ?? "no SF"}).`, href: "/data-verification" });
   rev(...CORE_SURFACES, "/data-verification");
   return { ok: true, slotId };
 }
@@ -283,6 +317,8 @@ export async function iaVerifyCoreSlot(slotId: string): Promise<CoreSlotResult> 
   const slot = slotById(slotId);
   if (!slot) return { ok: false, reason: "NOT_FOUND" };
   if (slot.status !== "Awaiting IA Verification") return { ok: false, reason: "INVALID_STATE" };
+  // CCEO visits must clear PL sign-off first (§12).
+  if (slot.plVerificationStatus === "Pending") return { ok: false, reason: "INVALID_STATE" };
 
   updateSlot(slotId, { status: "Completed", iaVerificationStatus: "Verified", completedAt: new Date().toISOString() });
   notifyPlanRefresh(slot.corePlanId);

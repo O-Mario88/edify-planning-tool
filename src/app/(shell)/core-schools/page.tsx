@@ -1,9 +1,11 @@
 import Link from "next/link";
-import { GraduationCap, Trophy, TrendingUp, ArrowRight } from "lucide-react";
+import { GraduationCap, Trophy, TrendingUp, ArrowRight, BarChart3 } from "lucide-react";
 import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { RoleBottomNav } from "@/components/mobile/RoleBottomNav";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { CoreHealthBanner } from "@/components/core/CoreHealthPanel";
 import { coreBoardData, coreBoardSummary } from "@/lib/core/core-board";
+import { coreHealthReport } from "@/lib/core/core-health";
 import { getCurrentUser } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +17,7 @@ export default async function CoreSchoolDashboard() {
   const user = await getCurrentUser();
   const cards = coreBoardData(user.staffId, user.role);
   const summary = coreBoardSummary(cards);
+  const health = coreHealthReport();
 
   const body = (
     <>
@@ -34,12 +37,19 @@ export default async function CoreSchoolDashboard() {
           <Kpi label="Visits · Trainings" value={`${summary.visitsDone} · ${summary.trainingsDone}`} />
         </section>
 
+        <CoreHealthBanner report={health} />
+
         <section className="card p-3.5">
           <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
             <h2 className="text-[13px] font-extrabold tracking-tight">Core School Directory</h2>
-            <Link href="/planning/core-schools" className="inline-flex items-center gap-1 text-[11.5px] font-extrabold text-[var(--color-edify-primary)] hover:text-[var(--color-edify-dark)]">
-              Planning Console <ArrowRight size={12} />
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link href="/core-schools/analytics" className="inline-flex items-center gap-1 text-[11.5px] font-extrabold text-[var(--color-edify-primary)] hover:text-[var(--color-edify-dark)]">
+                <BarChart3 size={12} /> Analytics
+              </Link>
+              <Link href="/planning/core-schools" className="inline-flex items-center gap-1 text-[11.5px] font-extrabold text-[var(--color-edify-primary)] hover:text-[var(--color-edify-dark)]">
+                Planning Console <ArrowRight size={12} />
+              </Link>
+            </div>
           </div>
           {cards.length === 0 ? (
             <p className="py-8 text-center text-[12px] muted italic">No core schools in your scope yet — onboard a verified candidate to populate this directory.</p>
@@ -63,7 +73,7 @@ export default async function CoreSchoolDashboard() {
                   {cards.map((c) => (
                     <tr key={c.plan.id} className="hover:bg-[var(--color-edify-soft)]/30 align-top">
                       <td className="py-2.5 pr-2">
-                        <Link href={`/schools/${c.plan.schoolId}`} className="font-extrabold hover:underline">{c.schoolName}</Link>
+                        <Link href={`/core-schools/${c.plan.schoolId}`} className="font-extrabold hover:underline">{c.schoolName}</Link>
                         <div className="text-[10px] muted tabular">ID {c.plan.schoolId}</div>
                       </td>
                       <td className="py-2.5 px-2 muted">{c.district}{c.cluster ? ` · ${c.cluster}` : ""}</td>
@@ -91,7 +101,7 @@ export default async function CoreSchoolDashboard() {
                         ) : <span className="text-[11px] muted">—</span>}
                       </td>
                       <td className="py-2.5 pl-2 text-right">
-                        <Link href="/planning/core-schools" className="text-[11px] font-bold text-[var(--color-edify-primary)] hover:underline">Plan →</Link>
+                        <Link href={`/core-schools/${c.plan.schoolId}`} className="text-[11px] font-bold text-[var(--color-edify-primary)] hover:underline">Detail →</Link>
                       </td>
                     </tr>
                   ))}

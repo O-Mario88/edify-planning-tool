@@ -197,7 +197,10 @@ export type CoreActivitySlot = {
   assignedStaffName?: string;
   assignedPartnerId?: string;
   assignedPartnerName?: string;
-  activityId?: string;      // optional FK to PlannedActivityRecord
+  activityId?: string;      // FK to the activity ledger record (set on completion)
+  /** PL sign-off gate for CCEO field visits (§12): Pending until the PL
+   *  verifies, then Verified. Absent for non-CCEO or partner-delivered work. */
+  plVerificationStatus?: "Pending" | "Verified";
   scheduledFor?: string;    // display label "May 2026 · Wk 2"
   scheduledMonth?: string;
   scheduledWeek?: number;

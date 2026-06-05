@@ -29,9 +29,19 @@ export type CorePlanCardVM = {
   impact?: CoreImpactSnapshot;
 };
 
+const PARTNER_ROLES: EdifyRole[] = ["PartnerAdmin", "PartnerFieldOfficer"];
+
 function scopeIds(staffId: string, role: EdifyRole): Set<string> | "all" {
   if (role === "CCEO" || role === "CountryProgramLead") {
     return new Set(directoryRecords(staffId, role).map((s) => s.schoolId));
+  }
+  // Partners see only core schools that have partner-assigned work (§21).
+  if (PARTNER_ROLES.includes(role)) {
+    const ids = new Set<string>();
+    for (const p of corePlans()) {
+      if (slotsForPlan(p.id).some((s) => !!s.assignedPartnerId || s.owner === "partner" || s.owner === "partner_facilitator")) ids.add(p.schoolId);
+    }
+    return ids;
   }
   return "all";
 }
@@ -131,6 +141,10 @@ export function coreOwnershipRows(staffId: string, role: EdifyRole): CoreOwnersh
   }
   return { assignedToMe, assignedToPartner, awaitingPartner, plannedThisMonth };
 }
+
+// Gap buckets (§10) live in core-gaps (pure, client-safe). Re-exported here so
+// server callers can keep importing from the board.
+export { CORE_GAP_TABS, coreCardGaps, coreGapCounts, type CoreGapTab } from "./core-gaps";
 
 export function coreBoardSummary(cards: CorePlanCardVM[]) {
   return {
