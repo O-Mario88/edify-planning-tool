@@ -18,7 +18,7 @@ import { useState } from "react";
 import { Building2, UsersRound, Briefcase, type LucideIcon } from "lucide-react";
 import { SchoolGapsBoard } from "./SchoolGapsBoard";
 import { ClusterGapsBoard } from "./ClusterGapsBoard";
-import { CorePlanBoard } from "@/components/core/CorePlanBoard";
+import { CorePlanningAccordion } from "@/components/core/CorePlanningAccordion";
 import type { SlotViewer } from "@/components/core/CoreSlotActions";
 import type { CorePlanCardVM } from "@/lib/core/core-board";
 import type { SchoolGap, ClusterGap } from "@/lib/planning/planning-gaps-mock";
@@ -87,7 +87,7 @@ export function PlanningGapBoard({
       <div role="tabpanel" aria-label={`${TABS.find((t) => t.key === activeTab)?.label} gaps`}>
         {activeTab === "clientSchools" && <SchoolGapsBoard extraGaps={extraGaps} />}
         {activeTab === "clusters" && <ClusterGapsBoard gaps={clusterGaps} />}
-        {activeTab === "coreSchools" && <CorePlanBoard cards={coreCards} viewer={coreViewer} canChampion={canChampion} />}
+        {activeTab === "coreSchools" && <CorePlanningAccordion cards={coreCards} viewer={coreViewer} canChampion={canChampion} />}
       </div>
     </section>
   );
