@@ -14,7 +14,8 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { AppShell } from "@/components/app/AppShell";
-import { SectionCard, KpiCard, StatusBadge, ProgressRing } from "@/components/ui/primitives";
+import { SectionCard, StatusBadge, ProgressRing } from "@/components/ui/primitives";
+import { MetricStrip } from "@/components/ui/MetricStrip";
 import { ActionButton } from "@/components/ui/ActionButton";
 import { schoolsCatalog, salesforceMatches, validVisitRules } from "@/lib/workflow-mock";
 import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
@@ -170,14 +171,17 @@ export default async function School360({ params }: { params: Promise<{ id: stri
       </SectionCard>
 
       {/* KPI strip */}
-      <section className="grid grid-cols-6 gap-3">
-        <KpiCard label="SSA Score"        value={`${s.ssaScore}%`} caption="Latest" icon={<TrendingUp size={16} />} iconTone={s.ssaScore < 35 ? "red" : s.ssaScore < 55 ? "amber" : "green"} />
-        <KpiCard label="Valid Visits YTD" value="6"                caption="Counts toward target" icon={<ShieldCheck size={16} />} iconTone="green" />
-        <KpiCard label="Trainings YTD"    value="2"                caption="Cluster + In-School" icon={<Users size={16} />} iconTone="edify" />
-        <KpiCard label="Last Visit"       value={s.lastVisit}      caption="On record"           icon={<CalendarCheck size={16} />} iconTone="edify" />
-        <KpiCard label="MSC Stories"      value="3"                caption="Most Significant Change" icon={<Sparkles size={16} />} iconTone="violet" />
-        <KpiCard label="Enrolment"        value="412"              caption="Latest update"       icon={<Users size={16} />} iconTone="edify" />
-      </section>
+      <MetricStrip
+        columns="grid-cols-2 sm:grid-cols-3 lg:grid-cols-6"
+        metrics={[
+          { key: "ssa",       label: "SSA Score",        value: `${s.ssaScore}%`, caption: "Latest", tone: s.ssaScore < 35 ? "alert" : s.ssaScore >= 55 ? "good" : "default" },
+          { key: "visits",    label: "Valid Visits YTD", value: "6",              caption: "Counts toward target", tone: "good" },
+          { key: "trainings", label: "Trainings YTD",    value: "2",              caption: "Cluster + In-School" },
+          { key: "lastvisit", label: "Last Visit",       value: s.lastVisit,      caption: "On record" },
+          { key: "msc",       label: "MSC Stories",      value: "3",              caption: "Most Significant Change" },
+          { key: "enrolment", label: "Enrolment",        value: "412",            caption: "Latest update" },
+        ]}
+      />
 
       {/* Partner support journey — closes the workflow loop:
           every partner activity for this school is threaded into the

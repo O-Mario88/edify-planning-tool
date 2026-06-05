@@ -32,6 +32,10 @@ export type MetricCell = {
   icon?: LucideIcon;
   /** Makes the cell a link (e.g. deep-link into a filtered list). */
   href?: string;
+  /** Makes the cell a button (e.g. a filter trigger). Ignored if href is set. */
+  onClick?: () => void;
+  /** Highlights the cell as the active selection (for onClick filter cells). */
+  active?: boolean;
 };
 
 const DELTA_ICON = { up: ArrowUpRight, down: ArrowDownRight, flat: Minus };
@@ -108,12 +112,20 @@ function Cell({ cell }: { cell: MetricCell }) {
   );
 
   const base = "block px-3 py-2.5 border-r border-b border-[var(--color-edify-divider)] min-w-0";
+  const activeCls = cell.active ? "bg-[var(--color-edify-soft)]/70 ring-1 ring-inset ring-[var(--color-edify-primary)]/40" : "";
   if (cell.href) {
     return (
-      <Link href={cell.href} className={cn(base, "transition-colors hover:bg-[var(--color-edify-soft)]/50")}>
+      <Link href={cell.href} className={cn(base, "transition-colors hover:bg-[var(--color-edify-soft)]/50", activeCls)}>
         {body}
       </Link>
     );
   }
-  return <div className={base}>{body}</div>;
+  if (cell.onClick) {
+    return (
+      <button type="button" onClick={cell.onClick} className={cn(base, "text-left w-full transition-colors hover:bg-[var(--color-edify-soft)]/50", activeCls)}>
+        {body}
+      </button>
+    );
+  }
+  return <div className={cn(base, activeCls)}>{body}</div>;
 }
