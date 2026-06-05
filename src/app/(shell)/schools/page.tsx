@@ -5,6 +5,7 @@ import { PlanningReviewSignals } from "@/components/schools/PlanningReviewSignal
 import { SchoolQuickActions } from "@/components/schools/SchoolQuickActions";
 import { SchoolsClusterDirectory, type DirectoryClusterOption } from "@/components/cluster/SchoolsClusterDirectory";
 import type { DirectorySchoolVM, DirectoryClusterMatch } from "@/components/cluster/DirectoryClusterDrawer";
+import { schoolRecommendationSummary } from "@/lib/planning/intervention-recommendation";
 import { TargetsByTimePeriodCard } from "@/components/portfolio/TargetsByTimePeriodCard";
 import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { SchoolsView } from "@/components/mobile/views/SchoolsView";
@@ -116,6 +117,7 @@ export default async function SchoolsDashboard() {
         .filter((p) => evaluateEligibility(s, p).recommended)
         .map((p) => p.projectId),
       delegations: activePartnerAssignmentsForSchool(s.schoolId).map((p) => ({ id: p.id, partnerName: p.partnerName, interventionArea: p.interventionArea })),
+      recommendation: schoolRecommendationSummary(s.schoolId),
     };
   });
   // Partner/HR cannot assign; everyone else with directory access can (server re-checks).

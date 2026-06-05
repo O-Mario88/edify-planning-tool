@@ -61,6 +61,15 @@ export type DirectorySchoolVM = {
   recommendedProjectIds?: string[];
   /** Active partner delegations (execution only). */
   delegations?: DirectoryDelegation[];
+  /** SSA-derived recommendation summary — severity + delivery for the weakest gap. */
+  recommendation?: {
+    hasSsa: boolean;
+    strugglingCount: number;
+    weakestArea?: string;
+    weakestScore?: number;
+    weakestSeverity?: "Critical" | "Needs Support" | "Good" | "Strong";
+    weakestDelivery?: "staff" | "partner";
+  };
 };
 
 type Tab = "cluster" | "project" | "partner";

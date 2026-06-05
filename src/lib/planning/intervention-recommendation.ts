@@ -19,6 +19,8 @@
 import type { SsaInterventionArea } from "./planning-gaps-mock";
 import { SSA_INTERVENTIONS } from "./ssa-performance-mock";
 import { ssaForSchool } from "@/lib/projects/project-school-ssa";
+import { ssaUploads } from "@/lib/intake/intake-mock";
+import { normalizeScores, isComplete } from "./intervention-taxonomy";
 
 // ────────── Severity (spec §6 thresholds) ──────────
 //   0–4 Critical · 5–6 Needs Support · 7–8 Good · 9–10 Strong
@@ -179,17 +181,43 @@ export type SchoolRecommendation = {
 };
 
 /**
+ * Resolve a school's current per-intervention scores (canonical-keyed). Prefers
+ * the most recent IA SSA upload (normalized from the intake labels) so a freshly
+ * uploaded SSA feeds recommendations immediately; falls back to the seeded
+ * per-school baseline+current scores. Returns undefined when neither exists —
+ * the "no scored SSA" state that keeps planning locked.
+ */
+function currentScoresForSchool(
+  schoolId: string,
+): { scores: Record<SsaInterventionArea, number>; date?: string } | undefined {
+  // Latest IA upload for this school (uploads are stored newest-first).
+  const upload = ssaUploads
+    .filter((u) => u.schoolId === schoolId)
+    .sort((a, b) => (a.ssaDate < b.ssaDate ? 1 : -1))[0];
+  if (upload) {
+    const normalized = normalizeScores(upload.scores);
+    if (isComplete(normalized)) {
+      return { scores: normalized as Record<SsaInterventionArea, number>, date: upload.ssaDate };
+    }
+  }
+  // Fall back to the seeded scores (the assignable+scored pool).
+  const seed = ssaForSchool(schoolId);
+  if (seed) return { scores: seed.current, date: seed.currentDate };
+  return undefined;
+}
+
+/**
  * The recommendation for a school, derived from its most recent SSA. Returns
  * `hasSsa: false` (and empty lists) when the school has no scored SSA yet — in
  * that state planning is locked and the next action is SIT / SSA, not support.
  */
 export function recommendInterventionsForSchool(schoolId: string): SchoolRecommendation {
-  const ssa = ssaForSchool(schoolId);
-  if (!ssa) {
+  const resolved = currentScoresForSchool(schoolId);
+  if (!resolved) {
     return { schoolId, hasSsa: false, overallAverage: null, all: [], struggling: [] };
   }
 
-  const all = SSA_INTERVENTIONS.map((area) => buildRecommendation(area, ssa.current[area])).sort(
+  const all = SSA_INTERVENTIONS.map((area) => buildRecommendation(area, resolved.scores[area])).sort(
     (a, b) => a.score - b.score,
   );
   const struggling = all.filter((r) => isStruggling(r.score));
@@ -200,7 +228,7 @@ export function recommendInterventionsForSchool(schoolId: string): SchoolRecomme
     schoolId,
     hasSsa: true,
     overallAverage,
-    currentDate: ssa.currentDate,
+    currentDate: resolved.date,
     all,
     struggling,
   };
@@ -214,4 +242,28 @@ export function recommendInterventionsForSchool(schoolId: string): SchoolRecomme
  */
 export function coreFocusInterventions(schoolId: string): InterventionRecommendation[] {
   return recommendInterventionsForSchool(schoolId).all.slice(0, 4);
+}
+
+/** Compact, serializable summary for list rows (School Directory, planning). */
+export type SchoolRecommendationSummary = {
+  hasSsa: boolean;
+  strugglingCount: number;
+  weakestArea?: SsaInterventionArea;
+  weakestScore?: number;
+  weakestSeverity?: Severity;
+  weakestDelivery?: DeliveryType;
+};
+
+export function schoolRecommendationSummary(schoolId: string): SchoolRecommendationSummary {
+  const r = recommendInterventionsForSchool(schoolId);
+  if (!r.hasSsa) return { hasSsa: false, strugglingCount: 0 };
+  const weakest = r.all[0]; // ranked weakest → strongest
+  return {
+    hasSsa: true,
+    strugglingCount: r.struggling.length,
+    weakestArea: weakest?.intervention,
+    weakestScore: weakest?.score,
+    weakestSeverity: weakest?.severity,
+    weakestDelivery: weakest?.delivery,
+  };
 }

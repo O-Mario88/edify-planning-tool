@@ -281,6 +281,19 @@ export function SchoolsClusterDirectory({
                       <Handshake size={9} /> {d.partnerName}
                     </span>
                   ))}
+                  {s.recommendation?.hasSsa && s.recommendation.strugglingCount > 0 && (
+                    <span className={cn(
+                      "text-[10.5px] inline-flex items-center gap-1 px-1.5 py-[1px] rounded font-semibold",
+                      s.recommendation.weakestSeverity === "Critical" ? "bg-rose-50 text-rose-700" : "bg-amber-50 text-amber-700",
+                    )}
+                      title={`Weakest: ${s.recommendation.weakestArea} (${s.recommendation.weakestScore?.toFixed(1)}/10) · ${s.recommendation.weakestDelivery === "partner" ? "partner" : "staff"} recommended`}>
+                      <AlertTriangle size={9} />
+                      {s.recommendation.strugglingCount} gap{s.recommendation.strugglingCount === 1 ? "" : "s"} · {s.recommendation.weakestArea}
+                      <span className={cn("ml-0.5 px-1 rounded text-[9.5px]", s.recommendation.weakestDelivery === "partner" ? "bg-violet-100 text-violet-700" : "bg-blue-100 text-blue-700")}>
+                        {s.recommendation.weakestDelivery === "partner" ? "Partner" : "Staff"}
+                      </span>
+                    </span>
+                  )}
                 </div>
               </div>
               {/* Actions */}
