@@ -13,7 +13,7 @@ import { schoolIdsWithActivePartner } from "@/lib/portfolio/partner-assignments"
 import { clusterStatusOf } from "@/lib/cluster/cluster-core";
 import { schoolWorkflowState } from "./school-state";
 import { openDuplicateCandidates } from "@/lib/intake/duplicate-candidates-mock";
-import type { SchoolKpi, StatusSnapshotTile, PlanningSignal } from "@/lib/schools-mock";
+import type { PlanningSignal } from "@/lib/schools-mock";
 
 const SEES_ALL: ReadonlySet<string> = new Set(["Admin", "CountryDirector", "RVP", "ImpactAssessment"]);
 
@@ -27,56 +27,40 @@ export function directoryRecords(staffId: string, role: EdifyRole): IntakeSchool
   });
 }
 
-const FLAT = { pct: "—", tone: "up" as const };
+/** One metric for the compact MetricStrip (dense alternative to the tile grid).
+ *  Counts carry their proportion as a caption so no info is lost vs the donuts. */
+export type DirectoryMetric = {
+  key: string;
+  label: string;
+  value: number;
+  caption?: string;
+  tone?: "default" | "alert" | "good";
+};
 
-/** Headline KPIs computed from the master (same shape the KPI row renders). */
-export function directoryKpis(schools: IntakeSchool[]): SchoolKpi[] {
-  const withPartner = schoolIdsWithActivePartner();
+export function directoryMetrics(schools: IntakeSchool[]): DirectoryMetric[] {
   const total = schools.length;
+  const denom = Math.max(total, 1);
+  const pct = (n: number) => `${Math.round((n / denom) * 1000) / 10}%`;
+  const withPartner = schoolIdsWithActivePartner();
   const client = schools.filter((s) => s.schoolType === "Client").length;
   const core = schools.filter((s) => s.schoolType === "Core").length;
-  const owned = schools.filter((s) => resolveOwner(s.assignedCceo).status === "matched").length;
-  const partners = schools.filter((s) => withPartner.has(s.schoolId)).length;
   const clustered = schools.filter((s) => clusterStatusOf(s) === "clustered").length;
   const unclustered = total - clustered;
+  const owned = schools.filter((s) => resolveOwner(s.assignedCceo).status === "matched").length;
+  const partners = schools.filter((s) => withPartner.has(s.schoolId)).length;
   const ssaDone = schools.filter((s) => s.ssaStatus === "SSA Done").length;
   const ssaMiss = total - ssaDone;
 
   return [
-    { key: "total",     label: "Total Schools",       value: total,       delta: FLAT, icon: "school",      iconTone: "edify",   spark: { seed: 21, trend: "up" } },
-    { key: "client",    label: "Client Schools",      value: client,      delta: FLAT, icon: "briefcase",   iconTone: "blue",    spark: { seed: 23, trend: "up" } },
-    { key: "core",      label: "Core Schools",        value: core,        delta: FLAT, icon: "shield",      iconTone: "violet",  spark: { seed: 24, trend: "up" } },
-    { key: "clustered", label: "Clustered",           value: clustered,   delta: FLAT, icon: "checkCircle", iconTone: "emerald", spark: { seed: 30, trend: "up" } },
-    { key: "unclustered", label: "Unclustered",       value: unclustered, delta: { pct: "—", tone: "down" }, icon: "schoolOff", iconTone: "rose", spark: { seed: 31, trend: "down" } },
-    { key: "staff",     label: "Owned by Staff",      value: owned,       delta: FLAT, icon: "userPlus",    iconTone: "amber",   spark: { seed: 26, trend: "up" } },
-    { key: "partners",  label: "Partner-Supported",   value: partners,    delta: FLAT, icon: "handshake",   iconTone: "edify",   spark: { seed: 27, trend: "up" } },
-    { key: "ssa_done",  label: "SSA Complete",        value: ssaDone,     delta: FLAT, icon: "checkCircle", iconTone: "emerald", spark: { seed: 28, trend: "up" } },
-    { key: "ssa_miss",  label: "SSA Pending",         value: ssaMiss,     delta: { pct: "—", tone: "down" }, icon: "xCircle", iconTone: "red", spark: { seed: 29, trend: "down" } },
-  ];
-}
-
-/** Status snapshot tiles from the master. */
-export function directoryStatusSnapshot(schools: IntakeSchool[]): StatusSnapshotTile[] {
-  const total = Math.max(schools.length, 1);
-  const pct = (n: number) => Math.round((n / total) * 1000) / 10;
-  const withPartner = schoolIdsWithActivePartner();
-  const client = schools.filter((s) => s.schoolType === "Client").length;
-  const core = schools.filter((s) => s.schoolType === "Core").length;
-  const clustered = schools.filter((s) => clusterStatusOf(s) === "clustered").length;
-  const unclustered = schools.length - clustered;
-  const ssaDone = schools.filter((s) => s.ssaStatus === "SSA Done").length;
-  const ssaMiss = schools.length - ssaDone;
-  const owned = schools.filter((s) => resolveOwner(s.assignedCceo).status === "matched").length;
-  const partners = schools.filter((s) => withPartner.has(s.schoolId)).length;
-  return [
-    { key: "active",   label: "Clustered",       value: clustered,   pct: pct(clustered),   icon: "checkCircle", tone: "emerald" },
-    { key: "inactive", label: "Unclustered",     value: unclustered, pct: pct(unclustered), icon: "schoolOff",   tone: "rose"    },
-    { key: "client",   label: "Client Schools",  value: client,      pct: pct(client),      icon: "briefcase",   tone: "blue"    },
-    { key: "core",     label: "Core Schools",    value: core,        pct: pct(core),        icon: "shield",      tone: "violet"  },
-    { key: "ssa_done", label: "SSA Complete",    value: ssaDone,     pct: pct(ssaDone),     icon: "checkCircle", tone: "emerald" },
-    { key: "ssa_miss", label: "SSA Pending",     value: ssaMiss,     pct: pct(ssaMiss),     icon: "xCircle",     tone: "red"     },
-    { key: "staff",    label: "Owned by Staff",  value: owned,       pct: pct(owned),       icon: "userPlus",    tone: "amber"   },
-    { key: "partners", label: "Partner-Supported", value: partners,  pct: pct(partners),    icon: "handshake",   tone: "edify"   },
+    { key: "total",       label: "Total Schools",     value: total },
+    { key: "client",      label: "Client",            value: client,      caption: pct(client) },
+    { key: "core",        label: "Core",              value: core,        caption: pct(core) },
+    { key: "clustered",   label: "Clustered",         value: clustered,   caption: pct(clustered), tone: clustered ? "good" : "default" },
+    { key: "unclustered", label: "Unclustered",       value: unclustered, caption: pct(unclustered), tone: unclustered ? "alert" : "default" },
+    { key: "ssa_done",    label: "SSA Complete",      value: ssaDone,     caption: pct(ssaDone), tone: ssaDone ? "good" : "default" },
+    { key: "ssa_miss",    label: "SSA Pending",       value: ssaMiss,     caption: pct(ssaMiss), tone: ssaMiss ? "alert" : "default" },
+    { key: "staff",       label: "Owned by Staff",    value: owned,       caption: pct(owned) },
+    { key: "partners",    label: "Partner-Supported", value: partners,    caption: pct(partners) },
   ];
 }
 

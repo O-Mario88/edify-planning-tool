@@ -520,7 +520,7 @@ export type SchoolKpi = {
 //
 // Country-wide totals match the screenshot for visual fidelity (a Country
 // Director would see these); for a CCEO, recompute from the assigned set —
-// see SchoolKpiRow which calls computeKpisFor().
+// see computeKpisFor().
 export function computeKpisFor(schools: SchoolRow[]): SchoolKpi[] {
   const total = schools.length;
   const active = schools.filter((s) => s.schoolStatus === "Active").length;

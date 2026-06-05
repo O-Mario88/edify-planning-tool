@@ -1,0 +1,95 @@
+"use client";
+
+// MetricStrip — the dense alternative to a grid of KPI tiles.
+//
+// WHY: big KPI tiles work at ≤4 in a row; past that they become a noisy,
+// equal-weight grid where nothing leads. A strip lays many metrics as one
+// continuous band of flush, hairline-separated cells — value + small label,
+// no sparklines, optional tiny icon — so 8–13 metrics read as a single
+// scannable stat line instead of a wall of boxes. Reserve the big-tile
+// treatment for the ≤4 hero metrics a user actually acts on.
+//
+// Tone: "alert" tints the value (needs-attention metrics — unclustered, pending);
+// "good" tints it positive. Cells can deep-link via `href`.
+
+import Link from "next/link";
+import { cn } from "@/lib/utils";
+import type { LucideIcon } from "lucide-react";
+
+export type MetricCell = {
+  key: string;
+  label: string;
+  value: string | number;
+  /** Faint sub-line — e.g. a proportion "76.9%" or "of 13". */
+  caption?: string;
+  tone?: "default" | "alert" | "good";
+  icon?: LucideIcon;
+  /** Makes the cell a link (e.g. deep-link into a filtered list). */
+  href?: string;
+};
+
+const VALUE_TONE: Record<NonNullable<MetricCell["tone"]>, string> = {
+  default: "text-[var(--text-primary)]",
+  alert: "text-rose-600",
+  good: "text-emerald-600",
+};
+
+// Cells use collapsing 1px borders (a spreadsheet-like band) so any count wraps
+// cleanly without leading/trailing dividers — the strip reads as one unit.
+const COLS =
+  "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6";
+
+export function MetricStrip({
+  metrics,
+  title,
+  className,
+  columns,
+}: {
+  metrics: MetricCell[];
+  title?: string;
+  className?: string;
+  /** Override the responsive column classes when a specific count fits better. */
+  columns?: string;
+}) {
+  return (
+    <section className={cn("card rounded-2xl overflow-hidden", className)}>
+      {title && (
+        <header className="px-3.5 pt-3 pb-2 border-b border-[var(--color-edify-divider)]">
+          <h2 className="text-[12px] font-extrabold tracking-tight uppercase muted">{title}</h2>
+        </header>
+      )}
+      <div className={cn("grid border-t border-l border-[var(--color-edify-divider)]", columns ?? COLS)}>
+        {metrics.map((m) => (
+          <Cell key={m.key} cell={m} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function Cell({ cell }: { cell: MetricCell }) {
+  const Icon = cell.icon;
+  const tone = cell.tone ?? "default";
+  const body = (
+    <>
+      <div className="flex items-center gap-1 text-[10px] muted font-bold uppercase tracking-wide leading-tight">
+        {Icon && <Icon size={10} className="shrink-0" />}
+        <span className="truncate">{cell.label}</span>
+      </div>
+      <div className={cn("text-[17px] font-extrabold tabular leading-none mt-1.5 truncate", VALUE_TONE[tone])}>
+        {typeof cell.value === "number" ? cell.value.toLocaleString() : cell.value}
+      </div>
+      {cell.caption && <div className="text-[10px] muted font-medium mt-0.5 truncate">{cell.caption}</div>}
+    </>
+  );
+
+  const base = "block px-3 py-2.5 border-r border-b border-[var(--color-edify-divider)] min-w-0";
+  if (cell.href) {
+    return (
+      <Link href={cell.href} className={cn(base, "transition-colors hover:bg-[var(--color-edify-soft)]/50")}>
+        {body}
+      </Link>
+    );
+  }
+  return <div className={base}>{body}</div>;
+}

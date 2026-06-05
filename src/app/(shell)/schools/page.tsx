@@ -1,6 +1,5 @@
 import { SchoolsHeader } from "@/components/schools/SchoolsHeader";
-import { SchoolKpiRow } from "@/components/schools/SchoolKpiRow";
-import { SchoolStatusSnapshot } from "@/components/schools/SchoolStatusSnapshot";
+import { MetricStrip } from "@/components/ui/MetricStrip";
 import { PlanningReviewSignals } from "@/components/schools/PlanningReviewSignals";
 import { SchoolQuickActions } from "@/components/schools/SchoolQuickActions";
 import { SchoolsClusterDirectory, type DirectoryClusterOption } from "@/components/cluster/SchoolsClusterDirectory";
@@ -18,8 +17,7 @@ import {
 import { schoolWorkflowState } from "@/lib/school-directory/school-state";
 import {
   directoryRecords,
-  directoryKpis,
-  directoryStatusSnapshot,
+  directoryMetrics,
   directoryPlanningSignals,
 } from "@/lib/school-directory/directory";
 import { openDuplicateCandidates } from "@/lib/intake/duplicate-candidates-mock";
@@ -54,8 +52,7 @@ export default async function SchoolsDashboard() {
 
   // Canonical directory: the viewer's uploaded schools (scoped to their chain).
   const records = directoryRecords(currentUser.staffId, currentUser.role);
-  const kpis = directoryKpis(records);
-  const snapshot = directoryStatusSnapshot(records);
+  const metrics = directoryMetrics(records);
   const signals = directoryPlanningSignals(records);
 
   // Portfolio targets — only when the viewer personally OWNS schools (CCEO/PL).
@@ -132,8 +129,14 @@ export default async function SchoolsDashboard() {
     <>
       <SchoolsHeader />
         <div className="px-3 sm:px-4 md:px-6 pb-24 md:pb-6 space-y-3 md:space-y-4">
-          {/* KPI Row — 9 cards (role-scoped) */}
-          <SchoolKpiRow kpis={kpis} />
+          {/* Portfolio at a glance — dense metric strip (role-scoped).
+              Replaces the 9-tile KPI grid + the redundant donut snapshot:
+              one scannable band, proportions carried as captions. */}
+          <MetricStrip
+            title="Portfolio at a glance"
+            metrics={metrics}
+            columns="grid-cols-2 sm:grid-cols-3 md:grid-cols-5 xl:grid-cols-9"
+          />
 
           {/* Portfolio targets — cumulative FY progress (shown when you own schools) */}
           {portfolio.schools.length > 0 && (
@@ -160,15 +163,9 @@ export default async function SchoolsDashboard() {
             interventionAreas={interventionAreas}
           />
 
-          {/* Status snapshot + Planning signals — from the master */}
-          <section className="grid grid-cols-12 gap-4 items-start">
-            <div className="col-span-12 md:col-span-7">
-              <SchoolStatusSnapshot tiles={snapshot} />
-            </div>
-            <div className="col-span-12 md:col-span-5">
-              <PlanningReviewSignals signals={signals} />
-            </div>
-          </section>
+          {/* Planning-readiness signals — the actionable workflow stages
+              (counts duplicated by the strip above were removed). */}
+          <PlanningReviewSignals signals={signals} />
 
           {/* Quick actions — permission-aware */}
           <SchoolQuickActions user={currentUser} />
