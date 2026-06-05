@@ -20,7 +20,7 @@ type Tile = { label: string; href: string; Icon: LucideIcon; badge?: number; sub
 
 const QUICK: Tile[] = [
   { label: "Today's Tasks",         href: "/today",          Icon: CalendarCheck, badge: todaysTaskCounts.planned + todaysTaskCounts.inProgress, sub: todayHeader.dateLabel },
-  { label: "My Plan",               href: "/my-plan",        Icon: ClipboardList, sub: "Current month activities" },
+  { label: "Planning",              href: "/planning",       Icon: ClipboardList, sub: "Your plan + scheduling" },
   { label: "My Targets",            href: "/my-targets",     Icon: Award,         sub: "Personal achievement" },
   { label: "Routes",                href: "/route",          Icon: Map,           sub: "Smart route planning" },
   { label: "Salesforce Queue",      href: "/queue",          Icon: Database,      badge: sfQueueCounts.awaiting, sub: "IDs to submit" },

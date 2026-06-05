@@ -48,7 +48,7 @@ export function PlanningOwnershipSections({ ownership = EMPTY_OWNERSHIP }: { own
         emptyTitle="Nothing on your queue."
         emptyBody="When a core activity is assigned to you, it lands here. Tap Assign to Myself from any gap card to populate this view."
         emptyVariant="calm"
-        viewAllHref="/my-plan"
+        viewAllHref="/plans"
       />
       <OwnershipSection
         title="Assigned to Partner"
@@ -82,7 +82,7 @@ export function PlanningOwnershipSections({ ownership = EMPTY_OWNERSHIP }: { own
         emptyTitle="No core activities this month."
         emptyBody="As visits and trainings get scheduled, they appear here grouped by their delivery week."
         emptyVariant="calm"
-        viewAllHref="/my-plan"
+        viewAllHref="/plans"
       />
     </>
   );

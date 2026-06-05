@@ -1,12 +1,12 @@
 "use client";
 
-// Core School Planning accordion (§14) — collapsible sections derived from the
-// real CorePlan progress. Default: expand the most urgent non-empty section,
-// collapse the rest. Each section header shows a live count; the body is the
-// real CorePlanBoard (full execution controls) for that section's plans.
+// Core School Planning — grouped into sections (§14), each showing a compact
+// LIST of schools. Clicking a SCHOOL row expands it inline to reveal the full
+// plan detail (4+4 slots, follow-up SSA, impact, champion) with live controls.
+// The expand/collapse unit is the SCHOOL, not the section.
 
-import { useMemo, useState } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { useState } from "react";
+import { ChevronDown, ChevronRight, Footprints, GraduationCap, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CorePlanBoard } from "./CorePlanBoard";
 import type { SlotViewer } from "./CoreSlotActions";
@@ -14,8 +14,6 @@ import type { CorePlanCardVM } from "@/lib/core/core-board";
 
 type Section = { key: string; label: string; match: (c: CorePlanCardVM) => boolean };
 
-// Next-needed buckets: a plan lands in exactly one visit-section and one
-// training-section (its next required), plus lifecycle sections.
 const SECTIONS: Section[] = [
   { key: "ready", label: "Ready for Planning", match: (c) => c.progress.visitsCompleted === 0 && c.progress.trainingsCompleted === 0 && c.plan.status !== "Completed Pending Follow-Up SSA" },
   { key: "v1", label: "Missing Visit 1", match: (c) => c.progress.visitsCompleted === 0 },
@@ -32,40 +30,59 @@ const SECTIONS: Section[] = [
   { key: "verified", label: "Verified Champion Schools", match: (c) => c.championStatus === "Verified Champion" || c.championStatus === "Champion Mentor School" },
 ];
 
+function nextAction(c: CorePlanCardVM): string {
+  if (c.plan.status === "Completed Pending Follow-Up SSA") return "Schedule Follow-Up SSA";
+  if (c.plan.status === "Follow-Up SSA Scheduled") return "Awaiting Follow-Up SSA";
+  if (c.progress.visitsCompleted < 4) return `Schedule Visit ${c.progress.visitsCompleted + 1}`;
+  if (c.progress.trainingsCompleted < 4) return `Schedule Training ${c.progress.trainingsCompleted + 1}`;
+  return "Measure impact";
+}
+
 export function CorePlanningAccordion({ cards, viewer, canChampion }: { cards: CorePlanCardVM[]; viewer: SlotViewer; canChampion: boolean }) {
-  const sections = useMemo(
-    () => SECTIONS.map((s) => ({ ...s, items: cards.filter(s.match) })).filter((s) => s.items.length > 0),
-    [cards],
-  );
-  // Default: expand the first (most urgent) non-empty section.
-  const [open, setOpen] = useState<Record<string, boolean>>(() => (sections[0] ? { [sections[0].key]: true } : {}));
+  const sections = SECTIONS.map((s) => ({ ...s, items: cards.filter(s.match) })).filter((s) => s.items.length > 0);
 
   if (cards.length === 0) {
     return <div className="card p-8 text-center text-[12px] muted italic">No core plans in your scope yet.</div>;
   }
-
   return (
-    <div className="space-y-2">
-      {sections.map((s) => {
-        const isOpen = !!open[s.key];
-        return (
-          <section key={s.key} className="card overflow-hidden">
-            <button type="button" onClick={() => setOpen((o) => ({ ...o, [s.key]: !o[s.key] }))}
-              className="w-full flex items-center justify-between gap-2 px-3.5 py-2.5 hover:bg-[var(--color-edify-soft)]/30">
-              <span className="inline-flex items-center gap-2 text-[12.5px] font-extrabold tracking-tight">
-                {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                {s.label}
-                <span className={cn("tabular text-[11px] px-1.5 rounded-full", isOpen ? "bg-[var(--color-edify-primary)] text-white" : "bg-[var(--color-edify-soft)]/70")}>{s.items.length}</span>
-              </span>
-            </button>
-            {isOpen && (
-              <div className="px-3 pb-3 pt-1 border-t border-[var(--color-edify-divider)]">
-                <CorePlanBoard cards={s.items} viewer={viewer} canChampion={canChampion} />
-              </div>
-            )}
-          </section>
-        );
-      })}
+    <div className="space-y-3">
+      {sections.map((s) => (
+        <section key={s.key} className="card p-3">
+          <h3 className="text-[12px] font-extrabold tracking-tight mb-2 inline-flex items-center gap-2">
+            {s.label}
+            <span className="tabular text-[11px] px-1.5 rounded-full bg-[var(--color-edify-soft)]/70">{s.items.length}</span>
+          </h3>
+          <ul className="space-y-1.5">
+            {s.items.map((c) => <SchoolRow key={c.plan.id} c={c} viewer={viewer} canChampion={canChampion} />)}
+          </ul>
+        </section>
+      ))}
     </div>
+  );
+}
+
+function SchoolRow({ c, viewer, canChampion }: { c: CorePlanCardVM; viewer: SlotViewer; canChampion: boolean }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <li className="rounded-lg border border-[var(--color-edify-divider)] overflow-hidden">
+      <button type="button" onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center gap-2 px-2.5 py-2 hover:bg-[var(--color-edify-soft)]/30 text-left">
+        {open ? <ChevronDown size={13} className="shrink-0" /> : <ChevronRight size={13} className="shrink-0" />}
+        <span className="font-bold text-[12px] truncate min-w-0 flex-1">{c.schoolName}
+          <span className="muted font-normal"> · {c.district}{c.cluster ? ` · ${c.cluster}` : ""}</span>
+        </span>
+        <span className="hidden sm:inline-flex items-center gap-2 text-[10.5px] muted tabular shrink-0">
+          <span className="inline-flex items-center gap-0.5"><Footprints size={10} />{c.progress.visitsCompleted}/4</span>
+          <span className="inline-flex items-center gap-0.5"><GraduationCap size={10} />{c.progress.trainingsCompleted}/4</span>
+          {c.championStatus !== "Not Eligible" && <span className="inline-flex items-center gap-0.5 text-amber-700"><Trophy size={10} />{c.championStatus}</span>}
+        </span>
+        <span className={cn("shrink-0 text-[10px] font-bold px-1.5 py-[2px] rounded-full hidden md:inline", open ? "bg-[var(--color-edify-primary)] text-white" : "bg-[var(--color-edify-soft)]/70")}>{nextAction(c)}</span>
+      </button>
+      {open && (
+        <div className="px-2 pb-2 pt-1 border-t border-[var(--color-edify-divider)]">
+          <CorePlanBoard cards={[c]} viewer={viewer} canChampion={canChampion} />
+        </div>
+      )}
+    </li>
   );
 }

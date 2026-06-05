@@ -28,10 +28,10 @@ export function PlanningOwnershipSectionsMobile({ ownership = EMPTY_OWNERSHIP }:
 
   return (
     <>
-      <CompactSection title="Assigned to Me"           Icon={User}       tone="info" rows={me}      href="/my-plan" />
+      <CompactSection title="Assigned to Me"           Icon={User}       tone="info" rows={me}      href="/plans" />
       <CompactSection title="Assigned to Partner"      Icon={Handshake}  tone="info" rows={partner} href="/partner/assignments" />
       <CompactSection title="Awaiting Partner Schedule" Icon={Clock}     tone="warn" rows={waiting} href="/partner/schedule" />
-      <CompactSection title="Planned This Month"       Icon={Calendar}   tone="good" rows={month}   href="/my-plan" />
+      <CompactSection title="Planned This Month"       Icon={Calendar}   tone="good" rows={month}   href="/plans" />
     </>
   );
 }

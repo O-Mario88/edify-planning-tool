@@ -44,7 +44,7 @@ const CCEO_LAYOUT: Layout = {
   kind: "fab",
   tabs: [
     { key: "home",         label: "Home",         href: "/dashboards/cceo", Icon: Home,        match: ["/dashboards/cceo", "/work-plan", "/dashboard"] },
-    { key: "plan",         label: "Plan",         href: "/my-plan",      Icon: ClipboardList,  match: ["/my-plan", "/planning"] },
+    { key: "plan",         label: "Plan",         href: "/planning",     Icon: ClipboardList,  match: ["/my-plan", "/planning"] },
     null,
     // Core Schools — opens the executive Core School Dashboard, which
     // surfaces the full list of Core Schools through its Best Performing

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarRange, ClipboardList, User } from "lucide-react";
+import { CalendarRange, ClipboardList } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // Three-pill cross-link strip for the plans family.
@@ -23,8 +23,9 @@ const SURFACES: Array<{
   label: string;
   Icon: typeof CalendarRange;
 }> = [
+  // My Plan is now integrated into the Planning Tool (the ownership sections
+  // render inside /planning), so it is no longer a separate surface.
   { key: "planning", href: "/planning", label: "Planning Tool", Icon: CalendarRange },
-  { key: "my-plan",  href: "/my-plan",  label: "My Plan",       Icon: User },
   { key: "plans",    href: "/plans",    label: "All Plans",     Icon: ClipboardList },
 ];
 
