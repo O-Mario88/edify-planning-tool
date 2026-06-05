@@ -3,6 +3,7 @@
 // server with no client chart runtime: lifecycle funnel, package progress,
 // visits/trainings 1–4, baseline-vs-follow-up, staff-vs-partner, heatmap.
 
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import type { CoreAnalytics } from "@/lib/core/core-analytics";
 
@@ -118,7 +119,7 @@ function BeforeAfter({ rows }: { rows: CoreAnalytics["beforeAfter"] }) {
     <div className="space-y-1.5">
       {rows.map((r) => (
         <div key={r.schoolId} className="flex items-center gap-2 text-[11px]">
-          <div className="w-28 truncate font-semibold">{r.schoolName}</div>
+          <Link href={`/core-schools/${r.schoolId}`} className="w-28 truncate font-semibold hover:underline text-[var(--color-edify-primary)]">{r.schoolName}</Link>
           <div className="flex-1 relative h-4">
             <div className="absolute inset-y-0 left-0 right-0 rounded bg-[var(--color-edify-soft)]/40" />
             <div className="absolute inset-y-0 rounded bg-emerald-400/70" style={{ left: `${(Math.min(r.baseline, r.followUp) / 10) * 100}%`, width: `${(Math.abs(r.followUp - r.baseline) / 10) * 100}%` }} />
@@ -195,7 +196,7 @@ function Heatmap({ areas, rows }: { areas: readonly string[]; rows: CoreAnalytic
         <tbody>
           {rows.map((r) => (
             <tr key={r.schoolId}>
-              <td className="pr-2 font-semibold whitespace-nowrap">{r.schoolName}</td>
+              <td className="pr-2 font-semibold whitespace-nowrap"><Link href={`/core-schools/${r.schoolId}`} className="hover:underline text-[var(--color-edify-primary)]">{r.schoolName}</Link></td>
               {r.scores.map((sc, i) => (
                 <td key={i} className={cn("w-7 h-7 text-center align-middle rounded tabular font-bold", heatTone(sc))}>{sc ?? ""}</td>
               ))}

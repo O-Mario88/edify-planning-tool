@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { Trophy, TrendingUp, ArrowRight, BarChart3 } from "lucide-react";
+import { Trophy, TrendingUp, ArrowRight, BarChart3, Wallet } from "lucide-react";
 import { RoleBottomNav } from "@/components/mobile/RoleBottomNav";
 import { CorePageHeader } from "@/components/core/CorePageHeader";
 import { CoreHealthBanner } from "@/components/core/CoreHealthPanel";
+import { CoreExportButton, type ExportRow } from "@/components/core/CoreExportButton";
 import { coreBoardData, coreBoardSummary } from "@/lib/core/core-board";
 import { coreHealthReport } from "@/lib/core/core-health";
 import { getCurrentUser } from "@/lib/auth";
@@ -17,6 +18,22 @@ export default async function CoreSchoolDashboard() {
   const cards = coreBoardData(user.staffId, user.role);
   const summary = coreBoardSummary(cards);
   const health = coreHealthReport();
+
+  const exportRows: ExportRow[] = cards.map((c) => ({
+    schoolId: c.plan.schoolId,
+    school: c.schoolName,
+    district: c.district,
+    cluster: c.cluster ?? "",
+    owner: c.owner ?? "",
+    fy: c.plan.fy,
+    baselineSSA: c.baselineAverage,
+    planStatus: c.plan.status,
+    visitsCompleted: c.progress.visitsCompleted,
+    trainingsCompleted: c.progress.trainingsCompleted,
+    packagePercent: c.progress.packageCompletionPercent,
+    impactChange: c.impact ? c.impact.averageChange : "",
+    championStatus: c.championStatus,
+  }));
 
   const body = (
     <>
@@ -42,6 +59,12 @@ export default async function CoreSchoolDashboard() {
           <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
             <h2 className="text-[13px] font-extrabold tracking-tight">Core School Directory</h2>
             <div className="flex items-center gap-3">
+              <CoreExportButton rows={exportRows} filename="core-schools" />
+              {["ProgramAccountant", "CountryDirector", "CountryProgramLead", "Admin"].includes(user.role) && (
+                <Link href="/core-schools/payments" className="inline-flex items-center gap-1 text-[11.5px] font-extrabold text-[var(--color-edify-primary)] hover:text-[var(--color-edify-dark)]">
+                  <Wallet size={12} /> Payments
+                </Link>
+              )}
               <Link href="/core-schools/analytics" className="inline-flex items-center gap-1 text-[11.5px] font-extrabold text-[var(--color-edify-primary)] hover:text-[var(--color-edify-dark)]">
                 <BarChart3 size={12} /> Analytics
               </Link>

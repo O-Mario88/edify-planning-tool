@@ -33,6 +33,7 @@ import {
 } from "@/lib/core/core-store";
 import { corePlanProgress, recomputePlanCounters } from "@/lib/core/core-progress";
 import { coreImpactFor } from "@/lib/core/core-impact";
+import { recordCompletion } from "@/lib/execution/completion-overlay";
 import {
   CORE_SSA_THRESHOLD, VISITS_TARGET, TRAININGS_TARGET,
   type CoreSlotOwner, type CoreActivitySlot, type CoreSsaScores,
@@ -318,6 +319,22 @@ export async function completeCoreSlot(slotId: string, input: CoreCompleteInput)
     leaders: input.leaders,
     participants: input.participants ?? ((input.teachers ?? 0) + (input.leaders ?? 0)),
   });
+  // Two-way activity-ledger integration: a completed core slot becomes a real
+  // record in the shared completion overlay (the same ledger /visits + /trainings
+  // and IA read), keyed by the entered Salesforce ID. No longer one-way (§9/§22).
+  const coreSchool = intakeSchools.find((s) => s.schoolId === slot.schoolId);
+  recordCompletion({
+    activityId,
+    activityType: slot.activityType === "visit" ? "Core Visit" : "Core Training",
+    schoolName: coreSchool?.schoolName ?? slot.schoolId,
+    salesforceId: sf,
+    salesforceIdKind: slot.activityType === "visit" ? "SVE" : "TS",
+    teachers: input.teachers,
+    leaders: input.leaders,
+    confirmedById: user.staffId,
+    confirmedByName: user.name,
+  });
+
   emitAudit({ action: "core.slotCompleted", subjectKind: "CoreActivitySlot", subjectId: slotId, actorId: user.staffId, actorRole: user.role, actorName: user.name, payload: { salesforceId: sf, activityId, planId: slot.corePlanId } });
   if (needsPl) {
     emitNotification({ userId: "PROGRAM_LEAD", template: "core.slotPlReview", channel: "Inbox", title: "CCEO core visit needs your sign-off", body: `Verify the CCEO core visit (${slot.intervention}) before it goes to IA.`, href: "/planning/core-schools" });
