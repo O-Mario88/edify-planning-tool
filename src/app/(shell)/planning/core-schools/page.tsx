@@ -7,7 +7,7 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { CorePageHeader } from "@/components/core/CorePageHeader";
-import { CoreGapTabs } from "@/components/core/CoreGapTabs";
+import { CorePlanningWorkspace } from "@/components/core/CorePlanningWorkspace";
 import { coreBoardData, coreBoardSummary } from "@/lib/core/core-board";
 import { getCurrentUser } from "@/lib/auth";
 
@@ -53,7 +53,7 @@ export default async function Page() {
       </div>
 
       <div className="px-4 sm:px-5 md:px-6 pb-24 md:pb-8 pt-4">
-        <CoreGapTabs cards={cards} viewer={viewer} canChampion={canChampion} />
+        <CorePlanningWorkspace cards={cards} viewer={viewer} canChampion={canChampion} />
       </div>
     </>
   );
