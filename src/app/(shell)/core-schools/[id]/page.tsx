@@ -1,8 +1,6 @@
 import { notFound } from "next/navigation";
-import { GraduationCap } from "lucide-react";
-import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { RoleBottomNav } from "@/components/mobile/RoleBottomNav";
-import { PageHeader } from "@/components/ui/PageHeader";
+import { CorePageHeader } from "@/components/core/CorePageHeader";
 import { CoreSchoolDetail } from "@/components/core/CoreSchoolDetail";
 import { coreSchoolDetail } from "@/lib/core/core-detail";
 
@@ -17,14 +15,14 @@ export default async function CoreSchoolDetailPage({ params }: { params: Promise
 
   const body = (
     <>
-      <PageHeader
+      <CorePageHeader
+        icon="schools"
         title={vm.schoolName}
         subtitle={`Core School · ${vm.district}${vm.cluster ? ` · ${vm.cluster}` : ""} · ${vm.plan?.status ?? "No core plan"}`}
-        Icon={GraduationCap}
       />
       <CoreSchoolDetail vm={vm} />
       <RoleBottomNav />
     </>
   );
-  return <ResponsiveDashboard mobile={body} desktop={body} />;
+  return body;
 }

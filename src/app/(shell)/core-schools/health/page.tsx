@@ -1,7 +1,5 @@
-import { ShieldCheck } from "lucide-react";
-import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { RoleBottomNav } from "@/components/mobile/RoleBottomNav";
-import { PageHeader } from "@/components/ui/PageHeader";
+import { CorePageHeader } from "@/components/core/CorePageHeader";
 import { CoreHealthPanel } from "@/components/core/CoreHealthPanel";
 import { coreHealthReport } from "@/lib/core/core-health";
 
@@ -14,10 +12,10 @@ export default async function CoreHealthPage() {
   const report = coreHealthReport();
   const body = (
     <>
-      <PageHeader
+      <CorePageHeader
+        icon="health"
         title="Core Health Checks"
         subtitle="Data-integrity rules across the core lifecycle. Every finding points to the record that breaks the one-schoolId invariant."
-        Icon={ShieldCheck}
       />
       <div className="px-3 sm:px-4 lg:px-6 pb-24 lg:pb-6 pt-3">
         <CoreHealthPanel report={report} />
@@ -25,5 +23,5 @@ export default async function CoreHealthPage() {
       <RoleBottomNav />
     </>
   );
-  return <ResponsiveDashboard mobile={body} desktop={body} />;
+  return body;
 }

@@ -5,8 +5,8 @@
 // 4 trainings → execution (Salesforce/IA) → follow-up SSA → impact → champion.
 
 import Link from "next/link";
-import { ArrowLeft, Calendar, MapPin, User, GraduationCap, Filter } from "lucide-react";
-import { PageHeader } from "@/components/ui/PageHeader";
+import { ArrowLeft } from "lucide-react";
+import { CorePageHeader } from "@/components/core/CorePageHeader";
 import { CoreGapTabs } from "@/components/core/CoreGapTabs";
 import { coreBoardData, coreBoardSummary } from "@/lib/core/core-board";
 import { getCurrentUser } from "@/lib/auth";
@@ -29,15 +29,15 @@ export default async function Page() {
 
   return (
     <>
-      <PageHeader
+      <CorePageHeader
+        icon="schools"
         title="Core School Planning Console"
         subtitle="Every core school flows through SSA → 4 priority interventions → 4 visits + 4 trainings → follow-up SSA → impact. This board mutates the real core plan."
-        Icon={GraduationCap}
         filters={[
-          { Icon: Calendar, label: "FY26" },
-          { Icon: MapPin, label: `${summary.plans} core plans` },
-          { Icon: User, label: `${summary.champions} champions` },
-          { Icon: Filter, label: `${summary.pendingFollowUp} awaiting SSA` },
+          { iconKey: "calendar", label: "FY26" },
+          { iconKey: "map", label: `${summary.plans} core plans` },
+          { iconKey: "user", label: `${summary.champions} champions` },
+          { iconKey: "filter", label: `${summary.pendingFollowUp} awaiting SSA` },
         ]}
         searchPlaceholder="Search core schools"
       />

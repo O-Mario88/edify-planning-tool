@@ -1,7 +1,5 @@
-import { BarChart3 } from "lucide-react";
-import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { RoleBottomNav } from "@/components/mobile/RoleBottomNav";
-import { PageHeader } from "@/components/ui/PageHeader";
+import { CorePageHeader } from "@/components/core/CorePageHeader";
 import { CoreAnalyticsView } from "@/components/core/CoreAnalyticsView";
 import { coreAnalytics } from "@/lib/core/core-analytics";
 import { getCurrentUser } from "@/lib/auth";
@@ -16,10 +14,10 @@ export default async function CoreAnalyticsPage() {
   const a = coreAnalytics(user.staffId, user.role);
   const body = (
     <>
-      <PageHeader
+      <CorePageHeader
+        icon="analytics"
         title="Core Analytics"
         subtitle="Candidate → Verified → Onboarded → 4+4 Complete → Follow-Up SSA → Improved → Champion. Scoped to your portfolio."
-        Icon={BarChart3}
       />
       <div className="px-3 sm:px-4 lg:px-6 pb-24 lg:pb-6 pt-3">
         <CoreAnalyticsView a={a} />
@@ -27,5 +25,5 @@ export default async function CoreAnalyticsPage() {
       <RoleBottomNav />
     </>
   );
-  return <ResponsiveDashboard mobile={body} desktop={body} />;
+  return body;
 }

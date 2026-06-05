@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { GraduationCap, Trophy, TrendingUp, ArrowRight, BarChart3 } from "lucide-react";
-import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
+import { Trophy, TrendingUp, ArrowRight, BarChart3 } from "lucide-react";
 import { RoleBottomNav } from "@/components/mobile/RoleBottomNav";
-import { PageHeader } from "@/components/ui/PageHeader";
+import { CorePageHeader } from "@/components/core/CorePageHeader";
 import { CoreHealthBanner } from "@/components/core/CoreHealthPanel";
 import { coreBoardData, coreBoardSummary } from "@/lib/core/core-board";
 import { coreHealthReport } from "@/lib/core/core-health";
@@ -21,10 +20,10 @@ export default async function CoreSchoolDashboard() {
 
   const body = (
     <>
-      <PageHeader
+      <CorePageHeader
+        icon="schools"
         title="Core Schools"
         subtitle="Schools onboarded as Core — each tracked through its 4 visits + 4 trainings package, follow-up SSA, measured impact, and the champion pipeline. Filtered from the School Directory by core status."
-        Icon={GraduationCap}
         searchPlaceholder="Search core schools"
       />
       <div className="px-3 sm:px-4 lg:px-6 pb-24 lg:pb-6 space-y-3 lg:space-y-4 pt-3">
@@ -115,7 +114,10 @@ export default async function CoreSchoolDashboard() {
     </>
   );
 
-  return <ResponsiveDashboard mobile={body} desktop={body} />;
+  // Render the tree directly. Wrapping it in the client <ResponsiveDashboard>
+  // would force the server-side PageHeader Icon prop through RSC serialization
+  // (which throws); the child components already handle their own breakpoints.
+  return body;
 }
 
 function Kpi({ label, value, tone }: { label: string; value: number | string; tone?: string }) {
