@@ -7,23 +7,10 @@ import {
   XCircle,
   Target,
   TrendingUp,
-  ArrowUpRight,
-  type LucideIcon,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { MetricStrip, type MetricCell } from "@/components/ui/MetricStrip";
 
-// 6 KPI tiles for the Daily Field Debrief page. Each card sits flush in
-// a single row at lg+; wraps at smaller widths.
-
-type KpiTile = {
-  key: string;
-  label: string;
-  value: string;
-  delta: string;
-  Icon: LucideIcon;
-  iconBg: string;
-  iconText: string;
-};
+// Daily Field Debrief — 6 metrics as one dense MetricStrip.
 
 export function FieldIntelKpiRowV2({
   planned,
@@ -40,37 +27,14 @@ export function FieldIntelKpiRowV2({
   rawAchievementPct: number;
   contextAdjustedPct: number;
 }) {
-  const tiles: KpiTile[] = [
-    { key: "planned",     label: "Planned",          value: String(planned),               delta: "↑25% ", Icon: Calendar,    iconBg: "bg-sky-100",    iconText: "text-sky-700"    },
-    { key: "completed",   label: "Completed",        value: String(completed),             delta: "↑20% ", Icon: CheckCircle2, iconBg: "bg-emerald-100", iconText: "text-emerald-700" },
-    { key: "verified",    label: "Verified",         value: String(verified),              delta: "↑50% ", Icon: ShieldCheck, iconBg: "bg-emerald-100",iconText: "text-emerald-700"},
-    { key: "incomplete",  label: "Incomplete",       value: String(incomplete),            delta: "↑100%", Icon: XCircle,     iconBg: "bg-rose-100",   iconText: "text-rose-700"   },
-    { key: "raw",         label: "Raw Achievement",  value: `${rawAchievementPct}%`,       delta: "↑10pp", Icon: Target,      iconBg: "bg-violet-100", iconText: "text-violet-700" },
-    { key: "ctx",         label: "Context-Adjusted", value: `${contextAdjustedPct}%`,      delta: "↑8pp ", Icon: TrendingUp,  iconBg: "bg-emerald-100",iconText: "text-emerald-700"},
+  const up = (text: string): MetricCell["delta"] => ({ dir: "up", text: `${text} vs last month` });
+  const metrics: MetricCell[] = [
+    { key: "planned",    label: "Planned",          value: planned,                    icon: Calendar,    delta: up("↑25%") },
+    { key: "completed",  label: "Completed",        value: completed,                  icon: CheckCircle2, delta: up("↑20%") },
+    { key: "verified",   label: "Verified",         value: verified,                   icon: ShieldCheck, delta: up("↑50%") },
+    { key: "incomplete", label: "Incomplete",       value: incomplete,                 icon: XCircle,     delta: up("↑100%") },
+    { key: "raw",        label: "Raw Achievement",  value: `${rawAchievementPct}%`,    icon: Target,      delta: up("↑10pp") },
+    { key: "ctx",        label: "Context-Adjusted", value: `${contextAdjustedPct}%`,   icon: TrendingUp,  delta: up("↑8pp") },
   ];
-
-  return (
-    <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-      {tiles.map((t) => (
-        <article key={t.key} className="card p-3.5 flex flex-col">
-          <div className="flex items-start gap-2.5">
-            <span className={cn("h-9 w-9 rounded-xl grid place-items-center shrink-0", t.iconBg, t.iconText)}>
-              <t.Icon size={16} />
-            </span>
-            <div className="min-w-0">
-              <div className="text-[11.5px] muted font-semibold leading-tight truncate">{t.label}</div>
-              <div className="text-[24px] font-extrabold tabular leading-none mt-0.5">{t.value}</div>
-            </div>
-          </div>
-          <div className="mt-2 inline-flex items-center gap-1 text-caption muted font-semibold">
-            vs last month
-            <span className="text-emerald-600 inline-flex items-center gap-0.5 ml-auto">
-              <ArrowUpRight size={11} />
-              {t.delta.trim()}
-            </span>
-          </div>
-        </article>
-      ))}
-    </section>
-  );
+  return <MetricStrip metrics={metrics} columns="grid-cols-2 sm:grid-cols-3 lg:grid-cols-6" />;
 }

@@ -21,7 +21,8 @@
 import { Globe, Wallet, Target, Sparkles, TrendingUp, AlertTriangle } from "lucide-react";
 import { CommandStack } from "@/components/actions/CommandStack";
 import { DashboardPageHeader } from "@/components/dashboards/DashboardPageHeader";
-import { KpiCard, SectionCard, StatusBadge, ProgressRing } from "@/components/ui/primitives";
+import { SectionCard, StatusBadge, ProgressRing } from "@/components/ui/primitives";
+import { MetricStrip } from "@/components/ui/MetricStrip";
 import { countryRollups, specialProjects } from "@/lib/workflow-mock";
 import { TeamTargetsCallout } from "@/components/team-targets/TeamTargetsCallout";
 import { LeadershipImpactSnapshot } from "@/components/impact/LeadershipImpactSnapshot";
@@ -91,54 +92,17 @@ export default async function RVPDashboard() {
           title="What's happening across the region"
           description="Region-weighted scale numbers, what the system is noticing this period, and whether training is covering the SSA gaps."
         />
-      <section
-        aria-label="Region KPIs"
-        className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-6 gap-3"
-      >
-        <KpiCard
-          label="Schools in Region"
-          value={totalSchools.toString()}
-          caption={`${countryRollups.length} countries`}
-          icon={<Globe size={16} />}
-          iconTone="edify"
-        />
-        <KpiCard
-          label="Avg Monthly Target"
-          value={`${avg("monthlyTargetPct")}%`}
-          caption="Region-weighted"
-          icon={<Target size={16} />}
-          iconTone="amber"
-          spark={{ seed: 13, trend: "up" }}
-        />
-        <KpiCard
-          label="Avg Valid Visit"
-          value={`${avg("validVisitPct")}%`}
-          caption="Verified portion"
-          icon={<TrendingUp size={16} />}
-          iconTone="green"
-        />
-        <KpiCard
-          label="Avg SSA Done"
-          value={`${avg("ssaCompletedPct")}%`}
-          caption="Region"
-          icon={<TrendingUp size={16} />}
-          iconTone="edify"
-        />
-        <KpiCard
-          label="Funds Committed"
-          value={`UGX ${totalCommitted.toLocaleString()}M`}
-          caption="From approved plans"
-          icon={<Wallet size={16} />}
-          iconTone="amber"
-        />
-        <KpiCard
-          label="Funds Disbursed"
-          value={`UGX ${totalDisbursed.toLocaleString()}M`}
-          caption="Across countries"
-          icon={<Wallet size={16} />}
-          iconTone="green"
-        />
-      </section>
+      <MetricStrip
+        metrics={[
+          { key: "schools",   label: "Schools in Region", value: totalSchools, caption: `${countryRollups.length} countries` },
+          { key: "target",    label: "Avg Monthly Target", value: `${avg("monthlyTargetPct")}%`, caption: "Region-weighted" },
+          { key: "visit",     label: "Avg Valid Visit",    value: `${avg("validVisitPct")}%`, caption: "Verified portion" },
+          { key: "ssa",       label: "Avg SSA Done",       value: `${avg("ssaCompletedPct")}%`, caption: "Region" },
+          { key: "committed", label: "Funds Committed",    value: `UGX ${totalCommitted.toLocaleString()}M`, caption: "From approved plans" },
+          { key: "disbursed", label: "Funds Disbursed",    value: `UGX ${totalDisbursed.toLocaleString()}M`, caption: "Across countries" },
+        ]}
+        columns="grid-cols-2 sm:grid-cols-3 xl:grid-cols-6"
+      />
 
       <InsightStrip insights={insightsForRvp()} />
       <TrainingCoverageCard audience="rvp" clusterPlans={allClusterTrainingPlans()} />

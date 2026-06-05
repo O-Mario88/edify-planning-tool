@@ -13,19 +13,32 @@
 // "good" tints it positive. Cells can deep-link via `href`.
 
 import Link from "next/link";
+import { ArrowUpRight, ArrowDownRight, Minus, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { LucideIcon } from "lucide-react";
+
+export type MetricDelta = { dir: "up" | "down" | "flat"; text: string };
 
 export type MetricCell = {
   key: string;
   label: string;
   value: string | number;
+  /** Small muted unit beside the value ("%", "schools"). */
+  unit?: string;
   /** Faint sub-line — e.g. a proportion "76.9%" or "of 13". */
   caption?: string;
+  /** Trend sub-line (colored + arrow). Takes precedence over caption. */
+  delta?: MetricDelta;
   tone?: "default" | "alert" | "good";
   icon?: LucideIcon;
   /** Makes the cell a link (e.g. deep-link into a filtered list). */
   href?: string;
+};
+
+const DELTA_ICON = { up: ArrowUpRight, down: ArrowDownRight, flat: Minus };
+const DELTA_FG = {
+  up: "text-emerald-600",
+  down: "text-rose-600",
+  flat: "muted",
 };
 
 const VALUE_TONE: Record<NonNullable<MetricCell["tone"]>, string> = {
@@ -70,16 +83,27 @@ export function MetricStrip({
 function Cell({ cell }: { cell: MetricCell }) {
   const Icon = cell.icon;
   const tone = cell.tone ?? "default";
+  const DeltaIcon = cell.delta ? DELTA_ICON[cell.delta.dir] : null;
   const body = (
     <>
       <div className="flex items-center gap-1 text-[10px] muted font-bold uppercase tracking-wide leading-tight">
         {Icon && <Icon size={10} className="shrink-0" />}
         <span className="truncate">{cell.label}</span>
       </div>
-      <div className={cn("text-[17px] font-extrabold tabular leading-none mt-1.5 truncate", VALUE_TONE[tone])}>
-        {typeof cell.value === "number" ? cell.value.toLocaleString() : cell.value}
+      <div className="flex items-baseline gap-1 mt-1.5 min-w-0">
+        <span className={cn("text-[17px] font-extrabold tabular leading-none truncate", VALUE_TONE[tone])}>
+          {typeof cell.value === "number" ? cell.value.toLocaleString() : cell.value}
+        </span>
+        {cell.unit && <span className="text-[11px] muted font-semibold leading-none">{cell.unit}</span>}
       </div>
-      {cell.caption && <div className="text-[10px] muted font-medium mt-0.5 truncate">{cell.caption}</div>}
+      {cell.delta ? (
+        <div className={cn("flex items-center gap-0.5 text-[10px] font-bold tabular mt-0.5 truncate", DELTA_FG[cell.delta.dir])}>
+          {DeltaIcon && <DeltaIcon size={10} className="shrink-0" />}
+          <span className="truncate">{cell.delta.text}</span>
+        </div>
+      ) : cell.caption ? (
+        <div className="text-[10px] muted font-medium mt-0.5 truncate">{cell.caption}</div>
+      ) : null}
     </>
   );
 
