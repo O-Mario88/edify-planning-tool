@@ -26,6 +26,7 @@ import { intakeSchools } from "@/lib/intake/intake-mock";
 import { projectsForSchool, projectById } from "@/lib/special-projects-mock";
 import { activitiesForProjectSchool } from "@/lib/projects/project-activities";
 import { ssaForSchool } from "@/lib/projects/project-school-ssa";
+import { recommendInterventionsForSchool } from "@/lib/planning/intervention-recommendation";
 import { schoolWorkflowState, schoolLinkedActivities } from "@/lib/school-directory/school-state";
 import { recommendClustersFor, type ClusterMatch } from "@/lib/cluster/cluster-core";
 import { openDuplicateCandidates } from "@/lib/intake/duplicate-candidates-mock";
@@ -404,6 +405,7 @@ async function IntakeSchool360({ schoolId }: { schoolId: string }) {
         activities={activities}
         addToClusterVM={addToClusterVM}
         projects={projectVMs}
+        ssa={recommendInterventionsForSchool(s.schoolId)}
       />
     </>
   );

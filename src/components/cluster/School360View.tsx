@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { DirectoryClusterDrawer, type DirectorySchoolVM } from "./DirectoryClusterDrawer";
 import { activateSsaAction } from "@/lib/actions/ssa-activation-actions";
 import type { SsaActivationMethod } from "@/lib/school-directory/ssa-activation";
+import type { SchoolRecommendation, Severity, InterventionRecommendation } from "@/lib/planning/intervention-recommendation";
 
 const SSA_ACTION_METHOD: Record<string, SsaActivationMethod> = {
   schedule_sit: "sit",
@@ -73,13 +74,14 @@ const STAGE_TONE: Record<string, string> = {
 };
 
 export function School360View({
-  record, state, activities, addToClusterVM, projects = [],
+  record, state, activities, addToClusterVM, projects = [], ssa,
 }: {
   record: School360Record;
   state: School360State;
   activities: School360Activity[];
   addToClusterVM: DirectorySchoolVM | null;
   projects?: School360ProjectVM[];
+  ssa?: SchoolRecommendation;
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const router = useRouter();
@@ -157,6 +159,9 @@ export function School360View({
               })}
             </div>
           </section>
+
+          {/* SSA performance + recommendations — SSA creates the recommendation */}
+          <SsaRecommendationSection ssa={ssa} ssaDone={state.ssaDone} />
 
           {/* Linked activities */}
           <section className="card rounded-2xl overflow-hidden">
@@ -258,5 +263,122 @@ function Fact({ icon, label, value }: { icon: React.ReactNode; label: string; va
       <span className="muted">{label}</span>
       <span className="ml-auto font-semibold text-[var(--color-edify-text)] text-right">{value}</span>
     </div>
+  );
+}
+
+// ────────── SSA performance + recommendations ──────────
+// SSA creates the recommendation: classify every intervention by severity, then
+// route each struggling one to staff or partner by type.
+
+const SEVERITY_STYLE: Record<Severity, { badge: string; bar: string }> = {
+  Critical:        { badge: "bg-rose-50 text-rose-700",      bar: "bg-rose-500"    },
+  "Needs Support": { badge: "bg-amber-50 text-amber-700",    bar: "bg-amber-500"   },
+  Good:            { badge: "bg-emerald-50 text-emerald-700", bar: "bg-emerald-500" },
+  Strong:          { badge: "bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)]", bar: "bg-[var(--color-edify-primary)]" },
+};
+
+function SsaRecommendationSection({ ssa, ssaDone }: { ssa?: SchoolRecommendation; ssaDone: boolean }) {
+  // No scored SSA yet → planning locked; the workflow card above drives SIT/SSA.
+  if (!ssa || !ssa.hasSsa) {
+    return (
+      <section className="card rounded-2xl overflow-hidden">
+        <header className="px-4 pt-3.5 pb-2">
+          <h2 className="text-[14px] font-extrabold tracking-tight inline-flex items-center gap-1.5">
+            <ShieldCheck size={14} className="text-[var(--color-edify-primary)]" /> SSA performance &amp; recommendations
+          </h2>
+        </header>
+        <div className="px-4 pb-4 pt-1 border-t border-[var(--color-edify-divider)]">
+          <p className="text-[12px] muted inline-flex items-start gap-1.5">
+            <AlertTriangle size={12} className="mt-0.5 shrink-0 text-amber-600" />
+            {ssaDone
+              ? "SSA marked complete, but no scored assessment is on file yet — recommendations appear once intervention scores are uploaded."
+              : "No current-FY SSA. Recommendations unlock after SSA — start with School Improvement Training / SSA above."}
+          </p>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="card rounded-2xl overflow-hidden">
+      <header className="px-4 pt-3.5 pb-2 flex items-center gap-2">
+        <div className="min-w-0">
+          <h2 className="text-[14px] font-extrabold tracking-tight inline-flex items-center gap-1.5">
+            <ShieldCheck size={14} className="text-[var(--color-edify-primary)]" /> SSA performance &amp; recommendations
+          </h2>
+          <p className="text-[11.5px] muted mt-0.5">
+            Latest SSA {ssa.currentDate ?? ""} · {ssa.struggling.length} struggling intervention{ssa.struggling.length === 1 ? "" : "s"} · recommendations guide staff vs partner delivery.
+          </p>
+        </div>
+        {ssa.overallAverage != null && (
+          <span className="ml-auto shrink-0 text-right">
+            <span className="block text-[18px] font-extrabold leading-none tracking-tight">{ssa.overallAverage.toFixed(1)}</span>
+            <span className="block text-[10px] muted font-semibold">avg / 10</span>
+          </span>
+        )}
+      </header>
+
+      {/* All 8 interventions — score bars, weakest first */}
+      <div className="px-4 pb-3 pt-1 border-t border-[var(--color-edify-divider)] space-y-1.5">
+        {ssa.all.map((r) => {
+          const style = SEVERITY_STYLE[r.severity];
+          return (
+            <div key={r.intervention} className="flex items-center gap-2">
+              <span className="w-[170px] shrink-0 text-[11.5px] font-semibold truncate">{r.intervention}</span>
+              <span className="flex-1 h-2 rounded-full bg-[var(--color-edify-soft)]/70 overflow-hidden">
+                <span className={cn("block h-full rounded-full", style.bar)} style={{ width: `${Math.round((r.score / 10) * 100)}%` }} />
+              </span>
+              <span className="w-9 shrink-0 text-right text-[11.5px] font-bold tabular-nums">{r.score.toFixed(1)}</span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Struggling interventions → recommended action + delivery */}
+      {ssa.struggling.length > 0 ? (
+        <div className="border-t border-[var(--color-edify-divider)]">
+          <p className="px-4 pt-2.5 pb-1 text-[11px] font-bold uppercase tracking-wide muted">Recommended support</p>
+          <ul className="divide-y divide-[var(--color-edify-divider)]">
+            {ssa.struggling.map((r) => <RecommendationRow key={r.intervention} r={r} />)}
+          </ul>
+        </div>
+      ) : (
+        <p className="px-4 py-3 text-[12px] muted border-t border-[var(--color-edify-divider)] inline-flex items-center gap-1.5">
+          <CheckCircle2 size={13} className="text-emerald-600" /> No struggling interventions — all areas at Good or above.
+        </p>
+      )}
+    </section>
+  );
+}
+
+function RecommendationRow({ r }: { r: InterventionRecommendation }) {
+  const style = SEVERITY_STYLE[r.severity];
+  const deliveryStyle = r.delivery === "partner"
+    ? "bg-violet-50 text-violet-700"
+    : "bg-blue-50 text-blue-700";
+  return (
+    <li className="px-4 py-2.5">
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-[12.5px] font-extrabold">{r.intervention}</span>
+        <span className="text-[11.5px] font-bold tabular-nums muted">{r.score.toFixed(1)}/10</span>
+        <span className={cn("px-1.5 py-[1px] rounded text-[10px] font-bold", style.badge)}>{r.severity}</span>
+        <span className={cn("px-1.5 py-[1px] rounded text-[10px] font-bold inline-flex items-center gap-1", deliveryStyle)}>
+          {r.delivery === "partner" ? <Users2 size={9} /> : <User size={9} />}
+          {r.delivery === "partner" ? "Partner recommended" : "Staff recommended"}
+        </span>
+        <span className="ml-auto px-1.5 py-[1px] rounded text-[10px] font-bold bg-slate-100 text-slate-600">{r.recommendedActivity}</span>
+      </div>
+      <p className="mt-1 text-[11.5px] muted">{r.reason}{r.partnerType ? ` · Look for: ${r.partnerType}.` : ""}</p>
+      <div className="mt-1.5 flex flex-wrap gap-1.5">
+        {r.suggestedActions.map((a, i) => (
+          <span key={a} className={cn(
+            "px-2 py-0.5 rounded-lg text-[11px] font-semibold",
+            i === 0
+              ? "bg-[var(--color-edify-primary)] text-white"
+              : "border border-[var(--color-edify-border)] text-[var(--color-edify-text)]",
+          )}>{a}</span>
+        ))}
+      </div>
+    </li>
   );
 }
