@@ -1,7 +1,8 @@
-import Link from "next/link";
-import { CalendarPlus, Ban } from "lucide-react";
+import { Ban } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { PlanningCapacity } from "@/lib/planning/planning-capacity";
+import { ScheduleActivityButton } from "./ScheduleActivityButton";
+import type { ActivityKind } from "@/lib/actions/store";
 
 // Per-school planning capacity (the gray-out rule made visible). Client schools
 // get one visit; core schools get 4 visits + 4 trainings. When a quota is full
@@ -16,14 +17,7 @@ function Quota({ label, used, allowed, full }: { label: string; used: number; al
   );
 }
 
-function ScheduleButton({ label, enabled, reason, href }: { label: string; enabled: boolean; reason: string | null; href: string }) {
-  if (enabled) {
-    return (
-      <Link href={href} className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--color-edify-primary)] text-white px-3 py-1.5 text-[11.5px] font-extrabold hover:bg-[var(--color-edify-dark)]">
-        <CalendarPlus size={13} /> {label}
-      </Link>
-    );
-  }
+function DisabledButton({ label, reason }: { label: string; reason: string | null }) {
   return (
     <span
       title={reason ?? "Not available"}
@@ -35,8 +29,9 @@ function ScheduleButton({ label, enabled, reason, href }: { label: string; enabl
   );
 }
 
-export function PlanningCapacityBar({ schoolId, capacity }: { schoolId: string; capacity: PlanningCapacity }) {
-  const planHref = `/schools/${encodeURIComponent(schoolId)}?view=plan`;
+export function PlanningCapacityBar({ schoolId, schoolName, capacity }: { schoolId: string; schoolName?: string; capacity: PlanningCapacity }) {
+  const VISIT: ActivityKind = "SCHOOL_VISIT";
+  const TRAINING: ActivityKind = "TRAINING_FOLLOW_UP";
   return (
     <div className="card p-3 flex flex-wrap items-center justify-between gap-3">
       <div className="flex items-center gap-2 flex-wrap">
@@ -48,9 +43,13 @@ export function PlanningCapacityBar({ schoolId, capacity }: { schoolId: string; 
         )}
       </div>
       <div className="flex items-center gap-2">
-        <ScheduleButton label="Schedule Visit" enabled={capacity.canPlanVisit} reason={capacity.visitDisabledReason} href={planHref} />
+        {capacity.canPlanVisit
+          ? <ScheduleActivityButton schoolId={schoolId} schoolName={schoolName} kind={VISIT} label="Schedule Visit" />
+          : <DisabledButton label="Schedule Visit" reason={capacity.visitDisabledReason} />}
         {capacity.schoolType === "core" && (
-          <ScheduleButton label="Schedule Training" enabled={capacity.canPlanTraining} reason={capacity.trainingDisabledReason} href={planHref} />
+          capacity.canPlanTraining
+            ? <ScheduleActivityButton schoolId={schoolId} schoolName={schoolName} kind={TRAINING} label="Schedule Training" />
+            : <DisabledButton label="Schedule Training" reason={capacity.trainingDisabledReason} />
         )}
       </div>
     </div>

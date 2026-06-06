@@ -1,0 +1,143 @@
+"use server";
+
+// My Plan loop — the plan-as-list actions. Scheduling from a school/cluster
+// CREATES a Planned activity here; the My Plan list then acts on each row:
+// Reschedule (with reason + slip limit), Reassign (staff ↔ partner),
+// Cancel/Defer, Complete (the existing markActivityCompleted path).
+//
+// Demo store (in-memory, globalThis-backed) — production swaps the array ops for
+// Prisma. Every mutation revalidates the surfaces that render the plan.
+
+import { revalidatePath } from "next/cache";
+import { getCurrentUser } from "@/lib/auth";
+import {
+  activities, findActivity, updateActivity, newId,
+  type ActivityKind, type PlannedActivityRecord,
+} from "@/lib/actions/store";
+import { emitAudit } from "@/lib/actions/audit";
+import { canReschedule } from "@/lib/planning/planning-capacity";
+
+export type MyPlanResult =
+  | { ok: true; id: string }
+  | { ok: false; reason: "NOT_FOUND" | "SLIP_LIMIT" | "FORBIDDEN" | "INVALID_INPUT" };
+
+const TITLE: Record<string, string> = {
+  SCHOOL_VISIT: "School visit", IN_SCHOOL_COACHING: "In-school coaching",
+  SSA_FOLLOW_UP: "SSA follow-up visit", COURTESY_VISIT: "Courtesy visit",
+  CLUSTER_TRAINING: "Cluster training", TRAINING_FOLLOW_UP: "Training follow-up",
+  HANDOVER_MEETING: "Cluster meeting", LESSON_OBSERVATION: "Lesson observation",
+  PARTNER_FOLLOW_UP: "Partner follow-up", DATA_COLLECTION: "Data collection",
+};
+
+function weekOfMonth(iso?: string): number {
+  if (!iso) return 1;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return 1;
+  return Math.min(5, Math.max(1, Math.ceil(d.getUTCDate() / 7)));
+}
+
+function revalidate(schoolId?: string) {
+  try {
+    revalidatePath("/plans");
+    revalidatePath("/planning");
+    if (schoolId) revalidatePath(`/schools/${schoolId}`);
+  } catch { /* outside a request scope (e.g. tests) */ }
+}
+
+// ── Create from school / cluster ────────────────────────────────────
+export async function scheduleSchoolActivity(input: {
+  schoolId: string;
+  schoolName?: string;
+  kind: ActivityKind;
+  dateIso?: string;
+  deliveryType?: "staff" | "partner";
+  partnerName?: string;
+}): Promise<MyPlanResult> {
+  const user = await getCurrentUser();
+  if (!input.schoolId || !input.kind) return { ok: false, reason: "INVALID_INPUT" };
+  const now = new Date().toISOString();
+  const act: PlannedActivityRecord = {
+    id: newId("act"),
+    planId: `MYPLAN-${user.staffId}`,
+    schoolId: input.schoolId,
+    schoolName: input.schoolName,
+    kind: input.kind,
+    title: `${TITLE[input.kind] ?? "Activity"}${input.schoolName ? ` — ${input.schoolName}` : ""}`,
+    weekOfMonth: weekOfMonth(input.dateIso),
+    scheduledDate: input.dateIso,
+    assigneeId: user.staffId,
+    estCostCents: 0,
+    status: "Planned",
+    deliveryType: input.deliveryType ?? "staff",
+    partnerName: input.deliveryType === "partner" ? input.partnerName : undefined,
+    rescheduleCount: 0,
+    createdAt: now,
+    updatedAt: now,
+  };
+  activities().push(act);
+  emitAudit({ action: "myplan.activity.scheduled", subjectKind: "Activity", subjectId: act.id, actorId: user.staffId, actorRole: user.role, actorName: user.name, payload: { schoolId: input.schoolId, kind: input.kind } });
+  revalidate(input.schoolId);
+  return { ok: true, id: act.id };
+}
+
+// ── Reschedule (date move, reason, slip limit) ──────────────────────
+export async function rescheduleActivity(id: string, newDateIso: string, reason: string): Promise<MyPlanResult> {
+  const a = findActivity(id);
+  if (!a) return { ok: false, reason: "NOT_FOUND" };
+  const count = a.rescheduleCount ?? 0;
+  if (!canReschedule(count)) return { ok: false, reason: "SLIP_LIMIT" };
+  const user = await getCurrentUser();
+  updateActivity(id, {
+    scheduledDate: newDateIso,
+    rescheduleCount: count + 1,
+    lastReason: reason,
+    // a reschedule revives a deferred/cancelled item back into the plan
+    status: a.status === "Deferred" || a.status === "Cancelled" ? "Planned" : a.status,
+  });
+  emitAudit({ action: "myplan.activity.rescheduled", subjectKind: "Activity", subjectId: id, actorId: user.staffId, actorRole: user.role, actorName: user.name, payload: { reason, moveNo: count + 1 } });
+  revalidate(a.schoolId);
+  return { ok: true, id };
+}
+
+// ── Reassign (staff ↔ partner) ──────────────────────────────────────
+export async function reassignActivity(id: string, delivery: "staff" | "partner", partnerName?: string): Promise<MyPlanResult> {
+  const a = findActivity(id);
+  if (!a) return { ok: false, reason: "NOT_FOUND" };
+  const user = await getCurrentUser();
+  updateActivity(id, { deliveryType: delivery, partnerName: delivery === "partner" ? partnerName : undefined });
+  emitAudit({ action: "myplan.activity.reassigned", subjectKind: "Activity", subjectId: id, actorId: user.staffId, actorRole: user.role, actorName: user.name, payload: { delivery, partnerName } });
+  revalidate(a.schoolId);
+  return { ok: true, id };
+}
+
+// ── Cancel / Defer (not happening now — distinct from a date move) ──
+export async function cancelActivity(id: string, reason: string): Promise<MyPlanResult> {
+  const a = findActivity(id);
+  if (!a) return { ok: false, reason: "NOT_FOUND" };
+  const user = await getCurrentUser();
+  updateActivity(id, { status: "Cancelled", lastReason: reason });
+  emitAudit({ action: "myplan.activity.cancelled", subjectKind: "Activity", subjectId: id, actorId: user.staffId, actorRole: user.role, actorName: user.name, payload: { reason } });
+  revalidate(a.schoolId);
+  return { ok: true, id };
+}
+
+export async function deferActivity(id: string, reason: string): Promise<MyPlanResult> {
+  const a = findActivity(id);
+  if (!a) return { ok: false, reason: "NOT_FOUND" };
+  const user = await getCurrentUser();
+  updateActivity(id, { status: "Deferred", lastReason: reason });
+  emitAudit({ action: "myplan.activity.deferred", subjectKind: "Activity", subjectId: id, actorId: user.staffId, actorRole: user.role, actorName: user.name, payload: { reason } });
+  revalidate(a.schoolId);
+  return { ok: true, id };
+}
+
+// ── Complete (simple path for the My Plan loop) ─────────────────────
+export async function completeActivity(id: string, salesforceId?: string): Promise<MyPlanResult> {
+  const a = findActivity(id);
+  if (!a) return { ok: false, reason: "NOT_FOUND" };
+  const user = await getCurrentUser();
+  updateActivity(id, { status: "Completed", salesforceId: salesforceId?.trim() || a.salesforceId });
+  emitAudit({ action: "myplan.activity.completed", subjectKind: "Activity", subjectId: id, actorId: user.staffId, actorRole: user.role, actorName: user.name, payload: { salesforceId } });
+  revalidate(a.schoolId);
+  return { ok: true, id };
+}

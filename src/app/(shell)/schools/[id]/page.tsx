@@ -147,7 +147,7 @@ export default async function School360({
       )}
 
       {/* Planning capacity — visit/training quota + gray-out */}
-      <PlanningCapacityBar schoolId={s.id} capacity={capacity} />
+      <PlanningCapacityBar schoolId={s.id} schoolName={s.name} capacity={capacity} />
 
       {/* Identity card */}
       <SectionCard
@@ -477,7 +477,7 @@ async function IntakeSchool360({ schoolId, view }: { schoolId: string; view?: Sc
         </div>
       )}
       <div className="mx-3 sm:mx-4 md:mx-6 mb-3">
-        <PlanningCapacityBar schoolId={s.schoolId} capacity={capacity} />
+        <PlanningCapacityBar schoolId={s.schoolId} schoolName={s.schoolName} capacity={capacity} />
       </div>
       <School360View
         record={{

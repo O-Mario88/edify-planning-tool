@@ -62,7 +62,8 @@ export type PlannedActivityStatus =
   | "Verified"
   | "AccountabilityClosed"
   | "Returned"
-  | "Cancelled";
+  | "Cancelled"
+  | "Deferred"; // "not happening this period" — distinct from a reschedule (date move)
 
 export type PlannedActivityRecord = {
   id:               string;
@@ -76,6 +77,16 @@ export type PlannedActivityRecord = {
   estCostCents:     number;
   status:           PlannedActivityStatus;
   interventionArea?: string;
+  /** Cached school name for list display (avoids a join in the demo store). */
+  schoolName?:      string;
+  /** Who delivers it — flips on Reassign (staff ↔ partner). */
+  deliveryType?:    "staff" | "partner";
+  /** Partner org name when deliveryType === "partner". */
+  partnerName?:     string;
+  /** Times this activity has been rescheduled (drives the slip limit). */
+  rescheduleCount?: number;
+  /** Latest reschedule / cancel / defer reason — the audit context. */
+  lastReason?:      string;
   /** The exact Salesforce Activity ID the staff entered on completion (SVE-/TS-).
    *  Single source of truth for the verification queue — the IA copies THIS into
    *  Salesforce to confirm. */
