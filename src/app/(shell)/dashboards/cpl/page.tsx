@@ -28,6 +28,7 @@ import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
+import { TeamCapacityCard } from "@/components/cpl/TeamCapacityCard";
 import { ROLE_REDIRECT } from "@/lib/auth-public";
 
 // Country Program Lead Dashboard — replica of the SIPA reference.
@@ -116,6 +117,7 @@ export default async function CountryProgramLeadDashboard() {
             description="Eight KPIs, leadership-attention alerts, and the monthly performance picture next to your own targets."
           />
           <TeamKpiRow />
+          <TeamCapacityCard plStaffId={user.staffId} />
           <CplLeadershipAttentionRow />
           <section className="grid grid-cols-12 gap-3 md:gap-4 items-stretch">
             <div className="col-span-12 lg:col-span-8" id="team-performance">

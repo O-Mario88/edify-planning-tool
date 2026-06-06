@@ -25,6 +25,7 @@ import { ProjectWorkCard } from "@/components/special-projects/ProjectWorkCard";
 import { ClusterReadinessCard } from "@/components/cluster/ClusterReadinessCard";
 import { scopedClusterCounts } from "@/lib/cluster/cluster-scope";
 import { getCurrentUser } from "@/lib/auth";
+import { MyCapacityCard } from "@/components/cceo/MyCapacityCard";
 
 // CCEO Role Command Center.
 //
@@ -102,6 +103,7 @@ export default async function CceoDashboardPage() {
           </div>
           <CceoSixKpiRow />
           <CceoKpiStrip />
+          <MyCapacityCard staffId={user.staffId} />
           <CoreServicePackageCard />
         </section>
 
