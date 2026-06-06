@@ -1,7 +1,7 @@
 import { Gauge, ShieldAlert } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { DEMO_USERS } from "@/lib/auth";
-import { computeStaffCapacity } from "@/lib/planning/assignment-policy";
+import { computeStaffCapacity, teamCapacityRollup } from "@/lib/planning/assignment-policy";
 import { isLimitExplicit } from "@/lib/planning/staff-capacity-store";
 import { SetLimitForm } from "@/components/admin/SetLimitForm";
 import { cn } from "@/lib/utils";
@@ -13,6 +13,17 @@ export const dynamic = "force-dynamic";
 // a partner. Read-only for everyone else.
 const FIELD_ROLES = new Set(["CCEO", "CountryProgramLead"]);
 const CAN_SET = new Set(["CountryDirector", "ImpactAssessment", "Admin"]);
+
+function Stat({ label, value, caption, tone }: { label: string; value: number | string; caption?: string; tone?: "alert" | "warn" | "good" | "default" }) {
+  const v = tone === "alert" ? "text-rose-600" : tone === "warn" ? "text-amber-600" : tone === "good" ? "text-emerald-600" : "text-[var(--text-primary)]";
+  return (
+    <div className="card px-3 py-2.5">
+      <div className="text-[10px] font-semibold muted leading-tight">{label}</div>
+      <div className={cn("text-[18px] font-extrabold tabular leading-none mt-1", v)}>{value}</div>
+      {caption && <div className="text-[9.5px] muted mt-0.5">{caption}</div>}
+    </div>
+  );
+}
 
 function statusOf(used: number, max: number, near: boolean): { label: string; tone: string } {
   if (used > max) return { label: "Over Limit · Review", tone: "bg-rose-100 text-rose-700" };
@@ -34,6 +45,7 @@ export default async function CapacityPage() {
     .sort((a, b) => b.cap.used / b.cap.max - a.cap.used / a.cap.max);
 
   const atOrOver = staff.filter((s) => s.cap.used >= s.cap.max).length;
+  const rollup = teamCapacityRollup(staff.map((s) => s.staffId));
 
   return (
     <div className="px-3 sm:px-4 md:px-6 pt-4 pb-24 space-y-4">
@@ -52,6 +64,20 @@ export default async function CapacityPage() {
           <ShieldAlert size={14} /> Setting limits is restricted to Country Director and Impact Assessment.
         </div>
       )}
+
+      {/* Capacity analytics (spec §22) — staff are capped, partners are NOT. */}
+      <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+        <Stat label="Direct support used" value={`${rollup.totalUsed}/${rollup.totalCapacity}`} caption="across field staff" />
+        <Stat label="Staff at limit" value={rollup.atLimit} tone={rollup.atLimit ? "alert" : "default"} />
+        <Stat label="Staff near limit" value={rollup.nearLimit} tone={rollup.nearLimit ? "warn" : "default"} />
+        <Stat label="Partner-supported schools" value={rollup.partnerSupportedSchools} caption="no support limit" tone="good" />
+        <Stat label="Field staff" value={rollup.staffCount} />
+      </section>
+
+      <div className="card p-3 text-[11.5px] muted flex items-center gap-2">
+        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5 text-[10.5px] font-bold border border-emerald-200">Partners</span>
+        Partners have <b className="text-[var(--color-edify-text)]">no school-support limit</b> — they absorb support when staff reach capacity. Only staff (CCEO / PL) are capped.
+      </div>
 
       {atOrOver > 0 && (
         <div className="card p-3 text-[12px]"><b>{atOrOver}</b> staff at or over their direct-support limit — new school support for them should be assigned to partners.</div>

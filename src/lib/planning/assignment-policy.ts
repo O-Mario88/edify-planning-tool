@@ -63,6 +63,49 @@ export function computeStaffCapacity(staffId: string): StaffCapacity {
   };
 }
 
+// ── Partner load — partners are UNBOUNDED (no school-support limit). These are
+//    surfaced for visibility / "partner dependency caused by staff capacity",
+//    never to cap a partner. ──
+
+/** Distinct schools a staff member routed to a PARTNER (delivery = partner). */
+export function partnerSupportedSchools(staffId?: string): number {
+  return new Set(
+    activities()
+      .filter((a) =>
+        a.deliveryType === "partner" &&
+        !EXCLUDED_STATUS.has(a.status) &&
+        a.schoolId &&
+        (!staffId || a.assigneeId === staffId),
+      )
+      .map((a) => a.schoolId as string),
+  ).size;
+}
+
+export type TeamCapacityRollup = {
+  staffCount: number;
+  atLimit: number;
+  nearLimit: number;
+  totalUsed: number;
+  totalCapacity: number;
+  partnerSupportedSchools: number; // unbounded
+};
+
+/** Team-wide capacity rollup for the analytics band (spec §22). */
+export function teamCapacityRollup(staffIds: string[]): TeamCapacityRollup {
+  let atLimit = 0, nearLimit = 0, totalUsed = 0, totalCapacity = 0;
+  for (const id of staffIds) {
+    const c = computeStaffCapacity(id);
+    totalUsed += c.used;
+    totalCapacity += c.max;
+    if (c.used >= c.max) atLimit++;
+    else if (c.nearLimit) nearLimit++;
+  }
+  return {
+    staffCount: staffIds.length, atLimit, nearLimit, totalUsed, totalCapacity,
+    partnerSupportedSchools: partnerSupportedSchools(),
+  };
+}
+
 /** Does the staff already directly support this school this FY? (doesn't re-count) */
 export function staffAlreadySupportsSchool(staffId: string, schoolId: string): boolean {
   return activities().some(

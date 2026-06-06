@@ -16,8 +16,30 @@ import {
 } from "@/lib/actions/store";
 import { emitAudit, emitNotification } from "@/lib/actions/audit";
 import { canReschedule } from "@/lib/planning/planning-capacity";
-import { computeStaffCapacity, staffAlreadySupportsSchool } from "@/lib/planning/assignment-policy";
-import { cceosSupervisedBy } from "@/lib/org/supervision";
+import { computeStaffCapacity, staffAlreadySupportsSchool, type StaffCapacity } from "@/lib/planning/assignment-policy";
+import { cceosSupervisedBy, supervisorOf } from "@/lib/org/supervision";
+import { DEMO_USERS } from "@/lib/auth";
+
+// CD/IA recipients for capacity escalations (spec §21).
+function cdIaStaffIds(): string[] {
+  return Object.values(DEMO_USERS).filter((u) => u.role === "CountryDirector" || u.role === "ImpactAssessment").map((u) => u.staffId);
+}
+
+// Fire near/at-limit notifications after a staff self-assign crosses a threshold.
+function notifyCapacity(staffId: string, staffName: string, cap: StaffCapacity) {
+  if (cap.atLimit) {
+    const sup = supervisorOf(staffId)?.staffId;
+    const recipients = [staffId, ...(sup ? [sup] : []), ...cdIaStaffIds()];
+    for (const r of new Set(recipients)) {
+      emitNotification({ userId: r, template: "capacity.atLimit", channel: "Inbox", title: "Direct support limit reached", body: r === staffId ? `You've reached your direct support limit (${cap.max} schools). New school support should be assigned to a partner.` : `${staffName} has reached their direct support limit (${cap.max}). New school support should go to a partner.`, href: "/capacity" });
+    }
+  } else if (cap.nearLimit) {
+    const sup = supervisorOf(staffId)?.staffId;
+    for (const r of new Set([staffId, ...(sup ? [sup] : [])])) {
+      emitNotification({ userId: r, template: "capacity.nearLimit", channel: "Inbox", title: "Direct support capacity near limit", body: `${r === staffId ? "You have" : staffName + " has"} used ${cap.used}/${cap.max} of direct support capacity (≥90%).`, href: "/capacity" });
+    }
+  }
+}
 
 export type MyPlanResult =
   | { ok: true; id: string }
@@ -94,6 +116,8 @@ export async function scheduleSchoolActivity(input: {
   };
   activities().push(act);
   emitAudit({ action: "myplan.activity.scheduled", subjectKind: "Activity", subjectId: act.id, actorId: user.staffId, actorRole: user.role, actorName: user.name, payload: { schoolId: input.schoolId, kind: input.kind } });
+  // Near/at-limit escalation after a staff self-assign (spec §21).
+  if (!toPartner) notifyCapacity(user.staffId, user.name, computeStaffCapacity(user.staffId));
   revalidate(input.schoolId);
   return { ok: true, id: act.id };
 }
