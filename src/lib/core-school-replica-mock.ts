@@ -119,26 +119,30 @@ export const replicaInterventionScores: ReplicaInterventionRow[] = [
 
 // ────────── Core SSA Heatmap by District ──────────
 
+// All 8 official SSA interventions (display order matches the canonical list).
 export type ReplicaHeatmapRow = {
   district:   string;
   ssaAvg:     number;
-  christlike: number;
-  wordOfGod:  number;
-  leadership: number;
-  teaching:   number;
-  enrollment: number;
+  christlike: number; // Christ-like Behavior
+  wordOfGod:  number; // Exposure to the Word of God
+  leadership: number; // Leadership Best Practice
+  teaching:   number; // Teaching Environment
+  learning:   number; // Learning Environment
+  government: number; // Government Requirements
+  fees:       number; // Fees / Budget / Accounts
+  enrollment: number; // Enrollment
   avgRow:     number;
 };
 
 export const replicaHeatmap: ReplicaHeatmapRow[] = [
-  { district: "Lusaka",       ssaAvg: 8.3, christlike: 8.2, wordOfGod: 7.9, leadership: 7.9, teaching: 7.1, enrollment: 7.1, avgRow: 7.7 },
-  { district: "Ndola",        ssaAvg: 7.9, christlike: 7.8, wordOfGod: 7.6, leadership: 7.6, teaching: 6.4, enrollment: 7.2, avgRow: 7.2 },
-  { district: "Kitwe",        ssaAvg: 7.6, christlike: 7.4, wordOfGod: 7.1, leadership: 6.8, teaching: 6.5, enrollment: 6.9, avgRow: 7.0 },
-  { district: "Chipata",      ssaAvg: 7.2, christlike: 7.0, wordOfGod: 6.8, leadership: 6.6, teaching: 5.8, enrollment: 6.7, avgRow: 6.7 },
-  { district: "Mufulira",     ssaAvg: 6.8, christlike: 6.6, wordOfGod: 6.4, leadership: 6.3, teaching: 5.6, enrollment: 6.3, avgRow: 6.3 },
-  { district: "Solwezi",      ssaAvg: 6.4, christlike: 6.4, wordOfGod: 6.2, leadership: 7.0, teaching: 6.2, enrollment: 7.3, avgRow: 6.6 },
-  { district: "Kabwe",        ssaAvg: 7.1, christlike: 7.0, wordOfGod: 7.2, leadership: 6.8, teaching: 5.4, enrollment: 6.5, avgRow: 6.5 },
-  { district: "Chillalombwe", ssaAvg: 6.6, christlike: 6.4, wordOfGod: 6.3, leadership: 6.1, teaching: 5.8, enrollment: 5.1, avgRow: 6.0 },
+  { district: "Lusaka",       ssaAvg: 8.3, christlike: 8.2, wordOfGod: 7.9, leadership: 7.9, teaching: 7.1, learning: 7.6, government: 8.0, fees: 6.8, enrollment: 7.1, avgRow: 7.6 },
+  { district: "Ndola",        ssaAvg: 7.9, christlike: 7.8, wordOfGod: 7.6, leadership: 7.6, teaching: 6.4, learning: 7.2, government: 7.5, fees: 6.3, enrollment: 7.2, avgRow: 7.2 },
+  { district: "Kitwe",        ssaAvg: 7.6, christlike: 7.4, wordOfGod: 7.1, leadership: 6.8, teaching: 6.5, learning: 6.9, government: 7.0, fees: 6.0, enrollment: 6.9, avgRow: 6.8 },
+  { district: "Chipata",      ssaAvg: 7.2, christlike: 7.0, wordOfGod: 6.8, leadership: 6.6, teaching: 5.8, learning: 6.5, government: 6.7, fees: 5.7, enrollment: 6.7, avgRow: 6.5 },
+  { district: "Mufulira",     ssaAvg: 6.8, christlike: 6.6, wordOfGod: 6.4, leadership: 6.3, teaching: 5.6, learning: 6.2, government: 6.4, fees: 5.3, enrollment: 6.3, avgRow: 6.1 },
+  { district: "Solwezi",      ssaAvg: 6.4, christlike: 6.4, wordOfGod: 6.2, leadership: 7.0, teaching: 6.2, learning: 6.3, government: 6.6, fees: 5.5, enrollment: 7.3, avgRow: 6.4 },
+  { district: "Kabwe",        ssaAvg: 7.1, christlike: 7.0, wordOfGod: 7.2, leadership: 6.8, teaching: 5.4, learning: 6.4, government: 6.9, fees: 5.6, enrollment: 6.5, avgRow: 6.5 },
+  { district: "Chillalombwe", ssaAvg: 6.6, christlike: 6.4, wordOfGod: 6.3, leadership: 6.1, teaching: 5.8, learning: 6.0, government: 6.2, fees: 4.8, enrollment: 5.1, avgRow: 5.8 },
 ];
 
 // ────────── Intervention Performance YoY ──────────

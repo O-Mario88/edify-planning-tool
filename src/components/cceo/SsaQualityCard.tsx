@@ -80,12 +80,16 @@ function heatTone(score: number): { bg: string; text: string } {
   return                       { bg: "#fecaca",  text: "#991b1b" };
 }
 
+// The official 8 SSA interventions (display order matches the canonical list).
 const DISTRICT_COLUMNS: { key: keyof (typeof cceoHeatmap)[number]["scores"]; label: string; short: string }[] = [
-  { key: "christlike",  label: "Christ-like Behavior", short: "Christ-like" },
-  { key: "word",        label: "Word of God",          short: "Word" },
-  { key: "leadership",  label: "Leadership",           short: "Leadership" },
-  { key: "teaching",    label: "Teaching Environment", short: "Teaching" },
-  { key: "enrollment",  label: "Enrollment",           short: "Enrollment" },
+  { key: "christlike",  label: "Christ-like Behavior",        short: "Christ-like" },
+  { key: "word",        label: "Exposure to the Word of God", short: "Word of God" },
+  { key: "leadership",  label: "Leadership Best Practice",    short: "Leadership" },
+  { key: "teaching",    label: "Teaching Environment",        short: "Teaching" },
+  { key: "learning",    label: "Learning Environment",        short: "Learning" },
+  { key: "government",  label: "Government Requirements",      short: "Gov't Req." },
+  { key: "fees",        label: "Fees / Budget / Accounts",    short: "Fees/Budget" },
+  { key: "enrollment",  label: "Enrollment",                  short: "Enrollment" },
 ];
 
 export function SsaQualityCard() {

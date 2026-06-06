@@ -88,12 +88,16 @@ function InterventionBar({ row }: { row: ReplicaInterventionRow }) {
 
 // ───────────── Core SSA Heatmap by District ─────────────
 
+// The official 8 SSA interventions (display order matches the canonical list),
+// with the average shown as a SEPARATE trailing column — never a replacement.
 const HEAT_COLS = [
-  { key: "ssaAvg",     label: "SSA Avg" },
   { key: "christlike", label: "Christ-like Behavior" },
-  { key: "wordOfGod",  label: "Word of God" },
-  { key: "leadership", label: "Leadership" },
+  { key: "wordOfGod",  label: "Exposure to the Word of God" },
+  { key: "leadership", label: "Leadership Best Practice" },
   { key: "teaching",   label: "Teaching Environment" },
+  { key: "learning",   label: "Learning Environment" },
+  { key: "government", label: "Government Requirements" },
+  { key: "fees",       label: "Fees / Budget / Accounts" },
   { key: "enrollment", label: "Enrollment" },
   { key: "avgRow",     label: "Avg Score" },
 ] as const;

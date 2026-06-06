@@ -233,16 +233,18 @@ function partnerOptions(schools: SchoolRow[]): FilterOption[] {
 // these into a `lib/program-packages.ts` config file once the model
 // owner confirms the canonical list.
 
+// The official 8 SSA interventions — labels + display order match the canonical
+// list. (ids are kept stable so existing filter state keeps resolving.)
 const PACKAGE_OPTIONS: FilterOption[] = [
-  { id: ALL_SENTINEL, label: "All Core Packages" },
-  { id: "teaching",   label: "Teaching & Learning" },
-  { id: "financial",  label: "Financial Health" },
-  { id: "christlike", label: "Christlike Behaviour" },
-  { id: "word",       label: "Exposure to the Word of God" },
-  { id: "compliance", label: "Government Requirements & Compliance" },
-  { id: "leadership", label: "Leadership" },
-  { id: "edtech",     label: "Education Technology" },
+  { id: ALL_SENTINEL,  label: "All Core Packages" },
+  { id: "christlike",  label: "Christ-like Behavior" },
+  { id: "word",        label: "Exposure to the Word of God" },
+  { id: "leadership",  label: "Leadership Best Practice" },
+  { id: "teaching",    label: "Teaching Environment" },
   { id: "environment", label: "Learning Environment" },
+  { id: "compliance",  label: "Government Requirements" },
+  { id: "financial",   label: "Fees / Budget / Accounts" },
+  { id: "enrollment",  label: "Enrollment" },
 ];
 
 const SSA_OPTIONS: FilterOption[] = [

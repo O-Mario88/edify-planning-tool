@@ -143,26 +143,30 @@ export const ssaInterventionRows: CceoInterventionRow[] = [
 
 // ────────── Core SSA Heatmap (district × intervention) ──────────
 
+// All 8 official SSA interventions (display order matches the canonical list).
 export type CceoHeatmapRow = {
   district: string;
   scores: {
-    christlike: number;
-    word: number;
-    leadership: number;
-    teaching: number;
-    enrollment: number;
+    christlike: number; // Christ-like Behavior
+    word: number; // Exposure to the Word of God
+    leadership: number; // Leadership Best Practice
+    teaching: number; // Teaching Environment
+    learning: number; // Learning Environment
+    government: number; // Government Requirements
+    fees: number; // Fees / Budget / Accounts
+    enrollment: number; // Enrollment
   };
   avg: number;
 };
 
 export const cceoHeatmap: CceoHeatmapRow[] = [
-  { district: "Chongwe",       scores: { christlike: 8.4, word: 8.2, leadership: 8.0, teaching: 7.6, enrollment: 7.2 }, avg: 7.9 },
-  { district: "Lusaka",        scores: { christlike: 8.1, word: 7.9, leadership: 7.6, teaching: 7.3, enrollment: 6.9 }, avg: 7.6 },
-  { district: "Kabwe",         scores: { christlike: 7.8, word: 7.5, leadership: 7.2, teaching: 6.9, enrollment: 6.4 }, avg: 7.2 },
-  { district: "Kitwe",         scores: { christlike: 7.6, word: 7.3, leadership: 7.0, teaching: 6.7, enrollment: 6.2 }, avg: 6.9 },
-  { district: "Ndola",         scores: { christlike: 7.4, word: 7.1, leadership: 6.8, teaching: 6.5, enrollment: 5.9 }, avg: 6.7 },
-  { district: "Mufulira",      scores: { christlike: 7.1, word: 6.8, leadership: 6.5, teaching: 6.1, enrollment: 5.6 }, avg: 6.4 },
-  { district: "Chillalombwe",  scores: { christlike: 6.8, word: 6.4, leadership: 6.0, teaching: 5.8, enrollment: 5.3 }, avg: 6.1 },
+  { district: "Chongwe",       scores: { christlike: 8.4, word: 8.2, leadership: 8.0, teaching: 7.6, learning: 7.8, government: 8.1, fees: 7.0, enrollment: 7.2 }, avg: 7.8 },
+  { district: "Lusaka",        scores: { christlike: 8.1, word: 7.9, leadership: 7.6, teaching: 7.3, learning: 7.4, government: 7.7, fees: 6.7, enrollment: 6.9 }, avg: 7.5 },
+  { district: "Kabwe",         scores: { christlike: 7.8, word: 7.5, leadership: 7.2, teaching: 6.9, learning: 7.0, government: 7.3, fees: 6.2, enrollment: 6.4 }, avg: 7.0 },
+  { district: "Kitwe",         scores: { christlike: 7.6, word: 7.3, leadership: 7.0, teaching: 6.7, learning: 6.8, government: 7.1, fees: 5.9, enrollment: 6.2 }, avg: 6.8 },
+  { district: "Ndola",         scores: { christlike: 7.4, word: 7.1, leadership: 6.8, teaching: 6.5, learning: 6.6, government: 6.9, fees: 5.6, enrollment: 5.9 }, avg: 6.6 },
+  { district: "Mufulira",      scores: { christlike: 7.1, word: 6.8, leadership: 6.5, teaching: 6.1, learning: 6.3, government: 6.6, fees: 5.2, enrollment: 5.6 }, avg: 6.3 },
+  { district: "Chillalombwe",  scores: { christlike: 6.8, word: 6.4, leadership: 6.0, teaching: 5.8, learning: 6.0, government: 6.2, fees: 4.9, enrollment: 5.3 }, avg: 5.9 },
 ];
 
 // ────────── Best Performing Core Schools ──────────

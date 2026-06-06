@@ -16,18 +16,32 @@ function cellTone(score: number): { bg: string; text: string } {
   return                       { bg: "#fecaca",  text: "#991b1b" }; // rose-200
 }
 
+// The official 8 SSA interventions — display order matches the canonical list.
+// Average is a SEPARATE column (below), never a replacement for an intervention.
 const COLUMNS: { key: keyof (typeof cceoHeatmap)[number]["scores"]; label: string; short: string }[] = [
-  { key: "christlike",  label: "Christ-like Behavior", short: "Christ-like" },
-  { key: "word",        label: "Word of God",          short: "Word" },
-  { key: "leadership",  label: "Leadership",           short: "Leadership" },
-  { key: "teaching",    label: "Teaching Environment", short: "Teaching" },
-  { key: "enrollment",  label: "Enrollment",           short: "Enrollment" },
+  { key: "christlike",  label: "Christ-like Behavior",        short: "Christ-like" },
+  { key: "word",        label: "Exposure to the Word of God", short: "Word of God" },
+  { key: "leadership",  label: "Leadership Best Practice",    short: "Leadership" },
+  { key: "teaching",    label: "Teaching Environment",        short: "Teaching" },
+  { key: "learning",    label: "Learning Environment",        short: "Learning" },
+  { key: "government",  label: "Government Requirements",      short: "Gov't Req." },
+  { key: "fees",        label: "Fees / Budget / Accounts",    short: "Fees/Budget" },
+  { key: "enrollment",  label: "Enrollment",                  short: "Enrollment" },
 ];
+
+// SSA average is computed from all 8 intervention scores (never a partial set).
+function avgOf(scores: (typeof cceoHeatmap)[number]["scores"]): number {
+  const vals = COLUMNS.map((c) => scores[c.key]);
+  return +(vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1);
+}
 
 export function CoreSsaHeatmapCard() {
   // Headline computations — pick the brightest + darkest cells in the
   // matrix, plus the weakest column averaged across districts.
-  const sortedByAvg = [...cceoHeatmap].sort((a, b) => b.avg - a.avg);
+  // Average is always derived from all 8 interventions, so the heatmap can never
+  // drift from a stale partial average.
+  const rows = cceoHeatmap.map((r) => ({ ...r, avg: avgOf(r.scores) }));
+  const sortedByAvg = [...rows].sort((a, b) => b.avg - a.avg);
   const bestDistrict  = sortedByAvg[0];
   const worstDistrict = sortedByAvg[sortedByAvg.length - 1];
 
@@ -78,7 +92,7 @@ export function CoreSsaHeatmapCard() {
             </tr>
           </thead>
           <tbody>
-            {cceoHeatmap.map((row) => (
+            {rows.map((row) => (
               <tr key={row.district}>
                 <td className="text-[11.5px] font-semibold whitespace-nowrap pr-2">
                   {row.district}
