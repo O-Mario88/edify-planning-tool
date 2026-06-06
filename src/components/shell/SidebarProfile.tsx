@@ -20,21 +20,8 @@ import {
 import { ProfileAvatar } from "@/components/ui/ProfileAvatar";
 import { MenuLink, RoleSwitchButton, ThemeToggle } from "@/components/shell/AvatarMenu";
 import { cn } from "@/lib/utils";
-
-// Concise role labels for the profile row (not the verbose console names).
-const ROLE_LABEL: Record<string, string> = {
-  CCEO:                "CCEO",
-  CountryProgramLead:  "Program Lead",
-  CountryDirector:     "Country Director",
-  RVP:                 "Regional VP",
-  ProgramAccountant:   "Accountant",
-  ImpactAssessment:    "M&E / Impact",
-  HumanResource:       "Human Resource",
-  Admin:               "Administrator",
-  PartnerAdmin:        "Partner Admin",
-  PartnerFieldOfficer: "Partner Field Officer",
-  PartnerViewer:       "Partner Viewer",
-};
+import { ROLE_LABEL_CONCISE } from "@/lib/role-labels";
+import type { EdifyRole } from "@/lib/auth";
 
 export function SidebarProfile({
   staffId,
@@ -58,7 +45,7 @@ export function SidebarProfile({
 }) {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
-  const roleLabel = ROLE_LABEL[role] ?? role;
+  const roleLabel = ROLE_LABEL_CONCISE[role as EdifyRole] ?? role;
 
   useEffect(() => {
     if (!open) return;

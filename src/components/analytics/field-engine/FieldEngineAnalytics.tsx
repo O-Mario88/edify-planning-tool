@@ -4,12 +4,15 @@
 //
 // Every number is computed live from the workflow records (computeAnalytics),
 // changes with the filter bar, and drills into the exact records behind it.
-// Layout: a hero KPI band → a charts grid (line / donut / funnel / bar) → the
-// SSA heatmap + core/client comparison → compact grouped operational panels →
-// district ranking + MSC funnel → donor reporting. Premium, dense, organized.
+// The headline reach metrics (schools reached / learners / teachers / districts /
+// SSA improved) now live in the scoped "My Contribution" lens + the live backend
+// band above this on /analytics, so this surface drops the duplicate hero band and
+// owns the UNIQUE views: charts grid (line / donut / funnel / bar) → SSA heatmap +
+// core/client comparison → grouped operational panels (verification / payment /
+// exam / MSC) → district ranking + MSC funnel. Premium, dense, organized.
 
 import { useMemo } from "react";
-import { AlertTriangle, Inbox, Download, School, Users, GraduationCap, CheckCircle2, TrendingUp, MapPin } from "lucide-react";
+import { AlertTriangle, Inbox, Download } from "lucide-react";
 import { ALL_SENTINEL, type FilterScope, type FilterSelection } from "@/lib/filters/types";
 import type { AnalyticsSnapshot, AnalyticsMetric } from "@/lib/analytics/types";
 import { HeaderFilterBar } from "@/components/shell/HeaderFilterBar";
@@ -21,16 +24,6 @@ import { SsaComparisonCard } from "./SsaComparisonCard";
 import { FIELD_ANALYTICS_TILES } from "./tile-registry";
 import { MomentumChart, VerificationDonut, PipelineFunnel, InterventionRankBar, SsaHeatmap } from "./charts";
 import { cn } from "@/lib/utils";
-
-// Hero metrics + their icons. The headline numbers leadership reads first.
-const HERO: { key: string; Icon: typeof School }[] = [
-  { key: "schoolsReached", Icon: School },
-  { key: "learnersImpacted", Icon: Users },
-  { key: "teachersTrained", Icon: GraduationCap },
-  { key: "activitiesCompleted", Icon: CheckCircle2 },
-  { key: "ssaImproved", Icon: TrendingUp },
-  { key: "districtsCovered", Icon: MapPin },
-];
 
 // Compact grouped panels — replaces the flat tile-wall with organized lists.
 const PANELS: { title: string; keys: string[] }[] = [
@@ -83,15 +76,6 @@ export function FieldEngineAnalytics({
       {/* Data-quality strip (slim) */}
       <DataQualityStrip score={snapshot.dataQualityScore} notes={snapshot.dataQuality.notes} />
 
-      {/* Hero KPI band */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2.5">
-        {HERO.map(({ key, Icon }) => {
-          const metric = byKey.get(key);
-          if (!metric) return null;
-          return <HeroStat key={key} metric={metric} Icon={Icon} active={isActive(key)} onClick={() => toggle(key)} />;
-        })}
-      </div>
-
       {/* Drilldown — records behind the active number */}
       {activeFilter && activeMetric && (
         <DrilldownPanel metric={activeMetric} filter={activeFilter} onReset={resetTileFilter} />
@@ -141,40 +125,6 @@ export function FieldEngineAnalytics({
       </div>
     </div>
   );
-}
-
-// ── Hero stat card ──
-function HeroStat({ metric, Icon, active, onClick }: { metric: AnalyticsMetric; Icon: typeof School; active: boolean; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={cn(
-        "card p-3 text-left transition-all hover:-translate-y-0.5 hover:shadow-md",
-        active && "ring-2 ring-[var(--color-edify-primary)]/40 border-[var(--color-edify-primary)]",
-      )}
-    >
-      <div className="flex items-center gap-1.5 mb-1.5">
-        <span className="h-6 w-6 rounded-md bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)] grid place-items-center shrink-0">
-          <Icon size={13} />
-        </span>
-        <span className="t-tiny uppercase tracking-wide muted font-bold leading-tight truncate">{metric.label}</span>
-      </div>
-      <div className="num-hero tabular text-[24px] font-extrabold leading-none">{metric.value.toLocaleString()}</div>
-      <div className="t-tiny muted mt-1 truncate">
-        {metric.target
-          ? <span className={paceTone(metric.target.paceStatus)}>{metric.target.paceStatus} · exp {metric.target.expectedCumulative.toLocaleString()}</span>
-          : metric.breakdown.verified > 0 ? `${metric.breakdown.verified.toLocaleString()} verified` : "Tap to drill"}
-      </div>
-    </button>
-  );
-}
-
-function paceTone(pace: string): string {
-  if (pace === "Ahead" || pace === "On Track") return "text-[var(--color-success)] font-semibold";
-  if (pace === "Slightly Behind") return "text-amber-600 font-semibold";
-  return "text-[var(--color-danger)] font-semibold";
 }
 
 // ── Compact grouped stat panel ──

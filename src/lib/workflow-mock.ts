@@ -471,17 +471,17 @@ export const specialProjects: SpecialProject[] = [
 
 // ────────── Schools dashboard data ──────────
 
-export type SchoolStatus = "Active" | "Inactive" | "Becoming Inactive";
-export type SchoolSegment = "Client" | "Core";
+export type WorkflowSchoolStatus = "Active" | "Inactive" | "Becoming Inactive";
+export type WorkflowSchoolSegment = "Client" | "Core";
 
-export type SchoolRow = {
+export type WorkflowSchoolRow = {
   id: string;
   name: string;
   cluster: string;
   district: string;
   ssaScore: number; // %
-  status: SchoolStatus;
-  segment: SchoolSegment;
+  status: WorkflowSchoolStatus;
+  segment: WorkflowSchoolSegment;
   ssaCompleted: boolean;
   weakestIntervention: string;
   recommended: string;
@@ -493,7 +493,7 @@ export type SchoolRow = {
   dataQuality: DataQualityStatus;
 };
 
-export const schoolsCatalog: SchoolRow[] = [
+export const schoolsCatalog: WorkflowSchoolRow[] = [
   { id: "sch-1",  name: "Hope Primary School",       cluster: "Kigun Central Cluster", district: "Kigun",   ssaScore: 19, status: "Becoming Inactive", segment: "Client", ssaCompleted: true,  weakestIntervention: "Attendance",          recommended: "SSA Support + Home Visits",     cceo: "Sarah Okello", partner: "Eagle Africa",      lastVisit: "May 02", noTraining: true,  noVisit: true,  dataQuality: "Ready for Planning" },
   { id: "sch-2",  name: "Greenfields Primary School",cluster: "Kigun Central Cluster", district: "Kigun",   ssaScore: 42, status: "Active",            segment: "Client", ssaCompleted: true,  weakestIntervention: "Teaching Learning",   recommended: "In-School Coaching",            cceo: "Sarah Okello", partner: "Hope Africa",       lastVisit: "May 02", noTraining: true,  noVisit: false, dataQuality: "Ready for Planning" },
   { id: "sch-3",  name: "Maple Grove Primary School",cluster: "Maryhill Cluster",      district: "Kigun",   ssaScore: 48, status: "Active",            segment: "Client", ssaCompleted: true,  weakestIntervention: "Teaching Learning",   recommended: "In-School Coaching",            cceo: "Sarah Okello", partner: "Hope Africa",       lastVisit: "Apr 28", noTraining: true,  noVisit: true,  dataQuality: "Ready for Planning" },

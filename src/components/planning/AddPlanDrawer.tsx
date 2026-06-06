@@ -18,14 +18,14 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { GlassDatePicker } from "@/components/ui/GlassDatePicker";
-import { schoolsCatalog, type SchoolRow } from "@/lib/workflow-mock";
+import { schoolsCatalog, type WorkflowSchoolRow } from "@/lib/workflow-mock";
 import type { PlannedActivityRow, PlanStatus, DeliveryMode, AssignedTo } from "@/lib/planning-mock";
 import { cn } from "@/lib/utils";
 
 // ─── recommendation rules (system, not staff, decides what to plan) ───
-function recommendationOrder(a: SchoolRow, b: SchoolRow) {
+function recommendationOrder(a: WorkflowSchoolRow, b: WorkflowSchoolRow) {
   if (a.ssaScore !== b.ssaScore) return a.ssaScore - b.ssaScore;
-  const inactiveRank = (s: SchoolRow) =>
+  const inactiveRank = (s: WorkflowSchoolRow) =>
     s.status === "Becoming Inactive" ? 0 : s.status === "Inactive" ? -1 : 1;
   if (inactiveRank(a) !== inactiveRank(b)) return inactiveRank(a) - inactiveRank(b);
   return (a.noVisit ? 0 : 1) - (b.noVisit ? 0 : 1);

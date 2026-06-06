@@ -17,6 +17,7 @@
 // a future RescheduleActivityDrawer (school side).
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { formatUgxShort as formatUgx } from "@/lib/format-utils";
 import {
   CalendarPlus, ChevronLeft, ChevronRight, Users, GraduationCap, MapPin,
   CalendarCheck, AlertTriangle, Wallet, Sparkles,
@@ -529,11 +530,6 @@ function formatIso(d: Date): string {
 function formatHumanDate(d: Date): string {
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
-}
-function formatUgx(amount: number): string {
-  if (amount >= 1_000_000) return `UGX ${(amount / 1_000_000).toFixed(1)}M`;
-  if (amount >= 1_000)     return `UGX ${(amount / 1_000).toFixed(0)}K`;
-  return `UGX ${amount}`;
 }
 function cycleBoundsFor(today: Date): { start: Date; end: Date } {
   const m = today.getMonth();

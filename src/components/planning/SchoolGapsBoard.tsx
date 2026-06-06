@@ -9,6 +9,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { formatUgxShort } from "@/lib/format-utils";
 import { assignToExistingClusterAction, createClusterAndAssignAction } from "@/lib/actions/cluster-actions";
 import {
   AlertOctagon, Footprints, GraduationCap, Users, Building2, MapPin,
@@ -660,11 +661,6 @@ function Fact({
   );
 }
 
-function formatUgxShort(amount: number): string {
-  if (amount >= 1_000_000) return `UGX ${(amount / 1_000_000).toFixed(1)}M`;
-  if (amount >= 1_000)     return `UGX ${(amount / 1_000).toFixed(0)}K`;
-  return `UGX ${amount}`;
-}
 
 function StatusChip({ ok, label }: { ok: boolean; label: string }) {
   return (

@@ -6,6 +6,7 @@
 // SSA — disabled buttons explain the gate inline.
 
 import { useMemo, useState } from "react";
+import { formatUgxShort as formatUgx } from "@/lib/format-utils";
 import {
   Users, Calendar, AlertTriangle, ArrowRight, CheckCircle2, Circle, Clock, RotateCw,
   Lock, Handshake, ChevronDown, ChevronRight, ChevronUp, CalendarCheck, Sparkles,
@@ -175,12 +176,6 @@ export function ClusterGapsBoard({
     });
     setScheduleAssign(null);
     setTimeout(() => setToast(null), 5500);
-  }
-
-  function formatUgx(amount: number): string {
-    if (amount >= 1_000_000) return `UGX ${(amount / 1_000_000).toFixed(1)}M`;
-    if (amount >= 1_000)     return `UGX ${(amount / 1_000).toFixed(0)}K`;
-    return `UGX ${amount}`;
   }
 
   /** Rolled-up list of meetings/trainings scheduled in this session.

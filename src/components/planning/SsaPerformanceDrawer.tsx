@@ -15,6 +15,7 @@
 // for what is effectively static, low-density bar marks.
 
 import { useMemo } from "react";
+import { formatHumanDate } from "@/lib/format-utils";
 import {
   BookOpen, CalendarCheck, ChevronRight, TrendingUp, TrendingDown, Minus,
   AlertTriangle, Lock, Sparkles, GraduationCap, Footprints, RotateCw,
@@ -705,11 +706,6 @@ function EmptyStateHistoricalOnly({
 
 // ────────── Helpers ──────────
 
-function formatHumanDate(iso: string): string {
-  const d = new Date(iso);
-  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
-}
 
 function isCurrentCycle(rec: SsaPerformanceRecord | undefined, currentCycle: string): boolean {
   if (!rec) return false;

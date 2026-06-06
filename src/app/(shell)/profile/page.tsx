@@ -4,26 +4,7 @@ import { StubPage } from "@/components/shell/StubPage";
 import { SectionCard, StatusBadge } from "@/components/ui/primitives";
 import { ProfilePhotoEditor } from "@/components/profile/ProfilePhotoEditor";
 import { getCurrentUser } from "@/lib/auth";
-import type { EdifyRole } from "@/lib/auth";
-
-// Human-readable role labels. Mirrors SUBTITLE_BY_ROLE but trims the
-// "Console" suffix so the row reads as a job title rather than a screen
-// name. Keep this local until the canonical ROLE_LABEL lands in
-// auth-public.ts.
-const ROLE_LABEL: Record<EdifyRole, string> = {
-  CCEO:                "Core Schools Officer (CCEO)",
-  CountryProgramLead:  "Country Program Lead",
-  CountryDirector:     "Country Director",
-  RVP:                 "Regional Vice President",
-  ProgramAccountant:   "Program Accountant",
-  ImpactAssessment:    "M&E / Impact Assessment",
-  HumanResource:       "Human Resource",
-  ProjectCoordinator:  "Project Coordinator",
-  Admin:               "Administrator",
-  PartnerAdmin:        "Partner Admin",
-  PartnerFieldOfficer: "Partner Field Officer",
-  PartnerViewer:       "Partner Viewer",
-};
+import { ROLE_LABEL_VERBOSE as ROLE_LABEL } from "@/lib/role-labels";
 
 export default async function ProfilePage() {
   const user = await getCurrentUser();

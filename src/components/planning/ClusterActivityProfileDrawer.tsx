@@ -10,6 +10,7 @@
 // Potential · Costs · Evidence · Next Actions.
 
 import { useMemo, useState } from "react";
+import { formatUgxCompact as formatUgx, formatHumanDate } from "@/lib/format-utils";
 import {
   Users, GraduationCap, ClipboardList, Sparkles, MapPin, Receipt,
   ShieldCheck, ListTree, ChevronRight, Wallet, Award, AlertTriangle,
@@ -824,18 +825,6 @@ function Field({ label, value }: { label: string; value: string }) {
 
 // ────────── Helpers ──────────
 
-function formatUgx(amount: number): string {
-  if (amount === 0)        return "UGX 0";
-  if (amount >= 1_000_000) return `UGX ${(amount / 1_000_000).toFixed(amount % 1_000_000 === 0 ? 0 : 2)}M`;
-  if (amount >= 1_000)     return `UGX ${(amount / 1_000).toFixed(0)}K`;
-  return `UGX ${amount}`;
-}
-function formatHumanDate(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
-}
 function barFillFor(score: number): string {
   if (score <= 4) return "bg-rose-500";
   if (score <= 6) return "bg-amber-500";

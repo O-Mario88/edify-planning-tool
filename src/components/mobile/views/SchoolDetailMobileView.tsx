@@ -17,20 +17,20 @@ import {
   type MobileKpiTile,
   type KpiTone,
 } from "@/components/mobile/views/MobileSubpageShell";
-import { type SchoolRow } from "@/lib/workflow-mock";
+import { type WorkflowSchoolRow } from "@/lib/workflow-mock";
 
-const STATUS_TONE: Record<SchoolRow["status"], KpiTone> = {
+const STATUS_TONE: Record<WorkflowSchoolRow["status"], KpiTone> = {
   "Active":            "green",
   "Becoming Inactive": "amber",
   "Inactive":          "rose",
 };
 
-const SEGMENT_TONE: Record<SchoolRow["segment"], KpiTone> = {
+const SEGMENT_TONE: Record<WorkflowSchoolRow["segment"], KpiTone> = {
   "Core":   "green",
   "Client": "edify",
 };
 
-export function SchoolDetailMobileView({ school }: { school: SchoolRow }) {
+export function SchoolDetailMobileView({ school }: { school: WorkflowSchoolRow }) {
   const tiles: MobileKpiTile[] = [
     { key: "ssa",      Icon: ShieldCheck,  label: "SSA Score",        value: `${school.ssaScore}%`,                  caption: school.ssaCompleted ? "Completed" : "Pending", tone: school.ssaScore >= 50 ? "green" : school.ssaScore >= 30 ? "amber" : "rose" },
     { key: "segment",  Icon: Sparkles,     label: "Segment",          value: school.segment,                          caption: school.status, tone: SEGMENT_TONE[school.segment] },

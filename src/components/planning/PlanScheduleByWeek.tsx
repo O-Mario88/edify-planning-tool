@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { formatUgxShort as formatUgx } from "@/lib/format-utils";
 import {
   Calendar,
   ChevronRight,
@@ -84,11 +85,6 @@ const AUDIENCE_SUBTITLE: Record<Audience, string> = {
   leadership: "30-day plan horizon. Roll-ups show which weeks concentrate spending so reviews stay sequenced.",
 };
 
-function formatUgx(amount: number): string {
-  if (amount >= 1_000_000) return `UGX ${(amount / 1_000_000).toFixed(1)}M`;
-  if (amount >= 1_000)     return `UGX ${(amount / 1_000).toFixed(0)}K`;
-  return `UGX ${amount}`;
-}
 
 export function PlanScheduleByWeek({
   items,
