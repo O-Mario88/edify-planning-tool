@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { SsaMobileView } from "@/components/mobile/views/SsaMobileView";
 import { SsaHeader } from "@/components/ssa/SsaHeader";
@@ -21,7 +22,16 @@ import { ActionInsightsPanel } from "@/components/ssa/ActionInsightsPanel";
 //   4. 6-year Trend  +  District heat panel                    (paired)
 //   5. Priority intervention gaps heatmap                       (full)
 //   6. Schools requiring urgent attention                       (full)
-export default function SsaPerformancePage() {
+// This is the AGGREGATE SSA cockpit. A school-specific "View SSA" must never land
+// here — if a schoolId is passed, send it to that school's profile (SSA section).
+export default async function SsaPerformancePage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const sp = await searchParams;
+  const sid = Array.isArray(sp.schoolId) ? sp.schoolId[0] : sp.schoolId;
+  if (sid) redirect(`/schools/${encodeURIComponent(sid)}?view=ssa`);
   return (
     <ResponsiveDashboard mobile={<SsaMobileView />} desktop={
     <>

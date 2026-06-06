@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { PlanningToolPage } from "@/components/planning/PlanningToolPage";
 import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { PlanningMobileView } from "@/components/mobile/views/PlanningMobileView";
@@ -8,7 +9,18 @@ import { getCurrentUser } from "@/lib/auth";
 // single tabbed switcher (Client Schools · Clusters · Core Schools) that
 // drives the three neat, collapsible, detail-rich gap boards. The Core
 // Schools tab (desktop + mobile) consumes the unified CorePlan model.
-export default async function Page() {
+// The gap-based board is a scope-wide planning view. A school-specific "Plan
+// Action" must never land here generically — if a schoolId is passed, send it to
+// that school's profile, which resolves the correct next action for it.
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const sp = await searchParams;
+  const sid = Array.isArray(sp.schoolId) ? sp.schoolId[0] : sp.schoolId;
+  if (sid) redirect(`/schools/${encodeURIComponent(sid)}?view=plan`);
+
   const user = await getCurrentUser();
   const coreCards = coreBoardData(user.staffId, user.role);
   const coreViewer = {

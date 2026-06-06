@@ -17,7 +17,9 @@ import { AppShell } from "@/components/app/AppShell";
 import { SectionCard, StatusBadge, ProgressRing } from "@/components/ui/primitives";
 import { MetricStrip } from "@/components/ui/MetricStrip";
 import { ActionButton } from "@/components/ui/ActionButton";
-import { schoolsCatalog, salesforceMatches, validVisitRules } from "@/lib/workflow-mock";
+import { schoolsCatalog, salesforceMatches, validVisitRules, type WorkflowSchoolRow } from "@/lib/workflow-mock";
+import { schoolsMock } from "@/lib/schools-mock";
+import { resolveSchoolNextAction, type SchoolView } from "@/lib/planning/school-next-action";
 import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { SchoolDetailMobileView } from "@/components/mobile/views/SchoolDetailMobileView";
 import { SchoolPartnerJourney, sampleJourneyForHope } from "@/components/partner/SchoolPartnerJourney";
@@ -33,16 +35,51 @@ import { recommendClustersFor, type ClusterMatch } from "@/lib/cluster/cluster-c
 import { openDuplicateCandidates } from "@/lib/intake/duplicate-candidates-mock";
 import type { DirectorySchoolVM, DirectoryClusterMatch } from "@/components/cluster/DirectoryClusterDrawer";
 
-export default async function School360({ params }: { params: Promise<{ id: string }> }) {
+// Adapt a legacy schools-mock row (SCH-### id-space, used by the mobile schools
+// intelligence cards) into the WorkflowSchoolRow the 360 render expects — so
+// "View School" from those cards opens this profile instead of 404-ing.
+function adaptSchoolsMock(sm: (typeof schoolsMock)[number]): WorkflowSchoolRow {
+  return {
+    id: sm.schoolId, name: sm.schoolName, cluster: "—", district: sm.district,
+    ssaScore: sm.ssaScore,
+    status: sm.schoolStatus === "Active" ? "Active" : "Inactive",
+    segment: sm.segment === "Core" ? "Core" : "Client",
+    ssaCompleted: sm.ssaStatus === "Completed",
+    weakestIntervention: "—", recommended: String(sm.recommendedNextAction ?? "—"),
+    cceo: sm.assignedCceoName, partner: "—", lastVisit: "—",
+    noTraining: sm.noTraining, noVisit: sm.noVisit, dataQuality: "Ready for Planning",
+  };
+}
+
+export default async function School360({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const { id } = await params;
+  const spv = (await searchParams).view;
+  const view = (Array.isArray(spv) ? spv[0] : spv) as SchoolView | undefined;
 
   // Source of truth: an uploaded School Directory record. Render the School 360
-  // for it; fall back to the legacy catalogue for old ids.
+  // for it; fall back to the legacy catalogue (sch-N) and the mobile schools-mock
+  // set (SCH-###) for old ids so a school action button never dead-ends.
   const intake = intakeSchools.find((x) => x.schoolId === id);
-  if (intake) return <IntakeSchool360 schoolId={id} />;
+  if (intake) return <IntakeSchool360 schoolId={id} view={view} />;
 
-  const s = schoolsCatalog.find((x) => x.id === id);
+  const sm = schoolsMock.find((x) => x.schoolId === id);
+  const s = schoolsCatalog.find((x) => x.id === id) ?? (sm ? adaptSchoolsMock(sm) : null);
   if (!s) return notFound();
+
+  // School-specific next action (spec §4/§5) — surfaced when the user arrived via
+  // a "Plan Action" / "View SSA" button (?view=...), so the action that brought
+  // them here is front-and-centre instead of a generic page.
+  const nextAction = resolveSchoolNextAction({
+    clusterStatus: s.cluster && s.cluster !== "—" ? "clustered" : "unclustered",
+    currentFySsaStatus: s.ssaCompleted ? "done" : "not_done",
+    schoolType: s.segment === "Core" ? "core" : "client",
+  });
 
   // Stub history derived from the school
   const ssaHistory = [
@@ -80,6 +117,18 @@ export default async function School360({ params }: { params: Promise<{ id: stri
           Back to Schools
         </Link>
       </div>
+
+      {/* School-specific next action — shown when arriving from a View SSA /
+          Plan Action button so the resolved workflow for THIS school leads. */}
+      {view && (
+        <div className={`rounded-xl border px-3.5 py-2.5 flex items-start gap-2.5 ${nextAction.blockingGate ? "bg-amber-50 border-amber-200 text-amber-800" : "bg-emerald-50 border-emerald-200 text-emerald-800"}`}>
+          <Sparkles size={15} className="shrink-0 mt-0.5" />
+          <div className="min-w-0">
+            <div className="text-[12.5px] font-extrabold">Next action · {nextAction.label}</div>
+            <div className="text-[11.5px] opacity-90 leading-snug">{nextAction.reason}</div>
+          </div>
+        </div>
+      )}
 
       {/* Identity card */}
       <SectionCard
@@ -346,9 +395,14 @@ export default async function School360({ params }: { params: Promise<{ id: stri
 }
 
 // ── School 360 for an uploaded (intake) school — the source-of-truth record ──
-async function IntakeSchool360({ schoolId }: { schoolId: string }) {
+async function IntakeSchool360({ schoolId, view }: { schoolId: string; view?: SchoolView }) {
   const s = intakeSchools.find((x) => x.schoolId === schoolId)!;
   const state = schoolWorkflowState(s);
+  const nextAction = resolveSchoolNextAction({
+    clusterStatus: state.clusterId ? "clustered" : "unclustered",
+    currentFySsaStatus: state.ssaDone ? "done" : "not_done",
+    schoolType: s.schoolType,
+  });
   const activities = schoolLinkedActivities(s);
   const dupe = openDuplicateCandidates().some((d) => d.schoolId === s.schoolId);
 
@@ -393,6 +447,15 @@ async function IntakeSchool360({ schoolId }: { schoolId: string }) {
   return (
     <>
       <TitleRegister title={s.schoolName} dateLabel="School 360" />
+      {view && (
+        <div className={`mx-3 sm:mx-4 md:mx-6 mb-3 rounded-xl border px-3.5 py-2.5 flex items-start gap-2.5 ${nextAction.blockingGate ? "bg-amber-50 border-amber-200 text-amber-800" : "bg-emerald-50 border-emerald-200 text-emerald-800"}`}>
+          <Sparkles size={15} className="shrink-0 mt-0.5" />
+          <div className="min-w-0">
+            <div className="text-[12.5px] font-extrabold">Next action · {nextAction.label}</div>
+            <div className="text-[11.5px] opacity-90 leading-snug">{nextAction.reason}</div>
+          </div>
+        </div>
+      )}
       <School360View
         record={{
           schoolId: s.schoolId, schoolName: s.schoolName, schoolType: s.schoolType,

@@ -271,8 +271,8 @@ function PriorityCard({
 
       <footer className="flex items-center gap-2 mt-1">
         <CardLink href={`/schools/${school.schoolId}`} primary>View School</CardLink>
-        <CardLink href={`/ssa?schoolId=${school.schoolId}`}>View SSA</CardLink>
-        <CardLink href={`/planning?schoolId=${school.schoolId}`}>Plan Action</CardLink>
+        <CardLink href={`/schools/${school.schoolId}?view=ssa`}>View SSA</CardLink>
+        <CardLink href={`/schools/${school.schoolId}?view=plan`}>Plan Action</CardLink>
       </footer>
     </article>
   );
@@ -382,7 +382,7 @@ function ImprovedCard({
       )}
 
       <footer className="flex items-center gap-2 mt-1">
-        <CardLink href={`/ssa?schoolId=${school.schoolId}`} primary>View SSA</CardLink>
+        <CardLink href={`/schools/${school.schoolId}?view=ssa`} primary>View SSA</CardLink>
         <CardLink href={`/schools/${school.schoolId}`}>View School</CardLink>
       </footer>
     </article>
@@ -531,8 +531,8 @@ function StrugglingCard({
       </div>
 
       <footer className="flex items-center gap-2 mt-1">
-        <CardLink href={`/ssa?schoolId=${school.schoolId}`} primary>View SSA</CardLink>
-        <CardLink href={`/planning?schoolId=${school.schoolId}`}>Plan Action</CardLink>
+        <CardLink href={`/schools/${school.schoolId}?view=ssa`} primary>View SSA</CardLink>
+        <CardLink href={`/schools/${school.schoolId}?view=plan`}>Plan Action</CardLink>
       </footer>
     </article>
   );
