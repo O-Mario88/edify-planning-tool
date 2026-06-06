@@ -6,7 +6,7 @@
 // The expand/collapse unit is the SCHOOL, not the section.
 
 import { useState } from "react";
-import { ChevronDown, ChevronRight, Footprints, GraduationCap, Trophy } from "lucide-react";
+import { ChevronDown, ChevronRight, ChevronUp, Footprints, GraduationCap, Trophy, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CorePlanBoard } from "./CorePlanBoard";
 import type { SlotViewer } from "./CoreSlotActions";
@@ -38,25 +38,56 @@ function nextAction(c: CorePlanCardVM): string {
   return "Measure impact";
 }
 
+// Icon per section group (visits / trainings / champion-or-done / follow-up).
+function sectionIcon(key: string): LucideIcon {
+  if (key.startsWith("t")) return GraduationCap;
+  if (key === "potential" || key === "verified" || key === "fullpackage") return Trophy;
+  return Footprints;
+}
+
 export function CorePlanningAccordion({ cards, viewer, canChampion }: { cards: CorePlanCardVM[]; viewer: SlotViewer; canChampion: boolean }) {
   const sections = SECTIONS.map((s) => ({ ...s, items: cards.filter(s.match) })).filter((s) => s.items.length > 0);
+
+  // Section-level collapse (matches the Client Schools + Clusters gap boards):
+  // click a card header to expand/collapse its whole list of schools. The "done"
+  // buckets (full package complete, verified champions) start collapsed.
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(SECTIONS.map((s) => [s.key, s.key === "fullpackage" || s.key === "verified"])),
+  );
 
   if (cards.length === 0) {
     return <div className="card p-8 text-center text-[12px] muted italic">No core plans in your scope yet.</div>;
   }
   return (
     <div className="space-y-3">
-      {sections.map((s) => (
-        <section key={s.key} className="card p-3">
-          <h3 className="text-[12px] font-extrabold tracking-tight mb-2 inline-flex items-center gap-2">
-            {s.label}
-            <span className="tabular text-[11px] px-1.5 rounded-full bg-[var(--color-edify-soft)]/70">{s.items.length}</span>
-          </h3>
-          <ul className="space-y-1.5">
-            {s.items.map((c) => <SchoolRow key={c.plan.id} c={c} viewer={viewer} canChampion={canChampion} />)}
-          </ul>
-        </section>
-      ))}
+      {sections.map((s) => {
+        const isCollapsed = collapsed[s.key];
+        const Icon = sectionIcon(s.key);
+        return (
+          <div key={s.key} className="rounded-xl border border-[var(--color-edify-divider)] bg-white">
+            <button
+              type="button"
+              onClick={() => setCollapsed((c) => ({ ...c, [s.key]: !c[s.key] }))}
+              aria-expanded={!isCollapsed}
+              className="w-full flex items-center gap-3 px-3.5 py-2.5 hover:bg-[var(--color-edify-soft)]/40 transition-colors text-left"
+            >
+              <span className="grid place-items-center h-8 w-8 rounded-md bg-[var(--color-edify-soft)]/70 text-[var(--color-edify-primary)]">
+                <Icon size={14} />
+              </span>
+              <div className="flex-1 min-w-0 text-[12px] font-extrabold tracking-tight">{s.label}</div>
+              <span className="text-[12px] font-extrabold tabular text-[var(--color-edify-text)]">{s.items.length}</span>
+              <span className="text-[var(--color-edify-muted)]">
+                {isCollapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+              </span>
+            </button>
+            {!isCollapsed && (
+              <ul className="divide-y divide-[var(--color-edify-divider)] border-t border-[var(--color-edify-divider)]">
+                {s.items.map((c) => <SchoolRow key={c.plan.id} c={c} viewer={viewer} canChampion={canChampion} />)}
+              </ul>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -64,7 +95,7 @@ export function CorePlanningAccordion({ cards, viewer, canChampion }: { cards: C
 function SchoolRow({ c, viewer, canChampion }: { c: CorePlanCardVM; viewer: SlotViewer; canChampion: boolean }) {
   const [open, setOpen] = useState(false);
   return (
-    <li className="rounded-lg border border-[var(--color-edify-divider)] overflow-hidden">
+    <li className="overflow-hidden">
       <button type="button" onClick={() => setOpen((o) => !o)}
         className="w-full flex items-center gap-2 px-2.5 py-2 hover:bg-[var(--color-edify-soft)]/30 text-left">
         {open ? <ChevronDown size={13} className="shrink-0" /> : <ChevronRight size={13} className="shrink-0" />}
