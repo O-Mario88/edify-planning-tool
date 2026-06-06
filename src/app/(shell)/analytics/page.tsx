@@ -1,5 +1,8 @@
 import { getCurrentUser } from "@/lib/auth";
 import { getFilterScope } from "@/lib/filters/scope-service";
+import { fetchAnalyticsDashboard, fetchAnalyticsSsa, fetchActivityPipeline } from "@/lib/api/surfaces";
+import { MetricStrip, type MetricCell } from "@/components/ui/MetricStrip";
+import { LiveBadge, BackendOfflineBanner } from "@/components/ui/BackendStatus";
 import { getDonorMetricSnapshot } from "@/lib/donor-metrics";
 import type { DonorRoleScope, DonorReportingFilters } from "@/lib/donor-metrics-types";
 import { FieldEngineAnalytics } from "@/components/analytics/field-engine/FieldEngineAnalytics";
@@ -77,6 +80,17 @@ export default async function AnalyticsPage({
     overrides,
   });
 
+  // Live backend band — scoped counts straight from edify-api (Postgres). Sits
+  // above the workflow engine so the two truth layers are visible side by side;
+  // renders only when the backend is enabled and reachable.
+  const [beDash, beSsa, bePipe] = await Promise.all([
+    fetchAnalyticsDashboard(user),
+    fetchAnalyticsSsa(user),
+    fetchActivityPipeline(user),
+  ]);
+  const liveBand = buildLiveBand(beDash, beSsa, bePipe);
+  const liveError = !beDash.live ? beDash.error : null;
+
   return (
     <div className="px-3 sm:px-4 md:px-5 lg:px-6 pt-4 pb-24 space-y-4">
       <header className="min-w-0">
@@ -85,6 +99,17 @@ export default async function AnalyticsPage({
           Workflow-derived, filter-aware, drillable. Every number traces to the records behind it.
         </p>
       </header>
+      {liveBand && (
+        <div className="space-y-2">
+          <LiveBadge label="Live · backend API · scoped counts" />
+          <MetricStrip
+            title="Directory & activity — live from edify-api"
+            metrics={liveBand}
+            columns="grid-cols-2 sm:grid-cols-3 md:grid-cols-5 xl:grid-cols-9"
+          />
+        </div>
+      )}
+      <BackendOfflineBanner error={liveError} />
       <FieldEngineAnalytics
         filterScope={filterScope}
         role={user.role}
@@ -93,6 +118,36 @@ export default async function AnalyticsPage({
       />
     </div>
   );
+}
+
+// Build the live KPI band from the three scoped backend analytics endpoints.
+// Returns null when the dashboard summary isn't live (backend off/unreachable),
+// so the band simply doesn't render.
+function buildLiveBand(
+  dash: Awaited<ReturnType<typeof fetchAnalyticsDashboard>>,
+  ssa: Awaited<ReturnType<typeof fetchAnalyticsSsa>>,
+  pipe: Awaited<ReturnType<typeof fetchActivityPipeline>>,
+): MetricCell[] | null {
+  if (!dash.live) return null;
+  const d = dash.data;
+  const cells: MetricCell[] = [
+    { key: "schools", label: "Schools in scope", value: d.schools },
+    { key: "core", label: "Core", value: d.coreSchools },
+    { key: "client", label: "Client", value: d.clientSchools },
+    { key: "ready", label: "Planning Ready", value: d.planningReady, tone: d.planningReady ? "good" : "default" },
+    { key: "unclustered", label: "Unclustered", value: d.unclustered, tone: d.unclustered ? "alert" : "default" },
+    { key: "ssa_done", label: "SSA Complete", value: d.ssaDone, tone: d.ssaDone ? "good" : "default" },
+  ];
+  if (ssa.live) {
+    cells.push(
+      { key: "ssa_schools", label: "Schools w/ SSA", value: ssa.data.schoolsWithSsa },
+      { key: "ssa_avg", label: "Avg SSA Score", value: ssa.data.overallAverage, unit: "/10" },
+    );
+  }
+  if (pipe.live) {
+    cells.push({ key: "activities", label: "Activities", value: pipe.data.total });
+  }
+  return cells;
 }
 
 function donorScopeForRole(role: string): DonorRoleScope {

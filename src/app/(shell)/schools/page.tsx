@@ -23,6 +23,9 @@ import {
 import { openDuplicateCandidates } from "@/lib/intake/duplicate-candidates-mock";
 import { getVisibleSchools, priorityOrder } from "@/lib/schools-mock";
 import { getCurrentUser, toCurrentUser } from "@/lib/auth";
+import { fetchSchools, type BeSchoolRow } from "@/lib/api/surfaces";
+import { LiveBadge, BackendOfflineBanner } from "@/components/ui/BackendStatus";
+import type { DirectoryMetric } from "@/lib/school-directory/directory";
 import { portfolioForStaffId } from "@/lib/portfolio/portfolio";
 import { activePartnerAssignmentsForSchool, schoolIdsWithActivePartner } from "@/lib/portfolio/partner-assignments";
 import { getVisibleProjects, projectsForSchool } from "@/lib/special-projects-mock";
@@ -41,6 +44,34 @@ const PARTNER_SUGGESTIONS = [
   "Mastercard Foundation",
 ];
 
+// Portfolio "at a glance" cells computed from the live backend school list
+// (scoped server-side by the caller's role). Mirrors directoryMetrics, minus the
+// partner-supported cell (the backend directory feed doesn't carry partner
+// assignments yet). When the backend is off/unreachable the page uses the
+// in-memory directoryMetrics instead — same shape, so the strip is identical.
+function liveDirectoryMetrics(rows: BeSchoolRow[], total: number): DirectoryMetric[] {
+  const denom = Math.max(total, 1);
+  const pct = (n: number) => `${Math.round((n / denom) * 1000) / 10}%`;
+  const count = (pred: (r: BeSchoolRow) => boolean) => rows.filter(pred).length;
+  const core = count((r) => r.schoolType === "core");
+  const client = count((r) => r.schoolType === "client");
+  const clustered = count((r) => r.clusterStatus === "clustered");
+  const unclustered = total - clustered;
+  const ssaDone = count((r) => r.currentFySsaStatus === "done");
+  const ssaMiss = total - ssaDone;
+  const owned = count((r) => r.accountOwnerStatus === "matched");
+  return [
+    { key: "total", label: "Total Schools", value: total },
+    { key: "client", label: "Client", value: client, caption: pct(client) },
+    { key: "core", label: "Core", value: core, caption: pct(core) },
+    { key: "clustered", label: "Clustered", value: clustered, caption: pct(clustered), tone: clustered ? "good" : "default" },
+    { key: "unclustered", label: "Unclustered", value: unclustered, caption: pct(unclustered), tone: unclustered ? "alert" : "default" },
+    { key: "ssa_done", label: "SSA Complete", value: ssaDone, caption: pct(ssaDone), tone: ssaDone ? "good" : "default" },
+    { key: "ssa_miss", label: "SSA Pending", value: ssaMiss, caption: pct(ssaMiss), tone: ssaMiss ? "alert" : "default" },
+    { key: "staff", label: "Owned by Staff", value: owned, caption: pct(owned) },
+  ];
+}
+
 // School Directory = Portfolio = source of truth. KPIs, snapshot, signals, the
 // directory itself, AND every assignment (cluster, special project, partner) all
 // run off the uploaded schools (intakeSchools) via the canonical accessor — one
@@ -52,8 +83,17 @@ export default async function SchoolsDashboard() {
 
   // Canonical directory: the viewer's uploaded schools (scoped to their chain).
   const records = directoryRecords(currentUser.staffId, currentUser.role);
-  const metrics = directoryMetrics(records);
+  const mockMetrics = directoryMetrics(records);
   const signals = directoryPlanningSignals(records);
+
+  // Portfolio strip is live from edify-api when the backend is enabled; otherwise
+  // it falls back to the in-memory directory metrics (identical shape).
+  const liveSchools = await fetchSchools(me, { pageSize: 200 });
+  const metrics = liveSchools.live
+    ? liveDirectoryMetrics(liveSchools.data.data, liveSchools.data.total)
+    : mockMetrics;
+  const metricsLive = liveSchools.live;
+  const metricsError = liveSchools.live ? null : liveSchools.error;
 
   // Portfolio targets — only when the viewer personally OWNS schools (CCEO/PL).
   // Cumulative against the portfolio (Q1 25% · Q2 50% · Q3 75% · Q4 100%).
@@ -131,11 +171,14 @@ export default async function SchoolsDashboard() {
         <div className="px-3 sm:px-4 md:px-6 pb-24 md:pb-6 space-y-3 md:space-y-4">
           {/* Portfolio at a glance — dense metric strip (role-scoped).
               Replaces the 9-tile KPI grid + the redundant donut snapshot:
-              one scannable band, proportions carried as captions. */}
+              one scannable band, proportions carried as captions.
+              Values are live from edify-api when the backend is enabled. */}
+          {metricsLive && <LiveBadge />}
+          <BackendOfflineBanner error={metricsError} />
           <MetricStrip
             title="Portfolio at a glance"
             metrics={metrics}
-            columns="grid-cols-2 sm:grid-cols-3 md:grid-cols-5 xl:grid-cols-9"
+            columns="grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-8"
           />
 
           {/* Portfolio targets — cumulative FY progress (shown when you own schools) */}
