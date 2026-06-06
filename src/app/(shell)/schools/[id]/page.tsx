@@ -21,8 +21,11 @@ import { schoolsCatalog, salesforceMatches, validVisitRules, type WorkflowSchool
 import { schoolsMock } from "@/lib/schools-mock";
 import { resolveSchoolNextAction, type SchoolView } from "@/lib/planning/school-next-action";
 import { resolvePlanningCapacity, classifyActivityKind } from "@/lib/planning/planning-capacity";
-import { PlanningCapacityBar } from "@/components/planning/PlanningCapacityBar";
+import { PlanningCapacityBar, type AssignmentVM } from "@/components/planning/PlanningCapacityBar";
 import { activities as plannedActivities } from "@/lib/actions/store";
+import { getCurrentUser } from "@/lib/auth";
+import { computeStaffCapacity, staffAlreadySupportsSchool, getAssignmentOptions } from "@/lib/planning/assignment-policy";
+import { cceosSupervisedBy } from "@/lib/org/supervision";
 
 // Per-school planning capacity from the live planned-activity store (the gray-out
 // rule): client = 1 visit; core = 4 visits + 4 trainings. Cancelled/returned
@@ -34,6 +37,34 @@ function planningCapacityFor(schoolId: string, schoolType: string) {
   const visitsPlanned = acts.filter((a) => classifyActivityKind(a.kind) === "visit").length;
   const trainingsPlanned = acts.filter((a) => classifyActivityKind(a.kind) === "training").length;
   return resolvePlanningCapacity({ schoolType, visitsPlanned, trainingsPlanned });
+}
+
+// Assignment options for the current user on this school (role rules + staff
+// support capacity). Drives the Assign-to-Myself / Assign-to-Partner buttons.
+async function assignmentFor(schoolId: string, ownerName: string | undefined, canPlanVisit: boolean): Promise<AssignmentVM> {
+  const user = await getCurrentUser();
+  const staffCap = computeStaffCapacity(user.staffId);
+  const isDirectOwner = !!ownerName && ownerName === user.name;
+  const supervised = user.role === "CountryProgramLead"
+    ? cceosSupervisedBy(user.staffId).map((c) => ({ staffId: c.staffId, name: c.name }))
+    : [];
+  const isSupervisedSchool = !!ownerName && supervised.some((c) => c.name === ownerName);
+  const already = staffAlreadySupportsSchool(user.staffId, schoolId);
+  const opts = getAssignmentOptions({
+    role: user.role, isDirectOwner, isSupervisedSchool,
+    schoolAlreadySupported: already, capacity: staffCap, partnerAvailable: true, supervisedCceos: supervised,
+  });
+  const self = opts.find((o) => o.type === "self");
+  const partner = opts.find((o) => o.type === "partner");
+  return {
+    staffUsed: staffCap.used, staffMax: staffCap.max, staffAtLimit: staffCap.atLimit, staffNearLimit: staffCap.nearLimit,
+    showSelf: !!self,
+    selfEnabled: !!self?.enabled && canPlanVisit,
+    selfReason: self && !self.enabled ? self.reason : (!canPlanVisit ? "Visit quota for this school is full." : undefined),
+    partnerEnabled: !!partner?.enabled,
+    partnerReason: partner && !partner.enabled ? partner.reason : undefined,
+    team: opts.filter((o) => o.type === "staff").map((t) => ({ name: t.label.replace("Assign to ", ""), staffId: t.staffId ?? "" })),
+  };
 }
 import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { SchoolDetailMobileView } from "@/components/mobile/views/SchoolDetailMobileView";
@@ -96,6 +127,7 @@ export default async function School360({
     schoolType: s.segment === "Core" ? "core" : "client",
   });
   const capacity = planningCapacityFor(s.id, s.segment === "Core" ? "core" : "client");
+  const assignment = await assignmentFor(s.id, s.cceo, capacity.canPlanVisit);
 
   // Stub history derived from the school
   const ssaHistory = [
@@ -146,8 +178,8 @@ export default async function School360({
         </div>
       )}
 
-      {/* Planning capacity — visit/training quota + gray-out */}
-      <PlanningCapacityBar schoolId={s.id} schoolName={s.name} capacity={capacity} />
+      {/* Planning capacity — visit/training quota + gray-out + assignment */}
+      <PlanningCapacityBar schoolId={s.id} schoolName={s.name} capacity={capacity} assignment={assignment} />
 
       {/* Identity card */}
       <SectionCard
@@ -423,6 +455,7 @@ async function IntakeSchool360({ schoolId, view }: { schoolId: string; view?: Sc
     schoolType: s.schoolType,
   });
   const capacity = planningCapacityFor(s.schoolId, s.schoolType);
+  const assignment = await assignmentFor(s.schoolId, s.assignedCceo, capacity.canPlanVisit);
   const activities = schoolLinkedActivities(s);
   const dupe = openDuplicateCandidates().some((d) => d.schoolId === s.schoolId);
 
@@ -477,7 +510,7 @@ async function IntakeSchool360({ schoolId, view }: { schoolId: string; view?: Sc
         </div>
       )}
       <div className="mx-3 sm:mx-4 md:mx-6 mb-3">
-        <PlanningCapacityBar schoolId={s.schoolId} schoolName={s.schoolName} capacity={capacity} />
+        <PlanningCapacityBar schoolId={s.schoolId} schoolName={s.schoolName} capacity={capacity} assignment={assignment} />
       </div>
       <School360View
         record={{

@@ -16,10 +16,11 @@ import {
 } from "@/lib/actions/store";
 import { emitAudit } from "@/lib/actions/audit";
 import { canReschedule } from "@/lib/planning/planning-capacity";
+import { computeStaffCapacity, staffAlreadySupportsSchool } from "@/lib/planning/assignment-policy";
 
 export type MyPlanResult =
   | { ok: true; id: string }
-  | { ok: false; reason: "NOT_FOUND" | "SLIP_LIMIT" | "FORBIDDEN" | "INVALID_INPUT" };
+  | { ok: false; reason: "NOT_FOUND" | "SLIP_LIMIT" | "FORBIDDEN" | "INVALID_INPUT" | "CAPACITY_FULL"; message?: string };
 
 const TITLE: Record<string, string> = {
   SCHOOL_VISIT: "School visit", IN_SCHOOL_COACHING: "In-school coaching",
@@ -55,6 +56,22 @@ export async function scheduleSchoolActivity(input: {
 }): Promise<MyPlanResult> {
   const user = await getCurrentUser();
   if (!input.schoolId || !input.kind) return { ok: false, reason: "INVALID_INPUT" };
+
+  const toPartner = input.deliveryType === "partner";
+  // ── Backend assignment enforcement (spec §6/§9) — never frontend-only. ──
+  if (!toPartner) {
+    // Self / staff-delivered support: role + direct support capacity gate.
+    if (user.role !== "CCEO" && user.role !== "CountryProgramLead") {
+      return { ok: false, reason: "FORBIDDEN", message: "Your role does not deliver direct school support." };
+    }
+    const cap = computeStaffCapacity(user.staffId);
+    const already = staffAlreadySupportsSchool(user.staffId, input.schoolId);
+    if (!already && cap.remaining <= 0) {
+      emitAudit({ action: "myplan.assignment.blocked", subjectKind: "School", subjectId: input.schoolId, actorId: user.staffId, actorRole: user.role, actorName: user.name, payload: { reason: "CAPACITY_FULL", max: cap.max, used: cap.used } });
+      return { ok: false, reason: "CAPACITY_FULL", message: `Direct support limit reached (${cap.max} schools). Assign this to a partner.` };
+    }
+  }
+
   const now = new Date().toISOString();
   const act: PlannedActivityRecord = {
     id: newId("act"),

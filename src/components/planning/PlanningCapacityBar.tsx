@@ -29,28 +29,59 @@ function DisabledButton({ label, reason }: { label: string; reason: string | nul
   );
 }
 
-export function PlanningCapacityBar({ schoolId, schoolName, capacity }: { schoolId: string; schoolName?: string; capacity: PlanningCapacity }) {
+// Assignment view-model (role rules + staff support capacity) from the policy engine.
+export type AssignmentVM = {
+  staffUsed: number;
+  staffMax: number;
+  staffAtLimit: boolean;
+  staffNearLimit: boolean;
+  showSelf: boolean;
+  selfEnabled: boolean;
+  selfReason?: string;
+  partnerEnabled: boolean;
+  partnerReason?: string;
+  team: { name: string; staffId: string }[];
+};
+
+export function PlanningCapacityBar({ schoolId, schoolName, capacity, assignment }: { schoolId: string; schoolName?: string; capacity: PlanningCapacity; assignment?: AssignmentVM }) {
   const VISIT: ActivityKind = "SCHOOL_VISIT";
-  const TRAINING: ActivityKind = "TRAINING_FOLLOW_UP";
   return (
-    <div className="card p-3 flex flex-wrap items-center justify-between gap-3">
-      <div className="flex items-center gap-2 flex-wrap">
+    <div className="card p-3 space-y-2.5">
+      <div className="flex flex-wrap items-center gap-2">
         <span className="text-[11px] font-extrabold uppercase tracking-wide muted">Planning capacity</span>
         <Quota label="Visits" used={capacity.visitsUsed} allowed={capacity.visitsAllowed} full={!capacity.canPlanVisit} />
         <Quota label="Trainings" used={capacity.trainingsUsed} allowed={capacity.trainingsAllowed} full={!capacity.canPlanTraining} />
-        {capacity.fullyPlanned && (
-          <span className="text-[11px] font-bold text-slate-500">· Fully planned for this FY</span>
+        {assignment && (
+          <span className={cn("inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-bold border",
+            assignment.staffAtLimit ? "bg-rose-50 text-rose-700 border-rose-200" : assignment.staffNearLimit ? "bg-amber-50 text-amber-700 border-amber-200" : "bg-slate-50 text-slate-600 border-slate-200")}>
+            Direct support <span className="tabular">{assignment.staffUsed}/{assignment.staffMax}</span>{assignment.staffAtLimit ? " · at limit" : ""}
+          </span>
         )}
       </div>
-      <div className="flex items-center gap-2">
-        {capacity.canPlanVisit
-          ? <ScheduleActivityButton schoolId={schoolId} schoolName={schoolName} kind={VISIT} label="Schedule Visit" />
-          : <DisabledButton label="Schedule Visit" reason={capacity.visitDisabledReason} />}
-        {capacity.schoolType === "core" && (
-          capacity.canPlanTraining
-            ? <ScheduleActivityButton schoolId={schoolId} schoolName={schoolName} kind={TRAINING} label="Schedule Training" />
-            : <DisabledButton label="Schedule Training" reason={capacity.trainingDisabledReason} />
+
+      {assignment?.staffAtLimit && (
+        <p className="text-[11px] text-rose-700">You've reached your direct support limit ({assignment.staffMax} schools). New school support should be assigned to a partner.</p>
+      )}
+
+      {/* Assignment actions — role + capacity aware (spec §10). */}
+      <div className="flex items-center gap-2 flex-wrap">
+        {assignment?.showSelf && (
+          assignment.selfEnabled
+            ? <ScheduleActivityButton schoolId={schoolId} schoolName={schoolName} kind={VISIT} label="Assign to Myself" deliveryType="staff" />
+            : <DisabledButton label="Assign to Myself" reason={assignment.selfReason ?? null} />
         )}
+        {assignment
+          ? (assignment.partnerEnabled
+              ? <ScheduleActivityButton schoolId={schoolId} schoolName={schoolName} kind={VISIT} label="Assign to Partner" deliveryType="partner" tone="outline" />
+              : <DisabledButton label="Assign to Partner" reason={assignment.partnerReason ?? null} />)
+          : (capacity.canPlanVisit
+              ? <ScheduleActivityButton schoolId={schoolId} schoolName={schoolName} kind={VISIT} label="Schedule Visit" />
+              : <DisabledButton label="Schedule Visit" reason={capacity.visitDisabledReason} />)}
+        {assignment?.team.map((t) => (
+          <span key={t.staffId} className="inline-flex items-center gap-1 rounded-lg border border-[var(--color-edify-border)] muted px-3 py-1.5 text-[11.5px] font-bold" title="Assign to a supervised CCEO">
+            Assign to {t.name}
+          </span>
+        ))}
       </div>
     </div>
   );
