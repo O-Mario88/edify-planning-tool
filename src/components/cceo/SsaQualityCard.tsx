@@ -81,15 +81,15 @@ function heatTone(score: number): { bg: string; text: string } {
 }
 
 // The official 8 SSA interventions (display order matches the canonical list).
-const DISTRICT_COLUMNS: { key: keyof (typeof cceoHeatmap)[number]["scores"]; label: string; short: string }[] = [
-  { key: "christlike",  label: "Christ-like Behavior",        short: "Christ-like" },
-  { key: "word",        label: "Exposure to the Word of God", short: "Word of God" },
-  { key: "leadership",  label: "Leadership Best Practice",    short: "Leadership" },
-  { key: "teaching",    label: "Teaching Environment",        short: "Teaching" },
-  { key: "learning",    label: "Learning Environment",        short: "Learning" },
-  { key: "government",  label: "Government Requirements",      short: "Gov't Req." },
-  { key: "fees",        label: "Fees / Budget / Accounts",    short: "Fees/Budget" },
-  { key: "enrollment",  label: "Enrollment",                  short: "Enrollment" },
+const DISTRICT_COLUMNS: { key: keyof (typeof cceoHeatmap)[number]["scores"]; label: string; short: string; abbr: string }[] = [
+  { key: "christlike",  label: "Christ-like Behavior",        short: "Christ-like", abbr: "CB" },
+  { key: "word",        label: "Exposure to the Word of God", short: "Word of God", abbr: "WG" },
+  { key: "leadership",  label: "Leadership Best Practice",    short: "Leadership",  abbr: "LP" },
+  { key: "teaching",    label: "Teaching Environment",        short: "Teaching",    abbr: "TE" },
+  { key: "learning",    label: "Learning Environment",        short: "Learning",    abbr: "LE" },
+  { key: "government",  label: "Government Requirements",      short: "Gov't Req.",  abbr: "GR" },
+  { key: "fees",        label: "Fees / Budget / Accounts",    short: "Fees/Budget", abbr: "FB" },
+  { key: "enrollment",  label: "Enrollment",                  short: "Enrollment",  abbr: "EN" },
 ];
 
 export function SsaQualityCard() {
@@ -315,23 +315,24 @@ function InterventionView() {
 
 function DistrictView() {
   return (
-    <div className="overflow-x-auto -mx-2 rounded-lg">
-      <table className="w-full border-separate border-spacing-x-1 border-spacing-y-1 px-2">
+    <div className="overflow-x-auto -mx-1 sm:-mx-2 rounded-lg">
+      <table className="w-full border-separate border-spacing-x-0.5 sm:border-spacing-x-1 border-spacing-y-1 px-1 sm:px-2">
         <thead>
           <tr>
-            <th scope="col" className="text-left text-[10px] muted font-bold uppercase tracking-wide pb-1.5">
+            <th scope="col" className="text-left text-[9px] sm:text-[10px] muted font-bold uppercase tracking-wide pb-1.5">
               District
             </th>
             {DISTRICT_COLUMNS.map((c) => (
               <th
                 key={c.key}
-                className="text-center text-[9.5px] muted font-bold leading-tight pb-1.5"
+                className="text-center text-[9px] sm:text-[9.5px] muted font-bold leading-tight pb-1.5"
                 title={c.label}
               >
-                {c.short}
+                <span className="sm:hidden">{c.abbr}</span>
+                <span className="hidden sm:inline">{c.short}</span>
               </th>
             ))}
-            <th scope="col" className="text-center text-[9.5px] muted font-bold uppercase tracking-wide pb-1.5">
+            <th scope="col" className="text-center text-[9px] sm:text-[9.5px] muted font-bold uppercase tracking-wide pb-1.5">
               Avg
             </th>
           </tr>
@@ -339,8 +340,8 @@ function DistrictView() {
         <tbody>
           {cceoHeatmap.map((row) => (
             <tr key={row.district}>
-              <td className="text-[11.5px] font-semibold whitespace-nowrap pr-2 inline-flex items-center gap-1">
-                <MapPin size={10} className="text-[var(--color-edify-muted)]" />
+              <td className="text-[10px] sm:text-[11.5px] font-semibold whitespace-nowrap pr-1 sm:pr-2 inline-flex items-center gap-1">
+                <MapPin size={10} className="text-[var(--color-edify-muted)] hidden sm:inline" />
                 {row.district}
               </td>
               {DISTRICT_COLUMNS.map((c) => {
@@ -349,7 +350,7 @@ function DistrictView() {
                 return (
                   <td key={c.key} className="text-center">
                     <span
-                      className="inline-block w-full min-w-[44px] py-1.5 rounded-md text-[11px] font-extrabold tabular"
+                      className="inline-block w-full min-w-0 sm:min-w-[44px] py-1 sm:py-1.5 rounded sm:rounded-md text-[10px] sm:text-[11px] font-extrabold tabular"
                       style={{ backgroundColor: tone.bg, color: tone.text }}
                     >
                       {score.toFixed(1)}
@@ -359,7 +360,7 @@ function DistrictView() {
               })}
               <td className="text-center">
                 <span
-                  className="inline-block w-full min-w-[44px] py-1.5 rounded-md text-[11px] font-extrabold tabular ring-1 ring-black/5"
+                  className="inline-block w-full min-w-0 sm:min-w-[44px] py-1 sm:py-1.5 rounded sm:rounded-md text-[10px] sm:text-[11px] font-extrabold tabular ring-1 ring-black/5"
                   style={{
                     backgroundColor: heatTone(row.avg).bg,
                     color: heatTone(row.avg).text,

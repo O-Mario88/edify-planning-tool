@@ -71,7 +71,7 @@ export function CceoSalesforceQueueCard() {
           same physical size whether 5 rows or 50, so the dashboard's
           row alignment stays stable. */}
       <div className="rounded-xl border border-[var(--color-edify-border)] bg-white overflow-hidden">
-        <div className="grid grid-cols-[1.6fr_72px_120px_96px] gap-2 px-3 py-2 bg-gradient-to-r from-[var(--color-edify-soft)] to-[var(--color-edify-soft)]/40 text-[9.5px] uppercase tracking-wide text-slate-600 font-bold">
+        <div className="grid grid-cols-[1.4fr_52px_82px_70px] sm:grid-cols-[1.6fr_72px_120px_96px] gap-2 px-3 py-2 bg-gradient-to-r from-[var(--color-edify-soft)] to-[var(--color-edify-soft)]/40 text-[9.5px] uppercase tracking-wide text-slate-600 font-bold">
           <div>School</div>
           <div className="text-right">Completed</div>
           <div>Match Status</div>
@@ -86,7 +86,7 @@ export function CceoSalesforceQueueCard() {
             return (
               <div
                 key={r.key}
-                className="grid grid-cols-[1.6fr_72px_120px_96px] gap-2 px-3 py-2.5 items-center text-[11.5px]"
+                className="grid grid-cols-[1.4fr_52px_82px_70px] sm:grid-cols-[1.6fr_72px_120px_96px] gap-2 px-3 py-2.5 items-center text-[11.5px]"
               >
                 <div className="font-semibold text-slate-900 leading-tight truncate">{r.school}</div>
                 <div className="text-right tabular muted">{r.completedOn}</div>

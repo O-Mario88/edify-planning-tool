@@ -51,7 +51,7 @@ export function CceoMonthPlannerCard() {
     >
       <div className="rounded-xl border border-[var(--color-edify-border)] overflow-hidden">
         {/* Week header */}
-        <div className="grid grid-cols-[120px_repeat(5,1fr)] bg-[var(--color-edify-soft)]/40">
+        <div className="grid grid-cols-[68px_repeat(5,1fr)] sm:grid-cols-[120px_repeat(5,1fr)] bg-[var(--color-edify-soft)]/40">
           <div />
           {m.columns.map((c) => (
             <div key={c.weekLabel} className="px-2 py-2 text-center">
@@ -107,7 +107,7 @@ function PlannerRow({
   values: number[];
 }) {
   return (
-    <div className="grid grid-cols-[120px_repeat(5,1fr)] border-t border-[#eef2f4]">
+    <div className="grid grid-cols-[68px_repeat(5,1fr)] sm:grid-cols-[120px_repeat(5,1fr)] border-t border-[#eef2f4]">
       <div className="flex items-center gap-1.5 px-2 py-2.5 bg-white">
         <span className={cn("w-6 h-6 rounded-md grid place-items-center shrink-0", iconTone)}>
           <Icon size={11} />
