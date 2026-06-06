@@ -13,6 +13,7 @@ import {
   type PlanItem,
   type PlanItemReschedule,
 } from "@/lib/mobile-mock";
+import { RESCHEDULE_SLIP_LIMIT, canReschedule, reschedulesRemaining } from "@/lib/planning/planning-capacity";
 
 // Reschedule a single planned activity (visit, follow-up, in-school
 // coaching, or cluster training).
@@ -59,9 +60,19 @@ export function RescheduleActivityDrawer({
 
   if (!item) return null;
 
+  const history = item.reschedules ?? [];
+  // Slip limit: an activity can only be moved so many times before it must be
+  // escalated/converted — so "reschedule" can't quietly hide non-delivery.
+  const atLimit = !canReschedule(history.length);
+  const remaining = reschedulesRemaining(history.length);
+
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+    if (atLimit) {
+      setError(`This activity has been moved ${RESCHEDULE_SLIP_LIMIT} times — escalate it or convert it instead of rescheduling again.`);
+      return;
+    }
     if (!newDate) {
       setError("Pick a new date for the activity.");
       return;
@@ -84,7 +95,6 @@ export function RescheduleActivityDrawer({
     });
   }
 
-  const history       = item.reschedules ?? [];
   const reasonOptions = ACTIVITY_RESCHEDULE_REASONS.map((r) => ({ value: r, label: r }));
 
   return (
@@ -101,6 +111,7 @@ export function RescheduleActivityDrawer({
           <Button
             size="sm"
             Icon={CalendarPlus}
+            disabled={atLimit}
             onClick={() => {
               const form = document.getElementById("activity-reschedule-form") as HTMLFormElement | null;
               form?.requestSubmit();
@@ -112,6 +123,16 @@ export function RescheduleActivityDrawer({
       }
     >
       <form id="activity-reschedule-form" onSubmit={handleSubmit} className="space-y-4">
+
+        {/* Slip limit reached — block another move, force escalate/convert. */}
+        {atLimit && (
+          <section className="rounded-lg border border-rose-200 bg-rose-50 p-3 flex items-start gap-2">
+            <AlertTriangle size={14} className="text-rose-600 shrink-0 mt-0.5" />
+            <div className="text-[11.5px] text-rose-800 leading-snug">
+              <span className="font-extrabold">Reschedule limit reached.</span> This activity has been moved {history.length} times (limit {RESCHEDULE_SLIP_LIMIT}). Escalate it to your CCEO/PL or convert it to a different activity type — it can't be rescheduled again.
+            </div>
+          </section>
+        )}
 
         {/* Current schedule */}
         <section className="rounded-lg border border-[var(--color-edify-border)] bg-[var(--color-edify-soft)]/40 p-3">
@@ -137,10 +158,10 @@ export function RescheduleActivityDrawer({
             <ul className="divide-y divide-[var(--color-edify-divider)] rounded-lg border border-[var(--color-edify-border)] bg-white">
               {history.map((h, i) => <HistoryRow key={i} entry={h} />)}
             </ul>
-            {history.length >= 2 && (
+            {history.length >= 1 && !atLimit && (
               <div className="mt-2 text-[11.5px] text-amber-700 inline-flex items-start gap-1.5">
                 <AlertTriangle size={11} className="mt-0.5 shrink-0" />
-                <span>This activity has been moved more than once. Consider escalating to your CCEO before booking a third date — or convert it to a different activity type.</span>
+                <span>{remaining} reschedule{remaining === 1 ? "" : "s"} left before this activity must be escalated or converted instead of moved again.</span>
               </div>
             )}
           </section>

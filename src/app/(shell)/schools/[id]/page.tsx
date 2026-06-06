@@ -20,6 +20,21 @@ import { ActionButton } from "@/components/ui/ActionButton";
 import { schoolsCatalog, salesforceMatches, validVisitRules, type WorkflowSchoolRow } from "@/lib/workflow-mock";
 import { schoolsMock } from "@/lib/schools-mock";
 import { resolveSchoolNextAction, type SchoolView } from "@/lib/planning/school-next-action";
+import { resolvePlanningCapacity, classifyActivityKind } from "@/lib/planning/planning-capacity";
+import { PlanningCapacityBar } from "@/components/planning/PlanningCapacityBar";
+import { activities as plannedActivities } from "@/lib/actions/store";
+
+// Per-school planning capacity from the live planned-activity store (the gray-out
+// rule): client = 1 visit; core = 4 visits + 4 trainings. Cancelled/returned
+// activities don't count against the quota.
+function planningCapacityFor(schoolId: string, schoolType: string) {
+  const acts = plannedActivities().filter(
+    (a) => a.schoolId === schoolId && a.status !== "Cancelled" && a.status !== "Returned",
+  );
+  const visitsPlanned = acts.filter((a) => classifyActivityKind(a.kind) === "visit").length;
+  const trainingsPlanned = acts.filter((a) => classifyActivityKind(a.kind) === "training").length;
+  return resolvePlanningCapacity({ schoolType, visitsPlanned, trainingsPlanned });
+}
 import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { SchoolDetailMobileView } from "@/components/mobile/views/SchoolDetailMobileView";
 import { SchoolPartnerJourney, sampleJourneyForHope } from "@/components/partner/SchoolPartnerJourney";
@@ -80,6 +95,7 @@ export default async function School360({
     currentFySsaStatus: s.ssaCompleted ? "done" : "not_done",
     schoolType: s.segment === "Core" ? "core" : "client",
   });
+  const capacity = planningCapacityFor(s.id, s.segment === "Core" ? "core" : "client");
 
   // Stub history derived from the school
   const ssaHistory = [
@@ -129,6 +145,9 @@ export default async function School360({
           </div>
         </div>
       )}
+
+      {/* Planning capacity — visit/training quota + gray-out */}
+      <PlanningCapacityBar schoolId={s.id} capacity={capacity} />
 
       {/* Identity card */}
       <SectionCard
@@ -403,6 +422,7 @@ async function IntakeSchool360({ schoolId, view }: { schoolId: string; view?: Sc
     currentFySsaStatus: state.ssaDone ? "done" : "not_done",
     schoolType: s.schoolType,
   });
+  const capacity = planningCapacityFor(s.schoolId, s.schoolType);
   const activities = schoolLinkedActivities(s);
   const dupe = openDuplicateCandidates().some((d) => d.schoolId === s.schoolId);
 
@@ -456,6 +476,9 @@ async function IntakeSchool360({ schoolId, view }: { schoolId: string; view?: Sc
           </div>
         </div>
       )}
+      <div className="mx-3 sm:mx-4 md:mx-6 mb-3">
+        <PlanningCapacityBar schoolId={s.schoolId} capacity={capacity} />
+      </div>
       <School360View
         record={{
           schoolId: s.schoolId, schoolName: s.schoolName, schoolType: s.schoolType,
