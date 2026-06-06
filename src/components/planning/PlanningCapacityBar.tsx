@@ -2,6 +2,7 @@ import { Ban } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { PlanningCapacity } from "@/lib/planning/planning-capacity";
 import { ScheduleActivityButton } from "./ScheduleActivityButton";
+import { AssignToStaffButton } from "./AssignToStaffButton";
 import type { ActivityKind } from "@/lib/actions/store";
 
 // Per-school planning capacity (the gray-out rule made visible). Client schools
@@ -40,7 +41,7 @@ export type AssignmentVM = {
   selfReason?: string;
   partnerEnabled: boolean;
   partnerReason?: string;
-  team: { name: string; staffId: string }[];
+  team: { name: string; staffId: string; enabled: boolean; reason?: string }[];
 };
 
 export function PlanningCapacityBar({ schoolId, schoolName, capacity, assignment }: { schoolId: string; schoolName?: string; capacity: PlanningCapacity; assignment?: AssignmentVM }) {
@@ -78,9 +79,9 @@ export function PlanningCapacityBar({ schoolId, schoolName, capacity, assignment
               ? <ScheduleActivityButton schoolId={schoolId} schoolName={schoolName} kind={VISIT} label="Schedule Visit" />
               : <DisabledButton label="Schedule Visit" reason={capacity.visitDisabledReason} />)}
         {assignment?.team.map((t) => (
-          <span key={t.staffId} className="inline-flex items-center gap-1 rounded-lg border border-[var(--color-edify-border)] muted px-3 py-1.5 text-[11.5px] font-bold" title="Assign to a supervised CCEO">
-            Assign to {t.name}
-          </span>
+          t.enabled
+            ? <AssignToStaffButton key={t.staffId} schoolId={schoolId} schoolName={schoolName} kind={VISIT} targetStaffId={t.staffId} targetName={t.name} />
+            : <DisabledButton key={t.staffId} label={`Assign to ${t.name}`} reason={t.reason ?? null} />
         ))}
       </div>
     </div>

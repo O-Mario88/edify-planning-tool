@@ -14,9 +14,10 @@ import {
   activities, findActivity, updateActivity, newId,
   type ActivityKind, type PlannedActivityRecord,
 } from "@/lib/actions/store";
-import { emitAudit } from "@/lib/actions/audit";
+import { emitAudit, emitNotification } from "@/lib/actions/audit";
 import { canReschedule } from "@/lib/planning/planning-capacity";
 import { computeStaffCapacity, staffAlreadySupportsSchool } from "@/lib/planning/assignment-policy";
+import { cceosSupervisedBy } from "@/lib/org/supervision";
 
 export type MyPlanResult =
   | { ok: true; id: string }
@@ -93,6 +94,56 @@ export async function scheduleSchoolActivity(input: {
   };
   activities().push(act);
   emitAudit({ action: "myplan.activity.scheduled", subjectKind: "Activity", subjectId: act.id, actorId: user.staffId, actorRole: user.role, actorName: user.name, payload: { schoolId: input.schoolId, kind: input.kind } });
+  revalidate(input.schoolId);
+  return { ok: true, id: act.id };
+}
+
+// ── PL → supervised CCEO (the other half of the assignment rules) ───
+export async function assignActivityToStaff(input: {
+  schoolId: string;
+  schoolName?: string;
+  kind: ActivityKind;
+  dateIso?: string;
+  targetStaffId: string;
+}): Promise<MyPlanResult> {
+  const user = await getCurrentUser();
+  // Only a PL can assign to a CCEO, and only to a CCEO they supervise (spec §17).
+  if (user.role !== "CountryProgramLead") {
+    return { ok: false, reason: "FORBIDDEN", message: "Only a Program Lead can assign to a supervised CCEO." };
+  }
+  const target = cceosSupervisedBy(user.staffId).find((c) => c.staffId === input.targetStaffId);
+  if (!target) {
+    return { ok: false, reason: "FORBIDDEN", message: "That CCEO is not on your supervised team." };
+  }
+  // The TARGET CCEO's direct-support capacity gates the assignment.
+  const cap = computeStaffCapacity(target.staffId);
+  const already = staffAlreadySupportsSchool(target.staffId, input.schoolId);
+  if (!already && cap.remaining <= 0) {
+    emitAudit({ action: "myplan.assignment.blocked", subjectKind: "School", subjectId: input.schoolId, actorId: user.staffId, actorRole: user.role, actorName: user.name, payload: { reason: "TARGET_CAPACITY_FULL", targetStaffId: target.staffId } });
+    return { ok: false, reason: "CAPACITY_FULL", message: `${target.name} is at their support limit (${cap.max} schools). Assign to a partner or another CCEO.` };
+  }
+
+  const now = new Date().toISOString();
+  const act: PlannedActivityRecord = {
+    id: newId("act"),
+    planId: `MYPLAN-${target.staffId}`,
+    schoolId: input.schoolId,
+    schoolName: input.schoolName,
+    kind: input.kind,
+    title: `${TITLE[input.kind] ?? "Activity"}${input.schoolName ? ` — ${input.schoolName}` : ""}`,
+    weekOfMonth: weekOfMonth(input.dateIso),
+    scheduledDate: input.dateIso,
+    assigneeId: target.staffId, // owned by the CCEO
+    estCostCents: 0,
+    status: "Planned",
+    deliveryType: "staff",
+    rescheduleCount: 0,
+    createdAt: now,
+    updatedAt: now,
+  };
+  activities().push(act);
+  emitAudit({ action: "myplan.activity.assignedToStaff", subjectKind: "Activity", subjectId: act.id, actorId: user.staffId, actorRole: user.role, actorName: user.name, payload: { schoolId: input.schoolId, targetStaffId: target.staffId } });
+  emitNotification({ userId: target.staffId, template: "plan.assignedByPL", channel: "Inbox", title: "New school support assigned by your PL", body: `${user.name} assigned ${TITLE[input.kind] ?? "an activity"}${input.schoolName ? ` at ${input.schoolName}` : ""} to you.`, href: "/plans" });
   revalidate(input.schoolId);
   return { ok: true, id: act.id };
 }

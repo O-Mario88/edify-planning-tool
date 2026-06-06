@@ -48,11 +48,14 @@ async function assignmentFor(schoolId: string, ownerName: string | undefined, ca
   const supervised = user.role === "CountryProgramLead"
     ? cceosSupervisedBy(user.staffId).map((c) => ({ staffId: c.staffId, name: c.name }))
     : [];
-  const isSupervisedSchool = !!ownerName && supervised.some((c) => c.name === ownerName);
+  // The relevant team assignee is the school's OWNER, if they're a supervised CCEO.
+  const ownerCceo = !isDirectOwner ? supervised.find((c) => c.name === ownerName) : undefined;
+  const isSupervisedSchool = !!ownerCceo;
   const already = staffAlreadySupportsSchool(user.staffId, schoolId);
   const opts = getAssignmentOptions({
     role: user.role, isDirectOwner, isSupervisedSchool,
-    schoolAlreadySupported: already, capacity: staffCap, partnerAvailable: true, supervisedCceos: supervised,
+    schoolAlreadySupported: already, capacity: staffCap, partnerAvailable: true,
+    supervisedCceos: ownerCceo ? [ownerCceo] : [],
   });
   const self = opts.find((o) => o.type === "self");
   const partner = opts.find((o) => o.type === "partner");
@@ -63,7 +66,13 @@ async function assignmentFor(schoolId: string, ownerName: string | undefined, ca
     selfReason: self && !self.enabled ? self.reason : (!canPlanVisit ? "Visit quota for this school is full." : undefined),
     partnerEnabled: !!partner?.enabled,
     partnerReason: partner && !partner.enabled ? partner.reason : undefined,
-    team: opts.filter((o) => o.type === "staff").map((t) => ({ name: t.label.replace("Assign to ", ""), staffId: t.staffId ?? "" })),
+    team: opts.filter((o) => o.type === "staff").map((t) => {
+      const name = t.label.replace("Assign to ", "");
+      const tc = t.staffId ? computeStaffCapacity(t.staffId) : null;
+      const tAlready = t.staffId ? staffAlreadySupportsSchool(t.staffId, schoolId) : false;
+      const enabled = !!tc && (tAlready || tc.remaining > 0);
+      return { name, staffId: t.staffId ?? "", enabled, reason: enabled ? undefined : `${name} is at their direct support limit (${tc?.max ?? 0}).` };
+    }),
   };
 }
 import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
