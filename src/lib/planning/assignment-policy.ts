@@ -15,18 +15,13 @@
 // re-count, so additional activities for it stay allowed.
 
 import { activities } from "@/lib/actions/store";
+import { getStaffLimit, STAFF_SUPPORT_LIMIT_DEFAULT } from "@/lib/planning/staff-capacity-store";
 
-export const STAFF_SUPPORT_LIMIT_DEFAULT = 50;
+export { STAFF_SUPPORT_LIMIT_DEFAULT };
 
-// CD/IA-set per-staff limits (demo config — production: StaffSupportCapacity
-// table set by CD/IA). Keyed by staffId. A low value here demonstrates the
-// at-limit behaviour for that staff.
-const STAFF_LIMITS: Record<string, number> = {
-  "STF-PC-001": 3, // Paul Chinyama (demo CCEO) — small limit to exercise the gate
-};
-
+// CD/IA-set per-staff direct-support limit (from the mutable capacity store).
 export function staffSupportLimit(staffId: string): number {
-  return STAFF_LIMITS[staffId] ?? STAFF_SUPPORT_LIMIT_DEFAULT;
+  return getStaffLimit(staffId);
 }
 
 // Staff-delivered, school-level support that counts toward the direct limit.
