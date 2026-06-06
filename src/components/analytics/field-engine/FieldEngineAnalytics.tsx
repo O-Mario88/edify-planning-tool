@@ -20,8 +20,6 @@ import { computeAnalytics } from "@/lib/analytics/compute-analytics";
 import { SsaComparisonCard } from "./SsaComparisonCard";
 import { FIELD_ANALYTICS_TILES } from "./tile-registry";
 import { MomentumChart, VerificationDonut, PipelineFunnel, InterventionRankBar, SsaHeatmap } from "./charts";
-import { DonorReportingImpact } from "@/components/donor-reporting/DonorReportingImpact";
-import type { DonorMetricSnapshot } from "@/lib/donor-metrics-types";
 import { cn } from "@/lib/utils";
 
 // Hero metrics + their icons. The headline numbers leadership reads first.
@@ -46,12 +44,10 @@ export function FieldEngineAnalytics({
   filterScope,
   role,
   scopeLabel,
-  donorSnapshot,
 }: {
   filterScope: FilterScope;
   role: string;
   scopeLabel: string;
-  donorSnapshot?: DonorMetricSnapshot;
 }) {
   const selection = useActiveFilters();
   const { activeFilter, isActive, setTileFilter, resetTileFilter } = useTileFilter(FIELD_ANALYTICS_TILES);
@@ -143,9 +139,6 @@ export function FieldEngineAnalytics({
           <PipelineFunnel stages={snapshot.mscFunnel} />
         </ChartCard>
       </div>
-
-      {/* Donor reporting */}
-      {donorSnapshot && <DonorReportingImpact snapshot={donorSnapshot} />}
     </div>
   );
 }
