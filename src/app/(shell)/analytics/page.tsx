@@ -1,8 +1,9 @@
 import { getCurrentUser } from "@/lib/auth";
 import { getFilterScope } from "@/lib/filters/scope-service";
-import { fetchAnalyticsDashboard, fetchAnalyticsSsa, fetchActivityPipeline } from "@/lib/api/surfaces";
+import { fetchAnalyticsDashboard, fetchAnalyticsSsa, fetchActivityPipeline, fetchContributionSummary, type ContributionLens, type ContributionSummary } from "@/lib/api/surfaces";
 import { MetricStrip, type MetricCell } from "@/components/ui/MetricStrip";
 import { LiveBadge, BackendOfflineBanner } from "@/components/ui/BackendStatus";
+import { MyContribution } from "@/components/analytics/MyContribution";
 import { getDonorMetricSnapshot } from "@/lib/donor-metrics";
 import type { DonorRoleScope, DonorReportingFilters } from "@/lib/donor-metrics-types";
 import { FieldEngineAnalytics } from "@/components/analytics/field-engine/FieldEngineAnalytics";
@@ -91,6 +92,12 @@ export default async function AnalyticsPage({
   const liveBand = buildLiveBand(beDash, beSsa, bePipe);
   const liveError = !beDash.live ? beDash.error : null;
 
+  // Scope-enforced contribution lens. PL gets own / team / combined (team = the
+  // CCEOs they supervise); CCEO gets own-schools only; country roles get a
+  // country aggregate. Backend enforces — a CCEO asking for team is a 403.
+  const contributionLenses = await loadContributionLenses(user, fyId);
+  const contributionTitle = contributionTitleFor(user.role);
+
   return (
     <div className="px-3 sm:px-4 md:px-5 lg:px-6 pt-4 pb-24 space-y-4">
       <header className="min-w-0">
@@ -99,6 +106,9 @@ export default async function AnalyticsPage({
           Workflow-derived, filter-aware, drillable. Every number traces to the records behind it.
         </p>
       </header>
+      {contributionLenses && (
+        <MyContribution title={contributionTitle} fy={fyId} lenses={contributionLenses} />
+      )}
       {liveBand && (
         <div className="space-y-2">
           <LiveBadge label="Live · backend API · scoped counts" />
@@ -148,6 +158,43 @@ function buildLiveBand(
     cells.push({ key: "activities", label: "Activities", value: pipe.data.total });
   }
   return cells;
+}
+
+// Roles that get a school-improvement contribution lens. Partner/HR have a
+// different contribution model (assigned work / staff performance) — later phase.
+const CONTRIBUTION_ROLES = ["CCEO", "CountryProgramLead", "CountryDirector", "RVP", "ImpactAssessment", "ProgramAccountant", "Admin"];
+
+async function loadContributionLenses(
+  user: Awaited<ReturnType<typeof getCurrentUser>>,
+  fy: string,
+): Promise<Partial<Record<ContributionLens, ContributionSummary>> | null> {
+  if (!CONTRIBUTION_ROLES.includes(user.role)) return null;
+  const own = await fetchContributionSummary(user, { lens: "own", fy });
+  if (!own.live) return null; // backend off/unreachable → don't render the lens
+  const lenses: Partial<Record<ContributionLens, ContributionSummary>> = { own: own.data };
+  // Only PL has a genuine own-vs-team split worth tabbing; country roles' lenses
+  // all resolve to the same country aggregate, so a single lens reads cleaner.
+  if (user.role === "CountryProgramLead" && own.data.canViewTeam) {
+    const [team, combined] = await Promise.all([
+      fetchContributionSummary(user, { lens: "team", fy }),
+      fetchContributionSummary(user, { lens: "combined", fy }),
+    ]);
+    if (team.live) lenses.team = team.data;
+    if (combined.live) lenses.combined = combined.data;
+  }
+  return lenses;
+}
+
+function contributionTitleFor(role: string): string {
+  switch (role) {
+    case "CCEO": return "My Contribution to School Improvement";
+    case "CountryProgramLead": return "My Contribution & Team Impact";
+    case "CountryDirector": return "Country Impact";
+    case "RVP": return "Regional / Country Impact (summary)";
+    case "ImpactAssessment": return "Verification & Impact Contribution";
+    case "ProgramAccountant": return "Accountability Contribution";
+    default: return "My Contribution";
+  }
 }
 
 function donorScopeForRole(role: string): DonorRoleScope {

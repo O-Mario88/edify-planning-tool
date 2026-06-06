@@ -117,3 +117,71 @@ export function fetchAnalyticsSsa(user: BackendUser) {
 export function fetchActivityPipeline(user: BackendUser) {
   return live<BeActivityPipeline>("/analytics/activity-pipeline", user);
 }
+
+// ── Contribution ("how much am I contributing?") — scope-enforced ──
+
+export type ContributionLens = "own" | "team" | "combined";
+export type ContributionMetricKey =
+  | "schoolsReached" | "teachersTrained" | "schoolLeadersTrained"
+  | "learnersImpacted" | "districtsCovered" | "ssaImprovement";
+
+export type ContributionMetrics = {
+  schoolsReached: number;
+  clientSchoolsReached: number;
+  coreSchoolsSupported: number;
+  projectSchoolsSupported: number;
+  learnersImpacted: number;
+  teachersTrained: number;
+  schoolLeadersTrained: number;
+  districtsCovered: number;
+  subCountiesCovered: number;
+  clustersCovered: number;
+  regionsCovered: number;
+  visitsCompleted: number;
+  trainingsCompleted: number;
+  clusterMeetingsCompleted: number;
+  ssaCompleted: number;
+  schoolsImproved: number;
+  bestIntervention: string | null;
+  worstIntervention: string | null;
+  partnerActivities: number;
+  staffActivities: number;
+  evidencePending: number;
+  salesforceIdsPending: number;
+  iaVerifiedActivities: number;
+};
+
+export type ContributionSummary = {
+  lens: ContributionLens;
+  role: string;
+  summaryOnly: boolean;
+  canViewTeam: boolean;
+  schoolsInScope: number;
+  metrics: ContributionMetrics;
+  dataQuality: string[];
+};
+
+type ContributionParams = { lens?: ContributionLens; fy?: string; quarter?: string; districtId?: string; clusterId?: string };
+
+function contributionQuery(p: ContributionParams): string {
+  const params = new URLSearchParams();
+  params.set("lens", p.lens ?? "own");
+  if (p.fy) params.set("fy", p.fy);
+  if (p.quarter) params.set("quarter", p.quarter);
+  if (p.districtId) params.set("districtId", p.districtId);
+  if (p.clusterId) params.set("clusterId", p.clusterId);
+  return params.toString();
+}
+
+export function fetchContributionSummary(user: BackendUser, p: ContributionParams = {}) {
+  return live<ContributionSummary>(`/analytics/contribution-summary?${contributionQuery(p)}`, user);
+}
+
+export function fetchContributionDrilldown(
+  user: BackendUser,
+  p: ContributionParams & { metric: ContributionMetricKey },
+) {
+  const params = new URLSearchParams(contributionQuery(p));
+  params.set("metric", p.metric);
+  return live<Record<string, unknown>[]>(`/analytics/contribution-drilldown?${params.toString()}`, user);
+}
