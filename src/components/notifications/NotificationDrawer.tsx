@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { CheckCheck, AlertTriangle, Inbox, ArrowRight, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { StatusBadge } from "@/components/ui/primitives";
-import type { Notification, NotificationPriority } from "@/lib/notifications-mock";
+import type { Notification, NotificationPriority } from "@/lib/notifications-types";
 import {
   useNotifications,
   markNotificationRead,

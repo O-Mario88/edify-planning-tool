@@ -476,6 +476,25 @@ export function fetchDebriefsToday(user: BackendUser) {
   return live<BeDebriefToday>(`/debriefs/today`, user);
 }
 
+// ── Notifications (backend-backed; no mock) ─────────────────────────
+export type BeNotification = {
+  id: string; title: string; body?: string | null; contextType?: string | null; contextId?: string | null;
+  targetRoute?: string | null; actionRequired: boolean; priority: "low" | "normal" | "high" | "urgent";
+  status: "unread" | "read" | "archived"; createdAt: string;
+};
+export function fetchNotificationsRecent(user: BackendUser) {
+  return live<BeNotification[]>(`/notifications/recent`, user);
+}
+export function fetchNotificationCounts(user: BackendUser) {
+  return live<{ unread: number; actionRequired: number }>(`/notifications/counts`, user);
+}
+export function markNotificationReadBE(user: BackendUser, id: string) {
+  return live<{ status: string }>(`/notifications/${encodeURIComponent(id)}/read`, user, { method: "PATCH" });
+}
+export function markAllNotificationsReadBE(user: BackendUser) {
+  return live<{ updated: number }>(`/notifications/mark-all-read`, user, { method: "PATCH" });
+}
+
 export type BeMergeResult = { merged: BeDebrief; partnerDebriefId: string; routedTo: number };
 /** CCEO reviews + merges a partner debrief into their daily debrief; routes up. */
 export function mergePartnerDebrief(user: BackendUser, body: { partnerDebriefId: string; cceoDebriefId?: string; note?: string }) {
