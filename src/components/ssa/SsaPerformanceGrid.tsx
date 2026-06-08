@@ -74,36 +74,39 @@ export function SsaPerformanceGrid() {
       {loading || !data ? (
         <div className="py-8 text-center text-[12px] muted">Loading…</div>
       ) : (
-        <div className="overflow-x-auto -mx-1">
+        <>
+        <div className="overflow-x-auto -mx-1 scroll-px-2">
           <table className="w-full text-[11px] px-1 border-separate border-spacing-x-0.5 border-spacing-y-1">
             <thead>
               <tr className="text-left muted font-bold uppercase tracking-wide">
-                <th className="py-1 pr-2 text-[9.5px]">{GROUPS.find((g) => g.key === groupBy)?.label}</th>
+                <th className="py-1 pr-2 text-[9.5px] sticky left-0 z-10 bg-[var(--surface-1)]">{GROUPS.find((g) => g.key === groupBy)?.label}</th>
                 <th className="py-1 px-1 text-[9px] text-center">Assd</th>
                 {data.interventions.map((iv) => (
-                  <th key={iv.code} className="py-1 px-0.5 text-[9px] text-center" title={iv.label}>{ABBR[iv.code] ?? iv.code.slice(0, 2)}</th>
+                  <th key={iv.code} className="py-1 px-0.5 text-[9px] text-center min-w-[30px]" title={iv.label}>{ABBR[iv.code] ?? iv.code.slice(0, 2)}</th>
                 ))}
-                <th className="py-1 px-1 text-[9px] text-center">Avg</th>
+                <th className="py-1 px-1 text-[9px] text-center min-w-[30px]">Avg</th>
               </tr>
             </thead>
             <tbody>
               {data.rows.map((r) => (
-                <tr key={r.groupId} className="hover:bg-[var(--color-edify-soft)]/30 cursor-pointer" onClick={() => openDrill(r)}>
-                  <td className="py-1 pr-2 font-semibold whitespace-nowrap text-[10.5px]">
+                <tr key={r.groupId} className="group cursor-pointer" onClick={() => openDrill(r)}>
+                  <td className="py-1 pr-2 font-semibold whitespace-nowrap text-[10.5px] sticky left-0 z-10 bg-[var(--surface-1)] group-hover:bg-[var(--surface-3)]">
                     <span className="inline-flex items-center gap-0.5">{r.groupName}<ChevronRight size={10} className="opacity-40" /></span>
                   </td>
                   <td className="py-1 px-1 text-center text-[10px] tabular muted">{r.schoolsAssessed}/{r.schoolCount}</td>
                   {data.interventions.map((iv) => {
                     const v = r.interventions[iv.code];
                     const t = tone(v);
-                    return <td key={iv.code} className="text-center"><span className="inline-block w-full min-w-0 sm:min-w-[30px] py-1 rounded text-[10px] font-extrabold tabular" style={{ backgroundColor: t.bg, color: t.fg }}>{v ?? "—"}</span></td>;
+                    return <td key={iv.code} className="text-center"><span className="inline-block w-full min-w-[30px] py-1 rounded text-[10px] font-extrabold tabular" style={{ backgroundColor: t.bg, color: t.fg }}>{v ?? "—"}</span></td>;
                   })}
-                  <td className="text-center"><span className="inline-block w-full min-w-0 sm:min-w-[30px] py-1 rounded text-[10px] font-extrabold tabular ring-1 ring-black/5" style={{ backgroundColor: tone(r.overallAverage).bg, color: tone(r.overallAverage).fg }}>{r.overallAverage ?? "—"}</span></td>
+                  <td className="text-center"><span className="inline-block w-full min-w-[30px] py-1 rounded text-[10px] font-extrabold tabular ring-1 ring-black/5" style={{ backgroundColor: tone(r.overallAverage).bg, color: tone(r.overallAverage).fg }}>{r.overallAverage ?? "—"}</span></td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+        <p className="mt-1 text-[9.5px] muted sm:hidden">Swipe the table sideways to see all 8 interventions →</p>
+        </>
       )}
 
       {drill && (

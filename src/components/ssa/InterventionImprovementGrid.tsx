@@ -65,20 +65,21 @@ export function InterventionImprovementGrid() {
       {loading || !data ? (
         <div className="py-8 text-center text-[12px] muted">Loading…</div>
       ) : (
+        <>
         <div className="overflow-x-auto -mx-1">
           <table className="w-full text-[11px] px-1 border-separate border-spacing-x-0.5 border-spacing-y-1">
             <thead>
               <tr className="text-left muted font-bold uppercase tracking-wide">
-                <th className="py-1 pr-2 text-[9.5px]">{GROUPS.find((g) => g.key === groupBy)?.label}</th>
+                <th className="py-1 pr-2 text-[9.5px] sticky left-0 z-10 bg-[var(--surface-1)]">{GROUPS.find((g) => g.key === groupBy)?.label}</th>
                 <th className="py-1 px-1 text-[9px] text-center">↑/↓</th>
-                {data.interventions.map((iv) => <th key={iv.code} className="py-1 px-0.5 text-[9px] text-center" title={`${iv.label} (change)`}>{ABBR[iv.code] ?? iv.code.slice(0, 2)}</th>)}
+                {data.interventions.map((iv) => <th key={iv.code} className="py-1 px-0.5 text-[9px] text-center min-w-[30px]" title={`${iv.label} (change)`}>{ABBR[iv.code] ?? iv.code.slice(0, 2)}</th>)}
                 <th className="py-1 pl-1.5 text-[9px]">Best ↑</th>
               </tr>
             </thead>
             <tbody>
               {data.rows.map((r) => (
-                <tr key={r.groupId} className="hover:bg-[var(--color-edify-soft)]/30">
-                  <td className="py-1 pr-2 font-semibold whitespace-nowrap text-[10.5px]">
+                <tr key={r.groupId} className="group">
+                  <td className="py-1 pr-2 font-semibold whitespace-nowrap text-[10.5px] sticky left-0 z-10 bg-[var(--surface-1)] group-hover:bg-[var(--surface-3)]">
                     {r.groupName}
                     {r.schoolsNoComparison > 0 && <span className="ml-1 text-[9px] text-amber-600" title="schools with no previous-FY SSA">({r.schoolsNoComparison} no comp.)</span>}
                   </td>
@@ -92,7 +93,7 @@ export function InterventionImprovementGrid() {
                     const cell = r.interventions.find((i) => i.code === iv.code);
                     const v = cell?.change ?? null;
                     const t = changeTone(v);
-                    return <td key={iv.code} className="text-center"><span title={cell ? `${cell.prevAvg ?? "—"} → ${cell.currAvg ?? "—"}` : ""} className="inline-block w-full min-w-0 sm:min-w-[30px] py-1 rounded text-[10px] font-extrabold tabular" style={{ backgroundColor: t.bg, color: t.fg }}>{fmt(v)}</span></td>;
+                    return <td key={iv.code} className="text-center"><span title={cell ? `${cell.prevAvg ?? "—"} → ${cell.currAvg ?? "—"}` : ""} className="inline-block w-full min-w-[30px] py-1 rounded text-[10px] font-extrabold tabular" style={{ backgroundColor: t.bg, color: t.fg }}>{fmt(v)}</span></td>;
                   })}
                   <td className="py-1 pl-1.5 text-[10px] whitespace-nowrap">
                     {r.bestIntervention ? <span className="text-emerald-700 font-bold">{ABBR[r.bestIntervention.code]} +{r.bestIntervention.change}</span> : <span className="muted">—</span>}
@@ -102,6 +103,8 @@ export function InterventionImprovementGrid() {
             </tbody>
           </table>
         </div>
+        <p className="mt-1 text-[9.5px] muted sm:hidden">Swipe sideways to see all 8 interventions →</p>
+        </>
       )}
       <p className="mt-2 text-[10.5px] muted">Cells show the change from FY{data?.prevFy} → FY{data?.currentFy}. Green = improved, red = declined. Only schools with both years of SSA are compared.</p>
     </section>

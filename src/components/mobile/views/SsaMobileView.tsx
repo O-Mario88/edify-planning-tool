@@ -28,6 +28,9 @@ import {
   ssaQuarterlyTrend,
 } from "@/lib/ssa-mock";
 import { cn } from "@/lib/utils";
+import { SsaPerformanceGrid } from "@/components/ssa/SsaPerformanceGrid";
+import { InterventionImprovementGrid } from "@/components/ssa/InterventionImprovementGrid";
+import { SupportImprovementCard } from "@/components/analytics/SupportImprovementCard";
 
 const KPI_ICON: Record<string, LucideIcon> = {
   school:        School,
@@ -73,6 +76,13 @@ export function SsaMobileView() {
       initials={ssaUser.initials}
       notificationsCount={ssaNotificationCount}
     >
+      {/* Backend-driven truth layer (same as desktop): the 8-intervention SSA
+          performance grid, FY-over-FY improvement, and support→improvement.
+          Each self-hides when the backend is off, leaving the mock cards below. */}
+      <SsaPerformanceGrid />
+      <InterventionImprovementGrid />
+      <SupportImprovementCard />
+
       <MobileKpiGrid tiles={tiles} cols={2} />
 
       {/* Quarterly trend mini-chart */}
