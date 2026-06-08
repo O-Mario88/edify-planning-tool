@@ -178,7 +178,7 @@ export default async function SchoolsDashboard() {
           <MetricStrip
             title="Portfolio at a glance"
             metrics={metrics}
-            columns="grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-8"
+            columns="grid-cols-4 md:grid-cols-8"
           />
 
           {/* Portfolio targets — cumulative FY progress (shown when you own schools) */}
