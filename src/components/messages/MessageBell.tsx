@@ -9,7 +9,7 @@
 import { useRef, useState } from "react";
 import { MessageSquare } from "lucide-react";
 import { MessageDrawer } from "./MessageDrawer";
-import { useUnreadMessageCount } from "@/components/shell/PageTitleContext";
+import { useMessages } from "./messages-store";
 import { cn } from "@/lib/utils";
 
 type Variant = "default" | "today" | "dark";
@@ -17,7 +17,8 @@ type Variant = "default" | "today" | "dark";
 export function MessageBell({ variant = "default" }: { variant?: Variant }) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
-  const unread = useUnreadMessageCount();
+  const { counts } = useMessages();
+  const unread = counts.unread;
 
   const trigger =
     variant === "today"

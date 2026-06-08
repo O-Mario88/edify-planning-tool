@@ -6,7 +6,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { CheckCheck, AlertTriangle, Inbox, ArrowRight, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { StatusBadge, type ChipTone } from "@/components/ui/primitives";
-import { useRecentMessages } from "@/components/shell/PageTitleContext";
+import { useMessages, markMessageRead, markAllMessagesRead } from "./messages-store";
+import { LoadingState, ErrorState } from "@/components/ui/DataStates";
 import { formatMessageTime } from "@/lib/messages-v2/access";
 import type {
   Message,
@@ -64,7 +65,7 @@ export function MessageDrawer({
   triggerRef?: React.RefObject<HTMLElement | null>;
 }) {
   const router = useRouter();
-  const recent = useRecentMessages();
+  const { list: recent, loading, error, reload } = useMessages();
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const [filter, setFilter] = useState<Filter>("All");
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -126,6 +127,7 @@ export function MessageDrawer({
       next.add(m.id);
       return next;
     });
+    markMessageRead(m.id);
     onClose();
     // Routing branches on viewport:
     //   • Desktop (≥lg) → /messages — the two-pane layout shows the
@@ -144,6 +146,7 @@ export function MessageDrawer({
 
   function markAllRead() {
     setReadIds(new Set(recent.map((m) => m.id)));
+    markAllMessagesRead();
   }
 
   return (
@@ -245,7 +248,15 @@ export function MessageDrawer({
 
           {/* Message list */}
           <div className="flex-1 min-h-0 overflow-y-auto">
-            {visible.length === 0 ? (
+            {error ? (
+              <div className="px-4 py-10">
+                <ErrorState message={error} onRetry={reload} compact />
+              </div>
+            ) : loading && messages.length === 0 ? (
+              <div className="px-4 py-10">
+                <LoadingState message="Loading messages…" compact />
+              </div>
+            ) : visible.length === 0 ? (
               <EmptyState filter={filter} />
             ) : (
               <ul className="divide-y divide-[var(--color-edify-divider)]">

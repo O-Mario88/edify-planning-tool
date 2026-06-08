@@ -1,45 +1,102 @@
+"use client";
+
+import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Search as SearchIcon, Building2, Users, Sparkles, Wallet, FileText, ChevronRight } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Search as SearchIcon, Building2, Users, Sparkles, Wallet, FileText, Layers, ChevronRight } from "lucide-react";
 import { StubPage } from "@/components/shell/StubPage";
-import { schoolsMock } from "@/lib/schools-mock";
-import { staffTargetPerformance } from "@/lib/team-targets-mock";
-import { specialProjects } from "@/lib/special-projects-mock";
-import { fundRequests } from "@/lib/workflow-mock";
+import { LoadingState, EmptyState, ErrorState } from "@/components/ui/DataStates";
+import type { SearchResult } from "@/app/api/search/route";
 
-// Search is a client surface, but the page itself is server-rendered so
-// the initial body is fast. The input below uses a `name="q"` GET form so
-// the URL becomes shareable (/search?q=hope). Client interactivity (live
-// filtering, ⌘K palette) lands next.
+// Backend-backed search. The page reads `?q=` (shareable URL), fetches the
+// role-scoped DB search via /api/search, and renders grouped results with
+// loading / empty / error states. No mock data.
 
-export default async function SearchPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ q?: string }>;
-}) {
-  const { q } = await searchParams;
-  const query = (q ?? "").trim().toLowerCase();
+type Group = { title: string; Icon: typeof FileText; items: SearchResult[] };
 
-  const matched = (s: string) => query === "" || s.toLowerCase().includes(query);
+// Map backend result `type` onto display groups (in render order).
+const GROUPS: { key: string; title: string; Icon: typeof FileText; types: string[] }[] = [
+  { key: "schools", title: "Schools", Icon: Building2, types: ["school", "core_school"] },
+  { key: "clusters", title: "Clusters", Icon: Layers, types: ["cluster"] },
+  { key: "projects", title: "Special Projects", Icon: Sparkles, types: ["project"] },
+  { key: "staff", title: "Staff", Icon: Users, types: ["staff"] },
+  { key: "funds", title: "Fund Requests", Icon: Wallet, types: ["fund_request"] },
+];
 
-  const schools = schoolsMock.filter((s) => matched(s.schoolName) || matched(s.district)).slice(0, 8);
-  const staff   = staffTargetPerformance.filter((s) => matched(s.staffName) || matched(s.region)).slice(0, 8);
-  const projects = specialProjects.filter((p) => matched(p.projectName) || matched(p.projectType)).slice(0, 8);
-  const funds   = fundRequests.filter((f) => matched(f.id) || matched(f.staff) || matched(f.district)).slice(0, 8);
+export default function SearchPage() {
+  // useSearchParams must be used inside Suspense in the app router to avoid a
+  // client-side-rendering bailout at build time.
+  return (
+    <Suspense fallback={null}>
+      <SearchInner />
+    </Suspense>
+  );
+}
 
-  const totalShown = schools.length + staff.length + projects.length + funds.length;
+function SearchInner() {
+  const router = useRouter();
+  const params = useSearchParams();
+  const q = (params.get("q") ?? "").trim();
+
+  const [input, setInput] = useState(q);
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [state, setState] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [failedAt, setFailedAt] = useState<Date | null>(null);
+
+  useEffect(() => {
+    setInput(q);
+  }, [q]);
+
+  const load = useCallback(async () => {
+    if (q.length < 2) {
+      setResults([]);
+      setState("idle");
+      return;
+    }
+    setState("loading");
+    try {
+      const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`, { cache: "no-store" });
+      const data = await res.json();
+      if (!res.ok || data.live === false) {
+        setFailedAt(new Date());
+        setState("error");
+        return;
+      }
+      setResults(Array.isArray(data.results) ? data.results : []);
+      setState("ready");
+    } catch {
+      setFailedAt(new Date());
+      setState("error");
+    }
+  }, [q]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const onSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const next = input.trim();
+    router.push(next ? `/search?q=${encodeURIComponent(next)}` : "/search");
+  };
+
+  const groups: Group[] = GROUPS
+    .map((g) => ({ title: g.title, Icon: g.Icon, items: results.filter((r) => g.types.includes(r.type)) }))
+    .filter((g) => g.items.length > 0);
 
   return (
     <StubPage
       title="Search"
-      subtitle="Find a school, staff member, project, or fund request. Shareable — the query is part of the URL."
+      subtitle="Find a school, cluster, project, staff member, or fund request. Shareable — the query is part of the URL."
     >
-      <form action="/search" method="get" className="card rounded-2xl p-3 flex items-center gap-3">
+      <form onSubmit={onSubmit} className="card rounded-2xl p-3 flex items-center gap-3">
         <SearchIcon size={15} className="text-[var(--color-edify-muted)]" />
         <input
           name="q"
-          defaultValue={q ?? ""}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
           aria-label="Search"
-          placeholder="Search for a school, staff member, project, fund request…"
+          placeholder="Search for a school, cluster, project, staff member, fund request…"
           className="flex-1 bg-transparent focus:outline-none text-[13px]"
         />
         <button
@@ -50,60 +107,24 @@ export default async function SearchPage({
         </button>
       </form>
 
-      {query === "" ? (
-        <p className="text-[11.5px] muted text-center py-6">Type a search above to see results across schools, staff, projects, and fund requests.</p>
-      ) : totalShown === 0 ? (
-        <p className="text-[12px] muted text-center py-6">No results for <span className="font-extrabold">&ldquo;{q}&rdquo;</span>.</p>
+      {q.length < 2 ? (
+        <p className="text-[11.5px] muted text-center py-6">Type at least two characters to search across schools, clusters, projects, staff, and fund requests.</p>
+      ) : state === "loading" ? (
+        <LoadingState message="Searching…" />
+      ) : state === "error" ? (
+        <ErrorState message="Search is unavailable." onRetry={load} at={failedAt ?? undefined} />
+      ) : groups.length === 0 ? (
+        <EmptyState
+          title="No results"
+          message={`Nothing matched “${q}”.`}
+          icon={SearchIcon}
+          compact
+        />
       ) : (
         <>
-          {schools.length > 0 && (
-            <ResultGroup
-              title="Schools"
-              Icon={Building2}
-              items={schools.map((s) => ({
-                key: s.schoolId,
-                title: s.schoolName,
-                subtitle: `${s.district} · ${s.region} · SSA ${s.ssaScore}%`,
-                href: `/schools/${s.schoolId}`,
-              }))}
-            />
-          )}
-          {staff.length > 0 && (
-            <ResultGroup
-              title="Staff"
-              Icon={Users}
-              items={staff.map((s) => ({
-                key: s.staffId,
-                title: s.staffName,
-                subtitle: `${s.role} · ${s.region} · ${s.achievementPercent}% achievement`,
-                href: `/staff/${s.staffId}`,
-              }))}
-            />
-          )}
-          {projects.length > 0 && (
-            <ResultGroup
-              title="Special Projects"
-              Icon={Sparkles}
-              items={projects.map((p) => ({
-                key: p.projectId,
-                title: p.projectName,
-                subtitle: `${p.projectType} · ${p.status} · ${p.assignedPartnerName ?? "—"}`,
-                href: `/projects/${p.projectId}`,
-              }))}
-            />
-          )}
-          {funds.length > 0 && (
-            <ResultGroup
-              title="Fund Requests"
-              Icon={Wallet}
-              items={funds.map((f) => ({
-                key: f.id,
-                title: `#${f.id} · ${f.district}`,
-                subtitle: `${f.staff} · ${f.month} · ${f.status}`,
-                href: `/fund-requests/${f.id}`,
-              }))}
-            />
-          )}
+          {groups.map((g) => (
+            <ResultGroup key={g.title} title={g.title} Icon={g.Icon} items={g.items} />
+          ))}
         </>
       )}
     </StubPage>
@@ -117,7 +138,7 @@ function ResultGroup({
 }: {
   title: string;
   Icon: typeof FileText;
-  items: { key: string; title: string; subtitle: string; href: string }[];
+  items: SearchResult[];
 }) {
   return (
     <section>
@@ -128,13 +149,16 @@ function ResultGroup({
       <div className="card rounded-2xl divide-y divide-[var(--color-edify-divider)] overflow-hidden">
         {items.map((it) => (
           <Link
-            key={it.key}
-            href={it.href}
+            key={it.id}
+            href={it.route}
             className="flex items-center gap-3 px-4 py-3 hover:bg-[var(--color-edify-soft)]/40"
           >
             <div className="flex-1 min-w-0">
               <div className="text-body font-extrabold tracking-tight truncate">{it.title}</div>
-              <div className="text-[11px] muted truncate">{it.subtitle}</div>
+              <div className="text-[11px] muted truncate">
+                {it.subtitle}
+                {it.status ? ` · ${it.status}` : ""}
+              </div>
             </div>
             <ChevronRight size={14} className="text-[var(--color-edify-muted)] shrink-0" />
           </Link>
