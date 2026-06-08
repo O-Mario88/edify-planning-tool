@@ -31,6 +31,8 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { ROLE_REDIRECT } from "@/lib/auth-public";
+import { SsaPerformanceGrid } from "@/components/ssa/SsaPerformanceGrid";
+import { InterventionImprovementGrid } from "@/components/ssa/InterventionImprovementGrid";
 
 // Country Director Dashboard — Executive cockpit replica.
 //
@@ -74,6 +76,10 @@ export default async function CountryDirectorDashboard() {
       <div className="px-3 sm:px-4 md:px-5 pb-24 md:pb-5 pt-3 md:pt-4 space-y-4 md:space-y-5">
         {/* TODAY — CommandStack carries its own header. */}
         <CommandStack user={user} hideMission />
+
+        {/* Country truth layer — SSA performance + impact (backend, country scope). */}
+        <SsaPerformanceGrid />
+        <InterventionImprovementGrid />
 
         {/* COUNTRY HEALTH — KPIs, attention banners, debrief routing,
             training coverage. */}

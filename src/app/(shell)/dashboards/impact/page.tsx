@@ -23,6 +23,8 @@ import { insightsForImpactAssessment } from "@/lib/insights";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { ROLE_REDIRECT } from "@/lib/auth-public";
+import { SsaPerformanceGrid } from "@/components/ssa/SsaPerformanceGrid";
+import { InterventionImprovementGrid } from "@/components/ssa/InterventionImprovementGrid";
 
 export default async function ImpactDashboard() {
   // Defense-in-depth: middleware already gates /dashboards/impact, but
@@ -56,6 +58,10 @@ export default async function ImpactDashboard() {
           <div className="px-6 pb-24 md:pb-6 pt-4 space-y-5">
             {/* Section 1 — Today.  The unified action surface. */}
             <CommandStack user={user} hideMission />
+
+            {/* SSA truth layer (IA scope) — performance + impact, backend-driven. */}
+            <SsaPerformanceGrid />
+            <InterventionImprovementGrid />
 
             {/* Section 2 — Vital signs.  Five KPIs + system insights. */}
             <section className="space-y-3">
