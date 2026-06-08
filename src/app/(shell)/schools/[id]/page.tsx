@@ -26,6 +26,12 @@ import { activities as plannedActivities } from "@/lib/actions/store";
 import { getCurrentUser } from "@/lib/auth";
 import { computeStaffCapacity, staffAlreadySupportsSchool, getAssignmentOptions } from "@/lib/planning/assignment-policy";
 import { cceosSupervisedBy } from "@/lib/org/supervision";
+import { isBackendEnabled } from "@/lib/api/backend";
+import { fetchSchoolDetail, fetchAssignmentOptions, type BeAssignmentOptions } from "@/lib/api/surfaces";
+import { resolveSchoolNextAction as resolveNextAction } from "@/lib/planning/school-next-action";
+import { CorePageHeader } from "@/components/core/CorePageHeader";
+import { RoleBottomNav } from "@/components/mobile/RoleBottomNav";
+import { Database } from "lucide-react";
 
 // Per-school planning capacity from the live planned-activity store (the gray-out
 // rule): client = 1 visit; core = 4 visits + 4 trainings. Cancelled/returned
@@ -116,6 +122,14 @@ export default async function School360({
   const { id } = await params;
   const spv = (await searchParams).view;
   const view = (Array.isArray(spv) ? spv[0] : spv) as SchoolView | undefined;
+
+  // Write-path migration: when the backend is on and this is a backend school,
+  // render the backend-backed profile so scheduling writes to the API (enforced).
+  if (isBackendEnabled()) {
+    const user = await getCurrentUser();
+    const be = await fetchSchoolDetail(user, id);
+    if (be.live) return <BackendSchool360 school={be.data} />;
+  }
 
   // Source of truth: an uploaded School Directory record. Render the School 360
   // for it; fall back to the legacy catalogue (sch-N) and the mobile schools-mock
@@ -540,5 +554,99 @@ async function IntakeSchool360({ schoolId, view }: { schoolId: string; view?: Sc
         ssa={recommendInterventionsForSchool(s.schoolId)}
       />
     </>
+  );
+}
+
+// ── Backend-backed school profile (write-path migration) ────────────
+// Identity + assignment/capacity from the backend (/schools/:id, /assignment/
+// options). Scheduling here writes to the API (capacity-enforced) because the
+// schoolId is a real backend id.
+function assignmentVmFromBackend(d: BeAssignmentOptions, canPlanVisit: boolean): AssignmentVM {
+  const self = d.options.find((o) => o.type === "self");
+  const partner = d.options.find((o) => o.type === "partner");
+  return {
+    staffUsed: d.capacity.used, staffMax: d.capacity.max, staffAtLimit: d.capacity.atLimit, staffNearLimit: d.capacity.nearLimit,
+    showSelf: !!self,
+    selfEnabled: !!self?.enabled && canPlanVisit,
+    selfReason: self && !self.enabled ? self.reason : (!canPlanVisit ? "Visit quota for this school is full." : undefined),
+    partnerEnabled: !!partner?.enabled,
+    partnerReason: partner && !partner.enabled ? partner.reason : undefined,
+    team: d.options.filter((o) => o.type === "staff").map((t) => ({ name: t.label.replace("Assign to ", ""), staffId: t.staffId ?? "", enabled: t.enabled, reason: t.reason })),
+  };
+}
+
+async function BackendSchool360({ school }: { school: import("@/lib/api/surfaces").BeSchoolDetail }) {
+  const user = await getCurrentUser();
+  const opts = await fetchAssignmentOptions(user, school.schoolId);
+  const capacity = resolvePlanningCapacity({ schoolType: school.schoolType, visitsPlanned: 0, trainingsPlanned: 0 });
+  const assignment = opts.live ? assignmentVmFromBackend(opts.data, capacity.canPlanVisit) : undefined;
+  const nextAction = resolveNextAction({
+    clusterStatus: school.clusterStatus === "clustered" ? "clustered" : "unclustered",
+    currentFySsaStatus: school.currentFySsaStatus === "done" ? "done" : "not_done",
+    schoolType: school.schoolType === "core" ? "core" : "client",
+  });
+  const latestSsa = (school.ssaRecords ?? []).slice().sort((a, b) => (b.dateOfSsa > a.dateOfSsa ? 1 : -1))[0];
+
+  return (
+    <>
+      <CorePageHeader icon="schools" title={school.name} subtitle={`${school.schoolType} school · ${school.district?.name ?? "—"}${school.cluster?.name ? ` · ${school.cluster.name}` : ""}`} />
+      <div className="px-3 sm:px-4 md:px-6 pb-24 lg:pb-6 space-y-3 pt-3">
+        <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 text-emerald-700 px-2.5 py-1 text-[11px] font-bold border border-emerald-200">
+          <Database size={12} /> Live from the backend database (edify-api)
+        </div>
+
+        <div className="card p-3 flex items-start gap-2.5">
+          <div className="grid place-items-center h-9 w-9 rounded-lg bg-[var(--color-edify-primary)] text-white shrink-0">→</div>
+          <div className="min-w-0">
+            <div className="text-[12.5px] font-extrabold">Next action · {nextAction.label}</div>
+            <div className="text-[11.5px] muted leading-snug">{nextAction.reason}</div>
+          </div>
+        </div>
+
+        <PlanningCapacityBar schoolId={school.schoolId} schoolName={school.name} capacity={capacity} assignment={assignment} />
+
+        <section className="card p-3.5">
+          <h2 className="text-[12px] font-extrabold uppercase tracking-wide muted mb-2">School bio</h2>
+          <dl className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1.5 text-[12px]">
+            <Fact label="School ID" value={school.schoolId} />
+            <Fact label="Type" value={school.schoolType} />
+            <Fact label="Region" value={school.region?.name ?? "—"} />
+            <Fact label="District" value={school.district?.name ?? "—"} />
+            <Fact label="Cluster" value={school.cluster?.name ?? "Unclustered"} />
+            <Fact label="Account owner" value={school.accountOwner?.user?.name ?? school.accountOwnerNameRaw ?? "—"} />
+            <Fact label="Enrollment" value={school.enrollment != null ? String(school.enrollment) : "—"} />
+            <Fact label="SSA status" value={school.currentFySsaStatus} />
+            <Fact label="Planning" value={school.planningReadiness} />
+          </dl>
+        </section>
+
+        <section className="card p-3.5">
+          <h2 className="text-[12px] font-extrabold uppercase tracking-wide muted mb-2">SSA history</h2>
+          {school.ssaRecords && school.ssaRecords.length > 0 ? (
+            <ul className="divide-y divide-[var(--color-edify-divider)] text-[12px]">
+              {school.ssaRecords.slice().sort((a, b) => (b.dateOfSsa > a.dateOfSsa ? 1 : -1)).map((r) => (
+                <li key={r.id} className="py-1.5 flex items-center justify-between">
+                  <span className="muted">{r.fy} · {new Date(r.dateOfSsa).toLocaleDateString()}</span>
+                  <span className="font-extrabold tabular">{r.averageScore != null ? `${r.averageScore.toFixed(1)}/10` : "—"}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-[12px] muted italic">No SSA on record for this school yet.</p>
+          )}
+          {latestSsa && <p className="text-[10.5px] muted mt-2">Latest: {latestSsa.fy}</p>}
+        </section>
+      </div>
+      <RoleBottomNav />
+    </>
+  );
+}
+
+function Fact({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt className="text-[10px] uppercase tracking-wide muted font-bold">{label}</dt>
+      <dd className="font-semibold capitalize">{value}</dd>
+    </div>
   );
 }

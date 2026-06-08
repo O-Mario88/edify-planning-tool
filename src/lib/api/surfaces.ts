@@ -220,3 +220,42 @@ export function backendActivityAction(user: BackendUser, id: string, action: Act
 export function backendCreateActivity(user: BackendUser, body: Record<string, unknown>) {
   return live<BeActivity>(`/activities`, user, { method: "POST", body: JSON.stringify(body) });
 }
+
+// ── School detail + assignment (reads migration) ────────────────────
+
+export type BeSchoolDetail = {
+  id: string;
+  schoolId: string;
+  name: string;
+  schoolType: string;
+  enrollment?: number | null;
+  clusterStatus: string;
+  currentFySsaStatus: string;
+  planningReadiness: string;
+  accountOwnerNameRaw?: string | null;
+  region?: { name: string } | null;
+  district?: { name: string } | null;
+  cluster?: { name: string } | null;
+  accountOwner?: { user?: { name?: string } } | null;
+  ssaRecords?: { id: string; fy: string; averageScore?: number | null; dateOfSsa: string }[];
+};
+
+/** A single school from the backend directory (by external schoolId). */
+export function fetchSchoolDetail(user: BackendUser, schoolId: string) {
+  return live<BeSchoolDetail>(`/schools/${encodeURIComponent(schoolId)}`, user);
+}
+
+export type BeAssignmentOption = { type: "self" | "staff" | "partner"; label: string; enabled: boolean; reason?: string; staffId?: string };
+export type BeAssignmentOptions = {
+  schoolId: string;
+  fy: string;
+  capacity: { staffId: string; fy: string; max: number; used: number; remaining: number; atLimit: boolean; nearLimit: boolean };
+  options: BeAssignmentOption[];
+};
+
+/** Role + capacity-aware assignment options for a school (backend-enforced). */
+export function fetchAssignmentOptions(user: BackendUser, schoolId: string, fy?: string) {
+  const params = new URLSearchParams({ schoolId });
+  if (fy) params.set("fy", fy);
+  return live<BeAssignmentOptions>(`/assignment/options?${params.toString()}`, user);
+}

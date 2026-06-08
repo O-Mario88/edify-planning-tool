@@ -20,7 +20,7 @@ import { computeStaffCapacity, staffAlreadySupportsSchool, type StaffCapacity } 
 import { cceosSupervisedBy, supervisorOf } from "@/lib/org/supervision";
 import { DEMO_USERS } from "@/lib/auth";
 import { isBackendEnabled } from "@/lib/api/backend";
-import { backendActivityAction, type ActivityLifecycleAction } from "@/lib/api/surfaces";
+import { backendActivityAction, backendCreateActivity, type ActivityLifecycleAction } from "@/lib/api/surfaces";
 
 // Backend-first: when EDIFY_USE_BACKEND is on, run the lifecycle action against
 // the backend (the enforced, authoritative source). Returns true if the backend
@@ -73,6 +73,24 @@ function weekOfMonth(iso?: string): number {
   return Math.min(5, Math.max(1, Math.ceil(d.getUTCDate() / 7)));
 }
 
+// FE ActivityKind → backend ActivityType.
+const KIND_TO_BE: Record<string, string> = {
+  SCHOOL_VISIT: "school_visit", IN_SCHOOL_COACHING: "coaching_visit", SSA_FOLLOW_UP: "follow_up_visit",
+  COURTESY_VISIT: "school_visit", LESSON_OBSERVATION: "school_visit", PARTNER_FOLLOW_UP: "follow_up_visit",
+  TRAINING_FOLLOW_UP: "school_improvement_training", CLUSTER_TRAINING: "cluster_training",
+  HANDOVER_MEETING: "cluster_meeting", DATA_COLLECTION: "school_visit",
+};
+
+// FY ("2026") + quarter ("Q1".."Q4", FY starts Oct) from a date.
+function fyQuarter(iso?: string): { fy: string; quarter: string } {
+  const d = iso ? new Date(iso) : new Date();
+  const y = d.getUTCFullYear();
+  const m = d.getUTCMonth(); // 0-11
+  const fy = String(m >= 9 ? y + 1 : y);
+  const quarter = m >= 9 ? "Q1" : m <= 2 ? "Q2" : m <= 5 ? "Q3" : "Q4";
+  return { fy, quarter };
+}
+
 function revalidate(schoolId?: string) {
   try {
     revalidatePath("/plans");
@@ -94,6 +112,25 @@ export async function scheduleSchoolActivity(input: {
   if (!input.schoolId || !input.kind) return { ok: false, reason: "INVALID_INPUT" };
 
   const toPartner = input.deliveryType === "partner";
+
+  // ── Backend-first create (write-path migration) ──────────────────
+  // When the backend is on AND the school exists there (backend schoolId), the
+  // create is persisted + enforced by the API. A 403 is the real capacity block
+  // (surface it); a 404 means the school only exists in the mock store (fall back).
+  if (isBackendEnabled()) {
+    const { fy, quarter } = fyQuarter(input.dateIso);
+    const r = await backendCreateActivity(user, {
+      activityType: KIND_TO_BE[input.kind] ?? "school_visit",
+      schoolId: input.schoolId, fy, quarter,
+      deliveryType: toPartner ? "partner" : "staff",
+    });
+    if (r.live) { revalidate(input.schoolId); return { ok: true, id: r.data.id }; }
+    if (r.error && r.error.includes("403")) {
+      return { ok: false, reason: "CAPACITY_FULL", message: "Direct support limit reached. Assign this to a partner." };
+    }
+    // 404 / other → fall through to the in-memory store (mock-id school).
+  }
+
   // ── Backend assignment enforcement (spec §6/§9) — never frontend-only. ──
   if (!toPartner) {
     // Self / staff-delivered support: role + direct support capacity gate.
