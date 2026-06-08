@@ -69,6 +69,7 @@ const PROTECTED_PREFIXES = [
   "/access-restricted",
   "/school-directory",
   "/recruitment",
+  "/system-health",
   "/my-targets",
   "/my-plan",
   "/my-team",
@@ -132,6 +133,7 @@ const ROLE_RESTRICTED: Array<{ prefix: string; allow: EdifyRole[] }> = [
   // profile, help) — same access model as /dashboards/partner.
   { prefix: "/partner",               allow: ["PartnerAdmin", "PartnerFieldOfficer", "PartnerViewer", "Admin"] },
   { prefix: "/admin",                 allow: ["Admin"] },
+  { prefix: "/system-health",         allow: ["Admin"] },
   { prefix: "/cost-settings",         allow: ["CountryDirector", "Admin", "ProgramAccountant"] },
   { prefix: "/budget/approvals",      allow: ["CountryProgramLead", "CountryDirector", "RVP", "ProgramAccountant", "Admin"] },
   // Fund Approvals — financial sign-off surface. Restricted to the
