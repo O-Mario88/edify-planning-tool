@@ -14,6 +14,22 @@ import {
 import { SectionCard } from "@/components/ui/primitives";
 import { ssaQuarterlyTrend, ssaTrendTarget } from "@/lib/ssa-mock";
 
+// Two-line x-axis tick: "Q4" on top, "Jul–Sep '23" beneath. Splitting the
+// quarter from its period (and shortening 2023 → '23) keeps eight labels from
+// colliding without angling the text.
+function QuarterTick({ x, y, payload }: { x?: number; y?: number; payload?: { value?: string | number } }) {
+  const raw = String(payload?.value ?? "");
+  const m = raw.match(/^(Q\d)\s*\(([^)]+)\)/);
+  const quarter = m ? m[1] : raw;
+  const period = (m ? m[2] : "").replace(/\b\d{2}(\d{2})\b/, "’$1"); // 2023 → ’23
+  return (
+    <g transform={`translate(${x ?? 0},${y ?? 0})`}>
+      <text x={0} y={0} dy={11} textAnchor="middle" fontSize={10.5} fontWeight={600} fill="#475569">{quarter}</text>
+      <text x={0} y={0} dy={24} textAnchor="middle" fontSize={9} fill="#94a3b8">{period}</text>
+    </g>
+  );
+}
+
 export function SsaTrendCard() {
   return (
     <SectionCard
@@ -21,18 +37,18 @@ export function SsaTrendCard() {
       title="SSA Performance Trend by Quarter"
       subtitle="Quarterly SSA average — track progress across recent quarters"
     >
-      <div className="h-[220px]">
+      <div className="h-[236px]">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={ssaQuarterlyTrend} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
+          <LineChart data={ssaQuarterlyTrend} margin={{ top: 10, right: 16, left: 0, bottom: 6 }}>
             <CartesianGrid stroke="#eef2f4" vertical={false} />
             <XAxis
               dataKey="q"
               stroke="#647782"
-              fontSize={11}
               tickLine={false}
               axisLine={{ stroke: "#eef2f4" }}
               interval={0}
-              dy={6}
+              height={34}
+              tick={<QuarterTick />}
             />
             <YAxis
               stroke="#647782"
