@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { AccountantConsoleDashboard } from "@/components/accountant-console/AccountantConsoleDashboard";
 import { CommandStack } from "@/components/actions/CommandStack";
 import { AccountantPartnerPaymentsQueue } from "@/components/partner/AccountantPartnerPaymentsQueue";
+import { PartnerPaymentQueue } from "@/components/payments/PartnerPaymentQueue";
 import { VerificationPaymentFunnel } from "@/components/cceo/VerificationPaymentFunnel";
 import { StaffAccountabilityQueue } from "@/components/accountant-console/StaffAccountabilityQueue";
 import type { CceoFunnelStage } from "@/lib/cceo-mock";
@@ -44,6 +45,10 @@ export default async function AccountantConsolePage() {
   return (
     <div className="space-y-4 px-4 sm:px-5 md:px-6 pt-4 pb-24">
       <CommandStack user={user} />
+      {/* Partner-to-payment (backend, scoped, IA-gated). The live terminal
+          gate: partner activities clear to paid only with evidence + SF ID +
+          IA confirmation. Self-hides when the backend is disabled. */}
+      <PartnerPaymentQueue />
       {/* Staff NetSuite Accountability — IA-confirmed activities to close. */}
       <StaffAccountabilityQueue rows={accountabilityRows} closed={closedRows} />
       {/* Partner Payments Ready to Clear — final leg of the partner

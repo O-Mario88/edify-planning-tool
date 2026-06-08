@@ -365,3 +365,30 @@ export function fetchAssignmentOptions(user: BackendUser, schoolId: string, fy?:
   if (fy) params.set("fy", fy);
   return live<BeAssignmentOptions>(`/assignment/options?${params.toString()}`, user);
 }
+
+// ── Partner-to-payment (accountant) ─────────────────────────────────
+export type BePaymentQueueRow = {
+  id: string;
+  activityType: string;
+  salesforceActivityId: string | null;
+  evidenceStatus: string;
+  iaVerificationStatus: string;
+  paymentStatus: string;
+  school: { schoolId: string; name: string } | null;
+  assignedPartner: { name: string } | null;
+  ready: boolean;
+};
+
+/** Partner-delivered activities sitting in the payment pipeline (accountant-scoped). */
+export function fetchPaymentQueue(user: BackendUser) {
+  return live<BePaymentQueueRow[]>(`/activities/payment-queue`, user);
+}
+
+/** Accountant clears a partner payment. Backend enforces IA-verified + SF id + evidence accepted. */
+export function clearPayment(user: BackendUser, activityId: string) {
+  return live<{ id: string; paymentStatus: string }>(
+    `/activities/${encodeURIComponent(activityId)}/clear-payment`,
+    user,
+    { method: "POST" },
+  );
+}
