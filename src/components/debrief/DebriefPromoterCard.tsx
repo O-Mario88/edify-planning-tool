@@ -8,7 +8,8 @@
 // persistence layer without touching the card.
 
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, ClipboardList, Eye } from "lucide-react";
+import { CheckCircle2, ClipboardList, Eye } from "lucide-react";
+import { DebriefDrawerButton } from "./DebriefDrawerButton";
 import {
   subtitleForRole,
   titleForRole,
@@ -58,13 +59,13 @@ export function DebriefPromoterCard({
       </div>
       <div className="flex items-center gap-2 shrink-0 w-full lg:w-auto">
         {s.kind === "not-submitted" ? (
-          <Link
-            href="/debriefs/new"
-            className="h-10 w-full lg:w-auto px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-body font-extrabold inline-flex items-center justify-center gap-1.5 shadow-sm shadow-emerald-500/25"
-          >
-            Submit Debrief
-            <ArrowRight size={13} />
-          </Link>
+          // Opens the floating Daily Debrief drawer (backend-submitting), not a
+          // separate page. Partner roles file a partner debrief that routes to
+          // their responsible CCEO first.
+          <DebriefDrawerButton
+            className="w-full lg:w-auto"
+            debriefType={submitterRole === "Partner" ? "partner" : "staff"}
+          />
         ) : (
           <Link
             href="/debriefs"

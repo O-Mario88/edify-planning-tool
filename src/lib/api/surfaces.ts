@@ -452,6 +452,30 @@ export type BeRecruitment = {
   nextAction: string; disclaimer: string;
 };
 
+// ── Daily Debrief ───────────────────────────────────────────────────
+export type BeDebrief = {
+  id: string; fy: string; date: string; debriefType: string; status: string;
+  whatHappened?: string | null; whatWentWell?: string | null; whatDidNotGoWell?: string | null;
+  blockers: string[]; supportNeeded?: string | null; recommendations?: string | null; nextAction?: string | null;
+  submittedByRole: string; submittedAt: string; routedTo?: number;
+};
+export type BeDebriefToday = { submittedToday: boolean; mine: BeDebrief[]; partnerInputs: BeDebrief[] };
+
+export type SubmitDebriefBody = {
+  debriefType?: "staff" | "partner"; partnerId?: string; responsibleStaffId?: string;
+  whatHappened?: string; whatWentWell?: string; whatDidNotGoWell?: string;
+  blockers?: string[]; blockerOther?: string;
+  supportNeeded?: string; recommendations?: string; nextAction?: string;
+  linkedSchoolIds?: string[]; linkedActivityIds?: string[];
+};
+
+export function submitDebrief(user: BackendUser, body: SubmitDebriefBody) {
+  return live<BeDebrief>(`/debriefs`, user, { method: "POST", body: JSON.stringify(body) });
+}
+export function fetchDebriefsToday(user: BackendUser) {
+  return live<BeDebriefToday>(`/debriefs/today`, user);
+}
+
 export function fetchRecruitmentRecommendation(user: BackendUser, params: { fy?: string; districtId?: string } = {}) {
   const q = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) if (v) q.set(k, v);
