@@ -11,11 +11,26 @@ import {
   Timer,
   type LucideIcon,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import {
   quickActions,
   type QuickAction,
 } from "@/lib/accountant-console-mock";
+import { exportDisbursementLedger } from "@/lib/funds/export-ledger";
 import { cn } from "@/lib/utils";
+
+// Where each quick action takes the accountant. Most deep-link to the relevant
+// section of the disbursement console; Export Ledger downloads a real CSV.
+const ROUTE: Record<QuickAction["key"], string> = {
+  logFunds:  "/disbursements#funds-received",
+  disb:      "/disbursements#disbursement-queue",
+  partial:   "/disbursements#disbursement-queue",
+  hold:      "/disbursements#disbursement-queue",
+  ledger:    "",
+  reconcile: "/disbursements#disbursement-history",
+  report:    "/reports",
+  audit:     "/disbursements#disbursement-audit",
+};
 
 const ACT_ICON: Record<QuickAction["iconKey"], LucideIcon> = {
   logFunds:     Banknote,
@@ -49,6 +64,12 @@ const TONE: Record<
 // A subtle divider sits between the two groups so the user can scan the
 // group affordance instantly.
 export function QuickActionsGrid() {
+  const router = useRouter();
+  const run = (key: QuickAction["key"]) => {
+    if (key === "ledger") { exportDisbursementLedger(); return; }
+    const route = ROUTE[key];
+    if (route) router.push(route);
+  };
   return (
     <article className="card p-3 lg:p-4 flex flex-col overflow-hidden">
       <header className="flex items-center justify-between gap-2 mb-2.5 px-1">
@@ -70,6 +91,7 @@ export function QuickActionsGrid() {
             <button
               key={a.key}
               type="button"
+              onClick={() => run(a.key)}
               className={cn(
                 "relative rounded-xl ring-1 ring-[var(--color-edify-border)] bg-white transition-all duration-200 p-2.5 flex items-center gap-2 tile-in text-left group min-w-0",
                 "hover:-translate-y-0.5 hover:shadow-[0_8px_20px_-10px_rgba(15,23,32,0.18)] hover:ring-slate-300",

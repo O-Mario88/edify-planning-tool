@@ -15,6 +15,7 @@ import {
 import {
   pendingDisbursementQueue,
   weeklyFundRequests,
+  currentWeek,
 } from "@/lib/funds/weekly-fund-mock";
 import { formatMoney, priorWeekClosedFor } from "@/lib/funds/weekly-fund-engine";
 import { StatusChip } from "@/components/funds/StatusChip";
@@ -34,14 +35,19 @@ import { cn } from "@/lib/utils";
 // exist in the header for fast-path one-click action when the gate is
 // clean; they now toggle the row open (in the relevant mode) so the
 // confirmation lives in the same place.
+export type DisbursementFilter = { thisWeekOnly?: boolean; status?: "all" | "ready" | "blocked" };
+
 export function DisbursementQueue({
   onDisburse,
   iaPendingByStaff = {},
+  filter,
 }: {
   onDisburse?: (id: string, form: DisburseForm, mode: "full" | "partial") => void;
   /** Per-staff count of activities still awaiting IA verification — keyed by
    *  staffId. A non-zero count gates further advances to that staffer. */
   iaPendingByStaff?: Record<string, number>;
+  /** Header-driven filter (This Week toggle + Filters popover). */
+  filter?: DisbursementFilter;
 }) {
   const [tab, setTab] = useState<"weekly" | "monthly" | "partial">("weekly");
   // Open row state: `null` collapsed, else { id, mode } open inline. We
@@ -63,35 +69,48 @@ export function DisbursementQueue({
     });
   }, [all, iaPendingByStaff]);
 
-  const cleared = rows.filter((row) => row.blockers.length === 0).length;
+  // Apply the header-driven filter (This Week + status). Genuinely narrows the
+  // visible queue — not decorative.
+  const visibleRows = useMemo(() => {
+    return rows.filter(({ r, blockers }) => {
+      if (filter?.thisWeekOnly && r.period.weekOfMonth !== currentWeek.weekOfMonth) return false;
+      if (filter?.status === "ready" && blockers.length > 0) return false;
+      if (filter?.status === "blocked" && blockers.length === 0) return false;
+      return true;
+    });
+  }, [rows, filter]);
+
+  const cleared = visibleRows.filter((row) => row.blockers.length === 0).length;
 
   const toggleRow = (id: string, mode: "full" | "partial") => {
     setOpenRow((cur) => (cur && cur.id === id && cur.mode === mode ? null : { id, mode }));
   };
 
   return (
-    <article className="card p-3.5 flex flex-col">
+    <article id="disbursement-queue" className="card p-3.5 flex flex-col scroll-mt-24">
       <header className="flex items-center justify-between gap-2 mb-2.5 flex-wrap">
         <div className="min-w-0">
           <h3 className="text-[13px] font-extrabold tracking-tight">Weekly Disbursement Queue</h3>
           <p className="text-caption muted font-semibold leading-tight">
-            {cleared} of {rows.length} cleared for release · prior-week + IA-verification gates enforced
+            {cleared} of {visibleRows.length} cleared for release · prior-week + IA-verification gates enforced
+            {filter?.thisWeekOnly ? ` · Week ${currentWeek.weekOfMonth} only` : ""}
+            {filter?.status && filter.status !== "all" ? ` · ${filter.status}` : ""}
           </p>
         </div>
         <div className="flex items-center gap-1">
-          <TabBtn label="Weekly" active={tab === "weekly"} onClick={() => setTab("weekly")} count={rows.length} />
+          <TabBtn label="Weekly" active={tab === "weekly"} onClick={() => setTab("weekly")} count={visibleRows.length} />
           <TabBtn label="Monthly" active={tab === "monthly"} onClick={() => setTab("monthly")} />
           <TabBtn label="Partial" active={tab === "partial"} onClick={() => setTab("partial")} />
         </div>
       </header>
 
       <div className="flex flex-col gap-2">
-        {rows.length === 0 && (
+        {visibleRows.length === 0 && (
           <div className="text-[12px] muted italic py-6 text-center">
-            All approved requests cleared. Nothing waiting on the Accountant.
+            {rows.length === 0 ? "All approved requests cleared. Nothing waiting on the Accountant." : "No requests match the current filter."}
           </div>
         )}
-        {rows.map(({ r, priorClosed, blockers }, i) => {
+        {visibleRows.map(({ r, priorClosed, blockers }, i) => {
           const stagger = `stagger-${(i % 6) + 1}`;
           const canDisburse = blockers.length === 0;
           const isOpen = openRow?.id === r.id;
