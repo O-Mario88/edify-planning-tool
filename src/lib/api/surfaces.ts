@@ -16,9 +16,9 @@ export type LiveResult<T> =
   | { live: true; data: T }
   | { live: false; error: string | null };
 
-async function live<T>(path: string, user: BackendUser): Promise<LiveResult<T>> {
+async function live<T>(path: string, user: BackendUser, init?: RequestInit): Promise<LiveResult<T>> {
   if (!isBackendEnabled()) return { live: false, error: null };
-  const r = await backendFetch<T>(path, user);
+  const r = await backendFetch<T>(path, user, init);
   return r.ok ? { live: true, data: r.data } : { live: false, error: r.error };
 }
 
@@ -184,4 +184,39 @@ export function fetchContributionDrilldown(
   const params = new URLSearchParams(contributionQuery(p));
   params.set("metric", p.metric);
   return live<Record<string, unknown>[]>(`/analytics/contribution-drilldown?${params.toString()}`, user);
+}
+
+// ── My Plan (activities) — the write-path migration surface ─────────
+
+export type BeActivity = {
+  id: string;
+  schoolId?: string | null;
+  activityType: string;
+  status: string;
+  deliveryType: string;
+  scheduledDate?: string | null;
+  rescheduleCount?: number | null;
+  lastReason?: string | null;
+  assignedPartnerId?: string | null;
+  school?: { schoolId: string; name: string } | null;
+};
+
+/** The caller's own activities (My Plan), from the backend. */
+export function fetchMyPlanActivities(user: BackendUser, fy?: string) {
+  const params = new URLSearchParams({ mine: "true", pageSize: "100" });
+  if (fy) params.set("fy", fy);
+  return live<BePaginated<BeActivity>>(`/activities?${params.toString()}`, user);
+}
+
+export type ActivityLifecycleAction = "reschedule" | "reassign" | "cancel" | "defer" | "complete";
+
+/** Run a lifecycle action against a backend activity (My Plan row actions). */
+export function backendActivityAction(user: BackendUser, id: string, action: ActivityLifecycleAction, body: Record<string, unknown>) {
+  return live<BeActivity>(`/activities/${encodeURIComponent(id)}/${action}`, user, { method: "POST", body: JSON.stringify(body) });
+}
+
+/** Create an activity on the backend (capacity-enforced). Returns the live result
+ *  so callers can distinguish an enforced 403 from a 404 (school not in backend). */
+export function backendCreateActivity(user: BackendUser, body: Record<string, unknown>) {
+  return live<BeActivity>(`/activities`, user, { method: "POST", body: JSON.stringify(body) });
 }

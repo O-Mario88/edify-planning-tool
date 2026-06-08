@@ -19,6 +19,19 @@ import { canReschedule } from "@/lib/planning/planning-capacity";
 import { computeStaffCapacity, staffAlreadySupportsSchool, type StaffCapacity } from "@/lib/planning/assignment-policy";
 import { cceosSupervisedBy, supervisorOf } from "@/lib/org/supervision";
 import { DEMO_USERS } from "@/lib/auth";
+import { isBackendEnabled } from "@/lib/api/backend";
+import { backendActivityAction, type ActivityLifecycleAction } from "@/lib/api/surfaces";
+
+// Backend-first: when EDIFY_USE_BACKEND is on, run the lifecycle action against
+// the backend (the enforced, authoritative source). Returns true if the backend
+// handled it; false → caller falls back to the in-memory store (e.g. activities
+// that only exist in the mock store, keyed by non-backend ids).
+async function tryBackend(id: string, action: ActivityLifecycleAction, body: Record<string, unknown>): Promise<boolean> {
+  if (!isBackendEnabled()) return false;
+  const user = await getCurrentUser();
+  const r = await backendActivityAction(user, id, action, body);
+  return r.live;
+}
 
 // CD/IA recipients for capacity escalations (spec §21).
 function cdIaStaffIds(): string[] {
@@ -174,6 +187,7 @@ export async function assignActivityToStaff(input: {
 
 // ── Reschedule (date move, reason, slip limit) ──────────────────────
 export async function rescheduleActivity(id: string, newDateIso: string, reason: string): Promise<MyPlanResult> {
+  if (await tryBackend(id, "reschedule", { scheduledDate: newDateIso, reason })) { revalidate(); return { ok: true, id }; }
   const a = findActivity(id);
   if (!a) return { ok: false, reason: "NOT_FOUND" };
   const count = a.rescheduleCount ?? 0;
@@ -193,6 +207,7 @@ export async function rescheduleActivity(id: string, newDateIso: string, reason:
 
 // ── Reassign (staff ↔ partner) ──────────────────────────────────────
 export async function reassignActivity(id: string, delivery: "staff" | "partner", partnerName?: string): Promise<MyPlanResult> {
+  if (await tryBackend(id, "reassign", { deliveryType: delivery })) { revalidate(); return { ok: true, id }; }
   const a = findActivity(id);
   if (!a) return { ok: false, reason: "NOT_FOUND" };
   const user = await getCurrentUser();
@@ -204,6 +219,7 @@ export async function reassignActivity(id: string, delivery: "staff" | "partner"
 
 // ── Cancel / Defer (not happening now — distinct from a date move) ──
 export async function cancelActivity(id: string, reason: string): Promise<MyPlanResult> {
+  if (await tryBackend(id, "cancel", { reason })) { revalidate(); return { ok: true, id }; }
   const a = findActivity(id);
   if (!a) return { ok: false, reason: "NOT_FOUND" };
   const user = await getCurrentUser();
@@ -214,6 +230,7 @@ export async function cancelActivity(id: string, reason: string): Promise<MyPlan
 }
 
 export async function deferActivity(id: string, reason: string): Promise<MyPlanResult> {
+  if (await tryBackend(id, "defer", { reason })) { revalidate(); return { ok: true, id }; }
   const a = findActivity(id);
   if (!a) return { ok: false, reason: "NOT_FOUND" };
   const user = await getCurrentUser();

@@ -56,7 +56,7 @@ function PlanRow({ row }: { row: MyPlanRow }) {
 
   const terminal = status === "Completed" || status === "Cancelled";
   const atLimit = moves >= RESCHEDULE_SLIP_LIMIT;
-  const Icon = /TRAINING|MEETING/.test(row.kind) ? GraduationCap : Footprints;
+  const Icon = /training|meeting/i.test(row.kind) ? GraduationCap : Footprints;
 
   function run(fn: () => Promise<unknown>, after: () => void) {
     start(async () => { await fn(); after(); setMode(null); });
