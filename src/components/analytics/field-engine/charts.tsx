@@ -344,7 +344,7 @@ export function SsaHeatmap({ interventions, rows }: { interventions: string[]; r
                     <td key={a} className="p-0">
                       <div
                         title={`${row.label} · ${a}: ${v ?? "no data"}`}
-                        className="grid place-items-center h-9 min-w-[34px] rounded-md t-caption font-extrabold tabular"
+                        className="grid place-items-center h-8 sm:h-9 min-w-[26px] sm:min-w-[34px] rounded sm:rounded-md t-caption font-extrabold tabular"
                         style={{ backgroundColor: tone.bg, color: tone.fg }}
                       >
                         {v ?? "—"}

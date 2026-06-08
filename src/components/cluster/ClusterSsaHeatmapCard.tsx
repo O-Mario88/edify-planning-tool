@@ -52,7 +52,7 @@ export function ClusterSsaHeatmapCard() {
                     const b = band(v);
                     return (
                       <td key={i} className="p-0">
-                        <div className={`h-8 w-9 grid place-items-center rounded-md font-bold tabular ${b.cls}`}>{b.label}</div>
+                        <div className={`h-7 w-7 sm:h-8 sm:w-9 grid place-items-center rounded sm:rounded-md font-bold tabular ${b.cls}`}>{b.label}</div>
                       </td>
                     );
                   })}
