@@ -33,7 +33,7 @@ import {
   type StaffMonitorTabKey,
   type StaffMonitorRow,
   type DelayAlert,
-} from "@/lib/partner/partner-monitoring-mock";
+} from "@/lib/partner/partner-monitoring-types";
 import { STATUS_LABEL, STATUS_TONE } from "@/lib/partner/partner-workflow";
 import { evidenceSummaries } from "@/lib/partner/partner-evidence-mock";
 
