@@ -10,10 +10,10 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { countryFundKpis, type CountryFundKpi } from "@/lib/country-fund-approvals-mock";
-import { Tile } from "@/components/ui/Tile";
+import { MetricStrip, type MetricCell } from "@/components/ui/MetricStrip";
 
-// Country-Director fund-approval KPI row — shares the `Tile` primitive
-// with every other approvals surface (one tone/glow/stagger source).
+// Country-Director fund-approval KPIs — one dense MetricStrip (the canonical
+// app-wide KPI-row pattern).
 
 const ICON_MAP: Record<CountryFundKpi["icon"], LucideIcon> = {
   wallet:      Wallet,
@@ -25,25 +25,19 @@ const ICON_MAP: Record<CountryFundKpi["icon"], LucideIcon> = {
 };
 
 export function CountryFundKpiRow() {
+  const metrics: MetricCell[] = countryFundKpis.map((k) => ({
+    key: k.key,
+    label: k.label,
+    value: k.value,
+    icon: ICON_MAP[k.icon],
+    delta: k.delta
+      ? { dir: k.deltaTone === "up" ? "up" : "down", text: `${k.delta}${k.caption ? ` · ${k.caption}` : ""}` }
+      : undefined,
+    caption: !k.delta ? k.caption : undefined,
+  }));
   return (
     <section className="px-3 sm:px-4 lg:px-6 pb-3">
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
-        {countryFundKpis.map((k, i) => {
-          const Icon = ICON_MAP[k.icon];
-          return (
-            <Tile
-              key={k.key}
-              index={i}
-              tone={k.iconTone}
-              icon={<Icon size={15} />}
-              label={k.label}
-              value={k.value}
-              delta={k.delta ? { dir: k.deltaTone === "up" ? "up" : "down", text: k.delta, caption: k.caption } : undefined}
-              trend={!k.delta && k.caption ? <span className="muted font-semibold truncate">{k.caption}</span> : undefined}
-            />
-          );
-        })}
-      </div>
+      <MetricStrip metrics={metrics} columns="grid-cols-2 sm:grid-cols-3 lg:grid-cols-6" />
     </section>
   );
 }
