@@ -392,3 +392,47 @@ export function clearPayment(user: BackendUser, activityId: string) {
     { method: "POST" },
   );
 }
+
+// ── Layer 3: Support-to-Improvement correlation ─────────────────────
+export type BeSupportFilter = "all" | "staff" | "partner" | "certified_partner" | "visit" | "training" | "project";
+
+export type BeCorrelationSummary = {
+  schoolsWithComparison: number;
+  correlation: number | null;
+  strength: string;
+  avgSupport: number | null;
+  avgImprovement: number | null;
+  interpretation: string;
+};
+export type BeInterventionBin = {
+  code: string; label: string;
+  zero: number | null; zeroN: number; low: number | null; lowN: number; high: number | null; highN: number;
+};
+export type BeChartPoint = { schoolId: string; name: string; support: number; improvement: number; supportClass: string };
+export type BeSupportCorrelation = {
+  currentFy: string; prevFy: string; support: BeSupportFilter;
+  summary: BeCorrelationSummary;
+  chartPoints: BeChartPoint[];
+  interventionBins: BeInterventionBin[];
+  dataQuality: string[];
+};
+export type BeStaffVsPartnerGroup = {
+  supportClass: string; schools: number;
+  avgOverallImprovement: number | null; avgInterventionImprovement: number | null;
+  schoolsImprovedPct: number | null; schoolsDeclinedPct: number | null; avgVerifiedSupport: number | null;
+};
+export type BeStaffVsPartner = { currentFy: string; prevFy: string; groups: BeStaffVsPartnerGroup[]; note: string; dataQuality: string[] };
+
+export function fetchSupportSsaCorrelation(user: BackendUser, params: { support?: string; schoolType?: string; districtId?: string; regionId?: string } = {}) {
+  const q = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) if (v) q.set(k, v);
+  const s = q.toString();
+  return live<BeSupportCorrelation>(`/analytics/support-ssa-correlation${s ? `?${s}` : ""}`, user);
+}
+
+export function fetchStaffVsPartner(user: BackendUser, params: { schoolType?: string; districtId?: string; regionId?: string } = {}) {
+  const q = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) if (v) q.set(k, v);
+  const s = q.toString();
+  return live<BeStaffVsPartner>(`/analytics/staff-vs-partner-correlation${s ? `?${s}` : ""}`, user);
+}

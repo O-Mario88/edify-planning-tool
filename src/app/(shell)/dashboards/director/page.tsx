@@ -33,6 +33,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { ROLE_REDIRECT } from "@/lib/auth-public";
 import { SsaPerformanceGrid } from "@/components/ssa/SsaPerformanceGrid";
 import { InterventionImprovementGrid } from "@/components/ssa/InterventionImprovementGrid";
+import { SupportImprovementCard } from "@/components/analytics/SupportImprovementCard";
 
 // Country Director Dashboard — Executive cockpit replica.
 //
@@ -77,9 +78,11 @@ export default async function CountryDirectorDashboard() {
         {/* TODAY — CommandStack carries its own header. */}
         <CommandStack user={user} hideMission />
 
-        {/* Country truth layer — SSA performance + impact (backend, country scope). */}
+        {/* Three-layer truth: ① SSA performance (status) ② intervention
+            improvement (FY change) ③ support→improvement (what worked before SSA). */}
         <SsaPerformanceGrid />
         <InterventionImprovementGrid />
+        <SupportImprovementCard />
 
         {/* COUNTRY HEALTH — KPIs, attention banners, debrief routing,
             training coverage. */}

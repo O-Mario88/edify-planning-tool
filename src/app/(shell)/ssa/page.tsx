@@ -11,6 +11,7 @@ import { SsaTrendCard } from "@/components/ui/lazy-charts";
 import { ActionInsightsPanel } from "@/components/ssa/ActionInsightsPanel";
 import { SsaPerformanceGrid } from "@/components/ssa/SsaPerformanceGrid";
 import { InterventionImprovementGrid } from "@/components/ssa/InterventionImprovementGrid";
+import { SupportImprovementCard } from "@/components/analytics/SupportImprovementCard";
 
 // SSA Performance — intelligence cockpit.
 //
@@ -58,6 +59,10 @@ export default async function SsaPerformancePage({
 
         {/* Impact — previous-FY vs current-FY change per intervention. */}
         <InterventionImprovementGrid />
+
+        {/* Support → improvement — what verified support before SSA is
+            associated with the change above (association, not causation). */}
+        <SupportImprovementCard />
 
         {/* 2 — Intervention scoreboard + recommendations.
             Matched height (~8 ranked rows vs ~4 insight cards), so they
