@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   ClipboardList,
   Building2,
+  Compass,
   Activity,
   Star,
   Map,
@@ -201,7 +202,9 @@ function buildCdMenu(dashboardHref: string): MenuSection[] {
         { label: "Dashboard",        href: dashboardHref,           Icon: LayoutDashboard    },
         { label: "Targets",          href: "/team-targets",         Icon: Award              },
         { label: "Planning",         href: "/planning",             Icon: ClipboardList      },
-        { label: "Schools",          href: "/schools",              Icon: Building2          },
+        // No "Schools" — the School Directory is an operational surface for
+        // CCEO/PL/IA. The CD leads through analytics + recruitment intelligence.
+        { label: "Recruitment",      href: "/recruitment",          Icon: Compass            },
         { label: "SSA Performance",  href: "/ssa",                  Icon: Activity           },
         { label: "Analytics",        href: "/analytics",            Icon: BarChart3          },
         { label: "Reports",          href: "/reports",              Icon: FileText           },

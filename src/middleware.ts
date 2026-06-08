@@ -66,6 +66,9 @@ const PUBLIC_PATHS = new Set<string>([
 const PROTECTED_PREFIXES = [
   "/dashboards",
   "/dashboard",
+  "/access-restricted",
+  "/school-directory",
+  "/recruitment",
   "/my-targets",
   "/my-plan",
   "/my-team",
@@ -148,7 +151,17 @@ const ROLE_RESTRICTED: Array<{ prefix: string; allow: EdifyRole[] }> = [
   { prefix: "/monthly-fund-request",  allow: ["CountryProgramLead", "CountryDirector", "RVP", "ProgramAccountant", "Admin"] },
   { prefix: "/program-lead",          allow: ["CountryProgramLead", "Admin"] },
   { prefix: "/data-intake",           allow: ["ImpactAssessment", "ProgramAccountant", "CountryDirector", "Admin"] },
+  // School Directory — operational working surface. Only the roles that
+  // actually work schools (CCEO, PL, IA) + the project coordinator who
+  // assigns project schools. CD/RVP/HR/Accountant/Partner are bounced to an
+  // Access Restricted page (they lead through analytics, not the directory).
+  { prefix: "/schools",               allow: ["CCEO", "CountryProgramLead", "ImpactAssessment", "ProjectCoordinator", "Admin"] },
+  { prefix: "/school-directory",      allow: ["CCEO", "CountryProgramLead", "ImpactAssessment", "ProjectCoordinator", "Admin"] },
 ];
+
+// Prefixes whose wrong-role bounce should land on the explicit Access
+// Restricted page (not a silent redirect to the role's home).
+const SHOW_ACCESS_RESTRICTED = ["/schools", "/school-directory"];
 
 function isProtected(pathname: string): boolean {
   if (PUBLIC_PATHS.has(pathname)) return false;
@@ -255,8 +268,16 @@ export function middleware(req: NextRequest) {
   const allow = restrictionFor(pathname);
   if (allow && !allow.includes(role)) {
     const url = req.nextUrl.clone();
-    url.pathname = ROLE_REDIRECT[role] ?? "/login";
-    url.search = "";
+    const showRestricted = SHOW_ACCESS_RESTRICTED.some(
+      (p) => pathname === p || pathname.startsWith(p + "/"),
+    );
+    if (showRestricted) {
+      url.pathname = "/access-restricted";
+      url.search = `?from=${encodeURIComponent(pathname)}`;
+    } else {
+      url.pathname = ROLE_REDIRECT[role] ?? "/login";
+      url.search = "";
+    }
     return ensureCsrfCookie(req, NextResponse.redirect(url));
   }
 

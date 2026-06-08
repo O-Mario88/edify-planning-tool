@@ -436,3 +436,25 @@ export function fetchStaffVsPartner(user: BackendUser, params: { schoolType?: st
   const s = q.toString();
   return live<BeStaffVsPartner>(`/analytics/staff-vs-partner-correlation${s ? `?${s}` : ""}`, user);
 }
+
+// ── Recruitment Intelligence ────────────────────────────────────────
+export type BeRecruitmentDistrict = { districtId: string; district: string; schools: number; ssaCompletionPct: number; clusteredPct: number; reachedPct: number; score: number; signal: "expand" | "hold" | "pause" };
+export type BeRecruitment = {
+  fy: string; scope: string; readinessScore: number;
+  recommendation: string; reason: string;
+  capacity: { totalSchools: number; core: number; client: number; reachedPct: number; partnerPaymentBacklog: number; partnerEvidencePending: number; partnerStrainPct: number };
+  ssaReadiness: { currentSsaPct: number; previousSsaPct: number; impactReadyPct: number; missingCurrentSsa: number };
+  dataQuality: { missingCluster: number; unmatchedOwner: number; duplicates: number; missingEnrollment: number; penaltyPct: number };
+  impact: { schoolsImproved: number; schoolsDeclined: number };
+  suggestedRecruitDistricts: { districtId: string; district: string; ssaCompletionPct: number; score: number }[];
+  pauseDistricts: { districtId: string; district: string; ssaCompletionPct: number; score: number }[];
+  districts: BeRecruitmentDistrict[];
+  nextAction: string; disclaimer: string;
+};
+
+export function fetchRecruitmentRecommendation(user: BackendUser, params: { fy?: string; districtId?: string } = {}) {
+  const q = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) if (v) q.set(k, v);
+  const s = q.toString();
+  return live<BeRecruitment>(`/analytics/recruitment-recommendation${s ? `?${s}` : ""}`, user);
+}

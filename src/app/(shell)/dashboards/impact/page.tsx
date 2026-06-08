@@ -26,6 +26,7 @@ import { ROLE_REDIRECT } from "@/lib/auth-public";
 import { SsaPerformanceGrid } from "@/components/ssa/SsaPerformanceGrid";
 import { InterventionImprovementGrid } from "@/components/ssa/InterventionImprovementGrid";
 import { SupportImprovementCard } from "@/components/analytics/SupportImprovementCard";
+import { RecruitmentIntelligenceCard } from "@/components/analytics/RecruitmentIntelligenceCard";
 
 export default async function ImpactDashboard() {
   // Defense-in-depth: middleware already gates /dashboards/impact, but
@@ -64,6 +65,9 @@ export default async function ImpactDashboard() {
             <SsaPerformanceGrid />
             <InterventionImprovementGrid />
             <SupportImprovementCard />
+
+            {/* Recruitment readiness from a data-quality lens (IA scope). */}
+            <RecruitmentIntelligenceCard />
 
             {/* Section 2 — Vital signs.  Five KPIs + system insights. */}
             <section className="space-y-3">
