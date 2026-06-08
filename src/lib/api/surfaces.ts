@@ -476,6 +476,12 @@ export function fetchDebriefsToday(user: BackendUser) {
   return live<BeDebriefToday>(`/debriefs/today`, user);
 }
 
+export type BeMergeResult = { merged: BeDebrief; partnerDebriefId: string; routedTo: number };
+/** CCEO reviews + merges a partner debrief into their daily debrief; routes up. */
+export function mergePartnerDebrief(user: BackendUser, body: { partnerDebriefId: string; cceoDebriefId?: string; note?: string }) {
+  return live<BeMergeResult>(`/debriefs/merge-partner-debrief`, user, { method: "POST", body: JSON.stringify(body) });
+}
+
 export function fetchRecruitmentRecommendation(user: BackendUser, params: { fy?: string; districtId?: string } = {}) {
   const q = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) if (v) q.set(k, v);
