@@ -98,9 +98,9 @@ export function DailyDebriefDrawer({
   if (!mounted || !open) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[60]" role="dialog" aria-label="Daily Field Debrief" aria-modal="true">
-      <div className="absolute inset-0 bg-[rgba(15,23,32,0.28)] backdrop-blur-[2px]" onClick={attemptClose} />
-      <div className="absolute inset-y-0 right-0 w-full sm:w-[460px] md:w-[520px] bg-[var(--surface-1)] shadow-2xl flex flex-col animate-[slideIn_.22s_ease-out]">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4" role="dialog" aria-label="Daily Field Debrief" aria-modal="true">
+      <div className="absolute inset-0 bg-[rgba(15,23,32,0.32)] backdrop-blur-[2px]" onClick={attemptClose} />
+      <div className="relative w-full max-w-[540px] max-h-[90vh] rounded-2xl bg-[var(--surface-1)] shadow-2xl flex flex-col overflow-hidden animate-[popIn_.16s_ease-out]">
         {/* Header */}
         <header className="flex items-start gap-3 px-4 py-3.5 border-b border-[var(--color-edify-divider)]">
           <span className="h-9 w-9 rounded-xl bg-emerald-50 text-emerald-700 grid place-items-center shrink-0"><ClipboardList size={17} /></span>
@@ -166,7 +166,7 @@ export function DailyDebriefDrawer({
           </footer>
         )}
       </div>
-      <style>{`@keyframes slideIn{from{transform:translateX(24px);opacity:.4}to{transform:translateX(0);opacity:1}}`}</style>
+      <style>{`@keyframes popIn{from{transform:scale(.96);opacity:.4}to{transform:scale(1);opacity:1}}`}</style>
     </div>,
     document.body,
   );
