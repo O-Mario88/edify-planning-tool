@@ -476,6 +476,27 @@ export function fetchDebriefsToday(user: BackendUser) {
   return live<BeDebriefToday>(`/debriefs/today`, user);
 }
 
+// ── Clusters (backend-backed; no mock) ──────────────────────────────
+export type BeCluster = {
+  id: string; name: string; clusterType: string; status: string;
+  district?: { name: string } | null; subCounty?: { name: string } | null;
+  subCountyName?: string | null; responsibleStaffId?: string | null;
+  _count?: { schools: number };
+};
+export type BeClusterSchool = {
+  schoolId: string; name: string; schoolType: string; subCounty?: string | null;
+  accountOwner?: string | null; ssaStatus: string; planningReadiness: string;
+  latestSsa: number | null; stage: string;
+};
+export function fetchClusters(user: BackendUser) {
+  return live<BeCluster[]>(`/clusters`, user);
+}
+export function fetchClusterSchools(user: BackendUser, clusterId: string) {
+  return live<{ cluster: { id: string; name: string; status: string; type: string }; count: number; schools: BeClusterSchool[] }>(
+    `/clusters/${encodeURIComponent(clusterId)}/schools`, user,
+  );
+}
+
 // ── Notifications (backend-backed; no mock) ─────────────────────────
 export type BeNotification = {
   id: string; title: string; body?: string | null; contextType?: string | null; contextId?: string | null;
