@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { StubPage } from "@/components/shell/StubPage";
 import { ExportButton } from "@/components/ui/ExportButton";
-import { recentReports, scheduledReports } from "@/lib/reports-mock";
+import { EmptyState } from "@/components/ui/DataStates";
 import { cn } from "@/lib/utils";
 import { getCurrentUser } from "@/lib/auth";
 import type { EdifyRole } from "@/lib/auth-public";
@@ -48,6 +48,13 @@ const FORMAT_TONE = {
   XLSX: "bg-emerald-100 text-emerald-700",
   CSV:  "bg-sky-100     text-sky-700",
 } as const;
+
+// No backend reports source exists yet — render empty states, never fabricated
+// rows. These become live fetches once a reports endpoint ships.
+type RecentReport = { id: string; title: string; period: string; generatedBy: string; generatedAt: string; format: keyof typeof FORMAT_TONE; sizeKb: number };
+type ScheduledReport = { id: string; title: string; cadence: string; nextRun: string; recipients: string; status: "Active" | "Paused" };
+const recentReports: RecentReport[] = [];
+const scheduledReports: ScheduledReport[] = [];
 
 export default async function ReportsPage() {
   const user = await getCurrentUser();
@@ -97,6 +104,9 @@ export default async function ReportsPage() {
             className="!h-9 !px-3 !rounded-xl"
           />
         </header>
+        {recentReports.length === 0 && (
+          <EmptyState compact title="No reports generated yet" message="Generated report snapshots will appear here once the backend is producing them." />
+        )}
         <ul className="divide-y divide-[var(--color-edify-divider)]">
           {recentReports.map((r) => (
             <li key={r.id} className="py-2.5 flex items-center gap-3">
@@ -142,6 +152,9 @@ export default async function ReportsPage() {
             Schedule new
           </button>
         </header>
+        {scheduledReports.length === 0 ? (
+          <EmptyState compact title="No scheduled reports" message="Scheduled report jobs will appear here once configured against the backend." />
+        ) : (
         <div className="overflow-x-auto -mx-2 px-2">
         <table className="w-full text-[12px] min-w-[640px]">
           <thead>
@@ -186,6 +199,7 @@ export default async function ReportsPage() {
           </tbody>
         </table>
         </div>
+        )}
       </section>
     </StubPage>
   );
