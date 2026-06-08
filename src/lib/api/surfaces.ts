@@ -476,6 +476,25 @@ export function fetchDebriefsToday(user: BackendUser) {
   return live<BeDebriefToday>(`/debriefs/today`, user);
 }
 
+// ── Special Projects (backend-backed; no mock) ──────────────────────
+export type BeProject = {
+  id: string; name: string; category: string; intervention?: string | null;
+  managerStaffId?: string | null; schoolCount: number; partnerCount: number; activityCount: number;
+  latestImpact?: unknown; latestImpactFy?: string | null;
+};
+export type BeProjectDetail = {
+  id: string; name: string; category: string; intervention?: string | null; managerStaffId?: string | null;
+  schools: { schoolId: string; name: string; schoolType: string; district: string | null; ssaStatus: string }[];
+  partners: { id: string; name: string; isCertified: boolean; certificationStatus?: string | null }[];
+  impactSnapshots: { fy: string; metrics: unknown }[];
+};
+export function fetchSpecialProjects(user: BackendUser) {
+  return live<BeProject[]>(`/special-projects`, user);
+}
+export function fetchProjectDetail(user: BackendUser, id: string) {
+  return live<BeProjectDetail>(`/special-projects/${encodeURIComponent(id)}`, user);
+}
+
 // ── Clusters (backend-backed; no mock) ──────────────────────────────
 export type BeCluster = {
   id: string; name: string; clusterType: string; status: string;

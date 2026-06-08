@@ -3,6 +3,7 @@ import { SpecialProjectsMobileView } from "@/components/mobile/views/SpecialProj
 import { SpHeader } from "@/components/special-projects/SpHeader";
 import { SpKpiRow } from "@/components/special-projects/SpKpiRow";
 import { SpActionBar } from "@/components/special-projects/SpActionBar";
+import { SpecialProjectsLiveBoard } from "@/components/special-projects/SpecialProjectsLiveBoard";
 import { ProjectPortfolioTable } from "@/components/special-projects/ProjectPortfolioTable";
 import { PriorityProjectsPanel } from "@/components/special-projects/PriorityProjectsPanel";
 import { ProjectImpactOverviewCard } from "@/components/special-projects/ProjectImpactOverviewCard";
@@ -39,6 +40,9 @@ export default async function SpecialProjectsDashboard() {
 
           {/* Action bar — primary CTA + 5 outline actions */}
           <SpActionBar user={currentUser} />
+
+          {/* Live from the backend Project graph — the real projects + counts. */}
+          <SpecialProjectsLiveBoard />
 
           {/* Project Portfolio + Priority Projects */}
           <section className="grid grid-cols-12 gap-4 items-start">
