@@ -26,6 +26,8 @@ import { ClusterReadinessCard } from "@/components/cluster/ClusterReadinessCard"
 import { scopedClusterCounts } from "@/lib/cluster/cluster-scope";
 import { getCurrentUser } from "@/lib/auth";
 import { MyCapacityCard } from "@/components/cceo/MyCapacityCard";
+import { fetchTargetsByPeriod } from "@/lib/api/surfaces";
+import { BackendTargetsTable } from "@/components/targets/BackendTargetsTable";
 
 // CCEO Role Command Center.
 //
@@ -45,6 +47,7 @@ import { MyCapacityCard } from "@/components/cceo/MyCapacityCard";
 //   9. (no header)  — quick actions + momentum
 export default async function CceoDashboardPage() {
   const user = await getCurrentUser();
+  const targets = await fetchTargetsByPeriod(user);
   const clusterCounts = scopedClusterCounts(user.staffId, user.role);
 
   const mobile = (
@@ -104,6 +107,7 @@ export default async function CceoDashboardPage() {
           <CceoSixKpiRow />
           <CceoKpiStrip />
           <MyCapacityCard staffId={user.staffId} />
+          {targets.live && <BackendTargetsTable targets={targets.data} title="My targets by time period" />}
           <CoreServicePackageCard />
         </section>
 

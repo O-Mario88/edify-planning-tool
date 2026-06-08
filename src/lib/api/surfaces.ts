@@ -245,6 +245,23 @@ export function fetchSchoolDetail(user: BackendUser, schoolId: string) {
   return live<BeSchoolDetail>(`/schools/${encodeURIComponent(schoolId)}`, user);
 }
 
+// ── Targets by Time Period (staff vs partner, cumulative) ───────────
+export type BeTargetCell = { target: number; achieved: number; pct: number | null };
+export type BeTargetRow = { period: string; staff: BeTargetCell; partner: BeTargetCell; total: BeTargetCell; gap: number; status: string };
+export type BeTargets = {
+  fy: string; staffId: string; totalPortfolio: number;
+  annual: { staffTarget: number; partnerTarget: number; total: number };
+  rows: BeTargetRow[]; dataQuality: string[];
+};
+
+export function fetchTargetsByPeriod(user: BackendUser, fy?: string, staffId?: string) {
+  const params = new URLSearchParams();
+  if (fy) params.set("fy", fy);
+  if (staffId) params.set("staffId", staffId);
+  const q = params.toString();
+  return live<BeTargets>(`/targets/time-period${q ? `?${q}` : ""}`, user);
+}
+
 export type BeWorkflowStep = { key: string; label: string; done: boolean; status: "done" | "current" | "pending" };
 export type BeSchoolWorkflow = {
   school: { schoolId: string; name: string; schoolType: string; owner?: string | null };
