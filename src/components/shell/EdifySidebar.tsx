@@ -460,42 +460,38 @@ function buildImpactMenu(dashboardHref: string): MenuSection[] {
 // signals, recognition, and aggregated field intelligence. School,
 // field-visit, finance, and data-intake surfaces are NOT here — they
 // do not map to anything on the HR console.
+// HR supports PEOPLE, not schools. Per the access spec, HR gets exactly three
+// working surfaces — Staff Performance, Leave Planner, Daily Field Debrief —
+// plus insights + account. No School Directory, no partner/payment/fund/project
+// operational pages (those are blocked in middleware + backend permissions).
 function buildHrMenu(dashboardHref: string): MenuSection[] {
   return [
     {
       label: "My Work",
       items: [
-        { label: "Dashboard",        href: dashboardHref,    Icon: LayoutDashboard },
-        { label: "Calendar",         href: "/calendar",      Icon: CalendarRange },
+        { label: "Dashboard",         href: dashboardHref,    Icon: LayoutDashboard },
       ],
     },
     {
-      label: "Team",
+      label: "People",
       items: [
-        { label: "Team Targets",     href: "/team-targets",  Icon: Target },
-        { label: "Staff",            href: "/staff",         Icon: UserCog },
-      ],
-    },
-    {
-      label: "Activity",
-      items: [
-        { label: "Field Intelligence", href: "/field-intelligence", Icon: Brain },
+        { label: "Staff Performance", href: "/staff",         Icon: UserCog },
+        { label: "Leave Planner",     href: "/leave",         Icon: CalendarRange },
+        { label: "Daily Debrief",     href: "/debriefs",      Icon: Brain },
       ],
     },
     {
       label: "Insights",
       items: [
-        { label: "Analytics",        href: "/analytics",     Icon: BarChart3 },
-        { label: "Reports",          href: "/reports",       Icon: FileText },
+        { label: "Analytics",         href: "/analytics",     Icon: BarChart3 },
+        { label: "Reports",           href: "/reports",       Icon: FileText },
       ],
     },
     {
       label: "Account",
       items: [
-        { label: "Messages",         href: "/messages",      Icon: MessageSquare },
-        { label: "Leave & Holidays", href: "/leave",         Icon: CalendarRange },
-        { label: "Help",             href: "/help",          Icon: HelpCircle },
-        { label: "Settings",         href: "/settings",      Icon: Settings },
+        { label: "Messages",          href: "/messages",      Icon: MessageSquare },
+        { label: "Settings",          href: "/settings",      Icon: Settings },
       ],
     },
   ];
