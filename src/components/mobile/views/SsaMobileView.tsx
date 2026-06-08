@@ -1,52 +1,16 @@
 "use client";
 
-import {
-  School,
-  CheckCircle2,
-  Users,
-  Star,
-  AlertTriangle,
-  Building2,
-  TrendingUp,
-  ArrowDownRight,
-  ArrowUpRight,
-  type LucideIcon,
-} from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { TrendingUp } from "lucide-react";
 import {
   MobileSubpageShell,
-  MobileKpiGrid,
   MobileSectionCard,
-  type MobileKpiTile,
-  type KpiTone,
 } from "@/components/mobile/views/MobileSubpageShell";
-import {
-  ssaKpis,
-  ssaUser,
-  ssaNotificationCount,
-  interventionScores,
-  districtSsaPerformance,
-  ssaQuarterlyTrend,
-} from "@/lib/ssa-mock";
-import { cn } from "@/lib/utils";
+import { EmptyState, ErrorState, LoadingState } from "@/components/ui/DataStates";
+import type { BeSsaPerformanceGrouped } from "@/lib/api/surfaces";
 import { SsaPerformanceGrid } from "@/components/ssa/SsaPerformanceGrid";
 import { InterventionImprovementGrid } from "@/components/ssa/InterventionImprovementGrid";
 import { SupportImprovementCard } from "@/components/analytics/SupportImprovementCard";
-
-const KPI_ICON: Record<string, LucideIcon> = {
-  school:        School,
-  checkCircle:   CheckCircle2,
-  users:         Users,
-  star:          Star,
-  alertTriangle: AlertTriangle,
-  building:      Building2,
-};
-
-const KPI_TONE: Record<string, KpiTone> = {
-  edify:   "edify",
-  amber:   "amber",
-  rose:    "rose",
-  emerald: "green",
-};
 
 function barColor(score: number) {
   if (score >= 7.0) return "#10b981";
@@ -54,126 +18,142 @@ function barColor(score: number) {
   return "#ef4444";
 }
 
-export function SsaMobileView() {
-  const tiles: MobileKpiTile[] = ssaKpis.map((k) => ({
-    key: k.key,
-    Icon: KPI_ICON[k.icon] ?? School,
-    label: k.label,
-    value: `${k.value}${k.unit ?? ""}`,
-    caption: k.caption ?? (k.trend ? `${k.trend.delta}` : undefined),
-    tone: KPI_TONE[k.iconTone] ?? "edify",
-  }));
+type InterventionRow = { rank: number; label: string; score: number };
+type DistrictRow = { rank: number; district: string; schoolsAssessed: number; averageScore: number; completionRate: number };
 
-  const trendDelta = (
-    ssaQuarterlyTrend[ssaQuarterlyTrend.length - 1].score -
-    ssaQuarterlyTrend[0].score
-  ).toFixed(2);
+function deriveInterventions(data: BeSsaPerformanceGrouped): InterventionRow[] {
+  return data.interventions
+    .map((iv) => {
+      let sum = 0;
+      let weight = 0;
+      for (const r of data.rows) {
+        const v = r.interventions[iv.code];
+        if (v != null && r.schoolsAssessed > 0) {
+          sum += v * r.schoolsAssessed;
+          weight += r.schoolsAssessed;
+        }
+      }
+      return { label: iv.label, score: weight > 0 ? sum / weight : null };
+    })
+    .filter((r): r is { label: string; score: number } => r.score != null)
+    .sort((a, b) => b.score - a.score)
+    .map((r, i) => ({ rank: i + 1, label: r.label, score: r.score }));
+}
+
+function deriveDistricts(data: BeSsaPerformanceGrouped): DistrictRow[] {
+  return data.rows
+    .filter((r): r is typeof r & { overallAverage: number } => r.overallAverage != null && r.schoolsAssessed > 0)
+    .map((r) => ({
+      district: r.groupName,
+      schoolsAssessed: r.schoolsAssessed,
+      averageScore: r.overallAverage,
+      completionRate: r.schoolCount > 0 ? (r.schoolsAssessed / r.schoolCount) * 100 : 0,
+    }))
+    .sort((a, b) => b.averageScore - a.averageScore)
+    .map((r, i) => ({ ...r, rank: i + 1 }));
+}
+
+export function SsaMobileView() {
+  const [data, setData] = useState<BeSsaPerformanceGrouped | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/analytics/ssa-performance?groupBy=district&schoolType=all", {
+        credentials: "include",
+      });
+      const j = (await res.json()) as (BeSsaPerformanceGrouped & { live?: boolean; error?: string }) | null;
+      if (!res.ok || !j || j.live === false) {
+        setError(j?.error ?? "Could not load SSA performance.");
+        setData(null);
+      } else {
+        setData(j);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Network error");
+      setData(null);
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const interventions = data ? deriveInterventions(data) : [];
+  const districts = data ? deriveDistricts(data) : [];
 
   return (
     <MobileSubpageShell
       title="SSA Performance"
-      subtitle={`Country M&E · ${ssaQuarterlyTrend.length} quarters tracked`}
-      initials={ssaUser.initials}
-      notificationsCount={ssaNotificationCount}
+      subtitle="School self-assessment intelligence across the portfolio"
     >
       {/* Backend-driven truth layer (same as desktop): the 8-intervention SSA
-          performance grid, FY-over-FY improvement, and support→improvement.
-          Each self-hides when the backend is off, leaving the mock cards below. */}
+          performance grid, FY-over-FY improvement, and support→improvement. */}
       <SsaPerformanceGrid />
       <InterventionImprovementGrid />
       <SupportImprovementCard />
 
-      <MobileKpiGrid tiles={tiles} cols={2} />
-
-      {/* Quarterly trend mini-chart */}
-      <MobileSectionCard
-        title="SSA Performance Trend by Quarter"
-        subtitle={`Quarterly average · ${trendDelta} pts since ${ssaQuarterlyTrend[0].q.split(" ")[0]}`}
-      >
-        <div className="px-3 pb-3">
-          <ul className="space-y-1.5">
-            {ssaQuarterlyTrend.map((y) => {
-              const widthPct = (y.score / 10) * 100;
-              const shortQ = y.q.split(" ")[0];
-              return (
-                <li key={y.q} className="flex items-center gap-2 text-[11px]">
-                  <span className="w-10 muted font-semibold tabular shrink-0" title={y.q}>{shortQ}</span>
-                  <div className="flex-1 h-1.5 rounded-full bg-[#eef2f4] overflow-hidden">
-                    <div
-                      className="h-full rounded-full"
-                      style={{ width: `${widthPct}%`, backgroundColor: barColor(y.score) }}
-                    />
-                  </div>
-                  <span className="w-10 text-right font-extrabold tabular shrink-0">
-                    {y.score.toFixed(2)}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      </MobileSectionCard>
-
-      {/* Intervention scores */}
+      {/* Intervention scores — live portfolio-wide averages. */}
       <MobileSectionCard title="Intervention Performance" subtitle="Average score across the 8 SSA areas">
-        <ul className="divide-y divide-[var(--color-edify-divider)]">
-          {interventionScores.map((row) => (
-            <li key={row.label} className="px-3 py-2 flex items-center gap-2">
-              <span className="text-caption muted font-bold tabular shrink-0 w-5">#{row.rank}</span>
-              <div className="flex-1 min-w-0">
-                <div className="text-[11.5px] font-semibold leading-tight truncate">{row.label}</div>
-                <div className="mt-1 h-1.5 rounded-full bg-[#eef2f4] overflow-hidden">
-                  <div
-                    className="h-full rounded-full"
-                    style={{ width: `${(row.score / 10) * 100}%`, backgroundColor: barColor(row.score) }}
-                  />
+        {loading ? (
+          <LoadingState message="Loading…" compact />
+        ) : error ? (
+          <ErrorState message={error} onRetry={load} compact />
+        ) : interventions.length === 0 ? (
+          <EmptyState compact title="No scores yet" message="Intervention averages appear once schools are assessed." />
+        ) : (
+          <ul className="divide-y divide-[var(--color-edify-divider)]">
+            {interventions.map((row) => (
+              <li key={row.label} className="px-3 py-2 flex items-center gap-2">
+                <span className="text-caption muted font-bold tabular shrink-0 w-5">#{row.rank}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[11.5px] font-semibold leading-tight truncate">{row.label}</div>
+                  <div className="mt-1 h-1.5 rounded-full bg-[#eef2f4] overflow-hidden">
+                    <div className="h-full rounded-full" style={{ width: `${(row.score / 10) * 100}%`, backgroundColor: barColor(row.score) }} />
+                  </div>
                 </div>
-              </div>
-              <span className="text-[11.5px] font-extrabold tabular shrink-0 w-10 text-right">
-                {row.score.toFixed(2)}
-              </span>
-            </li>
-          ))}
-        </ul>
+                <span className="text-[11.5px] font-extrabold tabular shrink-0 w-10 text-right">{row.score.toFixed(2)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </MobileSectionCard>
 
-      {/* District performance list */}
-      <MobileSectionCard
-        title="Districts"
-        subtitle="Ranked by average SSA"
-        ctaLabel="View All"
-        ctaHref="#districts"
-      >
-        <ul className="divide-y divide-[var(--color-edify-divider)]">
-          {districtSsaPerformance.map((d) => (
-            <li key={d.district} className="px-3 py-2.5 flex items-center gap-3">
-              <span className="text-caption muted font-bold tabular shrink-0 w-6">#{d.rank}</span>
-              <div className="flex-1 min-w-0">
-                <div className="text-body font-extrabold tracking-tight">{d.district}</div>
-                <div className="text-caption muted truncate">
-                  {d.schoolsAssessed} schools · {d.completionRate}% complete
+      {/* District performance list — live, ranked by average SSA. */}
+      <MobileSectionCard title="Districts" subtitle="Ranked by average SSA" ctaLabel="View All" ctaHref="#districts">
+        {loading ? (
+          <LoadingState message="Loading…" compact />
+        ) : error ? (
+          <ErrorState message={error} onRetry={load} compact />
+        ) : districts.length === 0 ? (
+          <EmptyState compact title="No assessed districts yet" message="District performance appears once schools are assessed." />
+        ) : (
+          <ul className="divide-y divide-[var(--color-edify-divider)]">
+            {districts.map((d) => (
+              <li key={d.district} className="px-3 py-2.5 flex items-center gap-3">
+                <span className="text-caption muted font-bold tabular shrink-0 w-6">#{d.rank}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="text-body font-extrabold tracking-tight">{d.district}</div>
+                  <div className="text-caption muted truncate">
+                    {d.schoolsAssessed} schools · {d.completionRate.toFixed(0)}% complete
+                  </div>
                 </div>
-              </div>
-              <div className="text-right shrink-0">
-                <div className="text-body-lg font-extrabold tabular leading-none">
-                  {d.averageScore.toFixed(2)}
+                <div className="text-right shrink-0">
+                  <div className="text-body-lg font-extrabold tabular leading-none">{d.averageScore.toFixed(2)}</div>
                 </div>
-                <div className={cn(
-                  "text-[10px] font-semibold mt-0.5 inline-flex items-center gap-0.5",
-                  d.trend === "up" ? "text-emerald-600" : "text-rose-600",
-                )}>
-                  {d.trend === "up" ? <ArrowUpRight size={10} /> : <ArrowDownRight size={10} />}
-                  {d.highRiskSchools} high-risk
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
+              </li>
+            ))}
+          </ul>
+        )}
       </MobileSectionCard>
 
       <div className="muted text-caption inline-flex items-center gap-1 px-1">
         <TrendingUp size={11} />
-        Annual rollup so leaders can see multi-year school progress at a glance.
+        Portfolio-wide SSA averages, scoped to your role.
       </div>
     </MobileSubpageShell>
   );

@@ -1,19 +1,11 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  Network,
-  MapPin,
-  Building2,
-  User,
-  Calendar,
-  School,
-  ChevronRight,
-} from "lucide-react";
-import { EntityDetail, DetailKpi, DetailFacts } from "@/components/shell/EntityDetail";
-import { clustersMock, schoolsMock } from "@/lib/schools-mock";
+import { Network, MapPin, User } from "lucide-react";
+import { EntityDetail, DetailFacts } from "@/components/shell/EntityDetail";
+import { clustersMock } from "@/lib/schools-mock";
 import { orgStaff } from "@/lib/org/supervision";
 import { TitleRegister } from "@/components/shell/TitleRegister";
 import { ClusterProfileView } from "@/components/cluster/ClusterProfileView";
+import { ClusterMemberSchoolsLive } from "@/components/cluster/ClusterMemberSchoolsLive";
 import { clusterProfile, clusterById, activeClusters, CLUSTER_MEETING_LABEL, feedbackForCluster, CLUSTER_FEEDBACK_LABEL } from "@/lib/cluster/cluster-core";
 import { getCurrentUser } from "@/lib/auth";
 import { getCurrentPartner } from "@/lib/partner/partner-identity";
@@ -34,14 +26,6 @@ export default async function ClusterDetail({ params }: { params: Promise<{ id: 
   // to the stored value if the id isn't on the roster.
   const ownerName = orgStaff(cluster.ownerCceoId)?.name ?? cluster.ownerCceoId;
 
-  const schools = cluster.schoolIds
-    .map((sid) => schoolsMock.find((s) => s.schoolId === sid))
-    .filter((s): s is NonNullable<typeof s> => Boolean(s));
-  const avgSsa = schools.length
-    ? Math.round((schools.reduce((a, s) => a + s.ssaScore, 0) / schools.length) * 10) / 10
-    : 0;
-  const verified = schools.filter((s) => s.ssaStatus === "Completed").length;
-
   return (
     <EntityDetail
       breadcrumbs={[
@@ -53,54 +37,18 @@ export default async function ClusterDetail({ params }: { params: Promise<{ id: 
       subtitle={cluster.description ?? "Cluster of schools for grouped planning + delivery."}
       Icon={Network}
     >
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <DetailKpi label="Member Schools" value={String(schools.length)} caption="In this cluster" Icon={School}   tone="edify"  />
-        <DetailKpi label="Avg SSA"        value={`${avgSsa}%`}            caption="Across members" Icon={Calendar} tone={avgSsa >= 70 ? "green" : avgSsa >= 50 ? "amber" : "rose"} />
-        <DetailKpi label="SSA Completed"  value={`${verified}/${schools.length}`} caption="Verified"   Icon={Building2} tone="violet" />
-        <DetailKpi label="Owner"           value={ownerName} caption="Assigned CCEO" Icon={User} tone="edify" />
-      </section>
+      <DetailFacts
+        rows={[
+          { label: "Cluster ID",        value: cluster.id },
+          { label: "Owner",             value: <span className="inline-flex items-center gap-1.5"><User size={12} />{ownerName}</span> },
+          { label: "Region",            value: cluster.region ?? "—" },
+          { label: "District",          value: cluster.district ?? "—" },
+          { label: "Shipping Address",  value: <span className="inline-flex items-center gap-1.5"><MapPin size={12} />{cluster.shippingAddress ?? "—"}</span> },
+          { label: "Created",           value: cluster.createdAt },
+        ]}
+      />
 
-      <section className="grid grid-cols-12 gap-3 md:gap-4 items-start">
-        <div className="col-span-12 md:col-span-5">
-          <DetailFacts
-            rows={[
-              { label: "Cluster ID",        value: cluster.id },
-              { label: "Region",            value: cluster.region ?? "—" },
-              { label: "District",          value: cluster.district ?? "—" },
-              { label: "Shipping Address",  value: <span className="inline-flex items-center gap-1.5"><MapPin size={12} />{cluster.shippingAddress ?? "—"}</span> },
-              { label: "Created",           value: cluster.createdAt },
-            ]}
-          />
-        </div>
-        <div className="col-span-12 md:col-span-7 card rounded-2xl overflow-hidden">
-          <header className="px-4 pt-3.5 pb-2 flex items-baseline justify-between">
-            <h3 className="text-[13px] font-extrabold tracking-tight">Member Schools</h3>
-            <Link href="/schools" className="text-[11px] font-semibold text-[var(--color-edify-primary)]">View All schools →</Link>
-          </header>
-          <ul className="divide-y divide-[var(--color-edify-divider)]">
-            {schools.map((s) => (
-              <li key={s.schoolId}>
-                <Link
-                  href={`/schools/${s.schoolId}`}
-                  className="flex items-center gap-3 px-4 py-3 hover:bg-[var(--color-edify-soft)]/40"
-                >
-                  <span className="h-8 w-8 rounded-md bg-[var(--color-edify-soft)]/80 text-[var(--color-edify-primary)] grid place-items-center shrink-0">
-                    <Building2 size={14} />
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-body font-extrabold tracking-tight truncate">{s.schoolName}</div>
-                    <div className="text-caption muted truncate">{s.district} · {s.region} · SSA {s.ssaScore}%</div>
-                  </div>
-                  <span className={`px-1.5 py-[2px] rounded-md text-[9.5px] font-extrabold whitespace-nowrap ${s.ssaStatus === "Completed" ? "bg-emerald-100 text-emerald-700" : s.ssaStatus === "Overdue" ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-700"}`}>
-                    {s.ssaStatus}
-                  </span>
-                  <ChevronRight size={14} className="text-[var(--color-edify-muted)] shrink-0" />
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
+      <ClusterMemberSchoolsLive clusterId={cluster.id} />
     </EntityDetail>
   );
 }

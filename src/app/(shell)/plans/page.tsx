@@ -1,10 +1,8 @@
 import { ClipboardList, Plus } from "lucide-react";
 import { EntityIndex } from "@/components/shell/EntityIndex";
 import { PlansFamilyNav } from "@/components/planning/PlansFamilyNav";
-import { PlanIndexAccordion } from "@/components/planning/PlanIndexAccordion";
 import { MyPlanList, type MyPlanRow } from "@/components/planning/MyPlanList";
 import { Button } from "@/components/ui/Button";
-import { planItems } from "@/lib/mobile-mock";
 import { getCurrentUser } from "@/lib/auth";
 import { activities } from "@/lib/actions/store";
 import { fetchMyPlanActivities, type BeActivity } from "@/lib/api/surfaces";
@@ -71,7 +69,7 @@ export default async function PlansIndex() {
       title="Plans"
       subtitle="Everything you've planned: scheduled from a school or cluster. Reschedule, reassign, defer, cancel, or complete each row in place."
       Icon={ClipboardList}
-      count={myRows.length + planItems.length}
+      count={myRows.length}
       searchPlaceholder="Search plans"
     >
       <div className="flex justify-end">
@@ -90,8 +88,6 @@ export default async function PlansIndex() {
         </div>
         <MyPlanList rows={myRows} />
       </section>
-
-      <PlanIndexAccordion items={planItems} />
     </EntityIndex>
     </>
   );

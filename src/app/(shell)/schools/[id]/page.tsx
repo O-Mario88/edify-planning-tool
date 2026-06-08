@@ -29,6 +29,7 @@ import { cceosSupervisedBy } from "@/lib/org/supervision";
 import { isBackendEnabled } from "@/lib/api/backend";
 import { fetchSchoolDetail, fetchAssignmentOptions, fetchSchoolWorkflow, type BeAssignmentOptions } from "@/lib/api/surfaces";
 import { SchoolWorkflowJourney } from "@/components/schools/SchoolWorkflowJourney";
+import { SchoolDetailErrorState } from "@/components/schools/SchoolDetailErrorState";
 import { resolveSchoolNextAction as resolveNextAction } from "@/lib/planning/school-next-action";
 import { CorePageHeader } from "@/components/core/CorePageHeader";
 import { RoleBottomNav } from "@/components/mobile/RoleBottomNav";
@@ -126,10 +127,18 @@ export default async function School360({
 
   // Write-path migration: when the backend is on and this is a backend school,
   // render the backend-backed profile so scheduling writes to the API (enforced).
+  // A real backend error surfaces an error state (with retry) instead of silently
+  // rendering mock data — "Backend failure = error. Never fake data." A 404 means
+  // the id is not a backend school, so we fall through to the legacy id-space
+  // lookups below (so old SCH-### / sch-N links never dead-end).
   if (isBackendEnabled()) {
     const user = await getCurrentUser();
     const be = await fetchSchoolDetail(user, id);
     if (be.live) return <BackendSchool360 school={be.data} />;
+    const notFoundOnBackend = be.error == null || /\b404\b/.test(be.error);
+    if (!notFoundOnBackend) {
+      return <SchoolDetailErrorState message={`Could not load this school from the backend (${be.error}).`} />;
+    }
   }
 
   // Source of truth: an uploaded School Directory record. Render the School 360

@@ -7,9 +7,17 @@
 
 import { PageHeader } from "@/components/ui/PageHeader";
 import { HeaderFilterBar } from "@/components/shell/HeaderFilterBar";
-import { ssaHeader } from "@/lib/ssa-mock";
 import { getCurrentUser } from "@/lib/auth";
 import { getFilterScope } from "@/lib/filters/scope-service";
+
+// Static page chrome (title/subtitle/search placeholder). Inlined off ssa-mock
+// so the header compiles independently of the mock data layer.
+const SSA_HEADER = {
+  title: "SSA Performance",
+  subtitle:
+    "Track school self-assessment performance across all 8 interventions and compare district performance.",
+  searchPlaceholder: "Search schools, districts, or interventions…",
+} as const;
 
 export async function SsaHeader() {
   const user = await getCurrentUser();
@@ -17,10 +25,10 @@ export async function SsaHeader() {
 
   return (
     <PageHeader
-      title={ssaHeader.title}
-      subtitle={ssaHeader.subtitle}
+      title={SSA_HEADER.title}
+      subtitle={SSA_HEADER.subtitle}
       filterBar={<HeaderFilterBar scope={scope} />}
-      searchPlaceholder={ssaHeader.searchPlaceholder}
+      searchPlaceholder={SSA_HEADER.searchPlaceholder}
     />
   );
 }

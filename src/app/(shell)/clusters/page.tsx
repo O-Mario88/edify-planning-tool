@@ -4,9 +4,9 @@ import { EntityIndex } from "@/components/shell/EntityIndex";
 import { UnclusteredSchoolsBanner } from "@/components/planning/UnclusteredSchoolsBanner";
 import { ClusterReadinessCard } from "@/components/cluster/ClusterReadinessCard";
 import { CreateClusterButton } from "@/components/cluster/CreateClusterButton";
-import { ClusterManageList } from "@/components/cluster/ClusterManageList";
+import { LiveClusterList } from "@/components/cluster/LiveClusterList";
 import { getCurrentUser } from "@/lib/auth";
-import { clusterCountsFor, activeClusters, schoolsInCluster, meetingsForCluster } from "@/lib/cluster/cluster-core";
+import { clusterCountsFor } from "@/lib/cluster/cluster-core";
 import { intakeSchools } from "@/lib/intake/intake-mock";
 import { partners } from "@/lib/partner/partner-mock";
 import { resolveOwner } from "@/lib/portfolio/portfolio";
@@ -29,20 +29,8 @@ export default async function ClustersIndex() {
   const counts = clusterCountsFor(scopedSchools);
   const unclusteredCount = counts.unclustered;
 
-  // The hub lists the live engine clusters (the ones the "New cluster" button
-  // creates + that schools are assigned to), each with its current school count.
-  const clusterList = activeClusters().map((c) => ({
-    id: c.id,
-    name: c.name,
-    district: c.district,
-    subCounties: c.subCounties ?? [],
-    schoolCount: schoolsInCluster(c.id).length,
-    clusterLeaderName: c.clusterLeaderName,
-    clusterLeaderPhone: c.clusterLeaderPhone,
-    managedByPartnerId: c.managedByPartnerId,
-    managedByPartnerName: c.managedByPartnerName,
-    meetingCount: meetingsForCluster(c.id).length,
-  }));
+  // Partner picker options for delegating a cluster to a partner. Stable
+  // config-ish input passed into the live list (no backend partner endpoint).
   const partnerOptions = partners.map((p) => ({ id: p.id, name: p.name }));
 
   return (
@@ -50,7 +38,6 @@ export default async function ClustersIndex() {
       title="Clusters"
       subtitle="Groups of schools planned and delivered together. Drives routes, training cohorts, and partner assignments."
       Icon={Network}
-      count={clusterList.length}
       searchPlaceholder="Search clusters"
     >
       <div className="mb-3 space-y-3">
@@ -72,15 +59,7 @@ export default async function ClustersIndex() {
           </nav>
         </div>
       </div>
-      {clusterList.length === 0 ? (
-        <div className="card rounded-2xl p-8 text-center">
-          <Network size={24} className="mx-auto text-[var(--color-edify-primary)]" />
-          <h2 className="text-[14px] font-extrabold mt-2">No clusters yet</h2>
-          <p className="text-[12px] muted mt-1">Use “New cluster” to create one, then assign schools from the workspace.</p>
-        </div>
-      ) : (
-        <ClusterManageList clusters={clusterList} partners={partnerOptions} />
-      )}
+      <LiveClusterList partners={partnerOptions} />
     </EntityIndex>
   );
 }
