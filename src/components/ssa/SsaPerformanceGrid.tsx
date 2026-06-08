@@ -79,8 +79,8 @@ export function SsaPerformanceGrid() {
           <table className="w-full text-[11px] px-1 border-separate border-spacing-x-0.5 border-spacing-y-1">
             <thead>
               <tr className="text-left muted font-bold uppercase tracking-wide">
-                <th className="py-1 pr-2 text-[9.5px] sticky left-0 z-10 bg-[var(--surface-1)]">{GROUPS.find((g) => g.key === groupBy)?.label}</th>
-                <th className="py-1 px-1 text-[9px] text-center">Assd</th>
+                <th className="py-1 pr-2 text-[9.5px] sticky left-0 z-10 bg-[var(--surface-1)] w-[1%] whitespace-nowrap">{GROUPS.find((g) => g.key === groupBy)?.label}</th>
+                <th className="py-1 px-1 text-[9px] text-center w-[1%] whitespace-nowrap">Assd</th>
                 {data.interventions.map((iv) => (
                   <th key={iv.code} className="py-1 px-0.5 text-[9px] text-center min-w-[30px]" title={iv.label}>{ABBR[iv.code] ?? iv.code.slice(0, 2)}</th>
                 ))}
@@ -90,10 +90,10 @@ export function SsaPerformanceGrid() {
             <tbody>
               {data.rows.map((r) => (
                 <tr key={r.groupId} className="group cursor-pointer" onClick={() => openDrill(r)}>
-                  <td className="py-1 pr-2 font-semibold whitespace-nowrap text-[10.5px] sticky left-0 z-10 bg-[var(--surface-1)] group-hover:bg-[var(--surface-3)]">
+                  <td className="py-1 pr-2 font-semibold whitespace-nowrap text-[10.5px] sticky left-0 z-10 bg-[var(--surface-1)] group-hover:bg-[var(--surface-3)] w-[1%]">
                     <span className="inline-flex items-center gap-0.5">{r.groupName}<ChevronRight size={10} className="opacity-40" /></span>
                   </td>
-                  <td className="py-1 px-1 text-center text-[10px] tabular muted">{r.schoolsAssessed}/{r.schoolCount}</td>
+                  <td className="py-1 px-1 text-center text-[10px] tabular muted w-[1%] whitespace-nowrap">{r.schoolsAssessed}/{r.schoolCount}</td>
                   {data.interventions.map((iv) => {
                     const v = r.interventions[iv.code];
                     const t = tone(v);

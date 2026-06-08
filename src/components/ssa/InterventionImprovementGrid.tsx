@@ -70,20 +70,20 @@ export function InterventionImprovementGrid() {
           <table className="w-full text-[11px] px-1 border-separate border-spacing-x-0.5 border-spacing-y-1">
             <thead>
               <tr className="text-left muted font-bold uppercase tracking-wide">
-                <th className="py-1 pr-2 text-[9.5px] sticky left-0 z-10 bg-[var(--surface-1)]">{GROUPS.find((g) => g.key === groupBy)?.label}</th>
-                <th className="py-1 px-1 text-[9px] text-center">↑/↓</th>
+                <th className="py-1 pr-2 text-[9.5px] sticky left-0 z-10 bg-[var(--surface-1)] w-[1%] whitespace-nowrap">{GROUPS.find((g) => g.key === groupBy)?.label}</th>
+                <th className="py-1 px-1 text-[9px] text-center w-[1%] whitespace-nowrap">↑/↓</th>
                 {data.interventions.map((iv) => <th key={iv.code} className="py-1 px-0.5 text-[9px] text-center min-w-[30px]" title={`${iv.label} (change)`}>{ABBR[iv.code] ?? iv.code.slice(0, 2)}</th>)}
-                <th className="py-1 pl-1.5 text-[9px]">Best ↑</th>
+                <th className="py-1 pl-1.5 text-[9px] w-[1%] whitespace-nowrap">Best ↑</th>
               </tr>
             </thead>
             <tbody>
               {data.rows.map((r) => (
                 <tr key={r.groupId} className="group">
-                  <td className="py-1 pr-2 font-semibold whitespace-nowrap text-[10.5px] sticky left-0 z-10 bg-[var(--surface-1)] group-hover:bg-[var(--surface-3)]">
+                  <td className="py-1 pr-2 font-semibold whitespace-nowrap text-[10.5px] sticky left-0 z-10 bg-[var(--surface-1)] group-hover:bg-[var(--surface-3)] w-[1%]">
                     {r.groupName}
                     {r.schoolsNoComparison > 0 && <span className="ml-1 text-[9px] text-amber-600" title="schools with no previous-FY SSA">({r.schoolsNoComparison} no comp.)</span>}
                   </td>
-                  <td className="py-1 px-1 text-center text-[10px] tabular">
+                  <td className="py-1 px-1 text-center text-[10px] tabular w-[1%] whitespace-nowrap">
                     <span className="text-emerald-600 font-bold">{r.schoolsImproved}</span>
                     <span className="muted">/</span>
                     <span className="text-rose-600 font-bold">{r.schoolsDeclined}</span>
@@ -95,7 +95,7 @@ export function InterventionImprovementGrid() {
                     const t = changeTone(v);
                     return <td key={iv.code} className="text-center"><span title={cell ? `${cell.prevAvg ?? "—"} → ${cell.currAvg ?? "—"}` : ""} className="inline-block w-full min-w-[30px] py-1 rounded text-[10px] font-extrabold tabular" style={{ backgroundColor: t.bg, color: t.fg }}>{fmt(v)}</span></td>;
                   })}
-                  <td className="py-1 pl-1.5 text-[10px] whitespace-nowrap">
+                  <td className="py-1 pl-1.5 text-[10px] whitespace-nowrap w-[1%]">
                     {r.bestIntervention ? <span className="text-emerald-700 font-bold">{ABBR[r.bestIntervention.code]} +{r.bestIntervention.change}</span> : <span className="muted">—</span>}
                   </td>
                 </tr>
