@@ -1,4 +1,5 @@
 import { CommandStack } from "@/components/actions/CommandStack";
+import { RecruitmentIntelligenceCard } from "@/components/analytics/RecruitmentIntelligenceCard";
 import { ProjectWorkCard } from "@/components/special-projects/ProjectWorkCard";
 import { DashboardPageHeader } from "@/components/dashboards/DashboardPageHeader";
 import { DebriefPromoterCard } from "@/components/debrief/DebriefPromoterCard";
@@ -86,6 +87,10 @@ export default async function CountryProgramLeadDashboard() {
         {/* TODAY — 10-Second Command Stack carries its own strategic
             header internally; no outer chapter needed. */}
         <CommandStack user={user} hideMission />
+
+        {/* Recruitment intelligence — team-scope: which districts to expand
+            vs pause given the team's SSA readiness + capacity. */}
+        <RecruitmentIntelligenceCard />
 
         {/* FIELD & TEAM — the player-coach split. Two command lanes
             (My Field Work vs My Team Work) so the PL sees their own

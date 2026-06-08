@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { ROLE_REDIRECT } from "@/lib/auth-public";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { RecruitmentIntelligenceCard } from "@/components/analytics/RecruitmentIntelligenceCard";
+import { RecruitmentDistrictTable } from "@/components/analytics/RecruitmentDistrictTable";
 
 // Recruitment Intelligence page — the CD's directory replacement. Aggregated,
 // drillable advisory: should we recruit more or focus on current schools?
@@ -22,6 +23,7 @@ export default async function RecruitmentPage() {
         description="A backend-driven, role-scoped decision aid combining SSA readiness, capacity, clustering, data quality, partner strain, and impact. It advises where to expand and where to pause — it never recruits automatically."
       />
       <RecruitmentIntelligenceCard />
+      <RecruitmentDistrictTable />
     </div>
   );
 }

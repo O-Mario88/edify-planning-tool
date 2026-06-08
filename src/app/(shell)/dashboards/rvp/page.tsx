@@ -20,6 +20,7 @@
 
 import { Globe, Wallet, Target, Sparkles, TrendingUp, AlertTriangle } from "lucide-react";
 import { CommandStack } from "@/components/actions/CommandStack";
+import { RecruitmentIntelligenceCard } from "@/components/analytics/RecruitmentIntelligenceCard";
 import { DashboardPageHeader } from "@/components/dashboards/DashboardPageHeader";
 import { SectionCard, StatusBadge, ProgressRing } from "@/components/ui/primitives";
 import { MetricStrip } from "@/components/ui/MetricStrip";
@@ -82,6 +83,9 @@ export default async function RVPDashboard() {
 
       {/* TODAY — CommandStack carries its own header. */}
       <CommandStack user={rawUser} hideMission />
+
+      {/* Recruitment intelligence — regional expansion-readiness summary. */}
+      <RecruitmentIntelligenceCard />
 
       {/* REGIONAL SIGNALS — region-weighted KPIs, system insights, and
           training coverage against SSA gaps. */}

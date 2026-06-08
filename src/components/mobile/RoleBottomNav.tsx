@@ -70,7 +70,8 @@ const DIRECTOR_LAYOUT: Layout = {
   kind: "flat",
   tabs: [
     { key: "home",     label: "Home",     href: "/dashboards/director", Icon: Home,           match: ["/dashboards/director"] },
-    { key: "schools",  label: "Schools",  href: "/schools",             Icon: Building2,      match: ["/schools"] },
+    // No Schools — the CD doesn't access the operational directory.
+    { key: "recruit",  label: "Recruit",  href: "/recruitment",         Icon: Compass,        match: ["/recruitment"] },
     { key: "ssa",      label: "SSA",      href: "/ssa",                 Icon: Activity,       match: ["/ssa"] },
     { key: "team",     label: "Team",     href: "/team-targets",        Icon: Users,          match: ["/team-targets"] },
     { key: "more",     label: "More",     href: "/more",              Icon: MoreHorizontal, match: ["/more"] },
@@ -111,10 +112,12 @@ const IMPACT_LAYOUT: Layout = {
 
 const HR_LAYOUT: Layout = {
   kind: "flat",
+  // HR supports people: Staff Performance, Leave Planner, Daily Debrief. No Schools.
   tabs: [
-    { key: "home",     label: "Home",     href: "/team-targets",    Icon: Home,           match: ["/team-targets"] },
-    { key: "field",    label: "Field",    href: "/field-intelligence", Icon: Activity,    match: ["/field-intelligence"] },
+    { key: "home",     label: "Home",     href: "/dashboards/hr",   Icon: Home,           match: ["/dashboards/hr"] },
+    { key: "staff",    label: "Staff",    href: "/staff",           Icon: Users,          match: ["/staff"] },
     { key: "leave",    label: "Leave",    href: "/leave",           Icon: ClipboardList,  match: ["/leave"] },
+    { key: "debrief",  label: "Debrief",  href: "/debriefs",        Icon: Activity,       match: ["/debriefs"] },
     { key: "more",     label: "More",     href: "/more",          Icon: MoreHorizontal, match: ["/more"] },
   ],
 };

@@ -1,6 +1,7 @@
 import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { DashboardPageHeader } from "@/components/dashboards/DashboardPageHeader";
 import { CommandStack } from "@/components/actions/CommandStack";
+import { RecruitmentIntelligenceCard } from "@/components/analytics/RecruitmentIntelligenceCard";
 import { DebriefPromoterCard } from "@/components/debrief/DebriefPromoterCard";
 import { CceoSixKpiRow } from "@/components/cceo/CceoSixKpiRow";
 import { CceoKpiStrip } from "@/components/cceo/CceoKpiStrip";
@@ -56,6 +57,7 @@ export default async function CceoDashboardPage() {
       <main className="flex-1 px-3 sm:px-4 pt-3 pb-28 space-y-3">
         <CommandStack user={user} />
         <DebriefPromoterCard submitterRole="CCEO" />
+        <RecruitmentIntelligenceCard advisory />
         <PortfolioSummaryCard staffId={user.staffId} />
         <ClusterReadinessCard clustered={clusterCounts.clustered} unclustered={clusterCounts.unclustered} needsReview={clusterCounts.needsReview} title="Cluster setup readiness" />
         <ProjectWorkCard user={user} />
@@ -87,6 +89,10 @@ export default async function CceoDashboardPage() {
         <CommandStack user={user} />
 
         <DebriefPromoterCard submitterRole="CCEO" />
+
+        {/* Recruitment intelligence — own-portfolio advisory (CCEO is not the
+            strategic recruitment decision-maker, so this reads as guidance). */}
+        <RecruitmentIntelligenceCard advisory />
 
         {/* THIS WEEK — vital signs.  KPI tiles + health funnel + service. */}
         <section className="space-y-3">

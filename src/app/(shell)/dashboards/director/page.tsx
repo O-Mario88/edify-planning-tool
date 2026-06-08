@@ -99,7 +99,7 @@ export default async function CountryDirectorDashboard() {
             description="Eight headline KPIs, leadership-attention alerts, debriefs routed up to you, and training-coverage against SSA gaps."
           />
           <CountryKpiRow />
-          <ClusterReadinessCard clustered={clusterCounts.clustered} unclustered={clusterCounts.unclustered} needsReview={clusterCounts.needsReview} title="National cluster setup" />
+          <ClusterReadinessCard clustered={clusterCounts.clustered} unclustered={clusterCounts.unclustered} needsReview={clusterCounts.needsReview} title="National cluster setup" actionable={false} />
           <ClusterOperationsCard scope="country" />
           <LeadershipAttentionRow />
           <DebriefReviewInbox user={user} audience="cd" />

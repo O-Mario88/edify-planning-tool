@@ -8,12 +8,17 @@ export function ClusterReadinessCard({
   needsReview,
   hrefAll = "/schools",
   title = "Cluster setup",
+  actionable = true,
 }: {
   clustered: number;
   unclustered: number;
   needsReview?: number;
   hrefAll?: string;
   title?: string;
+  // When false (e.g. CD viewing aggregates), show the readiness stat without
+  // the operational "Assign to clusters" CTA — cluster assignment is CCEO/PL/IA
+  // work, and the CD has no directory access (spec §18).
+  actionable?: boolean;
 }) {
   const review = needsReview ?? 0;
   const total = clustered + unclustered + review;
@@ -61,7 +66,9 @@ export function ClusterReadinessCard({
         <div className="muted mt-1 text-[11px] tabular">{pct}% clustered</div>
       </div>
 
-      {unclustered > 0 ? (
+      {unclustered > 0 && !actionable ? (
+        <div className="muted text-[12px] tabular">{unclustered} unclustered</div>
+      ) : unclustered > 0 ? (
         <Link
           href={hrefAll}
           className={cn(
