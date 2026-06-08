@@ -68,6 +68,17 @@ export type BackendResult<T> =
   | { ok: true; data: T }
   | { ok: false; error: string };
 
+/** The backend API base — used by the SSE proxy route to stream realtime events. */
+export function backendApiBase(): string {
+  return API;
+}
+
+/** Resolve the backend bearer token for a user (for the SSE proxy, which can't
+ *  use backendFetch because it streams an open connection). */
+export async function backendTokenFor(user: BackendUser): Promise<string | null> {
+  return loginToBackend(backendEmailFor(user));
+}
+
 /** Fetch a scoped backend endpoint as the current edify-web user. */
 export async function backendFetch<T>(path: string, user: BackendUser, init?: RequestInit): Promise<BackendResult<T>> {
   const token = await loginToBackend(backendEmailFor(user));

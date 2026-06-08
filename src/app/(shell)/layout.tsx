@@ -2,6 +2,7 @@ import { type ReactNode } from "react";
 import { EdifySidebarServer } from "@/components/shell/EdifySidebarServer";
 import { RoleBottomNav } from "@/components/mobile/RoleBottomNav";
 import { PageTitleProvider } from "@/components/shell/PageTitleContext";
+import { RealtimeProvider } from "@/components/shell/RealtimeProvider";
 import { MobileTopBar } from "@/components/shell/MobileTopBar";
 import { RouteTitleSync } from "@/components/shell/RouteTitleSync";
 import { CommandPalette } from "@/components/shell/CommandPalette";
@@ -67,6 +68,10 @@ export default async function ShellLayout({ children }: { children: ReactNode })
           `useSetPageTitle()` overrides still win because they run
           after this default. */}
       <RouteTitleSync />
+      {/* The live wire: subscribes to the SSE stream and refreshes server
+          components on every domain event, so dashboards/queues/counters update
+          without a manual reload. Renders nothing. */}
+      {user && <RealtimeProvider />}
       <div className="flex min-h-screen w-full bg-[var(--color-page)]">
         <EdifySidebarServer />
         <main id="main-content" className="flex-1 min-w-0">
