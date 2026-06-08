@@ -186,6 +186,42 @@ export function fetchContributionDrilldown(
   return live<Record<string, unknown>[]>(`/analytics/contribution-drilldown?${params.toString()}`, user);
 }
 
+// ── SSA Performance by group (8 intervention averages, drillable) ──
+
+export type BeSsaGroupRow = {
+  groupId: string; groupName: string;
+  schoolCount: number; schoolsAssessed: number; schoolsMissingSSA: number;
+  interventions: Record<string, number | null>;
+  overallAverage: number | null;
+};
+export type BeSsaPerformanceGrouped = {
+  fy: string; groupBy: string; schoolType: string;
+  interventions: { code: string; label: string }[];
+  rows: BeSsaGroupRow[];
+};
+export type BeSsaDrilldownRow = {
+  schoolId: string; name: string; schoolType: string;
+  district: string | null; cluster: string | null; cceo: string | null;
+  ssaDate: string | null; overallAverage: number | null;
+  interventions: Record<string, number | null>;
+};
+
+export function fetchSsaPerformanceGrouped(user: BackendUser, p: { groupBy?: string; schoolType?: string; fy?: string } = {}) {
+  const params = new URLSearchParams();
+  if (p.groupBy) params.set("groupBy", p.groupBy);
+  if (p.schoolType) params.set("schoolType", p.schoolType);
+  if (p.fy) params.set("fy", p.fy);
+  const q = params.toString();
+  return live<BeSsaPerformanceGrouped>(`/analytics/ssa-performance-grouped${q ? `?${q}` : ""}`, user);
+}
+
+export function fetchSsaDrilldown(user: BackendUser, p: { groupBy: string; groupId: string; fy?: string; schoolType?: string }) {
+  const params = new URLSearchParams({ groupBy: p.groupBy, groupId: p.groupId });
+  if (p.fy) params.set("fy", p.fy);
+  if (p.schoolType) params.set("schoolType", p.schoolType);
+  return live<BeSsaDrilldownRow[]>(`/analytics/ssa-performance-grouped/drilldown?${params.toString()}`, user);
+}
+
 // ── My Plan (activities) — the write-path migration surface ─────────
 
 export type BeActivity = {
@@ -285,6 +321,17 @@ export type BeAssignmentOptions = {
   capacity: { staffId: string; fy: string; max: number; used: number; remaining: number; atLimit: boolean; nearLimit: boolean };
   options: BeAssignmentOption[];
 };
+
+export type BeStaffCapacity = { staffId: string; fy: string; max: number; used: number; remaining: number; atLimit: boolean; nearLimit: boolean };
+
+/** The caller's (or a given staff's) direct-support capacity from the backend. */
+export function fetchStaffCapacity(user: BackendUser, staffId?: string, fy?: string) {
+  const params = new URLSearchParams();
+  if (staffId) params.set("staffId", staffId);
+  if (fy) params.set("fy", fy);
+  const q = params.toString();
+  return live<BeStaffCapacity>(`/assignment/capacity${q ? `?${q}` : ""}`, user);
+}
 
 /** Role + capacity-aware assignment options for a school (backend-enforced). */
 export function fetchAssignmentOptions(user: BackendUser, schoolId: string, fy?: string) {

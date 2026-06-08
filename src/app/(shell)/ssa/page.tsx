@@ -9,6 +9,7 @@ import { PriorityInterventionGapsCard } from "@/components/ssa/PriorityIntervent
 import { UrgentInterventionSchoolsCard } from "@/components/ssa/UrgentInterventionSchoolsCard";
 import { SsaTrendCard } from "@/components/ui/lazy-charts";
 import { ActionInsightsPanel } from "@/components/ssa/ActionInsightsPanel";
+import { SsaPerformanceGrid } from "@/components/ssa/SsaPerformanceGrid";
 
 // SSA Performance — intelligence cockpit.
 //
@@ -49,6 +50,10 @@ export default async function SsaPerformancePage({
 
       <div className="px-3 sm:px-4 md:px-6 pb-24 md:pb-6 pt-3 md:pt-4 space-y-3 md:space-y-4">
         {/* SsaHero retired per global hero removal pass. */}
+
+        {/* Backend-driven SSA Performance — the average of EACH of the 8
+            interventions per group (district/region/CCEO/cluster), drillable. */}
+        <SsaPerformanceGrid />
 
         {/* 2 — Intervention scoreboard + recommendations.
             Matched height (~8 ranked rows vs ~4 insight cards), so they

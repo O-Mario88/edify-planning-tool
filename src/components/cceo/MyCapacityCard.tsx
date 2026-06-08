@@ -1,12 +1,19 @@
 import Link from "next/link";
 import { Gauge, Handshake } from "lucide-react";
 import { computeStaffCapacity, partnerSupportedSchools } from "@/lib/planning/assignment-policy";
+import { fetchStaffCapacity } from "@/lib/api/surfaces";
+import { getCurrentUser } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
 // CCEO "My Direct Support Capacity" — how many schools I directly support vs my
-// CD/IA-set limit. At the limit, new support goes to partners (who are uncapped).
-export function MyCapacityCard({ staffId }: { staffId: string }) {
-  const cap = computeStaffCapacity(staffId);
+// CD/IA-set limit. Reads the BACKEND capacity when enabled (the enforced source),
+// falling back to the in-memory store. At the limit, new support goes to partners.
+export async function MyCapacityCard({ staffId }: { staffId: string }) {
+  const user = await getCurrentUser();
+  const be = await fetchStaffCapacity(user);
+  const cap = be.live
+    ? { used: be.data.used, max: be.data.max, remaining: be.data.remaining, nearLimit: be.data.nearLimit }
+    : computeStaffCapacity(staffId);
   const partner = partnerSupportedSchools(staffId);
   const pct = cap.max ? Math.min(100, Math.round((cap.used / cap.max) * 100)) : 0;
   const barTone = cap.used >= cap.max ? "bg-rose-500" : cap.nearLimit ? "bg-amber-500" : "bg-emerald-500";
