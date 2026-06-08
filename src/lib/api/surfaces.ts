@@ -215,6 +215,32 @@ export function fetchSsaPerformanceGrouped(user: BackendUser, p: { groupBy?: str
   return live<BeSsaPerformanceGrouped>(`/analytics/ssa-performance-grouped${q ? `?${q}` : ""}`, user);
 }
 
+export type BeImprovementIntervention = { code: string; label: string; prevAvg: number | null; currAvg: number | null; change: number | null };
+export type BeImprovementRow = {
+  groupId: string; groupName: string;
+  schoolsImproved: number; schoolsDeclined: number; schoolsNoChange: number; schoolsNoComparison: number;
+  improvementRate: number | null;
+  bestIntervention: { code: string; label: string; change: number } | null;
+  decliningIntervention: { code: string; label: string; change: number } | null;
+  weakestIntervention: { code: string; label: string; currAvg: number | null } | null;
+  interventions: BeImprovementIntervention[];
+};
+export type BeInterventionImprovement = {
+  currentFy: string; prevFy: string; groupBy: string; schoolType: string;
+  interventions: { code: string; label: string }[];
+  rows: BeImprovementRow[];
+};
+
+export function fetchInterventionImprovement(user: BackendUser, p: { groupBy?: string; schoolType?: string; currentFy?: string; prevFy?: string } = {}) {
+  const params = new URLSearchParams();
+  if (p.groupBy) params.set("groupBy", p.groupBy);
+  if (p.schoolType) params.set("schoolType", p.schoolType);
+  if (p.currentFy) params.set("currentFy", p.currentFy);
+  if (p.prevFy) params.set("prevFy", p.prevFy);
+  const q = params.toString();
+  return live<BeInterventionImprovement>(`/analytics/intervention-improvement${q ? `?${q}` : ""}`, user);
+}
+
 export function fetchSsaDrilldown(user: BackendUser, p: { groupBy: string; groupId: string; fy?: string; schoolType?: string }) {
   const params = new URLSearchParams({ groupBy: p.groupBy, groupId: p.groupId });
   if (p.fy) params.set("fy", p.fy);

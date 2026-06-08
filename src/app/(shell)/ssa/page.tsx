@@ -10,6 +10,7 @@ import { UrgentInterventionSchoolsCard } from "@/components/ssa/UrgentInterventi
 import { SsaTrendCard } from "@/components/ui/lazy-charts";
 import { ActionInsightsPanel } from "@/components/ssa/ActionInsightsPanel";
 import { SsaPerformanceGrid } from "@/components/ssa/SsaPerformanceGrid";
+import { InterventionImprovementGrid } from "@/components/ssa/InterventionImprovementGrid";
 
 // SSA Performance — intelligence cockpit.
 //
@@ -54,6 +55,9 @@ export default async function SsaPerformancePage({
         {/* Backend-driven SSA Performance — the average of EACH of the 8
             interventions per group (district/region/CCEO/cluster), drillable. */}
         <SsaPerformanceGrid />
+
+        {/* Impact — previous-FY vs current-FY change per intervention. */}
+        <InterventionImprovementGrid />
 
         {/* 2 — Intervention scoreboard + recommendations.
             Matched height (~8 ranked rows vs ~4 insight cards), so they
