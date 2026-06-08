@@ -27,7 +27,8 @@ import { getCurrentUser } from "@/lib/auth";
 import { computeStaffCapacity, staffAlreadySupportsSchool, getAssignmentOptions } from "@/lib/planning/assignment-policy";
 import { cceosSupervisedBy } from "@/lib/org/supervision";
 import { isBackendEnabled } from "@/lib/api/backend";
-import { fetchSchoolDetail, fetchAssignmentOptions, type BeAssignmentOptions } from "@/lib/api/surfaces";
+import { fetchSchoolDetail, fetchAssignmentOptions, fetchSchoolWorkflow, type BeAssignmentOptions } from "@/lib/api/surfaces";
+import { SchoolWorkflowJourney } from "@/components/schools/SchoolWorkflowJourney";
 import { resolveSchoolNextAction as resolveNextAction } from "@/lib/planning/school-next-action";
 import { CorePageHeader } from "@/components/core/CorePageHeader";
 import { RoleBottomNav } from "@/components/mobile/RoleBottomNav";
@@ -577,7 +578,10 @@ function assignmentVmFromBackend(d: BeAssignmentOptions, canPlanVisit: boolean):
 
 async function BackendSchool360({ school }: { school: import("@/lib/api/surfaces").BeSchoolDetail }) {
   const user = await getCurrentUser();
-  const opts = await fetchAssignmentOptions(user, school.schoolId);
+  const [opts, wf] = await Promise.all([
+    fetchAssignmentOptions(user, school.schoolId),
+    fetchSchoolWorkflow(user, school.schoolId),
+  ]);
   const capacity = resolvePlanningCapacity({ schoolType: school.schoolType, visitsPlanned: 0, trainingsPlanned: 0 });
   const assignment = opts.live ? assignmentVmFromBackend(opts.data, capacity.canPlanVisit) : undefined;
   const nextAction = resolveNextAction({
@@ -595,13 +599,17 @@ async function BackendSchool360({ school }: { school: import("@/lib/api/surfaces
           <Database size={12} /> Live from the backend database (edify-api)
         </div>
 
-        <div className="card p-3 flex items-start gap-2.5">
-          <div className="grid place-items-center h-9 w-9 rounded-lg bg-[var(--color-edify-primary)] text-white shrink-0">→</div>
-          <div className="min-w-0">
-            <div className="text-[12.5px] font-extrabold">Next action · {nextAction.label}</div>
-            <div className="text-[11.5px] muted leading-snug">{nextAction.reason}</div>
+        {wf.live ? (
+          <SchoolWorkflowJourney wf={wf.data} />
+        ) : (
+          <div className="card p-3 flex items-start gap-2.5">
+            <div className="grid place-items-center h-9 w-9 rounded-lg bg-[var(--color-edify-primary)] text-white shrink-0">→</div>
+            <div className="min-w-0">
+              <div className="text-[12.5px] font-extrabold">Next action · {nextAction.label}</div>
+              <div className="text-[11.5px] muted leading-snug">{nextAction.reason}</div>
+            </div>
           </div>
-        </div>
+        )}
 
         <PlanningCapacityBar schoolId={school.schoolId} schoolName={school.name} capacity={capacity} assignment={assignment} />
 

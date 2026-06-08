@@ -245,6 +245,22 @@ export function fetchSchoolDetail(user: BackendUser, schoolId: string) {
   return live<BeSchoolDetail>(`/schools/${encodeURIComponent(schoolId)}`, user);
 }
 
+export type BeWorkflowStep = { key: string; label: string; done: boolean; status: "done" | "current" | "pending" };
+export type BeSchoolWorkflow = {
+  school: { schoolId: string; name: string; schoolType: string; owner?: string | null };
+  fy: string | null;
+  stage: string;
+  steps: BeWorkflowStep[];
+  nextAction: { type: string; label: string; reason: string } | null;
+  blockers: string[];
+};
+
+/** The full school improvement journey (the main workflow). */
+export function fetchSchoolWorkflow(user: BackendUser, schoolId: string, fy?: string) {
+  const q = fy ? `?fy=${encodeURIComponent(fy)}` : "";
+  return live<BeSchoolWorkflow>(`/schools/${encodeURIComponent(schoolId)}/workflow${q}`, user);
+}
+
 export type BeAssignmentOption = { type: "self" | "staff" | "partner"; label: string; enabled: boolean; reason?: string; staffId?: string };
 export type BeAssignmentOptions = {
   schoolId: string;
