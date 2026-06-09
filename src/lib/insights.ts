@@ -167,11 +167,11 @@ export function insightsForCpl(): Insight[] {
   const ssaPending = schoolFinancialYearSummaries.filter((s) => s.ssaCompleted && !s.ssaVerified).length;
   if (ssaPending > 0) {
     out.push({
-      id: "cpl-ssa-verify",
+      id: "cpl-ssa-qa",
       tone: "highlight",
-      headline: `${ssaPending} SSAs done but not verified`,
-      body: "Verified SSA unlocks Full Planning Mode + Core onboarding. Verification is the gateway, not paperwork.",
-      ctaLabel: "Verification Queue",
+      headline: `${ssaPending} complete SSAs eligible for QA review`,
+      body: "Complete SSA already unlocks planning — these are in the 10% quality-assurance sample, not blocking school support.",
+      ctaLabel: "QA Sample",
       ctaHref: "/queue",
     });
   }

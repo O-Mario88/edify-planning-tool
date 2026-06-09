@@ -46,9 +46,14 @@ export function SchoolSsaLive({ schoolId }: { schoolId: string }) {
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <h3 className="text-[13px] font-extrabold inline-flex items-center gap-1.5"><Grid3x3 size={14} /> SSA · FY{latest.fy}</h3>
-        <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold border",
-          latest.verificationStatus === "confirmed" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-amber-50 text-amber-700 border-amber-200")}>
-          {latest.verificationStatus === "confirmed" ? "Verified" : "Awaiting verification"}
+        {/* Complete SSA unlocks planning regardless of QA. The badge reflects the
+            10% quality-assurance sample, NOT a planning gate. */}
+        <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold border bg-emerald-50 text-emerald-700 border-emerald-200">
+          Complete · planning unlocked
+        </span>
+        <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold border ml-1.5",
+          latest.verificationStatus === "confirmed" ? "bg-sky-50 text-sky-700 border-sky-200" : "bg-slate-50 text-slate-500 border-slate-200")}>
+          {latest.verificationStatus === "confirmed" ? "QA passed" : "Eligible for QA sample"}
         </span>
       </div>
 
