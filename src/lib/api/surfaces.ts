@@ -262,7 +262,9 @@ export type BeActivity = {
   rescheduleCount?: number | null;
   lastReason?: string | null;
   assignedPartnerId?: string | null;
-  school?: { schoolId: string; name: string } | null;
+  school?: { schoolId: string; name: string; district?: { name: string } | null } | null;
+  cluster?: { name: string } | null;
+  assignedPartner?: { name: string } | null;
   // Workflow fields (returned by the backend; used by IA/accountant views).
   fy?: string;
   quarter?: string;

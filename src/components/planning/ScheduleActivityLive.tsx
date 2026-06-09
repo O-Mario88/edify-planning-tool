@@ -58,6 +58,7 @@ export function ScheduleActivityLive({
   const [activityType, setActivityType] = useState(types[0].v);
   const [deliveryType, setDeliveryType] = useState<"staff" | "partner">("staff");
   const [month, setMonth] = useState(new Date().getMonth() + 1);
+  const [exactDate, setExactDate] = useState("");
   const [participants, setParticipants] = useState(25);
   const [rates, setRates] = useState<Record<string, number>>({});
   const [busy, setBusy] = useState(false);
@@ -76,6 +77,11 @@ export function ScheduleActivityLive({
   const realType = selected.type;
   const slot = selected.slot;
   const isTraining = TRAINING.has(realType);
+  // Cluster work, trainings and SIT happen on a SPECIFIC date → date required.
+  // Plain school visits may be scheduled by month/week only.
+  const isVisit = !isCluster && !isTraining;
+  const dateRequired = !isVisit;
+  const effMonth = exactDate ? Number(exactDate.slice(5, 7)) : month;
 
   // Same costing the backend budget engine applies.
   const cost = useMemo(() => {
@@ -96,7 +102,8 @@ export function ScheduleActivityLive({
         body: JSON.stringify({
           activityType: realType,
           ...(isCluster ? { clusterId, ...(slot ? { clusterSlot: slot } : {}) } : { schoolId }),
-          fy: "2026", quarter: quarterFor(month), plannedMonth: month, deliveryType,
+          fy: "2026", quarter: quarterFor(effMonth), plannedMonth: effMonth, deliveryType,
+          ...(exactDate ? { scheduledDate: new Date(exactDate + "T09:00:00").toISOString() } : {}),
         }),
       });
       const j = await res.json();
@@ -137,11 +144,19 @@ export function ScheduleActivityLive({
                   ))}
                 </div>
               </Field>
-              <Field label="Month">
-                <select value={month} onChange={(e) => setMonth(Number(e.target.value))} className="w-full h-9 px-2 rounded-lg border border-[var(--color-edify-border)] text-[12px]">
-                  {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => <option key={m} value={m}>{MONTHS[m]} (Q{quarterFor(m).slice(1)})</option>)}
-                </select>
-              </Field>
+              {dateRequired ? (
+                <Field label="Date — required for this activity">
+                  <input type="date" value={exactDate} onChange={(e) => setExactDate(e.target.value)}
+                    className={cn("w-full h-9 px-2 rounded-lg border text-[12px]", exactDate ? "border-[var(--color-edify-border)]" : "border-amber-300")} />
+                  {!exactDate && <span className="text-[10px] text-amber-600 font-semibold">Cluster meetings, trainings and SIT need an exact date.</span>}
+                </Field>
+              ) : (
+                <Field label="Month / week">
+                  <select value={month} onChange={(e) => setMonth(Number(e.target.value))} className="w-full h-9 px-2 rounded-lg border border-[var(--color-edify-border)] text-[12px]">
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => <option key={m} value={m}>{MONTHS[m]} (Q{quarterFor(m).slice(1)})</option>)}
+                  </select>
+                </Field>
+              )}
               {isTraining && deliveryType === "staff" && (
                 <Field label="Expected participants">
                   <input type="number" min={1} value={participants} onChange={(e) => setParticipants(Math.max(1, Number(e.target.value)))} className="w-full h-9 px-2 rounded-lg border border-[var(--color-edify-border)] text-[12px]" />
@@ -156,13 +171,13 @@ export function ScheduleActivityLive({
                 <div key={l.label} className="flex items-center justify-between text-[11px]"><span className="muted">{l.label}</span><span className="tabular">{ugx(l.amount)}</span></div>
               ))}
               <div className="flex items-center justify-between text-[12.5px] font-extrabold border-t border-[var(--color-edify-divider)] mt-1 pt-1"><span>Total</span><span className="tabular">{ugx(cost.total)}</span></div>
-              <p className="text-[9.5px] muted mt-1">Added to {MONTHS[month]} fund request automatically.</p>
+              <p className="text-[9.5px] muted mt-1">Added to {MONTHS[effMonth]} fund request automatically.</p>
             </div>
 
             {error && <div className="mt-2 text-[11px] text-rose-600 font-semibold">{error}</div>}
 
-            <button disabled={busy} onClick={submit} className="mt-3 w-full h-10 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[13px] font-extrabold disabled:opacity-50">
-              {busy ? "Scheduling…" : "Schedule activity"}
+            <button disabled={busy || (dateRequired && !exactDate)} onClick={submit} className="mt-3 w-full h-10 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[13px] font-extrabold disabled:opacity-50 disabled:cursor-not-allowed">
+              {busy ? "Scheduling…" : dateRequired && !exactDate ? "Pick a date to schedule" : "Schedule activity"}
             </button>
           </>
         )}

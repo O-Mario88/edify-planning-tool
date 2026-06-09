@@ -25,6 +25,7 @@ export const EXACT_ROUTE_TITLES: Record<string, RouteTitle> = {
   "/dashboards/cceo":      { title: "Main Dashboard" },
   "/today":                { title: "Today's Tasks", dateLabel: "Mon, May 12 · Wk 3" },
   "/my-plan":              { title: "My Plan" },
+  "/completed-activities": { title: "Completed Activities Log" },
   "/my-targets":           { title: "My Targets" },
   "/my-team":              { title: "My Team" },
   "/team-targets":         { title: "Team Targets" },

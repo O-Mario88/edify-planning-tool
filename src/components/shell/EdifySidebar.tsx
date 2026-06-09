@@ -202,6 +202,8 @@ function buildCdMenu(dashboardHref: string): MenuSection[] {
         { label: "Dashboard",        href: dashboardHref,           Icon: LayoutDashboard    },
         { label: "Targets",          href: "/team-targets",         Icon: Award              },
         { label: "Planning",         href: "/planning",             Icon: ClipboardList      },
+        { label: "My Plan",          href: "/my-plan",              Icon: ClipboardList      },
+        { label: "Completed Log",    href: "/completed-activities", Icon: ClipboardList      },
         // No "Schools" — the School Directory is an operational surface for
         // CCEO/PL/IA. The CD leads through analytics + recruitment intelligence.
         { label: "Recruitment",      href: "/recruitment",          Icon: Compass            },
@@ -274,6 +276,8 @@ function buildCplMenu(dashboardHref: string): MenuSection[] {
         { label: "Dashboard",       href: dashboardHref,  Icon: LayoutDashboard },
         { label: "Today's Tasks",   href: "/today",       Icon: CalendarCheck   },
         { label: "Planning",        href: "/planning",    Icon: ClipboardCheckIcon },
+        { label: "My Plan",         href: "/my-plan",     Icon: CalendarCheck   },
+        { label: "Completed Log",   href: "/completed-activities", Icon: ClipboardCheckIcon },
         { label: "My Targets",      href: "/my-targets",  Icon: Award           },
         { label: "Routes",          href: "/route",       Icon: Map             },
         { label: "Calendar",        href: "/calendar",    Icon: CalendarRange   },
@@ -510,6 +514,8 @@ function buildAdminMenu(dashboardHref: string): MenuSection[] {
         { label: "Dashboard",        href: dashboardHref,    Icon: LayoutDashboard },
         { label: "Today's Tasks",    href: "/today",         Icon: CalendarCheck },
         { label: "Planning",         href: "/planning",      Icon: ClipboardList },
+        { label: "My Plan",          href: "/my-plan",       Icon: CalendarCheck },
+        { label: "Completed Log",    href: "/completed-activities", Icon: ClipboardList },
         { label: "My Targets",       href: "/my-targets",    Icon: Award },
         { label: "Routes",           href: "/route",         Icon: Map },
         { label: "Calendar",         href: "/calendar",      Icon: CalendarRange },

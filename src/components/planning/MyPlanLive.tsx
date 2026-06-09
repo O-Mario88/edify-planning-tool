@@ -24,7 +24,8 @@ export function MyPlanLive() {
 
   const load = useCallback(() => {
     setLoading(true); setError(null);
-    fetch("/api/activities?mine=true&pageSize=100", { credentials: "include" })
+    // Active only — completed/closed work lives in the Completed Activities Log.
+    fetch("/api/activities?mine=true&statusGroup=active&pageSize=100", { credentials: "include" })
       .then((r) => r.json())
       .then((j) => { if (j.live) setRows(j.data as BeActivity[]); else setError(j.error || "Could not load your plan"); })
       .catch(() => setError("Could not reach the server"))
@@ -55,8 +56,8 @@ export function MyPlanLive() {
   return (
     <section className="card p-3.5">
       <header className="flex items-center justify-between gap-2 mb-2.5 flex-wrap">
-        <h2 className="text-[13px] font-extrabold tracking-tight inline-flex items-center gap-1.5"><CalendarClock size={14} /> My Plan</h2>
-        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5 text-[10px] font-bold border border-emerald-200">Live · your scheduled work</span>
+        <h2 className="text-[13px] font-extrabold tracking-tight inline-flex items-center gap-1.5"><CalendarClock size={14} /> My Plan · scheduled work</h2>
+        <a href="/completed-activities" className="text-[10.5px] font-bold text-[var(--color-edify-primary)] hover:underline">View Completed Log →</a>
       </header>
 
       {loading ? (
@@ -68,7 +69,7 @@ export function MyPlanLive() {
       ) : (
         <>
           {error && <div className="mb-2 text-[11px] text-rose-600 font-semibold">{error}</div>}
-          <p className="text-[11.5px] muted mb-2">{open.length} open · {rest.length} done/closed</p>
+          <p className="text-[11.5px] muted mb-2">{open.length} to do · {rest.length} waiting on me</p>
           <ul className="divide-y divide-[var(--color-edify-divider)]">
             {[...open, ...rest].map((a) => (
               <li key={a.id} className="py-2 text-[12px]">
