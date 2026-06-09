@@ -196,6 +196,7 @@ export type BeSsaGroupRow = {
 };
 export type BeSsaPerformanceGrouped = {
   fy: string; groupBy: string; schoolType: string;
+  canGroupByCceo?: boolean;
   interventions: { code: string; label: string }[];
   rows: BeSsaGroupRow[];
 };
@@ -227,6 +228,7 @@ export type BeImprovementRow = {
 };
 export type BeInterventionImprovement = {
   currentFy: string; prevFy: string; groupBy: string; schoolType: string;
+  canGroupByCceo?: boolean;
   interventions: { code: string; label: string }[];
   rows: BeImprovementRow[];
 };

@@ -47,6 +47,14 @@ export function SsaPerformanceGrid() {
 
   useEffect(() => { void load(); }, [load]);
 
+  // "By CCEO" is a supervisory lens — backend allows it only for PL/CD/IA.
+  const allowCceo = data?.canGroupByCceo !== false;
+  const availableGroups = allowCceo ? GROUPS : GROUPS.filter((g) => g.key !== "cceo");
+  // If the viewer loses CCEO access (e.g. a CCEO landed on it), fall back.
+  useEffect(() => {
+    if (data && !allowCceo && groupBy === "cceo") setGroupBy("district");
+  }, [data, allowCceo, groupBy]);
+
   async function openDrill(row: BeSsaGroupLike) {
     setDrill({ name: row.groupName, rows: [], loading: true });
     try {
@@ -66,7 +74,7 @@ export function SsaPerformanceGrid() {
       </header>
 
       <div className="flex items-center gap-2 mb-2.5 flex-wrap">
-        <Pills options={GROUPS} value={groupBy} onChange={setGroupBy} />
+        <Pills options={availableGroups} value={groupBy} onChange={setGroupBy} />
         <span className="text-slate-300">·</span>
         <Pills options={TYPES} value={schoolType} onChange={setSchoolType} />
       </div>

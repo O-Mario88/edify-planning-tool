@@ -47,6 +47,14 @@ export function InterventionImprovementGrid() {
   }, [groupBy, schoolType]);
 
   useEffect(() => { void load(); }, [load]);
+
+  // "By CCEO" grouping is a supervisory lens — only PL/CD/IA (backend-decided).
+  const allowCceo = data?.canGroupByCceo !== false;
+  const availableGroups = allowCceo ? GROUPS : GROUPS.filter((g) => g.key !== "cceo");
+  useEffect(() => {
+    if (data && !allowCceo && groupBy === "cceo") setGroupBy("district");
+  }, [data, allowCceo, groupBy]);
+
   if (off) return null;
 
   return (
@@ -57,7 +65,7 @@ export function InterventionImprovementGrid() {
       </header>
 
       <div className="flex items-center gap-2 mb-2.5 flex-wrap">
-        <Pills options={GROUPS} value={groupBy} onChange={setGroupBy} />
+        <Pills options={availableGroups} value={groupBy} onChange={setGroupBy} />
         <span className="text-slate-300">·</span>
         <Pills options={TYPES} value={schoolType} onChange={setSchoolType} />
       </div>
