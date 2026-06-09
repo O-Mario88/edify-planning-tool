@@ -27,7 +27,8 @@ import { getCurrentUser } from "@/lib/auth";
 import { computeStaffCapacity, staffAlreadySupportsSchool, getAssignmentOptions } from "@/lib/planning/assignment-policy";
 import { cceosSupervisedBy } from "@/lib/org/supervision";
 import { isBackendEnabled } from "@/lib/api/backend";
-import { fetchSchoolDetail, fetchAssignmentOptions, fetchSchoolWorkflow, type BeAssignmentOptions } from "@/lib/api/surfaces";
+import { fetchSchoolDetail, fetchAssignmentOptions, fetchSchoolWorkflow, fetchActivities, type BeAssignmentOptions } from "@/lib/api/surfaces";
+import type { School360Activity } from "@/components/cluster/School360View";
 import { SchoolWorkflowJourney } from "@/components/schools/SchoolWorkflowJourney";
 import { SchoolSsaLive } from "@/components/ssa/SchoolSsaLive";
 import { SchoolDetailErrorState } from "@/components/schools/SchoolDetailErrorState";
@@ -93,7 +94,6 @@ import { intakeSchools } from "@/lib/intake/intake-mock";
 import { projectsForSchool, projectById } from "@/lib/special-projects-mock";
 import { activitiesForProjectSchool } from "@/lib/projects/project-activities";
 import { ssaForSchool } from "@/lib/projects/project-school-ssa";
-import { recommendInterventionsForSchool } from "@/lib/planning/intervention-recommendation";
 import { schoolWorkflowState, schoolLinkedActivities } from "@/lib/school-directory/school-state";
 import { recommendClustersFor, type ClusterMatch } from "@/lib/cluster/cluster-core";
 import { openDuplicateCandidates } from "@/lib/intake/duplicate-candidates-mock";
@@ -479,6 +479,24 @@ export default async function School360({
   );
 }
 
+// This school's REAL activities from the backend, mapped to the 360 shape.
+// Returns null when the backend is off (caller falls back to the mock).
+const VISIT_KINDS = new Set(["school_visit", "follow_up_visit", "coaching_visit", "in_school_support", "core_visit"]);
+const tcase = (x: string) => x.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+async function liveSchoolActivities(schoolId: string): Promise<School360Activity[] | null> {
+  if (!isBackendEnabled()) return null;
+  const user = await getCurrentUser();
+  const r = await fetchActivities(user, `?schoolId=${encodeURIComponent(schoolId)}&pageSize=50`);
+  if (!r.live) return null;
+  return r.data.data.map((a) => ({
+    kind: VISIT_KINDS.has(a.activityType) ? "visit" : a.activityType.includes("ssa") ? "ssa_upload" : "training",
+    label: tcase(a.activityType),
+    date: a.scheduledDate ? new Date(a.scheduledDate).toLocaleDateString() : `${a.fy ?? ""} ${a.quarter ?? ""}`.trim(),
+    status: tcase(a.status),
+    ref: a.salesforceActivityId ?? undefined,
+  }));
+}
+
 // ── School 360 for an uploaded (intake) school — the source-of-truth record ──
 async function IntakeSchool360({ schoolId, view }: { schoolId: string; view?: SchoolView }) {
   const s = intakeSchools.find((x) => x.schoolId === schoolId)!;
@@ -490,7 +508,9 @@ async function IntakeSchool360({ schoolId, view }: { schoolId: string; view?: Sc
   });
   const capacity = planningCapacityFor(s.schoolId, s.schoolType);
   const assignment = await assignmentFor(s.schoolId, s.assignedCceo, capacity.canPlanVisit);
-  const activities = schoolLinkedActivities(s);
+  // Linked activities — LIVE from the backend (this school's real activities),
+  // falling back to the mock only when the backend is disabled.
+  const activities = (await liveSchoolActivities(s.schoolId)) ?? schoolLinkedActivities(s);
   const dupe = openDuplicateCandidates().some((d) => d.schoolId === s.schoolId);
 
   // Special-project participation (separate from SSA interventions).
@@ -564,9 +584,11 @@ async function IntakeSchool360({ schoolId, view }: { schoolId: string; view?: Sc
           ssaDone: state.ssaDone, nextActions: state.nextActions,
         }}
         activities={activities}
+        /* SSA now shown live above via <SchoolSsaLive> — suppress the mock
+           recommendation section so the page has one source of SSA truth. */
         addToClusterVM={addToClusterVM}
         projects={projectVMs}
-        ssa={recommendInterventionsForSchool(s.schoolId)}
+        ssa={undefined}
       />
     </>
   );
