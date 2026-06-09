@@ -476,6 +476,24 @@ export function fetchDebriefsToday(user: BackendUser) {
   return live<BeDebriefToday>(`/debriefs/today`, user);
 }
 
+// ── SSA verification QA (10% client-portfolio rule) ─────────────────
+export type BeSsaVerifyRequirement = {
+  staffId: string; fy: string; clientPortfolioCount: number; requiredSampleCount: number;
+  verifiedSampleCount: number; gap: number; percentage: number; meetsRequirement: boolean;
+  partnerPending: number; schoolsMissingSsa: number;
+};
+export type BeSsaVerifySummary = {
+  fy: string; staffCount: number; staffMeetingRequirement: number; staffBelowRequirement: number;
+  compliancePct: number; totalRequiredSample: number; totalVerifiedSample: number; partnerPendingTotal: number;
+  belowStaff: BeSsaVerifyRequirement[];
+};
+export function fetchSsaVerificationRequirements(user: BackendUser, staffId?: string) {
+  return live<BeSsaVerifyRequirement>(`/ssa/verification-requirements${staffId ? `?staffId=${encodeURIComponent(staffId)}` : ""}`, user);
+}
+export function fetchSsaVerificationSummary(user: BackendUser) {
+  return live<BeSsaVerifySummary>(`/ssa/verification-summary`, user);
+}
+
 // ── Special Projects (backend-backed; no mock) ──────────────────────
 export type BeProject = {
   id: string; name: string; category: string; intervention?: string | null;
