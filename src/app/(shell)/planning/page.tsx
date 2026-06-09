@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { PlanningToolPage } from "@/components/planning/PlanningToolPage";
 import { MyPlanLive } from "@/components/planning/MyPlanLive";
 import { PlanningSetupLive } from "@/components/planning/PlanningSetupLive";
+import { ClusterPlanningLive } from "@/components/planning/ClusterPlanningLive";
 import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { PlanningMobileView } from "@/components/mobile/views/PlanningMobileView";
 import { coreBoardData, coreOwnershipRows } from "@/lib/core/core-board";
@@ -39,6 +40,7 @@ export default async function Page({
         <div className="px-3 sm:px-4 md:px-5 pt-3 md:pt-4 space-y-3">
           {/* LIVE, backend-driven planning surface (no mock). */}
           <PlanningSetupLive />
+          <ClusterPlanningLive />
           <MyPlanLive />
           <PlanningToolPage />
         </div>

@@ -22,16 +22,23 @@ const CLIENT_TYPES = [
   { v: "training", l: "Training" }, { v: "school_improvement_training", l: "SIT / SSA" },
 ];
 const CORE_TYPES = [{ v: "core_visit", l: "Core visit" }, { v: "core_training", l: "Core training" }];
+const CLUSTER_TYPES = [{ v: "cluster_meeting", l: "Cluster meeting" }, { v: "cluster_training", l: "Cluster training" }, { v: "school_improvement_training", l: "SIT / SSA" }];
 
 const ugx = (n: number) => `UGX ${Math.round(n).toLocaleString()}`;
 
 export function ScheduleActivityLive({
-  schoolId, schoolName, schoolType, onClose, onScheduled,
+  schoolId, schoolName, schoolType = "client", clusterId, clusterName, onClose, onScheduled,
 }: {
-  schoolId: string; schoolName: string; schoolType: string;
+  // Provide EITHER a school (schoolId/schoolName/schoolType) OR a cluster
+  // (clusterId/clusterName) target — the backend create accepts either.
+  schoolId?: string; schoolName?: string; schoolType?: string;
+  clusterId?: string; clusterName?: string;
   onClose: () => void; onScheduled?: () => void;
 }) {
-  const types = schoolType === "core" ? CORE_TYPES : CLIENT_TYPES;
+  const isCluster = !!clusterId;
+  const targetName = isCluster ? clusterName ?? "Cluster" : schoolName ?? "School";
+  const targetKind = isCluster ? "Cluster" : schoolType;
+  const types = isCluster ? CLUSTER_TYPES : schoolType === "core" ? CORE_TYPES : CLIENT_TYPES;
   const [activityType, setActivityType] = useState(types[0].v);
   const [deliveryType, setDeliveryType] = useState<"staff" | "partner">("staff");
   const [month, setMonth] = useState(new Date().getMonth() + 1);
@@ -54,7 +61,8 @@ export function ScheduleActivityLive({
   const cost = useMemo(() => {
     const lines: { label: string; amount: number }[] = [];
     const add = (label: string, key: string, qty = 1) => { if (rates[key] != null) lines.push({ label, amount: rates[key] * qty }); };
-    if (deliveryType === "partner") add("Partner lump sum", "partner_visit_lump_sum");
+    if (activityType === "cluster_meeting") add("Cluster meeting", "cluster_meeting_cost");
+    else if (deliveryType === "partner") add("Partner lump sum", "partner_visit_lump_sum");
     else if (VISIT.has(activityType)) { add("Transport", "staff_visit_transport_primary"); add("Lunch", "lunch"); }
     else if (isTraining) { add("Training session", "training_session_fee"); add("Venue", "venue"); add("Meals", "meals_per_participant", participants); }
     return { lines, total: lines.reduce((s, l) => s + l.amount, 0) };
@@ -66,8 +74,8 @@ export function ScheduleActivityLive({
       const res = await fetch("/api/activities", {
         method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          activityType, schoolId, fy: "2026", quarter: quarterFor(month),
-          plannedMonth: month, deliveryType,
+          activityType, ...(isCluster ? { clusterId } : { schoolId }),
+          fy: "2026", quarter: quarterFor(month), plannedMonth: month, deliveryType,
         }),
       });
       const j = await res.json();
@@ -85,7 +93,7 @@ export function ScheduleActivityLive({
           <h2 className="text-[14px] font-extrabold inline-flex items-center gap-1.5"><CalendarPlus size={15} /> Schedule activity</h2>
           <button onClick={onClose} className="h-7 w-7 grid place-items-center rounded-lg hover:bg-[var(--surface-3)]"><X size={14} /></button>
         </header>
-        <p className="text-[11.5px] muted mb-3 truncate">{schoolName} · <span className="capitalize">{schoolType}</span></p>
+        <p className="text-[11.5px] muted mb-3 truncate">{targetName} · <span className="capitalize">{targetKind}</span></p>
 
         {done ? (
           <div className="py-6 text-center">
