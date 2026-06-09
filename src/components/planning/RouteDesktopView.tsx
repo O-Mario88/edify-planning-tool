@@ -231,22 +231,6 @@ function RouteGroupCard({ group, index }: { group: RouteGroup; index: number }) 
         ))}
       </ul>
 
-      <div className="grid grid-cols-2 gap-2 p-4 border-t border-[var(--color-edify-border)]">
-        <button
-          type="button"
-          className="h-10 rounded-xl border border-[var(--color-edify-border)] bg-white inline-flex items-center justify-center gap-1.5 text-body font-bold hover:bg-[var(--color-edify-soft)]/40"
-        >
-          <MapIcon size={14} />
-          Open in Maps
-        </button>
-        <button
-          type="button"
-          className="h-10 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white inline-flex items-center justify-center gap-1.5 text-body font-bold shadow-sm shadow-emerald-500/25"
-        >
-          <Play size={14} fill="currentColor" />
-          Start Route
-        </button>
-      </div>
     </section>
   );
 }

@@ -15,6 +15,7 @@
 import type { AppRole, CurrentUser } from "./schools-mock";
 import type { SsaInterventionArea } from "./planning/planning-gaps-mock";
 import { SSA_INTERVENTIONS } from "./planning/ssa-performance-mock";
+import { intakeSchools } from "./intake/intake-mock";
 
 // ────────── Project type — extensible ──────────
 //
@@ -474,6 +475,12 @@ export function assignSchoolToProject(input: {
 }): { ok: true; membership: SchoolProjectMembership } | { ok: false; reason: string } {
   const project = specialProjects.find((p) => p.projectId === input.projectId);
   if (!project) return { ok: false, reason: "Project not found." };
+  // INVARIANT: special-project schools come ONLY from the School Directory.
+  // Reject any schoolId that does not exist there — no orphan/phantom
+  // assignments that would later vanish silently from the project view.
+  if (!intakeSchools.some((s) => s.schoolId === input.schoolId)) {
+    return { ok: false, reason: "School is not in the School Directory. Assign it from the Directory only." };
+  }
   const existing = schoolProjectMemberships.find(
     (m) => m.schoolId === input.schoolId && m.projectId === input.projectId,
   );

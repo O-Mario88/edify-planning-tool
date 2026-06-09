@@ -1,13 +1,8 @@
 "use client";
 
 import {
-  CheckCircle2,
-  Download,
-  Eye,
   GraduationCap,
   Heart,
-  MessageSquare,
-  Plus,
   School,
   Users,
   UsersRound,
@@ -61,20 +56,9 @@ export function RvpCountryDetail() {
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          <button type="button" className="inline-flex items-center gap-1.5 h-9 px-3 rounded-xl bg-white border border-[var(--color-edify-border)] hover:bg-slate-50 text-[12px] font-semibold text-slate-700">
-            <Eye size={12} />
-            View Plan
-          </button>
-          <button type="button" className="inline-flex items-center gap-1.5 h-9 px-3 rounded-xl bg-white border border-[var(--color-edify-border)] hover:bg-slate-50 text-[12px] font-semibold text-slate-700">
-            <MessageSquare size={12} />
-            Message Lead
-          </button>
-          <button type="button" className="inline-flex items-center gap-1.5 h-9 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-[12px] font-extrabold shadow-[0_10px_28px_-12px_rgba(15,23,32,0.45)]">
-            <CheckCircle2 size={12} />
-            Approve All ({rvpActiveCountry.approveAllCount})
-          </button>
-        </div>
+        {/* Country-plan approval/messaging actions are routed through the live
+            fund-approval + messaging surfaces — not stubbed here. Removed the
+            non-functional View Plan / Message Lead / Approve All controls. */}
       </header>
 
       {/* Detail KPI strip — 5 tiles */}
@@ -92,16 +76,6 @@ export function RvpCountryDetail() {
           <Tab label="Budget Breakdown" />
           <Tab label="Activity Log" />
         </nav>
-        <div className="flex items-center gap-1.5 shrink-0">
-          <button type="button" className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg border border-[var(--color-edify-border)] bg-white hover:bg-slate-50 text-[11.5px] font-semibold text-slate-700">
-            <Download size={11} />
-            Download
-          </button>
-          <button type="button" className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-lg border border-[var(--color-edify-border)] bg-white hover:bg-slate-50 text-[11.5px] font-semibold text-slate-700">
-            <Plus size={11} />
-            Add Note
-          </button>
-        </div>
       </div>
 
       {/* Body — Plan Summary (8 cols) + Spending by Category (4 cols) */}

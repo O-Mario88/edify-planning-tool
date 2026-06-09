@@ -80,7 +80,10 @@ export type ClusterInterventionCoverage = {
 export type ClusterSsaPerformance = {
   /** Per-intervention average across cluster member schools. */
   averages: { intervention: string; score: number; status: SsaStatus }[];
-  weakestIntervention?:   { intervention: string; score: number };
+  weakestIntervention?:       { intervention: string; score: number };
+  /** Second-worst across the cluster average — the "two worst" rule applies to
+   *  clusters too: recommendations target the two lowest-scoring interventions. */
+  secondWeakestIntervention?: { intervention: string; score: number };
   strongestIntervention?: { intervention: string; score: number };
   /** School-by-school SSA snapshot. */
   schools: {
@@ -442,7 +445,8 @@ function buildSsaPerformance(member: SchoolGap[]): ClusterSsaPerformance {
     return { intervention, score: round1(avg), status: statusFor(avg) };
   });
   const ranked = [...averages].filter((a) => a.score > 0).sort((a, b) => a.score - b.score);
-  const weakestIntervention   = ranked[0] ? { intervention: ranked[0].intervention, score: ranked[0].score } : undefined;
+  const weakestIntervention       = ranked[0] ? { intervention: ranked[0].intervention, score: ranked[0].score } : undefined;
+  const secondWeakestIntervention = ranked[1] ? { intervention: ranked[1].intervention, score: ranked[1].score } : undefined;
   const strongestIntervention = ranked[ranked.length - 1] ? { intervention: ranked[ranked.length - 1].intervention, score: ranked[ranked.length - 1].score } : undefined;
 
   // Yearly cluster averages — derived from each school's history.
@@ -461,6 +465,7 @@ function buildSsaPerformance(member: SchoolGap[]): ClusterSsaPerformance {
   return {
     averages,
     weakestIntervention,
+    secondWeakestIntervention,
     strongestIntervention,
     schools: schoolSnaps.map((s) => ({
       schoolId: s.schoolId, schoolName: s.schoolName,
@@ -730,15 +735,18 @@ function buildNextActions(args: {
     });
   }
 
-  // Weakest intervention training gap.
-  const weak = ssaPerformance.weakestIntervention;
-  if (weak && weak.score < 6) {
-    out.push({
-      title:  `Schedule ${weak.intervention} training`,
-      reason: `Cluster average is ${weak.score}/10 — weakest intervention. Drive shared training.`,
-      ctaLabel: "Schedule training",
-      action:   "schedule_training",
-    });
+  // Two-worst intervention training gaps — SSA recommends the cluster's two
+  // lowest-scoring interventions (parity with the school-level rule).
+  const twoWorst = [ssaPerformance.weakestIntervention, ssaPerformance.secondWeakestIntervention];
+  for (const weak of twoWorst) {
+    if (weak && weak.score < 6) {
+      out.push({
+        title:  `Schedule ${weak.intervention} training`,
+        reason: `Cluster average is ${weak.score}/10 — among the two weakest interventions. Drive shared training.`,
+        ctaLabel: "Schedule training",
+        action:   "schedule_training",
+      });
+    }
   }
 
   // SSA coverage gap.

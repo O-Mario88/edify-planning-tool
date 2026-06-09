@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
   ListFilter,
@@ -61,19 +62,6 @@ export function SchoolsDirectorySection({
 
   const filtersActive = region !== "All" || district !== "All" || shipping !== "All";
 
-  const handleCreateCluster = () => {
-    const dim = shipping !== "All" ? shipping : district !== "All" ? district : region !== "All" ? region : "Filtered set";
-    // Mock action — the real backend call would persist this to the
-    // Cluster table for the current CCEO.
-    alert(
-      `Create cluster from ${filtered.length} schools (${dim}).\n\n` +
-        `Backend POST /api/clusters {\n  ownerCceoId,\n  schoolIds: [${filtered
-          .slice(0, 5)
-          .map((s) => s.schoolId)
-          .join(", ")}${filtered.length > 5 ? ", …" : ""}],\n  region, district, shippingAddress\n}`,
-    );
-  };
-
   return (
     <SchoolsOverviewTable
       groups={groups}
@@ -88,18 +76,13 @@ export function SchoolsDirectorySection({
             }))}
             filename="schools-directory"
           />
-          <button
-            type="button"
-            onClick={handleCreateCluster}
-            disabled={filtered.length === 0}
-            className={cn(
-              "btn btn-sm btn-primary",
-              filtered.length === 0 && "opacity-55 cursor-not-allowed",
-            )}
-          >
+          {/* Clusters are created ONLY in the Cluster Dashboard (one official
+              ClusterService). From the Directory, schools are assigned to an
+              existing cluster per-row; bulk creation lives in the dashboard. */}
+          <Link href="/clusters" className="btn btn-sm btn-primary" title="Clusters are created in the Cluster Dashboard">
             <Plus size={12} />
-            Create Cluster
-          </button>
+            Create clusters in Cluster Dashboard
+          </Link>
         </div>
       }
       filterBar={

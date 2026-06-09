@@ -3,8 +3,6 @@
 import { useState } from "react";
 import {
   Phone,
-  Navigation,
-  CheckCircle2,
   Circle,
 } from "lucide-react";
 import { MobileShell } from "@/components/mobile/MobileShell";
@@ -107,17 +105,6 @@ export function SchoolsView({ intelligenceSchools = [] }: { intelligenceSchools?
             </ul>
           </div>
 
-          {/* Action footer */}
-          <div className="grid grid-cols-2 gap-2 p-3 border-t border-[var(--border-subtle)]">
-            <button type="button" className="premium-button premium-button-secondary h-10">
-              <Navigation size={14} />
-              Navigate
-            </button>
-            <button type="button" className="premium-button premium-button-primary h-10">
-              <CheckCircle2 size={14} />
-              Log Visit
-            </button>
-          </div>
         </section>
       </main>
 
