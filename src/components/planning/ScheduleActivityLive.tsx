@@ -16,13 +16,29 @@ const quarterFor = (m: number) => (m >= 7 && m <= 9 ? "Q1" : m >= 10 ? "Q2" : m 
 const VISIT = new Set(["school_visit", "follow_up_visit", "coaching_visit", "in_school_support", "core_visit"]);
 const TRAINING = new Set(["training", "school_improvement_training", "cluster_training", "core_training"]);
 
-const CLIENT_TYPES = [
-  { v: "school_visit", l: "School visit" }, { v: "follow_up_visit", l: "Follow-up visit" },
-  { v: "coaching_visit", l: "Coaching visit" }, { v: "in_school_support", l: "In-school support" },
-  { v: "training", l: "Training" }, { v: "school_improvement_training", l: "SIT / SSA" },
+// Each option: v = unique select key, type = real ActivityType, slot = explicit
+// cluster slot (cluster options only). The composite key lets the 3 cluster
+// meetings share the cluster_meeting type but carry distinct slot tags.
+type ActOption = { v: string; l: string; type: string; slot?: string };
+const CLIENT_TYPES: ActOption[] = [
+  { v: "school_visit", l: "School visit", type: "school_visit" },
+  { v: "follow_up_visit", l: "Follow-up visit", type: "follow_up_visit" },
+  { v: "coaching_visit", l: "Coaching visit", type: "coaching_visit" },
+  { v: "in_school_support", l: "In-school support", type: "in_school_support" },
+  { v: "training", l: "Training", type: "training" },
+  { v: "school_improvement_training", l: "SIT / SSA", type: "school_improvement_training" },
 ];
-const CORE_TYPES = [{ v: "core_visit", l: "Core visit" }, { v: "core_training", l: "Core training" }];
-const CLUSTER_TYPES = [{ v: "cluster_meeting", l: "Cluster meeting" }, { v: "cluster_training", l: "Cluster training" }, { v: "school_improvement_training", l: "SIT / SSA" }];
+const CORE_TYPES: ActOption[] = [
+  { v: "core_visit", l: "Core visit", type: "core_visit" },
+  { v: "core_training", l: "Core training", type: "core_training" },
+];
+const CLUSTER_TYPES: ActOption[] = [
+  { v: "sit", l: "SIT / SSA", type: "school_improvement_training", slot: "sit" },
+  { v: "meeting1", l: "First cluster meeting", type: "cluster_meeting", slot: "first_meeting" },
+  { v: "meeting2", l: "Second cluster meeting", type: "cluster_meeting", slot: "second_meeting" },
+  { v: "meeting3", l: "Third cluster meeting", type: "cluster_meeting", slot: "third_meeting" },
+  { v: "cluster_training", l: "Cluster training", type: "cluster_training" },
+];
 
 const ugx = (n: number) => `UGX ${Math.round(n).toLocaleString()}`;
 
@@ -55,18 +71,22 @@ export function ScheduleActivityLive({
       .catch(() => undefined);
   }, []);
 
-  const isTraining = TRAINING.has(activityType);
+  // Resolve the selected option → real ActivityType + explicit cluster slot.
+  const selected = types.find((t) => t.v === activityType) ?? types[0];
+  const realType = selected.type;
+  const slot = selected.slot;
+  const isTraining = TRAINING.has(realType);
 
   // Same costing the backend budget engine applies.
   const cost = useMemo(() => {
     const lines: { label: string; amount: number }[] = [];
     const add = (label: string, key: string, qty = 1) => { if (rates[key] != null) lines.push({ label, amount: rates[key] * qty }); };
-    if (activityType === "cluster_meeting") add("Cluster meeting", "cluster_meeting_cost");
+    if (realType === "cluster_meeting") add("Cluster meeting", "cluster_meeting_cost");
     else if (deliveryType === "partner") add("Partner lump sum", "partner_visit_lump_sum");
-    else if (VISIT.has(activityType)) { add("Transport", "staff_visit_transport_primary"); add("Lunch", "lunch"); }
+    else if (VISIT.has(realType)) { add("Transport", "staff_visit_transport_primary"); add("Lunch", "lunch"); }
     else if (isTraining) { add("Training session", "training_session_fee"); add("Venue", "venue"); add("Meals", "meals_per_participant", participants); }
     return { lines, total: lines.reduce((s, l) => s + l.amount, 0) };
-  }, [rates, activityType, deliveryType, participants, isTraining]);
+  }, [rates, realType, deliveryType, participants, isTraining]);
 
   const submit = async () => {
     setBusy(true); setError(null);
@@ -74,7 +94,8 @@ export function ScheduleActivityLive({
       const res = await fetch("/api/activities", {
         method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          activityType, ...(isCluster ? { clusterId } : { schoolId }),
+          activityType: realType,
+          ...(isCluster ? { clusterId, ...(slot ? { clusterSlot: slot } : {}) } : { schoolId }),
           fy: "2026", quarter: quarterFor(month), plannedMonth: month, deliveryType,
         }),
       });
