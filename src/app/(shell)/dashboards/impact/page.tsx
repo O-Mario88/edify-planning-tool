@@ -27,6 +27,7 @@ import { SsaPerformanceGrid } from "@/components/ssa/SsaPerformanceGrid";
 import { InterventionImprovementGrid } from "@/components/ssa/InterventionImprovementGrid";
 import { SupportImprovementCard } from "@/components/analytics/SupportImprovementCard";
 import { RecruitmentIntelligenceCard } from "@/components/analytics/RecruitmentIntelligenceCard";
+import { ClientVerificationCard } from "@/components/ssa/ClientVerificationCard";
 
 export default async function ImpactDashboard() {
   // Defense-in-depth: middleware already gates /dashboards/impact, but
@@ -65,6 +66,9 @@ export default async function ImpactDashboard() {
             <SsaPerformanceGrid />
             <InterventionImprovementGrid />
             <SupportImprovementCard />
+
+            {/* Client SSA verification — 10% portfolio quota (PL/CD/IA/RVP). */}
+            <ClientVerificationCard />
 
             {/* Recruitment readiness from a data-quality lens (IA scope). */}
             <RecruitmentIntelligenceCard />
