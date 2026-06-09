@@ -148,7 +148,7 @@ export function NotificationDrawer({
                 Notifications
               </h2>
               <p className="text-[11.5px] text-muted leading-snug mt-0.5">
-                Updates on messages, approvals, evidence, payments, planning, and field activity.
+                Red alerts and what to do next, plus updates on evidence, payments, and approvals. Use <strong>Action</strong> for tasks.
               </p>
             </div>
             <button

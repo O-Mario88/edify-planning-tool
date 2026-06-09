@@ -105,3 +105,40 @@ export function adaptNotification(n: BackendNotification): Notification {
     contextLabel: n.contextType ? n.contextType.replace(/_/g, " ") : undefined,
   };
 }
+
+// ── Command Center → notifications ───────────────────────────────────────────
+// Red alerts and required actions PUSH: the recommendation feed
+// (/api/command-center/today) is merged into the same bell/drawer so "if it's
+// due, notify; if overdue, escalate" happens without a second system. These are
+// live (no backend id) — they persist until the underlying work is resolved.
+export type CommandCenterItem = {
+  id: string;
+  priority: "critical" | "high" | "medium";
+  kind: string;
+  title: string;
+  reason: string;
+  action: { label: string; href: string };
+  count?: number;
+};
+
+const CC_PRIORITY: Record<CommandCenterItem["priority"], NotificationPriority> = {
+  critical: "critical", high: "urgent", medium: "important",
+};
+
+export function adaptCommandCenterItem(i: CommandCenterItem): Notification {
+  const c = classify(i.kind, i.title);
+  return {
+    id: `cc-${i.id}`,
+    title: i.title,
+    body: i.reason,
+    href: i.action.href,
+    unread: true, // a red alert / required action stays "unread" until resolved
+    ago: "now",
+    Icon: c.Icon, iconBg: c.iconBg, iconText: c.iconText,
+    category: c.category,
+    priority: CC_PRIORITY[i.priority],
+    actionRequired: true,
+    actionLabel: i.action.label,
+    contextLabel: "recommended for you",
+  };
+}

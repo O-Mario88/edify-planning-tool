@@ -6,7 +6,7 @@
 // the database has no notifications; never fabricated.
 
 import { useCallback, useEffect, useState } from "react";
-import { adaptNotification, type Notification, type NotificationCounts, type BackendNotification } from "./notifications-types";
+import { adaptNotification, adaptCommandCenterItem, type Notification, type NotificationCounts, type BackendNotification, type CommandCenterItem } from "./notifications-types";
 
 type Snapshot = { list: Notification[]; counts: NotificationCounts };
 
@@ -26,23 +26,54 @@ function countsOf(list: Notification[]): NotificationCounts {
   };
 }
 
+// Locally-dismissed command-center alerts (no backend id to mark read). They
+// reappear on the next reload if still unresolved — a red alert can't be
+// permanently silenced, only acted on. Cleared whenever the feed refreshes.
+const dismissedCc = new Set<string>();
+
 export async function loadNotifications(): Promise<void> {
   if (loading) return;
   loading = true; error = null; emit();
   try {
-    const res = await fetch("/api/notifications", { credentials: "include" });
-    const j = await res.json();
-    if (!res.ok || j.live === false) {
-      error = j.error || "Could not load notifications";
-    } else {
-      const list = (j.recent as BackendNotification[]).map(adaptNotification);
-      const base = countsOf(list);
-      // Prefer backend unread (counts the full set, not just the recent slice).
-      const counts: NotificationCounts = j.counts
-        ? { all: list.length, unread: j.counts.unread ?? base.unread, action: j.counts.actionRequired ?? base.action, urgent: base.urgent }
-        : base;
-      snapshot = { list, counts };
+    // Backend notifications (Updates) + the live recommendation feed (red alerts
+    // / required actions) load in parallel and merge into one bell + drawer.
+    const [notifRes, ccRes] = await Promise.allSettled([
+      fetch("/api/notifications", { credentials: "include" }).then((r) => r.json()),
+      fetch("/api/command-center/today", { credentials: "include" }).then((r) => r.json()),
+    ]);
+
+    let backendList: Notification[] = [];
+    let backendUnread = 0;
+    let backendAction = 0;
+    if (notifRes.status === "fulfilled" && notifRes.value?.live !== false && Array.isArray(notifRes.value?.recent)) {
+      backendList = (notifRes.value.recent as BackendNotification[]).map(adaptNotification);
+      const base = countsOf(backendList);
+      backendUnread = notifRes.value.counts?.unread ?? base.unread;
+      backendAction = notifRes.value.counts?.actionRequired ?? base.action;
+    } else if (notifRes.status === "fulfilled" && notifRes.value?.error) {
+      error = notifRes.value.error;
     }
+
+    // Command-center rollups become push notifications (one per red-alert type).
+    let ccNotifs: Notification[] = [];
+    if (ccRes.status === "fulfilled" && ccRes.value?.live && Array.isArray(ccRes.value?.groups)) {
+      const items: CommandCenterItem[] = ccRes.value.groups
+        .flatMap((g: { items: CommandCenterItem[] }) => g.items)
+        .filter((i: CommandCenterItem) => i.count != null);
+      ccNotifs = items.map(adaptCommandCenterItem).filter((n) => !dismissedCc.has(n.id));
+    }
+
+    const list = [...ccNotifs, ...backendList];
+    const ccUrgent = ccNotifs.filter((n) => n.priority === "urgent" || n.priority === "critical").length;
+    snapshot = {
+      list,
+      counts: {
+        all: list.length,
+        unread: ccNotifs.length + backendUnread,
+        action: ccNotifs.length + backendAction,
+        urgent: ccUrgent + countsOf(backendList).urgent,
+      },
+    };
   } catch {
     error = "Could not reach the server";
   }
@@ -53,10 +84,14 @@ export function markNotificationRead(id: string): void {
   const list = snapshot.list.map((n) => (n.id === id ? { ...n, unread: false } : n));
   snapshot = { list, counts: countsOf(list) };
   emit();
+  // Command-center alerts have no backend row — dismiss locally (reappears next
+  // reload if still unresolved). Only persist read-state for real notifications.
+  if (id.startsWith("cc-")) { dismissedCc.add(id); return; }
   void fetch(`/api/notifications/${encodeURIComponent(id)}/read`, { method: "PATCH", credentials: "include" }).catch(() => undefined);
 }
 
 export function markAllNotificationsRead(): void {
+  for (const n of snapshot.list) if (n.id.startsWith("cc-")) dismissedCc.add(n.id);
   const list = snapshot.list.map((n) => ({ ...n, unread: false }));
   snapshot = { list, counts: countsOf(list) };
   emit();
