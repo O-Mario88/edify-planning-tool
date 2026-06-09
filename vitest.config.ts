@@ -1,4 +1,5 @@
 import { defineConfig } from "vitest/config";
+import { fileURLToPath } from "node:url";
 
 // Vitest config — runs the engine + lib tests under tests/.
 // React component tests are intentionally NOT included here; UI
@@ -7,9 +8,18 @@ import { defineConfig } from "vitest/config";
 // `resolve.tsconfigPaths: true` lets test files import "@/lib/foo"
 // exactly as production code does, reading the alias straight from
 // tsconfig.json (no plugin needed in Vite 6+).
+//
+// `server-only` is a Next.js build-time marker that throws if imported
+// outside a server bundle; in the node test env we alias it to a no-op
+// stub so server-side modules (rate-limit, storage, …) can be imported.
 
 export default defineConfig({
-  resolve: { tsconfigPaths: true },
+  resolve: {
+    tsconfigPaths: true,
+    alias: {
+      "server-only": fileURLToPath(new URL("./tests/stubs/server-only.ts", import.meta.url)),
+    },
+  },
   test: {
     include: ["tests/**/*.test.ts"],
     environment: "node",

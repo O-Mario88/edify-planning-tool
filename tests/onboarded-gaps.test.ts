@@ -10,12 +10,14 @@ describe("onboardedSchoolGaps", () => {
     expect(gaps.length).toBeGreaterThanOrEqual(2); // the two seeds
     for (const g of gaps) expect(g.id.startsWith("onb-")).toBe(true);
   });
-  it("a school with no SSA is a no_ssa / Critical gap", () => {
-    // Seed 32791 (Nakaseke) is SSA Not Done.
+  it("an UNCLUSTERED school is a no_cluster gap, even with no SSA", () => {
+    // Seed 32791 (Nakaseke) is SSA Not Done AND not in a cluster. The operating
+    // model gates in order: owner → cluster → SSA. So the FIRST unmet gate wins:
+    // an unclustered school is no_cluster (clustering unlocks SSA), not no_ssa.
     const nakaseke = gaps.find((g) => g.id === "onb-32791");
-    expect(nakaseke?.gapCategory).toBe("no_ssa");
+    expect(nakaseke?.gapCategory).toBe("no_cluster");
     expect(nakaseke?.ssaCompleted).toBe(false);
-    expect(nakaseke?.riskLevel).toBe("Critical");
+    expect(nakaseke?.riskLevel).toBe("High");
   });
   it("maps uploaded SSA scores onto planner intervention areas when present", () => {
     // Any gap that has a weakestArea must use a planning-area label.
