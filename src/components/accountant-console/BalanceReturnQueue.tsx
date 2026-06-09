@@ -242,7 +242,7 @@ export function BalanceReturnQueue() {
                       <button
                         type="button"
                         title="Mark balance return confirmed"
-                        className="inline-flex items-center gap-1 h-7 px-2.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-caption font-extrabold shadow-[0_6px_14px_-6px_rgba(16,185,129,0.55)]"
+                        className="inline-flex items-center gap-1 h-7 px-2.5 rounded-md bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-caption font-extrabold shadow-[0_6px_14px_-6px_rgba(16,185,129,0.55)]"
                       >
                         <CheckCircle2 size={11} />
                         Confirm Return

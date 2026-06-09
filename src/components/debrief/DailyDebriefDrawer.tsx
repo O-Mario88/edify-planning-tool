@@ -159,7 +159,7 @@ export function DailyDebriefDrawer({
           <footer className="px-4 py-3 border-t border-[var(--color-edify-divider)]">
             <button onClick={submit} disabled={!canSubmit || phase === "submitting"}
               className={cn("w-full h-11 rounded-xl font-extrabold text-[13px] inline-flex items-center justify-center gap-2",
-                canSubmit && phase !== "submitting" ? "bg-emerald-600 hover:bg-emerald-500 text-white" : "bg-slate-200 text-slate-400 cursor-not-allowed")}>
+                canSubmit && phase !== "submitting" ? "bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white" : "bg-slate-200 text-slate-400 cursor-not-allowed")}>
               {phase === "submitting" ? <><Loader2 size={15} className="animate-spin" /> Submitting…</> : phase === "error" ? "Retry submission" : "Submit debrief"}
             </button>
             {!canSubmit && <p className="text-[10.5px] muted text-center mt-1.5">“What happened today?” is required{blockers.includes("other") ? " · explain ‘Other’" : ""}.</p>}

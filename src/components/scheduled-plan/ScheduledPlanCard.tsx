@@ -228,7 +228,7 @@ function ActionRow({
         <button
           type="button"
           onClick={onStart}
-          className="h-10 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-body font-extrabold inline-flex items-center justify-center gap-1.5 shadow-[0_1px_2px_rgba(15,23,32,0.06)] flex-1 sm:flex-none"
+          className="h-10 px-4 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-body font-extrabold inline-flex items-center justify-center gap-1.5 shadow-[0_1px_2px_rgba(15,23,32,0.06)] flex-1 sm:flex-none"
         >
           <Play size={13} />
           Start activity
@@ -237,7 +237,7 @@ function ActionRow({
       {showComplete && (
         <Link
           href={detailHref ?? "#"}
-          className="h-10 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-body font-extrabold inline-flex items-center justify-center gap-1.5 flex-1 sm:flex-none"
+          className="h-10 px-4 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-body font-extrabold inline-flex items-center justify-center gap-1.5 flex-1 sm:flex-none"
         >
           <CheckCircle2 size={13} />
           Complete activity

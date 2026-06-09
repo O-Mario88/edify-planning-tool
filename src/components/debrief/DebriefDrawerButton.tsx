@@ -33,7 +33,7 @@ export function DebriefDrawerButton({
         className={cn(
           "h-10 px-4 rounded-xl text-body font-extrabold inline-flex items-center justify-center gap-1.5",
           variant === "primary"
-            ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm shadow-emerald-500/25"
+            ? "bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white shadow-sm shadow-[var(--focus-ring)]"
             : "border border-[var(--color-edify-border)] hover:bg-slate-50 text-slate-700",
           className,
         )}

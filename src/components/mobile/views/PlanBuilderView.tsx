@@ -182,7 +182,7 @@ export function PlanBuilderView() {
                 "ml-auto h-10 px-4 rounded-xl text-body font-extrabold tracking-tight inline-flex items-center gap-1.5",
                 selectedCount === 0
                   ? "bg-[var(--color-edify-soft)] text-[var(--color-edify-muted)]"
-                  : "bg-emerald-500 hover:bg-emerald-600 text-white shadow-md shadow-emerald-500/30",
+                  : "bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white shadow-md shadow-emerald-500/30",
               )}
             >
               Continue

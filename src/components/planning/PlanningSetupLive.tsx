@@ -44,7 +44,7 @@ export function PlanningSetupLive() {
     <section className="card p-3.5">
       <header className="flex items-center justify-between gap-2 mb-2.5 flex-wrap">
         <h2 className="text-[13px] font-extrabold tracking-tight inline-flex items-center gap-1.5"><ListChecks size={14} /> Planning — schools by stage</h2>
-        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5 text-[10px] font-bold border border-emerald-200">Live · scoped</span>
+        <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)] px-2 py-0.5 text-[10px] font-bold border border-[var(--color-edify-border)]">Live · scoped</span>
       </header>
 
       {loading ? (
@@ -85,7 +85,7 @@ export function PlanningSetupLive() {
                         <span className="truncate">{s.name}<span className="muted"> · {s.subCounty ?? s.schoolId}</span></span>
                         <button
                           onClick={() => setScheduling({ schoolId: s.schoolId, name: s.name, type: s.schoolType })}
-                          className="inline-flex items-center gap-1 h-7 px-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-[10.5px] font-bold whitespace-nowrap shrink-0"
+                          className="inline-flex items-center gap-1 h-7 px-2.5 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[10.5px] font-bold whitespace-nowrap shrink-0"
                         >
                           <CalendarPlus size={11} /> Schedule
                         </button>

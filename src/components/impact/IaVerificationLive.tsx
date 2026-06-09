@@ -45,7 +45,7 @@ export function IaVerificationLive() {
     <section className="card p-3.5">
       <header className="flex items-center justify-between gap-2 mb-2.5 flex-wrap">
         <h2 className="text-[13px] font-extrabold tracking-tight inline-flex items-center gap-1.5"><ShieldCheck size={14} /> Work waiting for IA confirmation</h2>
-        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5 text-[10px] font-bold border border-emerald-200">Live · scoped</span>
+        <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)] px-2 py-0.5 text-[10px] font-bold border border-[var(--color-edify-border)]">Live · scoped</span>
       </header>
 
       {loading ? (
@@ -68,7 +68,7 @@ export function IaVerificationLive() {
                 <button
                   disabled={busy === a.id}
                   onClick={() => confirm(a.id)}
-                  className="inline-flex items-center gap-1 h-8 px-3 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-[11.5px] font-bold whitespace-nowrap shrink-0 disabled:opacity-50"
+                  className="inline-flex items-center gap-1 h-8 px-3 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[11.5px] font-bold whitespace-nowrap shrink-0 disabled:opacity-50"
                 >
                   <CheckCircle2 size={12} /> Confirm <ArrowRight size={11} />
                 </button>

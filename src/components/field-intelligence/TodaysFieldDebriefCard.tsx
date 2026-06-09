@@ -198,7 +198,7 @@ export function TodaysFieldDebriefCard({
           </button>
           <button
             type="button"
-            className="h-9 px-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-body font-semibold inline-flex items-center gap-1.5 shadow-sm shadow-emerald-500/25"
+            className="h-9 px-3.5 rounded-xl bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-body font-semibold inline-flex items-center gap-1.5 shadow-sm shadow-emerald-500/25"
           >
             <Send size={12} />
             Submit Debrief

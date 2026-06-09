@@ -301,7 +301,7 @@ function Button({
       onClick={onClick}
       className={cn(
         "inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-[12px] font-extrabold transition-colors",
-        tone === "primary" && "bg-emerald-600 hover:bg-emerald-700 text-white shadow-[0_10px_28px_-12px_rgba(5,150,105,0.45)]",
+        tone === "primary" && "bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white shadow-[0_10px_28px_-12px_rgba(5,150,105,0.45)]",
         tone === "rose"    && "bg-white border border-rose-200 text-rose-700 hover:bg-rose-50",
         tone === "amber"   && "bg-white border border-amber-200 text-amber-700 hover:bg-amber-50",
       )}

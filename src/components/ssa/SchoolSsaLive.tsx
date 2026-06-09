@@ -48,7 +48,7 @@ export function SchoolSsaLive({ schoolId }: { schoolId: string }) {
         <h3 className="text-[13px] font-extrabold inline-flex items-center gap-1.5"><Grid3x3 size={14} /> SSA · FY{latest.fy}</h3>
         {/* Complete SSA unlocks planning regardless of QA. The badge reflects the
             10% quality-assurance sample, NOT a planning gate. */}
-        <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold border bg-emerald-50 text-emerald-700 border-emerald-200">
+        <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold border bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)] border-[var(--color-edify-border)]">
           Complete · planning unlocked
         </span>
         <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold border ml-1.5",

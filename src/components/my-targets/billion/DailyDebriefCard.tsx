@@ -65,7 +65,7 @@ export function DailyDebriefCard() {
           type="button"
           onClick={handleSubmit}
           disabled={submitted}
-          className="inline-flex items-center gap-1 h-9 px-3 rounded-lg bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 text-white text-[11.5px] font-extrabold shrink-0 transition-colors"
+          className="inline-flex items-center gap-1 h-9 px-3 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] disabled:opacity-60 text-white text-[11.5px] font-extrabold shrink-0 transition-colors"
         >
           <Send size={11} />
           {submitted ? "Sent" : "Submit"}

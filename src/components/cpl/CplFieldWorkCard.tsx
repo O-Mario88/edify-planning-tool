@@ -167,7 +167,7 @@ export function CplFieldWorkCard() {
           <ShieldCheck size={12} />
           Open SSA
         </Link>
-        <Link href="/field-intelligence" className="h-9 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white inline-flex items-center justify-center gap-1.5 text-[var(--text-caption)] font-semibold shadow-sm shadow-emerald-500/25">
+        <Link href="/field-intelligence" className="h-9 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white inline-flex items-center justify-center gap-1.5 text-[var(--text-caption)] font-semibold shadow-sm shadow-emerald-500/25">
           <FileText size={12} />
           Submit Debrief
         </Link>

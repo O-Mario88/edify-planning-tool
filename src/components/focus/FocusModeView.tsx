@@ -117,7 +117,7 @@ export function FocusModeView({
         ) : null}
         <Link
           href={primaryStop.startCta.href}
-          className="inline-flex items-center gap-1.5 mt-4 h-10 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-[13.5px] font-extrabold transition-colors"
+          className="inline-flex items-center gap-1.5 mt-4 h-10 px-4 rounded-xl bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[13.5px] font-extrabold transition-colors"
         >
           {primaryStop.startCta.label}
           <ArrowRight size={14} />

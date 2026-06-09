@@ -81,7 +81,7 @@ export default function PartnerAssignmentRecommendationsPage() {
                 <div className="flex flex-col gap-1.5 shrink-0">
                   <button
                     type="button"
-                    className="h-9 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-body font-semibold inline-flex items-center gap-1.5"
+                    className="h-9 px-3 rounded-xl bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-body font-semibold inline-flex items-center gap-1.5"
                   >
                     Assign
                     <ChevronRight size={12} />

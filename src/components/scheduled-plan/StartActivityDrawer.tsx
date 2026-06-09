@@ -150,7 +150,7 @@ export function StartActivityDrawer({
               "h-10 px-4 rounded-lg text-white text-body font-extrabold inline-flex items-center gap-1.5 shadow-[0_1px_2px_rgba(15,23,32,0.06)] transition-colors",
               submitting
                 ? "bg-[var(--color-edify-muted)] cursor-not-allowed"
-                : "bg-emerald-600 hover:bg-emerald-500",
+                : "bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)]",
             )}
           >
             <Play size={13} />

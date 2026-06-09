@@ -47,12 +47,14 @@
    * The premium light theme uses this for primary CTAs, focus rings,
    * active sidebar states, and the "12" selected-date pill in the
    * calendar. Dark + Glass themes keep their own brand mappings. */
-  --color-edify-primary: #073f4a;
-  --color-edify-dark:    #052f38;
-  --color-edify-deep:    #0a4856;
-  --color-edify-darker:  #052b34;
-  --color-edify-soft:    #e8f1f3;
-  --color-edify-border:  #d6e1e5;
+  /* Brand = slate-blue #50758b (the app's default, esp. light mode). Green is
+     reserved for good/completed semantics, red for struggling, orange for warning. */
+  --color-edify-primary: #50758b;
+  --color-edify-dark:    #3f5e70;
+  --color-edify-deep:    #2f4a59;
+  --color-edify-darker:  #28404d;
+  --color-edify-soft:    #eaeff3;
+  --color-edify-border:  #d8e0e6;
   /* Inner divider — lighter than the card border. The de-facto divider
      colour across the app (table rules, list separators, progress
      tracks). Formalised here so the ~6 stray near-greys collapse to one. */
@@ -169,7 +171,7 @@
   --border-subtle:  rgba(21,41,46,.06);
   --border-card:    rgba(21,41,46,.10);
   --border-strong:  rgba(21,41,46,.16);
-  --border-focus:   #073f4a;
+  --border-focus:   #50758b;
   --border-success: rgba(15,138,95,.30);
   --border-warn:    rgba(245,158,11,.30);
   --border-danger:  rgba(217,59,80,.30);
@@ -182,14 +184,15 @@
   --row-hover:      var(--surface-row-hover);
   --tab-hover:      var(--surface-hover);
   --dropdown-hover: var(--surface-hover);
-  --focus-ring:     rgba(7,63,74,.30);
-  --focus-ring-strong: rgba(7,63,74,.50);
+  --focus-ring:     rgba(80,117,139,.30);
+  --focus-ring-strong: rgba(80,117,139,.50);
 
-  /* Brand — deep teal. The Schedule-send button colour. */
-  --brand-primary:        #073f4a;
-  --brand-primary-hover:  #0a5263;
-  --brand-primary-press:  #052f38;
-  --brand-deep:           #052f38;
+  /* Brand — slate-blue #50758b. The default app colour (primary buttons,
+     active sidebar rows, links, focus). Green stays for good/completed only. */
+  --brand-primary:        #50758b;
+  --brand-primary-hover:  #5e87a0;
+  --brand-primary-press:  #3f5e70;
+  --brand-deep:           #2f4a59;
   --brand-accent:         #f59e0b;
   --brand-accent-hover:   #fbb429;
   --brand-success:        #0f8a5f;
@@ -353,10 +356,10 @@
   /* Brand — Edify teal. The dashboard's signature active colour:
    * sidebar selected row, segmented-toggle active pill, focus ring,
    * primary CTA. Everything else stays graphite. */
-  --brand-primary:        #14b8a6;
-  --brand-primary-hover:  #2dd4bf;
-  --brand-primary-press:  #0d9488;
-  --brand-deep:           #0f766e;
+  --brand-primary:        #6b93ab;
+  --brand-primary-hover:  #84a8bd;
+  --brand-primary-press:  #50758b;
+  --brand-deep:           #3f5e70;
   --brand-accent:         #a78bfa;        /* violet — recommendations / secondary highlights */
   --brand-accent-hover:   #b9a0fb;
   --brand-success:        #22c55e;
@@ -375,7 +378,7 @@
   --color-edify-dark:       var(--brand-primary-press);
   --color-edify-deep:       #121316;
   --color-edify-darker:     #0b0c0e;
-  --color-edify-soft:       rgba(20,184,166,.12);
+  --color-edify-soft:       rgba(80,117,139,.16);
   --color-edify-border:     var(--border-card);
   --color-edify-divider:    var(--border-subtle);
   --color-edify-muted:      var(--text-muted);

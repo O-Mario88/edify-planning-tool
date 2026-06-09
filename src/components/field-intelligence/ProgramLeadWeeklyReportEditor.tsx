@@ -207,7 +207,7 @@ export function ProgramLeadWeeklyReportEditor({ r }: { r: ProgramLeadWeeklyField
               className={cn(
                 "h-10 px-4 rounded-xl text-[13px] font-extrabold inline-flex items-center gap-1.5",
                 canSubmit
-                  ? "bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm shadow-emerald-500/25"
+                  ? "bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white shadow-sm shadow-emerald-500/25"
                   : "bg-[var(--color-edify-soft)] text-[var(--color-edify-muted)] cursor-not-allowed",
               )}
             >

@@ -277,7 +277,7 @@ function PlanRow({
           <button
             type="button"
             onClick={onComplete}
-            className="h-8 px-3 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-extrabold inline-flex items-center gap-1.5"
+            className="h-8 px-3 rounded-md bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[11px] font-extrabold inline-flex items-center gap-1.5"
           >
             <Database size={11} />
             {isTraining ? "Complete Training · log SF ID" : "Complete Visit · log SF ID"}

@@ -361,7 +361,7 @@ export function BatchActionsCard({
               "h-10 rounded-xl text-body font-extrabold inline-flex items-center justify-center gap-1.5",
               hasBlockingErrors
                 ? "bg-[var(--color-edify-soft)] text-[var(--color-edify-muted)] cursor-not-allowed"
-                : "bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm shadow-emerald-500/25",
+                : "bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white shadow-sm shadow-emerald-500/25",
             )}
           >
             <CheckCircle2 size={13} />
@@ -431,7 +431,7 @@ export function TabSwitchModal({
               "h-10 rounded-xl text-body font-extrabold inline-flex items-center justify-center gap-1.5",
               hasBlockingErrors
                 ? "bg-[var(--color-edify-soft)] text-[var(--color-edify-muted)] cursor-not-allowed"
-                : "bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm shadow-emerald-500/25",
+                : "bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white shadow-sm shadow-emerald-500/25",
             )}
           >
             Submit batch
@@ -538,7 +538,7 @@ export function SelectionSummary({
           "mt-3 w-full h-10 rounded-xl text-body font-extrabold inline-flex items-center justify-center gap-1.5",
           totalSelected === 0 || hasErrors
             ? "bg-[var(--color-edify-soft)] text-[var(--color-edify-muted)] cursor-not-allowed"
-            : "bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm shadow-emerald-500/25",
+            : "bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white shadow-sm shadow-emerald-500/25",
         )}
       >
         <Calendar size={13} />

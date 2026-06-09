@@ -119,7 +119,7 @@ export function FundApprovalQueueLive() {
                 {actionErr && <p className="mt-2 text-[11px] text-rose-600 font-semibold">{actionErr}</p>}
                 {selected.status === "submitted" && (
                   <div className="flex gap-1.5 mt-3">
-                    <button disabled={busy} onClick={() => act("approve")} className="flex-1 inline-flex items-center justify-center gap-1 h-9 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-[11.5px] font-bold disabled:opacity-50"><CheckCircle2 size={13} /> Approve</button>
+                    <button disabled={busy} onClick={() => act("approve")} className="flex-1 inline-flex items-center justify-center gap-1 h-9 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[11.5px] font-bold disabled:opacity-50"><CheckCircle2 size={13} /> Approve</button>
                     <button disabled={busy} onClick={() => act("return")} className="inline-flex items-center justify-center gap-1 h-9 px-3 rounded-lg border border-sky-300 text-sky-700 hover:bg-sky-50 text-[11.5px] font-bold disabled:opacity-50"><RotateCcw size={13} /> Return</button>
                     <button disabled={busy} onClick={() => act("reject")} className="inline-flex items-center justify-center gap-1 h-9 px-3 rounded-lg border border-rose-300 text-rose-700 hover:bg-rose-50 text-[11.5px] font-bold disabled:opacity-50"><XCircle size={13} /> Reject</button>
                   </div>

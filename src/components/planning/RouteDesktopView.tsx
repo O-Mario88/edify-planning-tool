@@ -73,7 +73,7 @@ export function RouteDesktopView() {
               Icon={Play}
               label="Start all routes"
               ariaLabel="Start all routes for this week"
-              className="h-10 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-body font-bold shadow-sm shadow-emerald-500/25"
+              className="h-10 px-3 rounded-xl bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-body font-bold shadow-sm shadow-emerald-500/25"
               toast={{
                 tone: "success",
                 title: "Week started",

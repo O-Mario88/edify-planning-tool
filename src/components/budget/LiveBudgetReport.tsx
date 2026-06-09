@@ -61,7 +61,7 @@ export function LiveBudgetReport({ view }: { view: "breakdown" | "monthly" }) {
               {data.activityCount} scheduled activities in {SCOPE_LABEL[data.scope]} · FY{data.fy} · auto-costed from the CD rate card
             </div>
           </div>
-          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 px-2.5 py-1 text-[11px] font-bold border border-emerald-200">Live · scoped · backend-driven</span>
+          <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)] px-2.5 py-1 text-[11px] font-bold border border-[var(--color-edify-border)]">Live · scoped · backend-driven</span>
         </div>
         {(data.costMissingCount > 0 || data.unscheduledCount > 0) && (
           <div className="flex flex-wrap gap-2 mt-3">

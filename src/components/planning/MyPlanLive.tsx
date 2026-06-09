@@ -81,7 +81,7 @@ export function MyPlanLive() {
                   </span>
                   {OPEN.has(a.status) && (
                     <span className="inline-flex items-center gap-1 shrink-0">
-                      <button onClick={() => { setEditing({ id: a.id, mode: "complete" }); setField(""); }} className="inline-flex items-center gap-1 h-7 px-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-[10.5px] font-bold"><CheckCircle2 size={11} /> Complete</button>
+                      <button onClick={() => { setEditing({ id: a.id, mode: "complete" }); setField(""); }} className="inline-flex items-center gap-1 h-7 px-2 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[10.5px] font-bold"><CheckCircle2 size={11} /> Complete</button>
                       <button onClick={() => { setEditing({ id: a.id, mode: "reschedule" }); setField(""); }} className="inline-flex items-center gap-1 h-7 px-2 rounded-lg border border-[var(--color-edify-border)] hover:bg-[var(--surface-3)] text-[10.5px] font-bold"><RotateCcw size={11} /></button>
                     </span>
                   )}

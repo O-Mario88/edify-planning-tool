@@ -235,7 +235,7 @@ function QueueRow({ item }: { item: SfQueueItem }) {
                 ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                 : recordId.trim().length === 0
                   ? "bg-[var(--color-edify-soft)] text-[var(--color-edify-muted)] cursor-not-allowed"
-                  : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-[0_1px_2px_rgba(15,23,32,0.06)]",
+                  : "bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white shadow-[0_1px_2px_rgba(15,23,32,0.06)]",
             )}
           >
             <CheckCircle2 size={13} />

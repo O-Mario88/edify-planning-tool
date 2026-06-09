@@ -190,7 +190,7 @@ function GreetingHero({
           <div className="flex flex-col sm:flex-row md:flex-col gap-2">
             <Link
               href={primaryCta.href}
-              className="inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 active:bg-emerald-600 text-white text-[13px] font-extrabold shadow-[0_10px_28px_-8px_rgba(16,185,129,0.55)] transition-colors whitespace-nowrap flex-1 sm:flex-none"
+              className="inline-flex items-center justify-center gap-1.5 h-10 px-4 rounded-xl bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] active:bg-emerald-600 text-white text-[13px] font-extrabold shadow-[0_10px_28px_-8px_rgba(16,185,129,0.55)] transition-colors whitespace-nowrap flex-1 sm:flex-none"
             >
               {primaryCta.label}
               <ArrowRight size={14} />

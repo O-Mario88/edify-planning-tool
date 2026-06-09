@@ -236,7 +236,7 @@ export function DebriefForm({
             className={cn(
               "h-10 px-4 rounded-xl text-white text-body font-extrabold inline-flex items-center gap-2 shadow-sm transition-colors",
               canSubmit
-                ? "bg-emerald-600 hover:bg-emerald-500 shadow-emerald-500/25"
+                ? "bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] shadow-[var(--focus-ring)]"
                 : "bg-[var(--color-edify-muted)] cursor-not-allowed",
             )}
           >

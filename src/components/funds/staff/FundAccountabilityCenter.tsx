@@ -295,7 +295,7 @@ function ReceiptCallToAction({
         <button
           type="button"
           onClick={() => onConfirmReceipt?.()}
-          className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-extrabold shadow-[0_8px_22px_-8px_rgba(16,185,129,0.5)]"
+          className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[12px] font-extrabold shadow-[0_8px_22px_-8px_rgba(16,185,129,0.5)]"
         >
           <CheckCircle2 size={12} />
           Confirm Received

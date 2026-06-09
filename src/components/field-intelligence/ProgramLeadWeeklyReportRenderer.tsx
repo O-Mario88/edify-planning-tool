@@ -499,7 +499,7 @@ function DecisionLine({
               className={cn(
                 "h-9 px-3 rounded-md text-[12px] font-extrabold",
                 assigneeName.trim()
-                  ? "bg-emerald-500 hover:bg-emerald-600 text-white"
+                  ? "bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white"
                   : "bg-[var(--color-edify-soft)] text-[var(--color-edify-muted)] cursor-not-allowed",
               )}
             >

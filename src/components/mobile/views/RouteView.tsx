@@ -143,7 +143,7 @@ function RouteGroupCard({ group }: { group: RouteGroup }) {
         </button>
         <button
           type="button"
-          className="h-10 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white inline-flex items-center justify-center gap-1.5 text-body font-bold"
+          className="h-10 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white inline-flex items-center justify-center gap-1.5 text-body font-bold"
         >
           <Play size={14} fill="currentColor" />
           Start Route

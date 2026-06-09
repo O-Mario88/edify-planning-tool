@@ -109,7 +109,7 @@ export function PartnerDebriefReviewCard() {
                       <div className="text-[9.5px] font-bold uppercase tracking-wide muted mb-1">Your review note (optional)</div>
                       <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} placeholder="Add context before merging into your daily debrief…" className="w-full rounded-lg border border-[var(--color-edify-border)] bg-white px-2.5 py-2 text-[12px] resize-none focus:outline-none focus:ring-2 focus:ring-emerald-200" />
                     </div>
-                    <button onClick={() => void merge(r.id)} disabled={busy === r.id} className="w-full h-10 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white text-[12.5px] font-extrabold inline-flex items-center justify-center gap-2">
+                    <button onClick={() => void merge(r.id)} disabled={busy === r.id} className="w-full h-10 rounded-xl bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] disabled:opacity-60 text-white text-[12.5px] font-extrabold inline-flex items-center justify-center gap-2">
                       {busy === r.id ? <><Loader2 size={14} className="animate-spin" /> Merging…</> : <><GitMerge size={14} /> Merge into today’s debrief → route up</>}
                     </button>
                   </div>

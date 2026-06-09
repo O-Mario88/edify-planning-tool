@@ -37,7 +37,7 @@ export function ClusterPlanningLive() {
     <section className="card p-3.5">
       <header className="flex items-center justify-between gap-2 mb-2.5 flex-wrap">
         <h2 className="text-[13px] font-extrabold tracking-tight inline-flex items-center gap-1.5"><Network size={14} /> Cluster planning</h2>
-        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5 text-[10px] font-bold border border-emerald-200">Live · scoped</span>
+        <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)] px-2 py-0.5 text-[10px] font-bold border border-[var(--color-edify-border)]">Live · scoped</span>
       </header>
 
       {loading ? (
@@ -58,7 +58,7 @@ export function ClusterPlanningLive() {
               </span>
               <button
                 onClick={() => setScheduling({ id: c.id, name: c.name })}
-                className="inline-flex items-center gap-1 h-7 px-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-[10.5px] font-bold whitespace-nowrap shrink-0"
+                className="inline-flex items-center gap-1 h-7 px-2.5 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[10.5px] font-bold whitespace-nowrap shrink-0"
               >
                 <CalendarPlus size={11} /> Schedule meeting
               </button>

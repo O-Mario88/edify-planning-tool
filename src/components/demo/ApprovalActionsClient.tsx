@@ -78,7 +78,7 @@ function ActionsRow({
           <button
             type="button"
             onClick={() => setModal("approve")}
-            className="h-9 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-body font-semibold inline-flex items-center gap-1.5"
+            className="h-9 px-3 rounded-xl bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-body font-semibold inline-flex items-center gap-1.5"
           >
             <CheckCircle2 size={13} />
             Approve Plan + budget
@@ -89,7 +89,7 @@ function ActionsRow({
             <button
               type="button"
               onClick={() => setModal("approve")}
-              className="h-9 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-body font-semibold inline-flex items-center gap-1.5"
+              className="h-9 px-3 rounded-xl bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-body font-semibold inline-flex items-center gap-1.5"
             >
               <CheckCircle2 size={13} />
               Approve
@@ -116,7 +116,7 @@ function ActionsRow({
           <button
             type="button"
             onClick={() => setModal("rvpFinal")}
-            className="h-9 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-body font-semibold inline-flex items-center gap-1.5"
+            className="h-9 px-3 rounded-xl bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-body font-semibold inline-flex items-center gap-1.5"
           >
             <CheckCircle2 size={13} />
             Final approve
@@ -296,7 +296,7 @@ function Modal({
               "h-9 px-3 rounded-xl text-white text-body font-semibold inline-flex items-center gap-1.5",
               isReturn ? "bg-rose-500 hover:bg-rose-600" :
               isAmend  ? "bg-amber-500 hover:bg-amber-600" :
-                         "bg-emerald-500 hover:bg-emerald-600",
+                         "bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)]",
               busy && "opacity-70 cursor-not-allowed",
             )}
           >

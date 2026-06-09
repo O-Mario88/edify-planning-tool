@@ -40,7 +40,7 @@ export function WeeklyFundRequestCard() {
     <section className="card p-3.5">
       <header className="flex items-center justify-between gap-2 mb-2.5 flex-wrap">
         <h2 className="text-[13px] font-extrabold tracking-tight inline-flex items-center gap-1.5"><Receipt size={14} /> Weekly fund request</h2>
-        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5 text-[10px] font-bold border border-emerald-200">Live · from schedule</span>
+        <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)] px-2 py-0.5 text-[10px] font-bold border border-[var(--color-edify-border)]">Live · from schedule</span>
       </header>
 
       {loading ? (
