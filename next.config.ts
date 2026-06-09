@@ -20,6 +20,10 @@ const nextConfig: NextConfig = {
   // the rewrite broke at least one icon import. Modern lucide-react
   // tree-shakes well in production builds, so leaving the default barrel.
 
+  // Standalone output → a self-contained .next/standalone server with only the
+  // traced runtime deps, for a small production Docker image.
+  output: "standalone",
+
   images: {
     // Next 15 requires every `quality` value used by next/image to be
     // whitelisted here. The login hero photo uses `quality={85}` for
