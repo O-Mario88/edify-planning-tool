@@ -1,5 +1,6 @@
 import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { DashboardPageHeader } from "@/components/dashboards/DashboardPageHeader";
+import { TodayCommandCenter } from "@/components/command/TodayCommandCenter";
 import { CommandStack } from "@/components/actions/CommandStack";
 import { RecruitmentIntelligenceCard } from "@/components/analytics/RecruitmentIntelligenceCard";
 import { PartnerDebriefReviewCard } from "@/components/debrief/PartnerDebriefReviewCard";
@@ -57,6 +58,7 @@ export default async function CceoDashboardPage() {
     <div className="min-h-screen bg-[var(--color-page)] flex flex-col">
       <DashboardPageHeader role="CCEO" />
       <main className="flex-1 px-3 sm:px-4 pt-3 pb-28 space-y-3">
+        <TodayCommandCenter />
         <CommandStack user={user} />
         <DebriefPromoterCard submitterRole="CCEO" />
         <PartnerDebriefReviewCard />
@@ -91,6 +93,7 @@ export default async function CceoDashboardPage() {
       <DashboardPageHeader role="CCEO" />
       <div className="px-4 sm:px-5 lg:px-6 pb-24 lg:pb-6 pt-3 lg:pt-4 space-y-4 lg:space-y-5">
         {/* COMMAND — actions before everything else. What to do next. */}
+        <TodayCommandCenter />
         <CommandStack user={user} />
 
         <DebriefPromoterCard submitterRole="CCEO" />

@@ -1,5 +1,6 @@
 import { CommandStack } from "@/components/actions/CommandStack";
 import { DashboardPageHeader } from "@/components/dashboards/DashboardPageHeader";
+import { TodayCommandCenter } from "@/components/command/TodayCommandCenter";
 import { DonorImpactReachCard } from "@/components/director/DonorImpactReachCard";
 import { getDonorMetricSnapshot } from "@/lib/donor-metrics";
 import { ImpactKpiRow } from "@/components/impact/ImpactKpiRow";
@@ -60,6 +61,7 @@ export default async function ImpactDashboard() {
           <DashboardPageHeader role="ImpactAssessment" />
           <div className="px-6 pb-24 md:pb-6 pt-4 space-y-5">
             {/* Section 1 — Today.  The unified action surface. */}
+            <TodayCommandCenter />
             <CommandStack user={user} hideMission />
 
             {/* SSA truth layer (IA scope) — performance + impact + support→improvement. */}

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { AccountantConsoleDashboard } from "@/components/accountant-console/AccountantConsoleDashboard";
 import { CommandStack } from "@/components/actions/CommandStack";
+import { TodayCommandCenter } from "@/components/command/TodayCommandCenter";
 import { AccountantPartnerPaymentsQueue } from "@/components/partner/AccountantPartnerPaymentsQueue";
 import { PartnerPaymentQueue } from "@/components/payments/PartnerPaymentQueue";
 import { VerificationPaymentFunnel } from "@/components/cceo/VerificationPaymentFunnel";
@@ -44,6 +45,7 @@ export default async function AccountantConsolePage() {
 
   return (
     <div className="space-y-4 px-4 sm:px-5 md:px-6 pt-4 pb-24">
+      <TodayCommandCenter />
       <CommandStack user={user} />
       {/* Partner-to-payment (backend, scoped, IA-gated). The live terminal
           gate: partner activities clear to paid only with evidence + SF ID +

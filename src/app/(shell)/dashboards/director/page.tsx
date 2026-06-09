@@ -1,5 +1,6 @@
 import { CommandStack } from "@/components/actions/CommandStack";
 import { DashboardPageHeader } from "@/components/dashboards/DashboardPageHeader";
+import { TodayCommandCenter } from "@/components/command/TodayCommandCenter";
 import { DonorImpactReachCard } from "@/components/director/DonorImpactReachCard";
 import { ScheduleBudgetCard } from "@/components/budget/ScheduleBudgetCard";
 import { CostSettingsCard } from "@/components/budget/CostSettingsCard";
@@ -79,6 +80,7 @@ export default async function CountryDirectorDashboard() {
       <DashboardPageHeader role="CountryDirector" />
       <div className="px-3 sm:px-4 md:px-5 pb-24 md:pb-5 pt-3 md:pt-4 space-y-4 md:space-y-5">
         {/* TODAY — CommandStack carries its own header. */}
+        <TodayCommandCenter />
         <CommandStack user={user} hideMission />
 
         {/* Recruitment Intelligence — the CD's directory replacement: should we

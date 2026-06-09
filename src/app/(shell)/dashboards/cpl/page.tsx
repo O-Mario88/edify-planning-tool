@@ -2,6 +2,7 @@ import { CommandStack } from "@/components/actions/CommandStack";
 import { RecruitmentIntelligenceCard } from "@/components/analytics/RecruitmentIntelligenceCard";
 import { ProjectWorkCard } from "@/components/special-projects/ProjectWorkCard";
 import { DashboardPageHeader } from "@/components/dashboards/DashboardPageHeader";
+import { TodayCommandCenter } from "@/components/command/TodayCommandCenter";
 import { DebriefPromoterCard } from "@/components/debrief/DebriefPromoterCard";
 import { PlCommandLanes } from "@/components/cpl/PlCommandLanes";
 import { CplFieldWorkCard } from "@/components/cpl/CplFieldWorkCard";
@@ -88,6 +89,7 @@ export default async function CountryProgramLeadDashboard() {
 
         {/* TODAY — 10-Second Command Stack carries its own strategic
             header internally; no outer chapter needed. */}
+        <TodayCommandCenter />
         <CommandStack user={user} hideMission />
 
         {/* Recruitment intelligence — team-scope: which districts to expand

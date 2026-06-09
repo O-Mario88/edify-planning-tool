@@ -576,6 +576,23 @@ export function removeProjectSchool(user: BackendUser, projectId: string, school
   );
 }
 
+// ── Command Center (recommendation-led "what must I do next") ───────
+export type BeActionItem = {
+  id: string; priority: "critical" | "high" | "medium"; kind: string;
+  title: string; reason: string;
+  subject?: { kind: string; id: string; name: string };
+  action: { label: string; href: string };
+  count?: number;
+};
+export type BeTodayFeed = {
+  live: true; role: string; scope: "own" | "team" | "country";
+  summary: { total: number; critical: number; action: number; attention: number };
+  groups: { key: string; label: string; items: BeActionItem[] }[];
+};
+export function fetchCommandCenterToday(user: BackendUser) {
+  return live<Omit<BeTodayFeed, "live">>(`/command-center/today`, user);
+}
+
 // ── Clusters (backend-backed; no mock) ──────────────────────────────
 export type BeCluster = {
   id: string; name: string; clusterType: string; status: string;
