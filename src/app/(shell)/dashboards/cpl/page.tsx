@@ -19,6 +19,8 @@ import {
 } from "@/components/cpl/SchoolSsaIntelligenceCard";
 import { SmartRouteCapacityCard } from "@/components/cpl/SmartRouteCapacityCard";
 import { FundingExecutionCard } from "@/components/cpl/FundingExecutionCard";
+import { ScheduleBudgetCard } from "@/components/budget/ScheduleBudgetCard";
+import { WeeklyFundRequestCard } from "@/components/budget/WeeklyFundRequestCard";
 import { QuickActionsRow } from "@/components/cpl/QuickActionsRow";
 import { MyPlanCard } from "@/components/planning/MyPlanCard";
 import { ClientVerificationCard } from "@/components/ssa/ClientVerificationCard";
@@ -173,6 +175,10 @@ export default async function CountryProgramLeadDashboard() {
           <div id="backlog-snapshot">
             <TeamBacklogSnapshotCard />
           </div>
+          <section className="grid grid-cols-12 gap-3 md:gap-4 items-stretch" id="team-budget">
+            <div className="col-span-12 lg:col-span-7"><ScheduleBudgetCard /></div>
+            <div className="col-span-12 lg:col-span-5"><WeeklyFundRequestCard /></div>
+          </section>
           <section className="grid grid-cols-12 gap-3 md:gap-4 items-stretch">
             <div className="col-span-12 lg:col-span-8" id="ssa-intelligence">
               <InterventionPerformanceByClusterCard />

@@ -496,6 +496,50 @@ export function fetchSsaVerificationSummary(user: BackendUser) {
   return live<BeSsaVerifySummary>(`/ssa/verification-summary`, user);
 }
 
+// ── Budget = the schedule, costed (automatic costing spine) ─────────
+export type BeCostSetting = { id: string; key: string; label: string; unitCost: number; fy?: string | null; updatedAt?: string };
+export type BeCostSettings = { settings: BeCostSetting[]; count: number };
+export type BeBudgetMonth = { month: number; label: string; amount: number; count: number; trainings: number; insight?: string };
+export type BeBudgetFromSchedule = {
+  live: true; fy: string; role: string; scope: "own" | "team" | "country";
+  total: number; activityCount: number; costMissingCount: number;
+  scheduledTotal: number; unscheduledCount: number; unscheduledAmount: number;
+  byMonth: BeBudgetMonth[];
+  byQuarter: { quarter: string; amount: number; count: number }[];
+  byType: { type: string; amount: number; count: number }[];
+  byDelivery: { staff: { amount: number; count: number }; partner: { amount: number; count: number } };
+  busyMonths: BeBudgetMonth[]; slowMonths: BeBudgetMonth[]; avgMonthlyCost: number;
+};
+export type BeBudgetCostLine = { label: string; key: string; unit: number | null; qty: number; amount: number; missing: boolean };
+export type BeBudgetWeeklyLine = {
+  id: string; activityType: string; deliveryType: string; status: string;
+  month: number | null; week: number | null; scheduledDate: string | null;
+  place: string; district: string | null; staff: string | null; partner: string | null;
+  amount: number; costMissing: boolean; lines: BeBudgetCostLine[];
+  paymentStatus: string; iaVerificationStatus: string;
+};
+export type BeBudgetWeekly = {
+  live: true; fy: string; role: string; total: number; count: number; costMissingCount: number;
+  weeks: { key: string; month: number | null; week: number | null; amount: number; count: number }[];
+  lines: BeBudgetWeeklyLine[];
+};
+export function fetchBudgetFromSchedule(user: BackendUser, fy?: string) {
+  return live<Omit<BeBudgetFromSchedule, "live">>(`/budget/from-schedule${fy ? `?fy=${encodeURIComponent(fy)}` : ""}`, user);
+}
+export function fetchBudgetWeekly(user: BackendUser, opts: { fy?: string; month?: number } = {}) {
+  const q = new URLSearchParams();
+  if (opts.fy) q.set("fy", opts.fy);
+  if (opts.month) q.set("month", String(opts.month));
+  const qs = q.toString();
+  return live<Omit<BeBudgetWeekly, "live">>(`/budget/weekly${qs ? `?${qs}` : ""}`, user);
+}
+export function fetchCostSettings(user: BackendUser) {
+  return live<BeCostSettings>(`/budget/cost-settings`, user);
+}
+export function setCostSetting(user: BackendUser, body: { key: string; label?: string; unitCost: number; fy?: string }) {
+  return live<{ ok: boolean; setting: BeCostSetting }>(`/budget/cost-settings`, user, { method: "POST", body: JSON.stringify(body) });
+}
+
 // ── Special Projects (backend-backed; no mock) ──────────────────────
 export type BeProject = {
   id: string; name: string; category: string; intervention?: string | null;

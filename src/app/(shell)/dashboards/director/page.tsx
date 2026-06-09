@@ -1,6 +1,8 @@
 import { CommandStack } from "@/components/actions/CommandStack";
 import { DashboardPageHeader } from "@/components/dashboards/DashboardPageHeader";
 import { DonorImpactReachCard } from "@/components/director/DonorImpactReachCard";
+import { ScheduleBudgetCard } from "@/components/budget/ScheduleBudgetCard";
+import { CostSettingsCard } from "@/components/budget/CostSettingsCard";
 import { getDonorMetricSnapshot } from "@/lib/donor-metrics";
 import { DebriefReviewInbox } from "@/components/messages/DebriefReviewInbox";
 import { CountryKpiRow } from "@/components/director/CountryKpiRow";
@@ -168,6 +170,10 @@ export default async function CountryDirectorDashboard() {
             title="What's in approval and where money is parked"
             description="Fund approvals awaiting your sign-off and disbursements that haven't yet converted to delivery."
           />
+          <section className="grid grid-cols-12 gap-3 items-stretch" id="country-budget">
+            <div className="col-span-12 lg:col-span-7"><ScheduleBudgetCard /></div>
+            <div className="col-span-12 lg:col-span-5"><CostSettingsCard /></div>
+          </section>
           <section className="grid grid-cols-12 gap-3 items-stretch" id="fund-approvals">
             <div className="col-span-12 lg:col-span-8">
               <FundApprovalFinanceSnapshot />

@@ -15,6 +15,8 @@ import { VerificationPaymentFunnel } from "@/components/cceo/VerificationPayment
 import { CceoMonthPlannerCard } from "@/components/cceo/CceoMonthPlannerCard";
 import { CceoMonthlyActivityBreakdownCard } from "@/components/cceo/CceoMonthlyActivityBreakdownCard";
 import { CceoSalesforceQueueCard } from "@/components/cceo/CceoSalesforceQueueCard";
+import { ScheduleBudgetCard } from "@/components/budget/ScheduleBudgetCard";
+import { WeeklyFundRequestCard } from "@/components/budget/WeeklyFundRequestCard";
 import { CceoRouteOpportunitiesCard } from "@/components/cceo/CceoRouteOpportunitiesCard";
 import { CceoClusterScheduleCard } from "@/components/cceo/CceoClusterScheduleCard";
 import { CceoNextPrioritySchoolStrip } from "@/components/cceo/CceoNextPrioritySchoolStrip";
@@ -71,6 +73,8 @@ export default async function CceoDashboardPage() {
         <CoreSchoolsNeedingAttentionCard />
         <VerificationPaymentFunnel />
         <CceoSalesforceQueueCard />
+        <ScheduleBudgetCard />
+        <WeeklyFundRequestCard />
         <CceoMonthPlannerCard />
         <CceoMonthlyActivityBreakdownCard />
         <CceoRouteOpportunitiesCard />
@@ -185,6 +189,10 @@ export default async function CceoDashboardPage() {
             title="What's planned across the month"
             description="Visit cadence, activity mix, and route opportunities for the days ahead."
           />
+          <div className="grid grid-cols-12 gap-3 lg:gap-4 items-stretch">
+            <div className="col-span-12 lg:col-span-7"><ScheduleBudgetCard /></div>
+            <div className="col-span-12 lg:col-span-5"><WeeklyFundRequestCard /></div>
+          </div>
           <div className="grid grid-cols-12 gap-3 lg:gap-4 items-stretch">
             <div className="col-span-12 lg:col-span-4">
               <CceoMonthPlannerCard />
