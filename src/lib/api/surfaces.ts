@@ -602,6 +602,23 @@ export function fetchCommandCenterToday(user: BackendUser) {
   return live<Omit<BeTodayFeed, "live">>(`/command-center/today`, user);
 }
 
+// ── Fund requests (approval queue + dynamic detail) ─────────────────
+export type BeFundRequest = {
+  id: string; fy: string; period: string; periodKey: string; scope: string;
+  submittedBy: string; submittedByRole: string; totalAmount: number; activityCount: number;
+  status: "submitted" | "approved" | "returned" | "rejected" | "disbursed";
+  reviewedAt?: string | null; reviewNote?: string | null; createdAt: string;
+};
+export function fetchFundRequests(user: BackendUser) {
+  return live<BeFundRequest[]>(`/fund-requests`, user);
+}
+export function fetchFundRequest(user: BackendUser, id: string) {
+  return live<BeFundRequest>(`/fund-requests/${encodeURIComponent(id)}`, user);
+}
+export function reviewFundRequest(user: BackendUser, id: string, action: "approve" | "return" | "reject", note?: string) {
+  return live<BeFundRequest>(`/fund-requests/${encodeURIComponent(id)}/${action}`, user, { method: "POST", body: JSON.stringify({ note }) });
+}
+
 // ── Activities — generic scoped list (IA queue, etc.; My Plan uses
 //    fetchMyPlanActivities; actions use backendActivityAction above) ──
 export function fetchActivities(user: BackendUser, qs = "") {

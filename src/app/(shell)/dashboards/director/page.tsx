@@ -4,6 +4,7 @@ import { TodayCommandCenter } from "@/components/command/TodayCommandCenter";
 import { DonorImpactReachCard } from "@/components/director/DonorImpactReachCard";
 import { ScheduleBudgetCard } from "@/components/budget/ScheduleBudgetCard";
 import { CostSettingsCard } from "@/components/budget/CostSettingsCard";
+import { FundApprovalQueueLive } from "@/components/funds/FundApprovalQueueLive";
 import { getDonorMetricSnapshot } from "@/lib/donor-metrics";
 import { DebriefReviewInbox } from "@/components/messages/DebriefReviewInbox";
 import { CountryKpiRow } from "@/components/director/CountryKpiRow";
@@ -176,6 +177,9 @@ export default async function CountryDirectorDashboard() {
             <div className="col-span-12 lg:col-span-7"><ScheduleBudgetCard /></div>
             <div className="col-span-12 lg:col-span-5"><CostSettingsCard /></div>
           </section>
+          {/* Live, backend-driven fund-approval queue — clicking a request
+              updates the detail panel dynamically (no stale data). */}
+          <FundApprovalQueueLive />
           <section className="grid grid-cols-12 gap-3 items-stretch" id="fund-approvals">
             <div className="col-span-12 lg:col-span-8">
               <FundApprovalFinanceSnapshot />
