@@ -76,7 +76,7 @@ export function MessageReplyBox({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="card p-3.5 lg:p-5">
+    <form id="message-reply" onSubmit={handleSubmit} className="card p-3.5 lg:p-5 scroll-mt-20">
       <header className="flex items-center gap-2 mb-3">
         <CornerUpLeft size={14} className="text-[var(--color-edify-muted)]" />
         <h3 className="text-body font-extrabold tracking-tight">

@@ -15,6 +15,7 @@
 // into the inbox + detail page.
 
 import Link from "next/link";
+import { useState } from "react";
 import {
   Archive,
   ArrowUpFromLine,
@@ -52,11 +53,10 @@ function secondaryActionsFor(message: Message, role: EdifyRole): ActionDef[] {
   const out: ActionDef[] = [];
   const isInternal = role !== "PartnerAdmin" && role !== "PartnerFieldOfficer" && role !== "PartnerViewer";
 
-  // Reply — everyone except System messages. (Reply is wired
-  // through the inline MessageReplyBox lower on the detail page;
-  // this button could scroll to it in a future polish pass.)
+  // Reply — everyone except System messages. Scrolls to the inline
+  // MessageReplyBox (id="message-reply") rendered lower on the detail page.
   if (message.senderRole !== "System") {
-    out.push({ key: "reply", label: "Reply", Icon: CornerUpLeft });
+    out.push({ key: "reply", label: "Reply", Icon: CornerUpLeft, href: "#message-reply" });
   }
 
   // Acknowledge — surfaces when there's outstanding action. Wired to
@@ -71,11 +71,9 @@ function secondaryActionsFor(message: Message, role: EdifyRole): ActionDef[] {
     out.push({ key: "mark-done", label: "Mark Resolved", Icon: CheckCircle2, action: markResolvedAction });
   }
 
-  // Escalate to leadership — internal roles only. Not yet wired —
-  // when it lands it'll add a system message at priority=Urgent.
-  if (isInternal && message.priority !== "Critical" && message.status !== "resolved") {
-    out.push({ key: "escalate", label: "Escalate", Icon: ArrowUpFromLine });
-  }
+  // (Escalate-to-leadership removed: it had no backend. When a real
+  // escalation flow lands — a system message at priority=Urgent — it can be
+  // re-added here wired to a server action, not a no-op button.)
 
   // Archive — anyone can archive. Wired to the real server mutator.
   out.push({ key: "archive", label: "Archive", Icon: Archive, action: archiveAction });
@@ -96,6 +94,29 @@ export function MessageActionBar({
 }) {
   const primary = message.primaryAction;
   const secondary = secondaryActionsFor(message, role);
+  const [moreOpen, setMoreOpen] = useState(false);
+  // A primary "reply" with no explicit destination targets the inline reply box.
+  const primaryHref = primary?.href ?? (primary?.key === "reply" ? "#message-reply" : undefined);
+
+  // Render one secondary action as the correct element: a link (href), a
+  // server-action form (action), or — only if neither — a plain button.
+  const renderSecondary = (a: ActionDef, className: string) => {
+    const inner = (
+      <>
+        <a.Icon size={12} className="text-[var(--color-edify-muted)]" />
+        {a.label}
+      </>
+    );
+    if (a.href) return <a key={a.key} href={a.href} className={className} onClick={() => setMoreOpen(false)}>{inner}</a>;
+    if (a.action)
+      return (
+        <form key={a.key} action={a.action} className="contents">
+          <input type="hidden" name="messageId" value={message.id} />
+          <button type="submit" className={className} onClick={() => setMoreOpen(false)}>{inner}</button>
+        </form>
+      );
+    return <button key={a.key} type="button" className={className}>{inner}</button>;
+  };
 
   // On mobile/tablet the bottom of the viewport already hosts the
   // shell's RoleBottomNav (~72px). Stick the action bar ABOVE it so
@@ -118,55 +139,61 @@ export function MessageActionBar({
   return (
     <footer className={wrapperClass}>
       {/* ─── Mobile layout: primary CTA fills, secondaries collapse to More ─── */}
-      <div className="lg:hidden flex items-center gap-2 w-full">
-        {primary && (
-          primary.href ? (
-            <Link href={primary.href} className={cn(primaryClass, "flex-1")}>
-              <PrimaryIcon size={14} />
-              {primary.label}
-            </Link>
-          ) : (
-            <button type="button" className={cn(primaryClass, "flex-1")}>
-              <PrimaryIcon size={14} />
-              {primary.label}
+      <div className="lg:hidden w-full">
+        <div className="flex items-center gap-2 w-full">
+          {primary && (
+            primaryHref ? (
+              <Link href={primaryHref} className={cn(primaryClass, "flex-1")}>
+                <PrimaryIcon size={14} />
+                {primary.label}
+              </Link>
+            ) : (
+              <button type="button" className={cn(primaryClass, "flex-1")}>
+                <PrimaryIcon size={14} />
+                {primary.label}
+              </button>
+            )
+          )}
+          {secondary.length > 0 && (
+            <button
+              type="button"
+              aria-label="More actions"
+              aria-expanded={moreOpen}
+              onClick={() => setMoreOpen((v) => !v)}
+              className="inline-flex items-center justify-center h-10 w-10 shrink-0 rounded-lg border border-[var(--color-edify-border)] bg-white hover:bg-[var(--color-edify-soft)]/40"
+            >
+              <MoreHorizontal size={16} className="text-[var(--color-edify-muted)]" />
             </button>
-          )
+          )}
+        </div>
+        {/* The secondary actions (Reply, Acknowledge, Mark Resolved, Archive)
+            were previously unreachable on mobile — More is now a real
+            disclosure that lists them, each wired to its link/server action. */}
+        {moreOpen && secondary.length > 0 && (
+          <div className="mt-2 grid grid-cols-2 gap-1.5">
+            {secondary.map((a) =>
+              renderSecondary(
+                a,
+                "inline-flex items-center justify-center gap-1.5 h-10 px-3 rounded-lg border border-[var(--color-edify-border)] bg-white hover:bg-[var(--color-edify-soft)]/40 text-[12px] font-semibold w-full",
+              ),
+            )}
+          </div>
         )}
-        <button
-          type="button"
-          aria-label="More actions"
-          className="inline-flex items-center justify-center h-10 w-10 shrink-0 rounded-lg border border-[var(--color-edify-border)] bg-white hover:bg-[var(--color-edify-soft)]/40"
-        >
-          <MoreHorizontal size={16} className="text-[var(--color-edify-muted)]" />
-        </button>
       </div>
 
       {/* ─── Desktop layout: full secondary row + primary on the right ─── */}
       <div className="hidden lg:flex items-center justify-between gap-3 w-full">
         <div className="flex items-center gap-1.5">
-          {secondary.slice(0, 4).map((a) => {
-            const className = "inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-[var(--color-edify-border)] bg-white hover:bg-[var(--color-edify-soft)]/40 text-[12px] font-semibold whitespace-nowrap";
-            const inner = (
-              <>
-                <a.Icon size={12} className="text-[var(--color-edify-muted)]" />
-                {a.label}
-              </>
-            );
-            // Wired actions submit a tiny inline form so the server
-            // mutator runs and revalidatePath bubbles the change.
-            return a.action ? (
-              <form key={a.key} action={a.action}>
-                <input type="hidden" name="messageId" value={message.id} />
-                <button type="submit" className={className}>{inner}</button>
-              </form>
-            ) : (
-              <button key={a.key} type="button" className={className}>{inner}</button>
-            );
-          })}
+          {secondary.slice(0, 4).map((a) =>
+            renderSecondary(
+              a,
+              "inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-[var(--color-edify-border)] bg-white hover:bg-[var(--color-edify-soft)]/40 text-[12px] font-semibold whitespace-nowrap",
+            ),
+          )}
         </div>
         {primary && (
-          primary.href ? (
-            <Link href={primary.href} className={primaryClass}>
+          primaryHref ? (
+            <Link href={primaryHref} className={primaryClass}>
               <PrimaryIcon size={13} />
               {primary.label}
             </Link>

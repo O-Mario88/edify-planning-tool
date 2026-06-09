@@ -50,8 +50,6 @@ export const EXACT_ROUTE_TITLES: Record<string, RouteTitle> = {
   "/budget":               { title: "Budget" },
   "/budget/breakdown":     { title: "Budget breakdown" },
   "/budget/monthly":       { title: "Monthly budget" },
-  "/budget/scenarios":     { title: "Budget scenarios" },
-  "/budget/variance":      { title: "Budget variance" },
   // Deprecated: /budget/approvals (bare) now redirects to /approvals.
   // Sub-pages live on; their titles below.
   "/budget/approvals/active":         { title: "Active budget approvals" },
