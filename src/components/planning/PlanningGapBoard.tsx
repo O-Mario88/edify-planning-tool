@@ -38,6 +38,7 @@ export function PlanningGapBoard({
   extraGaps = [],
   liveGaps = false,
   clusterGaps,
+  liveClusterGaps = false,
   coreCards = [],
   coreViewer = { canAssign: false, canExec: false, canIa: false },
   canChampion = false,
@@ -47,6 +48,8 @@ export function PlanningGapBoard({
    *  use the live writer for scheduling. */
   liveGaps?: boolean;
   clusterGaps?: ClusterGap[];
+  /** True when clusterGaps are REAL backend clusters — schedule via the live writer. */
+  liveClusterGaps?: boolean;
   coreCards?: CorePlanCardVM[];
   coreViewer?: SlotViewer;
   canChampion?: boolean;
@@ -90,7 +93,7 @@ export function PlanningGapBoard({
       {/* Active board — each renders its own collapsible, detail-rich card. */}
       <div role="tabpanel" aria-label={`${TABS.find((t) => t.key === activeTab)?.label} gaps`}>
         {activeTab === "clientSchools" && <SchoolGapsBoard extraGaps={extraGaps} liveGaps={liveGaps} />}
-        {activeTab === "clusters" && <ClusterGapsBoard gaps={clusterGaps} />}
+        {activeTab === "clusters" && <ClusterGapsBoard gaps={clusterGaps} liveGaps={liveClusterGaps} />}
         {activeTab === "coreSchools" && <CorePlanningAccordion cards={coreCards} viewer={coreViewer} canChampion={canChampion} />}
       </div>
     </section>

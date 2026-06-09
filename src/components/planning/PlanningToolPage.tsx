@@ -8,6 +8,7 @@ import { ProjectPlanningGaps } from "@/components/special-projects/ProjectPlanni
 import { getCurrentUser, toCurrentUser } from "@/lib/auth";
 import { onboardedSchoolGaps, scopeGapsToViewer } from "@/lib/planning/onboarded-gaps";
 import { backendSchoolGaps } from "@/lib/planning/backend-school-gaps";
+import { backendClusterGaps } from "@/lib/planning/backend-cluster-gaps";
 import { assignedGapIds } from "@/lib/planning/assignment-overlay";
 import { coreBoardData, coreOwnershipRows } from "@/lib/core/core-board";
 import { engineClusterGaps } from "@/lib/planning/engine-cluster-gaps";
@@ -38,9 +39,11 @@ export async function PlanningToolPage() {
   // Cluster-first: count the viewer's unclustered schools so the Planning Tool
   // leads with the cluster-assignment call to action when any are outstanding.
   const unclusteredCount = onboardedGaps.filter((g) => g.gapCategory === "no_cluster").length;
-  // Cluster gaps now come from the real cluster engine (clusters + their
-  // scheduled/completed meetings), so the planning board reflects live truth.
-  const clusterGaps = engineClusterGaps();
+  // Cluster gaps: prefer the REAL backend (clusters + slot status derived from
+  // real activities); fall back to the mock engine when the backend is off.
+  const backendClGaps = await backendClusterGaps(user);
+  const clusterGaps = backendClGaps ?? engineClusterGaps();
+  const liveClusterGaps = backendClGaps !== null;
 
   // Project follow-up gaps, scoped like the directory: CCEO/PL see their
   // portfolio/team schools; broader roles see all in-scope project schools.
@@ -81,7 +84,7 @@ export async function PlanningToolPage() {
         <UnclusteredSchoolsBanner count={unclusteredCount} />
 
         <PlansFamilyNav current="planning" className="flex items-center gap-1" />
-        <PlanningGapBoard extraGaps={onboardedGaps} liveGaps={liveGaps} clusterGaps={clusterGaps} coreCards={coreCards} coreViewer={coreViewer} canChampion={canChampion} />
+        <PlanningGapBoard extraGaps={onboardedGaps} liveGaps={liveGaps} clusterGaps={clusterGaps} liveClusterGaps={liveClusterGaps} coreCards={coreCards} coreViewer={coreViewer} canChampion={canChampion} />
 
         <PlanningOwnershipSections ownership={coreOwnership} />
 

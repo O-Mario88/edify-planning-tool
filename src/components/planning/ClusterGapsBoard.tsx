@@ -35,6 +35,7 @@ import {
   type ScheduleActivityContext,
   type ScheduleActivityOutcome,
 } from "@/components/planning/ScheduleActivityDrawer";
+import { ScheduleActivityLive } from "@/components/planning/ScheduleActivityLive";
 import {
   ClusterActivityProfileDrawer,
   type ClusterActivityProfileContext,
@@ -77,12 +78,16 @@ const MEETING_TONE: Record<ClusterMeetingStatus, { bg: string; text: string; Ico
 export function ClusterGapsBoard({
   assigningUserRole = "CountryProgramLead",
   gaps,
+  liveGaps = false,
 }: {
   /** Role threaded to the assign drawer for owner-option gating. */
   assigningUserRole?: "CCEO" | "CountryProgramLead" | "ImpactAssessment" | "CountryDirector" | "Admin";
   /** Engine-derived cluster gaps (from the real cluster engine). Falls back to
    *  the seed mock only when not provided (standalone/storybook use). */
   gaps?: ClusterGap[];
+  /** True when gaps are REAL backend clusters: schedule through the live writer
+   *  (POST /api/activities with the cluster's real id). */
+  liveGaps?: boolean;
 } = {}) {
   // Source of truth = engine-derived gaps passed by the Planning page; the
   // imported seed list is only a standalone fallback.
@@ -362,12 +367,22 @@ export function ClusterGapsBoard({
         onSubmit={handleRescheduleSubmit}
       />
 
-      <ScheduleActivityDrawer
-        open={!!scheduleAssign}
-        context={scheduleAssign?.context ?? null}
-        onClose={() => setScheduleAssign(null)}
-        onSubmit={handleScheduleSubmit}
-      />
+      {/* Live writer when clusters are real backend rows; mock drawer otherwise. */}
+      {scheduleAssign && liveGaps ? (
+        <ScheduleActivityLive
+          clusterId={scheduleAssign.cluster.id}
+          clusterName={scheduleAssign.cluster.clusterName}
+          onClose={() => setScheduleAssign(null)}
+          onScheduled={() => setScheduleAssign(null)}
+        />
+      ) : (
+        <ScheduleActivityDrawer
+          open={!!scheduleAssign}
+          context={scheduleAssign?.context ?? null}
+          onClose={() => setScheduleAssign(null)}
+          onSubmit={handleScheduleSubmit}
+        />
+      )}
 
       <ClusterActivityProfileDrawer
         open={!!clusterProfile}

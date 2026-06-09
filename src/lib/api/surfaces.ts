@@ -646,6 +646,15 @@ export type BeClusterSchool = {
   accountOwner?: string | null; ssaStatus: string; planningReadiness: string;
   latestSsa: number | null; stage: string;
 };
+export type BeClusterPlanning = {
+  id: string; clusterName: string; district: string; subCounty: string;
+  schoolsCount: number; schoolsWithSsa: number;
+  sit: string; firstMeeting: string; secondMeeting: string; thirdMeeting: string;
+  gapCategory: "no_sit" | "no_first_meeting" | "no_second_meeting" | "no_third_meeting";
+};
+export function fetchClusterPlanning(user: BackendUser) {
+  return live<BeClusterPlanning[]>(`/clusters/planning`, user);
+}
 export function fetchClusters(user: BackendUser) {
   return live<BeCluster[]>(`/clusters`, user);
 }
