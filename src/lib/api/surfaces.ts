@@ -263,6 +263,13 @@ export type BeActivity = {
   lastReason?: string | null;
   assignedPartnerId?: string | null;
   school?: { schoolId: string; name: string } | null;
+  // Workflow fields (returned by the backend; used by IA/accountant views).
+  fy?: string;
+  quarter?: string;
+  salesforceActivityId?: string | null;
+  evidenceStatus?: string;
+  iaVerificationStatus?: string;
+  paymentStatus?: string;
 };
 
 /** The caller's own activities (My Plan), from the backend. */
@@ -591,6 +598,40 @@ export type BeTodayFeed = {
 };
 export function fetchCommandCenterToday(user: BackendUser) {
   return live<Omit<BeTodayFeed, "live">>(`/command-center/today`, user);
+}
+
+// ── Activities — generic scoped list (IA queue, etc.; My Plan uses
+//    fetchMyPlanActivities; actions use backendActivityAction above) ──
+export function fetchActivities(user: BackendUser, qs = "") {
+  return live<BePaginated<BeActivity>>(`/activities${qs}`, user);
+}
+// Generic action caller — covers the full row state machine incl. ia-confirm /
+// clear-payment (backendActivityAction above is typed to the 5 plan-row actions).
+export function activityAction(user: BackendUser, id: string, action: string, body: Record<string, unknown> = {}) {
+  return live<unknown>(`/activities/${encodeURIComponent(id)}/${action}`, user, { method: "POST", body: JSON.stringify(body) });
+}
+
+// ── Planning (setup buckets + core) ─────────────────────────────────
+export type BePlanningBucket = { key: string; label: string; count: number; items: BePlanningSchool[] };
+export type BePlanningSchool = {
+  id: string; schoolId: string; name: string; schoolType: string; subCounty?: string | null;
+  accountOwner?: string | null; ssaStatus: string; planningReadiness: string; clusterStatus?: string;
+};
+export function fetchPlanningSetup(user: BackendUser, qs = "") {
+  return live<BePlanningBucket[]>(`/planning/setup${qs}`, user);
+}
+export function fetchPlanningCore(user: BackendUser, qs = "") {
+  return live<unknown>(`/planning/core${qs}`, user);
+}
+
+// ── SSA for a specific school (the View SSA drawer) ─────────────────
+export type BeSsaScore = { intervention: string; score: number };
+export type BeSchoolSsaRecord = {
+  id: string; fy: string; dateOfSsa?: string | null; averageScore?: number | null;
+  verificationStatus: string; collectorType?: string | null; scores: BeSsaScore[];
+};
+export function fetchSsaForSchool(user: BackendUser, schoolId: string) {
+  return live<BeSchoolSsaRecord[]>(`/ssa/school/${encodeURIComponent(schoolId)}`, user);
 }
 
 // ── Clusters (backend-backed; no mock) ──────────────────────────────

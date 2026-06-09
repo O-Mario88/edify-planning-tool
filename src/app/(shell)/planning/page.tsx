@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import { PlanningToolPage } from "@/components/planning/PlanningToolPage";
+import { MyPlanLive } from "@/components/planning/MyPlanLive";
+import { PlanningSetupLive } from "@/components/planning/PlanningSetupLive";
 import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { PlanningMobileView } from "@/components/mobile/views/PlanningMobileView";
 import { coreBoardData, coreOwnershipRows } from "@/lib/core/core-board";
@@ -33,8 +35,21 @@ export default async function Page({
 
   return (
     <ResponsiveDashboard
-      desktop={<PlanningToolPage />}
-      mobile={<PlanningMobileView coreCards={coreCards} coreViewer={coreViewer} canChampion={canChampion} coreOwnership={coreOwnership} />}
+      desktop={
+        <div className="px-3 sm:px-4 md:px-5 pt-3 md:pt-4 space-y-3">
+          {/* LIVE, backend-driven planning surface (no mock). */}
+          <PlanningSetupLive />
+          <MyPlanLive />
+          <PlanningToolPage />
+        </div>
+      }
+      mobile={
+        <div className="px-3 pt-3 space-y-3">
+          <PlanningSetupLive />
+          <MyPlanLive />
+          <PlanningMobileView coreCards={coreCards} coreViewer={coreViewer} canChampion={canChampion} coreOwnership={coreOwnership} />
+        </div>
+      }
     />
   );
 }

@@ -29,6 +29,7 @@ import { cceosSupervisedBy } from "@/lib/org/supervision";
 import { isBackendEnabled } from "@/lib/api/backend";
 import { fetchSchoolDetail, fetchAssignmentOptions, fetchSchoolWorkflow, type BeAssignmentOptions } from "@/lib/api/surfaces";
 import { SchoolWorkflowJourney } from "@/components/schools/SchoolWorkflowJourney";
+import { SchoolSsaLive } from "@/components/ssa/SchoolSsaLive";
 import { SchoolDetailErrorState } from "@/components/schools/SchoolDetailErrorState";
 import { resolveSchoolNextAction as resolveNextAction } from "@/lib/planning/school-next-action";
 import { CorePageHeader } from "@/components/core/CorePageHeader";
@@ -544,6 +545,10 @@ async function IntakeSchool360({ schoolId, view }: { schoolId: string; view?: Sc
       )}
       <div className="mx-3 sm:mx-4 md:mx-6 mb-3">
         <PlanningCapacityBar schoolId={s.schoolId} schoolName={s.schoolName} capacity={capacity} assignment={assignment} />
+      </div>
+      {/* View SSA — this school's REAL SSA from the backend (not a general grid). */}
+      <div className="mx-3 sm:mx-4 md:mx-6 mb-3 card p-3.5">
+        <SchoolSsaLive schoolId={s.schoolId} />
       </div>
       <School360View
         record={{
