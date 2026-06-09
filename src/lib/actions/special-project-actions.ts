@@ -23,6 +23,7 @@ import {
   createProjectActivity,
   type CreateProjectActivityInput,
 } from "@/lib/projects/project-activities";
+import { assignProjectSchool, removeProjectSchool } from "@/lib/api/surfaces";
 
 const PROJECT_ROLES = new Set<string>([
   "CCEO",
@@ -69,13 +70,21 @@ export async function assignSchoolToProjectAction(
   if (!PROJECT_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
   if (!canManageProjectById(user.role, projectId)) return { ok: false, reason: "FORBIDDEN" };
 
+  // Backend is the source of truth when enabled: it validates the school against
+  // the real School Directory, enforces the permission, persists the assignment,
+  // and writes an audit log. We then mirror into the mock so the FE's project
+  // tag/directory pages reflect it immediately. Backend OFF → mock-only.
+  const be = await assignProjectSchool(user, projectId, schoolId);
+  if (be.live === false && be.error) return { ok: false, reason: "FAILED", message: be.error };
+
   const res = assignSchoolToProject({
     schoolId,
     projectId,
     assignedByName: user.name,
     assignedByStaffId: user.staffId,
   });
-  if (!res.ok) return { ok: false, reason: "FAILED", message: res.reason };
+  // Only fail on the mock when the backend didn't already persist it.
+  if (!be.live && !res.ok) return { ok: false, reason: "FAILED", message: res.reason };
 
   const project = specialProjects.find((p) => p.projectId === projectId);
   emitAudit({
@@ -85,7 +94,7 @@ export async function assignSchoolToProjectAction(
     actorId: user.staffId,
     actorRole: user.role,
     actorName: user.name,
-    payload: { projectId, projectName: project?.projectName },
+    payload: { projectId, projectName: project?.projectName, persisted: be.live ? "backend" : "mock" },
   });
   revalidateProjectSurfaces();
   return { ok: true, projectName: project?.projectShortName ?? projectId };
@@ -105,13 +114,16 @@ export async function assignSchoolsToProjectAction(
   let assigned = 0;
   let skipped = 0;
   for (const schoolId of schoolIds) {
+    // Backend first (source of truth + Directory validation), then mirror to mock.
+    const be = await assignProjectSchool(user, projectId, schoolId);
+    if (be.live === false && be.error) { skipped += 1; continue; }
     const res = assignSchoolToProject({
       schoolId,
       projectId,
       assignedByName: user.name,
       assignedByStaffId: user.staffId,
     });
-    if (res.ok) assigned += 1;
+    if (be.live || res.ok) assigned += 1;
     else skipped += 1;
   }
 
@@ -140,8 +152,11 @@ export async function removeSchoolFromProjectAction(
   const user = await getCurrentUser();
   if (!PROJECT_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
   if (!canManageProjectById(user.role, projectId)) return { ok: false, reason: "FORBIDDEN" };
+  // Backend first (source of truth + audit), then mirror to the mock.
+  const be = await removeProjectSchool(user, projectId, schoolId);
+  if (be.live === false && be.error) return { ok: false, reason: "FAILED", message: be.error };
   const ok = removeSchoolFromProject(schoolId, projectId);
-  if (!ok) return { ok: false, reason: "FAILED", message: "Membership not found." };
+  if (!be.live && !ok) return { ok: false, reason: "FAILED", message: "Membership not found." };
   emitAudit({
     action: "specialProject.schoolRemoved",
     subjectKind: "School",

@@ -542,7 +542,7 @@ export function setCostSetting(user: BackendUser, body: { key: string; label?: s
 
 // ── Special Projects (backend-backed; no mock) ──────────────────────
 export type BeProject = {
-  id: string; name: string; category: string; intervention?: string | null;
+  id: string; code?: string | null; name: string; category: string; intervention?: string | null;
   managerStaffId?: string | null; schoolCount: number; partnerCount: number; activityCount: number;
   latestImpact?: unknown; latestImpactFy?: string | null;
 };
@@ -557,6 +557,23 @@ export function fetchSpecialProjects(user: BackendUser) {
 }
 export function fetchProjectDetail(user: BackendUser, id: string) {
   return live<BeProjectDetail>(`/special-projects/${encodeURIComponent(id)}`, user);
+}
+// Assignment write paths — `projectId` may be the backend cuid OR the business
+// code (e.g. "SP-EDTECH"); the backend resolves either. `schoolId` is the
+// business School-Directory id; the backend rejects anything not in the Directory.
+export function assignProjectSchool(user: BackendUser, projectId: string, schoolId: string) {
+  return live<{ ok: boolean; schoolId: string; projectId: string }>(
+    `/special-projects/${encodeURIComponent(projectId)}/schools`,
+    user,
+    { method: "POST", body: JSON.stringify({ schoolId }) },
+  );
+}
+export function removeProjectSchool(user: BackendUser, projectId: string, schoolId: string) {
+  return live<{ ok: boolean; schoolId: string; projectId: string }>(
+    `/special-projects/${encodeURIComponent(projectId)}/schools/${encodeURIComponent(schoolId)}`,
+    user,
+    { method: "DELETE" },
+  );
 }
 
 // ── Clusters (backend-backed; no mock) ──────────────────────────────
