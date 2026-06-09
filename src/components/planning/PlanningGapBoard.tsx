@@ -36,12 +36,16 @@ const TABS: ReadonlyArray<TabDef> = [
 
 export function PlanningGapBoard({
   extraGaps = [],
+  liveGaps = false,
   clusterGaps,
   coreCards = [],
   coreViewer = { canAssign: false, canExec: false, canIa: false },
   canChampion = false,
 }: {
   extraGaps?: SchoolGap[];
+  /** True when extraGaps are REAL backend schools — suppress the seed mock and
+   *  use the live writer for scheduling. */
+  liveGaps?: boolean;
   clusterGaps?: ClusterGap[];
   coreCards?: CorePlanCardVM[];
   coreViewer?: SlotViewer;
@@ -85,7 +89,7 @@ export function PlanningGapBoard({
 
       {/* Active board — each renders its own collapsible, detail-rich card. */}
       <div role="tabpanel" aria-label={`${TABS.find((t) => t.key === activeTab)?.label} gaps`}>
-        {activeTab === "clientSchools" && <SchoolGapsBoard extraGaps={extraGaps} />}
+        {activeTab === "clientSchools" && <SchoolGapsBoard extraGaps={extraGaps} liveGaps={liveGaps} />}
         {activeTab === "clusters" && <ClusterGapsBoard gaps={clusterGaps} />}
         {activeTab === "coreSchools" && <CorePlanningAccordion cards={coreCards} viewer={coreViewer} canChampion={canChampion} />}
       </div>

@@ -41,6 +41,7 @@ import {
   type ScheduleActivityContext,
   type ScheduleActivityOutcome,
 } from "@/components/planning/ScheduleActivityDrawer";
+import { ScheduleActivityLive } from "@/components/planning/ScheduleActivityLive";
 import {
   SsaPerformanceDrawer,
   type SsaPerformanceContext,
@@ -108,7 +109,11 @@ const ACTION_LABEL: Record<SchoolGapAction, string> = {
 export function SchoolGapsBoard({
   assigningUserRole = "CountryProgramLead",
   extraGaps = [],
+  liveGaps = false,
 }: {
+  /** True when extraGaps are real backend schools: suppress the seed mock and
+   *  schedule through the live writer (POST /api/activities). */
+  liveGaps?: boolean;
   /**
    * Role of the user viewing the planning page. Forwarded to the
    * assign drawer so CCEOs see only the Partner owner option per the
@@ -164,9 +169,9 @@ export function SchoolGapsBoard({
   // Distinct clusters present across the current gaps (for the filter select).
   const clusterOptions = useMemo(
     () =>
-      [...new Set([...extraGaps, ...schoolGaps].map((s) => s.clusterName).filter(Boolean) as string[])]
+      [...new Set([...extraGaps, ...(liveGaps ? [] : schoolGaps)].map((s) => s.clusterName).filter(Boolean) as string[])]
         .sort((a, b) => a.localeCompare(b)),
-    [extraGaps],
+    [extraGaps, liveGaps],
   );
 
   function dismiss(schoolId: string) {
@@ -185,13 +190,13 @@ export function SchoolGapsBoard({
     // filtered out so the gap counts and lists reflect "what still
     // needs CCEO/PL action right now", not "what was on the table when
     // the page loaded".
-    for (const s of [...extraGaps, ...schoolGaps]) {
+    for (const s of [...extraGaps, ...(liveGaps ? [] : schoolGaps)]) {
       if (dismissedIds.has(s.id)) continue;
       if (clusterFilter && s.clusterName !== clusterFilter) continue;
       map[s.gapCategory].push(s);
     }
     return map;
-  }, [dismissedIds, extraGaps, clusterFilter]);
+  }, [dismissedIds, extraGaps, liveGaps, clusterFilter]);
 
   function handleClusterSubmit(outcome: AddToClusterOutcome) {
     // Connect to the real cluster workflow: assign to an existing cluster, or
@@ -418,12 +423,27 @@ export function SchoolGapsBoard({
         onSubmit={handleClusterSubmit}
       />
 
-      <ScheduleActivityDrawer
-        open={!!scheduleSchoolTraining}
-        context={scheduleSchoolTraining?.context ?? null}
-        onClose={() => setScheduleSchoolTraining(null)}
-        onSubmit={handleSchoolTrainingSubmit}
-      />
+      {/* Live writer when gaps are real backend schools; mock drawer otherwise. */}
+      {scheduleSchoolTraining && liveGaps ? (
+        <ScheduleActivityLive
+          schoolId={scheduleSchoolTraining.school.id}
+          schoolName={scheduleSchoolTraining.school.schoolName}
+          schoolType="client"
+          onClose={() => setScheduleSchoolTraining(null)}
+          onScheduled={() => {
+            setToast(`Activity scheduled at ${scheduleSchoolTraining.school.schoolName} — on the plan and the fund request.`);
+            dismiss(scheduleSchoolTraining.school.id);
+            setTimeout(() => setToast(null), 4500);
+          }}
+        />
+      ) : (
+        <ScheduleActivityDrawer
+          open={!!scheduleSchoolTraining}
+          context={scheduleSchoolTraining?.context ?? null}
+          onClose={() => setScheduleSchoolTraining(null)}
+          onSubmit={handleSchoolTrainingSubmit}
+        />
+      )}
 
       <SsaPerformanceDrawer
         open={!!ssaPerformance}

@@ -614,8 +614,8 @@ export function activityAction(user: BackendUser, id: string, action: string, bo
 // ── Planning (setup buckets + core) ─────────────────────────────────
 export type BePlanningBucket = { key: string; label: string; count: number; items: BePlanningSchool[] };
 export type BePlanningSchool = {
-  id: string; schoolId: string; name: string; schoolType: string; subCounty?: string | null;
-  accountOwner?: string | null; ssaStatus: string; planningReadiness: string; clusterStatus?: string;
+  schoolId: string; name: string; schoolType: string; districtId?: string | null;
+  subCounty?: string | null; owner?: string | null; ssaStatus: string; planningReadiness: string; stage?: string;
 };
 export function fetchPlanningSetup(user: BackendUser, qs = "") {
   return live<BePlanningBucket[]>(`/planning/setup${qs}`, user);

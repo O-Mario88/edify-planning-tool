@@ -7,6 +7,7 @@ import { PlansFamilyNav } from "./PlansFamilyNav";
 import { ProjectPlanningGaps } from "@/components/special-projects/ProjectPlanningGaps";
 import { getCurrentUser, toCurrentUser } from "@/lib/auth";
 import { onboardedSchoolGaps, scopeGapsToViewer } from "@/lib/planning/onboarded-gaps";
+import { backendSchoolGaps } from "@/lib/planning/backend-school-gaps";
 import { assignedGapIds } from "@/lib/planning/assignment-overlay";
 import { coreBoardData, coreOwnershipRows } from "@/lib/core/core-board";
 import { engineClusterGaps } from "@/lib/planning/engine-cluster-gaps";
@@ -26,11 +27,14 @@ export async function PlanningToolPage() {
   // Onboarded schools (+ their uploaded SSA) become planner gaps, scoped to the
   // viewer's supervision chain. Computed server-side so runtime uploads show.
   const user = await getCurrentUser();
-  // Drop gaps that have already been assigned this session so an actioned gap
-  // disappears from the board on reload (the assignment lives in the overlay).
+  // Prefer REAL backend gaps (live schools, live scheduling); fall back to the
+  // mock onboarded gaps only when the backend is disabled.
+  const backendGaps = await backendSchoolGaps(user);
   const assigned = assignedGapIds();
-  const onboardedGaps = scopeGapsToViewer(onboardedSchoolGaps(), user.staffId, user.role)
+  const mockGaps = scopeGapsToViewer(onboardedSchoolGaps(), user.staffId, user.role)
     .filter((g) => !assigned.has(g.id));
+  const onboardedGaps = backendGaps ?? mockGaps;
+  const liveGaps = backendGaps !== null;
   // Cluster-first: count the viewer's unclustered schools so the Planning Tool
   // leads with the cluster-assignment call to action when any are outstanding.
   const unclusteredCount = onboardedGaps.filter((g) => g.gapCategory === "no_cluster").length;
@@ -77,7 +81,7 @@ export async function PlanningToolPage() {
         <UnclusteredSchoolsBanner count={unclusteredCount} />
 
         <PlansFamilyNav current="planning" className="flex items-center gap-1" />
-        <PlanningGapBoard extraGaps={onboardedGaps} clusterGaps={clusterGaps} coreCards={coreCards} coreViewer={coreViewer} canChampion={canChampion} />
+        <PlanningGapBoard extraGaps={onboardedGaps} liveGaps={liveGaps} clusterGaps={clusterGaps} coreCards={coreCards} coreViewer={coreViewer} canChampion={canChampion} />
 
         <PlanningOwnershipSections ownership={coreOwnership} />
 

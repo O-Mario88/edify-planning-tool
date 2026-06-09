@@ -81,7 +81,7 @@ export function PlanningSetupLive() {
                 {plannable && open && (
                   <ul className="border-t border-[var(--color-edify-divider)] divide-y divide-[var(--color-edify-divider)]">
                     {b.items.map((s) => (
-                      <li key={s.id} className="flex items-center justify-between gap-2 px-3 py-1.5 text-[11.5px]">
+                      <li key={s.schoolId} className="flex items-center justify-between gap-2 px-3 py-1.5 text-[11.5px]">
                         <span className="truncate">{s.name}<span className="muted"> · {s.subCounty ?? s.schoolId}</span></span>
                         <button
                           onClick={() => setScheduling({ schoolId: s.schoolId, name: s.name, type: s.schoolType })}
