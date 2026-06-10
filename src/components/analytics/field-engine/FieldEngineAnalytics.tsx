@@ -13,9 +13,8 @@
 
 import { useMemo } from "react";
 import { AlertTriangle, Inbox, Download } from "lucide-react";
-import { ALL_SENTINEL, type FilterScope, type FilterSelection } from "@/lib/filters/types";
+import { ALL_SENTINEL, type FilterSelection } from "@/lib/filters/types";
 import type { AnalyticsSnapshot, AnalyticsMetric } from "@/lib/analytics/types";
-import { HeaderFilterBar } from "@/components/shell/HeaderFilterBar";
 import { useActiveFilters } from "@/hooks/use-active-filters";
 import { useTileFilter } from "@/components/tile-filter/use-tile-filter";
 import { ActiveTileFilterHeader } from "@/components/tile-filter/ActiveTileFilterHeader";
@@ -34,11 +33,9 @@ const PANELS: { title: string; keys: string[] }[] = [
 ];
 
 export function FieldEngineAnalytics({
-  filterScope,
   role,
   scopeLabel,
 }: {
-  filterScope: FilterScope;
   role: string;
   scopeLabel: string;
 }) {
@@ -61,9 +58,10 @@ export function FieldEngineAnalytics({
 
   return (
     <div className="space-y-3.5">
-      {/* Toolbar */}
-      <div className="flex items-center gap-2">
-        <div className="flex-1 min-w-0"><HeaderFilterBar scope={filterScope} /></div>
+      {/* Toolbar — the live filter bar now lives in the page's <PageHeader>
+          (filterBar slot); Export stays here because the CSV is built from
+          the snapshot computed in this component. */}
+      <div className="flex items-center justify-end gap-2">
         <button
           type="button"
           onClick={() => exportSnapshotCsv(snapshot, selection, scopeLabel)}

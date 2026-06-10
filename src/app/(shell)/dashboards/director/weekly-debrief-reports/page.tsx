@@ -11,6 +11,7 @@ import {
   Clock,
 } from "lucide-react";
 import { ActionButton } from "@/components/ui/ActionButton";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { getCurrentUser } from "@/lib/auth";
 import {
   programLeadWeeklyFieldReports,
@@ -58,28 +59,25 @@ export default async function WeeklyDebriefReportCenterPage() {
 
   return (
     <>
-      <header className="pl-16 pr-4 pt-5 lg:pl-6 lg:pr-6 pb-4">
-          <div className="flex items-start justify-between gap-4 flex-wrap">
-            <div className="min-w-0 flex-1">
-              <div className="text-[11px] muted font-bold uppercase tracking-wider">Country Director · Weekly Debrief Report Center</div>
-              <h1 className="page-title mt-0.5">
-                CD Weekly Debrief Report Center
-              </h1>
-              <p className="text-body muted mt-0.5 max-w-[760px]">
-                One report per Program Lead. Daily debriefs stay with Program Leads — only weekly compiled reports surface here. Use the week selector to scan prior weeks.
-              </p>
-            </div>
-            {/* Week selector — demo shows the current week only; the chip stays visible to set the expectation that prior weeks live here. */}
-            <button
-              type="button"
-              className="h-10 px-3 rounded-xl border border-[var(--color-edify-border)] bg-white inline-flex items-center gap-2 text-[12px] font-bold whitespace-nowrap"
-            >
-              <Clock size={13} className="text-[var(--color-edify-primary)]" />
-              <span>{country.weekLabel}</span>
-              <ChevronDown size={12} className="text-[var(--color-edify-muted)]" />
-            </button>
-          </div>
-        </header>
+      {/* Canonical page chrome — title + search + identity cluster. The week
+          selector rides the `actions` slot (demo shows the current week only;
+          the chip stays visible to set the expectation that prior weeks live
+          here). NOTE: PageHeader is a Client Component — pass only
+          strings/ReactNode from this server page, never icon components. */}
+      <PageHeader
+        title="CD Weekly Debrief Report Center"
+        subtitle="One report per Program Lead. Daily debriefs stay with Program Leads — only weekly compiled reports surface here. Use the week selector to scan prior weeks."
+        actions={
+          <button
+            type="button"
+            className="h-10 px-3 rounded-xl border border-[var(--color-edify-border)] bg-white inline-flex items-center gap-2 text-[12px] font-bold whitespace-nowrap"
+          >
+            <Clock size={13} className="text-[var(--color-edify-primary)]" />
+            <span>{country.weekLabel}</span>
+            <ChevronDown size={12} className="text-[var(--color-edify-muted)]" />
+          </button>
+        }
+      />
 
         <div className="px-4 sm:px-5 md:px-6 pb-10 md:pb-6 space-y-4">
           {/* Country rollup card */}

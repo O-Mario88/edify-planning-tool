@@ -24,7 +24,7 @@ import { computeProjectPlanningGaps } from "@/lib/projects/project-planning-gaps
 // "as of {date} · refresh" footer have been retired: the banner copy now
 // lives in the header's HelpCircle tooltip, and the refresh signal lives
 // in the header's "Snapshot · <timestamp>" badge.
-export async function PlanningToolPage() {
+export async function PlanningToolPage({ topSlot }: { topSlot?: React.ReactNode } = {}) {
   // Onboarded schools (+ their uploaded SSA) become planner gaps, scoped to the
   // viewer's supervision chain. Computed server-side so runtime uploads show.
   const user = await getCurrentUser();
@@ -80,6 +80,11 @@ export async function PlanningToolPage() {
             5. Planned This Month
             (PlanningGapsHero retired per global hero removal pass.) */}
         <OperationalCycleBanner />
+
+        {/* Live planning-setup cards (schools-by-stage, cluster planning)
+            passed down from the page so they render BELOW the header —
+            the header must stay the first element on the page. */}
+        {topSlot}
 
         <UnclusteredSchoolsBanner count={unclusteredCount} />
 

@@ -32,6 +32,7 @@ import {
   Upload, ClipboardCheck, Users as UsersIcon,
 } from "lucide-react";
 import type { FocusStep } from "./focus-composers";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { spring } from "@/lib/motion";
 
 export type FocusVariant = "cceo" | "partner";
@@ -68,7 +69,14 @@ export function FocusModeView({
 }) {
   const reduce = useReducedMotion();
   return (
-    <div className="space-y-4 max-w-[640px] mx-auto px-3 sm:px-4 py-4">
+    <>
+      {/* Canonical page chrome — desktop only. Below lg the dark
+          MobileTopBar carries the title (PageHeader still registers it
+          via useSetPageTitle), keeping the field surface minimal. */}
+      <div className="hidden lg:block">
+        <PageHeader title="Focus" noBack />
+      </div>
+      <div className="space-y-4 max-w-[640px] mx-auto px-3 sm:px-4 py-4">
       {/* Greeting + focus chip */}
       <header className="flex items-center gap-2">
         <span className="inline-flex items-center gap-1 px-2 py-[3px] rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold uppercase tracking-[0.12em]">
@@ -196,7 +204,8 @@ export function FocusModeView({
       <p className="text-caption text-[var(--color-edify-muted)] text-center pt-2">
         Focus mode. No charts, no noise. Tap the header bar to switch to the full dashboard.
       </p>
-    </div>
+      </div>
+    </>
   );
 }
 

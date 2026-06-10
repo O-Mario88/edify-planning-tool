@@ -1,4 +1,6 @@
 import { redirect } from "next/navigation";
+import type { ReactNode } from "react";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { getCurrentUser } from "@/lib/auth";
 import { ROLE_REDIRECT } from "@/lib/auth-public";
 import { buildBudgetSummary } from "@/lib/funds/budget/budget-summary";
@@ -23,8 +25,29 @@ export default async function BudgetPage() {
 
   const summary = buildBudgetSummary(role);
 
-  if (role === "RVP") return <RvpBudgetSummary rollup={summary.rollup} />;
-  if (role === "CountryProgramLead") return <PlBudgetOverview rollup={summary.rollup} operational={summary.operational!} />;
-  // CountryDirector, ProgramAccountant, ImpactAssessment, Admin
-  return <AnnualBudgetDashboard rollup={summary.rollup} />;
+  // Role-routed body. The big page-title rows that used to live inside each
+  // dashboard were demoted to action-only toolbars — the canonical PageHeader
+  // below owns the title so it isn't duplicated.
+  let body: ReactNode;
+  if (role === "RVP") {
+    body = <RvpBudgetSummary rollup={summary.rollup} />;
+  } else if (role === "CountryProgramLead") {
+    body = <PlBudgetOverview rollup={summary.rollup} operational={summary.operational!} />;
+  } else {
+    // CountryDirector, ProgramAccountant, ImpactAssessment, Admin
+    body = <AnnualBudgetDashboard rollup={summary.rollup} />;
+  }
+
+  return (
+    <>
+      {/* Canonical page chrome — title + search + identity cluster.
+          PageHeader is a Client Component: pass only strings from this
+          server page, never icon components. */}
+      <PageHeader
+        title="Annual Budget"
+        subtitle="The financial expression of the annual plan — approved budgets, quarterly allocations, monthly burn, and fund requests."
+      />
+      {body}
+    </>
+  );
 }

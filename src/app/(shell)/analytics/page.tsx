@@ -1,6 +1,8 @@
 import { getCurrentUser } from "@/lib/auth";
 import { getFilterScope } from "@/lib/filters/scope-service";
 import { fetchAnalyticsDashboard, fetchAnalyticsSsa, fetchActivityPipeline, fetchContributionSummary, type ContributionLens, type ContributionSummary } from "@/lib/api/surfaces";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { HeaderFilterBar } from "@/components/shell/HeaderFilterBar";
 import { MetricStrip, type MetricCell } from "@/components/ui/MetricStrip";
 import { LiveBadge, BackendOfflineBanner } from "@/components/ui/BackendStatus";
 import { MyContribution } from "@/components/analytics/MyContribution";
@@ -60,33 +62,31 @@ export default async function AnalyticsPage({
   const contributionTitle = contributionTitleFor(user.role);
 
   return (
-    <div className="px-3 sm:px-4 md:px-5 lg:px-6 pt-4 pb-24 space-y-4">
-      <header className="min-w-0">
-        <h1 className="page-title">Analytics</h1>
-        <p className="text-body muted">
-          Workflow-derived, filter-aware, drillable. Every number traces to the records behind it.
-        </p>
-      </header>
-      {contributionLenses && (
-        <MyContribution title={contributionTitle} fy={fyId} lenses={contributionLenses} />
-      )}
-      {liveBand && (
-        <div className="space-y-2">
-          <LiveBadge label="Live · backend API · scoped counts" />
-          <MetricStrip
-            title="Directory & activity — live from edify-api"
-            metrics={liveBand}
-            columns="grid-cols-2 sm:grid-cols-3 md:grid-cols-5 xl:grid-cols-9"
-          />
-        </div>
-      )}
-      <BackendOfflineBanner error={liveError} />
-      <FieldEngineAnalytics
-        filterScope={filterScope}
-        role={user.role}
-        scopeLabel={user.name}
+    <>
+      <PageHeader
+        title="Analytics"
+        subtitle="Workflow-derived, filter-aware, drillable. Every number traces to the records behind it."
+        filterBar={<HeaderFilterBar scope={filterScope} />}
+        backFallbackHref="/dashboard"
       />
-    </div>
+      <div className="px-3 sm:px-4 md:px-5 lg:px-6 pt-2 pb-24 space-y-4">
+        {contributionLenses && (
+          <MyContribution title={contributionTitle} fy={fyId} lenses={contributionLenses} />
+        )}
+        {liveBand && (
+          <div className="space-y-2">
+            <LiveBadge label="Live · backend API · scoped counts" />
+            <MetricStrip
+              title="Directory & activity — live from edify-api"
+              metrics={liveBand}
+              columns="grid-cols-2 sm:grid-cols-3 md:grid-cols-5 xl:grid-cols-9"
+            />
+          </div>
+        )}
+        <BackendOfflineBanner error={liveError} />
+        <FieldEngineAnalytics role={user.role} scopeLabel={user.name} />
+      </div>
+    </>
   );
 }
 

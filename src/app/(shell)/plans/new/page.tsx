@@ -2,7 +2,7 @@ import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { PlanBuilderView } from "@/components/mobile/views/PlanBuilderView";
 import { PlanBuilderDesktopView } from "@/components/planning/PlanBuilderDesktopView";
 import { DistrictGatewayCard } from "@/components/planning/DistrictGatewayCard";
-import { TitleRegister } from "@/components/shell/TitleRegister";
+import { PageHeader } from "@/components/ui/PageHeader";
 import {
   highPrioritySchoolVisits,
   highPriorityClusters,
@@ -57,10 +57,18 @@ export default async function PlanBuilderPage() {
 
   return (
     <>
-      <TitleRegister title="Create / Edit Plan" dateLabel="May 2025" />
+      {/* Canonical page chrome — first element on every viewport. Replaces
+          the old TitleRegister + the PageHeader that used to live inside
+          PlanBuilderDesktopView. */}
+      <PageHeader
+        title="Create / Edit Plan"
+        dateLabel="May 2025"
+        subtitle="Pre-loaded with the highest-priority work — by SSA, training history, partner capacity, and coverage targets. Plan one activity type at a time: each tab uses its own cost formula from active Country Cost Settings."
+        backFallbackHref="/plans"
+      />
       {/* Step 1 — District Gateway. On MOBILE it's the first content under the
-          MobileTopBar (so it's gated to mobile here); on DESKTOP it renders
-          INSIDE the builder, just below the in-page page header (passed as the
+          page header (so it's gated to mobile here); on DESKTOP it renders
+          INSIDE the builder, at the top of the content column (passed as the
           `gateway` slot) — no longer floating above the page chrome. */}
       <div className="md:hidden px-3 sm:px-4 pt-3">
         <DistrictGatewayCard homeDistrict={homeDistrict} rates={visitCostRates} />

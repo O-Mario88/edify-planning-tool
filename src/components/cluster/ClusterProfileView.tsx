@@ -73,7 +73,7 @@ export function ClusterProfileView({
           <span className="grid place-items-center h-11 w-11 rounded-xl bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)] shrink-0"><Network size={20} /></span>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-[18px] font-extrabold tracking-tight">{profile.name}</h1>
+              <h2 className="text-[18px] font-extrabold tracking-tight">{profile.name}</h2>
               <ManagementBadge type={profile.managementType} partner={profile.partnerName} />
             </div>
             <p className="text-[12.5px] muted inline-flex items-center gap-1 mt-0.5">

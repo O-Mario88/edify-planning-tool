@@ -64,27 +64,23 @@ export function AnnualBudgetDashboard({ rollup }: { rollup: AnnualBudgetRollup }
 
   return (
     <div className="px-3 sm:px-4 md:px-6 pb-24 md:pb-6 space-y-3 md:space-y-4">
-      {/* Header */}
-      <header className="flex items-start justify-between gap-3 flex-wrap pt-2">
-        <div>
-          <h1 className="text-[22px] font-extrabold tracking-tight">Annual Budget</h1>
-          <p className="text-[12px] muted">Monitor approved budgets, quarterly allocations, monthly burn, and fund requests.</p>
+      {/* Toolbar — tabs left, actions right. The page title lives in the
+          canonical <PageHeader> mounted by /budget/page.tsx, so this row was
+          demoted from a header to an action toolbar (no duplicate title). */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-1 p-1 rounded-lg bg-[var(--color-edify-soft)]/50 w-fit">
+          {TABS.map((t) => (
+            <button key={t} type="button" onClick={() => setTab(t)}
+              className={`h-8 px-3 rounded-md text-[12px] font-bold transition-colors ${tab === t ? "bg-[var(--color-edify-primary)] text-white" : "text-[var(--color-edify-muted)] hover:text-[var(--color-edify-text)]"}`}>
+              {t}
+            </button>
+          ))}
         </div>
         <div className="flex items-center gap-2">
           <span className="h-9 px-3 rounded-lg border border-[var(--color-edify-border)] bg-white text-[12px] font-semibold inline-flex items-center gap-1.5">{rollup.fyLabel}</span>
           <span className="h-9 px-3 rounded-lg border border-[var(--color-edify-border)] bg-white text-[12px] font-semibold inline-flex items-center gap-1.5"><Download size={13} /> Export</span>
           <span className="h-9 px-3 rounded-lg bg-[var(--color-edify-primary)] text-white text-[12px] font-bold inline-flex items-center gap-1.5"><ClipboardCheck size={14} /> Submit for Approval</span>
         </div>
-      </header>
-
-      {/* Tabs */}
-      <div className="flex items-center gap-1 p-1 rounded-lg bg-[var(--color-edify-soft)]/50 w-fit">
-        {TABS.map((t) => (
-          <button key={t} type="button" onClick={() => setTab(t)}
-            className={`h-8 px-3 rounded-md text-[12px] font-bold transition-colors ${tab === t ? "bg-[var(--color-edify-primary)] text-white" : "text-[var(--color-edify-muted)] hover:text-[var(--color-edify-text)]"}`}>
-            {t}
-          </button>
-        ))}
       </div>
 
       <BudgetKpiRow items={kpis} />

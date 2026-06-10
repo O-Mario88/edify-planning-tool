@@ -36,13 +36,18 @@ export default async function Page({
   return (
     <ResponsiveDashboard
       desktop={
-        <div className="px-3 sm:px-4 md:px-5 pt-3 md:pt-4 space-y-3">
-          {/* Planning = what still needs to be scheduled (gaps + recommendations).
-              My Plan (what's already scheduled) is its own page at /my-plan. */}
-          <PlanningSetupLive />
-          <ClusterPlanningLive />
-          <PlanningToolPage />
-        </div>
+        /* Planning = what still needs to be scheduled (gaps + recommendations).
+           My Plan (what's already scheduled) is its own page at /my-plan.
+           The live setup cards render through PlanningToolPage's topSlot so
+           the canonical header stays the FIRST element on the page. */
+        <PlanningToolPage
+          topSlot={
+            <>
+              <PlanningSetupLive />
+              <ClusterPlanningLive />
+            </>
+          }
+        />
       }
       mobile={
         <div className="px-3 pt-3 space-y-3">

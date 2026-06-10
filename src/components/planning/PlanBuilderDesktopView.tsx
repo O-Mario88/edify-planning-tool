@@ -47,7 +47,6 @@ import {
   type StaffVisitType,
 } from "@/lib/plan-cost-calculator";
 import { cn } from "@/lib/utils";
-import { PageHeader } from "@/components/ui/PageHeader";
 import {
   TabButton,
   Summary,
@@ -568,13 +567,10 @@ export function PlanBuilderDesktopView({
 
   return (
     <>
-      <PageHeader
-        title="Create / Edit Plan"
-        dateLabel="May 2025"
-        subtitle="Pre-loaded with the highest-priority work — by SSA, training history, partner capacity, and coverage targets. Plan one activity type at a time: each tab uses its own cost formula from active Country Cost Settings."
-      />
-
-      <div className="px-4 sm:px-5 md:px-6 pb-10 md:pb-6 space-y-4">
+      {/* Page chrome (canonical <PageHeader>) is mounted by the route —
+          src/app/(shell)/plans/new/page.tsx — so it renders first on
+          every viewport. This view owns only the builder content. */}
+      <div className="px-4 sm:px-5 md:px-6 pt-2 pb-10 md:pb-6 space-y-4">
         {/* Step 1 — District Gateway, the first section under the page header. */}
         {gateway}
 

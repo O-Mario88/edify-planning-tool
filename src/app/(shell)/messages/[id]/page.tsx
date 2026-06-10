@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { ROLE_REDIRECT } from "@/lib/auth-public";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { MessageDetailPage } from "@/components/messages/MessageDetailPage";
 import { messageByIdForUser } from "@/lib/messages-v2/access";
 import { threadMessages } from "@/lib/messages-v2/mock";
@@ -43,12 +44,23 @@ export default async function MessageDetailRoute({
   // run outside the render context and revalidate safely.
 
   return (
-    <MessageDetailPage
-      thread={thread}
-      role={user.role}
-      backHref="/messages"
-      backLabel="Messages"
-      replyAction={replyMessageAction}
-    />
+    <>
+      {/* Canonical page chrome first; the reader below keeps its own
+          sticky thread toolbar (back + category) for in-thread nav.
+          Mounted here (not inside MessageDetailPage) because the same
+          component serves the partner route with different chrome. */}
+      <PageHeader
+        title="Message"
+        backFallbackHref="/messages"
+        breadcrumbTrailingLabel={message.subject}
+      />
+      <MessageDetailPage
+        thread={thread}
+        role={user.role}
+        backHref="/messages"
+        backLabel="Messages"
+        replyAction={replyMessageAction}
+      />
+    </>
   );
 }

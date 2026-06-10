@@ -142,8 +142,10 @@ export function PageHeader({
       )}
 
       <div className="flex items-start justify-between gap-4 flex-wrap">
-        {/* Left: back button + title + subtitle */}
-        <div className="flex items-start gap-3 min-w-0 flex-1">
+        {/* Left: back button + title + subtitle. The min-width keeps the
+            title from being crushed into a multi-line column by a wide
+            right cluster — past it, the cluster wraps to its own row. */}
+        <div className="flex items-start gap-3 min-w-0 flex-1 lg:min-w-[260px]">
           {!noBack && (
             <BackButton
               fallbackHref={backFallbackHref}

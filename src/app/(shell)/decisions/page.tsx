@@ -21,6 +21,7 @@
 import Link from "next/link";
 import { AlertTriangle, ChevronRight, ClipboardCheck, Inbox, Sparkles } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { decisionBoardFor } from "@/lib/decisions/decisions-mock";
 import { DecisionCard } from "@/components/decisions/DecisionCard";
 import {
@@ -66,18 +67,24 @@ export default async function DecisionsPage() {
   return (
     <>
       {/* ─── Header ─── */}
-      <header className="pl-16 pr-4 pt-5 lg:pl-6 lg:pr-6 pb-4">
-        <div className="text-[11px] muted font-bold uppercase tracking-wider inline-flex items-center gap-1.5">
-          <Sparkles size={11} className="text-[var(--color-edify-primary)]" />
-          {user.role} · Decision Intelligence
-        </div>
-        <h1 className="page-title mt-0.5">{board.header.greeting}</h1>
-        <p className="text-body muted mt-0.5 italic">{board.header.mission}</p>
-        <p className="text-[13px] text-[var(--color-edify-text)] mt-2 max-w-[820px] leading-snug">
-          <span className="font-extrabold">{board.header.periodLabel}.</span>{" "}
-          {board.header.summary}
-        </p>
-      </header>
+      <PageHeader
+        title={board.header.greeting}
+        subtitle={board.header.mission}
+        showTitleOnMobile
+        backFallbackHref="/dashboard"
+        meta={
+          <div className="space-y-1.5">
+            <div className="text-[11px] muted font-bold uppercase tracking-wider inline-flex items-center gap-1.5">
+              <Sparkles size={11} className="text-[var(--color-edify-primary)]" />
+              {user.role} · Decision Intelligence
+            </div>
+            <p className="text-[13px] text-[var(--color-edify-text)] max-w-[820px] leading-snug">
+              <span className="font-extrabold">{board.header.periodLabel}.</span>{" "}
+              {board.header.summary}
+            </p>
+          </div>
+        }
+      />
 
       <div className="px-4 sm:px-5 md:px-6 pb-10 md:pb-6 space-y-5">
         {/* Hero retired per global hero removal pass. The top decision is

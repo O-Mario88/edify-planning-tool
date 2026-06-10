@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { ProgramLeadWeeklyReportEditor } from "@/components/field-intelligence/ProgramLeadWeeklyReportEditor";
 import { getCurrentUser } from "@/lib/auth";
 import { programLeadWeeklyFieldReports } from "@/lib/field-intelligence-mock";
@@ -21,19 +22,19 @@ export default async function ProgramLeadWeeklyReportEditorPage() {
 
   return (
     <>
-      <header className="pl-16 pr-4 pt-5 lg:pl-6 lg:pr-6 pb-4">
-          <div className="text-[11px] muted font-bold uppercase tracking-wider">Program Lead workspace</div>
-          <h1 className="page-title mt-0.5">
-            Weekly Field Report Editor
-          </h1>
-          <p className="text-body muted mt-0.5 max-w-[760px]">
-            The system auto-fills team activity, debriefs submitted, raw/adjusted achievement, and barriers from your CCEOs&apos; daily debriefs. You add the weekly reflection and confirm the decisions list before submitting to the Country Director.
-          </p>
-        </header>
-
-        <div className="px-4 sm:px-5 md:px-6 pb-10 md:pb-6">
-          <ProgramLeadWeeklyReportEditor r={myReport} />
-        </div>
-      </>
+      <PageHeader
+        title="Weekly Field Report Editor"
+        titleBadge={
+          <span className="px-2 py-[2px] rounded-full bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)] text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">
+            Program Lead workspace
+          </span>
+        }
+        subtitle="The system auto-fills team activity, debriefs submitted, raw/adjusted achievement, and barriers from your CCEOs' daily debriefs. You add the weekly reflection and confirm the decisions list before submitting to the Country Director."
+        backFallbackHref="/dashboard"
+      />
+      <div className="px-4 sm:px-5 md:px-6 pt-2 pb-10 md:pb-6">
+        <ProgramLeadWeeklyReportEditor r={myReport} />
+      </div>
+    </>
   );
 }

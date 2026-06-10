@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { AggregatedFieldContextCard } from "@/components/field-intelligence/AggregatedFieldContextCard";
 import { DecisionActionsCard } from "@/components/decisions/DecisionActionsCard";
 import { getCurrentUser } from "@/lib/auth";
@@ -20,15 +21,13 @@ export default async function RvpCountrySummaryPage() {
 
   return (
     <>
-      <header className="pl-16 pr-4 pt-5 lg:pl-6 lg:pr-6 pb-4">
-          <div className="text-[11px] muted font-bold uppercase tracking-wider">Regional VP · Country summary</div>
-          <h1 className="page-title mt-0.5">
-            Uganda — Country Weekly Field Intelligence
-          </h1>
-          <p className="text-body muted mt-0.5 max-w-[760px]">
-            Aggregated only. RVP routes decisions to Country Director or HR — never directly to Program Leads or below.
-          </p>
-        </header>
+      {/* Canonical page chrome — title + search + identity cluster.
+          PageHeader is a Client Component: pass only strings from this
+          server page, never icon components. */}
+      <PageHeader
+        title="Uganda — Country Weekly Field Intelligence"
+        subtitle="Aggregated only. RVP routes decisions to Country Director or HR — never directly to Program Leads or below."
+      />
 
         <div className="px-4 sm:px-5 md:px-6 pb-10 md:pb-6 space-y-4">
           <AggregatedFieldContextCard

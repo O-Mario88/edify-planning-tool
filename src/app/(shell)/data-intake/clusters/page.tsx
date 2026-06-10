@@ -1,4 +1,4 @@
-import { TitleRegister } from "@/components/shell/TitleRegister";
+import { PageHeader } from "@/components/ui/PageHeader";
 import IaClusterQualityQueue from "@/components/cluster/IaClusterQualityQueue";
 import IaClusterConfirmationQueue, {
   type IaClusterConfirmationVM,
@@ -38,10 +38,17 @@ export default async function ClusterQualityPage() {
   );
 
   return (
-    <div className="px-4 sm:px-5 md:px-6 pb-24 md:pb-8 space-y-4">
-      <TitleRegister title="Cluster Quality" dateLabel="IA" />
-      <IaClusterConfirmationQueue items={confirmations} />
-      <IaClusterQualityQueue />
-    </div>
+    <>
+      <PageHeader
+        title="Cluster Quality"
+        subtitle="IA confirmation queue for completed cluster meetings, plus data-quality checks across the cluster register."
+        dateLabel="IA"
+        backFallbackHref="/data-intake"
+      />
+      <div className="px-4 sm:px-5 md:px-6 pb-24 md:pb-8 space-y-4">
+        <IaClusterConfirmationQueue items={confirmations} />
+        <IaClusterQualityQueue />
+      </div>
+    </>
   );
 }

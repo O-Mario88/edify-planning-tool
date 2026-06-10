@@ -1,6 +1,7 @@
 import { type ReactNode } from "react";
 import Link from "next/link";
 import { ChevronRight, type LucideIcon } from "lucide-react";
+import { HeaderChrome } from "@/components/shell/HeaderChrome";
 
 // Reusable scaffold for entity detail pages (staff, cluster, district,
 // project, fund request, …). The outer flex + sidebar comes from the
@@ -77,7 +78,13 @@ export function EntityDetail({
                 <p className="text-body muted mt-0.5 max-w-[760px]">{subtitle}</p>
               )}
             </div>
-            {actions && <div className="flex items-center gap-2 shrink-0">{actions}</div>}
+            <div className="flex items-center gap-2 shrink-0">
+              {actions}
+              {/* Canonical identity chrome (search · message · bell) so
+                  detail pages read like every PageHeader page. Desktop
+                  only — the dark MobileTopBar carries the bells below lg. */}
+              <HeaderChrome className="hidden lg:flex" />
+            </div>
           </div>
         </header>
 

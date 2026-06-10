@@ -3,7 +3,7 @@ import { Network, MapPin, User } from "lucide-react";
 import { EntityDetail, DetailFacts } from "@/components/shell/EntityDetail";
 import { clustersMock } from "@/lib/schools-mock";
 import { orgStaff } from "@/lib/org/supervision";
-import { TitleRegister } from "@/components/shell/TitleRegister";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { ClusterProfileView } from "@/components/cluster/ClusterProfileView";
 import { ClusterMemberSchoolsLive } from "@/components/cluster/ClusterMemberSchoolsLive";
 import { clusterProfile, clusterById, activeClusters, CLUSTER_MEETING_LABEL, feedbackForCluster, CLUSTER_FEEDBACK_LABEL } from "@/lib/cluster/cluster-core";
@@ -121,7 +121,12 @@ async function EngineClusterProfile({ clusterId }: { clusterId: string }) {
 
   return (
     <>
-      <TitleRegister title={profile.cluster.name} dateLabel="Cluster" />
+      <PageHeader
+        title={profile.cluster.name}
+        dateLabel="Cluster"
+        backFallbackHref="/clusters"
+        breadcrumbTrailingLabel={profile.cluster.name}
+      />
       <ClusterProfileView profile={vm} flags={flags} reassignTargets={reassignTargets} canReassign={staffRole} />
     </>
   );

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ShieldX, ArrowRight } from "lucide-react";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { getCurrentUser } from "@/lib/auth";
 import { ROLE_REDIRECT } from "@/lib/auth-public";
 
@@ -20,12 +21,14 @@ export default async function AccessRestrictedPage({
   const isDirectory = from.startsWith("/schools") || from.startsWith("/school-directory");
 
   return (
-    <div className="px-4 sm:px-6 pt-10 pb-24 max-w-2xl mx-auto">
+    <>
+      <PageHeader title="Access Restricted" noBack />
+      <div className="px-4 sm:px-6 pt-4 pb-24 max-w-2xl mx-auto">
       <div className="card p-6 sm:p-8 text-center">
         <div className="mx-auto mb-4 grid place-items-center w-12 h-12 rounded-full bg-rose-50 border border-rose-200">
           <ShieldX size={22} className="text-rose-600" />
         </div>
-        <h1 className="text-[18px] font-extrabold tracking-tight mb-1.5">Access restricted</h1>
+        <h2 className="text-[18px] font-extrabold tracking-tight mb-1.5">Access restricted</h2>
         {isDirectory ? (
           <p className="text-[13px] text-slate-600 leading-relaxed mb-1">
             The <strong>School Directory</strong> is an operational working surface for the
@@ -52,6 +55,7 @@ export default async function AccessRestrictedPage({
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { DashboardPageHeader } from "@/components/dashboards/DashboardPageHeader";
 import { AccountantConsoleDashboard } from "@/components/accountant-console/AccountantConsoleDashboard";
 import { CommandStack } from "@/components/actions/CommandStack";
 import { TodayCommandCenter } from "@/components/command/TodayCommandCenter";
@@ -44,7 +45,11 @@ export default async function AccountantConsolePage() {
     .map((a) => ({ id: a.id, title: a.title, netsuiteExpenseId: a.netsuiteExpenseId, assigneeName: a.assigneeId }));
 
   return (
-    <div className="space-y-4 px-4 sm:px-5 md:px-6 pt-4 pb-24">
+    <>
+      {/* Canonical page chrome — title + live role-scoped filters + search +
+          message/notification/avatar cluster. Matches /dashboards/cceo. */}
+      <DashboardPageHeader role="ProgramAccountant" />
+      <div className="space-y-4 px-4 sm:px-5 md:px-6 pt-3 lg:pt-4 pb-24">
       <TodayCommandCenter />
       <CommandStack user={user} />
       {/* Partner-to-payment (backend, scoped, IA-gated). The live terminal
@@ -65,6 +70,7 @@ export default async function AccountantConsolePage() {
         subtitle="IA verified → Sent to accountant → Cleared → Netsuite ID → Paid"
       />
       <AccountantConsoleDashboard />
-    </div>
+      </div>
+    </>
   );
 }

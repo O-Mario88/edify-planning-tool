@@ -1,4 +1,5 @@
-import { Gauge, ShieldAlert } from "lucide-react";
+import { ShieldAlert } from "lucide-react";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { getCurrentUser } from "@/lib/auth";
 import { DEMO_USERS } from "@/lib/auth";
 import { computeStaffCapacity, teamCapacityRollup } from "@/lib/planning/assignment-policy";
@@ -48,17 +49,12 @@ export default async function CapacityPage() {
   const rollup = teamCapacityRollup(staff.map((s) => s.staffId));
 
   return (
-    <div className="px-3 sm:px-4 md:px-6 pt-4 pb-24 space-y-4">
-      <header className="flex items-start gap-2.5">
-        <span className="grid place-items-center h-9 w-9 rounded-lg bg-[var(--color-edify-soft)]/70 text-[var(--color-edify-primary)]"><Gauge size={16} /></span>
-        <div>
-          <h1 className="page-title">Staff Support Capacity</h1>
-          <p className="text-body muted">How many schools each staff member can directly support this FY. At the limit, new school support shifts to partners.{" "}
-            {canSet ? <b className="text-[var(--color-edify-text)]">You can set limits.</b> : "View only — only CD / IA can change limits."}
-          </p>
-        </div>
-      </header>
-
+    <>
+      <PageHeader
+        title="Staff Support Capacity"
+        subtitle={`How many schools each staff member can directly support this FY. At the limit, new school support shifts to partners. ${canSet ? "You can set limits." : "View only — only CD / IA can change limits."}`}
+      />
+      <div className="px-3 sm:px-4 md:px-6 pt-2 pb-24 space-y-4">
       {!canSet && (
         <div className="card p-3 flex items-center gap-2 text-[12px] text-amber-700 bg-amber-50 border-amber-200">
           <ShieldAlert size={14} /> Setting limits is restricted to Country Director and Impact Assessment.
@@ -113,6 +109,7 @@ export default async function CapacityPage() {
           </table>
         </div>
       </section>
-    </div>
+      </div>
+    </>
   );
 }

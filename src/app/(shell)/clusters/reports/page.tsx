@@ -1,5 +1,5 @@
-import { ShieldCheck, GraduationCap, Users2, Network, Building2, CalendarCheck } from "lucide-react";
-import { TitleRegister } from "@/components/shell/TitleRegister";
+import { GraduationCap, Users2, Network, Building2, CalendarCheck } from "lucide-react";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { verifiedClusterImpact } from "@/lib/cluster/cluster-core";
 import { clusterAcquisitionMetrics } from "@/lib/cluster/cluster-join-source";
 
@@ -22,16 +22,13 @@ export default async function ClusterReportsPage() {
 
   return (
     <>
-      <TitleRegister title="Cluster Impact Report" dateLabel="Donor" />
-      <div className="px-4 sm:px-5 md:px-6 pt-4 pb-12 space-y-4">
-        <header>
-          <h1 className="text-[18px] font-extrabold tracking-tight">Cluster impact — verified</h1>
-          <p className="text-[12.5px] muted mt-0.5 inline-flex items-center gap-1.5 max-w-2xl">
-            <ShieldCheck size={13} className="text-emerald-600 shrink-0" />
-            Donor-ready figures count <b className="mx-1">only IA-confirmed</b> cluster activities. Every row below traces to a Salesforce TS- training id.
-          </p>
-        </header>
-
+      <PageHeader
+        title="Cluster Impact Report"
+        subtitle="Donor-ready figures count only IA-confirmed cluster activities. Every row below traces to a Salesforce TS- training id."
+        dateLabel="Donor"
+        backFallbackHref="/clusters"
+      />
+      <div className="px-4 sm:px-5 md:px-6 pb-12 space-y-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {kpis.map((k) => (
             <div key={k.label} className="card rounded-2xl p-4">
