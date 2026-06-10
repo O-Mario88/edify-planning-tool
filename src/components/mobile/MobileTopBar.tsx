@@ -22,26 +22,7 @@
 // This file can be deleted once no callers remain — but as a shim,
 // every consumer gets fixed for free with no per-page wiring.
 
-import { useSession } from "@/components/auth/SessionContext";
 import { useSetPageTitle } from "@/components/shell/PageTitleContext";
-import type { EdifyRole } from "@/lib/auth-public";
-
-const ROLE_LABEL: Record<EdifyRole, string> = {
-  CCEO:               "CCEO",
-  CountryProgramLead: "Country Program Lead",
-  CountryDirector:    "Country Director",
-  RVP:                "Regional VP",
-  ProgramAccountant:  "Program Accountant",
-  ImpactAssessment:   "Impact Assessment",
-  HumanResource:      "Human Resources",
-  ProjectCoordinator: "Project Coordinator",
-  Admin:              "Admin",
-  // Partner Operating Layer — three sub-types render distinct labels
-  // so partner users can identify themselves in the topbar.
-  PartnerAdmin:        "Partner Admin",
-  PartnerFieldOfficer: "Partner Field Officer",
-  PartnerViewer:       "Partner Viewer",
-};
 
 export function MobileTopBar({
   title,
@@ -63,14 +44,13 @@ export function MobileTopBar({
   void _legacyNotificationsHref;
   void _legacyClassName;
 
-  const session = useSession();
-  const resolvedTitle =
-    title ?? (session ? ROLE_LABEL[session.role] : "Edify");
-
   // Empty-string month sentinel from the old API means "hide pill" —
   // map it to `undefined` so the shell bar doesn't render a date chip.
   const dateLabel = monthLabel === "" ? undefined : monthLabel;
 
-  useSetPageTitle(resolvedTitle, dateLabel);
+  // No explicit title → register nothing; the route-level default from
+  // RouteTitleSync stands. (The old role-label fallback stamped "CCEO"
+  // over real page names like "Schools".)
+  useSetPageTitle(title, dateLabel);
   return null;
 }

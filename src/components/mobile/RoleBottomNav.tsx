@@ -148,9 +148,11 @@ export function RoleBottomNav({ role: roleProp }: { role?: EdifyRole } = {}) {
   const role = roleProp ?? sessionRole;
   const layout = LAYOUT_BY_ROLE[role];
   const pathname = usePathname();
-  const activeColor    = role === "CCEO" ? "text-emerald-600"    : "text-[var(--color-edify-primary)]";
-  const activeIconBg   = role === "CCEO" ? "bg-emerald-50"        : "bg-[var(--color-edify-soft)]";
-  const activeIconRing = role === "CCEO" ? "ring-emerald-100"     : "ring-[var(--color-edify-divider)]";
+  // One brand accent for every role — the old CCEO emerald special-case
+  // predates the slate-blue rebrand and read as a different product.
+  const activeColor    = "text-[var(--color-edify-primary)]";
+  const activeIconBg   = "bg-[var(--color-edify-soft)]";
+  const activeIconRing = "ring-[var(--color-edify-divider)]";
 
   return (
     <nav
@@ -200,7 +202,7 @@ export function RoleBottomNav({ role: roleProp }: { role?: EdifyRole } = {}) {
           <Link
             href={layout.fab.href}
             aria-label={layout.fab.label}
-            className="absolute left-1/2 -translate-x-1/2 -top-5 h-14 w-14 rounded-full bg-gradient-to-b from-emerald-400 to-emerald-600 hover:from-emerald-300 hover:to-emerald-500 text-white shadow-[0_10px_24px_-6px_rgba(16,185,129,0.5),0_4px_8px_-2px_rgba(16,185,129,0.3)] grid place-items-center pressable ring-4 ring-white"
+            className="absolute left-1/2 -translate-x-1/2 -top-5 h-14 w-14 rounded-full bg-gradient-to-b from-[#638aa1] to-[var(--color-edify-primary)] hover:from-[#7099b0] hover:to-[#5d8399] text-white shadow-[0_10px_24px_-6px_rgba(80,117,139,0.5),0_4px_8px_-2px_rgba(80,117,139,0.3)] grid place-items-center pressable ring-4 ring-white"
           >
             <Plus size={22} strokeWidth={2.5} />
           </Link>

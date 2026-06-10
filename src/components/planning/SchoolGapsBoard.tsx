@@ -52,6 +52,8 @@ import {
 } from "@/components/planning/SchoolActivityProfileDrawer";
 import { PlanningEmptyState } from "@/components/planning/PlanningEmptyState";
 import { RISK_TONE } from "@/lib/planning/status-tokens";
+import { useActiveFilters } from "@/hooks/use-active-filters";
+import { applyGeographyScope } from "@/lib/filters/apply-filters";
 
 /**
  * Translate a SchoolGap into the unified ScheduleActivityDrawer's
@@ -166,12 +168,25 @@ export function SchoolGapsBoard({
   // Cluster filter — narrows every bucket to one cluster ("" = all clusters).
   const [clusterFilter, setClusterFilter] = useState<string>("");
 
+  // Header filters → data: extraGaps arrive already geo-scoped server-side,
+  // but the static seed merges in client-side — scope it here too so the
+  // bucket counts obey the header geography selection (district + derived
+  // region; the seed carries no filter-space cluster id or planning date).
+  const selection = useActiveFilters();
+  const seedGaps = useMemo(
+    () =>
+      liveGaps
+        ? []
+        : applyGeographyScope(schoolGaps, selection, { district: (g) => g.district }),
+    [liveGaps, selection],
+  );
+
   // Distinct clusters present across the current gaps (for the filter select).
   const clusterOptions = useMemo(
     () =>
-      [...new Set([...extraGaps, ...(liveGaps ? [] : schoolGaps)].map((s) => s.clusterName).filter(Boolean) as string[])]
+      [...new Set([...extraGaps, ...seedGaps].map((s) => s.clusterName).filter(Boolean) as string[])]
         .sort((a, b) => a.localeCompare(b)),
-    [extraGaps, liveGaps],
+    [extraGaps, seedGaps],
   );
 
   function dismiss(schoolId: string) {
@@ -190,13 +205,13 @@ export function SchoolGapsBoard({
     // filtered out so the gap counts and lists reflect "what still
     // needs CCEO/PL action right now", not "what was on the table when
     // the page loaded".
-    for (const s of [...extraGaps, ...(liveGaps ? [] : schoolGaps)]) {
+    for (const s of [...extraGaps, ...seedGaps]) {
       if (dismissedIds.has(s.id)) continue;
       if (clusterFilter && s.clusterName !== clusterFilter) continue;
       map[s.gapCategory].push(s);
     }
     return map;
-  }, [dismissedIds, extraGaps, liveGaps, clusterFilter]);
+  }, [dismissedIds, extraGaps, seedGaps, clusterFilter]);
 
   function handleClusterSubmit(outcome: AddToClusterOutcome) {
     // Connect to the real cluster workflow: assign to an existing cluster, or

@@ -5,6 +5,8 @@ import { Map } from "lucide-react";
 import { SectionCard } from "@/components/ui/primitives";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/DataStates";
 import type { BeSsaPerformanceGrouped } from "@/lib/api/surfaces";
+import { isFilterActive, useActiveFilters } from "@/hooks/use-active-filters";
+import { applyGeographyScope } from "@/lib/filters/apply-filters";
 import { cn } from "@/lib/utils";
 
 // District performance heat panel — per-district overall SSA score, live from
@@ -42,34 +44,47 @@ function deriveTiles(data: BeSsaPerformanceGrouped): Tile[] {
 }
 
 export function DistrictHeatPanel() {
-  const [tiles, setTiles] = useState<Tile[] | null>(null);
+  const [data, setData] = useState<BeSsaPerformanceGrouped | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Header filters → data. FY goes to the backend; district/region scope the
+  // district-keyed tiles client-side (region derives from the district).
+  const selection = useActiveFilters();
+  const fy = isFilterActive(selection.fy) ? selection.fy : undefined;
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/analytics/ssa-performance?groupBy=district&schoolType=all", {
-        credentials: "include",
-      });
+      const res = await fetch(
+        `/api/analytics/ssa-performance?groupBy=district&schoolType=all${fy ? `&fy=${encodeURIComponent(fy)}` : ""}`,
+        { credentials: "include" },
+      );
       const j = (await res.json()) as (BeSsaPerformanceGrouped & { live?: boolean; error?: string }) | null;
       if (!res.ok || !j || j.live === false) {
         setError(j?.error ?? "Could not load district heat panel.");
-        setTiles(null);
+        setData(null);
       } else {
-        setTiles(deriveTiles(j));
+        setData(j);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Network error");
-      setTiles(null);
+      setData(null);
     }
     setLoading(false);
-  }, []);
+  }, [fy]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  const tiles = data
+    ? deriveTiles({
+        ...data,
+        rows: applyGeographyScope(data.rows, selection, { district: (r) => r.groupName }),
+      })
+    : null;
 
   return (
     <SectionCard title="District Performance Heat Panel">

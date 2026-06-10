@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { Compass, TrendingUp, TrendingDown, CircleDot, MapPin, TriangleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { BeRecruitment } from "@/lib/api/surfaces";
+import { LoadingState } from "@/components/ui/DataStates";
 
 const RECO_TONE: Record<string, { bg: string; fg: string; ring: string }> = {
   "Continue Recruiting": { bg: "bg-emerald-50", fg: "text-emerald-700", ring: "border-emerald-200" },
@@ -57,7 +58,7 @@ export function RecruitmentIntelligenceCard({ advisory = false }: { advisory?: b
       </header>
 
       {loading || !data ? (
-        <div className="py-8 text-center text-[12px] muted">Loading…</div>
+        <LoadingState compact />
       ) : (
         <>
           {/* Headline: score ring + recommendation */}

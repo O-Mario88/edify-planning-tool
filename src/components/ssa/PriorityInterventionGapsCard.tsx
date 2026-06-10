@@ -5,6 +5,8 @@ import { Activity, MapPin } from "lucide-react";
 import { SectionCard } from "@/components/ui/primitives";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/DataStates";
 import type { BeSsaPerformanceGrouped } from "@/lib/api/surfaces";
+import { isFilterActive, useActiveFilters } from "@/hooks/use-active-filters";
+import { applyGeographyScope } from "@/lib/filters/apply-filters";
 import { cn } from "@/lib/utils";
 
 // Priority intervention gaps — district × intervention heatmap, live from the
@@ -43,42 +45,53 @@ type Col = { code: string; label: string; short: string };
 type HeatRow = { district: string; scores: (number | null)[] };
 
 export function PriorityInterventionGapsCard() {
-  const [data, setData] = useState<{ cols: Col[]; rows: HeatRow[] } | null>(null);
+  const [raw, setRaw] = useState<BeSsaPerformanceGrouped | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Header filters → data. FY goes to the backend; district/region scope the
+  // district-keyed heatmap rows client-side (region derives from the district).
+  const selection = useActiveFilters();
+  const fy = isFilterActive(selection.fy) ? selection.fy : undefined;
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/analytics/ssa-performance?groupBy=district&schoolType=all", {
-        credentials: "include",
-      });
+      const res = await fetch(
+        `/api/analytics/ssa-performance?groupBy=district&schoolType=all${fy ? `&fy=${encodeURIComponent(fy)}` : ""}`,
+        { credentials: "include" },
+      );
       const j = (await res.json()) as (BeSsaPerformanceGrouped & { live?: boolean; error?: string }) | null;
       if (!res.ok || !j || j.live === false) {
         setError(j?.error ?? "Could not load intervention gaps.");
-        setData(null);
+        setRaw(null);
       } else {
-        const cols: Col[] = j.interventions.map((iv) => ({
-          code: iv.code,
-          label: iv.label,
-          short: SHORT_LABEL[iv.code] ?? iv.label,
-        }));
-        const rows: HeatRow[] = j.rows
-          .filter((r) => r.schoolsAssessed > 0)
-          .map((r) => ({ district: r.groupName, scores: cols.map((c) => r.interventions[c.code] ?? null) }));
-        setData({ cols, rows });
+        setRaw(j);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Network error");
-      setData(null);
+      setRaw(null);
     }
     setLoading(false);
-  }, []);
+  }, [fy]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  const data = (() => {
+    if (!raw) return null;
+    const cols: Col[] = raw.interventions.map((iv) => ({
+      code: iv.code,
+      label: iv.label,
+      short: SHORT_LABEL[iv.code] ?? iv.label,
+    }));
+    const rows: HeatRow[] = applyGeographyScope(raw.rows, selection, { district: (r) => r.groupName })
+      .filter((r) => r.schoolsAssessed > 0)
+      .map((r) => ({ district: r.groupName, scores: cols.map((c) => r.interventions[c.code] ?? null) }));
+    return { cols, rows };
+  })();
 
   return (
     <SectionCard

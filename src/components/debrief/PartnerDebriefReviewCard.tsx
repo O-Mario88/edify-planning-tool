@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { Handshake, ChevronDown, GitMerge, Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { BeDebrief } from "@/lib/api/surfaces";
+import { LoadingState } from "@/components/ui/DataStates";
 
 function blockerLabel(k: string): string {
   return k.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
@@ -77,7 +78,7 @@ export function PartnerDebriefReviewCard() {
       )}
 
       {loading ? (
-        <div className="py-6 text-center text-[12px] muted">Loading…</div>
+        <LoadingState compact />
       ) : (
         <div className="space-y-2">
           {rows.map((r) => {

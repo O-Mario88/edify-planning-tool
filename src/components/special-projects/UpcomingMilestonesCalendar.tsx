@@ -3,6 +3,12 @@
 import { Clock, MapPin, CalendarDays, Calendar } from "lucide-react";
 import { SectionCard } from "@/components/ui/primitives";
 import { projectMilestones, type Milestone } from "@/lib/special-projects-mock";
+import {
+  isFilterActive,
+  useActiveFilters,
+  useResolvedDateRange,
+} from "@/hooks/use-active-filters";
+import { applyDateScope } from "@/lib/filters/apply-filters";
 
 const monthAccent: Record<string, string> = {
   MAY: "border-[var(--color-edify-primary)] text-[var(--color-edify-primary)]",
@@ -18,6 +24,18 @@ function dateBlock(iso: string): { mon: string; day: string } {
 }
 
 export function UpcomingMilestonesCalendar() {
+  // Header filters → data. Milestones carry an ISO date, so the FY/Quarter
+  // window applies; no scoping when no FY/Quarter is selected (the mock
+  // calendar spans periods). Geography is skipped — `location` is free text
+  // ("Virtual", "All Regions", office names), not a district field.
+  const selection = useActiveFilters();
+  const range = useResolvedDateRange();
+  const periodActive =
+    isFilterActive(selection.fy) || isFilterActive(selection.quarter);
+  const milestones = periodActive
+    ? applyDateScope(projectMilestones, range, (m) => m.date)
+    : projectMilestones;
+
   return (
     <SectionCard
       icon={<Calendar size={13} />}
@@ -32,11 +50,17 @@ export function UpcomingMilestonesCalendar() {
         </button>
       }
     >
-      <div className="grid grid-cols-6 gap-3">
-        {projectMilestones.map((m) => (
-          <MilestoneCard key={m.id} m={m} />
-        ))}
-      </div>
+      {milestones.length === 0 ? (
+        <div className="text-caption muted py-4 text-center">
+          No milestones in the selected period.
+        </div>
+      ) : (
+        <div className="grid grid-cols-6 gap-3">
+          {milestones.map((m) => (
+            <MilestoneCard key={m.id} m={m} />
+          ))}
+        </div>
+      )}
     </SectionCard>
   );
 }

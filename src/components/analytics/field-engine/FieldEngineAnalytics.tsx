@@ -58,21 +58,22 @@ export function FieldEngineAnalytics({
 
   return (
     <div className="space-y-3.5">
-      {/* Toolbar — the live filter bar now lives in the page's <PageHeader>
-          (filterBar slot); Export stays here because the CSV is built from
-          the snapshot computed in this component. */}
-      <div className="flex items-center justify-end gap-2">
+      {/* Lead row — data-quality strip with Export on the same line.
+          The live filter bar lives in the page's <PageHeader> (filterBar
+          slot); Export stays in this component because the CSV is built
+          from the snapshot computed here. */}
+      <div className="flex items-center gap-2">
+        <div className="flex-1 min-w-0">
+          <DataQualityStrip score={snapshot.dataQualityScore} notes={snapshot.dataQuality.notes} />
+        </div>
         <button
           type="button"
           onClick={() => exportSnapshotCsv(snapshot, selection, scopeLabel)}
-          className="h-9 px-3 rounded-xl border border-[var(--color-edify-border)] text-[12px] font-semibold inline-flex items-center gap-1.5 hover:bg-[var(--color-edify-soft)]/40 shrink-0"
+          className="h-9 px-3 rounded-xl border border-[var(--color-edify-border)] bg-[var(--color-card)] text-[12px] font-semibold inline-flex items-center gap-1.5 hover:bg-[var(--color-edify-soft)]/40 shrink-0"
         >
           <Download size={13} /> Export
         </button>
       </div>
-
-      {/* Data-quality strip (slim) */}
-      <DataQualityStrip score={snapshot.dataQualityScore} notes={snapshot.dataQuality.notes} />
 
       {/* Drilldown — records behind the active number */}
       {activeFilter && activeMetric && (

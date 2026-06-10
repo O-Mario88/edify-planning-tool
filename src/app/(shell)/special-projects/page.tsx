@@ -17,15 +17,38 @@ import {
   getVisibleProjects,
 } from "@/lib/special-projects-mock";
 import { getCurrentUser, toCurrentUser } from "@/lib/auth";
+import {
+  buildDateRangeFromFilters,
+  selectionFromSearchParams,
+} from "@/lib/filters/apply-filters";
+import { ALL_SENTINEL } from "@/lib/filters/types";
 
 // The Special Projects Module sits OUTSIDE the SSA 8 interventions but
 // integrates with staff capacity, fund requests, Salesforce logging,
 // verification, and the School 360 profile — see special-projects-mock.ts
 // for the role-aware visibility filter and the strict separation between
 // teacher-impact and school-impact projects.
-export default async function SpecialProjectsDashboard() {
+export default async function SpecialProjectsDashboard({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const currentUser = toCurrentUser(await getCurrentUser());
-  const visible = getVisibleProjects(currentUser);
+
+  // Header filters → data. Projects carry run dates but NO per-row district
+  // (scope is country-level), so only the FY/Quarter window applies: keep
+  // projects whose start–end range OVERLAPS the selected period. No FY/Quarter
+  // selected = no date scoping (the portfolio spans FYs by design). The KPI
+  // row is recomputed AFTER scoping so the headline numbers obey the filter.
+  const selection = selectionFromSearchParams(await searchParams);
+  const periodActive =
+    selection.fy !== ALL_SENTINEL || selection.quarter !== ALL_SENTINEL;
+  const range = buildDateRangeFromFilters(selection);
+  const visible = getVisibleProjects(currentUser).filter(
+    (p) =>
+      !periodActive ||
+      (p.startDate <= range.endDate && p.endDate >= range.startDate),
+  );
   const kpis = computeSpecialProjectKpis(visible);
 
   return (

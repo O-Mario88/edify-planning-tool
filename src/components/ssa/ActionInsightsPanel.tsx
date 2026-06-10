@@ -6,6 +6,8 @@ import { AlertCircle, ArrowRight, Lightbulb } from "lucide-react";
 import { SectionCard } from "@/components/ui/primitives";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/DataStates";
 import type { BeSsaPerformanceGrouped } from "@/lib/api/surfaces";
+import { isFilterActive, useActiveFilters } from "@/hooks/use-active-filters";
+import { applyGeographyScope } from "@/lib/filters/apply-filters";
 
 // SSA Insights & Recommendations — derived live from the backend SSA grid
 // (groupBy=district). We surface the genuinely worst district and the single
@@ -64,34 +66,48 @@ function deriveInsights(data: BeSsaPerformanceGrouped): Insight[] {
 }
 
 export function ActionInsightsPanel() {
-  const [insights, setInsights] = useState<Insight[] | null>(null);
+  const [data, setData] = useState<BeSsaPerformanceGrouped | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Header filters → data. FY goes to the backend; district/region narrow the
+  // district rows BEFORE the insights derive, so "worst district / weakest
+  // intervention" answer for the selected geography only.
+  const selection = useActiveFilters();
+  const fy = isFilterActive(selection.fy) ? selection.fy : undefined;
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/analytics/ssa-performance?groupBy=district&schoolType=all", {
-        credentials: "include",
-      });
+      const res = await fetch(
+        `/api/analytics/ssa-performance?groupBy=district&schoolType=all${fy ? `&fy=${encodeURIComponent(fy)}` : ""}`,
+        { credentials: "include" },
+      );
       const j = (await res.json()) as (BeSsaPerformanceGrouped & { live?: boolean; error?: string }) | null;
       if (!res.ok || !j || j.live === false) {
         setError(j?.error ?? "Could not load SSA insights.");
-        setInsights(null);
+        setData(null);
       } else {
-        setInsights(deriveInsights(j));
+        setData(j);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Network error");
-      setInsights(null);
+      setData(null);
     }
     setLoading(false);
-  }, []);
+  }, [fy]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  const insights = data
+    ? deriveInsights({
+        ...data,
+        rows: applyGeographyScope(data.rows, selection, { district: (r) => r.groupName }),
+      })
+    : null;
 
   return (
     <SectionCard title="SSA Insights & Recommendations">

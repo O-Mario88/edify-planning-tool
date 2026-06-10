@@ -8,6 +8,9 @@ import { useEffect, useState, useCallback } from "react";
 import { Grid3x3, ChevronRight, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { BeSsaPerformanceGrouped, BeSsaDrilldownRow } from "@/lib/api/surfaces";
+import { isFilterActive, useActiveFilters } from "@/hooks/use-active-filters";
+import { applyGeographyScope } from "@/lib/filters/apply-filters";
+import { LoadingState } from "@/components/ui/DataStates";
 
 const GROUPS = [
   { key: "district", label: "District" }, { key: "region", label: "Region" },
@@ -35,15 +38,21 @@ export function SsaPerformanceGrid() {
   const [off, setOff] = useState(false);
   const [drill, setDrill] = useState<{ name: string; rows: BeSsaDrilldownRow[]; loading: boolean } | null>(null);
 
+  // Header filters → data. FY goes to the backend; district/region scope the
+  // rows client-side when the grid is grouped by district (the only grouping
+  // whose rows carry a district name — region derives from it).
+  const selection = useActiveFilters();
+  const fy = isFilterActive(selection.fy) ? selection.fy : undefined;
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/analytics/ssa-performance?groupBy=${groupBy}&schoolType=${schoolType}`, { credentials: "include" });
+      const res = await fetch(`/api/analytics/ssa-performance?groupBy=${groupBy}&schoolType=${schoolType}${fy ? `&fy=${encodeURIComponent(fy)}` : ""}`, { credentials: "include" });
       const j = await res.json();
       if (j.live) { setData(j); setOff(false); } else { setOff(true); }
     } catch { setOff(true); }
     setLoading(false);
-  }, [groupBy, schoolType]);
+  }, [groupBy, schoolType, fy]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -64,6 +73,14 @@ export function SsaPerformanceGrid() {
     } catch { setDrill({ name: row.groupName, rows: [], loading: false }); }
   }
 
+  // District-keyed rows obey the header district/region filter; other
+  // groupings (region/cceo/cluster/sub-county) have no district per row.
+  const visibleRows = data
+    ? data.groupBy === "district"
+      ? applyGeographyScope(data.rows, selection, { district: (r) => r.groupName })
+      : data.rows
+    : [];
+
   if (off) return null; // backend not enabled/reachable — page's mock layer remains
 
   return (
@@ -80,7 +97,7 @@ export function SsaPerformanceGrid() {
       </div>
 
       {loading || !data ? (
-        <div className="py-8 text-center text-[12px] muted">Loading…</div>
+        <LoadingState compact />
       ) : (
         <>
         <div className="overflow-x-auto -mx-1 scroll-px-2">
@@ -96,7 +113,7 @@ export function SsaPerformanceGrid() {
               </tr>
             </thead>
             <tbody>
-              {data.rows.map((r) => (
+              {visibleRows.map((r) => (
                 <tr key={r.groupId} className="group cursor-pointer" onClick={() => openDrill(r)}>
                   <td className="py-1 pr-2 font-semibold whitespace-nowrap text-[10.5px] sticky left-0 z-10 bg-[var(--surface-1)] group-hover:bg-[var(--surface-3)] w-[1%]">
                     <span className="inline-flex items-center gap-0.5">{r.groupName}<ChevronRight size={10} className="opacity-40" /></span>

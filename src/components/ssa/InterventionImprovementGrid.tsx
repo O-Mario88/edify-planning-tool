@@ -9,6 +9,9 @@ import { useEffect, useState, useCallback } from "react";
 import { TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { BeInterventionImprovement } from "@/lib/api/surfaces";
+import { isFilterActive, useActiveFilters } from "@/hooks/use-active-filters";
+import { applyGeographyScope } from "@/lib/filters/apply-filters";
+import { LoadingState } from "@/components/ui/DataStates";
 
 const GROUPS = [
   { key: "district", label: "District" }, { key: "region", label: "Region" },
@@ -36,15 +39,21 @@ export function InterventionImprovementGrid() {
   const [loading, setLoading] = useState(true);
   const [off, setOff] = useState(false);
 
+  // Header filters → data. The selected FY becomes the comparison's CURRENT
+  // year (backend derives prevFy); district/region scope the rows client-side
+  // when grouped by district (the only grouping carrying a district name).
+  const selection = useActiveFilters();
+  const fy = isFilterActive(selection.fy) ? selection.fy : undefined;
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/analytics/intervention-improvement?groupBy=${groupBy}&schoolType=${schoolType}`, { credentials: "include" });
+      const res = await fetch(`/api/analytics/intervention-improvement?groupBy=${groupBy}&schoolType=${schoolType}${fy ? `&currentFy=${encodeURIComponent(fy)}` : ""}`, { credentials: "include" });
       const j = await res.json();
       if (j.live) { setData(j); setOff(false); } else { setOff(true); }
     } catch { setOff(true); }
     setLoading(false);
-  }, [groupBy, schoolType]);
+  }, [groupBy, schoolType, fy]);
 
   useEffect(() => { void load(); }, [load]);
 
@@ -54,6 +63,14 @@ export function InterventionImprovementGrid() {
   useEffect(() => {
     if (data && !allowCceo && groupBy === "cceo") setGroupBy("district");
   }, [data, allowCceo, groupBy]);
+
+  // District-keyed rows obey the header district/region filter; other
+  // groupings (region/cceo/cluster) have no district per row.
+  const visibleRows = data
+    ? data.groupBy === "district"
+      ? applyGeographyScope(data.rows, selection, { district: (r) => r.groupName })
+      : data.rows
+    : [];
 
   if (off) return null;
 
@@ -71,7 +88,7 @@ export function InterventionImprovementGrid() {
       </div>
 
       {loading || !data ? (
-        <div className="py-8 text-center text-[12px] muted">Loading…</div>
+        <LoadingState compact />
       ) : (
         <>
         <div className="overflow-x-auto -mx-1">
@@ -85,7 +102,7 @@ export function InterventionImprovementGrid() {
               </tr>
             </thead>
             <tbody>
-              {data.rows.map((r) => (
+              {visibleRows.map((r) => (
                 <tr key={r.groupId} className="group">
                   <td className="py-1 pr-2 font-semibold whitespace-nowrap text-[10.5px] sticky left-0 z-10 bg-[var(--surface-1)] group-hover:bg-[var(--surface-3)] w-[1%]">
                     {r.groupName}

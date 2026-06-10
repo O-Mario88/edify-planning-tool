@@ -5,6 +5,8 @@ import { Activity, Info } from "lucide-react";
 import { SectionCard } from "@/components/ui/primitives";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/DataStates";
 import type { BeSsaPerformanceGrouped } from "@/lib/api/surfaces";
+import { isFilterActive, useActiveFilters } from "@/hooks/use-active-filters";
+import { applyGeographyScope } from "@/lib/filters/apply-filters";
 import { cn } from "@/lib/utils";
 
 // 8 Intervention Performance Overview — portfolio-wide average for each of the
@@ -53,34 +55,48 @@ function deriveRows(data: BeSsaPerformanceGrouped): Row[] {
 }
 
 export function InterventionPerformanceCard() {
-  const [rows, setRows] = useState<Row[] | null>(null);
+  const [data, setData] = useState<BeSsaPerformanceGrouped | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Header filters → data. FY goes to the backend; district/region narrow the
+  // district rows BEFORE the school-weighted averages, so the per-intervention
+  // scores reflect only the selected geography.
+  const selection = useActiveFilters();
+  const fy = isFilterActive(selection.fy) ? selection.fy : undefined;
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/analytics/ssa-performance?groupBy=district&schoolType=all", {
-        credentials: "include",
-      });
+      const res = await fetch(
+        `/api/analytics/ssa-performance?groupBy=district&schoolType=all${fy ? `&fy=${encodeURIComponent(fy)}` : ""}`,
+        { credentials: "include" },
+      );
       const j = (await res.json()) as (BeSsaPerformanceGrouped & { live?: boolean; error?: string }) | null;
       if (!res.ok || !j || j.live === false) {
         setError(j?.error ?? "Could not load intervention performance.");
-        setRows(null);
+        setData(null);
       } else {
-        setRows(deriveRows(j));
+        setData(j);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Network error");
-      setRows(null);
+      setData(null);
     }
     setLoading(false);
-  }, []);
+  }, [fy]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  const rows = data
+    ? deriveRows({
+        ...data,
+        rows: applyGeographyScope(data.rows, selection, { district: (r) => r.groupName }),
+      })
+    : null;
 
   return (
     <SectionCard

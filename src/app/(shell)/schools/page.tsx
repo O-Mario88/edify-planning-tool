@@ -32,6 +32,8 @@ import { getVisibleProjects, projectsForSchool } from "@/lib/special-projects-mo
 import { evaluateEligibility } from "@/lib/projects/project-eligibility";
 import { SSA_INTERVENTION_AREAS, deriveQuarterFromDate } from "@/lib/intake/intake-core";
 import { computePeriodTarget } from "@/lib/targets/period-target";
+import { applyGeographyScope, selectionFromSearchParams } from "@/lib/filters/apply-filters";
+import { ALL_SENTINEL } from "@/lib/filters/types";
 import { activeFinancialYear } from "@/lib/fy-engine";
 import { engineNowIso } from "@/lib/clock";
 
@@ -77,20 +79,47 @@ function liveDirectoryMetrics(rows: BeSchoolRow[], total: number): DirectoryMetr
 // run off the uploaded schools (intakeSchools) via the canonical accessor — one
 // page, one universe. The old separate /portfolio + /clusters/assign surfaces
 // fold in here. (The mobile view still renders the legacy SchoolRow set.)
-export default async function SchoolsDashboard() {
+export default async function SchoolsDashboard({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const me = await getCurrentUser();
   const currentUser = toCurrentUser(me);
 
+  // Header filters → data. The HeaderFilterBar writes the selection to the
+  // URL; this page reads it back and scopes everything derived from the
+  // directory (KPI strip, signals, the directory rows themselves) so the
+  // filters control the data, not just the chips. Role scope stays first
+  // (directoryRecords); geography narrows within it.
+  const selection = selectionFromSearchParams(await searchParams);
+
   // Canonical directory: the viewer's uploaded schools (scoped to their chain).
-  const records = directoryRecords(currentUser.staffId, currentUser.role);
+  const records = applyGeographyScope(
+    directoryRecords(currentUser.staffId, currentUser.role),
+    selection,
+    // Region derives from district via the geography source of truth, so
+    // the match is always consistent with the filter options.
+    { district: (s) => s.district },
+  );
   const mockMetrics = directoryMetrics(records);
   const signals = directoryPlanningSignals(records);
 
   // Portfolio strip is live from edify-api when the backend is enabled; otherwise
   // it falls back to the in-memory directory metrics (identical shape).
   const liveSchools = await fetchSchools(me, { pageSize: 200 });
+  const liveRows = liveSchools.live
+    ? applyGeographyScope(liveSchools.data.data, selection, {
+        district: (r) => r.district?.name,
+      })
+    : [];
+  const geoActive = [selection.region, selection.district, selection.cluster].some(
+    (v) => v !== ALL_SENTINEL,
+  );
+  // Unfiltered: keep the backend's true total (rows are page-capped at 200).
+  // Filtered: the scoped row count IS the universe being summarised.
   const metrics = liveSchools.live
-    ? liveDirectoryMetrics(liveSchools.data.data, liveSchools.data.total)
+    ? liveDirectoryMetrics(liveRows, geoActive ? liveRows.length : liveSchools.data.total)
     : mockMetrics;
   const metricsLive = liveSchools.live;
   const metricsError = liveSchools.live ? null : liveSchools.error;

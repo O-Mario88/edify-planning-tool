@@ -19,6 +19,48 @@ function isReal(value: string | undefined): boolean {
   return !!value && value !== ALL_SENTINEL;
 }
 
+// URL query keys — MUST stay in sync with hooks/use-active-filters.ts
+// (the client reader) and hooks/use-filter-bar.ts (the writer).
+const URL_KEYS: Record<keyof FilterSelection, string> = {
+  fy:       "fy",
+  quarter:  "q",
+  region:   "region",
+  district: "district",
+  cluster:  "cluster",
+  cceo:     "cceo",
+  partner:  "partner",
+  package:  "pkg",
+  ssa:      "ssa",
+  champion: "champ",
+};
+
+/**
+ * Server-side counterpart of `useActiveFilters()`: read the filter
+ * selection from a page's awaited `searchParams`. Lets server components
+ * scope their data by the same URL the HeaderFilterBar writes.
+ */
+export function selectionFromSearchParams(
+  sp: Record<string, string | string[] | undefined>,
+): FilterSelection {
+  const get = (k: keyof FilterSelection): string => {
+    const v = sp[URL_KEYS[k]];
+    const s = Array.isArray(v) ? v[0] : v;
+    return s && s.length > 0 ? s : ALL_SENTINEL;
+  };
+  return {
+    fy:       get("fy"),
+    quarter:  get("quarter"),
+    region:   get("region"),
+    district: get("district"),
+    cluster:  get("cluster"),
+    cceo:     get("cceo"),
+    partner:  get("partner"),
+    package:  get("package"),
+    ssa:      get("ssa"),
+    champion: get("champion"),
+  };
+}
+
 /**
  * Resolve the selected FY (+ optional quarter) to an ISO date range.
  * FY only → the full FY window. FY + quarter → that quarter's window.

@@ -1,23 +1,22 @@
-"use client";
-
-import { Calendar, MapPin } from "lucide-react";
-import { PageHeader, type PageHeaderFilter } from "@/components/ui/PageHeader";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { HeaderFilterBar } from "@/components/shell/HeaderFilterBar";
 import { schoolsHeader } from "@/lib/schools-mock";
+import { getCurrentUser } from "@/lib/auth";
+import { getFilterScope } from "@/lib/filters/scope-service";
 
-// Thin adapter over the canonical <PageHeader>. Replaces the previous
-// EntityHeader-based bespoke header. Filter values stay local until
-// the backing state lands; everything else — title, subtitle, search,
-// breadcrumbs, avatar menu, ⌘K — comes from PageHeader.
-export function SchoolsHeader() {
-  const filters: PageHeaderFilter[] = [
-    { Icon: Calendar, label: schoolsHeader.filters.month  },
-    { Icon: MapPin,   label: schoolsHeader.filters.region },
-  ];
+// Thin adapter over the canonical <PageHeader>. Async server component:
+// resolves the viewer, computes their role-scoped FilterScope, and mounts
+// the LIVE <HeaderFilterBar> (URL-synced, cascading) — the page body reads
+// the same URL via selectionFromSearchParams() so the filters actually
+// re-scope the KPI strip + directory, not just the chips.
+export async function SchoolsHeader() {
+  const user = await getCurrentUser();
+  const scope = getFilterScope({ user });
   return (
     <PageHeader
       title={schoolsHeader.title}
       subtitle={schoolsHeader.subtitle}
-      filters={filters}
+      filterBar={<HeaderFilterBar scope={scope} />}
       searchPlaceholder={schoolsHeader.searchPlaceholder}
     />
   );

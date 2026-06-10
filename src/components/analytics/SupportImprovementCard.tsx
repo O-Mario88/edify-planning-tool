@@ -10,6 +10,7 @@ import { useEffect, useState, useCallback } from "react";
 import { GitCompareArrows, Info, TriangleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { BeSupportCorrelation, BeStaffVsPartner } from "@/lib/api/surfaces";
+import { LoadingState } from "@/components/ui/DataStates";
 
 const SUPPORT_FILTERS = [
   { key: "all", label: "All support" },
@@ -74,7 +75,7 @@ export function SupportImprovementCard() {
       </div>
 
       {loading || !corr ? (
-        <div className="py-8 text-center text-[12px] muted">Loading…</div>
+        <LoadingState compact />
       ) : (
         <>
           {/* Headline coefficient */}

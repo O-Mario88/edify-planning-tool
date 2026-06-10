@@ -7,7 +7,8 @@
 //   • request in flight             → <LoadingState>
 // "No backend data = empty state. Backend failure = error. Never fake data."
 
-import { Inbox, AlertTriangle, Loader2, RefreshCw } from "lucide-react";
+import { Inbox, AlertTriangle, RefreshCw } from "lucide-react";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 export function EmptyState({
   title = "No records yet",
@@ -60,10 +61,34 @@ export function ErrorState({
   );
 }
 
-export function LoadingState({ message = "Loading…", compact = false }: { message?: string; compact?: boolean }) {
+// Skeleton rows, not a spinner: the layout holds its shape while data
+// streams in, so nothing jumps when rows replace the shimmer. `message`
+// stays for screen readers.
+const SKELETON_LINE_WIDTHS = ["w-3/5", "w-2/5", "w-1/2", "w-2/3"];
+
+export function LoadingState({
+  message = "Loading…",
+  compact = false,
+  rows,
+}: {
+  message?: string;
+  compact?: boolean;
+  /** Number of shimmer rows. Defaults to 2 (compact) / 3. */
+  rows?: number;
+}) {
+  const count = rows ?? (compact ? 2 : 3);
   return (
-    <div className={`flex items-center justify-center gap-2 text-[12px] muted ${compact ? "py-6" : "py-12"}`}>
-      <Loader2 size={15} className="animate-spin" /> {message}
+    <div role="status" aria-label={message} className={compact ? "py-3 space-y-2.5" : "py-5 space-y-3"}>
+      <span className="sr-only">{message}</span>
+      {Array.from({ length: count }, (_, i) => (
+        <div key={i} className="flex items-center gap-3">
+          <Skeleton className="h-9 w-9 rounded-lg shrink-0" />
+          <div className="flex-1 min-w-0 space-y-1.5">
+            <Skeleton className={`h-3 ${SKELETON_LINE_WIDTHS[i % SKELETON_LINE_WIDTHS.length]}`} />
+            <Skeleton className={`h-2.5 ${SKELETON_LINE_WIDTHS[(i + 2) % SKELETON_LINE_WIDTHS.length]}`} />
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

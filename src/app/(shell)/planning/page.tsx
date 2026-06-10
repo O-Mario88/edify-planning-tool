@@ -41,6 +41,7 @@ export default async function Page({
            The live setup cards render through PlanningToolPage's topSlot so
            the canonical header stays the FIRST element on the page. */
         <PlanningToolPage
+          searchParams={sp}
           topSlot={
             <>
               <PlanningSetupLive />

@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { MapPin, TrendingUp, Minus, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { BeRecruitment, BeRecruitmentDistrict } from "@/lib/api/surfaces";
+import { LoadingState } from "@/components/ui/DataStates";
 
 const SIGNAL: Record<string, { label: string; cls: string; Icon: typeof TrendingUp }> = {
   expand: { label: "Recruit more", cls: "bg-emerald-50 text-emerald-700 border-emerald-200", Icon: TrendingUp },
@@ -70,7 +71,7 @@ export function RecruitmentDistrictTable() {
       </header>
 
       {loading ? (
-        <div className="py-8 text-center text-[12px] muted">Loading…</div>
+        <LoadingState compact />
       ) : rows.length === 0 ? (
         <div className="py-8 text-center text-[12px] muted">No districts in scope.</div>
       ) : (

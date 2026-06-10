@@ -14,6 +14,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Wallet, CheckCircle2, ShieldCheck, FileCheck2, Hash, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { BePaymentQueueRow } from "@/lib/api/surfaces";
+import { LoadingState } from "@/components/ui/DataStates";
 
 function GateChip({ ok, label, Icon }: { ok: boolean; label: string; Icon: typeof ShieldCheck }) {
   return (
@@ -89,7 +90,7 @@ export function PartnerPaymentQueue() {
       {error && <p className="mb-2 text-[11px] font-semibold text-rose-600 bg-rose-50 border border-rose-200 rounded px-2 py-1">{error}</p>}
 
       {loading ? (
-        <div className="py-8 text-center text-[12px] muted">Loading…</div>
+        <LoadingState compact />
       ) : rows.length === 0 ? (
         <div className="py-8 text-center text-[12px] muted">No partner activities awaiting payment. Cleared payments leave the queue.</div>
       ) : (

@@ -116,12 +116,15 @@ export function useRecentMessages(): Message[] {
  *  effect → setMeta again → infinite loop. That loop jammed React's
  *  reconciliation pipeline and silently broke router navigations.
  */
-export function useSetPageTitle(title: string, dateLabel?: string) {
+export function useSetPageTitle(title: string | undefined, dateLabel?: string) {
   const ctx = useContext(PageTitleCtx);
   const setMeta = ctx?.setMeta;
 
   useEffect(() => {
     if (!setMeta) return;
+    // No explicit title → leave the route-level default (RouteTitleSync)
+    // in place rather than stamping a fallback over it.
+    if (!title) return;
     setMeta({ title, dateLabel });
   }, [setMeta, title, dateLabel]);
 }
