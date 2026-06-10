@@ -19,6 +19,10 @@ export default async function AccessRestrictedPage({
   const user = await getCurrentUser();
   const home = ROLE_REDIRECT[user.role] ?? "/";
   const isDirectory = from.startsWith("/schools") || from.startsWith("/school-directory");
+  const isFieldPlanning =
+    from.startsWith("/planning") ||
+    from.startsWith("/my-plan") ||
+    from.startsWith("/completed-activities");
 
   return (
     <>
@@ -36,13 +40,22 @@ export default async function AccessRestrictedPage({
             ({user.role}) leads through analytics, reports, budget, and recruitment
             intelligence — not the operational school list.
           </p>
+        ) : isFieldPlanning ? (
+          <p className="text-[13px] text-slate-600 leading-relaxed mb-1">
+            <strong>Field planning</strong> is an operational working surface for the
+            CCEO and Program Lead roles. Your role ({user.role}) monitors execution
+            through the dashboard, analytics, and approvals — not row-level activity
+            planning.
+          </p>
         ) : (
           <p className="text-[13px] text-slate-600 leading-relaxed mb-1">
             Your role ({user.role}) doesn’t have access to this page.
           </p>
         )}
         <p className="text-[12px] muted mb-5">
-          No school records were loaded. This restriction is enforced on both the page and the backend.
+          {isFieldPlanning
+            ? "No plan records were loaded. This restriction is enforced on both the page and the backend."
+            : "No school records were loaded. This restriction is enforced on both the page and the backend."}
         </p>
         <div className="flex flex-wrap items-center justify-center gap-2">
           <Link href={home} className="inline-flex items-center gap-1.5 rounded-md bg-[var(--color-edify-primary)] text-white px-3.5 py-2 text-[12px] font-bold hover:opacity-90">

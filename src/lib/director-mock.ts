@@ -277,7 +277,7 @@ export type LeadershipActionTile = {
 };
 
 export const leadershipActions: LeadershipActionTile[] = [
-  { key: "review_funds",   title: "Review Fund Requests",      subtitle: "154 pending approvals",    icon: "wallet",        href: "/fund-requests",     tone: "edify" },
+  { key: "review_funds",   title: "Review Fund Requests",      subtitle: "154 pending approvals",    icon: "wallet",        href: "/approvals",         tone: "edify" },
   { key: "high_risk",      title: "View High-Risk Regions",    subtitle: "2 regions need attention", icon: "alertTriangle", href: "/reports",           tone: "edify" },
   { key: "sf_backlog",     title: "Inspect Salesforce Backlog",subtitle: "7,842 pending records",   icon: "database",      href: "/quality-checks",   tone: "edify" },
   { key: "core_delays",    title: "See Core School Delays",    subtitle: "842 schools behind",       icon: "shieldAlert",   href: "/core-schools",   tone: "edify" },

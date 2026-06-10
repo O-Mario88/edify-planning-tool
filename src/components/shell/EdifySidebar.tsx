@@ -173,51 +173,71 @@ function buildRvpMenu(dashboardHref: string): MenuSection[] {
 
 // ────────── CD menu (Country Director specific) ──────────
 //
-// The Country Director sits above the field. They DO NOT see:
-//   • Today's Tasks · My Plan · My Targets · Routes · Calendar
-//     (personal field-work surfaces — for CCEO + PL)
-//   • Visits · Trainings
-//     (day-to-day field activity — for CCEO + PL)
-//   • My Team · Partners · Leaderboard
-//     (PL's team management — supervised circle, not country-wide)
-//   • Coverage · Core Schools (drill-down) · Field Intelligence
-//     (school-level operational surfaces)
-//   • Salesforce Queue · Data Intake · Cost Settings
-//     (Accountant / IA / Admin)
-//   • Country comparison · Region overview
-//     (RVP cross-country scope)
-//   • Staff roster · Performance reviews
-//     (HR — only Leave & Holidays leaks through)
+// The Country Director is the senior country executive — mission,
+// strategy, money, people, partners, risk, and impact. The CD leads
+// through oversight and approvals, NOT field planning. They DO NOT see:
+//   • Planning · My Plan · Completed Log · Targets · Routes · Calendar
+//     (field planning + personal work surfaces — for CCEO + PL; the CD
+//     monitors execution through the dashboard + analytics summaries)
+//   • Schools / School Directory (operational surface — CCEO/PL/IA)
+//   • Visits · Trainings (day-to-day field activity)
+//   • Salesforce Queue · Data Intake operational queues (IA / Accountant)
+//   • Staff roster HR-private detail (HR — CD gets the performance summary)
 //
-// The CD menu is a single Main Navigation section focused on
-// country-level decisions (targets, planning oversight, schools
-// roll-up, SSA, analytics, reports, special projects, finance,
-// approvals). User administration and audit logs are NOT surfaced
-// here — /admin is gated to the Admin role in middleware.ts.
+// Sections mirror the CD's six executive command areas: money
+// stewardship, program oversight, people & partners, reporting.
+// User administration and audit logs are NOT surfaced here — /admin
+// is gated to the Admin role in middleware.ts.
 function buildCdMenu(dashboardHref: string): MenuSection[] {
   return [
     {
-      label: "Main Navigation",
+      label: "Command",
       items: [
-        { label: "Dashboard",        href: dashboardHref,           Icon: LayoutDashboard    },
-        { label: "Targets",          href: "/team-targets",         Icon: Award              },
-        { label: "Planning",         href: "/planning",             Icon: ClipboardList      },
-        { label: "My Plan",          href: "/my-plan",              Icon: ClipboardList      },
-        { label: "Completed Log",    href: "/completed-activities", Icon: ClipboardList      },
+        { label: "Dashboard",         href: dashboardHref,           Icon: LayoutDashboard    },
         // No "Schools" — the School Directory is an operational surface for
-        // CCEO/PL/IA. The CD leads through analytics + recruitment intelligence.
-        { label: "Recruitment",      href: "/recruitment",          Icon: Compass            },
-        { label: "SSA Performance",  href: "/ssa",                  Icon: Activity           },
-        { label: "Analytics",        href: "/analytics",            Icon: BarChart3          },
-        { label: "Reports",          href: "/reports",              Icon: FileText           },
-        { label: "Special Projects", href: "/special-projects",     Icon: Sparkles           },
-        { label: "Project Schools",  href: "/special-projects/schools", Icon: GraduationCap  },
-        { label: "Finance",          href: "/budget",               Icon: Calculator         },
-        { label: "Weekly Funds",     href: "/weekly-funds",         Icon: Wallet             },
-        { label: "Disbursements",    href: "/disbursements",        Icon: Send               },
-        { label: "Approvals",        href: "/approvals",            Icon: ClipboardCheckIcon },
-        { label: "Monthly Request",  href: "/monthly-fund-request", Icon: ClipboardCheckIcon },
-        { label: "Messages",         href: "/messages",             Icon: MessageSquare      },
+        // CCEO/PL/IA. The CD leads through recruitment intelligence + analytics.
+        { label: "Recruitment",       href: "/recruitment",          Icon: Compass            },
+      ],
+    },
+    {
+      label: "Money",
+      items: [
+        { label: "Cost Catalogue",    href: "/cost-settings",        Icon: ShieldCheck        },
+        { label: "Annual Budget",     href: "/budget",               Icon: Calculator         },
+        { label: "Monthly Request",   href: "/monthly-fund-request", Icon: ClipboardCheckIcon },
+        { label: "Fund Approvals",    href: "/approvals",            Icon: ClipboardCheckIcon },
+        { label: "Weekly Funds",      href: "/weekly-funds",         Icon: Wallet             },
+        { label: "Disbursements",     href: "/disbursements",        Icon: Send               },
+      ],
+    },
+    {
+      label: "Program",
+      items: [
+        { label: "Analytics",         href: "/analytics",            Icon: BarChart3          },
+        { label: "SSA Performance",   href: "/ssa",                  Icon: Activity           },
+        { label: "Special Projects",  href: "/special-projects",     Icon: Sparkles           },
+      ],
+    },
+    {
+      label: "People & Partners",
+      items: [
+        { label: "Partners",          href: "/partners",             Icon: Handshake          },
+        { label: "Staff Performance", href: "/staff",                Icon: UserCog            },
+        { label: "Daily Debriefs",    href: "/debriefs",             Icon: Brain              },
+      ],
+    },
+    {
+      label: "Reporting",
+      items: [
+        { label: "Reports",           href: "/reports",              Icon: FileText           },
+        { label: "Donor Reporting",   href: "/donor-reporting/print", Icon: TrendingUp        },
+      ],
+    },
+    {
+      label: "Account",
+      items: [
+        { label: "Messages",          href: "/messages",             Icon: MessageSquare      },
+        { label: "Settings",          href: "/settings",             Icon: Settings           },
       ],
     },
   ];

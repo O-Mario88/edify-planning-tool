@@ -47,7 +47,7 @@ export function DonorImpactReachCard({ snapshot }: { snapshot: DonorMetricSnapsh
       icon={<BadgeCheck size={13} />}
       actions={
         <Link
-          href="/donor-reporting"
+          href="/donor-reporting/print"
           className="inline-flex items-center gap-1 text-[12px] font-semibold text-[var(--color-edify-primary)] hover:underline"
         >
           Full report
@@ -63,7 +63,7 @@ export function DonorImpactReachCard({ snapshot }: { snapshot: DonorMetricSnapsh
           return (
             <Link
               key={key}
-              href="/donor-reporting"
+              href="/donor-reporting/print"
               className="group rounded-xl border border-[var(--border-card)] bg-[var(--surface-1)] p-3 hover:border-[var(--color-edify-primary)]/40 transition-colors"
               title={`Open the full donor report for ${m.label}`}
             >

@@ -83,6 +83,7 @@ const PROTECTED_PREFIXES = [
   "/visits",
   "/today",
   "/trainings",
+  "/completed-activities",
   "/notifications",
   "/messages",
   "/budget",
@@ -159,11 +160,26 @@ const ROLE_RESTRICTED: Array<{ prefix: string; allow: EdifyRole[] }> = [
   // Access Restricted page (they lead through analytics, not the directory).
   { prefix: "/schools",               allow: ["CCEO", "CountryProgramLead", "ImpactAssessment", "ProjectCoordinator", "Admin"] },
   { prefix: "/school-directory",      allow: ["CCEO", "CountryProgramLead", "ImpactAssessment", "ProjectCoordinator", "Admin"] },
+  // Field planning surfaces — operational working pages for the roles that
+  // plan and execute school activities (CCEO plans their portfolio, PL plans
+  // for themselves + their team). The Country Director leads through the
+  // executive dashboard, analytics, and approvals — never row-level field
+  // planning — so the CD (and every non-field role) is bounced to the
+  // Access Restricted page that explains the executive view instead.
+  { prefix: "/planning",              allow: ["CCEO", "CountryProgramLead", "Admin"] },
+  { prefix: "/my-plan",               allow: ["CCEO", "CountryProgramLead", "Admin"] },
+  { prefix: "/completed-activities",  allow: ["CCEO", "CountryProgramLead", "Admin"] },
 ];
 
 // Prefixes whose wrong-role bounce should land on the explicit Access
 // Restricted page (not a silent redirect to the role's home).
-const SHOW_ACCESS_RESTRICTED = ["/schools", "/school-directory"];
+const SHOW_ACCESS_RESTRICTED = [
+  "/schools",
+  "/school-directory",
+  "/planning",
+  "/my-plan",
+  "/completed-activities",
+];
 
 function isProtected(pathname: string): boolean {
   if (PUBLIC_PATHS.has(pathname)) return false;

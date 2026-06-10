@@ -7,7 +7,10 @@ import { CostSettingsCard } from "@/components/budget/CostSettingsCard";
 import { getDonorMetricSnapshot } from "@/lib/donor-metrics";
 import { DebriefReviewInbox } from "@/components/messages/DebriefReviewInbox";
 import { CountryKpiRow } from "@/components/director/CountryKpiRow";
-import { LeadershipAttentionRow } from "@/components/director/LeadershipAttentionRow";
+import { ExecutiveAlerts } from "@/components/director/ExecutiveAlerts";
+import { MissionSnapshotStrip } from "@/components/director/MissionSnapshotStrip";
+import { StaffPerformanceSummary } from "@/components/director/StaffPerformanceSummary";
+import { PartnerPerformanceSummary } from "@/components/director/PartnerPerformanceSummary";
 import { TrainingCoverageCard } from "@/components/director/TrainingCoverageCard";
 import { allClusterTrainingPlans } from "@/lib/plan-builder-engine";
 import { PlanScheduleByWeek } from "@/components/planning/PlanScheduleByWeek";
@@ -39,25 +42,24 @@ import { InterventionImprovementGrid } from "@/components/ssa/InterventionImprov
 import { SupportImprovementCard } from "@/components/analytics/SupportImprovementCard";
 import { RecruitmentIntelligenceCard } from "@/components/analytics/RecruitmentIntelligenceCard";
 
-// Country Director Dashboard — Executive cockpit replica.
+// Country Director Dashboard — Country Mission Control.
 //
-// Reading order (post-rebalance — every row now pairs cards by
-// content weight, so no row leaves dead vertical space):
-//   1. Executive Header — breadcrumb + title + subtitle + filters + profile
-//   2. 8 KPI tiles
-//   3. Leadership Attention — 3 alert banners
-//   4. Country Performance Overview + Regional Performance
-//   5. Program Leads Performance + Priority Schools Needing Urgent Attention
-//   6. Operational Risk & Backlog + School & SSA Intelligence
-//   7. Fund Approval & Finance Snapshot + Funded Not Completed
-//   8. Quick Leadership Actions — 6 shortcuts
+// The CD is the senior country executive: mission, strategy, money,
+// people, partners, risk, and impact. This page is ordered as an
+// executive decision flow, not an operational feed:
+//   A. Today's Executive Alerts — what needs a CD decision, with the
+//      why and a recommended action on every row
+//   B. Country Mission Snapshot — are we achieving the mission?
+//   C. Budget & Fund Request Health — is money matching approved plans?
+//   D. Program Execution — are teams executing the plan?
+//   E. SSA & Intervention Improvement — are schools improving?
+//   F. Staff & Partner Performance — are people delivering / overloaded?
+//   G. Recruitment Recommendation — expand or focus?
+//   H. Donor-Ready Impact — what can we report confidently?
+//   I. Risk & Data Quality — what could undermine all of the above?
 //
-// All the auxiliary callouts that previously stacked above the fold
-// (decision routing, leave impact, leaderboard, weekly debriefs, top
-// performers, team targets, SSA refresh, training follow-ups) have been
-// stripped because none of them appear in the reference. The director
-// view is a glanceable status read-out, not a feed of personal queues —
-// those live on the Director's "Today" and per-domain pages.
+// The CD never does field-level planning from here: every card is a
+// summary with a controlled drilldown, no operational action buttons.
 export default async function CountryDirectorDashboard() {
   // Defense-in-depth: middleware already gates /dashboards/director,
   // but the page re-checks so a guard gap can't expose this cockpit.
@@ -79,107 +81,38 @@ export default async function CountryDirectorDashboard() {
     <>
       <DashboardPageHeader role="CountryDirector" />
       <div className="px-3 sm:px-4 md:px-5 pb-24 md:pb-5 pt-3 md:pt-4 space-y-4 md:space-y-5">
-        {/* TODAY — CommandStack carries its own header. */}
+        {/* TODAY — greeting, pace, and the unified action inbox. */}
         <TodayCommandCenter />
         <CommandStack user={user} hideMission />
 
-        {/* Recruitment Intelligence — the CD's directory replacement: should we
-            recruit more or focus on current schools? Country + per-district. */}
-        <RecruitmentIntelligenceCard />
+        {/* A. TODAY'S EXECUTIVE ALERTS — issue · why · scope · recommended
+            action · one button. Supersedes the old attention banners. */}
+        <ExecutiveAlerts inputs={{ unclusteredSchools: clusterCounts.unclustered }} />
 
-        {/* Three-layer truth: ① SSA performance (status) ② intervention
-            improvement (FY change) ③ support→improvement (what worked before SSA). */}
-        <SsaPerformanceGrid />
-        <InterventionImprovementGrid />
-        <SupportImprovementCard />
-
-        {/* COUNTRY HEALTH — KPIs, attention banners, debrief routing,
-            training coverage. */}
+        {/* B. COUNTRY MISSION SNAPSHOT — are we achieving the mission? */}
         <section className="space-y-3">
           <SectionHeader
             tier="strategic"
-            eyebrow="Country health"
-            title="The state of the country this period"
-            description="Eight headline KPIs, leadership-attention alerts, debriefs routed up to you, and training-coverage against SSA gaps."
+            eyebrow="Mission"
+            title="Are we achieving the country mission?"
+            description="Reach, training, improvement, and coverage — from the same builder as the donor report — plus the country's headline KPIs."
           />
+          <MissionSnapshotStrip snapshot={donorSnapshot} />
           <CountryKpiRow />
-          <ClusterReadinessCard clustered={clusterCounts.clustered} unclustered={clusterCounts.unclustered} needsReview={clusterCounts.needsReview} title="National cluster setup" actionable={false} />
-          <ClusterOperationsCard scope="country" />
-          <LeadershipAttentionRow />
-          <DebriefReviewInbox user={user} audience="cd" />
-          <TrainingCoverageCard audience="cd" clusterPlans={allClusterTrainingPlans()} />
         </section>
 
-        {/* PERFORMANCE — country chart, regional rail, PL table,
-            priority schools, recognition. */}
+        {/* C. BUDGET & FUND REQUEST HEALTH — financial stewardship. */}
         <section className="space-y-3">
           <SectionHeader
             tier="strategic"
-            eyebrow="Performance"
-            title="How regions and program leads are tracking"
-            description="Country-wide trend, regional comparison, PL performance, schools needing attention, and the period's top performers."
-          />
-          <section className="grid grid-cols-12 gap-3 items-stretch">
-            <div className="col-span-12 lg:col-span-8">
-              <CountryPerformanceChart />
-            </div>
-            <div className="col-span-12 lg:col-span-4">
-              <RegionalPerformanceCard />
-            </div>
-          </section>
-          <section className="grid grid-cols-12 gap-3 items-stretch" id="program-leads">
-            <div className="col-span-12 lg:col-span-7">
-              <ProgramLeadsPerformanceTable />
-            </div>
-            <div className="col-span-12 lg:col-span-5" id="priority-schools">
-              <PrioritySchoolsUrgentAttentionCard />
-            </div>
-          </section>
-          {/* Portfolio self-verification — country rollup of the 10% quota. */}
-          <ClientVerificationCard />
-        </section>
-
-        {/* OPERATIONS & PLAN — risk backlog, SSA intelligence, plan
-            horizon. */}
-        <section className="space-y-3">
-          <SectionHeader
-            tier="strategic"
-            eyebrow="Operations & plan"
-            title="Where execution is at risk"
-            description="Operational risk + SSA intelligence today, then the 30-day plan horizon for what's coming."
-          />
-          <section className="grid grid-cols-12 gap-3 items-stretch" id="operational-risk">
-            <div className="col-span-12 lg:col-span-5">
-              <OperationalRiskBacklogRow />
-            </div>
-            <div className="col-span-12 lg:col-span-7" id="ssa-intelligence">
-              <SchoolSsaIntelligenceCard />
-            </div>
-          </section>
-          <PlanScheduleByWeek
-            items={[...planItems, ...cceoPlanItems]}
-            audience="leadership"
-            title="30-day plan horizon — country"
-            initialExpanded="first"
-          />
-        </section>
-
-        {/* FINANCE — fund approvals + funded-not-completed. */}
-        <section className="space-y-3">
-          <SectionHeader
-            tier="strategic"
-            eyebrow="Finance"
-            title="What's in approval and where money is parked"
-            description="Fund approvals awaiting your sign-off and disbursements that haven't yet converted to delivery."
+            eyebrow="Money"
+            title="Is money matching approved plans?"
+            description="Annual budget vs plan, the cost catalogue you control, fund approvals awaiting sign-off, and funds parked without delivery."
           />
           <section className="grid grid-cols-12 gap-3 items-stretch" id="country-budget">
             <div className="col-span-12 lg:col-span-7"><ScheduleBudgetCard /></div>
             <div className="col-span-12 lg:col-span-5"><CostSettingsCard /></div>
           </section>
-          {/* The CD owns the rate card and sees every budget, but does NOT
-              approve fund requests — approval lives in the field chain
-              (CCEO → PL). The live approval queue therefore renders on the
-              CCEO and PL dashboards, not here. */}
           <section className="grid grid-cols-12 gap-3 items-stretch" id="fund-approvals">
             <div className="col-span-12 lg:col-span-8">
               <FundApprovalFinanceSnapshot />
@@ -190,16 +123,110 @@ export default async function CountryDirectorDashboard() {
           </section>
         </section>
 
-        {/* IMPACT & DONOR REPORTING — what the country can report up to
-            donors this period, straight from verified workflow data. */}
+        {/* D. PROGRAM EXECUTION — are teams executing the plan? */}
+        <section className="space-y-3">
+          <SectionHeader
+            tier="strategic"
+            eyebrow="Program execution"
+            title="Are teams executing the plan?"
+            description="Country-wide trend, regional comparison, cluster operations, training coverage against SSA gaps, and the 30-day plan horizon."
+          />
+          <section className="grid grid-cols-12 gap-3 items-stretch">
+            <div className="col-span-12 lg:col-span-8">
+              <CountryPerformanceChart />
+            </div>
+            <div className="col-span-12 lg:col-span-4">
+              <RegionalPerformanceCard />
+            </div>
+          </section>
+          <ClusterOperationsCard scope="country" />
+          <TrainingCoverageCard audience="cd" clusterPlans={allClusterTrainingPlans()} />
+          <PlanScheduleByWeek
+            items={[...planItems, ...cceoPlanItems]}
+            audience="leadership"
+            title="30-day plan horizon — country"
+            initialExpanded="first"
+          />
+        </section>
+
+        {/* E. SSA & INTERVENTION IMPROVEMENT — are schools improving?
+            Three-layer truth: ① SSA performance (status) ② intervention
+            improvement (FY change) ③ support→improvement (what worked). */}
+        <section className="space-y-3">
+          <SectionHeader
+            tier="strategic"
+            eyebrow="SSA & impact"
+            title="Are schools improving?"
+            description="All 8 interventions: current FY performance, FY-to-FY change, and which support is associated with improvement."
+          />
+          <SsaPerformanceGrid />
+          <InterventionImprovementGrid />
+          <SupportImprovementCard />
+          <SchoolSsaIntelligenceCard />
+        </section>
+
+        {/* F. STAFF & PARTNER PERFORMANCE — leadership visibility,
+            not HR detail or partner raw operations. */}
+        <section className="space-y-3">
+          <SectionHeader
+            tier="strategic"
+            eyebrow="People & partners"
+            title="Are teams and partners delivering?"
+            description="PL performance, staff pace with context flags, partner delivery and certification, debriefs routed up to you, and the 10% verification quota."
+          />
+          <section className="grid grid-cols-12 gap-3 items-stretch" id="program-leads">
+            <div className="col-span-12 lg:col-span-7">
+              <ProgramLeadsPerformanceTable />
+            </div>
+            <div className="col-span-12 lg:col-span-5">
+              <StaffPerformanceSummary />
+            </div>
+          </section>
+          <PartnerPerformanceSummary />
+          <DebriefReviewInbox user={user} audience="cd" />
+          <ClientVerificationCard />
+        </section>
+
+        {/* G. RECRUITMENT RECOMMENDATION — expand or focus? The CD's
+            directory replacement: country + per-district recommendation. */}
+        <section className="space-y-3">
+          <SectionHeader
+            tier="strategic"
+            eyebrow="Recruitment"
+            title="Recruit more schools or focus on current schools?"
+            description="Capacity, SSA readiness, partner coverage, and impact rolled into one recommendation — with district-level continue/pause calls."
+          />
+          <RecruitmentIntelligenceCard />
+        </section>
+
+        {/* H. DONOR-READY IMPACT — what can we report confidently? */}
         <section className="space-y-3">
           <SectionHeader
             tier="strategic"
             eyebrow="Impact"
-            title="What the country can report this period"
+            title="What can the country report this period?"
             description="Donor-ready reach, training, and improvement figures — deduplicated and scoped to the country. Each tile opens the full report."
           />
           <DonorImpactReachCard snapshot={donorSnapshot} />
+        </section>
+
+        {/* I. RISK & DATA QUALITY — what could undermine the above. */}
+        <section className="space-y-3">
+          <SectionHeader
+            tier="strategic"
+            eyebrow="Risk & data quality"
+            title="What needs executive protection?"
+            description="Operational backlogs, schools on red alert, and cluster readiness — the data-quality floor under every number above."
+          />
+          <section className="grid grid-cols-12 gap-3 items-stretch" id="operational-risk">
+            <div className="col-span-12 lg:col-span-7">
+              <OperationalRiskBacklogRow />
+            </div>
+            <div className="col-span-12 lg:col-span-5" id="priority-schools">
+              <PrioritySchoolsUrgentAttentionCard />
+            </div>
+          </section>
+          <ClusterReadinessCard clustered={clusterCounts.clustered} unclustered={clusterCounts.unclustered} needsReview={clusterCounts.needsReview} title="National cluster setup" actionable={false} />
         </section>
 
         {/* Quick Leadership Actions — closing utility surface. */}
