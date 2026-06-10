@@ -603,11 +603,19 @@ export function fetchCommandCenterToday(user: BackendUser) {
 }
 
 // ── Fund requests (approval queue + dynamic detail) ─────────────────
+export type BeFundCostLine = { label: string; qty: number; unit: number | null; amount: number; missing: boolean };
+export type BeFundActivityCost = {
+  id: string; activityType: string; deliveryType: string; target: string;
+  month: number | null; amount: number; costMissing: boolean; lines: BeFundCostLine[];
+};
 export type BeFundRequest = {
   id: string; fy: string; period: string; periodKey: string; scope: string;
   submittedBy: string; submittedByRole: string; totalAmount: number; activityCount: number;
   status: "submitted" | "approved" | "returned" | "rejected" | "disbursed";
   reviewedAt?: string | null; reviewNote?: string | null; createdAt: string;
+  // Present on the list (whether YOU may act) and detail (the costed breakdown).
+  canReview?: boolean;
+  breakdown?: { total: number; count: number; activities: BeFundActivityCost[] } | null;
 };
 export function fetchFundRequests(user: BackendUser) {
   return live<BeFundRequest[]>(`/fund-requests`, user);

@@ -18,6 +18,7 @@ import { CceoMonthlyActivityBreakdownCard } from "@/components/cceo/CceoMonthlyA
 import { CceoSalesforceQueueCard } from "@/components/cceo/CceoSalesforceQueueCard";
 import { ScheduleBudgetCard } from "@/components/budget/ScheduleBudgetCard";
 import { WeeklyFundRequestCard } from "@/components/budget/WeeklyFundRequestCard";
+import { FundApprovalQueueLive } from "@/components/funds/FundApprovalQueueLive";
 import { CceoRouteOpportunitiesCard } from "@/components/cceo/CceoRouteOpportunitiesCard";
 import { CceoClusterScheduleCard } from "@/components/cceo/CceoClusterScheduleCard";
 import { CceoNextPrioritySchoolStrip } from "@/components/cceo/CceoNextPrioritySchoolStrip";
@@ -195,6 +196,12 @@ export default async function CceoDashboardPage() {
           <div className="grid grid-cols-12 gap-3 lg:gap-4 items-stretch">
             <div className="col-span-12 lg:col-span-7"><ScheduleBudgetCard /></div>
             <div className="col-span-12 lg:col-span-5"><WeeklyFundRequestCard /></div>
+          </div>
+          {/* CCEO approves the fund requests of the staff they supervise, then
+              submits their own consolidated monthly request up to the PL.
+              Expandable rows; every cost traces to the plan + catalogue. */}
+          <div id="fund-approvals">
+            <FundApprovalQueueLive />
           </div>
           <div className="grid grid-cols-12 gap-3 lg:gap-4 items-stretch">
             <div className="col-span-12 lg:col-span-4">

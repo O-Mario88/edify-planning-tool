@@ -1,18 +1,21 @@
 "use client";
 
-// Fund Approval Queue — LIVE master-detail. Clicking a queue item updates the
-// detail panel dynamically (selectedFundRequestId) — the previous bug was a
-// static panel. Backend-driven (/api/fund-requests), role-scoped; approve /
-// return / reject act on the SELECTED request only.
+// Fund Approval Queue — LIVE expandable list. Each submitted request is a row
+// that expands in place to reveal the per-activity cost breakdown (every line
+// priced from the plan + CD cost catalogue) and the approve / return / reject
+// actions. Approval is supervision-scoped by the backend: a CCEO approves their
+// staff, a PL approves their CCEOs, and no one approves their own request. The
+// CD does NOT appear here — they own the rate card, not the approval. No mock.
 
 import { useCallback, useEffect, useState } from "react";
-import { Wallet, CheckCircle2, RotateCcw, XCircle, Inbox } from "lucide-react";
+import { Wallet, CheckCircle2, RotateCcw, XCircle, ChevronDown, ChevronRight, Loader2 } from "lucide-react";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/DataStates";
 import { cn } from "@/lib/utils";
 import type { BeFundRequest } from "@/lib/api/surfaces";
 
 const ugx = (n: number) => `UGX ${Math.round(n).toLocaleString()}`;
 const MONTHS = ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const titleCase = (s: string) => s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 const periodLabel = (p: string, key: string) => {
   const m = key.match(/-M(\d+)$/); if (m) return `${MONTHS[Number(m[1])]} ${key.slice(0, 4)}`;
   const q = key.match(/-(Q\d)$/); if (q) return `${q[1]} ${key.slice(0, 4)}`;
@@ -27,117 +30,146 @@ export function FundApprovalQueueLive() {
   const [rows, setRows] = useState<BeFundRequest[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [detail, setDetail] = useState<Record<string, BeFundRequest>>({});
+  const [detailBusy, setDetailBusy] = useState<string | null>(null);
+  const [actionBusy, setActionBusy] = useState(false);
   const [actionErr, setActionErr] = useState<string | null>(null);
 
   const load = useCallback(() => {
     setLoading(true); setError(null);
     fetch("/api/fund-requests", { credentials: "include" })
       .then((r) => r.json())
-      .then((j) => {
-        if (j.live) { setRows(j.requests as BeFundRequest[]); }
-        else setError(j.error || "Could not load fund requests");
-      })
+      .then((j) => { if (j.live) setRows(j.requests as BeFundRequest[]); else setError(j.error || "Could not load fund requests"); })
       .catch(() => setError("Could not reach the server"))
       .finally(() => setLoading(false));
   }, []);
   useEffect(load, [load]);
 
-  const selected = rows?.find((r) => r.id === selectedId) ?? null;
+  // Lazy-load the costed breakdown the first time a row is expanded.
+  const toggle = async (r: BeFundRequest) => {
+    setActionErr(null);
+    if (openId === r.id) { setOpenId(null); return; }
+    setOpenId(r.id);
+    if (!detail[r.id]) {
+      setDetailBusy(r.id);
+      try {
+        const res = await fetch(`/api/fund-requests/${r.id}`, { credentials: "include" });
+        const j = await res.json();
+        if (j.live) setDetail((d) => ({ ...d, [r.id]: j.request as BeFundRequest }));
+      } catch { /* surface nothing; the row still shows summary */ }
+      setDetailBusy(null);
+    }
+  };
 
-  const act = async (action: "approve" | "return" | "reject") => {
-    if (!selected) return;
-    setBusy(true); setActionErr(null);
+  const act = async (r: BeFundRequest, action: "approve" | "return" | "reject") => {
+    setActionBusy(true); setActionErr(null);
     try {
-      const res = await fetch(`/api/fund-requests/${selected.id}/${action}`, {
+      const res = await fetch(`/api/fund-requests/${r.id}/${action}`, {
         method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}),
       });
       const j = await res.json();
-      if (j.live) load();
+      if (j.live) { setDetail((d) => { const n = { ...d }; delete n[r.id]; return n; }); load(); }
       else setActionErr(j.error || "The action was rejected");
     } catch { setActionErr("Could not reach the server"); }
-    setBusy(false);
+    setActionBusy(false);
   };
 
   return (
     <section className="card p-3.5">
       <header className="flex items-center justify-between gap-2 mb-2.5 flex-wrap">
         <h2 className="text-[13px] font-extrabold tracking-tight inline-flex items-center gap-1.5"><Wallet size={14} /> Fund Approval Queue</h2>
-        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5 text-[10px] font-bold border border-emerald-200">Live · scoped</span>
+        <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)] px-2 py-0.5 text-[10px] font-bold border border-[var(--color-edify-border)]">Live · you supervise</span>
       </header>
 
       {loading ? <LoadingState compact />
         : error ? <ErrorState compact message={error} onRetry={load} />
-        : !rows || rows.length === 0 ? <EmptyState compact title="No fund requests in your queue" message="Submitted fund requests awaiting review appear here." />
+        : !rows || rows.length === 0 ? <EmptyState compact title="No fund requests in your queue" message="Requests from the staff you supervise appear here for approval. Each cost is drawn from the plan and the cost catalogue." />
         : (
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-3">
-          {/* Queue */}
-          <ul className="space-y-1 max-h-[22rem] overflow-y-auto pr-0.5">
-            {rows.map((r) => (
-              <li key={r.id}>
+        <ul className="space-y-1.5">
+          {rows.map((r) => {
+            const open = openId === r.id;
+            const d = detail[r.id];
+            return (
+              <li key={r.id} className="rounded-lg border border-[var(--color-edify-border)] overflow-hidden">
+                {/* Row header — click to expand */}
                 <button
-                  onClick={() => { setSelectedId(r.id); setActionErr(null); }}
-                  className={cn("w-full text-left rounded-lg border p-2.5 transition-colors",
-                    selectedId === r.id ? "border-[var(--color-edify-primary)] bg-[var(--color-edify-soft)]/40" : "border-[var(--color-edify-border)] hover:bg-[var(--surface-3)]")}
+                  onClick={() => toggle(r)}
+                  className="w-full text-left flex items-center gap-2 px-3 py-2.5 hover:bg-[var(--surface-3)] transition-colors"
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[12px] font-bold truncate">{r.submittedBy}</span>
-                    <span className={cn("px-1.5 py-0.5 rounded text-[8.5px] font-bold uppercase shrink-0", statusTone[r.status])}>{r.status}</span>
-                  </div>
-                  <div className="flex items-center justify-between gap-2 mt-0.5">
-                    <span className="text-[10.5px] muted">{r.submittedByRole} · {periodLabel(r.period, r.periodKey)}</span>
-                    <span className="text-[11.5px] font-extrabold tabular">{ugx(r.totalAmount)}</span>
-                  </div>
+                  {open ? <ChevronDown size={14} className="shrink-0 muted" /> : <ChevronRight size={14} className="shrink-0 muted" />}
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-1.5">
+                      <span className="text-[12.5px] font-bold truncate">{r.submittedBy}</span>
+                      <span className={cn("px-1.5 py-0.5 rounded text-[8.5px] font-bold uppercase shrink-0", statusTone[r.status])}>{r.status}</span>
+                    </span>
+                    <span className="block text-[10.5px] muted truncate">{r.submittedByRole} · {periodLabel(r.period, r.periodKey)} · {r.activityCount} costed</span>
+                  </span>
+                  <span className="text-[13px] font-extrabold tabular shrink-0">{ugx(r.totalAmount)}</span>
                 </button>
-              </li>
-            ))}
-          </ul>
 
-          {/* Detail */}
-          <div className="rounded-lg border border-[var(--color-edify-border)] p-3 bg-[var(--color-edify-soft)]/20 min-h-[14rem]">
-            {!selected ? (
-              <div className="h-full grid place-items-center text-center py-8">
-                <div className="text-[12px] muted inline-flex flex-col items-center gap-1.5"><Inbox size={20} className="text-slate-300" /> Select a fund request to view details.</div>
-              </div>
-            ) : (
-              <>
-                <div className="flex items-center justify-between gap-2 mb-1">
-                  <h3 className="text-[14px] font-extrabold">{selected.submittedBy}</h3>
-                  <span className={cn("px-2 py-0.5 rounded-full text-[9.5px] font-bold uppercase", statusTone[selected.status])}>{selected.status}</span>
-                </div>
-                <div className="text-[24px] font-extrabold tabular leading-none mb-2.5">{ugx(selected.totalAmount)}</div>
-                <dl className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[11.5px]">
-                  <Row k="Role" v={selected.submittedByRole} />
-                  <Row k="Scope" v={selected.scope} />
-                  <Row k="Period" v={periodLabel(selected.period, selected.periodKey)} />
-                  <Row k="FY" v={selected.fy} />
-                  <Row k="Activities" v={`${selected.activityCount} costed`} />
-                  <Row k="Submitted" v={new Date(selected.createdAt).toLocaleDateString()} />
-                </dl>
-                {selected.reviewNote && <p className="mt-2 text-[10.5px] muted italic">Note: {selected.reviewNote}</p>}
-                {actionErr && <p className="mt-2 text-[11px] text-rose-600 font-semibold">{actionErr}</p>}
-                {selected.status === "submitted" && (
-                  <div className="flex gap-1.5 mt-3">
-                    <button disabled={busy} onClick={() => act("approve")} className="flex-1 inline-flex items-center justify-center gap-1 h-9 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[11.5px] font-bold disabled:opacity-50"><CheckCircle2 size={13} /> Approve</button>
-                    <button disabled={busy} onClick={() => act("return")} className="inline-flex items-center justify-center gap-1 h-9 px-3 rounded-lg border border-sky-300 text-sky-700 hover:bg-sky-50 text-[11.5px] font-bold disabled:opacity-50"><RotateCcw size={13} /> Return</button>
-                    <button disabled={busy} onClick={() => act("reject")} className="inline-flex items-center justify-center gap-1 h-9 px-3 rounded-lg border border-rose-300 text-rose-700 hover:bg-rose-50 text-[11.5px] font-bold disabled:opacity-50"><XCircle size={13} /> Reject</button>
+                {/* Expanded detail — costed breakdown + actions */}
+                {open && (
+                  <div className="border-t border-[var(--color-edify-divider)] bg-[var(--color-edify-soft)]/20 px-3 py-2.5">
+                    {detailBusy === r.id && !d ? (
+                      <div className="py-3"><LoadingState compact /></div>
+                    ) : (
+                      <>
+                        <div className="text-[9.5px] font-bold uppercase tracking-wide muted mb-1.5">Costed activities — every line from the cost catalogue</div>
+                        {d?.breakdown && d.breakdown.activities.length > 0 ? (
+                          <ul className="space-y-1.5 mb-2.5">
+                            {d.breakdown.activities.map((a) => (
+                              <li key={a.id} className="rounded-md border border-[var(--color-edify-border)] bg-[var(--surface-1)] px-2.5 py-1.5">
+                                <div className="flex items-center justify-between gap-2 text-[11.5px]">
+                                  <span className="min-w-0 truncate">
+                                    <span className="font-bold">{titleCase(a.activityType)}</span>
+                                    <span className="muted"> · {a.target}{a.month ? ` · ${MONTHS[a.month]}` : ""} · {a.deliveryType}</span>
+                                  </span>
+                                  <span className={cn("font-extrabold tabular shrink-0", a.costMissing ? "text-rose-600" : "")}>{a.costMissing ? "no rate" : ugx(a.amount)}</span>
+                                </div>
+                                {a.lines.length > 0 && (
+                                  <div className="mt-1 pl-2 border-l-2 border-[var(--color-edify-divider)] space-y-0.5">
+                                    {a.lines.map((l, i) => (
+                                      <div key={i} className="flex items-center justify-between gap-2 text-[10px] muted">
+                                        <span>{l.label}{l.qty > 1 ? ` × ${l.qty}` : ""}</span>
+                                        <span className={cn("tabular", l.missing ? "text-rose-600 font-bold" : "")}>{l.missing ? "rate missing" : ugx(l.amount)}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="text-[11px] muted mb-2.5">No itemised activities available for this period.</p>
+                        )}
+
+                        <div className="flex items-center justify-between text-[12.5px] font-extrabold border-t border-[var(--color-edify-divider)] pt-1.5">
+                          <span>Total requested</span><span className="tabular">{ugx(r.totalAmount)}</span>
+                        </div>
+
+                        {r.reviewNote && <p className="mt-2 text-[10.5px] muted italic">Note: {r.reviewNote}</p>}
+                        {actionErr && <p className="mt-2 text-[11px] text-rose-600 font-semibold">{actionErr}</p>}
+
+                        {/* Actions only when the backend says you may review this row */}
+                        {(d?.canReview ?? r.canReview) ? (
+                          <div className="flex gap-1.5 mt-2.5">
+                            <button disabled={actionBusy} onClick={() => act(r, "approve")} className="flex-1 inline-flex items-center justify-center gap-1 h-9 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[11.5px] font-bold disabled:opacity-50">{actionBusy ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />} Approve</button>
+                            <button disabled={actionBusy} onClick={() => act(r, "return")} className="inline-flex items-center justify-center gap-1 h-9 px-3 rounded-lg border border-sky-300 text-sky-700 hover:bg-sky-50 text-[11.5px] font-bold disabled:opacity-50"><RotateCcw size={13} /> Return</button>
+                            <button disabled={actionBusy} onClick={() => act(r, "reject")} className="inline-flex items-center justify-center gap-1 h-9 px-3 rounded-lg border border-rose-300 text-rose-700 hover:bg-rose-50 text-[11.5px] font-bold disabled:opacity-50"><XCircle size={13} /> Reject</button>
+                          </div>
+                        ) : r.status === "submitted" ? (
+                          <p className="mt-2.5 text-[10.5px] muted">This is your own request — it routes to your supervisor for approval.</p>
+                        ) : null}
+                      </>
+                    )}
                   </div>
                 )}
-              </>
-            )}
-          </div>
-        </div>
+              </li>
+            );
+          })}
+        </ul>
       )}
     </section>
-  );
-}
-
-function Row({ k, v }: { k: string; v: string }) {
-  return (
-    <div>
-      <dt className="text-[9px] uppercase tracking-wide muted font-semibold">{k}</dt>
-      <dd className="font-semibold capitalize">{v}</dd>
-    </div>
   );
 }
