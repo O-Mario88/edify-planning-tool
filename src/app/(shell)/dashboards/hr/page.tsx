@@ -6,7 +6,6 @@ import {
   ChevronRight,
   ClipboardList,
   Inbox,
-  Layers,
   ShieldAlert,
   Telescope,
   Users,
@@ -18,7 +17,7 @@ import { DashboardPageHeader } from "@/components/dashboards/DashboardPageHeader
 import { DebriefReviewInbox } from "@/components/messages/DebriefReviewInbox";
 import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
-import { Tile, type TileTone } from "@/components/ui/Tile";
+import { HrKpiStrip } from "@/components/hr/HrKpiStrip";
 import { HrMobileView } from "@/components/mobile/views/HrMobileView";
 import { getCurrentUser } from "@/lib/auth";
 import { ROLE_REDIRECT } from "@/lib/auth-public";
@@ -66,11 +65,7 @@ export default async function HrFieldContextPage() {
             description="Escalations routed from CD/RVP, staff flagged for support, performance reviews due, and the active queues underneath."
           />
           <HrAttentionRow />
-          <section className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-            {HR_KPIS.map((k, i) => (
-              <KpiLinkCard key={k.label} kpi={k} index={i} />
-            ))}
-          </section>
+          <HrKpiStrip />
         </section>
 
         {/* PEOPLE — routed debriefs + recognition. */}
@@ -224,48 +219,6 @@ function HrAttentionRow() {
         ))}
       </div>
     </section>
-  );
-}
-
-// ─────────────────────────── KPI Tiles ───────────────────────────
-//
-// Every tile is a Link to its working queue so the dashboard reads as
-// "here's what's open, here's how to act," not as a passive metric grid.
-
-type HrKpi = {
-  href:    string;
-  label:   string;
-  value:   string;
-  caption: string;
-  Icon:    LucideIcon;
-  tint:    "edify" | "amber" | "red" | "violet";
-};
-
-const HR_KPIS: HrKpi[] = [
-  { href: "/team-targets?view=reviews",      label: "Active Performance Reviews", value: "12", caption: "Across 5 program leads",    Icon: ClipboardList,  tint: "edify"  },
-  { href: "/team-targets?view=support",      label: "Staff Flagged for Support",  value: "4",  caption: "Requires HR + PL review",   Icon: AlertTriangle,  tint: "amber"  },
-  { href: "/team-targets?view=hr-decisions", label: "Open HR Decisions",          value: "3",  caption: "Routed from CD / RVP",      Icon: Inbox,          tint: "red"    },
-  { href: "/field-intelligence",             label: "Aggregated Barriers",        value: "18", caption: "Field signals this month",  Icon: Layers,         tint: "violet" },
-];
-
-const TONE: Record<HrKpi["tint"], TileTone> = {
-  edify:  "edify",
-  amber:  "amber",
-  red:    "rose",
-  violet: "violet",
-};
-
-function KpiLinkCard({ kpi, index }: { kpi: HrKpi; index: number }) {
-  return (
-    <Tile
-      href={kpi.href}
-      index={index}
-      tone={TONE[kpi.tint]}
-      icon={<kpi.Icon size={15} />}
-      label={kpi.label}
-      value={kpi.value}
-      trend={<span className="muted">{kpi.caption}</span>}
-    />
   );
 }
 
