@@ -84,6 +84,7 @@ const PROTECTED_PREFIXES = [
   "/today",
   "/trainings",
   "/completed-activities",
+  "/team-plan",
   "/notifications",
   "/messages",
   "/budget",
@@ -169,6 +170,9 @@ const ROLE_RESTRICTED: Array<{ prefix: string; allow: EdifyRole[] }> = [
   { prefix: "/planning",              allow: ["CCEO", "CountryProgramLead", "Admin"] },
   { prefix: "/my-plan",               allow: ["CCEO", "CountryProgramLead", "Admin"] },
   { prefix: "/completed-activities",  allow: ["CCEO", "CountryProgramLead", "Admin"] },
+  // Team Plan — the PL's per-CCEO supervision workspace. Scoped to the
+  // supervision chain, so only the PL (and Admin) can open it.
+  { prefix: "/team-plan",             allow: ["CountryProgramLead", "Admin"] },
 ];
 
 // Prefixes whose wrong-role bounce should land on the explicit Access

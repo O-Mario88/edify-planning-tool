@@ -317,10 +317,14 @@ function buildCplMenu(dashboardHref: string): MenuSection[] {
     {
       label: "Team",
       items: [
+        // Team Plan — per-CCEO supervision cards + cluster meeting
+        // recommendations: the PL's team execution workspace.
+        { label: "Team Plan",       href: "/team-plan",     Icon: ClipboardList },
         // "My Team" was removed — it pointed to the same surface as
         // "Team Targets" and the duplication just bloated the menu.
         { label: "Team Targets",    href: "/team-targets",  Icon: Target    },
         { label: "Partners",        href: "/partners",      Icon: Handshake },
+        { label: "Daily Debriefs",  href: "/debriefs",      Icon: Brain     },
       ],
     },
     {

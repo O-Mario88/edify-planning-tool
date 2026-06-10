@@ -35,28 +35,30 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { TeamCapacityCard } from "@/components/cpl/TeamCapacityCard";
 import { ROLE_REDIRECT } from "@/lib/auth-public";
+import { TeamPlanBoard } from "@/components/cpl/TeamPlanBoard";
+import { buildTeamPlan } from "@/lib/cpl/team-plan-engine";
+import { ClusterMeetingRecommendationsCard } from "@/components/cpl/ClusterMeetingRecommendations";
+import { clusterMeetingRecommendations } from "@/lib/cluster/cluster-meeting-recommendations";
+import { PartnerOversightCard } from "@/components/cpl/PartnerOversightCard";
+import { TeamDebriefComplianceCard } from "@/components/cpl/TeamDebriefComplianceCard";
 
-// Country Program Lead Dashboard — replica of the SIPA reference.
+// Country Program Lead Dashboard — Team Field Command Center.
 //
-// Reading order (post-rebalance — every row is now sized to its
-// natural content so no card has dead space and no label truncates):
-//   1. Unified DashboardHero (title · filters · greeting · chips · CTAs)
-//   2. 8 KPI tiles — single row at xl, 4×2 at lg, 2-up on phone
-//   3. Leadership Attention — 3 alert banners
-//   4. Team Performance Overview (8) + My Personal Targets (4)
-//   5. CCEO Performance (7) + Approval Queue (5)         ← two tables paired
-//   6. Team Backlog Snapshot — full-width 6-tile strip   ← promoted from col-3
-//   7. SSA Intelligence (8) + Funding & Execution (4)    ← heatmap gets room
-//   8. Smart Route & Capacity — full width               ← 4 KPIs + table breathe
-//   9. Quick Actions — 6 shortcut tiles
+// The PL is a player-coach: Team Coach + Quality Controller + Cluster
+// Strategist + Field Execution Manager. Reading order = the PL's day:
+//   A. Today's Required Actions — debrief, command stack, attention alerts
+//   B. My Field Work — the PL's own plan, schools, and targets
+//   C. Team Execution — per-CCEO Team Plan board, KPIs, capacity,
+//      CCEO performance, plan approvals, routes
+//   D. Schools & Clusters at Risk — urgent schools + SSA-guided cluster
+//      meeting recommendations (two weakest interventions → topics)
+//   E. Partner Work Needing Attention — oversight + payment gate
+//   F. Budget & Fund Readiness — does money match the planned work?
+//   G. Impact & Quality — intervention heatmap, verification quota,
+//      evidence/Salesforce backlog, team debrief compliance
 //
-// What changed vs the original 5/4/3 + 4/4/4 layout:
-//   • The 5/4/3 row crushed Team Backlog's 6 tiles into ~280px each —
-//     labels truncated, the card visually starved.
-//   • The 4/4/4 row crushed SSA Intelligence (heatmap *and* schools
-//     list) into ~390px — both halves shrunk.
-// Splitting Team Backlog and Smart Route into their own full-width
-// rows lets every card show its full content at a glanceable size.
+// Not here by design: CD-level strategy (cost catalogue editing, country
+// rollups) and accountant-level payment controls.
 export default async function CountryProgramLeadDashboard() {
   // Defense-in-depth: middleware already gates /dashboards/cpl, but the
   // page re-checks so a guard gap can't expose another role's cockpit.
@@ -65,6 +67,8 @@ export default async function CountryProgramLeadDashboard() {
     redirect(ROLE_REDIRECT[user.role]);
   }
   const clusterCounts = scopedClusterCounts(user.staffId, user.role);
+  const teamPlan = buildTeamPlan(user.staffId);
+  const clusterRecs = clusterMeetingRecommendations(user.staffId);
 
   const body = (
     <>
@@ -84,70 +88,49 @@ export default async function CountryProgramLeadDashboard() {
 
       <DashboardPageHeader role="CountryProgramLead" />
       <div className="px-3 sm:px-4 md:px-5 lg:px-6 pb-24 lg:pb-6 pt-3 md:pt-4 space-y-4 md:space-y-5">
-        {/* Today's Program Debrief promoter sits above CommandStack so
-            the PL is reminded to file before they review queues. */}
+        {/* A. TODAY'S REQUIRED ACTIONS — file the debrief first, then the
+            command stack and the leadership-attention alerts. */}
         <DebriefPromoterCard submitterRole="CountryProgramLead" />
-
-        {/* TODAY — 10-Second Command Stack carries its own strategic
-            header internally; no outer chapter needed. */}
         <TodayCommandCenter />
         <CommandStack user={user} hideMission />
+        <CplLeadershipAttentionRow />
 
-        {/* Recruitment intelligence — team-scope: which districts to expand
-            vs pause given the team's SSA readiness + capacity. */}
-        <RecruitmentIntelligenceCard />
-
-        {/* FIELD & TEAM — the player-coach split. Two command lanes
-            (My Field Work vs My Team Work) so the PL sees their own
-            implementation target AND what the CCEO team needs, before the
-            deeper field-work card. */}
+        {/* B. MY FIELD WORK — the player half of the player-coach split:
+            the PL's own schools, plan, and personal targets. */}
         <section className="space-y-3">
           <SectionHeader
             tier="strategic"
-            eyebrow="Field & team"
-            title="Your two jobs today"
-            description="You deliver field work and you lead a CCEO team — here's what each needs from you right now."
+            eyebrow="My field work"
+            title="What you must personally do this week"
+            description="Your own visits, trainings, cluster meetings, and targets — separate from the team's work."
           />
           <PlCommandLanes />
-          <ClusterReadinessCard clustered={clusterCounts.clustered} unclustered={clusterCounts.unclustered} needsReview={clusterCounts.needsReview} title="Team cluster setup" />
-          <ClusterOperationsCard scope="team" />
-          <ProjectWorkCard user={user} />
           <div id="my-field-work">
             <CplFieldWorkCard />
           </div>
-        </section>
-
-        {/* TEAM PERFORMANCE — KPIs, attention alerts, monthly chart,
-            personal targets. */}
-        <section className="space-y-3">
-          <SectionHeader
-            tier="strategic"
-            eyebrow="Team performance"
-            title="How your team is tracking"
-            description="Eight KPIs, leadership-attention alerts, and the monthly performance picture next to your own targets."
-          />
-          <TeamKpiRow />
-          <TeamCapacityCard plStaffId={user.staffId} />
-          <CplLeadershipAttentionRow />
           <section className="grid grid-cols-12 gap-3 md:gap-4 items-stretch">
-            <div className="col-span-12 lg:col-span-8" id="team-performance">
-              <TeamPerformanceOverviewChart />
+            <div className="col-span-12 lg:col-span-8" id="my-plan">
+              <MyPlanCard role="cpl" />
             </div>
             <div className="col-span-12 lg:col-span-4">
               <PersonalTargetsCard />
             </div>
           </section>
+          <ProjectWorkCard user={user} />
         </section>
 
-        {/* APPROVALS & PEOPLE — CCEO table, approval queue, best
-            performers, partner payments, the team plan. */}
+        {/* C. TEAM EXECUTION — the coach half: per-CCEO supervision board,
+            team KPIs, capacity, CCEO table + plan approvals, routes. */}
         <section className="space-y-3">
           <SectionHeader
             tier="strategic"
-            eyebrow="Approvals & people"
-            title="What needs your sign-off"
-            description="CCEO performance, the approval queue, recognition, partner-payment gate, and the team field plan."
+            eyebrow="Team execution"
+            title="What your CCEOs are doing"
+            description="Per-CCEO status with the why behind it, team KPIs, workload capacity, plan approvals, and route quality — without opening every CCEO page."
           />
+          <TeamPlanBoard rows={teamPlan.rows} summary={teamPlan.summary} />
+          <TeamKpiRow />
+          <TeamCapacityCard plStaffId={user.staffId} />
           <section className="grid grid-cols-12 gap-3 md:gap-4 items-stretch" id="cceo-performance">
             <div className="col-span-12 lg:col-span-7">
               <CceoPerformanceTable />
@@ -156,28 +139,57 @@ export default async function CountryProgramLeadDashboard() {
               <ApprovalQueueCard />
             </div>
           </section>
-          <div id="partner-payments">
-            <PlPartnerPaymentsQueue />
-          </div>
-          <div id="my-plan">
-            <MyPlanCard role="cpl" />
-          </div>
-          {/* Portfolio self-verification — own quota + the whole CCEO team's 10%. */}
-          <ClientVerificationCard highlightStaffId={user.staffId} />
+          <section className="grid grid-cols-12 gap-3 md:gap-4 items-stretch">
+            <div className="col-span-12 lg:col-span-8" id="team-performance">
+              <TeamPerformanceOverviewChart />
+            </div>
+            <div className="col-span-12 lg:col-span-4" id="smart-route">
+              <SmartRouteCapacityCard />
+            </div>
+          </section>
         </section>
 
-        {/* OPERATIONS — Team backlog, intervention heatmap, funding,
-            urgent schools. */}
+        {/* D. SCHOOLS & CLUSTERS AT RISK — where support is needed next:
+            urgent schools, then SSA-guided cluster meeting topics. */}
         <section className="space-y-3">
           <SectionHeader
             tier="strategic"
-            eyebrow="Operations"
-            title="Where execution is slipping"
-            description="Team backlog, intervention performance by cluster, funding execution, and schools needing urgent attention."
+            eyebrow="Schools & clusters"
+            title="Which schools and clusters need support"
+            description="Red-alert schools, cluster setup, cluster operations, and SSA-guided meeting recommendations — the two weakest interventions per cluster with a ready discussion topic."
           />
-          <div id="backlog-snapshot">
-            <TeamBacklogSnapshotCard />
+          <div id="urgent-schools">
+            <SchoolsNeedingUrgentAttentionCard />
           </div>
+          <ClusterMeetingRecommendationsCard recommendations={clusterRecs} />
+          <ClusterReadinessCard clustered={clusterCounts.clustered} unclustered={clusterCounts.unclustered} needsReview={clusterCounts.needsReview} title="Team cluster setup" />
+          <ClusterOperationsCard scope="team" />
+          <RecruitmentIntelligenceCard />
+        </section>
+
+        {/* E. PARTNER WORK NEEDING ATTENTION — monitor + intervene;
+            onboarding stays with the CD. */}
+        <section className="space-y-3">
+          <SectionHeader
+            tier="strategic"
+            eyebrow="Partners"
+            title="Partner work needing attention"
+            description="Payments awaiting your approval, evidence status, and partners at delivery risk — escalate to the CD when quality doesn't recover."
+          />
+          <PartnerOversightCard />
+          <div id="partner-payments">
+            <PlPartnerPaymentsQueue />
+          </div>
+        </section>
+
+        {/* F. BUDGET & FUND READINESS — does money match planned work? */}
+        <section className="space-y-3">
+          <SectionHeader
+            tier="strategic"
+            eyebrow="Budget & funds"
+            title="Are funds matching the planned work?"
+            description="The schedule auto-costed from the CD rate card, the weekly envelope, and the monthly fund requests rolled up from your CCEOs."
+          />
           <section className="grid grid-cols-12 gap-3 md:gap-4 items-stretch" id="team-budget">
             <div className="col-span-12 lg:col-span-7"><ScheduleBudgetCard /></div>
             <div className="col-span-12 lg:col-span-5"><WeeklyFundRequestCard /></div>
@@ -188,6 +200,17 @@ export default async function CountryProgramLeadDashboard() {
           <div id="fund-approvals">
             <FundApprovalQueueLive />
           </div>
+        </section>
+
+        {/* G. IMPACT & QUALITY — is support improving schools, and is the
+            data chain (evidence → Salesforce → IA) keeping up? */}
+        <section className="space-y-3">
+          <SectionHeader
+            tier="strategic"
+            eyebrow="Impact & quality"
+            title="Are schools improving — and is the data keeping up?"
+            description="Intervention performance by cluster, funding execution, the 10% verification quota, the evidence/Salesforce backlog, and team debrief compliance."
+          />
           <section className="grid grid-cols-12 gap-3 md:gap-4 items-stretch">
             <div className="col-span-12 lg:col-span-8" id="ssa-intelligence">
               <InterventionPerformanceByClusterCard />
@@ -196,22 +219,11 @@ export default async function CountryProgramLeadDashboard() {
               <FundingExecutionCard />
             </div>
           </section>
-          <div id="urgent-schools">
-            <SchoolsNeedingUrgentAttentionCard />
+          <ClientVerificationCard highlightStaffId={user.staffId} />
+          <div id="backlog-snapshot">
+            <TeamBacklogSnapshotCard />
           </div>
-        </section>
-
-        {/* ROUTES — Smart routing + capacity. */}
-        <section className="space-y-3">
-          <SectionHeader
-            tier="strategic"
-            eyebrow="Routes"
-            title="Capacity and route quality"
-            description="Where the team can pick up more visits and which routes are degrading."
-          />
-          <div id="smart-route">
-            <SmartRouteCapacityCard />
-          </div>
+          <TeamDebriefComplianceCard plStaffId={user.staffId} />
         </section>
 
         {/* Quick Actions — its own self-contained card, no chapter. */}
