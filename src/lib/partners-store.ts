@@ -14,6 +14,18 @@
 
 import type { EdifyRole } from "@/lib/auth-public";
 
+/** Partner lifecycle — partners are assignable ONLY after CD activation. */
+export type PartnerLifecycleStatus = "Pending Activation" | "Active" | "Inactive";
+export type PartnerCertStatus = "Certified" | "Pending" | "Not Certified";
+export type PartnerContractStatus = "Draft" | "Signed" | "Expired";
+
+export type PartnerStatusEvent = {
+  status: PartnerLifecycleStatus;
+  byName: string;
+  byRole: EdifyRole;
+  at:     string; // ISO timestamp
+};
+
 export type AddedPartner = {
   id:            string;
   name:          string;
@@ -26,6 +38,20 @@ export type AddedPartner = {
   addedByName:   string;
   addedByRole:   EdifyRole;
   addedAt:       string; // ISO timestamp
+  // ── Onboarding profile (CD-owned) ──
+  contactPerson?: string;
+  email?:         string;
+  phone?:         string;
+  /** District coverage — assignments outside these districts fail the
+   *  coverage check. Empty = whole region. */
+  districts?:     string[];
+  subCounties?:   string[];
+  certificationStatus?: PartnerCertStatus;
+  contractStatus?:      PartnerContractStatus;
+  startDate?:     string; // ISO date
+  // ── Lifecycle (only the CD activates; pending = NOT assignable) ──
+  status?:        PartnerLifecycleStatus;
+  statusHistory?: PartnerStatusEvent[];
 };
 
 // ────────── Role gating ──────────
@@ -36,12 +62,26 @@ const PARTNER_ADD_ROLES: EdifyRole[] = [
   "Admin",
 ];
 
+// Activation is narrower than add: the CD owns the partner canon — IA
+// can prepare the record, but only the CD switches it live (or off).
+const PARTNER_ACTIVATE_ROLES: EdifyRole[] = ["CountryDirector", "Admin"];
+
 export function canAddPartner(role: EdifyRole): boolean {
   return PARTNER_ADD_ROLES.includes(role);
 }
 
+export function canActivatePartner(role: EdifyRole): boolean {
+  return PARTNER_ACTIVATE_ROLES.includes(role);
+}
+
 export function partnerEditorRolesLabel(): string {
   return "Impact Assessment, Country Director, or Admin";
+}
+
+/** Lifecycle status of a partner row — legacy rows (saved before the
+ *  lifecycle existed) read as Pending Activation, never silently Active. */
+export function partnerStatusOf(p: AddedPartner): PartnerLifecycleStatus {
+  return p.status ?? "Pending Activation";
 }
 
 // ────────── Storage ──────────
@@ -86,6 +126,38 @@ export function addPartner(input: Omit<AddedPartner, "id" | "addedAt">): AddedPa
 
 export function removePartner(id: string) {
   writeAll(readAll().filter((r) => r.id !== id));
+}
+
+/**
+ * Activate / deactivate a partner. CD (or Admin) only — callers must
+ * gate on `canActivatePartner(role)`; this also enforces it so a stray
+ * caller can't flip a partner live. Every change is appended to the
+ * row's status history (the audit trail the backend will mirror).
+ */
+export function setPartnerStatus(
+  id: string,
+  status: PartnerLifecycleStatus,
+  byName: string,
+  byRole: EdifyRole,
+): AddedPartner | undefined {
+  if (!canActivatePartner(byRole)) return undefined;
+  const rows = readAll();
+  const row = rows.find((r) => r.id === id);
+  if (!row) return undefined;
+  row.status = status;
+  row.statusHistory = [
+    ...(row.statusHistory ?? []),
+    { status, byName, byRole, at: new Date().toISOString() },
+  ];
+  writeAll(rows);
+  return row;
+}
+
+/** Partners eligible for work assignment — Active only. Assignment
+ *  pickers must read THIS, not listPartners(): a partner that the CD
+ *  has not activated (or has deactivated) is never assignable. */
+export function assignablePartners(): AddedPartner[] {
+  return listPartners().filter((p) => partnerStatusOf(p) === "Active");
 }
 
 // ────────── Reactivity ──────────

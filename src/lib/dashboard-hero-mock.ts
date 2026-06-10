@@ -80,7 +80,7 @@ export const directorHeroContent: DashboardHeroContent = {
     regionCaption:  "Country",
   },
   quote:   "Steward the mission. Steady the field. Sharpen the wins.",
-  subtext: "Every region you raise raises the country with it.",
+  subtext: "Here is the country execution, budget, and impact picture for today.",
   chips: [
     { key: "target",   tone: "good", label: "+5 pp Target", caption: "vs Apr"          },
     { key: "approvals",tone: "info", label: "154 Approvals", caption: "awaiting review" },

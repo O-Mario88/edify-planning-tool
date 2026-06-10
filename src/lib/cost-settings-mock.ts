@@ -64,12 +64,29 @@ export type CountryCostSetting = {
   setBy:          string;
   approvedBy?:    string;
   status:         "Draft" | "Active" | "Archived";
+  /** Version within this FY — bumped on every rate change. v1 = the
+   *  FY-opening rate card. Existing approved plans keep the version
+   *  they were approved against. */
+  version:        number;
+};
+
+/** One audit entry per cost-setting change — the trail the backend
+ *  CostSettingAudit table will mirror. Newest first. */
+export type CostSettingAuditEntry = {
+  id:        string;
+  costItem:  CostItem;
+  /** e.g. "v1 → v2 · UGX 90,000 → UGX 95,000" or "Created v1 (Draft)". */
+  change:    string;
+  reason?:   string;
+  byName:    string;
+  byRole:    "CountryDirector" | "Admin" | "ProgramAccountant";
+  at:        string; // ISO date
 };
 
 const ACTIVE_FY = activeFinancialYear();
 
 export const countryCostSettings: CountryCostSetting[] = [
-  cost("Staff school visit cost",         95_000,  "Sarah Okello", "Active"),
+  cost("Staff school visit cost",         95_000,  "Sarah Okello", "Active", 2),
   cost("Partner school visit cost",      120_000,  "Sarah Okello", "Active"),
   cost("Cluster training cost",        2_400_000,  "Sarah Okello", "Active"),
   cost("In-School coaching cost",        180_000,  "Sarah Okello", "Active"),
@@ -117,7 +134,7 @@ export const countryCostSettings: CountryCostSetting[] = [
   cost("Training Participant Meals",       10_000,  "Sarah Okello", "Active"),  // per participant
   cost("Training Mobilisation Per Participant", 2_000, "Sarah Okello", "Active"),
   cost("Partner Visit Cost Per School",    40_000,  "Sarah Okello", "Active"),
-  cost("Partner Training Facilitation Fee",420_000, "Sarah Okello", "Active"),
+  cost("Partner Training Facilitation Fee",420_000, "Sarah Okello", "Active", 2),
   cost("Partner Facilitator Daily Fee",   180_000,  "Sarah Okello", "Active"),
 ];
 
@@ -126,6 +143,7 @@ function cost(
   unit:    number,
   setBy:   string,
   status:  CountryCostSetting["status"],
+  version = 1,
 ): CountryCostSetting {
   return {
     id:              `cs-${slug(item)}-${ACTIVE_FY.id}`,
@@ -138,8 +156,56 @@ function cost(
     setBy,
     approvedBy:      status === "Active" ? "Sarah Okello" : undefined,
     status,
+    version,
   };
 }
+
+// ── Audit trail ─────────────────────────────────────────────────────
+//
+// Every cost change in the demo seed, newest first. The page shows this
+// under the register so "who changed what rate, when, and why" is one
+// glance — no field staff ever invents an activity cost.
+export const costSettingAudit: CostSettingAuditEntry[] = [
+  {
+    id: "ca-7", costItem: "Staff school visit cost",
+    change: "v1 → v2 · UGX 90,000 → UGX 95,000",
+    reason: "Fuel price adjustment for FY 2026",
+    byName: "Sarah Okello", byRole: "CountryDirector", at: "2026-05-20",
+  },
+  {
+    id: "ca-6", costItem: "Partner Training Facilitation Fee",
+    change: "v1 → v2 · UGX 400,000 → UGX 420,000",
+    reason: "Aligned with signed partner contracts",
+    byName: "Sarah Okello", byRole: "CountryDirector", at: "2026-05-18",
+  },
+  {
+    id: "ca-5", costItem: "Accommodation Per Night",
+    change: "Created v1 (Active) · UGX 150,000",
+    byName: "Sarah Okello", byRole: "CountryDirector", at: "2026-05-12",
+  },
+  {
+    id: "ca-4", costItem: "Evidence verification cost",
+    change: "Created v1 (Draft) · UGX 55,000",
+    reason: "Awaiting CD approval",
+    byName: "Moses Tindi", byRole: "ProgramAccountant", at: "2026-05-10",
+  },
+  {
+    id: "ca-3", costItem: "Partner travel support",
+    change: "Created v1 (Draft) · UGX 90,000",
+    reason: "Awaiting CD approval",
+    byName: "Moses Tindi", byRole: "ProgramAccountant", at: "2026-05-10",
+  },
+  {
+    id: "ca-2", costItem: "Cluster Meeting Cost Per Participant",
+    change: "Created v1 (Active) · UGX 10,000",
+    byName: "Sarah Okello", byRole: "CountryDirector", at: "2026-05-08",
+  },
+  {
+    id: "ca-1", costItem: "Staff Commuting Transport",
+    change: "Created v1 (Active) · UGX 56,000",
+    byName: "Sarah Okello", byRole: "CountryDirector", at: "2026-05-08",
+  },
+];
 
 function slug(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");

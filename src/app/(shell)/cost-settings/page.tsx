@@ -3,6 +3,7 @@ import { StubPage } from "@/components/shell/StubPage";
 import { ActionButton } from "@/components/ui/ActionButton";
 import {
   countryCostSettings,
+  costSettingAudit,
   validateCountryCostSettings,
   formatUgxBig,
 } from "@/lib/cost-settings-mock";
@@ -86,6 +87,7 @@ export default async function CountryCostSettingsPage() {
                   <th scope="col" className="py-2 px-2 text-right">Unit cost</th>
                   <th scope="col" className="py-2 px-2">Currency</th>
                   <th scope="col" className="py-2 px-2">Effective from</th>
+                  <th scope="col" className="py-2 px-2">Version</th>
                   <th scope="col" className="py-2 px-2">Set by</th>
                   <th scope="col" className="py-2 px-2">Approved by</th>
                   <th scope="col" className="py-2 pl-2">Status</th>
@@ -99,6 +101,7 @@ export default async function CountryCostSettingsPage() {
                     <td className="py-2 px-2 text-right tabular font-extrabold">{formatUgxBig(c.unitCost)}</td>
                     <td className="py-2 px-2">{c.currency}</td>
                     <td className="py-2 px-2 muted whitespace-nowrap">{c.effectiveFrom}</td>
+                    <td className="py-2 px-2 tabular font-bold">v{c.version}</td>
                     <td className="py-2 px-2 muted">{c.setBy}</td>
                     <td className="py-2 px-2 muted">{c.approvedBy ?? "—"}</td>
                     <td className="py-2 pl-2">
@@ -131,12 +134,35 @@ export default async function CountryCostSettingsPage() {
         </section>
       )}
 
+      {/* Audit log — who changed what rate, when, why. */}
+      {allowed && (
+        <section className="card p-3.5">
+          <header className="flex items-baseline justify-between mb-2">
+            <h2 className="text-body-lg font-extrabold tracking-tight">Change audit log</h2>
+            <span className="text-caption muted">{costSettingAudit.length} entries · newest first</span>
+          </header>
+          <ul className="divide-y divide-[var(--color-edify-divider)]">
+            {costSettingAudit.map((a) => (
+              <li key={a.id} className="py-2 flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-[12px]">
+                <span className="muted tabular whitespace-nowrap">{a.at}</span>
+                <span className="font-extrabold">{a.costItem}</span>
+                <span className="tabular">{a.change}</span>
+                {a.reason && <span className="muted">— {a.reason}</span>}
+                <span className="ml-auto muted whitespace-nowrap">{a.byName} · {a.byRole}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {/* Role gate explainer */}
       <section className="card p-3.5 text-[11.5px] muted">
         <span className="font-extrabold text-[var(--color-edify-text)]">Role contract: </span>
         Only the Country Director (or Admin) may activate / approve cost settings.
         Program Accountant has read + draft-edit access. RVP reviews — does not edit.
-        CCEOs and Program Leads cannot see this page.
+        CCEOs and Program Leads cannot see this page. Every rate change bumps the
+        version and lands in the audit log; approved plans keep the version they
+        were approved against.
       </section>
     </StubPage>
   );

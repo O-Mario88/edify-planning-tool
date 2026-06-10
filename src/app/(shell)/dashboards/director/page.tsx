@@ -81,9 +81,12 @@ export default async function CountryDirectorDashboard() {
     <>
       <DashboardPageHeader role="CountryDirector" />
       <div className="px-3 sm:px-4 md:px-5 pb-24 md:pb-5 pt-3 md:pt-4 space-y-4 md:space-y-5">
-        {/* TODAY — greeting, pace, and the unified action inbox. */}
+        {/* TODAY — greeting hero (mission header), pace, and the unified
+            action inbox. The mission header renders here (not hidden):
+            this page has no DashboardHero, so it IS the greeting surface
+            — "Good morning, [CD]. Here is the country picture for today." */}
         <TodayCommandCenter />
-        <CommandStack user={user} hideMission />
+        <CommandStack user={user} />
 
         {/* A. TODAY'S EXECUTIVE ALERTS — issue · why · scope · recommended
             action · one button. Supersedes the old attention banners. */}

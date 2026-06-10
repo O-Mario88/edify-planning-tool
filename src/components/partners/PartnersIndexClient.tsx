@@ -19,12 +19,18 @@ import {
   SEED_PARTNER_TRAINS_ON,
   addPartner,
   canAddPartner,
+  canActivatePartner,
   formatRelative,
   listPartners,
   partnerEditorRolesLabel,
+  partnerStatusOf,
   removePartner,
+  setPartnerStatus,
   subscribePartners,
   type AddedPartner,
+  type PartnerCertStatus,
+  type PartnerContractStatus,
+  type PartnerLifecycleStatus,
 } from "@/lib/partners-store";
 import { partnerTargetPerformance, type PartnerTargetRow } from "@/lib/team-targets-mock";
 import { Pill, type PillTone } from "@/components/ui/Pill";
@@ -44,6 +50,14 @@ const RISK_TONE: Record<PartnerTargetRow["risk"], PillTone> = {
   Medium:   "warning",
   High:     "amber",
   Critical: "danger",
+};
+
+// Lifecycle pill — Pending reads amber (the CD must act), Active green,
+// Inactive slate.
+const LIFECYCLE_TONE: Record<PartnerLifecycleStatus, PillTone> = {
+  "Pending Activation": "warning",
+  "Active":             "success",
+  "Inactive":           "neutral",
 };
 
 // Achievement-percent colour, by how close the partner is to target.
@@ -123,14 +137,37 @@ export function PartnersIndexClient({ role, userName }: { role: EdifyRole; userN
             <span className="text-[11px] muted shrink-0">{added.length} record{added.length === 1 ? "" : "s"}</span>
           </header>
           <ul className="divide-y divide-[var(--color-edify-divider)]">
-            {added.map((p) => (
+            {added.map((p) => {
+              const status = partnerStatusOf(p);
+              const lastEvent = p.statusHistory?.[p.statusHistory.length - 1];
+              return (
               <li key={p.id} className="px-4 sm:px-5 py-4 flex items-start gap-3 sm:gap-4 hover:bg-[var(--color-edify-soft)]/40 transition-colors">
                 <span className="h-11 w-11 rounded-xl bg-gradient-to-br from-violet-500/20 to-violet-500/5 text-violet-600 grid place-items-center shrink-0 ring-1 ring-violet-200/60">
                   <Handshake size={17} />
                 </span>
                 <div className="flex-1 min-w-0">
-                  <div className="text-[13.5px] font-extrabold tracking-tight truncate">{p.name}</div>
-                  <div className="text-[11.5px] muted truncate">{p.region}</div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[13.5px] font-extrabold tracking-tight truncate">{p.name}</span>
+                    <Pill tone={LIFECYCLE_TONE[status]} size="xs">{status}</Pill>
+                    {p.certificationStatus && (
+                      <Pill tone={CERT_TONE[p.certificationStatus]} size="xs" icon={CheckCircle2}>{p.certificationStatus}</Pill>
+                    )}
+                    {p.contractStatus && (
+                      <Pill tone={p.contractStatus === "Signed" ? "success" : p.contractStatus === "Expired" ? "danger" : "neutral"} size="xs">
+                        Contract: {p.contractStatus}
+                      </Pill>
+                    )}
+                  </div>
+                  <div className="text-[11.5px] muted truncate mt-0.5">
+                    {p.region}
+                    {p.districts && p.districts.length > 0 && <> · {p.districts.join(", ")}</>}
+                    {p.subCounties && p.subCounties.length > 0 && <> · {p.subCounties.join(", ")}</>}
+                  </div>
+                  {(p.contactPerson || p.email || p.phone) && (
+                    <div className="text-[11.5px] muted truncate mt-0.5">
+                      {[p.contactPerson, p.email, p.phone].filter(Boolean).join(" · ")}
+                    </div>
+                  )}
                   {p.trainsOn.length > 0 && (
                     <div className="mt-2 flex items-center gap-1.5 flex-wrap">
                       <GraduationCap size={12} className="text-muted shrink-0" />
@@ -144,22 +181,52 @@ export function PartnersIndexClient({ role, userName }: { role: EdifyRole; userN
                   {p.notes && <div className="text-[11px] text-muted mt-1.5 line-clamp-2">{p.notes}</div>}
                   <div className="text-caption text-muted mt-1.5">
                     Added by {p.addedByName} · {formatRelative(p.addedAt)}
+                    {lastEvent && (
+                      <> · {lastEvent.status === "Active" ? "Activated" : lastEvent.status === "Inactive" ? "Deactivated" : "Updated"} by {lastEvent.byName} · {formatRelative(lastEvent.at)}</>
+                    )}
                   </div>
+                  {status !== "Active" && (
+                    <div className="text-[11px] text-amber-700 mt-1">
+                      Not assignable — partners can receive work only after the Country Director activates them.
+                    </div>
+                  )}
                 </div>
-                {p.addedByName === userName && p.addedByRole === role && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (confirm(`Remove "${p.name}"?`)) removePartner(p.id);
-                    }}
-                    aria-label={`Remove ${p.name}`}
-                    className="grid place-items-center h-8 w-8 rounded-md text-[var(--color-edify-muted)] hover:text-[#b42318] hover:bg-rose-50 dark:hover:bg-rose-500/10 shrink-0 self-center transition-colors"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                )}
+                <div className="flex flex-col items-end gap-1.5 shrink-0 self-center">
+                  {canActivatePartner(role) && (
+                    status === "Active" ? (
+                      <button
+                        type="button"
+                        onClick={() => setPartnerStatus(p.id, "Inactive", userName, role)}
+                        className="h-8 px-3 rounded-md border border-[var(--color-edify-border)] text-[11.5px] font-bold hover:bg-[var(--color-edify-soft)]/40"
+                      >
+                        Deactivate
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setPartnerStatus(p.id, "Active", userName, role)}
+                        className="h-8 px-3 rounded-md bg-[var(--color-edify-primary)] text-white text-[11.5px] font-bold hover:opacity-95"
+                      >
+                        Activate
+                      </button>
+                    )
+                  )}
+                  {p.addedByName === userName && p.addedByRole === role && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (confirm(`Remove "${p.name}"?`)) removePartner(p.id);
+                      }}
+                      aria-label={`Remove ${p.name}`}
+                      className="grid place-items-center h-8 w-8 rounded-md text-[var(--color-edify-muted)] hover:text-[#b42318] hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
               </li>
-            ))}
+              );
+            })}
           </ul>
         </section>
       )}
@@ -252,6 +319,14 @@ function AddPartnerDialog({
   const [region, setRegion]   = useState("Central");
   const [trainsOn, setTrainsOn] = useState("");
   const [notes, setNotes]     = useState("");
+  const [contactPerson, setContactPerson] = useState("");
+  const [email, setEmail]     = useState("");
+  const [phone, setPhone]     = useState("");
+  const [districts, setDistricts] = useState("");
+  const [subCounties, setSubCounties] = useState("");
+  const [certification, setCertification] = useState<PartnerCertStatus>("Pending");
+  const [contract, setContract] = useState<PartnerContractStatus>("Draft");
+  const [startDate, setStartDate] = useState("");
   const [error, setError]     = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -282,6 +357,18 @@ function AddPartnerDialog({
       notes:       notes.trim(),
       addedByName: userName,
       addedByRole: role,
+      contactPerson: contactPerson.trim() || undefined,
+      email:         email.trim() || undefined,
+      phone:         phone.trim() || undefined,
+      districts:     districts.split(",").map((d) => d.trim()).filter(Boolean),
+      subCounties:   subCounties.split(",").map((d) => d.trim()).filter(Boolean),
+      certificationStatus: certification,
+      contractStatus:      contract,
+      startDate:     startDate || undefined,
+      // Every new partner starts pending — only the CD flips it Active,
+      // and only Active partners are assignable.
+      status:        "Pending Activation",
+      statusHistory: [{ status: "Pending Activation", byName: userName, byRole: role, at: new Date().toISOString() }],
     });
     onClose();
   }
@@ -296,13 +383,13 @@ function AddPartnerDialog({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-[520px] rounded-2xl bg-white shadow-[0_24px_60px_-20px_rgba(15,23,32,0.35)] overflow-hidden"
+        className="w-full max-w-[560px] rounded-2xl bg-white shadow-[0_24px_60px_-20px_rgba(15,23,32,0.35)] overflow-hidden max-h-[90vh] flex flex-col"
       >
-        <header className="flex items-center justify-between gap-3 px-5 py-4 border-b border-[var(--color-edify-divider)]">
+        <header className="flex items-center justify-between gap-3 px-5 py-4 border-b border-[var(--color-edify-divider)] shrink-0">
           <div>
-            <div className="text-body-lg font-extrabold tracking-tight">Add a Partner</div>
+            <div className="text-body-lg font-extrabold tracking-tight">Onboard a Partner</div>
             <div className="text-[11px] muted mt-0.5">
-              Visible to everyone with access to Partners.
+              Visible to everyone with access to Partners. Assignable only after the Country Director activates.
             </div>
           </div>
           <button
@@ -315,9 +402,9 @@ function AddPartnerDialog({
           </button>
         </header>
 
-        <div className="px-5 py-4 space-y-3.5">
+        <div className="px-5 py-4 space-y-3.5 overflow-y-auto">
           <label className="block">
-            <div className="text-[11.5px] font-semibold muted mb-1">Partner Name</div>
+            <div className="text-[11.5px] font-semibold muted mb-1">Partner Organization Name</div>
             <input
               ref={inputRef}
               type="text"
@@ -328,8 +415,41 @@ function AddPartnerDialog({
             />
           </label>
 
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <label className="block">
+              <div className="text-[11.5px] font-semibold muted mb-1">Contact Person</div>
+              <input
+                type="text"
+                value={contactPerson}
+                onChange={(e) => setContactPerson(e.target.value)}
+                placeholder="Lead contact"
+                className="w-full h-10 px-3 rounded-lg border border-[var(--color-edify-border)] text-[13px] focus:outline-none focus:ring-2 focus:ring-[var(--color-edify-primary)]/30"
+              />
+            </label>
+            <label className="block">
+              <div className="text-[11.5px] font-semibold muted mb-1">Registered Email</div>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="partner@org.org"
+                className="w-full h-10 px-3 rounded-lg border border-[var(--color-edify-border)] text-[13px] focus:outline-none focus:ring-2 focus:ring-[var(--color-edify-primary)]/30"
+              />
+            </label>
+            <label className="block">
+              <div className="text-[11.5px] font-semibold muted mb-1">Phone</div>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+256 …"
+                className="w-full h-10 px-3 rounded-lg border border-[var(--color-edify-border)] text-[13px] focus:outline-none focus:ring-2 focus:ring-[var(--color-edify-primary)]/30"
+              />
+            </label>
+          </div>
+
           <label className="block">
-            <div className="text-[11.5px] font-semibold muted mb-1">Region</div>
+            <div className="text-[11.5px] font-semibold muted mb-1">Region Coverage</div>
             <select
               value={region}
               onChange={(e) => setRegion(e.target.value)}
@@ -340,6 +460,65 @@ function AddPartnerDialog({
               ))}
             </select>
           </label>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <label className="block">
+              <div className="text-[11.5px] font-semibold muted mb-1">District Coverage</div>
+              <input
+                type="text"
+                value={districts}
+                onChange={(e) => setDistricts(e.target.value)}
+                placeholder="Comma-separated, e.g. Gulu, Lira"
+                className="w-full h-10 px-3 rounded-lg border border-[var(--color-edify-border)] text-[13px] focus:outline-none focus:ring-2 focus:ring-[var(--color-edify-primary)]/30"
+              />
+            </label>
+            <label className="block">
+              <div className="text-[11.5px] font-semibold muted mb-1">Sub-county Coverage (Optional)</div>
+              <input
+                type="text"
+                value={subCounties}
+                onChange={(e) => setSubCounties(e.target.value)}
+                placeholder="Comma-separated"
+                className="w-full h-10 px-3 rounded-lg border border-[var(--color-edify-border)] text-[13px] focus:outline-none focus:ring-2 focus:ring-[var(--color-edify-primary)]/30"
+              />
+            </label>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <label className="block">
+              <div className="text-[11.5px] font-semibold muted mb-1">Certification</div>
+              <select
+                value={certification}
+                onChange={(e) => setCertification(e.target.value as PartnerCertStatus)}
+                className="w-full h-10 px-3 rounded-lg border border-[var(--color-edify-border)] text-[13px] bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-edify-primary)]/30"
+              >
+                {(["Pending", "Certified", "Not Certified"] as const).map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </label>
+            <label className="block">
+              <div className="text-[11.5px] font-semibold muted mb-1">Contract</div>
+              <select
+                value={contract}
+                onChange={(e) => setContract(e.target.value as PartnerContractStatus)}
+                className="w-full h-10 px-3 rounded-lg border border-[var(--color-edify-border)] text-[13px] bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-edify-primary)]/30"
+              >
+                {(["Draft", "Signed", "Expired"] as const).map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </label>
+            <label className="block">
+              <div className="text-[11.5px] font-semibold muted mb-1">Start Date</div>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full h-10 px-3 rounded-lg border border-[var(--color-edify-border)] text-[13px] bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-edify-primary)]/30"
+              />
+            </label>
+          </div>
 
           <label className="block">
             <div className="text-[11.5px] font-semibold muted mb-1">Trains On</div>
@@ -379,7 +558,7 @@ function AddPartnerDialog({
           )}
         </div>
 
-        <footer className="flex items-center justify-end gap-2 px-5 py-3 border-t border-[var(--color-edify-divider)] bg-[var(--color-edify-soft)]/30">
+        <footer className="flex items-center justify-end gap-2 px-5 py-3 border-t border-[var(--color-edify-divider)] bg-[var(--color-edify-soft)]/30 shrink-0">
           <button
             type="button"
             onClick={onClose}
@@ -393,7 +572,7 @@ function AddPartnerDialog({
             disabled={disabled}
             className="h-9 px-4 rounded-lg bg-[var(--color-edify-primary)] text-white text-body font-semibold disabled:opacity-50"
           >
-            Add partner
+            Onboard partner
           </button>
         </footer>
       </div>

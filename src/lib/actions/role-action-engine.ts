@@ -369,7 +369,7 @@ function cdBoard(name: string, now: Date, sinceCookie: Date | null): RoleActionB
     greeting: `${greetingForHour(now.getUTCHours())}, ${firstName}.`,
     mission: "Hold the line on quality. Sign off what's ready. Protect the field.",
     periodLabel: periodLabel(now),
-    summary: "Cost-settings for Q2 are still Draft, 12 PL-approved plans await your final sign-off, and one district's SSA dropped 8pp this week.",
+    summary: "Here is the country execution, budget, and impact picture for today: Q2 cost-settings are still Draft, 12 PL-approved plans await your final sign-off, and one district's SSA dropped 8pp this week.",
   };
 
   const inbox: ActionItem[] = [
