@@ -113,6 +113,16 @@ const PROTECTED_PREFIXES = [
   "/admin",
   "/focus",
   "/partner",
+  // Field-coach + finance surfaces (previously missing — these were
+  // reachable without a session because protection is allowlist-based).
+  "/evidence",
+  "/clusters",
+  "/weekly-funds",
+  "/disbursements",
+  "/fund-requests",
+  "/analytics",
+  "/approvals",
+  "/monthly-fund-request",
 ];
 
 // Role-restricted prefixes. Map prefix → roles allowed. Anyone else with
@@ -173,6 +183,15 @@ const ROLE_RESTRICTED: Array<{ prefix: string; allow: EdifyRole[] }> = [
   // Team Plan — the PL's per-CCEO supervision workspace. Scoped to the
   // supervision chain, so only the PL (and Admin) can open it.
   { prefix: "/team-plan",             allow: ["CountryProgramLead", "Admin"] },
+  // Evidence & Accountability — the field officer's own proof queues
+  // (evidence, Salesforce ID, IA returns, accountability). Personal to
+  // the field roles; leadership reads the same truth through analytics.
+  { prefix: "/evidence",              allow: ["CCEO", "CountryProgramLead", "Admin"] },
+  // Disbursement console — accountant payment controls. CCEOs track
+  // payment STATUS through weekly funds + partner monitoring, never the
+  // pay-out controls themselves (spec: CCEO must not see accountant
+  // payment controls).
+  { prefix: "/disbursements",         allow: ["ProgramAccountant", "CountryDirector", "Admin"] },
 ];
 
 // Prefixes whose wrong-role bounce should land on the explicit Access

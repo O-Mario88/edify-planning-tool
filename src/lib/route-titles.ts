@@ -81,6 +81,7 @@ export const EXACT_ROUTE_TITLES: Record<string, RouteTitle> = {
   "/data-intake/templates":{ title: "Data intake templates" },
   "/data-intake/upload":   { title: "Upload Center" },
   "/data-verification":    { title: "Data Verification" },
+  "/evidence":             { title: "Evidence & Accountability" },
   "/queue":                { title: "Salesforce Queue" },
   "/analytics":            { title: "Analytics" },
   "/reports":              { title: "Reports" },

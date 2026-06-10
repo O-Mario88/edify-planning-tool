@@ -14,7 +14,7 @@ import { latestEnrollmentFor } from "@/lib/analytics/sources/school-enrollment-h
 import { examPerformanceMock } from "@/lib/analytics/sources/exam-performance-mock";
 import { mscMock } from "@/lib/analytics/sources/msc-mock";
 import { historyFor, SSA_INTERVENTIONS } from "@/lib/planning/ssa-performance-mock";
-import { analyticsSchoolById } from "./school-directory";
+import { analyticsSchoolById, getAnalyticsSchools } from "./school-directory";
 import { isCompleted, isVerified, isDonorReady, isPaid } from "./status-maps";
 import { sfRecordForActivity } from "@/lib/analytics/sources/salesforce-verification-mock";
 import { isSelfVerified } from "@/lib/analytics/sources/self-verification-mock";
@@ -28,13 +28,32 @@ import type {
 
 export type ComputeInput = {
   selection: FilterSelection;
-  /** Role used for the FY target (CCEO 560 / PL 280). */
+  /** Role used for the FY target (CCEO 560 / PL 280) AND viewer scoping —
+   *  a CCEO viewer is narrowed to their own portfolio (see viewerPortfolio). */
   role?: string;
   scopeLabel?: string;
   now?: string;
 };
 
 const VERIFIED_TRAINING = new Set(["MeVerified", "CceoConfirmed"]);
+
+// Personal activity splits (spec §22 — CCEO personal analytics).
+const VISIT_TYPES = new Set(["staff_visit", "coaching_visit", "follow_up_visit", "classroom_observation"]);
+const TRAINING_TYPES = new Set(["training", "school_improvement_training"]);
+
+/** Viewer scope: a CCEO sees their own portfolio (assignedCceo), not the
+ *  country-wide record set. Returns null for non-CCEO viewers (no extra
+ *  narrowing). Mock gotcha: the demo school directory is a single-officer
+ *  universe (every school carries one placeholder assignedCceo), so when
+ *  the signed-in CCEO owns no directory school by name, the whole
+ *  directory IS their portfolio — same convention as the other personal
+ *  CCEO surfaces (My Plan, portfolio counts). */
+function viewerPortfolio(role?: string, scopeLabel?: string): Set<string> | null {
+  if (role !== "CCEO") return null;
+  const all = getAnalyticsSchools();
+  const mine = scopeLabel ? all.filter((s) => s.assignedCceo === scopeLabel) : [];
+  return new Set((mine.length > 0 ? mine : all).map((s) => s.schoolId));
+}
 
 function monthOf(iso: string): string {
   return iso.slice(0, 7);
@@ -47,19 +66,25 @@ export function computeAnalytics(input: ComputeInput): AnalyticsSnapshot {
   const cycleTag = selectedCycleTag(selection, now);
   const qRange = selectedQuarterRange(selection, now);
 
-  // ── Scope the record sets ──
+  // ── Scope the record sets (geo filters ∩ viewer portfolio) ──
+  const portfolio = viewerPortfolio(input.role, input.scopeLabel);
+  const inScope = (schoolId: string) =>
+    schoolInGeoScope(schoolId, selection) && (!portfolio || portfolio.has(schoolId));
   const acts = rawActivities.filter(
-    (a) => a.operationalCycle === cycleTag && schoolInGeoScope(a.schoolId, selection) && dateInRange(a.date, qRange),
+    (a) => a.operationalCycle === cycleTag && inScope(a.schoolId) && dateInRange(a.date, qRange),
   );
   const participants = trainingParticipantMock.filter(
-    (p) => p.fy === cycleTag && schoolInGeoScope(p.schoolId, selection) && dateInRange(p.date, qRange),
+    (p) => p.fy === cycleTag && inScope(p.schoolId) && dateInRange(p.date, qRange),
   );
   const exams = examPerformanceMock.filter(
-    (e) => e.fy === cycleTag && schoolInGeoScope(e.schoolId, selection) && dateInRange(e.examDate, qRange),
+    (e) => e.fy === cycleTag && inScope(e.schoolId) && dateInRange(e.examDate, qRange),
   );
   const stories = mscMock.filter(
-    (m) => m.fy === cycleTag && schoolInGeoScope(m.schoolId, selection) && dateInRange(m.submittedAt, qRange),
+    (m) => m.fy === cycleTag && inScope(m.schoolId) && dateInRange(m.submittedAt, qRange),
   );
+  // The school universe in scope — denominator for portfolio-state metrics
+  // (missing SSA, portfolio size) as opposed to activity-derived reach.
+  const scopeSchools = getAnalyticsSchools().filter((s) => inScope(s.schoolId));
 
   // ── Reach: distinct reached schools (activities ∪ verified trainings) ──
   type ReachAgg = { completed: boolean; verified: boolean; donorReady: boolean };
@@ -231,6 +256,13 @@ export function computeAnalytics(input: ComputeInput): AnalyticsSnapshot {
     { key: "donorReady", label: "Donor-Ready", count: mscDonorReady, records: mscRec(stories.filter((m) => m.status === "DonorReady")) },
   ];
 
+  // ── Personal activity splits (§22): visits / trainings / partner work / cost ──
+  const visitActs = acts.filter((a) => VISIT_TYPES.has(a.activityType));
+  const trainingActs = acts.filter((a) => TRAINING_TYPES.has(a.activityType));
+  const partnerActs = acts.filter((a) => a.deliveredByRole === "Partner" || !!a.partnerName);
+  const plannedCost = acts.reduce((sum, a) => sum + a.cost, 0);
+  const ssaMissingSchools = scopeSchools.filter((s) => historyFor(s.schoolId).length === 0);
+
   // ── Target context for the completed-activities headline ──
   const completedCount = pipeline[1].count;
   const fyTarget = fyTargetForRole(input.role ?? "CCEO");
@@ -361,6 +393,28 @@ export function computeAnalytics(input: ComputeInput): AnalyticsSnapshot {
       "MSC stories submitted but not yet PL-reviewed.",
       { ...zero, completed: mscPendingReview.length }, mscRec(mscPendingReview),
       "derived", { level: mscPendingReview.length > 0 ? "caveat" : "ok", notes: [] }),
+
+    // Personal portfolio analytics (§22) — viewer-scoped splits the CCEO
+    // surface leads with; harmless extras for wider scopes.
+    metric("portfolioSchools", "Portfolio Schools", "reach", scopeSchools.length,
+      "Schools in the viewer's scope (a CCEO's own portfolio; filter-narrowed otherwise).",
+      { ...zero, planned: scopeSchools.length }, scopeSchools.map((s) => schoolRecord(s.schoolId))),
+    metric("ssaMissing", "Schools Missing SSA", "ssa", ssaMissingSchools.length,
+      "In-scope schools with no SSA on record — planning stays locked until a first SSA exists.",
+      { ...zero, planned: ssaMissingSchools.length }, ssaMissingSchools.map((s) => schoolRecord(s.schoolId, "no SSA")),
+      "derived", { level: ssaMissingSchools.length > 0 ? "caveat" : "ok", notes: [] }),
+    metric("visitsCompleted", "Visits Completed", "pipeline", visitActs.filter(isCompleted).length,
+      "School visits (staff/coaching/follow-up/observation) completed vs planned in scope.",
+      { ...zero, planned: visitActs.length, completed: visitActs.filter(isCompleted).length, verified: visitActs.filter(isVerified).length }, actRecords(visitActs, (a) => a.verificationStatus)),
+    metric("trainingsCompleted", "Trainings Completed", "pipeline", trainingActs.filter(isCompleted).length,
+      "Trainings (incl. School Improvement Trainings) completed vs planned in scope.",
+      { ...zero, planned: trainingActs.length, completed: trainingActs.filter(isCompleted).length, verified: trainingActs.filter(isVerified).length }, actRecords(trainingActs, (a) => a.verificationStatus)),
+    metric("partnerWorkCompleted", "Partner Work Completed", "pipeline", partnerActs.filter(isCompleted).length,
+      "Partner-delivered activities completed vs assigned (delegations keep CCEO ownership).",
+      { ...zero, planned: partnerActs.length, completed: partnerActs.filter(isCompleted).length, verified: partnerActs.filter(isVerified).length }, actRecords(partnerActs, (a) => a.verificationStatus)),
+    metric("plannedCost", "Cost of Planned Work", "finance", plannedCost,
+      "Total UGX cost of in-scope activities (school share for multi-school allocations).",
+      { ...zero, planned: plannedCost }, [], "derived"),
   ];
 
   // ── District comparison / ranking (§21) ──

@@ -1,5 +1,6 @@
 import { CommandStack } from "@/components/actions/CommandStack";
 import { DashboardPageHeader } from "@/components/dashboards/DashboardPageHeader";
+import { DashboardGreetingHero } from "@/components/dashboards/DashboardGreetingHero";
 import { TodayCommandCenter } from "@/components/command/TodayCommandCenter";
 import { DonorImpactReachCard } from "@/components/director/DonorImpactReachCard";
 import { getDonorMetricSnapshot } from "@/lib/donor-metrics";
@@ -60,7 +61,25 @@ export default async function ImpactDashboard() {
         <>
           <DashboardPageHeader role="ImpactAssessment" />
           <div className="px-6 pb-24 md:pb-6 pt-4 space-y-5">
-            {/* Section 1 — Today.  The unified action surface. */}
+            {/* GREETING HERO — system-wide layout rule: header → hero →
+                stats → work. */}
+            <DashboardGreetingHero user={user} />
+
+            {/* Vital signs — the statistics snapshot, directly below the
+                hero: five KPIs + cluster quality + system insights. */}
+            <section className="space-y-3">
+              <SectionHeader
+                tier="strategic"
+                eyebrow="This Period"
+                title="Vital Signs"
+                description="The five numbers leadership reads first, plus what the system is noticing right now."
+              />
+              <ImpactKpiRow />
+              <ClusterReadinessCard clustered={clusterCounts.clustered} unclustered={clusterCounts.unclustered} needsReview={clusterCounts.needsReview} title="Cluster setup quality" hrefAll="/data-intake/clusters" />
+              <InsightStrip insights={insightsForImpactAssessment()} />
+            </section>
+
+            {/* Today — the unified action surface (work begins here). */}
             <TodayCommandCenter />
             <CommandStack user={user} hideMission />
 
@@ -74,19 +93,6 @@ export default async function ImpactDashboard() {
 
             {/* Recruitment readiness from a data-quality lens (IA scope). */}
             <RecruitmentIntelligenceCard />
-
-            {/* Section 2 — Vital signs.  Five KPIs + system insights. */}
-            <section className="space-y-3">
-              <SectionHeader
-                tier="strategic"
-                eyebrow="This Period"
-                title="Vital Signs"
-                description="The five numbers leadership reads first, plus what the system is noticing right now."
-              />
-              <ImpactKpiRow />
-              <ClusterReadinessCard clustered={clusterCounts.clustered} unclustered={clusterCounts.unclustered} needsReview={clusterCounts.needsReview} title="Cluster setup quality" hrefAll="/data-intake/clusters" />
-              <InsightStrip insights={insightsForImpactAssessment()} />
-            </section>
 
             {/* Section 3 — Verification.  The strategic #2.
                 Plan card (what's expected) + Program Overview (counts

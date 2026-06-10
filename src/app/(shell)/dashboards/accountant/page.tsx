@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { DashboardPageHeader } from "@/components/dashboards/DashboardPageHeader";
+import { DashboardGreetingHero } from "@/components/dashboards/DashboardGreetingHero";
 import { AccountantConsoleDashboard } from "@/components/accountant-console/AccountantConsoleDashboard";
 import { CommandStack } from "@/components/actions/CommandStack";
 import { TodayCommandCenter } from "@/components/command/TodayCommandCenter";
@@ -50,8 +51,18 @@ export default async function AccountantConsolePage() {
           message/notification/avatar cluster. Matches /dashboards/cceo. */}
       <DashboardPageHeader role="ProgramAccountant" />
       <div className="space-y-4 px-4 sm:px-5 md:px-6 pt-3 lg:pt-4 pb-24">
+      {/* GREETING HERO — system-wide layout rule: header → hero → stats → work. */}
+      <DashboardGreetingHero user={user} />
+      {/* Payment pipeline — the statistics snapshot, directly below the
+          hero: where money is stuck before the queues. */}
+      <VerificationPaymentFunnel
+        stages={ACCOUNTANT_PAYMENT_STAGES}
+        title="Payment Pipeline"
+        subtitle="IA verified → Sent to accountant → Cleared → Netsuite ID → Paid"
+      />
+      {/* WORK — today's queue, then the payment/accountability queues. */}
       <TodayCommandCenter />
-      <CommandStack user={user} />
+      <CommandStack user={user} hideMission />
       {/* Partner-to-payment (backend, scoped, IA-gated). The live terminal
           gate: partner activities clear to paid only with evidence + SF ID +
           IA confirmation. Self-hides when the backend is disabled. */}
@@ -62,13 +73,6 @@ export default async function AccountantConsolePage() {
           workflow. Only PL-approved requests appear here (gate
           enforced in partner-workflow.REQUIRED_PATH). */}
       <AccountantPartnerPaymentsQueue />
-      {/* Payment pipeline — IA verified → accountant → cleared → Netsuite
-          ID → paid. Surfaces where money is stuck before the queues. */}
-      <VerificationPaymentFunnel
-        stages={ACCOUNTANT_PAYMENT_STAGES}
-        title="Payment Pipeline"
-        subtitle="IA verified → Sent to accountant → Cleared → Netsuite ID → Paid"
-      />
       <AccountantConsoleDashboard />
       </div>
     </>

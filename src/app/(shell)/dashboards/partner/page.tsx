@@ -91,10 +91,8 @@ export default async function PartnerCommandCenter({
       <PartnerHeader />
 
       <div className="px-4 sm:px-5 md:px-6 pb-24 md:pb-6 space-y-4 md:space-y-5">
-        {/* PartnerMissionHero retired per global hero removal pass. */}
-        <DebriefPromoterCard submitterRole="Partner" />
-
-        {/* PIPELINE — the 8-step workflow tracker. */}
+        {/* Layout rule: stats snapshot before work prompts — the 8-step
+            pipeline tracker is the partner's statistics band. */}
         <section className="space-y-3">
           <SectionHeader
             tier="strategic"
@@ -104,6 +102,8 @@ export default async function PartnerCommandCenter({
           />
           <PartnerWorkflowTracker counts={trackerCounts} />
         </section>
+
+        <DebriefPromoterCard submitterRole="Partner" />
 
         {/* TODAY — priorities, daily habit, inbox, evidence, corrections. */}
         <section className="space-y-3">

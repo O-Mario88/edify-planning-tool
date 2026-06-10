@@ -61,11 +61,20 @@ export default async function AnalyticsPage({
   const contributionLenses = await loadContributionLenses(user, fyId);
   const contributionTitle = contributionTitleFor(user.role);
 
+  // CCEO (spec §22): the page reads as PERSONAL portfolio analytics — the
+  // engine narrows every record set to the viewer's own schools and the
+  // surface leads with a personal metric strip (country-wide sections hidden).
+  const personal = user.role === "CCEO";
+
   return (
     <>
       <PageHeader
-        title="Analytics"
-        subtitle="Workflow-derived, filter-aware, drillable. Every number traces to the records behind it."
+        title={personal ? "My Analytics" : "Analytics"}
+        subtitle={
+          personal
+            ? "Your portfolio only — schools reached, gaps, target pace and pipeline. Every number traces to your own records."
+            : "Workflow-derived, filter-aware, drillable. Every number traces to the records behind it."
+        }
         filterBar={<HeaderFilterBar scope={filterScope} />}
         backFallbackHref="/dashboard"
       />
@@ -84,7 +93,7 @@ export default async function AnalyticsPage({
           </div>
         )}
         <BackendOfflineBanner error={liveError} />
-        <FieldEngineAnalytics role={user.role} scopeLabel={user.name} />
+        <FieldEngineAnalytics role={user.role} scopeLabel={user.name} personal={personal} />
       </div>
     </>
   );

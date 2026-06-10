@@ -19,12 +19,16 @@ export function ConfirmCompletionButton({
   activity,
   className,
   confirmed = false,
+  label = "Confirm",
 }: {
   activity: CompletionActivity;
   className?: string;
   /** Server-confirmed state (from the completion overlay) so the badge shows
    *  for everyone, not just the browser that confirmed it. */
   confirmed?: boolean;
+  /** Button text — queue surfaces override it ("Upload Evidence",
+   *  "Enter Salesforce ID") while /visits and /trainings keep "Confirm". */
+  label?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [done, setDone] = useState(confirmed);
@@ -50,7 +54,7 @@ export function ConfirmCompletionButton({
         onClick={() => setOpen(true)}
         className={cn("btn btn-sm", className)}
       >
-        Confirm
+        {label}
       </button>
       <SalesforceCompletionModal
         activity={activity}

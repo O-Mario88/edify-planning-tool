@@ -49,6 +49,14 @@ export type NotificationRecord = {
   read:      boolean;
   readAt?:   string;
   createdAt: string;
+  // Optional task context — maps to the Notification.payload JSON column
+  // in prisma, kept flat here so read-side pages render without parsing.
+  dueDate?:           string;   // "Today" / "Thu 17:00" / "3 days overdue"
+  recommendedAction?: string;   // the one concrete next step
+  actionLabel?:       string;   // label for the single action link (href)
+  category?:          string;   // "Planning" / "Payment" / "Partner" / ...
+  priority?:          "normal" | "important" | "urgent" | "critical";
+  actionRequired?:    boolean;
 };
 
 // ─── Global stores (HMR-safe) ───────────────────────────────────────
@@ -166,8 +174,63 @@ export function readAuditLog(opts?: {
 
 export function readNotificationsFor(userId: string, opts?: { unreadOnly?: boolean; limit?: number }): NotificationRecord[] {
   let rows = getStore().notifications.filter((n) => n.userId === userId);
+  // The CCEO role token also serves the spec §20 catalogue (activity
+  // due/overdue, fund request due, debrief due, missing SSA/cluster, red
+  // alerts, partner follow-ups, SF/IA/payment issues, target pace, cluster
+  // meetings). Wired here — NOT as a parallel source — so the bell, the
+  // drawer and /notifications all read one path. Live emitted rows stay
+  // first; the catalogue fills in behind them in mock-mode.
+  if (userId === "CCEO") rows = [...rows, ...cceoCatalogueRecords()];
   if (opts?.unreadOnly) rows = rows.filter((n) => !n.read);
   return rows.slice(0, opts?.limit ?? 50);
+}
+
+// ─── CCEO catalogue → NotificationRecord (spec §20) ─────────────────
+//
+// Projects src/lib/notifications-mock.ts CCEO_NOTIFICATIONS into the
+// canonical record shape. createdAt is derived from each entry's `ago`
+// at first read (per process) so ordering is stable within a session.
+
+let cceoCatalogueCache: NotificationRecord[] | null = null;
+
+function agoToIso(ago: string, now: number): string {
+  const m = /^(\d+)([mhd])$/.exec(ago.trim());
+  let offsetMs = 0;
+  if (m) {
+    const n = Number(m[1]);
+    offsetMs = m[2] === "m" ? n * 60_000 : m[2] === "h" ? n * 3_600_000 : n * 86_400_000;
+  } else if (/yesterday/i.test(ago)) {
+    offsetMs = 86_400_000;
+  }
+  return new Date(now - offsetMs).toISOString();
+}
+
+function cceoCatalogueRecords(): NotificationRecord[] {
+  if (cceoCatalogueCache) return cceoCatalogueCache;
+  // Lazy require keeps the (client-safe, lucide-importing) mock out of
+  // this server-only module's import graph until a CCEO actually reads.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { CCEO_NOTIFICATIONS } = require("@/lib/notifications-mock") as
+    typeof import("@/lib/notifications-mock");
+  const now = Date.now();
+  cceoCatalogueCache = CCEO_NOTIFICATIONS.map((n) => ({
+    id:                `mock_${n.id}`,
+    userId:            "CCEO",
+    template:          `cceo.${(n.category ?? "system").toLowerCase()}.${n.id}`,
+    channel:           "Inbox" as const,
+    title:             n.title,
+    body:              n.body,
+    href:              n.href,
+    read:              !n.unread,
+    createdAt:         agoToIso(n.ago, now),
+    dueDate:           n.dueDate,
+    recommendedAction: n.recommendedAction,
+    actionLabel:       n.actionLabel,
+    category:          n.category,
+    priority:          n.priority,
+    actionRequired:    n.actionRequired,
+  }));
+  return cceoCatalogueCache;
 }
 
 // Test / reset hook — only used from vitest setup. In production this

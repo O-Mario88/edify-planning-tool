@@ -1,8 +1,15 @@
 import Link from "next/link";
 import {
   AlertTriangle,
+  ArrowRight,
   Bell,
+  CalendarClock,
   ClipboardCheck,
+  FileCheck2,
+  GraduationCap,
+  Handshake,
+  Network,
+  School,
   ShieldCheck,
   Wallet,
   Trophy,
@@ -43,10 +50,23 @@ const DEMO_NOTIFICATIONS: DemoNotification[] = [
   { id: "n-6", title: "Public holiday on Friday",                    body: "Planning auto-blocked — your route runner skipped 2 stops.",            href: "/leave",                   unread: false, ago: "2d",   Icon: CalendarRange,  iconBg: "bg-sky-100",     iconText: "text-sky-700"     },
 ];
 
-// Pick an icon for a live notification based on its template key.
-// Falls back to a generic bell so an unknown template never breaks
-// the page.
-function iconForTemplate(template: string): { Icon: LucideIcon; bg: string; text: string } {
+// Pick an icon for a live notification based on its template key (and,
+// for the CCEO catalogue, the category baked into the record). Falls
+// back to a generic bell so an unknown template never breaks the page.
+const CATEGORY_ICON: Record<string, { Icon: LucideIcon; bg: string; text: string }> = {
+  Planning: { Icon: CalendarClock,  bg: "bg-sky-100",     text: "text-sky-700"     },
+  Payment:  { Icon: Wallet,         bg: "bg-violet-100",  text: "text-violet-700"  },
+  Debrief:  { Icon: ClipboardCheck, bg: "bg-emerald-100", text: "text-emerald-700" },
+  SSA:      { Icon: ShieldCheck,    bg: "bg-sky-100",     text: "text-sky-700"     },
+  Cluster:  { Icon: Network,        bg: "bg-indigo-100",  text: "text-indigo-700"  },
+  School:   { Icon: School,         bg: "bg-rose-100",    text: "text-rose-700"    },
+  Partner:  { Icon: Handshake,      bg: "bg-violet-100",  text: "text-violet-700"  },
+  Evidence: { Icon: FileCheck2,     bg: "bg-amber-100",   text: "text-amber-700"   },
+  HR:       { Icon: GraduationCap,  bg: "bg-amber-100",   text: "text-amber-700"   },
+};
+
+function iconForTemplate(template: string, category?: string): { Icon: LucideIcon; bg: string; text: string } {
+  if (category && CATEGORY_ICON[category]) return CATEGORY_ICON[category];
   if (template.startsWith("weeklyFund") || template.startsWith("fundPlan") || template.startsWith("reimbursement") || template.startsWith("balance")) {
     return { Icon: Wallet, bg: "bg-violet-100", text: "text-violet-700" };
   }
@@ -78,6 +98,7 @@ export default async function NotificationsPage() {
   const roleToken = user.role === "ProgramAccountant" ? "ACCOUNTANT"
                   : user.role === "CountryProgramLead" ? "PROGRAM_LEAD"
                   : user.role === "CountryDirector" ? "COUNTRY_DIRECTOR"
+                  : user.role === "CCEO" ? "CCEO"
                   : null;
   const personal = readNotificationsFor(user.staffId, { limit: 100 });
   const roleScoped = roleToken ? readNotificationsFor(roleToken, { limit: 100 }) : [];
@@ -85,10 +106,14 @@ export default async function NotificationsPage() {
   // a write (defensive — shouldn't happen).
   const live = dedupeAndSort([...personal, ...roleScoped]);
 
+  // The CCEO role token already carries the full spec §20 catalogue via
+  // readNotificationsFor — the generic demo rows would duplicate it.
+  const demoRows = user.role === "CCEO" ? [] : DEMO_NOTIFICATIONS;
+
   const liveUnread = live.filter((n) => !n.read).length;
-  const demoUnread = DEMO_NOTIFICATIONS.filter((n) => n.unread).length;
+  const demoUnread = demoRows.filter((n) => n.unread).length;
   const totalUnread = liveUnread + demoUnread;
-  const totalCount = live.length + DEMO_NOTIFICATIONS.length;
+  const totalCount = live.length + demoRows.length;
 
   return (
     <StubPage
@@ -96,9 +121,12 @@ export default async function NotificationsPage() {
       subtitle={`${totalUnread} unread · ${totalCount - totalUnread} read this week. ${live.length > 0 ? `${live.length} live event${live.length === 1 ? "" : "s"} from this session.` : "Drawn from the same engines that power your dashboards."}`}
     >
       <section className="card rounded-2xl divide-y divide-[var(--color-edify-divider)] overflow-hidden">
-        {/* Live notifications — from the canonical store */}
+        {/* Live notifications — from the canonical store (CCEO rows carry
+            the spec §20 task context: reason, due date, recommended action,
+            and exactly one action link). */}
         {live.map((n) => {
-          const { Icon, bg, text } = iconForTemplate(n.template);
+          const { Icon, bg, text } = iconForTemplate(n.template, n.category);
+          const urgent = n.priority === "urgent" || n.priority === "critical";
           return (
             <Link
               key={n.id}
@@ -117,15 +145,38 @@ export default async function NotificationsPage() {
                   <div className="text-caption muted shrink-0 tabular">{relativeFrom(n.createdAt)}</div>
                 </div>
                 <div className="text-[11.5px] muted leading-snug mt-0.5">{n.body}</div>
-                <div className="text-[9.5px] muted leading-snug mt-1 font-mono uppercase tracking-wide">
-                  {n.template} · {n.channel}
-                </div>
+                {n.recommendedAction && (
+                  <div className="text-[11px] leading-snug mt-1 text-[var(--text-secondary)]">
+                    <span className="font-bold">Next:</span> {n.recommendedAction}
+                  </div>
+                )}
+                {(n.dueDate || n.actionLabel) && (
+                  <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                    {n.dueDate && (
+                      <span className={`inline-flex items-center gap-1 px-1.5 py-[2px] rounded-md text-[10px] font-extrabold ${urgent ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-700"}`}>
+                        <CalendarClock size={9} />
+                        Due {n.dueDate}
+                      </span>
+                    )}
+                    {n.actionLabel && (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[var(--color-edify-primary)]">
+                        {n.actionLabel}
+                        <ArrowRight size={10} />
+                      </span>
+                    )}
+                  </div>
+                )}
+                {!n.id.startsWith("mock_") && (
+                  <div className="text-[9.5px] muted leading-snug mt-1 font-mono uppercase tracking-wide">
+                    {n.template} · {n.channel}
+                  </div>
+                )}
               </div>
             </Link>
           );
         })}
         {/* Static demo notifications — page never looks empty */}
-        {DEMO_NOTIFICATIONS.map((n) => (
+        {demoRows.map((n) => (
           <Link
             key={n.id}
             href={n.href}

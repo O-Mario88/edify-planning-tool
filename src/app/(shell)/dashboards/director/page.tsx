@@ -1,5 +1,6 @@
 import { CommandStack } from "@/components/actions/CommandStack";
 import { DashboardPageHeader } from "@/components/dashboards/DashboardPageHeader";
+import { DashboardGreetingHero } from "@/components/dashboards/DashboardGreetingHero";
 import { TodayCommandCenter } from "@/components/command/TodayCommandCenter";
 import { DonorImpactReachCard } from "@/components/director/DonorImpactReachCard";
 import { ScheduleBudgetCard } from "@/components/budget/ScheduleBudgetCard";
@@ -81,18 +82,13 @@ export default async function CountryDirectorDashboard() {
     <>
       <DashboardPageHeader role="CountryDirector" />
       <div className="px-3 sm:px-4 md:px-5 pb-24 md:pb-5 pt-3 md:pt-4 space-y-4 md:space-y-5">
-        {/* TODAY — greeting hero (mission header), pace, and the unified
-            action inbox. The mission header renders here (not hidden):
-            this page has no DashboardHero, so it IS the greeting surface
-            — "Good morning, [CD]. Here is the country picture for today." */}
-        <TodayCommandCenter />
-        <CommandStack user={user} />
+        {/* GREETING HERO — system-wide layout rule: header → hero →
+            stats → work. "Good morning, [CD]. Here is the country
+            execution, budget, and impact picture for today." */}
+        <DashboardGreetingHero user={user} />
 
-        {/* A. TODAY'S EXECUTIVE ALERTS — issue · why · scope · recommended
-            action · one button. Supersedes the old attention banners. */}
-        <ExecutiveAlerts inputs={{ unclusteredSchools: clusterCounts.unclustered }} />
-
-        {/* B. COUNTRY MISSION SNAPSHOT — are we achieving the mission? */}
+        {/* COUNTRY MISSION SNAPSHOT + KPI ROW — the program statistics
+            band, directly below the hero and before any work content. */}
         <section className="space-y-3">
           <SectionHeader
             tier="strategic"
@@ -103,6 +99,14 @@ export default async function CountryDirectorDashboard() {
           <MissionSnapshotStrip snapshot={donorSnapshot} />
           <CountryKpiRow />
         </section>
+
+        {/* MAIN WORK — today's queue, then the executive alerts. */}
+        <TodayCommandCenter />
+        <CommandStack user={user} hideMission />
+
+        {/* TODAY'S EXECUTIVE ALERTS — issue · why · scope · recommended
+            action · one button. Supersedes the old attention banners. */}
+        <ExecutiveAlerts inputs={{ unclusteredSchools: clusterCounts.unclustered }} />
 
         {/* C. BUDGET & FUND REQUEST HEALTH — financial stewardship. */}
         <section className="space-y-3">

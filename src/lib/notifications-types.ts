@@ -31,7 +31,10 @@ export type Notification = {
 
 export type NotificationCounts = { all: number; unread: number; action: number; urgent: number };
 
-// The raw backend row (edify-api Notification model).
+// The raw backend row (edify-api Notification model). The optional task
+// fields (actionLabel / dueDate / recommendedAction) come from the
+// Notification.payload JSON — today they're populated by the CCEO §20
+// catalogue rows merged in /api/notifications.
 export type BackendNotification = {
   id: string;
   title: string;
@@ -43,6 +46,9 @@ export type BackendNotification = {
   priority: "low" | "normal" | "high" | "urgent";
   status: "unread" | "read" | "archived";
   createdAt: string;
+  actionLabel?: string | null;
+  dueDate?: string | null;
+  recommendedAction?: string | null;
 };
 
 // Static tint classes (Tailwind can't see interpolated class names).
@@ -91,10 +97,16 @@ function timeAgo(iso: string): string {
 
 export function adaptNotification(n: BackendNotification): Notification {
   const c = classify(n.contextType ?? "", n.title);
+  // Task-shaped rows (CCEO §20 catalogue) render reason + recommended next
+  // step in the body and the due date in the context line, so the drawer
+  // shows reason / due / action without a new row component.
+  const body = n.recommendedAction
+    ? `${n.body ?? ""} Next: ${n.recommendedAction}`.trim()
+    : (n.body ?? "");
   return {
     id: n.id,
     title: n.title,
-    body: n.body ?? "",
+    body,
     href: n.targetRoute ?? "/notifications",
     unread: n.status === "unread",
     ago: timeAgo(n.createdAt),
@@ -102,7 +114,10 @@ export function adaptNotification(n: BackendNotification): Notification {
     category: c.category,
     priority: PRIORITY_MAP[n.priority],
     actionRequired: n.actionRequired,
-    contextLabel: n.contextType ? n.contextType.replace(/_/g, " ") : undefined,
+    actionLabel: n.actionLabel ?? undefined,
+    contextLabel: n.dueDate
+      ? `Due ${n.dueDate}`
+      : n.contextType ? n.contextType.replace(/_/g, " ") : undefined,
   };
 }
 

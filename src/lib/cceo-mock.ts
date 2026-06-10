@@ -471,35 +471,35 @@ export type CceoMenuItem = {
   section: CceoMenuSection;
 };
 
+// CCEO sidebar (spec: "CCEO Sidebar — keep it clean"). Exactly the 14
+// field-coach surfaces, grouped in the shared section rhythm. Deeper
+// routes (Core Schools, SSA, Map, Today, My Targets…) stay reachable
+// through the dashboard, the directory, and ⌘K search — they are
+// workflow destinations, not navigation anchors, for this role.
 export const cceoSidebarItems: CceoMenuItem[] = [
-  // My Work — personal command surfaces
-  { section: "My Work",  label: "Overview",           href: "/dashboards/cceo",               icon: "layoutDashboard" },
-  { section: "My Work",  label: "Today's Tasks",      href: "/today",                         icon: "calendarCheck" },
-  { section: "My Work",  label: "My Plan",            href: "/my-plan",                       icon: "clipboardList" },
-  { section: "My Work",  label: "My Targets",         href: "/my-targets",                    icon: "target" },
+  // My Work — plan it, execute it, report it
+  { section: "My Work",  label: "Dashboard",            href: "/dashboards/cceo",      icon: "layoutDashboard" },
+  { section: "My Work",  label: "Planning",             href: "/planning",             icon: "clipboardList" },
+  { section: "My Work",  label: "My Plan",              href: "/my-plan",              icon: "calendarCheck" },
+  { section: "My Work",  label: "Daily Debrief",        href: "/debriefs",             icon: "fileText" },
 
-  // Schools — the field of play (directory + portfolio merged into one)
-  { section: "Schools",  label: "Schools",            href: "/schools",                       icon: "school" },
-  { section: "Schools",  label: "Clusters",           href: "/clusters",                      icon: "network" },
-  { section: "Schools",  label: "Core Schools",       href: "/core-schools",                  icon: "school" },
-  { section: "Schools",  label: "Project Schools",    href: "/special-projects/schools",      icon: "sparkles" },
-  { section: "Schools",  label: "Project Pipeline",   href: "/special-projects/pipeline",     icon: "handshake" },
-  { section: "Schools",  label: "SSA Performance",    href: "/ssa",                           icon: "activity" },
-  { section: "Schools",  label: "Visits & Trainings", href: "/trainings",                     icon: "calendarCheck" },
+  // Schools — the field of play
+  { section: "Schools",  label: "Schools",              href: "/schools",              icon: "school" },
+  { section: "Schools",  label: "Clusters",             href: "/clusters",             icon: "network" },
+  { section: "Schools",  label: "Partners",             href: "/partners",             icon: "handshake" },
 
-  // Activity — recognition + ops queues
-  { section: "Activity", label: "My Weekly Funds",    href: "/weekly-funds",                  icon: "wallet" },
-  { section: "Activity", label: "Planning",           href: "/planning",                      icon: "clipboardList" },
+  // Activity — proof + money
+  { section: "Activity", label: "Evidence",             href: "/evidence",             icon: "shieldCheck" },
+  { section: "Activity", label: "Fund Requests",        href: "/weekly-funds",         icon: "wallet" },
+  { section: "Activity", label: "Completed Activities", href: "/completed-activities", icon: "listChecks" },
 
   // Insights — read-and-think surfaces
-  { section: "Insights", label: "Reports",            href: "/reports",                       icon: "fileText" },
-  { section: "Insights", label: "Analytics",          href: "/analytics",                     icon: "barChart" },
-  { section: "Insights", label: "Map View",           href: "/map",                           icon: "mapPin" },
+  { section: "Insights", label: "Analytics",            href: "/analytics",            icon: "barChart" },
+  { section: "Insights", label: "Reports",              href: "/reports",              icon: "fileText" },
 
-  // Account — references + settings-adjacent
-  { section: "Account",  label: "Messages",           href: "/messages",                      icon: "messageSquare" },
-  { section: "Account",  label: "Resources",          href: "/resources",                     icon: "bookOpen" },
-  { section: "Account",  label: "Leave & Holidays",   href: "/leave",                         icon: "calendarRange" },
+  // Account — communication
+  { section: "Account",  label: "Messages",             href: "/messages",             icon: "messageSquare" },
+  { section: "Account",  label: "Notifications",        href: "/notifications",        icon: "bell" },
 ];
 
 // ─────────── Verification & Payment funnel ───────────
@@ -515,13 +515,16 @@ export type CceoFunnelStage = {
 };
 
 export const cceoVerificationFunnel: CceoFunnelStage[] = [
-  { key: "completed", label: "Completed activities", count: 32, href: "/my-plan" },
-  { key: "evidence",  label: "Evidence uploaded",    count: 28, href: "/data-verification" },
-  { key: "sfid",      label: "Salesforce ID entered", count: 21, href: "/data-verification" },
-  { key: "pl",        label: "PL verified",          count: 18, href: "/approvals" },
-  { key: "ia",        label: "IA verified",          count: 16, href: "/approvals" },
-  { key: "accountant", label: "Sent to accountant",  count: 9,  href: "/disbursements" },
-  { key: "paid",      label: "Paid / cleared",       count: 6,  href: "/disbursements" },
+  // Hrefs stay inside the CCEO's own access envelope: proof stages live
+  // on /evidence (the CCEO queue page); money stages read as STATUS on
+  // /weekly-funds (the disbursement console is accountant-only).
+  { key: "completed", label: "Completed activities", count: 32, href: "/completed-activities" },
+  { key: "evidence",  label: "Evidence uploaded",    count: 28, href: "/evidence" },
+  { key: "sfid",      label: "Salesforce ID entered", count: 21, href: "/evidence" },
+  { key: "pl",        label: "PL verified",          count: 18, href: "/evidence" },
+  { key: "ia",        label: "IA verified",          count: 16, href: "/evidence" },
+  { key: "accountant", label: "Sent to accountant",  count: 9,  href: "/weekly-funds" },
+  { key: "paid",      label: "Paid / cleared",       count: 6,  href: "/weekly-funds" },
 ];
 
 // ─────────── Risk & bottleneck board ───────────
@@ -547,8 +550,8 @@ export type CceoRiskItem = {
 export const cceoRiskBoard: CceoRiskItem[] = [
   { type: "Planning",     count: 8, reason: "Schools stuck — current-cycle SSA is missing", owner: "CCEO",        action: "Complete SSA",        href: "/planning" },
   { type: "Execution",    count: 6, reason: "Scheduled activities not started",             owner: "CCEO",        action: "Start activities",    href: "/my-plan" },
-  { type: "Verification", count: 7, reason: "Completed work missing a Salesforce ID",       owner: "CCEO / PL",   action: "Enter Salesforce IDs", href: "/data-verification" },
-  { type: "Partner",      count: 3, reason: "Partner activities returned for correction",   owner: "Partner",     action: "Review returns",      href: "/my-targets" },
-  { type: "Payment",      count: 4, reason: "Payments blocked at IA verification",          owner: "IA",          action: "Follow up IA",        href: "/approvals" },
+  { type: "Verification", count: 7, reason: "Completed work missing a Salesforce ID",       owner: "CCEO / PL",   action: "Enter Salesforce IDs", href: "/evidence" },
+  { type: "Partner",      count: 3, reason: "Partner activities returned for correction",   owner: "Partner",     action: "Review returns",      href: "/evidence" },
+  { type: "Payment",      count: 4, reason: "Payments blocked at IA verification",          owner: "IA",          action: "Follow up IA",        href: "/evidence" },
   { type: "Performance",  count: 2, reason: "Districts behind on this quarter's visit target", owner: "CCEO",     action: "Rebalance the plan",  href: "/my-targets" },
 ];

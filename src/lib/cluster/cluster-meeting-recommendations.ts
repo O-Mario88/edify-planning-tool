@@ -20,6 +20,7 @@ import {
   CLUSTER_MEETING_LABEL,
   type ClusterRecord,
 } from "@/lib/cluster/cluster-core";
+import type { IntakeSchool } from "@/lib/intake/intake-mock";
 import { recommendInterventionsForSchool } from "@/lib/planning/intervention-recommendation";
 import { SSA_INTERVENTIONS } from "@/lib/planning/ssa-performance-mock";
 import type { SsaInterventionArea } from "@/lib/planning/planning-gaps-mock";
@@ -157,6 +158,29 @@ export function clusterMeetingRecommendations(plStaffId?: string): ClusterMeetin
     }
   }
 
+  return pool
+    .map(recommendForCluster)
+    .sort((a, b) => (a.overallAverage ?? 11) - (b.overallAverage ?? 11));
+}
+
+/**
+ * Recommendations scoped to the clusters CONTAINING the given schools — the
+ * CCEO "my clusters / parish fellowship" view (pass the viewer's portfolio
+ * from directoryRecords). Demo seeds don't always carry clusterIds yet, so
+ * when none of the schools is clustered we fall back to active clusters in
+ * the schools' districts (the CCEO's geography) rather than an empty board.
+ */
+export function clusterMeetingRecommendationsForSchools(
+  schools: IntakeSchool[],
+): ClusterMeetingRecommendation[] {
+  const myClusterIds = new Set(
+    schools.map((s) => s.clusterId).filter((id): id is string => !!id),
+  );
+  let pool = activeClusters().filter((c) => myClusterIds.has(c.id));
+  if (pool.length === 0 && schools.length > 0) {
+    const districts = new Set(schools.map((s) => s.district.trim().toLowerCase()));
+    pool = activeClusters().filter((c) => districts.has(c.district.trim().toLowerCase()));
+  }
   return pool
     .map(recommendForCluster)
     .sort((a, b) => (a.overallAverage ?? 11) - (b.overallAverage ?? 11));

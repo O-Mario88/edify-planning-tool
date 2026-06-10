@@ -57,8 +57,54 @@ export function DailyDebriefDrawer({
   const [nextAction, setNextAction] = useState("");
   const [phase, setPhase] = useState<Phase>("form");
   const [error, setError] = useState<string | null>(null);
+  // Spec §19: the drawer prefills from today's plan + proof queues so the
+  // CCEO edits a draft instead of typing from memory. One attempt per
+  // mount; non-CCEO sessions (403) skip silently.
+  const [prefillTried, setPrefillTried] = useState(false);
+  const [prefilled, setPrefilled] = useState(false);
 
   useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    if (!open || prefillTried || debriefType !== "staff") return;
+    if (whatHappened || blockers.length) { setPrefillTried(true); return; }
+    setPrefillTried(true);
+    (async () => {
+      try {
+        const [planRes, queueRes] = await Promise.allSettled([
+          fetch("/api/cceo/my-plan", { credentials: "include" }),
+          fetch("/api/cceo/evidence-queue", { credentials: "include" }),
+        ]);
+        let summary = "";
+        const suggested: string[] = [];
+        if (planRes.status === "fulfilled" && planRes.value.ok) {
+          const j = await planRes.value.json();
+          const sections: { key: string; items: { typeLabel: string; entityName: string }[] }[] =
+            j?.data?.sections ?? [];
+          const line = (key: string, label: string) => {
+            const items = sections.find((s) => s.key === key)?.items ?? [];
+            if (!items.length) return "";
+            const names = items.slice(0, 4).map((i) => `${i.typeLabel} — ${i.entityName}`).join("; ");
+            return `${label}: ${names}${items.length > 4 ? ` (+${items.length - 4} more)` : ""}.\n`;
+          };
+          summary += line("dueToday", "Planned today");
+          summary += line("needsAttention", "Rescheduled / carried over");
+          summary += line("waitingOnMe", "Awaiting my evidence / Salesforce ID");
+        }
+        if (queueRes.status === "fulfilled" && queueRes.value.ok) {
+          const j = await queueRes.value.json();
+          const counts = j?.data?.counts;
+          if (counts?.evidence > 0) suggested.push("evidence_missing");
+          if (counts?.salesforce > 0) suggested.push("salesforce_entry_issue");
+        }
+        if (summary) { setWhatHappened(summary.trimEnd()); setPrefilled(true); }
+        if (suggested.length) { setBlockers((b) => (b.length ? b : suggested)); setPrefilled(true); }
+      } catch {
+        /* prefill is best-effort — the form stays blank */
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, prefillTried, debriefType]);
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") attemptClose(); };
@@ -79,6 +125,7 @@ export function DailyDebriefDrawer({
   function reset() {
     setWhatHappened(""); setWhatWentWell(""); setWhatDidNotGoWell(""); setBlockers([]); setBlockerOther("");
     setSupportNeeded(""); setNextAction(""); setPhase("form"); setError(null);
+    setPrefillTried(false); setPrefilled(false);
   }
   const toggleBlocker = (k: string) => setBlockers((b) => (b.includes(k) ? b.filter((x) => x !== k) : [...b, k]));
 
@@ -121,6 +168,11 @@ export function DailyDebriefDrawer({
             </div>
           ) : (
             <>
+              {prefilled && (
+                <p className="text-[11px] font-semibold text-[var(--color-edify-primary)] bg-[var(--color-edify-soft)]/60 border border-[var(--color-edify-border)] rounded-lg px-2.5 py-1.5 -mb-1">
+                  Prefilled from today&rsquo;s plan and proof queues — edit before submitting.
+                </p>
+              )}
               <Field label="What happened today?" required>
                 <textarea value={whatHappened} onChange={(e) => setWhatHappened(e.target.value)} rows={3} placeholder="Schools visited, trainings, cluster meetings, partner work reviewed…" className={ta} />
               </Field>

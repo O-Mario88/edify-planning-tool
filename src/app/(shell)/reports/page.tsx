@@ -16,6 +16,7 @@ import {
 import { StubPage } from "@/components/shell/StubPage";
 import { ExportButton } from "@/components/ui/ExportButton";
 import { EmptyState } from "@/components/ui/DataStates";
+import { CceoAutoReports } from "@/components/reports/CceoAutoReports";
 import { cn } from "@/lib/utils";
 import { getCurrentUser } from "@/lib/auth";
 import type { EdifyRole } from "@/lib/auth-public";
@@ -58,6 +59,20 @@ const scheduledReports: ScheduledReport[] = [];
 
 export default async function ReportsPage() {
   const user = await getCurrentUser();
+
+  // CCEO (spec §21): seven auto-generated reports assembled from the
+  // records the CCEO already produces — no manual report writing.
+  if (user.role === "CCEO") {
+    return (
+      <StubPage
+        title="My Reports"
+        subtitle="Auto-generated from your workflow records — plans, completions, evidence, SSA, partner work, cluster meetings and targets. View the detail or export."
+      >
+        <CceoAutoReports />
+      </StubPage>
+    );
+  }
+
   const reports = REPORTS.filter((r) => r.roles.includes(user.role));
 
   return (

@@ -407,6 +407,18 @@ function seedDemoStore(s: EntityStore) {
     base({ id: "ACT-DEMO-3", schoolId: "51884", kind: "CLUSTER_TRAINING", title: "Cluster training — Wakiso Grace Academy", status: "Verified", salesforceId: "TS-50294", interventionArea: "Learning Environment" }),
     base({ id: "ACT-DEMO-4", schoolId: "32791", kind: "IN_SCHOOL_COACHING", title: "Follow-up visit — Nakaseke Hill Primary", status: "Verified", salesforceId: "SVE-40233", interventionArea: "Christlike Behaviour" }),
     base({ id: "ACT-DEMO-5", schoolId: "51884", kind: "IN_SCHOOL_COACHING", title: "Closed — Wakiso Grace Academy coaching", status: "AccountabilityClosed", salesforceId: "SVE-40180", netsuiteExpenseId: "6161", interventionArea: "Teaching Environment" }),
+    // Tail of the seed: rows that populate the CCEO's /evidence guided queues
+    // (Evidence Required / Salesforce ID Required / IA Returned) — see
+    // src/lib/cceo/evidence-queues.ts.
+    base({ id: "ACT-DEMO-6", schoolId: "51884", kind: "CLUSTER_TRAINING", title: "Cluster meeting — Wakiso North cluster", schoolName: "Wakiso North cluster", status: "Completed", interventionArea: "Leadership Best Practice" }),
+    base({ id: "ACT-DEMO-7", schoolId: "52910", kind: "CLUSTER_TRAINING", title: "In-school training — Mukono Light Primary", schoolName: "Mukono Light Primary", status: "Completed", interventionArea: "Teaching Environment" }),
+    base({ id: "ACT-DEMO-8", schoolId: "32791", kind: "IN_SCHOOL_COACHING", title: "Coaching visit — Nakaseke Hill Primary", schoolName: "Nakaseke Hill Primary", status: "Returned", salesforceId: "SVE-40177", lastReason: "Headteacher sign-off missing on the visit form — re-attach and resubmit.", interventionArea: "Christlike Behaviour" }),
+  );
+  // ACT-DEMO-7 already has participant evidence captured, so it sits at the
+  // Salesforce-ID gate (evidence done, SVE-/TS- ID still missing).
+  s.trainingParticipants.push(
+    { id: "TP-DEMO-1", activityId: "ACT-DEMO-7", participantType: "Teacher", participantName: "Agnes Nakato", identityKey: "nat:agnes nakato|52910|no_contact", schoolId: "52910", evidenceStatus: "Uploaded", donorCountStatus: "pending_verification", createdAt: now, updatedAt: now },
+    { id: "TP-DEMO-2", activityId: "ACT-DEMO-7", participantType: "SchoolLeader", participantName: "Samuel Ssempa", identityKey: "nat:samuel ssempa|52910|no_contact", schoolId: "52910", evidenceStatus: "Uploaded", donorCountStatus: "pending_verification", createdAt: now, updatedAt: now },
   );
 }
 

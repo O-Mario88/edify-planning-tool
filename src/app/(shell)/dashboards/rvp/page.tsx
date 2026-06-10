@@ -23,6 +23,7 @@ import { CommandStack } from "@/components/actions/CommandStack";
 import { RecruitmentIntelligenceCard } from "@/components/analytics/RecruitmentIntelligenceCard";
 import { ClientVerificationCard } from "@/components/ssa/ClientVerificationCard";
 import { DashboardPageHeader } from "@/components/dashboards/DashboardPageHeader";
+import { DashboardGreetingHero } from "@/components/dashboards/DashboardGreetingHero";
 import { SectionCard, StatusBadge, ProgressRing } from "@/components/ui/primitives";
 import { MetricStrip } from "@/components/ui/MetricStrip";
 import { countryRollups, specialProjects } from "@/lib/workflow-mock";
@@ -82,17 +83,11 @@ export default async function RVPDashboard() {
       <DashboardPageHeader role="RVP" />
       <div className="px-4 sm:px-5 md:px-6 pb-24 md:pb-6 pt-4 space-y-4 md:space-y-5">
 
-      {/* TODAY — CommandStack carries its own header. */}
-      <CommandStack user={rawUser} hideMission />
+      {/* GREETING HERO — system-wide layout rule: header → hero → stats → work. */}
+      <DashboardGreetingHero user={rawUser} />
 
-      {/* Recruitment intelligence — regional expansion-readiness summary. */}
-      <RecruitmentIntelligenceCard />
-
-      {/* Client SSA verification — 10% portfolio quota (PL/CD/IA/RVP). */}
-      <ClientVerificationCard />
-
-      {/* REGIONAL SIGNALS — region-weighted KPIs, system insights, and
-          training coverage against SSA gaps. */}
+      {/* REGIONAL SIGNALS — the statistics snapshot, directly below the
+          hero: region-weighted KPIs, system insights, training coverage. */}
       <section className="space-y-3">
         <SectionHeader
           tier="strategic"
@@ -115,6 +110,15 @@ export default async function RVPDashboard() {
       <InsightStrip insights={insightsForRvp()} />
       <TrainingCoverageCard audience="rvp" clusterPlans={allClusterTrainingPlans()} />
       </section>
+
+      {/* TODAY — the work stack. */}
+      <CommandStack user={rawUser} hideMission />
+
+      {/* Recruitment intelligence — regional expansion-readiness summary. */}
+      <RecruitmentIntelligenceCard />
+
+      {/* Client SSA verification — 10% portfolio quota (PL/CD/IA/RVP). */}
+      <ClientVerificationCard />
 
       {/* COUNTRIES & RISK — comparison table and burn-rate rail. */}
       <section className="space-y-3">

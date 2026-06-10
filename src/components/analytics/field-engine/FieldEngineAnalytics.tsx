@@ -14,6 +14,7 @@
 import { useMemo } from "react";
 import { AlertTriangle, Inbox, Download } from "lucide-react";
 import { ALL_SENTINEL, type FilterSelection } from "@/lib/filters/types";
+import { MetricStrip, type MetricCell } from "@/components/ui/MetricStrip";
 import type { AnalyticsSnapshot, AnalyticsMetric } from "@/lib/analytics/types";
 import { useActiveFilters } from "@/hooks/use-active-filters";
 import { useTileFilter } from "@/components/tile-filter/use-tile-filter";
@@ -35,9 +36,14 @@ const PANELS: { title: string; keys: string[] }[] = [
 export function FieldEngineAnalytics({
   role,
   scopeLabel,
+  personal = false,
 }: {
   role: string;
   scopeLabel: string;
+  /** Personal-portfolio mode (CCEO, spec §22): the engine is already
+   *  viewer-scoped via `role`; this leads with a "My portfolio" metric
+   *  strip and hides the country-wide comparison sections. */
+  personal?: boolean;
 }) {
   const selection = useActiveFilters();
   const { activeFilter, isActive, setTileFilter, resetTileFilter } = useTileFilter(FIELD_ANALYTICS_TILES);
@@ -74,6 +80,16 @@ export function FieldEngineAnalytics({
           <Download size={13} /> Export
         </button>
       </div>
+
+      {/* Personal portfolio strip (CCEO §22) — my schools, gaps, splits,
+          target pace and cost, all from the viewer-scoped snapshot. */}
+      {personal && (
+        <MetricStrip
+          title={`My portfolio — FY ${snapshot.fyId}`}
+          metrics={buildPersonalCells(byKey)}
+          columns="grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6"
+        />
+      )}
 
       {/* Drilldown — records behind the active number */}
       {activeFilter && activeMetric && (
@@ -115,15 +131,60 @@ export function FieldEngineAnalytics({
         ))}
       </div>
 
-      {/* District ranking + MSC funnel */}
+      {/* District ranking + MSC funnel. The district-vs-district ranking is
+          a country-wide view — personal mode (CCEO portfolio) drops it. */}
       <div className="grid grid-cols-12 gap-3.5">
-        <div className="col-span-12 lg:col-span-7"><DistrictComparison rows={snapshot.districtComparison} /></div>
-        <ChartCard className="col-span-12 lg:col-span-5" title="MSC story workflow" subtitle="Submitted → PL Reviewed → Verified → Donor-Ready.">
+        {!personal && (
+          <div className="col-span-12 lg:col-span-7"><DistrictComparison rows={snapshot.districtComparison} /></div>
+        )}
+        <ChartCard className={cn("col-span-12", personal ? "" : "lg:col-span-5")} title="MSC story workflow" subtitle="Submitted → PL Reviewed → Verified → Donor-Ready.">
           <PipelineFunnel stages={snapshot.mscFunnel} />
         </ChartCard>
       </div>
     </div>
   );
+}
+
+// ── Personal portfolio cells (CCEO §22) ──
+// Reads the viewer-scoped snapshot metrics; every cell traces to an
+// AnalyticsMetric the drilldown/export already understand.
+function buildPersonalCells(byKey: Map<string, AnalyticsMetric>): MetricCell[] {
+  const m = (k: string) => byKey.get(k);
+  const v = (k: string) => m(k)?.value ?? 0;
+  const ofPlanned = (k: string): string | undefined => {
+    const mx = m(k);
+    return mx ? `of ${mx.breakdown.planned} planned` : undefined;
+  };
+  // Red flags = the needs-attention states on MY portfolio.
+  const redFlags = v("ssaDeclined") + v("evidenceReturned") + v("paymentsBlocked");
+  const target = m("activitiesCompleted")?.target;
+  const cost = v("plannedCost");
+  const costLabel = cost >= 1_000_000 ? `${(cost / 1_000_000).toFixed(1)}M` : cost.toLocaleString();
+
+  const cells: (MetricCell | null)[] = [
+    { key: "reached", label: "My schools reached", value: v("schoolsReached"), caption: `of ${v("portfolioSchools")} in portfolio`, tone: "good" },
+    { key: "ssaMissing", label: "Missing SSA", value: v("ssaMissing"), tone: v("ssaMissing") > 0 ? "alert" : "default", caption: "planning locked" },
+    { key: "redFlags", label: "Red flags", value: redFlags, tone: redFlags > 0 ? "alert" : "default", caption: "SSA declines · returns · blocked" },
+    { key: "visits", label: "Visits completed", value: v("visitsCompleted"), caption: ofPlanned("visitsCompleted") },
+    { key: "trainings", label: "Trainings completed", value: v("trainingsCompleted"), caption: ofPlanned("trainingsCompleted") },
+    { key: "partner", label: "Partner work done", value: v("partnerWorkCompleted"), caption: ofPlanned("partnerWorkCompleted")?.replace("planned", "assigned") },
+    { key: "core", label: "Core schools reached", value: v("coreSchoolsReached"), caption: "4 visits + 4 trainings track" },
+    target
+      ? {
+          key: "target", label: "Target progress", value: v("activitiesCompleted"),
+          // gapToExpected = achieved − expected (negative when behind pace).
+          delta: target.gapToExpected < 0
+            ? { dir: "down" as const, text: `${Math.abs(target.gapToExpected)} behind pace` }
+            : { dir: "up" as const, text: target.paceStatus },
+          caption: `expected ${target.expectedCumulative} by now`,
+        }
+      : { key: "target", label: "Target progress", value: v("activitiesCompleted") },
+    { key: "cost", label: "Cost of planned work", value: costLabel, unit: "UGX", caption: "in-scope activities" },
+    { key: "evMissing", label: "Evidence missing", value: v("evidenceMissing"), tone: v("evidenceMissing") > 0 ? "alert" : "default" },
+    { key: "sfMissing", label: "SF IDs missing", value: v("sfMissing"), tone: v("sfMissing") > 0 ? "alert" : "default", caption: "completion gate" },
+    { key: "iaVerified", label: "IA verified", value: v("iaVerified"), tone: "good", caption: "evidence → SF → IA" },
+  ];
+  return cells.filter(Boolean) as MetricCell[];
 }
 
 // ── Compact grouped stat panel ──

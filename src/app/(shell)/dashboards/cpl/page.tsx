@@ -2,6 +2,7 @@ import { CommandStack } from "@/components/actions/CommandStack";
 import { RecruitmentIntelligenceCard } from "@/components/analytics/RecruitmentIntelligenceCard";
 import { ProjectWorkCard } from "@/components/special-projects/ProjectWorkCard";
 import { DashboardPageHeader } from "@/components/dashboards/DashboardPageHeader";
+import { DashboardGreetingHero } from "@/components/dashboards/DashboardGreetingHero";
 import { TodayCommandCenter } from "@/components/command/TodayCommandCenter";
 import { DebriefPromoterCard } from "@/components/debrief/DebriefPromoterCard";
 import { PlCommandLanes } from "@/components/cpl/PlCommandLanes";
@@ -88,6 +89,14 @@ export default async function CountryProgramLeadDashboard() {
 
       <DashboardPageHeader role="CountryProgramLead" />
       <div className="px-3 sm:px-4 md:px-5 lg:px-6 pb-24 lg:pb-6 pt-3 md:pt-4 space-y-4 md:space-y-5">
+        {/* GREETING HERO — system-wide layout rule: header → hero →
+            stats → work. Orients the PL before any numbers or queues. */}
+        <DashboardGreetingHero user={user} />
+
+        {/* TEAM SNAPSHOT — the program statistics band, directly below
+            the hero: eight team KPIs before any work content. */}
+        <TeamKpiRow />
+
         {/* A. TODAY'S REQUIRED ACTIONS — file the debrief first, then the
             command stack and the leadership-attention alerts. */}
         <DebriefPromoterCard submitterRole="CountryProgramLead" />
@@ -129,7 +138,6 @@ export default async function CountryProgramLeadDashboard() {
             description="Per-CCEO status with the why behind it, team KPIs, workload capacity, plan approvals, and route quality — without opening every CCEO page."
           />
           <TeamPlanBoard rows={teamPlan.rows} summary={teamPlan.summary} />
-          <TeamKpiRow />
           <TeamCapacityCard plStaffId={user.staffId} />
           <section className="grid grid-cols-12 gap-3 md:gap-4 items-stretch" id="cceo-performance">
             <div className="col-span-12 lg:col-span-7">

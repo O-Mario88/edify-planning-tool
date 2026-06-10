@@ -41,6 +41,8 @@ import {
   Globe,
   Upload,
   Network,
+  ListChecks,
+  Bell,
   type LucideIcon,
 } from "lucide-react";
 import { cceoSidebarItems } from "@/lib/cceo-mock";
@@ -86,6 +88,9 @@ const CCEO_ICON: Record<string, LucideIcon> = {
   network:         Network,
   sparkles:        Sparkles,
   handshake:       Handshake,
+  shieldCheck:     ShieldCheck,
+  listChecks:      ListChecks,
+  bell:            Bell,
 };
 
 function buildCceoMenu(): MenuSection[] {

@@ -4,6 +4,7 @@ import { UnclusteredSchoolsBanner } from "./UnclusteredSchoolsBanner";
 import { PlanningGapBoard } from "./PlanningGapBoard";
 import { PlanningOwnershipSections } from "./PlanningOwnershipSections";
 import { PlansFamilyNav } from "./PlansFamilyNav";
+import { PlanningCategorySummary } from "./PlanningCategorySummary";
 import { ProjectPlanningGaps } from "@/components/special-projects/ProjectPlanningGaps";
 import { getCurrentUser, toCurrentUser } from "@/lib/auth";
 import { onboardedSchoolGaps, scopeGapsToViewer } from "@/lib/planning/onboarded-gaps";
@@ -14,6 +15,8 @@ import { coreBoardData, coreOwnershipRows } from "@/lib/core/core-board";
 import { engineClusterGaps } from "@/lib/planning/engine-cluster-gaps";
 import { directoryRecords } from "@/lib/school-directory/directory";
 import { computeProjectPlanningGaps } from "@/lib/projects/project-planning-gaps";
+import { buildPlanningCategories } from "@/lib/planning/planning-categories";
+import { loadVisitCostRates, loadGroupActivityRates } from "@/lib/cost-engine/cost-engine-server";
 import { applyGeographyScope, selectionFromSearchParams } from "@/lib/filters/apply-filters";
 
 // PlanningToolPage no longer renders its own sidebar — the (shell)
@@ -95,6 +98,21 @@ export async function PlanningToolPage({
   // CoreOwnershipRow carries no geography (schoolId/slot only) — left unscoped.
   const coreOwnership = coreOwnershipRows(user.staffId, user.role);
 
+  // CCEO-only recommendation-led summary (spec §9): the SAME scoped gap data
+  // the boards below consume, folded into 8 expandable categories. Built here
+  // (not recomputed in the engine) so every row stays viewer- + filter-scoped
+  // and, by construction, unscheduled.
+  const planningCategories =
+    user.role === "CCEO"
+      ? buildPlanningCategories({
+          schoolGaps: onboardedGaps,
+          clusterGaps,
+          coreCards,
+          projectGaps,
+          rates: { visit: loadVisitCostRates(), group: loadGroupActivityRates() },
+        })
+      : null;
+
   return (
     <>
       <PlanningTopHeader />
@@ -118,6 +136,8 @@ export async function PlanningToolPage({
         {topSlot}
 
         <UnclusteredSchoolsBanner count={unclusteredCount} />
+
+        {planningCategories && <PlanningCategorySummary categories={planningCategories} />}
 
         <PlansFamilyNav current="planning" className="flex items-center gap-1" />
         <PlanningGapBoard extraGaps={onboardedGaps} liveGaps={liveGaps} clusterGaps={clusterGaps} liveClusterGaps={liveClusterGaps} coreCards={coreCards} coreViewer={coreViewer} canChampion={canChampion} />

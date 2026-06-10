@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Network, BarChart3, History, ShieldCheck, FileText, Building2 } from "lucide-react";
 import { EntityIndex } from "@/components/shell/EntityIndex";
 import { UnclusteredSchoolsBanner } from "@/components/planning/UnclusteredSchoolsBanner";
+import { CceoClusterBoard } from "@/components/cluster/CceoClusterBoard";
 import { ClusterReadinessCard } from "@/components/cluster/ClusterReadinessCard";
 import { CreateClusterButton } from "@/components/cluster/CreateClusterButton";
 import { LiveClusterList } from "@/components/cluster/LiveClusterList";
@@ -42,6 +43,11 @@ export default async function ClustersIndex() {
     >
       <div className="mb-3 space-y-3">
         <UnclusteredSchoolsBanner count={unclusteredCount} />
+        {/* CCEO: parish-fellowship view of THEIR clusters — SSA coverage,
+            weakest interventions, discussion topics, next meeting (spec §11). */}
+        {user.role === "CCEO" && (
+          <CceoClusterBoard staffId={user.staffId} role={user.role} />
+        )}
         <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-stretch">
           <ClusterReadinessCard
             clustered={counts.clustered}

@@ -14,6 +14,7 @@ import {
 import { AggregatedFieldContextCard } from "@/components/field-intelligence/AggregatedFieldContextCard";
 import { CommandStack } from "@/components/actions/CommandStack";
 import { DashboardPageHeader } from "@/components/dashboards/DashboardPageHeader";
+import { DashboardGreetingHero } from "@/components/dashboards/DashboardGreetingHero";
 import { DebriefReviewInbox } from "@/components/messages/DebriefReviewInbox";
 import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
@@ -52,11 +53,12 @@ export default async function HrFieldContextPage() {
     <>
       <DashboardPageHeader role="HumanResource" />
       <div className="px-4 sm:px-5 md:px-6 pb-10 md:pb-6 pt-3 md:pt-4 space-y-4 md:space-y-5">
-        {/* TODAY — CommandStack carries its own header. */}
-        <CommandStack user={user} hideMission />
+        {/* GREETING HERO — system-wide layout rule: header → hero →
+            stats → work. */}
+        <DashboardGreetingHero user={user} />
 
-        {/* ATTENTION — HR decisions, flagged staff, reviews due, plus
-            the four working-queue KPIs. */}
+        {/* ATTENTION — the statistics snapshot, directly below the hero:
+            flags, reviews due, and the four working-queue KPIs. */}
         <section className="space-y-3">
           <SectionHeader
             tier="strategic"
@@ -67,6 +69,9 @@ export default async function HrFieldContextPage() {
           <HrAttentionRow />
           <HrKpiStrip />
         </section>
+
+        {/* TODAY — the work stack. */}
+        <CommandStack user={user} hideMission />
 
         {/* PEOPLE — routed debriefs + recognition. */}
         <section className="space-y-3">
