@@ -4,10 +4,20 @@ import { useState } from "react";
 import Link from "next/link";
 import { DollarSign, AlertCircle, Loader2 } from "lucide-react";
 import { SectionCard, StatusBadge, TableEmptyRow } from "@/components/ui/primitives";
-import { pendingFundRequests, fundedNotCompleted } from "@/lib/director-mock";
+import { pendingFundRequests as seedPending, fundedNotCompleted } from "@/lib/director-mock";
 import { useDemoStore } from "@/components/demo/DemoStore";
 
-export function FundApprovalFinanceSnapshot() {
+type PendingRow = {
+  id: string;
+  region: string;
+  amountLabel: string;
+  activitiesCovered: number;
+  stage: string;
+};
+
+export function FundApprovalFinanceSnapshot({
+  pendingFundRequests = seedPending,
+}: { pendingFundRequests?: PendingRow[] } = {}) {
   const { pushToast } = useDemoStore();
   const [busyId, setBusyId] = useState<string | null>(null);
 

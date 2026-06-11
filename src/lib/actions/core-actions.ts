@@ -34,11 +34,27 @@ import {
 import { corePlanProgress, recomputePlanCounters } from "@/lib/core/core-progress";
 import { coreImpactFor } from "@/lib/core/core-impact";
 import { recordCompletion } from "@/lib/execution/completion-overlay";
+import { syncSlotToActivities } from "@/lib/core/sync-to-activities";
+import { intakeSchools } from "@/lib/intake/intake-mock";
+
+// Look up the slot's school name from the intake directory so the
+// mirrored canonical activity displays the school by name in My Plan,
+// PL Team Plan, and Targets — not just an opaque id.
+function schoolNameFor(schoolId: string): string | undefined {
+  return intakeSchools.find((s) => s.schoolId === schoolId)?.schoolName;
+}
+
+// Re-read the slot after an updateSlot patch so the mirrored activity
+// reflects the new status. Safe no-op when the slot is missing.
+function mirrorAfterSlotChange(slotId: string, staffId: string): void {
+  const fresh = slotById(slotId);
+  if (!fresh) return;
+  syncSlotToActivities(fresh, { actingStaffId: staffId, schoolName: schoolNameFor(fresh.schoolId) });
+}
 import {
   CORE_SSA_THRESHOLD, VISITS_TARGET, TRAININGS_TARGET,
   type CoreSlotOwner, type CoreActivitySlot, type CoreSsaScores,
 } from "@/lib/core/core-types";
-import { intakeSchools } from "@/lib/intake/intake-mock";
 
 const VERIFY_ROLES = new Set(["ImpactAssessment", "CCEO", "CountryProgramLead", "CountryDirector", "Admin"]);
 const ONBOARD_ROLES = new Set(["CountryDirector", "CountryProgramLead", "ImpactAssessment", "Admin"]);
@@ -212,6 +228,10 @@ export async function assignCoreSlot(
 
   emitAudit({ action: "core.slotAssigned", subjectKind: "CoreActivitySlot", subjectId: slotId, actorId: user.staffId, actorRole: user.role, actorName: user.name, payload: { owner: input.owner, ownerName: input.ownerName, planId: slot.corePlanId } });
   if (isPartner) emitNotification({ userId: "PARTNER", template: "core.slotAssigned", channel: "Inbox", title: `Core ${slot.activityType} assigned`, body: `${user.name} assigned a core ${slot.activityType} (${slot.intervention}) to ${input.ownerName ?? "your team"}.`, href: "/partner/assignments" });
+  // Mirror into the canonical activities() ledger so the assignee
+  // sees the Core slot on their My Plan / Today, and PL Team Plan
+  // counts include Core work.
+  mirrorAfterSlotChange(slotId, user.staffId);
   rev(...CORE_SURFACES);
   return { ok: true, slotId };
 }
@@ -223,6 +243,7 @@ export async function scheduleCoreSlot(slotId: string, monthLabel: string, week:
   if (!slot) return { ok: false, reason: "NOT_FOUND" };
   updateSlot(slotId, { status: "Scheduled", scheduledMonth: monthLabel, scheduledWeek: week, scheduledFor: `${monthLabel} · Wk ${week}` });
   emitAudit({ action: "core.slotScheduled", subjectKind: "CoreActivitySlot", subjectId: slotId, actorId: user.staffId, actorRole: user.role, actorName: user.name, payload: { monthLabel, week } });
+  mirrorAfterSlotChange(slotId, user.staffId);
   rev(...CORE_SURFACES);
   return { ok: true, slotId };
 }
@@ -234,6 +255,7 @@ export async function startCoreSlot(slotId: string): Promise<CoreSlotResult> {
   if (!slot) return { ok: false, reason: "NOT_FOUND" };
   updateSlot(slotId, { status: "In Progress" });
   emitAudit({ action: "core.slotStarted", subjectKind: "CoreActivitySlot", subjectId: slotId, actorId: user.staffId, actorRole: user.role, actorName: user.name });
+  mirrorAfterSlotChange(slotId, user.staffId);
   rev(...CORE_SURFACES);
   return { ok: true, slotId };
 }
@@ -245,6 +267,7 @@ export async function uploadCoreEvidence(slotId: string, evidenceUri: string, no
   if (!slot) return { ok: false, reason: "NOT_FOUND" };
   if (!evidenceUri?.trim()) return { ok: false, reason: "INVALID_INPUT" };
   updateSlot(slotId, { status: "Evidence Uploaded", evidenceUri: evidenceUri.trim(), evidenceNotes: notes?.trim() || undefined });
+  mirrorAfterSlotChange(slotId, user.staffId);
   emitAudit({ action: "core.evidenceUploaded", subjectKind: "CoreActivitySlot", subjectId: slotId, actorId: user.staffId, actorRole: user.role, actorName: user.name });
   emitNotification({ userId: "CCEO", template: "core.evidenceUploaded", channel: "Inbox", title: "Core evidence to review", body: `Evidence uploaded for a core ${slot.activityType}. Review it, then enter the Salesforce ID.`, href: "/planning/core-schools" });
   rev(...CORE_SURFACES);
@@ -335,6 +358,7 @@ export async function completeCoreSlot(slotId: string, input: CoreCompleteInput)
     confirmedByName: user.name,
   });
 
+  mirrorAfterSlotChange(slotId, user.staffId);
   emitAudit({ action: "core.slotCompleted", subjectKind: "CoreActivitySlot", subjectId: slotId, actorId: user.staffId, actorRole: user.role, actorName: user.name, payload: { salesforceId: sf, activityId, planId: slot.corePlanId } });
   if (needsPl) {
     emitNotification({ userId: "PROGRAM_LEAD", template: "core.slotPlReview", channel: "Inbox", title: "CCEO core visit needs your sign-off", body: `Verify the CCEO core visit (${slot.intervention}) before it goes to IA.`, href: "/planning/core-schools" });
@@ -354,6 +378,7 @@ export async function plVerifyCoreSlot(slotId: string): Promise<CoreSlotResult> 
   if (!slot) return { ok: false, reason: "NOT_FOUND" };
   if (slot.plVerificationStatus !== "Pending") return { ok: false, reason: "INVALID_STATE" };
   updateSlot(slotId, { plVerificationStatus: "Verified" });
+  mirrorAfterSlotChange(slotId, user.staffId);
   emitAudit({ action: "core.slotPlVerified", subjectKind: "CoreActivitySlot", subjectId: slotId, actorId: user.staffId, actorRole: user.role, actorName: user.name, payload: { planId: slot.corePlanId } });
   emitNotification({ userId: "IMPACT_ASSESSMENT", template: "core.slotCompleted", channel: "Inbox", title: "CCEO core visit ready for IA", body: `PL signed off — verify the core visit (${slot.salesforceId ?? "no SF"}).`, href: "/data-verification" });
   rev(...CORE_SURFACES, "/data-verification");
@@ -372,6 +397,7 @@ export async function iaVerifyCoreSlot(slotId: string): Promise<CoreSlotResult> 
   if (slot.plVerificationStatus === "Pending") return { ok: false, reason: "INVALID_STATE" };
 
   updateSlot(slotId, { status: "Completed", iaVerificationStatus: "Verified", completedAt: new Date().toISOString() });
+  mirrorAfterSlotChange(slotId, user.staffId);
   notifyPlanRefresh(slot.corePlanId);
 
   // If the package is complete, flip the plan to Pending Follow-Up SSA.
@@ -401,6 +427,7 @@ export async function returnCoreSlot(slotId: string, reason: string): Promise<Co
   if (!slot) return { ok: false, reason: "NOT_FOUND" };
   if ((reason?.trim() ?? "").length < 5) return { ok: false, reason: "INVALID_INPUT" };
   updateSlot(slotId, { status: "Returned", returnedReason: reason.trim() });
+  mirrorAfterSlotChange(slotId, user.staffId);
   emitAudit({ action: "core.slotReturned", subjectKind: "CoreActivitySlot", subjectId: slotId, actorId: user.staffId, actorRole: user.role, actorName: user.name, payload: { reason: reason.trim() } });
   rev(...CORE_SURFACES, "/data-verification");
   return { ok: true, slotId };

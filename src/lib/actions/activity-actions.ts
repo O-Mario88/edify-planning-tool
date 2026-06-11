@@ -72,7 +72,14 @@ export async function markActivityCompleted(
   if (a.status !== "Planned" && a.status !== "Draft") {
     return { ok: false, reason: "INVALID_STATE", current: a.status };
   }
-  updateActivity(activityId, { status: "Completed" });
+  // Completion lands at SalesforceIdPending when the activity has no
+  // Salesforce ID yet — that's the state the CCEO `/evidence` SF
+  // queue gates on. Once the user enters SVE-/TS- and
+  // submitActivityForVerification runs, it moves to
+  // SubmittedForVerification. Activities that already carry a SF ID
+  // skip directly to Completed.
+  const nextStatus = a.salesforceId ? "Completed" : "SalesforceIdPending";
+  updateActivity(activityId, { status: nextStatus });
 
   // First completion in the week auto-flips the matching WFR from
   // RECEIVED → IN_USE so the staff doesn't have to remember the step.
@@ -101,14 +108,21 @@ export async function submitActivityForVerification(
   const a = findActivity(activityId);
   if (!a) return { ok: false, reason: "NOT_FOUND" };
   if (!ASSIGNEE_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
-  if (a.status !== "Completed") {
+  // Completion lands at SalesforceIdPending when no SF ID is present
+  // yet (the orphan-state fix), so accept either status here. The
+  // submit cannot succeed without a Salesforce ID at this gate.
+  if (a.status !== "Completed" && a.status !== "SalesforceIdPending") {
     return { ok: false, reason: "INVALID_STATE", current: a.status };
+  }
+  const sfId = salesforceId?.trim() || a.salesforceId;
+  if (!sfId) {
+    return { ok: false, reason: "INVALID_INPUT", field: "salesforceId" };
   }
   // Store the exact Salesforce ID the staff entered so the IA verification
   // queue shows the same value they'll paste into Salesforce to confirm.
   updateActivity(activityId, {
     status: "SubmittedForVerification",
-    ...(salesforceId?.trim() ? { salesforceId: salesforceId.trim() } : {}),
+    salesforceId: sfId,
   });
   emitAudit({
     action: "activity.submittedForVerification",
@@ -558,15 +572,21 @@ function flipWeeklyFundRequestToInUseFor(planId: string): void {
 
 function revalidateActivitySurfaces(planId?: string) {
   try {
+    revalidatePath("/my-plan");
     revalidatePath("/today");
     revalidatePath("/visits");
     revalidatePath("/trainings");
     revalidatePath("/calendar");
+    revalidatePath("/evidence");
     revalidatePath("/data-verification");
     revalidatePath("/quality-checks");
+    revalidatePath("/planning");
+    revalidatePath("/team-plan");
     if (planId) revalidatePath(`/plans/${planId}`);
     revalidatePath("/dashboards/cceo");
+    revalidatePath("/dashboards/cpl");
     revalidatePath("/dashboards/impact");
+    revalidatePath("/dashboards/director");
     revalidatePath("/notifications");
   } catch { /* outside request */ }
 }

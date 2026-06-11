@@ -25,6 +25,7 @@ import {
   FundApprovalFinanceSnapshot,
   FundedNotCompletedCard,
 } from "@/components/director/FundApprovalFinance";
+import { fundRequests as fundRequestsStore } from "@/lib/actions/store";
 import { OperationalRiskBacklogRow } from "@/components/director/OperationalRiskRow";
 import { SchoolSsaIntelligenceCard } from "@/components/director/SchoolSsaIntelligenceCard";
 import { PrioritySchoolsUrgentAttentionCard } from "@/components/director/PrioritySchoolsAttention";
@@ -122,7 +123,7 @@ export default async function CountryDirectorDashboard() {
           </section>
           <section className="grid grid-cols-12 gap-3 items-stretch" id="fund-approvals">
             <div className="col-span-12 lg:col-span-8">
-              <FundApprovalFinanceSnapshot />
+              <FundApprovalFinanceSnapshot pendingFundRequests={cdPendingFundRequests()} />
             </div>
             <div className="col-span-12 lg:col-span-4">
               <FundedNotCompletedCard />
@@ -242,9 +243,37 @@ export default async function CountryDirectorDashboard() {
     </>
   );
 
-  // Same content tree for mobile + desktop. Each component below the
-  // hero uses responsive Tailwind classes (grid-cols-1 → md:grid-cols-2
-  // → lg:grid-cols-X) and tables overflow inside their own cards on
-  // phones rather than blowing out the page width.
+  // Same content tree for mobile + desktop. Each content tree uses
+  // responsive Tailwind classes (grid-cols-1 → md:grid-cols-2 → lg…)
+  // and tables overflow inside their own cards on phones rather than
+  // blowing out the page width.
   return <ResponsiveDashboard mobile={body} desktop={body} />;
+}
+
+// Live "pending fund requests" rows for the CD finance snapshot —
+// folds the fundRequestsStore() SUBMITTED + APPROVED rows into the
+// region-grouped shape FundApprovalFinanceSnapshot expects.
+function cdPendingFundRequests() {
+  const PENDING_STATUSES = new Set(["SUBMITTED", "APPROVED", "READY_TO_DISBURSE"]);
+  const byRegion = new Map<string, { id: string; region: string; amount: number; activities: number; stages: Set<string> }>();
+  for (const r of fundRequestsStore()) {
+    if (!PENDING_STATUSES.has(r.status)) continue;
+    const key = r.district || r.countryId || "—";
+    const acc = byRegion.get(key) ?? { id: `fr-${key}`, region: key, amount: 0, activities: 0, stages: new Set<string>() };
+    acc.amount += r.requestedAmount.amount;
+    acc.activities += r.activities.length;
+    acc.stages.add(r.status === "SUBMITTED" ? "Review" : "Approved");
+    byRegion.set(key, acc);
+  }
+  const fmt = (n: number) =>
+    n >= 1_000_000_000 ? `UGX ${(n / 1_000_000_000).toFixed(2)}B`
+    : n >= 1_000_000     ? `UGX ${(n / 1_000_000).toFixed(1)}M`
+    :                       `UGX ${n.toLocaleString()}`;
+  return Array.from(byRegion.values()).map((r) => ({
+    id: r.id,
+    region: r.region,
+    amountLabel: fmt(r.amount),
+    activitiesCovered: r.activities,
+    stage: r.stages.has("Review") ? "Review" : "Approved",
+  }));
 }

@@ -14,7 +14,35 @@ import {
   type SeedAdminItem,
 } from "@/lib/funds/monthly-fund-request-mock";
 import type { AdminBudgetCategory, MfrAdminItem } from "@/lib/funds/monthly-fund-request-types";
-import { emitAudit } from "./audit";
+import { emitAudit, emitNotificationFanOut } from "./audit";
+import { findFundRequest } from "@/lib/actions/store";
+
+// Notify the affected CCEO + PL when CD touches an admin item — the
+// change re-prices their weekly slip and they should know. Best-effort:
+// silently skips when the request can't be resolved (e.g. the admin
+// item is part of a country envelope not yet bound to a CCEO request).
+function notifyAdminItemChange(
+  fundRequestId: string,
+  action: "added" | "updated" | "removed",
+  name: string,
+): void {
+  const req = findFundRequest(fundRequestId);
+  if (!req) return;
+  const recipients: string[] = [];
+  if (req.staffId) recipients.push(req.staffId);
+  if (req.programLeadId) recipients.push(req.programLeadId);
+  if (recipients.length === 0) return;
+  emitNotificationFanOut(recipients, {
+    template: `mfrAdminItem.${action}`,
+    channel: "Inbox",
+    title:
+      action === "added"   ? `CD added admin item: ${name}` :
+      action === "updated" ? `CD updated admin item: ${name}` :
+                             `CD removed admin item: ${name}`,
+    body: "Your monthly fund request envelope was re-priced — open the request to review the new totals.",
+    href: `/fund-requests/${fundRequestId}`,
+  });
+}
 
 export type AdminItemInput = {
   category: AdminBudgetCategory;
@@ -78,6 +106,7 @@ export async function addAdminItem(fundRequestId: string, input: AdminItemInput)
     actorName: user.name,
     payload: { fundRequestId, name: rec.name, totalCost: rec.quantity * rec.unitCost },
   });
+  notifyAdminItemChange(fundRequestId, "added", rec.name);
 
   try { revalidatePath("/monthly-fund-request"); revalidatePath("/budget"); } catch { /* noop */ }
   return { ok: true, item: toMfrItem(rec, fundRequestId, user.staffId, user.name) };
@@ -108,6 +137,7 @@ export async function updateAdminItem(id: string, patch: Partial<AdminItemInput>
     actorName: user.name,
     payload: { patch },
   });
+  // No fundRequestId on the record — best-effort, no notification.
 
   try { revalidatePath("/monthly-fund-request"); revalidatePath("/budget"); } catch { /* noop */ }
   return { ok: true, id };

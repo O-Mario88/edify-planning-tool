@@ -39,6 +39,7 @@ export type PartnerActionResult<T = { id: string }> =
 // Role gates
 const PARTNER_ROLES = new Set(["PartnerAdmin", "PartnerFieldOfficer", "Admin"]);
 const CCEO_ROLES    = new Set(["CCEO", "Admin"]);
+const PL_ROLES      = new Set(["CountryProgramLead", "Admin"]);
 const ME_ROLES      = new Set(["ImpactAssessment", "Admin"]);
 const ACCT_ROLES    = new Set(["ProgramAccountant", "Admin"]);
 
@@ -238,11 +239,48 @@ export async function cceoConfirmPartnerActivity(
     actorRole: user.role,
     actorName: user.name,
   });
+  // PL is now the next stop in the partner-payment chain (spec
+  // CCEO → PL → IA → Accountant). The previous flow jumped CCEO
+  // confirm straight to IA verification, leaving the PL invisible.
+  emitNotificationFanOut(["PROGRAM_LEAD"], {
+    template: "partnerActivity.pendingPlApproval",
+    channel: "Inbox",
+    title: `Partner activity ready for your approval: ${a.title}`,
+    body: "CCEO confirmed delivery. Review & approve before IA verification.",
+    href: `/data-verification`,
+  });
+  revalidatePartnerSurfaces(activityId);
+  return { ok: true, id: activityId };
+}
+
+// ─── 4b. plApprovePartnerActivity (CCEO confirm → PL approve → IA) ──
+
+export async function plApprovePartnerActivity(
+  activityId: string,
+): Promise<PartnerActionResult> {
+  const user = await getCurrentUser();
+  if (!PL_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+  const a = findPartnerActivity(activityId);
+  if (!a) return { ok: false, reason: "NOT_FOUND" };
+  if (a.status !== "CceoConfirmed") {
+    return { ok: false, reason: "INVALID_STATE", current: a.status };
+  }
+  updatePartnerActivity(activityId, {
+    status: "PlApproved",
+  });
+  emitAudit({
+    action: "partnerActivity.plApproved",
+    subjectKind: "PartnerActivity",
+    subjectId: activityId,
+    actorId: user.staffId,
+    actorRole: user.role,
+    actorName: user.name,
+  });
   emitNotificationFanOut(["IMPACT_ASSESSMENT"], {
     template: "partnerActivity.pendingMeVerification",
     channel: "Inbox",
-    title: `Partner activity confirmed: ${a.title}`,
-    body: "CCEO confirmed delivery. Ready for M&E verification.",
+    title: `Partner activity approved by PL: ${a.title}`,
+    body: "PL signed off on the CCEO confirmation. Ready for M&E verification.",
     href: `/data-verification`,
   });
   revalidatePartnerSurfaces(activityId);
@@ -258,7 +296,9 @@ export async function meVerifyPartnerActivity(
   if (!ME_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
   const a = findPartnerActivity(activityId);
   if (!a) return { ok: false, reason: "NOT_FOUND" };
-  if (a.status !== "CceoConfirmed") {
+  // Accept PlApproved (the new canonical predecessor) or CceoConfirmed
+  // (back-compat for activities started before the PL gate was wired).
+  if (a.status !== "PlApproved" && a.status !== "CceoConfirmed") {
     return { ok: false, reason: "INVALID_STATE", current: a.status };
   }
   updatePartnerActivity(activityId, {

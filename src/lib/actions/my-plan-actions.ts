@@ -95,6 +95,12 @@ function revalidate(schoolId?: string) {
   try {
     revalidatePath("/plans");
     revalidatePath("/planning");
+    revalidatePath("/my-plan");
+    revalidatePath("/today");
+    revalidatePath("/calendar");
+    revalidatePath("/team-plan");
+    revalidatePath("/dashboards/cceo");
+    revalidatePath("/dashboards/cpl");
     if (schoolId) revalidatePath(`/schools/${schoolId}`);
   } catch { /* outside a request scope (e.g. tests) */ }
 }

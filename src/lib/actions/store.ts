@@ -250,6 +250,7 @@ export type PartnerActivityStatus =
   | "Planned"
   | "Delivered"
   | "CceoConfirmed"
+  | "PlApproved"   // PL signs off on the CCEO confirmation before IA verifies
   | "MeVerified"
   | "Rejected"
   | "Cancelled";

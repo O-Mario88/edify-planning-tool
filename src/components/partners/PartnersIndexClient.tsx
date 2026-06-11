@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Handshake,
@@ -68,8 +69,19 @@ function pctTone(pct: number): { text: string; bar: string } {
 }
 
 export function PartnersIndexClient({ role, userName }: { role: EdifyRole; userName: string }) {
+  const router = useRouter();
   const [added, setAdded] = useState<AddedPartner[]>([]);
   const [openForm, setOpenForm] = useState(false);
+
+  // Activate / deactivate updates the client store immediately (for
+  // this page's subscribePartners listener) and asks the router to
+  // refresh so server-rendered schedule drawers — which call
+  // assignablePartners() server-side — see the new lifecycle state
+  // without a hard reload.
+  const flipPartnerStatus = (id: string, next: PartnerLifecycleStatus) => {
+    setPartnerStatus(id, next, userName, role);
+    router.refresh();
+  };
   const canAdd = canAddPartner(role);
 
   // Hydrate and subscribe to the client-side partner store. Migrate to
@@ -196,7 +208,7 @@ export function PartnersIndexClient({ role, userName }: { role: EdifyRole; userN
                     status === "Active" ? (
                       <button
                         type="button"
-                        onClick={() => setPartnerStatus(p.id, "Inactive", userName, role)}
+                        onClick={() => flipPartnerStatus(p.id, "Inactive")}
                         className="h-8 px-3 rounded-md border border-[var(--color-edify-border)] text-[11.5px] font-bold hover:bg-[var(--color-edify-soft)]/40"
                       >
                         Deactivate
@@ -204,7 +216,7 @@ export function PartnersIndexClient({ role, userName }: { role: EdifyRole; userN
                     ) : (
                       <button
                         type="button"
-                        onClick={() => setPartnerStatus(p.id, "Active", userName, role)}
+                        onClick={() => flipPartnerStatus(p.id, "Active")}
                         className="h-8 px-3 rounded-md bg-[var(--color-edify-primary)] text-white text-[11.5px] font-bold hover:opacity-95"
                       >
                         Activate

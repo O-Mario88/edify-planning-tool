@@ -24,6 +24,28 @@ import {
   type CreateProjectActivityInput,
 } from "@/lib/projects/project-activities";
 import { assignProjectSchool, removeProjectSchool } from "@/lib/api/surfaces";
+import { intakeSchools } from "@/lib/intake/intake-mock";
+import { schoolWorkflowState } from "@/lib/school-directory/school-state";
+
+// Spine gate — a school must clear the planning prerequisites before
+// project tagging. Returns ok:false with a human reason when it
+// hasn't (unclustered, no SSA, owner unresolved, etc.).
+function projectAssignmentGateFor(schoolId: string): { ok: true } | { ok: false; reason: string } {
+  const s = intakeSchools.find((x) => x.schoolId === schoolId);
+  if (!s) return { ok: true }; // backend-only schools — backend enforces its own gate
+  const state = schoolWorkflowState(s);
+  if (state.stage === "planning_ready") return { ok: true };
+  const reasonMap: Record<string, string> = {
+    needs_owner:   "School owner is unresolved. Map it in the IA queue before tagging into a project.",
+    duplicate:     "School is flagged as a possible duplicate. Resolve it in the IA queue first.",
+    unclustered:   "Assign the school to a cluster before tagging it into a project.",
+    ssa_required:  "Upload a first SSA before tagging the school into a project.",
+  };
+  return {
+    ok: false,
+    reason: reasonMap[state.stage] ?? `School is at ${state.stageLabel}; complete planning prerequisites first.`,
+  };
+}
 
 const PROJECT_ROLES = new Set<string>([
   "CCEO",
@@ -70,6 +92,15 @@ export async function assignSchoolToProjectAction(
   if (!PROJECT_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
   if (!canManageProjectById(user.role, projectId)) return { ok: false, reason: "FORBIDDEN" };
 
+  // Spine gate: a special project assignment is real planning work, so
+  // the school must be plannable (clustered + SSA done). Otherwise the
+  // project tag attaches to a locked school and downstream analytics
+  // count work that can't happen.
+  const gate = projectAssignmentGateFor(schoolId);
+  if (!gate.ok) {
+    return { ok: false, reason: "FAILED", message: gate.reason };
+  }
+
   // Backend is the source of truth when enabled: it validates the school against
   // the real School Directory, enforces the permission, persists the assignment,
   // and writes an audit log. We then mirror into the mock so the FE's project
@@ -114,6 +145,8 @@ export async function assignSchoolsToProjectAction(
   let assigned = 0;
   let skipped = 0;
   for (const schoolId of schoolIds) {
+    // Spine gate per-school — same as the single-school action above.
+    if (!projectAssignmentGateFor(schoolId).ok) { skipped += 1; continue; }
     // Backend first (source of truth + Directory validation), then mirror to mock.
     const be = await assignProjectSchool(user, projectId, schoolId);
     if (be.live === false && be.error) { skipped += 1; continue; }

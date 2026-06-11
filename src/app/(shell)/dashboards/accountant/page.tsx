@@ -11,18 +11,30 @@ import { StaffAccountabilityQueue } from "@/components/accountant-console/StaffA
 import type { CceoFunnelStage } from "@/lib/cceo-mock";
 import { getCurrentUser } from "@/lib/auth";
 import { ROLE_REDIRECT } from "@/lib/auth-public";
-import { activities } from "@/lib/actions/store";
+import { activities, fundRequests, disbursements } from "@/lib/actions/store";
 
 // The finance leg of the workflow — where cleared money is on its way to
-// paid. Largest stage-to-stage drop (here: Cleared → Netsuite ID) is the
-// bottleneck the funnel calls out, matching the spec's Netsuite emphasis.
-const ACCOUNTANT_PAYMENT_STAGES: CceoFunnelStage[] = [
-  { key: "iaVerified",   label: "IA verified",         count: 18, href: "/approvals" },
-  { key: "toAccountant", label: "Sent to accountant",  count: 15, href: "/disbursements" },
-  { key: "cleared",      label: "Cleared",             count: 13, href: "/disbursements" },
-  { key: "netsuite",     label: "Netsuite ID entered", count: 8,  href: "/disbursements" },
-  { key: "paid",         label: "Paid",                count: 7,  href: "/disbursements" },
-];
+// paid. Counts come from the live store: activity statuses (Verified,
+// AccountabilityClosed) feed the IA-verified/Paid ends, fund requests
+// feed the cleared/sent stages, disbursements feed the actually-disbursed
+// stage. Largest stage-to-stage drop is the bottleneck.
+function paymentPipelineStages(): CceoFunnelStage[] {
+  const acts = activities();
+  const reqs = fundRequests();
+  const disb = disbursements();
+  const iaVerified   = acts.filter((a) => a.status === "Verified").length;
+  const toAccountant = reqs.filter((r) => r.status === "APPROVED" || r.status === "READY_TO_DISBURSE").length;
+  const cleared      = reqs.filter((r) => r.status === "DISBURSED" || r.status === "RECEIVED").length;
+  const netsuite     = acts.filter((a) => a.status === "AccountabilityClosed" && !!a.netsuiteExpenseId).length;
+  const paid         = disb.length;
+  return [
+    { key: "iaVerified",   label: "IA verified",         count: iaVerified,   href: "/approvals" },
+    { key: "toAccountant", label: "Sent to accountant",  count: toAccountant, href: "/disbursements" },
+    { key: "cleared",      label: "Cleared",             count: cleared,      href: "/disbursements" },
+    { key: "netsuite",     label: "Netsuite ID entered", count: netsuite,     href: "/disbursements" },
+    { key: "paid",         label: "Paid",                count: paid,         href: "/disbursements" },
+  ];
+}
 
 // /dashboards/accountant — Program Accountant Console.
 //
@@ -56,7 +68,7 @@ export default async function AccountantConsolePage() {
       {/* Payment pipeline — the statistics snapshot, directly below the
           hero: where money is stuck before the queues. */}
       <VerificationPaymentFunnel
-        stages={ACCOUNTANT_PAYMENT_STAGES}
+        stages={paymentPipelineStages()}
         title="Payment Pipeline"
         subtitle="IA verified → Sent to accountant → Cleared → Netsuite ID → Paid"
       />
