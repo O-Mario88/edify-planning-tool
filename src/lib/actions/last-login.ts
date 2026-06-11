@@ -66,10 +66,10 @@ const SEED_BY_ROLE: Record<EdifyRole, Seed[]> = {
     { id: "d1", kind: "Plans approved by PLs",       subject: "12 plans this week",  context: "UGX 38M total",         hoursAgo: 4,  tone: "info",   href: "/approvals" },
     { id: "d2", kind: "Cost settings draft",         subject: "Q2 cost rates",       context: "awaiting your activation", hoursAgo: 14, tone: "warn", href: "/cost-settings" },
     { id: "d3", kind: "Country backlog cleared",     subject: "Salesforce match queue", context: "down from 164 to 81",   hoursAgo: 20, tone: "success", href: "/data-verification" },
-    { id: "d4", kind: "RVP requested clarification", subject: "May funding envelope", context: "see RVP note",          hoursAgo: 30, tone: "warn",  href: "/funds/approvals" },
+    { id: "d4", kind: "RVP requested clarification", subject: "May funding envelope", context: "see RVP note",          hoursAgo: 30, tone: "warn",  href: "/approvals" },
   ],
   RVP: [
-    { id: "r1", kind: "Country envelope submitted",  subject: "Uganda · May 2026",   context: "UGX 142M",              hoursAgo: 3,  tone: "info",    href: "/funds/approvals" },
+    { id: "r1", kind: "Country envelope submitted",  subject: "Uganda · May 2026",   context: "UGX 142M",              hoursAgo: 3,  tone: "info",    href: "/approvals" },
     { id: "r2", kind: "Country at risk",             subject: "Kenya · staff pace",  context: "5 of 8 CCEOs behind",   hoursAgo: 12, tone: "danger",  href: "/dashboards/rvp" },
     { id: "r3", kind: "Quarterly report ready",      subject: "Region Q1",           context: "ready to export",       hoursAgo: 28, tone: "success", href: "/reports" },
   ],

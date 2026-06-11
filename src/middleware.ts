@@ -123,6 +123,15 @@ const PROTECTED_PREFIXES = [
   "/analytics",
   "/approvals",
   "/monthly-fund-request",
+  // Audit round 3 — these data/management surfaces were absent from the
+  // allowlist, so they bypassed the login wall entirely (the shell
+  // layout uses getCurrentUserOrNull and never redirects).
+  "/capacity",
+  "/calendar",
+  "/fy",
+  "/exam-scores",
+  "/discipleship-clubs",
+  "/donor-reporting",
 ];
 
 // Role-restricted prefixes. Map prefix → roles allowed. Anyone else with
@@ -164,7 +173,25 @@ const ROLE_RESTRICTED: Array<{ prefix: string; allow: EdifyRole[] }> = [
   // Accountant prepares disbursement after RVP approval.
   { prefix: "/monthly-fund-request",  allow: ["CountryProgramLead", "CountryDirector", "RVP", "ProgramAccountant", "Admin"] },
   { prefix: "/program-lead",          allow: ["CountryProgramLead", "Admin"] },
-  { prefix: "/data-intake",           allow: ["ImpactAssessment", "ProgramAccountant", "CountryDirector", "Admin"] },
+  // Data intake (Add School / Upload SSA / templates / queue / readiness)
+  // is IA + Admin only — "CD does cost, not data" and the accountant's
+  // intake is treasury (weekly-funds), not school data. Previously also
+  // allowed ProgramAccountant + CountryDirector, who could then VIEW the
+  // ungated Upload Center subpages.
+  { prefix: "/data-intake",           allow: ["ImpactAssessment", "Admin"] },
+  // Plan Builder workspace — same field-planning roles as /planning +
+  // /my-plan. Was auth-only with no role gate, so any session (Accountant,
+  // IA, RVP, HR) could open the full builder.
+  { prefix: "/plans",                 allow: ["CCEO", "CountryProgramLead", "Admin"] },
+  // Capacity dashboards — CCEO (own) + PL (team) view; CD/IA set the
+  // per-staff support limits. Excludes RVP/HR/Accountant/Partner.
+  { prefix: "/capacity",              allow: ["CCEO", "CountryProgramLead", "CountryDirector", "ImpactAssessment", "Admin"] },
+  // Analytics — portfolio/country intelligence for the program roles.
+  // HR (people ops) and partner users have no analytics surface.
+  { prefix: "/analytics",             allow: ["CCEO", "CountryProgramLead", "CountryDirector", "RVP", "ImpactAssessment", "ProjectCoordinator", "Admin"] },
+  // Fund requests carry money amounts — visible to the fund-flow roles
+  // only. HR + IA + partners are bounced.
+  { prefix: "/fund-requests",         allow: ["CCEO", "CountryProgramLead", "CountryDirector", "RVP", "ProgramAccountant", "Admin"] },
   // School Directory — operational working surface. Only the roles that
   // actually work schools (CCEO, PL, IA) + the project coordinator who
   // assigns project schools. CD/RVP/HR/Accountant/Partner are bounced to an

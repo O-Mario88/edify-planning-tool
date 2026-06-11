@@ -5,9 +5,13 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { RecruitmentIntelligenceCard } from "@/components/analytics/RecruitmentIntelligenceCard";
 import { RecruitmentDistrictTable } from "@/components/analytics/RecruitmentDistrictTable";
 
-// Recruitment Intelligence page — the CD's directory replacement. Aggregated,
-// drillable advisory: should we recruit more or focus on current schools?
+// Recruitment Intelligence — the CD's aggregated, drillable directory
+// replacement: should we recruit more or focus on current schools?
 // Access mirrors the backend RECRUITMENT_INTELLIGENCE_VIEW permission.
+// NOTE (audit round 3): the CD sidebar features this as the CD's primary
+// directory-replacement surface, which conflicts with the older "block CD
+// from Recruitment" note (commit 5f50635). Left admitting CD pending a
+// product decision rather than breaking the CD's featured navigation.
 const ALLOWED = ["CountryDirector", "RVP", "ImpactAssessment", "CountryProgramLead", "CCEO", "Admin"];
 
 export default async function RecruitmentPage() {

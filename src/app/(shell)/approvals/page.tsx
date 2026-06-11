@@ -17,6 +17,7 @@ import { redirect } from "next/navigation";
 import {
   liveApprovalsForPl,
   liveApprovalsForAccountant,
+  liveCdFundRequests,
 } from "@/lib/funds/live-approval-queue";
 
 // Role-aware Approvals page.
@@ -72,7 +73,11 @@ export default async function FundApprovalsPage() {
     user.role === "Admin";
 
   if (isCountryScope) {
-    return <ResponsiveDashboard mobile={<CountryFundApprovalsView />} desktop={<CountryFundApprovalsView />} />;
+    // Live CD-tier approval queue (non-CCEO requesters) from the action
+    // store — replaces the static cdFundRequests seed the view used to
+    // render. Mirrors the PL/Accountant live migration.
+    const cdRequests = liveCdFundRequests();
+    return <ResponsiveDashboard mobile={<CountryFundApprovalsView cdRequests={cdRequests} />} desktop={<CountryFundApprovalsView cdRequests={cdRequests} />} />;
   }
 
   // Live queue from the action store the server actions mutate. PL sees

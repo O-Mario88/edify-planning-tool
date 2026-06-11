@@ -58,6 +58,25 @@ export type MyPlanResult =
   | { ok: true; id: string }
   | { ok: false; reason: "NOT_FOUND" | "SLIP_LIMIT" | "FORBIDDEN" | "INVALID_INPUT" | "CAPACITY_FULL"; message?: string };
 
+// Can this user act on this activity's lifecycle? Owner (assignee), the
+// assignee's supervisor (PL acting for a supervised CCEO, CD for a PL),
+// or Admin. WITHOUT this guard every My Plan row action was a public
+// mutation endpoint — any authenticated session could reschedule,
+// reassign, cancel, defer, or COMPLETE any activity in the store, since
+// the getCurrentUser() call only stamped the audit row.
+function canActOnActivity(
+  user: { staffId: string; role: string },
+  activity: PlannedActivityRecord,
+): boolean {
+  if (user.role === "Admin") return true;
+  if (activity.assigneeId && activity.assigneeId === user.staffId) return true;
+  if (activity.assigneeId) {
+    const sup = supervisorOf(activity.assigneeId);
+    if (sup?.staffId === user.staffId) return true;
+  }
+  return false;
+}
+
 const TITLE: Record<string, string> = {
   SCHOOL_VISIT: "School visit", IN_SCHOOL_COACHING: "In-school coaching",
   SSA_FOLLOW_UP: "SSA follow-up visit", COURTESY_VISIT: "Courtesy visit",
@@ -256,9 +275,10 @@ export async function rescheduleActivity(id: string, newDateIso: string, reason:
   if (await tryBackend(id, "reschedule", { scheduledDate: newDateIso, reason })) { revalidate(); return { ok: true, id }; }
   const a = findActivity(id);
   if (!a) return { ok: false, reason: "NOT_FOUND" };
+  const user = await getCurrentUser();
+  if (!canActOnActivity(user, a)) return { ok: false, reason: "FORBIDDEN", message: "You can only act on your own (or a supervised CCEO's) plan activities." };
   const count = a.rescheduleCount ?? 0;
   if (!canReschedule(count)) return { ok: false, reason: "SLIP_LIMIT" };
-  const user = await getCurrentUser();
   updateActivity(id, {
     scheduledDate: newDateIso,
     rescheduleCount: count + 1,
@@ -277,6 +297,7 @@ export async function reassignActivity(id: string, delivery: "staff" | "partner"
   const a = findActivity(id);
   if (!a) return { ok: false, reason: "NOT_FOUND" };
   const user = await getCurrentUser();
+  if (!canActOnActivity(user, a)) return { ok: false, reason: "FORBIDDEN", message: "You can only act on your own (or a supervised CCEO's) plan activities." };
   updateActivity(id, { deliveryType: delivery, partnerName: delivery === "partner" ? partnerName : undefined });
   emitAudit({ action: "myplan.activity.reassigned", subjectKind: "Activity", subjectId: id, actorId: user.staffId, actorRole: user.role, actorName: user.name, payload: { delivery, partnerName } });
   revalidate(a.schoolId);
@@ -289,6 +310,7 @@ export async function cancelActivity(id: string, reason: string): Promise<MyPlan
   const a = findActivity(id);
   if (!a) return { ok: false, reason: "NOT_FOUND" };
   const user = await getCurrentUser();
+  if (!canActOnActivity(user, a)) return { ok: false, reason: "FORBIDDEN", message: "You can only act on your own (or a supervised CCEO's) plan activities." };
   updateActivity(id, { status: "Cancelled", lastReason: reason });
   emitAudit({ action: "myplan.activity.cancelled", subjectKind: "Activity", subjectId: id, actorId: user.staffId, actorRole: user.role, actorName: user.name, payload: { reason } });
   revalidate(a.schoolId);
@@ -300,6 +322,7 @@ export async function deferActivity(id: string, reason: string): Promise<MyPlanR
   const a = findActivity(id);
   if (!a) return { ok: false, reason: "NOT_FOUND" };
   const user = await getCurrentUser();
+  if (!canActOnActivity(user, a)) return { ok: false, reason: "FORBIDDEN", message: "You can only act on your own (or a supervised CCEO's) plan activities." };
   updateActivity(id, { status: "Deferred", lastReason: reason });
   emitAudit({ action: "myplan.activity.deferred", subjectKind: "Activity", subjectId: id, actorId: user.staffId, actorRole: user.role, actorName: user.name, payload: { reason } });
   revalidate(a.schoolId);
@@ -311,6 +334,7 @@ export async function completeActivity(id: string, salesforceId?: string): Promi
   const a = findActivity(id);
   if (!a) return { ok: false, reason: "NOT_FOUND" };
   const user = await getCurrentUser();
+  if (!canActOnActivity(user, a)) return { ok: false, reason: "FORBIDDEN", message: "You can only act on your own (or a supervised CCEO's) plan activities." };
   updateActivity(id, { status: "Completed", salesforceId: salesforceId?.trim() || a.salesforceId });
   emitAudit({ action: "myplan.activity.completed", subjectKind: "Activity", subjectId: id, actorId: user.staffId, actorRole: user.role, actorName: user.name, payload: { salesforceId } });
   revalidate(a.schoolId);

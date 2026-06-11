@@ -16,12 +16,14 @@ import {
 } from "./CountryFundFooter";
 import { CreateAdminFundRequestDrawer } from "./CreateAdminFundRequestDrawer";
 import { CdFundApprovalQueue } from "@/components/funds/cd/CdFundApprovalQueue";
+import type { WeeklyFundRequest } from "@/lib/funds/weekly-fund-types";
 
 // Full Country Director Fund Approvals view — assembles the header,
 // filter bar, KPI row, main 5/7 split (Queue + Plan Detail/Rules),
 // 3-card summary row, and footer. Owns the open/closed state for the
-// Create Admin Fund Request drawer.
-export function CountryFundApprovalsView() {
+// Create Admin Fund Request drawer. `cdRequests` is the live CD-tier
+// queue (passed by the /approvals page); the action queue reads it.
+export function CountryFundApprovalsView({ cdRequests }: { cdRequests?: WeeklyFundRequest[] } = {}) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   return (
     <>
@@ -34,7 +36,7 @@ export function CountryFundApprovalsView() {
             requesters (PL / IA / Accountant / SP / Admin). CCEO weekly
             requests stay with the Program Lead. Sits at the top so the
             inbox is the first thing the CD sees. */}
-        <CdFundApprovalQueue />
+        <CdFundApprovalQueue requests={cdRequests} />
 
         {/* Main row — Queue (5) over Recent Activity, paired with
             Plan Detail (7) over Approval Rules. The Queue card is

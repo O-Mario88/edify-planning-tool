@@ -92,3 +92,20 @@ export function liveApprovalsForAccountant(): FundApprovalItem[] {
   );
   return rows.map(adapt);
 }
+
+// CD queue: requests from the higher-tier requesters the Country Director
+// approves (PL / IA / Accountant / Special Projects / Admin). CCEO weekly
+// requests are excluded — they go to the Program Lead. Returns the raw
+// WeeklyFundRequest rows (the CdFundApprovalQueue groups them by
+// requester role itself). Live store, not the cdFundRequests seed.
+export function liveCdFundRequests(): WeeklyFundRequest[] {
+  return fundRequestsStore().filter((r) => {
+    const requester = r.requesterRole ?? r.staffRole;
+    if (requester === "CCEO") return false;
+    return (
+      r.status === "SUBMITTED" ||
+      r.status === "RETURNED_TO_STAFF" ||
+      r.status === "APPROVED"
+    );
+  });
+}

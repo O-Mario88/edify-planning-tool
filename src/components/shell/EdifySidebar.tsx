@@ -396,7 +396,9 @@ function buildAccountantMenu(dashboardHref: string): MenuSection[] {
     {
       label: "Intake",
       items: [
-        { label: "Data Intake",       href: "/data-intake",   Icon: Upload          },
+        // Data Intake (school/SSA upload) is IA + Admin only — dropped
+        // from the accountant menu; their intake is treasury (weekly
+        // funds), not school data.
         { label: "Salesforce Queue",  href: "/queue",         Icon: Database        },
       ],
     },
@@ -498,6 +500,12 @@ function buildImpactMenu(dashboardHref: string): MenuSection[] {
 // plus insights + account. No School Directory, no partner/payment/fund/project
 // operational pages (those are blocked in middleware + backend permissions).
 function buildHrMenu(dashboardHref: string): MenuSection[] {
+  // HR's functional surface is People only — Staff Performance, Leave
+  // Planner, Daily Debrief (plus the universal Dashboard + Account
+  // chrome). The former "Insights" section (Analytics + Reports) was
+  // dropped: country analytics + fund-money reporting are outside HR's
+  // remit, and /analytics is now role-restricted away from HR (the link
+  // would bounce).
   return [
     {
       label: "My Work",
@@ -511,13 +519,6 @@ function buildHrMenu(dashboardHref: string): MenuSection[] {
         { label: "Staff Performance", href: "/staff",         Icon: UserCog },
         { label: "Leave Planner",     href: "/leave",         Icon: CalendarRange },
         { label: "Daily Debrief",     href: "/debriefs",      Icon: Brain },
-      ],
-    },
-    {
-      label: "Insights",
-      items: [
-        { label: "Analytics",         href: "/analytics",     Icon: BarChart3 },
-        { label: "Reports",           href: "/reports",       Icon: FileText },
       ],
     },
     {

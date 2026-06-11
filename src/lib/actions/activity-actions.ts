@@ -360,6 +360,10 @@ export async function uploadEvidence(args: {
   notes?: string;
 }): Promise<ActivityActionResult & { uri?: string }> {
   const user = await getCurrentUser();
+  // Evidence capture is field-staff work — only the assignee role (CCEO)
+  // or Admin may upload. Without this, any session could push a training
+  // participant into the donor-count pipeline (donorCountStatus flip).
+  if (!ASSIGNEE_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
   if (args.contentLength <= 0 || args.contentLength > 25 * 1024 * 1024) {
     return { ok: false, reason: "INVALID_INPUT", field: "contentLength" };
   }

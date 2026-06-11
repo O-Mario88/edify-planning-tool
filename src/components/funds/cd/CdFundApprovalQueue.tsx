@@ -15,7 +15,7 @@ import {
   type LucideIcon,
   XCircle,
 } from "lucide-react";
-import { cdFundRequests } from "@/lib/funds/weekly-fund-mock";
+import { cdFundRequests as cdFundRequestsSeed } from "@/lib/funds/weekly-fund-mock";
 import { formatMoney } from "@/lib/funds/weekly-fund-engine";
 import { REQUESTER_LABEL, RISK_LABEL } from "@/lib/funds/weekly-fund-types";
 import type {
@@ -50,7 +50,11 @@ const ROLE_TONE: Record<Exclude<RequesterRole, "CCEO">, { bg: string; fg: string
 //
 // Requests are grouped by requester type so the CD can scan the
 // inbox by category at a glance.
-export function CdFundApprovalQueue() {
+// `requests` comes from the live fundRequestsStore (passed by the
+// /approvals page via liveCdFundRequests()). Falls back to the demo
+// seed only when a caller renders the queue without props.
+export function CdFundApprovalQueue({ requests }: { requests?: WeeklyFundRequest[] } = {}) {
+  const cdFundRequests = requests ?? cdFundRequestsSeed;
   const [selectedId, setSelectedId] = useState<string | undefined>(() =>
     cdFundRequests.find((r) => r.status === "SUBMITTED")?.id,
   );

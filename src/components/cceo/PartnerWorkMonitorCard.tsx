@@ -113,7 +113,7 @@ export async function PartnerWorkMonitorCard() {
             </span>
           </span>
           <Link
-            href="/clusters/assign"
+            href="/clusters"
             className="shrink-0 inline-flex items-center gap-1 text-[11px] font-extrabold text-sky-900 hover:underline whitespace-nowrap"
           >
             Assign clusters

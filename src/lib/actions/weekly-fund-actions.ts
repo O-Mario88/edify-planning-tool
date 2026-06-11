@@ -126,6 +126,18 @@ const STAFF_ROLES   = new Set(["CCEO", "Admin"]);
 const LEAD_ROLES    = new Set(["CountryProgramLead", "CountryDirector", "Admin"]);
 const ACCT_ROLES    = new Set(["ProgramAccountant", "Admin"]);
 const IA_ROLES      = new Set(["ImpactAssessment", "Admin"]);
+
+// Approver-correctness: a CCEO weekly request is approved by its Program
+// Lead; every other requester (PL / IA / Accountant / SP) goes to the
+// Country Director. Without this, LEAD_ROLES let a CD approve/return an
+// individual CCEO weekly request — the CCEO+PL chain the spec reserves
+// for the PL. Admin always passes.
+function isCorrectApprover(userRole: string, req: { requesterRole?: string; staffRole?: string }): boolean {
+  if (userRole === "Admin") return true;
+  const requester = req.requesterRole ?? req.staffRole ?? "CCEO";
+  const requiredApproverRole = requester === "CCEO" ? "CountryProgramLead" : "CountryDirector";
+  return userRole === requiredApproverRole;
+}
 const CD_ROLES      = new Set(["CountryDirector", "Admin"]);
 
 function actorIdOf(user: { staffId: string; name: string }) {
@@ -215,6 +227,15 @@ function revalidateFundSurfaces(reqId?: string) {
 export async function generateWeeklyFundRequestsForPlan(
   planId: string,
 ): Promise<{ ok: true; requestIds: string[] } | { ok: false; reason: string }> {
+  // Auth: this is an exported "use server" action (callable by any
+  // session), and it mints + upserts money records. Only the staff who
+  // owns the plan, their lead, or Admin may trigger generation. Other
+  // server actions call it internally AFTER their own role gate, so the
+  // re-check here is cheap and closes the public-endpoint hole.
+  const user = await getCurrentUser();
+  if (!STAFF_ROLES.has(user.role) && !LEAD_ROLES.has(user.role)) {
+    return { ok: false, reason: "Forbidden" };
+  }
   const plan = findPlan(planId);
   if (!plan) return { ok: false, reason: "Plan not found" };
 
@@ -356,6 +377,7 @@ export async function approveFundRequest(reqId: string, note?: string): Promise<
   }
   const req = findFundRequest(reqId);
   if (!req) return { ok: false, reason: "NOT_FOUND" };
+  if (!isCorrectApprover(user.role, req)) return { ok: false, reason: "FORBIDDEN" };
   const res = approveWeeklyFundRequestByLead(req, actorIdOf(user), { note });
   if (!res.ok || !res.data) return { ok: false, reason: "ENGINE_ERROR", error: res.error ?? "approve failed" };
   upsertFundRequest(res.data);
@@ -423,6 +445,7 @@ export async function returnFundRequest(reqId: string, reason: string): Promise<
   }
   const req = findFundRequest(reqId);
   if (!req) return { ok: false, reason: "NOT_FOUND" };
+  if (!isCorrectApprover(user.role, req)) return { ok: false, reason: "FORBIDDEN" };
   const res = returnWeeklyFundRequestByLead(req, actorIdOf(user), reason);
   if (!res.ok || !res.data) return { ok: false, reason: "ENGINE_ERROR", error: res.error ?? "return failed" };
   upsertFundRequest(res.data);
