@@ -13,7 +13,6 @@ import {
   ChevronLeft,
   TrendingUp,
 } from "lucide-react";
-import { AppShell } from "@/components/app/AppShell";
 import { SectionCard, StatusBadge, ProgressRing } from "@/components/ui/primitives";
 import { MetricStrip } from "@/components/ui/MetricStrip";
 import { ActionButton } from "@/components/ui/ActionButton";
@@ -184,13 +183,18 @@ export default async function School360({
 
   return (
     <ResponsiveDashboard mobile={<SchoolDetailMobileView school={s} />} desktop={
-    <AppShell
-      role="CCEO"
-      title="School 360"
-      subtitle="Operational profile, SSA history, planned vs completed activities, and verification trail."
-      filters={["financialYear", "month", "region"]}
-    >
-      <div className="-mt-2">
+    // Canonical in-shell page chrome (CorePageHeader) — replaces the
+    // legacy AppShell/AppTopHeader, which rendered a parallel header with
+    // dead FY/month/region filter pills + a dead search on top of the
+    // app's real shell. Mirrors BackendSchool360 below.
+    <>
+      <CorePageHeader
+        icon="schools"
+        title="School 360"
+        subtitle="Operational profile, SSA history, planned vs completed activities, and verification trail."
+      />
+      <div className="px-3 sm:px-4 md:px-6 pb-24 lg:pb-6 space-y-3 pt-3">
+      <div>
         <Link
           href="/schools"
           className="inline-flex items-center gap-1 text-[12px] muted hover:text-[var(--color-edify-text)]"
@@ -474,7 +478,8 @@ export default async function School360({
           </SectionCard>
         </div>
       </section>
-    </AppShell>
+      </div>
+    </>
     } />
   );
 }
