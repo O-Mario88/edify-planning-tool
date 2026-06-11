@@ -320,6 +320,13 @@ export async function updateActivity(
     return { ok: false, reason: "INVALID_INPUT", field: "estCostCents" };
   }
 
+  // Detect a reschedule that crosses a week boundary before the patch
+  // is applied so we can recalc the weekly fund request afterwards
+  // (punch-list B11 — was specced but never wired). A reschedule is
+  // either an explicit weekOfMonth change OR a scheduledDate change
+  // whose ISO falls in a different calendar week.
+  const oldWeek      = activity.weekOfMonth;
+  const oldDateIso   = activity.scheduledDate;
   const updated = updateActivityRow(activityId, patch);
   if (!updated) return { ok: false, reason: "NOT_FOUND" };
   recomputePlanTotal(plan.id);
@@ -334,8 +341,36 @@ export async function updateActivity(
     payload: { activityId, patch },
   });
 
+  const newWeek    = updated.weekOfMonth;
+  const newDateIso = updated.scheduledDate;
+  const weekChanged = newWeek !== oldWeek;
+  const dateCrossedWeek =
+    !!oldDateIso && !!newDateIso && oldDateIso !== newDateIso &&
+    isoCalendarWeek(oldDateIso) !== isoCalendarWeek(newDateIso);
+  if (weekChanged || dateCrossedWeek) {
+    // Fire-and-forget — recalc never blocks the user's reschedule.
+    // The generator regenerates / upserts the affected weekly fund
+    // requests and revalidates the fund surfaces itself.
+    void generateWeeklyFundRequestsForPlan(plan.id).catch(() => {});
+  }
+
   revalidatePlanSurfaces(plan.id);
   return { ok: true, id: activityId };
+}
+
+/** ISO calendar-week key — used to detect a reschedule that
+ *  crosses a week boundary so the MFR can recalc (B11). */
+function isoCalendarWeek(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  // Move to nearest Thursday: current date + 4 - current day number
+  // (ISO weeks start Monday).
+  const t = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  const day = t.getUTCDay() || 7;
+  t.setUTCDate(t.getUTCDate() + 4 - day);
+  const yearStart = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+  const week = Math.ceil(((+t - +yearStart) / 86_400_000 + 1) / 7);
+  return `${t.getUTCFullYear()}-W${String(week).padStart(2, "0")}`;
 }
 
 // ─── 4. removeActivity ──────────────────────────────────────────────

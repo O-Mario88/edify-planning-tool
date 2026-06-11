@@ -5,7 +5,7 @@
 // carries its own freshness window).
 
 import { requireCceo, ok, type NextAction } from "../_auth";
-import { cceoAutoReports, recentReports, scheduledReports } from "@/lib/reports-mock";
+import { cceoAutoReports, recentReports, scheduledReports } from "@/lib/reports-types";
 
 export const dynamic = "force-dynamic";
 

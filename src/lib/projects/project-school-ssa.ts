@@ -17,6 +17,8 @@
 
 import type { SsaInterventionArea } from "@/lib/planning/planning-gaps-mock";
 import { SSA_INTERVENTIONS } from "@/lib/planning/ssa-performance-mock";
+import { ssaUploads } from "@/lib/intake/intake-mock";
+import { normalizeScores } from "@/lib/planning/intervention-taxonomy";
 
 export type InterventionScores = Record<SsaInterventionArea, number>; // 0–10
 
@@ -123,19 +125,56 @@ const BY_SCHOOL: Record<string, ProjectSchoolSsa> = Object.fromEntries(
   SEED.map((r) => [r.schoolId, r]),
 );
 
+/** Build the latest live SSA reading for `schoolId` from the intake
+ *  uploads store, or undefined when no upload exists. Used to overlay
+ *  fresh IA captures on top of the seed so analytics / cluster
+ *  heatmaps / Special Projects see new SSAs without a deploy. */
+function liveCurrentForSchool(schoolId: string): { date: string; current: InterventionScores } | undefined {
+  const upload = ssaUploads
+    .filter((u) => u.schoolId === schoolId)
+    .sort((a, b) => (a.ssaDate < b.ssaDate ? 1 : -1))[0];
+  if (!upload) return undefined;
+  const normalized = normalizeScores(upload.scores);
+  // Only override when the upload covers all 8 interventions (partial
+  // uploads carry too many holes for the impact engine).
+  for (const area of SSA_INTERVENTIONS) {
+    if (typeof normalized[area] !== "number") return undefined;
+  }
+  return {
+    date: upload.ssaDate,
+    current: normalized as InterventionScores,
+  };
+}
+
 export function ssaForSchool(schoolId: string): ProjectSchoolSsa | undefined {
-  return BY_SCHOOL[schoolId];
+  const live = liveCurrentForSchool(schoolId);
+  const seed = BY_SCHOOL[schoolId];
+  if (live && seed) {
+    return { ...seed, currentDate: live.date, current: live.current };
+  }
+  if (live) {
+    // No seed baseline yet — surface the upload as both baseline and current
+    // so impact stays neutral (zero movement) until a second upload lands.
+    return {
+      schoolId,
+      baselineDate: live.date,
+      baseline: live.current,
+      currentDate: live.date,
+      current: live.current,
+    };
+  }
+  return seed;
 }
 
 export function hasSsa(schoolId: string): boolean {
-  return schoolId in BY_SCHOOL;
+  return !!ssaForSchool(schoolId);
 }
 
 export type WeakInterventionPick = { intervention: SsaInterventionArea; score: number };
 
 /** Lowest-scoring intervention on the most recent SSA (the gap). */
 export function weakestIntervention(schoolId: string): WeakInterventionPick | undefined {
-  const r = BY_SCHOOL[schoolId];
+  const r = ssaForSchool(schoolId);
   if (!r) return undefined;
   let pick: WeakInterventionPick | undefined;
   for (const area of SSA_INTERVENTIONS) {
@@ -151,11 +190,13 @@ export function interventionScore(
   intervention: SsaInterventionArea,
   which: "baseline" | "current",
 ): number | undefined {
-  const r = BY_SCHOOL[schoolId];
+  const r = ssaForSchool(schoolId);
   return r ? r[which][intervention] : undefined;
 }
 
-/** All school ids with seeded SSA scores (the assignable+scored pool). */
+/** All school ids with SSA — seed plus any school with a live upload. */
 export function scoredSchoolIds(): string[] {
-  return Object.keys(BY_SCHOOL);
+  const ids = new Set(Object.keys(BY_SCHOOL));
+  for (const u of ssaUploads) ids.add(u.schoolId);
+  return Array.from(ids);
 }

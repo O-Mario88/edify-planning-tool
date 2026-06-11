@@ -1,11 +1,11 @@
 // CCEO partner-work monitoring (spec §15) — buildPartnerWork(user).
 //
-// Thin derivation layer over the partner-monitoring engine
-// (partner-monitoring-mock.ts), which mirrors the workflow state
-// machine in partner-workflow.ts. This wrapper groups the raw monitor
-// rows into the six CCEO monitor buckets and ranks the most urgent
-// rows, so the dashboard card, the /partners monitor section, and a
-// future /api/cceo/partner-work route all read the exact same shape.
+// Thin derivation layer over partner-monitoring-types (the typed,
+// empty-by-default seed; live rows arrive once PartnerService exposes
+// the SQL view). This wrapper groups raw monitor rows into the six
+// CCEO monitor buckets and ranks the most urgent rows, so the
+// dashboard card, the /partners monitor section, and the
+// /api/cceo/partner-work route all read the exact same shape.
 //
 // Scope: the monitor rows are authored as "every partner activity this
 // staff member assigned" (their schools/clusters), so for the CCEO the
@@ -18,7 +18,7 @@ import {
   delayAlerts,
   monitorEvidenceLink,
   type StaffMonitorRow,
-} from "@/lib/partner/partner-monitoring-mock";
+} from "@/lib/partner/partner-monitoring-types";
 import {
   STATUS_LABEL,
   type PartnerWorkflowStatus,

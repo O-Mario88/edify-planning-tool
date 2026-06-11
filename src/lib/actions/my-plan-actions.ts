@@ -168,6 +168,29 @@ export async function scheduleSchoolActivity(input: {
   emitAudit({ action: "myplan.activity.scheduled", subjectKind: "Activity", subjectId: act.id, actorId: user.staffId, actorRole: user.role, actorName: user.name, payload: { schoolId: input.schoolId, kind: input.kind } });
   // Near/at-limit escalation after a staff self-assign (spec §21).
   if (!toPartner) notifyCapacity(user.staffId, user.name, computeStaffCapacity(user.staffId));
+  // Partner-delivered: push to the partner so they see the new
+  // assignment immediately instead of discovering it on their next
+  // dashboard visit. Looked up by name (best-effort) — partners that
+  // can't be resolved skip the notify, audit still fires.
+  if (toPartner && input.partnerName) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { partners } = require("@/lib/partner/partner-mock") as
+      typeof import("@/lib/partner/partner-mock");
+    const partner = partners.find(
+      (p: { name: string; shortName?: string }) =>
+        p.name === input.partnerName || p.shortName === input.partnerName,
+    );
+    if (partner) {
+      emitNotification({
+        userId: partner.id,
+        template: "partnerActivity.assigned",
+        channel: "Inbox",
+        title: `New activity assigned: ${act.title}`,
+        body: `${user.name} routed ${TITLE[input.kind] ?? "an activity"} at ${input.schoolName ?? input.schoolId} to you.`,
+        href: "/partner/today",
+      });
+    }
+  }
   revalidate(input.schoolId);
   return { ok: true, id: act.id };
 }

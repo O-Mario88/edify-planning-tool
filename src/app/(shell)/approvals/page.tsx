@@ -14,7 +14,10 @@ import { RvpFundApprovalsView } from "@/components/approvals/rvp/RvpFundApproval
 import { getCurrentUser } from "@/lib/auth";
 import { ROLE_REDIRECT, type EdifyRole } from "@/lib/auth-public";
 import { redirect } from "next/navigation";
-import { fundApprovalQueue } from "@/lib/fund-approvals-mock";
+import {
+  liveApprovalsForPl,
+  liveApprovalsForAccountant,
+} from "@/lib/funds/live-approval-queue";
 
 // Role-aware Approvals page.
 //
@@ -72,7 +75,15 @@ export default async function FundApprovalsPage() {
     return <ResponsiveDashboard mobile={<CountryFundApprovalsView />} desktop={<CountryFundApprovalsView />} />;
   }
 
-  const approvalExportRows = fundApprovalQueue.map((f) => ({
+  // Live queue from the action store the server actions mutate. PL sees
+  // their team's pending submissions + returns; Accountant sees
+  // PL-approved requests across teams ready for disbursement.
+  const liveQueue =
+    user.role === "ProgramAccountant"
+      ? liveApprovalsForAccountant()
+      : liveApprovalsForPl(user.staffId);
+
+  const approvalExportRows = liveQueue.map((f) => ({
     CCEO: f.cceoName, District: f.district, Region: f.region,
     Amount: f.amount, Status: f.status,
     Visits: f.counts.visits, Partners: f.counts.partners,
@@ -97,7 +108,7 @@ export default async function FundApprovalsPage() {
               actions. ApprovalRulesCard docks below the detail. */}
         <section className="grid grid-cols-12 gap-3 lg:gap-4 items-start">
           <div className="col-span-12 xl:col-span-7">
-            <FundApprovalQueue queue={fundApprovalQueue} />
+            <FundApprovalQueue queue={liveQueue} />
           </div>
           <div className="col-span-12 xl:col-span-5 flex flex-col gap-3 lg:gap-4">
             {/* Side detail pane — desktop only. Reads the same ?plan=
@@ -105,7 +116,7 @@ export default async function FundApprovalsPage() {
                 this pane. Hidden below xl since the queue handles its
                 own inline expansion there. */}
             <div className="hidden xl:block">
-              <FundPlanDetail queue={fundApprovalQueue} />
+              <FundPlanDetail queue={liveQueue} />
             </div>
             <ApprovalRulesCard />
           </div>

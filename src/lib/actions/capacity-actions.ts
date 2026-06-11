@@ -24,5 +24,9 @@ export async function setStaffSupportLimit(staffId: string, max: number, notes?:
     payload: { max, notes },
   });
   try { revalidatePath("/capacity"); } catch { /* outside request */ }
+  // Raising a limit unblocks self-assignment in the planning drawers.
+  // Lowering may push the staff member back over capacity. Either way
+  // /planning's "can assign to self" decision needs to refresh.
+  try { revalidatePath("/planning"); } catch { /* outside request */ }
   return { ok: true };
 }

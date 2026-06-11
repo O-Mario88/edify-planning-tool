@@ -75,6 +75,38 @@ import type {
 } from "@/lib/funds/weekly-fund-types";
 import { activities as activitiesStore } from "./store";
 import { isValidId } from "@/lib/intake/id-formats";
+import {
+  activeCostFor,
+  type CostItem,
+} from "@/lib/cost-settings-mock";
+import type { ActivityKind } from "@/lib/actions/store";
+
+// Activity kind → cost-catalogue item. Drives plan-derived weekly
+// fund generation so changing a catalogue rate at /cost-settings
+// flows into next week's slip without code changes (audit-flagged
+// gap — generation previously hardcoded a.estCostCents only).
+const KIND_TO_CATALOGUE: Record<ActivityKind, CostItem> = {
+  CLUSTER_TRAINING:   "Cluster training cost",
+  IN_SCHOOL_COACHING: "In-School coaching cost",
+  SCHOOL_VISIT:       "Staff school visit cost",
+  SSA_FOLLOW_UP:      "SSA support cost",
+  HANDOVER_MEETING:   "Cluster Meeting Cost Per Participant",
+  LESSON_OBSERVATION: "Staff school visit cost",
+  PARTNER_FOLLOW_UP:  "Partner school visit cost",
+  TRAINING_FOLLOW_UP: "Training Session Fee",
+  DATA_COLLECTION:    "SSA verification cost",
+  COURTESY_VISIT:     "Staff school visit cost",
+};
+
+/** Look up the CD-approved catalogue unit cost for an activity kind;
+ *  returns null when no Active rate exists so the caller can fall
+ *  back to the activity's own estimate. */
+function catalogueUnitCostFor(kind: ActivityKind): number | null {
+  const item = KIND_TO_CATALOGUE[kind];
+  if (!item) return null;
+  const rate = activeCostFor(item);
+  return rate > 0 ? rate : null;
+}
 
 // ─── Result types ──────────────────────────────────────────────────
 
@@ -93,6 +125,7 @@ export type FundActionResult<T = { id: string }> =
 const STAFF_ROLES   = new Set(["CCEO", "Admin"]);
 const LEAD_ROLES    = new Set(["CountryProgramLead", "CountryDirector", "Admin"]);
 const ACCT_ROLES    = new Set(["ProgramAccountant", "Admin"]);
+const IA_ROLES      = new Set(["ImpactAssessment", "Admin"]);
 const CD_ROLES      = new Set(["CountryDirector", "Admin"]);
 
 function actorIdOf(user: { staffId: string; name: string }) {
@@ -140,10 +173,11 @@ function bridgeNotifications(events: WeeklyFundNotification[]): void {
 }
 
 function titleForTemplate(template: string, reqId: string): string {
-  // Light human-friendly mapping; full catalog lives in
-  // src/lib/notifications-mock.ts for the future i18n pass.
+  // Light human-friendly mapping; the production copy + i18n catalog
+  // lives in the backend Notification template registry.
   switch (template) {
     case "REQUEST_AUTO_GENERATED":  return "Weekly fund request ready to submit";
+    case "REQUEST_SUBMITTED":       return "Fund request awaiting your approval";
     case "REQUEST_APPROVED":        return "Fund request approved";
     case "REQUEST_RETURNED":        return "Fund request returned";
     case "REQUEST_DISBURSED":       return "Funds disbursed";
@@ -190,34 +224,41 @@ export async function generateWeeklyFundRequestsForPlan(
   const allActivities = activitiesStore().filter((a) => a.planId === planId);
   if (allActivities.length === 0) return { ok: false, reason: "Plan has no activities" };
 
-  const planActivityInputs = allActivities.map((a) => ({
-    id: a.id,
-    staffId: a.assigneeId ?? plan.authorId,
-    staffName: plan.authorName,
-    staffRole: "CCEO" as const,
-    district: "Northern District", // mock — production reads from User.district
-    programLeadId: "PL_DEFAULT",
-    programLeadName: "Program Lead",
-    countryId: plan.countryId,
-    monthlyPlanId: planId,
-    weekOfMonth: Math.min(Math.max(a.weekOfMonth, 1), 4) as 1 | 2 | 3 | 4,
-    activity: {
+  const planActivityInputs = allActivities.map((a) => {
+    // Prefer the CD-approved catalogue rate so a rate change at
+    // /cost-settings carries straight into the next slip. Fall back
+    // to the activity's own estimate when the catalogue is missing.
+    const rate = catalogueUnitCostFor(a.kind);
+    const unit = rate ?? a.estCostCents;
+    return ({
       id: a.id,
-      originPlanLineId: a.id,
-      kind: "SchoolVisit" as const,
-      title: a.title,
-      plannedDay: a.scheduledDate ?? "Mon",
-      costBreakdown: {
-        transport: { amount: a.estCostCents, currency: "UGX" as const },
-        allowance: ZERO_UGX,
-        meals:     ZERO_UGX,
-        materials: ZERO_UGX,
-        misc:      ZERO_UGX,
+      staffId: a.assigneeId ?? plan.authorId,
+      staffName: plan.authorName,
+      staffRole: "CCEO" as const,
+      district: "Northern District", // mock — production reads from User.district
+      programLeadId: "PL_DEFAULT",
+      programLeadName: "Program Lead",
+      countryId: plan.countryId,
+      monthlyPlanId: planId,
+      weekOfMonth: Math.min(Math.max(a.weekOfMonth, 1), 4) as 1 | 2 | 3 | 4,
+      activity: {
+        id: a.id,
+        originPlanLineId: a.id,
+        kind: "SchoolVisit" as const,
+        title: a.title,
+        plannedDay: a.scheduledDate ?? "Mon",
+        costBreakdown: {
+          transport: { amount: unit, currency: "UGX" as const },
+          allowance: ZERO_UGX,
+          meals:     ZERO_UGX,
+          materials: ZERO_UGX,
+          misc:      ZERO_UGX,
+        },
+        totalCost: { amount: unit, currency: "UGX" as const },
+        status: "Planned" as const,
       },
-      totalCost: { amount: a.estCostCents, currency: "UGX" as const },
-      status: "Planned" as const,
-    },
-  }));
+    });
+  });
 
   const period = {
     fyLabel: "FY 2026",
@@ -320,6 +361,52 @@ export async function approveFundRequest(reqId: string, note?: string): Promise<
   upsertFundRequest(res.data);
   bridgeAudit(res.audit, user.role);
   bridgeNotifications(res.notifications);
+  revalidateFundSurfaces(reqId);
+  return { ok: true, id: reqId };
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 4b. verifyFundRequestByIa (sets iaVerifiedAt → unblocks disburse)
+// ───────────────────────────────────────────────────────────────────
+// IA gate (B12). CCEO weekly fund requests must clear Impact Assessment
+// before the Accountant disburses. IA reviews the underlying activity
+// plan + prior accountability and stamps `iaVerifiedAt`; the disburse
+// action then proceeds. PL/IA/Accountant/Admin requests skip this gate.
+
+export async function verifyFundRequestByIa(reqId: string, note?: string): Promise<FundActionResult> {
+  const user = await getCurrentUser();
+  if (!IA_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+  if (!claimIdempotencyKey(`weeklyFund:${reqId}:iaVerify:${user.staffId}`)) {
+    return { ok: false, reason: "DUPLICATE" };
+  }
+  const req = findFundRequest(reqId);
+  if (!req) return { ok: false, reason: "NOT_FOUND" };
+  if (req.status !== "APPROVED" && req.status !== "READY_TO_DISBURSE") {
+    return { ok: false, reason: "INVALID_STATE", current: req.status };
+  }
+  if (req.iaVerifiedAt) return { ok: true, id: reqId };
+
+  upsertFundRequest({
+    ...req,
+    iaVerifiedAt: new Date().toISOString(),
+    iaVerifiedById: user.staffId,
+  });
+  emitAudit({
+    action: "weeklyFund.iaVerified",
+    subjectKind: "WeeklyFundRequest",
+    subjectId: reqId,
+    actorId: user.staffId,
+    actorRole: user.role,
+    actorName: user.name,
+    payload: { note },
+  });
+  emitNotificationFanOut(["ACCOUNTANT"], {
+    template: "weeklyFund.iaVerified",
+    channel: "Inbox",
+    title: `Fund request ${reqId} cleared by IA`,
+    body: "Impact Assessment verified the underlying plan. Disbursement unblocked.",
+    href: "/disbursements",
+  });
   revalidateFundSurfaces(reqId);
   return { ok: true, id: reqId };
 }
@@ -471,6 +558,14 @@ export async function disburseFundRequest(input: DisburseInput): Promise<FundAct
   if (!batch) return { ok: false, reason: "NOT_FOUND" };
   if (!input.reference || input.reference.trim().length < 3) {
     return { ok: false, reason: "INVALID_INPUT", field: "reference" };
+  }
+
+  // IA verification gate (B12) — CCEO weekly fund requests cannot be
+  // disbursed until Impact Assessment confirms the underlying activity
+  // plan. PL/IA/Accountant/Admin requesters skip this gate.
+  const requesterRole = req.requesterRole ?? req.staffRole;
+  if (requesterRole === "CCEO" && !req.iaVerifiedAt) {
+    return { ok: false, reason: "INVALID_STATE", current: "IA_VERIFICATION_REQUIRED" };
   }
 
   const res = disburseWeeklyFundRequest(req, {

@@ -43,6 +43,16 @@ export function FundPlanDetail({ queue }: { queue: FundApprovalItem[] }) {
   // updated by the server action + Prisma swap-ready). `activePlanDetail`
   // is the deep-detail mock that doesn't change row-by-row yet.
   const selectedItem = queue.find((q) => q.id === selectedPlanId) ?? queue[0];
+  if (!selectedItem) {
+    return (
+      <article className="card p-6 text-center">
+        <p className="text-[12px] muted leading-snug">
+          No fund request selected. Once a CCEO submits a weekly slip, it
+          will appear in the queue and the plan detail opens here.
+        </p>
+      </article>
+    );
+  }
   return (
     <article className="card p-4 flex flex-col">
       {/* Header */}

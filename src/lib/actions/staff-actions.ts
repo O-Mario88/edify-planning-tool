@@ -103,6 +103,10 @@ export async function createStaff(input: NewStaffInput): Promise<StaffActionResu
   });
 
   revalidatePath("/admin/users");
+  // Newly-created staff may be Active immediately (CCEO with supervisor
+  // + targets handed over in one drawer). Refresh /planning so the
+  // assignment drawers offer them without a reload.
+  revalidatePath("/planning");
   return { ok: true, id: staffId, status };
 }
 
@@ -199,6 +203,10 @@ export async function assignTargetProfile(
   }
 
   revalidatePath("/admin/users");
+  // Phase 6 activation makes the staff appear in assignment drawers
+  // (PL → supervised CCEO, capacity overlays). Refresh /planning so PLs
+  // can route to them in the same session.
+  if (activated) revalidatePath("/planning");
   return { ok: true, staffId, activated };
 }
 

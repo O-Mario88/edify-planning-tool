@@ -245,6 +245,12 @@ export type WeeklyFundRequest = {
   submittedAt?: string;
   approvedAt?: string;
   approvedByLeadId?: string;
+  // IA verification gate (punch-list B12). When set, the Accountant
+  // can mark Ready-to-Disburse and disburse. CCEO requests stay
+  // gated until IA confirms; PL/IA/Accountant/Admin requests skip
+  // this gate (they don't carry the CCEO data-quality risk profile).
+  iaVerifiedAt?: string;
+  iaVerifiedById?: string;
   disbursedAt?: string;
   disbursedByAccountantId?: string;
   receivedAt?: string;
@@ -365,6 +371,7 @@ export type WeeklyFundNotification = {
   channel: "Inbox" | "Email" | "SMS";
   template:
     | "REQUEST_AUTO_GENERATED"
+    | "REQUEST_SUBMITTED"
     | "REQUEST_RETURNED"
     | "REQUEST_APPROVED"
     | "REQUEST_DISBURSED"

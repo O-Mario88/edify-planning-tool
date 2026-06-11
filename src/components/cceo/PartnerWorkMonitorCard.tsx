@@ -17,10 +17,12 @@ import { getCurrentUser } from "@/lib/auth";
 import { SectionCard } from "@/components/ui/primitives";
 import { MetricStrip, type MetricCell } from "@/components/ui/MetricStrip";
 import { buildPartnerWork, fmtUgx } from "@/lib/cceo/partner-work";
+import { buildPartnerWorkContext } from "@/lib/cceo/partner-work-context";
 
 export async function PartnerWorkMonitorCard() {
   const user = await getCurrentUser();
   const work = buildPartnerWork(user);
+  const ctx  = buildPartnerWorkContext(user);
 
   // Six buckets → one dense strip. Each cell deep-links into the
   // matching filtered list on /partners.
@@ -83,6 +85,40 @@ export async function PartnerWorkMonitorCard() {
               </Link>
             </div>
           ))}
+        </div>
+      )}
+
+      {ctx.capacity && (ctx.capacity.atLimit || ctx.capacity.nearLimit) && (
+        <div className="mt-3 rounded-md bg-amber-50 border border-amber-200 px-3 py-2 text-[11px] leading-snug">
+          <span className="font-extrabold text-amber-900">
+            You support {ctx.capacity.used} of {ctx.capacity.max} schools directly.
+          </span>{" "}
+          <span className="text-amber-900/80">
+            {ctx.capacity.atLimit
+              ? "You're at your direct-support limit — partner delegation is the route for any NEW school until a slot frees up."
+              : "You're near your direct-support limit — consider partner delegation for the next new school."}
+          </span>
+        </div>
+      )}
+
+      {ctx.clusterGate && (ctx.clusterGate.unclustered > 0 || ctx.clusterGate.needsReview > 0) && (
+        <div className="mt-2 rounded-md bg-sky-50 border border-sky-200 px-3 py-2 text-[11px] leading-snug flex items-start justify-between gap-2">
+          <span>
+            <span className="font-extrabold text-sky-900">
+              {ctx.clusterGate.unclustered + ctx.clusterGate.needsReview} school
+              {ctx.clusterGate.unclustered + ctx.clusterGate.needsReview === 1 ? "" : "s"} blocked at the cluster gate.
+            </span>{" "}
+            <span className="text-sky-900/80">
+              Planning is locked until they're assigned to a cluster — neither you nor a partner can pick them up.
+            </span>
+          </span>
+          <Link
+            href="/clusters/assign"
+            className="shrink-0 inline-flex items-center gap-1 text-[11px] font-extrabold text-sky-900 hover:underline whitespace-nowrap"
+          >
+            Assign clusters
+            <ArrowUpRight size={11} />
+          </Link>
         </div>
       )}
 

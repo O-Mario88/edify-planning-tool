@@ -92,18 +92,28 @@ export function FundApprovalQueue({ queue }: { queue: FundApprovalItem[] }) {
         </div>
       )}
 
-      <ul className="flex flex-col gap-2 flex-1">
-        {queue.map((q, i) => (
-          <QueueRow
-            key={q.id}
-            q={q}
-            approved={approved.has(q.id)}
-            isOpen={q.id === openPlanId}
-            onToggle={() => toggle(q.id)}
-            stagger={["stagger-1","stagger-2","stagger-3","stagger-4","stagger-5","stagger-6"][i] ?? ""}
-          />
-        ))}
-      </ul>
+      {queue.length === 0 ? (
+        <div className="flex-1 grid place-items-center py-10">
+          <p className="text-[12px] muted text-center max-w-md leading-snug">
+            Nothing waiting on you right now. When a CCEO on your team submits
+            a weekly fund slip — or you return one for edits — it appears here
+            with the funding breakdown and the Approve / Return actions.
+          </p>
+        </div>
+      ) : (
+        <ul className="flex flex-col gap-2 flex-1">
+          {queue.map((q, i) => (
+            <QueueRow
+              key={q.id}
+              q={q}
+              approved={approved.has(q.id)}
+              isOpen={q.id === openPlanId}
+              onToggle={() => toggle(q.id)}
+              stagger={["stagger-1","stagger-2","stagger-3","stagger-4","stagger-5","stagger-6"][i] ?? ""}
+            />
+          ))}
+        </ul>
+      )}
 
       <footer className="mt-3 pt-3 border-t border-[#eef2f4] flex items-center justify-between text-[11px] muted">
         <span>Showing 1–{queue.length} of {queue.length}</span>

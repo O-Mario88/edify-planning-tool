@@ -364,7 +364,7 @@ export function confirmWeeklyFundRequest(
       { note: opts?.note }),
   ];
   const notifications: WeeklyFundNotification[] = [
-    notify(next, { role: "ProgramLead", userId: req.programLeadId }, "REQUEST_AUTO_GENERATED"),
+    notify(next, { role: "ProgramLead", userId: req.programLeadId }, "REQUEST_SUBMITTED"),
   ];
   return { ok: true, data: next, audit, notifications };
 }

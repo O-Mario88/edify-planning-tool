@@ -22,6 +22,42 @@ import {
   portfolioForStaffId,
   type PortfolioCounts,
 } from "@/lib/portfolio/portfolio";
+import { activities } from "@/lib/actions/store";
+
+// Activity statuses that count as "done" for the team-plan pace card.
+// Matches the cumulative-target ledger in fy-target-filter-engine —
+// Completed unlocks all downstream verification, so PL sees the same
+// number their CCEO sees as "done this month".
+const DONE_STATUSES: ReadonlySet<string> = new Set([
+  "Completed",
+  "SubmittedForVerification",
+  "SalesforceIdPending",
+  "Verified",
+  "AccountabilityClosed",
+]);
+
+function liveMonthCounts(staffId: string, now: Date = new Date()): {
+  completed: number;
+  scheduledThisMonth: number;
+} {
+  const y = now.getFullYear();
+  const m = now.getMonth();
+  let completed = 0;
+  let scheduledThisMonth = 0;
+  for (const a of activities()) {
+    if (a.assigneeId !== staffId) continue;
+    if (a.deliveryType === "partner") continue; // partner-delivered doesn't count toward staff pace
+    // Anchor on scheduledDate when present, else updatedAt — same
+    // disambiguation the My Plan + targets engines use.
+    const anchorIso = a.scheduledDate ?? a.updatedAt;
+    const d = new Date(anchorIso);
+    if (Number.isNaN(d.getTime())) continue;
+    if (d.getFullYear() !== y || d.getMonth() !== m) continue;
+    scheduledThisMonth++;
+    if (DONE_STATUSES.has(a.status)) completed++;
+  }
+  return { completed, scheduledThisMonth };
+}
 
 // The five supervision labels from the PL spec. One label per CCEO;
 // when several apply, the most actionable wins (worst-first precedence
@@ -148,6 +184,17 @@ export function buildTeamPlan(plStaffId: string): { rows: TeamPlanRow[]; summary
     if (!t) continue; // no target profile yet (staff not Active) — nothing to supervise
     const { status, reasons } = classify(t);
     const portfolio = portfolioForStaffId(member.staffId).counts;
+    // Override completed/remaining with live store counts so the PL
+    // dashboard reflects what the CCEO actually scheduled + completed
+    // this month, not the static team-targets-mock snapshot. Falls
+    // back to the mock value if no live activities exist yet (the
+    // CCEO is genuinely idle for the month).
+    const live = liveMonthCounts(member.staffId);
+    const completedLive = live.completed > 0 ? live.completed : t.completedActivities;
+    const remainingLive = Math.max(0, t.monthlyTargetActivities - completedLive);
+    const achievementLive = t.monthlyTargetActivities > 0
+      ? Math.round((completedLive / t.monthlyTargetActivities) * 100)
+      : t.achievementPercent;
     rows.push({
       staffId: member.staffId,
       name: t.staffName,
@@ -156,10 +203,10 @@ export function buildTeamPlan(plStaffId: string): { rows: TeamPlanRow[]; summary
       status,
       statusReasons: reasons,
       monthlyTarget: t.monthlyTargetActivities,
-      completedThisMonth: t.completedActivities,
-      remainingThisMonth: t.remainingActivities,
-      weeklyPaceNeeded: Math.ceil(t.remainingActivities / 4),
-      achievementPercent: t.achievementPercent,
+      completedThisMonth: completedLive,
+      remainingThisMonth: remainingLive,
+      weeklyPaceNeeded: Math.ceil(remainingLive / 4),
+      achievementPercent: achievementLive,
       paceStatus: t.paceStatus,
       portfolio: {
         total: portfolio.total,

@@ -25,7 +25,7 @@ import {
   Target,
   type LucideIcon,
 } from "lucide-react";
-import { cceoAutoReports, type CceoAutoReport } from "@/lib/reports-mock";
+import { cceoAutoReports, type CceoAutoReport } from "@/lib/reports-types";
 import { ExportButton } from "@/components/ui/ExportButton";
 import { cn } from "@/lib/utils";
 
@@ -60,6 +60,16 @@ export function CceoAutoReports() {
           SSA uploads, partner work, cluster meetings and targets. Nothing here is typed up by hand.
         </p>
       </div>
+
+      {cceoAutoReports.length === 0 && (
+        <div className="card p-6 text-center">
+          <p className="text-[12px] muted leading-snug">
+            Auto-generated reports will appear here once you have field activity to summarise — plans,
+            completed visits, evidence, SSA uploads, partner work, cluster meetings and target progress.
+            Reports assemble themselves from those records.
+          </p>
+        </div>
+      )}
 
       <div className="grid grid-cols-12 gap-3 md:gap-4 items-start">
         {cceoAutoReports.map((r) => {

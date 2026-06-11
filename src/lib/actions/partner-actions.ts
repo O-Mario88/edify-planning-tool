@@ -129,6 +129,16 @@ export async function partnerMarkDelivered(
     actorName: user.name,
     payload: input,
   });
+  // Tell the assigning CCEO so they can review & upload the evidence
+  // confirmation — closes the "delivered silently, CCEO doesn't know"
+  // gap surfaced by the cross-feature sync audit.
+  emitNotificationFanOut(["CCEO_OWNER"], {
+    template: "partnerActivity.delivered",
+    channel: "Inbox",
+    title: `Partner delivery complete: ${a.title}`,
+    body: `${user.name} marked the activity delivered at ${a.schoolId}. Review & upload evidence to confirm.`,
+    href: `/partner/evidence`,
+  });
   revalidatePartnerSurfaces(activityId);
   return { ok: true, id: activityId };
 }
