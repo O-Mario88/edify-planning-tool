@@ -1,6 +1,5 @@
 import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { FundApprovalsHeader } from "@/components/approvals/FundApprovalsHeader";
-import { FundApprovalsFilterBar } from "@/components/approvals/FundApprovalsFilterBar";
 import { FundApprovalsKpiRow } from "@/components/approvals/FundApprovalsKpiRow";
 import { FundApprovalQueue } from "@/components/approvals/FundApprovalQueue";
 import { FundPlanDetail } from "@/components/approvals/FundPlanDetail";
@@ -19,6 +18,8 @@ import {
   liveApprovalsForAccountant,
   liveCdFundRequests,
 } from "@/lib/funds/live-approval-queue";
+import { getFilterScope } from "@/lib/filters/scope-service";
+import { selectionFromSearchParams, applyGeographyScope } from "@/lib/filters/apply-filters";
 
 // Role-aware Approvals page.
 //
@@ -54,11 +55,18 @@ const ALLOWED: ReadonlySet<EdifyRole> = new Set([
   "Admin",
 ]);
 
-export default async function FundApprovalsPage() {
+export default async function FundApprovalsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const user = await getCurrentUser();
   if (!ALLOWED.has(user.role)) {
     redirect(ROLE_REDIRECT[user.role]);
   }
+  // Live, URL-synced filter selection (the HeaderFilterBar writes it).
+  const selection = selectionFromSearchParams(await searchParams);
+  const filterScope = getFilterScope({ user });
 
   // RVP gets the multi-country regional view: country picker on the
   // left, country plan + spending + recent requests + comments on
@@ -74,19 +82,33 @@ export default async function FundApprovalsPage() {
 
   if (isCountryScope) {
     // Live CD-tier approval queue (non-CCEO requesters) from the action
-    // store — replaces the static cdFundRequests seed the view used to
-    // render. Mirrors the PL/Accountant live migration.
-    const cdRequests = liveCdFundRequests();
-    return <ResponsiveDashboard mobile={<CountryFundApprovalsView cdRequests={cdRequests} />} desktop={<CountryFundApprovalsView cdRequests={cdRequests} />} />;
+    // store, scoped by the header region/district filter. Mirrors the
+    // PL/Accountant live migration.
+    const cdRequests = applyGeographyScope(liveCdFundRequests(), selection, {
+      district: (r) => r.district,
+    });
+    return (
+      <ResponsiveDashboard
+        mobile={<CountryFundApprovalsView cdRequests={cdRequests} filterScope={filterScope} />}
+        desktop={<CountryFundApprovalsView cdRequests={cdRequests} filterScope={filterScope} />}
+      />
+    );
   }
 
   // Live queue from the action store the server actions mutate. PL sees
   // their team's pending submissions + returns; Accountant sees
   // PL-approved requests across teams ready for disbursement.
-  const liveQueue =
+  const rawQueue =
     user.role === "ProgramAccountant"
       ? liveApprovalsForAccountant()
       : liveApprovalsForPl(user.staffId);
+
+  // Apply the header filter selection (region/district) to the queue —
+  // region is backfilled from each row's district via the geography
+  // source of truth. This is what makes the filter bar actually filter.
+  const liveQueue = applyGeographyScope(rawQueue, selection, {
+    district: (r) => r.district,
+  });
 
   const approvalExportRows = liveQueue.map((f) => ({
     CCEO: f.cceoName, District: f.district, Region: f.region,
@@ -97,8 +119,7 @@ export default async function FundApprovalsPage() {
 
   const plBody = (
     <>
-      <FundApprovalsHeader exportRows={approvalExportRows} />
-      <FundApprovalsFilterBar />
+      <FundApprovalsHeader exportRows={approvalExportRows} filterScope={filterScope} />
       <FundApprovalsKpiRow />
 
       <div className="px-3 sm:px-4 lg:px-6 pb-3 space-y-3 lg:space-y-4">

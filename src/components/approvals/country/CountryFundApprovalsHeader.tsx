@@ -1,15 +1,20 @@
 "use client";
 
-import { CheckCircle2, Download, Info, Plus } from "lucide-react";
+import { Info, Plus } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { ExportButton } from "@/components/ui/ExportButton";
 
-// CD-scope fund approvals header — title + info badge + subtitle + 3
-// actions (Export, Approve All Valid, Create Admin Fund Request). Now
-// a thin adapter over <PageHeader>.
+// CD-scope fund approvals header — title + info badge + subtitle + 2
+// actions (Export, Create Admin Fund Request). The old dead "Approve All
+// Valid" bulk button was removed — bulk-approving money was never wired,
+// and the per-row Approve in the queue (CdFundActionButtons, role-checked)
+// is the real path. Export now uses the shared ExportButton.
 export function CountryFundApprovalsHeader({
   onCreateRequest,
+  exportRows = [],
 }: {
   onCreateRequest?: () => void;
+  exportRows?: Record<string, unknown>[];
 }) {
   return (
     <PageHeader
@@ -26,21 +31,11 @@ export function CountryFundApprovalsHeader({
       }
       actions={
         <>
-          <button
-            type="button"
-            aria-label="Export"
-            className="inline-flex items-center justify-center gap-1.5 h-10 px-3.5 rounded-xl bg-white border border-[var(--color-edify-border)] hover:bg-slate-50 text-body font-semibold text-slate-700 transition-colors shrink-0"
-          >
-            <Download size={13} />
-            <span className="hidden sm:inline">Export</span>
-          </button>
-          <button
-            type="button"
-            className="btn btn-primary inline-flex items-center justify-center gap-1.5 h-10 px-3.5 rounded-xl text-body font-extrabold"
-          >
-            <CheckCircle2 size={13} />
-            <span className="truncate">Approve All Valid</span>
-          </button>
+          <ExportButton
+            rows={exportRows}
+            filename="country-fund-approvals"
+            className="!h-10 !px-3.5 !rounded-xl bg-white"
+          />
           <button
             type="button"
             onClick={onCreateRequest}

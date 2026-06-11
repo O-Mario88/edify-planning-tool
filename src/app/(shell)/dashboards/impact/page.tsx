@@ -79,6 +79,20 @@ export default async function ImpactDashboard() {
               <InsightStrip insights={insightsForImpactAssessment()} />
             </section>
 
+            {/* Donor-ready counts — a HEADLINE stat block, kept directly
+                below the hero stats (not buried mid-page): what M&E has
+                signed off for donor reporting. The detailed pipeline +
+                verification sections live further down. */}
+            <section className="space-y-3">
+              <SectionHeader
+                tier="strategic"
+                eyebrow="Donor-ready"
+                title="What's Cleared for Donor Reporting"
+                description="The reach, training, and improvement figures verification has signed off — pending records stay flagged and out of the headline totals. Each tile opens the full report."
+              />
+              <DonorImpactReachCard snapshot={donorSnapshot} />
+            </section>
+
             {/* Today — the unified action surface (work begins here). */}
             <TodayCommandCenter />
             <CommandStack user={user} hideMission />
@@ -117,18 +131,6 @@ export default async function ImpactDashboard() {
                   <DataVerificationFunnelCard />
                 </div>
               </div>
-            </section>
-
-            {/* Section 3b — Donor-ready counts.  The verified output of
-                the pipeline above: what M&E can sign off for donors. */}
-            <section className="space-y-3">
-              <SectionHeader
-                tier="strategic"
-                eyebrow="Donor-ready"
-                title="What's Cleared for Donor Reporting"
-                description="The reach, training, and improvement figures verification has signed off — pending records stay flagged and out of the headline totals. Each tile opens the full report."
-              />
-              <DonorImpactReachCard snapshot={donorSnapshot} />
             </section>
 
             {/* Section 4 — Quality & partners.  Operational rhythm.

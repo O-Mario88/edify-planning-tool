@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { CountryFundApprovalsHeader } from "./CountryFundApprovalsHeader";
-import { CountryFundFilterBar } from "./CountryFundFilterBar";
 import { CountryFundKpiRow } from "./CountryFundKpiRow";
+import { HeaderFilterBar } from "@/components/shell/HeaderFilterBar";
+import type { FilterScope } from "@/lib/filters/types";
 import { CountryFundQueue } from "./CountryFundQueue";
 import { CountryFundPlanDetail } from "./CountryFundPlanDetail";
 import {
@@ -23,12 +24,34 @@ import type { WeeklyFundRequest } from "@/lib/funds/weekly-fund-types";
 // 3-card summary row, and footer. Owns the open/closed state for the
 // Create Admin Fund Request drawer. `cdRequests` is the live CD-tier
 // queue (passed by the /approvals page); the action queue reads it.
-export function CountryFundApprovalsView({ cdRequests }: { cdRequests?: WeeklyFundRequest[] } = {}) {
+export function CountryFundApprovalsView({
+  cdRequests,
+  filterScope,
+}: {
+  cdRequests?: WeeklyFundRequest[];
+  filterScope?: FilterScope;
+} = {}) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const exportRows = (cdRequests ?? []).map((r) => ({
+    Requester: r.staffName,
+    Role: r.requesterRole ?? r.staffRole,
+    District: r.district,
+    Week: r.period.weekOfMonth,
+    Month: r.period.monthLabel,
+    Amount: r.requestedAmount.amount,
+    Status: r.status,
+  }));
   return (
     <>
-      <CountryFundApprovalsHeader onCreateRequest={() => setDrawerOpen(true)} />
-      <CountryFundFilterBar />
+      <CountryFundApprovalsHeader onCreateRequest={() => setDrawerOpen(true)} exportRows={exportRows} />
+      {/* LIVE region/district filter (replaces the old static
+          CountryFundFilterBar whose dropdowns + search did nothing).
+          Scopes the CD queue via the same URL the page reads. */}
+      {filterScope && (
+        <div className="px-3 sm:px-4 lg:px-6 pt-1">
+          <HeaderFilterBar scope={filterScope} />
+        </div>
+      )}
       <CountryFundKpiRow />
 
       <div className="px-3 sm:px-4 lg:px-6 pb-3 space-y-3 lg:space-y-4">

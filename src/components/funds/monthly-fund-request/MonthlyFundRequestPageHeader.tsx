@@ -27,7 +27,8 @@ export function MonthlyFundRequestPageHeader({
     <PageHeader
       title="Monthly Fund Request"
       subtitle={`${monthLabel} · ${countryName} · Auto-generated from approved monthly plans + active CD cost settings.`}
-      searchPlaceholder="Search staff, partner, district, activity..."
+      // The live staff/partner search lives in MfrStaffFilter; the header
+      // slot falls back to the global ⌘K palette (no duplicate search box).
       titleBadge={
         <button
           type="button"

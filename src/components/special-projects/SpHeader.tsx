@@ -19,7 +19,9 @@ export async function SpHeader() {
       title={specialProjectsHeader.title}
       subtitle={specialProjectsHeader.subtitle}
       filterBar={<HeaderFilterBar scope={scope} />}
-      searchPlaceholder={specialProjectsHeader.searchPlaceholder}
+      // No header search box — the /special-projects/schools directory
+      // has its own live search; the header slot falls back to the global
+      // ⌘K palette to avoid two competing search inputs.
     />
   );
 }

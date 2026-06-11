@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { ChevronDown, Search, Star } from "lucide-react";
 import { rvpCountryRequests, type RvpCountryRequest } from "@/lib/rvp-fund-approvals-mock";
 import { cn } from "@/lib/utils";
@@ -17,6 +18,18 @@ const STATUS_TONE: Record<RvpCountryRequest["status"], string> = {
 // emoji, lead name, amount, and status pill. The active country gets
 // an emerald-ring focus state.
 export function RvpCountryList() {
+  const [query, setQuery] = useState("");
+  const [sortByName, setSortByName] = useState(false);
+
+  const rows = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    let list = rvpCountryRequests.filter(
+      (c) => !q || c.country.toLowerCase().includes(q) || c.leadName.toLowerCase().includes(q),
+    );
+    if (sortByName) list = [...list].sort((a, b) => a.country.localeCompare(b.country));
+    return list;
+  }, [query, sortByName]);
+
   return (
     <article className="card p-3.5 flex flex-col">
       <header className="mb-2.5">
@@ -26,23 +39,31 @@ export function RvpCountryList() {
             <Search size={13} className="text-slate-400 shrink-0" />
             <input
               type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
               placeholder="Search countries…"
+              aria-label="Search countries"
               className="bg-transparent outline-none flex-1 text-[12px] text-slate-700 placeholder:text-slate-400 min-w-0"
             />
           </label>
           <button
             type="button"
+            onClick={() => setSortByName((v) => !v)}
+            aria-label={`Sort by ${sortByName ? "priority" : "name"}`}
             className="inline-flex items-center gap-1 h-9 px-2.5 rounded-lg border border-[var(--color-edify-border)] bg-white hover:bg-slate-50 text-[11.5px] font-semibold text-slate-700 transition-colors whitespace-nowrap"
           >
             <span className="muted">Sort:</span>
-            <span>Priority</span>
+            <span>{sortByName ? "Name" : "Priority"}</span>
             <ChevronDown size={11} className="text-slate-400" />
           </button>
         </div>
       </header>
 
+      {rows.length === 0 && (
+        <p className="px-2 py-6 text-center text-[12px] muted italic">No countries match “{query}”.</p>
+      )}
       <ul className="flex flex-col gap-2">
-        {rvpCountryRequests.map((c, i) => (
+        {rows.map((c, i) => (
           <CountryRow
             key={c.id}
             c={c}

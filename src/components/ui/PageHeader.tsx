@@ -222,16 +222,22 @@ export function PageHeader({
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-edify-muted)] pointer-events-none"
               />
               {searchPlaceholder ? (
-                <>
-                  <input
-                    aria-label={searchPlaceholder}
-                    placeholder={searchPlaceholder}
-                    className="h-10 w-full pl-9 pr-14 rounded-xl border border-[var(--color-edify-border)] bg-[var(--color-card)] text-body text-[var(--color-edify-text)] placeholder:text-[var(--color-edify-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-edify-primary)]/30 shadow-[0_1px_2px_rgba(15,23,32,0.04)]"
-                  />
+                // The page-specific placeholder is a HINT, not an in-list
+                // filter — this opens the global ⌘K command palette, same
+                // as the no-placeholder branch below. (Previously this was
+                // an inert <input> with no handler: typing/clicking did
+                // nothing on ~20 pages. The palette IS the app's search.)
+                <button
+                  type="button"
+                  aria-label={searchPlaceholder}
+                  onClick={() => window.dispatchEvent(new CustomEvent("edify:open-command-palette"))}
+                  className="h-10 w-full pl-9 pr-14 rounded-xl border border-[var(--color-edify-border)] bg-[var(--color-card)] text-body text-left text-[var(--color-edify-muted)] hover:bg-[var(--color-edify-soft)]/40 focus:outline-none focus:ring-2 focus:ring-[var(--color-edify-primary)]/30 shadow-[0_1px_2px_rgba(15,23,32,0.04)] transition-colors flex items-center"
+                >
+                  {searchPlaceholder}
                   <kbd className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none hidden md:inline-flex items-center gap-0.5 h-5 px-1.5 rounded border border-[var(--color-edify-border)] bg-[var(--color-edify-soft)] text-[10px] font-bold text-[var(--color-edify-muted)]">
                     ⌘K
                   </kbd>
-                </>
+                </button>
               ) : (
                 <button
                   type="button"

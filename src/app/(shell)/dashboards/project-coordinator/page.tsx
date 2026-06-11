@@ -29,10 +29,12 @@ export default async function ProjectCoordinatorDashboard() {
     <>
       <SpHeader />
       <div className="px-3 sm:px-4 md:px-6 pb-24 md:pb-6 space-y-3 md:space-y-4">
-        <CommandStack user={user} />
-
+        {/* Layout rule: header → stats → work. The KPI row + action bar
+            (stats) sit above the CommandStack (work), not below it. */}
         <SpKpiRow kpis={kpis} />
         <SpActionBar user={currentUser} />
+
+        <CommandStack user={user} />
 
         <section className="grid grid-cols-12 gap-4 items-start">
           <div className="col-span-12 md:col-span-8">

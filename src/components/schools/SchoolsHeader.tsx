@@ -17,7 +17,9 @@ export async function SchoolsHeader() {
       title={schoolsHeader.title}
       subtitle={schoolsHeader.subtitle}
       filterBar={<HeaderFilterBar scope={scope} />}
-      searchPlaceholder={schoolsHeader.searchPlaceholder}
+      // No header search box here — the directory has its own live
+      // school/id/district search. The header slot falls back to the
+      // global ⌘K palette so there aren't two competing search inputs.
     />
   );
 }
