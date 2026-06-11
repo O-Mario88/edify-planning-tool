@@ -23,6 +23,7 @@ import type {
   WeeklyFundRequest,
 } from "@/lib/funds/weekly-fund-types";
 import { StatusChip } from "@/components/funds/StatusChip";
+import { CdFundActionButtons } from "./CdFundActionButtons";
 import { cn } from "@/lib/utils";
 
 const ROLE_ICON: Record<Exclude<RequesterRole, "CCEO">, LucideIcon> = {
@@ -181,26 +182,7 @@ export function CdFundApprovalQueue({ requests }: { requests?: WeeklyFundRequest
                                 {r.adjustments.length} adj.
                               </span>
                             )}
-                            {isPending && (
-                              <div className="flex items-center gap-1 ml-1">
-                                <button
-                                  type="button"
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-rose-200 bg-rose-50 hover:bg-rose-100 text-caption font-extrabold text-rose-700"
-                                >
-                                  <XCircle size={10} />
-                                  Return
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="inline-flex items-center gap-1 h-7 px-2 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-caption font-extrabold"
-                                >
-                                  <CheckCircle2 size={10} />
-                                  Approve
-                                </button>
-                              </div>
-                            )}
+                            {isPending && <CdFundActionButtons reqId={r.id} />}
                             {!isPending && (
                               <button
                                 type="button"

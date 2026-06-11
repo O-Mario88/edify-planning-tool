@@ -20,10 +20,10 @@ import { useRouter } from "next/navigation";
 import { CheckCircle2, Eye, Loader2, RotateCcw, X } from "lucide-react";
 import { useDemoStore } from "@/components/demo/DemoStore";
 import {
-  approveFundPlan,
-  returnFundPlan,
-  type FundPlanActionResult,
-} from "@/lib/actions/fund-plan-actions";
+  approveFundRequest,
+  returnFundRequest,
+  type FundActionResult,
+} from "@/lib/actions/weekly-fund-actions";
 import type { FundApprovalItem } from "@/lib/fund-approvals-mock";
 import { cn } from "@/lib/utils";
 
@@ -33,23 +33,32 @@ const TERMINAL_STATUSES: ReadonlySet<FundApprovalItem["status"]> = new Set([
 ]);
 
 // Human copy for every non-ok branch. Localising this here means the
-// server action can stay schema-pure; the UI owns presentation.
-function reasonCopy(res: Extract<FundPlanActionResult, { ok: false }>): { title: string; body: string } {
+// server action can stay schema-pure; the UI owns presentation. Maps the
+// LIVE weekly-fund-actions reasons — the queue rows carry live
+// WeeklyFundRequest ids, so the actions act on the real store (the old
+// approveFundPlan/returnFundPlan looked up a dead mock by id and no-op'd).
+function reasonCopy(res: Extract<FundActionResult, { ok: false }>): { title: string; body: string } {
   switch (res.reason) {
     case "FORBIDDEN":
-      return { title: "Not your call", body: "Only Country Program Leads and above can approve this plan." };
+      return { title: "Not your call", body: "This request is approved by a different role — CCEO requests go to their Program Lead, others to the Country Director." };
     case "NOT_FOUND":
-      return { title: "Plan no longer exists", body: "It may have been withdrawn or merged. Refresh the queue." };
+      return { title: "Request no longer exists", body: "It may have been withdrawn or merged. Refresh the queue." };
+    case "DUPLICATE":
+      return { title: "Already actioned", body: "This request was just approved — refresh to see the latest status." };
     case "INVALID_STATE":
       return {
         title: `Already ${res.current}`,
-        body: "Someone else acted on this plan first. Refresh to see the latest status.",
+        body: "Someone else acted on this request first. Refresh to see the latest status.",
       };
     case "INVALID_INPUT":
       return {
         title: "Reason needed",
-        body: `Add a short note (5+ characters) explaining why the plan is being returned.`,
+        body: `Add a short note (5+ characters) explaining why the request is being returned.`,
       };
+    case "BLOCKED":
+      return { title: "Blocked", body: res.blockers.join(" · ") || "A prerequisite is not met yet." };
+    case "ENGINE_ERROR":
+      return { title: "Couldn't complete", body: res.error || "The action failed — try again." };
   }
 }
 
@@ -72,12 +81,12 @@ export function FundPlanActionRow({
 
   function runApprove() {
     startTransition(async () => {
-      const res = await approveFundPlan(planId);
+      const res = await approveFundRequest(planId);
       if (res.ok) {
         pushToast({
           tone: "success",
-          title: "Plan approved",
-          body: `Status is now ${res.newStatus}. Funds are queued for disbursement.`,
+          title: "Request approved",
+          body: "Approved — funds are queued for disbursement (IA verification clears CCEO requests first).",
         });
         // Pull fresh server state so the queue badge + dashboard tiles
         // reflect the new status without a full reload. In production
@@ -94,12 +103,12 @@ export function FundPlanActionRow({
 
   function runReturn() {
     startTransition(async () => {
-      const res = await returnFundPlan(planId, reason);
+      const res = await returnFundRequest(planId, reason);
       if (res.ok) {
         pushToast({
           tone: "info",
-          title: "Plan returned",
-          body: "The CCEO will see the reason in their inbox and can resubmit.",
+          title: "Request returned",
+          body: "The requester will see the reason in their inbox and can resubmit.",
         });
         setReturnOpen(false);
         setReason("");
