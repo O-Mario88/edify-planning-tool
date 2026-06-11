@@ -656,6 +656,10 @@ function revalidatePlanSurfaces(planId?: string) {
     revalidatePath("/today");
     revalidatePath("/calendar");
     revalidatePath("/approvals");
+    // Schedule via the plan-action flow should drop the satisfied
+    // gap off /planning the next render, same as gap-assign-actions.
+    revalidatePath("/planning");
+    revalidatePath("/team-plan");
     revalidatePath("/dashboards/cceo");
     revalidatePath("/dashboards/cpl");
     revalidatePath("/dashboards/director");
