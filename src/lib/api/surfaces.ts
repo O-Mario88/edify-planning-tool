@@ -753,6 +753,17 @@ export function fetchClusterSchools(user: BackendUser, clusterId: string) {
   );
 }
 
+// ── Partners (for assignment pickers — real backend partner IDs) ────
+export type BePartner = {
+  id: string; name: string; isCertified: boolean;
+  certificationStatus?: string | null; activeStatus?: boolean | null;
+  regionName?: string | null; expertiseAreas?: string[] | null;
+};
+/** Active partners the caller may assign work to (real assignedPartnerId values). */
+export function fetchPartners(user: BackendUser, activeOnly = true) {
+  return live<BePartner[]>(`/partners${activeOnly ? "?activeOnly=true" : ""}`, user);
+}
+
 // ── Notifications (backend-backed; no mock) ─────────────────────────
 export type BeNotification = {
   id: string; title: string; body?: string | null; contextType?: string | null; contextId?: string | null;

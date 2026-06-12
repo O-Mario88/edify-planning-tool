@@ -2655,7 +2655,7 @@ html, body {
       box-shadow    var(--motion-medium)   var(--motion-ease-out),
       border-color  var(--motion-standard) var(--motion-ease-std),
       background-color var(--motion-standard) var(--motion-ease-std);
-    transform: translateZ(0);
+    /* No rest-state transform — only :hover/:active set one (transient). */
   }
   .motion-hover-lift:hover  { transform: translateY(-2px); }
   .motion-hover-lift:active { transform: translateY(0); }
@@ -2981,10 +2981,13 @@ html, body {
     0 1px 2px var(--shadow-card-contact),
     0 2px 6px -2px var(--shadow-card-mid),
     0 10px 22px -12px var(--shadow-card-ambient);
-  transform: translateZ(0);
+  /* NOTE: no `transform`/`will-change` here. A transform (even translateZ(0))
+   * turns every .card into the containing block for its descendants, so any
+   * `position: fixed` drawer rendered inside a card would anchor to the card
+   * instead of the viewport — opening far off-screen when the page is scrolled.
+   * Keep cards transform-free so portal-less drawers stay viewport-fixed. */
   transition: box-shadow 280ms cubic-bezier(.2,.6,.2,1),
               border-color 280ms cubic-bezier(.2,.6,.2,1),
-              transform 280ms cubic-bezier(.2,.6,.2,1),
               background-color 180ms ease;
   color: var(--color-edify-text);
 }
@@ -3013,8 +3016,8 @@ html, body {
     0 1px 2px var(--shadow-card-contact),
     0 2px 6px -2px var(--shadow-card-mid),
     0 10px 22px -12px var(--shadow-card-ambient);
-  transform: translateZ(0);
-  will-change: transform, box-shadow;
+  /* No rest-state transform/will-change — see the .card note: it would make
+   * this card the containing block for any fixed drawer rendered inside it. */
   transition: box-shadow 280ms cubic-bezier(.2,.6,.2,1),
               border-color 280ms cubic-bezier(.2,.6,.2,1),
               transform 280ms cubic-bezier(.2,.6,.2,1),
@@ -3029,7 +3032,8 @@ html, body {
    rather than just "darker". */
 .card-lift {
   cursor: pointer;
-  transform: translateZ(0);
+  /* No rest-state transform — only the :hover/:active lifts below set one,
+   * which is transient and covered by any open drawer's overlay. */
   /* Pulled into the motion-token system — was a hard-coded 280ms
    * triple; now reads from `--motion-medium` + `--motion-spring` so
    * every clickable card moves with the same rhythm.  Reduced-motion

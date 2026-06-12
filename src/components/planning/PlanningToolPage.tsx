@@ -140,7 +140,7 @@ export async function PlanningToolPage({
         {planningCategories && <PlanningCategorySummary categories={planningCategories} />}
 
         <PlansFamilyNav current="planning" className="flex items-center gap-1" />
-        <PlanningGapBoard extraGaps={onboardedGaps} liveGaps={liveGaps} clusterGaps={clusterGaps} liveClusterGaps={liveClusterGaps} coreCards={coreCards} coreViewer={coreViewer} canChampion={canChampion} />
+        <PlanningGapBoard assigningUserRole={user.role} extraGaps={onboardedGaps} liveGaps={liveGaps} clusterGaps={clusterGaps} liveClusterGaps={liveClusterGaps} coreCards={coreCards} coreViewer={coreViewer} canChampion={canChampion} />
 
         <PlanningOwnershipSections ownership={coreOwnership} />
 

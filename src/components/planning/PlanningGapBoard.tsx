@@ -24,6 +24,14 @@ import type { CorePlanCardVM } from "@/lib/core/core-board";
 import type { SchoolGap, ClusterGap } from "@/lib/planning/planning-gaps-mock";
 import { cn } from "@/lib/utils";
 
+// Narrow an arbitrary role string to the assign drawer's recognised set.
+type AssignRole = "CCEO" | "CountryProgramLead" | "ImpactAssessment" | "CountryDirector" | "Admin";
+function normalizeRole(role?: string): AssignRole {
+  return role === "CCEO" || role === "ImpactAssessment" || role === "CountryDirector" || role === "Admin"
+    ? role
+    : "CountryProgramLead";
+}
+
 type TabKey = "clientSchools" | "clusters" | "coreSchools";
 
 type TabDef = { key: TabKey; label: string; icon: LucideIcon };
@@ -35,6 +43,7 @@ const TABS: ReadonlyArray<TabDef> = [
 ];
 
 export function PlanningGapBoard({
+  assigningUserRole,
   extraGaps = [],
   liveGaps = false,
   clusterGaps,
@@ -43,6 +52,8 @@ export function PlanningGapBoard({
   coreViewer = { canAssign: false, canExec: false, canIa: false },
   canChampion = false,
 }: {
+  /** Viewer's role — gates the assign drawer (CCEO→Partner; PL→CCEO/Partner). */
+  assigningUserRole?: string;
   extraGaps?: SchoolGap[];
   /** True when extraGaps are REAL backend schools — suppress the seed mock and
    *  use the live writer for scheduling. */
@@ -92,7 +103,7 @@ export function PlanningGapBoard({
 
       {/* Active board — each renders its own collapsible, detail-rich card. */}
       <div role="tabpanel" aria-label={`${TABS.find((t) => t.key === activeTab)?.label} gaps`}>
-        {activeTab === "clientSchools" && <SchoolGapsBoard extraGaps={extraGaps} liveGaps={liveGaps} />}
+        {activeTab === "clientSchools" && <SchoolGapsBoard assigningUserRole={normalizeRole(assigningUserRole)} extraGaps={extraGaps} liveGaps={liveGaps} />}
         {activeTab === "clusters" && <ClusterGapsBoard gaps={clusterGaps} liveGaps={liveClusterGaps} />}
         {activeTab === "coreSchools" && <CorePlanningAccordion cards={coreCards} viewer={coreViewer} canChampion={canChampion} />}
       </div>

@@ -7,7 +7,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ListChecks, ArrowRight, CalendarPlus, ChevronDown, ChevronRight } from "lucide-react";
+import { ListChecks, ArrowRight, CalendarPlus, Handshake, ChevronDown, ChevronRight } from "lucide-react";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/DataStates";
 import { ScheduleActivityLive } from "./ScheduleActivityLive";
 import type { BePlanningBucket } from "@/lib/api/surfaces";
@@ -23,12 +23,12 @@ const NEXT: Record<string, { label: string; href: string }> = {
   coreSchoolPlanning: { label: "Plan core package", href: "/schools" },
 };
 
-export function PlanningSetupLive() {
+export function PlanningSetupLive({ role }: { role?: string } = {}) {
   const [buckets, setBuckets] = useState<BePlanningBucket[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [openKey, setOpenKey] = useState<string | null>(null);
-  const [scheduling, setScheduling] = useState<{ schoolId: string; name: string; type: string } | null>(null);
+  const [scheduling, setScheduling] = useState<{ schoolId: string; name: string; type: string; mode: "schedule" | "assign" } | null>(null);
 
   const load = () => {
     setLoading(true); setError(null);
@@ -82,13 +82,23 @@ export function PlanningSetupLive() {
                   <ul className="border-t border-[var(--color-edify-divider)] divide-y divide-[var(--color-edify-divider)]">
                     {b.items.map((s) => (
                       <li key={s.schoolId} className="flex items-center justify-between gap-2 px-3 py-1.5 text-[11.5px]">
-                        <span className="truncate">{s.name}<span className="muted"> · {s.subCounty ?? s.schoolId}</span></span>
-                        <button
-                          onClick={() => setScheduling({ schoolId: s.schoolId, name: s.name, type: s.schoolType })}
-                          className="inline-flex items-center gap-1 h-7 px-2.5 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[10.5px] font-bold whitespace-nowrap shrink-0"
-                        >
-                          <CalendarPlus size={11} /> Schedule
-                        </button>
+                        <span className="truncate min-w-0">{s.name}<span className="muted"> · {s.subCounty ?? s.schoolId}</span></span>
+                        <span className="flex items-center gap-1 shrink-0">
+                          <button
+                            onClick={() => setScheduling({ schoolId: s.schoolId, name: s.name, type: s.schoolType, mode: "schedule" })}
+                            title="Schedule this yourself (adds to your plan)"
+                            className="inline-flex items-center gap-1 h-7 px-2.5 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[10.5px] font-bold whitespace-nowrap"
+                          >
+                            <CalendarPlus size={11} /> Schedule
+                          </button>
+                          <button
+                            onClick={() => setScheduling({ schoolId: s.schoolId, name: s.name, type: s.schoolType, mode: "assign" })}
+                            title="Assign this school to a partner"
+                            className="inline-flex items-center gap-1 h-7 px-2.5 rounded-lg border border-[var(--color-edify-border)] bg-white text-sky-700 hover:bg-sky-50 text-[10.5px] font-bold whitespace-nowrap"
+                          >
+                            <Handshake size={11} /> Assign
+                          </button>
+                        </span>
                       </li>
                     ))}
                     {b.count > b.items.length && <li className="px-3 py-1.5 text-[10.5px] muted">+{b.count - b.items.length} more — open the Directory to plan them.</li>}
@@ -105,6 +115,8 @@ export function PlanningSetupLive() {
           schoolId={scheduling.schoolId}
           schoolName={scheduling.name}
           schoolType={scheduling.type}
+          mode={scheduling.mode}
+          assigningRole={role}
           onClose={() => setScheduling(null)}
           onScheduled={load}
         />

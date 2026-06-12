@@ -11,6 +11,7 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { formatUgxShort } from "@/lib/format-utils";
 import { assignToExistingClusterAction, createClusterAndAssignAction } from "@/lib/actions/cluster-actions";
+import { scheduleSchoolActivity } from "@/lib/actions/my-plan-actions";
 import {
   AlertOctagon, Footprints, GraduationCap, Users, Building2, MapPin,
   ChevronDown, ChevronRight, ChevronUp, ArrowRight, Eye, User, Phone,
@@ -277,10 +278,28 @@ export function SchoolGapsBoard({
     const pending = scheduleVisit;
     if (!pending) return;
     const weekLabel = outcome.weekOfMonth ? ` · Week ${outcome.weekOfMonth}` : "";
-    setToast(`Visit scheduled at ${pending.school.schoolName} for ${outcome.date}${weekLabel}.`);
     setScheduleVisit(null);
-    dismiss(pending.school.id);
-    setTimeout(() => setToast(null), 4500);
+    // Persist to the backend (self-schedule = self-assign). The school's
+    // gap id is the real backend schoolId, so this lands in Postgres + My Plan.
+    const month = outcome.date ? new Date(outcome.date).getUTCMonth() + 1 : undefined;
+    startClusterTx(async () => {
+      const res = await scheduleSchoolActivity({
+        schoolId: pending.school.id,
+        schoolName: pending.school.schoolName,
+        kind: "SCHOOL_VISIT",
+        dateIso: outcome.date,
+        deliveryType: "staff",
+        plannedMonth: month,
+        plannedWeek: outcome.weekOfMonth,
+      });
+      if (res.ok) {
+        setToast(`Visit scheduled at ${pending.school.schoolName}${outcome.date ? ` for ${outcome.date}` : ""}${weekLabel}. Saved to your plan.`);
+        dismiss(pending.school.id);
+      } else {
+        setToast(res.reason === "CAPACITY_FULL" ? (res.message ?? "Direct support limit reached — assign to a partner.") : "Couldn't save the visit — try again.");
+      }
+      setTimeout(() => setToast(null), 4500);
+    });
   }
 
   function handleAssignSubmit(outcome: AssignOutcome) {

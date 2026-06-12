@@ -132,6 +132,11 @@ export async function scheduleSchoolActivity(input: {
   dateIso?: string;
   deliveryType?: "staff" | "partner";
   partnerName?: string;
+  /** Real backend partner id — set when assigning to a specific partner. */
+  partnerId?: string;
+  /** Visit scheduling by month/week (no exact date). */
+  plannedMonth?: number;
+  plannedWeek?: number;
 }): Promise<MyPlanResult> {
   const user = await getCurrentUser();
   if (!input.schoolId || !input.kind) return { ok: false, reason: "INVALID_INPUT" };
@@ -148,6 +153,10 @@ export async function scheduleSchoolActivity(input: {
       activityType: KIND_TO_BE[input.kind] ?? "school_visit",
       schoolId: input.schoolId, fy, quarter,
       deliveryType: toPartner ? "partner" : "staff",
+      ...(toPartner && input.partnerId ? { assignedPartnerId: input.partnerId } : {}),
+      ...(input.plannedMonth ? { plannedMonth: input.plannedMonth } : {}),
+      ...(input.plannedWeek ? { plannedWeek: input.plannedWeek } : {}),
+      ...(input.dateIso ? { scheduledDate: input.dateIso } : {}),
     });
     if (r.live) { revalidate(input.schoolId); return { ok: true, id: r.data.id }; }
     if (r.error && r.error.includes("403")) {

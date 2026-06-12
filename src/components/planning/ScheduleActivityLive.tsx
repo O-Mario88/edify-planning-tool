@@ -42,21 +42,34 @@ const CLUSTER_TYPES: ActOption[] = [
 
 const ugx = (n: number) => `UGX ${Math.round(n).toLocaleString()}`;
 
+type BePartnerLite = { id: string; name: string };
+
 export function ScheduleActivityLive({
   schoolId, schoolName, schoolType = "client", clusterId, clusterName, onClose, onScheduled,
+  mode = "schedule", assigningRole,
 }: {
   // Provide EITHER a school (schoolId/schoolName/schoolType) OR a cluster
   // (clusterId/clusterName) target — the backend create accepts either.
   schoolId?: string; schoolName?: string; schoolType?: string;
   clusterId?: string; clusterName?: string;
   onClose: () => void; onScheduled?: () => void;
+  /** "schedule" = staff plans/owns it (self-assign). "assign" = route to a
+   *  partner for delivery (persists assignedPartnerId → status assigned_to_partner). */
+  mode?: "schedule" | "assign";
+  /** Caller's role — gates the delivery options (CCEO assigns to Partner only). */
+  assigningRole?: string;
 }) {
   const isCluster = !!clusterId;
+  const isAssign = mode === "assign";
+  const isCceo = assigningRole === "CCEO";
   const targetName = isCluster ? clusterName ?? "Cluster" : schoolName ?? "School";
   const targetKind = isCluster ? "Cluster" : schoolType;
   const types = isCluster ? CLUSTER_TYPES : schoolType === "core" ? CORE_TYPES : CLIENT_TYPES;
   const [activityType, setActivityType] = useState(types[0].v);
-  const [deliveryType, setDeliveryType] = useState<"staff" | "partner">("staff");
+  // Assign mode is partner-delivered by definition; schedule mode defaults to staff.
+  const [deliveryType, setDeliveryType] = useState<"staff" | "partner">(isAssign ? "partner" : "staff");
+  const [partners, setPartners] = useState<BePartnerLite[]>([]);
+  const [partnerId, setPartnerId] = useState<string>("");
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [week, setWeek] = useState(Math.min(4, Math.ceil(new Date().getDate() / 7)));
   const [exactDate, setExactDate] = useState("");
@@ -70,6 +83,20 @@ export function ScheduleActivityLive({
     fetch("/api/budget/cost-settings", { credentials: "include" })
       .then((r) => r.json())
       .then((j) => { if (j.live) { const m: Record<string, number> = {}; for (const s of j.settings) m[s.key] = s.unitCost; setRates(m); } })
+      .catch(() => undefined);
+  }, []);
+
+  // Partner directory — needed whenever partner delivery is possible.
+  useEffect(() => {
+    fetch("/api/partners", { credentials: "include" })
+      .then((r) => r.json())
+      .then((j) => {
+        if (j.live && Array.isArray(j.partners)) {
+          const list = j.partners.map((p: { id: string; name: string }) => ({ id: p.id, name: p.name }));
+          setPartners(list);
+          setPartnerId((cur) => cur || list[0]?.id || "");
+        }
+      })
       .catch(() => undefined);
   }, []);
 
@@ -104,8 +131,9 @@ export function ScheduleActivityLive({
           activityType: realType,
           ...(isCluster ? { clusterId, ...(slot ? { clusterSlot: slot } : {}) } : { schoolId }),
           fy: "2026", quarter: quarterFor(effMonth), plannedMonth: effMonth, deliveryType,
+          ...(deliveryType === "partner" && partnerId ? { assignedPartnerId: partnerId } : {}),
           ...(exactDate ? { scheduledDate: new Date(exactDate + "T09:00:00").toISOString() } : {}),
-          ...(isVisit ? { weekOfMonth: week } : {}),
+          ...(isVisit ? { plannedWeek: week } : {}),
         }),
       });
       const j = await res.json();
@@ -120,15 +148,15 @@ export function ScheduleActivityLive({
       <div className="absolute inset-0 bg-black/30" onClick={onClose} />
       <div className="relative w-full sm:max-w-md card p-4 rounded-t-2xl sm:rounded-2xl max-h-[88vh] overflow-y-auto">
         <header className="flex items-center justify-between gap-2 mb-3">
-          <h2 className="text-[14px] font-extrabold inline-flex items-center gap-1.5"><CalendarPlus size={15} /> Schedule activity</h2>
+          <h2 className="text-[14px] font-extrabold inline-flex items-center gap-1.5"><CalendarPlus size={15} /> {isAssign ? "Assign to partner" : "Schedule activity"}</h2>
           <button onClick={onClose} className="h-7 w-7 grid place-items-center rounded-lg hover:bg-[var(--surface-3)]"><X size={14} /></button>
         </header>
         <p className="text-[11.5px] muted mb-3 truncate">{targetName} · <span className="capitalize">{targetKind}</span></p>
 
         {done ? (
           <div className="py-6 text-center">
-            <div className="text-[13px] font-extrabold text-emerald-600 mb-1">Scheduled ✓</div>
-            <p className="text-[11.5px] muted mb-3">It’s on your plan and in next period’s fund request.</p>
+            <div className="text-[13px] font-extrabold text-emerald-600 mb-1">{isAssign ? "Assigned ✓" : "Scheduled ✓"}</div>
+            <p className="text-[11.5px] muted mb-3">{isAssign ? "Sent to the partner’s scheduling dashboard. It returns to your monitoring queue once they schedule." : "It’s on your plan and in next period’s fund request."}</p>
             <button onClick={onClose} className="h-9 px-4 rounded-lg bg-[var(--color-edify-primary)] text-white text-[12px] font-bold">Done</button>
           </div>
         ) : (
@@ -139,13 +167,29 @@ export function ScheduleActivityLive({
                   {types.map((t) => <option key={t.v} value={t.v}>{t.l}</option>)}
                 </select>
               </Field>
-              <Field label="Delivered by">
-                <div className="flex gap-1.5">
-                  {(["staff", "partner"] as const).map((d) => (
-                    <button key={d} onClick={() => setDeliveryType(d)} className={cn("flex-1 h-9 rounded-lg text-[12px] font-bold border capitalize", deliveryType === d ? "bg-[var(--color-edify-primary)] text-white border-transparent" : "border-[var(--color-edify-border)]")}>{d}</button>
-                  ))}
-                </div>
-              </Field>
+              {/* Delivery owner. Assign mode is partner-only. In schedule mode a
+                  CCEO may still deliver themselves (self-assign) OR route to a
+                  partner; other roles get the full staff/partner toggle. */}
+              {!isAssign && (
+                <Field label="Delivered by">
+                  <div className="flex gap-1.5">
+                    {(["staff", "partner"] as const).map((d) => (
+                      <button key={d} onClick={() => setDeliveryType(d)} className={cn("flex-1 h-9 rounded-lg text-[12px] font-bold border capitalize", deliveryType === d ? "bg-[var(--color-edify-primary)] text-white border-transparent" : "border-[var(--color-edify-border)]")}>{d === "staff" ? "Myself (staff)" : "Partner"}</button>
+                    ))}
+                  </div>
+                </Field>
+              )}
+              {(isAssign || deliveryType === "partner") && (
+                <Field label={isCceo ? "Partner (CCEOs deliver field work through partners)" : "Partner"}>
+                  {partners.length === 0 ? (
+                    <div className="text-[11px] text-amber-600 font-semibold">No certified partners available to assign.</div>
+                  ) : (
+                    <select value={partnerId} onChange={(e) => setPartnerId(e.target.value)} className="w-full h-9 px-2 rounded-lg border border-[var(--color-edify-border)] text-[12px]">
+                      {partners.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    </select>
+                  )}
+                </Field>
+              )}
               {dateRequired ? (
                 <Field label="Date — required for this activity">
                   <input type="date" value={exactDate} onChange={(e) => setExactDate(e.target.value)}
@@ -188,8 +232,12 @@ export function ScheduleActivityLive({
 
             {error && <div className="mt-2 text-[11px] text-rose-600 font-semibold">{error}</div>}
 
-            <button disabled={busy || (dateRequired && !exactDate)} onClick={submit} className="mt-3 w-full h-10 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[13px] font-extrabold disabled:opacity-50 disabled:cursor-not-allowed">
-              {busy ? "Scheduling…" : dateRequired && !exactDate ? "Pick a date to schedule" : "Schedule activity"}
+            <button disabled={busy || (dateRequired && !exactDate) || (deliveryType === "partner" && !partnerId)} onClick={submit} className="mt-3 w-full h-10 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[13px] font-extrabold disabled:opacity-50 disabled:cursor-not-allowed">
+              {busy ? (isAssign ? "Assigning…" : "Scheduling…")
+                : dateRequired && !exactDate ? "Pick a date to schedule"
+                : deliveryType === "partner" && !partnerId ? "Choose a partner"
+                : isAssign ? "Assign to partner"
+                : "Schedule activity"}
             </button>
           </>
         )}

@@ -83,13 +83,17 @@ export type AssigningRole = "CCEO" | "CountryProgramLead" | "ImpactAssessment" |
 /** Returns the AssignOwner values a given role is allowed to pick. */
 function availableOwnersFor(role: AssigningRole | undefined, allowPartner: boolean, allowFacilitator: boolean): AssignOwner[] {
   if (role === "CCEO") {
-    // CCEO assigns only to partners per the operating model. If
-    // partner ownership is disallowed (e.g. someday SSA Verification),
-    // the drawer would show nothing — but allowPartner is always true
-    // for CCEO-reachable actions today.
+    // CCEO assigns only to partners per the operating model. Scheduling for
+    // themselves is the separate [Schedule] action (= self-assign); this
+    // assign drawer is partner-only.
     return allowPartner ? ["partner"] : [];
   }
-  if (role === "CountryProgramLead" || role === "ImpactAssessment" || role === "CountryDirector" || role === "Admin") {
+  if (role === "CountryProgramLead") {
+    // PL assigns to a supervised CCEO (the "staff" option) OR a partner —
+    // never to themselves and not as a facilitator.
+    return allowPartner ? ["staff", "partner"] : ["staff"];
+  }
+  if (role === "ImpactAssessment" || role === "CountryDirector" || role === "Admin") {
     const opts: AssignOwner[] = ["myself", "staff"];
     if (allowPartner) opts.push("partner");
     if (allowFacilitator) opts.push("partner_facilitator");
@@ -389,12 +393,14 @@ function OwnerStep({
 
       {allowStaff && (
         <>
+          {/* When "myself" isn't an option (PL), staff assignment means a
+              supervised CCEO — relabel + scope the pool accordingly. */}
           <OwnerOption
             active={owner === "staff"}
             onClick={() => setOwner("staff")}
             Icon={Users}
-            title="Assign to Staff"
-            body="Lands on that staff member's planning queue."
+            title={allowMyself ? "Assign to Staff" : "Assign to CCEO"}
+            body={allowMyself ? "Lands on that staff member's planning queue." : "Lands on that CCEO's planning queue. They schedule and deliver it."}
           />
           {owner === "staff" && (
             <select
@@ -402,7 +408,7 @@ function OwnerStep({
               value={staffName}
               onChange={(e) => setStaffName(e.target.value)}
             >
-              {STAFF_POOL.map((s) => <option key={s}>{s}</option>)}
+              {(allowMyself ? STAFF_POOL : STAFF_POOL.filter((s) => s.includes("(CCEO)"))).map((s) => <option key={s}>{s}</option>)}
             </select>
           )}
         </>

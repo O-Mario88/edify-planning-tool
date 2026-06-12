@@ -46,7 +46,7 @@ export default async function Page({
           topSlot={
             <>
               <SmartGroupingCard assignedCceo={user.role === "CCEO" ? user.name : undefined} />
-              <PlanningSetupLive />
+              <PlanningSetupLive role={user.role} />
               <ClusterPlanningLive />
             </>
           }
@@ -55,7 +55,7 @@ export default async function Page({
       mobile={
         <div className="px-3 pt-3 space-y-3">
           <SmartGroupingCard assignedCceo={user.role === "CCEO" ? user.name : undefined} />
-          <PlanningSetupLive />
+          <PlanningSetupLive role={user.role} />
           <PlanningMobileView coreCards={coreCards} coreViewer={coreViewer} canChampion={canChampion} coreOwnership={coreOwnership} />
         </div>
       }
