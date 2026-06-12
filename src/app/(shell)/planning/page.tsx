@@ -6,6 +6,7 @@ import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { PlanningMobileView } from "@/components/mobile/views/PlanningMobileView";
 import { coreBoardData, coreOwnershipRows } from "@/lib/core/core-board";
 import { getCurrentUser } from "@/lib/auth";
+import { SmartGroupingCard } from "@/components/planning/SmartGroupingCard";
 
 // The gap-based planning board now lives inside PlanningToolPage as a
 // single tabbed switcher (Client Schools · Clusters · Core Schools) that
@@ -44,6 +45,7 @@ export default async function Page({
           searchParams={sp}
           topSlot={
             <>
+              <SmartGroupingCard assignedCceo={user.role === "CCEO" ? user.name : undefined} />
               <PlanningSetupLive />
               <ClusterPlanningLive />
             </>
@@ -52,6 +54,7 @@ export default async function Page({
       }
       mobile={
         <div className="px-3 pt-3 space-y-3">
+          <SmartGroupingCard assignedCceo={user.role === "CCEO" ? user.name : undefined} />
           <PlanningSetupLive />
           <PlanningMobileView coreCards={coreCards} coreViewer={coreViewer} canChampion={canChampion} coreOwnership={coreOwnership} />
         </div>
