@@ -70,6 +70,10 @@ export function ScheduleActivityLive({
   const [deliveryType, setDeliveryType] = useState<"staff" | "partner">(isAssign ? "partner" : "staff");
   const [partners, setPartners] = useState<BePartnerLite[]>([]);
   const [partnerId, setPartnerId] = useState<string>("");
+  // Assign mode: the role-aware CCEO target (PL → the school's owner CCEO).
+  // Self is intentionally excluded here — self-assign is the [Schedule] button.
+  const [cceoOption, setCceoOption] = useState<{ label: string; staffId: string } | null>(null);
+  const [assignTarget, setAssignTarget] = useState<"partner" | "staff">("partner");
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [week, setWeek] = useState(Math.min(4, Math.ceil(new Date().getDate() / 7)));
   const [exactDate, setExactDate] = useState("");
@@ -100,6 +104,32 @@ export function ScheduleActivityLive({
       .catch(() => undefined);
   }, []);
 
+  // Assign mode: ask the backend who this school can be assigned to (role +
+  // capacity aware). PL gets the school's owner CCEO as a "staff" target;
+  // self is filtered out (that's the separate [Schedule] = self-assign path).
+  useEffect(() => {
+    if (!isAssign || isCluster || !schoolId) return;
+    fetch(`/api/assignment/options?schoolId=${encodeURIComponent(schoolId)}`, { credentials: "include" })
+      .then((r) => r.json())
+      .then((j) => {
+        if (!j.live || !Array.isArray(j.options)) return;
+        const staff = j.options.find((o: { type: string; enabled: boolean; staffId?: string; label: string }) => o.type === "staff" && o.enabled && o.staffId);
+        const partner = j.options.find((o: { type: string; enabled: boolean }) => o.type === "partner");
+        if (staff) {
+          setCceoOption({ label: staff.label, staffId: staff.staffId });
+          // When the owner CCEO is the available target and partner is blocked
+          // (PL must route through the supervised CCEO), default to the CCEO.
+          if (!partner || partner.enabled === false) setAssignTarget("staff");
+        }
+      })
+      .catch(() => undefined);
+  }, [isAssign, isCluster, schoolId]);
+
+  const cceoStaffId = assignTarget === "staff" ? cceoOption?.staffId : undefined;
+  // Effective delivery: in assign mode the target toggle wins; otherwise the
+  // schedule-mode staff/partner toggle.
+  const effDelivery: "staff" | "partner" = isAssign ? assignTarget : deliveryType;
+
   // Resolve the selected option → real ActivityType + explicit cluster slot.
   const selected = types.find((t) => t.v === activityType) ?? types[0];
   const realType = selected.type;
@@ -116,11 +146,11 @@ export function ScheduleActivityLive({
     const lines: { label: string; amount: number }[] = [];
     const add = (label: string, key: string, qty = 1) => { if (rates[key] != null) lines.push({ label, amount: rates[key] * qty }); };
     if (realType === "cluster_meeting") add("Cluster meeting", "cluster_meeting_cost");
-    else if (deliveryType === "partner") add("Partner lump sum", "partner_visit_lump_sum");
+    else if (effDelivery === "partner") add("Partner lump sum", "partner_visit_lump_sum");
     else if (VISIT.has(realType)) { add("Transport", "staff_visit_transport_primary"); add("Lunch", "lunch"); }
     else if (isTraining) { add("Training session", "training_session_fee"); add("Venue", "venue"); add("Meals", "meals_per_participant", participants); }
     return { lines, total: lines.reduce((s, l) => s + l.amount, 0) };
-  }, [rates, realType, deliveryType, participants, isTraining]);
+  }, [rates, realType, effDelivery, participants, isTraining]);
 
   const submit = async () => {
     setBusy(true); setError(null);
@@ -130,8 +160,9 @@ export function ScheduleActivityLive({
         body: JSON.stringify({
           activityType: realType,
           ...(isCluster ? { clusterId, ...(slot ? { clusterSlot: slot } : {}) } : { schoolId }),
-          fy: "2026", quarter: quarterFor(effMonth), plannedMonth: effMonth, deliveryType,
-          ...(deliveryType === "partner" && partnerId ? { assignedPartnerId: partnerId } : {}),
+          fy: "2026", quarter: quarterFor(effMonth), plannedMonth: effMonth, deliveryType: effDelivery,
+          ...(effDelivery === "partner" && partnerId ? { assignedPartnerId: partnerId } : {}),
+          ...(effDelivery === "staff" && cceoStaffId ? { responsibleStaffId: cceoStaffId } : {}),
           ...(exactDate ? { scheduledDate: new Date(exactDate + "T09:00:00").toISOString() } : {}),
           ...(isVisit ? { plannedWeek: week } : {}),
         }),
@@ -156,7 +187,7 @@ export function ScheduleActivityLive({
         {done ? (
           <div className="py-6 text-center">
             <div className="text-[13px] font-extrabold text-emerald-600 mb-1">{isAssign ? "Assigned ✓" : "Scheduled ✓"}</div>
-            <p className="text-[11.5px] muted mb-3">{isAssign ? "Sent to the partner’s scheduling dashboard. It returns to your monitoring queue once they schedule." : "It’s on your plan and in next period’s fund request."}</p>
+            <p className="text-[11.5px] muted mb-3">{!isAssign ? "It’s on your plan and in next period’s fund request." : effDelivery === "staff" ? "Assigned to the CCEO — it’s on their planning queue. You’ll monitor delivery." : "Sent to the partner’s scheduling dashboard. It returns to your monitoring queue once they schedule."}</p>
             <button onClick={onClose} className="h-9 px-4 rounded-lg bg-[var(--color-edify-primary)] text-white text-[12px] font-bold">Done</button>
           </div>
         ) : (
@@ -167,9 +198,10 @@ export function ScheduleActivityLive({
                   {types.map((t) => <option key={t.v} value={t.v}>{t.l}</option>)}
                 </select>
               </Field>
-              {/* Delivery owner. Assign mode is partner-only. In schedule mode a
-                  CCEO may still deliver themselves (self-assign) OR route to a
-                  partner; other roles get the full staff/partner toggle. */}
+              {/* Delivery owner. Schedule mode: a CCEO may deliver themselves
+                  (self-assign) or route to a partner; other roles get the full
+                  toggle. Assign mode: partner by default, plus the school's
+                  owner CCEO when the backend allows it (PL → CCEO or Partner). */}
               {!isAssign && (
                 <Field label="Delivered by">
                   <div className="flex gap-1.5">
@@ -179,7 +211,15 @@ export function ScheduleActivityLive({
                   </div>
                 </Field>
               )}
-              {(isAssign || deliveryType === "partner") && (
+              {isAssign && cceoOption && (
+                <Field label="Assign to">
+                  <div className="flex gap-1.5">
+                    <button onClick={() => setAssignTarget("staff")} className={cn("flex-1 h-9 rounded-lg text-[12px] font-bold border px-1 truncate", assignTarget === "staff" ? "bg-[var(--color-edify-primary)] text-white border-transparent" : "border-[var(--color-edify-border)]")}>{cceoOption.label}</button>
+                    <button onClick={() => setAssignTarget("partner")} className={cn("flex-1 h-9 rounded-lg text-[12px] font-bold border", assignTarget === "partner" ? "bg-[var(--color-edify-primary)] text-white border-transparent" : "border-[var(--color-edify-border)]")}>Partner</button>
+                  </div>
+                </Field>
+              )}
+              {effDelivery === "partner" && (
                 <Field label={isCceo ? "Partner (CCEOs deliver field work through partners)" : "Partner"}>
                   {partners.length === 0 ? (
                     <div className="text-[11px] text-amber-600 font-semibold">No certified partners available to assign.</div>
@@ -213,7 +253,7 @@ export function ScheduleActivityLive({
                   </Field>
                 </>
               )}
-              {isTraining && deliveryType === "staff" && (
+              {isTraining && effDelivery === "staff" && (
                 <Field label="Expected participants">
                   <input type="number" min={1} value={participants} onChange={(e) => setParticipants(Math.max(1, Number(e.target.value)))} className="w-full h-9 px-2 rounded-lg border border-[var(--color-edify-border)] text-[12px]" />
                 </Field>
@@ -232,10 +272,11 @@ export function ScheduleActivityLive({
 
             {error && <div className="mt-2 text-[11px] text-rose-600 font-semibold">{error}</div>}
 
-            <button disabled={busy || (dateRequired && !exactDate) || (deliveryType === "partner" && !partnerId)} onClick={submit} className="mt-3 w-full h-10 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[13px] font-extrabold disabled:opacity-50 disabled:cursor-not-allowed">
+            <button disabled={busy || (dateRequired && !exactDate) || (effDelivery === "partner" && !partnerId)} onClick={submit} className="mt-3 w-full h-10 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[13px] font-extrabold disabled:opacity-50 disabled:cursor-not-allowed">
               {busy ? (isAssign ? "Assigning…" : "Scheduling…")
                 : dateRequired && !exactDate ? "Pick a date to schedule"
-                : deliveryType === "partner" && !partnerId ? "Choose a partner"
+                : effDelivery === "partner" && !partnerId ? "Choose a partner"
+                : isAssign && effDelivery === "staff" ? `Assign to ${cceoOption?.label?.replace("Assign to ", "") ?? "CCEO"}`
                 : isAssign ? "Assign to partner"
                 : "Schedule activity"}
             </button>
