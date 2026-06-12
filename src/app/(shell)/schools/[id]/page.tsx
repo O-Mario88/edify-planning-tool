@@ -94,6 +94,7 @@ import { projectsForSchool, projectById } from "@/lib/special-projects-mock";
 import { activitiesForProjectSchool } from "@/lib/projects/project-activities";
 import { ssaForSchool } from "@/lib/projects/project-school-ssa";
 import { schoolWorkflowState, schoolLinkedActivities } from "@/lib/school-directory/school-state";
+import { SchoolTimeline } from "@/components/schools/SchoolTimeline";
 import { recommendClustersFor, type ClusterMatch } from "@/lib/cluster/cluster-core";
 import { openDuplicateCandidates } from "@/lib/intake/duplicate-candidates-mock";
 import type { DirectorySchoolVM, DirectoryClusterMatch } from "@/components/cluster/DirectoryClusterDrawer";
@@ -574,6 +575,10 @@ async function IntakeSchool360({ schoolId, view }: { schoolId: string; view?: Sc
       {/* View SSA — this school's REAL SSA from the backend (not a general grid). */}
       <div className="mx-3 sm:mx-4 md:mx-6 mb-3 card p-3.5">
         <SchoolSsaLive schoolId={s.schoolId} />
+      </div>
+      {/* Operational timeline — the school's full story, upload → verified impact. */}
+      <div className="mx-3 sm:mx-4 md:mx-6 mb-3">
+        <SchoolTimeline schoolId={s.schoolId} />
       </div>
       <School360View
         record={{
