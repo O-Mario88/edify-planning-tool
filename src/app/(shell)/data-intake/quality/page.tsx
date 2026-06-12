@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AlertTriangle, CheckCircle2, ShieldCheck, AlertCircle } from "lucide-react";
 import { StubPage } from "@/components/shell/StubPage";
 import { runDataQualityScan } from "@/lib/intake/data-quality-mock";
+import { CountryDataQualityCard } from "@/components/intake/CountryDataQualityCard";
 import { activeFinancialYear } from "@/lib/fy-engine";
 import { getCurrentUser } from "@/lib/auth";
 import { cn } from "@/lib/utils";
@@ -29,7 +30,10 @@ export default async function DataQualityCenterPage() {
         </section>
       )}
 
-      {/* Verdict + score */}
+      {/* Country data quality — workflow-aware confidence score (spec layer #10). */}
+      <CountryDataQualityCard />
+
+      {/* School master-data integrity scan (below the country headline). */}
       <section className={cn(
         "card p-3.5 flex items-start gap-3",
         verdict === "Clean"    && "border-emerald-200 bg-emerald-50",
