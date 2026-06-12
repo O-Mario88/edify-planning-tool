@@ -6,6 +6,7 @@ import { RealtimeProvider } from "@/components/shell/RealtimeProvider";
 import { MobileTopBar } from "@/components/shell/MobileTopBar";
 import { RouteTitleSync } from "@/components/shell/RouteTitleSync";
 import { CommandPalette } from "@/components/shell/CommandPalette";
+import { OfflineBanner } from "@/components/offline/OfflineBanner";
 import { getCurrentUserOrNull } from "@/lib/auth";
 
 // Shared shell layout for every authenticated, sidebar-bearing page.
@@ -87,6 +88,8 @@ export default async function ShellLayout({ children }: { children: ReactNode })
             it's reachable from every (shell) route. Toggled via ⌘K /
             Ctrl+K or via the magnifier icon in the MobileTopBar. */}
         <CommandPalette />
+        {/* App-wide offline banner — renders only when the network drops. */}
+        <OfflineBanner />
       </div>
     </PageTitleProvider>
   );
