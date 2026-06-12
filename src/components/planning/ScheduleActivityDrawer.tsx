@@ -87,9 +87,11 @@ export type ScheduleActivityOutcome = {
   target:           ScheduleActivityTarget;
   activityType:     string;
   isTraining:       boolean;
-  date:             string;      // "Jun 20, 2026"
-  isoDate:          string;      // ISO "2026-06-20"
+  date:             string;      // "Jun 20, 2026" or "Week 2 · June 2026"
+  isoDate:          string;      // ISO "2026-06-20" (first day of chosen week for visits)
   proposedBy:       string;
+  /** Set for visit-type activities (month+week, no exact date). */
+  weekOfMonth?:     number;
   /** Required when isTraining. Optional for meetings. */
   participants?:    number;
   venue?:           string;
@@ -119,6 +121,9 @@ export function ScheduleActivityDrawer({
   const [viewYear, setViewYear]         = useState(today.getFullYear());
   const [viewMonth, setViewMonth]       = useState(today.getMonth());
   const [selected, setSelected]         = useState<Date | null>(null);
+  // Visit-mode (school visits, non-training): month + week instead of calendar.
+  const [visitMonth, setVisitMonth]     = useState(today.getMonth());
+  const [visitWeek, setVisitWeek]       = useState(Math.min(4, Math.ceil(today.getDate() / 7)));
   const [proposedBy, setProposedBy]     = useState("");
   const [participants, setParticipants] = useState<string>("");
   const [venue, setVenue]               = useState<string>("");
@@ -134,6 +139,8 @@ export function ScheduleActivityDrawer({
       setViewYear(today.getFullYear());
       setViewMonth(today.getMonth());
       setSelected(null);
+      setVisitMonth(today.getMonth());
+      setVisitWeek(Math.min(4, Math.ceil(today.getDate() / 7)));
       setProposedBy(context.defaultProposedBy);
       setParticipants(
         context.defaultParticipants != null
@@ -152,18 +159,21 @@ export function ScheduleActivityDrawer({
   if (!context) return null;
 
   const isTraining        = context.isTraining;
+  // School visits (not training, not cluster) use a month+week picker instead of
+  // the full calendar — visits don't happen on a specific date.
+  const isVisitMode       = !isTraining && context.target.kind === "school";
   const Icon              = isTraining ? GraduationCap : Users;
   const participantCount  = Number.parseInt(participants, 10);
   const validParticipants = Number.isFinite(participantCount) && participantCount > 0;
-  // Training → 4-rate cost; meeting → single-rate cost.
-  const costPreview = validParticipants
+  // Training → 4-rate cost; meeting → single-rate cost. Visits: no cost preview.
+  const costPreview = validParticipants && !isVisitMode
     ? (isTraining
         ? computeTrainingCost({ participants: participantCount, rates: DEFAULT_GROUP_RATES })
         : computeClusterMeetingCost({ participants: participantCount, rates: DEFAULT_GROUP_RATES })
       )
     : null;
   const outsideCycle = selected !== null && (selected < cycle.start || selected > cycle.end);
-  const submitLabel  = context.submitLabel ?? (isTraining ? "Schedule training" : "Schedule meeting");
+  const submitLabel  = context.submitLabel ?? (isVisitMode ? "Schedule visit" : isTraining ? "Schedule training" : "Schedule meeting");
 
   function handlePrevMonth() {
     setViewMonth((m) => {
@@ -196,10 +206,6 @@ export function ScheduleActivityDrawer({
     e.preventDefault();
     setError(null);
     if (!context) return;
-    if (!selected) {
-      setError("Pick a date on the calendar.");
-      return;
-    }
     if (!proposedBy.trim()) {
       setError("Name the person proposing the date.");
       return;
@@ -208,12 +214,38 @@ export function ScheduleActivityDrawer({
       setError("Expected participants is required for trainings so the projected cost can be generated.");
       return;
     }
+    if (!isVisitMode && !selected) {
+      setError("Pick a date on the calendar.");
+      return;
+    }
+
+    if (isVisitMode) {
+      // Visit mode: derive a representative ISO date (first day of the chosen
+      // week in the chosen month). The outcome carries weekOfMonth so My Plan
+      // can bucket it correctly without depending on the exact date.
+      const WEEK_START_DAY = [1, 8, 15, 22][visitWeek - 1] ?? 1;
+      const visitDate = new Date(today.getFullYear(), visitMonth, WEEK_START_DAY);
+      const weekLabels = ["Week 1", "Week 2", "Week 3", "Week 4"];
+      onSubmit({
+        target:       context.target,
+        activityType: context.activityType,
+        isTraining:   false,
+        date:         `${weekLabels[visitWeek - 1] ?? "Week 1"} · ${MONTHS[visitMonth]} ${visitDate.getFullYear()}`,
+        isoDate:      formatIso(visitDate),
+        weekOfMonth:  visitWeek,
+        proposedBy:   proposedBy.trim(),
+        venue:        venue.trim() || undefined,
+        notes:        notes.trim() || undefined,
+      });
+      return;
+    }
+
     onSubmit({
       target:             context.target,
       activityType:       context.activityType,
       isTraining,
-      date:               formatHumanDate(selected),
-      isoDate:            formatIso(selected),
+      date:               formatHumanDate(selected!),
+      isoDate:            formatIso(selected!),
       proposedBy:         proposedBy.trim(),
       participants:       validParticipants ? participantCount : undefined,
       venue:              venue.trim() || undefined,
@@ -291,98 +323,146 @@ export function ScheduleActivityDrawer({
           </div>
         </section>
 
-        {/* Quick picks */}
-        <section className="flex flex-wrap items-center gap-1.5">
-          <span className="text-caption uppercase tracking-wider font-bold muted mr-1">Quick picks</span>
-          <QuickPick label="This Week"  onClick={() => pickRelative(7 - today.getDay())} />
-          <QuickPick label="Next Week"  onClick={() => pickRelative(14 - today.getDay())} />
-          <QuickPick label="Next Month" onClick={pickNextMonth} />
-        </section>
-
-        {/* Calendar */}
-        <section className="rounded-lg border border-[var(--color-edify-border)] bg-white p-3">
-          <header className="flex items-center justify-between mb-2.5">
-            <button
-              type="button"
-              onClick={handlePrevMonth}
-              aria-label="Previous month"
-              className="h-7 w-7 grid place-items-center rounded-md hover:bg-[var(--color-edify-soft)] text-[var(--color-edify-muted)] hover:text-[var(--color-edify-text)] transition-colors"
-            >
-              <ChevronLeft size={14} />
-            </button>
-            <div className="text-[13px] font-extrabold tracking-tight">
-              {MONTHS[viewMonth]} {viewYear}
+        {isVisitMode ? (
+          /* ── Visit mode: Month + Week picker (no specific date) ── */
+          <section className="rounded-lg border border-[var(--color-edify-border)] bg-white p-3 space-y-3">
+            <div className="text-[11px] muted leading-snug">
+              School visits are scheduled by <strong>month and week</strong> — no specific date needed.
+              The system will show this visit in your plan for the chosen week.
             </div>
-            <button
-              type="button"
-              onClick={handleNextMonth}
-              aria-label="Next month"
-              className="h-7 w-7 grid place-items-center rounded-md hover:bg-[var(--color-edify-soft)] text-[var(--color-edify-muted)] hover:text-[var(--color-edify-text)] transition-colors"
-            >
-              <ChevronRight size={14} />
-            </button>
-          </header>
-
-          <div className="grid grid-cols-7 gap-0.5 mb-1">
-            {DAY_LABELS.map((d) => (
-              <div
-                key={d}
-                className="h-6 text-center text-[10px] uppercase tracking-wider font-bold text-[var(--color-edify-muted)] flex items-center justify-center"
-              >
-                {d}
-              </div>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-7 gap-0.5">
-            {buildCalendarCells(viewYear, viewMonth).map((cell, i) => {
-              const isToday    = sameDate(cell.date, today);
-              const isSelected = !!selected && sameDate(cell.date, selected);
-              const isPast     = cell.date < startOfDay(today);
-              return (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => {
-                    setSelected(cell.date);
-                    if (!cell.inMonth) {
-                      setViewMonth(cell.date.getMonth());
-                      setViewYear(cell.date.getFullYear());
-                    }
-                  }}
-                  disabled={isPast}
-                  className={cn(
-                    "h-9 rounded-md text-[12px] font-semibold tabular transition-colors",
-                    "focus:outline-2 focus:outline-offset-1 focus:outline-[var(--color-edify-primary)]",
-                    isSelected
-                      ? "bg-[var(--color-edify-primary)] text-white shadow-sm font-extrabold"
-                      : isPast
-                        ? "text-[var(--color-edify-muted)] opacity-40 cursor-not-allowed"
-                        : !cell.inMonth
-                          ? "text-[var(--color-edify-muted)] opacity-60 hover:bg-[var(--color-edify-soft)]/40"
-                          : isToday
-                            ? "text-[var(--color-edify-primary)] ring-1 ring-[var(--color-edify-primary)]/40 hover:bg-[var(--color-edify-soft)]"
-                            : "text-[var(--color-edify-text)] hover:bg-[var(--color-edify-soft)]/60",
-                  )}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[10.5px] font-bold uppercase tracking-wide muted mb-1">Month</label>
+                <select
+                  value={visitMonth}
+                  onChange={(e) => setVisitMonth(Number(e.target.value))}
+                  className="w-full h-9 px-2 rounded-lg border border-[var(--color-edify-border)] bg-white text-[12px]"
                 >
-                  {cell.date.getDate()}
+                  {MONTHS.map((name, idx) => (
+                    <option key={idx} value={idx}>{name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[10.5px] font-bold uppercase tracking-wide muted mb-1">Week</label>
+                <select
+                  value={visitWeek}
+                  onChange={(e) => setVisitWeek(Number(e.target.value))}
+                  className="w-full h-9 px-2 rounded-lg border border-[var(--color-edify-border)] bg-white text-[12px]"
+                >
+                  <option value={1}>Week 1 (1st – 7th)</option>
+                  <option value={2}>Week 2 (8th – 14th)</option>
+                  <option value={3}>Week 3 (15th – 21st)</option>
+                  <option value={4}>Week 4 (22nd – end)</option>
+                </select>
+              </div>
+            </div>
+            <div className="pt-2 border-t border-[var(--color-edify-divider)] flex items-center justify-between text-[11.5px]">
+              <span className="muted inline-flex items-center gap-1">
+                <CalendarCheck size={11} className="text-[var(--color-edify-primary)]" />
+                Scheduled for
+              </span>
+              <span className="font-extrabold tabular">
+                Week {visitWeek} · {MONTHS[visitMonth]} {today.getFullYear()}
+              </span>
+            </div>
+          </section>
+        ) : (
+          <>
+            {/* Quick picks */}
+            <section className="flex flex-wrap items-center gap-1.5">
+              <span className="text-caption uppercase tracking-wider font-bold muted mr-1">Quick picks</span>
+              <QuickPick label="This Week"  onClick={() => pickRelative(7 - today.getDay())} />
+              <QuickPick label="Next Week"  onClick={() => pickRelative(14 - today.getDay())} />
+              <QuickPick label="Next Month" onClick={pickNextMonth} />
+            </section>
+
+            {/* Calendar */}
+            <section className="rounded-lg border border-[var(--color-edify-border)] bg-white p-3">
+              <header className="flex items-center justify-between mb-2.5">
+                <button
+                  type="button"
+                  onClick={handlePrevMonth}
+                  aria-label="Previous month"
+                  className="h-7 w-7 grid place-items-center rounded-md hover:bg-[var(--color-edify-soft)] text-[var(--color-edify-muted)] hover:text-[var(--color-edify-text)] transition-colors"
+                >
+                  <ChevronLeft size={14} />
                 </button>
-              );
-            })}
-          </div>
+                <div className="text-[13px] font-extrabold tracking-tight">
+                  {MONTHS[viewMonth]} {viewYear}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleNextMonth}
+                  aria-label="Next month"
+                  className="h-7 w-7 grid place-items-center rounded-md hover:bg-[var(--color-edify-soft)] text-[var(--color-edify-muted)] hover:text-[var(--color-edify-text)] transition-colors"
+                >
+                  <ChevronRight size={14} />
+                </button>
+              </header>
 
-          <div className="mt-3 pt-3 border-t border-[var(--color-edify-divider)] flex items-center justify-between text-[11.5px]">
-            <span className="muted inline-flex items-center gap-1">
-              <CalendarCheck size={11} className="text-[var(--color-edify-primary)]" />
-              {selected ? "Selected" : "Pick a date"}
-            </span>
-            <span className="font-extrabold tabular">
-              {selected ? formatHumanDate(selected) : "—"}
-            </span>
-          </div>
-        </section>
+              <div className="grid grid-cols-7 gap-0.5 mb-1">
+                {DAY_LABELS.map((d) => (
+                  <div
+                    key={d}
+                    className="h-6 text-center text-[10px] uppercase tracking-wider font-bold text-[var(--color-edify-muted)] flex items-center justify-center"
+                  >
+                    {d}
+                  </div>
+                ))}
+              </div>
 
-        {outsideCycle && (
+              <div className="grid grid-cols-7 gap-0.5">
+                {buildCalendarCells(viewYear, viewMonth).map((cell, i) => {
+                  const isToday    = sameDate(cell.date, today);
+                  const isSelected = !!selected && sameDate(cell.date, selected);
+                  const isPast     = cell.date < startOfDay(today);
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => {
+                        setSelected(cell.date);
+                        if (!cell.inMonth) {
+                          setViewMonth(cell.date.getMonth());
+                          setViewYear(cell.date.getFullYear());
+                        }
+                      }}
+                      disabled={isPast}
+                      className={cn(
+                        "h-9 rounded-md text-[12px] font-semibold tabular transition-colors",
+                        "focus:outline-2 focus:outline-offset-1 focus:outline-[var(--color-edify-primary)]",
+                        isSelected
+                          ? "bg-[var(--color-edify-primary)] text-white shadow-sm font-extrabold"
+                          : isPast
+                            ? "text-[var(--color-edify-muted)] opacity-40 cursor-not-allowed"
+                            : !cell.inMonth
+                              ? "text-[var(--color-edify-muted)] opacity-60 hover:bg-[var(--color-edify-soft)]/40"
+                              : isToday
+                                ? "text-[var(--color-edify-primary)] ring-1 ring-[var(--color-edify-primary)]/40 hover:bg-[var(--color-edify-soft)]"
+                                : "text-[var(--color-edify-text)] hover:bg-[var(--color-edify-soft)]/60",
+                      )}
+                    >
+                      {cell.date.getDate()}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="mt-3 pt-3 border-t border-[var(--color-edify-divider)] flex items-center justify-between text-[11.5px]">
+                <span className="muted inline-flex items-center gap-1">
+                  <CalendarCheck size={11} className="text-[var(--color-edify-primary)]" />
+                  {selected ? "Selected" : "Pick a date"}
+                </span>
+                <span className="font-extrabold tabular">
+                  {selected ? formatHumanDate(selected) : "—"}
+                </span>
+              </div>
+            </section>
+          </>
+        )}
+
+        {outsideCycle && !isVisitMode && (
           <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-[11.5px] text-amber-800 inline-flex items-start gap-1.5">
             <AlertTriangle size={12} className="mt-0.5 shrink-0" />
             <span>
@@ -405,17 +485,19 @@ export function ScheduleActivityDrawer({
           }
         />
 
-        <Input
-          label={isTraining ? "Expected participants" : "Expected participants (optional)"}
-          type="number"
-          min={1}
-          required={isTraining}
-          value={participants}
-          onChange={(e) => setParticipants(e.target.value)}
-          helper={isTraining
-            ? "Required. Drives the projected training cost (Session + Venue + Meals + Mobilisation)."
-            : "Optional. When set, projects the cluster meeting cost at UGX 10K × participants."}
-        />
+        {!isVisitMode && (
+          <Input
+            label={isTraining ? "Expected participants" : "Expected participants (optional)"}
+            type="number"
+            min={1}
+            required={isTraining}
+            value={participants}
+            onChange={(e) => setParticipants(e.target.value)}
+            helper={isTraining
+              ? "Required. Drives the projected training cost (Session + Venue + Meals + Mobilisation)."
+              : "Optional. When set, projects the cluster meeting cost at UGX 10K × participants."}
+          />
+        )}
 
         {/* Partner facilitator (training only). Routine cluster
             meetings stay CCEO-led, so the field stays hidden. */}
@@ -432,7 +514,7 @@ export function ScheduleActivityDrawer({
           />
         )}
 
-        {costPreview ? (
+        {!isVisitMode && (costPreview ? (
           <section className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-3 space-y-1.5">
             <header className="inline-flex items-center gap-1.5">
               <Wallet size={12} className="text-emerald-700" />
@@ -459,7 +541,7 @@ export function ScheduleActivityDrawer({
           </section>
         ) : (
           <p className="text-[11px] muted">Cost will be calculated after participant count is added.</p>
-        )}
+        ))}
 
         <Input
           label="Venue / Location (optional)"

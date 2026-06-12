@@ -30,12 +30,24 @@ export type BeSchoolRow = {
   name: string;
   schoolType: string;
   clusterStatus: string;
+  clusterId?: string | null;
   currentFySsaStatus: string;
   planningReadiness: string;
   accountOwnerStatus: string;
   accountOwnerNameRaw?: string | null;
+  subCountyId?: string | null;
+  shippingAddress?: string | null;
+  schoolPhone?: string | null;
+  primaryContactName?: string | null;
+  primaryContactPhone?: string | null;
+  enrollment?: number | null;
+  duplicateStatus?: string | null;
+  region?: { name: string } | null;
   district?: { name: string } | null;
+  subCounty?: { name: string } | null;
+  parish?: { name: string } | null;
   cluster?: { name: string } | null;
+  accountOwner?: { user?: { name?: string } | null } | null;
 };
 
 export type BePaginated<T> = {
@@ -666,8 +678,58 @@ export type BeCluster = {
   id: string; name: string; clusterType: string; status: string;
   district?: { name: string } | null; subCounty?: { name: string } | null;
   subCountyName?: string | null; responsibleStaffId?: string | null;
+  clusterLeaderName?: string | null; clusterLeaderPhone?: string | null;
+  subCounties?: string[]; subCountyIds?: string[];
+  schoolCount?: number; schoolsWithSsa?: number;
   _count?: { schools: number };
 };
+// A cluster as returned by the eligibility endpoint (covered set + leader).
+export type BeEligibleCluster = {
+  id: string; name: string; district?: string | null; status: string; clusterType: string;
+  subCounty?: string | null; subCounties: string[];
+  clusterLeaderName?: string | null; clusterLeaderPhone?: string | null;
+  schoolCount: number;
+};
+export type BeClusterEligibility = {
+  schoolId: string; subCounty?: string | null;
+  eligible: BeEligibleCluster[]; districtAlternatives: BeEligibleCluster[];
+  canCreate: boolean; hint?: string;
+};
+/** Eligible clusters for a school's geography (only ones covering its sub-county). */
+export function fetchEligibleClusters(user: BackendUser, schoolId: string) {
+  return live<BeClusterEligibility>(`/clusters/eligible-for-school/${encodeURIComponent(schoolId)}`, user);
+}
+/** Create a cluster (standard form: district + sub-counties + name + leader). */
+export function backendCreateCluster(
+  user: BackendUser,
+  body: { name: string; regionId: string; districtId: string; subCountyIds: string[]; clusterLeaderName?: string; clusterLeaderPhone?: string; overrideReason?: string },
+) {
+  return live<BeCluster>(`/clusters`, user, { method: "POST", body: JSON.stringify(body) });
+}
+/** Assign a school to a cluster (backend enforces sub-county eligibility). */
+export function backendAssignCluster(user: BackendUser, schoolId: string, clusterId: string, reason?: string) {
+  return live<{ ok: boolean; schoolId: string; clusterId: string; planningReadiness: string; stage: string }>(
+    `/clusters/assign`, user, { method: "POST", body: JSON.stringify({ schoolId, clusterId, reason }) },
+  );
+}
+/** Create a cluster from a school (derives geography + auto-assigns the school). */
+export function backendCreateClusterFromSchool(user: BackendUser, body: { schoolId: string; name: string; overrideReason?: string }) {
+  return live<{ cluster: BeCluster; assignment: unknown }>(`/clusters/from-school`, user, { method: "POST", body: JSON.stringify(body) });
+}
+
+// ── Geography (regions → districts → sub-counties), for the cluster form ──
+export type BeRegion = { id: string; name: string; code?: string | null };
+export type BeDistrict = { id: string; name: string; regionId: string };
+export type BeSubCounty = { id: string; name: string; districtId: string };
+export function fetchRegions(user: BackendUser) {
+  return live<BeRegion[]>(`/geography/regions`, user);
+}
+export function fetchDistricts(user: BackendUser, regionId?: string) {
+  return live<BeDistrict[]>(`/geography/districts${regionId ? `?regionId=${encodeURIComponent(regionId)}` : ""}`, user);
+}
+export function fetchSubCounties(user: BackendUser, districtId: string) {
+  return live<BeSubCounty[]>(`/geography/sub-counties?districtId=${encodeURIComponent(districtId)}`, user);
+}
 export type BeClusterSchool = {
   schoolId: string; name: string; schoolType: string; subCounty?: string | null;
   accountOwner?: string | null; ssaStatus: string; planningReadiness: string;

@@ -10,8 +10,14 @@ import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import {
   Building2, MapPin, User, Search, Network, ArrowRight, CheckCircle2, AlertTriangle,
-  Sparkles, Handshake, Settings2, X,
+  Sparkles, Handshake, Settings2, X, ChevronDown, ChevronRight, Phone, UserCircle2,
+  Calendar, AlertCircle,
 } from "lucide-react";
+import {
+  ScheduleActivityDrawer,
+  type ScheduleActivityContext,
+  type ScheduleActivityOutcome,
+} from "@/components/planning/ScheduleActivityDrawer";
 import { cn } from "@/lib/utils";
 import { DirectoryClusterDrawer, type DirectorySchoolVM } from "./DirectoryClusterDrawer";
 import type { DirectoryProjectTag } from "./DirectoryClusterDrawer";
@@ -39,6 +45,8 @@ export function SchoolsClusterDirectory({
   schools,
   canManage,
   canManageClusters = true,
+  userRole = "",
+  userName = "",
   clusterOptions = [],
   projectOptions = [],
   partnerOptions = [],
@@ -49,11 +57,16 @@ export function SchoolsClusterDirectory({
   /** Cluster assignment is a CCEO/PL responsibility; when false (e.g. Project
    *  Coordinator) cluster controls are hidden and the drawer shows it read-only. */
   canManageClusters?: boolean;
+  /** Viewer's role — drives the CCEO/PL vs. other role button set. */
+  userRole?: string;
+  /** Viewer's name — used as defaultProposedBy in the scheduling drawer. */
+  userName?: string;
   clusterOptions?: DirectoryClusterOption[];
   projectOptions?: DirectoryProjectTag[];
   partnerOptions?: string[];
   interventionAreas?: string[];
 }) {
+  const isCceoPl = userRole === "CCEO" || userRole === "CountryProgramLead";
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<StageFilter>("all");
   const [district, setDistrict] = useState("");
@@ -65,6 +78,10 @@ export function SchoolsClusterDirectory({
   const [drawerSchool, setDrawerSchool] = useState<DirectorySchoolVM | null>(null);
   const [drawerTab, setDrawerTab] = useState<"cluster" | "project" | "partner">("cluster");
   const [toast, setToast] = useState<string | null>(null);
+  // Per-row expansion — tracks which school ids are expanded.
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  // Schedule-visit drawer (CCEO/PL quick-schedule from directory).
+  const [schedCtx, setSchedCtx] = useState<ScheduleActivityContext | null>(null);
 
   // Bulk selection
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -99,6 +116,24 @@ export function SchoolsClusterDirectory({
   const unclusteredCount = schools.filter((s) => s.clusterStatus === "unclustered").length;
 
   function showToast(msg: string) { setToast(msg); setTimeout(() => setToast(null), 4500); }
+
+  function toggleExpand(id: string) {
+    setExpanded((prev) => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id); else n.add(id);
+      return n;
+    });
+  }
+
+  function openScheduleDrawer(s: DirectorySchoolVM) {
+    setSchedCtx({
+      target: { kind: "school", id: s.schoolId, name: s.schoolName },
+      activityType: "School visit",
+      isTraining: false,
+      defaultProposedBy: userName ? `${userName} (CCEO)` : "CCEO",
+      locationLine: [s.district, s.subCounty].filter(Boolean).join(" · "),
+    });
+  }
 
   function onDrawerClose(changed?: boolean) {
     if (changed && drawerSchool) showToast(`${drawerSchool.schoolName} updated.`);
@@ -235,7 +270,7 @@ export function SchoolsClusterDirectory({
         </div>
       )}
 
-      {/* Rows */}
+      {/* Rows — unclustered schools first (full opacity), clustered greyed out at end */}
       <ul className="divide-y divide-[var(--color-edify-divider)] max-h-[60vh] overflow-y-auto">
         {filtered.length === 0 ? (
           <li className="px-4 py-8 text-center text-[12px] muted">No schools match these filters.</li>
@@ -244,85 +279,173 @@ export function SchoolsClusterDirectory({
           const meta = STAGE_META[stage];
           const projects = s.projects ?? [];
           const delegations = s.delegations ?? [];
+          const isClustered = s.clusterStatus === "clustered";
+          const isExpanded = expanded.has(s.schoolId);
+
           return (
-            <li key={s.schoolId} className="px-3.5 py-3 flex items-start gap-3">
-              {canManage && (
-                <input type="checkbox" checked={selected.has(s.schoolId)} onChange={() => toggleOne(s.schoolId)}
-                  className="mt-1.5 h-3.5 w-3.5 accent-[var(--color-edify-primary)] shrink-0" />
-              )}
-              <span className="grid place-items-center h-8 w-8 rounded-md bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)] shrink-0">
-                <Building2 size={13} />
-              </span>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Link href={`/schools/${s.schoolId}`} className="text-[12.5px] font-extrabold tracking-tight truncate hover:underline">{s.schoolName}</Link>
-                  <span className={cn("px-1.5 py-[1px] rounded text-[10px] font-bold", s.schoolType === "Core" ? "bg-violet-50 text-violet-700" : "bg-blue-50 text-blue-700")}>{s.schoolType}</span>
-                  <span className={cn("px-1.5 py-[1px] rounded text-[10px] font-bold", meta.cls)}>{meta.label}</span>
-                  {s.duplicate && <span className="px-1.5 py-[1px] rounded text-[10px] font-bold bg-amber-50 text-amber-700 inline-flex items-center gap-1"><AlertTriangle size={9} />Dup</span>}
-                </div>
-                <p className="text-[11px] muted leading-tight inline-flex items-center gap-1 mt-0.5">
-                  <MapPin size={9} className="text-[var(--color-edify-primary)]" />{s.district}{s.subCounty ? ` · ${s.subCounty}` : ""}
-                  <span className="opacity-50">·</span><User size={9} />{s.assignedCceo ?? "Unassigned"}
-                </p>
-                {/* Membership chips */}
-                <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                  {s.clusterName && (
-                    <span className="text-[10.5px] inline-flex items-center gap-1 px-1.5 py-[1px] rounded text-[var(--color-edify-primary)] font-semibold bg-[var(--color-edify-soft)]">
-                      <Network size={9} /> {s.clusterName}
-                    </span>
-                  )}
-                  {projects.map((p) => (
-                    <span key={p.projectId} className="text-[10.5px] inline-flex items-center gap-1 px-1.5 py-[1px] rounded bg-violet-50 text-violet-700 font-semibold">
-                      <Sparkles size={9} /> {p.projectShortName}
-                    </span>
-                  ))}
-                  {delegations.map((d) => (
-                    <span key={d.id} className="text-[10.5px] inline-flex items-center gap-1 px-1.5 py-[1px] rounded bg-sky-50 text-sky-700 font-semibold">
-                      <Handshake size={9} /> {d.partnerName}
-                    </span>
-                  ))}
-                  {s.recommendation?.hasSsa && s.recommendation.strugglingCount > 0 && (
-                    <span className={cn(
-                      "text-[10.5px] inline-flex items-center gap-1 px-1.5 py-[1px] rounded font-semibold",
-                      s.recommendation.weakestSeverity === "Critical" ? "bg-rose-50 text-rose-700" : "bg-amber-50 text-amber-700",
-                    )}
-                      title={`Weakest: ${s.recommendation.weakestArea} (${s.recommendation.weakestScore?.toFixed(1)}/10) · ${s.recommendation.weakestDelivery === "partner" ? "partner" : "staff"} recommended`}>
-                      <AlertTriangle size={9} />
-                      {s.recommendation.strugglingCount} gap{s.recommendation.strugglingCount === 1 ? "" : "s"} · {s.recommendation.weakestArea}
-                      <span className={cn("ml-0.5 px-1 rounded text-[9.5px]", s.recommendation.weakestDelivery === "partner" ? "bg-violet-100 text-violet-700" : "bg-blue-100 text-blue-700")}>
-                        {s.recommendation.weakestDelivery === "partner" ? "Partner" : "Staff"}
-                      </span>
-                    </span>
-                  )}
-                </div>
-              </div>
-              {/* Actions */}
-              <div className="shrink-0 flex flex-col items-end gap-1.5">
-                {stage === "unclustered" && canManage && canManageClusters ? (
-                  <button type="button" onClick={() => openDrawer(s, "cluster")}
-                    className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-[var(--color-edify-primary)] text-white text-[11.5px] font-extrabold hover:bg-[var(--color-edify-dark)] transition-colors">
-                    Add to Cluster <ArrowRight size={12} />
-                  </button>
-                ) : stage === "needs_owner" ? (
-                  <Link href="/data-intake/queue" className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-[var(--color-edify-border)] bg-white text-[11.5px] font-extrabold text-rose-700 hover:bg-rose-50 transition-colors">
-                    Map owner <ArrowRight size={12} />
-                  </Link>
-                ) : stage === "ssa_required" ? (
-                  <Link href={`/schools/${s.schoolId}`} className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-[var(--color-edify-border)] bg-white text-[11.5px] font-extrabold text-amber-700 hover:bg-amber-50 transition-colors">
-                    Activate SSA <ArrowRight size={12} />
-                  </Link>
-                ) : stage === "planning_ready" ? (
-                  <Link href="/planning" className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-[var(--color-edify-border)] bg-white text-[11.5px] font-extrabold text-emerald-700 hover:bg-emerald-50 transition-colors">
-                    Plan support <ArrowRight size={12} />
-                  </Link>
-                ) : null}
-                {canManage && (
-                  <button type="button" onClick={() => openDrawer(s, (s.clusterStatus === "unclustered" || !canManageClusters) ? "project" : "cluster")}
-                    className="inline-flex items-center gap-1 text-[11px] font-semibold muted hover:text-[var(--color-edify-text)]">
-                    <Settings2 size={11} /> Manage
-                  </button>
+            <li
+              key={s.schoolId}
+              className={cn("flex flex-col transition-colors", isClustered && "opacity-50")}
+            >
+              {/* ── Main row ── */}
+              <div className="px-3.5 py-3 flex items-start gap-3">
+                {canManage && !isClustered && (
+                  <input type="checkbox" checked={selected.has(s.schoolId)} onChange={() => toggleOne(s.schoolId)}
+                    className="mt-1.5 h-3.5 w-3.5 accent-[var(--color-edify-primary)] shrink-0" />
                 )}
+                {/* Expand toggle */}
+                <button
+                  type="button"
+                  aria-label={isExpanded ? "Collapse school details" : "Expand school details"}
+                  onClick={() => toggleExpand(s.schoolId)}
+                  className="grid place-items-center h-8 w-8 rounded-md bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)] shrink-0 hover:brightness-95 transition-all"
+                >
+                  {isExpanded ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+                </button>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Link href={`/schools/${s.schoolId}`} className="text-[12.5px] font-extrabold tracking-tight truncate hover:underline">{s.schoolName}</Link>
+                    <span className={cn("px-1.5 py-[1px] rounded text-[10px] font-bold", s.schoolType === "Core" ? "bg-violet-50 text-violet-700" : "bg-blue-50 text-blue-700")}>{s.schoolType}</span>
+                    <span className={cn("px-1.5 py-[1px] rounded text-[10px] font-bold", meta.cls)}>{meta.label}</span>
+                    {s.duplicate && <span className="px-1.5 py-[1px] rounded text-[10px] font-bold bg-amber-50 text-amber-700 inline-flex items-center gap-1"><AlertTriangle size={9} />Dup</span>}
+                  </div>
+                  <p className="text-[11px] muted leading-tight inline-flex items-center gap-1 mt-0.5">
+                    <MapPin size={9} className="text-[var(--color-edify-primary)]" />{s.district}{s.subCounty ? ` · ${s.subCounty}` : ""}
+                    <span className="opacity-50">·</span><User size={9} />{s.assignedCceo ?? "Unassigned"}
+                  </p>
+                  {/* Membership chips */}
+                  <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                    {s.clusterName && (
+                      <span className="text-[10.5px] inline-flex items-center gap-1 px-1.5 py-[1px] rounded text-[var(--color-edify-primary)] font-semibold bg-[var(--color-edify-soft)]">
+                        <Network size={9} /> {s.clusterName}
+                      </span>
+                    )}
+                    {projects.map((p) => (
+                      <span key={p.projectId} className="text-[10.5px] inline-flex items-center gap-1 px-1.5 py-[1px] rounded bg-violet-50 text-violet-700 font-semibold">
+                        <Sparkles size={9} /> {p.projectShortName}
+                      </span>
+                    ))}
+                    {delegations.map((d) => (
+                      <span key={d.id} className="text-[10.5px] inline-flex items-center gap-1 px-1.5 py-[1px] rounded bg-sky-50 text-sky-700 font-semibold">
+                        <Handshake size={9} /> {d.partnerName}
+                      </span>
+                    ))}
+                    {s.recommendation?.hasSsa && s.recommendation.strugglingCount > 0 && (
+                      <span className={cn(
+                        "text-[10.5px] inline-flex items-center gap-1 px-1.5 py-[1px] rounded font-semibold",
+                        s.recommendation.weakestSeverity === "Critical" ? "bg-rose-50 text-rose-700" : "bg-amber-50 text-amber-700",
+                      )}
+                        title={`Weakest: ${s.recommendation.weakestArea} (${s.recommendation.weakestScore?.toFixed(1)}/10)`}>
+                        <AlertTriangle size={9} />
+                        {s.recommendation.strugglingCount} gap{s.recommendation.strugglingCount === 1 ? "" : "s"}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {/* ── Role-based action buttons ── */}
+                <div className="shrink-0 flex flex-col items-end gap-1.5">
+                  {isClustered ? (
+                    /* Clustered: greyed out, link to planning page */
+                    <Link
+                      href="/planning"
+                      className="inline-flex items-center gap-1 h-7 px-2.5 rounded-lg border border-[var(--color-edify-border)] bg-white text-[11px] font-semibold text-[var(--color-edify-muted)] hover:text-[var(--color-edify-text)] transition-colors"
+                    >
+                      <Calendar size={10} /> View in Planning
+                    </Link>
+                  ) : isCceoPl && canManage ? (
+                    /* CCEO / PL on unclustered school */
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => openScheduleDrawer(s)}
+                        className="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg bg-[var(--color-edify-primary)] text-white text-[11.5px] font-extrabold hover:bg-[var(--color-edify-dark)] transition-colors"
+                      >
+                        <Calendar size={11} /> Schedule
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => openDrawer(s, "partner")}
+                        className="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg border border-[var(--color-edify-border)] bg-white text-[11.5px] font-semibold text-sky-700 hover:bg-sky-50 transition-colors"
+                      >
+                        <Handshake size={11} /> Assign to Partner
+                      </button>
+                    </div>
+                  ) : canManage ? (
+                    /* Other roles (CD, IA, Admin) on unclustered school */
+                    <button
+                      type="button"
+                      onClick={() => openDrawer(s, "cluster")}
+                      className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-[var(--color-edify-primary)] text-white text-[11.5px] font-extrabold hover:bg-[var(--color-edify-dark)] transition-colors"
+                    >
+                      Assign <ArrowRight size={12} />
+                    </button>
+                  ) : null}
+                  {/* Manage gear — always visible to authorised viewers */}
+                  {canManage && (
+                    <button
+                      type="button"
+                      onClick={() => openDrawer(s, "cluster")}
+                      className="inline-flex items-center gap-1 text-[11px] font-semibold muted hover:text-[var(--color-edify-text)]"
+                    >
+                      <Settings2 size={11} /> Manage
+                    </button>
+                  )}
+                </div>
               </div>
+
+              {/* ── Expanded detail panel ── */}
+              {isExpanded && (
+                <div className="mx-3.5 mb-3 rounded-xl border border-[var(--color-edify-divider)] bg-[var(--color-edify-soft)]/40 px-3 py-2.5 space-y-2">
+                  {/* Location */}
+                  <div className="flex items-start gap-2">
+                    <MapPin size={11} className="mt-0.5 shrink-0 text-[var(--color-edify-primary)]" />
+                    <div className="text-[11.5px]">
+                      <span className="font-semibold">{s.district}</span>
+                      {s.subCounty && <span className="muted"> · {s.subCounty}</span>}
+                      {s.parish && <span className="muted"> · {s.parish}</span>}
+                    </div>
+                  </div>
+                  {/* Phone */}
+                  <div className="flex items-center gap-2">
+                    <Phone size={11} className="shrink-0 text-[var(--color-edify-muted)]" />
+                    <span className="text-[11.5px]">{s.phone ?? <span className="muted italic">Phone not on file</span>}</span>
+                  </div>
+                  {/* Primary contact */}
+                  <div className="flex items-center gap-2">
+                    <UserCircle2 size={11} className="shrink-0 text-[var(--color-edify-muted)]" />
+                    <span className="text-[11.5px]">
+                      {s.primaryContact
+                        ? <><span className="font-semibold">{s.primaryContact}</span><span className="muted"> · Director / Primary contact</span></>
+                        : <span className="muted italic">Primary contact not on file</span>}
+                    </span>
+                  </div>
+                  {/* SSA weak areas */}
+                  {s.weakAreas && s.weakAreas.length > 0 && (
+                    <div>
+                      <div className="text-[10px] font-bold uppercase tracking-wide text-rose-600 mb-1 flex items-center gap-1">
+                        <AlertCircle size={9} /> Struggling intervention areas
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {s.weakAreas.map((w) => (
+                          <span
+                            key={w.area}
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-[11px] font-extrabold"
+                          >
+                            {w.area}
+                            <span className="ml-0.5 text-[10px] font-bold opacity-70">{w.score.toFixed(1)}/10</span>
+                          </span>
+                        ))}
+                      </div>
+                      <p className="text-[10px] muted mt-1">These areas should inform the cluster meeting agenda and training focus.</p>
+                    </div>
+                  )}
+                  {s.ssaStatus === "SSA Not Done" && (
+                    <div className="text-[11px] text-amber-700 inline-flex items-center gap-1">
+                      <AlertTriangle size={10} /> No SSA on record — intervention priorities unknown.
+                    </div>
+                  )}
+                </div>
+              )}
             </li>
           );
         })}
@@ -338,6 +461,17 @@ export function SchoolsClusterDirectory({
         projectOptions={projectOptions}
         partnerOptions={partnerOptions}
         interventionAreas={interventionAreas}
+      />
+
+      {/* Schedule-visit drawer — opened from [Schedule] button on unclustered school rows (CCEO/PL) */}
+      <ScheduleActivityDrawer
+        open={!!schedCtx}
+        context={schedCtx}
+        onClose={() => setSchedCtx(null)}
+        onSubmit={(outcome: ScheduleActivityOutcome) => {
+          showToast(`Visit scheduled: ${outcome.date}`);
+          setSchedCtx(null);
+        }}
       />
 
       {toast && (

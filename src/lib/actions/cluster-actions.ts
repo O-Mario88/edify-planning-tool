@@ -41,6 +41,15 @@ import {
 import { partners } from "@/lib/partner/partner-mock";
 import { getCurrentPartner } from "@/lib/partner/partner-identity";
 import { markJoinedThroughCluster, type ClusterJoinSourceType } from "@/lib/cluster/cluster-join-source";
+import { isBackendEnabled } from "@/lib/api/backend";
+import { backendAssignCluster, backendCreateClusterFromSchool } from "@/lib/api/surfaces";
+
+// The signed-in user as a backend principal (the bridge maps role → backend
+// account). Cluster writes hit edify-api when EDIFY_USE_BACKEND=true so the
+// School Directory's cluster flow is backend-driven + sub-county-enforced.
+function backendUserFor(u: { email: string; role: string }) {
+  return { email: u.email, role: u.role };
+}
 
 const CLUSTER_ROLES = new Set<string>([
   "CCEO",
@@ -67,6 +76,7 @@ function revalidateClusterSurfaces() {
     revalidatePath("/clusters");
     revalidatePath("/schools");
     revalidatePath("/planning");
+    revalidatePath("/my-plan");
     revalidatePath("/portfolio");
     revalidatePath("/analytics");
     revalidatePath("/notifications");
@@ -84,6 +94,21 @@ export async function assignToExistingClusterAction(
   const actor = await actorOrForbidden();
   if (!actor) return { ok: false, reason: "FORBIDDEN" };
   if (!schoolIds.length) return { ok: false, reason: "FAILED", message: "Select at least one school." };
+
+  // Backend-driven: assign each school via edify-api (sub-county-enforced).
+  if (isBackendEnabled()) {
+    const user = await getCurrentUser();
+    const beUser = backendUserFor(user);
+    const assignedIds: string[] = [];
+    const failedRows: { schoolId: string; reason: string }[] = [];
+    for (const sid of schoolIds) {
+      const res = await backendAssignCluster(beUser, sid, clusterId);
+      if (res.live) assignedIds.push(sid);
+      else failedRows.push({ schoolId: sid, reason: res.error ?? "Not eligible for this cluster." });
+    }
+    if (assignedIds.length) revalidateClusterSurfaces();
+    return { ok: true, assigned: assignedIds.length, failed: failedRows };
+  }
 
   const { assigned, failed } = bulkAssign(schoolIds, clusterId, actor);
   if (assigned.length > 0) {
@@ -116,6 +141,20 @@ export async function createClusterAndAssignAction(
 ): Promise<ClusterActionResult<{ clusterId: string; clusterName: string; assigned: number }>> {
   const actor = await actorOrForbidden();
   if (!actor) return { ok: false, reason: "FORBIDDEN" };
+
+  // Backend-driven: create the cluster FROM the school (edify-api derives the
+  // geography from the school's record + auto-assigns it). Covers the school's
+  // sub-county and enforces one-cluster-per-sub-county.
+  if (isBackendEnabled()) {
+    if (!input.name?.trim()) return { ok: false, reason: "INVALID_INPUT", errors: { name: "Give the cluster a name." } };
+    const schoolId = schoolIds[0];
+    if (!schoolId) return { ok: false, reason: "FAILED", message: "Select a school to create the cluster from." };
+    const user = await getCurrentUser();
+    const res = await backendCreateClusterFromSchool(backendUserFor(user), { schoolId, name: input.name.trim() });
+    if (!res.live) return { ok: false, reason: "FAILED", message: res.error ?? "Could not create the cluster." };
+    revalidateClusterSurfaces();
+    return { ok: true, clusterId: res.data.cluster.id, clusterName: res.data.cluster.name, assigned: 1 };
+  }
 
   // Validate the cluster shell first (name uniqueness, required geography).
   // Sub-counties are derived from the selected schools when not supplied.
@@ -511,6 +550,16 @@ export async function assignSchoolAction(
 ): Promise<ClusterActionResult> {
   const actor = await actorOrForbidden();
   if (!actor) return { ok: false, reason: "FORBIDDEN" };
+
+  // Backend-driven: edify-api enforces sub-county eligibility + writes the audit.
+  if (isBackendEnabled()) {
+    const user = await getCurrentUser();
+    const res = await backendAssignCluster(backendUserFor(user), schoolId, clusterId);
+    if (!res.live) return { ok: false, reason: "FAILED", message: res.error ?? "Could not assign the school to this cluster." };
+    revalidateClusterSurfaces();
+    return { ok: true };
+  }
+
   const r = assignSchoolToCluster(schoolId, clusterId, actor);
   if (!r.ok) return { ok: false, reason: "FAILED", message: r.reason };
   emitAudit({

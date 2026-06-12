@@ -4,7 +4,7 @@ import { PlanningReviewSignals } from "@/components/schools/PlanningReviewSignal
 import { SchoolQuickActions } from "@/components/schools/SchoolQuickActions";
 import { SchoolsClusterDirectory, type DirectoryClusterOption } from "@/components/cluster/SchoolsClusterDirectory";
 import type { DirectorySchoolVM, DirectoryClusterMatch } from "@/components/cluster/DirectoryClusterDrawer";
-import { schoolRecommendationSummary } from "@/lib/planning/intervention-recommendation";
+import { schoolRecommendationSummary, recommendInterventionsForSchool } from "@/lib/planning/intervention-recommendation";
 import { TargetsByTimePeriodCard } from "@/components/portfolio/TargetsByTimePeriodCard";
 import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { SchoolsView } from "@/components/mobile/views/SchoolsView";
@@ -23,7 +23,7 @@ import {
 import { openDuplicateCandidates } from "@/lib/intake/duplicate-candidates-mock";
 import { getVisibleSchools, priorityOrder } from "@/lib/schools-mock";
 import { getCurrentUser, toCurrentUser } from "@/lib/auth";
-import { fetchSchools, type BeSchoolRow } from "@/lib/api/surfaces";
+import { fetchSchools, fetchClusters, type BeSchoolRow, type BeCluster } from "@/lib/api/surfaces";
 import { LiveBadge, BackendOfflineBanner } from "@/components/ui/BackendStatus";
 import type { DirectoryMetric } from "@/lib/school-directory/directory";
 import { portfolioForStaffId } from "@/lib/portfolio/portfolio";
@@ -143,12 +143,9 @@ export default async function SchoolsDashboard({
   const ordered = [...getVisibleSchools(currentUser)].sort(priorityOrder);
 
   // Assignment option lists for the directory drawer + bulk bar.
-  const clusterOptions: DirectoryClusterOption[] = activeClusters().map((c) => ({ id: c.id, name: c.name, district: c.district }));
   const visibleProjects = getVisibleProjects(currentUser);
   const projectOptions = visibleProjects.map((p) => ({ projectId: p.projectId, projectShortName: p.projectShortName, projectType: p.projectType, primaryInterventionId: p.primaryInterventionId }));
   const interventionAreas = [...SSA_INTERVENTION_AREAS];
-
-  // ── Directory rows (same master, enriched with workflow state + memberships). ──
   const dupeIds = new Set(openDuplicateCandidates().map((d) => d.schoolId));
   const toMatchVM = (m: ClusterMatch): DirectoryClusterMatch => ({
     id: m.cluster.id,
@@ -160,32 +157,90 @@ export default async function SchoolsDashboard({
     tier: m.tier,
     leaderName: m.cluster.clusterLeaderName,
   });
-  const directorySchools: DirectorySchoolVM[] = records.map((s) => {
-    const g = recommendClustersFor(s);
-    return {
-      schoolId: s.schoolId,
-      schoolName: s.schoolName,
-      schoolType: s.schoolType,
-      region: s.region,
-      district: s.district,
-      subCounty: s.subCounty,
-      parish: s.parish,
-      assignedCceo: s.assignedCceo,
-      ssaStatus: s.ssaStatus,
-      duplicate: dupeIds.has(s.schoolId),
-      clusterStatus: clusterStatusOf(s),
-      clusterId: s.clusterId,
-      clusterName: s.cluster,
-      stage: schoolWorkflowState(s).stage,
-      matches: { strong: g.strong.map(toMatchVM), district: g.district.map(toMatchVM), region: g.region.map(toMatchVM) },
-      projects: projectsForSchool(s.schoolId),
-      recommendedProjectIds: visibleProjects
-        .filter((p) => evaluateEligibility(s, p).recommended)
-        .map((p) => p.projectId),
-      delegations: activePartnerAssignmentsForSchool(s.schoolId).map((p) => ({ id: p.id, partnerName: p.partnerName, interventionArea: p.interventionArea })),
-      recommendation: schoolRecommendationSummary(s.schoolId),
-    };
+
+  // ── Directory rows + cluster options ──
+  // BACKEND-DRIVEN when the API is live: the directory list, cluster options, and
+  // per-school cluster eligibility (matches) ALL come from edify-api, so what you
+  // see and assign is real backend data. Sub-county eligibility mirrors the
+  // server's rule (a cluster is "strong" iff it covers the school's sub-county).
+  // Falls back to the in-memory directory only when the backend is off.
+  const liveClusterRes = liveSchools.live ? await fetchClusters(me) : null;
+  const beClusters: BeCluster[] = liveClusterRes?.live ? liveClusterRes.data : [];
+  const beClustersBySub = new Map<string, BeCluster[]>();
+  for (const c of beClusters) for (const scId of c.subCountyIds ?? []) {
+    const arr = beClustersBySub.get(scId) ?? [];
+    arr.push(c);
+    beClustersBySub.set(scId, arr);
+  }
+  const beMatch = (c: BeCluster, tier: "strong" | "district" | "region"): DirectoryClusterMatch => ({
+    id: c.id, name: c.name, district: c.district?.name ?? "",
+    subCounties: c.subCounties ?? [],
+    schoolCount: c.schoolCount ?? c._count?.schools ?? 0,
+    ssaRate: c.schoolCount ? Math.round(((c.schoolsWithSsa ?? 0) / c.schoolCount) * 100) : 0,
+    tier, leaderName: c.clusterLeaderName ?? undefined,
   });
+  const beDirectoryVM = (r: BeSchoolRow): DirectorySchoolVM => {
+    const strong = r.subCountyId ? beClustersBySub.get(r.subCountyId) ?? [] : [];
+    const strongIds = new Set(strong.map((c) => c.id));
+    const district = beClusters.filter((c) => c.district?.name && c.district.name === r.district?.name && !strongIds.has(c.id));
+    const clustered = r.clusterStatus === "clustered";
+    const ssaDone = r.currentFySsaStatus === "done";
+    const stage = r.accountOwnerStatus !== "matched" ? "needs_owner" as const : !clustered ? "unclustered" as const : !ssaDone ? "ssa_required" as const : "planning_ready" as const;
+    return {
+      schoolId: r.schoolId, schoolName: r.name,
+      schoolType: r.schoolType === "core" ? "Core" : "Client",
+      region: r.region?.name ?? "", district: r.district?.name ?? "",
+      subCounty: r.subCounty?.name ?? undefined, parish: r.parish?.name ?? undefined,
+      assignedCceo: r.accountOwner?.user?.name ?? r.accountOwnerNameRaw ?? undefined,
+      ssaStatus: ssaDone ? "SSA Done" : "SSA Not Done",
+      duplicate: r.duplicateStatus === "potential",
+      clusterStatus: clustered ? "clustered" : "unclustered",
+      clusterId: r.clusterId ?? undefined, clusterName: r.cluster?.name ?? undefined,
+      stage,
+      matches: { strong: strong.map((c) => beMatch(c, "strong")), district: district.map((c) => beMatch(c, "district")), region: [] },
+      projects: [], recommendedProjectIds: [], delegations: [], recommendation: undefined,
+    };
+  };
+
+  const clusterOptions: DirectoryClusterOption[] = liveSchools.live
+    ? beClusters.map((c) => ({ id: c.id, name: c.name, district: c.district?.name ?? "" }))
+    : activeClusters().map((c) => ({ id: c.id, name: c.name, district: c.district }));
+
+  const directorySchools: DirectorySchoolVM[] = liveSchools.live
+    ? liveRows.map(beDirectoryVM)
+    : records.map((s) => {
+        const g = recommendClustersFor(s);
+        const rec = recommendInterventionsForSchool(s.schoolId);
+        const weakAreas = rec.hasSsa
+          ? rec.all.slice(0, 2).map((r) => ({ area: r.intervention, score: r.score }))
+          : undefined;
+        return {
+          schoolId: s.schoolId,
+          schoolName: s.schoolName,
+          schoolType: s.schoolType,
+          region: s.region,
+          district: s.district,
+          subCounty: s.subCounty,
+          parish: s.parish,
+          assignedCceo: s.assignedCceo,
+          ssaStatus: s.ssaStatus,
+          duplicate: dupeIds.has(s.schoolId),
+          clusterStatus: clusterStatusOf(s),
+          clusterId: s.clusterId,
+          clusterName: s.cluster,
+          stage: schoolWorkflowState(s).stage,
+          matches: { strong: g.strong.map(toMatchVM), district: g.district.map(toMatchVM), region: g.region.map(toMatchVM) },
+          projects: projectsForSchool(s.schoolId),
+          recommendedProjectIds: visibleProjects
+            .filter((p) => evaluateEligibility(s, p).recommended)
+            .map((p) => p.projectId),
+          delegations: activePartnerAssignmentsForSchool(s.schoolId).map((p) => ({ id: p.id, partnerName: p.partnerName, interventionArea: p.interventionArea })),
+          recommendation: schoolRecommendationSummary(s.schoolId),
+          phone: s.phone,
+          primaryContact: s.primaryContact,
+          weakAreas,
+        };
+      });
   // Partner/HR cannot assign; everyone else with directory access can (server re-checks).
   const canManageDirectory = ["CCEO", "CountryProgramLead", "CountryDirector", "ImpactAssessment", "Admin"]
     .includes(currentUser.role);
@@ -229,6 +284,8 @@ export default async function SchoolsDashboard({
             schools={directorySchools}
             canManage={canManageDirectory}
             canManageClusters={canManageClusters}
+            userRole={currentUser.role}
+            userName={currentUser.name}
             clusterOptions={clusterOptions}
             projectOptions={projectOptions}
             partnerOptions={PARTNER_SUGGESTIONS}

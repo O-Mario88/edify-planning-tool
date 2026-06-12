@@ -25,6 +25,8 @@ import type { BeActivity } from "@/lib/api/surfaces";
 import type { PlannedActivityRecord } from "@/lib/actions/store";
 import type { WeeklyFundRequest } from "@/lib/funds/weekly-fund-types";
 import { RESCHEDULE_SLIP_LIMIT, classifyActivityKind } from "@/lib/planning/planning-capacity";
+import type { ClusterMeeting } from "@/lib/cluster/cluster-core";
+import { clusterById, CLUSTER_MEETING_LABEL } from "@/lib/cluster/cluster-core";
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -227,6 +229,32 @@ export function fromStoreActivity(
   return item;
 }
 
+/** Cluster meeting → MyPlanItem for My Plan inclusion. */
+export function fromClusterMeeting(m: ClusterMeeting, todayIso: string): MyPlanItem | null {
+  const cluster = clusterById(m.clusterId);
+  if (!cluster) return null;
+  const waitingOn: MyPlanWaiting | undefined =
+    m.status === "Returned" ? "returned" : undefined;
+  const item: MyPlanItem = {
+    id: m.id,
+    source: "store",
+    typeLabel: CLUSTER_MEETING_LABEL[m.kind] ?? "Cluster activity",
+    entityName: cluster.name,
+    exactDate: true, // cluster meetings always have an exact date
+    dateIso: m.date,
+    costCents: undefined,
+    funding: undefined,
+    statusLabel: m.status,
+    waitingOn,
+    rescheduleCount: 0,
+    atSlipLimit: false,
+    lastReason: m.returnedReason,
+    nextAction: "reschedule",
+  };
+  item.nextAction = resolveNextAction(item, todayIso);
+  return item;
+}
+
 // ── Sectioning ───────────────────────────────────────────────────────
 
 const isoDay = (d: Date) => d.toISOString().slice(0, 10);
@@ -247,13 +275,31 @@ export function sectionMyPlan(items: MyPlanItem[], today: Date = new Date()): My
     dueToday: [], thisWeek: [], thisMonth: [], waitingOnMe: [], needsAttention: [],
   };
 
+  // Current week-of-month (1-4) so visit-typed items can land in thisWeek.
+  const todayDate = today.getUTCDate();
+  const currentWeekOfMonth = Math.min(4, Math.ceil(todayDate / 7));
+
   for (const i of items) {
     const date = i.dateIso?.slice(0, 10);
-    if (i.waitingOn) buckets.waitingOnMe.push(i);
-    else if (i.rescheduleCount > 0 || i.statusLabel === "Deferred" || i.statusLabel === "Rescheduled") buckets.needsAttention.push(i);
-    else if (date && date <= todayIso) buckets.dueToday.push(i);
-    else if (date && date <= weekEnd) buckets.thisWeek.push(i);
-    else buckets.thisMonth.push(i); // rest of month, later, or not yet dated
+    if (i.waitingOn) {
+      buckets.waitingOnMe.push(i);
+    } else if (i.rescheduleCount > 0 || i.statusLabel === "Deferred" || i.statusLabel === "Rescheduled") {
+      buckets.needsAttention.push(i);
+    } else if (i.exactDate && date && date <= todayIso) {
+      // Only training, SIT, and cluster meetings (exactDate=true) can appear in
+      // "Due Today". School visits carry a month+week approximation and should
+      // never appear as overdue — they go to thisWeek or thisMonth.
+      buckets.dueToday.push(i);
+    } else if (i.weekOfMonth !== undefined) {
+      // Visit scheduled by week-of-month (no exact date). Route to thisWeek if
+      // it's the current week, otherwise thisMonth.
+      if (i.weekOfMonth === currentWeekOfMonth) buckets.thisWeek.push(i);
+      else buckets.thisMonth.push(i);
+    } else if (date && date <= weekEnd) {
+      buckets.thisWeek.push(i);
+    } else {
+      buckets.thisMonth.push(i); // rest of month, later, or not yet dated
+    }
   }
 
   const byDate = (a: MyPlanItem, b: MyPlanItem) => (a.dateIso ?? "9999").localeCompare(b.dateIso ?? "9999");

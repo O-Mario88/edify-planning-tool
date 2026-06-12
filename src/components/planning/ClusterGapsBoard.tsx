@@ -35,11 +35,12 @@ import {
   type ScheduleActivityContext,
   type ScheduleActivityOutcome,
 } from "@/components/planning/ScheduleActivityDrawer";
-import { ScheduleActivityLive } from "@/components/planning/ScheduleActivityLive";
 import {
   ClusterActivityProfileDrawer,
   type ClusterActivityProfileContext,
 } from "@/components/planning/ClusterActivityProfileDrawer";
+import { scheduleClusterMeetingAction } from "@/lib/actions/cluster-actions";
+import type { ClusterMeetingKind } from "@/lib/cluster/cluster-core";
 
 /**
  * Translate a cluster gap + slot into the unified ScheduleActivityDrawer's
@@ -149,15 +150,9 @@ export function ClusterGapsBoard({
   }
 
   function handleScheduleSubmit(outcome: ScheduleActivityOutcome) {
-    // The unified drawer's outcome carries activityType (string) but
-    // the overlay key needs the slot enum — we kept the slot alongside
-    // the context when opening the drawer.
     const pending = scheduleAssign;
     if (!pending) return;
 
-    // Toast picks up the participant + projected-cost detail when the
-    // drawer collected them. Training always carries cost; meetings
-    // carry it only when participants were entered.
     const costFragment = outcome.projectedCostUgx
       ? ` · Projected cost ${formatUgx(outcome.projectedCostUgx)} (${outcome.participants} participants)`
       : outcome.participants
@@ -167,7 +162,7 @@ export function ClusterGapsBoard({
       ? ` Facilitator: ${outcome.partnerFacilitator}.`
       : "";
     setToast(
-      `${pending.cluster.clusterName} · ${outcome.activityType} scheduled for ${outcome.date}.${costFragment}${partnerFragment} Cluster leader + facilitator notified.`,
+      `${pending.cluster.clusterName} · ${outcome.activityType} scheduled for ${outcome.date}.${costFragment}${partnerFragment} Added to My Plan.`,
     );
     // Push the slot into the overlay so the MeetingChip flips to
     // Scheduled + the chosen date without waiting for a refresh.
@@ -181,6 +176,18 @@ export function ClusterGapsBoard({
     });
     setScheduleAssign(null);
     setTimeout(() => setToast(null), 5500);
+
+    // Persist to the cluster store (and backend when enabled) so the
+    // activity appears in My Plan on the next page load. Fire-and-forget
+    // — the overlay already reflects success in the current session.
+    const slotAsKind = pending.slot as ClusterMeetingKind;
+    scheduleClusterMeetingAction(
+      pending.cluster.id,
+      slotAsKind,
+      outcome.isoDate,
+      outcome.participants,
+      outcome.notes,
+    ).catch(() => undefined);
   }
 
   /** Rolled-up list of meetings/trainings scheduled in this session.
@@ -367,22 +374,15 @@ export function ClusterGapsBoard({
         onSubmit={handleRescheduleSubmit}
       />
 
-      {/* Live writer when clusters are real backend rows; mock drawer otherwise. */}
-      {scheduleAssign && liveGaps ? (
-        <ScheduleActivityLive
-          clusterId={scheduleAssign.cluster.id}
-          clusterName={scheduleAssign.cluster.clusterName}
-          onClose={() => setScheduleAssign(null)}
-          onScheduled={() => setScheduleAssign(null)}
-        />
-      ) : (
-        <ScheduleActivityDrawer
-          open={!!scheduleAssign}
-          context={scheduleAssign?.context ?? null}
-          onClose={() => setScheduleAssign(null)}
-          onSubmit={handleScheduleSubmit}
-        />
-      )}
+      {/* Always use the unified drawer — it handles both mock and live modes.
+          After submit, handleScheduleSubmit updates the overlay + persists
+          via scheduleClusterMeetingAction (which calls the backend when enabled). */}
+      <ScheduleActivityDrawer
+        open={!!scheduleAssign}
+        context={scheduleAssign?.context ?? null}
+        onClose={() => setScheduleAssign(null)}
+        onSubmit={handleScheduleSubmit}
+      />
 
       <ClusterActivityProfileDrawer
         open={!!clusterProfile}

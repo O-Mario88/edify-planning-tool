@@ -70,6 +70,11 @@ export type DirectorySchoolVM = {
     weakestSeverity?: "Critical" | "Needs Support" | "Good" | "Strong";
     weakestDelivery?: "staff" | "partner";
   };
+  /** School contact details shown in the expanded card row. */
+  phone?: string;
+  primaryContact?: string;
+  /** Top-2 weakest SSA intervention areas (score 0–10), shown in red. */
+  weakAreas?: Array<{ area: string; score: number }>;
 };
 
 type Tab = "cluster" | "project" | "partner";

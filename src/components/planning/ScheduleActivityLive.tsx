@@ -58,6 +58,7 @@ export function ScheduleActivityLive({
   const [activityType, setActivityType] = useState(types[0].v);
   const [deliveryType, setDeliveryType] = useState<"staff" | "partner">("staff");
   const [month, setMonth] = useState(new Date().getMonth() + 1);
+  const [week, setWeek] = useState(Math.min(4, Math.ceil(new Date().getDate() / 7)));
   const [exactDate, setExactDate] = useState("");
   const [participants, setParticipants] = useState(25);
   const [rates, setRates] = useState<Record<string, number>>({});
@@ -104,6 +105,7 @@ export function ScheduleActivityLive({
           ...(isCluster ? { clusterId, ...(slot ? { clusterSlot: slot } : {}) } : { schoolId }),
           fy: "2026", quarter: quarterFor(effMonth), plannedMonth: effMonth, deliveryType,
           ...(exactDate ? { scheduledDate: new Date(exactDate + "T09:00:00").toISOString() } : {}),
+          ...(isVisit ? { weekOfMonth: week } : {}),
         }),
       });
       const j = await res.json();
@@ -151,11 +153,21 @@ export function ScheduleActivityLive({
                   {!exactDate && <span className="text-[10px] text-amber-600 font-semibold">Cluster meetings, trainings and SIT need an exact date.</span>}
                 </Field>
               ) : (
-                <Field label="Month / week">
-                  <select value={month} onChange={(e) => setMonth(Number(e.target.value))} className="w-full h-9 px-2 rounded-lg border border-[var(--color-edify-border)] text-[12px]">
-                    {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => <option key={m} value={m}>{MONTHS[m]} (Q{quarterFor(m).slice(1)})</option>)}
-                  </select>
-                </Field>
+                <>
+                  <Field label="Month">
+                    <select value={month} onChange={(e) => setMonth(Number(e.target.value))} className="w-full h-9 px-2 rounded-lg border border-[var(--color-edify-border)] text-[12px]">
+                      {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => <option key={m} value={m}>{MONTHS[m]} (Q{quarterFor(m).slice(1)})</option>)}
+                    </select>
+                  </Field>
+                  <Field label="Week of month">
+                    <select value={week} onChange={(e) => setWeek(Number(e.target.value))} className="w-full h-9 px-2 rounded-lg border border-[var(--color-edify-border)] text-[12px]">
+                      <option value={1}>Week 1 (1st–7th)</option>
+                      <option value={2}>Week 2 (8th–14th)</option>
+                      <option value={3}>Week 3 (15th–21st)</option>
+                      <option value={4}>Week 4 (22nd–end)</option>
+                    </select>
+                  </Field>
+                </>
               )}
               {isTraining && deliveryType === "staff" && (
                 <Field label="Expected participants">

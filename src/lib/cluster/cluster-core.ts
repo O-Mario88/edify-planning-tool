@@ -421,6 +421,19 @@ export function clusterStatusOf(s: IntakeSchool): ClusterStatus {
   return s.clusterId ? "clustered" : "unclustered";
 }
 
+/**
+ * Scheduled (non-terminal) cluster meetings attributed to a staff member by name.
+ * Used by My Plan to surface cluster activities alongside school activities.
+ */
+export function clusterMeetingsForStaff(staffName: string): ClusterMeeting[] {
+  const TERMINAL: ClusterActivityStatus[] = ["IA Confirmed", "Paid", "Closed"];
+  return clusterMeetings.filter(
+    (m) =>
+      !TERMINAL.includes(m.status) &&
+      (m.scheduledBy === staffName || m.scheduledBy.startsWith(staffName.split(" ")[0])),
+  );
+}
+
 /** Schools that still need a cluster — the Unclustered Schools queue. */
 export function unclusteredSchools(): IntakeSchool[] {
   return intakeSchools.filter((s) => clusterStatusOf(s) === "unclustered");

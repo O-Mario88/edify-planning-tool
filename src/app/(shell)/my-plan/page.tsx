@@ -7,9 +7,10 @@ import { activities, fundRequests } from "@/lib/actions/store";
 import { fetchMyPlanActivities } from "@/lib/api/surfaces";
 import { activeFinancialYear } from "@/lib/fy-engine";
 import {
-  buildFundingByActivity, fromBeActivity, fromStoreActivity, sectionMyPlan,
+  buildFundingByActivity, fromBeActivity, fromStoreActivity, fromClusterMeeting, sectionMyPlan,
   type MyPlanItem,
 } from "@/lib/planning/my-plan-sections";
+import { clusterMeetingsForStaff } from "@/lib/cluster/cluster-core";
 import { dailyBrief, snapshotChips } from "@/lib/planning/my-plan-brief";
 
 // My Plan — the CCEO / Program Lead daily field cockpit (spec §10).
@@ -43,6 +44,18 @@ export default async function MyPlanPage() {
       .filter((a) => a.assigneeId === user.staffId)
       .map((a) => fromStoreActivity(a, funding, todayIso))
       .filter((i): i is MyPlanItem => i !== null);
+  }
+
+  // Cluster meetings are stored separately from school activities. Merge them
+  // in so scheduled meetings (SIT, 1st/2nd/3rd cluster meetings) appear in
+  // the correct urgency lane without a backend round-trip.
+  if (!be.live) {
+    const clusterItems = clusterMeetingsForStaff(user.name)
+      .map((m) => fromClusterMeeting(m, todayIso))
+      .filter((i): i is MyPlanItem => i !== null);
+    // De-duplicate by id in case the same meeting somehow lands in both.
+    const existingIds = new Set(items.map((i) => i.id));
+    items = [...items, ...clusterItems.filter((i) => !existingIds.has(i.id))];
   }
 
   const sections = sectionMyPlan(items, today);
