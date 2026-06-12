@@ -9,6 +9,9 @@ import { ClusterMemberSchoolsLive } from "@/components/cluster/ClusterMemberScho
 import { clusterProfile, clusterById, activeClusters, CLUSTER_MEETING_LABEL, feedbackForCluster, CLUSTER_FEEDBACK_LABEL } from "@/lib/cluster/cluster-core";
 import { getCurrentUser } from "@/lib/auth";
 import { getCurrentPartner } from "@/lib/partner/partner-identity";
+import { NextActionCard } from "@/components/next-action/NextActionCard";
+import { nextActionForCluster } from "@/lib/next-action/next-action";
+import { unifiedActivitiesForCluster } from "@/lib/activity/unified-activity-source";
 
 export default async function ClusterDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -127,6 +130,15 @@ async function EngineClusterProfile({ clusterId }: { clusterId: string }) {
         backFallbackHref="/clusters"
         breadcrumbTrailingLabel={profile.cluster.name}
       />
+      <div className="px-4 sm:px-5 lg:px-6 pt-3">
+        <NextActionCard
+          action={nextActionForCluster(
+            { hasSchools: profile.schools.length > 0, hasScheduledCycle: profile.meetingsScheduled > 0 },
+            unifiedActivitiesForCluster(clusterId),
+          )}
+          title="Cluster next action"
+        />
+      </div>
       <ClusterProfileView profile={vm} flags={flags} reassignTargets={reassignTargets} canReassign={staffRole} />
     </>
   );

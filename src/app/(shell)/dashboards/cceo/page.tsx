@@ -30,6 +30,7 @@ import {
 import { FundSlipStatusCard } from "@/components/cceo/FundSlipStatusCard";
 import { PartnerWorkMonitorCard } from "@/components/cceo/PartnerWorkMonitorCard";
 import { EvidenceFollowUpCard } from "@/components/cceo/EvidenceFollowUpCard";
+import { MyNextActions } from "@/components/next-action/MyNextActions";
 
 // CCEO — My Field Coaching Assistant (spec: "Today First" field dashboard).
 //
@@ -65,6 +66,7 @@ export default async function CceoDashboardPage() {
         <PortfolioSummaryCard staffId={user.staffId} />
         <CceoKpiStrip />
         {/* A — today's required actions, before everything else. */}
+        <MyNextActions assigneeId={user.staffId} />
         <TodayCommandCenter />
         <CommandStack user={user} hideMission />
         {/* B–D — coaching radar. */}
@@ -120,6 +122,7 @@ export default async function CceoDashboardPage() {
             title="Today's required actions"
             description="Visits, trainings, cluster meetings, reviews, and submissions due — each with its reason and one button."
           />
+          <MyNextActions assigneeId={user.staffId} />
           <TodayCommandCenter />
           <CommandStack user={user} hideMission />
         </section>

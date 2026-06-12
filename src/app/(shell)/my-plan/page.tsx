@@ -1,5 +1,6 @@
 import { StubPage } from "@/components/shell/StubPage";
 import { MyPlanSections } from "@/components/planning/MyPlanSections";
+import { MyNextActions } from "@/components/next-action/MyNextActions";
 import { getCurrentUser } from "@/lib/auth";
 import { activities, fundRequests } from "@/lib/actions/store";
 import { fetchMyPlanActivities } from "@/lib/api/surfaces";
@@ -46,6 +47,9 @@ export default async function MyPlanPage() {
       title="My Plan"
       subtitle="What's already scheduled for you — due today, this week, this month, what's waiting on you, and what keeps slipping."
     >
+      <div className="mb-4">
+        <MyNextActions assigneeId={user.staffId} heading="Your next best action" />
+      </div>
       <MyPlanSections sections={sections} live={be.live} />
     </StubPage>
   );
