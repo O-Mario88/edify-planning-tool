@@ -9,6 +9,7 @@ import { getDonorMetricSnapshot } from "@/lib/donor-metrics";
 import { DebriefReviewInbox } from "@/components/messages/DebriefReviewInbox";
 import { CountryKpiRow } from "@/components/director/CountryKpiRow";
 import { ExecutiveAlerts } from "@/components/director/ExecutiveAlerts";
+import { CdRiskSummaryCard } from "@/components/escalation/CdRiskSummaryCard";
 import { MissionSnapshotStrip } from "@/components/director/MissionSnapshotStrip";
 import { StaffPerformanceSummary } from "@/components/director/StaffPerformanceSummary";
 import { PartnerPerformanceSummary } from "@/components/director/PartnerPerformanceSummary";
@@ -108,6 +109,7 @@ export default async function CountryDirectorDashboard() {
         {/* TODAY'S EXECUTIVE ALERTS — issue · why · scope · recommended
             action · one button. Supersedes the old attention banners. */}
         <ExecutiveAlerts inputs={{ unclusteredSchools: clusterCounts.unclustered }} />
+        <CdRiskSummaryCard />
 
         {/* C. BUDGET & FUND REQUEST HEALTH — financial stewardship. */}
         <section className="space-y-3">

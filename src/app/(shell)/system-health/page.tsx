@@ -6,6 +6,7 @@ import { MockLeakageCard } from "@/components/system-health/MockLeakageCard";
 import { WorkflowHealthCard } from "@/components/system-health/WorkflowHealthCard";
 import { DemoReadinessCard } from "@/components/system-health/DemoReadinessCard";
 import { SourceOfTruthCard } from "@/components/system-health/SourceOfTruthCard";
+import { EscalationLadderCard } from "@/components/escalation/EscalationLadderCard";
 
 // System Health — production-safety + mock-data-leakage status (spec §18).
 // Admin-only.
@@ -22,6 +23,7 @@ export default async function SystemHealthPage() {
       <div className="px-4 sm:px-6 pt-2 pb-24 space-y-4">
         <DemoReadinessCard />
         <WorkflowHealthCard />
+        <EscalationLadderCard />
         <SourceOfTruthCard />
         <MockLeakageCard />
       </div>
