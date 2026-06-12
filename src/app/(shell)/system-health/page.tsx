@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { MockLeakageCard } from "@/components/system-health/MockLeakageCard";
 import { WorkflowHealthCard } from "@/components/system-health/WorkflowHealthCard";
 import { DemoReadinessCard } from "@/components/system-health/DemoReadinessCard";
+import { SourceOfTruthCard } from "@/components/system-health/SourceOfTruthCard";
 
 // System Health — production-safety + mock-data-leakage status (spec §18).
 // Admin-only.
@@ -21,6 +22,7 @@ export default async function SystemHealthPage() {
       <div className="px-4 sm:px-6 pt-2 pb-24 space-y-4">
         <DemoReadinessCard />
         <WorkflowHealthCard />
+        <SourceOfTruthCard />
         <MockLeakageCard />
       </div>
     </>
