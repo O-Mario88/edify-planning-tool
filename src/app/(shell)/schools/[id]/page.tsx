@@ -95,6 +95,8 @@ import { activitiesForProjectSchool } from "@/lib/projects/project-activities";
 import { ssaForSchool } from "@/lib/projects/project-school-ssa";
 import { schoolWorkflowState, schoolLinkedActivities } from "@/lib/school-directory/school-state";
 import { SchoolTimeline } from "@/components/schools/SchoolTimeline";
+import { QualityGateNotices } from "@/components/gates/QualityGateNotices";
+import { schoolQualityGates } from "@/lib/gates/quality-gates";
 import { recommendClustersFor, type ClusterMatch } from "@/lib/cluster/cluster-core";
 import { openDuplicateCandidates } from "@/lib/intake/duplicate-candidates-mock";
 import type { DirectorySchoolVM, DirectoryClusterMatch } from "@/components/cluster/DirectoryClusterDrawer";
@@ -570,6 +572,7 @@ async function IntakeSchool360({ schoolId, view }: { schoolId: string; view?: Sc
         </div>
       )}
       <div className="mx-3 sm:mx-4 md:mx-6 mb-3">
+        <QualityGateNotices evaluation={schoolQualityGates({ schoolId: s.schoolId, ssaDone: state.ssaDone })} />
         <PlanningCapacityBar schoolId={s.schoolId} schoolName={s.schoolName} capacity={capacity} assignment={assignment} />
       </div>
       {/* View SSA — this school's REAL SSA from the backend (not a general grid). */}
