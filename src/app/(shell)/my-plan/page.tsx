@@ -1,6 +1,7 @@
 import { StubPage } from "@/components/shell/StubPage";
 import { MyPlanSections } from "@/components/planning/MyPlanSections";
-import { MyNextActions } from "@/components/next-action/MyNextActions";
+import { MyPlanBriefingHero } from "@/components/planning/MyPlanBriefingHero";
+import { MyPlanSnapshotStrip } from "@/components/planning/MyPlanSnapshotStrip";
 import { getCurrentUser } from "@/lib/auth";
 import { activities, fundRequests } from "@/lib/actions/store";
 import { fetchMyPlanActivities } from "@/lib/api/surfaces";
@@ -9,15 +10,20 @@ import {
   buildFundingByActivity, fromBeActivity, fromStoreActivity, sectionMyPlan,
   type MyPlanItem,
 } from "@/lib/planning/my-plan-sections";
+import { dailyBrief, snapshotChips } from "@/lib/planning/my-plan-brief";
 
-// My Plan — what is ALREADY scheduled for me, sectioned by urgency (spec §10):
-// Due Today · Planned This Week · Planned This Month · Waiting on Me ·
-// Rescheduled / Needs Attention. Separate from the Planning Tool (which decides
-// what still needs scheduling) and from the Completed Log (history) — completed
-// and closed work never renders here.
+// My Plan — the CCEO / Program Lead daily field cockpit (spec §10).
 //
-// Server-rendered: backend-first (the enforced activity list) with the
-// in-memory store as fallback; the cards' action buttons are client islands.
+// Page shape:
+//   1. Header (StubPage)               — who, where, plan-as-list framing
+//   2. Daily Field Briefing hero       — greeting + one smart sentence + verdict
+//   3. Personal Execution snapshot     — 5 urgency chips that scroll to the lane
+//   4. Five urgency lanes              — Waiting · Attention · Today · Week · Month
+//
+// Backend-first: fetchMyPlanActivities reads the enforced list when the
+// backend is on; the in-memory store is the dev fallback. The brief and
+// the snapshot derive purely from the same sectioned items the lanes
+// render, so the numbers are guaranteed to match.
 export const dynamic = "force-dynamic";
 
 export default async function MyPlanPage() {
@@ -25,7 +31,6 @@ export default async function MyPlanPage() {
   const today = new Date();
   const todayIso = today.toISOString().slice(0, 10);
 
-  // Backend-first read (same seam as /plans); store fallback for mock-id work.
   const be = await fetchMyPlanActivities(user, activeFinancialYear().id);
   let items: MyPlanItem[];
   if (be.live) {
@@ -41,16 +46,19 @@ export default async function MyPlanPage() {
   }
 
   const sections = sectionMyPlan(items, today);
+  const brief = dailyBrief({ name: user.name, now: today, sections });
+  const chips = snapshotChips(sections, today);
 
   return (
     <StubPage
       title="My Plan"
-      subtitle="What's already scheduled for you — due today, this week, this month, what's waiting on you, and what keeps slipping."
+      subtitle="Your scheduled work, ordered by urgency."
     >
-      <div className="mb-4">
-        <MyNextActions assigneeId={user.staffId} heading="Your next best action" />
+      <div className="space-y-4">
+        <MyPlanBriefingHero brief={brief} />
+        <MyPlanSnapshotStrip chips={chips} />
+        <MyPlanSections sections={sections} live={be.live} />
       </div>
-      <MyPlanSections sections={sections} live={be.live} />
     </StubPage>
   );
 }
