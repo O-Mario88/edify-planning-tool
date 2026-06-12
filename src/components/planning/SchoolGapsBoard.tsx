@@ -14,7 +14,7 @@ import { assignToExistingClusterAction, createClusterAndAssignAction } from "@/l
 import {
   AlertOctagon, Footprints, GraduationCap, Users, Building2, MapPin,
   ChevronDown, ChevronRight, ChevronUp, ArrowRight, Eye, User, Phone,
-  type LucideIcon, Lock,
+  type LucideIcon, Lock, Calendar, Handshake, AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fullAddressOf, primaryContactOf } from "@/lib/planning/school-address";
@@ -71,6 +71,19 @@ function buildSchoolTrainingContext(s: SchoolGap): ScheduleActivityContext {
     locationLine:        `${s.district}${s.subCounty ? ` · ${s.subCounty}` : ""} · CCEO ${s.assignedCceo}`,
     ssaFocus:            s.weakestArea ? { area: s.weakestArea.area, score: s.weakestArea.score } : undefined,
     noCurrentSsa:        !s.ssaCompleted,
+  };
+}
+
+/** Visit scheduling context — month+week picker (no exact date). */
+function buildSchoolVisitContext(s: SchoolGap): ScheduleActivityContext {
+  return {
+    target: { kind: "school", id: s.id, name: s.schoolName },
+    activityType: "School visit",
+    isTraining: false,
+    defaultProposedBy: `${s.assignedCceo} (CCEO)`,
+    locationLine: `${s.district}${s.subCounty ? ` · ${s.subCounty}` : ""}`,
+    ssaFocus: s.weakestArea ? { area: s.weakestArea.area, score: s.weakestArea.score } : undefined,
+    noCurrentSsa: !s.ssaCompleted,
   };
 }
 
@@ -147,6 +160,11 @@ export function SchoolGapsBoard({
   // carry the underlying SchoolGap alongside the unified drawer context
   // so the submit handler can dismiss the right school from the list.
   const [scheduleSchoolTraining, setScheduleSchoolTraining] = useState<
+    | { context: ScheduleActivityContext; school: SchoolGap }
+    | null
+  >(null);
+  // Direct visit scheduling — month+week picker (separate from training drawer).
+  const [scheduleVisit, setScheduleVisit] = useState<
     | { context: ScheduleActivityContext; school: SchoolGap }
     | null
   >(null);
@@ -251,6 +269,16 @@ export function SchoolGapsBoard({
     // Training is now on the calendar — remove the school from the
     // No Training gap list. The training will reappear in the owner's
     // scheduled-activity feed (My Plan / Partner Plan / Cluster Plan).
+    dismiss(pending.school.id);
+    setTimeout(() => setToast(null), 4500);
+  }
+
+  function handleVisitSubmit(outcome: ScheduleActivityOutcome) {
+    const pending = scheduleVisit;
+    if (!pending) return;
+    const weekLabel = outcome.weekOfMonth ? ` · Week ${outcome.weekOfMonth}` : "";
+    setToast(`Visit scheduled at ${pending.school.schoolName} for ${outcome.date}${weekLabel}.`);
+    setScheduleVisit(null);
     dismiss(pending.school.id);
     setTimeout(() => setToast(null), 4500);
   }
@@ -371,9 +399,16 @@ export function SchoolGapsBoard({
                       <SchoolRow
                         key={s.id}
                         school={s}
+                        onSchedule={(school) => {
+                          setScheduleVisit({
+                            school,
+                            context: buildSchoolVisitContext(school),
+                          });
+                        }}
+                        onAssign={(school) => {
+                          setAssign({ school, action: "assign_partner" });
+                        }}
                         onAction={(action) => {
-                          // Cluster assignment has its own dedicated drawer with
-                          // existing-vs-create-new modes.
                           if (action === "add_to_cluster") {
                             setClusterAssign({
                               schoolId:   s.id,
@@ -384,10 +419,6 @@ export function SchoolGapsBoard({
                             });
                             return;
                           }
-                          // Schedule training opens the unified calendar
-                          // drawer (date + participants + projected cost)
-                          // rather than bouncing through the owner picker
-                          // — the owner is implicitly the assigned CCEO.
                           if (action === "schedule_training") {
                             setScheduleSchoolTraining({
                               school:  s,
@@ -395,23 +426,14 @@ export function SchoolGapsBoard({
                             });
                             return;
                           }
-                          // View SSA opens the performance drawer, not
-                          // the owner picker. Adapts to the school's SSA
-                          // history (locked / single / yearly comparison
-                          // / 3-year trend).
                           if (action === "view_ssa") {
                             setSsaPerformance({ school: s });
                             return;
                           }
-                          // View School opens the activity & investment
-                          // profile drawer (full history, costs,
-                          // evidence, contributors, next action).
                           if (action === "view_school") {
                             setSchoolProfile({ school: s });
                             return;
                           }
-                          // Every other action continues through the generic
-                          // owner picker.
                           setAssign({ school: s, action });
                         }}
                       />
@@ -459,6 +481,14 @@ export function SchoolGapsBoard({
           onSubmit={handleSchoolTrainingSubmit}
         />
       )}
+
+      {/* Visit scheduling drawer — month+week picker, opened from the [Schedule] row button */}
+      <ScheduleActivityDrawer
+        open={!!scheduleVisit}
+        context={scheduleVisit?.context ?? null}
+        onClose={() => setScheduleVisit(null)}
+        onSubmit={handleVisitSubmit}
+      />
 
       <SsaPerformanceDrawer
         open={!!ssaPerformance}
@@ -523,49 +553,58 @@ export function SchoolGapsBoard({
 }
 
 function SchoolRow({
-  school: s, onAction,
+  school: s,
+  onAction,
+  onSchedule,
+  onAssign,
 }: {
   school: SchoolGap;
   onAction: (action: SchoolGapAction) => void;
+  onSchedule: (school: SchoolGap) => void;
+  onAssign: (school: SchoolGap) => void;
 }) {
   const rec = recommendFor(s);
-  // Cluster-first gate takes precedence over the SSA gate: an unclustered
-  // school can only be assigned to a cluster (or viewed) until it is clustered.
   const clusterBlocked = s.gapCategory === "no_cluster" || !s.inCluster;
   const ssaBlocked = !clusterBlocked && !s.ssaCompleted;
   const [open, setOpen] = useState(false);
   const contact = primaryContactOf(s);
 
-  // The action buttons surfaced per row. Order: primary first.
-  // SSA-required (clustered, no SSA) offers the three activation methods —
-  // SIT, partner, or self — and nothing else until the SSA completes.
   const buttons: SchoolGapAction[] = clusterBlocked
     ? ["add_to_cluster", "view_school"]
     : ssaBlocked
       ? ["schedule_training", "assign_partner", "schedule_ssa", "view_school"]
       : rec.allowedActions;
 
+  const weakAreas = [s.weakestArea, s.secondWeakArea].filter(Boolean) as Array<{ area: string; score: number }>;
+
   return (
-    <li className={cn(open && "bg-[var(--color-edify-soft)]/30 transition-colors")}>
-      {/* Collapsed header — click to expand. Shows identity + risk pill +
-          the 4 status chips so the planner can scan urgency without
-          opening every row. Everything else (weak areas, contact details,
-          recommended action, action buttons) lives in the expanded body. */}
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
-        aria-controls={`school-${s.id}-detail`}
-        className="w-full px-3.5 py-3 flex items-start gap-3 text-left hover:bg-[var(--color-edify-soft)]/40 transition-colors"
-      >
-        <span className="grid place-items-center h-8 w-8 rounded-md bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)] shrink-0 mt-0.5">
+    <li className={cn("transition-colors", open && "bg-[var(--color-edify-soft)]/30")}>
+
+      {/* ── Collapsed row — content area expands, action buttons stay isolated ── */}
+      <div className="px-3.5 py-3 flex items-start gap-3">
+        {/* Icon + expand toggle */}
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          aria-expanded={open}
+          aria-controls={`school-${s.id}-detail`}
+          className="grid place-items-center h-8 w-8 rounded-md bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)] shrink-0 mt-0.5 hover:brightness-95 transition-all"
+        >
           <Building2 size={13} />
-        </span>
-        <div className="min-w-0 flex-1">
+        </button>
+
+        {/* School info — click anywhere here to expand */}
+        <div
+          className="min-w-0 flex-1 cursor-pointer"
+          role="button"
+          tabIndex={0}
+          onClick={() => setOpen((o) => !o)}
+          onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setOpen((o) => !o)}
+        >
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="text-[12px] font-extrabold tracking-tight truncate">{s.schoolName}</h3>
             <span className={cn(
-              "ml-auto inline-flex items-center px-1.5 py-[2px] rounded-md text-[10px] font-extrabold uppercase tracking-wide",
+              "inline-flex items-center px-1.5 py-[2px] rounded-md text-[10px] font-extrabold uppercase tracking-wide",
               RISK_TONE[s.riskLevel].bg,
               RISK_TONE[s.riskLevel].text,
             )}>
@@ -576,30 +615,87 @@ function SchoolRow({
             <MapPin size={9} className="text-[var(--color-edify-primary)]" />
             {fullAddressOf(s)}
           </p>
-          {/* Status chips — kept on the collapsed header so urgency reads
-              at a glance without expanding the row. */}
-          <div className="flex items-center gap-1.5 flex-wrap mt-2">
+
+          {/* ── 2 weakest SSA intervention areas — always visible, rose-red ── */}
+          {weakAreas.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1 mt-1.5">
+              <AlertTriangle size={9} className="text-rose-500 shrink-0" />
+              {weakAreas.map((w) => (
+                <span
+                  key={w.area}
+                  className="inline-flex items-center gap-1 px-1.5 py-[2px] rounded-md bg-rose-50 border border-rose-200 text-rose-700 text-[10px] font-extrabold"
+                >
+                  {w.area} · {w.score}/10
+                </span>
+              ))}
+            </div>
+          )}
+          {!s.ssaCompleted && weakAreas.length === 0 && (
+            <p className="text-[10px] text-amber-600 mt-1.5 font-semibold inline-flex items-center gap-1">
+              <AlertTriangle size={9} /> No SSA — intervention priorities unknown
+            </p>
+          )}
+
+          {/* Status chips */}
+          <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
             <StatusChip ok={s.ssaCompleted} label={s.ssaCompleted ? "SSA Complete" : "No SSA"} />
             <StatusChip ok={s.lastVisitLabel != null && s.lastVisitLabel !== "Never"} label={s.lastVisitLabel === "Never" || !s.lastVisitLabel ? "No Visit" : `Last visit ${s.lastVisitLabel}`} />
             <StatusChip ok={s.lastTrainingLabel != null && s.lastTrainingLabel !== "Never"} label={s.lastTrainingLabel === "Never" || !s.lastTrainingLabel ? "No Training" : `Last training ${s.lastTrainingLabel}`} />
             <StatusChip ok={s.inCluster} label={s.inCluster ? `In ${s.clusterName ?? "cluster"}` : "No Cluster"} />
           </div>
         </div>
-        <ChevronRight
-          size={14}
-          className={cn(
-            "text-[var(--color-edify-muted)] shrink-0 mt-1 transition-transform",
-            open && "rotate-90",
-          )}
-        />
-      </button>
 
+        {/* ── Row-level action buttons — always visible, never expand ── */}
+        <div className="shrink-0 flex flex-col items-end gap-1.5 mt-0.5">
+          {clusterBlocked ? (
+            /* Unclustered school — only cluster assignment makes sense */
+            <button
+              type="button"
+              onClick={() => onAction("add_to_cluster")}
+              className="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg bg-[var(--color-edify-primary)] text-white text-[11px] font-extrabold hover:bg-[var(--color-edify-dark)] transition-colors whitespace-nowrap"
+            >
+              <Users size={11} /> Add to Cluster
+            </button>
+          ) : (
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => onSchedule(s)}
+                title="Schedule a support visit for this school"
+                className="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg bg-[var(--color-edify-primary)] text-white text-[11px] font-extrabold hover:bg-[var(--color-edify-dark)] transition-colors whitespace-nowrap"
+              >
+                <Calendar size={11} /> Schedule
+              </button>
+              <button
+                type="button"
+                onClick={() => onAssign(s)}
+                title="Assign this school to a partner or staff"
+                className="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg border border-[var(--color-edify-border)] bg-white text-[11px] font-semibold text-sky-700 hover:bg-sky-50 transition-colors whitespace-nowrap"
+              >
+                <Handshake size={11} /> Assign
+              </button>
+            </div>
+          )}
+          {/* Expand chevron */}
+          <button
+            type="button"
+            onClick={() => setOpen((o) => !o)}
+            className="inline-flex items-center gap-1 text-[10.5px] font-semibold muted hover:text-[var(--color-edify-text)] transition-colors"
+          >
+            <ChevronRight
+              size={12}
+              className={cn("transition-transform", open && "rotate-90")}
+            />
+            {open ? "Less" : "More"}
+          </button>
+        </div>
+      </div>
+
+      {/* ── Expanded detail ── */}
       {open && (
-        <div id={`school-${s.id}-detail`} className="px-3.5 pb-3 -mt-1 space-y-2.5">
-          {/* Contact + weak areas + assigned ownership — laid out as a
-              compact facts grid that mirrors the /plans accordion. */}
-          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 rounded-xl bg-white border border-[var(--color-edify-border)] p-3">
-            <Fact icon={<User size={10} />}  label="Primary contact" value={
+        <div id={`school-${s.id}-detail`} className="mx-3.5 mb-3 rounded-xl border border-[var(--color-edify-divider)] bg-white p-3 space-y-2.5">
+          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
+            <Fact icon={<User size={10} />} label="Primary contact" value={
               <span className="inline-flex items-center gap-1.5">
                 <span>{contact.name}</span>
                 <span className="opacity-50">·</span>
@@ -609,26 +705,18 @@ function SchoolRow({
                 </a>
               </span>
             } fullWidth />
-            {s.weakestArea && (
-              <Fact label="Weakest SSA" value={`${s.weakestArea.area} ${s.weakestArea.score}/10`} />
-            )}
-            {s.secondWeakArea && (
-              <Fact label="Also weak" value={`${s.secondWeakArea.area} ${s.secondWeakArea.score}/10`} />
-            )}
             <Fact label="CCEO"    value={s.assignedCceo} />
             <Fact label="Partner" value={s.assignedPartner ?? "Not assigned"} />
           </dl>
 
-          {/* Recommendation — unified callout surface: bordered, no fill */}
+          {/* Recommendation */}
           <div className="rounded-md border border-[var(--color-edify-divider)] px-2.5 py-2">
             <div className="text-[10px] uppercase tracking-wider font-bold muted">Recommended next action</div>
             <p className="text-[12px] font-extrabold text-[var(--color-edify-text)] mt-0.5">{rec.headline}</p>
             <p className="text-[11px] muted leading-snug mt-1">{rec.purpose}</p>
           </div>
 
-          {/* Action buttons. Primary first, then a 2-col grid of secondary
-              actions. SSA-blocked schools only show the SSA action +
-              view-school until SSA completes. */}
+          {/* Secondary action buttons */}
           <div className="space-y-2">
             <ActionButton
               primary
@@ -649,8 +737,7 @@ function SchoolRow({
                 .map((action) => {
                   const disabled = clusterBlocked
                     ? action !== "add_to_cluster" && action !== "view_school"
-                    : ssaBlocked &&
-                      !SSA_ACTIVATION_ACTIONS.includes(action);
+                    : ssaBlocked && !SSA_ACTIVATION_ACTIONS.includes(action);
                   return (
                     <ActionButton
                       key={action}
