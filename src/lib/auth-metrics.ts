@@ -22,11 +22,14 @@
 
 import { calculateCategoryLeaderboard } from "./leaderboard-mock";
 import { staffTargetPerformance } from "./team-targets-mock";
+import { isBackendEnabled, type BackendUser } from "./api/backend";
+import { fetchAnalyticsDashboard, fetchActivityPipeline } from "./api/surfaces";
 
 export type LoginHeroMetric = {
   value: number;
   trendPercent: number;       // signed integer (positive = improvement)
   comparisonLabel: string;    // e.g. "vs Apr"
+  caption?: string;           // when live: a real descriptor instead of a fake delta
 };
 
 export type LoginHeroMetrics = {
@@ -85,7 +88,70 @@ export function calculatePercentagePointTrend(current: number, previous: number)
 
 // ────────── Public API ──────────
 
+// ────────── Live (backend) ──────────
+//
+// The login page is public, so we read the country-level analytics through a
+// fixed service account (server-side only — the token never reaches the
+// browser). Schools Reached = schools in the program; Target Progress =
+// share of activities delivered (completed → verified → paid). Numbers reflect
+// the live database in real time.
+
+const SERVICE_USER: BackendUser = { email: "cd@edify.org", role: "CountryDirector" };
+const DONE_STATUSES = new Set(["completed", "ia_verified", "paid", "closed"]);
+
+async function getLiveLoginHeroMetrics(): Promise<LoginHeroMetrics | null> {
+  const [dash, pipe] = await Promise.all([
+    fetchAnalyticsDashboard(SERVICE_USER),
+    fetchActivityPipeline(SERVICE_USER),
+  ]);
+  if (!dash.live) return null;
+  const d = dash.data;
+  const schoolsReached = d.schools;
+
+  let completed = 0;
+  let total = 0;
+  if (pipe.live) {
+    total = pipe.data.total;
+    completed = pipe.data.byStatus
+      .filter((s) => DONE_STATUSES.has(s.status))
+      .reduce((a, s) => a + s.count, 0);
+  }
+  const targetProgress =
+    total > 0
+      ? Math.round((completed / total) * 100)
+      : schoolsReached > 0
+        ? Math.round((d.planningReady / schoolsReached) * 100)
+        : 0;
+
+  return {
+    schoolsReached: {
+      value: schoolsReached,
+      trendPercent: 0,
+      comparisonLabel: "",
+      caption: `${formatMetricNumber(d.ssaDone)} SSA assessed`,
+    },
+    targetProgress: {
+      value: targetProgress,
+      trendPercent: 0,
+      comparisonLabel: "",
+      caption: total > 0 ? `${formatMetricNumber(completed)} of ${formatMetricNumber(total)} delivered` : "live data",
+    },
+    source: "live",
+    generatedAt: new Date().toISOString(),
+  };
+}
+
 export async function getLoginHeroMetrics(): Promise<LoginHeroMetrics> {
+  // Prefer live backend numbers; fall back to the mock engines only when the
+  // backend is disabled or unreachable.
+  if (isBackendEnabled()) {
+    try {
+      const live = await getLiveLoginHeroMetrics();
+      if (live) return live;
+    } catch {
+      // fall through to mock
+    }
+  }
   // In production:
   //   const [schoolsReached, lastMonthSchoolsReached] = await Promise.all([
   //     db.activities.countDistinctSchoolsVerifiedInMonth(currentMonth),

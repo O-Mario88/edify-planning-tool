@@ -109,7 +109,7 @@ export function LoginHeroSection({ metrics }: { metrics: LoginHeroMetrics }) {
               icon={<Users size={16} />}
               label="Schools Reached"
               value={formatMetricNumber(metrics.schoolsReached.value)}
-              trend={`${metrics.schoolsReached.trendPercent >= 0 ? "+" : ""}${metrics.schoolsReached.trendPercent}% ${metrics.schoolsReached.comparisonLabel}`}
+              trend={metrics.schoolsReached.caption ?? `${metrics.schoolsReached.trendPercent >= 0 ? "+" : ""}${metrics.schoolsReached.trendPercent}% ${metrics.schoolsReached.comparisonLabel}`}
               positive={metrics.schoolsReached.trendPercent >= 0}
             />
 
@@ -132,7 +132,7 @@ export function LoginHeroSection({ metrics }: { metrics: LoginHeroMetrics }) {
               icon={<Star size={16} />}
               label="Target Progress"
               value={`${metrics.targetProgress.value}%`}
-              trend={`${metrics.targetProgress.trendPercent >= 0 ? "+" : ""}${metrics.targetProgress.trendPercent}% ${metrics.targetProgress.comparisonLabel}`}
+              trend={metrics.targetProgress.caption ?? `${metrics.targetProgress.trendPercent >= 0 ? "+" : ""}${metrics.targetProgress.trendPercent}% ${metrics.targetProgress.comparisonLabel}`}
               positive={metrics.targetProgress.trendPercent >= 0}
               ring={metrics.targetProgress.value}
             />

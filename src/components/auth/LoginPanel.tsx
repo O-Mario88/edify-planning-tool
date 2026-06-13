@@ -170,7 +170,7 @@ export function LoginPanel() {
             type="submit"
             disabled={submitting}
             className={cn(
-              "w-full h-11 rounded-xl bg-[#2d4f66] hover:bg-[#23404f] text-white font-bold text-[14.5px] inline-flex items-center justify-center gap-2 transition-colors",
+              "w-full h-11 rounded-xl bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white font-bold text-[14.5px] inline-flex items-center justify-center gap-2 transition-colors",
               submitting && "opacity-80 cursor-not-allowed",
             )}
             style={{ color: "#ffffff" }}

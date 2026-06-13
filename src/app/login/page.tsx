@@ -8,6 +8,10 @@ import { getLoginHeroMetrics } from "@/lib/auth-metrics";
 // are available in the first paint and never fall back to client fetching
 // from a flash-of-zero state. The same function powers the public
 // /api/auth/login-metrics route.
+// Always render fresh so the hero stats reflect the live database, not a
+// build-time snapshot.
+export const dynamic = "force-dynamic";
+
 export default async function LoginPage() {
   const metrics = await getLoginHeroMetrics();
   return (
