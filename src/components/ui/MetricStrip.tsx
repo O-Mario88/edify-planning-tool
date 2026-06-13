@@ -61,13 +61,27 @@ export function MetricStrip({
   title,
   className,
   columns,
+  bare = false,
 }: {
   metrics: MetricCell[];
   title?: string;
   className?: string;
   /** Override the responsive column classes when a specific count fits better. */
   columns?: string;
+  /** Render just the hairline cell grid (no card/header) so it can drop into an
+   *  existing card in place of a tile grid without nesting cards. */
+  bare?: boolean;
 }) {
+  const grid = (
+    <div className={cn("grid border-t border-l border-[var(--color-edify-divider)]", columns ?? COLS)}>
+      {metrics.map((m) => (
+        <Cell key={m.key} cell={m} />
+      ))}
+    </div>
+  );
+  if (bare) {
+    return <div className={cn("rounded-xl overflow-hidden", className)}>{grid}</div>;
+  }
   return (
     <section className={cn("card rounded-2xl overflow-hidden", className)}>
       {title && (
@@ -75,11 +89,7 @@ export function MetricStrip({
           <h2 className="text-[12px] font-extrabold tracking-tight uppercase muted">{title}</h2>
         </header>
       )}
-      <div className={cn("grid border-t border-l border-[var(--color-edify-divider)]", columns ?? COLS)}>
-        {metrics.map((m) => (
-          <Cell key={m.key} cell={m} />
-        ))}
-      </div>
+      {grid}
     </section>
   );
 }
