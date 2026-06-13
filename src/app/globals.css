@@ -50,7 +50,7 @@
   /* Brand = slate-blue #50758b (the app's default, esp. light mode). Green is
      reserved for good/completed semantics, red for struggling, orange for warning. */
   --color-edify-primary: #50758b;
-  --color-edify-dark:    #3f5e70;
+  --color-edify-dark:    #2f4a59;
   --color-edify-deep:    #2f4a59;
   --color-edify-darker:  #28404d;
   --color-edify-soft:    #eaeff3;
@@ -190,8 +190,8 @@
   /* Brand — slate-blue #50758b. The default app colour (primary buttons,
      active sidebar rows, links, focus). Green stays for good/completed only. */
   --brand-primary:        #50758b;
-  --brand-primary-hover:  #5e87a0;
-  --brand-primary-press:  #3f5e70;
+  --brand-primary-hover:  #2f4a59;
+  --brand-primary-press:  #28404d;
   --brand-deep:           #2f4a59;
   --brand-accent:         #f59e0b;
   --brand-accent-hover:   #fbb429;
