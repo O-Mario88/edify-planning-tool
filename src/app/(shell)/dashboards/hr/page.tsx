@@ -19,6 +19,7 @@ import { DebriefReviewInbox } from "@/components/messages/DebriefReviewInbox";
 import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { HrKpiStrip } from "@/components/hr/HrKpiStrip";
+import { HrRosterLive } from "@/components/hr/HrRosterLive";
 import { HrMobileView } from "@/components/mobile/views/HrMobileView";
 import { getCurrentUser } from "@/lib/auth";
 import { ROLE_REDIRECT } from "@/lib/auth-public";
@@ -82,6 +83,8 @@ export default async function HrFieldContextPage() {
             description="Debriefs the routing engine flagged for HR, plus the period's top performers across program leads and CCEOs."
           />
           <DebriefReviewInbox user={user} audience="hr" />
+          {/* Live, backend-driven staff roster. */}
+          <HrRosterLive />
         </section>
 
         {/* FIELD — aggregated intelligence. */}

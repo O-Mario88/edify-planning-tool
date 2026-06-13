@@ -17,6 +17,7 @@ import { StubPage } from "@/components/shell/StubPage";
 import { ExportButton } from "@/components/ui/ExportButton";
 import { EmptyState } from "@/components/ui/DataStates";
 import { CceoAutoReports } from "@/components/reports/CceoAutoReports";
+import { ReportsLive } from "@/components/reports/ReportsLive";
 import { cn } from "@/lib/utils";
 import { getCurrentUser } from "@/lib/auth";
 import type { EdifyRole } from "@/lib/auth-public";
@@ -101,6 +102,9 @@ export default async function ReportsPage() {
           </Link>
         ))}
       </section>
+
+      {/* Live, backend-generated reports — snapshot current program data. */}
+      <ReportsLive />
 
       {/* Recent generated reports */}
       <section className="card p-3.5">

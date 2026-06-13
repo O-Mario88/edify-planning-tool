@@ -31,9 +31,10 @@ const ROLE_TO_BACKEND_EMAIL: Record<string, string> = {
   HumanResources: "hr@edify.org",
   ProjectCoordinator: "cd@edify.org",
   Admin: "admin@edify.org",
-  // No partner backend user yet — fall back to a scoped CCEO for testing.
-  PartnerAdmin: "cceo@edify.org",
-  PartnerFieldOfficer: "cceo@edify.org",
+  // Partner field officer authenticates as the partner user linked (Partner.userId)
+  // to a Partner org — their session is scoped to that org's assigned activities.
+  PartnerAdmin: "partner@edify.org",
+  PartnerFieldOfficer: "partner@edify.org",
 };
 
 export type BackendUser = { email?: string; role: string };

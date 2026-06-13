@@ -22,6 +22,7 @@ import { PartnerTodayTaskList } from "@/components/partner/PartnerTodayTaskList"
 import { PartnerTodayBottomSections } from "@/components/partner/PartnerTodayBottomSections";
 import { DoneForTodayPartner } from "@/components/partner/DoneForTodayPartner";
 import { PartnerClustersSummaryCard } from "@/components/cluster/PartnerClustersSummaryCard";
+import { PartnerWorkQueueLive } from "@/components/partner/PartnerWorkQueueLive";
 
 const ALLOWED = new Set([
   "PartnerAdmin", "PartnerFieldOfficer", "PartnerViewer", "Admin",
@@ -40,6 +41,8 @@ export default async function PartnerTodayPage({
   }
   return (
     <div className="px-4 sm:px-5 md:px-6 pt-5 pb-12 space-y-4">
+      {/* Live, backend-driven: activities routed to this partner org. */}
+      <PartnerWorkQueueLive />
       <PartnerTodayTaskList />
       <PartnerClustersSummaryCard />
       <PartnerTodayBottomSections />

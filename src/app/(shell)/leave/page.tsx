@@ -10,6 +10,7 @@ import { HolidayBlackoutDatesTable } from "@/components/leave/HolidayBlackoutDat
 import { AutoBlockedConflictsCard } from "@/components/leave/AutoBlockedConflictsCard";
 import { TeamAvailabilityHeatmap } from "@/components/leave/TeamAvailabilityHeatmap";
 import { PlanningEngineActiveBar } from "@/components/leave/PlanningEngineActiveBar";
+import { LeaveLive } from "@/components/leave/LeaveLive";
 
 // Leave & Holiday Planning Dashboard — premium redesign.
 //
@@ -36,6 +37,9 @@ export default function LeaveHolidayPlanningDashboard() {
 
           {/* 2. Compact KPI stat bar. */}
           <LeaveKpiRow />
+
+          {/* Live, backend-backed leave workflow — request + approve/reject. */}
+          <LeaveLive />
 
           {/* 3. Conflicts band — elevated above the calendar so the
                  planner sees what needs review before they start

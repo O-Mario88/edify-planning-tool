@@ -884,3 +884,62 @@ export function fetchRecruitmentRecommendation(user: BackendUser, params: { fy?:
   const s = q.toString();
   return live<BeRecruitment>(`/analytics/recruitment-recommendation${s ? `?${s}` : ""}`, user);
 }
+
+// ── Reports (generated, persisted program summaries) ────────────────
+export type BeReportRow = { id: string; title: string; type: string; fy: string; scope: string; createdAt: string };
+export type BeReport = BeReportRow & { summaryJson: Record<string, unknown>; createdByUserId?: string | null };
+/** List previously generated reports (newest first). */
+export function fetchReports(user: BackendUser) {
+  return live<BeReportRow[]>(`/reports`, user);
+}
+export function fetchReport(user: BackendUser, id: string) {
+  return live<BeReport>(`/reports/${encodeURIComponent(id)}`, user);
+}
+/** Generate + persist a report from live program data. */
+export function generateReport(user: BackendUser, type: string, fy = "2026") {
+  return live<BeReport>(`/reports/generate`, user, { method: "POST", body: JSON.stringify({ type, fy }) });
+}
+
+// ── HR (staff roster + leave workflow) ──────────────────────────────
+export type BeRosterRow = {
+  staffProfileId: string; name: string; email: string; role: string;
+  onboardingState: string; active: boolean; primaryDistrict: string | null;
+  schools: number; supervisees: number;
+};
+export type BeRoster = { counts: { total: number; active: number; pending: number }; staff: BeRosterRow[] };
+export function fetchHrRoster(user: BackendUser) {
+  return live<BeRoster>(`/hr/roster`, user);
+}
+export type BeLeaveRow = {
+  id: string; staffName: string; type: string; startDate: string; endDate: string;
+  days: number; status: string; reason: string | null; createdAt: string;
+};
+/** HR/CD see all leave; a staffer sees their own. */
+export function fetchLeave(user: BackendUser) {
+  return live<BeLeaveRow[]>(`/hr/leave`, user);
+}
+export function requestLeave(user: BackendUser, body: { type?: string; startDate: string; endDate: string; days?: number; reason?: string }) {
+  return live<{ id: string; status: string }>(`/hr/leave`, user, { method: "POST", body: JSON.stringify(body) });
+}
+export function reviewLeave(user: BackendUser, id: string, action: "approve" | "reject") {
+  return live<{ id: string; status: string }>(`/hr/leave/${encodeURIComponent(id)}/${action}`, user, { method: "POST" });
+}
+
+// ── Partner round-trip (a field officer's own scoped session) ───────
+export type BeMyPartnerActivity = {
+  id: string; activityType: string; schoolName: string | null; district: string | null;
+  status: string; evidenceStatus: string; scheduledDate: string | null; fy: string; deliveryType: string;
+};
+export type BeMyPartner = {
+  partner: BePartner;
+  counts: { total: number; open: number; awaitingEvidence: number; scheduled: number };
+  activities: BeMyPartnerActivity[];
+};
+/** The partner org the caller logs in as. */
+export function fetchMyPartner(user: BackendUser) {
+  return live<BePartner>(`/partners/me`, user);
+}
+/** Activities assigned to the caller's partner — the round-tripped work queue. */
+export function fetchMyPartnerActivities(user: BackendUser) {
+  return live<BeMyPartner>(`/partners/me/activities`, user);
+}

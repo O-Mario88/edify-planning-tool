@@ -10,6 +10,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { ROLE_REDIRECT } from "@/lib/auth-public";
 import { PartnerSubPageHeader } from "@/components/partner/PartnerSubPageHeader";
 import { MyActivitiesTable } from "@/components/partner/MyActivitiesTable";
+import { PartnerWorkQueueLive } from "@/components/partner/PartnerWorkQueueLive";
 
 const ALLOWED = new Set([
   "PartnerAdmin", "PartnerFieldOfficer", "PartnerViewer", "Admin",
@@ -43,7 +44,9 @@ export default async function PartnerMyPlanPage({
           { label: "Completed this mo", value: 11, iconKey: "cal-check", tone: "good",    caption: "+3 vs Apr"          },
         ]}
       />
-      <div className="px-4 sm:px-5 md:px-6 pt-5 pb-12">
+      <div className="px-4 sm:px-5 md:px-6 pt-5 pb-12 space-y-4">
+        {/* Live, backend-driven: the activities actually assigned to this org. */}
+        <PartnerWorkQueueLive limit={20} />
         <MyActivitiesTable />
       </div>
     </>
