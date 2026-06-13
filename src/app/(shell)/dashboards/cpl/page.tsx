@@ -24,6 +24,7 @@ import { FundingExecutionCard } from "@/components/cpl/FundingExecutionCard";
 import { ScheduleBudgetCard } from "@/components/budget/ScheduleBudgetCard";
 import { WeeklyFundRequestCard } from "@/components/budget/WeeklyFundRequestCard";
 import { FundApprovalQueueLive } from "@/components/funds/FundApprovalQueueLive";
+import { TargetsLive } from "@/components/targets/TargetsLive";
 import { QuickActionsRow } from "@/components/cpl/QuickActionsRow";
 import { MyPlanCard } from "@/components/planning/MyPlanCard";
 import { ClientVerificationCard } from "@/components/ssa/ClientVerificationCard";
@@ -92,6 +93,7 @@ export default async function CountryProgramLeadDashboard() {
         {/* GREETING HERO — system-wide layout rule: header → hero →
             stats → work. Orients the PL before any numbers or queues. */}
         <DashboardGreetingHero user={user} />
+        <TargetsLive title="Team target progress" />
 
         {/* TEAM SNAPSHOT — the program statistics band, directly below
             the hero: eight team KPIs before any work content. */}

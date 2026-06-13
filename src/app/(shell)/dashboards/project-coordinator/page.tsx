@@ -6,6 +6,7 @@ import { SpHeader } from "@/components/special-projects/SpHeader";
 import { SpKpiRow } from "@/components/special-projects/SpKpiRow";
 import { SpActionBar } from "@/components/special-projects/SpActionBar";
 import { ProjectPortfolioTable } from "@/components/special-projects/ProjectPortfolioTable";
+import { SpecialProjectsLiveBoard } from "@/components/special-projects/SpecialProjectsLiveBoard";
 import { PartnerDeliveryCard } from "@/components/special-projects/PartnerDeliveryCard";
 import { ProjectImpactComparisonCard } from "@/components/special-projects/ProjectImpactComparisonCard";
 import { ProjectWorkCard } from "@/components/special-projects/ProjectWorkCard";
@@ -35,6 +36,10 @@ export default async function ProjectCoordinatorDashboard() {
         <SpActionBar user={currentUser} />
 
         <CommandStack user={user} />
+
+        {/* Live project portfolio (backend) — click through to a project for the
+            backend-driven monitor (schools, intervention impact, partners). */}
+        <SpecialProjectsLiveBoard />
 
         <section className="grid grid-cols-12 gap-4 items-start">
           <div className="col-span-12 md:col-span-8">

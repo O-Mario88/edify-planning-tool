@@ -27,7 +27,9 @@ export function TargetsLive({ title = "Target progress", staffId }: { title?: st
     setLoading(true); setError(null);
     fetch(`/api/targets${staffId ? `?staffId=${encodeURIComponent(staffId)}` : ""}`, { credentials: "include" })
       .then((r) => r.json())
-      .then((j) => { if (j.live) setData(j as BeTargets); else setError(j.error || "Could not load targets"); })
+      // A role with no target profile returns non-live — degrade to an empty
+      // state rather than a scary error (keeps dashboards clean).
+      .then((j) => { setData(j.live ? (j as BeTargets) : null); })
       .catch(() => setError("Could not reach the server"))
       .finally(() => setLoading(false));
   };
