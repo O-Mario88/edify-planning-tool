@@ -264,7 +264,7 @@ export function ClusterGapsBoard({
             </span>
           </h2>
           <p className="text-[12px] muted mt-0.5">
-            Clusters with missing meetings or School Improvement Trainings. SIT is gated on schools having SSA — disabled buttons explain why.
+            Clusters with missing meetings or School Improvement Trainings. Schedule any meeting or SIT freely — schools can complete SSA at a later meeting, and new schools can join through a cluster meeting or training.
           </p>
         </div>
         <span className="text-[var(--color-edify-muted)] shrink-0 mt-1">
