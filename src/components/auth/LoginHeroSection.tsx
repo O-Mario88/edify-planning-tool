@@ -97,7 +97,10 @@ export function LoginHeroSection({ metrics }: { metrics: LoginHeroMetrics }) {
 
         {/* Floating stats — DATABASE-DRIVEN */}
         <div className="mt-8 md:mt-auto relative">
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 items-end">
+          {/* Two comfortable columns on mobile + tablet; the decorative bar
+              chart only joins as a third column on large screens where there's
+              room, so the stat cards never get squeezed below ~160px. */}
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-6 items-end">
             <HeroStatCard
               icon={<Users size={16} />}
               label="Schools Reached"
@@ -106,8 +109,8 @@ export function LoginHeroSection({ metrics }: { metrics: LoginHeroMetrics }) {
               positive={metrics.schoolsReached.trendPercent >= 0}
             />
 
-            {/* Decorative bar chart silhouette in the middle column */}
-            <div className="hidden md:flex items-end justify-center gap-1.5 h-[120px] opacity-90">
+            {/* Decorative bar chart silhouette — large screens only */}
+            <div className="hidden lg:flex items-end justify-center gap-1.5 h-[120px] opacity-90">
               {[24, 38, 56, 78, 92, 86, 74, 60, 46].map((h, i) => (
                 <span
                   key={i}
@@ -202,27 +205,27 @@ function HeroStatCard({
   ring?: number; // 0–100 — when present, shows a circular progress
 }) {
   return (
-    <div className="rounded-2xl border border-white/15 bg-white/[.10] backdrop-blur-md p-3.5 shadow-2xl shadow-black/30 overflow-hidden">
-      <div className="flex items-center gap-3">
+    <div className="rounded-2xl border border-white/15 bg-white/[.10] backdrop-blur-md p-2.5 sm:p-3.5 shadow-2xl shadow-black/30">
+      <div className="flex items-center gap-2 sm:gap-3">
         {ring !== undefined ? (
           <RingMini pct={ring} />
         ) : (
-          <span className="w-9 h-9 rounded-full bg-white/[.12] border border-white/15 grid place-items-center text-white">
+          <span className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/[.12] border border-white/15 grid place-items-center text-white shrink-0">
             {icon}
           </span>
         )}
         <div className="leading-tight min-w-0 flex-1">
-          <div className="text-caption uppercase tracking-wide text-white/65 font-semibold">
+          <div className="text-[9.5px] sm:text-[10px] uppercase tracking-wide text-white/65 font-semibold leading-snug">
             {label}
           </div>
-          <div className="text-[24px] font-extrabold tabular leading-none mt-1 truncate">
+          <div className="text-[18px] sm:text-[20px] md:text-[22px] lg:text-[24px] font-extrabold tabular leading-none mt-0.5 sm:mt-1 truncate">
             {value}
           </div>
           <div
-            className={`text-caption font-semibold mt-1 inline-flex items-center gap-1 truncate ${positive ? "text-emerald-300" : "text-rose-300"}`}
+            className={`text-[9.5px] sm:text-[10px] font-semibold mt-0.5 sm:mt-1 inline-flex items-center gap-1 min-w-0 ${positive ? "text-emerald-300" : "text-rose-300"}`}
           >
             <ArrowUpRight size={10} className="shrink-0" />
-            {trend}
+            <span className="truncate">{trend}</span>
           </div>
         </div>
       </div>
@@ -231,18 +234,19 @@ function HeroStatCard({
 }
 
 function RingMini({ pct }: { pct: number }) {
-  const size = 44;
+  // Fixed 44-unit viewBox; the rendered size scales with the container so the
+  // ring shrinks on mobile and grows on larger screens.
   const stroke = 5;
-  const r = size / 2 - stroke;
+  const r = 22 - stroke;
   const c = 2 * Math.PI * r;
   const off = c * (1 - Math.min(100, Math.max(0, pct)) / 100);
   return (
-    <span className="relative inline-block shrink-0" style={{ width: size, height: size }}>
-      <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size}>
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth={stroke} />
+    <span className="relative inline-block shrink-0 w-9 h-9 sm:w-10 sm:h-10 lg:w-11 lg:h-11">
+      <svg viewBox="0 0 44 44" className="w-full h-full">
+        <circle cx={22} cy={22} r={r} fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth={stroke} />
         <circle
-          cx={size / 2}
-          cy={size / 2}
+          cx={22}
+          cy={22}
           r={r}
           fill="none"
           stroke="#7ba3b8"
@@ -250,10 +254,10 @@ function RingMini({ pct }: { pct: number }) {
           strokeLinecap="round"
           strokeDasharray={c}
           strokeDashoffset={off}
-          transform={`rotate(-90 ${size / 2} ${size / 2})`}
+          transform="rotate(-90 22 22)"
         />
       </svg>
-      <span className="absolute inset-0 grid place-items-center text-[10px] font-extrabold tabular text-white">
+      <span className="absolute inset-0 grid place-items-center text-[9px] sm:text-[10px] font-extrabold tabular text-white">
         {pct}%
       </span>
     </span>
