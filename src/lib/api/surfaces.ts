@@ -924,6 +924,19 @@ export function requestLeave(user: BackendUser, body: { type?: string; startDate
 export function reviewLeave(user: BackendUser, id: string, action: "approve" | "reject") {
   return live<{ id: string; status: string }>(`/hr/leave/${encodeURIComponent(id)}/${action}`, user, { method: "POST" });
 }
+export type BeLeaveCalendarRow = {
+  id: string; staffName: string; staffProfileId: string; type: string;
+  startDate: string; endDate: string; dates: string[];
+};
+/** Approved leave shaped for the calendar + planning-availability engine
+ *  (HR/CD see the team; a staffer sees their own). */
+export function fetchApprovedLeave(user: BackendUser, range?: { from?: string; to?: string }) {
+  const q = new URLSearchParams();
+  if (range?.from) q.set("from", range.from);
+  if (range?.to) q.set("to", range.to);
+  const s = q.toString();
+  return live<BeLeaveCalendarRow[]>(`/hr/leave/calendar${s ? `?${s}` : ""}`, user);
+}
 
 // ── Partner round-trip (a field officer's own scoped session) ───────
 export type BeMyPartnerActivity = {

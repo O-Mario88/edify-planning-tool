@@ -16,9 +16,10 @@ import {
 import { StubPage } from "@/components/shell/StubPage";
 import { publicHolidays } from "@/lib/leave-mock";
 import { getCurrentUser } from "@/lib/auth";
+import { fetchApprovedLeave } from "@/lib/api/surfaces";
 import { todayDataForRole, type TodayTone } from "@/lib/today-mock";
 
-type Bucket = "today" | "this-week" | "this-month";
+type Bucket = "today" | "this-week" | "this-month" | "leave";
 type CalTone = "edify" | "amber" | "violet" | "rose" | "green";
 
 type Entry = {
@@ -59,6 +60,20 @@ export default async function CalendarPage() {
   const user = await getCurrentUser();
   const today = todayDataForRole(user.role);
 
+  // Approved leave from the backend — the caller's own (HR/CD: the team's).
+  // Linked here so leave schedules surface on the same timeline.
+  const leaveRes = await fetchApprovedLeave(user);
+  const leaveEntries: Entry[] = (leaveRes.live ? leaveRes.data : []).map((l) => ({
+    id: `leave-${l.id}`,
+    date: l.dates.length > 1 ? `${l.startDate} → ${l.endDate}` : l.startDate,
+    title: `${l.type[0].toUpperCase()}${l.type.slice(1)} leave — ${l.staffName}`,
+    context: `${l.dates.length} day${l.dates.length === 1 ? "" : "s"} · planning auto-blocked`,
+    Icon: Users,
+    tone: "violet",
+    href: "/leave",
+    bucket: "leave" as const,
+  }));
+
   const todayEntries: Entry[] = today.agenda.flatMap((block) =>
     block.tasks.map((t, i) => ({
       id: `today-${block.label}-${i}`,
@@ -98,6 +113,7 @@ export default async function CalendarPage() {
     { key: "today",      label: "Today",      subtitle: todayEntries.length ? "Your agenda for today" : "Nothing on today", entries: todayEntries },
     { key: "this-week",  label: "This Week",  subtitle: "Your upcoming activities this week", entries: weekEntries },
     { key: "this-month", label: "This Month", subtitle: "Holidays, blackouts, and conference weeks", entries: [...holidayEntries].sort((a, b) => a.date.localeCompare(b.date)) },
+    { key: "leave",      label: "Approved Leave", subtitle: leaveEntries.length ? "Leave schedules blocking planning days" : "No approved leave on the books", entries: [...leaveEntries].sort((a, b) => a.date.localeCompare(b.date)) },
   ];
 
   return (

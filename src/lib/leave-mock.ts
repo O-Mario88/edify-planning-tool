@@ -219,6 +219,10 @@ export function getPlanningAvailability(args: {
   activityType?: ActivityType;
   region?: string;
   country?: "Uganda";
+  /** Backend-sourced approved-leave ISO dates for the relevant staffer.
+   *  Passed in by surfaces that have live leave (the planning calendar);
+   *  blocks the day the same way seeded approved leave does. */
+  extraLeaveDates?: string[];
 }): Availability {
   const d = typeof args.date === "string" ? new Date(args.date + "T00:00:00") : args.date;
   const iso = isoDate(d);
@@ -274,7 +278,18 @@ export function getPlanningAvailability(args: {
     };
   }
 
-  // 5. Staff leave (only blocks for the matching staff).
+  // 5a. Backend-sourced approved leave (live) — blocks the planner's own day.
+  if (args.extraLeaveDates && args.extraLeaveDates.includes(iso)) {
+    return {
+      available: false,
+      reason: "Leave",
+      severity: "Medium",
+      message: "Approved leave.",
+      nextAvailableDate: nextNonBlockedDate(d, args.staffId),
+    };
+  }
+
+  // 5b. Seeded staff leave (only blocks for the matching staff).
   if (args.staffId) {
     const onLeave = leaveRequests.find(
       (l) =>

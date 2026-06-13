@@ -31,10 +31,10 @@ function buildMonthGrid(year: number, month0: number) {
   return cells;
 }
 
-function dayBlockSummary(iso: string, availability: Availability) {
+function dayBlockSummary(iso: string, availability: Availability, extraLeaveDates: string[]) {
   // For visual fidelity to the screenshot we surface:
   //   • Holiday chip on the holiday day
-  //   • Leave chip on individual leave days
+  //   • Leave chip on individual leave days (seeded OR live backend leave)
   //   • Conference chip across the conference-week range
   //   • Lock icon for any blocked day with no chip (Sundays)
   if (publicHolidays.some((h) => h.date === iso)) {
@@ -44,6 +44,7 @@ function dayBlockSummary(iso: string, availability: Availability) {
     return { chip: { label: "Conference", color: "bg-violet-100 text-violet-700" } };
   }
   if (
+    extraLeaveDates.includes(iso) ||
     leaveRequests.some(
       (l) => l.approvalStatus === "Approved" && l.validLeaveDates.includes(iso),
     )
@@ -57,9 +58,15 @@ function dayBlockSummary(iso: string, availability: Availability) {
 export function PlanningCalendar({
   initialYear = 2025,
   initialMonth0 = 6, // July
+  extraLeaveDates = [],
+  selfStaffId = "STF-SK-001",
 }: {
   initialYear?: number;
   initialMonth0?: number;
+  /** Live backend approved-leave ISO dates for the signed-in planner. */
+  extraLeaveDates?: string[];
+  /** Whose seeded leave to shade (demo default: Sarah). */
+  selfStaffId?: string;
 }) {
   const [year, setYear] = useState(initialYear);
   const [month0, setMonth0] = useState(initialMonth0);
@@ -146,9 +153,10 @@ export function PlanningCalendar({
         {cells.map((c) => {
           const availability = getPlanningAvailability({
             date: c.iso,
-            staffId: "STF-SK-001", // demo: render Sarah's leave shading
+            staffId: selfStaffId,
+            extraLeaveDates,
           });
-          const summary = dayBlockSummary(c.iso, availability);
+          const summary = dayBlockSummary(c.iso, availability, extraLeaveDates);
           const isToday = c.iso === isoDate(new Date(year, month0, new Date().getDate()));
           const blocked = !availability.available;
           const isConf = summary.chip?.label === "Conference";

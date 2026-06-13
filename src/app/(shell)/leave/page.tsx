@@ -11,6 +11,8 @@ import { AutoBlockedConflictsCard } from "@/components/leave/AutoBlockedConflict
 import { TeamAvailabilityHeatmap } from "@/components/leave/TeamAvailabilityHeatmap";
 import { PlanningEngineActiveBar } from "@/components/leave/PlanningEngineActiveBar";
 import { LeaveLive } from "@/components/leave/LeaveLive";
+import { getCurrentUser } from "@/lib/auth";
+import { fetchApprovedLeave } from "@/lib/api/surfaces";
 
 // Leave & Holiday Planning Dashboard — premium redesign.
 //
@@ -26,7 +28,17 @@ import { LeaveLive } from "@/components/leave/LeaveLive";
 // All availability decisions still resolve through
 // getPlanningAvailability() in lib/leave-mock.ts — single source of
 // truth across the planning tool, CCEO dashboard, and CPL dashboard.
-export default function LeaveHolidayPlanningDashboard() {
+export default async function LeaveHolidayPlanningDashboard() {
+  // The signed-in planner's own approved leave (backend) — fed into the
+  // planning calendar so those days shade + block, and the view opens on the
+  // first leave month when there is any.
+  const user = await getCurrentUser();
+  const leaveRes = await fetchApprovedLeave(user);
+  const myLeaveDates = (leaveRes.live ? leaveRes.data.flatMap((l) => l.dates) : []).sort();
+  const first = myLeaveDates[0];
+  const calYear = first ? Number(first.slice(0, 4)) : 2025;
+  const calMonth0 = first ? Number(first.slice(5, 7)) - 1 : 6;
+
   return (
     <ResponsiveDashboard mobile={<LeaveMobileView />} desktop={
     <>
@@ -53,7 +65,7 @@ export default function LeaveHolidayPlanningDashboard() {
                  sits in the right rail at col 4. */}
           <section id="planning-calendar" className="grid grid-cols-12 gap-4 items-start">
             <div className="col-span-12 lg:col-span-8">
-              <PlanningCalendar initialYear={2025} initialMonth0={6} />
+              <PlanningCalendar initialYear={calYear} initialMonth0={calMonth0} extraLeaveDates={myLeaveDates} />
             </div>
             <div className="col-span-12 lg:col-span-4" id="planning-rules">
               <AutomaticPlanningRulesPanel role="CCEO" />
