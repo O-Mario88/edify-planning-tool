@@ -2,7 +2,6 @@
 
 import type { ReactNode } from "react";
 import { motion } from "motion/react";
-import { AreaChart, Area, ResponsiveContainer } from "recharts";
 import { cn } from "@/lib/utils";
 
 // ─────────── ChipTone + StatusBadge ───────────
@@ -168,63 +167,6 @@ export function ProgressRing({
   );
 }
 
-// ─────────── MiniSparkline (Recharts) ───────────
-
-function makeSpark(seed: number, trend: "up" | "down") {
-  const out: { x: number; y: number }[] = [];
-  let v = 50;
-  for (let i = 0; i < 14; i++) {
-    v += Math.sin((i + seed) * 1.3) * 6 + (trend === "up" ? 1.2 : -1.2) + Math.cos((i + seed) * 0.7) * 4;
-    v = Math.max(8, Math.min(56, v));
-    out.push({ x: i, y: v });
-  }
-  return out;
-}
-
-export function MiniSparkline({
-  seed = 1,
-  trend = "up",
-  color,
-  width = 140,
-  height = 32,
-}: {
-  seed?: number;
-  trend?: "up" | "down";
-  color?: string;
-  width?: number;
-  height?: number;
-}) {
-  const data = makeSpark(seed, trend);
-  const stroke = color ?? (trend === "up" ? "#16a34a" : "#ef4444");
-  const id = `spark-${seed}-${trend}`;
-  // ResponsiveContainer + min-width prevents Recharts' `width(-1)/height(-1)`
-  // warnings when the parent measures 0 on first paint. The fixed-width
-  // legacy prop is kept as a fallback in case the container can't size.
-  void width;
-  return (
-    <div style={{ width: "100%", height }} role="img" aria-label="Trend">
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
-          <defs>
-            <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={stroke} stopOpacity={0.22} />
-              <stop offset="100%" stopColor={stroke} stopOpacity={0} />
-            </linearGradient>
-          </defs>
-          <Area
-            type="monotone"
-            dataKey="y"
-            stroke={stroke}
-            strokeWidth={1.8}
-            fill={`url(#${id})`}
-            isAnimationActive={false}
-          />
-        </AreaChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
 // ─────────── DonutChart ───────────
 
 export function DonutChart({
@@ -337,7 +279,6 @@ export function KpiCard({
   icon,
   iconTone = "edify",
   caption,
-  spark,
 }: {
   label: string;
   value: ReactNode;
@@ -346,7 +287,6 @@ export function KpiCard({
   icon?: ReactNode;
   iconTone?: ChipTone;
   caption?: string;
-  spark?: { seed: number; trend: "up" | "down" };
 }) {
   const tile =
     iconTone === "amber"
@@ -391,11 +331,6 @@ export function KpiCard({
       </div>
       {caption && <div className="text-[11px] muted font-medium mt-1">{caption}</div>}
       {trend && <div className={cn("text-caption font-semibold mt-1", trendCls)}>{trend}</div>}
-      {spark && (
-        <div className="mt-2">
-          <MiniSparkline seed={spark.seed} trend={spark.trend} />
-        </div>
-      )}
     </div>
   );
 }

@@ -20,8 +20,6 @@ import {
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
-  AreaChart,
-  Area,
 } from "recharts";
 import {
   PERIODS,
@@ -38,6 +36,7 @@ import { HealthPill } from "@/components/ui/Pill";
 import { ExportButton } from "@/components/ui/ExportButton";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { HeaderFilterBar } from "@/components/shell/HeaderFilterBar";
+import { MetricStrip } from "@/components/ui/MetricStrip";
 import type { FilterScope } from "@/lib/filters/types";
 import { cn } from "@/lib/utils";
 
@@ -101,27 +100,6 @@ function Donut({
         transform={`rotate(-90 ${size / 2} ${size / 2})`}
       />
     </svg>
-  );
-}
-
-// ────────── Mini sparkline ──────────
-
-function Sparkline({ values, color }: { values: number[]; color: string }) {
-  const data = values.map((v, i) => ({ i, v }));
-  return (
-    <div className="h-8 w-full">
-      <ResponsiveContainer>
-        <AreaChart data={data} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
-          <defs>
-            <linearGradient id={`spark-${color.replace("#", "")}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={color} stopOpacity={0.25} />
-              <stop offset="100%" stopColor={color} stopOpacity={0} />
-            </linearGradient>
-          </defs>
-          <Area type="monotone" dataKey="v" stroke={color} strokeWidth={1.6} fill={`url(#spark-${color.replace("#", "")})`} />
-        </AreaChart>
-      </ResponsiveContainer>
-    </div>
   );
 }
 
@@ -241,32 +219,22 @@ export function OperatingTargetsView({ data }: { data: OperatingTargets }) {
         </div>
       </section>
 
-      {/* KPI summary row */}
-      <section className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        {rows.map((r) => {
+      {/* KPI summary row — full-year achievement vs target as a dense metric
+          strip (replaces the big tiles + their decorative sparklines). */}
+      <MetricStrip
+        columns="grid-cols-2 sm:grid-cols-3 lg:grid-cols-6"
+        metrics={rows.map((r) => {
           const c = r.cells.fy;
-          const trendColor = c.pct >= 70 ? "#10b981" : c.pct >= 50 ? "#f59e0b" : "#ef4444";
-          const RIcon = METRIC_ICON[r.iconKey];
-          return (
-            <div key={r.key} className="card p-3.5 flex flex-col gap-2">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className={cn("h-8 w-8 rounded-lg grid place-items-center shrink-0", r.iconBg, r.iconText)}>
-                    <RIcon size={14} />
-                  </span>
-                  <div className="t-caption font-extrabold tracking-tight truncate">{r.label}</div>
-                </div>
-                <ChevronRight size={12} className="text-disabled shrink-0" />
-              </div>
-              <div className="t-h-sm tabular leading-none">
-                {c.achieved.toLocaleString()} <span className="t-body text-muted font-bold">/ {c.target.toLocaleString()}</span>
-              </div>
-              <div className="t-caption muted">{c.pct}% of Target</div>
-              <Sparkline values={r.trend} color={trendColor} />
-            </div>
-          );
+          return {
+            key: r.key,
+            label: r.label,
+            value: c.achieved.toLocaleString(),
+            unit: `/ ${c.target.toLocaleString()}`,
+            caption: `${c.pct}% of Target`,
+            icon: METRIC_ICON[r.iconKey],
+          };
         })}
-      </section>
+      />
 
       {/* Targets by Time Period — table */}
       <section className="card rounded-2xl overflow-hidden">
