@@ -401,7 +401,12 @@ export function SchoolGapsBoard({
       </header>
 
       <div className="space-y-3">
-        {GAP_SORT_ORDER.map((cat) => {
+        {GAP_SORT_ORDER
+          // Core + client schools are clustered in the School Directory, so the
+          // planner never shows an "unclustered" bucket — clustering is a
+          // directory step, not a planning step.
+          .filter((cat) => cat !== "no_cluster")
+          .map((cat) => {
           const list = groups[cat];
           const isCollapsed = collapsed[cat];
           const meta = CATEGORY_META[cat];

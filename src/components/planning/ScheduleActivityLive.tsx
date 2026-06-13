@@ -24,7 +24,8 @@ const CLIENT_TYPES: ActOption[] = [
   { v: "school_visit", l: "School visit", type: "school_visit" },
   { v: "follow_up_visit", l: "Follow-up visit", type: "follow_up_visit" },
   { v: "coaching_visit", l: "Coaching visit", type: "coaching_visit" },
-  { v: "in_school_support", l: "In-school support", type: "in_school_support" },
+  { v: "in_school_training", l: "In-school Training", type: "in_school_support" },
+  { v: "in_school_ssa_support", l: "In-school SSA Support", type: "ssa_activity" },
   { v: "training", l: "Training", type: "training" },
   { v: "school_improvement_training", l: "SIT / SSA", type: "school_improvement_training" },
 ];

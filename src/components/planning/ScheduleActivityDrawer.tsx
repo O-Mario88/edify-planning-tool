@@ -130,6 +130,10 @@ export function ScheduleActivityDrawer({
   const [notes, setNotes]               = useState<string>("");
   const [partnerFacilitator, setPartnerFacilitator] = useState<string>("");
   const [error, setError]               = useState<string | null>(null);
+  // The school's poorly-performing SSA interventions (name + score), fetched
+  // live so a support visit is planned against the real gaps, not a single
+  // hard-coded "weakest area".
+  const [weakInterventions, setWeakInterventions] = useState<Array<{ area: string; score: number }> | null>(null);
 
   // Re-seed each time the drawer opens for a new context. Encoded as
   // a single effect rather than a key-reset so the chrome doesn't
@@ -155,6 +159,30 @@ export function ScheduleActivityDrawer({
   }, [open, context, today]);
 
   const cycle = useMemo(() => cycleBoundsFor(today), [today]);
+
+  // Pull the school's SSA interventions when the drawer opens for a school, so
+  // the activity card lists every intervention the school is weak in (name +
+  // score), sorted worst-first. Cluster targets keep their summary instead.
+  const schoolTargetId = context && context.target.kind === "school" ? context.target.id : null;
+  useEffect(() => {
+    if (!open || !schoolTargetId) { setWeakInterventions(null); return; }
+    let cancelled = false;
+    fetch(`/api/ssa/school/${encodeURIComponent(schoolTargetId)}`, { credentials: "include" })
+      .then((r) => r.json())
+      .then((j) => {
+        if (cancelled) return;
+        const recs: Array<{ scores?: Array<{ intervention: string; score: number }> }> = j?.records ?? [];
+        const scores = recs[0]?.scores ?? [];
+        if (!scores.length) { setWeakInterventions(null); return; }
+        // "Poorly performing" = below 6/10; if none, fall back to the lowest two.
+        const ranked = [...scores].sort((a, b) => a.score - b.score);
+        const weak = ranked.filter((s) => s.score < 6);
+        const chosen = (weak.length ? weak : ranked.slice(0, 2)).slice(0, 4);
+        setWeakInterventions(chosen.map((s) => ({ area: humanizeIntervention(s.intervention), score: s.score })));
+      })
+      .catch(() => { if (!cancelled) setWeakInterventions(null); });
+    return () => { cancelled = true; };
+  }, [open, schoolTargetId]);
 
   if (!context) return null;
 
@@ -297,14 +325,27 @@ export function ScheduleActivityDrawer({
             {context.clusterSummary && (
               <div className="text-[11px] muted leading-tight mt-0.5">{context.clusterSummary}</div>
             )}
-            {context.ssaFocus && (
+            {/* Live SSA weak-intervention list (school targets). Shows every
+                intervention the school is performing poorly in, worst-first. */}
+            {weakInterventions && weakInterventions.length > 0 ? (
+              <div className="mt-1.5">
+                <div className="text-[10px] uppercase tracking-wider font-bold text-rose-600">Performing poorly in</div>
+                <div className="flex flex-wrap items-center gap-1 mt-1">
+                  {weakInterventions.map((w) => (
+                    <span key={w.area} className="inline-flex items-center gap-1 px-1.5 py-[2px] rounded-md bg-rose-50 border border-rose-200 text-rose-700 text-[10.5px] font-extrabold">
+                      {w.area} · {w.score}/10
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : context.ssaFocus ? (
               <div className="text-[11px] muted leading-tight mt-1">
                 SSA focus:{" "}
                 <span className="font-extrabold text-[var(--color-edify-text)]">
                   {context.ssaFocus.area} ({context.ssaFocus.score}/10)
                 </span>
               </div>
-            )}
+            ) : null}
             {/* Explicit SIP eligibility warning — cluster SIT only.
                 Spells out how many schools will be excluded so the
                 CCEO doesn't have to do the math against schoolsWithSsa. */}
@@ -543,14 +584,19 @@ export function ScheduleActivityDrawer({
           <p className="text-[11px] muted">Cost will be calculated after participant count is added.</p>
         ))}
 
-        <Input
-          label="Venue / Location (optional)"
-          value={venue}
-          onChange={(e) => setVenue(e.target.value)}
-          placeholder={context.target.kind === "cluster"
-            ? "e.g. Kitgum Central Community Hall"
-            : "e.g. School assembly hall"}
-        />
+        {/* Venue only matters for trainings + cluster meetings (a gathering at a
+            chosen location). School visits happen AT the school — its address is
+            already on record — so the field is hidden in visit mode. */}
+        {!isVisitMode && (
+          <Input
+            label="Venue / Location (optional)"
+            value={venue}
+            onChange={(e) => setVenue(e.target.value)}
+            placeholder={context.target.kind === "cluster"
+              ? "e.g. Kitgum Central Community Hall"
+              : "e.g. School assembly hall"}
+          />
+        )}
         <Textarea
           label="Notes (optional)"
           rows={2}
@@ -571,6 +617,15 @@ export function ScheduleActivityDrawer({
 }
 
 // ────────── Helpers ──────────
+
+// Backend intervention key → readable label, e.g. "teaching_and_learning" →
+// "Teaching & Learning".
+function humanizeIntervention(key: string): string {
+  return key
+    .split("_")
+    .map((w) => (w === "and" ? "&" : w.charAt(0).toUpperCase() + w.slice(1)))
+    .join(" ");
+}
 
 type Cell = { date: Date; inMonth: boolean };
 
