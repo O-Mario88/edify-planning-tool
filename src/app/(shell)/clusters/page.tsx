@@ -5,11 +5,10 @@ import { UnclusteredSchoolsBanner } from "@/components/planning/UnclusteredSchoo
 import { CceoClusterBoard } from "@/components/cluster/CceoClusterBoard";
 import { ClusterReadinessCard } from "@/components/cluster/ClusterReadinessCard";
 import { CreateClusterButton } from "@/components/cluster/CreateClusterButton";
-import { LiveClusterList } from "@/components/cluster/LiveClusterList";
+import { ClusterDistrictDirectory } from "@/components/cluster/ClusterDistrictDirectory";
 import { getCurrentUser } from "@/lib/auth";
 import { clusterCountsFor } from "@/lib/cluster/cluster-core";
 import { intakeSchools } from "@/lib/intake/intake-mock";
-import { partners } from "@/lib/partner/partner-mock";
 import { resolveOwner } from "@/lib/portfolio/portfolio";
 import { visibleStaffIds } from "@/lib/org/supervision";
 
@@ -29,10 +28,6 @@ export default async function ClustersIndex() {
   });
   const counts = clusterCountsFor(scopedSchools);
   const unclusteredCount = counts.unclustered;
-
-  // Partner picker options for delegating a cluster to a partner. Stable
-  // config-ish input passed into the live list (no backend partner endpoint).
-  const partnerOptions = partners.map((p) => ({ id: p.id, name: p.name }));
 
   return (
     <EntityIndex
@@ -65,7 +60,9 @@ export default async function ClustersIndex() {
           </nav>
         </div>
       </div>
-      <LiveClusterList partners={partnerOptions} />
+      {/* Cluster dashboard — live clusters grouped by district; each expands to
+          its school roster (ID, name, sub-county, phone, contact, SSA area). */}
+      <ClusterDistrictDirectory />
     </EntityIndex>
   );
 }

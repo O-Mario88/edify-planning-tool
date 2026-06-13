@@ -732,8 +732,10 @@ export function fetchSubCounties(user: BackendUser, districtId: string) {
 }
 export type BeClusterSchool = {
   schoolId: string; name: string; schoolType: string; subCounty?: string | null;
+  phone?: string | null; primaryContact?: string | null;
   accountOwner?: string | null; ssaStatus: string; planningReadiness: string;
   latestSsa: number | null; stage: string;
+  weakestIntervention?: { area: string; score: number } | null;
 };
 export type BeClusterPlanning = {
   id: string; clusterName: string; district: string; subCounty: string;
@@ -748,7 +750,12 @@ export function fetchClusters(user: BackendUser) {
   return live<BeCluster[]>(`/clusters`, user);
 }
 export function fetchClusterSchools(user: BackendUser, clusterId: string) {
-  return live<{ cluster: { id: string; name: string; status: string; type: string }; count: number; schools: BeClusterSchool[] }>(
+  return live<{
+    cluster: { id: string; name: string; status: string; type: string };
+    count: number;
+    commonWeakIntervention?: { area: string; avgScore: number } | null;
+    schools: BeClusterSchool[];
+  }>(
     `/clusters/${encodeURIComponent(clusterId)}/schools`, user,
   );
 }
