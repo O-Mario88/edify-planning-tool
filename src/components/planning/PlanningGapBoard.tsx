@@ -49,6 +49,8 @@ export function PlanningGapBoard({
   clusterGaps,
   liveClusterGaps = false,
   coreCards = [],
+  coreGaps = [],
+  liveCoreGaps = false,
   coreViewer = { canAssign: false, canExec: false, canIa: false },
   canChampion = false,
 }: {
@@ -62,6 +64,10 @@ export function PlanningGapBoard({
   /** True when clusterGaps are REAL backend clusters — schedule via the live writer. */
   liveClusterGaps?: boolean;
   coreCards?: CorePlanCardVM[];
+  /** Backend core-school gaps — when live, the Core Schools tab uses the same
+   *  detail-rich SchoolGapsBoard as Client Schools. */
+  coreGaps?: SchoolGap[];
+  liveCoreGaps?: boolean;
   coreViewer?: SlotViewer;
   canChampion?: boolean;
 } = {}) {
@@ -104,8 +110,12 @@ export function PlanningGapBoard({
       {/* Active board — each renders its own collapsible, detail-rich card. */}
       <div role="tabpanel" aria-label={`${TABS.find((t) => t.key === activeTab)?.label} gaps`}>
         {activeTab === "clientSchools" && <SchoolGapsBoard assigningUserRole={normalizeRole(assigningUserRole)} extraGaps={extraGaps} liveGaps={liveGaps} />}
-        {activeTab === "clusters" && <ClusterGapsBoard gaps={clusterGaps} liveGaps={liveClusterGaps} />}
-        {activeTab === "coreSchools" && <CorePlanningAccordion cards={coreCards} viewer={coreViewer} canChampion={canChampion} />}
+        {activeTab === "clusters" && <ClusterGapsBoard assigningUserRole={normalizeRole(assigningUserRole)} gaps={clusterGaps} liveGaps={liveClusterGaps} />}
+        {activeTab === "coreSchools" && (
+          liveCoreGaps
+            ? <SchoolGapsBoard assigningUserRole={normalizeRole(assigningUserRole)} extraGaps={coreGaps} liveGaps />
+            : <CorePlanningAccordion cards={coreCards} viewer={coreViewer} canChampion={canChampion} />
+        )}
       </div>
     </section>
   );

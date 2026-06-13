@@ -169,6 +169,10 @@ export function SchoolGapsBoard({
     | { context: ScheduleActivityContext; school: SchoolGap }
     | null
   >(null);
+  // Assign-to-Partner — the simplified live drawer (Activity · Partner ·
+  // Intervention · Estimated cost), backend-persisting. Opened by the [Assign]
+  // row button. Self-scheduling is the separate [Schedule] button.
+  const [assignLive, setAssignLive] = useState<SchoolGap | null>(null);
   // View SSA opens the performance drawer — adapts based on how many
   // completed SSAs the school has (0 / 1 / 2 / 3+).
   const [ssaPerformance, setSsaPerformance] = useState<SsaPerformanceContext | null>(null);
@@ -253,25 +257,40 @@ export function SchoolGapsBoard({
     });
   }
 
+  // Month (1-12) from the outcome's ISO date.
+  function monthOf(iso?: string): number | undefined {
+    if (!iso) return undefined;
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? undefined : d.getUTCMonth() + 1;
+  }
+
   function handleSchoolTrainingSubmit(outcome: ScheduleActivityOutcome) {
     const pending = scheduleSchoolTraining;
     if (!pending) return;
-
-    const partnerSuffix = outcome.partnerFacilitator
-      ? ` Facilitator: ${outcome.partnerFacilitator}.`
-      : "";
-    const costSuffix = outcome.projectedCostUgx && outcome.projectedCostUgx > 0
-      ? ` Projected ${formatUgxShort(outcome.projectedCostUgx)} for ${outcome.participants} participants.`
-      : "";
-    setToast(
-      `${outcome.activityType} scheduled at ${pending.school.schoolName} for ${outcome.date}.${costSuffix}${partnerSuffix}`,
-    );
     setScheduleSchoolTraining(null);
-    // Training is now on the calendar — remove the school from the
-    // No Training gap list. The training will reappear in the owner's
-    // scheduled-activity feed (My Plan / Partner Plan / Cluster Plan).
-    dismiss(pending.school.id);
-    setTimeout(() => setToast(null), 4500);
+    // Persist the training to the backend so it lands in My Plan + the fund
+    // request. SIT/SSA Improvement Training → school_improvement_training.
+    startClusterTx(async () => {
+      const res = await scheduleSchoolActivity({
+        schoolId: pending.school.id,
+        schoolName: pending.school.schoolName,
+        kind: "TRAINING_FOLLOW_UP",
+        backendActivityType: "school_improvement_training",
+        dateIso: outcome.isoDate,
+        deliveryType: outcome.partnerFacilitator ? "partner" : "staff",
+        plannedMonth: monthOf(outcome.isoDate),
+      });
+      if (res.ok) {
+        const costSuffix = outcome.projectedCostUgx && outcome.projectedCostUgx > 0
+          ? ` Projected ${formatUgxShort(outcome.projectedCostUgx)} for ${outcome.participants} participants.`
+          : "";
+        setToast(`${outcome.activityType} scheduled at ${pending.school.schoolName} for ${outcome.date}.${costSuffix} Saved to your plan.`);
+        dismiss(pending.school.id);
+      } else {
+        setToast(res.reason === "CAPACITY_FULL" ? (res.message ?? "Direct support limit reached — assign to a partner.") : "Couldn't save the training — try again.");
+      }
+      setTimeout(() => setToast(null), 4500);
+    });
   }
 
   function handleVisitSubmit(outcome: ScheduleActivityOutcome) {
@@ -281,15 +300,14 @@ export function SchoolGapsBoard({
     setScheduleVisit(null);
     // Persist to the backend (self-schedule = self-assign). The school's
     // gap id is the real backend schoolId, so this lands in Postgres + My Plan.
-    const month = outcome.date ? new Date(outcome.date).getUTCMonth() + 1 : undefined;
     startClusterTx(async () => {
       const res = await scheduleSchoolActivity({
         schoolId: pending.school.id,
         schoolName: pending.school.schoolName,
         kind: "SCHOOL_VISIT",
-        dateIso: outcome.date,
+        dateIso: outcome.isoDate,
         deliveryType: "staff",
-        plannedMonth: month,
+        plannedMonth: monthOf(outcome.isoDate),
         plannedWeek: outcome.weekOfMonth,
       });
       if (res.ok) {
@@ -425,7 +443,7 @@ export function SchoolGapsBoard({
                           });
                         }}
                         onAssign={(school) => {
-                          setAssign({ school, action: "assign_partner" });
+                          setAssignLive(school);
                         }}
                         onAction={(action) => {
                           if (action === "add_to_cluster") {
@@ -479,27 +497,15 @@ export function SchoolGapsBoard({
         onSubmit={handleClusterSubmit}
       />
 
-      {/* Live writer when gaps are real backend schools; mock drawer otherwise. */}
-      {scheduleSchoolTraining && liveGaps ? (
-        <ScheduleActivityLive
-          schoolId={scheduleSchoolTraining.school.id}
-          schoolName={scheduleSchoolTraining.school.schoolName}
-          schoolType="client"
-          onClose={() => setScheduleSchoolTraining(null)}
-          onScheduled={() => {
-            setToast(`Activity scheduled at ${scheduleSchoolTraining.school.schoolName} — on the plan and the fund request.`);
-            dismiss(scheduleSchoolTraining.school.id);
-            setTimeout(() => setToast(null), 4500);
-          }}
-        />
-      ) : (
-        <ScheduleActivityDrawer
-          open={!!scheduleSchoolTraining}
-          context={scheduleSchoolTraining?.context ?? null}
-          onClose={() => setScheduleSchoolTraining(null)}
-          onSubmit={handleSchoolTrainingSubmit}
-        />
-      )}
+      {/* Training/SIT scheduling — the unified ScheduleActivityDrawer (the loved
+          calendar format). handleSchoolTrainingSubmit persists it to the backend
+          → My Plan + fund request. Same drawer for live and mock gaps. */}
+      <ScheduleActivityDrawer
+        open={!!scheduleSchoolTraining}
+        context={scheduleSchoolTraining?.context ?? null}
+        onClose={() => setScheduleSchoolTraining(null)}
+        onSubmit={handleSchoolTrainingSubmit}
+      />
 
       {/* Visit scheduling drawer — month+week picker, opened from the [Schedule] row button */}
       <ScheduleActivityDrawer
@@ -508,6 +514,27 @@ export function SchoolGapsBoard({
         onClose={() => setScheduleVisit(null)}
         onSubmit={handleVisitSubmit}
       />
+
+      {/* Assign-to-Partner — simplified live drawer (Activity · Partner ·
+          Intervention · Estimated cost). Backend-persisting (assignedPartnerId);
+          the partner schedules the delivery week on their own dashboard. */}
+      {assignLive && (
+        <ScheduleActivityLive
+          schoolId={assignLive.id}
+          schoolName={assignLive.schoolName}
+          schoolType="client"
+          mode="assign"
+          assigningRole={assigningUserRole}
+          intervention={assignLive.weakestArea?.area}
+          onClose={() => setAssignLive(null)}
+          onScheduled={() => {
+            setToast(`${assignLive.schoolName} assigned to partner — awaiting their schedule.`);
+            dismiss(assignLive.id);
+            router.refresh();
+            setTimeout(() => setToast(null), 4500);
+          }}
+        />
+      )}
 
       <SsaPerformanceDrawer
         open={!!ssaPerformance}
@@ -664,37 +691,30 @@ function SchoolRow({
           </div>
         </div>
 
-        {/* ── Row-level action buttons — always visible, never expand ── */}
+        {/* ── Row-level action buttons — always visible, never expand ──
+            Two buttons on EVERY school: [Schedule] (staff schedules their own
+            visit/training) and [Assign] (route to a partner). Cluster
+            assignment is no longer a row gate — client + core school gaps merge
+            into one visit/training planning surface. */}
         <div className="shrink-0 flex flex-col items-end gap-1.5 mt-0.5">
-          {clusterBlocked ? (
-            /* Unclustered school — only cluster assignment makes sense */
+          <div className="flex items-center gap-1.5">
             <button
               type="button"
-              onClick={() => onAction("add_to_cluster")}
+              onClick={() => onSchedule(s)}
+              title="Schedule a visit or training yourself (adds to your plan)"
               className="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg bg-[var(--color-edify-primary)] text-white text-[11px] font-extrabold hover:bg-[var(--color-edify-dark)] transition-colors whitespace-nowrap"
             >
-              <Users size={11} /> Add to Cluster
+              <Calendar size={11} /> Schedule
             </button>
-          ) : (
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => onSchedule(s)}
-                title="Schedule a support visit for this school"
-                className="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg bg-[var(--color-edify-primary)] text-white text-[11px] font-extrabold hover:bg-[var(--color-edify-dark)] transition-colors whitespace-nowrap"
-              >
-                <Calendar size={11} /> Schedule
-              </button>
-              <button
-                type="button"
-                onClick={() => onAssign(s)}
-                title="Assign this school to a partner or staff"
-                className="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg border border-[var(--color-edify-border)] bg-white text-[11px] font-semibold text-sky-700 hover:bg-sky-50 transition-colors whitespace-nowrap"
-              >
-                <Handshake size={11} /> Assign
-              </button>
-            </div>
-          )}
+            <button
+              type="button"
+              onClick={() => onAssign(s)}
+              title="Assign this school to a partner"
+              className="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg border border-[var(--color-edify-border)] bg-white text-[11px] font-semibold text-sky-700 hover:bg-sky-50 transition-colors whitespace-nowrap"
+            >
+              <Handshake size={11} /> Assign
+            </button>
+          </div>
           {/* Expand chevron */}
           <button
             type="button"

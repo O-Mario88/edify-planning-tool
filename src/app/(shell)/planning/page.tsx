@@ -1,7 +1,5 @@
 import { redirect } from "next/navigation";
 import { PlanningToolPage } from "@/components/planning/PlanningToolPage";
-import { PlanningSetupLive } from "@/components/planning/PlanningSetupLive";
-import { ClusterPlanningLive } from "@/components/planning/ClusterPlanningLive";
 import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { PlanningMobileView } from "@/components/mobile/views/PlanningMobileView";
 import { coreBoardData, coreOwnershipRows } from "@/lib/core/core-board";
@@ -44,18 +42,13 @@ export default async function Page({
         <PlanningToolPage
           searchParams={sp}
           topSlot={
-            <>
-              <SmartGroupingCard assignedCceo={user.role === "CCEO" ? user.name : undefined} />
-              <PlanningSetupLive role={user.role} />
-              <ClusterPlanningLive />
-            </>
+            <SmartGroupingCard assignedCceo={user.role === "CCEO" ? user.name : undefined} />
           }
         />
       }
       mobile={
         <div className="px-3 pt-3 space-y-3">
           <SmartGroupingCard assignedCceo={user.role === "CCEO" ? user.name : undefined} />
-          <PlanningSetupLive role={user.role} />
           <PlanningMobileView coreCards={coreCards} coreViewer={coreViewer} canChampion={canChampion} coreOwnership={coreOwnership} />
         </div>
       }

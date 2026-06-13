@@ -9,6 +9,7 @@ import { ProjectPlanningGaps } from "@/components/special-projects/ProjectPlanni
 import { getCurrentUser, toCurrentUser } from "@/lib/auth";
 import { onboardedSchoolGaps, scopeGapsToViewer } from "@/lib/planning/onboarded-gaps";
 import { backendSchoolGaps } from "@/lib/planning/backend-school-gaps";
+import { backendCoreSchoolGaps } from "@/lib/planning/backend-core-school-gaps";
 import { backendClusterGaps } from "@/lib/planning/backend-cluster-gaps";
 import { assignedGapIds } from "@/lib/planning/assignment-overlay";
 import { coreBoardData, coreOwnershipRows } from "@/lib/core/core-board";
@@ -89,6 +90,10 @@ export async function PlanningToolPage({
   const coreCards = applyGeographyScope(coreBoardData(user.staffId, user.role), selection, {
     district: (c) => c.district,
   });
+  // Backend core-school gaps — when live, the Core Schools tab renders the SAME
+  // detail-rich gap rows as Client Schools (schedule/assign → My Plan).
+  const backendCoreGaps = await backendCoreSchoolGaps(user);
+  const liveCoreGaps = backendCoreGaps !== null;
   const coreViewer = {
     canAssign: ["CCEO", "CountryProgramLead", "CountryDirector", "ImpactAssessment", "Admin"].includes(user.role),
     canExec: ["CCEO", "CountryProgramLead", "PartnerAdmin", "PartnerFieldOfficer", "Admin"].includes(user.role),
@@ -130,17 +135,21 @@ export async function PlanningToolPage({
             (PlanningGapsHero retired per global hero removal pass.) */}
         <OperationalCycleBanner />
 
-        {/* Live planning-setup cards (schools-by-stage, cluster planning)
-            passed down from the page so they render BELOW the header —
-            the header must stay the first element on the page. */}
-        {topSlot}
-
+        {/* Tabs sit DIRECTLY under the operational-cycle card — the single
+            switcher (Client Schools · Clusters · Core Schools) that separates
+            the three planning surfaces. Each tab is the detail-rich, backend-
+            driven gap board; the old standalone "schools-by-stage" and
+            "cluster planning" cards are merged into these tabs. */}
         <UnclusteredSchoolsBanner count={unclusteredCount} />
+
+        <PlanningGapBoard assigningUserRole={user.role} extraGaps={onboardedGaps} liveGaps={liveGaps} clusterGaps={clusterGaps} liveClusterGaps={liveClusterGaps} coreCards={coreCards} coreGaps={backendCoreGaps ?? []} liveCoreGaps={liveCoreGaps} coreViewer={coreViewer} canChampion={canChampion} />
+
+        {/* Secondary context below the boards. */}
+        {topSlot}
 
         {planningCategories && <PlanningCategorySummary categories={planningCategories} />}
 
         <PlansFamilyNav current="planning" className="flex items-center gap-1" />
-        <PlanningGapBoard assigningUserRole={user.role} extraGaps={onboardedGaps} liveGaps={liveGaps} clusterGaps={clusterGaps} liveClusterGaps={liveClusterGaps} coreCards={coreCards} coreViewer={coreViewer} canChampion={canChampion} />
 
         <PlanningOwnershipSections ownership={coreOwnership} />
 

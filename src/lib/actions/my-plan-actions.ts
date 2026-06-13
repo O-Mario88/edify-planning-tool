@@ -134,6 +134,10 @@ export async function scheduleSchoolActivity(input: {
   partnerName?: string;
   /** Real backend partner id — set when assigning to a specific partner. */
   partnerId?: string;
+  /** Explicit backend ActivityType (e.g. "core_visit", "school_improvement_training").
+   *  Overrides the KIND_TO_BE mapping so core + training activities persist with the
+   *  correct type. The mock-store fallback still uses `kind` for its title. */
+  backendActivityType?: string;
   /** Visit scheduling by month/week (no exact date). */
   plannedMonth?: number;
   plannedWeek?: number;
@@ -150,7 +154,7 @@ export async function scheduleSchoolActivity(input: {
   if (isBackendEnabled()) {
     const { fy, quarter } = fyQuarter(input.dateIso);
     const r = await backendCreateActivity(user, {
-      activityType: KIND_TO_BE[input.kind] ?? "school_visit",
+      activityType: input.backendActivityType ?? KIND_TO_BE[input.kind] ?? "school_visit",
       schoolId: input.schoolId, fy, quarter,
       deliveryType: toPartner ? "partner" : "staff",
       ...(toPartner && input.partnerId ? { assignedPartnerId: input.partnerId } : {}),

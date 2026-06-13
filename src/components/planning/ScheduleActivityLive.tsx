@@ -6,7 +6,7 @@
 // engine uses, so what you see here is what lands in the fund request. No mock.
 
 import { useEffect, useMemo, useState } from "react";
-import { CalendarPlus, X, Wallet } from "lucide-react";
+import { CalendarPlus, X, Wallet, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const MONTHS = ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -46,7 +46,7 @@ type BePartnerLite = { id: string; name: string };
 
 export function ScheduleActivityLive({
   schoolId, schoolName, schoolType = "client", clusterId, clusterName, onClose, onScheduled,
-  mode = "schedule", assigningRole,
+  mode = "schedule", assigningRole, intervention,
 }: {
   // Provide EITHER a school (schoolId/schoolName/schoolType) OR a cluster
   // (clusterId/clusterName) target — the backend create accepts either.
@@ -58,6 +58,9 @@ export function ScheduleActivityLive({
   mode?: "schedule" | "assign";
   /** Caller's role — gates the delivery options (CCEO assigns to Partner only). */
   assigningRole?: string;
+  /** Recommended intervention (the weakest SSA area). Shown in assign mode so
+   *  the partner knows what to focus on. The partner picks the date later. */
+  intervention?: string;
 }) {
   const isCluster = !!clusterId;
   const isAssign = mode === "assign";
@@ -82,6 +85,10 @@ export function ScheduleActivityLive({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  // Auto-recommended intervention (weakest SSA area) — fetched in assign mode
+  // when the caller didn't pass one in.
+  const [autoIntervention, setAutoIntervention] = useState<string | null>(null);
+  const shownIntervention = intervention ?? autoIntervention ?? undefined;
 
   useEffect(() => {
     fetch("/api/budget/cost-settings", { credentials: "include" })
@@ -103,6 +110,22 @@ export function ScheduleActivityLive({
       })
       .catch(() => undefined);
   }, []);
+
+  // Assign mode: auto-recommend the intervention from the school's weakest SSA
+  // area (lowest-scoring intervention on the latest SSA record).
+  useEffect(() => {
+    if (!isAssign || isCluster || !schoolId || intervention) return;
+    fetch(`/api/ssa/school/${encodeURIComponent(schoolId)}`, { credentials: "include" })
+      .then((r) => r.json())
+      .then((j) => {
+        const recs: Array<{ scores?: Array<{ intervention: string; score: number }> }> = j?.records ?? [];
+        const scores = recs[0]?.scores ?? [];
+        if (!scores.length) return;
+        const weakest = scores.reduce((a, b) => (b.score < a.score ? b : a));
+        setAutoIntervention(humanizeIntervention(weakest.intervention));
+      })
+      .catch(() => undefined);
+  }, [isAssign, isCluster, schoolId, intervention]);
 
   // Assign mode: ask the backend who this school can be assigned to (role +
   // capacity aware). PL gets the school's owner CCEO as a "staff" target;
@@ -160,11 +183,14 @@ export function ScheduleActivityLive({
         body: JSON.stringify({
           activityType: realType,
           ...(isCluster ? { clusterId, ...(slot ? { clusterSlot: slot } : {}) } : { schoolId }),
-          fy: "2026", quarter: quarterFor(effMonth), plannedMonth: effMonth, deliveryType: effDelivery,
+          fy: "2026", quarter: quarterFor(effMonth), deliveryType: effDelivery,
+          // Assign mode carries NO planned month/week — the partner schedules the
+          // delivery week on their own dashboard. Schedule mode sets them.
+          ...(isAssign ? {} : { plannedMonth: effMonth }),
           ...(effDelivery === "partner" && partnerId ? { assignedPartnerId: partnerId } : {}),
           ...(effDelivery === "staff" && cceoStaffId ? { responsibleStaffId: cceoStaffId } : {}),
           ...(exactDate ? { scheduledDate: new Date(exactDate + "T09:00:00").toISOString() } : {}),
-          ...(isVisit ? { plannedWeek: week } : {}),
+          ...(!isAssign && isVisit ? { plannedWeek: week } : {}),
         }),
       });
       const j = await res.json();
@@ -230,7 +256,19 @@ export function ScheduleActivityLive({
                   )}
                 </Field>
               )}
-              {dateRequired ? (
+              {/* Intervention — auto-recommended from the school's weakest SSA
+                  area so the partner knows what to focus on. Read-only. */}
+              {isAssign && (
+                <Field label="Intervention (auto from SSA)">
+                  <div className="w-full min-h-9 px-2.5 py-2 rounded-lg border border-[var(--color-edify-border)] bg-[var(--color-edify-soft)]/40 text-[12px] font-semibold inline-flex items-center gap-1.5">
+                    <Sparkles size={12} className="text-[var(--color-edify-primary)] shrink-0" />
+                    {shownIntervention ?? "Will be set from the school's SSA"}
+                  </div>
+                </Field>
+              )}
+              {/* Assign mode has NO date — the partner picks the delivery week on
+                  their own dashboard. Schedule mode keeps the date/month+week. */}
+              {isAssign ? null : dateRequired ? (
                 <Field label="Date — required for this activity">
                   <input type="date" value={exactDate} onChange={(e) => setExactDate(e.target.value)}
                     className={cn("w-full h-9 px-2 rounded-lg border text-[12px]", exactDate ? "border-[var(--color-edify-border)]" : "border-amber-300")} />
@@ -267,14 +305,14 @@ export function ScheduleActivityLive({
                 <div key={l.label} className="flex items-center justify-between text-[11px]"><span className="muted">{l.label}</span><span className="tabular">{ugx(l.amount)}</span></div>
               ))}
               <div className="flex items-center justify-between text-[12.5px] font-extrabold border-t border-[var(--color-edify-divider)] mt-1 pt-1"><span>Total</span><span className="tabular">{ugx(cost.total)}</span></div>
-              <p className="text-[9.5px] muted mt-1">Added to {MONTHS[effMonth]} fund request automatically.</p>
+              <p className="text-[9.5px] muted mt-1">{isAssign ? "Drawn from the CD cost catalogue. The partner confirms the delivery week." : `Added to ${MONTHS[effMonth]} fund request automatically.`}</p>
             </div>
 
             {error && <div className="mt-2 text-[11px] text-rose-600 font-semibold">{error}</div>}
 
-            <button disabled={busy || (dateRequired && !exactDate) || (effDelivery === "partner" && !partnerId)} onClick={submit} className="mt-3 w-full h-10 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[13px] font-extrabold disabled:opacity-50 disabled:cursor-not-allowed">
+            <button disabled={busy || (!isAssign && dateRequired && !exactDate) || (effDelivery === "partner" && !partnerId)} onClick={submit} className="mt-3 w-full h-10 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[13px] font-extrabold disabled:opacity-50 disabled:cursor-not-allowed">
               {busy ? (isAssign ? "Assigning…" : "Scheduling…")
-                : dateRequired && !exactDate ? "Pick a date to schedule"
+                : !isAssign && dateRequired && !exactDate ? "Pick a date to schedule"
                 : effDelivery === "partner" && !partnerId ? "Choose a partner"
                 : isAssign && effDelivery === "staff" ? `Assign to ${cceoOption?.label?.replace("Assign to ", "") ?? "CCEO"}`
                 : isAssign ? "Assign to partner"
@@ -285,6 +323,15 @@ export function ScheduleActivityLive({
       </div>
     </div>
   );
+}
+
+// Backend intervention key → readable label, e.g. "teaching_and_learning" →
+// "Teaching & Learning".
+function humanizeIntervention(key: string): string {
+  return key
+    .split("_")
+    .map((w) => (w === "and" ? "&" : w.charAt(0).toUpperCase() + w.slice(1)))
+    .join(" ");
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
