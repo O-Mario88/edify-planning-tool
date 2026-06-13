@@ -9,7 +9,7 @@ import { useMemo, useState } from "react";
 import { formatUgxShort as formatUgx } from "@/lib/format-utils";
 import {
   Users, Calendar, AlertTriangle, ArrowRight, CheckCircle2, Circle, Clock, RotateCw,
-  Lock, Handshake, ChevronDown, ChevronRight, ChevronUp, CalendarCheck, Sparkles,
+  Handshake, ChevronDown, ChevronRight, ChevronUp, CalendarCheck, Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -455,7 +455,12 @@ function ClusterRow({
   // slots as effectively Scheduled — primary CTA advances past the
   // gap immediately, no page refresh needed.
   const rec = recommendForCluster(c, overlay);
-  const sitBlocked = !!rec.sitDisabledReason;
+  // SIT / cluster meetings are NEVER blocked on SSA coverage: schools that
+  // didn't finish SSA at the 1st meeting can complete it at the 2nd/3rd, and
+  // some schools join Edify THROUGH a cluster meeting or training. The SSA
+  // shortfall stays as an informational note (rec.sitDisabledReason), not a gate.
+  const sitBlocked = false;
+  const sitShortfallNote = rec.sitDisabledReason;
   const [open, setOpen] = useState(false);
 
   // Per-slot effective status + date. The overlay represents work the
@@ -592,10 +597,10 @@ function ClusterRow({
                   {rec.primaryLabel}
                   {!sitBlocked && <ArrowRight size={12} />}
                 </button>
-                {sitBlocked && (
-                  <div className="text-[11px] muted leading-snug flex items-start gap-1.5 px-1">
-                    <Lock size={10} className="mt-0.5 text-rose-500 shrink-0" />
-                    <span>{rec.sitDisabledReason}</span>
+                {sitShortfallNote && (
+                  <div className="text-[11px] text-amber-700 leading-snug flex items-start gap-1.5 px-1">
+                    <AlertTriangle size={10} className="mt-0.5 shrink-0" />
+                    <span>{sitShortfallNote} You can still schedule — remaining schools can complete SSA at the 2nd/3rd meeting, and schools that join through this meeting are added then.</span>
                   </div>
                 )}
               </>
