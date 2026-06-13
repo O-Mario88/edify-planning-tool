@@ -42,7 +42,28 @@ import { partners } from "@/lib/partner/partner-mock";
 import { getCurrentPartner } from "@/lib/partner/partner-identity";
 import { markJoinedThroughCluster, type ClusterJoinSourceType } from "@/lib/cluster/cluster-join-source";
 import { isBackendEnabled } from "@/lib/api/backend";
-import { backendAssignCluster, backendCreateClusterFromSchool } from "@/lib/api/surfaces";
+import { backendAssignCluster, backendCreateClusterFromSchool, backendCreateActivity } from "@/lib/api/surfaces";
+
+// ClusterMeetingKind → backend ActivityType + explicit cluster slot. SIT is a
+// school-improvement training tagged to the cluster's SIT slot; the three
+// numbered meetings are cluster_meeting + their slot; follow-up/training carry
+// no slot.
+const CLUSTER_KIND_TO_BE: Record<ClusterMeetingKind, { activityType: string; clusterSlot?: string }> = {
+  sit:            { activityType: "school_improvement_training", clusterSlot: "sit" },
+  first_meeting:  { activityType: "cluster_meeting", clusterSlot: "first_meeting" },
+  second_meeting: { activityType: "cluster_meeting", clusterSlot: "second_meeting" },
+  third_meeting:  { activityType: "cluster_meeting", clusterSlot: "third_meeting" },
+  follow_up:      { activityType: "cluster_meeting" },
+  training:       { activityType: "cluster_training" },
+};
+
+// FY ("2026") + quarter from an ISO date (FY starts Oct).
+function clusterFyQuarter(iso: string): { fy: string; quarter: string } {
+  const d = new Date(iso);
+  const y = d.getUTCFullYear();
+  const m = d.getUTCMonth();
+  return { fy: String(m >= 9 ? y + 1 : y), quarter: m >= 9 ? "Q1" : m <= 2 ? "Q2" : m <= 5 ? "Q3" : "Q4" };
+}
 
 // The signed-in user as a backend principal (the bridge maps role → backend
 // account). Cluster writes hit edify-api when EDIFY_USE_BACKEND=true so the
@@ -289,17 +310,11 @@ export async function scheduleClusterMeetingAction(
   participants?: number,
   notes?: string,
 ): Promise<ClusterActionResult<{ label: string; organizer: ClusterMeetingOrganizer }>> {
-  const cluster = clusterById(clusterId);
-  if (!cluster) return { ok: false, reason: "FAILED", message: "Cluster not found." };
-
   // A delegated partner manages their own clusters; staff schedule Edify activities.
   const partner = await getCurrentPartner();
   let actor: ClusterActor;
   let organizer: ClusterMeetingOrganizer;
   if (partner) {
-    if (cluster.managedByPartnerId !== partner.id) {
-      return { ok: false, reason: "FORBIDDEN" };
-    }
     actor = { name: partner.name, role: "Partner" };
     organizer = "partner";
   } else {
@@ -308,6 +323,44 @@ export async function scheduleClusterMeetingAction(
     actor = staff;
     organizer = "edify";
   }
+
+  // ── Backend-first: persist the cluster activity to Postgres. The board passes
+  // the REAL cluster cuid, which clusterById (in-memory) can't resolve — so the
+  // live writer is the authoritative path; in-memory is the mock-cluster fallback. ──
+  if (isBackendEnabled()) {
+    const user = await getCurrentUser();
+    const map = CLUSTER_KIND_TO_BE[kind];
+    const { fy, quarter } = clusterFyQuarter(isoDate);
+    const r = await backendCreateActivity(backendUserFor(user), {
+      activityType: map.activityType,
+      clusterId,
+      ...(map.clusterSlot ? { clusterSlot: map.clusterSlot } : {}),
+      fy, quarter,
+      scheduledDate: new Date(isoDate).toISOString(),
+      deliveryType: organizer === "partner" ? "partner" : "staff",
+    });
+    if (r.live) {
+      emitAudit({
+        action: "cluster.meetingScheduled", subjectKind: "Cluster", subjectId: clusterId,
+        actorId: actor.name, actorRole: actor.role, actorName: actor.name,
+        payload: { kind, date: isoDate, organizer, participants, backend: true },
+      });
+      emitNotificationFanOut(organizer === "partner" ? ["CCEO", "PROGRAM_LEAD"] : ["PARTNER"], {
+        template: "cluster.meetingScheduled", channel: "Inbox",
+        title: `${CLUSTER_MEETING_LABEL[kind]} scheduled`,
+        body: `${actor.name} scheduled ${CLUSTER_MEETING_LABEL[kind]} on ${isoDate}.`,
+        href: organizer === "partner" ? "/clusters" : "/partner/clusters",
+      });
+      try { revalidatePath("/partner/clusters"); revalidatePath("/partner/today"); } catch { /* outside request */ }
+      revalidateClusterSurfaces();
+      return { ok: true, label: CLUSTER_MEETING_LABEL[kind], organizer };
+    }
+    // fall through to in-memory for mock-id clusters / backend miss
+  }
+
+  const cluster = clusterById(clusterId);
+  if (!cluster) return { ok: false, reason: "FAILED", message: "Cluster not found." };
+  if (partner && cluster.managedByPartnerId !== partner.id) return { ok: false, reason: "FORBIDDEN" };
 
   const res = scheduleClusterMeeting(clusterId, { kind, date: isoDate, participants, notes }, actor, organizer);
   if (!res.ok) return { ok: false, reason: "FAILED", message: res.reason };

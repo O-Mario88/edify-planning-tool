@@ -180,10 +180,14 @@ export function ClusterGapsBoard({
     // Persist to the cluster store (and backend when enabled) so the
     // activity appears in My Plan on the next page load. Fire-and-forget
     // — the overlay already reflects success in the current session.
-    const slotAsKind = pending.slot as ClusterMeetingKind;
+    // Map the board's slot ("first") to the action's ClusterMeetingKind
+    // ("first_meeting"). The two type spaces diverged — this is the bridge.
+    const SLOT_TO_KIND: Record<ClusterMeetingSlot, ClusterMeetingKind> = {
+      first: "first_meeting", second: "second_meeting", third: "third_meeting", sit: "sit",
+    };
     scheduleClusterMeetingAction(
       pending.cluster.id,
-      slotAsKind,
+      SLOT_TO_KIND[pending.slot],
       outcome.isoDate,
       outcome.participants,
       outcome.notes,
