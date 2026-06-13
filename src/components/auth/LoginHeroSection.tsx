@@ -61,8 +61,10 @@ export function LoginHeroSection({ metrics }: { metrics: LoginHeroMetrics }) {
         {/* Top: brand + pill */}
         <div className="flex flex-col items-start gap-6">
           {/* Brand — logo only (the logo IS the edify wordmark). On this dark
-              hero the white logo is used. */}
-          <Image src="/edify-logo-white.png" alt="Edify" width={106} height={44} className="object-contain drop-shadow-lg" priority />
+              hero the white logo is used, centred like the sign-in panel. */}
+          <div className="w-full flex justify-center">
+            <Image src="/edify-logo-white.png" alt="Edify" width={106} height={44} className="object-contain drop-shadow-lg" priority />
+          </div>
 
 
           <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[.07] px-3 py-1.5 text-[12px] font-semibold text-white/90">
