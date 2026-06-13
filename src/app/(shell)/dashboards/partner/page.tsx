@@ -103,6 +103,23 @@ export default async function PartnerCommandCenter({
           <PartnerWorkflowTracker counts={trackerCounts} />
         </section>
 
+        {/* STATUS & PAYMENT — figures hoisted up so the numbers (evidence
+            snapshot, payment pipeline, 30-day quality trend, school-impact
+            contribution) are seen right after the pipeline band, before any
+            work prompts. */}
+        <section className="space-y-3">
+          <SectionHeader
+            tier="strategic"
+            eyebrow="Status & payment"
+            title="How everything is tracking"
+            description="Evidence snapshot, payment pipeline, 30-day evidence-quality trend, and the school-improvement contribution that all this work adds up to."
+          />
+          <PartnerStatusGrid buckets={partnerStatusBuckets} />
+          <PartnerPaymentStatusCard />
+          <PartnerEvidenceQualityPanel />
+          <PartnerSchoolImpactSummary />
+        </section>
+
         <DebriefPromoterCard submitterRole="Partner" />
 
         {/* TODAY — priorities, daily habit, inbox, evidence, corrections. */}
@@ -130,20 +147,6 @@ export default async function PartnerCommandCenter({
           />
           <PartnerAssignedSchools schools={partnerAssignedSchools} />
           <PartnerUpcoming items={partnerUpcoming} />
-        </section>
-
-        {/* STATUS & PAYMENT — the closing intelligence panel. */}
-        <section className="space-y-3">
-          <SectionHeader
-            tier="strategic"
-            eyebrow="Status & payment"
-            title="How everything is tracking"
-            description="Evidence snapshot, payment pipeline, 30-day evidence-quality trend, and the school-improvement contribution that all this work adds up to."
-          />
-          <PartnerStatusGrid buckets={partnerStatusBuckets} />
-          <PartnerPaymentStatusCard />
-          <PartnerEvidenceQualityPanel />
-          <PartnerSchoolImpactSummary />
         </section>
 
         {/* Thank-you footer */}

@@ -58,17 +58,27 @@ export default async function HrFieldContextPage() {
             stats → work. */}
         <DashboardGreetingHero user={user} />
 
-        {/* ATTENTION — the statistics snapshot, directly below the hero:
-            flags, reviews due, and the four working-queue KPIs. */}
+        {/* STATISTICS FIRST — the KPI snapshot is the first thing under the
+            hero so the numbers are seen before the attention queues. */}
+        <section className="space-y-3">
+          <SectionHeader
+            tier="strategic"
+            eyebrow="People snapshot"
+            title="Your team at a glance"
+            description="Headcount, active staff, leave, and the working-queue counts — the figures first."
+          />
+          <HrKpiStrip />
+        </section>
+
+        {/* ATTENTION — decisions and flags this week, below the figures. */}
         <section className="space-y-3">
           <SectionHeader
             tier="strategic"
             eyebrow="Attention"
             title="HR decisions and flags this week"
-            description="Escalations routed from CD/RVP, staff flagged for support, performance reviews due, and the active queues underneath."
+            description="Escalations routed from CD/RVP, staff flagged for support, and performance reviews due."
           />
           <HrAttentionRow />
-          <HrKpiStrip />
         </section>
 
         {/* TODAY — the work stack. */}

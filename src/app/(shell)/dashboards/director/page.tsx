@@ -102,16 +102,88 @@ export default async function CountryDirectorDashboard() {
           <CountryKpiRow />
         </section>
 
+        {/* ── STATISTICS FIRST ──────────────────────────────────────────
+            Every figure-heavy section sits up top so leadership sees the
+            numbers before any work/action content: program execution +
+            cluster operations, SSA & impact, donor-ready figures, and the
+            risk/data-quality figures. Work, money, people and recruitment
+            follow underneath. */}
+
+        {/* PROGRAM EXECUTION — country trend, regional comparison, cluster ops. */}
+        <section className="space-y-3">
+          <SectionHeader
+            tier="strategic"
+            eyebrow="Program execution"
+            title="Is the program on track?"
+            description="Country-wide trend, regional comparison, and cluster operations — monitored through analytics, not field planning."
+          />
+          <section className="grid grid-cols-12 gap-3 items-stretch">
+            <div className="col-span-12 lg:col-span-8">
+              <CountryPerformanceChart />
+            </div>
+            <div className="col-span-12 lg:col-span-4">
+              <RegionalPerformanceCard />
+            </div>
+          </section>
+          <ClusterOperationsCard scope="country" />
+        </section>
+
+        {/* SSA & INTERVENTION IMPROVEMENT — are schools improving? */}
+        <section className="space-y-3">
+          <SectionHeader
+            tier="strategic"
+            eyebrow="SSA & impact"
+            title="Are schools improving?"
+            description="All 8 interventions: current FY performance, FY-to-FY change, and which support is associated with improvement."
+          />
+          <SsaPerformanceGrid />
+          <InterventionImprovementGrid />
+          <SupportImprovementCard />
+          <SchoolSsaIntelligenceCard />
+        </section>
+
+        {/* DONOR-READY IMPACT — what can the country report this period? */}
+        <section className="space-y-3">
+          <SectionHeader
+            tier="strategic"
+            eyebrow="Impact"
+            title="What can the country report this period?"
+            description="Donor-ready reach, training, and improvement figures — deduplicated and scoped to the country. Each tile opens the full report."
+          />
+          <DonorImpactReachCard snapshot={donorSnapshot} />
+        </section>
+
+        {/* RISK & DATA QUALITY — what needs executive protection? */}
+        <section className="space-y-3">
+          <SectionHeader
+            tier="strategic"
+            eyebrow="Risk & data quality"
+            title="What needs executive protection?"
+            description="Operational backlogs, schools on red alert, and cluster readiness — the data-quality floor under every number above."
+          />
+          <section className="grid grid-cols-12 gap-3 items-stretch" id="operational-risk">
+            <div className="col-span-12 lg:col-span-7">
+              <OperationalRiskBacklogRow />
+            </div>
+            <div className="col-span-12 lg:col-span-5" id="priority-schools">
+              <PrioritySchoolsUrgentAttentionCard />
+            </div>
+          </section>
+          <ClusterReadinessCard clustered={clusterCounts.clustered} unclustered={clusterCounts.unclustered} needsReview={clusterCounts.needsReview} title="National cluster setup" actionable={false} />
+        </section>
+
+        {/* ── WORK & ACTION (below the figures) ────────────────────────── */}
+
         {/* MAIN WORK — today's queue, then the executive alerts. */}
         <TodayCommandCenter />
         <CommandStack user={user} hideMission />
 
         {/* TODAY'S EXECUTIVE ALERTS — issue · why · scope · recommended
-            action · one button. Supersedes the old attention banners. */}
+            action · one button. */}
         <ExecutiveAlerts inputs={{ unclusteredSchools: clusterCounts.unclustered }} />
         <CdRiskSummaryCard />
 
-        {/* C. BUDGET & FUND REQUEST HEALTH — financial stewardship. */}
+        {/* BUDGET & FUND REQUEST HEALTH — financial stewardship. */}
         <section className="space-y-3">
           <SectionHeader
             tier="strategic"
@@ -133,46 +205,7 @@ export default async function CountryDirectorDashboard() {
           </section>
         </section>
 
-        {/* D. PROGRAM EXECUTION — monitoring only, via analytics. The CD
-            does not plan: the activity-plan schedule + training-coverage
-            (plan) cards were removed; what remains is the trend, regional
-            comparison, and cluster-operations health. */}
-        <section className="space-y-3">
-          <SectionHeader
-            tier="strategic"
-            eyebrow="Program execution"
-            title="Is the program on track?"
-            description="Country-wide trend, regional comparison, and cluster operations — monitored through analytics, not field planning."
-          />
-          <section className="grid grid-cols-12 gap-3 items-stretch">
-            <div className="col-span-12 lg:col-span-8">
-              <CountryPerformanceChart />
-            </div>
-            <div className="col-span-12 lg:col-span-4">
-              <RegionalPerformanceCard />
-            </div>
-          </section>
-          <ClusterOperationsCard scope="country" />
-        </section>
-
-        {/* E. SSA & INTERVENTION IMPROVEMENT — are schools improving?
-            Three-layer truth: ① SSA performance (status) ② intervention
-            improvement (FY change) ③ support→improvement (what worked). */}
-        <section className="space-y-3">
-          <SectionHeader
-            tier="strategic"
-            eyebrow="SSA & impact"
-            title="Are schools improving?"
-            description="All 8 interventions: current FY performance, FY-to-FY change, and which support is associated with improvement."
-          />
-          <SsaPerformanceGrid />
-          <InterventionImprovementGrid />
-          <SupportImprovementCard />
-          <SchoolSsaIntelligenceCard />
-        </section>
-
-        {/* F. STAFF & PARTNER PERFORMANCE — leadership visibility,
-            not HR detail or partner raw operations. */}
+        {/* STAFF & PARTNER PERFORMANCE — leadership visibility. */}
         <section className="space-y-3">
           <SectionHeader
             tier="strategic"
@@ -193,8 +226,7 @@ export default async function CountryDirectorDashboard() {
           <ClientVerificationCard />
         </section>
 
-        {/* G. RECRUITMENT RECOMMENDATION — expand or focus? The CD's
-            directory replacement: country + per-district recommendation. */}
+        {/* RECRUITMENT RECOMMENDATION — expand or focus? */}
         <section className="space-y-3">
           <SectionHeader
             tier="strategic"
@@ -203,36 +235,6 @@ export default async function CountryDirectorDashboard() {
             description="Capacity, SSA readiness, partner coverage, and impact rolled into one recommendation — with district-level continue/pause calls."
           />
           <RecruitmentIntelligenceCard />
-        </section>
-
-        {/* H. DONOR-READY IMPACT — what can we report confidently? */}
-        <section className="space-y-3">
-          <SectionHeader
-            tier="strategic"
-            eyebrow="Impact"
-            title="What can the country report this period?"
-            description="Donor-ready reach, training, and improvement figures — deduplicated and scoped to the country. Each tile opens the full report."
-          />
-          <DonorImpactReachCard snapshot={donorSnapshot} />
-        </section>
-
-        {/* I. RISK & DATA QUALITY — what could undermine the above. */}
-        <section className="space-y-3">
-          <SectionHeader
-            tier="strategic"
-            eyebrow="Risk & data quality"
-            title="What needs executive protection?"
-            description="Operational backlogs, schools on red alert, and cluster readiness — the data-quality floor under every number above."
-          />
-          <section className="grid grid-cols-12 gap-3 items-stretch" id="operational-risk">
-            <div className="col-span-12 lg:col-span-7">
-              <OperationalRiskBacklogRow />
-            </div>
-            <div className="col-span-12 lg:col-span-5" id="priority-schools">
-              <PrioritySchoolsUrgentAttentionCard />
-            </div>
-          </section>
-          <ClusterReadinessCard clustered={clusterCounts.clustered} unclustered={clusterCounts.unclustered} needsReview={clusterCounts.needsReview} title="National cluster setup" actionable={false} />
         </section>
 
         {/* Quick Leadership Actions — closing utility surface. */}
