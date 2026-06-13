@@ -6,7 +6,8 @@
 // server action; the row updates optimistically.
 
 import { useState, useTransition } from "react";
-import { CalendarClock, UserCog, Ban, PauseCircle, CheckCircle2, MapPin, Footprints, GraduationCap } from "lucide-react";
+import Link from "next/link";
+import { CalendarClock, UserCog, Ban, PauseCircle, CheckCircle2, MapPin, Footprints, GraduationCap, Paperclip } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { rescheduleActivity, reassignActivity, cancelActivity, deferActivity, completeActivity } from "@/lib/actions/my-plan-actions";
 import { RESCHEDULE_SLIP_LIMIT, reschedulesRemaining } from "@/lib/planning/planning-capacity";
@@ -76,6 +77,10 @@ function PlanRow({ row }: { row: MyPlanRow }) {
           </div>
         </div>
         <span className={cn("text-[10px] font-bold px-1.5 py-[2px] rounded-full shrink-0", STATUS_TONE[status] ?? "bg-slate-100 text-slate-600")}>{status}</span>
+        <Link href={`/activities/${row.id}/evidence`} title="Upload / review evidence"
+          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-bold border border-[var(--color-edify-border)] muted hover:bg-[var(--color-edify-soft)]/40 shrink-0">
+          <Paperclip size={12} /> Evidence
+        </Link>
       </div>
 
       {/* Row actions */}

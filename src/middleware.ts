@@ -66,6 +66,7 @@ const PUBLIC_PATHS = new Set<string>([
 const PROTECTED_PREFIXES = [
   "/dashboards",
   "/dashboard",
+  "/activities",
   "/access-restricted",
   "/school-directory",
   "/recruitment",

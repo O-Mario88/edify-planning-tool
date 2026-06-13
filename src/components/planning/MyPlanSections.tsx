@@ -21,7 +21,7 @@ import Link from "next/link";
 import {
   CalendarClock, CheckCircle2, Footprints, GraduationCap, Hash,
   Sun, CalendarDays, CalendarRange, Hourglass, RotateCcw, Upload, Wallet, X,
-  ChevronDown, Sparkles, ArrowRight, AlertTriangle, type LucideIcon,
+  ChevronDown, Sparkles, ArrowRight, AlertTriangle, Paperclip, type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { completeActivity, rescheduleActivity } from "@/lib/actions/my-plan-actions";
@@ -526,6 +526,13 @@ function ActivityRow({
                 {item.funding}
               </span>
             )}
+            <Link
+              href={`/activities/${item.id}/evidence`}
+              title="Upload / preview evidence"
+              className="inline-flex items-center gap-1 rounded-lg border border-slate-200 text-slate-600 px-2 py-1.5 text-[11px] font-bold hover:bg-slate-50 no-underline dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+            >
+              <Paperclip size={12} aria-hidden /> Evidence
+            </Link>
             <NextActionButton
               item={item}
               pending={pending}
