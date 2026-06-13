@@ -4,9 +4,10 @@
 // The field officer authenticates as the partner user linked to the Partner org,
 // so they see only their org's work. Renders nothing when the backend is off.
 
-import { Handshake, School2, CalendarClock, ClipboardCheck, CircleAlert } from "lucide-react";
+import { Handshake, School2 } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { fetchMyPartnerActivities } from "@/lib/api/surfaces";
+import { MetricStrip } from "@/components/ui/MetricStrip";
 
 const STATUS_TONE: Record<string, string> = {
   completed: "bg-emerald-100 text-emerald-700",
@@ -36,13 +37,6 @@ export async function PartnerWorkQueueLive({ limit = 12 }: { limit?: number }) {
   if (!r.live) return null;
   const { partner, counts, activities } = r.data;
 
-  const tiles = [
-    { label: "Assigned to us", value: counts.total, Icon: ClipboardCheck },
-    { label: "Open", value: counts.open, Icon: CircleAlert, alert: counts.open > 0 },
-    { label: "Scheduled", value: counts.scheduled, Icon: CalendarClock },
-    { label: "Awaiting evidence", value: counts.awaitingEvidence, Icon: School2, alert: counts.awaitingEvidence > 0 },
-  ];
-
   return (
     <section className="card p-3.5">
       <header className="flex items-center justify-between gap-2 mb-3 flex-wrap">
@@ -55,16 +49,17 @@ export async function PartnerWorkQueueLive({ limit = 12 }: { limit?: number }) {
         <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)] px-2 py-0.5 text-[10px] font-bold border border-[var(--color-edify-border)]">Live · backend</span>
       </header>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-3">
-        {tiles.map((t) => (
-          <div key={t.label} className="rounded-lg border border-[var(--color-edify-divider)] p-2.5">
-            <div className="text-[10px] font-semibold muted leading-tight inline-flex items-center gap-1">
-              <t.Icon size={10} className={t.alert ? "text-rose-500" : "text-[var(--color-edify-primary)]"} /> {t.label}
-            </div>
-            <div className={`text-[20px] font-extrabold tabular leading-none mt-1 ${t.alert ? "text-rose-600" : ""}`}>{t.value}</div>
-          </div>
-        ))}
-      </div>
+      <MetricStrip
+        bare
+        className="mb-3"
+        columns="grid-cols-2 sm:grid-cols-4"
+        metrics={[
+          { key: "total", label: "Assigned to us", value: counts.total },
+          { key: "open", label: "Open", value: counts.open, tone: counts.open > 0 ? "alert" : "default" },
+          { key: "scheduled", label: "Scheduled", value: counts.scheduled },
+          { key: "awaitingEvidence", label: "Awaiting evidence", value: counts.awaitingEvidence, tone: counts.awaitingEvidence > 0 ? "alert" : "default" },
+        ]}
+      />
 
       {activities.length === 0 ? (
         <p className="text-[12px] muted py-3 text-center">No activities assigned to your organization yet.</p>

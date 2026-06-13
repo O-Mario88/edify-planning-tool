@@ -2,16 +2,9 @@
 // Server component: reads the engine directly, no props, no client state.
 
 import {
-  Boxes,
-  CheckCircle2,
-  CircleSlash,
-  Layers,
-  Users,
-  GraduationCap,
   MapPin,
   ShieldAlert,
   ShieldCheck,
-  type LucideIcon,
 } from "lucide-react";
 import {
   activeClusters,
@@ -22,9 +15,8 @@ import {
 } from "@/lib/cluster/cluster-core";
 import { clusterAcquisitionMetrics } from "@/lib/cluster/cluster-join-source";
 import { ClusterSsaHeatmapCard } from "./ClusterSsaHeatmapCard";
+import { MetricStrip } from "@/components/ui/MetricStrip";
 import { cn } from "@/lib/utils";
-
-type Kpi = { label: string; value: number; Icon: LucideIcon };
 
 type DistrictRollup = {
   district: string;
@@ -52,34 +44,20 @@ export function ClusterAnalyticsView() {
   const cmp = staffVsPartnerClusterComparison();
   const acq = clusterAcquisitionMetrics();
 
-  const kpis: Kpi[] = [
-    { label: "Total clusters", value: a.totalClusters, Icon: Boxes },
-    { label: "Schools clustered", value: a.schoolsClustered, Icon: CheckCircle2 },
-    { label: "Schools unclustered", value: a.schoolsUnclustered, Icon: CircleSlash },
-    { label: "Client clustered", value: a.clientClustered, Icon: Users },
-    { label: "Core clustered", value: a.coreClustered, Icon: GraduationCap },
-    { label: "Avg schools / cluster", value: a.avgSchoolsPerCluster, Icon: Layers },
-  ];
-
   return (
     <div className="space-y-4">
       {/* KPI tiles */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        {kpis.map((k) => (
-          <div key={k.label} className="card rounded-2xl p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-[24px] font-extrabold tracking-tight tabular text-[var(--color-edify-text)]">
-                {k.value}
-              </span>
-              <k.Icon
-                className="size-4 text-[var(--color-edify-primary)]"
-                aria-hidden
-              />
-            </div>
-            <div className="muted mt-1 text-[12px]">{k.label}</div>
-          </div>
-        ))}
-      </div>
+      <MetricStrip
+        columns="grid-cols-2 md:grid-cols-3 lg:grid-cols-6"
+        metrics={[
+          { key: "total", label: "Total clusters", value: a.totalClusters },
+          { key: "clustered", label: "Schools clustered", value: a.schoolsClustered },
+          { key: "unclustered", label: "Schools unclustered", value: a.schoolsUnclustered, tone: a.schoolsUnclustered > 0 ? "alert" : "default" },
+          { key: "client", label: "Client clustered", value: a.clientClustered },
+          { key: "core", label: "Core clustered", value: a.coreClustered },
+          { key: "avg", label: "Avg schools / cluster", value: a.avgSchoolsPerCluster },
+        ]}
+      />
 
       {/* Clusters by district */}
       <section className="card rounded-2xl p-4">
@@ -118,19 +96,18 @@ export function ClusterAnalyticsView() {
           New schools joined through cluster
         </h2>
         <p className="muted text-[12px] mt-0.5">Schools acquired via cluster onboarding/referral. Partner-facilitated clusters count as partner-influenced (ownership stays with staff).</p>
-        <div className="mt-3 grid grid-cols-2 md:grid-cols-5 gap-2 tabular">
-          {[
-            ["Schools joined", acq.schoolsJoined],
-            ["Client", acq.clientJoined],
-            ["Core", acq.coreJoined],
-            ["Learners added", acq.learnersAdded],
-            ["Partner-influenced", acq.partnerInfluenced],
-          ].map(([label, value]) => (
-            <div key={String(label)} className="rounded-xl border border-[var(--color-edify-border)] px-3 py-2.5">
-              <div className="text-[20px] font-extrabold tracking-tight">{value}</div>
-              <div className="muted text-[11px]">{label}</div>
-            </div>
-          ))}
+        <div className="mt-3">
+          <MetricStrip
+            bare
+            columns="grid-cols-2 md:grid-cols-5"
+            metrics={[
+              { key: "joined", label: "Schools joined", value: acq.schoolsJoined },
+              { key: "client", label: "Client", value: acq.clientJoined },
+              { key: "core", label: "Core", value: acq.coreJoined },
+              { key: "learners", label: "Learners added", value: acq.learnersAdded },
+              { key: "partner", label: "Partner-influenced", value: acq.partnerInfluenced },
+            ]}
+          />
         </div>
       </section>
 

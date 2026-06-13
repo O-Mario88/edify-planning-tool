@@ -1,5 +1,5 @@
-import { GraduationCap, Users2, Network, Building2, CalendarCheck } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { MetricStrip } from "@/components/ui/MetricStrip";
 import { verifiedClusterImpact } from "@/lib/cluster/cluster-core";
 import { clusterAcquisitionMetrics } from "@/lib/cluster/cluster-join-source";
 
@@ -8,17 +8,6 @@ import { clusterAcquisitionMetrics } from "@/lib/cluster/cluster-join-source";
 export default async function ClusterReportsPage() {
   const v = verifiedClusterImpact();
   const acq = clusterAcquisitionMetrics();
-
-  const kpis = [
-    { label: "Verified meetings", value: v.verifiedMeetings, Icon: CalendarCheck },
-    { label: "Teachers reached", value: v.teachersReached, Icon: GraduationCap },
-    { label: "School leaders reached", value: v.schoolLeadersReached, Icon: Users2 },
-    { label: "Total attendance", value: v.attendanceTotal, Icon: Users2 },
-    { label: "Clusters active", value: v.clustersWithVerified, Icon: Network },
-    { label: "Schools in clusters", value: v.schoolsInClusters, Icon: Building2 },
-    { label: "New schools via cluster", value: acq.schoolsJoined, Icon: Building2 },
-    { label: "Learners added via cluster", value: acq.learnersAdded, Icon: GraduationCap },
-  ];
 
   return (
     <>
@@ -29,15 +18,19 @@ export default async function ClusterReportsPage() {
         backFallbackHref="/clusters"
       />
       <div className="px-4 sm:px-5 md:px-6 pb-12 space-y-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {kpis.map((k) => (
-            <div key={k.label} className="card rounded-2xl p-4">
-              <k.Icon size={14} className="text-[var(--color-edify-primary)]" />
-              <div className="text-[22px] font-extrabold tabular tracking-tight mt-1">{k.value}</div>
-              <div className="muted text-[12px]">{k.label}</div>
-            </div>
-          ))}
-        </div>
+        <MetricStrip
+          columns="grid-cols-2 md:grid-cols-4"
+          metrics={[
+            { key: "meetings", label: "Verified meetings", value: v.verifiedMeetings },
+            { key: "teachers", label: "Teachers reached", value: v.teachersReached },
+            { key: "leaders", label: "School leaders reached", value: v.schoolLeadersReached },
+            { key: "attendance", label: "Total attendance", value: v.attendanceTotal },
+            { key: "active", label: "Clusters active", value: v.clustersWithVerified },
+            { key: "schools", label: "Schools in clusters", value: v.schoolsInClusters },
+            { key: "joined", label: "New schools via cluster", value: acq.schoolsJoined },
+            { key: "learners", label: "Learners added via cluster", value: acq.learnersAdded },
+          ]}
+        />
 
         <section className="card rounded-2xl overflow-hidden">
           <header className="px-4 pt-3.5 pb-2">

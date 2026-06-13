@@ -11,6 +11,7 @@ import { GitCompareArrows, Info, TriangleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { BeSupportCorrelation, BeStaffVsPartner } from "@/lib/api/surfaces";
 import { LoadingState } from "@/components/ui/DataStates";
+import { MetricStrip } from "@/components/ui/MetricStrip";
 
 const SUPPORT_FILTERS = [
   { key: "all", label: "All support" },
@@ -79,12 +80,17 @@ export function SupportImprovementCard() {
       ) : (
         <>
           {/* Headline coefficient */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
-            <Stat label="Schools compared" value={String(s?.schoolsWithComparison ?? 0)} />
-            <Stat label="Association (r)" value={s?.correlation == null ? "—" : String(s.correlation)} hint={s?.strength} />
-            <Stat label="Avg support / school" value={s?.avgSupport == null ? "—" : String(s.avgSupport)} />
-            <Stat label="Avg SSA change" value={fmt(s?.avgImprovement ?? null)} />
-          </div>
+          <MetricStrip
+            bare
+            className="mb-3"
+            columns="grid-cols-2 sm:grid-cols-4"
+            metrics={[
+              { key: "compared", label: "Schools compared", value: String(s?.schoolsWithComparison ?? 0) },
+              { key: "assoc", label: "Association (r)", value: s?.correlation == null ? "—" : String(s.correlation), caption: s?.strength },
+              { key: "avgSupport", label: "Avg support / school", value: s?.avgSupport == null ? "—" : String(s.avgSupport) },
+              { key: "avgChange", label: "Avg SSA change", value: fmt(s?.avgImprovement ?? null) },
+            ]}
+          />
 
           <p className="text-[11px] text-slate-600 bg-slate-50 border border-slate-200 rounded px-2.5 py-1.5 mb-3 inline-flex items-start gap-1.5">
             <Info size={13} className="mt-px shrink-0 text-slate-400" /> {s?.interpretation}
@@ -146,14 +152,5 @@ export function SupportImprovementCard() {
         </>
       )}
     </section>
-  );
-}
-
-function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
-  return (
-    <div className="rounded-lg border border-[var(--color-edify-border)] p-2">
-      <div className="text-[18px] font-extrabold tabular leading-none">{value}</div>
-      <div className="text-[9.5px] muted mt-1 leading-tight">{label}{hint ? <span className="block text-[9px] text-violet-600 font-semibold">{hint}</span> : null}</div>
-    </div>
   );
 }

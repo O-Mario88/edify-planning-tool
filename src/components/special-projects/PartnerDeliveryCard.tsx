@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight, ArrowDownRight, Handshake } from "lucide-react";
+import { Handshake } from "lucide-react";
 import { SectionCard } from "@/components/ui/primitives";
+import { MetricStrip } from "@/components/ui/MetricStrip";
 import { partnerKpis, partnerDelivery } from "@/lib/special-projects-mock";
-import { cn } from "@/lib/utils";
 
 export function PartnerDeliveryCard() {
   return (
@@ -17,28 +17,17 @@ export function PartnerDeliveryCard() {
         </Link>
       }
     >
-      <div className="grid grid-cols-3 gap-2.5 mb-3">
-        {partnerKpis.map((k) => {
-          const TrendIcon = k.deltaTone === "up" ? ArrowUpRight : ArrowDownRight;
-          const trendCls =
-            k.deltaTone === "up" ? "text-[var(--color-success)]" : "text-[var(--color-danger)]";
-          return (
-            <div
-              key={k.key}
-              className="rounded-xl border border-[var(--color-edify-border)] bg-white p-2.5 overflow-hidden"
-            >
-              <div className="text-[10px] muted font-semibold leading-tight line-clamp-2 min-h-[24px]">{k.label}</div>
-              <div className="text-[18px] font-extrabold tabular leading-none mt-1.5 truncate">
-                {k.value}
-              </div>
-              <div className={cn("text-[10px] font-semibold mt-1 flex items-center gap-1 truncate", trendCls)}>
-                <TrendIcon size={10} className="shrink-0" />
-                <span className="truncate">{k.delta} <span className="muted font-medium">vs Apr</span></span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      <MetricStrip
+        bare
+        className="mb-3"
+        columns="grid-cols-3"
+        metrics={partnerKpis.map((k) => ({
+          key: k.key,
+          label: k.label,
+          value: k.value,
+          delta: { dir: k.deltaTone === "up" ? "up" : "down", text: `${k.delta} vs Apr` },
+        }))}
+      />
 
       <div className="text-[12px] font-bold mb-1.5">Partner Delivery Overview</div>
       <table className="w-full dtable">

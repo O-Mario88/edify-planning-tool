@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { GraduationCap, Lock, Unlock, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { StubPage } from "@/components/shell/StubPage";
+import { MetricStrip } from "@/components/ui/MetricStrip";
 import {
   schoolFinancialYearSummaries,
   activeFinancialYear,
@@ -49,14 +50,14 @@ export default function GatewayPage() {
       subtitle={`Every active school must complete School Improvement Training before SSA becomes due. Active FY: ${active.label}. Staff can edit cluster name + cluster date only — the system calculates the rest.`}
     >
       {/* Gateway status distribution */}
-      <section className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5">
-        {(Object.keys(counts) as GatewayStatus[]).map((k) => (
-          <div key={k} className="rounded-xl border border-[var(--color-edify-border)] p-3">
-            <div className="text-[10px] muted font-semibold leading-tight line-clamp-2 min-h-[24px]">{k}</div>
-            <div className="text-[22px] font-extrabold tabular leading-none mt-1">{counts[k]}</div>
-          </div>
-        ))}
-      </section>
+      <MetricStrip
+        columns="grid-cols-2 md:grid-cols-3 lg:grid-cols-6"
+        metrics={(Object.keys(counts) as GatewayStatus[]).map((k) => ({
+          key: k,
+          label: k,
+          value: counts[k],
+        }))}
+      />
 
       {/* Planning lock distribution */}
       <section className="card p-3.5">

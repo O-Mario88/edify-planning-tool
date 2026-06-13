@@ -25,6 +25,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { ProgressRing, StatusBadge } from "@/components/ui/primitives";
+import { MetricStrip } from "@/components/ui/MetricStrip";
 import { cn } from "@/lib/utils";
 import {
   METRIC_GROUP_LABELS,
@@ -382,15 +383,20 @@ function EnrollmentCoverageCard({ snapshot }: { snapshot: DonorMetricSnapshot })
           </p>
         </div>
       </div>
-      <div className="grid grid-cols-3 gap-3">
-        <StatBox label="Schools reached" value={c.schoolsReached.toLocaleString()} />
-        <StatBox label="Enrollment on file" value={c.schoolsWithEnrollment.toLocaleString()} />
-        <StatBox
-          label="Missing enrollment"
-          value={c.schoolsMissingEnrollment.toLocaleString()}
-          tone={c.schoolsMissingEnrollment > 0 ? "amber" : "green"}
-        />
-      </div>
+      <MetricStrip
+        bare
+        columns="grid-cols-3"
+        metrics={[
+          { key: "schoolsReached", label: "Schools reached", value: c.schoolsReached.toLocaleString() },
+          { key: "enrollmentOnFile", label: "Enrollment on file", value: c.schoolsWithEnrollment.toLocaleString() },
+          {
+            key: "missingEnrollment",
+            label: "Missing enrollment",
+            value: c.schoolsMissingEnrollment.toLocaleString(),
+            tone: c.schoolsMissingEnrollment > 0 ? "alert" : "good",
+          },
+        ]}
+      />
       <div>
         <div className="h-1.5 rounded-full bg-[var(--color-edify-divider)] overflow-hidden">
           <div
@@ -401,31 +407,6 @@ function EnrollmentCoverageCard({ snapshot }: { snapshot: DonorMetricSnapshot })
         <div className="text-[11px] muted mt-1.5 leading-snug">{c.note}</div>
       </div>
     </section>
-  );
-}
-
-function StatBox({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: string;
-  tone?: "green" | "amber" | "red";
-}) {
-  const fg =
-    tone === "amber"
-      ? "#b45309"
-      : tone === "red"
-        ? "var(--color-danger)"
-        : "var(--color-edify-text)";
-  return (
-    <div className="rounded-lg border border-[var(--color-edify-divider)] bg-white px-3 py-2.5">
-      <div className="text-[10px] uppercase tracking-[0.08em] muted font-extrabold">{label}</div>
-      <div className="text-[18px] font-extrabold tabular num-hero mt-1" style={{ color: fg }}>
-        {value}
-      </div>
-    </div>
   );
 }
 

@@ -5,6 +5,7 @@
 
 import { useEffect, useState } from "react";
 import { ShieldCheck, ShieldAlert, Database, FileWarning, CheckCircle2, XCircle } from "lucide-react";
+import { MetricStrip } from "@/components/ui/MetricStrip";
 import { cn } from "@/lib/utils";
 
 type Resp = {
@@ -47,11 +48,17 @@ export function MockLeakageCard() {
         </span>
       </header>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
-        <Stat label="Mock lib files" value={t.mockLibFiles} />
-        <Stat label="Files importing mock" value={t.filesImportingMock} />
-        <Stat label="Page routes leaking" value={t.pageRoutesWithMock} tone={t.pageRoutesWithMock ? "alert" : "good"} />
-        <Stat label="Components leaking" value={t.componentsWithMock} tone={t.componentsWithMock ? "alert" : "good"} />
+      <div className="mb-3">
+        <MetricStrip
+          bare
+          columns="grid-cols-2 sm:grid-cols-4"
+          metrics={[
+            { key: "mockLib", label: "Mock lib files", value: t.mockLibFiles },
+            { key: "filesImporting", label: "Files importing mock", value: t.filesImportingMock },
+            { key: "pageRoutes", label: "Page routes leaking", value: t.pageRoutesWithMock, tone: t.pageRoutesWithMock ? "alert" : "good" },
+            { key: "components", label: "Components leaking", value: t.componentsWithMock, tone: t.componentsWithMock ? "alert" : "good" },
+          ]}
+        />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mb-3">
@@ -72,14 +79,6 @@ export function MockLeakageCard() {
   );
 }
 
-function Stat({ label, value, tone }: { label: string; value: number; tone?: "alert" | "good" }) {
-  return (
-    <div className="rounded-lg border border-[var(--color-edify-border)] p-2">
-      <div className={cn("text-[18px] font-extrabold tabular leading-none", tone === "alert" ? "text-rose-600" : tone === "good" ? "text-emerald-600" : "")}>{value}</div>
-      <div className="text-[9.5px] muted mt-1 leading-tight">{label}</div>
-    </div>
-  );
-}
 function Flag({ ok, label }: { ok: boolean; label: string }) {
   return (
     <div className="inline-flex items-center gap-1.5 text-[11.5px] font-semibold">

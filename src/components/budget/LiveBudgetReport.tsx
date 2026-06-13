@@ -9,6 +9,7 @@
 import { useEffect, useState } from "react";
 import { AlertTriangle, CalendarClock, TrendingUp, TrendingDown } from "lucide-react";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/DataStates";
+import { MetricStrip } from "@/components/ui/MetricStrip";
 import { cn } from "@/lib/utils";
 import type { BeBudgetFromSchedule } from "@/lib/api/surfaces";
 
@@ -148,15 +149,16 @@ export function LiveBudgetReport({ view }: { view: "breakdown" | "monthly" }) {
           {/* Quarterly roll-up */}
           <section className="card p-4">
             <h2 className="text-[13px] font-extrabold tracking-tight mb-3">Quarterly roll-up</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {data.byQuarter.map((q) => (
-                <div key={q.quarter} className="rounded-lg border border-[var(--color-edify-border)] p-3">
-                  <div className="text-[10px] muted uppercase tracking-wide font-bold">{q.quarter}</div>
-                  <div className="text-[16px] font-extrabold tabular mt-1">{ugx(q.amount)}</div>
-                  <div className="text-[10px] muted mt-0.5">{q.count} activities</div>
-                </div>
-              ))}
-            </div>
+            <MetricStrip
+              bare
+              columns="grid-cols-2 sm:grid-cols-4"
+              metrics={data.byQuarter.map((q) => ({
+                key: q.quarter,
+                label: q.quarter,
+                value: ugx(q.amount),
+                caption: `${q.count} activities`,
+              }))}
+            />
           </section>
 
           {/* Busy/slow intelligence */}

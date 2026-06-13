@@ -9,14 +9,15 @@ import Link from "next/link";
 import { useState } from "react";
 import {
   ChevronDown, CalendarCheck, Users, Calendar, ClipboardCheck, Wallet,
-  Navigation, FileText, CheckCircle2, Loader, Flame, TrendingUp,
-  Minus, Sun, Moon, GraduationCap, Building2, Footprints, Handshake,
+  Navigation, FileText, CheckCircle2, Loader, Flame,
+  Sun, Moon, GraduationCap, Building2, Footprints, Handshake,
   MessageSquare, Clock, CircleDashed, MoreVertical, List, CalendarDays,
   Target, Upload, type LucideIcon,
 } from "lucide-react";
 import type {
   TodayData, TodayTone, TodayStatus, TodayGlance,
 } from "@/lib/today-mock";
+import { MetricStrip } from "@/components/ui/MetricStrip";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { Pill, TaskPill } from "@/components/ui/Pill";
 import { BackButton } from "@/components/ui/BackButton";
@@ -211,32 +212,19 @@ export function TodayConsole({
         {/* ───── Left column ───── */}
         <div className="col-span-12 xl:col-span-8 space-y-5">
           {/* KPI cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {data.kpis.map((k) => {
-              const KIcon = ICONS[k.icon] ?? CheckCircle2;
-              return (
-                <div key={k.label} className="bg-white rounded-2xl border border-[var(--color-edify-divider)] p-4 shadow-[0_1px_2px_rgba(15,23,32,0.04),0_8px_24px_-16px_rgba(15,23,32,0.12)]">
-                  <div className="flex items-center gap-2.5">
-                    <span className={"grid place-items-center h-9 w-9 rounded-xl " + TILE[k.tone]}>
-                      <KIcon size={18} />
-                    </span>
-                    <span className="text-[11px] font-bold uppercase tracking-[0.06em] text-[#7c8896]">{k.label}</span>
-                  </div>
-                  <div className="text-[30px] font-extrabold leading-none mt-3">{k.value}</div>
-                  <div className="flex items-center gap-1 mt-2.5 text-[11.5px] font-semibold">
-                    {k.dir === "flat" ? (
-                      <Minus size={13} className="text-muted" />
-                    ) : (
-                      <TrendingUp size={13} className={k.dir === "bad" ? "text-[#e0524a]" : "text-[#15a35a]"} />
-                    )}
-                    <span className={k.dir === "flat" ? "text-muted" : k.dir === "bad" ? "text-[#e0524a]" : "text-[#15a35a]"}>
-                      {k.trend}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <MetricStrip
+            bare
+            columns="grid-cols-2 lg:grid-cols-4"
+            metrics={data.kpis.map((k) => ({
+              key: k.label,
+              label: k.label,
+              value: k.value,
+              delta: {
+                dir: k.dir === "flat" ? "flat" : k.dir === "bad" ? "down" : "up",
+                text: k.trend,
+              },
+            }))}
+          />
 
           {/* Today's Agenda */}
           <section className="bg-white rounded-2xl border border-[var(--color-edify-divider)] shadow-[0_1px_2px_rgba(15,23,32,0.04),0_10px_30px_-18px_rgba(15,23,32,0.14)]">

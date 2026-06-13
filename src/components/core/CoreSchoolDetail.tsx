@@ -8,6 +8,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { MetricStrip } from "@/components/ui/MetricStrip";
 import type { CoreSchoolDetailVM } from "@/lib/core/core-detail";
 
 const TABS = [
@@ -99,31 +100,25 @@ function Overview({ vm }: { vm: CoreSchoolDetailVM }) {
 function DeliverySplit({ vm }: { vm: CoreSchoolDetailVM }) {
   const d = vm.deliverySplit!;
   const cells = [
-    { label: "Staff Visits",     cell: d.staffVisits,     tone: "blue"   as const },
-    { label: "Partner Visits",   cell: d.partnerVisits,   tone: "violet" as const },
-    { label: "Staff Trainings",  cell: d.staffTrainings,  tone: "blue"   as const },
-    { label: "Partner Trainings", cell: d.partnerTrainings, tone: "violet" as const },
+    { label: "Staff Visits",      cell: d.staffVisits },
+    { label: "Partner Visits",    cell: d.partnerVisits },
+    { label: "Staff Trainings",   cell: d.staffTrainings },
+    { label: "Partner Trainings", cell: d.partnerTrainings },
   ];
   return (
     <Card title="Package delivery split — 2 staff + 2 partner">
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        {cells.map((c) => {
-          const over = c.cell.assigned > c.cell.target;
-          return (
-            <div key={c.label} className={cn(
-              "rounded-lg border px-2.5 py-2",
-              over ? "border-rose-300 bg-rose-50/50" : "border-[var(--color-edify-divider)]",
-            )}>
-              <div className="text-[10px] muted leading-tight">{c.label}</div>
-              <div className="flex items-baseline gap-1 mt-0.5">
-                <span className={cn("text-[17px] font-extrabold tabular", c.tone === "violet" ? "text-violet-700" : "text-blue-700")}>{c.cell.assigned}</span>
-                <span className="text-[12px] font-bold muted">/ {c.cell.target}</span>
-              </div>
-              <div className="text-[10px] muted mt-0.5">{c.cell.completed} completed</div>
-            </div>
-          );
-        })}
-      </div>
+      <MetricStrip
+        bare
+        columns="grid-cols-2 sm:grid-cols-4"
+        metrics={cells.map((c) => ({
+          key: c.label,
+          label: c.label,
+          value: c.cell.assigned,
+          unit: `/ ${c.cell.target}`,
+          caption: `${c.cell.completed} completed`,
+          tone: c.cell.assigned > c.cell.target ? ("alert" as const) : ("default" as const),
+        }))}
+      />
       <div className="flex items-center gap-3 mt-2.5 pt-2.5 border-t border-[var(--color-edify-divider)] text-[11.5px]">
         <span className="font-bold">Total Visits <span className="tabular">{d.totalVisits.completed}/{d.totalVisits.target}</span></span>
         <span className="font-bold">Total Trainings <span className="tabular">{d.totalTrainings.completed}/{d.totalTrainings.target}</span></span>

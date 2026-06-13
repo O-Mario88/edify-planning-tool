@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft, Sparkles, Handshake, ShieldCheck, ChevronRight, AlertTriangle } from "lucide-react";
 import { StubPage } from "@/components/shell/StubPage";
+import { MetricStrip } from "@/components/ui/MetricStrip";
 import {
   generatePartnerAssignmentRecommendations,
   type PartnerCertification,
@@ -30,12 +31,15 @@ export default function PartnerAssignmentRecommendationsPage() {
         Back to Coverage
       </Link>
 
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Kpi label="Recommendations"     value={String(recs.length)} sub="Awaiting assignment" tone="violet" />
-        <Kpi label="Schools to cover"    value={totalSchools.toLocaleString()} sub="Ranked by SSA risk" tone="rose" />
-        <Kpi label="Certified partners"  value="6"   sub="With capacity to absorb" tone="green" />
-        <Kpi label="High-risk schools"   value="76"  sub="SSA < 5 or no FY SSA" tone="amber" />
-      </section>
+      <MetricStrip
+        columns="grid-cols-2 md:grid-cols-4"
+        metrics={[
+          { key: "recs", label: "Recommendations", value: String(recs.length), caption: "Awaiting assignment" },
+          { key: "schools", label: "Schools to cover", value: totalSchools.toLocaleString(), caption: "Ranked by SSA risk", tone: "alert" },
+          { key: "partners", label: "Certified partners", value: "6", caption: "With capacity to absorb", tone: "good" },
+          { key: "highRisk", label: "High-risk schools", value: "76", caption: "SSA < 5 or no FY SSA", tone: "alert" },
+        ]}
+      />
 
       <ol className="space-y-3">
         {recs.map((r) => (
@@ -137,20 +141,3 @@ export default function PartnerAssignmentRecommendationsPage() {
   );
 }
 
-const KPI_TONE = {
-  edify:  "bg-[var(--color-edify-soft)]/80 text-[var(--color-edify-primary)]",
-  green:  "bg-emerald-100 text-emerald-700",
-  amber:  "bg-amber-100   text-amber-700",
-  rose:   "bg-rose-100    text-rose-700",
-  violet: "bg-violet-100  text-violet-700",
-} as const;
-
-function Kpi({ label, value, sub, tone }: { label: string; value: string; sub: string; tone: keyof typeof KPI_TONE }) {
-  return (
-    <div className="card p-3.5">
-      <div className={cn("text-[11px] font-semibold inline-flex items-center px-1.5 py-[2px] rounded-md", KPI_TONE[tone])}>{label}</div>
-      <div className="text-[22px] font-extrabold tabular leading-none mt-2">{value}</div>
-      <div className="text-caption muted mt-1">{sub}</div>
-    </div>
-  );
-}

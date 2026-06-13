@@ -2,10 +2,11 @@
 // recent fund requests, and the annual/quarterly/monthly snapshots.
 
 import {
-  AlertTriangle, AlertOctagon, Clock, FileText, CheckCircle2, Send, Layers,
+  AlertTriangle, AlertOctagon, Clock, FileText,
   TrendingUp, CalendarRange, BarChart3,
 } from "lucide-react";
 import { SectionCard, StatusBadge } from "@/components/ui/primitives";
+import { MetricStrip } from "@/components/ui/MetricStrip";
 import { fmtUgx, fmtUgxShort, fmtPct } from "@/lib/funds/budget/budget-format";
 import type { AnnualBudgetRollup } from "@/lib/funds/budget/annual-rollup";
 
@@ -43,27 +44,19 @@ export function BudgetRiskAlerts({ alerts, title = "Variance / Risk Alerts" }: {
   );
 }
 
-const FR_ICON: Record<string, React.ReactNode> = {
-  Draft: <FileText size={15} className="text-slate-500" />,
-  "Under Review": <Clock size={15} className="text-amber-500" />,
-  Approved: <CheckCircle2 size={15} className="text-emerald-600" />,
-  Released: <Send size={15} className="text-sky-600" />,
-  Reconciled: <Layers size={15} className="text-violet-600" />,
-};
-
 export function FundRequestStatusRow({ counts }: { counts: AnnualBudgetRollup["fundRequestStatusCounts"] }) {
   return (
     <SectionCard icon={<FileText size={13} />} title="Fund Request Status">
-      <div className="grid grid-cols-5 gap-2">
-        {counts.map((c) => (
-          <div key={c.status} className="rounded-lg border border-[var(--color-edify-border)] p-2.5 text-center">
-            <div className="grid place-items-center mb-1">{FR_ICON[c.status]}</div>
-            <div className="text-[11px] font-bold muted">{c.status}</div>
-            <div className="text-[18px] font-extrabold tabular leading-none mt-1">{c.count}</div>
-            <div className="text-[10px] muted mt-0.5">{fmtUgxShort(c.amount)}</div>
-          </div>
-        ))}
-      </div>
+      <MetricStrip
+        bare
+        columns="grid-cols-5"
+        metrics={counts.map((c) => ({
+          key: c.status,
+          label: c.status,
+          value: c.count,
+          caption: fmtUgxShort(c.amount),
+        }))}
+      />
     </SectionCard>
   );
 }

@@ -10,6 +10,7 @@ import {
   ShieldCheck, Handshake, AlertTriangle, Search,
 } from "lucide-react";
 import { SectionCard, StatusBadge } from "@/components/ui/primitives";
+import { MetricStrip } from "@/components/ui/MetricStrip";
 import { Modal } from "@/components/ui/Modal";
 import { PipelineFunnel, InterventionRankBar, SsaHeatmap } from "@/components/analytics/field-engine/charts";
 import { cn } from "@/lib/utils";
@@ -94,19 +95,16 @@ export function ProjectImpactAnalytics({ snapshot }: { snapshot: ProjectAnalytic
 
       {/* Assigned → Reached → Verified → Donor-ready split */}
       <SectionCard icon={<ShieldCheck size={13} />} title="Reach quality" subtitle="Planned activities never count. Each stage is a stricter, deduped subset.">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-          {[
-            { label: "Assigned", value: s.schools.assigned, tone: "bg-slate-100 text-slate-600" },
-            { label: "Reached", value: s.schools.reached, tone: "bg-blue-50 text-blue-700" },
-            { label: "Verified (IA)", value: s.schools.verified, tone: "bg-amber-50 text-amber-700" },
-            { label: "Donor-ready", value: s.schools.donorReady, tone: "bg-emerald-50 text-emerald-700" },
-          ].map((x) => (
-            <div key={x.label} className={`rounded-lg p-2.5 ${x.tone}`}>
-              <div className="text-[20px] font-extrabold tabular leading-none">{x.value}</div>
-              <div className="text-[11px] font-semibold mt-0.5">{x.label}</div>
-            </div>
-          ))}
-        </div>
+        <MetricStrip
+          bare
+          columns="grid-cols-2 md:grid-cols-4"
+          metrics={[
+            { key: "assigned", label: "Assigned", value: s.schools.assigned },
+            { key: "reached", label: "Reached", value: s.schools.reached },
+            { key: "verified", label: "Verified (IA)", value: s.schools.verified },
+            { key: "donorReady", label: "Donor-ready", value: s.schools.donorReady, tone: "good" },
+          ]}
+        />
       </SectionCard>
 
       {/* Funnel + linked intervention before/after */}
@@ -161,22 +159,19 @@ export function ProjectImpactAnalytics({ snapshot }: { snapshot: ProjectAnalytic
       <section className="grid grid-cols-12 gap-4 items-start">
         <div className="col-span-12 md:col-span-7">
           <SectionCard icon={<Handshake size={13} />} title="Delivery">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-[11.5px]">
-              {[
-                { l: "Trainings", v: s.delivery.trainings },
-                { l: "Follow-ups", v: s.delivery.followUps },
-                { l: "Assessments", v: s.delivery.assessments },
-                { l: "Evidence verified", v: s.delivery.evidenceVerified },
-                { l: "Staff-delivered", v: s.delivery.staffActivities },
-                { l: "Partner-delivered", v: s.delivery.partnerActivities },
-                { l: "IA confirmed", v: s.delivery.iaConfirmed },
-              ].map((x) => (
-                <div key={x.l} className="rounded-lg border border-[var(--color-edify-border)] p-2">
-                  <div className="text-[18px] font-extrabold tabular">{x.v}</div>
-                  <div className="muted">{x.l}</div>
-                </div>
-              ))}
-            </div>
+            <MetricStrip
+              bare
+              columns="grid-cols-2 sm:grid-cols-4"
+              metrics={[
+                { key: "trainings", label: "Trainings", value: s.delivery.trainings },
+                { key: "followUps", label: "Follow-ups", value: s.delivery.followUps },
+                { key: "assessments", label: "Assessments", value: s.delivery.assessments },
+                { key: "evidenceVerified", label: "Evidence verified", value: s.delivery.evidenceVerified },
+                { key: "staffActivities", label: "Staff-delivered", value: s.delivery.staffActivities },
+                { key: "partnerActivities", label: "Partner-delivered", value: s.delivery.partnerActivities },
+                { key: "iaConfirmed", label: "IA confirmed", value: s.delivery.iaConfirmed },
+              ]}
+            />
           </SectionCard>
         </div>
         <div className="col-span-12 md:col-span-5">

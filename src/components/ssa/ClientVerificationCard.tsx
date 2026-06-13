@@ -8,7 +8,7 @@
 import { useEffect, useState } from "react";
 import { ShieldCheck, Info, CheckCircle2, AlertTriangle } from "lucide-react";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/DataStates";
-import { cn } from "@/lib/utils";
+import { MetricStrip } from "@/components/ui/MetricStrip";
 import type { BeSsaVerifySummary } from "@/lib/api/surfaces";
 
 const RATE_PCT = 10;
@@ -69,11 +69,16 @@ export function ClientVerificationCard(_props: { highlightStaffId?: string; comp
           </div>
 
           {/* QA metric strip */}
-          <div className="grid grid-cols-3 gap-2 mb-2">
-            <Mini label="Verified sample" value={`${data.totalVerifiedSample}`} sub={`of ${data.totalRequiredSample} required`} />
-            <Mini label="Partner SSA pending" value={`${data.partnerPendingTotal}`} sub="awaiting review" alert={data.partnerPendingTotal > 0} />
-            <Mini label="Staff below quota" value={`${data.staffBelowRequirement}`} sub="need QA" alert={data.staffBelowRequirement > 0} />
-          </div>
+          <MetricStrip
+            bare
+            className="mb-2"
+            columns="grid-cols-3"
+            metrics={[
+              { key: "verified", label: "Verified sample", value: data.totalVerifiedSample, caption: `of ${data.totalRequiredSample} required` },
+              { key: "pending", label: "Partner SSA pending", value: data.partnerPendingTotal, caption: "awaiting review", tone: data.partnerPendingTotal > 0 ? "alert" : "default" },
+              { key: "below", label: "Staff below quota", value: data.staffBelowRequirement, caption: "need QA", tone: data.staffBelowRequirement > 0 ? "alert" : "default" },
+            ]}
+          />
 
           {data.belowStaff.length > 0 && (
             <div className="mt-1 rounded-lg border border-rose-200 bg-rose-50/50 p-2">
@@ -91,14 +96,5 @@ export function ClientVerificationCard(_props: { highlightStaffId?: string; comp
         </>
       )}
     </article>
-  );
-}
-
-function Mini({ label, value, sub, alert }: { label: string; value: string; sub: string; alert?: boolean }) {
-  return (
-    <div className={cn("rounded-lg border p-2", alert ? "border-amber-200 bg-amber-50/40" : "border-[var(--color-edify-border)]")}>
-      <div className="text-[16px] font-extrabold tabular leading-none">{value}</div>
-      <div className="text-[9.5px] muted mt-1 leading-tight">{label}<span className="block text-[9px] text-slate-400">{sub}</span></div>
-    </div>
   );
 }

@@ -1,13 +1,8 @@
 "use client";
 
-import {
-  AlertOctagon,
-  CheckCircle2,
-  Clock,
-  MapPin,
-  Users,
-} from "lucide-react";
+import { MapPin, Users } from "lucide-react";
 import { SectionCard } from "@/components/ui/primitives";
+import { MetricStrip } from "@/components/ui/MetricStrip";
 import { teamStatusDistribution } from "@/lib/team-targets-billion-mock";
 import { cn } from "@/lib/utils";
 
@@ -28,10 +23,18 @@ export function TeamStatusDistributionCard() {
       subtitle={`${d.total} staff supervised across regions`}
     >
       {/* 4 KPI tiles */}
-      <div className="grid grid-cols-2 gap-1.5 mb-3">
-        {d.buckets.map((b) => (
-          <BucketTile key={b.key} bucket={b} />
-        ))}
+      <div className="mb-3">
+        <MetricStrip
+          bare
+          columns="grid-cols-2"
+          metrics={d.buckets.map((b) => ({
+            key: b.key,
+            label: b.label,
+            value: b.count,
+            caption: `${b.countLabel} · ${b.pct}%`,
+            tone: b.tone === "good" ? "good" : b.tone === "warn" ? "alert" : "default",
+          }))}
+        />
       </div>
 
       {/* Stacked bar */}
@@ -81,38 +84,5 @@ export function TeamStatusDistributionCard() {
         </ul>
       </div>
     </SectionCard>
-  );
-}
-
-// ───────────── BucketTile ─────────────
-
-type Bucket = typeof teamStatusDistribution.buckets[number];
-
-function BucketTile({ bucket }: { bucket: Bucket }) {
-  const Icon =
-    bucket.tone === "good"  ? CheckCircle2
-    : bucket.tone === "watch" ? Clock
-    : AlertOctagon;
-  const valueColor =
-    bucket.tone === "good"  ? "text-emerald-700"
-    : bucket.tone === "watch" ? "text-amber-700"
-    : "text-rose-700";
-  return (
-    <div className="rounded-xl bg-[var(--color-edify-soft)]/40 border border-[var(--color-edify-border)] p-2.5 flex items-center gap-2">
-      <span className="w-8 h-8 rounded-lg grid place-items-center shrink-0" style={{ backgroundColor: `${bucket.color}1f`, color: bucket.color }}>
-        <Icon size={14} />
-      </span>
-      <div className="min-w-0 flex-1">
-        <div className="text-[9.5px] uppercase tracking-wide muted font-bold truncate">
-          {bucket.label}
-        </div>
-        <div className={cn("text-[15px] font-extrabold tabular leading-none mt-0.5", valueColor)}>
-          {bucket.count}
-        </div>
-        <div className="text-[9.5px] muted font-semibold mt-0.5 truncate">
-          {bucket.countLabel} · {bucket.pct}%
-        </div>
-      </div>
-    </div>
   );
 }

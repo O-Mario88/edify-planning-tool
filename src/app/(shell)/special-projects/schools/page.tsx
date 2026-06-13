@@ -1,11 +1,11 @@
 import { redirect } from "next/navigation";
-import { School, GraduationCap, CalendarCheck, TrendingUp, FileWarning, Briefcase } from "lucide-react";
 import { getCurrentUser, toCurrentUser } from "@/lib/auth";
 import { ROLE_REDIRECT } from "@/lib/auth-public";
 import { directoryRecords } from "@/lib/school-directory/directory";
 import { buildProjectSchoolDirectory } from "@/lib/projects/project-school-directory";
 import { ProjectSchoolDirectory } from "@/components/special-projects/ProjectSchoolDirectory";
 import { SpHeader } from "@/components/special-projects/SpHeader";
+import { MetricStrip } from "@/components/ui/MetricStrip";
 
 // Special Project Schools — a PROJECT-GROUPED directory. Each project is a
 // card holding only its assigned schools (a mini school-portfolio per
@@ -29,13 +29,13 @@ export default async function SpecialProjectSchoolsPage() {
 
   const { cards, summary } = buildProjectSchoolDirectory(currentUser, scoped);
 
-  const kpis = [
-    { label: "Active Projects",     value: summary.activeProjects,     Icon: Briefcase,     tone: "bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)]" },
-    { label: "Project Schools",     value: summary.projectSchools,     Icon: School,        tone: "bg-blue-50 text-blue-700" },
-    { label: "Schools Trained",     value: summary.schoolsTrained,     Icon: GraduationCap, tone: "bg-violet-50 text-violet-700" },
-    { label: "Follow-Ups Done",     value: summary.followUpsCompleted, Icon: CalendarCheck, tone: "bg-amber-50 text-amber-700" },
-    { label: "Schools Improved",    value: summary.schoolsImproved,    Icon: TrendingUp,    tone: "bg-emerald-50 text-emerald-700" },
-    { label: "Evidence Pending",    value: summary.evidencePending,    Icon: FileWarning,   tone: "bg-rose-50 text-rose-700" },
+  const metrics = [
+    { key: "active",    label: "Active Projects",  value: summary.activeProjects },
+    { key: "schools",   label: "Project Schools",  value: summary.projectSchools },
+    { key: "trained",   label: "Schools Trained",  value: summary.schoolsTrained },
+    { key: "followups", label: "Follow-Ups Done",  value: summary.followUpsCompleted },
+    { key: "improved",  label: "Schools Improved", value: summary.schoolsImproved, tone: summary.schoolsImproved > 0 ? ("good" as const) : ("default" as const) },
+    { key: "evidence",  label: "Evidence Pending", value: summary.evidencePending, tone: summary.evidencePending > 0 ? ("alert" as const) : ("default" as const) },
   ];
 
   return (
@@ -48,17 +48,7 @@ export default async function SpecialProjectSchoolsPage() {
         </header>
 
         {/* Summary row */}
-        <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {kpis.map((k) => (
-            <div key={k.label} className="card rounded-2xl p-3 flex items-center gap-2.5">
-              <span className={`h-9 w-9 rounded-xl grid place-items-center shrink-0 ${k.tone}`}><k.Icon size={16} /></span>
-              <div className="min-w-0">
-                <div className="text-[20px] font-extrabold tabular leading-none">{k.value}</div>
-                <div className="text-[11px] muted leading-tight mt-0.5">{k.label}</div>
-              </div>
-            </div>
-          ))}
-        </section>
+        <MetricStrip columns="grid-cols-2 sm:grid-cols-3 lg:grid-cols-6" metrics={metrics} />
 
         <ProjectSchoolDirectory cards={cards} userRole={user.role} />
       </div>

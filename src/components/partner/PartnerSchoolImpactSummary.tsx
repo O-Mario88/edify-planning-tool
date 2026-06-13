@@ -6,7 +6,8 @@
 //   • schoolsSupported  → schoolsCceoConfirmed  → schoolsMeVerified
 //   • schoolsShowingImprovement  → schoolsMovedBandUp
 
-import { School, ShieldCheck, CheckCircle2, TrendingUp, ArrowUp } from "lucide-react";
+import { TrendingUp, ArrowUp } from "lucide-react";
+import { MetricStrip } from "@/components/ui/MetricStrip";
 import { schoolImpactMetrics } from "@/lib/partner/partner-evidence-mock";
 
 export function PartnerSchoolImpactSummary() {
@@ -23,29 +24,15 @@ export function PartnerSchoolImpactSummary() {
       </header>
 
       {/* Funnel reading — supported → confirmed → verified */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-        <FunnelTile
-          Icon={School}
-          tone="primary"
-          label="Schools supported"
-          value={m.schoolsSupported}
-          caption="this period"
-        />
-        <FunnelTile
-          Icon={ShieldCheck}
-          tone="amber"
-          label="CCEO confirmed"
-          value={m.schoolsCceoConfirmed}
-          caption={`${pct(m.schoolsCceoConfirmed, m.schoolsSupported)}% of supported`}
-        />
-        <FunnelTile
-          Icon={CheckCircle2}
-          tone="emerald"
-          label="M&E verified"
-          value={m.schoolsMeVerified}
-          caption={`${pct(m.schoolsMeVerified, m.schoolsSupported)}% of supported`}
-        />
-      </div>
+      <MetricStrip
+        bare
+        columns="grid-cols-1 sm:grid-cols-3"
+        metrics={[
+          { key: "supported", label: "Schools supported", value: m.schoolsSupported, caption: "this period" },
+          { key: "cceo", label: "CCEO confirmed", value: m.schoolsCceoConfirmed, caption: `${pct(m.schoolsCceoConfirmed, m.schoolsSupported)}% of supported` },
+          { key: "mne", label: "M&E verified", value: m.schoolsMeVerified, caption: `${pct(m.schoolsMeVerified, m.schoolsSupported)}% of supported`, tone: "good" },
+        ]}
+      />
 
       {/* Outcome callout — band changes are the strongest signal */}
       <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-3 flex items-start gap-3">
@@ -72,34 +59,4 @@ export function PartnerSchoolImpactSummary() {
 function pct(n: number, total: number): number {
   if (total === 0) return 0;
   return Math.round((n / total) * 100);
-}
-
-function FunnelTile({
-  Icon, tone, label, value, caption,
-}: {
-  Icon: typeof School;
-  tone: "primary" | "amber" | "emerald";
-  label: string;
-  value: number;
-  caption: string;
-}) {
-  const cls = tone === "primary"
-    ? { bg: "bg-[var(--color-edify-soft)]", text: "text-[var(--color-edify-primary)]", num: "text-[var(--color-edify-text)]" }
-    : tone === "amber"
-      ? { bg: "bg-amber-50", text: "text-amber-700", num: "text-amber-700" }
-      : { bg: "bg-emerald-50", text: "text-emerald-700", num: "text-emerald-700" };
-  return (
-    <div className="rounded-xl border border-[var(--color-edify-divider)] bg-white p-3.5">
-      <div className="flex items-center gap-2.5">
-        <span className={`grid place-items-center h-8 w-8 rounded-lg ${cls.bg} ${cls.text}`}>
-          <Icon size={14} />
-        </span>
-        <div className="text-caption uppercase tracking-wide font-bold muted">{label}</div>
-      </div>
-      <div className={`text-[28px] font-extrabold tabular num-hero mt-2 leading-none ${cls.num}`}>
-        {value}
-      </div>
-      <div className="text-caption muted mt-1">{caption}</div>
-    </div>
-  );
 }

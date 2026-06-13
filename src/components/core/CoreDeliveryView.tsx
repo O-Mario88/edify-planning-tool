@@ -6,10 +6,11 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Wallet, Loader2, CheckCircle2 } from "lucide-react";
+import { Wallet, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDemoStore } from "@/components/demo/DemoStore";
 import { accountantConfirmCoreSlot } from "@/lib/actions/core-actions";
+import { MetricStrip, type MetricCell } from "@/components/ui/MetricStrip";
 import type { CoreDeliveryRow } from "@/lib/core/core-delivery";
 
 export function CoreDeliveryView({ rows, mode }: { rows: CoreDeliveryRow[]; mode: "accountant" | "partner" }) {
@@ -82,22 +83,18 @@ function ConfirmPay({ slotId }: { slotId: string }) {
 }
 
 export function CoreDeliverySummaryCards({ summary, mode }: { summary: { total: number; paymentDue: number; confirmed: number; awaitingIa: number }; mode: "accountant" | "partner" }) {
+  const metrics: MetricCell[] = [
+    { key: "total", label: "Partner activities", value: summary.total },
+    ...(mode === "accountant"
+      ? [{ key: "due", label: "Payment due", value: summary.paymentDue, tone: summary.paymentDue > 0 ? "alert" : "good" } as MetricCell]
+      : []),
+    { key: "confirmed", label: "Confirmed paid", value: summary.confirmed, tone: "good" },
+    { key: "awaitingIa", label: "Awaiting IA", value: summary.awaitingIa, tone: summary.awaitingIa > 0 ? "alert" : "good" },
+  ];
   return (
-    <section className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-      <Kpi label="Partner activities" value={summary.total} />
-      {mode === "accountant" && <Kpi label="Payment due" value={summary.paymentDue} tone="text-amber-700" />}
-      <Kpi label="Confirmed paid" value={summary.confirmed} tone="text-emerald-700" />
-      <Kpi label="Awaiting IA" value={summary.awaitingIa} />
-    </section>
-  );
-}
-function Kpi({ label, value, tone }: { label: string; value: number; tone?: string }) {
-  return (
-    <div className="card px-3 py-2.5">
-      <div className="text-[10px] font-semibold muted leading-tight">{label}</div>
-      <div className={cn("text-[18px] font-extrabold tabular leading-none mt-1 inline-flex items-center gap-1", tone)}>
-        {value === 0 && <CheckCircle2 size={13} className="text-emerald-500" />}{value}
-      </div>
-    </div>
+    <MetricStrip
+      columns={mode === "accountant" ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-3"}
+      metrics={metrics}
+    />
   );
 }

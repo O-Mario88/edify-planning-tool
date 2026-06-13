@@ -2,9 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import {
   Sparkles,
-  Target,
   Activity,
-  Users,
   ShieldCheck,
   Layers,
   TrendingUp,
@@ -14,8 +12,9 @@ import {
   Lightbulb,
   LineChart,
 } from "lucide-react";
-import { EntityDetail, DetailKpi, DetailFacts } from "@/components/shell/EntityDetail";
+import { EntityDetail, DetailFacts } from "@/components/shell/EntityDetail";
 import { SectionCard, StatusBadge } from "@/components/ui/primitives";
+import { MetricStrip } from "@/components/ui/MetricStrip";
 import { specialProjects, type ProjectStatus } from "@/lib/special-projects-mock";
 import { computeProjectImpact, projectVsNonProject } from "@/lib/projects/project-impact";
 import { recommendSchoolsForProject } from "@/lib/projects/project-eligibility";
@@ -100,12 +99,15 @@ export default async function ProjectDetail({ params }: { params: Promise<{ id: 
       </section>
 
       {/* Impact KPIs */}
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <DetailKpi label="Schools Enrolled" value={String(impact?.schoolsEnrolled ?? 0)} caption={`${impact?.schoolsWithSsa ?? 0} with SSA data`} Icon={Activity} tone="edify" />
-        <DetailKpi label={`Avg. ${project.primaryInterventionId} change`} value={impact ? `${impact.avgImprovement > 0 ? "+" : ""}${impact.avgImprovement.toFixed(1)}` : "—"} caption={impact ? `${impact.avgBefore.toFixed(1)} → ${impact.avgAfter.toFixed(1)}` : "no data"} Icon={Target} tone={(impact?.avgImprovement ?? 0) > 0 ? "green" : "amber"} />
-        <DetailKpi label="Schools Improved" value={String(impact?.schoolsImproved ?? 0)} caption={`${impact?.schoolsDeclined ?? 0} declined · ${impact?.schoolsFlat ?? 0} flat`} Icon={Users} tone="violet" />
-        <DetailKpi label="Schools Trained" value={String(impact?.schoolsTrained ?? 0)} caption={`${impact?.schoolsFollowedUp ?? 0} followed up`} Icon={CalendarCheck} tone="edify" />
-      </section>
+      <MetricStrip
+        columns="grid-cols-2 md:grid-cols-4"
+        metrics={[
+          { key: "enrolled", label: "Schools Enrolled", value: impact?.schoolsEnrolled ?? 0, caption: `${impact?.schoolsWithSsa ?? 0} with SSA data` },
+          { key: "avgChange", label: `Avg. ${project.primaryInterventionId} change`, value: impact ? `${impact.avgImprovement > 0 ? "+" : ""}${impact.avgImprovement.toFixed(1)}` : "—", caption: impact ? `${impact.avgBefore.toFixed(1)} → ${impact.avgAfter.toFixed(1)}` : "no data", tone: (impact?.avgImprovement ?? 0) > 0 ? "good" : "default" },
+          { key: "improved", label: "Schools Improved", value: impact?.schoolsImproved ?? 0, caption: `${impact?.schoolsDeclined ?? 0} declined · ${impact?.schoolsFlat ?? 0} flat` },
+          { key: "trained", label: "Schools Trained", value: impact?.schoolsTrained ?? 0, caption: `${impact?.schoolsFollowedUp ?? 0} followed up` },
+        ]}
+      />
 
       {/* Project vs non-project comparison */}
       {comparison && (comparison.project.count > 0 || comparison.nonProject.count > 0) && (
@@ -117,18 +119,15 @@ export default async function ProjectDetail({ params }: { params: Promise<{ id: 
           <p className="text-[11.5px] muted mt-1 leading-snug">
             Project schools vs. comparable non-project schools weak in {comparison.intervention}.
           </p>
-          <div className="mt-3 grid grid-cols-2 gap-3">
-            <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
-              <div className="text-[11px] font-bold text-emerald-800">Project schools ({comparison.project.count})</div>
-              <div className="text-[20px] font-extrabold tabular text-emerald-700 mt-0.5">{comparison.project.avgImprovement > 0 ? "+" : ""}{comparison.project.avgImprovement.toFixed(1)}</div>
-              <div className="text-[11px] muted">{comparison.project.avgBefore.toFixed(1)} → {comparison.project.avgAfter.toFixed(1)} on {comparison.intervention}</div>
-            </div>
-            <div className="rounded-lg border border-[var(--color-edify-border)] p-3">
-              <div className="text-[11px] font-bold muted">Comparable non-project ({comparison.nonProject.count})</div>
-              <div className="text-[20px] font-extrabold tabular mt-0.5">{comparison.nonProject.avgImprovement > 0 ? "+" : ""}{comparison.nonProject.avgImprovement.toFixed(1)}</div>
-              <div className="text-[11px] muted">{comparison.nonProject.avgBefore.toFixed(1)} → {comparison.nonProject.avgAfter.toFixed(1)} on {comparison.intervention}</div>
-            </div>
-          </div>
+          <MetricStrip
+            bare
+            className="mt-3"
+            columns="grid-cols-2"
+            metrics={[
+              { key: "project", label: `Project schools (${comparison.project.count})`, value: `${comparison.project.avgImprovement > 0 ? "+" : ""}${comparison.project.avgImprovement.toFixed(1)}`, caption: `${comparison.project.avgBefore.toFixed(1)} → ${comparison.project.avgAfter.toFixed(1)} on ${comparison.intervention}`, tone: "good" },
+              { key: "nonProject", label: `Comparable non-project (${comparison.nonProject.count})`, value: `${comparison.nonProject.avgImprovement > 0 ? "+" : ""}${comparison.nonProject.avgImprovement.toFixed(1)}`, caption: `${comparison.nonProject.avgBefore.toFixed(1)} → ${comparison.nonProject.avgAfter.toFixed(1)} on ${comparison.intervention}` },
+            ]}
+          />
           <div className="mt-2 text-[12px] font-semibold inline-flex items-center gap-1.5">
             {trendIcon(comparison.improvementGap)}
             Project advantage: <span className="font-extrabold">{comparison.improvementGap > 0 ? "+" : ""}{comparison.improvementGap.toFixed(1)}</span> vs. similar schools

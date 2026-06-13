@@ -5,23 +5,15 @@
 
 import Link from "next/link";
 import {
-  Network, CalendarCheck, ShieldCheck, Users2, GraduationCap, Wallet, ArrowRight,
+  Network, ShieldCheck, Wallet, ArrowRight,
 } from "lucide-react";
 import { clusterMeetingMetrics, staffVsPartnerClusterComparison } from "@/lib/cluster/cluster-core";
+import { MetricStrip } from "@/components/ui/MetricStrip";
 
 export function ClusterOperationsCard({ scope = "team" }: { scope?: "team" | "country" | "region" }) {
   const m = clusterMeetingMetrics();
   const cmp = staffVsPartnerClusterComparison();
   const scopeLabel = scope === "country" ? "Country" : scope === "region" ? "Region" : "Team";
-
-  const tiles = [
-    { label: "Meetings confirmed", value: m.confirmed, Icon: CalendarCheck, tone: "text-emerald-500" },
-    { label: "Awaiting IA", value: m.awaitingIa, Icon: ShieldCheck, tone: "text-amber-500" },
-    { label: "Scheduled", value: m.scheduled, Icon: Network, tone: "text-sky-500" },
-    { label: "Attendance", value: m.attendanceTotal, Icon: Users2, tone: "text-violet-500" },
-    { label: "Teachers reached", value: m.teachersReached, Icon: GraduationCap, tone: "text-[var(--color-edify-primary)]" },
-    { label: "Partner payments ready", value: m.partnerPaymentsReady, Icon: Wallet, tone: "text-rose-500" },
-  ];
 
   return (
     <section className="card rounded-2xl p-4">
@@ -35,14 +27,19 @@ export function ClusterOperationsCard({ scope = "team" }: { scope?: "team" | "co
         </Link>
       </div>
 
-      <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-2">
-        {tiles.map((t) => (
-          <div key={t.label} className="rounded-xl border border-[var(--color-edify-border)] px-3 py-2.5">
-            <t.Icon size={13} className={t.tone} />
-            <div className="text-[18px] font-extrabold tabular tracking-tight mt-1">{t.value}</div>
-            <div className="text-[10.5px] muted leading-tight">{t.label}</div>
-          </div>
-        ))}
+      <div className="mt-3">
+        <MetricStrip
+          bare
+          columns="grid-cols-2 md:grid-cols-3"
+          metrics={[
+            { key: "confirmed", label: "Meetings confirmed", value: m.confirmed, tone: "good" },
+            { key: "awaitingIa", label: "Awaiting IA", value: m.awaitingIa, tone: m.awaitingIa > 0 ? "alert" : "default" },
+            { key: "scheduled", label: "Scheduled", value: m.scheduled },
+            { key: "attendance", label: "Attendance", value: m.attendanceTotal },
+            { key: "teachers", label: "Teachers reached", value: m.teachersReached },
+            { key: "payments", label: "Partner payments ready", value: m.partnerPaymentsReady, tone: m.partnerPaymentsReady > 0 ? "alert" : "default" },
+          ]}
+        />
       </div>
 
       {/* Staff vs partner snapshot */}

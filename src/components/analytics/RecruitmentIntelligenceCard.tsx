@@ -9,6 +9,7 @@ import { Compass, TrendingUp, TrendingDown, CircleDot, MapPin, TriangleAlert } f
 import { cn } from "@/lib/utils";
 import type { BeRecruitment } from "@/lib/api/surfaces";
 import { LoadingState } from "@/components/ui/DataStates";
+import { MetricStrip } from "@/components/ui/MetricStrip";
 
 const RECO_TONE: Record<string, { bg: string; fg: string; ring: string }> = {
   "Continue Recruiting": { bg: "bg-emerald-50", fg: "text-emerald-700", ring: "border-emerald-200" },
@@ -74,12 +75,17 @@ export function RecruitmentIntelligenceCard({ advisory = false }: { advisory?: b
           </div>
 
           {/* Signal grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
-            <Mini label="Current-FY SSA" value={`${data.ssaReadiness.currentSsaPct}%`} sub={`${data.ssaReadiness.missingCurrentSsa} missing`} />
-            <Mini label="Schools reached" value={`${data.capacity.reachedPct}%`} sub={`${data.capacity.totalSchools} schools`} />
-            <Mini label="Partner strain" value={`${data.capacity.partnerStrainPct}%`} sub={`${data.capacity.partnerEvidencePending} ev. pending`} />
-            <Mini label="Impact ready" value={`${data.ssaReadiness.impactReadyPct}%`} sub={`${data.impact.schoolsImproved}↑ ${data.impact.schoolsDeclined}↓`} />
-          </div>
+          <MetricStrip
+            bare
+            className="mb-3"
+            columns="grid-cols-2 sm:grid-cols-4"
+            metrics={[
+              { key: "ssa", label: "Current-FY SSA", value: `${data.ssaReadiness.currentSsaPct}%`, caption: `${data.ssaReadiness.missingCurrentSsa} missing` },
+              { key: "reached", label: "Schools reached", value: `${data.capacity.reachedPct}%`, caption: `${data.capacity.totalSchools} schools` },
+              { key: "strain", label: "Partner strain", value: `${data.capacity.partnerStrainPct}%`, caption: `${data.capacity.partnerEvidencePending} ev. pending` },
+              { key: "impact", label: "Impact ready", value: `${data.ssaReadiness.impactReadyPct}%`, caption: `${data.impact.schoolsImproved}↑ ${data.impact.schoolsDeclined}↓` },
+            ]}
+          />
 
           {/* District expand / pause (hidden in CCEO advisory mode) */}
           {!advisory && (data.suggestedRecruitDistricts.length > 0 || data.pauseDistricts.length > 0) && (
@@ -98,15 +104,6 @@ export function RecruitmentIntelligenceCard({ advisory = false }: { advisory?: b
         </>
       )}
     </section>
-  );
-}
-
-function Mini({ label, value, sub }: { label: string; value: string; sub: string }) {
-  return (
-    <div className="rounded-lg border border-[var(--color-edify-border)] p-2">
-      <div className="text-[16px] font-extrabold tabular leading-none">{value}</div>
-      <div className="text-[9.5px] muted mt-1 leading-tight">{label}<span className="block text-[9px] text-slate-400">{sub}</span></div>
-    </div>
   );
 }
 

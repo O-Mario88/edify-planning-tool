@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { GraduationCap, Calendar, Users, Building2, type LucideIcon } from "lucide-react";
+import { GraduationCap, Building2 } from "lucide-react";
 import { EntityIndex } from "@/components/shell/EntityIndex";
+import { MetricStrip } from "@/components/ui/MetricStrip";
 import { StatusBadge, type ChipTone } from "@/components/ui/primitives";
 import { TRAININGS, type TrainingStatus } from "@/lib/training-mock";
 import { shortStatusLabel, fullStatusLabel } from "@/lib/status-labels";
@@ -27,10 +28,10 @@ const FILTERS: Array<"All" | TrainingStatus> = [
   "Cancelled",
 ];
 
-const STATS: { Icon: LucideIcon; label: string; value: string }[] = [
-  { Icon: Calendar,      label: "Scheduled",   value: TRAININGS.filter((t) => t.status === "Scheduled").length.toString() },
-  { Icon: Users,         label: "In Progress", value: TRAININGS.filter((t) => t.status === "In Progress").length.toString() },
-  { Icon: GraduationCap, label: "Completed",   value: TRAININGS.filter((t) => t.status === "Completed").length.toString() },
+const STATS: { key: string; label: string; value: string }[] = [
+  { key: "scheduled",   label: "Scheduled",   value: TRAININGS.filter((t) => t.status === "Scheduled").length.toString() },
+  { key: "inProgress",  label: "In Progress", value: TRAININGS.filter((t) => t.status === "In Progress").length.toString() },
+  { key: "completed",   label: "Completed",   value: TRAININGS.filter((t) => t.status === "Completed").length.toString() },
 ];
 
 export default function TrainingsIndex() {
@@ -48,19 +49,10 @@ export default function TrainingsIndex() {
       count={TRAININGS.length}
       searchPlaceholder="Search by title, cluster, facilitator"
     >
-      <section className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-        {STATS.map((s) => (
-          <div key={s.label} className="card rounded-2xl p-3 flex items-center gap-3">
-            <span className="h-9 w-9 rounded-md bg-[var(--color-edify-soft)]/80 text-[var(--color-edify-primary)] grid place-items-center">
-              <s.Icon size={15} />
-            </span>
-            <div>
-              <div className="text-caption muted font-bold uppercase tracking-wide">{s.label}</div>
-              <div className="text-[18px] font-extrabold tabular">{s.value}</div>
-            </div>
-          </div>
-        ))}
-      </section>
+      <MetricStrip
+        columns="grid-cols-1 sm:grid-cols-3"
+        metrics={STATS.map((s) => ({ key: s.key, label: s.label, value: s.value }))}
+      />
 
       {/* Filter chips */}
       <div className="flex flex-wrap items-center gap-1.5">

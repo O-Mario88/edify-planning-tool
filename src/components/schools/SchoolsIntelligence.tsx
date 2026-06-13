@@ -31,6 +31,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { MetricStrip, type MetricCell } from "@/components/ui/MetricStrip";
 import {
   type SchoolRow,
   type Priority,
@@ -540,40 +541,30 @@ function StrugglingCard({
 
 // ───────────────────────── Shared bits ──────────────────────────
 
+const BAND_TONE: Record<"success" | "warning" | "danger" | "info" | "neutral", MetricCell["tone"]> = {
+  danger:  "alert",
+  warning: "alert",
+  success: "good",
+  info:    "default",
+  neutral: "default",
+};
+
 function BandStrip({
   items,
 }: {
   items: Array<{ label: string; value: number; tone: "success" | "warning" | "danger" | "info" | "neutral" }>;
 }) {
   return (
-    <ul className="grid grid-cols-4 gap-2">
-      {items.map((it) => (
-        <li
-          key={it.label}
-          className={cn(
-            "premium-card p-2.5 flex flex-col gap-0.5",
-            it.tone === "danger"  && "border-[var(--border-danger)]",
-            it.tone === "warning" && "border-[var(--border-warn)]",
-            it.tone === "success" && "border-[var(--border-success)]",
-            it.tone === "info"    && "border-[var(--border-info)]",
-          )}
-        >
-          <span className="text-[10px] uppercase tracking-[0.06em] font-extrabold text-[var(--text-muted)] truncate">
-            {it.label}
-          </span>
-          <span className={cn(
-            "text-[20px] font-extrabold tabular num-hero leading-none",
-            it.tone === "danger"  && "text-[#fca5a5]",
-            it.tone === "warning" && "text-[#fcd34d]",
-            it.tone === "success" && "text-[#6ee7b7]",
-            it.tone === "info"    && "text-[var(--brand-info)]",
-            it.tone === "neutral" && "text-[var(--text-primary)]",
-          )}>
-            {it.value}
-          </span>
-        </li>
-      ))}
-    </ul>
+    <MetricStrip
+      bare
+      columns="grid-cols-4"
+      metrics={items.map((it) => ({
+        key: it.label,
+        label: it.label,
+        value: it.value,
+        tone: BAND_TONE[it.tone],
+      }))}
+    />
   );
 }
 

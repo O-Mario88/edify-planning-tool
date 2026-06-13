@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Network, CheckCircle2 } from "lucide-react";
+import { MetricStrip, type MetricCell } from "@/components/ui/MetricStrip";
 import { cn } from "@/lib/utils";
 
 export function ClusterReadinessCard({
@@ -24,6 +25,14 @@ export function ClusterReadinessCard({
   const total = clustered + unclustered + review;
   const pct = total > 0 ? Math.round((clustered / total) * 100) : 0;
 
+  const cells: MetricCell[] = [
+    { key: "clustered", label: "Clustered", value: clustered, tone: "good" },
+    { key: "unclustered", label: "Unclustered", value: unclustered, tone: "alert" },
+    ...(review > 0
+      ? [{ key: "review", label: "Needs review", value: review } as MetricCell]
+      : []),
+  ];
+
   return (
     <div className="card rounded-2xl p-4 space-y-4">
       <div className="flex items-center justify-between gap-2">
@@ -33,28 +42,11 @@ export function ClusterReadinessCard({
         <Network className="h-4 w-4 text-[var(--color-edify-primary)]" />
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
-        <div className="rounded-xl border border-[var(--color-edify-border)] px-3 py-2">
-          <div className="text-[18px] font-extrabold tabular tracking-tight text-emerald-500">
-            {clustered}
-          </div>
-          <div className="muted text-[11px]">Clustered</div>
-        </div>
-        <div className="rounded-xl border border-[var(--color-edify-border)] px-3 py-2">
-          <div className="text-[18px] font-extrabold tabular tracking-tight text-rose-500">
-            {unclustered}
-          </div>
-          <div className="muted text-[11px]">Unclustered</div>
-        </div>
-        {review > 0 ? (
-          <div className="rounded-xl border border-[var(--color-edify-border)] px-3 py-2">
-            <div className="text-[18px] font-extrabold tabular tracking-tight text-amber-500">
-              {review}
-            </div>
-            <div className="muted text-[11px]">Needs review</div>
-          </div>
-        ) : null}
-      </div>
+      <MetricStrip
+        bare
+        columns={review > 0 ? "grid-cols-3" : "grid-cols-2"}
+        metrics={cells}
+      />
 
       <div>
         <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--color-edify-soft)]">
