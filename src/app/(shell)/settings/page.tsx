@@ -222,12 +222,7 @@ export default async function SettingsPage() {
                 <div className="text-[11px] muted">last active just now</div>
               </div>
             </div>
-            <button
-              type="button"
-              className="text-[11.5px] font-semibold text-rose-700 hover:underline shrink-0"
-            >
-              Sign Out
-            </button>
+            <SignOutButton variant="light" fullWidth={false} className="shrink-0" />
           </div>
         </SectionCard>
 
@@ -262,7 +257,7 @@ export default async function SettingsPage() {
                   <div className="text-[11px] muted">Revokes every active session on your account</div>
                 </div>
               </div>
-              <SmallBtn tone="danger">Sign Out Everywhere</SmallBtn>
+              <SignOutButton variant="light" fullWidth={false} className="shrink-0 !border-rose-200 !text-rose-700" />
             </div>
           </div>
         </SectionCard>
