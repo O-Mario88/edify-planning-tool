@@ -9,6 +9,7 @@ import { AttentionStrip } from "@/components/team-targets/AttentionStrip";
 import { TargetRecoveryFocusTable } from "@/components/team-targets/TargetRecoveryFocusTable";
 import { TeamTargetsTabs, type TeamTargetsTab } from "@/components/team-targets/TeamTargetsTabs";
 import { OperatingTargetsView } from "@/components/operating-targets/OperatingTargetsView";
+import { TargetsLive } from "@/components/targets/TargetsLive";
 import { cceoOperatingTargets, teamOperatingTargets } from "@/lib/operating-targets-mock";
 import { filterStaffForUser } from "@/lib/team-targets-mock";
 import { getCurrentUser, toCurrentUser } from "@/lib/auth";
@@ -106,6 +107,7 @@ export default async function TeamTargetsDashboard() {
 
   const teamTargetsSlot = (
     <>
+      <TargetsLive title="Team target progress" />
       <OperatingTargetsView data={teamData} />
 
       <section className="grid grid-cols-12 gap-4 items-start">

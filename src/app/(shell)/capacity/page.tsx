@@ -1,5 +1,6 @@
 import { ShieldAlert } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { CapacityLive } from "@/components/capacity/CapacityLive";
 import { getCurrentUser } from "@/lib/auth";
 import { DEMO_USERS } from "@/lib/auth";
 import { computeStaffCapacity, teamCapacityRollup } from "@/lib/planning/assignment-policy";
@@ -55,6 +56,10 @@ export default async function CapacityPage() {
         subtitle={`How many schools each staff member can directly support this FY. At the limit, new school support shifts to partners. ${canSet ? "You can set limits." : "View only — only CD / IA can change limits."}`}
       />
       <div className="px-3 sm:px-4 md:px-6 pt-2 pb-24 space-y-4">
+      {/* The caller's own direct-support capacity — live from the backend
+          (/assignment/capacity). The full staff roster below is the planning
+          overview (no all-staff capacity endpoint yet). */}
+      <CapacityLive />
       {!canSet && (
         <div className="card p-3 flex items-center gap-2 text-[12px] text-amber-700 bg-amber-50 border-amber-200">
           <ShieldAlert size={14} /> Setting limits is restricted to Country Director and Impact Assessment.

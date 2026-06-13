@@ -5,6 +5,7 @@ import { OperatingTargetsView, OperatingTargetsPageHeader } from "@/components/o
 import { CommandStack } from "@/components/actions/CommandStack";
 import { StaffPartnerMonitoring } from "@/components/partner/StaffPartnerMonitoring";
 import { cceoOperatingTargets, plOperatingTargets } from "@/lib/operating-targets-mock";
+import { TargetsLive } from "@/components/targets/TargetsLive";
 import { getCurrentUser } from "@/lib/auth";
 import { getFilterScope } from "@/lib/filters/scope-service";
 import { WorkloadContextCallout } from "@/components/performance/WorkloadContextCallout";
@@ -45,6 +46,7 @@ export default async function MyTargetsPage() {
         <OperatingTargetsPageHeader data={cceoOperatingTargets} scope={scope} />
         <div className="px-4 sm:px-5 md:px-6 pb-24 md:pb-6 space-y-4">
           <CommandStack user={user} />
+          <TargetsLive title="My target progress" />
           {me && contributions ? (
             <WorkloadContextCallout
               staffName={user.name}
@@ -71,6 +73,7 @@ export default async function MyTargetsPage() {
         <OperatingTargetsPageHeader data={plOperatingTargets} scope={scope} />
         <div className="px-4 sm:px-5 md:px-6 pb-24 md:pb-6 space-y-4">
           <CommandStack user={user} />
+          <TargetsLive title="My team-lead target progress" />
           <StaffPartnerMonitoring />
           <OperatingTargetsView data={plOperatingTargets} />
         </div>
