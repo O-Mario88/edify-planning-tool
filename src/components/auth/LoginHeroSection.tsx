@@ -169,16 +169,22 @@ function GlassFeatureCard() {
     },
   ];
   return (
-    <div className="rounded-2xl border border-white/15 bg-white/[.06] backdrop-blur-md p-5">
-      <div className="grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-white/10">
+    <div className="rounded-2xl border border-white/15 bg-white/[.06] backdrop-blur-md p-4 sm:p-5">
+      {/* 2×2 on mobile + tablet (titles like "Close tasks with Salesforce" get
+          room to wrap); 4 divided columns only at lg where the hero is wide
+          enough. min-w-0 + break-words keep text inside its own column. */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-4 lg:gap-x-0">
         {features.map((f, i) => (
-          <div key={f.key} className={`px-2 ${i === 0 ? "md:pl-0" : "md:pl-4"} ${i === features.length - 1 ? "md:pr-0" : "md:pr-4"} py-3 md:py-0`}>
-            <div className="w-9 h-9 rounded-full bg-white/[.10] border border-white/15 grid place-items-center text-white">
+          <div
+            key={f.key}
+            className={`min-w-0 lg:px-4 ${i === 0 ? "lg:pl-0" : "lg:border-l lg:border-white/10"} ${i === features.length - 1 ? "lg:pr-0" : ""}`}
+          >
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/[.10] border border-white/15 grid place-items-center text-white shrink-0">
               {f.icon}
             </div>
-            <div className="mt-3">
-              <div className="text-[13px] font-bold leading-tight">{f.title}</div>
-              <div className="text-[11.5px] text-white/65 leading-snug mt-1.5">{f.body}</div>
+            <div className="mt-2.5 sm:mt-3 min-w-0">
+              <div className="text-[12.5px] sm:text-[13px] font-bold leading-tight break-words">{f.title}</div>
+              <div className="text-[11px] sm:text-[11.5px] text-white/65 leading-snug mt-1.5 break-words">{f.body}</div>
             </div>
           </div>
         ))}
