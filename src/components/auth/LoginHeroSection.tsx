@@ -14,7 +14,7 @@ import { formatMetricNumber, type LoginHeroMetrics } from "@/lib/auth-metrics";
 // LoginHeroMetrics — never hardcoded.
 export function LoginHeroSection({ metrics }: { metrics: LoginHeroMetrics }) {
   return (
-    <section className="relative min-h-screen md:h-screen overflow-hidden text-white isolate bg-[#0a1623]">
+    <section className="relative min-h-screen lg:h-screen overflow-hidden text-white isolate bg-[#0a1623]">
       {/* Real Edify field photo as the hero backdrop. The next/image fill
           variant lets it cover at any viewport size; the layered gradients
           above keep the white headline + glass cards legible.
@@ -67,9 +67,11 @@ export function LoginHeroSection({ metrics }: { metrics: LoginHeroMetrics }) {
           </div>
 
 
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[.07] px-3 py-1.5 text-[12px] font-semibold text-white/90">
-            <Users size={13} className="text-white/80" />
-            Smarter planning. Stronger schools. Greater impact.
+          <div className="w-full flex justify-center">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[.07] px-3 py-1.5 text-[12px] font-semibold text-white/90 text-center">
+              <Users size={13} className="text-white/80 shrink-0" />
+              Smarter planning. Stronger schools. Greater impact.
+            </div>
           </div>
         </div>
 
@@ -95,8 +97,10 @@ export function LoginHeroSection({ metrics }: { metrics: LoginHeroMetrics }) {
           <GlassFeatureCard />
         </div>
 
-        {/* Floating stats — DATABASE-DRIVEN */}
-        <div className="mt-8 md:mt-auto relative">
+        {/* Floating stats — DATABASE-DRIVEN. Fixed, comfortable gap below the
+            feature card on mobile + tablet; only auto-pushed to the bottom on
+            large screens where the hero height is fixed. */}
+        <div className="mt-6 sm:mt-8 lg:mt-auto relative">
           {/* Two comfortable columns on mobile + tablet; the decorative bar
               chart only joins as a third column on large screens where there's
               room, so the stat cards never get squeezed below ~160px. */}
