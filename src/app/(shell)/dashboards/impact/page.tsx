@@ -1,6 +1,7 @@
 import { CommandStack } from "@/components/actions/CommandStack";
 import { DashboardPageHeader } from "@/components/dashboards/DashboardPageHeader";
 import { DashboardGreetingHero } from "@/components/dashboards/DashboardGreetingHero";
+import { CountryAnalyticsLive } from "@/components/analytics/CountryAnalyticsLive";
 import { TodayCommandCenter } from "@/components/command/TodayCommandCenter";
 import { DonorImpactReachCard } from "@/components/director/DonorImpactReachCard";
 import { getDonorMetricSnapshot } from "@/lib/donor-metrics";
@@ -64,6 +65,9 @@ export default async function ImpactDashboard() {
             {/* GREETING HERO — system-wide layout rule: header → hero →
                 stats → work. */}
             <DashboardGreetingHero user={user} />
+
+            {/* Live program snapshot (backend analytics) — the IA's M&E numbers. */}
+            <CountryAnalyticsLive />
 
             {/* Vital signs — the statistics snapshot, directly below the
                 hero: five KPIs + cluster quality + system insights. */}

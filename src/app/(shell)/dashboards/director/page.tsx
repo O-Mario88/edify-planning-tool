@@ -1,6 +1,7 @@
 import { CommandStack } from "@/components/actions/CommandStack";
 import { DashboardPageHeader } from "@/components/dashboards/DashboardPageHeader";
 import { DashboardGreetingHero } from "@/components/dashboards/DashboardGreetingHero";
+import { CountryAnalyticsLive } from "@/components/analytics/CountryAnalyticsLive";
 import { TodayCommandCenter } from "@/components/command/TodayCommandCenter";
 import { DonorImpactReachCard } from "@/components/director/DonorImpactReachCard";
 import { ScheduleBudgetCard } from "@/components/budget/ScheduleBudgetCard";
@@ -88,6 +89,9 @@ export default async function CountryDirectorDashboard() {
             stats → work. "Good morning, [CD]. Here is the country
             execution, budget, and impact picture for today." */}
         <DashboardGreetingHero user={user} />
+
+        {/* Live program snapshot (backend analytics) — real KPIs + activity pipeline. */}
+        <CountryAnalyticsLive />
 
         {/* COUNTRY MISSION SNAPSHOT + KPI ROW — the program statistics
             band, directly below the hero and before any work content. */}

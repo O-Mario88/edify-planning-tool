@@ -2,6 +2,7 @@ import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { FundApprovalsHeader } from "@/components/approvals/FundApprovalsHeader";
 import { FundApprovalsKpiRow } from "@/components/approvals/FundApprovalsKpiRow";
 import { FundApprovalQueue } from "@/components/approvals/FundApprovalQueue";
+import { FundApprovalQueueLive } from "@/components/funds/FundApprovalQueueLive";
 import { FundPlanDetail } from "@/components/approvals/FundPlanDetail";
 import {
   ApprovalRulesCard,
@@ -123,6 +124,10 @@ export default async function FundApprovalsPage({
       <FundApprovalsKpiRow />
 
       <div className="px-3 sm:px-4 lg:px-6 pb-3 space-y-3 lg:space-y-4">
+        {/* Live fund-request approval queue (backend) — real submitted requests
+            routed to this approver. The richer plan workbench below stays mock. */}
+        <FundApprovalQueueLive />
+
         {/* Responsive layout for the approvals workbench:
             • Mobile + tablet (< xl): queue is full width and each row
               expands inline, so PLs/Accountants can review and act on

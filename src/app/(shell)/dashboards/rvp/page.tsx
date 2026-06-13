@@ -24,6 +24,7 @@ import { RecruitmentIntelligenceCard } from "@/components/analytics/RecruitmentI
 import { ClientVerificationCard } from "@/components/ssa/ClientVerificationCard";
 import { DashboardPageHeader } from "@/components/dashboards/DashboardPageHeader";
 import { DashboardGreetingHero } from "@/components/dashboards/DashboardGreetingHero";
+import { CountryAnalyticsLive } from "@/components/analytics/CountryAnalyticsLive";
 import { SectionCard, StatusBadge, ProgressRing } from "@/components/ui/primitives";
 import { MetricStrip } from "@/components/ui/MetricStrip";
 import { countryRollups, specialProjects } from "@/lib/workflow-mock";
@@ -85,6 +86,9 @@ export default async function RVPDashboard() {
 
       {/* GREETING HERO — system-wide layout rule: header → hero → stats → work. */}
       <DashboardGreetingHero user={rawUser} />
+
+      {/* Live program snapshot (backend analytics). */}
+      <CountryAnalyticsLive />
 
       {/* REGIONAL SIGNALS — the statistics snapshot, directly below the
           hero: region-weighted KPIs, system insights, training coverage. */}
