@@ -14,10 +14,6 @@ import { CdRiskSummaryCard } from "@/components/escalation/CdRiskSummaryCard";
 import { MissionSnapshotStrip } from "@/components/director/MissionSnapshotStrip";
 import { StaffPerformanceSummary } from "@/components/director/StaffPerformanceSummary";
 import { PartnerPerformanceSummary } from "@/components/director/PartnerPerformanceSummary";
-import { TrainingCoverageCard } from "@/components/director/TrainingCoverageCard";
-import { allClusterTrainingPlans } from "@/lib/plan-builder-engine";
-import { PlanScheduleByWeek } from "@/components/planning/PlanScheduleByWeek";
-import { planItems, cceoPlanItems } from "@/lib/mobile-mock";
 import {
   CountryPerformanceChart,
   RegionalPerformanceCard,
@@ -55,7 +51,7 @@ import { RecruitmentIntelligenceCard } from "@/components/analytics/RecruitmentI
 //      why and a recommended action on every row
 //   B. Country Mission Snapshot — are we achieving the mission?
 //   C. Budget & Fund Request Health — is money matching approved plans?
-//   D. Program Execution — are teams executing the plan?
+//   D. Program Execution — is the program on track? (analytics only)
 //   E. SSA & Intervention Improvement — are schools improving?
 //   F. Staff & Partner Performance — are people delivering / overloaded?
 //   G. Recruitment Recommendation — expand or focus?
@@ -137,13 +133,16 @@ export default async function CountryDirectorDashboard() {
           </section>
         </section>
 
-        {/* D. PROGRAM EXECUTION — are teams executing the plan? */}
+        {/* D. PROGRAM EXECUTION — monitoring only, via analytics. The CD
+            does not plan: the activity-plan schedule + training-coverage
+            (plan) cards were removed; what remains is the trend, regional
+            comparison, and cluster-operations health. */}
         <section className="space-y-3">
           <SectionHeader
             tier="strategic"
             eyebrow="Program execution"
-            title="Are teams executing the plan?"
-            description="Country-wide trend, regional comparison, cluster operations, training coverage against SSA gaps, and the 30-day plan horizon."
+            title="Is the program on track?"
+            description="Country-wide trend, regional comparison, and cluster operations — monitored through analytics, not field planning."
           />
           <section className="grid grid-cols-12 gap-3 items-stretch">
             <div className="col-span-12 lg:col-span-8">
@@ -154,13 +153,6 @@ export default async function CountryDirectorDashboard() {
             </div>
           </section>
           <ClusterOperationsCard scope="country" />
-          <TrainingCoverageCard audience="cd" clusterPlans={allClusterTrainingPlans()} />
-          <PlanScheduleByWeek
-            items={[...planItems, ...cceoPlanItems]}
-            audience="leadership"
-            title="30-day plan horizon — country"
-            initialExpanded="first"
-          />
         </section>
 
         {/* E. SSA & INTERVENTION IMPROVEMENT — are schools improving?

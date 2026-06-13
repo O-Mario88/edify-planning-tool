@@ -35,12 +35,8 @@ import { InsightStrip } from "@/components/insights/InsightCard";
 import { insightsForRvp } from "@/lib/insights";
 import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { RvpMobileView } from "@/components/mobile/views/RvpMobileView";
-import { TrainingCoverageCard } from "@/components/director/TrainingCoverageCard";
 import { DonorImpactReachCard } from "@/components/director/DonorImpactReachCard";
 import { getDonorMetricSnapshot } from "@/lib/donor-metrics";
-import { allClusterTrainingPlans } from "@/lib/plan-builder-engine";
-import { PlanScheduleByWeek } from "@/components/planning/PlanScheduleByWeek";
-import { planItems, cceoPlanItems } from "@/lib/mobile-mock";
 import { getCurrentUser, toCurrentUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { ROLE_REDIRECT } from "@/lib/auth-public";
@@ -97,7 +93,7 @@ export default async function RVPDashboard() {
           tier="strategic"
           eyebrow="Regional signals"
           title="What's happening across the region"
-          description="Region-weighted scale numbers, what the system is noticing this period, and whether training is covering the SSA gaps."
+          description="Region-weighted scale numbers and what the system is noticing this period."
         />
       <MetricStrip
         metrics={[
@@ -112,7 +108,6 @@ export default async function RVPDashboard() {
       />
 
       <InsightStrip insights={insightsForRvp()} />
-      <TrainingCoverageCard audience="rvp" clusterPlans={allClusterTrainingPlans()} />
       </section>
 
       {/* TODAY — the work stack. */}
@@ -304,19 +299,14 @@ export default async function RVPDashboard() {
         <DonorImpactReachCard snapshot={donorSnapshot} />
       </section>
 
-      {/* PLAN & CONTEXT — regional plan horizon + cycle/impact/recognition. */}
+      {/* CONTEXT — cycle/impact/recognition. The activity-plan horizon
+          card was removed: the RVP monitors via analytics, not planning. */}
       <section className="space-y-3">
         <SectionHeader
           tier="strategic"
-          eyebrow="Plan & context"
-          title="What's coming and what's working"
-          description="Regional activity-plan horizon, the annual cycle, leadership-impact snapshot, top performers, and team-target rollups."
-        />
-        <PlanScheduleByWeek
-          items={[...planItems, ...cceoPlanItems]}
-          audience="leadership"
-          title="Regional plan horizon — activity wave"
-          initialExpanded="first"
+          eyebrow="Context"
+          title="What's working across the region"
+          description="The annual cycle, leadership-impact snapshot, top performers, and team-target rollups."
         />
         <AnnualCycleCallout variant="rvp" />
         <LeadershipImpactSnapshot variant="rvp" />
