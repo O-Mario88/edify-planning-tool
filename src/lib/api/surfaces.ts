@@ -803,9 +803,18 @@ export function backendCreateSchool(user: BackendUser, body: {
   schoolId: string; name: string; regionId: string; districtId: string;
   subCountyId?: string; parishId?: string; shippingAddress?: string;
   schoolPhone?: string; primaryContactName?: string; primaryContactPhone?: string;
-  enrollment?: number; accountOwnerName?: string;
+  enrollment?: number; accountOwnerName?: string; schoolType?: string;
 }) {
   return live<{ id: string; schoolId: string }>(`/schools`, user, { method: "POST", body: JSON.stringify(body) });
+}
+/** Change a school's type (Client → Core → Champion). Moves it on/off the core dashboard. */
+export function backendSetSchoolType(user: BackendUser, schoolId: string, schoolType: string) {
+  return live<{ schoolId: string; name: string; schoolType: string }>(`/schools/${encodeURIComponent(schoolId)}/type`, user, { method: "POST", body: JSON.stringify({ schoolType }) });
+}
+export type BeSchoolProposal = { schoolId: string; name: string; district: string | null; schoolType: string; latestSsa: number | null };
+/** Best-SSA client schools → potential Core; best-SSA core schools → potential Champion. */
+export function fetchSchoolProposals(user: BackendUser) {
+  return live<{ potentialCore: BeSchoolProposal[]; potentialChampion: BeSchoolProposal[] }>(`/schools/proposals`, user);
 }
 export function backendUploadSsa(user: BackendUser, body: {
   schoolId: string; dateOfSsa: string; newEnrollment?: number;

@@ -33,7 +33,17 @@ import { getIntakeTemplate } from "@/lib/intake/intake-templates";
 import { validateIntakeValues } from "@/lib/intake/intake-validate";
 import { addIntakeRecords } from "@/lib/intake/intake-records-mock";
 import { isBackendEnabled, type BackendUser } from "@/lib/api/backend";
-import { backendCreateSchool, backendUploadSsa, fetchDistricts, fetchSubCounties } from "@/lib/api/surfaces";
+import { backendCreateSchool, backendUploadSsa, backendSetSchoolType, fetchDistricts, fetchSubCounties } from "@/lib/api/surfaces";
+
+// FE school-type label → backend SchoolType enum key.
+const SCHOOL_TYPE_TO_BACKEND: Record<string, string> = {
+  Client: "client",
+  Core: "core",
+  "Potential Core": "potential_core",
+  Champion: "champion",
+  "Potential Champion": "potential_champion",
+  Other: "other",
+};
 
 // FE SSA display label → backend SsaIntervention enum key. The 8 areas map 1:1.
 const SSA_AREA_TO_BACKEND: Record<string, string> = {
@@ -124,6 +134,7 @@ export async function createSchool(input: NewSchoolInput): Promise<IntakeResult>
         districtId: geo.districtId,
         subCountyId: geo.subCountyId,
         enrollment,
+        schoolType: SCHOOL_TYPE_TO_BACKEND[input.schoolType] ?? "client",
         accountOwnerName: input.assignedCceo,
       });
       if (!r.live && r.error) {
@@ -583,6 +594,43 @@ export async function resolveDuplicate(
   revalidatePath("/data-intake/duplicates");
   revalidatePath("/data-intake");
   return { ok: true, id, status };
+}
+
+// ─── 8. changeSchoolType (Client → Core → Champion) ─────────────────
+//
+// Editing a school's type promotes/demotes it across the dashboards: setting
+// it to Core moves it onto the Core School dashboard (and increases the core
+// count); Champion marks a graduated core school. Backend-first; the system
+// proposes potential Core (best client SSA) / Champion (best core SSA) via
+// fetchSchoolProposals.
+
+const SCHOOL_TYPE_ROLES = new Set<string>([...DATA_INTAKE_ROLES, "CountryDirector", "CountryProgramLead", "CCEO"]);
+
+export type ChangeTypeResult =
+  | { ok: false; reason: "FORBIDDEN" | "INVALID_INPUT" | "FAILED"; message?: string }
+  | { ok: true; schoolId: string; schoolType: string };
+
+export async function changeSchoolType(schoolId: string, label: string): Promise<ChangeTypeResult> {
+  const user = await getCurrentUser();
+  if (!SCHOOL_TYPE_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+  const beType = SCHOOL_TYPE_TO_BACKEND[label];
+  if (!beType) return { ok: false, reason: "INVALID_INPUT" };
+
+  if (isBackendEnabled()) {
+    const r = await backendSetSchoolType(beUser(user), schoolId, beType);
+    if (!r.live) return { ok: false, reason: "FAILED", message: r.error ?? "Could not change the school type." };
+  }
+  // The backend is the source of truth for school type; the directory + core
+  // dashboard read it live, so no mock mirror is needed here.
+
+  emitAudit({
+    action: "intake.schoolTypeChanged", subjectKind: "School", subjectId: schoolId,
+    actorId: user.staffId, actorRole: user.role, actorName: user.name,
+    payload: { schoolType: label },
+  });
+  revalidateIntakeSurfaces(schoolId);
+  try { revalidatePath("/core-schools"); revalidatePath("/schools"); } catch { /* outside request */ }
+  return { ok: true, schoolId, schoolType: beType };
 }
 
 function revalidateIntakeSurfaces(schoolId?: string) {

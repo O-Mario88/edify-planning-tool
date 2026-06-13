@@ -62,7 +62,7 @@ export type IntakeSchoolLite = {
   lastEnrollmentDate?: string;
 };
 
-const SCHOOL_TYPES: SchoolType[] = ["Client", "Core", "Potential Core", "Other"];
+const SCHOOL_TYPES: SchoolType[] = ["Client", "Core", "Champion", "Potential Core", "Potential Champion", "Other"];
 const EMPTY_SCORES = Object.fromEntries(SSA_INTERVENTION_AREAS.map((a) => [a, ""])) as Record<SsaInterventionArea, string>;
 
 export function IaIntakeActions({ schools, existingIds }: { schools: IntakeSchoolLite[]; existingIds: string[] }) {
@@ -333,7 +333,7 @@ function NewSchoolDrawer({ open, onClose, existingIds, initialMode = "manual" }:
               <Select label="District *" placeholder={form.region ? "Select district" : "Pick a region first"} value={form.district}
                 error={errors.district} disabled={!form.region} options={districtOptions}
                 onChange={(e) => { set("district", e.target.value); set("subCounty", ""); }} />
-              <Select label="Partner type *" value={form.schoolType}
+              <Select label="School type *" value={form.schoolType}
                 options={SCHOOL_TYPES.map((t) => ({ value: t, label: t }))}
                 onChange={(e) => set("schoolType", e.target.value as SchoolType)} />
             </div>

@@ -31,7 +31,7 @@ export const SSA_INTERVENTION_AREAS = [
 
 export type SsaInterventionArea = (typeof SSA_INTERVENTION_AREAS)[number];
 
-export type SchoolType = "Client" | "Core" | "Potential Core" | "Other";
+export type SchoolType = "Client" | "Core" | "Potential Core" | "Champion" | "Potential Champion" | "Other";
 
 /** FY id ("2026") for an SSA/intake date — Oct 1 starts the next FY. */
 export function deriveFyFromDate(iso: string): string {
