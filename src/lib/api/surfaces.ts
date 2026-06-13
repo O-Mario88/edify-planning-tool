@@ -625,6 +625,11 @@ export type BeFundRequest = {
   submittedBy: string; submittedByRole: string; totalAmount: number; activityCount: number;
   status: "submitted" | "approved" | "returned" | "rejected" | "disbursed";
   reviewedAt?: string | null; reviewNote?: string | null; createdAt: string;
+  // Disbursement + accountability (the back half of the money pipeline).
+  disbursedAmount?: number | null; disbursedAt?: string | null; disburseMethod?: string | null; disburseReference?: string | null;
+  accountedAmount?: number | null; returnedAmount?: number | null;
+  accountabilityStatus?: "none" | "submitted" | "approved" | "returned" | null;
+  accountabilityNetsuiteId?: string | null; accountabilitySubmittedAt?: string | null; accountabilityReviewedAt?: string | null;
   // Present on the list (whether YOU may act) and detail (the costed breakdown).
   canReview?: boolean;
   breakdown?: { total: number; count: number; activities: BeFundActivityCost[] } | null;
@@ -637,6 +642,11 @@ export function fetchFundRequest(user: BackendUser, id: string) {
 }
 export function reviewFundRequest(user: BackendUser, id: string, action: "approve" | "return" | "reject", note?: string) {
   return live<BeFundRequest>(`/fund-requests/${encodeURIComponent(id)}/${action}`, user, { method: "POST", body: JSON.stringify({ note }) });
+}
+/** Generic fund-request action — review (approve/return/reject), disburse,
+ *  account, account-approve, account-return. Body passed straight through. */
+export function backendFundAction(user: BackendUser, id: string, action: string, body?: Record<string, unknown>) {
+  return live<BeFundRequest>(`/fund-requests/${encodeURIComponent(id)}/${action}`, user, { method: "POST", body: JSON.stringify(body ?? {}) });
 }
 
 // ── Activities — generic scoped list (IA queue, etc.; My Plan uses
