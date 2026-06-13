@@ -89,8 +89,11 @@ export async function assignSchoolToProjectAction(
   projectId: string,
 ): Promise<ProjectActionResult<{ projectName: string }>> {
   const user = await getCurrentUser();
+  // Assigning (nominating) a school to a project is NOT the same as managing the
+  // project — the account owner (CCEO) puts their school forward; the Project
+  // Coordinator who manages the project then plans delivery. So any project role,
+  // CCEO included, may assign regardless of the project's category.
   if (!PROJECT_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
-  if (!canManageProjectById(user.role, projectId)) return { ok: false, reason: "FORBIDDEN" };
 
   // Spine gate: a special project assignment is real planning work, so
   // the school must be plannable (clustered + SSA done). Otherwise the
@@ -138,8 +141,9 @@ export async function assignSchoolsToProjectAction(
   projectId: string,
 ): Promise<ProjectActionResult<{ assigned: number; skipped: number }>> {
   const user = await getCurrentUser();
+  // Assignment ≠ management — a CCEO may nominate their schools into any project
+  // (the Project Coordinator plans delivery). See assignSchoolToProjectAction.
   if (!PROJECT_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
-  if (!canManageProjectById(user.role, projectId)) return { ok: false, reason: "FORBIDDEN" };
   if (!schoolIds.length) return { ok: false, reason: "FAILED", message: "Select at least one school." };
 
   let assigned = 0;

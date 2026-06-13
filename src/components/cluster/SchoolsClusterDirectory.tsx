@@ -9,15 +9,10 @@
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import {
-  Building2, MapPin, User, Search, Network, ArrowRight, CheckCircle2, AlertTriangle,
-  Sparkles, Handshake, Settings2, X, ChevronDown, ChevronRight, Phone, UserCircle2,
-  Calendar, AlertCircle,
+  Building2, MapPin, User, Search, Network, CheckCircle2, AlertTriangle,
+  Sparkles, Handshake, X, ChevronDown, ChevronRight, Phone, UserCircle2,
+  Calendar, AlertCircle, Users, Briefcase,
 } from "lucide-react";
-import {
-  ScheduleActivityDrawer,
-  type ScheduleActivityContext,
-  type ScheduleActivityOutcome,
-} from "@/components/planning/ScheduleActivityDrawer";
 import { cn } from "@/lib/utils";
 import { DirectoryClusterDrawer, type DirectorySchoolVM } from "./DirectoryClusterDrawer";
 import type { DirectoryProjectTag } from "./DirectoryClusterDrawer";
@@ -66,7 +61,6 @@ export function SchoolsClusterDirectory({
   partnerOptions?: string[];
   interventionAreas?: string[];
 }) {
-  const isCceoPl = userRole === "CCEO" || userRole === "CountryProgramLead";
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<StageFilter>("all");
   const [district, setDistrict] = useState("");
@@ -80,8 +74,6 @@ export function SchoolsClusterDirectory({
   const [toast, setToast] = useState<string | null>(null);
   // Per-row expansion — tracks which school ids are expanded.
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
-  // Schedule-visit drawer (CCEO/PL quick-schedule from directory).
-  const [schedCtx, setSchedCtx] = useState<ScheduleActivityContext | null>(null);
 
   // Bulk selection
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -122,16 +114,6 @@ export function SchoolsClusterDirectory({
       const n = new Set(prev);
       if (n.has(id)) n.delete(id); else n.add(id);
       return n;
-    });
-  }
-
-  function openScheduleDrawer(s: DirectorySchoolVM) {
-    setSchedCtx({
-      target: { kind: "school", id: s.schoolId, name: s.schoolName },
-      activityType: "School visit",
-      isTraining: false,
-      defaultProposedBy: userName ? `${userName} (CCEO)` : "CCEO",
-      locationLine: [s.district, s.subCounty].filter(Boolean).join(" · "),
     });
   }
 
@@ -342,53 +324,41 @@ export function SchoolsClusterDirectory({
                     )}
                   </div>
                 </div>
-                {/* ── Role-based action buttons ── */}
+                {/* ── Directory actions — the directory does exactly two things:
+                    assign the school to a CLUSTER and to a PROJECT. Scheduling /
+                    partner assignment happen on the Planning page (after the
+                    school is clustered), not here. ── */}
                 <div className="shrink-0 flex flex-col items-end gap-1.5">
-                  {isClustered ? (
-                    /* Clustered: greyed out, link to planning page */
-                    <Link
-                      href="/planning"
-                      className="inline-flex items-center gap-1 h-7 px-2.5 rounded-lg border border-[var(--color-edify-border)] bg-white text-[11px] font-semibold text-[var(--color-edify-muted)] hover:text-[var(--color-edify-text)] transition-colors"
-                    >
-                      <Calendar size={10} /> View in Planning
-                    </Link>
-                  ) : isCceoPl && canManage ? (
-                    /* CCEO / PL on unclustered school */
+                  {canManage && (
                     <div className="flex items-center gap-1.5">
                       <button
                         type="button"
-                        onClick={() => openScheduleDrawer(s)}
-                        className="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg bg-[var(--color-edify-primary)] text-white text-[11.5px] font-extrabold hover:bg-[var(--color-edify-dark)] transition-colors"
+                        onClick={() => openDrawer(s, "cluster")}
+                        className={cn(
+                          "inline-flex items-center gap-1 h-8 px-2.5 rounded-lg text-[11.5px] font-extrabold transition-colors whitespace-nowrap",
+                          isClustered
+                            ? "border border-[var(--color-edify-border)] bg-white text-[var(--color-edify-muted)] hover:text-[var(--color-edify-text)]"
+                            : "bg-[var(--color-edify-primary)] text-white hover:bg-[var(--color-edify-dark)]",
+                        )}
                       >
-                        <Calendar size={11} /> Schedule
+                        <Users size={11} /> {isClustered ? "Clustered" : "Add to Cluster"}
                       </button>
                       <button
                         type="button"
-                        onClick={() => openDrawer(s, "partner")}
-                        className="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg border border-[var(--color-edify-border)] bg-white text-[11.5px] font-semibold text-sky-700 hover:bg-sky-50 transition-colors"
+                        onClick={() => openDrawer(s, "project")}
+                        className="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg border border-[var(--color-edify-border)] bg-white text-[11.5px] font-semibold text-violet-700 hover:bg-violet-50 transition-colors whitespace-nowrap"
                       >
-                        <Handshake size={11} /> Assign to Partner
+                        <Briefcase size={11} /> Assign to Project
                       </button>
                     </div>
-                  ) : canManage ? (
-                    /* Other roles (CD, IA, Admin) on unclustered school */
-                    <button
-                      type="button"
-                      onClick={() => openDrawer(s, "cluster")}
-                      className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-[var(--color-edify-primary)] text-white text-[11.5px] font-extrabold hover:bg-[var(--color-edify-dark)] transition-colors"
+                  )}
+                  {isClustered && (
+                    <Link
+                      href="/planning"
+                      className="inline-flex items-center gap-1 text-[11px] font-semibold muted hover:text-[var(--color-edify-text)] transition-colors"
                     >
-                      Assign <ArrowRight size={12} />
-                    </button>
-                  ) : null}
-                  {/* Manage gear — always visible to authorised viewers */}
-                  {canManage && (
-                    <button
-                      type="button"
-                      onClick={() => openDrawer(s, "cluster")}
-                      className="inline-flex items-center gap-1 text-[11px] font-semibold muted hover:text-[var(--color-edify-text)]"
-                    >
-                      <Settings2 size={11} /> Manage
-                    </button>
+                      <Calendar size={10} /> View in Planning
+                    </Link>
                   )}
                 </div>
               </div>
@@ -461,17 +431,6 @@ export function SchoolsClusterDirectory({
         projectOptions={projectOptions}
         partnerOptions={partnerOptions}
         interventionAreas={interventionAreas}
-      />
-
-      {/* Schedule-visit drawer — opened from [Schedule] button on unclustered school rows (CCEO/PL) */}
-      <ScheduleActivityDrawer
-        open={!!schedCtx}
-        context={schedCtx}
-        onClose={() => setSchedCtx(null)}
-        onSubmit={(outcome: ScheduleActivityOutcome) => {
-          showToast(`Visit scheduled: ${outcome.date}`);
-          setSchedCtx(null);
-        }}
       />
 
       {toast && (
