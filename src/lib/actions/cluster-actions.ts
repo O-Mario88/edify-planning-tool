@@ -42,7 +42,27 @@ import { partners } from "@/lib/partner/partner-mock";
 import { getCurrentPartner } from "@/lib/partner/partner-identity";
 import { markJoinedThroughCluster, type ClusterJoinSourceType } from "@/lib/cluster/cluster-join-source";
 import { isBackendEnabled } from "@/lib/api/backend";
-import { backendAssignCluster, backendCreateClusterFromSchool, backendCreateActivity } from "@/lib/api/surfaces";
+import { backendAssignCluster, backendCreateClusterFromSchool, backendCreateActivity, backendCreateCluster, fetchDistricts, fetchSubCounties } from "@/lib/api/surfaces";
+
+// Resolve mock geography NAMES (district + sub-counties, as the create form
+// collects them) to the backend's geography IDs so a new cluster persists to
+// Postgres. Returns null when the backend is off or the names don't match.
+async function resolveBackendGeography(
+  user: { email: string; role: string },
+  districtName: string,
+  subCountyNames: string[],
+): Promise<{ regionId: string; districtId: string; subCountyIds: string[] } | null> {
+  const dRes = await fetchDistricts(backendUserFor(user));
+  if (!dRes.live) return null;
+  const district = dRes.data.find((d) => d.name.toLowerCase() === districtName.toLowerCase());
+  if (!district) return null;
+  const scRes = await fetchSubCounties(backendUserFor(user), district.id);
+  if (!scRes.live) return null;
+  const subCountyIds = subCountyNames
+    .map((n) => scRes.data.find((s) => s.name.toLowerCase() === n.toLowerCase())?.id)
+    .filter((id): id is string => !!id);
+  return { regionId: district.regionId, districtId: district.id, subCountyIds };
+}
 
 // ClusterMeetingKind → backend ActivityType + explicit cluster slot. SIT is a
 // school-improvement training tagged to the cluster's SIT slot; the three
@@ -224,6 +244,37 @@ export async function createEmptyClusterAction(
   if (!actor) return { ok: false, reason: "FORBIDDEN" };
   const v = validateNewCluster(input);
   if (!v.ok) return { ok: false, reason: "INVALID_INPUT", errors: v.errors };
+
+  // ── Backend-first: persist to Postgres so the new cluster shows up in the
+  // backend-fetched cluster directory (/api/clusters). Resolve the form's
+  // district/sub-county NAMES to backend geography IDs first. ──
+  if (isBackendEnabled()) {
+    const user = await getCurrentUser();
+    const geo = await resolveBackendGeography(backendUserFor(user), input.district, input.subCounties);
+    if (geo && geo.subCountyIds.length) {
+      const res = await backendCreateCluster(backendUserFor(user), {
+        name: input.name,
+        regionId: geo.regionId,
+        districtId: geo.districtId,
+        subCountyIds: geo.subCountyIds,
+        clusterLeaderName: input.clusterLeaderName,
+        clusterLeaderPhone: input.clusterLeaderPhone,
+      });
+      if (res.live) {
+        emitAudit({
+          action: "cluster.created", subjectKind: "Cluster", subjectId: res.data.id,
+          actorId: actor.name, actorRole: actor.role, actorName: actor.name,
+          payload: { name: res.data.name, district: input.district, backend: true },
+        });
+        revalidateClusterSurfaces();
+        return { ok: true, clusterId: res.data.id, clusterName: res.data.name };
+      }
+      // backend create failed (e.g. duplicate sub-county cluster) — surface it
+      if (res.error) return { ok: false, reason: "FAILED", message: res.error };
+    }
+    // geo unresolved → fall through to the in-memory store (keeps dev working)
+  }
+
   const cluster = createCluster(input, actor);
   emitAudit({
     action: "cluster.created",
