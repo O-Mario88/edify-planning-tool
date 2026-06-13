@@ -228,7 +228,7 @@ export function DirectoryClusterDrawer({
       open={open}
       onClose={close}
       title={`Manage ${school.schoolName}`}
-      description="Assign to a cluster, tag into a special project, or delegate to a partner. Ownership stays with the account owner."
+      description="Assign to a cluster or tag into a special project. Ownership stays with the account owner."
       size="md"
       variant="sheet"
     >
@@ -246,11 +246,12 @@ export function DirectoryClusterDrawer({
           <div className="muted inline-flex items-center gap-1"><User size={10} />{school.assignedCceo ?? "Unassigned"}</div>
         </div>
 
-        {/* Top-level tabs */}
-        <div className="grid grid-cols-3 gap-1 p-1 rounded-lg bg-[var(--color-edify-soft)]/50">
+        {/* Top-level tabs — the directory does exactly two things: assign to a
+            CLUSTER and to a PROJECT. Partner delegation moved to the Planning
+            page (Assign to Partner), so there's no Partner tab here. */}
+        <div className="grid grid-cols-2 gap-1 p-1 rounded-lg bg-[var(--color-edify-soft)]/50">
           <TopTab active={tab === "cluster"} onClick={() => { setTab("cluster"); setError(null); }} Icon={Network} label="Cluster" />
           <TopTab active={tab === "project"} onClick={() => { setTab("project"); setError(null); }} Icon={Sparkles} label="Special project" count={projects.length} />
-          <TopTab active={tab === "partner"} onClick={() => { setTab("partner"); setError(null); }} Icon={Handshake} label="Partner" count={delegations.length} />
         </div>
 
         {/* ── CLUSTER TAB ── */}
