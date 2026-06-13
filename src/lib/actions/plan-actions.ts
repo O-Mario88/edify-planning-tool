@@ -14,6 +14,16 @@
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/auth";
 import { emitAudit, emitNotification, emitNotificationFanOut } from "./audit";
+import { isBackendEnabled, type BackendUser } from "@/lib/api/backend";
+import { backendCreatePlan, backendAddPlanActivity, backendPlanAction, type BePlanActivity } from "@/lib/api/surfaces";
+
+const bePlanUser = (u: { email: string; role: string }): BackendUser => ({ email: u.email, role: u.role });
+// FE DraftActivity → backend plan-activity body.
+const toBePlanActivity = (a: { kind: string; title: string; weekOfMonth?: number; scheduledDate?: string; schoolId?: string; estCostCents?: number; interventionArea?: string; deliveryType?: string; partnerName?: string }): BePlanActivity => ({
+  kind: a.kind, title: a.title, weekOfMonth: a.weekOfMonth, scheduledDate: a.scheduledDate,
+  schoolId: a.schoolId, estCostCents: a.estCostCents, interventionArea: a.interventionArea,
+  deliveryType: a.deliveryType, partnerName: a.partnerName,
+});
 import {
   type ActivityKind,
   type PlanRecord,
@@ -77,8 +87,15 @@ export async function createPlan(monthIso: string): Promise<PlanActionResult> {
     return { ok: false, reason: "DUPLICATE" };
   }
   const now = new Date().toISOString();
+  // Backend-first: persist the plan to Postgres and adopt its id as the
+  // canonical plan id, so submit/approve transitions hit the same backend row.
+  let planId = newId("plan");
+  if (isBackendEnabled()) {
+    const r = await backendCreatePlan(bePlanUser(user), { monthIso });
+    if (r.live) planId = r.data.id;
+  }
   const plan: PlanRecord = {
-    id: newId("plan"),
+    id: planId,
     authorId: user.staffId,
     authorName: user.name,
     countryId: "Uganda", // single-country MVP; resolved from user in prod
@@ -159,6 +176,8 @@ export async function addActivityToPlan(
   };
   activitiesStore().push(activity);
   recomputePlanTotal(planId);
+  // Persist the line to the backend plan (planId is the backend id).
+  if (isBackendEnabled()) await backendAddPlanActivity(bePlanUser(user), planId, toBePlanActivity({ ...draft, title: activity.title })).catch(() => undefined);
 
   emitAudit({
     action: "plan.activity.added",
@@ -210,9 +229,23 @@ export async function createPlanWithActivities(
   let plan = plansStore().find(
     (p) => p.authorId === user.staffId && p.monthIso === monthIso && (p.status === "Draft" || p.status === "Returned"),
   );
+  // Backend-first: for a NEW plan, create it in Postgres WITH its activities in
+  // one call and adopt the backend id (so submit/approve hit the same row).
+  let backendPlanId: string | undefined;
+  if (!plan && isBackendEnabled()) {
+    const beActs = drafts
+      .filter((d) => d.title && d.title.trim().length >= 3)
+      .map((d) => toBePlanActivity({
+        ...d, title: d.title.trim(),
+        weekOfMonth: d.weekOfMonth >= 1 && d.weekOfMonth <= 5 ? d.weekOfMonth : 1,
+        estCostCents: Math.max(0, Math.round(d.estCostCents)),
+      }));
+    const r = await backendCreatePlan(bePlanUser(user), { monthIso, activities: beActs });
+    if (r.live) backendPlanId = r.data.id;
+  }
   if (!plan) {
     plan = {
-      id: newId("plan"),
+      id: backendPlanId ?? newId("plan"),
       authorId: user.staffId,
       authorName: user.name,
       countryId: "Uganda",
@@ -426,6 +459,8 @@ export async function submitPlan(planId: string): Promise<PlanActionResult> {
 
   const now = new Date().toISOString();
   updatePlan(planId, { status: "SubmittedForApproval", submittedAt: now });
+  // Persist the transition to the backend (the plan id IS the backend id).
+  if (isBackendEnabled()) await backendPlanAction(bePlanUser(user), planId, "submit").catch(() => undefined);
 
   emitAudit({
     action: "plan.submitted",
@@ -480,6 +515,7 @@ export async function approvePlan(planId: string): Promise<PlanActionResult & { 
     approvedAt: now,
     approvedById: user.staffId,
   });
+  if (isBackendEnabled()) await backendPlanAction(bePlanUser(user), planId, "approve").catch(() => undefined);
 
   emitAudit({
     action: "plan.approved",
@@ -544,6 +580,7 @@ export async function returnPlan(planId: string, reason: string): Promise<PlanAc
   }
 
   updatePlan(planId, { status: "Returned", returnedReason: reason.trim() });
+  if (isBackendEnabled()) await backendPlanAction(bePlanUser(user), planId, "return", { reason: reason.trim() }).catch(() => undefined);
 
   emitAudit({
     action: "plan.returned",

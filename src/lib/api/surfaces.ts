@@ -760,6 +760,34 @@ export function fetchClusterSchools(user: BackendUser, clusterId: string) {
   );
 }
 
+// ── Monthly plan lifecycle (backend writes + reads) ─────────────────
+export type BePlanActivity = {
+  kind: string; title: string; weekOfMonth?: number; scheduledDate?: string | null;
+  schoolId?: string | null; estCostCents?: number; interventionArea?: string | null;
+  deliveryType?: string | null; partnerName?: string | null;
+};
+export type BeMonthlyPlan = {
+  id: string; monthIso: string; ownerStaffId: string; ownerName?: string | null;
+  status: string; totalCostCents: number; activityCount?: number;
+  submittedAt?: string | null; approvedAt?: string | null; returnedReason?: string | null;
+  activities?: (BePlanActivity & { id: string })[];
+};
+export function fetchPlans(user: BackendUser) {
+  return live<BeMonthlyPlan[]>(`/planning/plans`, user);
+}
+export function fetchPlan(user: BackendUser, id: string) {
+  return live<BeMonthlyPlan>(`/planning/plans/${encodeURIComponent(id)}`, user);
+}
+export function backendCreatePlan(user: BackendUser, body: { monthIso: string; activities?: BePlanActivity[] }) {
+  return live<BeMonthlyPlan>(`/planning/plans`, user, { method: "POST", body: JSON.stringify(body) });
+}
+export function backendAddPlanActivity(user: BackendUser, planId: string, body: BePlanActivity) {
+  return live<{ id: string }>(`/planning/plans/${encodeURIComponent(planId)}/activities`, user, { method: "POST", body: JSON.stringify(body) });
+}
+export function backendPlanAction(user: BackendUser, planId: string, action: "submit" | "approve" | "return", body?: Record<string, unknown>) {
+  return live<BeMonthlyPlan>(`/planning/plans/${encodeURIComponent(planId)}/${action}`, user, { method: "POST", body: JSON.stringify(body ?? {}) });
+}
+
 // ── Data intake (Add School + Upload SSA) — backend writes ──────────
 export function backendCreateSchool(user: BackendUser, body: {
   schoolId: string; name: string; regionId: string; districtId: string;
