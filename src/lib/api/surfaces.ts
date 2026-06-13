@@ -760,6 +760,22 @@ export function fetchClusterSchools(user: BackendUser, clusterId: string) {
   );
 }
 
+// ── Data intake (Add School + Upload SSA) — backend writes ──────────
+export function backendCreateSchool(user: BackendUser, body: {
+  schoolId: string; name: string; regionId: string; districtId: string;
+  subCountyId?: string; parishId?: string; shippingAddress?: string;
+  schoolPhone?: string; primaryContactName?: string; primaryContactPhone?: string;
+  enrollment?: number; accountOwnerName?: string;
+}) {
+  return live<{ id: string; schoolId: string }>(`/schools`, user, { method: "POST", body: JSON.stringify(body) });
+}
+export function backendUploadSsa(user: BackendUser, body: {
+  schoolId: string; dateOfSsa: string; newEnrollment?: number;
+  scores: { intervention: string; score: number }[];
+}) {
+  return live<{ id: string; averageScore?: number }>(`/ssa`, user, { method: "POST", body: JSON.stringify(body) });
+}
+
 // ── Partners (for assignment pickers — real backend partner IDs) ────
 export type BePartner = {
   id: string; name: string; isCertified: boolean;

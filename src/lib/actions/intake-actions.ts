@@ -32,6 +32,44 @@ import type { IntakeSchool } from "@/lib/intake/intake-mock";
 import { getIntakeTemplate } from "@/lib/intake/intake-templates";
 import { validateIntakeValues } from "@/lib/intake/intake-validate";
 import { addIntakeRecords } from "@/lib/intake/intake-records-mock";
+import { isBackendEnabled, type BackendUser } from "@/lib/api/backend";
+import { backendCreateSchool, backendUploadSsa, fetchDistricts, fetchSubCounties } from "@/lib/api/surfaces";
+
+// FE SSA display label → backend SsaIntervention enum key. The 8 areas map 1:1.
+const SSA_AREA_TO_BACKEND: Record<string, string> = {
+  "Christlike Behaviour": "christlike_behaviour",
+  "Exposure to the Word of God": "exposure_to_word_of_god",
+  "Fees/Budget and Accounts": "financial_health",
+  "Government Requirement": "government_requirements",
+  "Leadership Best Practice": "leadership",
+  "Learning Environment": "learning_environment",
+  "Teaching Environment": "teaching_and_learning",
+  "Education Technology": "education_technology",
+};
+
+// Resolve a school's region/district/sub-county NAMES to backend geography IDs
+// (the create-school DTO needs regionId + districtId). Returns null if the
+// district name doesn't match a backend district (caller falls back to mock).
+async function resolveSchoolGeography(
+  user: BackendUser,
+  districtName: string,
+  subCountyName?: string,
+): Promise<{ regionId: string; districtId: string; subCountyId?: string } | null> {
+  const dRes = await fetchDistricts(user);
+  if (!dRes.live) return null;
+  const district = dRes.data.find((d) => d.name.toLowerCase() === districtName.toLowerCase());
+  if (!district) return null;
+  let subCountyId: string | undefined;
+  if (subCountyName) {
+    const scRes = await fetchSubCounties(user, district.id);
+    if (scRes.live) subCountyId = scRes.data.find((s) => s.name.toLowerCase() === subCountyName.toLowerCase())?.id;
+  }
+  return { regionId: district.regionId, districtId: district.id, subCountyId };
+}
+
+function beUser(u: { email: string; role: string }): BackendUser {
+  return { email: u.email, role: u.role };
+}
 
 export type IntakeResult<T = { id: string }> =
   | ({ ok: true } & T)
@@ -71,6 +109,28 @@ export async function createSchool(input: NewSchoolInput): Promise<IntakeResult>
 
   const enrollment =
     input.enrollment === undefined || input.enrollment === "" ? undefined : Number(input.enrollment);
+
+  // ── Backend-first: persist the school master record to Postgres (POST
+  // /schools). Resolve district/sub-county names → backend geography IDs. On a
+  // backend error (e.g. duplicate schoolId) surface it; otherwise mirror into
+  // the in-memory store so the FE's mock-reading intake surfaces stay in sync. ──
+  if (isBackendEnabled()) {
+    const geo = await resolveSchoolGeography(beUser(user), input.district, input.subCounty);
+    if (geo) {
+      const r = await backendCreateSchool(beUser(user), {
+        schoolId: input.schoolId.trim(),
+        name: input.schoolName.trim(),
+        regionId: geo.regionId,
+        districtId: geo.districtId,
+        subCountyId: geo.subCountyId,
+        enrollment,
+        accountOwnerName: input.assignedCceo,
+      });
+      if (!r.live && r.error) {
+        return { ok: false, reason: "INVALID_INPUT", errors: { schoolId: `Backend rejected: ${r.error}` } };
+      }
+    }
+  }
 
   const row = addIntakeSchool({
     schoolId: input.schoolId.trim(),
@@ -240,6 +300,27 @@ export async function uploadSsaPerformance(input: SsaUploadInput): Promise<
   const averageScore = ssaAverage(input.scores as Partial<Record<SsaInterventionArea, number>>);
   const newEnrollment =
     input.newEnrollment === undefined || input.newEnrollment === "" ? undefined : Number(input.newEnrollment);
+
+  // ── Backend-first: persist the SSA record + per-intervention scores to
+  // Postgres (POST /ssa). Maps the FE display labels → backend enum keys. This
+  // is what feeds the live SSA-driven recommendations (cluster dashboard,
+  // planning interventions). On a backend error, surface it. ──
+  if (isBackendEnabled()) {
+    const beScores = Object.entries(input.scores)
+      .map(([area, raw]) => ({ intervention: SSA_AREA_TO_BACKEND[area], score: Number(raw) }))
+      .filter((s) => s.intervention && Number.isFinite(s.score));
+    if (beScores.length >= 8) {
+      const r = await backendUploadSsa(beUser(user), {
+        schoolId: input.schoolId,
+        dateOfSsa: new Date(input.ssaDate).toISOString(),
+        newEnrollment,
+        scores: beScores,
+      });
+      if (!r.live && r.error) {
+        return { ok: false, reason: "INVALID_INPUT", errors: { schoolId: `Backend rejected: ${r.error}` } };
+      }
+    }
+  }
 
   const row = addSsaUpload({
     id: newId("ssaup"),
