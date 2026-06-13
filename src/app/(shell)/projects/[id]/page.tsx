@@ -20,6 +20,8 @@ import { specialProjects, type ProjectStatus } from "@/lib/special-projects-mock
 import { computeProjectImpact, projectVsNonProject } from "@/lib/projects/project-impact";
 import { recommendSchoolsForProject } from "@/lib/projects/project-eligibility";
 import { activitiesForProject } from "@/lib/projects/project-activities";
+import { ProjectMonitorLive } from "@/components/special-projects/ProjectMonitorLive";
+import { getCurrentUser } from "@/lib/auth";
 
 const STATUS_BADGE: Record<ProjectStatus, { tone: "green" | "amber" | "rose" | "violet" | "edify"; label: string }> = {
   "Draft":                 { tone: "edify",  label: "Draft" },
@@ -43,6 +45,7 @@ export default async function ProjectDetail({ params }: { params: Promise<{ id: 
   const { id } = await params;
   const project = specialProjects.find((p) => p.projectId === id);
   if (!project) return notFound();
+  const currentUserRole = (await getCurrentUser()).role;
 
   const impact = computeProjectImpact(id);
   const comparison = projectVsNonProject(id);
@@ -61,6 +64,10 @@ export default async function ProjectDetail({ params }: { params: Promise<{ id: 
       Icon={Sparkles}
       badge={STATUS_BADGE[project.status]}
     >
+      {/* Backend-driven monitoring: assigned schools (plan/assign), intervention
+          improvement, and partner delivery — the Project Coordinator's live view. */}
+      <ProjectMonitorLive projectId={project.projectId} role={currentUserRole} />
+
       {/* Intervention mapping — the project's link to the SSA diagnostic */}
       <section className="card p-3.5">
         <h3 className="text-[13px] font-extrabold tracking-tight inline-flex items-center gap-1.5">

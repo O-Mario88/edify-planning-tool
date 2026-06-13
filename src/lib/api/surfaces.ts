@@ -579,6 +579,25 @@ export function fetchSpecialProjects(user: BackendUser) {
 export function fetchProjectDetail(user: BackendUser, id: string) {
   return live<BeProjectDetail>(`/special-projects/${encodeURIComponent(id)}`, user);
 }
+// ── Project impact (intervention improvement) + partner monitoring ──
+export type BeProjectImpact = {
+  projectId: string; name: string; intervention?: string | null;
+  schoolCount: number; measuredCount: number; improvedCount: number; avgDelta: number | null;
+  schools: { schoolId: string; name: string; baseline: number | null; latest: number | null; delta: number | null; ssaCount: number }[];
+};
+export type BeProjectPartner = { id: string; name: string; isCertified: boolean; certificationStatus?: string | null; activityTotal: number; activityCompleted: number };
+export function fetchProjectImpact(user: BackendUser, id: string) {
+  return live<BeProjectImpact>(`/special-projects/${encodeURIComponent(id)}/impact`, user);
+}
+export function fetchProjectPartners(user: BackendUser, id: string) {
+  return live<BeProjectPartner[]>(`/special-projects/${encodeURIComponent(id)}/partners`, user);
+}
+export function assignProjectPartner(user: BackendUser, projectId: string, partnerId: string) {
+  return live<{ ok: boolean }>(`/special-projects/${encodeURIComponent(projectId)}/partners`, user, { method: "POST", body: JSON.stringify({ partnerId }) });
+}
+export function removeProjectPartner(user: BackendUser, projectId: string, partnerId: string) {
+  return live<{ ok: boolean }>(`/special-projects/${encodeURIComponent(projectId)}/partners/${encodeURIComponent(partnerId)}`, user, { method: "DELETE" });
+}
 // Assignment write paths — `projectId` may be the backend cuid OR the business
 // code (e.g. "SP-EDTECH"); the backend resolves either. `schoolId` is the
 // business School-Directory id; the backend rejects anything not in the Directory.
