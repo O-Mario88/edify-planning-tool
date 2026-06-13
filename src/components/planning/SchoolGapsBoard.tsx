@@ -126,10 +126,14 @@ export function SchoolGapsBoard({
   assigningUserRole = "CountryProgramLead",
   extraGaps = [],
   liveGaps = false,
+  boardKind = "client",
 }: {
   /** True when extraGaps are real backend schools: suppress the seed mock and
    *  schedule through the live writer (POST /api/activities). */
   liveGaps?: boolean;
+  /** "client" (default) or "core" — drives the board title + the backend
+   *  activity types so core schools persist core_visit / core_training. */
+  boardKind?: "client" | "core";
   /**
    * Role of the user viewing the planning page. Forwarded to the
    * assign drawer so CCEOs see only the Partner owner option per the
@@ -143,8 +147,9 @@ export function SchoolGapsBoard({
    */
   extraGaps?: SchoolGap[];
 } = {}) {
+  const isCore = boardKind === "core";
   const [collapsed, setCollapsed] = useState<Record<SchoolGapCategory, boolean>>({
-    no_cluster: false, no_ssa: false, no_training: false, no_visit: true,
+    no_cluster: false, no_ssa: false, no_training: false, no_visit: isCore ? false : true,
   });
   const [assign, setAssign] = useState<{ school: SchoolGap; action: SchoolGapAction } | null>(null);
   // Add-to-cluster has its own drawer because the inputs are different
@@ -275,7 +280,7 @@ export function SchoolGapsBoard({
         schoolId: pending.school.id,
         schoolName: pending.school.schoolName,
         kind: "TRAINING_FOLLOW_UP",
-        backendActivityType: "school_improvement_training",
+        backendActivityType: isCore ? "core_training" : "school_improvement_training",
         dateIso: outcome.isoDate,
         deliveryType: outcome.partnerFacilitator ? "partner" : "staff",
         plannedMonth: monthOf(outcome.isoDate),
@@ -305,6 +310,7 @@ export function SchoolGapsBoard({
         schoolId: pending.school.id,
         schoolName: pending.school.schoolName,
         kind: "SCHOOL_VISIT",
+        backendActivityType: isCore ? "core_visit" : "school_visit",
         dateIso: outcome.isoDate,
         deliveryType: "staff",
         plannedMonth: monthOf(outcome.isoDate),
@@ -364,9 +370,11 @@ export function SchoolGapsBoard({
     <section className="card p-3.5">
       <header className="mb-3 flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-[16px] font-extrabold tracking-tight">Client school gaps</h2>
+          <h2 className="text-[16px] font-extrabold tracking-tight">{isCore ? "Core school gaps" : "Client school gaps"}</h2>
           <p className="text-[12px] muted mt-0.5">
-            Schools listed by gap, urgent first. Unclustered schools must join a cluster; clustered no-SSA schools activate SSA via SIT, a partner, or themselves — full planning unlocks once SSA completes.
+            {isCore
+              ? "Core schools listed by gap, urgent first. Schedule a core visit or training yourself, or assign delivery to a partner — every plan lands in My Plan."
+              : "Schools listed by gap, urgent first. Schedule a visit or training yourself, or assign delivery to a partner — every plan lands in My Plan."}
           </p>
         </div>
         {clusterOptions.length > 0 && (
@@ -522,7 +530,7 @@ export function SchoolGapsBoard({
         <ScheduleActivityLive
           schoolId={assignLive.id}
           schoolName={assignLive.schoolName}
-          schoolType="client"
+          schoolType={isCore ? "core" : "client"}
           mode="assign"
           assigningRole={assigningUserRole}
           intervention={assignLive.weakestArea?.area}

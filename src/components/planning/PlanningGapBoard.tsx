@@ -113,7 +113,7 @@ export function PlanningGapBoard({
         {activeTab === "clusters" && <ClusterGapsBoard assigningUserRole={normalizeRole(assigningUserRole)} gaps={clusterGaps} liveGaps={liveClusterGaps} />}
         {activeTab === "coreSchools" && (
           liveCoreGaps
-            ? <SchoolGapsBoard assigningUserRole={normalizeRole(assigningUserRole)} extraGaps={coreGaps} liveGaps />
+            ? <SchoolGapsBoard assigningUserRole={normalizeRole(assigningUserRole)} extraGaps={coreGaps} liveGaps boardKind="core" />
             : <CorePlanningAccordion cards={coreCards} viewer={coreViewer} canChampion={canChampion} />
         )}
       </div>
