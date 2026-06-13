@@ -67,14 +67,10 @@ export function LoginPanel() {
   return (
     <section className="flex h-screen items-center justify-center px-6 py-10 bg-[var(--color-page)]">
       <div className="w-full max-w-[440px] rounded-3xl border border-[var(--color-edify-border)] bg-white shadow-[0_24px_60px_rgba(15,23,32,0.10)] p-8">
-        {/* Brand */}
+        {/* Brand — logo only (the logo IS the edify wordmark). On this white
+            panel the full-colour logo is used. */}
         <div className="flex flex-col items-center text-center">
-          <div className="inline-flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-[var(--color-edify-soft)] grid place-items-center">
-              <Image src="/edify-logo.png" alt="Edify" width={26} height={11} className="object-contain" style={{ width: "auto", height: "auto" }} priority />
-            </div>
-            <span className="text-[28px] font-extrabold tracking-tight text-[var(--color-edify-primary)]">edify</span>
-          </div>
+          <Image src="/edify-logo.png" alt="Edify" width={77} height={32} className="object-contain" priority />
           <h1 className="text-[26px] font-extrabold tracking-tight mt-4 leading-none">Sign in</h1>
           <p className="text-body muted mt-1.5">Access your Edify account</p>
         </div>

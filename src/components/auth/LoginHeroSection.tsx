@@ -60,12 +60,10 @@ export function LoginHeroSection({ metrics }: { metrics: LoginHeroMetrics }) {
       <div className="relative h-full flex flex-col px-6 py-8 md:px-12 md:py-10">
         {/* Top: brand + pill */}
         <div className="flex flex-col items-start gap-6">
-          <div className="inline-flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-white/95 grid place-items-center shadow-lg shadow-black/20">
-              <Image src="/edify-logo.png" alt="Edify" width={36} height={15} className="object-contain" style={{ width: "auto", height: "auto" }} priority />
-            </div>
-            <div className="text-[44px] font-extrabold tracking-tight leading-none">edify</div>
-          </div>
+          {/* Brand — logo only (the logo IS the edify wordmark). On this dark
+              hero the white logo is used. */}
+          <Image src="/edify-logo-white.png" alt="Edify" width={106} height={44} className="object-contain drop-shadow-lg" priority />
+
 
           <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[.07] px-3 py-1.5 text-[12px] font-semibold text-white/90">
             <Users size={13} className="text-white/80" />
@@ -77,8 +75,13 @@ export function LoginHeroSection({ metrics }: { metrics: LoginHeroMetrics }) {
         <div className="mt-8 md:mt-10 max-w-[560px]">
           <h1 className="text-[30px] sm:text-[36px] md:text-[44px] leading-[1.1] md:leading-[1.05] font-extrabold tracking-tight">
             Welcome Back to{" "}
-            <span className="text-[var(--color-edify-primary)]">Edify</span>{" "}
-            Planning and Monitoring Tool.
+            <span
+              className="italic"
+              style={{ fontFamily: "'Times New Roman', Times, serif", color: "#8ec9ed", fontSize: "1.22em" }}
+            >
+              Edify Planning and Monitoring Tool
+            </span>
+            .
           </h1>
           <p className="mt-4 text-body-lg text-white/75 leading-relaxed max-w-[480px]">
             Plan smarter, serve schools better, and stay on top of your monthly targets.
