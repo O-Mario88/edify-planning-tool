@@ -6,6 +6,7 @@ import {
   Workflow,
   Sliders,
   ShieldCheck,
+  Lock,
   ChevronRight,
   UserPlus,
   KeyRound,
@@ -37,6 +38,7 @@ const SECTIONS: AdminSection[] = [
   { key: "workflows",  title: "Workflows",              body: "Approval routing, support reviews, escalation gates.",     href: "/admin/feature-flags",  Icon: Workflow,     iconBg: "bg-emerald-100", iconText: "text-emerald-700" },
   { key: "rules",      title: "Planning Rules",         body: "Holidays, blackouts, conference weeks, auto-blocking.",    href: "/leave",                Icon: Sliders,      iconBg: "bg-rose-100",    iconText: "text-rose-700"    },
   { key: "audit",      title: "Audit & Compliance",     body: "Sign-In trail, role changes, data exports, GDPR ledger.",  href: "/admin/audit-log",      Icon: ShieldCheck,  iconBg: "bg-slate-100",   iconText: "text-slate-700"   },
+  { key: "security",   title: "Security & Data Protection", body: "Live posture: auth, authz, audit-chain integrity, evidence, payment gates, backups.", href: "/admin/security", Icon: Lock, iconBg: "bg-rose-100", iconText: "text-rose-700" },
 ];
 
 type ActivityKind = "user" | "role" | "flag" | "audit" | "rollback";
