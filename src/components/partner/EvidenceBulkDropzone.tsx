@@ -16,7 +16,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Upload, FileText, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
 import { useDemoStore } from "@/components/demo/DemoStore";
-import { partnerUploadEvidence } from "@/lib/actions/partner-actions";
+import { csrfHeaders } from "@/lib/csrf-client";
 import { cn } from "@/lib/utils";
 
 // Each activity passed in is one the partner has marked Delivered and
@@ -38,6 +38,18 @@ type UploadEntry = {
 
 const MAX_FILE_BYTES = 25 * 1024 * 1024;
 
+// The backend's accepted evidence kinds (evidence.service VALID_KINDS).
+const EVIDENCE_KINDS: { value: string; label: string }[] = [
+  { value: "visit_form", label: "Visit form" },
+  { value: "attendance_form", label: "Attendance form" },
+  { value: "meeting_minutes", label: "Meeting minutes" },
+  { value: "assessment_form", label: "Assessment form" },
+  { value: "evaluation_form", label: "Evaluation form" },
+  { value: "school_stamp", label: "School stamp" },
+  { value: "photo", label: "Photo" },
+  { value: "project_report", label: "Project report" },
+];
+
 export function EvidenceBulkDropzone({
   eligibleActivities,
 }: {
@@ -45,6 +57,7 @@ export function EvidenceBulkDropzone({
 }) {
   const [over, setOver] = useState(false);
   const [activityId, setActivityId] = useState<string>(eligibleActivities[0]?.id ?? "");
+  const [kind, setKind] = useState<string>(EVIDENCE_KINDS[0].value);
   const [uploads, setUploads] = useState<UploadEntry[]>([]);
   const [pending, startTransition] = useTransition();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -84,34 +97,41 @@ export function EvidenceBulkDropzone({
     }));
     setUploads((prev) => [...startBatch, ...prev]);
 
-    // Fire one action call per accepted file. We don't batch into a
-    // single multipart call yet — that's the production swap, when
-    // we wire to S3 presigned-URL uploads.
+    // REAL multipart upload — one POST per file to /api/evidence/upload, the
+    // same backend path staff use. The file bytes are actually sent + persisted
+    // as an EvidenceRecord on the backend partner Activity, so the IA can open
+    // it from the verification queue. (Previously this sent only metadata.)
     startTransition(async () => {
+      let okCount = 0;
       for (let i = 0; i < list.length; i++) {
         const f = list[i];
         const localId = startBatch[i].id;
         if (f.size > MAX_FILE_BYTES) continue;
 
-        const res = await partnerUploadEvidence({
-          activityId,
-          filename: f.name,
-          contentLength: f.size,
-        });
+        let ok = false;
+        let message: string | undefined;
+        try {
+          const form = new FormData();
+          form.append("file", f, f.name);
+          form.append("activityId", activityId);
+          form.append("kind", kind);
+          const res = await fetch("/api/evidence/upload", {
+            method: "POST",
+            credentials: "include",
+            headers: { ...csrfHeaders() }, // no Content-Type — browser sets the multipart boundary
+            body: form,
+          });
+          const j = await res.json().catch(() => ({}));
+          ok = res.ok && j.live !== false && !j.error;
+          if (!ok) message = j.error || `Upload failed (${res.status})`;
+        } catch {
+          message = "Could not reach the server.";
+        }
+        if (ok) okCount += 1;
         setUploads((prev) =>
-          prev.map((u) =>
-            u.id === localId
-              ? {
-                  ...u,
-                  status: res.ok ? "ok" : "error",
-                  message: res.ok ? undefined : reasonFor(res),
-                  uri: res.ok ? res.uri : undefined,
-                }
-              : u,
-          ),
+          prev.map((u) => (u.id === localId ? { ...u, status: ok ? "ok" : "error", message } : u)),
         );
       }
-      const okCount = startBatch.filter((u) => u.status !== "error").length;
       if (okCount > 0) {
         pushToast({
           tone: "success",
@@ -121,14 +141,6 @@ export function EvidenceBulkDropzone({
       }
       router.refresh();
     });
-  }
-
-  function reasonFor(res: { ok: false; reason: string }): string {
-    if (res.reason === "FORBIDDEN") return "You don't have permission to upload here.";
-    if (res.reason === "NOT_FOUND") return "Activity no longer exists.";
-    if (res.reason === "INVALID_STATE") return "Activity isn't in Delivered state.";
-    if (res.reason === "INVALID_INPUT") return "File rejected by server.";
-    return res.reason;
   }
 
   return (
@@ -192,25 +204,37 @@ export function EvidenceBulkDropzone({
           <AlertCircle size={11} className="text-amber-600" />
           No activities awaiting evidence. Mark an activity Delivered first, then come back.
         </p>
-      ) : single ? (
-        <p className="text-caption muted">
-          Attaching to: <span className="font-semibold text-slate-800">{eligibleActivities[0].title}</span>
-          {" · "}
-          <span className="font-mono">{eligibleActivities[0].schoolId}</span>
-        </p>
       ) : (
-        <label className="inline-flex items-center gap-2 text-caption">
-          <span className="muted">Attach to:</span>
-          <select
-            value={activityId}
-            onChange={(e) => setActivityId(e.target.value)}
-            className="h-8 px-2 rounded-md border border-[var(--color-edify-border)] bg-white text-[11.5px] font-semibold"
-          >
-            {eligibleActivities.map((a) => (
-              <option key={a.id} value={a.id}>{a.title} · {a.schoolId}</option>
-            ))}
-          </select>
-        </label>
+        <div className="flex items-center gap-3 flex-wrap text-caption">
+          {single ? (
+            <p className="muted">Attaching to: <span className="font-semibold text-slate-800">{eligibleActivities[0].title}</span></p>
+          ) : (
+            <label className="inline-flex items-center gap-2">
+              <span className="muted">Attach to:</span>
+              <select
+                value={activityId}
+                onChange={(e) => setActivityId(e.target.value)}
+                className="h-8 px-2 rounded-md border border-[var(--color-edify-border)] bg-white text-[11.5px] font-semibold"
+              >
+                {eligibleActivities.map((a) => (
+                  <option key={a.id} value={a.id}>{a.title} · {a.schoolId}</option>
+                ))}
+              </select>
+            </label>
+          )}
+          <label className="inline-flex items-center gap-2">
+            <span className="muted">Evidence type:</span>
+            <select
+              value={kind}
+              onChange={(e) => setKind(e.target.value)}
+              className="h-8 px-2 rounded-md border border-[var(--color-edify-border)] bg-white text-[11.5px] font-semibold"
+            >
+              {EVIDENCE_KINDS.map((k) => (
+                <option key={k.value} value={k.value}>{k.label}</option>
+              ))}
+            </select>
+          </label>
+        </div>
       )}
 
       {/* Per-file outcome list. Last batch on top. */}

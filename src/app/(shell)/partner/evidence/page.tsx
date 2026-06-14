@@ -8,6 +8,7 @@ import { PartnerEvidenceRequired } from "@/components/partner/PartnerEvidenceReq
 import { PartnerEvidenceQualityPanel } from "@/components/partner/PartnerEvidenceQualityPanel";
 import { EvidenceBulkDropzone, type EligibleActivity } from "@/components/partner/EvidenceBulkDropzone";
 import { partnerActivities } from "@/lib/actions/store";
+import { fetchMyPartnerActivities } from "@/lib/api/surfaces";
 
 export const dynamic = "force-dynamic";
 
@@ -26,12 +27,21 @@ export default async function PartnerEvidencePage({
   if (!previewMode && !ALLOWED.has(user.role)) {
     redirect(ROLE_REDIRECT[user.role]);
   }
-  // Activities the current partner has marked Delivered are the ones
-  // eligible for evidence upload. In mock-mode we surface anything in
-  // Delivered status; production filters by partnerId === user.partnerId.
-  const eligible: EligibleActivity[] = partnerActivities()
-    .filter((a) => a.status === "Delivered")
-    .map((a) => ({ id: a.id, title: a.title, schoolId: a.schoolId }));
+  // Activities eligible for evidence upload = the partner's backend-assigned
+  // work that isn't yet IA-verified / evidence-accepted. Live from
+  // /partners/me/activities (the backend partner round-trip); the in-memory
+  // store is the offline fallback. The ids are real backend Activity ids, so
+  // the dropzone's POST /api/evidence/upload persists to that activity and the
+  // IA sees the file in the verification queue.
+  const TERMINAL = new Set(["ia_verified", "accountant_confirmed", "paid", "closed", "cancelled"]);
+  const live = await fetchMyPartnerActivities(user);
+  const eligible: EligibleActivity[] = live.live
+    ? live.data.activities
+        .filter((a) => a.evidenceStatus !== "accepted" && !TERMINAL.has(a.status))
+        .map((a) => ({ id: a.id, title: `${a.activityType.replace(/_/g, " ")} · ${a.schoolName ?? "—"}`, schoolId: a.schoolName ?? "" }))
+    : partnerActivities()
+        .filter((a) => a.status === "Delivered")
+        .map((a) => ({ id: a.id, title: a.title, schoolId: a.schoolId }));
   return (
     <>
       <PartnerSubPageHeader
