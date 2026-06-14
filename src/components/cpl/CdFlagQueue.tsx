@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Flag, Check, Eye } from "lucide-react";
+import { csrfHeaders } from "@/lib/csrf-client";
 
 // The PL's inbound "Flagged by your Country Director" queue. The CD monitors +
 // flags; the PL acts (plans/assigns through the normal planning workflow) and
@@ -33,7 +34,7 @@ export function CdFlagQueue() {
     setBusy(id);
     try {
       await fetch(`/api/flags/${id}`, {
-        method: "PATCH", headers: { "Content-Type": "application/json" }, credentials: "include",
+        method: "PATCH", headers: { "Content-Type": "application/json", ...csrfHeaders() }, credentials: "include",
         body: JSON.stringify({ action }),
       });
       load();

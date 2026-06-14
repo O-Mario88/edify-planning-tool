@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Upload, Loader2, FileText, Image as ImageIcon, Download, Eye, Check, X, Paperclip } from "lucide-react";
+import { csrfHeaders } from "@/lib/csrf-client";
 
 // EvidencePanel — the REAL, backend-backed evidence surface for an activity.
 // Upload a file (multipart → POST /api/evidence/upload → backend disk + DB),
@@ -65,7 +66,7 @@ export function EvidencePanel({ activityId, canReview = false }: { activityId: s
       form.append("file", file);
       form.append("activityId", activityId);
       form.append("kind", kind);
-      const res = await fetch("/api/evidence/upload", { method: "POST", body: form });
+      const res = await fetch("/api/evidence/upload", { method: "POST", headers: { ...csrfHeaders() }, body: form });
       const d = await res.json();
       if (!res.ok) { setError(d.error ?? "Upload failed."); return; }
       if (fileRef.current) fileRef.current.value = "";
@@ -83,7 +84,7 @@ export function EvidencePanel({ activityId, canReview = false }: { activityId: s
     setBusy(true);
     try {
       await fetch(`/api/evidence/${id}/review`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
+        method: "POST", headers: { "Content-Type": "application/json", ...csrfHeaders() },
         body: JSON.stringify({ action, note }),
       });
       if (preview?.id === id) setPreview(null);

@@ -25,6 +25,16 @@ function readCsrfTokenFromCookie(): string | null {
   return null;
 }
 
+// Header object carrying the CSRF token, for raw fetch() call sites that can't
+// use fetchJson (multipart uploads, fire-and-forget mutations, or existing
+// hand-rolled fetches). Spread into the request's headers:
+//   fetch(url, { method: "POST", headers: { "Content-Type": "application/json", ...csrfHeaders() }, body })
+// Returns {} when no token is present (SSR / no cookie) so it's always safe to spread.
+export function csrfHeaders(): Record<string, string> {
+  const token = readCsrfTokenFromCookie();
+  return token ? { [CSRF_HEADER_NAME]: token } : {};
+}
+
 export type FetchJsonOptions = Omit<RequestInit, "body" | "method"> & {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown; // JSON-serialised automatically

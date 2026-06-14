@@ -9,6 +9,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Wallet, CheckCircle2, Lock } from "lucide-react";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/DataStates";
 import { cn } from "@/lib/utils";
+import { csrfHeaders } from "@/lib/csrf-client";
 import type { BePaymentQueueRow } from "@/lib/api/surfaces";
 
 const titleCase = (s: string) => s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
@@ -32,7 +33,7 @@ export function AccountantQueueLive() {
   const clear = async (id: string) => {
     setBusy(id);
     try {
-      const res = await fetch(`/api/activities/${id}/clear-payment`, { method: "POST", credentials: "include" });
+      const res = await fetch(`/api/activities/${id}/clear-payment`, { method: "POST", credentials: "include", headers: { ...csrfHeaders() } });
       const j = await res.json();
       if (j.live) setRows((prev) => prev?.filter((r) => r.id !== id) ?? null);
       else setError(j.error || "Payment was rejected (verification incomplete)");

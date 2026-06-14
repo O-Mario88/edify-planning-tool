@@ -11,6 +11,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Wallet, CheckCircle2, RotateCcw, XCircle, ChevronDown, ChevronRight, Loader2 } from "lucide-react";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/DataStates";
 import { cn } from "@/lib/utils";
+import { csrfHeaders } from "@/lib/csrf-client";
 import type { BeFundRequest } from "@/lib/api/surfaces";
 
 const ugx = (n: number) => `UGX ${Math.round(n).toLocaleString()}`;
@@ -67,7 +68,7 @@ export function FundApprovalQueueLive({ canDisburse = false, canSubmit = false }
     setActionBusy(true); setActionErr(null);
     try {
       const res = await fetch(`/api/fund-requests/${r.id}/${action}`, {
-        method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}),
+        method: "POST", credentials: "include", headers: { "Content-Type": "application/json", ...csrfHeaders() }, body: JSON.stringify({}),
       });
       const j = await res.json();
       if (j.live) { setDetail((d) => { const n = { ...d }; delete n[r.id]; return n; }); load(); }
@@ -82,7 +83,7 @@ export function FundApprovalQueueLive({ canDisburse = false, canSubmit = false }
     setActionBusy(true); setSubmitMsg(null);
     try {
       const j = await fetch("/api/fund-requests", {
-        method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+        method: "POST", credentials: "include", headers: { "Content-Type": "application/json", ...csrfHeaders() },
         body: JSON.stringify({ period: "monthly" }),
       }).then((r) => r.json());
       if (j.live) { setSubmitMsg({ ok: true, text: "Monthly fund request submitted to your supervisor." }); load(); }

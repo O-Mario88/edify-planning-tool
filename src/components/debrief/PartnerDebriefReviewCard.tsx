@@ -9,6 +9,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Handshake, ChevronDown, GitMerge, Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { csrfHeaders } from "@/lib/csrf-client";
 import type { BeDebrief } from "@/lib/api/surfaces";
 import { LoadingState } from "@/components/ui/DataStates";
 
@@ -41,7 +42,7 @@ export function PartnerDebriefReviewCard() {
     setBusy(id); setError(null);
     try {
       const res = await fetch("/api/debriefs/merge", {
-        method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+        method: "POST", credentials: "include", headers: { "Content-Type": "application/json", ...csrfHeaders() },
         body: JSON.stringify({ partnerDebriefId: id, note }),
       });
       const j = await res.json();

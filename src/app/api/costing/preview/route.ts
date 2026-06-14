@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { backendCostPreview } from "@/lib/api/surfaces";
+import { enforceCsrf } from "@/lib/csrf";
 
 // Cost preview for the scheduling drawer — proxies to the backend CD Country
 // Cost Register so the drawer shows the OFFICIAL cost (+ cost-missing), never a
@@ -9,6 +10,7 @@ import { backendCostPreview } from "@/lib/api/surfaces";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
+  const csrf = enforceCsrf(req); if (csrf) return csrf;
   const user = await getCurrentUser();
   const body = await req.json().catch(() => ({} as Record<string, unknown>));
   const r = await backendCostPreview(

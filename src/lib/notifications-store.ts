@@ -6,6 +6,7 @@
 // the database has no notifications; never fabricated.
 
 import { useCallback, useEffect, useState } from "react";
+import { csrfHeaders } from "@/lib/csrf-client";
 import { adaptNotification, adaptCommandCenterItem, type Notification, type NotificationCounts, type BackendNotification, type CommandCenterItem } from "./notifications-types";
 
 type Snapshot = { list: Notification[]; counts: NotificationCounts };
@@ -87,7 +88,7 @@ export function markNotificationRead(id: string): void {
   // Command-center alerts have no backend row — dismiss locally (reappears next
   // reload if still unresolved). Only persist read-state for real notifications.
   if (id.startsWith("cc-")) { dismissedCc.add(id); return; }
-  void fetch(`/api/notifications/${encodeURIComponent(id)}/read`, { method: "PATCH", credentials: "include" }).catch(() => undefined);
+  void fetch(`/api/notifications/${encodeURIComponent(id)}/read`, { method: "PATCH", credentials: "include", headers: { ...csrfHeaders() } }).catch(() => undefined);
 }
 
 export function markAllNotificationsRead(): void {
@@ -95,7 +96,7 @@ export function markAllNotificationsRead(): void {
   const list = snapshot.list.map((n) => ({ ...n, unread: false }));
   snapshot = { list, counts: countsOf(list) };
   emit();
-  void fetch(`/api/notifications/mark-all-read`, { method: "PATCH", credentials: "include" }).catch(() => undefined);
+  void fetch(`/api/notifications/mark-all-read`, { method: "PATCH", credentials: "include", headers: { ...csrfHeaders() } }).catch(() => undefined);
 }
 
 export function useNotifications(): { list: Notification[]; counts: NotificationCounts; loading: boolean; error: string | null; reload: () => void } {

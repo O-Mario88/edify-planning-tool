@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { fetchProjectPartners, assignProjectPartner } from "@/lib/api/surfaces";
+import { enforceCsrf } from "@/lib/csrf";
 
 // Partners monitored on a project (GET) + assign a partner (POST). Backend.
 export const dynamic = "force-dynamic";
@@ -15,6 +16,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const csrf = enforceCsrf(req); if (csrf) return csrf;
   const { id } = await params;
   const user = await getCurrentUser();
   const body = await req.json().catch(() => ({}));

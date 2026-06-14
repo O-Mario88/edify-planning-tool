@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { activityAction } from "@/lib/api/surfaces";
+import { enforceCsrf } from "@/lib/csrf";
 
 // Activity row actions — the workflow state machine, backend-enforced.
 export const dynamic = "force-dynamic";
@@ -10,6 +11,7 @@ const ACTIONS = new Set([
 ]);
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string; action: string }> }) {
+  const csrf = enforceCsrf(req); if (csrf) return csrf;
   const { id, action } = await ctx.params;
   if (!ACTIONS.has(action)) {
     return NextResponse.json({ live: false, error: `Unknown action: ${action}` }, { status: 400 });

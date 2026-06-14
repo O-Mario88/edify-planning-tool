@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { backendFetch, isBackendEnabled } from "@/lib/api/backend";
+import { enforceCsrf } from "@/lib/csrf";
 
 // Thin server-side proxy for the Budget Intelligence & Financial Decision
 // Engine. The browser never sees the backend token — attached server-side and
@@ -28,6 +29,7 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ path?: stri
 }
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ path?: string[] }> }) {
+  const csrf = enforceCsrf(req); if (csrf) return csrf;
   const { path = [] } = await ctx.params;
   return proxy(req, path, "POST");
 }

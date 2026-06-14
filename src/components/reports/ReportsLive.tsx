@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { FileText, Loader2, Sparkles, ChevronDown } from "lucide-react";
+import { csrfHeaders } from "@/lib/csrf-client";
 
 // ReportsLive — generated, PERSISTED program reports straight from the backend.
 // "Generate" computes a snapshot from live program data (school counts, activity
@@ -78,7 +79,7 @@ export function ReportsLive() {
     try {
       const res = await fetch("/api/reports", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...csrfHeaders() },
         body: JSON.stringify({ type, fy: "2026" }),
       });
       const d = await res.json();

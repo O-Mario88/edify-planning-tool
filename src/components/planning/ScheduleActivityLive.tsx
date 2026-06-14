@@ -8,6 +8,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { CalendarPlus, X, Wallet, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { csrfHeaders } from "@/lib/csrf-client";
 
 const MONTHS = ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 // Edify FY quarters: Q1 Jul–Sep, Q2 Oct–Dec, Q3 Jan–Mar, Q4 Apr–Jun.
@@ -180,7 +181,7 @@ export function ScheduleActivityLive({
     setBusy(true); setError(null);
     try {
       const res = await fetch("/api/activities", {
-        method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+        method: "POST", credentials: "include", headers: { "Content-Type": "application/json", ...csrfHeaders() },
         body: JSON.stringify({
           activityType: realType,
           ...(isCluster ? { clusterId, ...(slot ? { clusterSlot: slot } : {}) } : { schoolId }),

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { fetchReports, generateReport } from "@/lib/api/surfaces";
+import { enforceCsrf } from "@/lib/csrf";
 
 // Generated, persisted program reports. GET lists; POST generates one from
 // live program data and persists it. Backend re-enforces ANALYTICS_VIEW.
@@ -15,6 +16,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const csrf = enforceCsrf(req); if (csrf) return csrf;
   const user = await getCurrentUser();
   const body = await req.json().catch(() => ({}));
   const type = typeof body?.type === "string" ? body.type : "program_summary";

@@ -9,6 +9,7 @@
 import { useEffect, useState } from "react";
 import { SlidersHorizontal, Check, Pencil, X, Plus, History, Loader2 } from "lucide-react";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/DataStates";
+import { csrfHeaders } from "@/lib/csrf-client";
 import type { BeCostSetting, BeCostHistoryRow } from "@/lib/api/surfaces";
 
 const ugx = (n: number) => `UGX ${n.toLocaleString()}`;
@@ -46,7 +47,7 @@ export function CostSettingsCard() {
     setSaving(true); setFormErr(null);
     try {
       const j = await fetch("/api/budget/cost-settings", {
-        method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+        method: "POST", credentials: "include", headers: { "Content-Type": "application/json", ...csrfHeaders() }, body: JSON.stringify(body),
       }).then((r) => r.json());
       if (j.live) { load(); return true; }
       setFormErr(j.error || "The change was rejected.");

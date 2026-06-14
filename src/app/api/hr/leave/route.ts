@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { fetchLeave, requestLeave } from "@/lib/api/surfaces";
+import { enforceCsrf } from "@/lib/csrf";
 
 // Leave requests. GET: HR/CD see all, a staffer sees their own (the backend
 // scopes by the caller's staff profile). POST: request leave. `canReview`
@@ -19,6 +20,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const csrf = enforceCsrf(req); if (csrf) return csrf;
   const user = await getCurrentUser();
   const body = await req.json().catch(() => ({}));
   if (!body?.startDate || !body?.endDate) {

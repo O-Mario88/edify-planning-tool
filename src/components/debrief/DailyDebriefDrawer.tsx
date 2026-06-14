@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { X, ClipboardList, Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { csrfHeaders } from "@/lib/csrf-client";
 
 // The 18 official blocker reasons (spec §2D).
 const BLOCKERS: { key: string; label: string }[] = [
@@ -133,7 +134,7 @@ export function DailyDebriefDrawer({
     setPhase("submitting"); setError(null);
     try {
       const res = await fetch("/api/debriefs", {
-        method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+        method: "POST", credentials: "include", headers: { "Content-Type": "application/json", ...csrfHeaders() },
         body: JSON.stringify({ debriefType, partnerId, whatHappened, whatWentWell, whatDidNotGoWell, blockers, blockerOther, supportNeeded, nextAction }),
       });
       const j = await res.json();

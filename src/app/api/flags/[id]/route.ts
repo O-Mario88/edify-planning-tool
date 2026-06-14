@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { backendUpdateFlag } from "@/lib/api/surfaces";
+import { enforceCsrf } from "@/lib/csrf";
 
 // PL acknowledges/resolves a CD flag.
 export const dynamic = "force-dynamic";
 
 export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }> }) {
+  const csrf = enforceCsrf(req); if (csrf) return csrf;
   const { id } = await ctx.params;
   const user = await getCurrentUser();
   const body = await req.json().catch(() => ({}));

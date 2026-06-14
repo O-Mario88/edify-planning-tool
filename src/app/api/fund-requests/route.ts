@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { fetchFundRequests, submitFundRequest } from "@/lib/api/surfaces";
+import { enforceCsrf } from "@/lib/csrf";
 
 // Fund-request queue (GET, role-scoped) + submit/generate a request (POST). No mock.
 export const dynamic = "force-dynamic";
@@ -14,6 +15,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const csrf = enforceCsrf(req); if (csrf) return csrf;
   const user = await getCurrentUser();
   const body = await req.json().catch(() => ({}));
   const r = await submitFundRequest(

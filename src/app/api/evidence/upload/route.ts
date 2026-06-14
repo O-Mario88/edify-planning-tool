@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUserOrNull } from "@/lib/auth";
 import { backendApiBase, backendTokenFor, isBackendEnabled } from "@/lib/api/backend";
+import { enforceCsrf } from "@/lib/csrf";
 
 // Proxy a real multipart evidence upload to the backend (POST /evidence/upload).
 // The browser sends the File here; we attach the scoped bearer server-side and
@@ -9,6 +10,7 @@ import { backendApiBase, backendTokenFor, isBackendEnabled } from "@/lib/api/bac
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
+  const csrf = enforceCsrf(req); if (csrf) return csrf;
   if (!isBackendEnabled()) {
     return NextResponse.json({ error: "Backend disabled" }, { status: 503 });
   }

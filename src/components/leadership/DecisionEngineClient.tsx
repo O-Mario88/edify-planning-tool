@@ -5,6 +5,7 @@ import { RefreshCw, FileText, ChevronRight, X, ShieldCheck, AlertTriangle } from
 import { Pill } from "@/components/ui/Pill";
 import { Button } from "@/components/ui/Button";
 import { MetricStrip, type MetricCell } from "@/components/ui/MetricStrip";
+import { csrfHeaders } from "@/lib/csrf-client";
 import type { BeLeadershipBoards, BeLeadershipSnapshot, BeDecisionInsight, BeDecisionBoard } from "@/lib/api/surfaces";
 import {
   DECISION_TYPE_LABEL, DECISION_TYPE_BLURB, riskToPill, confidenceToPill, confidenceLabel,
@@ -45,7 +46,7 @@ export function DecisionEngineClient({ snapshot, initialBoards, canRecompute }: 
     setBusy(true);
     setToast("Recomputing leadership insights from current data…");
     try {
-      await fetch(`/api/leadership/decision-engine/recompute`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+      await fetch(`/api/leadership/decision-engine/recompute`, { method: "POST", headers: { "Content-Type": "application/json", ...csrfHeaders() }, body: "{}" });
       await refresh();
       setToast("Insights refreshed.");
     } finally {
@@ -227,7 +228,7 @@ function DetailDrawer({ insight, canReview, onClose, onChanged }: { insight: BeD
     setBusy(true);
     try {
       await fetch(`/api/leadership/decision-engine/insight/${insight.id}/review`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
+        method: "POST", headers: { "Content-Type": "application/json", ...csrfHeaders() },
         body: JSON.stringify({ status, note: note || undefined }),
       });
       onChanged();
@@ -239,7 +240,7 @@ function DetailDrawer({ insight, canReview, onClose, onChanged }: { insight: BeD
     setBusy(true);
     try {
       await fetch(`/api/leadership/decision-engine/insight/${insight.id}/note`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
+        method: "POST", headers: { "Content-Type": "application/json", ...csrfHeaders() },
         body: JSON.stringify({ note }),
       });
       setNote("");

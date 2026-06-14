@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { backendFundAction } from "@/lib/api/surfaces";
+import { enforceCsrf } from "@/lib/csrf";
 
 // Fund-request lifecycle actions (backend role-gated):
 //   review:  approve | return | reject       (BUDGET_APPROVE)
@@ -10,6 +11,7 @@ export const dynamic = "force-dynamic";
 const ACTIONS = new Set(["approve", "return", "reject", "disburse", "account", "account-approve", "account-return"]);
 
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string; action: string }> }) {
+  const csrf = enforceCsrf(req); if (csrf) return csrf;
   const { id, action } = await ctx.params;
   if (!ACTIONS.has(action)) return NextResponse.json({ live: false, error: `Unknown action: ${action}` }, { status: 400 });
   const user = await getCurrentUser();

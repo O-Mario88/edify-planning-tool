@@ -10,6 +10,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Receipt, Loader2, CheckCircle2, Lock } from "lucide-react";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/DataStates";
 import { isValidId, ID_FORMATS } from "@/lib/intake/id-formats";
+import { csrfHeaders } from "@/lib/csrf-client";
 import type { BeFundRequest } from "@/lib/api/surfaces";
 
 const ugx = (n: number) => `UGX ${Math.round(n || 0).toLocaleString()}`;
@@ -39,7 +40,7 @@ function AccountabilityCard({ r, onDone }: { r: BeFundRequest; onDone: () => voi
     setBusy(true); setErr(null);
     try {
       const res = await fetch(`/api/fund-requests/${r.id}/account`, {
-        method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+        method: "POST", credentials: "include", headers: { "Content-Type": "application/json", ...csrfHeaders() },
         body: JSON.stringify({ netsuiteId: netsuiteId.trim(), amountSpent: spentNum, amountReturned: returned }),
       });
       const j = await res.json();

@@ -24,6 +24,7 @@ import {
   ChevronDown, Sparkles, ArrowRight, AlertTriangle, Paperclip, type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { csrfHeaders } from "@/lib/csrf-client";
 import { completeActivity, rescheduleActivity } from "@/lib/actions/my-plan-actions";
 import { RESCHEDULE_SLIP_LIMIT, reschedulesRemaining } from "@/lib/planning/planning-capacity";
 import { weekMonthLabel, type MyPlanItem, type MyPlanSection, type MyPlanSectionKey } from "@/lib/planning/my-plan-sections";
@@ -440,7 +441,7 @@ function ActivityRow({
           ? fetch(`/api/activities/${item.id}/complete`, {
               method: "POST",
               credentials: "include",
-              headers: { "Content-Type": "application/json" },
+              headers: { "Content-Type": "application/json", ...csrfHeaders() },
               body: JSON.stringify(field.trim() ? { salesforceId: field.trim() } : {}),
             })
           : completeActivity(item.id, field.trim() || undefined),
@@ -457,7 +458,7 @@ function ActivityRow({
           ? fetch(`/api/activities/${item.id}/reschedule`, {
               method: "POST",
               credentials: "include",
-              headers: { "Content-Type": "application/json" },
+              headers: { "Content-Type": "application/json", ...csrfHeaders() },
               body: JSON.stringify({ scheduledDate: field, reason }),
             })
           : rescheduleActivity(item.id, field, reason),

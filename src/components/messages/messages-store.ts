@@ -10,6 +10,7 @@
 // compose backend, so the full message center is left on its existing surface.
 
 import { useCallback, useEffect, useState } from "react";
+import { csrfHeaders } from "@/lib/csrf-client";
 import type {
   Message,
   MessagePriority,
@@ -166,7 +167,7 @@ export function markMessageRead(id: string): void {
   const list = snapshot.list.map((m) => (m.id === id ? { ...m, status: "read" as MessageStatus } : m));
   snapshot = { list, counts: countsOf(list) };
   emit();
-  void fetch(`/api/messages/${encodeURIComponent(id)}/read`, { method: "PATCH", credentials: "include" }).catch(() => undefined);
+  void fetch(`/api/messages/${encodeURIComponent(id)}/read`, { method: "PATCH", credentials: "include", headers: { ...csrfHeaders() } }).catch(() => undefined);
 }
 
 export function markAllMessagesRead(): void {

@@ -10,6 +10,7 @@
 import { useEffect, useState } from "react";
 import { Building2, TrendingUp, TrendingDown, Minus, Handshake, Calendar, Plus, X, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { csrfHeaders } from "@/lib/csrf-client";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/DataStates";
 import { ScheduleActivityLive } from "@/components/planning/ScheduleActivityLive";
 import type { BeProjectImpact, BeProjectPartner } from "@/lib/api/surfaces";
@@ -56,12 +57,12 @@ export function ProjectMonitorLive({ projectId, role }: { projectId: string; rol
   async function addPartner() {
     if (!partnerPick) return;
     await fetch(`/api/special-projects/${encodeURIComponent(projectId)}/partners`, {
-      method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ partnerId: partnerPick }),
+      method: "POST", credentials: "include", headers: { "Content-Type": "application/json", ...csrfHeaders() }, body: JSON.stringify({ partnerId: partnerPick }),
     }).catch(() => undefined);
     setAddingPartner(false); setPartnerPick(""); load();
   }
   async function removePartner(partnerId: string) {
-    await fetch(`/api/special-projects/${encodeURIComponent(projectId)}/partners/${encodeURIComponent(partnerId)}`, { method: "DELETE", credentials: "include" }).catch(() => undefined);
+    await fetch(`/api/special-projects/${encodeURIComponent(projectId)}/partners/${encodeURIComponent(partnerId)}`, { method: "DELETE", credentials: "include", headers: { ...csrfHeaders() } }).catch(() => undefined);
     load();
   }
 

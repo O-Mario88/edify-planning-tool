@@ -13,6 +13,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Wallet, CheckCircle2, ShieldCheck, FileCheck2, Hash, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { csrfHeaders } from "@/lib/csrf-client";
 import type { BePaymentQueueRow } from "@/lib/api/surfaces";
 import { LoadingState } from "@/components/ui/DataStates";
 
@@ -56,7 +57,7 @@ export function PartnerPaymentQueue() {
       const res = await fetch("/api/payments", {
         method: "POST",
         credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...csrfHeaders() },
         body: JSON.stringify({ activityId: id }),
       });
       const j = await res.json();

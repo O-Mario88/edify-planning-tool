@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { fetchPaymentQueue, clearPayment } from "@/lib/api/surfaces";
+import { enforceCsrf } from "@/lib/csrf";
 
 // Accountant partner-payment pipeline. The backend re-enforces both the
 // PAYMENT_ACT permission and the IA-verified + Salesforce-ID + evidence-accepted
@@ -14,6 +15,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const csrf = enforceCsrf(req); if (csrf) return csrf;
   const user = await getCurrentUser();
   const body = await req.json().catch(() => ({}));
   const activityId = typeof body?.activityId === "string" ? body.activityId : "";

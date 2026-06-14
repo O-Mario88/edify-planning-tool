@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { CalendarPlus, Check, X, Loader2, CalendarRange } from "lucide-react";
+import { csrfHeaders } from "@/lib/csrf-client";
 
 // LeaveLive — the real, backend-backed leave workflow alongside the planning
 // dashboard's visuals. A staffer requests leave; HR/CD approve or reject. Every
@@ -48,7 +49,7 @@ export function LeaveLive() {
     try {
       const res = await fetch("/api/hr/leave", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...csrfHeaders() },
         body: JSON.stringify({ ...form, days: daysBetween(form.startDate, form.endDate) }),
       });
       const d = await res.json();
@@ -61,7 +62,7 @@ export function LeaveLive() {
     try {
       const res = await fetch(`/api/hr/leave/${id}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...csrfHeaders() },
         body: JSON.stringify({ action }),
       });
       const d = await res.json();

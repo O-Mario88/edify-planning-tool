@@ -71,6 +71,18 @@ export function requireCsrf(req: Request): Response | null {
   return null;
 }
 
+// Kill-switch wrapper for route handlers. Identical to requireCsrf, but a single
+// env var (EDIFY_CSRF_DISABLE=true) turns enforcement OFF process-wide. This is
+// the safe default for rolling enforcement out: every mutating route can call
+// enforceCsrf, and if a flow ever 403s because a client forgot the header, the
+// switch disables it instantly without a code change. Session cookies are
+// SameSite=Lax, which already blocks cross-site authenticated POSTs, so this
+// double-submit check is defense-in-depth on top of that.
+export function enforceCsrf(req: Request): Response | null {
+  if (process.env.EDIFY_CSRF_DISABLE === "true") return null;
+  return requireCsrf(req);
+}
+
 function forbidden(message: string): Response {
   return new Response(JSON.stringify({ ok: false, message }), {
     status: 403,

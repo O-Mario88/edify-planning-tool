@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { fetchCostSettings, setCostSetting } from "@/lib/api/surfaces";
+import { enforceCsrf } from "@/lib/csrf";
 
 // The CD-owned rate card. GET is open to planners; POST (set a rate) is enforced
 // CD-only by the backend's COST_SETTINGS_MANAGE permission.
@@ -15,6 +16,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const csrf = enforceCsrf(req); if (csrf) return csrf;
   const user = await getCurrentUser();
   const body = await req.json().catch(() => ({}));
   const r = await setCostSetting(user, body);
