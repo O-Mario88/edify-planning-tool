@@ -30,7 +30,7 @@ import { clusterById, CLUSTER_MEETING_LABEL } from "@/lib/cluster/cluster-core";
 
 // ── Types ────────────────────────────────────────────────────────────
 
-export type MyPlanFunding = "Requested" | "Approved" | "Disbursed" | "Accounted" | "Returned";
+export type MyPlanFunding = "Not Requested" | "Requested" | "Approved" | "Disbursed" | "Accounted" | "Returned";
 export type MyPlanWaiting = "salesforceId" | "evidence" | "returned";
 export type MyPlanNextAction = "complete" | "reschedule" | "uploadEvidence" | "enterSalesforceId";
 export type MyPlanSectionKey = "dueToday" | "thisWeek" | "thisMonth" | "waitingOnMe" | "needsAttention";
@@ -155,6 +155,33 @@ function fundingFromPaymentStatus(s?: string): MyPlanFunding | undefined {
   }
 }
 
+// Fund-request status → the PRE-execution funding pill (before any payment).
+function fundingFromRequestStatus(s: string): MyPlanFunding | undefined {
+  switch (s) {
+    case "submitted": return "Requested";
+    case "approved": return "Approved";
+    case "disbursed": return "Disbursed";
+    case "returned": case "rejected": return "Returned";
+    default: return undefined;
+  }
+}
+
+/** periodKey ("FY-M3") → funding pill, from the caller's fund requests, so a
+ *  PLANNED activity shows whether its month's funds are requested / approved /
+ *  disbursed (the pre-execution money signal that the payment status can't give
+ *  until after IA verification). Furthest-along status wins per period. */
+export function buildFundingByPeriod(requests: { periodKey: string; status: string }[]): Map<string, MyPlanFunding> {
+  const rank: Record<string, number> = { Returned: 0, Requested: 1, Approved: 2, Disbursed: 3 };
+  const map = new Map<string, MyPlanFunding>();
+  for (const r of requests) {
+    const f = fundingFromRequestStatus(r.status);
+    if (!f) continue;
+    const cur = map.get(r.periodKey);
+    if (!cur || (rank[f] ?? 0) > (rank[cur] ?? 0)) map.set(r.periodKey, f);
+  }
+  return map;
+}
+
 // ── Next-action resolution (the ONE button per card) ────────────────
 
 function resolveNextAction(i: Pick<MyPlanItem, "waitingOn" | "atSlipLimit" | "dateIso" | "statusLabel">, todayIso: string): MyPlanNextAction {
@@ -170,7 +197,7 @@ function resolveNextAction(i: Pick<MyPlanItem, "waitingOn" | "atSlipLimit" | "da
 // ── Normalizers ──────────────────────────────────────────────────────
 
 /** Backend row → MyPlanItem. Returns null for completed/closed rows. */
-export function fromBeActivity(a: BeActivity, todayIso: string): MyPlanItem | null {
+export function fromBeActivity(a: BeActivity, todayIso: string, fundingByPeriod?: Map<string, MyPlanFunding>): MyPlanItem | null {
   if (BE_HIDDEN.has(a.status)) return null;
   const ev = (a.evidenceStatus ?? "").toLowerCase();
   const waitingOn: MyPlanWaiting | undefined =
@@ -188,7 +215,13 @@ export function fromBeActivity(a: BeActivity, todayIso: string): MyPlanItem | nu
     dateIso: a.scheduledDate ?? undefined,
     // Backend rows don't expose a cost field yet — the card shows no cost.
     costCents: undefined,
-    funding: fundingFromPaymentStatus(a.paymentStatus),
+    // Funding pill: the post-execution PAYMENT status if present, else the
+    // PRE-execution fund-request status for the activity's month, else
+    // "Not Requested" so the planner sees un-funded planned work.
+    funding:
+      fundingFromPaymentStatus(a.paymentStatus) ??
+      (a.scheduledDate && a.fy ? fundingByPeriod?.get(`${a.fy}-M${new Date(a.scheduledDate).getMonth() + 1}`) : undefined) ??
+      (a.scheduledDate ? "Not Requested" : undefined),
     statusLabel: titleCase(a.status),
     waitingOn,
     rescheduleCount,

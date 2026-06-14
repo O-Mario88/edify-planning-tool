@@ -96,6 +96,7 @@ const LANE_META: Record<MyPlanSectionKey, LaneMeta> = {
 };
 
 const FUNDING_TONE: Record<NonNullable<MyPlanItem["funding"]>, string> = {
+  "Not Requested": "bg-slate-50 text-slate-500 border-slate-200 dark:bg-slate-800/40 dark:text-slate-400 dark:border-slate-700",
   Requested: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-200 dark:border-amber-900/50",
   Approved:  "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/40 dark:text-sky-200 dark:border-sky-900/50",
   Disbursed: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-200 dark:border-emerald-900/50",

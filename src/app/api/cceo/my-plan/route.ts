@@ -8,10 +8,11 @@
 import type { NextRequest } from "next/server";
 import { requireCceo, ok, type NextAction } from "../_auth";
 import { activities, fundRequests } from "@/lib/actions/store";
-import { fetchMyPlanActivities } from "@/lib/api/surfaces";
+import { fetchMyPlanActivities, fetchFundRequests } from "@/lib/api/surfaces";
 import { activeFinancialYear } from "@/lib/fy-engine";
 import {
   buildFundingByActivity,
+  buildFundingByPeriod,
   fromBeActivity,
   fromStoreActivity,
   sectionMyPlan,
@@ -32,8 +33,10 @@ export async function GET(req: NextRequest) {
   const be = await fetchMyPlanActivities(user, fy);
   let items: MyPlanItem[];
   if (be.live) {
+    const fr = await fetchFundRequests(user);
+    const fundingByPeriod = buildFundingByPeriod(fr.live ? fr.data.map((r) => ({ periodKey: r.periodKey, status: r.status })) : []);
     items = be.data.data
-      .map((a) => fromBeActivity(a, todayIso))
+      .map((a) => fromBeActivity(a, todayIso, fundingByPeriod))
       .filter((i): i is MyPlanItem => i !== null);
   } else {
     const funding = buildFundingByActivity(fundRequests());

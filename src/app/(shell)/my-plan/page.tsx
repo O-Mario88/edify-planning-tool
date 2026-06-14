@@ -4,10 +4,10 @@ import { MyPlanBriefingHero } from "@/components/planning/MyPlanBriefingHero";
 import { MyPlanSnapshotStrip } from "@/components/planning/MyPlanSnapshotStrip";
 import { getCurrentUser } from "@/lib/auth";
 import { activities, fundRequests } from "@/lib/actions/store";
-import { fetchMyPlanActivities } from "@/lib/api/surfaces";
+import { fetchMyPlanActivities, fetchFundRequests } from "@/lib/api/surfaces";
 import { activeFinancialYear } from "@/lib/fy-engine";
 import {
-  buildFundingByActivity, fromBeActivity, fromStoreActivity, fromClusterMeeting, sectionMyPlan,
+  buildFundingByActivity, buildFundingByPeriod, fromBeActivity, fromStoreActivity, fromClusterMeeting, sectionMyPlan,
   type MyPlanItem,
 } from "@/lib/planning/my-plan-sections";
 import { clusterMeetingsForStaff } from "@/lib/cluster/cluster-core";
@@ -35,8 +35,12 @@ export default async function MyPlanPage() {
   const be = await fetchMyPlanActivities(user, activeFinancialYear().id);
   let items: MyPlanItem[];
   if (be.live) {
+    // Pre-execution funding: the caller's fund requests by period, so a planned
+    // activity's pill reflects requested/approved/disbursed (or Not Requested).
+    const fr = await fetchFundRequests(user);
+    const fundingByPeriod = buildFundingByPeriod(fr.live ? fr.data.map((r) => ({ periodKey: r.periodKey, status: r.status })) : []);
     items = be.data.data
-      .map((a) => fromBeActivity(a, todayIso))
+      .map((a) => fromBeActivity(a, todayIso, fundingByPeriod))
       .filter((i): i is MyPlanItem => i !== null);
   } else {
     const funding = buildFundingByActivity(fundRequests());
