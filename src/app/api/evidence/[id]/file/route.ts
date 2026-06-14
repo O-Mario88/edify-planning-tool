@@ -36,6 +36,13 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
       "Content-Type": contentType,
       "Content-Disposition": disposition,
       "Cache-Control": "private, no-store",
+      // Defang the evidence stream: no MIME sniffing, no active content, no
+      // framing by other origins. Mirrors the backend's file headers so the
+      // protection holds whether served direct or through this proxy.
+      "X-Content-Type-Options": "nosniff",
+      "Content-Security-Policy": "default-src 'none'; img-src 'self' data:; object-src 'none'; sandbox",
+      "X-Frame-Options": "SAMEORIGIN",
+      "Referrer-Policy": "no-referrer",
     },
   });
 }
