@@ -588,7 +588,7 @@ export function fetchSsaVerificationSummary(user: BackendUser) {
 }
 
 // ── Budget = the schedule, costed (automatic costing spine) ─────────
-export type BeCostSetting = { id: string; key: string; label: string; unitCost: number; fy?: string | null; updatedAt?: string };
+export type BeCostSetting = { id: string; key: string; label: string; unitCost: number; fy?: string | null; version?: number; updatedAt?: string };
 export type BeCostSettings = { settings: BeCostSetting[]; count: number };
 export type BeBudgetMonth = { month: number; label: string; amount: number; count: number; trainings: number; insight?: string };
 export type BeBudgetFromSchedule = {
@@ -627,8 +627,15 @@ export function fetchBudgetWeekly(user: BackendUser, opts: { fy?: string; month?
 export function fetchCostSettings(user: BackendUser) {
   return live<BeCostSettings>(`/budget/cost-settings`, user);
 }
-export function setCostSetting(user: BackendUser, body: { key: string; label?: string; unitCost: number; fy?: string }) {
+export function setCostSetting(user: BackendUser, body: { key: string; label?: string; unitCost: number; fy?: string; reason?: string }) {
   return live<{ ok: boolean; setting: BeCostSetting }>(`/budget/cost-settings`, user, { method: "POST", body: JSON.stringify(body) });
+}
+export type BeCostHistoryRow = {
+  id: string; key: string; label: string; oldUnitCost?: number | null; newUnitCost: number;
+  version: number; fy?: string | null; changedByUserId: string; reason?: string | null; changedAt: string;
+};
+export function fetchCostHistory(user: BackendUser, key?: string) {
+  return live<{ history: BeCostHistoryRow[]; count: number }>(`/budget/cost-settings/history${key ? `?key=${encodeURIComponent(key)}` : ""}`, user);
 }
 
 // ── Special Projects (backend-backed; no mock) ──────────────────────
