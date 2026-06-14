@@ -12,6 +12,7 @@
 import { NextResponse } from "next/server";
 import { ROLE_REDIRECT } from "@/lib/auth-public";
 import { authenticateRuntime } from "@/lib/auth-runtime-store";
+import { signSession, sessionSigningActive, SESSION_SIG_COOKIE } from "@/lib/session-sig";
 import { requireCsrf } from "@/lib/csrf";
 import { ipFromRequest, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { log, telemetry } from "@/lib/log";
@@ -95,6 +96,11 @@ export async function POST(request: Request) {
   res.cookies.set("edify-email", user.email, cookieOpts);
   res.cookies.set("edify-role", user.role, cookieOpts);
   res.cookies.set("edify-name", user.name, cookieOpts);
+  // HMAC signature over the identity — verified by the resolver + middleware so
+  // a forged/edited cookie can't impersonate a role. Inert when no secret is set.
+  if (sessionSigningActive()) {
+    res.cookies.set(SESSION_SIG_COOKIE, await signSession(user.email, user.role), cookieOpts);
+  }
 
   return res;
 }

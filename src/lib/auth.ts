@@ -15,6 +15,7 @@
 import "server-only";
 import { cookies } from "next/headers";
 import type { CurrentUser, AppRole } from "@/lib/schools-mock";
+import { sessionSigningActive, verifySession, SESSION_SIG_COOKIE } from "@/lib/session-sig";
 
 // ────────── Roles ──────────────────────────────────────────────────────
 
@@ -142,10 +143,19 @@ function gateAdmin(u: DemoUser | null): DemoUser | null {
 // unauthenticated case itself (e.g. /login, /signup).
 export async function getCurrentUserOrNull(): Promise<DemoUser | null> {
   const jar = await cookies();
-  const email = jar.get("edify-email")?.value?.toLowerCase();
+  const rawEmail = jar.get("edify-email")?.value;
+  const rawRole = jar.get("edify-role")?.value;
+  const sig = jar.get(SESSION_SIG_COOKIE)?.value;
+  // Reject a tampered / forged identity when signing is active (production with
+  // EDIFY_SESSION_SECRET set). Without a valid HMAC over (email, role) the
+  // session is treated as unauthenticated — closes the role-forge into /api/*.
+  if (sessionSigningActive()) {
+    if (!rawEmail || !rawRole || !(await verifySession(rawEmail, rawRole, sig))) return null;
+  }
+  const email = rawEmail?.toLowerCase();
   if (email && DEMO_USERS[email]) return gateAdmin(DEMO_USERS[email]);
   // Legacy: some early sessions only set `edify-role` + `edify-name`.
-  const role = jar.get("edify-role")?.value as EdifyRole | undefined;
+  const role = rawRole as EdifyRole | undefined;
   const name = jar.get("edify-name")?.value;
   if (role) {
     const match = Object.values(DEMO_USERS).find(

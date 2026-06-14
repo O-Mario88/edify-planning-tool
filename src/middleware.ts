@@ -21,6 +21,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { DEMO_USERS, ROLE_REDIRECT, type EdifyRole } from "@/lib/auth-public";
 import { CSRF_COOKIE_NAME, generateCsrfToken } from "@/lib/csrf";
+import { sessionSigningActive, signSession, verifySession, SESSION_SIG_COOKIE } from "@/lib/session-sig";
 
 // Dev-only `?as=<Role>` impersonation. Production: hard no-op.
 //
@@ -330,7 +331,7 @@ function ensureCsrfCookie(req: NextRequest, res: NextResponse): NextResponse {
   return res;
 }
 
-export function middleware(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
 
   // ─── Dev-only `?as=<Role>` impersonation ───────────────────────────
@@ -360,6 +361,11 @@ export function middleware(req: NextRequest) {
         res.cookies.set("edify-email", user.email, opts);
         res.cookies.set("edify-role", user.role, opts);
         res.cookies.set("edify-name", user.name, opts);
+        // Sign the impersonated session too, so `?as=` keeps working even when a
+        // secret is configured locally (signing is otherwise inert in dev).
+        if (sessionSigningActive()) {
+          res.cookies.set(SESSION_SIG_COOKIE, await signSession(user.email, user.role), opts);
+        }
         return ensureCsrfCookie(req, res);
       }
     }
@@ -386,9 +392,12 @@ export function middleware(req: NextRequest) {
 
   const role = req.cookies.get("edify-role")?.value as EdifyRole | undefined;
   const email = req.cookies.get("edify-email")?.value;
+  const sig = req.cookies.get(SESSION_SIG_COOKIE)?.value;
 
   // Not signed in → bounce to /login with ?next= so the user comes back.
-  if (!role || !email) {
+  // When signing is active, an absent/forged signature is also "not signed in" —
+  // a tampered role cookie can't pass the role gate.
+  if (!role || !email || (sessionSigningActive() && !(await verifySession(email, role, sig)))) {
     const url = req.nextUrl.clone();
     url.pathname = "/login";
     url.search = `?next=${encodeURIComponent(pathname + search)}`;
