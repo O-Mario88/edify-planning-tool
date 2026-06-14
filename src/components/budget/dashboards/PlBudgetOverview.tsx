@@ -4,6 +4,7 @@
 // Tracks budgets from CCEO plans, PL-led plans, and special projects.
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   Shield, FileText, Rocket, Send, ArrowUp, Wallet, Flame, Download, BarChart3, Info, MapPin,
 } from "lucide-react";
@@ -79,8 +80,8 @@ export function PlBudgetOverview({ rollup, operational }: { rollup: AnnualBudget
         </div>
         <div className="flex items-center gap-2">
           <span className="h-9 px-3 rounded-lg border border-[var(--color-edify-border)] bg-white text-[12px] font-semibold">{rollup.fyLabel}</span>
-          <span className="h-9 px-3 rounded-lg border border-[var(--color-edify-border)] bg-white text-[12px] font-semibold inline-flex items-center gap-1.5"><Download size={13} /> Export</span>
-          <span className="h-9 px-3 rounded-lg bg-[var(--color-edify-primary)] text-white text-[12px] font-bold inline-flex items-center gap-1.5"><Shield size={14} /> Review Budget Requests</span>
+          <button type="button" onClick={() => window.print()} className="h-9 px-3 rounded-lg border border-[var(--color-edify-border)] bg-white text-[12px] font-semibold inline-flex items-center gap-1.5 hover:bg-[var(--color-edify-soft)]/50 transition-colors"><Download size={13} /> Export</button>
+          <Link href="/approvals" className="h-9 px-3 rounded-lg bg-[var(--color-edify-primary)] text-white text-[12px] font-bold inline-flex items-center gap-1.5 hover:opacity-90 transition-opacity"><Shield size={14} /> Review Budget Requests</Link>
         </div>
       </div>
 

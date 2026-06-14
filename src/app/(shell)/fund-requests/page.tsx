@@ -1,46 +1,70 @@
 import { Wallet } from "lucide-react";
 import { EntityIndex, IndexRow } from "@/components/shell/EntityIndex";
-import {
-  fundRequests,
-  fundRequestTotal,
-  formatUgx,
-  type FundRequest,
-} from "@/lib/workflow-mock";
+import { getCurrentUser } from "@/lib/auth";
+import { fetchFundRequests, type BeFundRequest } from "@/lib/api/surfaces";
 
-const STATUS_TONE: Record<FundRequest["status"], "amber" | "blue" | "violet" | "green"> = {
-  "Pending Accountant": "amber",
-  "Pending Director":   "blue",
-  "Pending RVP":        "violet",
-  "Disbursed":          "green",
+// Fund Requests index — the live monthly fund-request pipeline. Reads the
+// caller's scoped requests from the backend (single-stage chain: a planner
+// submits → their Program Lead reviews → the accountant disburses). The old
+// page rendered workflow-mock rows and advertised a 3-stage Accountant→CD→RVP
+// chain that contradicted the backend; both are gone.
+export const dynamic = "force-dynamic";
+
+const STATUS_TONE: Record<BeFundRequest["status"], "amber" | "blue" | "green" | "rose" | "slate"> = {
+  submitted: "amber",
+  approved:  "blue",
+  disbursed: "green",
+  returned:  "rose",
+  rejected:  "slate",
+};
+const STATUS_LABEL: Record<BeFundRequest["status"], string> = {
+  submitted: "Submitted",
+  approved:  "Approved",
+  disbursed: "Disbursed",
+  returned:  "Returned",
+  rejected:  "Rejected",
 };
 
-export default function FundRequestsIndex() {
-  const total = fundRequests.reduce((a, f) => a + fundRequestTotal(f), 0);
+const fmtUgx = (n: number) => `UGX ${Math.round(n || 0).toLocaleString()}`;
+
+export default async function FundRequestsIndex() {
+  const user = await getCurrentUser();
+  const res = await fetchFundRequests(user);
+  const rows = res.live ? res.data : [];
+  const total = rows.reduce((a, f) => a + (f.totalAmount || 0), 0);
 
   return (
     <EntityIndex
       title="Fund Requests"
-      subtitle="Approval chain: Accountant → Country Director → RVP → Disbursement. Click a request for line items and history."
+      subtitle="Approval chain: Submit → Program Lead review → Disbursement. Click a request for its costed breakdown."
       Icon={Wallet}
-      count={fundRequests.length}
-      searchPlaceholder="Search by district, staff, month"
+      count={rows.length}
+      searchPlaceholder="Search by period, scope, submitter"
     >
-      <section className="card rounded-2xl divide-y divide-[var(--color-edify-divider)] overflow-hidden">
-        {fundRequests.map((fr) => (
-          <IndexRow
-            key={fr.id}
-            href={`/fund-requests/${fr.id}`}
-            Icon={Wallet}
-            title={`#${fr.id} · ${fr.district}`}
-            subtitle={`${fr.staff} · ${fr.month}`}
-            meta={`${fr.lineItems.length} line items · submitted ${fr.submittedOn}`}
-            badges={[{ label: fr.status, tone: STATUS_TONE[fr.status] }]}
-            rightTop={formatUgx(fundRequestTotal(fr))}
-            rightBottom="total"
-          />
-        ))}
-      </section>
-      <p className="text-[11.5px] muted text-right">Total in pipeline: {formatUgx(total)}</p>
+      {rows.length === 0 ? (
+        <div className="card rounded-2xl p-6 text-center text-[12.5px] muted">
+          No fund requests in the pipeline yet — they appear here once a planner generates a monthly request from their scheduled work.
+        </div>
+      ) : (
+        <section className="card rounded-2xl divide-y divide-[var(--color-edify-divider)] overflow-hidden">
+          {rows.map((fr) => (
+            <IndexRow
+              key={fr.id}
+              href={`/fund-requests/${fr.id}`}
+              Icon={Wallet}
+              title={`${fr.period} · ${fr.scope}`}
+              subtitle={`${fr.submittedBy} · ${fr.submittedByRole}`}
+              meta={`${fr.activityCount} ${fr.activityCount === 1 ? "activity" : "activities"} · ${fr.fy}`}
+              badges={[{ label: STATUS_LABEL[fr.status], tone: STATUS_TONE[fr.status] }]}
+              rightTop={fmtUgx(fr.totalAmount)}
+              rightBottom="total"
+            />
+          ))}
+        </section>
+      )}
+      {rows.length > 0 && (
+        <p className="text-[11.5px] muted text-right">Total in pipeline: {fmtUgx(total)}</p>
+      )}
     </EntityIndex>
   );
 }

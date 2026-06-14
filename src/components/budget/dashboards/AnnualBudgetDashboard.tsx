@@ -5,6 +5,7 @@
 // summary + detailed (ledger) view.
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   Lock, Shield, FileText, Flame, Scale, BarChart3, Download, Send, Wallet, UserRound, ClipboardCheck,
 } from "lucide-react";
@@ -78,8 +79,8 @@ export function AnnualBudgetDashboard({ rollup }: { rollup: AnnualBudgetRollup }
         </div>
         <div className="flex items-center gap-2">
           <span className="h-9 px-3 rounded-lg border border-[var(--color-edify-border)] bg-white text-[12px] font-semibold inline-flex items-center gap-1.5">{rollup.fyLabel}</span>
-          <span className="h-9 px-3 rounded-lg border border-[var(--color-edify-border)] bg-white text-[12px] font-semibold inline-flex items-center gap-1.5"><Download size={13} /> Export</span>
-          <span className="h-9 px-3 rounded-lg bg-[var(--color-edify-primary)] text-white text-[12px] font-bold inline-flex items-center gap-1.5"><ClipboardCheck size={14} /> Submit for Approval</span>
+          <button type="button" onClick={() => window.print()} className="h-9 px-3 rounded-lg border border-[var(--color-edify-border)] bg-white text-[12px] font-semibold inline-flex items-center gap-1.5 hover:bg-[var(--color-edify-soft)]/50 transition-colors"><Download size={13} /> Export</button>
+          <Link href="/approvals" className="h-9 px-3 rounded-lg bg-[var(--color-edify-primary)] text-white text-[12px] font-bold inline-flex items-center gap-1.5 hover:opacity-90 transition-opacity"><ClipboardCheck size={14} /> Submit for Approval</Link>
         </div>
       </div>
 
