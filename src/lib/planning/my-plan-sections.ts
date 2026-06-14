@@ -30,7 +30,7 @@ import { clusterById, CLUSTER_MEETING_LABEL } from "@/lib/cluster/cluster-core";
 
 // ── Types ────────────────────────────────────────────────────────────
 
-export type MyPlanFunding = "Requested" | "Approved" | "Disbursed";
+export type MyPlanFunding = "Requested" | "Approved" | "Disbursed" | "Accounted" | "Returned";
 export type MyPlanWaiting = "salesforceId" | "evidence" | "returned";
 export type MyPlanNextAction = "complete" | "reschedule" | "uploadEvidence" | "enterSalesforceId";
 export type MyPlanSectionKey = "dueToday" | "thisWeek" | "thisMonth" | "waitingOnMe" | "needsAttention";
@@ -141,13 +141,17 @@ export function buildFundingByActivity(reqs: WeeklyFundRequest[]): Map<string, M
   return map;
 }
 
-// Backend paymentStatus → funding pill (loose mapping; absent → undefined).
+// Backend PaymentStatus enum → funding pill. The old mapping used keys that
+// don't exist on the enum (requested/pending/approved/cleared/disbursed), so the
+// pill NEVER populated in backend mode. Mapped to the real values here.
 function fundingFromPaymentStatus(s?: string): MyPlanFunding | undefined {
   switch ((s ?? "").toLowerCase()) {
-    case "requested": case "pending": return "Requested";
-    case "approved": return "Approved";
-    case "paid": case "cleared": case "disbursed": return "Disbursed";
-    default: return undefined;
+    case "pending_ia": case "ia_confirmed": case "pl_approval_required": return "Requested";
+    case "pl_approved": return "Approved";
+    case "accountant_cleared": case "paid": return "Disbursed";
+    case "netsuite_accountability": case "closed": return "Accounted";
+    case "rejected": return "Returned";
+    default: return undefined; // 'none' = not yet in the fund pipeline
   }
 }
 
