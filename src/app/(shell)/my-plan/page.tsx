@@ -38,7 +38,9 @@ export default async function MyPlanPage() {
     // Pre-execution funding: the caller's fund requests by period, so a planned
     // activity's pill reflects requested/approved/disbursed (or Not Requested).
     const fr = await fetchFundRequests(user);
-    const fundingByPeriod = buildFundingByPeriod(fr.live ? fr.data.map((r) => ({ periodKey: r.periodKey, status: r.status })) : []);
+    // Only the caller's OWN requests drive their pill — an approver's queue also
+    // contains supervisees' requests, which must not colour the approver's plan.
+    const fundingByPeriod = buildFundingByPeriod(fr.live ? fr.data.filter((r) => r.isOwn ?? true).map((r) => ({ periodKey: r.periodKey, status: r.status })) : []);
     items = be.data.data
       .map((a) => fromBeActivity(a, todayIso, fundingByPeriod))
       .filter((i): i is MyPlanItem => i !== null);

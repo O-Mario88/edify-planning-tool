@@ -123,6 +123,18 @@ export const DEMO_USERS: Record<string, DemoUser> = {
 const ANONYMOUS_FALLBACK: DemoUser = DEMO_USERS["daniel.mwangi@edify.org"];
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
+// The privileged admin identity is disabled in production unless explicitly
+// enabled (mirrors the FE login store + backend seed). This gates IDENTITY
+// RESOLUTION, not just password seeding — so even a forged/leaked
+// `edify-email=admin@edify.org` cookie can't resolve as Admin on the (ungated)
+// /api/* proxies. NOTE: session cookies are unsigned; a host-level gate remains
+// the primary control against role-forgery in general.
+const ADMIN_ENABLED = process.env.ENABLE_DEMO_ADMIN === "true" || !IS_PRODUCTION;
+function gateAdmin(u: DemoUser | null): DemoUser | null {
+  if (u && !ADMIN_ENABLED && (u.email.toLowerCase() === "admin@edify.org" || u.role === "Admin")) return null;
+  return u;
+}
+
 // ────────── Server-side resolvers ──────────────────────────────────────
 
 // Reads the session cookie and returns the active user, or null if no
@@ -131,7 +143,7 @@ const IS_PRODUCTION = process.env.NODE_ENV === "production";
 export async function getCurrentUserOrNull(): Promise<DemoUser | null> {
   const jar = await cookies();
   const email = jar.get("edify-email")?.value?.toLowerCase();
-  if (email && DEMO_USERS[email]) return DEMO_USERS[email];
+  if (email && DEMO_USERS[email]) return gateAdmin(DEMO_USERS[email]);
   // Legacy: some early sessions only set `edify-role` + `edify-name`.
   const role = jar.get("edify-role")?.value as EdifyRole | undefined;
   const name = jar.get("edify-name")?.value;
@@ -139,7 +151,7 @@ export async function getCurrentUserOrNull(): Promise<DemoUser | null> {
     const match = Object.values(DEMO_USERS).find(
       (u) => u.role === role && (!name || decodeURIComponent(name) === u.name),
     );
-    if (match) return match;
+    if (match) return gateAdmin(match);
   }
   return null;
 }

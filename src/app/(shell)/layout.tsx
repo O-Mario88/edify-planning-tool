@@ -1,4 +1,5 @@
 import { type ReactNode } from "react";
+import { redirect } from "next/navigation";
 import { EdifySidebarServer } from "@/components/shell/EdifySidebarServer";
 import { RoleBottomNav } from "@/components/mobile/RoleBottomNav";
 import { PageTitleProvider } from "@/components/shell/PageTitleContext";
@@ -33,6 +34,14 @@ export default async function ShellLayout({ children }: { children: ReactNode })
   // mobile/tablet top bar + the desktop PageHeader avatar both read
   // identity through context — no per-page prop-drilling.
   const user = await getCurrentUserOrNull();
+  // Backstop: in production, never render the shell (whose sidebar resolves the
+  // signed-in user) for an anonymous request — bounce to /login. Middleware
+  // already gates allowlisted routes; this covers any shell route that isn't on
+  // the allowlist, so an anonymous deep-link redirects instead of 500ing. (Dev
+  // keeps the convenience fallback so previews render without logging in.)
+  if (!user && process.env.NODE_ENV === "production") {
+    redirect("/login");
+  }
   const identity = {
     name:     user?.name     ?? "Edify",
     initials: user?.initials ?? "—",

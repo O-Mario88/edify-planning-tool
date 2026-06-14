@@ -133,6 +133,20 @@ const PROTECTED_PREFIXES = [
   "/exam-scores",
   "/discipleship-clubs",
   "/donor-reporting",
+  // Shell routes that were off the allowlist — so an anonymous visitor reached
+  // the (shell) layout (whose sidebar resolves the user) and 500'd in production
+  // instead of bouncing to /login. These are all authenticated app surfaces.
+  "/portfolio",
+  "/decisions",
+  "/alerts",
+  "/help",
+  "/districts",
+  "/field-analytics",
+  "/work-plan",
+  "/data-upload",
+  "/core-onboarding",
+  "/demo-guide",
+  "/demo",
 ];
 
 // Role-restricted prefixes. Map prefix → roles allowed. Anyone else with

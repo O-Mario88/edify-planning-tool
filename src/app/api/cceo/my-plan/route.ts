@@ -34,7 +34,8 @@ export async function GET(req: NextRequest) {
   let items: MyPlanItem[];
   if (be.live) {
     const fr = await fetchFundRequests(user);
-    const fundingByPeriod = buildFundingByPeriod(fr.live ? fr.data.map((r) => ({ periodKey: r.periodKey, status: r.status })) : []);
+    // Own requests only — an approver's queue includes supervisees' requests.
+    const fundingByPeriod = buildFundingByPeriod(fr.live ? fr.data.filter((r) => r.isOwn ?? true).map((r) => ({ periodKey: r.periodKey, status: r.status })) : []);
     items = be.data.data
       .map((a) => fromBeActivity(a, todayIso, fundingByPeriod))
       .filter((i): i is MyPlanItem => i !== null);
