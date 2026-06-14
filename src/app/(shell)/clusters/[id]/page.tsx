@@ -8,6 +8,8 @@ import { ClusterProfileView } from "@/components/cluster/ClusterProfileView";
 import { ClusterMemberSchoolsLive } from "@/components/cluster/ClusterMemberSchoolsLive";
 import { clusterProfile, clusterById, activeClusters, CLUSTER_MEETING_LABEL, feedbackForCluster, CLUSTER_FEEDBACK_LABEL } from "@/lib/cluster/cluster-core";
 import { getCurrentUser } from "@/lib/auth";
+import { isBackendEnabled } from "@/lib/api/backend";
+import { fetchClusters } from "@/lib/api/surfaces";
 import { getCurrentPartner } from "@/lib/partner/partner-identity";
 import { NextActionCard } from "@/components/next-action/NextActionCard";
 import { nextActionForCluster } from "@/lib/next-action/next-action";
@@ -20,6 +22,42 @@ export default async function ClusterDetail({ params }: { params: Promise<{ id: 
   // through to the legacy clustersMock detail for old saved-group ids.
   if (clusterById(id)) {
     return <EngineClusterProfile clusterId={id} />;
+  }
+
+  // Backend cuid: the live planning-gap "Schedule" links point at real Postgres
+  // cluster cuids that neither the engine store nor clustersMock resolve — the
+  // page used to 404 on every real cluster. Resolve it from the live clusters
+  // list (no dedicated /clusters/:id header endpoint yet) + show live schools.
+  if (isBackendEnabled()) {
+    const user = await getCurrentUser();
+    const r = await fetchClusters({ email: user.email, role: user.role });
+    const be = r.live ? r.data.find((c) => c.id === id) : undefined;
+    if (be) {
+      return (
+        <EntityDetail
+          breadcrumbs={[
+            { label: "Home", href: "/dashboard" },
+            { label: "Clusters", href: "/clusters" },
+            { label: be.name },
+          ]}
+          title={be.name}
+          subtitle="Cluster of schools for grouped planning + delivery."
+          Icon={Network}
+        >
+          <DetailFacts
+            rows={[
+              { label: "Cluster ID", value: be.id },
+              { label: "Type", value: be.clusterType ?? "—" },
+              { label: "Status", value: be.status ?? "—" },
+              { label: "District", value: be.district?.name ?? "—" },
+              { label: "Sub-county", value: be.subCounty?.name ?? be.subCountyName ?? "—" },
+              { label: "Leader", value: be.clusterLeaderName ?? "—" },
+            ]}
+          />
+          <ClusterMemberSchoolsLive clusterId={be.id} />
+        </EntityDetail>
+      );
+    }
   }
 
   const cluster = clustersMock.find((c) => c.id === id);
