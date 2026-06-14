@@ -13,6 +13,8 @@
     "test:coverage": "vitest run --coverage",
     "analyze": "ANALYZE=true next build",
     "ci": "npm run typecheck && npm run lint && npm run test",
+    "mock:audit": "node scripts/mock-audit.mjs",
+    "prod:check": "node scripts/prod-readiness.mjs",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
