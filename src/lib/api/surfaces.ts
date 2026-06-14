@@ -771,6 +771,15 @@ export type BeSchoolSsaRecord = {
 export function fetchSsaForSchool(user: BackendUser, schoolId: string) {
   return live<BeSchoolSsaRecord[]>(`/ssa/school/${encodeURIComponent(schoolId)}`, user);
 }
+// SSA-driven recommendation (two weakest interventions + severity) — the
+// backend source that replaces the empty in-memory mock rec-engine.
+export type BeSsaRecommendation = {
+  schoolId: string; hasSsa: boolean; fy?: string; averageScore?: number | null;
+  severity: string; weakest: { intervention: string; score: number; label: string }[]; recommendation: string;
+};
+export function fetchSsaRecommendation(user: BackendUser, schoolId: string) {
+  return live<BeSsaRecommendation>(`/ssa/school/${encodeURIComponent(schoolId)}/recommendation`, user);
+}
 
 // ── Clusters (backend-backed; no mock) ──────────────────────────────
 export type BeCluster = {
