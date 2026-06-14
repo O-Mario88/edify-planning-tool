@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUserOrNull } from "@/lib/auth";
 import { backendApiBase, backendTokenFor, isBackendEnabled } from "@/lib/api/backend";
 
 // Stream an evidence file's bytes back to the browser for preview/download.
@@ -12,7 +12,8 @@ export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
   if (!isBackendEnabled()) return NextResponse.json({ error: "Backend disabled" }, { status: 503 });
-  const user = await getCurrentUser();
+  const user = await getCurrentUserOrNull();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const token = await backendTokenFor(user);
   if (!token) return NextResponse.json({ error: "Backend auth unavailable" }, { status: 502 });
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUserOrNull } from "@/lib/auth";
 import { backendFetch, isBackendEnabled } from "@/lib/api/backend";
 
 // Staff / PL / IA accept or return an uploaded evidence file. Drives
@@ -9,7 +9,8 @@ export const dynamic = "force-dynamic";
 export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
   if (!isBackendEnabled()) return NextResponse.json({ error: "Backend disabled" }, { status: 503 });
-  const user = await getCurrentUser();
+  const user = await getCurrentUserOrNull();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const body = await req.json().catch(() => ({}));
   const action = body?.action === "return" ? "return" : "accept";
   const r = await backendFetch<{ id: string; status: string }>(

@@ -114,7 +114,14 @@ export const DEMO_USERS: Record<string, DemoUser> = {
 // don't crash. Production code paths never reach this because
 // `src/middleware.ts` redirects anonymous traffic on protected routes
 // before any page renders.
+//
+// HOSTING-SECURITY: the fallback is hard-gated to non-production below.
+// Middleware does NOT gate `/api/*`, so without this gate an anonymous
+// caller to a proxy route (e.g. /api/evidence/<id>/file) would resolve to
+// this real PL identity and be served scoped data. In production the
+// resolver instead throws, so no anonymous caller ever gets an identity.
 const ANONYMOUS_FALLBACK: DemoUser = DEMO_USERS["daniel.mwangi@edify.org"];
+const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
 // ────────── Server-side resolvers ──────────────────────────────────────
 
@@ -150,7 +157,13 @@ export async function getCurrentUserOrNull(): Promise<DemoUser | null> {
 // `getCurrentUserOrNull()` instead.
 export async function getCurrentUser(): Promise<DemoUser> {
   const user = await getCurrentUserOrNull();
-  return user ?? ANONYMOUS_FALLBACK;
+  if (user) return user;
+  // In production never hand a privileged identity to an anonymous caller.
+  // Pages are redirected to /login by middleware before they render; any
+  // server context that still reaches here (notably the `/api/*` proxies,
+  // which middleware does not gate) is genuinely unauthenticated.
+  if (IS_PRODUCTION) throw new Error("UNAUTHENTICATED");
+  return ANONYMOUS_FALLBACK;
 }
 
 // Read just the role — handy when a server component only needs to pick a

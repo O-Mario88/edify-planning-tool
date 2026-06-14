@@ -246,6 +246,26 @@ const ROLE_RESTRICTED: Array<{ prefix: string; allow: EdifyRole[] }> = [
   // pay-out controls themselves (spec: CCEO must not see accountant
   // payment controls).
   { prefix: "/disbursements",         allow: ["ProgramAccountant", "CountryDirector", "Admin"] },
+  // Staff Performance (spec /staff-performance) — the HR/leadership people
+  // surface (names, role, achievement %, compliance %). CCEOs see their OWN
+  // performance via their dashboard, not the full directory; Partner/Accountant
+  // roles have no people-management surface. Was auth-only with no role gate.
+  { prefix: "/staff",                 allow: ["HumanResource", "CountryDirector", "RVP", "CountryProgramLead", "Admin"] },
+  // IA Verification queue (spec /verification) — confirm submitted work +
+  // Salesforce ID + the fund-disbursement gate. The write is already
+  // server-gated on IA_VERIFY; this stops any non-IA role from opening the
+  // page at all (it was auth-only with no role gate). Spec: only IA verifies.
+  { prefix: "/data-verification",     allow: ["ImpactAssessment", "Admin"] },
+  // Partner directory / oversight (Edify-side). Every Edify staff role that
+  // works with partners can view it; Partner* users see only their OWN work
+  // through /dashboards/partner and must never browse the partner directory.
+  // (Note: /partners does NOT collide with the /partner rule — restrictionFor
+  // requires an exact or "/"-bounded match.)
+  { prefix: "/partners",              allow: ["CCEO", "CountryProgramLead", "CountryDirector", "RVP", "HumanResource", "ProgramAccountant", "ImpactAssessment", "ProjectCoordinator", "Admin"] },
+  // Leave planner — Edify staff request/approve leave (HR manages, supervisors
+  // monitor, approved leave blocks planning dates). Partner* users have no
+  // Edify-leave surface. Was auth-only with no role gate.
+  { prefix: "/leave",                 allow: ["CCEO", "CountryProgramLead", "CountryDirector", "RVP", "HumanResource", "ProgramAccountant", "ImpactAssessment", "ProjectCoordinator", "Admin"] },
 ];
 
 // Prefixes whose wrong-role bounce should land on the explicit Access

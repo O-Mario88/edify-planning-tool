@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUserOrNull } from "@/lib/auth";
 import { backendApiBase, backendTokenFor, isBackendEnabled } from "@/lib/api/backend";
 
 // Proxy a real multipart evidence upload to the backend (POST /evidence/upload).
@@ -12,7 +12,8 @@ export async function POST(req: NextRequest) {
   if (!isBackendEnabled()) {
     return NextResponse.json({ error: "Backend disabled" }, { status: 503 });
   }
-  const user = await getCurrentUser();
+  const user = await getCurrentUserOrNull();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const token = await backendTokenFor(user);
   if (!token) return NextResponse.json({ error: "Backend auth unavailable" }, { status: 502 });
 
