@@ -1016,3 +1016,51 @@ export function fetchMyPartner(user: BackendUser) {
 export function fetchMyPartnerActivities(user: BackendUser) {
   return live<BeMyPartner>(`/partners/me/activities`, user);
 }
+
+// ── Budget Intelligence & Financial Decision Engine ─────────────────
+export type BeBudgetInsight = {
+  id: string;
+  fy: string;
+  insightType: string;
+  scopeType: string;
+  scopeId?: string | null;
+  scopeName?: string | null;
+  recommendation: string;
+  reason: string;
+  riskLevel: string;
+  impactYield: string;
+  confidenceLevel: string;
+  confidenceScore: number;
+  amountAffected?: number | null;
+  financialImplication?: string | null;
+  suggestedAction: string;
+  alternatives: string[];
+  metrics: Record<string, unknown>;
+  riskFlags: string[];
+  evidenceSummary?: { metricName: string; metricValue: string; tone?: string }[] | null;
+  status: string;
+};
+export type BeBudgetBoards = { fy: string; insights: BeBudgetInsight[] };
+export type BeBudgetSnapshot = {
+  fy: string;
+  totalInsights: number;
+  lowYieldCount: number;
+  highYieldCount: number;
+  amountAtRisk: number;
+  headline: string;
+};
+
+export function fetchBudgetIntelligenceBoards(
+  user: BackendUser,
+  q: { fy?: string; insightType?: string; impactYield?: string } = {},
+) {
+  const sp = new URLSearchParams();
+  if (q.fy) sp.set("fy", q.fy);
+  if (q.insightType) sp.set("insightType", q.insightType);
+  if (q.impactYield) sp.set("impactYield", q.impactYield);
+  const qs = sp.toString();
+  return live<BeBudgetBoards>(`/budget-intelligence${qs ? `?${qs}` : ""}`, user);
+}
+export function fetchBudgetIntelligenceSnapshot(user: BackendUser, fy?: string) {
+  return live<BeBudgetSnapshot>(`/budget-intelligence/snapshot${fy ? `?fy=${encodeURIComponent(fy)}` : ""}`, user);
+}

@@ -42,6 +42,7 @@ import { InterventionImprovementGrid } from "@/components/ssa/InterventionImprov
 import { SupportImprovementCard } from "@/components/analytics/SupportImprovementCard";
 import { RecruitmentIntelligenceCard } from "@/components/analytics/RecruitmentIntelligenceCard";
 import { DecisionEngineEmbed } from "@/components/leadership/DecisionEngineEmbed";
+import { BudgetIntelligenceEmbed } from "@/components/budget/BudgetIntelligenceEmbed";
 
 // Country Director Dashboard — Country Mission Control.
 //
@@ -95,6 +96,10 @@ export default async function CountryDirectorDashboard() {
             partner MOUs, regional investment) computed from live SSA, workload,
             partner & target data. The engine recommends; leadership decides. */}
         <DecisionEngineEmbed />
+
+        {/* BUDGET INTELLIGENCE — the financial brain: cost ↔ verified activity ↔
+            SSA impact, low-yield spend + reallocation advisory. */}
+        <BudgetIntelligenceEmbed />
 
         {/* COUNTRY MISSION SNAPSHOT + KPI ROW — the program statistics
             band, directly below the hero and before any work content. */}

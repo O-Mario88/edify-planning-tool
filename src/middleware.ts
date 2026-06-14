@@ -158,6 +158,9 @@ const ROLE_RESTRICTED: Array<{ prefix: string; allow: EdifyRole[] }> = [
   { prefix: "/system-health",         allow: ["Admin"] },
   { prefix: "/cost-settings",         allow: ["CountryDirector", "Admin", "ProgramAccountant"] },
   { prefix: "/budget/approvals",      allow: ["CountryProgramLead", "CountryDirector", "RVP", "ProgramAccountant", "Admin"] },
+  // Budget Intelligence & Financial Decision Engine — CD/Accountant full;
+  // RVP summary; PL supervised; CCEO own. Backend re-enforces the permission.
+  { prefix: "/budget/intelligence",   allow: ["CountryDirector", "ProgramAccountant", "RVP", "CountryProgramLead", "CCEO", "Admin"] },
   // Fund Approvals — financial sign-off surface. Restricted to the
   // four roles that actually have an approval / disbursement role in
   // the fund flow:

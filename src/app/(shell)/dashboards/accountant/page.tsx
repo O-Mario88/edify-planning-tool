@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { DashboardPageHeader } from "@/components/dashboards/DashboardPageHeader";
 import { DashboardGreetingHero } from "@/components/dashboards/DashboardGreetingHero";
+import { BudgetIntelligenceEmbed } from "@/components/budget/BudgetIntelligenceEmbed";
 import { AccountantConsoleDashboard } from "@/components/accountant-console/AccountantConsoleDashboard";
 import { CommandStack } from "@/components/actions/CommandStack";
 import { TodayCommandCenter } from "@/components/command/TodayCommandCenter";
@@ -65,6 +66,9 @@ export default async function AccountantConsolePage() {
       <div className="space-y-4 px-4 sm:px-5 md:px-6 pt-3 lg:pt-4 pb-24">
       {/* GREETING HERO — system-wide layout rule: header → hero → stats → work. */}
       <DashboardGreetingHero user={user} />
+
+      {/* Budget Intelligence — finance-execution view: low-yield spend, spend at risk. */}
+      <BudgetIntelligenceEmbed heading="Budget Intelligence" />
       {/* Payment pipeline — the statistics snapshot, directly below the
           hero: where money is stuck before the queues. */}
       <VerificationPaymentFunnel
