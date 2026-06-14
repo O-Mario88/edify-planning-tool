@@ -16,6 +16,11 @@ import { MetricStrip, type MetricCell } from "@/components/ui/MetricStrip";
 
 // Special-projects KPI row — dense MetricStrip. Trend deltas kept; sparkline
 // + colored tiles dropped.
+//
+// NOTE: this mock-typed variant is retained ONLY for the project-coordinator
+// dashboard (out of scope here). The /special-projects page uses the live
+// strip inside SpecialProjectsLiveOverview, computed from the backend Project
+// list, with no fabricated aggregates.
 
 const iconMap: Record<SpecialProjectKpi["icon"], LucideIcon> = {
   briefcase: Briefcase,
