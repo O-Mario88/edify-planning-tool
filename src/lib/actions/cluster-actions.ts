@@ -147,7 +147,23 @@ export async function assignToExistingClusterAction(
       if (res.live) assignedIds.push(sid);
       else failedRows.push({ schoolId: sid, reason: res.error ?? "Not eligible for this cluster." });
     }
-    if (assignedIds.length) revalidateClusterSurfaces();
+    if (assignedIds.length) {
+      // Fire the SAME audit + "planning unlocked" fan-out as the mock branch —
+      // it previously only ran in mock mode, so in backend mode CCEO/PL got no
+      // signal that clustering unlocked SSA/SIT planning.
+      emitAudit({
+        action: "cluster.schoolsAssigned", subjectKind: "Cluster", subjectId: clusterId,
+        actorId: actor.name, actorRole: actor.role, actorName: actor.name,
+        payload: { clusterId, assigned: assignedIds.length, failed: failedRows.length, schoolIds: assignedIds, backend: true },
+      });
+      emitNotificationFanOut(["CCEO", "PROGRAM_LEAD"], {
+        template: "cluster.schoolsAssigned", channel: "Inbox",
+        title: `${assignedIds.length} school${assignedIds.length === 1 ? "" : "s"} clustered`,
+        body: `${assignedIds.length} school${assignedIds.length === 1 ? "" : "s"} assigned to a cluster — SSA / SIT planning is now unlocked.`,
+        href: "/schools",
+      });
+      revalidateClusterSurfaces();
+    }
     return { ok: true, assigned: assignedIds.length, failed: failedRows };
   }
 
@@ -193,6 +209,17 @@ export async function createClusterAndAssignAction(
     const user = await getCurrentUser();
     const res = await backendCreateClusterFromSchool(backendUserFor(user), { schoolId, name: input.name.trim() });
     if (!res.live) return { ok: false, reason: "FAILED", message: res.error ?? "Could not create the cluster." };
+    emitAudit({
+      action: "cluster.created", subjectKind: "Cluster", subjectId: res.data.cluster.id,
+      actorId: actor.name, actorRole: actor.role, actorName: actor.name,
+      payload: { name: res.data.cluster.name, assigned: 1, backend: true },
+    });
+    emitNotificationFanOut(["CCEO", "PROGRAM_LEAD"], {
+      template: "cluster.created", channel: "Inbox",
+      title: `Cluster ${res.data.cluster.name} created`,
+      body: `A school was attached to ${res.data.cluster.name}. SSA / SIT planning unlocked.`,
+      href: "/schools",
+    });
     revalidateClusterSurfaces();
     return { ok: true, clusterId: res.data.cluster.id, clusterName: res.data.cluster.name, assigned: 1 };
   }
