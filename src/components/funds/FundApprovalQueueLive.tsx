@@ -26,7 +26,7 @@ const statusTone: Record<string, string> = {
   returned: "bg-sky-100 text-sky-700", rejected: "bg-rose-100 text-rose-700", disbursed: "bg-violet-100 text-violet-700",
 };
 
-export function FundApprovalQueueLive() {
+export function FundApprovalQueueLive({ canDisburse = false }: { canDisburse?: boolean } = {}) {
   const [rows, setRows] = useState<BeFundRequest[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -62,7 +62,7 @@ export function FundApprovalQueueLive() {
     }
   };
 
-  const act = async (r: BeFundRequest, action: "approve" | "return" | "reject") => {
+  const act = async (r: BeFundRequest, action: "approve" | "return" | "reject" | "disburse") => {
     setActionBusy(true); setActionErr(null);
     try {
       const res = await fetch(`/api/fund-requests/${r.id}/${action}`, {
@@ -161,6 +161,11 @@ export function FundApprovalQueueLive() {
                         ) : r.status === "submitted" ? (
                           <p className="mt-2.5 text-[10.5px] muted">This is your own request — it routes to your supervisor for approval.</p>
                         ) : null}
+                        {/* Accountant disburse — only on backend-APPROVED rows; the
+                            backend re-enforces PAYMENT_ACT before money moves. */}
+                        {canDisburse && r.status === "approved" && (
+                          <button disabled={actionBusy} onClick={() => act(r, "disburse")} className="mt-2.5 w-full inline-flex items-center justify-center gap-1 h-9 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-[11.5px] font-bold disabled:opacity-50">{actionBusy ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />} Disburse funds</button>
+                        )}
                       </>
                     )}
                   </div>

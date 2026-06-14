@@ -126,7 +126,7 @@ export default async function FundApprovalsPage({
       <div className="px-3 sm:px-4 lg:px-6 pb-3 space-y-3 lg:space-y-4">
         {/* Live fund-request approval queue (backend) — real submitted requests
             routed to this approver. The richer plan workbench below stays mock. */}
-        <FundApprovalQueueLive />
+        <FundApprovalQueueLive canDisburse={user.role === "ProgramAccountant" || user.role === "Admin"} />
 
         {/* Responsive layout for the approvals workbench:
             • Mobile + tablet (< xl): queue is full width and each row
