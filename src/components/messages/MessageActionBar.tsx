@@ -46,6 +46,15 @@ type ActionDef = {
   action?: (formData: FormData) => Promise<void>;
 };
 
+// A primary action with no href but a known status-mutator key is wired to its
+// real server action (not a dead button). Keys outside this map with no href
+// are genuinely unwired and fall back to a plain button.
+const PRIMARY_ACTION_MAP: Partial<Record<MessageActionKey, (formData: FormData) => Promise<void>>> = {
+  acknowledge: acknowledgeAction,
+  "mark-done": markResolvedAction,
+  archive: archiveAction,
+};
+
 // Returns secondary action chips appropriate for the given role +
 // message. The primary action is rendered separately from
 // `message.primaryAction`.
@@ -136,24 +145,28 @@ export function MessageActionBar({
   // Premium button class — shared by primary <Link>/<button>.
   const primaryClass = "inline-flex items-center justify-center gap-1.5 h-10 lg:h-9 px-4 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-body font-extrabold shadow-[0_1px_2px_rgba(15,23,32,0.06)] whitespace-nowrap";
 
+  // A href-less primary whose key is a known status mutator is rendered as a
+  // real server-action form — never a dead no-op button.
+  const primaryActionFn = primary ? PRIMARY_ACTION_MAP[primary.key] : undefined;
+  const renderPrimary = (className: string, iconSize: number) => {
+    if (!primary) return null;
+    const inner = (<><PrimaryIcon size={iconSize} />{primary.label}</>);
+    if (primaryHref) return <Link href={primaryHref} className={className}>{inner}</Link>;
+    if (primaryActionFn) return (
+      <form action={primaryActionFn} className="contents">
+        <input type="hidden" name="messageId" value={message.id} />
+        <button type="submit" className={className}>{inner}</button>
+      </form>
+    );
+    return <button type="button" className={className}>{inner}</button>;
+  };
+
   return (
     <footer className={wrapperClass}>
       {/* ─── Mobile layout: primary CTA fills, secondaries collapse to More ─── */}
       <div className="lg:hidden w-full">
         <div className="flex items-center gap-2 w-full">
-          {primary && (
-            primaryHref ? (
-              <Link href={primaryHref} className={cn(primaryClass, "flex-1")}>
-                <PrimaryIcon size={14} />
-                {primary.label}
-              </Link>
-            ) : (
-              <button type="button" className={cn(primaryClass, "flex-1")}>
-                <PrimaryIcon size={14} />
-                {primary.label}
-              </button>
-            )
-          )}
+          {renderPrimary(cn(primaryClass, "flex-1"), 14)}
           {secondary.length > 0 && (
             <button
               type="button"
@@ -191,19 +204,7 @@ export function MessageActionBar({
             ),
           )}
         </div>
-        {primary && (
-          primaryHref ? (
-            <Link href={primaryHref} className={primaryClass}>
-              <PrimaryIcon size={13} />
-              {primary.label}
-            </Link>
-          ) : (
-            <button type="button" className={primaryClass}>
-              <PrimaryIcon size={13} />
-              {primary.label}
-            </button>
-          )
-        )}
+        {renderPrimary(primaryClass, 13)}
       </div>
     </footer>
   );

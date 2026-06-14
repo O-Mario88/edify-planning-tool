@@ -32,6 +32,23 @@ function toBackendShape(r: NotificationRecord): BackendNotification {
   };
 }
 
+// Neutralize a targetRoute the recipient's role can't reach, so a notification
+// click never dead-ends on access-restricted / a redirect (spec §13: never route
+// CD/RVP/HR/Accountant to Planning/My Plan, etc.).
+const ROLE_RESTRICTED_ROUTES: { prefix: string; allow: string[] }[] = [
+  { prefix: "/my-plan", allow: ["CCEO", "CountryProgramLead", "PartnerAdmin", "PartnerFieldOfficer", "ProjectCoordinator", "Admin"] },
+  { prefix: "/plans", allow: ["CCEO", "CountryProgramLead", "ProjectCoordinator", "Admin"] },
+  { prefix: "/planning", allow: ["CCEO", "CountryProgramLead", "ProjectCoordinator", "Admin"] },
+  { prefix: "/queue", allow: ["ImpactAssessment", "Admin"] },
+  { prefix: "/data-verification", allow: ["ImpactAssessment", "Admin"] },
+  { prefix: "/disbursements", allow: ["ProgramAccountant", "CountryProgramLead", "CountryDirector", "RVP", "Admin"] },
+];
+function guardTargetRoute(n: BackendNotification, role: string): BackendNotification {
+  if (!n.targetRoute) return n;
+  const rule = ROLE_RESTRICTED_ROUTES.find((r) => n.targetRoute!.startsWith(r.prefix));
+  return rule && !rule.allow.includes(role) ? { ...n, targetRoute: "/notifications" } : n;
+}
+
 export async function GET() {
   const user = await getCurrentUser();
   const [recent, counts] = await Promise.all([
@@ -48,7 +65,9 @@ export async function GET() {
     ].map(toBackendShape);
     const backendRows: BackendNotification[] = recent.live && Array.isArray(recent.data) ? recent.data as BackendNotification[] : [];
     const seen = new Set<string>();
-    const merged = [...roleRows, ...backendRows].filter((r) => !seen.has(r.id) && seen.add(r.id) !== undefined);
+    const merged = [...roleRows, ...backendRows]
+      .filter((r) => !seen.has(r.id) && seen.add(r.id) !== undefined)
+      .map((r) => guardTargetRoute(r, user.role));
     merged.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     const unread = merged.filter((r) => r.status === "unread");
     return NextResponse.json({
@@ -59,5 +78,6 @@ export async function GET() {
   }
 
   if (!recent.live) return NextResponse.json({ live: false, error: recent.error }, { status: recent.error ? 502 : 200 });
-  return NextResponse.json({ live: true, recent: recent.data, counts: counts.live ? counts.data : null });
+  const guarded = (recent.data as BackendNotification[]).map((r) => guardTargetRoute(r, user.role));
+  return NextResponse.json({ live: true, recent: guarded, counts: counts.live ? counts.data : null });
 }
