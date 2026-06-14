@@ -306,6 +306,16 @@ export function backendCreateActivity(user: BackendUser, body: Record<string, un
   return live<BeActivity>(`/activities`, user, { method: "POST", body: JSON.stringify(body) });
 }
 
+// ── Cost preview from the CD Country Cost Register (scheduling drawer) ──
+export type BeCostLine = { label: string; key: string; unit: number | null; qty: number; amount: number; missing: boolean };
+export type BeCostPreview = { source: string; currency: string; amount: number; costMissing: boolean; lines: BeCostLine[] };
+export function backendCostPreview(
+  user: BackendUser,
+  body: { activityType: string; deliveryType?: string; districtType?: string; teachersAttended?: number; leadersAttended?: number; otherParticipants?: number },
+) {
+  return live<BeCostPreview>(`/budget/costing/preview`, user, { method: "POST", body: JSON.stringify(body) });
+}
+
 // ── School detail + assignment (reads migration) ────────────────────
 
 export type BeSchoolDetail = {

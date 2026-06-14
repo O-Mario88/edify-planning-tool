@@ -577,7 +577,7 @@ export function ScheduleActivityDrawer({
             </div>
             <p className="text-caption muted leading-snug pt-1">
               <Sparkles size={9} className="inline -mt-0.5 mr-1" />
-              Rates set by the Country Director. Staff and partners cannot edit.
+              Cost source: Uganda · FY 2026 Country Cost Register (CD-owned). Staff and partners cannot edit rates.
             </p>
           </section>
         ) : (
