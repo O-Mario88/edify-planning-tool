@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildFundingByActivity,
+  buildFundingByPeriod,
   fromBeActivity,
   fromStoreActivity,
   sectionMyPlan,
@@ -40,15 +41,21 @@ describe("section derivation", () => {
     return sections.find((s) => s.items.length > 0)?.key;
   }
 
-  it("buckets by scheduled date: today / overdue → dueToday", () => {
-    expect(bucketOf(fromStoreActivity(storeAct({ scheduledDate: "2026-06-10" }), NO_FUNDING, TODAY_ISO))).toBe("dueToday");
-    expect(bucketOf(fromStoreActivity(storeAct({ scheduledDate: "2026-06-02" }), NO_FUNDING, TODAY_ISO))).toBe("dueToday");
+  it("exact-dated work due today / overdue → dueToday", () => {
+    // Only exact-dated work (trainings, SIT, cluster meetings) can be "due today".
+    // School visits are week-of-month grained and never appear as overdue.
+    expect(bucketOf(fromStoreActivity(storeAct({ kind: "CLUSTER_TRAINING", scheduledDate: "2026-06-10" }), NO_FUNDING, TODAY_ISO))).toBe("dueToday");
+    expect(bucketOf(fromStoreActivity(storeAct({ kind: "CLUSTER_TRAINING", scheduledDate: "2026-06-02" }), NO_FUNDING, TODAY_ISO))).toBe("dueToday");
   });
 
-  it("rest of the current week → thisWeek; later or undated → thisMonth", () => {
-    expect(bucketOf(fromStoreActivity(storeAct({ scheduledDate: "2026-06-13" }), NO_FUNDING, TODAY_ISO))).toBe("thisWeek");
-    expect(bucketOf(fromStoreActivity(storeAct({ scheduledDate: "2026-06-25" }), NO_FUNDING, TODAY_ISO))).toBe("thisMonth");
-    expect(bucketOf(fromStoreActivity(storeAct({ scheduledDate: undefined }), NO_FUNDING, TODAY_ISO))).toBe("thisMonth");
+  it("week-grained visits route by week-of-month; later exact dates → thisMonth", () => {
+    // School visits carry a week-of-month, not an exact day.
+    expect(bucketOf(fromStoreActivity(storeAct({ kind: "SCHOOL_VISIT", weekOfMonth: 2 }), NO_FUNDING, TODAY_ISO))).toBe("thisWeek");
+    expect(bucketOf(fromStoreActivity(storeAct({ kind: "SCHOOL_VISIT", weekOfMonth: 4 }), NO_FUNDING, TODAY_ISO))).toBe("thisMonth");
+    // Exact-dated work later this week vs later this month vs undated.
+    expect(bucketOf(fromStoreActivity(storeAct({ kind: "CLUSTER_TRAINING", scheduledDate: "2026-06-13", weekOfMonth: undefined }), NO_FUNDING, TODAY_ISO))).toBe("thisWeek");
+    expect(bucketOf(fromStoreActivity(storeAct({ kind: "CLUSTER_TRAINING", scheduledDate: "2026-06-25", weekOfMonth: undefined }), NO_FUNDING, TODAY_ISO))).toBe("thisMonth");
+    expect(bucketOf(fromStoreActivity(storeAct({ kind: "CLUSTER_TRAINING", scheduledDate: undefined, weekOfMonth: undefined }), NO_FUNDING, TODAY_ISO))).toBe("thisMonth");
   });
 
   it("blocked-on-me statuses win over dates", () => {
@@ -128,9 +135,28 @@ describe("date granularity + funding", () => {
     expect(fromStoreActivity(storeAct({ id: "ACT-DISB" }), map, TODAY_ISO)!.funding).toBe("Disbursed");
   });
 
-  it("maps backend paymentStatus loosely", () => {
+  it("maps backend paymentStatus (real enum) to the funding pill", () => {
     expect(fromBeActivity(beAct({ paymentStatus: "paid" }), TODAY_ISO)!.funding).toBe("Disbursed");
-    expect(fromBeActivity(beAct({ paymentStatus: "pending" }), TODAY_ISO)!.funding).toBe("Requested");
+    expect(fromBeActivity(beAct({ paymentStatus: "pending_ia" }), TODAY_ISO)!.funding).toBe("Requested");
+    expect(fromBeActivity(beAct({ paymentStatus: "pl_approved" }), TODAY_ISO)!.funding).toBe("Approved");
+    expect(fromBeActivity(beAct({ paymentStatus: "netsuite_accountability" }), TODAY_ISO)!.funding).toBe("Accounted");
+    // No payment + no schedule = no pill at all.
     expect(fromBeActivity(beAct({}), TODAY_ISO)!.funding).toBeUndefined();
+  });
+
+  it("pre-execution funding pill: scheduled-but-unrequested → Not Requested; period map fills the stage", () => {
+    // A scheduled activity with no payment and no fund request shows "Not Requested".
+    expect(fromBeActivity(beAct({ scheduledDate: "2026-06-20", fy: "FY2026" }), TODAY_ISO)!.funding).toBe("Not Requested");
+    // The caller's fund requests by period (FY-Mmonth) supply the pre-execution stage.
+    const approved = buildFundingByPeriod([{ periodKey: "FY2026-M6", status: "approved" }]);
+    expect(fromBeActivity(beAct({ scheduledDate: "2026-06-20", fy: "FY2026" }), TODAY_ISO, approved)!.funding).toBe("Approved");
+    // Furthest-along status wins per period; returned ranks lowest.
+    const mixed = buildFundingByPeriod([
+      { periodKey: "FY2026-M6", status: "submitted" },
+      { periodKey: "FY2026-M6", status: "disbursed" },
+    ]);
+    expect(mixed.get("FY2026-M6")).toBe("Disbursed");
+    // Post-execution payment status always outranks the pre-execution period map.
+    expect(fromBeActivity(beAct({ scheduledDate: "2026-06-20", fy: "FY2026", paymentStatus: "paid" }), TODAY_ISO, approved)!.funding).toBe("Disbursed");
   });
 });
