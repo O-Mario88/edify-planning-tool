@@ -27,9 +27,11 @@ export type ConfirmCompletionResult =
   | { ok: false; reason: "FORBIDDEN" | "INVALID_INPUT" };
 
 // Field workers (and their leads) confirm completion. Partners confirm their
-// own delivered visits.
+// own delivered visits. CD does NOT execute field work and IA only VERIFIES
+// (ia-confirm) — neither completes activities (mirrors the backend
+// ACTIVITY_COMPLETE gate, which excludes both).
 const ROLES = new Set([
-  "CCEO", "CountryProgramLead", "ImpactAssessment", "CountryDirector", "Admin",
+  "CCEO", "CountryProgramLead", "Admin",
   "PartnerAdmin", "PartnerFieldOfficer",
 ]);
 
