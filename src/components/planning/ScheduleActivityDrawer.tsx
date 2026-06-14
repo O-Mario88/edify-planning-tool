@@ -134,6 +134,9 @@ export function ScheduleActivityDrawer({
   // live so a support visit is planned against the real gaps, not a single
   // hard-coded "weakest area".
   const [weakInterventions, setWeakInterventions] = useState<Array<{ area: string; score: number }> | null>(null);
+  // The planner's approved-leave days — scheduling onto these is blocked (spec
+  // Scenario A; /api/leave/calendar is backend-scoped to the caller's own leave).
+  const [leaveDates, setLeaveDates] = useState<Set<string>>(new Set());
 
   // Re-seed each time the drawer opens for a new context. Encoded as
   // a single effect rather than a key-reset so the chrome doesn't
@@ -157,6 +160,22 @@ export function ScheduleActivityDrawer({
       setError(null);
     }
   }, [open, context, today]);
+
+  // Load the planner's approved leave when the drawer opens so on-leave days are
+  // greyed out + un-selectable on the calendar.
+  useEffect(() => {
+    if (!open) { setLeaveDates(new Set()); return; }
+    let cancelled = false;
+    fetch(`/api/leave/calendar`, { credentials: "include" })
+      .then((r) => r.json())
+      .then((j) => {
+        if (cancelled) return;
+        const entries: Array<{ dates?: string[] }> = j?.leave ?? [];
+        setLeaveDates(new Set(entries.flatMap((e) => e.dates ?? [])));
+      })
+      .catch(() => { if (!cancelled) setLeaveDates(new Set()); });
+    return () => { cancelled = true; };
+  }, [open]);
 
   const cycle = useMemo(() => cycleBoundsFor(today), [today]);
 
@@ -458,6 +477,7 @@ export function ScheduleActivityDrawer({
                   const isToday    = sameDate(cell.date, today);
                   const isSelected = !!selected && sameDate(cell.date, selected);
                   const isPast     = cell.date < startOfDay(today);
+                  const isOnLeave  = cell.inMonth && leaveDates.has(formatIso(cell.date));
                   return (
                     <button
                       key={i}
@@ -469,7 +489,8 @@ export function ScheduleActivityDrawer({
                           setViewYear(cell.date.getFullYear());
                         }
                       }}
-                      disabled={isPast}
+                      disabled={isPast || isOnLeave}
+                      title={isOnLeave ? "You are on approved leave this day" : undefined}
                       className={cn(
                         "h-9 rounded-md text-[12px] font-semibold tabular transition-colors",
                         "focus:outline-2 focus:outline-offset-1 focus:outline-[var(--color-edify-primary)]",
@@ -477,6 +498,8 @@ export function ScheduleActivityDrawer({
                           ? "bg-[var(--color-edify-primary)] text-white shadow-sm font-extrabold"
                           : isPast
                             ? "text-[var(--color-edify-muted)] opacity-40 cursor-not-allowed"
+                            : isOnLeave
+                              ? "text-rose-400 line-through opacity-50 cursor-not-allowed"
                             : !cell.inMonth
                               ? "text-[var(--color-edify-muted)] opacity-60 hover:bg-[var(--color-edify-soft)]/40"
                               : isToday
@@ -489,6 +512,12 @@ export function ScheduleActivityDrawer({
                   );
                 })}
               </div>
+
+              {leaveDates.size > 0 && (
+                <p className="mt-1.5 text-[10.5px] muted inline-flex items-center gap-1">
+                  <span className="inline-block w-2.5 h-2.5 rounded-sm bg-rose-100 border border-rose-300" /> Crossed-out days are approved leave — they can't be scheduled.
+                </p>
+              )}
 
               <div className="mt-3 pt-3 border-t border-[var(--color-edify-divider)] flex items-center justify-between text-[11.5px]">
                 <span className="muted inline-flex items-center gap-1">
