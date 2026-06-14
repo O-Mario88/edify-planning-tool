@@ -737,6 +737,11 @@ export function reviewFundRequest(user: BackendUser, id: string, action: "approv
 export function backendFundAction(user: BackendUser, id: string, action: string, body?: Record<string, unknown>) {
   return live<BeFundRequest>(`/fund-requests/${encodeURIComponent(id)}/${action}`, user, { method: "POST", body: JSON.stringify(body ?? {}) });
 }
+/** Submit (generate) a fund request from the caller's scheduled work for a
+ *  period — derived from the plan + CD cost register; blocked on missing cost. */
+export function submitFundRequest(user: BackendUser, body: { period?: string; month?: number; quarter?: string }) {
+  return live<BeFundRequest>(`/fund-requests`, user, { method: "POST", body: JSON.stringify(body) });
+}
 
 // ── Activities — generic scoped list (IA queue, etc.; My Plan uses
 //    fetchMyPlanActivities; actions use backendActivityAction above) ──

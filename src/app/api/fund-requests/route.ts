@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
-import { fetchFundRequests } from "@/lib/api/surfaces";
+import { fetchFundRequests, submitFundRequest } from "@/lib/api/surfaces";
 
-// Fund-request queue — role-scoped (approvers see all; submitters see own). No mock.
+// Fund-request queue (GET, role-scoped) + submit/generate a request (POST). No mock.
 export const dynamic = "force-dynamic";
 
 export async function GET() {
@@ -11,4 +11,16 @@ export async function GET() {
   return r.live
     ? NextResponse.json({ live: true, requests: r.data })
     : NextResponse.json({ live: false, error: r.error }, { status: r.error ? 502 : 200 });
+}
+
+export async function POST(req: Request) {
+  const user = await getCurrentUser();
+  const body = await req.json().catch(() => ({}));
+  const r = await submitFundRequest(
+    { email: user.email, role: user.role },
+    { period: body.period ?? "monthly", month: body.month, quarter: body.quarter },
+  );
+  return r.live
+    ? NextResponse.json({ live: true, request: r.data })
+    : NextResponse.json({ live: false, error: r.error }, { status: 502 });
 }

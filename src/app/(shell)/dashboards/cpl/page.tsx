@@ -212,7 +212,7 @@ export default async function CountryProgramLeadDashboard() {
               CCEOs they supervise. Expandable rows; every cost from the
               catalogue. Backend scopes this to the supervision chain. */}
           <div id="fund-approvals">
-            <FundApprovalQueueLive />
+            <FundApprovalQueueLive canSubmit />
           </div>
         </section>
 

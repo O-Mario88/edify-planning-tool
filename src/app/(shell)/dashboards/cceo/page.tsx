@@ -184,7 +184,7 @@ export default async function CceoDashboardPage() {
             <div className="col-span-12 lg:col-span-7"><WeeklyFundRequestCard /></div>
           </div>
           <div id="fund-approvals">
-            <FundApprovalQueueLive />
+            <FundApprovalQueueLive canSubmit />
           </div>
         </section>
 

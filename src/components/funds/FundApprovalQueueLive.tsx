@@ -26,7 +26,8 @@ const statusTone: Record<string, string> = {
   returned: "bg-sky-100 text-sky-700", rejected: "bg-rose-100 text-rose-700", disbursed: "bg-violet-100 text-violet-700",
 };
 
-export function FundApprovalQueueLive({ canDisburse = false }: { canDisburse?: boolean } = {}) {
+export function FundApprovalQueueLive({ canDisburse = false, canSubmit = false }: { canDisburse?: boolean; canSubmit?: boolean } = {}) {
+  const [submitMsg, setSubmitMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [rows, setRows] = useState<BeFundRequest[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -75,12 +76,35 @@ export function FundApprovalQueueLive({ canDisburse = false }: { canDisburse?: b
     setActionBusy(false);
   };
 
+  // Generate THIS month's fund request from the caller's scheduled work (derived
+  // from the plan + CD cost register; the backend blocks on any missing cost).
+  const submitMine = async () => {
+    setActionBusy(true); setSubmitMsg(null);
+    try {
+      const j = await fetch("/api/fund-requests", {
+        method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ period: "monthly" }),
+      }).then((r) => r.json());
+      if (j.live) { setSubmitMsg({ ok: true, text: "Monthly fund request submitted to your supervisor." }); load(); }
+      else setSubmitMsg({ ok: false, text: j.error || "Could not generate the request." });
+    } catch { setSubmitMsg({ ok: false, text: "Could not reach the server." }); }
+    setActionBusy(false);
+  };
+
   return (
     <section className="card p-3.5">
       <header className="flex items-center justify-between gap-2 mb-2.5 flex-wrap">
         <h2 className="text-[13px] font-extrabold tracking-tight inline-flex items-center gap-1.5"><Wallet size={14} /> Fund Approval Queue</h2>
-        <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)] px-2 py-0.5 text-[10px] font-bold border border-[var(--color-edify-border)]">Live · you supervise</span>
+        <div className="flex items-center gap-2">
+          {canSubmit && (
+            <button disabled={actionBusy} onClick={submitMine} className="inline-flex items-center gap-1 h-7 px-2.5 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[10.5px] font-bold disabled:opacity-50">
+              {actionBusy ? <Loader2 size={12} className="animate-spin" /> : <Wallet size={12} />} Generate my monthly request
+            </button>
+          )}
+          <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)] px-2 py-0.5 text-[10px] font-bold border border-[var(--color-edify-border)]">Live · you supervise</span>
+        </div>
       </header>
+      {submitMsg && <p className={`mb-2 text-[11px] font-semibold ${submitMsg.ok ? "text-emerald-600" : "text-rose-500"}`}>{submitMsg.text}</p>}
 
       {loading ? <LoadingState compact />
         : error ? <ErrorState compact message={error} onRetry={load} />
