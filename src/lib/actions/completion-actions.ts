@@ -9,6 +9,7 @@
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/auth";
 import { recordCompletion } from "@/lib/execution/completion-overlay";
+import { salesforceKindFor, isValidSalesforceId } from "@/lib/salesforce-id";
 import { emitAudit, emitNotification } from "./audit";
 
 export type ConfirmCompletionInput = {
@@ -37,7 +38,13 @@ export async function confirmActivityCompletion(input: ConfirmCompletionInput): 
   if (!ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
 
   const sfId = input.salesforceId?.trim() ?? "";
-  if (sfId.length < 3 || !input.activityId) return { ok: false, reason: "INVALID_INPUT" };
+  if (!input.activityId || sfId.length < 3) return { ok: false, reason: "INVALID_INPUT" };
+  // Enforce the SV-/TS- format per activity type (the comment promised this but
+  // only a length check existed) — mirrors the backend's complete() gate so a
+  // malformed ID is rejected at entry, not after a round-trip to the backend.
+  if (!isValidSalesforceId(sfId, salesforceKindFor(input.activityType))) {
+    return { ok: false, reason: "INVALID_INPUT" };
+  }
 
   recordCompletion({
     activityId: input.activityId,
