@@ -15,6 +15,7 @@ import { AggregatedFieldContextCard } from "@/components/field-intelligence/Aggr
 import { CommandStack } from "@/components/actions/CommandStack";
 import { DashboardPageHeader } from "@/components/dashboards/DashboardPageHeader";
 import { DashboardGreetingHero } from "@/components/dashboards/DashboardGreetingHero";
+import { DecisionEngineEmbed } from "@/components/leadership/DecisionEngineEmbed";
 import { DebriefReviewInbox } from "@/components/messages/DebriefReviewInbox";
 import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
@@ -57,6 +58,9 @@ export default async function HrFieldContextPage() {
         {/* GREETING HERO — system-wide layout rule: header → hero →
             stats → work. */}
         <DashboardGreetingHero user={user} />
+
+        {/* Leadership Decision Engine — context-fair staff/HR + staffing advisory. */}
+        <DecisionEngineEmbed board="staff_hr" heading="Staff & HR Decisions" />
 
         {/* STATISTICS FIRST — the KPI snapshot is the first thing under the
             hero so the numbers are seen before the attention queues. */}

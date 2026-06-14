@@ -4,6 +4,7 @@ import { ROLE_REDIRECT } from "@/lib/auth-public";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { RecruitmentIntelligenceCard } from "@/components/analytics/RecruitmentIntelligenceCard";
 import { RecruitmentDistrictTable } from "@/components/analytics/RecruitmentDistrictTable";
+import { DecisionEngineEmbed } from "@/components/leadership/DecisionEngineEmbed";
 
 // Recruitment Intelligence — the CD's aggregated, drillable directory
 // replacement: should we recruit more or focus on current schools?
@@ -26,6 +27,10 @@ export default async function RecruitmentPage() {
       />
       <div className="px-4 sm:px-6 pt-2 pb-24 space-y-4">
         <RecruitmentIntelligenceCard />
+
+        {/* Leadership Decision Engine — recruitment decision board (per district + country). */}
+        <DecisionEngineEmbed board="recruitment" heading="Recruitment Decisions" />
+
         <RecruitmentDistrictTable />
       </div>
     </>

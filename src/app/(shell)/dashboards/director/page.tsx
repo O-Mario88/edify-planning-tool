@@ -41,6 +41,7 @@ import { SsaPerformanceGrid } from "@/components/ssa/SsaPerformanceGrid";
 import { InterventionImprovementGrid } from "@/components/ssa/InterventionImprovementGrid";
 import { SupportImprovementCard } from "@/components/analytics/SupportImprovementCard";
 import { RecruitmentIntelligenceCard } from "@/components/analytics/RecruitmentIntelligenceCard";
+import { DecisionEngineEmbed } from "@/components/leadership/DecisionEngineEmbed";
 
 // Country Director Dashboard — Country Mission Control.
 //
@@ -88,6 +89,12 @@ export default async function CountryDirectorDashboard() {
 
         {/* Live program snapshot (backend analytics) — real KPIs + activity pipeline. */}
         <CountryAnalyticsLive />
+
+        {/* LEADERSHIP DECISION ENGINE — the executive intelligence layer:
+            evidence-backed, human-reviewed recommendations (recruitment, staff,
+            partner MOUs, regional investment) computed from live SSA, workload,
+            partner & target data. The engine recommends; leadership decides. */}
+        <DecisionEngineEmbed />
 
         {/* COUNTRY MISSION SNAPSHOT + KPI ROW — the program statistics
             band, directly below the hero and before any work content. */}

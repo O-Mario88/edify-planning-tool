@@ -25,6 +25,7 @@ import { ClientVerificationCard } from "@/components/ssa/ClientVerificationCard"
 import { DashboardPageHeader } from "@/components/dashboards/DashboardPageHeader";
 import { DashboardGreetingHero } from "@/components/dashboards/DashboardGreetingHero";
 import { CountryAnalyticsLive } from "@/components/analytics/CountryAnalyticsLive";
+import { DecisionEngineEmbed } from "@/components/leadership/DecisionEngineEmbed";
 import { SectionCard, StatusBadge, ProgressRing } from "@/components/ui/primitives";
 import { MetricStrip } from "@/components/ui/MetricStrip";
 import { countryRollups, specialProjects } from "@/lib/workflow-mock";
@@ -85,6 +86,9 @@ export default async function RVPDashboard() {
 
       {/* Live program snapshot (backend analytics). */}
       <CountryAnalyticsLive />
+
+      {/* Leadership Decision Engine — region/country advisory boards, computed from live data. */}
+      <DecisionEngineEmbed />
 
       {/* REGIONAL SIGNALS — the statistics snapshot, directly below the
           hero: region-weighted KPIs, system insights, training coverage. */}

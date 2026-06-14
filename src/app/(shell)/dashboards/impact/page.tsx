@@ -2,6 +2,7 @@ import { CommandStack } from "@/components/actions/CommandStack";
 import { DashboardPageHeader } from "@/components/dashboards/DashboardPageHeader";
 import { DashboardGreetingHero } from "@/components/dashboards/DashboardGreetingHero";
 import { CountryAnalyticsLive } from "@/components/analytics/CountryAnalyticsLive";
+import { DecisionEngineEmbed } from "@/components/leadership/DecisionEngineEmbed";
 import { TodayCommandCenter } from "@/components/command/TodayCommandCenter";
 import { DonorImpactReachCard } from "@/components/director/DonorImpactReachCard";
 import { getDonorMetricSnapshot } from "@/lib/donor-metrics";
@@ -68,6 +69,9 @@ export default async function ImpactDashboard() {
 
             {/* Live program snapshot (backend analytics) — the IA's M&E numbers. */}
             <CountryAnalyticsLive />
+
+            {/* Leadership Decision Engine — data-confidence + SSA-impact readiness lens. */}
+            <DecisionEngineEmbed heading="Decision Readiness & Data Confidence" />
 
             {/* Vital signs — the statistics snapshot, directly below the
                 hero: five KPIs + cluster quality + system insights. */}
