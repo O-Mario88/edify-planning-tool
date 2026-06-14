@@ -1083,3 +1083,23 @@ export function fetchBudgetIntelligenceBoards(
 export function fetchBudgetIntelligenceSnapshot(user: BackendUser, fy?: string) {
   return live<BeBudgetSnapshot>(`/budget-intelligence/snapshot${fy ? `?fy=${encodeURIComponent(fy)}` : ""}`, user);
 }
+
+// ── CD → PL flags ───────────────────────────────────────────────────
+export type BeCdFlag = {
+  id: string; raisedByUserId: string; raisedByName?: string | null; assignedToUserId: string;
+  category: string; scopeType?: string | null; scopeId?: string | null; scopeName?: string | null;
+  note: string; recommendedAction?: string | null; priority: string; dueDate?: string | null;
+  status: string; resolutionNote?: string | null; resolvedAt?: string | null; createdAt: string;
+};
+export function fetchFlags(user: BackendUser, status?: string) {
+  return live<{ flags: BeCdFlag[]; count: number; openCount: number }>(`/flags${status ? `?status=${encodeURIComponent(status)}` : ""}`, user);
+}
+export function fetchProgramLeads(user: BackendUser) {
+  return live<{ programLeads: { id: string; name: string }[] }>(`/flags/program-leads`, user);
+}
+export function backendRaiseFlag(user: BackendUser, body: Record<string, unknown>) {
+  return live<BeCdFlag>(`/flags`, user, { method: "POST", body: JSON.stringify(body) });
+}
+export function backendUpdateFlag(user: BackendUser, id: string, body: { action: string; note?: string }) {
+  return live<BeCdFlag>(`/flags/${encodeURIComponent(id)}`, user, { method: "PATCH", body: JSON.stringify(body) });
+}

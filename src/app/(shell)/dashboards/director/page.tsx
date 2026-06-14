@@ -11,6 +11,7 @@ import { DebriefReviewInbox } from "@/components/messages/DebriefReviewInbox";
 import { CountryKpiRow } from "@/components/director/CountryKpiRow";
 import { ExecutiveAlerts } from "@/components/director/ExecutiveAlerts";
 import { CdRiskSummaryCard } from "@/components/escalation/CdRiskSummaryCard";
+import { FlagToPlCard } from "@/components/director/FlagToPlCard";
 import { MissionSnapshotStrip } from "@/components/director/MissionSnapshotStrip";
 import { StaffPerformanceSummary } from "@/components/director/StaffPerformanceSummary";
 import { PartnerPerformanceSummary } from "@/components/director/PartnerPerformanceSummary";
@@ -194,6 +195,9 @@ export default async function CountryDirectorDashboard() {
             action · one button. */}
         <ExecutiveAlerts inputs={{ unclusteredSchools: clusterCounts.unclustered }} />
         <CdRiskSummaryCard />
+        {/* The CD's sanctioned action on what they monitor: flag to a PL (who
+            plans) — never field-plan directly. Creates a tracked, notified item. */}
+        <FlagToPlCard />
 
         {/* BUDGET & FUND REQUEST HEALTH — financial stewardship. */}
         <section className="space-y-3">

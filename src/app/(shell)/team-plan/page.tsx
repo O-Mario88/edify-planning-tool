@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { ROLE_REDIRECT } from "@/lib/auth-public";
 import { buildTeamPlan } from "@/lib/cpl/team-plan-engine";
 import { TeamPlanBoard } from "@/components/cpl/TeamPlanBoard";
+import { CdFlagQueue } from "@/components/cpl/CdFlagQueue";
 import { ClusterMeetingRecommendationsCard } from "@/components/cpl/ClusterMeetingRecommendations";
 import { clusterMeetingRecommendations } from "@/lib/cluster/cluster-meeting-recommendations";
 
@@ -27,6 +28,8 @@ export default async function TeamPlanPage() {
     <>
       <PageHeader title="Team Plan" />
       <div className="px-3 sm:px-4 md:px-5 pb-24 md:pb-5 pt-3 md:pt-4 space-y-4">
+        {/* Inbound CD flags — the PL acts on what the Country Director monitored. */}
+        <CdFlagQueue />
         <TeamPlanBoard rows={rows} summary={summary} />
         <ClusterMeetingRecommendationsCard recommendations={clusterRecs} limit={8} />
       </div>
