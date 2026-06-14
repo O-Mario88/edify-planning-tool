@@ -63,7 +63,7 @@ export function FundApprovalQueueLive({ canDisburse = false, canSubmit = false }
     }
   };
 
-  const act = async (r: BeFundRequest, action: "approve" | "return" | "reject" | "disburse") => {
+  const act = async (r: BeFundRequest, action: "approve" | "return" | "reject" | "disburse" | "account-approve" | "account-return") => {
     setActionBusy(true); setActionErr(null);
     try {
       const res = await fetch(`/api/fund-requests/${r.id}/${action}`, {
@@ -189,6 +189,19 @@ export function FundApprovalQueueLive({ canDisburse = false, canSubmit = false }
                             backend re-enforces PAYMENT_ACT before money moves. */}
                         {canDisburse && r.status === "approved" && (
                           <button disabled={actionBusy} onClick={() => act(r, "disburse")} className="mt-2.5 w-full inline-flex items-center justify-center gap-1 h-9 rounded-lg bg-violet-600 hover:bg-violet-700 text-white text-[11.5px] font-bold disabled:opacity-50">{actionBusy ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />} Disburse funds</button>
+                        )}
+                        {/* Supervisor accountability review — the close-out leg.
+                            Shown when a supervised submitter has filed accountability
+                            (NetSuite ID + spent/returned) awaiting your approval. */}
+                        {(d?.canAccountReview ?? r.canAccountReview) && (
+                          <div className="mt-2.5 rounded-lg border border-[var(--color-edify-border)] bg-[var(--surface-1)] p-2.5">
+                            <p className="text-[10.5px] font-bold mb-1.5">Accountability filed{r.accountabilityNetsuiteId ? ` · NetSuite ${r.accountabilityNetsuiteId}` : ""}
+                              <span className="muted font-normal"> · accounted {ugx(r.accountedAmount ?? 0)} · returned {ugx(r.returnedAmount ?? 0)}</span></p>
+                            <div className="flex gap-1.5">
+                              <button disabled={actionBusy} onClick={() => act(r, "account-approve")} className="flex-1 inline-flex items-center justify-center gap-1 h-9 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[11.5px] font-bold disabled:opacity-50">{actionBusy ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />} Approve accountability</button>
+                              <button disabled={actionBusy} onClick={() => act(r, "account-return")} className="inline-flex items-center justify-center gap-1 h-9 px-3 rounded-lg border border-sky-300 text-sky-700 hover:bg-sky-50 text-[11.5px] font-bold disabled:opacity-50"><RotateCcw size={13} /> Return</button>
+                            </div>
+                          </div>
                         )}
                       </>
                     )}

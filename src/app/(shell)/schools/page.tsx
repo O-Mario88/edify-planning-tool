@@ -7,7 +7,7 @@ import type { DirectorySchoolVM, DirectoryClusterMatch } from "@/components/clus
 import { schoolRecommendationSummary, recommendInterventionsForSchool } from "@/lib/planning/intervention-recommendation";
 import { TargetsByTimePeriodCard } from "@/components/portfolio/TargetsByTimePeriodCard";
 import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
-import { SchoolsView } from "@/components/mobile/views/SchoolsView";
+import { MobileSchoolsLive } from "@/components/mobile/views/MobileSchoolsLive";
 import {
   clusterStatusOf,
   recommendClustersFor,
@@ -21,7 +21,6 @@ import {
   directoryPlanningSignals,
 } from "@/lib/school-directory/directory";
 import { openDuplicateCandidates } from "@/lib/intake/duplicate-candidates-mock";
-import { getVisibleSchools, priorityOrder } from "@/lib/schools-mock";
 import { getCurrentUser, toCurrentUser } from "@/lib/auth";
 import { fetchSchools, fetchClusters, type BeSchoolRow, type BeCluster } from "@/lib/api/surfaces";
 import { LiveBadge, BackendOfflineBanner } from "@/components/ui/BackendStatus";
@@ -139,9 +138,6 @@ export default async function SchoolsDashboard({
     selectedQuarter: currentQuarter,
   });
 
-  // Mobile view still uses the legacy SchoolRow set (separate migration).
-  const ordered = [...getVisibleSchools(currentUser)].sort(priorityOrder);
-
   // Assignment option lists for the directory drawer + bulk bar.
   const visibleProjects = getVisibleProjects(currentUser);
   const projectOptions = visibleProjects.map((p) => ({ projectId: p.projectId, projectShortName: p.projectShortName, projectType: p.projectType, primaryInterventionId: p.primaryInterventionId }));
@@ -249,7 +245,7 @@ export default async function SchoolsDashboard({
   const canManageClusters = canManageDirectory && me.role !== "ProjectCoordinator";
 
   return (
-    <ResponsiveDashboard mobile={<SchoolsView intelligenceSchools={ordered} />} desktop={
+    <ResponsiveDashboard mobile={<MobileSchoolsLive schools={directorySchools} live={liveSchools.live} />} desktop={
     <>
       <SchoolsHeader />
         <div className="px-3 sm:px-4 md:px-6 pb-24 md:pb-6 space-y-3 md:space-y-4">

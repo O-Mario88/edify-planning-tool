@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { LeadWeeklyView } from "@/components/funds/lead/LeadWeeklyView";
 import { StaffWeeklyView } from "@/components/funds/staff/StaffWeeklyView";
+import { StaffAccountabilityLive } from "@/components/funds/staff/StaffAccountabilityLive";
 import { AccountantDisbursementView } from "@/components/funds/accountant/AccountantDisbursementView";
 import { getCurrentUser } from "@/lib/auth";
 
@@ -37,12 +38,15 @@ export default async function WeeklyFundsPage() {
   }
 
   if (user.role === "CCEO") {
-    return (
-      <ResponsiveDashboard
-        mobile={<StaffWeeklyView staffId={user.staffId} staffName={user.name} />}
-        desktop={<StaffWeeklyView staffId={user.staffId} staffName={user.name} />}
-      />
+    // Weekly slips (planning context) + the LIVE accountability close-out leg:
+    // account for funds the accountant has disbursed (NetSuite Expense ID).
+    const staffView = (
+      <div className="space-y-4">
+        <StaffWeeklyView staffId={user.staffId} staffName={user.name} />
+        <StaffAccountabilityLive />
+      </div>
     );
+    return <ResponsiveDashboard mobile={staffView} desktop={staffView} />;
   }
 
   redirect("/dashboard");

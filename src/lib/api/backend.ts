@@ -10,7 +10,10 @@ import "server-only";
 // Enable per-surface via EDIFY_USE_BACKEND=true; the API base is EDIFY_API_URL.
 
 const API = process.env.EDIFY_API_URL ?? "http://localhost:4000/api";
-const DEV_PASSWORD = "edify";
+// Bridge → backend login password. Reads the SAME env var as the FE login store
+// and the backend seed (DEMO_LOGIN_PASSWORD) so a rotated demo secret keeps all
+// three in lockstep; defaults to "edify" for local dev.
+const DEV_PASSWORD = process.env.DEMO_LOGIN_PASSWORD || "edify";
 
 export function isBackendEnabled(): boolean {
   return (process.env.EDIFY_USE_BACKEND ?? "").toLowerCase() === "true";

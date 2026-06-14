@@ -271,6 +271,12 @@ export type BeActivity = {
   status: string;
   deliveryType: string;
   scheduledDate?: string | null;
+  // Week/month-grained scheduling (visits carry these instead of an exact date).
+  // The backend already returns them on the activity row.
+  plannedMonth?: number | null;
+  plannedWeek?: number | null;
+  month?: number | null;
+  week?: number | null;
   rescheduleCount?: number | null;
   lastReason?: string | null;
   assignedPartnerId?: string | null;
@@ -728,6 +734,11 @@ export type BeFundRequest = {
   accountabilityNetsuiteId?: string | null; accountabilitySubmittedAt?: string | null; accountabilityReviewedAt?: string | null;
   // Present on the list (whether YOU may act) and detail (the costed breakdown).
   canReview?: boolean;
+  // The list also flags the accountability close-out leg: isOwn = you submitted
+  // this (so you account for it); canAccountReview = you supervise the submitter
+  // and they've filed accountability awaiting your approve/return.
+  isOwn?: boolean;
+  canAccountReview?: boolean;
   breakdown?: { total: number; count: number; activities: BeFundActivityCost[] } | null;
 };
 export function fetchFundRequests(user: BackendUser) {

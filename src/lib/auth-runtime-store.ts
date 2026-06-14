@@ -81,12 +81,22 @@ export function verifyPassword(password: string, hash: string): boolean {
 // anyone who hasn't signed up fresh. Hashed with real bcrypt at module
 // init — cost is ~250ms × number of demo users, paid once per server
 // boot, never on a request hot path.
+//
+// HOSTING-SECURITY (P0-2): the demo password is env-overridable so a hosted
+// test runs on a per-event secret instead of the public "edify". Set
+// DEMO_LOGIN_PASSWORD in the deploy env (MUST match the bridge + backend seed —
+// they read the same var). The privileged admin account is disabled unless
+// ENABLE_DEMO_ADMIN=true (always available in dev so local testing is unaffected).
+const DEMO_PASSWORD = process.env.DEMO_LOGIN_PASSWORD || "edify";
+const ADMIN_ENABLED =
+  process.env.ENABLE_DEMO_ADMIN === "true" || process.env.NODE_ENV !== "production";
 for (const u of Object.values(DEMO_USERS)) {
+  if (u.email.toLowerCase() === "admin@edify.org" && !ADMIN_ENABLED) continue;
   userStore.set(u.email.toLowerCase(), {
     email: u.email.toLowerCase(),
     name: u.name,
     role: u.role,
-    passwordHash: hashPassword(u.password),
+    passwordHash: hashPassword(DEMO_PASSWORD),
     createdAt: "2025-01-01T00:00:00.000Z",
     status: "Active",
   });

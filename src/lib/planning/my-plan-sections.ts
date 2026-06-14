@@ -206,6 +206,13 @@ export function fromBeActivity(a: BeActivity, todayIso: string, fundingByPeriod?
     : ev === "required" || ev === "missing" || ev === "rejected" ? "evidence"
     : undefined;
   const rescheduleCount = a.rescheduleCount ?? 0;
+  // Resolve the activity's calendar month (1-12) for the funding lookup: an exact
+  // scheduledDate wins, else the week/month-grained planned month (visits carry
+  // plannedMonth, not a date). Keep getMonth (local) to match the fund-request
+  // periodKey built from the same source on the page caller.
+  const periodMonth = a.scheduledDate
+    ? new Date(a.scheduledDate).getMonth() + 1
+    : (a.plannedMonth ?? a.month ?? undefined);
   const item: MyPlanItem = {
     id: a.id,
     source: "backend",
@@ -216,12 +223,13 @@ export function fromBeActivity(a: BeActivity, todayIso: string, fundingByPeriod?
     // Backend rows don't expose a cost field yet — the card shows no cost.
     costCents: undefined,
     // Funding pill: the post-execution PAYMENT status if present, else the
-    // PRE-execution fund-request status for the activity's month, else
-    // "Not Requested" so the planner sees un-funded planned work.
+    // PRE-execution fund-request status for the activity's month (date OR
+    // planned-month), else "Not Requested" so the planner sees un-funded
+    // planned work. Month-grained visits now resolve their period too.
     funding:
       fundingFromPaymentStatus(a.paymentStatus) ??
-      (a.scheduledDate && a.fy ? fundingByPeriod?.get(`${a.fy}-M${new Date(a.scheduledDate).getMonth() + 1}`) : undefined) ??
-      (a.scheduledDate ? "Not Requested" : undefined),
+      (periodMonth && a.fy ? fundingByPeriod?.get(`${a.fy}-M${periodMonth}`) : undefined) ??
+      (periodMonth ? "Not Requested" : undefined),
     statusLabel: titleCase(a.status),
     waitingOn,
     rescheduleCount,
