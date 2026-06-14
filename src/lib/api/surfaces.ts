@@ -416,6 +416,66 @@ export function clearPayment(user: BackendUser, activityId: string) {
   );
 }
 
+// ── Leadership Decision Engine ──────────────────────────────────────
+export type BeDecisionEvidence = {
+  id: string;
+  metricName: string;
+  metricValue: string;
+  comparisonValue?: string | null;
+  sourceType: string;
+  explanation?: string | null;
+  weight: string;
+  tone?: string | null;
+};
+export type BeDecisionInsight = {
+  id: string;
+  fy: string;
+  decisionType: string;
+  scopeType: string;
+  scopeId?: string | null;
+  scopeName?: string | null;
+  recommendation: string;
+  reason: string;
+  riskLevel: string;
+  confidenceLevel: string;
+  confidenceScore: number;
+  contextAdjustment?: string | null;
+  financialImplication?: string | null;
+  suggestedAction: string;
+  alternatives: string[];
+  metrics: Record<string, unknown>;
+  riskFlags: string[];
+  status: string;
+  reviewedByUserId?: string | null;
+  reviewedAt?: string | null;
+  evidencePoints: BeDecisionEvidence[];
+  _count?: { notes: number };
+};
+export type BeDecisionBoard = { decisionType: string; canReview: boolean; insights: BeDecisionInsight[] };
+export type BeLeadershipBoards = { fy: string; visibleBoards: string[]; boards: BeDecisionBoard[] };
+export type BeLeadershipSnapshot = {
+  fy: string;
+  strategicHeadline: string;
+  regionsReadyToExpand: (string | null)[];
+  regionsToPauseRecruitment: (string | null)[];
+  staffOverloadRisks: number;
+  partnerMouRisks: number;
+  partnerCapacityGaps: number;
+  dataConfidence: number;
+  highRiskDecisions: number;
+  totalInsights: number;
+};
+
+export function fetchLeadershipBoards(user: BackendUser, q: { fy?: string; decisionType?: string; riskLevel?: string; confidenceLevel?: string } = {}) {
+  const sp = new URLSearchParams();
+  for (const [k, v] of Object.entries(q)) if (v) sp.set(k, v);
+  const qs = sp.toString();
+  return live<BeLeadershipBoards>(`/leadership/decision-engine${qs ? `?${qs}` : ""}`, user);
+}
+export function fetchLeadershipSnapshot(user: BackendUser, fy?: string) {
+  return live<BeLeadershipSnapshot>(`/leadership/decision-engine/snapshot${fy ? `?fy=${encodeURIComponent(fy)}` : ""}`, user);
+}
+
 // ── Layer 3: Support-to-Improvement correlation ─────────────────────
 export type BeSupportFilter = "all" | "staff" | "partner" | "certified_partner" | "visit" | "training" | "project";
 

@@ -190,6 +190,11 @@ const ROLE_RESTRICTED: Array<{ prefix: string; allow: EdifyRole[] }> = [
   // Analytics — portfolio/country intelligence for the program roles.
   // HR (people ops) and partner users have no analytics surface.
   { prefix: "/analytics",             allow: ["CCEO", "CountryProgramLead", "CountryDirector", "RVP", "ImpactAssessment", "ProjectCoordinator", "Admin"] },
+  // Leadership Decision Engine — executive advisory layer. Broader than the
+  // rest of analytics: HR (staff/HR board) and the Accountant (finance-implication
+  // view) are included; CCEO/ProjectCoordinator are not leadership-decision roles.
+  // Longest-prefix-wins, so this overrides the /analytics rule above.
+  { prefix: "/analytics/decision-engine", allow: ["CountryDirector", "RVP", "HumanResource", "ImpactAssessment", "CountryProgramLead", "ProgramAccountant", "Admin"] },
   // Fund requests carry money amounts — visible to the fund-flow roles
   // only. HR + IA + partners are bounced.
   { prefix: "/fund-requests",         allow: ["CCEO", "CountryProgramLead", "CountryDirector", "RVP", "ProgramAccountant", "Admin"] },
