@@ -207,6 +207,15 @@ const ROLE_RESTRICTED: Array<{ prefix: string; allow: EdifyRole[] }> = [
   // Access Restricted page (they lead through analytics, not the directory).
   { prefix: "/schools",               allow: ["CCEO", "CountryProgramLead", "ImpactAssessment", "ProjectCoordinator", "Admin"] },
   { prefix: "/school-directory",      allow: ["CCEO", "CountryProgramLead", "ImpactAssessment", "ProjectCoordinator", "Admin"] },
+  // Core-school operational directory — the core-status twin of /schools (same
+  // working surface + Planning Console link). Mirror /schools exactly; it was
+  // un-gated and leaked to CD/RVP/HR/Accountant.
+  { prefix: "/core-schools",          allow: ["CCEO", "CountryProgramLead", "ImpactAssessment", "ProjectCoordinator", "Admin"] },
+  // Field-execution queues (Confirm-completion / SVE- visit confirm). The write
+  // is already server-gated, but these are field surfaces — RVP/HR/Accountant
+  // monitor via analytics. CD retained (the completion action permits CD).
+  { prefix: "/trainings",             allow: ["CCEO", "CountryProgramLead", "ImpactAssessment", "CountryDirector", "ProjectCoordinator", "Admin"] },
+  { prefix: "/visits",                allow: ["CCEO", "CountryProgramLead", "ImpactAssessment", "CountryDirector", "ProjectCoordinator", "Admin"] },
   // Operational cluster planning/assignment — the field + data roles that work
   // clusters (CCEO/PL assign their portfolios; IA stands up clusters at intake).
   // CD/RVP/HR/Accountant lead through summaries, never the cluster planning page
@@ -249,6 +258,7 @@ const SHOW_ACCESS_RESTRICTED = [
   "/completed-activities",
   "/clusters",
   "/special-projects",
+  "/core-schools",
 ];
 
 function isProtected(pathname: string): boolean {
