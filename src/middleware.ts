@@ -207,6 +207,15 @@ const ROLE_RESTRICTED: Array<{ prefix: string; allow: EdifyRole[] }> = [
   // Access Restricted page (they lead through analytics, not the directory).
   { prefix: "/schools",               allow: ["CCEO", "CountryProgramLead", "ImpactAssessment", "ProjectCoordinator", "Admin"] },
   { prefix: "/school-directory",      allow: ["CCEO", "CountryProgramLead", "ImpactAssessment", "ProjectCoordinator", "Admin"] },
+  // Operational cluster planning/assignment — the field + data roles that work
+  // clusters (CCEO/PL assign their portfolios; IA stands up clusters at intake).
+  // CD/RVP/HR/Accountant lead through summaries, never the cluster planning page
+  // (they were previously un-gated and could open operational cluster planning).
+  { prefix: "/clusters",              allow: ["CCEO", "CountryProgramLead", "ImpactAssessment", "Admin"] },
+  // Special-projects working surface — the planning roles + the Project
+  // Coordinator who owns assigned projects. CD/RVP/HR/Accountant monitor through
+  // dashboards/analytics, not this operational page (was previously un-gated).
+  { prefix: "/special-projects",      allow: ["CCEO", "CountryProgramLead", "ProjectCoordinator", "Admin"] },
   // Field planning surfaces — operational working pages for the roles that
   // plan and execute school activities (CCEO plans their portfolio, PL plans
   // for themselves + their team). The Country Director leads through the
@@ -238,6 +247,8 @@ const SHOW_ACCESS_RESTRICTED = [
   "/planning",
   "/my-plan",
   "/completed-activities",
+  "/clusters",
+  "/special-projects",
 ];
 
 function isProtected(pathname: string): boolean {
