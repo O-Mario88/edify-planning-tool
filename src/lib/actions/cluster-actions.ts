@@ -42,7 +42,7 @@ import { partners } from "@/lib/partner/partner-mock";
 import { getCurrentPartner } from "@/lib/partner/partner-identity";
 import { markJoinedThroughCluster, type ClusterJoinSourceType } from "@/lib/cluster/cluster-join-source";
 import { isBackendEnabled } from "@/lib/api/backend";
-import { backendAssignCluster, backendCreateClusterFromSchool, backendCreateActivity, backendCreateCluster, fetchDistricts, fetchSubCounties } from "@/lib/api/surfaces";
+import { backendAssignCluster, backendCreateClusterFromSchool, backendCreateActivity, backendCreateCluster, backendActivityAction, activityAction, fetchDistricts, fetchSubCounties } from "@/lib/api/surfaces";
 
 // Resolve mock geography NAMES (district + sub-counties, as the create form
 // collects them) to the backend's geography IDs so a new cluster persists to
@@ -568,6 +568,37 @@ export async function completeClusterMeetingAction(
     resolutionsText?: string; resolutionsFileName?: string; nextMeetingDate?: string; notes?: string;
   },
 ): Promise<ClusterActionResult<{ nextScheduled?: string }>> {
+  // Backend-first: a board-scheduled meeting has a REAL Postgres cuid that the
+  // in-memory completeClusterMeeting can't resolve (→ "Activity not found").
+  // Complete it via the backend activity lifecycle. (Evidence files upload via
+  // the evidence endpoint; here we move the activity state forward.)
+  if (isBackendEnabled()) {
+    const user = await getCurrentUser();
+    const r = await backendActivityAction(backendUserFor(user), activityId, "complete", {
+      salesforceId: input.salesforceTrainingId.trim(),
+      teachersAttended: input.teachersCount,
+      leadersAttended: input.schoolLeadersCount,
+      otherParticipants: input.otherCount,
+    });
+    if (r.live) {
+      emitAudit({
+        action: "cluster.meetingCompleted", subjectKind: "Activity", subjectId: activityId,
+        actorId: user.name, actorRole: user.role, actorName: user.name,
+        payload: { salesforceTrainingId: input.salesforceTrainingId, backend: true },
+      });
+      emitNotificationFanOut(["IMPACT_ASSESSMENT"], {
+        template: "cluster.awaitingIa", channel: "Inbox",
+        title: "Cluster meeting awaiting Salesforce confirmation",
+        body: `Cluster meeting (${input.salesforceTrainingId}) completed — needs IA confirmation.`,
+        href: "/data-intake/clusters",
+      });
+      revalidateClusterSurfaces();
+      return { ok: true };
+    }
+    if (r.error) return { ok: false, reason: "FAILED", message: r.error };
+    // else fall through to in-memory (a mock-id cluster activity)
+  }
+
   const a = clusterActivityById(activityId);
   if (!a) return { ok: false, reason: "FAILED", message: "Activity not found." };
   const partner = await getCurrentPartner();
@@ -605,6 +636,26 @@ const ACCOUNTANT_ROLES = new Set<string>(["ProgramAccountant", "Admin"]);
 export async function iaConfirmClusterActivityAction(activityId: string): Promise<ClusterActionResult> {
   const user = await getCurrentUser();
   if (!IA_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+  // Backend-first: confirm a real backend cluster activity via the lifecycle
+  // endpoint (in-memory iaConfirmClusterActivity can't resolve a Postgres cuid).
+  if (isBackendEnabled()) {
+    const r = await activityAction(backendUserFor(user), activityId, "ia-confirm", {});
+    if (r.live) {
+      emitAudit({
+        action: "cluster.activityIaConfirmed", subjectKind: "Activity", subjectId: activityId,
+        actorId: user.staffId, actorRole: user.role, actorName: user.name, payload: { activityId, backend: true },
+      });
+      emitNotificationFanOut(["PROGRAM_ACCOUNTANT"], {
+        template: "cluster.paymentReady", channel: "Inbox",
+        title: "Cluster payment / accountability ready",
+        body: "Cluster activity confirmed by IA — payment / accountability can proceed.",
+        href: "/disbursements/cluster-payments",
+      });
+      revalidateClusterSurfaces();
+      return { ok: true };
+    }
+    if (r.error) return { ok: false, reason: "FAILED", message: r.error };
+  }
   const res = iaConfirmClusterActivity(activityId, { name: user.name, role: user.role });
   if (!res.ok) return { ok: false, reason: "FAILED", message: res.reason };
   emitAudit({
@@ -633,6 +684,20 @@ export async function iaConfirmClusterActivityAction(activityId: string): Promis
 export async function payClusterActivityAction(activityId: string): Promise<ClusterActionResult> {
   const user = await getCurrentUser();
   if (!ACCOUNTANT_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+  // Backend-first: clear payment on a real backend cluster activity (the backend
+  // re-enforces the IA-confirmed gate before money moves).
+  if (isBackendEnabled()) {
+    const r = await activityAction(backendUserFor(user), activityId, "clear-payment", {});
+    if (r.live) {
+      emitAudit({
+        action: "cluster.activityPaid", subjectKind: "Activity", subjectId: activityId,
+        actorId: user.staffId, actorRole: user.role, actorName: user.name, payload: { activityId, backend: true },
+      });
+      revalidateClusterSurfaces();
+      return { ok: true };
+    }
+    if (r.error) return { ok: false, reason: "FAILED", message: r.error };
+  }
   const res = accountantPayClusterActivity(activityId, { name: user.name, role: user.role });
   if (!res.ok) return { ok: false, reason: "FAILED", message: res.reason };
   emitAudit({
