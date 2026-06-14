@@ -229,6 +229,31 @@ export async function createSchoolsBulk(inputs: NewSchoolInput[]): Promise<BulkS
     }
     const enrollment =
       input.enrollment === undefined || input.enrollment === "" ? undefined : Number(input.enrollment);
+
+    // Backend-first per row (mirrors createSchool's backend branch). CSV bulk
+    // upload previously called only addIntakeSchool (in-memory) with no backend
+    // branch, so bulk-onboarded schools never reached the live directory under
+    // EDIFY_USE_BACKEND=true — the whole bulk-import journey dead-ended.
+    if (isBackendEnabled()) {
+      const geo = await resolveSchoolGeography(beUser(user), input.district, input.subCounty);
+      if (geo) {
+        const r = await backendCreateSchool(beUser(user), {
+          schoolId: input.schoolId.trim(),
+          name: input.schoolName.trim(),
+          regionId: geo.regionId,
+          districtId: geo.districtId,
+          subCountyId: geo.subCountyId,
+          enrollment,
+          schoolType: SCHOOL_TYPE_TO_BACKEND[input.schoolType] ?? "client",
+          accountOwnerName: input.assignedCceo,
+        });
+        if (!r.live && r.error) {
+          failed.push({ schoolId: input.schoolId, errors: { schoolId: `Backend rejected: ${r.error}` } });
+          continue;
+        }
+      }
+    }
+
     const row = addIntakeSchool({
       schoolId: input.schoolId.trim(),
       schoolName: input.schoolName.trim(),
