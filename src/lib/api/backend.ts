@@ -29,17 +29,26 @@ const ROLE_TO_BACKEND_EMAIL: Record<string, string> = {
   ProgramAccountant: "accountant@edify.org",
   HumanResource: "hr@edify.org",
   HumanResources: "hr@edify.org",
-  ProjectCoordinator: "cd@edify.org",
+  // Project Coordinator maps to its OWN seeded backend account, NOT the CD's —
+  // otherwise a PC would authenticate with full Country-Director permissions
+  // (role escalation). coordinator@edify.org has the narrow ProjectCoordinator
+  // scope (assigned projects + their schools only).
+  ProjectCoordinator: "coordinator@edify.org",
   Admin: "admin@edify.org",
   // Partner field officer authenticates as the partner user linked (Partner.userId)
   // to a Partner org — their session is scoped to that org's assigned activities.
   PartnerAdmin: "partner@edify.org",
   PartnerFieldOfficer: "partner@edify.org",
+  // Read-only partner viewer also maps to the partner org account — never the CD.
+  PartnerViewer: "partner@edify.org",
 };
 
 export type BackendUser = { email?: string; role: string };
 function backendEmailFor(user: BackendUser): string {
-  return ROLE_TO_BACKEND_EMAIL[user.role] ?? "cd@edify.org";
+  // Fail least-privilege, NOT to the CD account: an unmapped/unknown role must
+  // never silently inherit Country-Director powers. The partner account is the
+  // most restricted seeded principal.
+  return ROLE_TO_BACKEND_EMAIL[user.role] ?? "partner@edify.org";
 }
 
 type CacheEntry = { token: string; exp: number };
