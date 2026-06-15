@@ -1,9 +1,8 @@
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { MessageCompose } from "@/components/messages/MessageCompose";
+import { LiveCompose } from "@/components/messages/LiveCompose";
 import { getCurrentUser } from "@/lib/auth";
 import { ROLE_REDIRECT } from "@/lib/auth-public";
-import { sendMessageAction } from "./actions";
 
 // /messages/new — internal message composer for every internal role.
 
@@ -30,13 +29,7 @@ export default async function NewMessagePage() {
         backFallbackHref="/messages"
       />
       <div className="px-4 sm:px-5 lg:px-6 pb-24 lg:pb-12">
-        <MessageCompose
-          senderRole={user.role}
-          senderName={user.name}
-          senderEmail={user.email}
-          backHref="/messages"
-          sendAction={sendMessageAction}
-        />
+        <LiveCompose backHref="/messages" />
       </div>
     </>
   );
