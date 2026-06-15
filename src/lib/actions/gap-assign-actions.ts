@@ -25,9 +25,11 @@ export type AssignGapResult =
   | { ok: true; id: string }
   | { ok: false; reason: "FORBIDDEN" | "INVALID_INPUT" };
 
-// Who can assign from the gap boards (CCEO assigns to partners; PL/IA/CD own
-// the full range). Mirrors the drawer's permission contract.
-const ASSIGN_ROLES = new Set(["CCEO", "CountryProgramLead", "ImpactAssessment", "CountryDirector", "Admin"]);
+// Who can assign from the gap boards — a PLANNING write. Only the planning roles
+// (CCEO assigns own/partner; PL assigns supervised/partner). CD doesn't plan
+// (flags to PL instead) and IA only verifies — both removed to mirror the
+// backend ACTIVITY_ASSIGN gate.
+const ASSIGN_ROLES = new Set(["CCEO", "CountryProgramLead", "Admin"]);
 
 export async function assignGapActivity(input: AssignGapInput): Promise<AssignGapResult> {
   const user = await getCurrentUser();

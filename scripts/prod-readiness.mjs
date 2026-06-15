@@ -27,6 +27,15 @@ if ((process.env.EDIFY_USE_BACKEND ?? "").toLowerCase() !== "true") {
 if (process.env.NODE_ENV && process.env.NODE_ENV !== "production") {
   warns.push(`NODE_ENV is '${process.env.NODE_ENV}' — production build should run with NODE_ENV=production.`);
 }
+// 3b) Session signing secret — without it the session cookies are unsigned and
+// any role is forgeable on the /api/* proxies. Login itself blocks in prod when
+// it's missing; the gate makes the requirement explicit pre-deploy.
+{
+  const secret = process.env.EDIFY_SESSION_SECRET ?? "";
+  if (secret.length < 16 || /change-me|dev-only|test-secret/i.test(secret)) {
+    fails.push("EDIFY_SESSION_SECRET must be set to a strong value (>=16 chars) in production — it signs the session cookie that prevents role-forgery. Generate with: openssl rand -hex 32.");
+  }
+}
 
 // 4) No page route may import frontend mock (reuse the mock-audit gate).
 const gate = spawnSync(process.execPath, [join(here, "mock-audit.mjs"), "--gate"], { encoding: "utf8" });

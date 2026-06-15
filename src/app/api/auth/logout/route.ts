@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireCsrf } from "@/lib/csrf";
+import { SESSION_SIG_COOKIE } from "@/lib/session-sig";
 
 // POST /api/auth/logout
 //
@@ -18,6 +19,7 @@ function clearSession(res: NextResponse) {
   res.cookies.set("edify-email", "", opts);
   res.cookies.set("edify-role", "", opts);
   res.cookies.set("edify-name", "", opts);
+  res.cookies.set(SESSION_SIG_COOKIE, "", opts);
   // Plus the legacy single-cookie session so old sessions log out cleanly.
   res.cookies.set("edify_session", "", opts);
   return res;

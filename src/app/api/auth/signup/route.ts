@@ -17,6 +17,7 @@ import { NextResponse } from "next/server";
 import { ROLE_REDIRECT } from "@/lib/auth-public";
 import { createUser } from "@/lib/auth-runtime-store";
 import { requireCsrf } from "@/lib/csrf";
+import { signSession, sessionSigningActive, SESSION_SIG_COOKIE } from "@/lib/session-sig";
 import { ipFromRequest, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
@@ -96,5 +97,8 @@ export async function POST(request: Request) {
   res.cookies.set("edify-email", user.email, cookieOpts);
   res.cookies.set("edify-role", user.role, cookieOpts);
   res.cookies.set("edify-name", user.name, cookieOpts);
+  if (sessionSigningActive()) {
+    res.cookies.set(SESSION_SIG_COOKIE, await signSession(user.email, user.role), cookieOpts);
+  }
   return res;
 }

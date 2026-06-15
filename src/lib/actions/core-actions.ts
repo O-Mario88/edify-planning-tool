@@ -58,7 +58,9 @@ import {
 
 const VERIFY_ROLES = new Set(["ImpactAssessment", "CCEO", "CountryProgramLead", "CountryDirector", "Admin"]);
 const ONBOARD_ROLES = new Set(["CountryDirector", "CountryProgramLead", "ImpactAssessment", "Admin"]);
-const ASSIGN_ROLES = new Set(["CCEO", "CountryProgramLead", "CountryDirector", "ImpactAssessment", "Admin"]);
+// Core-slot scheduling/assignment is a PLANNING write — planning roles only.
+// (CD onboards + flags, IA verifies; neither schedules — mirrors ACTIVITY_ASSIGN.)
+const ASSIGN_ROLES = new Set(["CCEO", "CountryProgramLead", "Admin"]);
 const IA_ROLES = new Set(["ImpactAssessment", "Admin"]);
 const EXEC_ROLES = new Set(["CCEO", "CountryProgramLead", "PartnerAdmin", "PartnerFieldOfficer", "Admin"]);
 const PL_ROLES = new Set(["CountryProgramLead", "Admin"]);

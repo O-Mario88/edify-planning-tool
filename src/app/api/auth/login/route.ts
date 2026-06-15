@@ -37,6 +37,16 @@ export async function POST(request: Request) {
   const csrf = requireCsrf(request);
   if (csrf) return csrf;
 
+  // HARD ENFORCEMENT: in production the session MUST be signable (the role-forge
+  // fix is otherwise inert). Refuse to issue a session without EDIFY_SESSION_SECRET
+  // so a misconfigured deploy fails loudly at login rather than shipping the hole.
+  if (process.env.NODE_ENV === "production" && !sessionSigningActive()) {
+    return NextResponse.json(
+      { ok: false, message: "Server misconfigured: session secret is required." },
+      { status: 503 },
+    );
+  }
+
   const ip = ipFromRequest(request);
   const rl = await rateLimit(`login:${ip}`, LOGIN_RATE);
   if (!rl.ok) {
