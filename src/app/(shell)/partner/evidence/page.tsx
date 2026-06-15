@@ -7,8 +7,11 @@ import { PartnerSubPageHeader } from "@/components/partner/PartnerSubPageHeader"
 import { PartnerEvidenceRequired } from "@/components/partner/PartnerEvidenceRequired";
 import { PartnerEvidenceQualityPanel } from "@/components/partner/PartnerEvidenceQualityPanel";
 import { EvidenceBulkDropzone, type EligibleActivity } from "@/components/partner/EvidenceBulkDropzone";
+import { PartnerSubmitForVerification, type SubmitActivity } from "@/components/partner/PartnerSubmitForVerification";
 import { partnerActivities } from "@/lib/actions/store";
 import { fetchMyPartnerActivities } from "@/lib/api/surfaces";
+
+const sfKind = (t: string): "visit" | "training" => (/train|meeting|sit|cluster/i.test(t) ? "training" : "visit");
 
 export const dynamic = "force-dynamic";
 
@@ -42,6 +45,13 @@ export default async function PartnerEvidencePage({
     : partnerActivities()
         .filter((a) => a.status === "Delivered")
         .map((a) => ({ id: a.id, title: a.title, schoolId: a.schoolId }));
+  // Activities with evidence already uploaded — ready to submit for IA
+  // verification (complete with a Salesforce ID -> awaiting_ia_verification).
+  const readyToSubmit: SubmitActivity[] = live.live
+    ? live.data.activities
+        .filter((a) => a.status === "evidence_uploaded")
+        .map((a) => ({ id: a.id, title: `${a.activityType.replace(/_/g, " ")} · ${a.schoolName ?? "—"}`, kind: sfKind(a.activityType) }))
+    : [];
   return (
     <>
       <PartnerSubPageHeader
@@ -60,6 +70,7 @@ export default async function PartnerEvidencePage({
       />
       <div className="px-4 sm:px-5 md:px-6 pt-5 pb-12 space-y-4">
         <EvidenceBulkDropzone eligibleActivities={eligible} />
+        <PartnerSubmitForVerification activities={readyToSubmit} />
         <PartnerEvidenceRequired />
         <PartnerEvidenceQualityPanel />
       </div>
