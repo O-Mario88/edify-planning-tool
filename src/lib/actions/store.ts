@@ -14,6 +14,7 @@
 //   • Tests can call `__resetEntityStore()` between cases
 
 import "server-only";
+import { isMockAllowed } from "@/lib/mock-policy";
 
 // ─── Plan + PlannedActivity (W3) ───────────────────────────────────
 
@@ -389,7 +390,11 @@ type GlobalWithStore = typeof globalThis & { [STORE_KEY]?: EntityStore };
 // across his portfolio schools, spanning the verification → accountability tail
 // of the activity workflow.
 function seedDemoStore(s: EntityStore) {
-  if (process.env.NODE_ENV === "test") return;
+  // Production-data integrity: NEVER inject fabricated demo rows unless mock
+  // data is explicitly allowed (dev opt-in with the backend off). isMockAllowed()
+  // is false under NODE_ENV=production AND under NODE_ENV=test, so this single
+  // guard keeps prod clean and preserves the test suite's empty-store assumption.
+  if (!isMockAllowed()) return;
   if (s.activities.length > 0 || s.plans.length > 0) return;
   const now = new Date().toISOString();
   s.plans.push({

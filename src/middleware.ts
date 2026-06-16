@@ -192,6 +192,13 @@ const ROLE_RESTRICTED: Array<{ prefix: string; allow: EdifyRole[] }> = [
   // Accountant prepares disbursement after RVP approval.
   { prefix: "/monthly-fund-request",  allow: ["CountryProgramLead", "CountryDirector", "RVP", "ProgramAccountant", "Admin"] },
   { prefix: "/program-lead",          allow: ["CountryProgramLead", "Admin"] },
+  // Coverage planning + partner-assignment recommendations — a leadership
+  // planning surface. Not for line CCEOs, finance, HR, IA, or partners.
+  { prefix: "/coverage",              allow: ["CountryProgramLead", "CountryDirector", "RVP", "Admin"] },
+  // Team targets exposes named-staff performance + PIP/early-warning bands —
+  // restrict to the supervisory + people roles. A CCEO must not see peers'
+  // performance bands; partners must never see it.
+  { prefix: "/team-targets",          allow: ["CountryProgramLead", "CountryDirector", "RVP", "HumanResource", "Admin"] },
   // Data intake (Add School / Upload SSA / templates / queue / readiness)
   // is IA + Admin only — "CD does cost, not data" and the accountant's
   // intake is treasury (weekly-funds), not school data. Previously also

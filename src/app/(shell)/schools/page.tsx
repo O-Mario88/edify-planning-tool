@@ -22,7 +22,7 @@ import {
 } from "@/lib/school-directory/directory";
 import { openDuplicateCandidates } from "@/lib/intake/duplicate-candidates-mock";
 import { getCurrentUser, toCurrentUser } from "@/lib/auth";
-import { fetchSchools, fetchClusters, type BeSchoolRow, type BeCluster } from "@/lib/api/surfaces";
+import { fetchSchools, fetchClusters, fetchAnalyticsDashboard, type BeSchoolRow, type BeCluster, type BeDashboard } from "@/lib/api/surfaces";
 import { LiveBadge, BackendOfflineBanner } from "@/components/ui/BackendStatus";
 import type { DirectoryMetric } from "@/lib/school-directory/directory";
 import { portfolioForStaffId } from "@/lib/portfolio/portfolio";
@@ -50,6 +50,27 @@ const PARTNER_SUGGESTIONS = [
 // partner-supported cell (the backend directory feed doesn't carry partner
 // assignments yet). When the backend is off/unreachable the page uses the
 // in-memory directoryMetrics instead — same shape, so the strip is identical.
+// TRUE portfolio aggregates from the backend's server-side counts (full 700-row
+// universe, role-scoped) — NOT derived from the page-capped (<=200) row list.
+// This is the correct source for the unfiltered "at a glance" strip; counting a
+// truncated row page gave every breakdown the wrong value (audit P0).
+function aggregateDirectoryMetrics(d: BeDashboard): DirectoryMetric[] {
+  const total = d.schools;
+  const denom = Math.max(total, 1);
+  const pct = (n: number) => `${Math.round((n / denom) * 1000) / 10}%`;
+  const clustered = total - d.unclustered;
+  const ssaMiss = total - d.ssaDone;
+  return [
+    { key: "total", label: "Total Schools", value: total },
+    { key: "client", label: "Client", value: d.clientSchools, caption: pct(d.clientSchools) },
+    { key: "core", label: "Core", value: d.coreSchools, caption: pct(d.coreSchools) },
+    { key: "clustered", label: "Clustered", value: clustered, caption: pct(clustered), tone: clustered ? "good" : "default" },
+    { key: "unclustered", label: "Unclustered", value: d.unclustered, caption: pct(d.unclustered), tone: d.unclustered ? "alert" : "default" },
+    { key: "ssa_done", label: "SSA Complete", value: d.ssaDone, caption: pct(d.ssaDone), tone: d.ssaDone ? "good" : "default" },
+    { key: "ssa_miss", label: "SSA Pending", value: ssaMiss, caption: pct(ssaMiss), tone: ssaMiss ? "alert" : "default" },
+  ];
+}
+
 function liveDirectoryMetrics(rows: BeSchoolRow[], total: number): DirectoryMetric[] {
   const denom = Math.max(total, 1);
   const pct = (n: number) => `${Math.round((n / denom) * 1000) / 10}%`;
@@ -115,10 +136,19 @@ export default async function SchoolsDashboard({
   const geoActive = [selection.region, selection.district, selection.cluster].some(
     (v) => v !== ALL_SENTINEL,
   );
-  // Unfiltered: keep the backend's true total (rows are page-capped at 200).
-  // Filtered: the scoped row count IS the universe being summarised.
+  // Strip source of truth:
+  //  • Unfiltered → the backend's server-side AGGREGATE counts (full universe),
+  //    never the <=200-row page (counting the page made every breakdown wrong).
+  //  • Geo-filtered → the scoped row set IS the universe (and is < 200 for a
+  //    region/district), so counting it with itself as the denominator is
+  //    internally consistent.
+  const liveDashboard = !geoActive ? await fetchAnalyticsDashboard(me) : null;
   const metrics = liveSchools.live
-    ? liveDirectoryMetrics(liveRows, geoActive ? liveRows.length : liveSchools.data.total)
+    ? geoActive
+      ? liveDirectoryMetrics(liveRows, liveRows.length)
+      : liveDashboard?.live
+        ? aggregateDirectoryMetrics(liveDashboard.data)
+        : liveDirectoryMetrics(liveRows, liveSchools.data.total)
     : mockMetrics;
   const metricsLive = liveSchools.live;
   const metricsError = liveSchools.live ? null : liveSchools.error;
