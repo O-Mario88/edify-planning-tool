@@ -16,6 +16,8 @@ import { AlertTriangle, Inbox, Download } from "lucide-react";
 import { ALL_SENTINEL, type FilterSelection } from "@/lib/filters/types";
 import { MetricStrip, type MetricCell } from "@/components/ui/MetricStrip";
 import type { AnalyticsSnapshot, AnalyticsMetric } from "@/lib/analytics/types";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 import { useActiveFilters } from "@/hooks/use-active-filters";
 import { useTileFilter } from "@/components/tile-filter/use-tile-filter";
 import { ActiveTileFilterHeader } from "@/components/tile-filter/ActiveTileFilterHeader";
@@ -61,6 +63,11 @@ export function FieldEngineAnalytics({
   const activeMetric = activeFilter ? byKey.get(activeFilter.id) : undefined;
   const toggle = (key: string) => setTileFilter(isActive(key) ? null : key);
   const reachMetric = byKey.get("schoolsReached");
+
+  // computeAnalytics runs over a ~12-school MOCK universe and contradicts the
+  // live backend band shown above this surface on /analytics. In production show
+  // only the live band; withhold this mock-computed body.
+  if (!isMockAllowed()) return <InsufficientData surface="the analytics data-room" />;
 
   return (
     <div className="space-y-3.5">

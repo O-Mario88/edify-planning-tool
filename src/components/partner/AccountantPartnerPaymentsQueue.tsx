@@ -20,10 +20,15 @@ import {
   fmtUgx,
   type PartnerPaymentRequest,
 } from "@/lib/partner/partner-payment-requests-mock";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 
 export function AccountantPartnerPaymentsQueue() {
   const requests = accountantQueue();
   const [toast, setToast] = useState<string | null>(null);
+  // Mock payment requests with non-functional Clear/Return/Hold buttons that would
+  // falsely confirm payment. Never render fake clearable money in production.
+  if (!isMockAllowed()) return <InsufficientData surface="partner payments ready to clear" />;
 
   function handleAction(req: PartnerPaymentRequest, action: "clear" | "return" | "hold") {
     const labels = {

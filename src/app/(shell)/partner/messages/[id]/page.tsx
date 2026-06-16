@@ -6,6 +6,8 @@ import { messageByIdForUser } from "@/lib/messages-v2/access";
 import { threadMessages } from "@/lib/messages-v2/mock";
 import { replyMessageAction } from "../new/actions";
 import { markReadOnView } from "@/app/(shell)/messages/[id]/status-actions";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 
 // /partner/messages/[id] — Spark-Mail-style thread reader.
 
@@ -20,6 +22,7 @@ export default async function PartnerMessageDetailPage({
 }) {
   const user = await getCurrentUser();
   if (!ALLOWED.has(user.role)) redirect(ROLE_REDIRECT[user.role]);
+  if (!isMockAllowed()) return <InsufficientData surface="partner messages" />;
 
   const { id } = await params;
   const message = messageByIdForUser(id, user);

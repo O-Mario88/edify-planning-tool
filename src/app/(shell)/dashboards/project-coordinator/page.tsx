@@ -11,6 +11,8 @@ import { PartnerDeliveryCard } from "@/components/special-projects/PartnerDelive
 import { ProjectImpactComparisonCard } from "@/components/special-projects/ProjectImpactComparisonCard";
 import { ProjectWorkCard } from "@/components/special-projects/ProjectWorkCard";
 import { computeSpecialProjectKpis, getVisibleProjects } from "@/lib/special-projects-mock";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 
 // Project Coordinator console — the home for special projects & targeted
 // interventions. Action-first (CommandStack), then the project portfolio,
@@ -21,6 +23,9 @@ export default async function ProjectCoordinatorDashboard() {
   if (!["ProjectCoordinator", "Admin"].includes(user.role)) {
     redirect(ROLE_REDIRECT[user.role]);
   }
+  // KPI row hardcodes "Schools in Projects=426" and a 2025-05 period; the project
+  // portfolio is mock. Withhold until backed by live Project records.
+  if (!isMockAllowed()) return <InsufficientData surface="the project-coordinator console" />;
 
   const currentUser = toCurrentUser(user);
   const visible = getVisibleProjects(currentUser);

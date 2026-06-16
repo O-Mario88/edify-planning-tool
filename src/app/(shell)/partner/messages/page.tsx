@@ -12,6 +12,8 @@ import { ROLE_REDIRECT } from "@/lib/auth-public";
 import { PartnerSubPageHeader } from "@/components/partner/PartnerSubPageHeader";
 import { MessageCenterLayout } from "@/components/messages/MessageCenterLayout";
 import { messagesForUser, type MessageFolder } from "@/lib/messages-v2/access";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 
 const ALLOWED = new Set([
   "PartnerAdmin", "PartnerFieldOfficer", "PartnerViewer", "Admin",
@@ -24,6 +26,8 @@ export default async function PartnerMessagesPage({
 }) {
   const user = await getCurrentUser();
   if (!ALLOWED.has(user.role)) redirect(ROLE_REDIRECT[user.role]);
+  // Threads/counts come from the messages-v2 mock, not the backend. Withhold in prod.
+  if (!isMockAllowed()) return <InsufficientData surface="partner messages" />;
 
   const params = await searchParams;
   const folder: MessageFolder = params.folder === "sent" ? "sent" : "inbox";

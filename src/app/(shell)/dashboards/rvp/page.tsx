@@ -42,6 +42,8 @@ import { getCurrentUser, toCurrentUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { ROLE_REDIRECT } from "@/lib/auth-public";
 import { SectionHeader } from "@/components/ui/SectionHeader";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 
 export default async function RVPDashboard() {
   // Defense-in-depth: middleware already gates /dashboards/rvp, but the
@@ -51,6 +53,9 @@ export default async function RVPDashboard() {
     redirect(ROLE_REDIRECT[rawUser.role]);
   }
   const currentUser = toCurrentUser(rawUser);
+  // Regional Signals + Country Comparison invent 4 countries (production has 1
+  // country / 700 schools), and donor figures are mock. Withhold in production.
+  if (!isMockAllowed()) return <InsufficientData surface="the RVP regional cockpit" />;
 
   // Regional donor-reporting rollup — same builder as /donor-reporting,
   // scoped to RVP so the readiness snapshot and the full report agree.
