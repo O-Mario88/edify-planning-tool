@@ -970,6 +970,9 @@ export function fetchNotificationCounts(user: BackendUser) {
 export function markNotificationReadBE(user: BackendUser, id: string) {
   return live<{ status: string }>(`/notifications/${encodeURIComponent(id)}/read`, user, { method: "PATCH" });
 }
+export function resolveNotificationBE(user: BackendUser, id: string) {
+  return live<{ status: string }>(`/notifications/${encodeURIComponent(id)}/resolve`, user, { method: "PATCH" });
+}
 export function markAllNotificationsReadBE(user: BackendUser) {
   return live<{ updated: number }>(`/notifications/mark-all-read`, user, { method: "PATCH" });
 }
