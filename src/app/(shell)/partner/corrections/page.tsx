@@ -1,14 +1,16 @@
 // /partner/corrections — Corrections.
 //
-// Items returned by CCEO, PL, accountant, or M&E. Surfaces the
-// standardised reason + plain-English "what to fix" guidance so the
-// partner can act without a back-and-forth.
+// Items returned by CCEO, PL, accountant, or M&E — live off the partner
+// round-trip, filtered to activities whose evidence was rejected/returned (or
+// whose status is "returned"). Each row links to the real evidence screen so
+// the partner can re-upload corrected proof. When nothing is returned we show
+// an honest empty state.
 
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { ROLE_REDIRECT } from "@/lib/auth-public";
 import { PartnerSubPageHeader } from "@/components/partner/PartnerSubPageHeader";
-import { PartnerReturnedCorrections } from "@/components/partner/PartnerReturnedCorrections";
+import { PartnerActivityListLive } from "@/components/partner/PartnerActivityListLive";
 
 const ALLOWED = new Set([
   "PartnerAdmin", "PartnerFieldOfficer", "PartnerViewer", "Admin",
@@ -29,16 +31,16 @@ export default async function PartnerCorrectionsPage({
     <>
       <PartnerSubPageHeader
         title="Corrections"
-        subtitle="Items returned by your CCEO, PL, or M&amp;E. Each row tells you exactly what to fix — no back-and-forth needed."
-        kpis={[
-          { label: "To correct",          value: 3,         iconKey: "rotate", tone: "warn",    caption: "Open returns" },
-          { label: "Avg fix time",        value: "1.4 days",iconKey: "clock",  tone: "warn",    caption: "Median this month" },
-          { label: "Resolved this month", value: 12,        iconKey: "shield", tone: "good",    caption: "Cleared and re-submitted" },
-          { label: "Blocking payment",    value: 1,         iconKey: "alert",  tone: "danger",  caption: "Of the 3 open returns" },
-        ]}
+        subtitle="Items returned by your CCEO, PL, or M&amp;E. Each row links straight to the evidence screen so you can re-upload corrected proof."
       />
       <div className="px-4 sm:px-5 md:px-6 pt-5 pb-12">
-        <PartnerReturnedCorrections />
+        {/* Live, backend-driven: only activities whose evidence was returned /
+            rejected. Honest empty state when the queue is clean. */}
+        <PartnerActivityListLive
+          filter="corrections"
+          variant="corrections"
+          emptyHint="Nothing returned — your evidence is clean. Keep it up."
+        />
       </div>
     </>
   );

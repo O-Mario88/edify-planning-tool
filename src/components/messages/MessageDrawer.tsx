@@ -129,18 +129,13 @@ export function MessageDrawer({
     });
     markMessageRead(m.id);
     onClose();
-    // Routing branches on viewport:
-    //   • Desktop (≥lg) → /messages — the two-pane layout shows the
-    //     inbox list + detail at once.  Passing `?id=<m.id>` so
-    //     MessageCenterLayout can pre-select that thread.
-    //   • Tablet / mobile (<lg) → /messages/[id] — the dedicated
-    //     detail page is the right surface on narrow viewports where
-    //     a side-by-side layout doesn't fit.
+    // Navigate to the live thread reader. The detail route ([id]) is a
+    // THREAD id — the backend resolves /messages/thread/:id by thread id,
+    // not message id — so we route by m.threadId (the recent record carries
+    // it). Falls back to m.id only if a record somehow lacks a threadId.
+    const threadId = m.threadId || m.id;
     setTimeout(() => {
-      const isDesktop =
-        typeof window !== "undefined" &&
-        window.matchMedia("(min-width: 1024px)").matches;
-      router.push(isDesktop ? `/messages?id=${m.id}` : `/messages/${m.id}`);
+      router.push(`/messages/${threadId}`);
     }, 100);
   }
 

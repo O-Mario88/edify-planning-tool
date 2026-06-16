@@ -14,6 +14,8 @@ import {
   partnerPaymentTotals,
   type PartnerPaymentLine,
 } from "@/lib/partner/partner-dashboard-mock";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 
 const CELL_TONE: Record<PartnerPaymentLine["tone"], MetricCell["tone"]> = {
   muted:   "default",
@@ -31,6 +33,9 @@ function fmtUgx(n: number): string {
 }
 
 export function PartnerPaymentStatusCard() {
+  // Payment-pipeline totals are mock (fabricated UGX figures). Never show fake
+  // money to a partner in production — withhold until wired to PaymentRequest.
+  if (!isMockAllowed()) return <InsufficientData surface="your payment status" />;
   const { awaitingTotal, paidThisMonth } = partnerPaymentTotals();
   return (
     <section className="card p-3.5">
