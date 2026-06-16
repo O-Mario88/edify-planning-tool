@@ -7,6 +7,8 @@ import {
   type StaffTargetRow,
 } from "@/lib/team-targets-mock";
 import { cn } from "@/lib/utils";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 
 // Staff Performance Summary — leadership visibility without HR detail.
 // The CD sees pace distribution, early warnings, and who needs support
@@ -22,6 +24,9 @@ const PACE_TONE: Record<StaffTargetRow["paceStatus"], string> = {
 };
 
 export function StaffPerformanceSummary() {
+  // Avg achievement, risk counts and PIP watchlist are fabricated; never expose
+  // performance/PIP bands from mock data in production.
+  if (!isMockAllowed()) return <InsufficientData surface="staff performance" />;
   const rows = staffTargetPerformance;
   const onTrack = rows.filter((s) => s.paceStatus === "On Track" || s.paceStatus === "Slightly Behind").length;
   const atRisk = rows.filter((s) => s.paceStatus === "High Risk" || s.paceStatus === "Critical");

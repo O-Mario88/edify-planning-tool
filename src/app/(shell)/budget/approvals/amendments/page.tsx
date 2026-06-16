@@ -7,8 +7,11 @@ import {
 } from "@/lib/monthly-approval-mock";
 import { formatUgxBig } from "@/lib/cost-settings-mock";
 import { cn } from "@/lib/utils";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 
 export default function AmendmentHistoryPage() {
+  if (!isMockAllowed()) return <InsufficientData surface="amendment history" />;
   const amendments = monthlyPlanSubmissions.flatMap((s) =>
     s.amendments.map((a) => ({ submission: s, amendment: a })),
   );

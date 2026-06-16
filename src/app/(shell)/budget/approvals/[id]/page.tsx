@@ -30,6 +30,8 @@ import {
 } from "@/lib/monthly-approval-mock";
 import { formatUgxBig } from "@/lib/cost-settings-mock";
 import { cn } from "@/lib/utils";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 
 const TONE = {
   edify: "bg-[var(--color-edify-soft)]/80 text-[var(--color-edify-primary)]",
@@ -55,6 +57,7 @@ export default async function ApprovalSubmissionDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  if (!isMockAllowed()) return <InsufficientData surface="the approval submission" />;
   const s = getMonthlySubmission(id);
   if (!s) return notFound();
   const me = await getCurrentUser();

@@ -5,6 +5,8 @@ import { StaffWeeklyView } from "@/components/funds/staff/StaffWeeklyView";
 import { StaffAccountabilityLive } from "@/components/funds/staff/StaffAccountabilityLive";
 import { AccountantDisbursementView } from "@/components/funds/accountant/AccountantDisbursementView";
 import { getCurrentUser } from "@/lib/auth";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 
 // Role-aware /weekly-funds.
 //
@@ -14,6 +16,9 @@ import { getCurrentUser } from "@/lib/auth";
 //   • Anyone else                → bounced to their dashboard
 export default async function WeeklyFundsPage() {
   const user = await getCurrentUser();
+  // Weekly fund totals/roster (Received 510M / Disbursed 284.5M) are fabricated;
+  // money figures must never be shown as production data. Withhold until wired.
+  if (!isMockAllowed()) return <InsufficientData surface="weekly funds" />;
 
   if (user.role === "ProgramAccountant") {
     return (

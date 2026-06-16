@@ -7,6 +7,8 @@ import type { MfrViewerRole } from "@/components/funds/monthly-fund-request/Mont
 import { generateMonthlyFundRequest } from "@/lib/funds/monthly-fund-request-mock";
 import { mfrStatus } from "@/lib/funds/mfr-status-store";
 import { getCurrentUser } from "@/lib/auth";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 import { ROLE_REDIRECT, type EdifyRole } from "@/lib/auth-public";
 
 // Monthly Fund Request page.
@@ -45,6 +47,10 @@ export default async function MonthlyFundRequestPage() {
   if (!ALLOWED.has(user.role)) {
     redirect(ROLE_REDIRECT[user.role]);
   }
+  // The monthly country fund request is a hardcoded April-2026 mock artifact
+  // (fabricated grand total, wrong period). Money for approval must be real —
+  // withhold until derived from backend FundRequest + budget lines.
+  if (!isMockAllowed()) return <InsufficientData surface="the monthly fund request" />;
 
   const viewerRole: MfrViewerRole = ROLE_VIEW[user.role] ?? "PL";
 

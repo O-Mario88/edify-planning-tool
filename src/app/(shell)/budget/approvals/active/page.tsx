@@ -9,6 +9,8 @@ import {
 } from "@/lib/monthly-approval-mock";
 import { formatUgxBig } from "@/lib/cost-settings-mock";
 import { cn } from "@/lib/utils";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 
 const TONE = {
   edify: "bg-[var(--color-edify-soft)]/80 text-[var(--color-edify-primary)]",
@@ -29,6 +31,7 @@ const PRIORITY_TONE: Record<Priority, string> = {
 };
 
 export default function ActiveFundingPlanPage() {
+  if (!isMockAllowed()) return <InsufficientData surface="active funding plans" />;
   const active = monthlyPlanSubmissions.filter((s) =>
     s.status === "Final Approved" || s.status === "Active Funding Plan" || s.status === "Disbursed"
   );

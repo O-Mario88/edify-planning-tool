@@ -13,12 +13,17 @@ import {
   dailyDebriefs,
 } from "@/lib/field-intelligence-mock";
 import { getCurrentUser, toCurrentUser } from "@/lib/auth";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 
 // Daily Field Debrief — capture the field reality of today, see the
 // weekly reflection rolled up on the right. Aggregates flow up to
 // Program Lead → Country Director → RVP / HR via the same engine.
 export default async function FieldIntelligencePage() {
   const currentUser = toCurrentUser(await getCurrentUser());
+  // The 6 KPIs + weekly reflection come from hardcoded mock debriefs (dated
+  // 2025-11-12), not the live DailyDebrief backend. Withhold in production.
+  if (!isMockAllowed()) return <InsufficientData surface="field intelligence" />;
   const auto = autoFillDailyDebrief(currentUser.staffId);
   const todaysDebrief = dailyDebriefs.find(
     (d) => d.staffId === currentUser.staffId && d.date === "2025-11-12",

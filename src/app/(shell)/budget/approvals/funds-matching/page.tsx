@@ -8,6 +8,8 @@ import {
 } from "@/lib/monthly-approval-mock";
 import { formatUgxBig } from "@/lib/cost-settings-mock";
 import { cn } from "@/lib/utils";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 
 const PRIORITY_TONE: Record<Priority, string> = {
   Critical:   "bg-rose-100    text-rose-700",
@@ -18,6 +20,7 @@ const PRIORITY_TONE: Record<Priority, string> = {
 };
 
 export default function FundsMatchingPage() {
+  if (!isMockAllowed()) return <InsufficientData surface="funds matching" />;
   const rows = generateFundsMatching();
   const k    = monthlyApprovalKpis();
   const totalCritical    = rows.reduce((a, r) => a + r.criticalActivities, 0);

@@ -7,6 +7,8 @@ import { buildBudgetSummary } from "@/lib/funds/budget/budget-summary";
 import { AnnualBudgetDashboard } from "@/components/budget/dashboards/AnnualBudgetDashboard";
 import { RvpBudgetSummary } from "@/components/budget/dashboards/RvpBudgetSummary";
 import { PlBudgetOverview } from "@/components/budget/dashboards/PlBudgetOverview";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 
 // Role-aware Budget page. The budget is the financial expression of the annual
 // plan (generated from planned activities via the cost engine). Three views:
@@ -16,6 +18,9 @@ import { PlBudgetOverview } from "@/components/budget/dashboards/PlBudgetOvervie
 export default async function BudgetPage() {
   const user = await getCurrentUser();
   const role = user.role;
+  // The annual budget dashboard is fabricated (UGX 116M program+admin with
+  // invented requested/released/burn). Withhold money figures in production.
+  if (!isMockAllowed()) return <InsufficientData surface="the annual budget" />;
 
   // CCEO sees a monthly own-plan slice elsewhere; partners have their own
   // surfaces — send them to their landing rather than the country budget.

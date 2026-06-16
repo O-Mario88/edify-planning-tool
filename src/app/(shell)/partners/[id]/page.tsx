@@ -13,6 +13,8 @@ import {
 import { EntityDetail, DetailKpi } from "@/components/shell/EntityDetail";
 import { SectionCard, StatusBadge } from "@/components/ui/primitives";
 import { partnerTargetPerformance } from "@/lib/team-targets-mock";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 
 // ────────── Mock detail data ──────────
 //
@@ -63,6 +65,9 @@ const VERIFICATION_HISTORY: { date: string; result: "Pass" | "Conditional" | "Fa
 
 export default async function PartnerDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  // Partner detail is 100% hand-typed mock (same 3 projects/14 schools/78 visits
+  // for every partner). Withhold until backed by real Partner records.
+  if (!isMockAllowed()) return <InsufficientData surface="partner detail" />;
   const p = partnerTargetPerformance.find((x) => x.partnerId === id);
   if (!p) return notFound();
 

@@ -34,6 +34,8 @@ import { ChangedSinceCard } from "./ChangedSinceCard";
 import { DoneForTodayChecklist } from "./DoneForTodayChecklist";
 import { UnifiedInbox } from "./UnifiedInbox";
 import { CollapsibleCard } from "@/components/ui/CollapsibleCard";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 
 export async function CommandStack({
   user,
@@ -45,6 +47,16 @@ export async function CommandStack({
   user:         DemoUser;
   hideMission?: boolean;
 }) {
+  // The action rail (next-3 actions, inbox, change digest) is built from the
+  // mock role-action engine, not the backend. In production render an empty
+  // state instead — the page's own greeting hero still welcomes the user.
+  if (!isMockAllowed()) {
+    return (
+      <div className="space-y-4">
+        <InsufficientData surface="your action queue" />
+      </div>
+    );
+  }
   // Read the last-viewed cookie. Pass the raw header into the engine
   // so it stays pure (no Next.js coupling in the engine).
   const jar = await cookies();

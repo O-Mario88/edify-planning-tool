@@ -5,6 +5,8 @@ import {
 } from "lucide-react";
 import { acctKpis, type AcctKpi } from "@/lib/accountant-console-mock";
 import { MetricStrip, type MetricCell } from "@/components/ui/MetricStrip";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 
 const ICON: Record<AcctKpi["iconKey"], LucideIcon> = {
   available: Wallet, received: Inbox, disbursed: Send,
@@ -20,6 +22,9 @@ const TONE: Record<AcctKpi["iconKey"], MetricCell["tone"]> = {
 // Six finance KPIs — "where the money stands" — as one dense MetricStrip
 // (the canonical app-wide KPI-row pattern; rings/sparklines dropped).
 export function ConsoleKpiStrip() {
+  // Finance KPIs are fabricated (UGX 214.8M / 67% util, "May 2025"); never show
+  // fake money figures on the accountant's console in production.
+  if (!isMockAllowed()) return <InsufficientData surface="finance KPIs" />;
   const metrics: MetricCell[] = acctKpis.map((k) => {
     const deltaUp = k.delta?.startsWith("+");
     const deltaDown = k.delta?.startsWith("-");

@@ -4,6 +4,8 @@ import { PartnersIndexClient } from "@/components/partners/PartnersIndexClient";
 import { CceoPartnerWorkSection } from "@/components/partners/CceoPartnerWorkSection";
 import { partnerTargetPerformance } from "@/lib/team-targets-mock";
 import { getCurrentUser } from "@/lib/auth";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 
 // Partners index.
 //
@@ -23,6 +25,9 @@ export default async function PartnersIndex({
 }) {
   const user = await getCurrentUser();
   const { bucket } = await searchParams;
+  // "Established Delivery Partners" shows fabricated partners with invented
+  // activity counts. Withhold until backed by real Partner records.
+  if (!isMockAllowed()) return <InsufficientData surface="partners" />;
   const seedCount = partnerTargetPerformance.length;
 
   return (

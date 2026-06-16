@@ -8,6 +8,8 @@ import {
 } from "@/lib/monthly-approval-mock";
 import { formatUgxBig } from "@/lib/cost-settings-mock";
 import { cn } from "@/lib/utils";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 
 const TONE = {
   edify: "bg-[var(--color-edify-soft)]/80 text-[var(--color-edify-primary)]",
@@ -28,6 +30,7 @@ const PRIORITY_TONE: Record<Priority, string> = {
 };
 
 export default function RvpFinalApprovalQueuePage() {
+  if (!isMockAllowed()) return <InsufficientData surface="the RVP approval queue" />;
   const queue   = monthlyPlanSubmissions.filter((s) => s.status === "Submitted to RVP");
   const pending = monthlyPlanSubmissions.filter((s) => s.status === "Approved by Country Director");
   const passed  = monthlyPlanSubmissions.filter((s) =>

@@ -17,6 +17,8 @@ import { FairMatrixPlot } from "@/components/performance/FairMatrixPlot";
 import { RebalanceRecommendationsCard } from "@/components/performance/RebalanceRecommendationsCard";
 import { buildFairMatrix, generateRebalanceSuggestions } from "@/lib/performance/fwi-engine";
 import { fairMatrixInputsForTeam, rebalanceInputsForTeam } from "@/lib/performance/fwi-mock";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 
 // Team Targets Dashboard with tabbed navigation.
 //
@@ -35,6 +37,9 @@ function defaultTabForRole(role: string): TeamTargetsTab {
 
 export default async function TeamTargetsDashboard() {
   const user = await getCurrentUser();
+  // Per-CCEO + partner target rows and the Fair Workload Index are fabricated
+  // (named non-existent staff). Never expose performance/PIP bands from mock data.
+  if (!isMockAllowed()) return <InsufficientData surface="team targets" />;
   const currentUser = toCurrentUser(user);
   const visible = filterStaffForUser(currentUser);
   const defaultTab = defaultTabForRole(user.role);

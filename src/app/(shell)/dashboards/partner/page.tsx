@@ -38,6 +38,8 @@ import { PartnerEvidenceQualityPanel } from "@/components/partner/PartnerEvidenc
 import { PartnerSchoolImpactSummary } from "@/components/partner/PartnerSchoolImpactSummary";
 import { PartnerDashboardMobileView } from "@/components/mobile/views/PartnerDashboardMobileView";
 import { SectionHeader } from "@/components/ui/SectionHeader";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 import {
   partnerPriorityActions,
   doneForTodayItems,
@@ -74,6 +76,9 @@ export default async function PartnerCommandCenter({
   if (!previewMode && !ALLOWED.has(user.role)) {
     redirect(ROLE_REDIRECT[user.role]);
   }
+  // The entire command center is mock + unscoped (every partner sees identical
+  // fabricated totals). Withhold until wired to the partner's own live records.
+  if (!isMockAllowed()) return <InsufficientData surface="the partner command center" />;
 
   const trackerCounts = [
     { key: "assigned"   as const, count: workflowStepCounts.assigned },
