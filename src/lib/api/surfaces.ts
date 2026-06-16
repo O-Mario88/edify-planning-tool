@@ -78,6 +78,19 @@ export type BeDashboard = {
   ssaDone: number;
 };
 
+export type BeLeadershipSummary = {
+  countryScope: boolean;
+  schools: number; coreSchools: number; clientSchools: number;
+  clustered: number; unclustered: number; ssaDone: number; ssaPending: number;
+  ssaCompletePct: number; ssaAverage: number;
+  byIntervention: { intervention: string; average: number }[];
+  weakestInterventions: { intervention: string; average: number }[];
+  pipeline: { planned: number; scheduled: number; inProgress: number; evidenceUploaded: number; awaitingIa: number; iaVerified: number; completed: number };
+  activitiesTotal: number;
+  staffCount: number; partnerCount: number;
+  fundRequests: number; paymentsCleared: number; disbursedTotalUgx: number;
+};
+
 export type BeSsaPerformance = {
   schoolsWithSsa: number;
   overallAverage: number;
@@ -120,6 +133,9 @@ export function fetchCoreHeader(user: BackendUser) {
 
 export function fetchAnalyticsDashboard(user: BackendUser) {
   return live<BeDashboard>("/analytics/dashboard", user);
+}
+export function fetchLeadershipSummary(user: BackendUser) {
+  return live<BeLeadershipSummary>("/analytics/leadership-summary", user);
 }
 
 export function fetchAnalyticsSsa(user: BackendUser) {

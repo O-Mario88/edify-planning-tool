@@ -9,6 +9,8 @@ import { CostSettingsCard } from "@/components/budget/CostSettingsCard";
 import { getDonorMetricSnapshot } from "@/lib/donor-metrics";
 import { DebriefReviewInbox } from "@/components/messages/DebriefReviewInbox";
 import { CountryKpiRow } from "@/components/director/CountryKpiRow";
+import { LeadershipKpiStrip } from "@/components/director/LeadershipKpiStrip";
+import { fetchLeadershipSummary } from "@/lib/api/surfaces";
 import { ExecutiveAlerts } from "@/components/director/ExecutiveAlerts";
 import { CdRiskSummaryCard } from "@/components/escalation/CdRiskSummaryCard";
 import { FlagToPlCard } from "@/components/director/FlagToPlCard";
@@ -70,6 +72,8 @@ export default async function CountryDirectorDashboard() {
   if (!["CountryDirector", "Admin"].includes(user.role)) {
     redirect(ROLE_REDIRECT[user.role]);
   }
+  // Live country KPIs from the backend (real counts/aggregates over the CD's scope).
+  const leadership = await fetchLeadershipSummary(user);
 
   // National donor-reporting rollup — same builder as /donor-reporting,
   // so the dashboard snapshot and the full report never disagree.
@@ -112,7 +116,7 @@ export default async function CountryDirectorDashboard() {
             description="Reach, training, improvement, and coverage — from the same builder as the donor report — plus the country's headline KPIs."
           />
           <MissionSnapshotStrip snapshot={donorSnapshot} />
-          <CountryKpiRow />
+          {leadership.live ? <LeadershipKpiStrip s={leadership.data} scopeLabel="country" /> : <CountryKpiRow />}
         </section>
 
         {/* ── STATISTICS FIRST ──────────────────────────────────────────

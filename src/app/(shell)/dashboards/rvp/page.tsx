@@ -44,6 +44,8 @@ import { ROLE_REDIRECT } from "@/lib/auth-public";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { isMockAllowed } from "@/lib/mock-policy";
 import { InsufficientData } from "@/components/ui/InsufficientData";
+import { LeadershipKpiStrip } from "@/components/director/LeadershipKpiStrip";
+import { fetchLeadershipSummary } from "@/lib/api/surfaces";
 
 export default async function RVPDashboard() {
   // Defense-in-depth: middleware already gates /dashboards/rvp, but the
@@ -53,9 +55,25 @@ export default async function RVPDashboard() {
     redirect(ROLE_REDIRECT[rawUser.role]);
   }
   const currentUser = toCurrentUser(rawUser);
-  // Regional Signals + Country Comparison invent 4 countries (production has 1
-  // country / 700 schools), and donor figures are mock. Withhold in production.
-  if (!isMockAllowed()) return <InsufficientData surface="the RVP regional cockpit" />;
+  // Production: a clean LIVE regional cockpit — real KPIs from the backend plus
+  // the live program-analytics band. (The fabricated "4-country comparison" body
+  // below only renders in dev mock mode for design reference.)
+  const leadership = await fetchLeadershipSummary(rawUser);
+  if (!isMockAllowed()) {
+    return (
+      <>
+        <DashboardPageHeader role="RVP" />
+        <div className="px-4 sm:px-5 md:px-6 pb-24 md:pb-6 pt-4 space-y-4 md:space-y-5">
+          <DashboardGreetingHero user={rawUser} />
+          <section className="space-y-3">
+            <SectionHeader tier="strategic" eyebrow="Region" title="Regional performance at a glance" description="Live school counts, SSA health, activity pipeline and finance across the schools in your scope." />
+            {leadership.live ? <LeadershipKpiStrip s={leadership.data} scopeLabel="region" /> : <InsufficientData surface="regional KPIs" />}
+          </section>
+          <CountryAnalyticsLive />
+        </div>
+      </>
+    );
+  }
 
   // Regional donor-reporting rollup — same builder as /donor-reporting,
   // scoped to RVP so the readiness snapshot and the full report agree.
