@@ -217,8 +217,10 @@ export function recommendInterventionsForSchool(schoolId: string): SchoolRecomme
     return { schoolId, hasSsa: false, overallAverage: null, all: [], struggling: [] };
   }
 
+  // Deterministic tie-break (score, then intervention name) so the two weakest are
+  // stable across renders and match the backend recommendation engine on ties.
   const all = SSA_INTERVENTIONS.map((area) => buildRecommendation(area, resolved.scores[area])).sort(
-    (a, b) => a.score - b.score,
+    (a, b) => a.score - b.score || a.intervention.localeCompare(b.intervention),
   );
   const struggling = all.filter((r) => isStruggling(r.score));
   const sum = all.reduce((acc, r) => acc + r.score, 0);

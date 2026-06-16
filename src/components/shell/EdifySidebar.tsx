@@ -443,7 +443,7 @@ function buildImpactMenu(dashboardHref: string): MenuSection[] {
         { label: "Schools",          href: "/schools",       Icon: Building2 },
         { label: "SSA Performance",  href: "/ssa",           Icon: Activity },
         { label: "Core Schools",     href: "/core-schools",  Icon: Star },
-        { label: "Coverage",         href: "/coverage",      Icon: Handshake },
+        // Coverage removed — it's a PL/CD/RVP planning surface IA can't open.
       ],
     },
     {

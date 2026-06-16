@@ -21,6 +21,8 @@ import {
 } from "@/lib/mobile-mock";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { cn } from "@/lib/utils";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 
 const STATUS_TABS: SfStatus[] = ["Awaiting SF ID", "Submitted", "Returned", "Verified"];
 
@@ -57,6 +59,10 @@ export function QueueDesktopView() {
       return true;
     });
   }, [activeTab, filter]);
+
+  // The Salesforce/ID queue is mock-backed (mobile-mock); never show fabricated
+  // queue rows in production — withhold until wired to the live verification queue.
+  if (!isMockAllowed()) return <InsufficientData surface="the Salesforce ID queue" />;
 
   return (
     <>

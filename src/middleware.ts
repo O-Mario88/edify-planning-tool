@@ -278,6 +278,9 @@ const ROLE_RESTRICTED: Array<{ prefix: string; allow: EdifyRole[] }> = [
   // server-gated on IA_VERIFY; this stops any non-IA role from opening the
   // page at all (it was auth-only with no role gate). Spec: only IA verifies.
   { prefix: "/data-verification",     allow: ["ImpactAssessment", "Admin"] },
+  // Salesforce / ID-verification queue — IA verifies, Accountant consumes for
+  // payment. Was auth-only (open to every role by URL); restrict to the actors.
+  { prefix: "/queue",                 allow: ["ImpactAssessment", "ProgramAccountant", "Admin"] },
   // Partner directory / oversight (Edify-side). Every Edify staff role that
   // works with partners can view it; Partner* users see only their OWN work
   // through /dashboards/partner and must never browse the partner directory.
