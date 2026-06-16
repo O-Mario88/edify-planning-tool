@@ -2,6 +2,8 @@ import { Globe2 } from "lucide-react";
 import { SectionCard } from "@/components/ui/primitives";
 import { MetricStrip, type MetricCell } from "@/components/ui/MetricStrip";
 import type { DonorMetricSnapshot } from "@/lib/donor-metrics-types";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 
 // Country Mission Snapshot — the CD's "are we achieving the mission?"
 // band. One dense MetricStrip of mission-level reach figures, sourced
@@ -22,6 +24,8 @@ const MISSION_KEYS: { key: string; href: string }[] = [
 ];
 
 export function MissionSnapshotStrip({ snapshot }: { snapshot: DonorMetricSnapshot }) {
+  // Mission reach figures are mock-derived (donor-metrics builder); withhold in prod.
+  if (!isMockAllowed()) return <InsufficientData surface="the mission snapshot" />;
   const byKey = new Map(snapshot.metrics.map((m) => [m.key, m]));
   const metrics: MetricCell[] = MISSION_KEYS.flatMap(({ key, href }) => {
     const m = byKey.get(key);

@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import { fundApprovalKpis, type FundApprovalKpi } from "@/lib/fund-approvals-mock";
 import { MetricStrip, type MetricCell } from "@/components/ui/MetricStrip";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 
 // Program-Lead fund-approval KPIs — 6 metrics as one dense MetricStrip.
 
@@ -24,6 +26,9 @@ const ICON_MAP: Record<FundApprovalKpi["icon"], LucideIcon> = {
 };
 
 export function FundApprovalsKpiRow() {
+  // KPI figures (214.6M/128.4M) are fabricated; the live approval queue on the
+  // page is the real surface. Withhold the mock money KPIs in production.
+  if (!isMockAllowed()) return <InsufficientData surface="fund-approval KPIs" />;
   const metrics: MetricCell[] = fundApprovalKpis.map((k) => ({
     key: k.key,
     label: k.label,

@@ -6,6 +6,8 @@ import { RvpCountryList } from "./RvpCountryList";
 import { RvpCountryDetail } from "./RvpCountryDetail";
 import { RvpDetailFooter } from "./RvpDetailFooter";
 import { RvpCountryBudgetCard } from "@/components/funds/rvp/RvpCountryBudgetCard";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 
 // RVP Fund Approval — full page assembly.
 //
@@ -16,6 +18,8 @@ import { RvpCountryBudgetCard } from "@/components/funds/rvp/RvpCountryBudgetCar
 //                   Plan Summary + Spending by Category.
 //   4. Footer     — Recent Fund Requests (7) + Approvals & Comments (5)
 export function RvpFundApprovalsView() {
+  // The RVP fund-approval view (UGX 18.4B across 12 countries) is fabricated.
+  if (!isMockAllowed()) return <InsufficientData surface="RVP fund approvals" />;
   return (
     <>
       <RvpFundApprovalsHeader />

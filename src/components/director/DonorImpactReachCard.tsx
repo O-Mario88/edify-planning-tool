@@ -12,6 +12,8 @@ import { ArrowUpRight, BadgeCheck } from "lucide-react";
 import { SectionCard } from "@/components/ui/primitives";
 import { MetricStrip, type MetricCell } from "@/components/ui/MetricStrip";
 import type { DonorMetricSnapshot, DonorMetricStatus } from "@/lib/donor-metrics-types";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 
 // The six donor headline metrics, in spec order.
 const WANTED: string[] = [
@@ -35,6 +37,9 @@ function statusMeta(status: DonorMetricStatus): { label: string; tone: MetricCel
 }
 
 export function DonorImpactReachCard({ snapshot }: { snapshot: DonorMetricSnapshot }) {
+  // Donor reach/training/impact figures are mock-derived (donor-metrics lib), not
+  // GROUP BY over verified records. Never report fabricated donor numbers.
+  if (!isMockAllowed()) return <InsufficientData surface="donor-ready figures" />;
   const byKey = new Map(snapshot.metrics.map((m) => [m.key, m]));
 
   const metrics: MetricCell[] = WANTED.flatMap((key) => {
