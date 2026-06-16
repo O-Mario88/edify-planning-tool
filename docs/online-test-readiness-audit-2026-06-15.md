@@ -231,16 +231,25 @@ functionally complete**: surfaces without a backend show "Insufficient data" rat
 than live figures. The remaining work is the backend wiring per page (the documented
 mock-purge migration), not a data-integrity risk.
 
-**Honesty caveat on the gate:** `npm run prod:check` / `mock:audit` count mock
-*imports*, not whether they are *gated*. Those pages still import their `*-mock` for
-the dev path, so the import-based gate will still flag them even though the runtime is
-now safe. The real guarantee is the `isMockAllowed()` render guard, verified by build.
+**Gate is now guard-aware (fixed).** `scripts/mock-audit.mjs` previously counted mock
+*imports*; it now (a) skips `import type … from "…mock"` (type-only, no runtime data)
+and (b) classifies any page that references `isMockAllowed()` as **guarded**, failing
+only on genuinely unguarded leaks. The 29 remediated pages are now correctly reported as
+safe; 35 genuinely-unguarded pages remain (the broader migration). The
+`/coverage` guard was verified live in the running app (renders "Insufficient data",
+no fabricated 4,512 client-school count).
 
-**Not changed (deliberately):** `partner/activities`, `partner/inbox/[tab]`,
-`partner/payments` had uncommitted in-progress work in the tree at audit start — left
-untouched to avoid clobbering that WIP. The accountant dashboard payment funnel reads
-the (now-empty-in-prod) in-memory store, so it shows zeros rather than fabricated
-figures; repointing it to `PaymentRequest` is follow-up, not a fake-data risk.
+**Partner + messages WIP completed + hardened (fixed).** The in-progress migration of
+`messages`, `messages/[id]`, `partner/activities`, `partner/corrections`,
+`partner/inbox/[tab]` onto the live backend (`LiveInbox`/`LiveThread`/
+`PartnerActivityListLive`) was landed. Two real production leaks were found and closed:
+`PartnerActivityListLive` fell back to the mock component on *any* backend
+unreachability (incl. a transient prod blip) → now gated by `isMockAllowed()`;
+`PartnerPaymentStatusCard` rendered fabricated UGX totals unguarded → now gated.
+
+**Still follow-up (not a fake-data risk):** the accountant dashboard payment funnel reads
+the now-empty-in-prod in-memory store (shows zeros, not fabricated figures); repointing
+it to `PaymentRequest` is feature work. 35 pages remain on the mock-purge backlog.
 
 ---
 
