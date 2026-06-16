@@ -18,16 +18,18 @@ import { signSession, sessionSigningActive, SESSION_SIG_COOKIE } from "@/lib/ses
 // This is the OPPOSITE of the previous behavior, where any anonymous
 // POST could elevate a session to Admin in two clicks.
 
+// Online-test roster (10 accounts, password "edify"). The role-switcher resolves
+// each role to its kept account so in-app role hopping works post-trim.
 const FALLBACK_BY_ROLE: Record<EdifyRole, string> = {
-  CCEO:                "paul.chinyama@edify.org",
-  CountryProgramLead:  "daniel.mwangi@edify.org",
-  CountryDirector:     "sarah.okello@edify.org",
-  RVP:                 "esther.wanjiru@edify.org",
-  ProgramAccountant:   "moses.tindi@edify.org",
-  ImpactAssessment:    "grace.alimo@edify.org",
-  HumanResource:       "anne.wairimu@edify.org",
-  ProjectCoordinator:  "rachel.apio@edify.org",
-  Admin:               "demo@edify.org",
+  CCEO:                "cceo@edify.org",
+  CountryProgramLead:  "pl1@edify.org",
+  CountryDirector:     "cd@edify.org",
+  RVP:                 "rvp@edify.org",
+  ProgramAccountant:   "accountant@edify.org",
+  ImpactAssessment:    "ia@edify.org",
+  HumanResource:       "admin@edify.org",        // HR not in the test roster → Admin fallback
+  ProjectCoordinator:  "admin@edify.org",        // PC not in the test roster → Admin fallback
+  Admin:               "admin@edify.org",
   // Partner default flips to BFEP — the org showcased in the
   // partner Command Center mock data. The LTU accounts still exist
   // (sarah.kanyi@ltu.org, abel.opio@ltu.org, donor@ltu-funder.org)

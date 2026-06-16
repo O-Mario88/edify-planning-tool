@@ -20,8 +20,8 @@ describe("staffOnboardingHealth", () => {
   it("flags a duplicate email against the demo roster", () => {
     addOrgStaff({
       staffId: "STF-HL-DUP", name: "Dup Email", role: "CCEO", supervisorId: "STF-DM-014",
-      email: "paul.chinyama@edify.org", createdBy: "Sarah Okello", // collides with a demo user
+      email: "cceo@edify.org", createdBy: "Sarah Okello", // collides with a demo-roster user
     });
-    expect(staffOnboardingHealth().duplicateEmails).toContain("paul.chinyama@edify.org");
+    expect(staffOnboardingHealth().duplicateEmails).toContain("cceo@edify.org");
   });
 });

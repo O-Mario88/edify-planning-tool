@@ -80,34 +80,20 @@ export type DemoUser = {
   district?: string;
 };
 
+// Online-test roster — exactly 10 accounts (password "edify"), aligned 1:1 with the
+// backend edify_pm user table so login + getCurrentUser + the email-keyed FE↔BE
+// bridge all resolve. (Earlier named/partner demo accounts were trimmed for Phase 1.)
 export const DEMO_USERS: Record<string, DemoUser> = {
-  "paul.chinyama@edify.org":  { email: "paul.chinyama@edify.org",  password: "edify", staffId: "STF-PC-001", salesforceOwnerId: "0050X000009ABCC", name: "Paul Chinyama",  initials: "PC", role: "CCEO",               appRole: "CCEO",               scope: "Core Schools Officer" },
-  "daniel.mwangi@edify.org":  { email: "daniel.mwangi@edify.org",  password: "edify", staffId: "STF-DM-014", salesforceOwnerId: "0050X000009ABCD", name: "Daniel Mwangi",  initials: "DM", role: "CountryProgramLead", appRole: "CountryProgramLead", scope: "Planning Officer" },
-  "aisha.dar@edify.org":      { email: "aisha.dar@edify.org",      password: "edify", staffId: "STF-AD-021", salesforceOwnerId: "0050X000009ABCE", name: "Aisha Dar",      initials: "AD", role: "CountryProgramLead", appRole: "CountryProgramLead", scope: "Program Manager" },
-  "sarah.okello@edify.org":   { email: "sarah.okello@edify.org",   password: "edify", staffId: "STF-SO-007", salesforceOwnerId: "0050X000009ABCF", name: "Sarah Okello",   initials: "SO", role: "CountryDirector",    appRole: "CountryDirector",    scope: "Country Director" },
-  "esther.wanjiru@edify.org": { email: "esther.wanjiru@edify.org", password: "edify", staffId: "STF-EW-003", salesforceOwnerId: "0050X000009ABCG", name: "Esther Wanjiru", initials: "EW", role: "RVP",                appRole: "RVP",                scope: "Regional VP" },
-  "anne.wairimu@edify.org":   { email: "anne.wairimu@edify.org",   password: "edify", staffId: "STF-AW-019", salesforceOwnerId: "0050X000009ABCH", name: "Anne Wairimu",   initials: "AW", role: "HumanResource",      appRole: "CountryProgramLead", scope: "People & Performance" },
-  "moses.tindi@edify.org":    { email: "moses.tindi@edify.org",    password: "edify", staffId: "STF-MT-031", salesforceOwnerId: "0050X000009ABCJ", name: "Moses Tindi",    initials: "MT", role: "ProgramAccountant",  appRole: "ProgramAccountant",  scope: "Finance Console" },
-  "grace.alimo@edify.org":    { email: "grace.alimo@edify.org",    password: "edify", staffId: "STF-GA-042", salesforceOwnerId: "0050X000009ABCK", name: "Grace Alimo",    initials: "GA", role: "ImpactAssessment",   appRole: "ImpactAssessment",   scope: "M&E / Impact"      },
-  "admin@edify.org":          { email: "admin@edify.org",          password: "edify", staffId: "STF-AD-001", salesforceOwnerId: "0050X000009ABCL", name: "Edify Admin",    initials: "EA", role: "Admin",              appRole: "Admin",              scope: "Admin Console"     },
-  // Project Coordinator — owns special projects. appRole stays CountryProgramLead
-  // so the AppRole-keyed data layer (getVisibleProjects, etc.) keeps working;
-  // the ProjectCoordinator identity lives on the EdifyRole side (auth/sidebar/UI).
-  "rachel.apio@edify.org":    { email: "rachel.apio@edify.org",    password: "edify", staffId: "STF-RA-051", salesforceOwnerId: "0050X000009ABCM", name: "Rachel Apio",    initials: "RA", role: "ProjectCoordinator",  appRole: "CountryProgramLead", scope: "Special Projects Coordinator" },
-  "demo@edify.org":           { email: "demo@edify.org",           password: "demo",  staffId: "STF-DD-099", salesforceOwnerId: "0050X000009ABCI", name: "Edify Demo",     initials: "ED", role: "CountryDirector",    appRole: "CountryDirector",    scope: "Country Director" },
-  // ─── LTU partner demo accounts (Literacy Training Uganda) ───
-  "sarah.kanyi@ltu.org":      { email: "sarah.kanyi@ltu.org",      password: "edify", staffId: "PSF-SK-001", salesforceOwnerId: "0050X000009LTU1", name: "Sarah Kanyi",   initials: "SK", role: "PartnerAdmin",        appRole: "CCEO", scope: "Partner Admin"        },
-  "abel.opio@ltu.org":        { email: "abel.opio@ltu.org",        password: "edify", staffId: "PSF-AO-002", salesforceOwnerId: "0050X000009LTU2", name: "Abel Opio",     initials: "AO", role: "PartnerFieldOfficer", appRole: "CCEO", scope: "Partner Field Officer" },
-  "donor@ltu-funder.org":     { email: "donor@ltu-funder.org",     password: "edify", staffId: "PSF-LD-001", salesforceOwnerId: "0050X000009LTU3", name: "LTU Donor",     initials: "LD", role: "PartnerViewer",       appRole: "CCEO", scope: "Partner Viewer"        },
-  // ─── BFEP partner demo accounts (Bright Future Education Partners) ───
-  // Aligned with the Partner Dashboard reference build at /dashboards/partner.
-  // BFEP is the org used throughout partner-dashboard-mock.ts — 24 schools
-  // across Mukono + Kayunga, contract BFEP-UG-012. Daniel Mwangi here is
-  // the BFEP focal person (distinct from daniel.mwangi@edify.org who is
-  // the country program lead on the Edify staff side).
-  "daniel.mwangi@brightfuture.org": { email: "daniel.mwangi@brightfuture.org", password: "edify", staffId: "PSF-DM-BFEP", salesforceOwnerId: "0050X000009BFE1", name: "Daniel Mwangi",  initials: "DM", role: "PartnerAdmin",        appRole: "CCEO", scope: "Partner Admin"         },
-  "ruth.kabuye@brightfuture.org":   { email: "ruth.kabuye@brightfuture.org",   password: "edify", staffId: "PSF-RK-BFEP", salesforceOwnerId: "0050X000009BFE2", name: "Ruth Kabuye",    initials: "RK", role: "PartnerFieldOfficer", appRole: "CCEO", scope: "Partner Field Officer" },
-  "sarah.nanyongo@edify.org":       { email: "sarah.nanyongo@edify.org",       password: "edify", staffId: "STF-SN-BFEP", salesforceOwnerId: "0050X000009BFE3", name: "Sarah Nanyongo", initials: "SN", role: "PartnerViewer",       appRole: "CCEO", scope: "Edify Focal · BFEP"    },
+  "cceo@edify.org":       { email: "cceo@edify.org",       password: "edify", staffId: "STF-PC-001", salesforceOwnerId: "0050X000009ABCC", name: "Paul Chinyama", initials: "PC", role: "CCEO",               appRole: "CCEO",               scope: "Core Schools Officer" },
+  "pl1@edify.org":        { email: "pl1@edify.org",        password: "edify", staffId: "STF-DM-014", salesforceOwnerId: "0050X000009ABCD", name: "Daniel Mwangi", initials: "DM", role: "CountryProgramLead", appRole: "CountryProgramLead", scope: "Program Lead" },
+  "pl2@edify.org":        { email: "pl2@edify.org",        password: "edify", staffId: "STF-AD-021", salesforceOwnerId: "0050X000009ABCE", name: "Aisha Dar",     initials: "AD", role: "CountryProgramLead", appRole: "CountryProgramLead", scope: "Program Lead" },
+  "pl3@edify.org":        { email: "pl3@edify.org",        password: "edify", staffId: "STF-SK-022", salesforceOwnerId: "0050X000009ABCN", name: "Samuel Kato",   initials: "SK", role: "CountryProgramLead", appRole: "CountryProgramLead", scope: "Program Lead" },
+  "pl4@edify.org":        { email: "pl4@edify.org",        password: "edify", staffId: "STF-RA-051", salesforceOwnerId: "0050X000009ABCM", name: "Rachel Apio",   initials: "RA", role: "CountryProgramLead", appRole: "CountryProgramLead", scope: "Program Lead" },
+  "cd@edify.org":         { email: "cd@edify.org",         password: "edify", staffId: "STF-SO-007", salesforceOwnerId: "0050X000009ABCF", name: "Sarah Okello",  initials: "SO", role: "CountryDirector",    appRole: "CountryDirector",    scope: "Country Director" },
+  "rvp@edify.org":        { email: "rvp@edify.org",        password: "edify", staffId: "STF-RV-003", salesforceOwnerId: "0050X000009ABCG", name: "Robert Vance",  initials: "RV", role: "RVP",                appRole: "RVP",                scope: "Regional VP" },
+  "ia@edify.org":         { email: "ia@edify.org",         password: "edify", staffId: "STF-GA-042", salesforceOwnerId: "0050X000009ABCK", name: "Grace Alimo",   initials: "GA", role: "ImpactAssessment",   appRole: "ImpactAssessment",   scope: "M&E / Impact" },
+  "accountant@edify.org": { email: "accountant@edify.org", password: "edify", staffId: "STF-MT-031", salesforceOwnerId: "0050X000009ABCJ", name: "Moses Tindi",   initials: "MT", role: "ProgramAccountant",  appRole: "ProgramAccountant",  scope: "Finance Console" },
+  "admin@edify.org":      { email: "admin@edify.org",      password: "edify", staffId: "STF-AD-001", salesforceOwnerId: "0050X000009ABCL", name: "Edify Admin",   initials: "EA", role: "Admin",              appRole: "Admin",              scope: "Admin Console" },
 };
 
 // Internal fallback identity used ONLY in dev (NODE_ENV !== "production")
@@ -121,7 +107,7 @@ export const DEMO_USERS: Record<string, DemoUser> = {
 // caller to a proxy route (e.g. /api/evidence/<id>/file) would resolve to
 // this real PL identity and be served scoped data. In production the
 // resolver instead throws, so no anonymous caller ever gets an identity.
-const ANONYMOUS_FALLBACK: DemoUser = DEMO_USERS["daniel.mwangi@edify.org"];
+const ANONYMOUS_FALLBACK: DemoUser = DEMO_USERS["pl1@edify.org"];
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
 // The privileged admin identity is disabled in production unless explicitly

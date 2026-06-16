@@ -57,36 +57,16 @@ export type ClientDemoUser = {
 
 // Demo accounts. Production swaps this for a real auth provider; the
 // shape is otherwise unchanged.
+// Online-test roster — 10 accounts (password "edify"), aligned 1:1 with the backend.
 export const DEMO_USERS: Record<string, ClientDemoUser> = {
-  "paul.chinyama@edify.org":  { email: "paul.chinyama@edify.org",  password: "edify", role: "CCEO",               name: "Paul Chinyama"  },
-  "daniel.mwangi@edify.org":  { email: "daniel.mwangi@edify.org",  password: "edify", role: "CountryProgramLead", name: "Daniel Mwangi"  },
-  "aisha.dar@edify.org":      { email: "aisha.dar@edify.org",      password: "edify", role: "CountryProgramLead", name: "Aisha Dar"      },
-  "sarah.okello@edify.org":   { email: "sarah.okello@edify.org",   password: "edify", role: "CountryDirector",    name: "Sarah Okello"   },
-  "esther.wanjiru@edify.org": { email: "esther.wanjiru@edify.org", password: "edify", role: "RVP",                name: "Esther Wanjiru" },
-  "anne.wairimu@edify.org":   { email: "anne.wairimu@edify.org",   password: "edify", role: "HumanResource",      name: "Anne Wairimu"   },
-  "moses.tindi@edify.org":    { email: "moses.tindi@edify.org",    password: "edify", role: "ProgramAccountant",  name: "Moses Tindi"    },
-  "grace.alimo@edify.org":    { email: "grace.alimo@edify.org",    password: "edify", role: "ImpactAssessment",   name: "Grace Alimo"    },
-  "admin@edify.org":          { email: "admin@edify.org",          password: "edify", role: "Admin",              name: "Edify Admin"    },
-  "rachel.apio@edify.org":    { email: "rachel.apio@edify.org",    password: "edify", role: "ProjectCoordinator", name: "Rachel Apio"    },
-  "demo@edify.org":           { email: "demo@edify.org",           password: "demo",  role: "CountryDirector",    name: "Edify Demo"     },
-  // ─── Partner demo accounts ───
-  // PartnerAdmin — Sarah Kanyi at Literacy Training Uganda. Sees all
-  // LTU activities, can submit plans, can respond to corrections.
-  "sarah.kanyi@ltu.org":      { email: "sarah.kanyi@ltu.org",      password: "edify", role: "PartnerAdmin",         name: "Sarah Kanyi"    },
-  // PartnerFieldOfficer — Abel Opio, an LTU trainer. Sees assigned
-  // schools, can upload evidence, can't approve.
-  "abel.opio@ltu.org":        { email: "abel.opio@ltu.org",        password: "edify", role: "PartnerFieldOfficer",  name: "Abel Opio"      },
-  // PartnerViewer — donor / advisor with read-only access to verified
-  // partner work for the contract they support.
-  "donor@ltu-funder.org":     { email: "donor@ltu-funder.org",     password: "edify", role: "PartnerViewer",        name: "LTU Donor"      },
-  // ─── Bright Future Education Partners (BFEP) ───
-  // Demo accounts aligned with the Partner Dashboard reference build
-  // (/dashboards/partner). BFEP is the org used throughout
-  // partner-dashboard-mock.ts — 24 schools across Mukono + Kayunga,
-  // contract BFEP-UG-012. PartnerAdmin lands on the full dashboard;
-  // the FieldOfficer / Viewer accounts share the same landing with
-  // role-scoped affordances.
-  "daniel.mwangi@brightfuture.org": { email: "daniel.mwangi@brightfuture.org", password: "edify", role: "PartnerAdmin",        name: "Daniel Mwangi"  },
-  "ruth.kabuye@brightfuture.org":   { email: "ruth.kabuye@brightfuture.org",   password: "edify", role: "PartnerFieldOfficer", name: "Ruth Kabuye"    },
-  "sarah.nanyongo@edify.org":       { email: "sarah.nanyongo@edify.org",       password: "edify", role: "PartnerViewer",       name: "Sarah Nanyongo" },
+  "cceo@edify.org":       { email: "cceo@edify.org",       password: "edify", role: "CCEO",               name: "Paul Chinyama" },
+  "pl1@edify.org":        { email: "pl1@edify.org",        password: "edify", role: "CountryProgramLead", name: "Daniel Mwangi" },
+  "pl2@edify.org":        { email: "pl2@edify.org",        password: "edify", role: "CountryProgramLead", name: "Aisha Dar" },
+  "pl3@edify.org":        { email: "pl3@edify.org",        password: "edify", role: "CountryProgramLead", name: "Samuel Kato" },
+  "pl4@edify.org":        { email: "pl4@edify.org",        password: "edify", role: "CountryProgramLead", name: "Rachel Apio" },
+  "cd@edify.org":         { email: "cd@edify.org",         password: "edify", role: "CountryDirector",    name: "Sarah Okello" },
+  "rvp@edify.org":        { email: "rvp@edify.org",        password: "edify", role: "RVP",                name: "Robert Vance" },
+  "ia@edify.org":         { email: "ia@edify.org",         password: "edify", role: "ImpactAssessment",   name: "Grace Alimo" },
+  "accountant@edify.org": { email: "accountant@edify.org", password: "edify", role: "ProgramAccountant",  name: "Moses Tindi" },
+  "admin@edify.org":      { email: "admin@edify.org",      password: "edify", role: "Admin",              name: "Edify Admin" },
 };
