@@ -3,6 +3,8 @@ import { MapPin, Building2, Filter } from "lucide-react";
 import { StubPage } from "@/components/shell/StubPage";
 import { schoolsMock, distinctShippingAddresses } from "@/lib/schools-mock";
 import { cn } from "@/lib/utils";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 
 // Schools across the country. The top is a library-free "coverage map": each
 // school is a pin, anchored to its region's zone on an abstract canvas and
@@ -40,6 +42,9 @@ function ssaColor(status: string): string {
 }
 
 export default function MapPage() {
+  // The coverage map + SSA counts are not yet backed by live school records;
+  // never show the mock universe as production data.
+  if (!isMockAllowed()) return <InsufficientData surface="the coverage map" />;
   const totalSchools = schoolsMock.length;
   const completed    = schoolsMock.filter((s) => s.ssaStatus === "Completed").length;
   const overdue      = schoolsMock.filter((s) => s.ssaStatus === "Overdue").length;

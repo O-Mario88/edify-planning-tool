@@ -1,12 +1,16 @@
 import { MapPin } from "lucide-react";
 import { EntityIndex, IndexRow } from "@/components/shell/EntityIndex";
 import { districtRollups } from "@/lib/workflow-mock";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 
 function slug(s: string): string {
   return s.toLowerCase().replace(/\s+/g, "-");
 }
 
 export default function DistrictsIndex() {
+  // Per-district rollups (schools, SSA%, targets) are fabricated; withhold in prod.
+  if (!isMockAllowed()) return <InsufficientData surface="district rollups" />;
   return (
     <EntityIndex
       title="Districts"

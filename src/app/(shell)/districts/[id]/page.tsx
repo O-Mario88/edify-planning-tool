@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import { EntityDetail, DetailKpi, DetailFacts } from "@/components/shell/EntityDetail";
 import { districtRollups } from "@/lib/workflow-mock";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 
 // Districts are slug-cased so links can use them as URL segments.
 function slug(s: string): string {
@@ -19,6 +21,7 @@ function slug(s: string): string {
 
 export default async function DistrictDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  if (!isMockAllowed()) return <InsufficientData surface="district detail" />;
   const district = districtRollups.find((d) => slug(d.district) === id);
   if (!district) return notFound();
 

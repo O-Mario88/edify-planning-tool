@@ -4,6 +4,8 @@ import { TopIssuesCard } from "@/components/impact/TopIssuesCard";
 import { RunQualityCheckButton } from "@/components/quality/RunQualityCheckButton";
 import { qualityCheckSeverity, qualityCheckTotal } from "@/lib/impact-mock";
 import { latestQualityRun } from "@/lib/quality/quality-checks";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 
 function timeAgo(iso: string): string {
   const mins = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
@@ -15,6 +17,9 @@ function timeAgo(iso: string): string {
 }
 
 export default function QualityChecksPage() {
+  // Severity/issue counts (e.g. "876 open issues") come from impact-mock, not a
+  // real data-quality scan. Withhold in production.
+  if (!isMockAllowed()) return <InsufficientData surface="data-quality checks" />;
   const lastRun = latestQualityRun();
 
   return (

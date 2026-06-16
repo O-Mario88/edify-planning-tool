@@ -7,6 +7,8 @@ import { TeamPlanBoard } from "@/components/cpl/TeamPlanBoard";
 import { CdFlagQueue } from "@/components/cpl/CdFlagQueue";
 import { ClusterMeetingRecommendationsCard } from "@/components/cpl/ClusterMeetingRecommendations";
 import { clusterMeetingRecommendations } from "@/lib/cluster/cluster-meeting-recommendations";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 
 // /team-plan — the Program Lead's team execution workspace.
 //
@@ -20,6 +22,9 @@ export default async function TeamPlanPage() {
   if (!["CountryProgramLead", "Admin"].includes(user.role)) {
     redirect(ROLE_REDIRECT[user.role]);
   }
+  // Supervision cards use a hardcoded org tree + in-memory store, not live
+  // StaffSupervisorAssignment; withhold until wired to Postgres.
+  if (!isMockAllowed()) return <InsufficientData surface="the team plan" />;
 
   const { rows, summary } = buildTeamPlan(user.staffId);
   const clusterRecs = clusterMeetingRecommendations(user.staffId);

@@ -8,6 +8,8 @@ import {
   type Trend,
 } from "@/lib/ssa-comparison-mock";
 import { cn } from "@/lib/utils";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 
 const TREND_ICON = { Up: TrendingUp, Down: TrendingDown, Flat: Minus } as const;
 const TREND_TONE: Record<Trend, string> = {
@@ -17,6 +19,8 @@ const TREND_TONE: Record<Trend, string> = {
 };
 
 export default function YearlyComparisonPage() {
+  // Year-over-year SSA comparison is fabricated; never show it as production data.
+  if (!isMockAllowed()) return <InsufficientData surface="the year-over-year SSA comparison" />;
   const insights = generateSsaImprovementInsights();
 
   return (

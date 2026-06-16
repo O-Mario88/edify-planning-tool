@@ -10,6 +10,8 @@ import { TRAININGS, type TrainingStatus } from "@/lib/training-mock";
 import { shortStatusLabel, fullStatusLabel } from "@/lib/status-labels";
 import { ConfirmCompletionButton } from "@/components/my-targets/ConfirmCompletionButton";
 import { cn } from "@/lib/utils";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 
 // Training status → ChipTone. "In Progress" / "Scheduled" / "Cancelled"
 // are not in the canonical STATUS_TONE_MAP so we pin them here.
@@ -36,6 +38,8 @@ const STATS: { key: string; label: string; value: string }[] = [
 
 export default function TrainingsIndex() {
   const [statusFilter, setStatusFilter] = useState<(typeof FILTERS)[number]>("All");
+  // Training rows/counts are mock; never render them as live production data.
+  if (!isMockAllowed()) return <InsufficientData surface="the trainings log" />;
 
   const rows = statusFilter === "All"
     ? TRAININGS

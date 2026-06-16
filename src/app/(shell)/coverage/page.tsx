@@ -10,6 +10,8 @@ import {
   Sparkles,
 } from "lucide-react";
 import { StubPage } from "@/components/shell/StubPage";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 import {
   cceoCoverageRows,
   plCoverageRows,
@@ -41,6 +43,9 @@ const CERT_TONE: Record<PartnerCertification, string> = {
 };
 
 export default function ClientSchoolCoveragePage() {
+  // Coverage KPIs + partner-assignment recommendations are fabricated (no backend
+  // coverage service exists yet). Never present them as production decision data.
+  if (!isMockAllowed()) return <InsufficientData surface="client-school coverage" />;
   const k = coverageKpis();
   const recs = generatePartnerAssignmentRecommendations();
   const topRec = recs[0];

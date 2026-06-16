@@ -7,6 +7,8 @@ import {
   type PartnerCertification,
 } from "@/lib/coverage-mock";
 import { cn } from "@/lib/utils";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 
 const CERT_TONE: Record<PartnerCertification, string> = {
   "Certified":     "bg-emerald-100 text-emerald-700",
@@ -15,6 +17,7 @@ const CERT_TONE: Record<PartnerCertification, string> = {
 };
 
 export default function PartnerAssignmentRecommendationsPage() {
+  if (!isMockAllowed()) return <InsufficientData surface="partner-assignment recommendations" />;
   const recs = generatePartnerAssignmentRecommendations();
   const totalSchools = recs.reduce((a, r) => a + r.schoolCount, 0);
 
