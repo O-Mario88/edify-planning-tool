@@ -7,7 +7,6 @@
 
 import { Database } from "lucide-react";
 import { InterventionPerformanceCard } from "@/components/ssa/InterventionPerformanceCard";
-import { SsaPerformanceGrid } from "@/components/ssa/SsaPerformanceGrid";
 import { InterventionImprovementGrid } from "@/components/ssa/InterventionImprovementGrid";
 
 export function LiveDataRoom() {
@@ -23,8 +22,9 @@ export function LiveDataRoom() {
       {/* Performance in each of the 8 SSA interventions across the scope. */}
       <InterventionPerformanceCard />
 
-      {/* SSA performance by group (district / region / CCEO / cluster), drillable. */}
-      <SsaPerformanceGrid />
+      {/* SSA performance by district lives on the interactive map above (choropleth
+          + per-district detail panel), so it's intentionally not duplicated here.
+          District/region/CCEO/cluster grouping remains on the SSA Performance page. */}
 
       {/* Impact: previous-FY vs current-FY intervention movement. */}
       <InterventionImprovementGrid />
