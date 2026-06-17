@@ -126,6 +126,29 @@ reset + 10-account roster removes noise. **Gap to the <15-min target:** the peri
 improving / at risk" leadership dashboards are empty until wired — so leadership roles don't yet get
 the full at-a-glance vision (field/planning roles do).
 
+## Update — Backend wiring of leadership surfaces (post-audit)
+
+Wired previously-empty leadership/analytics surfaces to **real backend data** (new
+`/analytics/leadership-summary` + `/analytics/districts` endpoints, role-scoped):
+
+| Surface | Before | Now (verified live) |
+|---|---|---|
+| **Director dashboard** | "28,450 schools / UGX 5.29B" (fabricated) | **700 schools · SSA 100% · Avg 6.2 · Core 234** — live country KPIs |
+| **RVP dashboard** | invented 4-country comparison | clean live regional cockpit (real KPIs + live analytics band) |
+| **Districts list + detail** | fabricated rollups | **16 districts, real counts + SSA%** (Lira 50 schools/avg 6.3, Mbale 5.9, Gulu 6.5) |
+| **Project-Coordinator** | empty state | live backend project portfolio |
+
+These directly serve the "leadership logs in and sees where schools are heading"
+goal — the country + per-district SSA landscape is now real. (`LeadershipKpiStrip`
+shows school counts, SSA completion + average + weakest interventions, the activity
+pipeline, team size, and finance — all live counts/aggregates over the caller's scope.)
+
+**Still on the mock-purge backlog** (lower value on a pre-test clean DB — most read
+0 until testing generates workflow data): the HR/Accountant KPI strips (the live
+HR roster + Budget-Intelligence embed already render), the rich `/analytics`
+data-room charts, donor reporting, and the coverage service. These remain honest
+empty states, not fabricated numbers.
+
 ## P. Final Online Testing Recommendation
 **Proceed with Online Testing Phase 1** focused on the core operating vertical (School Directory →
 Cluster → SSA → Planning → Schedule → Cost → My Plan → Execution → Evidence → IA → Accountant →
