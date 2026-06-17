@@ -7,6 +7,8 @@ import { MetricStrip, type MetricCell } from "@/components/ui/MetricStrip";
 import { LiveBadge, BackendOfflineBanner } from "@/components/ui/BackendStatus";
 import { MyContribution } from "@/components/analytics/MyContribution";
 import { FieldEngineAnalytics } from "@/components/analytics/field-engine/FieldEngineAnalytics";
+import { LiveDataRoom } from "@/components/analytics/LiveDataRoom";
+import { isMockAllowed } from "@/lib/mock-policy";
 import { SubCountySsaPanel } from "@/components/ssa/SubCountySsaPanel";
 import { UgandaGeoMap } from "@/components/analytics/geo/UgandaGeoMap";
 import { selectedFyId } from "@/lib/analytics/scope";
@@ -108,7 +110,7 @@ export default async function AnalyticsPage({
             for the sub-counties inside that district (live, backend-filtered). */}
         <SubCountySsaPanel />
         <BackendOfflineBanner error={liveError} />
-        <FieldEngineAnalytics role={user.role} scopeLabel={user.name} personal={personal} />
+        {isMockAllowed() ? <FieldEngineAnalytics role={user.role} scopeLabel={user.name} personal={personal} /> : <LiveDataRoom />}
       </div>
     </>
   );
