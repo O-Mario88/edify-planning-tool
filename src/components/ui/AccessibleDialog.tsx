@@ -46,6 +46,7 @@ export function AccessibleDialog({
   initialFocusRef,
   dismissOnEscape = true,
   dismissOnOverlayClick = true,
+  dim = true,
   className,
 }: {
   open: boolean;
@@ -59,6 +60,10 @@ export function AccessibleDialog({
   initialFocusRef?: React.RefObject<HTMLElement | null>;
   dismissOnEscape?: boolean;
   dismissOnOverlayClick?: boolean;
+  /** Dim + blur the backdrop (default). false → transparent scrim: a sleek
+   *  floating panel with the page still fully visible behind it (click-away
+   *  still closes). Used by the geo-map district drawer so the map stays legible. */
+  dim?: boolean;
   className?: string;
 }) {
   const titleId = useId();
@@ -154,7 +159,11 @@ export function AccessibleDialog({
       {open && (
         <motion.div
           className={cn(
-            "fixed inset-0 z-[1000] flex justify-center bg-black/45 backdrop-blur-[2px]",
+            "fixed inset-0 z-[1000] flex justify-center",
+            // Backdrop: dim+blur by default; transparent (sleek floating panel,
+            // page visible behind) when dim={false}. Drawer-right hugs the right.
+            dim ? "bg-black/45 backdrop-blur-[2px]" : "bg-transparent",
+            variant === "drawer-right" ? "justify-end" : "",
             // Sheet sits at the bottom on mobile; centered on md+.
             // Drawer + dialog keep their existing alignment.
             variant === "sheet"

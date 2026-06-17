@@ -14,12 +14,13 @@
 // preview; click → full district analytics drawer; zoom / pan.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Map as MapIcon, ZoomIn, ZoomOut, Maximize2, X, ArrowRight, AlertTriangle, ShieldCheck, TrendingDown } from "lucide-react";
+import { Map as MapIcon, ZoomIn, ZoomOut, Maximize2, ArrowRight, AlertTriangle, ShieldCheck, TrendingDown } from "lucide-react";
 import Link from "next/link";
 import { isFilterActive, useActiveFilters } from "@/hooks/use-active-filters";
 import { ErrorState, LoadingState } from "@/components/ui/DataStates";
+import { Modal } from "@/components/ui/Modal";
 import { cn } from "@/lib/utils";
-import type { BeGeoMap, BeGeoDistrict, BeGeoSchoolPoint } from "@/lib/api/surfaces";
+import type { BeGeoMap, BeGeoDistrict, BeGeoSchoolPoint, BeGeoCluster } from "@/lib/api/surfaces";
 
 type GeoFeature = { properties: { pcode: string; name: string; region: string }; geometry: { type: string; coordinates: number[][][] | number[][][][] } };
 type GeoJson = { bbox: [number, number, number, number]; features: GeoFeature[] };
@@ -361,71 +362,117 @@ function Stat({ label, value, tone }: { label: string; value: string | number; t
   );
 }
 
+function ssaTone(v: number | null): string | undefined {
+  if (v == null) return undefined;
+  return v < 5 ? "text-rose-600" : v < 7 ? "text-amber-600" : "text-emerald-600";
+}
+
 function DistrictDrawer({ d, onClose }: { d: BeGeoDistrict; onClose: () => void }) {
   const sm = STATUS_META[d.status];
+  const [clusters, setClusters] = useState<BeGeoCluster[] | null>(null);
+  const [clusterErr, setClusterErr] = useState(false);
+
+  // Lazy-load the district's clusters (each with its OWN SSA avg + weakest intervention).
+  useEffect(() => {
+    let live = true;
+    setClusters(null); setClusterErr(false);
+    fetch(`/api/analytics/geo-map/district/${encodeURIComponent(d.districtId)}`, { credentials: "include" })
+      .then((r) => r.json())
+      .then((j) => { if (live) j.live ? setClusters(j.clusters) : setClusterErr(true); })
+      .catch(() => { if (live) setClusterErr(true); });
+    return () => { live = false; };
+  }, [d.districtId]);
+
   return (
-    <div className="fixed inset-0 z-50 flex justify-end" role="dialog" aria-label={`${d.district} district analytics`}>
-      <button className="absolute inset-0 bg-black/30" aria-label="Close" onClick={onClose} />
-      <aside className="relative w-full sm:w-[500px] max-w-full h-full bg-[var(--surface-1)] border-l border-[var(--color-edify-border)] shadow-2xl overflow-y-auto">
-        <header className="sticky top-0 bg-[var(--surface-1)] border-b border-[var(--color-edify-divider)] px-5 py-4 flex items-start justify-between gap-2 z-10">
-          <div>
-            <h3 className="text-[17px] font-extrabold tracking-tight">{d.district}</h3>
-            <p className="text-[12px] muted">{d.subRegion ?? "—"} sub-region · {d.region} region</p>
-            <span className={cn("mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10.5px] font-bold border", sm.cls)}>
-              {d.status === "high_risk" ? <AlertTriangle size={11} /> : d.status === "healthy" ? <ShieldCheck size={11} /> : null}{sm.label}
-            </span>
+    <Modal
+      open
+      onClose={onClose}
+      variant="drawer-right"
+      size="md"
+      dim={false}
+      title={d.district}
+      description={`${d.subRegion ?? "—"} sub-region · ${d.region} region`}
+    >
+      <div className="space-y-5">
+        <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10.5px] font-bold border", sm.cls)}>
+          {d.status === "high_risk" ? <AlertTriangle size={11} /> : d.status === "healthy" ? <ShieldCheck size={11} /> : null}{sm.label}
+        </span>
+
+        <section>
+          <h4 className="text-[11px] uppercase tracking-wider font-bold muted mb-2">School portfolio</h4>
+          <div className="grid grid-cols-3 gap-2">
+            <Stat label="Schools" value={d.schools} />
+            <Stat label="Client" value={d.clientSchools} />
+            <Stat label="Core" value={d.coreSchools} />
+            <Stat label="Clusters" value={d.clusters} />
+            <Stat label="Clustered" value={d.clustered} />
+            <Stat label="Unclustered" value={d.unclustered} tone={d.unclustered ? "text-rose-600" : undefined} />
           </div>
-          <button onClick={onClose} aria-label="Close" className="h-8 w-8 rounded-md hover:bg-[var(--color-edify-soft)] inline-flex items-center justify-center"><X size={17} /></button>
-        </header>
-        <div className="p-5 space-y-5">
-          <section>
-            <h4 className="text-[11px] uppercase tracking-wider font-bold muted mb-2">School portfolio</h4>
-            <div className="grid grid-cols-3 gap-2">
-              <Stat label="Schools" value={d.schools} />
-              <Stat label="Client" value={d.clientSchools} />
-              <Stat label="Core" value={d.coreSchools} />
-              <Stat label="Clusters" value={d.clusters} />
-              <Stat label="Clustered" value={d.clustered} />
-              <Stat label="Unclustered" value={d.unclustered} tone={d.unclustered ? "text-rose-600" : undefined} />
+        </section>
+
+        <section>
+          <h4 className="text-[11px] uppercase tracking-wider font-bold muted mb-2">SSA performance</h4>
+          <div className="grid grid-cols-3 gap-2">
+            <Stat label="SSA average" value={d.avgSsa ?? "—"} tone={ssaTone(d.avgSsa)} />
+            <Stat label="Critical" value={d.criticalCount} tone={d.criticalCount ? "text-rose-600" : undefined} />
+            <Stat label="SSA pending" value={d.ssaPending} />
+          </div>
+        </section>
+
+        <section>
+          <h4 className="text-[11px] uppercase tracking-wider font-bold muted mb-2 inline-flex items-center gap-1.5"><TrendingDown size={13} className="text-rose-500" /> Struggling across the district</h4>
+          {d.weakestInterventions.length === 0 ? (
+            <p className="text-[12px] muted">No SSA scores yet — interventions appear once schools are assessed.</p>
+          ) : (
+            <div className="space-y-1.5">
+              {d.weakestInterventions.map((w, i) => (
+                <div key={w.key} className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-rose-200 bg-rose-50/50">
+                  <span className="text-[12px] font-semibold inline-flex items-center gap-2"><span className="text-rose-600 font-extrabold">#{i + 1}</span> {w.label}</span>
+                  <span className="text-[13px] font-extrabold tabular text-rose-600">{w.avg.toFixed(1)}</span>
+                </div>
+              ))}
+              <p className="text-[11px] muted">The two interventions with the lowest district-wide SSA average — the focus for support.</p>
             </div>
-          </section>
-          <section>
-            <h4 className="text-[11px] uppercase tracking-wider font-bold muted mb-2">SSA performance</h4>
-            <div className="grid grid-cols-3 gap-2">
-              <Stat label="SSA average" value={d.avgSsa ?? "—"} tone={d.avgSsa != null ? (d.avgSsa < 5 ? "text-rose-600" : d.avgSsa < 7 ? "text-amber-600" : "text-emerald-600") : undefined} />
-              <Stat label="Critical" value={d.criticalCount} tone={d.criticalCount ? "text-rose-600" : undefined} />
-              <Stat label="SSA pending" value={d.ssaPending} />
-            </div>
-          </section>
-          <section>
-            <h4 className="text-[11px] uppercase tracking-wider font-bold muted mb-2 inline-flex items-center gap-1.5"><TrendingDown size={13} className="text-rose-500" /> Struggling across the district</h4>
-            {d.weakestInterventions.length === 0 ? (
-              <p className="text-[12px] muted">No SSA scores yet — interventions appear once schools are assessed.</p>
-            ) : (
-              <div className="space-y-1.5">
-                {d.weakestInterventions.map((w, i) => (
-                  <div key={w.key} className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-rose-200 bg-rose-50/50">
-                    <span className="text-[12px] font-semibold inline-flex items-center gap-2"><span className="text-rose-600 font-extrabold">#{i + 1}</span> {w.label}</span>
-                    <span className="text-[13px] font-extrabold tabular text-rose-600">{w.avg.toFixed(1)}</span>
+          )}
+        </section>
+
+        {/* Clusters — each with its OWN SSA average + the intervention IT is weakest in. */}
+        <section>
+          <h4 className="text-[11px] uppercase tracking-wider font-bold muted mb-2">Clusters in this district {clusters && <span className="muted font-semibold">· {clusters.length}</span>}</h4>
+          {clusterErr ? (
+            <p className="text-[12px] muted">Couldn&apos;t load clusters.</p>
+          ) : clusters == null ? (
+            <p className="text-[12px] muted">Loading clusters…</p>
+          ) : clusters.length === 0 ? (
+            <p className="text-[12px] muted">No clusters formed in this district yet. Clusters appear here once schools are grouped, each with its own SSA average and weakest intervention.</p>
+          ) : (
+            <div className="divide-y divide-[var(--color-edify-divider)] rounded-lg border border-[var(--color-edify-divider)] overflow-hidden">
+              {clusters.map((c) => (
+                <div key={c.id} className="px-3 py-2 flex items-center justify-between gap-3 text-[12px]">
+                  <div className="min-w-0">
+                    <div className="font-extrabold tracking-tight truncate">{c.name}</div>
+                    <div className="muted text-[10.5px] truncate">{c.schools} school{c.schools === 1 ? "" : "s"}{c.weakest ? ` · weakest: ${c.weakest.label} (${c.weakest.avg.toFixed(1)})` : ""}</div>
                   </div>
-                ))}
-                <p className="text-[11px] muted">The two interventions with the lowest district-wide SSA average — the focus for support.</p>
-              </div>
-            )}
-          </section>
-          <section>
-            <h4 className="text-[11px] uppercase tracking-wider font-bold muted mb-2">Execution</h4>
-            <div className="grid grid-cols-3 gap-2"><Stat label="Activities done" value={d.activitiesCompleted} /><Stat label="SSA complete" value={`${d.ssaPct}%`} /></div>
-          </section>
-          <section className="space-y-1.5">
-            <h4 className="text-[11px] uppercase tracking-wider font-bold muted mb-1">Quick actions</h4>
-            <Action href={`/analytics?district=${encodeURIComponent(d.district)}`} label="Filter analytics to this district" />
-            <Action href={`/schools?district=${encodeURIComponent(d.district)}`} label="View schools in district" />
-            <Action href={`/coverage?district=${encodeURIComponent(d.district)}`} label="View coverage & support needs" />
-          </section>
-        </div>
-      </aside>
-    </div>
+                  <span className={cn("text-[14px] font-extrabold tabular shrink-0", ssaTone(c.avgSsa))}>{c.avgSsa ?? "—"}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section>
+          <h4 className="text-[11px] uppercase tracking-wider font-bold muted mb-2">Execution</h4>
+          <div className="grid grid-cols-3 gap-2"><Stat label="Activities done" value={d.activitiesCompleted} /><Stat label="SSA complete" value={`${d.ssaPct}%`} /></div>
+        </section>
+
+        <section className="space-y-1.5">
+          <h4 className="text-[11px] uppercase tracking-wider font-bold muted mb-1">Quick actions</h4>
+          <Action href={`/analytics?district=${encodeURIComponent(d.district)}`} label="Filter analytics to this district" />
+          <Action href={`/schools?district=${encodeURIComponent(d.district)}`} label="View schools in district" />
+          <Action href={`/coverage?district=${encodeURIComponent(d.district)}`} label="View coverage & support needs" />
+        </section>
+      </div>
+    </Modal>
   );
 }
 

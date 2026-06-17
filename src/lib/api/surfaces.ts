@@ -221,6 +221,11 @@ export type BeGeoMap = {
 export function fetchGeoMap(user: BackendUser, geo?: GeoFilterParams) {
   return live<BeGeoMap>(`/analytics/geo-map${geoQuery(geo)}`, user);
 }
+export type BeGeoCluster = { id: string; name: string; schools: number; avgSsa: number | null; weakest: { key: string; label: string; avg: number } | null };
+export type BeGeoDistrictDetail = { districtId: string; clusters: BeGeoCluster[] };
+export function fetchGeoDistrictDetail(user: BackendUser, districtId: string) {
+  return live<BeGeoDistrictDetail>(`/analytics/geo-map/district/${encodeURIComponent(districtId)}`, user);
+}
 
 export function fetchAnalyticsSsa(user: BackendUser, geo?: GeoFilterParams) {
   return live<BeSsaPerformance>(`/analytics/ssa-performance${geoQuery(geo)}`, user);
