@@ -300,7 +300,7 @@ export function UgandaGeoMap() {
       districtId: pcode, pcode, district: m?.name ?? name, region: m?.region ?? "", subRegion: m?.subRegion ?? null,
       centroidLat: m?.lat ?? null, centroidLng: m?.lng ?? null,
       schools: 0, coreSchools: 0, clientSchools: 0, clustered: 0, unclustered: 0, clusters: 0,
-      ssaDone: 0, ssaPending: 0, ssaPct: 0, avgSsa: null, criticalCount: 0, activitiesCompleted: 0,
+      ssaDone: 0, ssaPending: 0, ssaPct: 0, avgSsa: null, coreAvgSsa: null, clientAvgSsa: null, criticalCount: 0, activitiesCompleted: 0,
       status: "insufficient_data", interventions: [], weakestInterventions: [],
     };
   };
@@ -477,8 +477,8 @@ export function UgandaGeoMap() {
                         <HRow icon={<Briefcase size={12} />} label="Client" value={sc.clientSchools} />
                         <HRow icon={<ShieldCheck size={12} />} label="Core" value={sc.coreSchools} />
                         <HRow icon={<Network size={12} />} label="Clusters" value={sc.clusters} />
-                        <HRow icon={<Gauge size={12} />} label="SSA avg" value={sc.avgSsa ?? "—"} />
-                        <HRow icon={<Layers size={12} />} label="Sub-region" value={hover.sub ?? "—"} />
+                        <HRow icon={<Gauge size={12} />} label="Core SSA" value={sc.coreAvgSsa ?? "—"} />
+                        <HRow icon={<Gauge size={12} />} label="Client SSA" value={sc.clientAvgSsa ?? "—"} />
                       </div>
                       {sc.weakest && (
                         <div className="mt-2 pt-2 border-t border-white/15 text-[11px] inline-flex items-center gap-1.5"><TrendingDown size={11} className="text-rose-200" /> Weakest: <b>{sc.weakest.label}</b> ({sc.weakest.avg.toFixed(1)})</div>
@@ -509,8 +509,9 @@ export function UgandaGeoMap() {
                       <HRow icon={<Briefcase size={12} />} label="Client" value={hover.d.clientSchools} />
                       <HRow icon={<ShieldCheck size={12} />} label="Core" value={hover.d.coreSchools} />
                       <HRow icon={<Network size={12} />} label="Clusters" value={hover.d.clusters} />
-                      <HRow icon={<Gauge size={12} />} label="SSA avg" value={hover.d.avgSsa ?? "—"} />
                       <HRow icon={<AlertTriangle size={12} />} label="Critical" value={hover.d.criticalCount} />
+                      <HRow icon={<Gauge size={12} />} label="Core SSA" value={hover.d.coreAvgSsa ?? "—"} />
+                      <HRow icon={<Gauge size={12} />} label="Client SSA" value={hover.d.clientAvgSsa ?? "—"} />
                     </div>
                     {(() => {
                       const cl = detailCache.current.get(hover.d.districtId)?.clusters;
@@ -669,7 +670,8 @@ function DetailBody({ focus, summary, detail, onClear, headerless }: {
           <section>
             <SectionTitle>SSA performance</SectionTitle>
             <div className="grid grid-cols-3 gap-2">
-              <Stat label="SSA average" value={summary.avgSsa ?? "—"} tone={ssaTone(summary.avgSsa)} />
+              <Stat label="Core SSA" value={summary.coreAvgSsa ?? "—"} tone={ssaTone(summary.coreAvgSsa)} />
+              <Stat label="Client SSA" value={summary.clientAvgSsa ?? "—"} tone={ssaTone(summary.clientAvgSsa)} />
               <Stat label="Critical" value={summary.criticalSchools} tone={summary.criticalSchools ? "text-rose-600" : undefined} />
               <Stat label="SSA pending" value={summary.ssaPending} />
             </div>
@@ -701,7 +703,8 @@ function DetailBody({ focus, summary, detail, onClear, headerless }: {
                   <Stat label="Client" value={sc.clientSchools} />
                   <Stat label="Core" value={sc.coreSchools} />
                   <Stat label="Clusters" value={sc.clusters} />
-                  <Stat label="SSA avg" value={sc.avgSsa ?? "—"} tone={ssaTone(sc.avgSsa)} />
+                  <Stat label="Core SSA" value={sc.coreAvgSsa ?? "—"} tone={ssaTone(sc.coreAvgSsa)} />
+                  <Stat label="Client SSA" value={sc.clientAvgSsa ?? "—"} tone={ssaTone(sc.clientAvgSsa)} />
                 </div>
               </section>
               {sc.weakest && (
@@ -747,7 +750,8 @@ function DetailBody({ focus, summary, detail, onClear, headerless }: {
         <section>
           <SectionTitle>SSA performance</SectionTitle>
           <div className="grid grid-cols-3 gap-2">
-            <Stat label="SSA average" value={d.avgSsa ?? "—"} tone={ssaTone(d.avgSsa)} />
+            <Stat label="Core SSA" value={d.coreAvgSsa ?? "—"} tone={ssaTone(d.coreAvgSsa)} />
+            <Stat label="Client SSA" value={d.clientAvgSsa ?? "—"} tone={ssaTone(d.clientAvgSsa)} />
             <Stat label="Critical" value={d.criticalCount} tone={d.criticalCount ? "text-rose-600" : undefined} />
             <Stat label="SSA pending" value={d.ssaPending} />
           </div>
