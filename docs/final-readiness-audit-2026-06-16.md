@@ -143,11 +143,23 @@ goal — the country + per-district SSA landscape is now real. (`LeadershipKpiSt
 shows school counts, SSA completion + average + weakest interventions, the activity
 pipeline, team size, and finance — all live counts/aggregates over the caller's scope.)
 
-**Still on the mock-purge backlog** (lower value on a pre-test clean DB — most read
-0 until testing generates workflow data): the HR/Accountant KPI strips (the live
-HR roster + Budget-Intelligence embed already render), the rich `/analytics`
-data-room charts, donor reporting, and the coverage service. These remain honest
-empty states, not fabricated numbers.
+**Second wave (all three buckets):**
+
+| Surface | Now (verified live) |
+|---|---|
+| **Action rail** (all 8 dashboards) | the backend command-center feed — CCEO sees "700 schools not in a cluster → Assign cluster" (14 real actions) |
+| **`/quality-checks`** | real data-quality (missing SSA, unmatched owners, duplicates) — clean DB → "0 issues, 700 schools, SSA 100%" |
+| **`/coverage` + recommendations** | 466 client schools, 100% covered, **209 below SSA threshold** ranked weakest-first (Kings Preparatory SSA 2 → Plan support) |
+| **`/budget`** | live budget-from-schedule (total · by-quarter · by-type · staff/partner) — costed from the cost register; populates as activities are scheduled |
+
+New backend endpoints: `/analytics/{leadership-summary,districts,coverage}` + the
+existing `command-center/today`, `intervention-improvement`, `budget/from-schedule`.
+
+**Remaining backlog** (same pattern, populate during testing; lower priority): the
+other finance dashboards (`/weekly-funds`, `/monthly-fund-request`, `/budget/approvals/*`),
+`/today`/`/trainings`, `/team-targets`, the `/analytics` data-room charts, donor
+reporting, and partner surfaces (no partner accounts in the roster). All honest empty
+states, not fabricated numbers.
 
 ## P. Final Online Testing Recommendation
 **Proceed with Online Testing Phase 1** focused on the core operating vertical (School Directory →
