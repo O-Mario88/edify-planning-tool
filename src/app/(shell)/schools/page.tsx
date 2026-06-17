@@ -1,5 +1,5 @@
 import { SchoolsHeader } from "@/components/schools/SchoolsHeader";
-import { MetricStrip } from "@/components/ui/MetricStrip";
+import { DirectoryKpiStrip } from "@/components/schools/DirectoryKpiStrip";
 import { PlanningReviewSignals } from "@/components/schools/PlanningReviewSignals";
 import { SchoolQuickActions } from "@/components/schools/SchoolQuickActions";
 import { SchoolsClusterDirectory, type DirectoryClusterOption } from "@/components/cluster/SchoolsClusterDirectory";
@@ -277,11 +277,7 @@ export default async function SchoolsDashboard({
               Values are live from edify-api when the backend is enabled. */}
           {metricsLive && <LiveBadge />}
           <BackendOfflineBanner error={metricsError} />
-          <MetricStrip
-            title="Portfolio at a glance"
-            metrics={metrics}
-            columns="grid-cols-4 md:grid-cols-8"
-          />
+          <DirectoryKpiStrip metrics={metrics} title="Portfolio at a glance" />
 
           {/* Portfolio targets — cumulative FY progress (shown when you own schools) */}
           {portfolio.schools.length > 0 && (
