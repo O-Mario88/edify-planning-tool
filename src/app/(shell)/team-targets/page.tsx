@@ -18,7 +18,6 @@ import { RebalanceRecommendationsCard } from "@/components/performance/Rebalance
 import { buildFairMatrix, generateRebalanceSuggestions } from "@/lib/performance/fwi-engine";
 import { fairMatrixInputsForTeam, rebalanceInputsForTeam } from "@/lib/performance/fwi-mock";
 import { isMockAllowed } from "@/lib/mock-policy";
-import { InsufficientData } from "@/components/ui/InsufficientData";
 
 // Team Targets Dashboard with tabbed navigation.
 //
@@ -37,9 +36,26 @@ function defaultTabForRole(role: string): TeamTargetsTab {
 
 export default async function TeamTargetsDashboard() {
   const user = await getCurrentUser();
-  // Per-CCEO + partner target rows and the Fair Workload Index are fabricated
-  // (named non-existent staff). Never expose performance/PIP bands from mock data.
-  if (!isMockAllowed()) return <InsufficientData surface="team targets" />;
+  // Production: render the LIVE target engine (/targets/time-period) — real
+  // per-period target vs achieved over the caller's scope. On a clean DB this
+  // shows 0 achieved with an explanation (target achievement populates as
+  // activities are completed and verified). The fabricated per-CCEO / Fair
+  // Workload tables (named non-existent staff) render in dev mock mode only.
+  if (!isMockAllowed()) {
+    const isLeader = ["CountryProgramLead", "CountryDirector", "RVP", "HumanResource", "Admin"].includes(user.role);
+    return (
+      <>
+        <TeamTargetsHeader />
+        <div className="px-3 sm:px-4 md:px-5 pb-12 pt-3 space-y-4">
+          <TargetsLive title={isLeader ? "Team target progress" : "My target progress"} />
+          <p className="text-[11.5px] muted text-center">
+            No verified activity yet. Target achievement populates as activities are
+            completed and IA-verified across {isLeader ? "your team" : "your portfolio"}.
+          </p>
+        </div>
+      </>
+    );
+  }
   const currentUser = toCurrentUser(user);
   const visible = filterStaffForUser(currentUser);
   const defaultTab = defaultTabForRole(user.role);

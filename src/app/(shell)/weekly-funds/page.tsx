@@ -6,7 +6,8 @@ import { StaffAccountabilityLive } from "@/components/funds/staff/StaffAccountab
 import { AccountantDisbursementView } from "@/components/funds/accountant/AccountantDisbursementView";
 import { getCurrentUser } from "@/lib/auth";
 import { isMockAllowed } from "@/lib/mock-policy";
-import { InsufficientData } from "@/components/ui/InsufficientData";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { LiveWeeklyFunds } from "@/components/funds/LiveWeeklyFunds";
 
 // Role-aware /weekly-funds.
 //
@@ -16,9 +17,21 @@ import { InsufficientData } from "@/components/ui/InsufficientData";
 //   • Anyone else                → bounced to their dashboard
 export default async function WeeklyFundsPage() {
   const user = await getCurrentUser();
-  // Weekly fund totals/roster (Received 510M / Disbursed 284.5M) are fabricated;
-  // money figures must never be shown as production data. Withhold until wired.
-  if (!isMockAllowed()) return <InsufficientData surface="weekly funds" />;
+  // Production: LIVE weekly fund needs — aggregated by the backend from scheduled
+  // activities × the CD cost register (/budget/weekly). Real money, role-scoped,
+  // reconciles with the activity budget lines. Empty until activities are
+  // scheduled. The fabricated roster views below render in dev mock mode only.
+  if (!isMockAllowed()) {
+    return (
+      <>
+        <PageHeader title="Weekly Funds" subtitle="Fund needs for the week, costed from scheduled activities via the Country Cost Register." />
+        <div className="px-3 sm:px-4 md:px-5 pb-12 pt-3 space-y-4">
+          <LiveWeeklyFunds />
+          {user.role === "CCEO" && <StaffAccountabilityLive />}
+        </div>
+      </>
+    );
+  }
 
   if (user.role === "ProgramAccountant") {
     return (

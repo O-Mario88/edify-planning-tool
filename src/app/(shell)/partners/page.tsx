@@ -5,7 +5,8 @@ import { CceoPartnerWorkSection } from "@/components/partners/CceoPartnerWorkSec
 import { partnerTargetPerformance } from "@/lib/team-targets-mock";
 import { getCurrentUser } from "@/lib/auth";
 import { isMockAllowed } from "@/lib/mock-policy";
-import { InsufficientData } from "@/components/ui/InsufficientData";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { LivePartnersList } from "@/components/partners/LivePartnersList";
 
 // Partners index.
 //
@@ -25,9 +26,19 @@ export default async function PartnersIndex({
 }) {
   const user = await getCurrentUser();
   const { bucket } = await searchParams;
-  // "Established Delivery Partners" shows fabricated partners with invented
-  // activity counts. Withhold until backed by real Partner records.
-  if (!isMockAllowed()) return <InsufficientData surface="partners" />;
+  // Production: the LIVE partner directory — real Partner records (GET /partners).
+  // Empty until partners are onboarded; never a fabricated roster with invented
+  // activity counts. The rich EntityIndex below renders in dev mock mode only.
+  if (!isMockAllowed()) {
+    return (
+      <>
+        <PageHeader title="Partners" subtitle="Delivery partner organizations staff can assign work to." />
+        <div className="px-3 sm:px-4 md:px-5 pb-12 pt-3">
+          <LivePartnersList />
+        </div>
+      </>
+    );
+  }
   const seedCount = partnerTargetPerformance.length;
 
   return (
