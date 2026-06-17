@@ -35,7 +35,7 @@ import { DoneForTodayChecklist } from "./DoneForTodayChecklist";
 import { UnifiedInbox } from "./UnifiedInbox";
 import { CollapsibleCard } from "@/components/ui/CollapsibleCard";
 import { isMockAllowed } from "@/lib/mock-policy";
-import { InsufficientData } from "@/components/ui/InsufficientData";
+import { LiveCommandRail } from "@/components/actions/LiveCommandRail";
 
 export async function CommandStack({
   user,
@@ -47,13 +47,13 @@ export async function CommandStack({
   user:         DemoUser;
   hideMission?: boolean;
 }) {
-  // The action rail (next-3 actions, inbox, change digest) is built from the
-  // mock role-action engine, not the backend. In production render an empty
-  // state instead — the page's own greeting hero still welcomes the user.
+  // In production the action rail renders the LIVE command-center feed — real,
+  // role-scoped "what must I do next" items computed from the backend (cluster/SSA
+  // gaps, owned-activity steps, IA/accountant queues) — instead of the mock board.
   if (!isMockAllowed()) {
     return (
       <div className="space-y-4">
-        <InsufficientData surface="your action queue" />
+        <LiveCommandRail />
       </div>
     );
   }
