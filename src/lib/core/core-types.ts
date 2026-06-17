@@ -1,10 +1,9 @@
 // Unified Core School lifecycle — one data model, one schoolId.
 //
 // Every record here keys on IntakeSchool.schoolId (the School Directory is the
-// single source of truth). This replaces the three disconnected mocks
-// (ssa-mock candidates, core-school-plan-mock plans, core-school-replica-mock
-// directory). Shapes mirror a future Prisma schema; the in-memory store
-// (core-store.ts) is the mechanical swap point.
+// single source of truth). This replaces the disconnected mocks (ssa-mock
+// candidates, core-school-plan-mock plans). Shapes mirror a future Prisma
+// schema; the in-memory store (core-store.ts) is the mechanical swap point.
 //
 // Lifecycle:
 //   School Directory → SSA ≥ 7.5 → Candidate → Verification → Onboarding

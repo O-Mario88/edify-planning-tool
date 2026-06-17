@@ -160,13 +160,13 @@ export type CceoHeatmapRow = {
 };
 
 export const cceoHeatmap: CceoHeatmapRow[] = [
-  { district: "Chongwe",       scores: { christlike: 8.4, word: 8.2, leadership: 8.0, teaching: 7.6, learning: 7.8, government: 8.1, fees: 7.0, enrollment: 7.2 }, avg: 7.8 },
-  { district: "Lusaka",        scores: { christlike: 8.1, word: 7.9, leadership: 7.6, teaching: 7.3, learning: 7.4, government: 7.7, fees: 6.7, enrollment: 6.9 }, avg: 7.5 },
-  { district: "Kabwe",         scores: { christlike: 7.8, word: 7.5, leadership: 7.2, teaching: 6.9, learning: 7.0, government: 7.3, fees: 6.2, enrollment: 6.4 }, avg: 7.0 },
-  { district: "Kitwe",         scores: { christlike: 7.6, word: 7.3, leadership: 7.0, teaching: 6.7, learning: 6.8, government: 7.1, fees: 5.9, enrollment: 6.2 }, avg: 6.8 },
-  { district: "Ndola",         scores: { christlike: 7.4, word: 7.1, leadership: 6.8, teaching: 6.5, learning: 6.6, government: 6.9, fees: 5.6, enrollment: 5.9 }, avg: 6.6 },
-  { district: "Mufulira",      scores: { christlike: 7.1, word: 6.8, leadership: 6.5, teaching: 6.1, learning: 6.3, government: 6.6, fees: 5.2, enrollment: 5.6 }, avg: 6.3 },
-  { district: "Chillalombwe",  scores: { christlike: 6.8, word: 6.4, leadership: 6.0, teaching: 5.8, learning: 6.0, government: 6.2, fees: 4.9, enrollment: 5.3 }, avg: 5.9 },
+  { district: "Gulu",       scores: { christlike: 8.4, word: 8.2, leadership: 8.0, teaching: 7.6, learning: 7.8, government: 8.1, fees: 7.0, enrollment: 7.2 }, avg: 7.8 },
+  { district: "Lira",        scores: { christlike: 8.1, word: 7.9, leadership: 7.6, teaching: 7.3, learning: 7.4, government: 7.7, fees: 6.7, enrollment: 6.9 }, avg: 7.5 },
+  { district: "Mbale",         scores: { christlike: 7.8, word: 7.5, leadership: 7.2, teaching: 6.9, learning: 7.0, government: 7.3, fees: 6.2, enrollment: 6.4 }, avg: 7.0 },
+  { district: "Soroti",         scores: { christlike: 7.6, word: 7.3, leadership: 7.0, teaching: 6.7, learning: 6.8, government: 7.1, fees: 5.9, enrollment: 6.2 }, avg: 6.8 },
+  { district: "Tororo",         scores: { christlike: 7.4, word: 7.1, leadership: 6.8, teaching: 6.5, learning: 6.6, government: 6.9, fees: 5.6, enrollment: 5.9 }, avg: 6.6 },
+  { district: "Jinja",      scores: { christlike: 7.1, word: 6.8, leadership: 6.5, teaching: 6.1, learning: 6.3, government: 6.6, fees: 5.2, enrollment: 5.6 }, avg: 6.3 },
+  { district: "Mukono",  scores: { christlike: 6.8, word: 6.4, leadership: 6.0, teaching: 5.8, learning: 6.0, government: 6.2, fees: 4.9, enrollment: 5.3 }, avg: 5.9 },
 ];
 
 // ────────── Best Performing Core Schools ──────────
@@ -184,11 +184,11 @@ export type CceoBestSchool = {
 };
 
 export const bestPerformingCoreSchools: CceoBestSchool[] = [
-  { rank: 1, schoolName: "Chongwe Christian School", district: "Chongwe", ssaAvg: 9.1, improvement: 1.4, visits: "4/4", trainings: "4/4", status: "Complete",        recommendation: "Champion Review"   },
-  { rank: 2, schoolName: "Living Word Academy",      district: "Lusaka",  ssaAvg: 8.9, improvement: 1.1, visits: "4/4", trainings: "4/4", status: "Complete",        recommendation: "Potential Champion" },
-  { rank: 3, schoolName: "Hope International School",district: "Kabwe",   ssaAvg: 8.7, improvement: 1.3, visits: "4/4", trainings: "4/4", status: "Complete",        recommendation: "Potential Champion" },
-  { rank: 4, schoolName: "Grace Community School",   district: "Kitwe",   ssaAvg: 8.4, improvement: 0.9, visits: "3/4", trainings: "4/4", status: "Nearly Complete", recommendation: "Potential Champion" },
-  { rank: 5, schoolName: "Victory Academy",          district: "Ndola",   ssaAvg: 8.2, improvement: 0.6, visits: "4/4", trainings: "3/4", status: "Nearly Complete", recommendation: "Potential Champion" },
+  { rank: 1, schoolName: "Gulu Christian School", district: "Gulu", ssaAvg: 9.1, improvement: 1.4, visits: "4/4", trainings: "4/4", status: "Complete",        recommendation: "Champion Review"   },
+  { rank: 2, schoolName: "Living Word Academy",      district: "Lira",  ssaAvg: 8.9, improvement: 1.1, visits: "4/4", trainings: "4/4", status: "Complete",        recommendation: "Potential Champion" },
+  { rank: 3, schoolName: "Hope International School",district: "Mbale",   ssaAvg: 8.7, improvement: 1.3, visits: "4/4", trainings: "4/4", status: "Complete",        recommendation: "Potential Champion" },
+  { rank: 4, schoolName: "Grace Community School",   district: "Soroti",   ssaAvg: 8.4, improvement: 0.9, visits: "3/4", trainings: "4/4", status: "Nearly Complete", recommendation: "Potential Champion" },
+  { rank: 5, schoolName: "Victory Academy",          district: "Tororo",   ssaAvg: 8.2, improvement: 0.6, visits: "4/4", trainings: "3/4", status: "Nearly Complete", recommendation: "Potential Champion" },
 ];
 
 // ────────── Core Schools Needing Attention ──────────
@@ -205,11 +205,11 @@ export type CceoAttentionSchool = {
 };
 
 export const coreSchoolsNeedingAttention: CceoAttentionSchool[] = [
-  { schoolName: "New Dawn School",       district: "Mufulira",     ssaAvg: 4.8, lowestIntervention: "Enrollment",         visits: "0/4", trainings: "0/4", riskLabel: "No SSA, No Visits, No Trainings", riskTone: "rose"   },
-  { schoolName: "Bright Future School",  district: "Chillalombwe", ssaAvg: 5.1, lowestIntervention: "Fees/Budget",        visits: "1/4", trainings: "1/4", riskLabel: "Low SSA, Behind Schedule",         riskTone: "amber"  },
-  { schoolName: "Unity Christian School",district: "Kabwe",        ssaAvg: 5.3, lowestIntervention: "Teaching Env.",      visits: "1/4", trainings: "0/4", riskLabel: "No Training, Behind Schedule",     riskTone: "violet" },
-  { schoolName: "Cornerstone School",    district: "Kitwe",        ssaAvg: 5.6, lowestIntervention: "Govt. Req.",         visits: "1/4", trainings: "1/4", riskLabel: "Low SSA, Behind Schedule",         riskTone: "amber"  },
-  { schoolName: "Redeemer School",       district: "Chongwe",      ssaAvg: 5.7, lowestIntervention: "Enrollment",         visits: "0/4", trainings: "1/4", riskLabel: "No Visits, Behind Schedule",       riskTone: "rose"   },
+  { schoolName: "New Dawn School",       district: "Jinja",     ssaAvg: 4.8, lowestIntervention: "Enrollment",         visits: "0/4", trainings: "0/4", riskLabel: "No SSA, No Visits, No Trainings", riskTone: "rose"   },
+  { schoolName: "Bright Future School",  district: "Mukono", ssaAvg: 5.1, lowestIntervention: "Fees/Budget",        visits: "1/4", trainings: "1/4", riskLabel: "Low SSA, Behind Schedule",         riskTone: "amber"  },
+  { schoolName: "Unity Christian School",district: "Mbale",        ssaAvg: 5.3, lowestIntervention: "Teaching Env.",      visits: "1/4", trainings: "0/4", riskLabel: "No Training, Behind Schedule",     riskTone: "violet" },
+  { schoolName: "Cornerstone School",    district: "Soroti",        ssaAvg: 5.6, lowestIntervention: "Govt. Req.",         visits: "1/4", trainings: "1/4", riskLabel: "Low SSA, Behind Schedule",         riskTone: "amber"  },
+  { schoolName: "Redeemer School",       district: "Gulu",      ssaAvg: 5.7, lowestIntervention: "Enrollment",         visits: "0/4", trainings: "1/4", riskLabel: "No Visits, Behind Schedule",       riskTone: "rose"   },
 ];
 
 // ────────── Champion School Pipeline (donut + legend + footer) ──────────
