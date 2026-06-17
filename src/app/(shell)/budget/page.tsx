@@ -9,6 +9,8 @@ import { RvpBudgetSummary } from "@/components/budget/dashboards/RvpBudgetSummar
 import { PlBudgetOverview } from "@/components/budget/dashboards/PlBudgetOverview";
 import { isMockAllowed } from "@/lib/mock-policy";
 import { InsufficientData } from "@/components/ui/InsufficientData";
+import { LiveBudgetView } from "@/components/budget/LiveBudgetView";
+import { fetchBudgetFromSchedule } from "@/lib/api/surfaces";
 
 // Role-aware Budget page. The budget is the financial expression of the annual
 // plan (generated from planned activities via the cost engine). Three views:
@@ -18,14 +20,24 @@ import { InsufficientData } from "@/components/ui/InsufficientData";
 export default async function BudgetPage() {
   const user = await getCurrentUser();
   const role = user.role;
-  // The annual budget dashboard is fabricated (UGX 116M program+admin with
-  // invented requested/released/burn). Withhold money figures in production.
-  if (!isMockAllowed()) return <InsufficientData surface="the annual budget" />;
 
   // CCEO sees a monthly own-plan slice elsewhere; partners have their own
   // surfaces — send them to their landing rather than the country budget.
   if (["CCEO", "PartnerAdmin", "PartnerFieldOfficer", "PartnerViewer", "HumanResource", "ProjectCoordinator"].includes(role)) {
     redirect(ROLE_REDIRECT[role]);
+  }
+
+  // Production: LIVE budget — computed by the backend from scheduled activities ×
+  // the CD cost register (real money, role-scoped). The rich mock dashboards
+  // below render only in dev mock mode.
+  if (!isMockAllowed()) {
+    const live = await fetchBudgetFromSchedule(user);
+    return (
+      <>
+        <PageHeader title="Annual Budget" subtitle="The financial expression of the annual plan — costed from scheduled activities via the Country Cost Register." />
+        {live.live ? <LiveBudgetView b={live.data} /> : <InsufficientData surface="the annual budget" />}
+      </>
+    );
   }
 
   const summary = buildBudgetSummary(role);
