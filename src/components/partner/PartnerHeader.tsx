@@ -9,10 +9,12 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { HeaderFilterBar } from "@/components/shell/HeaderFilterBar";
 import { getCurrentUser } from "@/lib/auth";
 import { getFilterScope } from "@/lib/filters/scope-service";
+import { liveDistrictNamesFor } from "@/lib/api/surfaces";
 
 export async function PartnerHeader() {
   const user = await getCurrentUser();
-  const scope = getFilterScope({ user });
+  const liveDistrictNames = await liveDistrictNamesFor(user);
+  const scope = getFilterScope({ user, liveDistrictNames });
   return (
     <PageHeader
       title="Partner"

@@ -13,6 +13,7 @@ import { HeaderFilterBar } from "@/components/shell/HeaderFilterBar";
 import { directorHeader } from "@/lib/director-mock";
 import { getCurrentUser } from "@/lib/auth";
 import { getFilterScope } from "@/lib/filters/scope-service";
+import { liveDistrictNamesFor } from "@/lib/api/surfaces";
 
 export async function ExecutiveHeader({
   title = directorHeader.title,
@@ -32,7 +33,8 @@ export async function ExecutiveHeader({
 } = {}) {
   void _legacyBreadcrumb;
   const user = await getCurrentUser();
-  const scope = getFilterScope({ user });
+  const liveDistrictNames = await liveDistrictNamesFor(user);
+  const scope = getFilterScope({ user, liveDistrictNames });
 
   return (
     <PageHeader

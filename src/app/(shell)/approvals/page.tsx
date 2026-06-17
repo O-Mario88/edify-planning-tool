@@ -20,6 +20,7 @@ import {
   liveCdFundRequests,
 } from "@/lib/funds/live-approval-queue";
 import { getFilterScope } from "@/lib/filters/scope-service";
+import { liveDistrictNamesFor } from "@/lib/api/surfaces";
 import { selectionFromSearchParams, applyGeographyScope } from "@/lib/filters/apply-filters";
 
 // Role-aware Approvals page.
@@ -67,7 +68,8 @@ export default async function FundApprovalsPage({
   }
   // Live, URL-synced filter selection (the HeaderFilterBar writes it).
   const selection = selectionFromSearchParams(await searchParams);
-  const filterScope = getFilterScope({ user });
+  const liveDistrictNames = await liveDistrictNamesFor(user);
+  const filterScope = getFilterScope({ user, liveDistrictNames });
 
   // RVP gets the multi-country regional view: country picker on the
   // left, country plan + spending + recent requests + comments on

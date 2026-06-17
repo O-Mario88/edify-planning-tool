@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { HeaderFilterBar } from "@/components/shell/HeaderFilterBar";
 import { getCurrentUser } from "@/lib/auth";
 import { getFilterScope } from "@/lib/filters/scope-service";
+import { liveDistrictNamesFor } from "@/lib/api/surfaces";
 
 // Static page chrome (title/subtitle/search placeholder). Inlined off ssa-mock
 // so the header compiles independently of the mock data layer.
@@ -21,7 +22,8 @@ const SSA_HEADER = {
 
 export async function SsaHeader() {
   const user = await getCurrentUser();
-  const scope = getFilterScope({ user });
+  const liveDistrictNames = await liveDistrictNamesFor(user);
+  const scope = getFilterScope({ user, liveDistrictNames });
 
   return (
     <PageHeader
