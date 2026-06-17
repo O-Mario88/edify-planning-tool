@@ -10,6 +10,8 @@ import { getCurrentUser } from "@/lib/auth";
 import { ROLE_REDIRECT } from "@/lib/auth-public";
 import { PartnerSubPageHeader } from "@/components/partner/PartnerSubPageHeader";
 import { PartnerPlanningBoard } from "@/components/partner/PartnerPlanningBoard";
+import { PartnerWorkQueueLive } from "@/components/partner/PartnerWorkQueueLive";
+import { isMockAllowed } from "@/lib/mock-policy";
 
 const ALLOWED = new Set([
   "PartnerAdmin", "PartnerFieldOfficer", "PartnerViewer", "Admin",
@@ -25,6 +27,27 @@ export default async function PartnerPlanningPage({
   const previewMode = process.env.NODE_ENV !== "production" && params.preview === "1";
   if (!previewMode && !ALLOWED.has(user.role)) {
     redirect(ROLE_REDIRECT[user.role]);
+  }
+
+  // Production: the planning board is the activities actually ASSIGNED to this
+  // partner org by program staff (live backend), not a fabricated week board.
+  // Empty until a CCEO/PL assigns work — an honest, real-pipeline empty state.
+  if (!isMockAllowed()) {
+    return (
+      <>
+        <PartnerSubPageHeader
+          title="Planning"
+          subtitle="Activities assigned to your organization. Schedule each into a delivery week — what you schedule lands on your CCEO's monitoring dashboard automatically."
+        />
+        <div className="px-4 sm:px-5 md:px-6 pt-5 pb-12 space-y-4">
+          <PartnerWorkQueueLive />
+          <p className="text-[11.5px] muted text-center">
+            No assignments yet? Assigned work appears here after a staff member assigns
+            an activity to your organization.
+          </p>
+        </div>
+      </>
+    );
   }
 
   return (

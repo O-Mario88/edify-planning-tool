@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { getDonorMetricSnapshot } from "@/lib/donor-metrics";
+import { buildLiveDonorSnapshot } from "@/lib/donor-metrics-live";
+import { isMockAllowed } from "@/lib/mock-policy";
 import {
   METRIC_GROUP_LABELS,
   METRIC_STATUS_LABELS,
@@ -311,11 +313,28 @@ export async function GET(
   }
 
   const user = await getCurrentUser();
-  const snapshot = getDonorMetricSnapshot({
-    role: roleToScope(user.role),
-    userName: user.name,
-    generatedBy: user.name,
-  });
+  // Production: a donor CSV must contain only REAL verified metrics. Refuse to
+  // emit fabricated figures — return an honest, empty "not ready" file instead.
+  const live = !isMockAllowed() ? await buildLiveDonorSnapshot(user) : null;
+  if (!isMockAllowed() && !live) {
+    const notReady = rowsToCsv([
+      ["Edify Donor Report"],
+      ["Status", "Not ready"],
+      ["Reason", "No backend connection or no verified activity. Complete and verify activities to generate donor metrics."],
+      ["Note", "This system does not export estimated or fabricated donor figures."],
+    ]);
+    return new NextResponse(notReady, {
+      status: 200,
+      headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": `attachment; filename="edify-donor-${kind}-not-ready.csv"`, "Cache-Control": "no-store" },
+    });
+  }
+  const snapshot =
+    live ??
+    getDonorMetricSnapshot({
+      role: roleToScope(user.role),
+      userName: user.name,
+      generatedBy: user.name,
+    });
 
   let body: (string | number | null)[][];
   switch (kind) {

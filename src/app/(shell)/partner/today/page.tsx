@@ -23,6 +23,7 @@ import { PartnerTodayBottomSections } from "@/components/partner/PartnerTodayBot
 import { DoneForTodayPartner } from "@/components/partner/DoneForTodayPartner";
 import { PartnerClustersSummaryCard } from "@/components/cluster/PartnerClustersSummaryCard";
 import { PartnerWorkQueueLive } from "@/components/partner/PartnerWorkQueueLive";
+import { isMockAllowed } from "@/lib/mock-policy";
 
 const ALLOWED = new Set([
   "PartnerAdmin", "PartnerFieldOfficer", "PartnerViewer", "Admin",
@@ -43,10 +44,17 @@ export default async function PartnerTodayPage({
     <div className="px-4 sm:px-5 md:px-6 pt-5 pb-12 space-y-4">
       {/* Live, backend-driven: activities routed to this partner org. */}
       <PartnerWorkQueueLive />
-      <PartnerTodayTaskList />
-      <PartnerClustersSummaryCard />
-      <PartnerTodayBottomSections />
-      <DoneForTodayPartner />
+      {/* The detailed to-do / evidence / payment sections below are mock-only
+          design references — hidden in production so the partner sees only the
+          real assigned-work queue above (empty until work is assigned). */}
+      {isMockAllowed() && (
+        <>
+          <PartnerTodayTaskList />
+          <PartnerClustersSummaryCard />
+          <PartnerTodayBottomSections />
+          <DoneForTodayPartner />
+        </>
+      )}
     </div>
   );
 }

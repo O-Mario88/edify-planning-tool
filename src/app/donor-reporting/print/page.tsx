@@ -1,5 +1,7 @@
 import { getCurrentUser } from "@/lib/auth";
 import { getDonorMetricSnapshot } from "@/lib/donor-metrics";
+import { buildLiveDonorSnapshot } from "@/lib/donor-metrics-live";
+import { isMockAllowed } from "@/lib/mock-policy";
 import {
   METRIC_GROUP_LABELS,
   METRIC_STATUS_LABELS,
@@ -51,11 +53,32 @@ function sourceLabel(source: MetricSource): string {
 
 export default async function DonorReportingPrintPage() {
   const user = await getCurrentUser();
-  const snapshot = getDonorMetricSnapshot({
-    role: roleToScope(user.role),
-    userName: user.name,
-    generatedBy: user.name,
-  });
+  // Production: only REAL, verified, backend-derived donor metrics may leave the
+  // system as a PDF. The mock snapshot renders for dev/design reference only.
+  const live = !isMockAllowed() ? await buildLiveDonorSnapshot(user) : null;
+  if (!isMockAllowed() && !live) {
+    return (
+      <main className="print-doc">
+        <PrintStyles />
+        <header className="print-header">
+          <div className="print-eyebrow">Donor Reporting Impact</div>
+          <h1>Donor report is not ready</h1>
+          <p className="print-subtitle">
+            Complete and verify activities to generate donor metrics. Every figure on
+            this report is derived from IA-verified, source-backed records — none are
+            estimated or fabricated.
+          </p>
+        </header>
+      </main>
+    );
+  }
+  const snapshot =
+    live ??
+    getDonorMetricSnapshot({
+      role: roleToScope(user.role),
+      userName: user.name,
+      generatedBy: user.name,
+    });
 
   return (
     <main className="print-doc">

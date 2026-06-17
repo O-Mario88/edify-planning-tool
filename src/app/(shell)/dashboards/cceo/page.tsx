@@ -8,6 +8,8 @@ import { DebriefPromoterCard } from "@/components/debrief/DebriefPromoterCard";
 import { CceoKpiStrip } from "@/components/cceo/CceoKpiStrip";
 import { CoreServicePackageCard } from "@/components/cceo/CoreServicePackageCard";
 import { CoreSsaHeatmapCard } from "@/components/cceo/CoreSsaHeatmapCard";
+import { CoreSsaHeatmapLive } from "@/components/cceo/CoreSsaHeatmapLive";
+import { isMockAllowed } from "@/lib/mock-policy";
 import { CoreSchoolsNeedingAttentionCard } from "@/components/cceo/CoreSchoolsNeedingAttentionCard";
 import { VerificationPaymentFunnel } from "@/components/cceo/VerificationPaymentFunnel";
 import { CceoSalesforceQueueCard } from "@/components/cceo/CceoSalesforceQueueCard";
@@ -142,7 +144,7 @@ export default async function CceoDashboardPage() {
           </div>
           <div className="grid grid-cols-12 gap-3 lg:gap-4 items-stretch">
             <div className="col-span-12 lg:col-span-7"><CoreSchoolsNeedingAttentionCard /></div>
-            <div className="col-span-12 lg:col-span-5"><CoreSsaHeatmapCard /></div>
+            <div className="col-span-12 lg:col-span-5">{isMockAllowed() ? <CoreSsaHeatmapCard /> : <CoreSsaHeatmapLive />}</div>
           </div>
         </section>
 

@@ -11,6 +11,7 @@ import { ROLE_REDIRECT } from "@/lib/auth-public";
 import { PartnerSubPageHeader } from "@/components/partner/PartnerSubPageHeader";
 import { MyActivitiesTable } from "@/components/partner/MyActivitiesTable";
 import { PartnerWorkQueueLive } from "@/components/partner/PartnerWorkQueueLive";
+import { isMockAllowed } from "@/lib/mock-policy";
 
 const ALLOWED = new Set([
   "PartnerAdmin", "PartnerFieldOfficer", "PartnerViewer", "Admin",
@@ -28,26 +29,28 @@ export default async function PartnerMyPlanPage({
     redirect(ROLE_REDIRECT[user.role]);
   }
 
+  const mock = isMockAllowed();
   return (
     <>
       <PartnerSubPageHeader
         title="My Plan"
         subtitle="Activities you've already scheduled — in flight, awaiting confirmation, or closed. Unscheduled assignments live on Schedule until you place them in a delivery week."
-        filters={[
+        filters={mock ? [
           { iconKey: "calendar", label: "All time" },
           { iconKey: "filter",   label: "All activity types" },
-        ]}
-        kpis={[
+        ] : undefined}
+        kpis={mock ? [
           { label: "On the plan",       value: 44, iconKey: "checks",    tone: "neutral", caption: "Scheduled + closed" },
           { label: "Active",            value: 18, iconKey: "activity",  tone: "good",    caption: "In flight today"    },
           { label: "Overdue",           value: 2,  iconKey: "alert",     tone: "danger",  caption: "Need attention"     },
           { label: "Completed this mo", value: 11, iconKey: "cal-check", tone: "good",    caption: "+3 vs Apr"          },
-        ]}
+        ] : undefined}
       />
       <div className="px-4 sm:px-5 md:px-6 pt-5 pb-12 space-y-4">
         {/* Live, backend-driven: the activities actually assigned to this org. */}
         <PartnerWorkQueueLive limit={20} />
-        <MyActivitiesTable />
+        {/* Mock detail table is a design reference only — prod shows the live queue. */}
+        {mock && <MyActivitiesTable />}
       </div>
     </>
   );
