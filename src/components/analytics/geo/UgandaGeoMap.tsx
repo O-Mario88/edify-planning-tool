@@ -4,23 +4,28 @@
 //
 // Real district BOUNDARY geometry (COD-AB, simplified, /public/geo/districts.geojson)
 // is joined by official pcode to LIVE per-district analytics (/api/analytics/geo-map,
-// role-scoped + filter-aware). Renders as a themeable SVG choropleth — no tiles, no
-// mock. Hover → rich preview popover; click → full district analytics drawer; a
-// metric switcher recolours the heatmap instantly; zoom / pan / reset.
+// role-scoped + filter-aware). Renders as a themeable SVG with three layers:
+//
+//   • Choropleth  — districts coloured by a chosen metric (a rate or a count).
+//   • Bubbles     — proportional symbols at district centroids: SIZE = school
+//                   count, COLOUR = health status. Two channels, two metrics —
+//                   "where is the work, and is it healthy there?" (the premium view).
+//   • Pins        — EXACT school points, shown automatically the moment schools
+//                   have uploaded coordinates (none → layer is simply empty).
+//
+// Hover → rich preview popover; click → full district analytics drawer; zoom/pan.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Map as MapIcon, ZoomIn, ZoomOut, Maximize2, X, ArrowRight, AlertTriangle, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { isFilterActive, useActiveFilters } from "@/hooks/use-active-filters";
-import { EmptyState, ErrorState, LoadingState } from "@/components/ui/DataStates";
+import { ErrorState, LoadingState } from "@/components/ui/DataStates";
 import { cn } from "@/lib/utils";
-import type { BeGeoMap, BeGeoDistrict } from "@/lib/api/surfaces";
+import type { BeGeoMap, BeGeoDistrict, BeGeoSchoolPoint } from "@/lib/api/surfaces";
 
 type GeoFeature = { properties: { pcode: string; name: string; region: string }; geometry: { type: string; coordinates: number[][][] | number[][][][] } };
 type GeoJson = { bbox: [number, number, number, number]; features: GeoFeature[] };
 
-// Metrics the heatmap can colour by — each maps to a BeGeoDistrict field and a
-// direction (higher = better/worse) so colours always mean the right thing.
 const METRICS: { key: keyof BeGeoDistrict; label: string; higherIsBetter: boolean; fmt?: (v: number) => string }[] = [
   { key: "schools", label: "Total Schools", higherIsBetter: true },
   { key: "coreSchools", label: "Core Schools", higherIsBetter: true },
@@ -33,19 +38,21 @@ const METRICS: { key: keyof BeGeoDistrict; label: string; higherIsBetter: boolea
 ];
 
 const W = 1000;
-
-// 5-stop ramps. "good" = sequential teal/emerald (more = better); "bad" =
-// sequential rose (more = worse). No-data is a muted neutral.
 const RAMP_GOOD = ["#e6f5f0", "#a7e8d2", "#5fd3ab", "#22b07f", "#0f7a57"];
 const RAMP_BAD = ["#fde8e8", "#f9c2c2", "#f08a8a", "#dc4f4f", "#a82626"];
 const NO_DATA = "var(--color-edify-soft)";
 
-const STATUS_META: Record<BeGeoDistrict["status"], { label: string; cls: string }> = {
-  healthy: { label: "Healthy", cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-  needs_attention: { label: "Needs Attention", cls: "bg-amber-50 text-amber-700 border-amber-200" },
-  high_risk: { label: "High Risk", cls: "bg-rose-50 text-rose-700 border-rose-200" },
-  insufficient_data: { label: "No SSA yet", cls: "bg-slate-100 text-slate-500 border-slate-200" },
+const STATUS_META: Record<BeGeoDistrict["status"], { label: string; cls: string; fill: string }> = {
+  healthy: { label: "Healthy", cls: "bg-emerald-50 text-emerald-700 border-emerald-200", fill: "#22b07f" },
+  needs_attention: { label: "Needs Attention", cls: "bg-amber-50 text-amber-700 border-amber-200", fill: "#f59e0b" },
+  high_risk: { label: "High Risk", cls: "bg-rose-50 text-rose-700 border-rose-200", fill: "#e11d48" },
+  insufficient_data: { label: "No SSA yet", cls: "bg-slate-100 text-slate-500 border-slate-200", fill: "#94a3b8" },
 };
+// Faint status tint for the choropleth underlay in Bubbles view.
+const STATUS_TINT: Record<BeGeoDistrict["status"], string> = {
+  healthy: "#eafaf3", needs_attention: "#fef6e7", high_risk: "#fdeef0", insufficient_data: "var(--color-edify-soft)",
+};
+const PIN_FILL: Record<string, string> = { core: "#0f7a57", client: "#0284c7", potential_core: "#7c3aed" };
 
 function geoQs(sel: ReturnType<typeof useActiveFilters>): string {
   const p = new URLSearchParams();
@@ -56,6 +63,8 @@ function geoQs(sel: ReturnType<typeof useActiveFilters>): string {
   return q ? `?${q}` : "";
 }
 
+type ViewMode = "choropleth" | "bubbles";
+
 export function UgandaGeoMap() {
   const selection = useActiveFilters();
   const qs = geoQs(selection);
@@ -64,17 +73,17 @@ export function UgandaGeoMap() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [metricKey, setMetricKey] = useState<keyof BeGeoDistrict>("schools");
+  const [viewMode, setViewMode] = useState<ViewMode>("bubbles");
+  const [showPins, setShowPins] = useState(true);
   const [hover, setHover] = useState<{ d: BeGeoDistrict | null; name: string; x: number; y: number } | null>(null);
   const [pinned, setPinned] = useState<BeGeoDistrict | null>(null);
   const [view, setView] = useState({ scale: 1, tx: 0, ty: 0 });
   const drag = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
 
-  // Geometry is static — load once.
   useEffect(() => {
     fetch("/geo/districts.geojson").then((r) => r.json()).then(setGeo).catch(() => setError("Could not load map geometry"));
   }, []);
 
-  // Data is filter-aware.
   const load = useCallback(() => {
     setLoading(true); setError(null);
     fetch(`/api/analytics/geo-map${qs}`, { credentials: "include" })
@@ -88,7 +97,6 @@ export function UgandaGeoMap() {
   const metric = METRICS.find((m) => m.key === metricKey)!;
   const byPcode = useMemo(() => new Map((data?.districts ?? []).map((d) => [d.pcode, d])), [data]);
 
-  // Projection (equirectangular — fine at Uganda's latitude). Returns viewBox H.
   const proj = useMemo(() => {
     if (!geo) return null;
     const [minLng, minLat, maxLng, maxLat] = geo.bbox;
@@ -99,7 +107,6 @@ export function UgandaGeoMap() {
     return { H, px, py };
   }, [geo]);
 
-  // Build SVG path strings per district (memoized — geometry never changes).
   const paths = useMemo(() => {
     if (!geo || !proj) return [];
     const ring = (coords: number[][]) => coords.map(([lng, lat], i) => `${i === 0 ? "M" : "L"}${proj.px(lng).toFixed(1)},${proj.py(lat).toFixed(1)}`).join("") + "Z";
@@ -112,7 +119,7 @@ export function UgandaGeoMap() {
     });
   }, [geo, proj]);
 
-  // Colour scale over the in-scope districts for the active metric.
+  // Choropleth colour scale for the active metric.
   const scale = useMemo(() => {
     const vals = (data?.districts ?? []).map((d) => d[metricKey]).filter((v): v is number => typeof v === "number");
     const min = vals.length ? Math.min(...vals) : 0;
@@ -127,10 +134,16 @@ export function UgandaGeoMap() {
     return { min, max, ramp, colorFor };
   }, [data, metricKey, metric.higherIsBetter]);
 
-  const onWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    setView((v) => ({ ...v, scale: Math.min(8, Math.max(1, v.scale * (e.deltaY < 0 ? 1.15 : 0.87))) }));
-  };
+  // Bubble radius scale — AREA-proportional (r ∝ √value) so a district with 4×
+  // the schools reads as 4× the area, not 4× the radius. Sized by the metric.
+  const bubbleR = useMemo(() => {
+    const vals = (data?.districts ?? []).map((d) => d[metricKey]).filter((v): v is number => typeof v === "number" && v > 0);
+    const max = vals.length ? Math.max(...vals) : 1;
+    const MIN_R = 5, MAX_R = 30;
+    return (v: number | null | undefined) => (v == null || v <= 0 ? 0 : MIN_R + (MAX_R - MIN_R) * Math.sqrt(v / max));
+  }, [data, metricKey]);
+
+  const onWheel = (e: React.WheelEvent) => { e.preventDefault(); setView((v) => ({ ...v, scale: Math.min(8, Math.max(1, v.scale * (e.deltaY < 0 ? 1.15 : 0.87))) })); };
   const zoom = (f: number) => setView((v) => ({ ...v, scale: Math.min(8, Math.max(1, v.scale * f)) }));
   const reset = () => setView({ scale: 1, tx: 0, ty: 0 });
 
@@ -138,6 +151,7 @@ export function UgandaGeoMap() {
   if (!geo || (!data && loading)) return <section className="card p-3.5"><LoadingState /></section>;
 
   const s = data?.summary;
+  const points = data?.schoolPoints ?? [];
 
   return (
     <section className="card p-0 overflow-hidden">
@@ -149,20 +163,30 @@ export function UgandaGeoMap() {
         <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)] px-2 py-0.5 text-[10px] font-bold border border-[var(--color-edify-border)]">Live · backend · COD-AB</span>
       </header>
 
-      {/* Metric switcher */}
-      <div className="px-4 py-2.5 border-b border-[var(--color-edify-divider)] flex items-center gap-1.5 flex-wrap">
-        <span className="text-[10px] uppercase tracking-wider font-bold muted mr-1">Colour by</span>
-        {METRICS.map((m) => (
-          <button key={String(m.key)} onClick={() => setMetricKey(m.key)}
-            className={cn("px-2 py-1 rounded-md text-[11px] font-semibold border transition-colors",
-              metricKey === m.key ? "bg-[var(--color-edify-primary)] text-white border-[var(--color-edify-primary)]" : "bg-transparent border-[var(--color-edify-border)] hover:bg-[var(--color-edify-soft)]/50")}>
-            {m.label}
-          </button>
-        ))}
+      {/* Controls: view mode · metric · pins */}
+      <div className="px-4 py-2.5 border-b border-[var(--color-edify-divider)] flex items-center gap-x-3 gap-y-2 flex-wrap">
+        <div className="inline-flex rounded-lg border border-[var(--color-edify-border)] overflow-hidden">
+          {(["bubbles", "choropleth"] as ViewMode[]).map((v) => (
+            <button key={v} onClick={() => setViewMode(v)} className={cn("px-2.5 py-1 text-[11px] font-semibold capitalize", viewMode === v ? "bg-[var(--color-edify-primary)] text-white" : "hover:bg-[var(--color-edify-soft)]/50")}>{v}</button>
+          ))}
+        </div>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-[10px] uppercase tracking-wider font-bold muted">{viewMode === "bubbles" ? "Size by" : "Colour by"}</span>
+          {METRICS.map((m) => (
+            <button key={String(m.key)} onClick={() => setMetricKey(m.key)}
+              className={cn("px-2 py-1 rounded-md text-[11px] font-semibold border transition-colors",
+                metricKey === m.key ? "bg-[var(--color-edify-primary)] text-white border-[var(--color-edify-primary)]" : "bg-transparent border-[var(--color-edify-border)] hover:bg-[var(--color-edify-soft)]/50")}>
+              {m.label}
+            </button>
+          ))}
+        </div>
+        <label className="inline-flex items-center gap-1.5 text-[11px] font-semibold cursor-pointer ml-auto">
+          <input type="checkbox" checked={showPins} onChange={(e) => setShowPins(e.target.checked)} className="accent-[var(--color-edify-primary)]" />
+          School pins {points.length > 0 && <span className="muted">({points.length})</span>}
+        </label>
       </div>
 
       <div className="relative">
-        {/* Zoom controls */}
         <div className="absolute top-3 right-3 z-10 flex flex-col gap-1">
           <button onClick={() => zoom(1.3)} aria-label="Zoom in" className="h-7 w-7 rounded-md bg-[var(--surface-1)] border border-[var(--color-edify-border)] inline-flex items-center justify-center hover:bg-[var(--color-edify-soft)]"><ZoomIn size={14} /></button>
           <button onClick={() => zoom(0.77)} aria-label="Zoom out" className="h-7 w-7 rounded-md bg-[var(--surface-1)] border border-[var(--color-edify-border)] inline-flex items-center justify-center hover:bg-[var(--color-edify-soft)]"><ZoomOut size={14} /></button>
@@ -171,44 +195,72 @@ export function UgandaGeoMap() {
 
         {/* Legend */}
         <div className="absolute bottom-3 left-3 z-10 bg-[var(--surface-1)]/90 backdrop-blur border border-[var(--color-edify-border)] rounded-lg px-2.5 py-2 text-[10px]">
-          <div className="font-bold uppercase tracking-wide muted mb-1">{metric.label}</div>
-          <div className="flex items-center gap-1">
-            <span className="muted">{metric.fmt ? metric.fmt(scale.min) : scale.min}</span>
-            <div className="flex">{scale.ramp.map((c, i) => <span key={i} className="w-5 h-2.5" style={{ background: c }} />)}</div>
-            <span className="muted">{metric.fmt ? metric.fmt(scale.max) : scale.max}</span>
-          </div>
+          {viewMode === "choropleth" ? (
+            <>
+              <div className="font-bold uppercase tracking-wide muted mb-1">{metric.label}</div>
+              <div className="flex items-center gap-1">
+                <span className="muted">{metric.fmt ? metric.fmt(scale.min) : scale.min}</span>
+                <div className="flex">{scale.ramp.map((c, i) => <span key={i} className="w-5 h-2.5" style={{ background: c }} />)}</div>
+                <span className="muted">{metric.fmt ? metric.fmt(scale.max) : scale.max}</span>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="font-bold uppercase tracking-wide muted mb-1">Bubble size = {metric.label}</div>
+              <div className="flex items-center gap-2.5">
+                {(["healthy", "needs_attention", "high_risk"] as const).map((k) => (
+                  <span key={k} className="inline-flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full" style={{ background: STATUS_META[k].fill }} /> {STATUS_META[k].label}</span>
+                ))}
+              </div>
+            </>
+          )}
         </div>
 
-        <svg viewBox={`0 0 ${W} ${proj!.H}`} className="w-full h-auto max-h-[560px] select-none touch-none"
-          style={{ background: "var(--surface-1)" }}
+        <svg viewBox={`0 0 ${W} ${proj!.H}`} className="w-full h-auto max-h-[560px] select-none touch-none" style={{ background: "var(--surface-1)" }}
           onWheel={onWheel}
           onMouseDown={(e) => { drag.current = { x: e.clientX, y: e.clientY, tx: view.tx, ty: view.ty }; }}
           onMouseUp={() => (drag.current = null)}
           onMouseLeave={() => { drag.current = null; setHover(null); }}
-          onMouseMove={(e) => {
-            if (drag.current) {
-              const dx = (e.clientX - drag.current.x), dy = (e.clientY - drag.current.y);
-              setView((v) => ({ ...v, tx: drag.current!.tx + dx, ty: drag.current!.ty + dy }));
-            }
-          }}>
+          onMouseMove={(e) => { if (drag.current) { const dx = e.clientX - drag.current.x, dy = e.clientY - drag.current.y; setView((v) => ({ ...v, tx: drag.current!.tx + dx, ty: drag.current!.ty + dy })); } }}>
           <g transform={`translate(${view.tx} ${view.ty}) scale(${view.scale})`}>
+            {/* Choropleth / status underlay */}
             {paths.map((p) => {
               const d = byPcode.get(p.pcode);
-              const val = d ? (d[metricKey] as number | null) : null;
-              const fill = d ? scale.colorFor(val) : NO_DATA;
+              const fill = !d ? NO_DATA : viewMode === "choropleth" ? scale.colorFor(d[metricKey] as number | null) : STATUS_TINT[d.status];
               const isActive = pinned?.pcode === p.pcode;
               return (
                 <path key={p.pcode} d={p.d} fill={fill}
-                  stroke={isActive ? "var(--color-edify-primary)" : "var(--surface-1)"} strokeWidth={isActive ? 2 / view.scale : 0.5 / view.scale}
+                  stroke={isActive ? "var(--color-edify-primary)" : "var(--surface-1)"} strokeWidth={(isActive ? 2 : 0.5) / view.scale}
                   className="cursor-pointer transition-[fill] duration-150 hover:opacity-80"
                   onMouseMove={(e) => { const r = (e.currentTarget.ownerSVGElement as SVGSVGElement).getBoundingClientRect(); setHover({ d: d ?? null, name: p.name, x: e.clientX - r.left, y: e.clientY - r.top }); }}
                   onClick={() => d && setPinned(d)} />
               );
             })}
+
+            {/* Proportional bubbles — size = metric, colour = health status */}
+            {viewMode === "bubbles" && data?.districts.map((d) => {
+              if (d.centroidLat == null || d.centroidLng == null) return null;
+              const r = bubbleR(d[metricKey] as number | null);
+              if (r <= 0) return null;
+              return (
+                <circle key={d.districtId} cx={proj!.px(d.centroidLng)} cy={proj!.py(d.centroidLat)} r={r / view.scale * Math.min(view.scale, 1.6)}
+                  fill={STATUS_META[d.status].fill} fillOpacity={0.62} stroke="#fff" strokeWidth={1 / view.scale}
+                  className="cursor-pointer hover:fill-opacity-80"
+                  onMouseMove={(e) => { const rect = (e.currentTarget.ownerSVGElement as SVGSVGElement).getBoundingClientRect(); setHover({ d, name: d.district, x: e.clientX - rect.left, y: e.clientY - rect.top }); }}
+                  onClick={() => setPinned(d)} />
+              );
+            })}
+
+            {/* Exact school pins — auto-appear when schools have coordinates */}
+            {showPins && points.map((pt: BeGeoSchoolPoint) => (
+              <circle key={pt.schoolId} cx={proj!.px(pt.lng)} cy={proj!.py(pt.lat)} r={3 / view.scale}
+                fill={PIN_FILL[pt.type] ?? "#64748b"} stroke="#fff" strokeWidth={0.6 / view.scale}>
+                <title>{pt.name}</title>
+              </circle>
+            ))}
           </g>
         </svg>
 
-        {/* Hover popover */}
         {hover && (
           <div className="absolute z-20 pointer-events-none bg-[var(--surface-1)] border border-[var(--color-edify-border)] rounded-lg shadow-lg px-3 py-2 text-[11.5px] min-w-[170px]"
             style={{ left: Math.min(hover.x + 12, W - 60), top: hover.y + 12, transform: hover.x > 520 ? "translateX(-110%)" : undefined }}>
@@ -259,7 +311,6 @@ function DistrictDrawer({ d, onClose }: { d: BeGeoDistrict; onClose: () => void 
           </div>
           <button onClick={onClose} aria-label="Close" className="h-7 w-7 rounded-md hover:bg-[var(--color-edify-soft)] inline-flex items-center justify-center"><X size={16} /></button>
         </header>
-
         <div className="p-4 space-y-4">
           <section>
             <h4 className="text-[11px] uppercase tracking-wider font-bold muted mb-2">School portfolio</h4>
@@ -282,9 +333,7 @@ function DistrictDrawer({ d, onClose }: { d: BeGeoDistrict; onClose: () => void 
           </section>
           <section>
             <h4 className="text-[11px] uppercase tracking-wider font-bold muted mb-2">Execution</h4>
-            <div className="grid grid-cols-3 gap-2">
-              <Stat label="Activities done" value={d.activitiesCompleted} />
-            </div>
+            <div className="grid grid-cols-3 gap-2"><Stat label="Activities done" value={d.activitiesCompleted} /></div>
           </section>
           <section className="space-y-1.5">
             <h4 className="text-[11px] uppercase tracking-wider font-bold muted mb-1">Quick actions</h4>

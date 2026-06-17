@@ -199,11 +199,13 @@ export function fetchCoverageSummary(user: BackendUser, geo?: GeoFilterParams) {
 // ── Geo-analytics map ──────────────────────────────────────────────
 export type BeGeoDistrict = {
   districtId: string; pcode: string | null; district: string; region: string; subRegion: string | null;
+  centroidLat: number | null; centroidLng: number | null;
   schools: number; coreSchools: number; clientSchools: number;
   clustered: number; unclustered: number; ssaDone: number; ssaPending: number; ssaPct: number;
   avgSsa: number | null; criticalCount: number; activitiesCompleted: number;
   status: "healthy" | "needs_attention" | "high_risk" | "insufficient_data";
 };
+export type BeGeoSchoolPoint = { schoolId: string; name: string; lat: number; lng: number; type: string };
 export type BeGeoSubRegion = {
   subRegion: string; region: string; districts: number; schools: number; coreSchools: number;
   clustered: number; avgSsa: number | null; criticalCount: number; activitiesCompleted: number;
@@ -213,6 +215,7 @@ export type BeGeoMap = {
   summary: { districts: number; subRegions: number; schools: number; coreSchools: number; clustered: number; criticalSchools: number; highRiskDistricts: number; activitiesCompleted: number };
   districts: BeGeoDistrict[];
   subRegions: BeGeoSubRegion[];
+  schoolPoints: BeGeoSchoolPoint[];
 };
 export function fetchGeoMap(user: BackendUser, geo?: GeoFilterParams) {
   return live<BeGeoMap>(`/analytics/geo-map${geoQuery(geo)}`, user);
