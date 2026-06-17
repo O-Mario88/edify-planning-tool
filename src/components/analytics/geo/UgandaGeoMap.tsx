@@ -13,8 +13,8 @@
 // regions/sub-regions/districts, so the map reads without hovering. Hover → rich
 // preview; click → full district analytics drawer; zoom / pan.
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Map as MapIcon, ZoomIn, ZoomOut, Maximize2, ArrowRight, AlertTriangle, ShieldCheck, TrendingDown } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { Map as MapIcon, ZoomIn, ZoomOut, Maximize2, ArrowRight, AlertTriangle, ShieldCheck, TrendingDown, Building2, Briefcase, Network, Gauge, MapPin, Layers } from "lucide-react";
 import Link from "next/link";
 import { isFilterActive, useActiveFilters } from "@/hooks/use-active-filters";
 import { ErrorState, LoadingState } from "@/components/ui/DataStates";
@@ -25,6 +25,11 @@ import type { BeGeoMap, BeGeoDistrict, BeGeoSchoolPoint, BeGeoCluster } from "@/
 type GeoFeature = { properties: { pcode: string; name: string; region: string }; geometry: { type: string; coordinates: number[][][] | number[][][][] } };
 type GeoJson = { bbox: [number, number, number, number]; features: GeoFeature[] };
 type DistrictMeta = { pcode: string; name: string; region: string; subRegion: string | null; lat: number | null; lng: number | null };
+
+// Hover card content — district (default / low zoom) or sub-county (zoomed in).
+type HoverState =
+  | { kind: "district"; x: number; y: number; d: BeGeoDistrict | null; name: string; sub: string | null; region: string | null }
+  | { kind: "subcounty"; x: number; y: number; name: string; districtName: string; sub: string | null; region: string | null };
 
 const METRICS: { key: keyof BeGeoDistrict; label: string; higherIsBetter: boolean; fmt?: (v: number) => string }[] = [
   { key: "schools", label: "Total Schools", higherIsBetter: true },
@@ -91,10 +96,13 @@ export function UgandaGeoMap() {
   const [viewMode, setViewMode] = useState<ViewMode>("subregions");
   const [showPins, setShowPins] = useState(true);
   const [showLabels, setShowLabels] = useState(true);
-  const [hover, setHover] = useState<{ d: BeGeoDistrict | null; name: string; sub: string | null; x: number; y: number } | null>(null);
+  const [hover, setHover] = useState<HoverState | null>(null);
   const [pinned, setPinned] = useState<BeGeoDistrict | null>(null);
+  // Cluster list for the hover card — lazy-fetched per district + cached.
+  const clusterCache = useRef<Map<string, BeGeoCluster[]>>(new Map());
+  const [, bumpCache] = useState(0);
   const [view, setView] = useState({ scale: 1, tx: 0, ty: 0 });
-  const [subCounties, setSubCounties] = useState<{ features: { properties: { pcode: string; name: string; district: string }; geometry: { type: string; coordinates: number[][][] | number[][][][] } }[] } | null>(null);
+  const [subCounties, setSubCounties] = useState<{ features: { properties: { pcode: string; name: string; district: string; lat: number; lng: number }; geometry: { type: string; coordinates: number[][][] | number[][][][] } }[] } | null>(null);
   const drag = useRef<{ x: number; y: number; tx: number; ty: number; moved: boolean } | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   // Zoom level at which sub-county boundaries (admin4) progressively appear —
@@ -114,6 +122,19 @@ export function UgandaGeoMap() {
       fetch("/geo/subcounties.geojson").then((r) => r.json()).then(setSubCounties).catch(() => {});
     }
   }, [view.scale, subCounties]);
+
+  // When hovering a district that has live data, lazily fetch + cache its cluster
+  // list (name · school count) so the hover card can show it.
+  const hoverDistrictId = hover?.kind === "district" ? hover.d?.districtId ?? null : null;
+  useEffect(() => {
+    if (!hoverDistrictId || clusterCache.current.has(hoverDistrictId)) return;
+    let alive = true;
+    fetch(`/api/analytics/geo-map/district/${encodeURIComponent(hoverDistrictId)}`, { credentials: "include" })
+      .then((r) => r.json())
+      .then((j) => { if (alive && j.live) { clusterCache.current.set(hoverDistrictId, j.clusters); bumpCache((n) => n + 1); } })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [hoverDistrictId]);
 
   const load = useCallback(() => {
     setLoading(true); setError(null);
@@ -160,7 +181,7 @@ export function UgandaGeoMap() {
       const d = g.type === "Polygon"
         ? (g.coordinates as number[][][]).map(ring).join("")
         : (g.coordinates as number[][][][]).flatMap((poly) => poly.map(ring)).join("");
-      return { pcode: f.properties.pcode, name: f.properties.name, district: f.properties.district, d };
+      return { pcode: f.properties.pcode, name: f.properties.name, district: f.properties.district, lat: f.properties.lat, lng: f.properties.lng, d };
     });
   }, [subCounties, proj]);
 
@@ -347,18 +368,24 @@ export function UgandaGeoMap() {
                 <path key={p.pcode} data-pcode={p.pcode} d={p.d} fill={fillFor(p.pcode)}
                   stroke={isActive ? "var(--color-edify-primary)" : BORDER} strokeWidth={(isActive ? 2.5 : 0.9) / view.scale} strokeLinejoin="round"
                   className="cursor-pointer transition-[fill] duration-150 hover:brightness-95"
-                  onMouseMove={(e) => { const r = (e.currentTarget.ownerSVGElement as SVGSVGElement).getBoundingClientRect(); setHover({ d: d ?? null, name: p.name, sub: m?.subRegion ?? d?.subRegion ?? null, x: e.clientX - r.left, y: e.clientY - r.top }); }}
+                  onMouseMove={(e) => { const r = (e.currentTarget.ownerSVGElement as SVGSVGElement).getBoundingClientRect(); setHover({ kind: "district", d: d ?? null, name: p.name, sub: m?.subRegion ?? d?.subRegion ?? null, region: m?.region ?? d?.region ?? null, x: e.clientX - r.left, y: e.clientY - r.top }); }}
                   onClick={() => setPinned(districtFor(p.pcode, p.name))} />
               );
             })}
 
-            {/* Sub-county boundaries (admin4) — appear on zoom-in (Google-Maps LOD),
-                culled to the districts in view. Thin, non-interactive overlay so
-                district clicks still register. */}
+            {/* Sub-county polygons (admin4) — appear on zoom-in (Google-Maps LOD),
+                culled to the districts in view. Transparent fill makes each
+                hoverable: hovering shows the SUB-COUNTY's details instead of the
+                district; clicking still opens the parent district drawer. */}
             {showSubCounties && subCountyPaths.map((sc) => {
               const dm = metaByPcode.get(sc.district);
               if (!dm || !inView(dm.lng, dm.lat)) return null;
-              return <path key={sc.pcode} d={sc.d} fill="none" stroke="#475569" strokeOpacity={0.75} strokeWidth={0.7 / view.scale} strokeLinejoin="round" style={{ pointerEvents: "none" }} />;
+              return (
+                <path key={sc.pcode} d={sc.d} fill="transparent" stroke="#475569" strokeOpacity={0.8} strokeWidth={0.7 / view.scale} strokeLinejoin="round"
+                  className="cursor-pointer hover:fill-[#3f6b94]/10"
+                  onMouseMove={(e) => { const r = (e.currentTarget.ownerSVGElement as SVGSVGElement).getBoundingClientRect(); setHover({ kind: "subcounty", name: sc.name, districtName: dm.name, sub: dm.subRegion, region: dm.region, x: e.clientX - r.left, y: e.clientY - r.top }); }}
+                  onClick={() => setPinned(districtFor(sc.district, dm.name))} />
+              );
             })}
 
             {/* Proportional bubbles — size = metric, colour = status */}
@@ -386,6 +413,12 @@ export function UgandaGeoMap() {
                     fontSize={7 / view.scale} fontWeight={600} fill="#1e293b" stroke="#fff" strokeWidth={1.6 / view.scale}
                     style={{ paintOrder: "stroke" }}>{m.name}</text>
                 )))}
+                {/* Sub-county labels — only when zoomed in (sub-counties shown), culled to view. */}
+                {showSubCounties && subCountyPaths.map((sc) => (!inView(sc.lng, sc.lat) ? null : (
+                  <text key={`sc-${sc.pcode}`} x={proj!.px(sc.lng)} y={proj!.py(sc.lat)} textAnchor="middle"
+                    fontSize={4.5 / view.scale} fontWeight={500} fill="#475569" stroke="#fff" strokeWidth={1.1 / view.scale}
+                    style={{ paintOrder: "stroke" }}>{sc.name}</text>
+                )))}
                 {subRegionLabels.map((sr) => (
                   <text key={sr.name} x={sr.x} y={sr.y} textAnchor="middle"
                     fontSize={13 / view.scale} fontWeight={800} fill="#0f172a" stroke="#fff" strokeWidth={3 / view.scale}
@@ -397,27 +430,82 @@ export function UgandaGeoMap() {
         </svg>
 
         {hover && (
-          <div className="absolute z-20 pointer-events-none bg-[var(--surface-1)] border border-[var(--color-edify-border)] rounded-lg shadow-lg px-3 py-2 text-[11.5px] min-w-[170px]"
-            style={{ left: Math.min(hover.x + 12, W - 60), top: hover.y + 12, transform: hover.x > 520 ? "translateX(-110%)" : undefined }}>
-            <div className="font-extrabold tracking-tight">{hover.name}</div>
-            <div className="muted text-[10.5px] mb-1">{hover.sub ?? "—"}{hover.d ? ` · ${hover.d.region}` : ""}</div>
-            {hover.d ? (
-              <>
-                <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 tabular">
-                  <span className="muted">Schools</span><span className="text-right font-bold">{hover.d.schools}</span>
-                  <span className="muted">Core</span><span className="text-right font-bold">{hover.d.coreSchools}</span>
-                  <span className="muted">SSA avg</span><span className="text-right font-bold">{hover.d.avgSsa ?? "—"}</span>
-                  <span className="muted">Critical</span><span className="text-right font-bold text-rose-600">{hover.d.criticalCount}</span>
+          <div className="absolute z-20 pointer-events-none rounded-xl shadow-2xl ring-1 ring-black/10 overflow-hidden text-white"
+            style={{ left: hover.x + 14, top: hover.y + 12, transform: `${hover.x > 520 ? "translateX(-105%)" : ""} ${hover.y > 300 ? "translateY(calc(-100% - 26px))" : ""}`.trim() || undefined, minWidth: 220, maxWidth: 270, background: "linear-gradient(160deg,#4a7aa7,#34597d)" }}>
+            {hover.kind === "subcounty" ? (
+              <div className="px-3.5 py-3">
+                <div className="text-[10px] uppercase tracking-wider text-white/60 font-bold inline-flex items-center gap-1"><MapPin size={10} /> Sub-county</div>
+                <div className="text-[14px] font-extrabold tracking-tight mt-0.5">{hover.name}</div>
+                <div className="mt-2 space-y-1.5 text-[11.5px]">
+                  <HRow icon={<Building2 size={12} />} label="District" value={hover.districtName} />
+                  <HRow icon={<Layers size={12} />} label="Sub-region" value={hover.sub ?? "—"} />
+                  <HRow icon={<MapPin size={12} />} label="Region" value={hover.region ?? "—"} />
                 </div>
-                <span className={cn("mt-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold border", STATUS_META[hover.d.status].cls)}>{STATUS_META[hover.d.status].label}</span>
-              </>
-            ) : <div className="muted text-[10.5px]">No schools in scope · click for geography</div>}
+                <div className="mt-2 pt-2 border-t border-white/15 text-[10.5px] text-white/70">Click to open {hover.districtName} district</div>
+              </div>
+            ) : (
+              <div className="px-3.5 py-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <div className="text-[14px] font-extrabold tracking-tight leading-tight">{hover.name}</div>
+                    <div className="text-[10.5px] text-white/70 mt-0.5 inline-flex items-center gap-1"><MapPin size={10} /> {hover.sub ?? "—"}{hover.region ? ` · ${hover.region}` : ""}</div>
+                  </div>
+                  {hover.d && <span className="shrink-0 inline-flex items-center gap-1 rounded-md bg-white/15 px-1.5 py-0.5 text-[9.5px] font-bold"><span className="w-1.5 h-1.5 rounded-full" style={{ background: STATUS_META[hover.d.status].fill }} />{STATUS_META[hover.d.status].label}</span>}
+                </div>
+                {hover.d ? (
+                  <>
+                    <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-[11.5px]">
+                      <HRow icon={<Building2 size={12} />} label="Schools" value={hover.d.schools} />
+                      <HRow icon={<Briefcase size={12} />} label="Client" value={hover.d.clientSchools} />
+                      <HRow icon={<ShieldCheck size={12} />} label="Core" value={hover.d.coreSchools} />
+                      <HRow icon={<Network size={12} />} label="Clusters" value={hover.d.clusters} />
+                      <HRow icon={<Gauge size={12} />} label="SSA avg" value={hover.d.avgSsa ?? "—"} />
+                      <HRow icon={<AlertTriangle size={12} />} label="Critical" value={hover.d.criticalCount} />
+                    </div>
+                    {(() => {
+                      const cl = clusterCache.current.get(hover.d.districtId);
+                      return (
+                        <div className="mt-2 pt-2 border-t border-white/15">
+                          <div className="text-[9.5px] uppercase tracking-wider text-white/60 font-bold inline-flex items-center gap-1 mb-1"><Network size={10} /> Clusters</div>
+                          {cl == null ? (
+                            <div className="text-[10.5px] text-white/60">Loading…</div>
+                          ) : cl.length === 0 ? (
+                            <div className="text-[10.5px] text-white/70">No clusters formed yet</div>
+                          ) : (
+                            <div className="space-y-0.5">
+                              {cl.slice(0, 5).map((c) => (
+                                <div key={c.id} className="flex items-center justify-between gap-2 text-[11px]">
+                                  <span className="truncate inline-flex items-center gap-1"><Layers size={10} className="text-white/60 shrink-0" /> {c.name}</span>
+                                  <span className="shrink-0 font-bold tabular text-white/90">{c.schools} sch.</span>
+                                </div>
+                              ))}
+                              {cl.length > 5 && <div className="text-[10px] text-white/60">+ {cl.length - 5} more</div>}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </>
+                ) : <div className="mt-1.5 text-[10.5px] text-white/70">No schools in scope · click for geography</div>}
+              </div>
+            )}
           </div>
         )}
       </div>
 
       {pinned && <DistrictDrawer d={pinned} onClose={() => setPinned(null)} />}
     </section>
+  );
+}
+
+// Row in the steel-blue hover card: icon · label · value (white theme).
+function HRow({ icon, label, value }: { icon: ReactNode; label: string; value: ReactNode }) {
+  return (
+    <div className="flex items-center gap-1.5 min-w-0">
+      <span className="text-white/55 shrink-0">{icon}</span>
+      <span className="text-white/70 truncate">{label}</span>
+      <span className="ml-auto font-extrabold tabular shrink-0">{value}</span>
+    </div>
   );
 }
 
