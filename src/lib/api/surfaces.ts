@@ -155,6 +155,14 @@ export type BeSchoolDirectorySummary = {
 export function fetchSchoolDirectorySummary(user: BackendUser) {
   return live<BeSchoolDirectorySummary>("/analytics/school-directory", user);
 }
+export type BeCoverageSummary = {
+  totalClientSchools: number; assigned: number; unassigned: number;
+  coveragePct: number; schoolsBelowSsaThreshold: number;
+  priority: { schoolId: string; name: string; district: string; owner: string; avgSsa: number | null }[];
+};
+export function fetchCoverageSummary(user: BackendUser) {
+  return live<BeCoverageSummary>("/analytics/coverage", user);
+}
 
 export function fetchAnalyticsSsa(user: BackendUser) {
   return live<BeSsaPerformance>("/analytics/ssa-performance", user);
