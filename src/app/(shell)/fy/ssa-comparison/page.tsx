@@ -1,170 +1,81 @@
-import { TrendingUp, TrendingDown, Minus, Lightbulb } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { StubPage } from "@/components/shell/StubPage";
-import {
-  districtSsaComparison,
-  clusterSsaComparison,
-  interventionSsaComparison,
-  generateSsaImprovementInsights,
-  type Trend,
-} from "@/lib/ssa-comparison-mock";
 import { cn } from "@/lib/utils";
-import { isMockAllowed } from "@/lib/mock-policy";
 import { InsufficientData } from "@/components/ui/InsufficientData";
+import { getCurrentUser } from "@/lib/auth";
+import { fetchInterventionImprovement } from "@/lib/api/surfaces";
 
-const TREND_ICON = { Up: TrendingUp, Down: TrendingDown, Flat: Minus } as const;
-const TREND_TONE: Record<Trend, string> = {
-  Up:   "text-emerald-600",
-  Down: "text-rose-600",
-  Flat: "text-slate-500",
-};
+// Year-over-year SSA movement — LIVE from the backend intervention-improvement
+// engine (prev-FY vs current-FY, per district, across the 8 interventions). Only
+// schools with BOTH a prior-FY and current-FY SSA are compared; the rest are shown
+// as "no baseline" rather than counted as impact.
+export default async function YearlyComparisonPage() {
+  const user = await getCurrentUser();
+  const res = await fetchInterventionImprovement(user, { groupBy: "district" });
+  if (!res.live) return <InsufficientData surface="the year-over-year SSA comparison" />;
+  const { currentFy, prevFy, rows } = res.data;
 
-export default function YearlyComparisonPage() {
-  // Year-over-year SSA comparison is fabricated; never show it as production data.
-  if (!isMockAllowed()) return <InsufficientData surface="the year-over-year SSA comparison" />;
-  const insights = generateSsaImprovementInsights();
+  const totals = rows.reduce(
+    (t, r) => ({
+      improved: t.improved + r.schoolsImproved,
+      declined: t.declined + r.schoolsDeclined,
+      noComp: t.noComp + r.schoolsNoComparison,
+    }),
+    { improved: 0, declined: 0, noComp: 0 },
+  );
+  const sorted = [...rows].sort((a, b) => (b.improvementRate ?? -1) - (a.improvementRate ?? -1));
+
+  const Stat = ({ label, value, tone }: { label: string; value: number; tone: "up" | "down" | "flat" }) => (
+    <div className="card p-3.5">
+      <div className="text-caption muted">{label}</div>
+      <div className={cn("text-2xl font-extrabold tracking-tight mt-1", tone === "up" ? "text-emerald-600" : tone === "down" ? "text-rose-600" : "text-slate-600")}>
+        {value.toLocaleString()}
+      </div>
+    </div>
+  );
 
   return (
     <StubPage
       title="Yearly SSA Performance Comparison"
-      subtitle="Year-over-year SSA performance, by district, cluster, and all 8 official intervention areas. Insights below identify the most-improved, most-declined, and repeated weakness patterns."
+      subtitle={`Year-over-year SSA movement (FY${prevFy} → FY${currentFy}) by district, across all 8 official intervention areas. Only schools with both a prior-FY and current-FY SSA are compared.`}
     >
-      {/* Insights */}
-      <section className="card p-3.5">
-        <header className="flex items-baseline justify-between mb-3">
-          <h2 className="text-body-lg font-extrabold tracking-tight inline-flex items-center gap-2">
-            <Lightbulb size={14} className="text-amber-600" />
-            SSA improvement intelligence
-          </h2>
-          <span className="text-caption muted">{insights.length} insights</span>
+      <section className="grid grid-cols-3 gap-3">
+        <Stat label="Schools improved" value={totals.improved} tone="up" />
+        <Stat label="Schools declined" value={totals.declined} tone="down" />
+        <Stat label="No prior-FY baseline" value={totals.noComp} tone="flat" />
+      </section>
+
+      <section className="card overflow-hidden mt-4">
+        <header className="px-4 py-3 border-b border-[var(--color-edify-divider)]">
+          <h2 className="text-body-lg font-extrabold tracking-tight">District improvement ({rows.length})</h2>
+          <p className="text-[11.5px] muted">Ranked by improvement rate. "Most improved" / "weakest" are the standout interventions per district.</p>
         </header>
-        <ul className="space-y-2.5">
-          {insights.map((i) => (
-            <li key={i.kind} className="rounded-xl border border-[var(--color-edify-border)] p-3 bg-[var(--color-edify-soft)]/30">
-              <div className="text-body font-extrabold tracking-tight">{i.headline}</div>
-              <div className="text-[11.5px] muted leading-snug mt-0.5">{i.detail}</div>
-              <div className="text-[11.5px] mt-1.5">
-                <span className="font-extrabold text-emerald-700">Recommendation: </span>
-                <span>{i.recommendation}</span>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      {/* District comparison */}
-      <section className="card p-3.5">
-        <h2 className="text-body-lg font-extrabold tracking-tight mb-2">District comparison (Previous FY vs Current FY)</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-[12px] min-w-[780px]">
-            <thead>
-              <tr className="text-left text-caption muted font-semibold uppercase tracking-wide border-b border-[var(--color-edify-border)]">
-                <th scope="col" className="py-2 pr-2">District</th>
-                <th scope="col" className="py-2 px-2 text-right">Prev FY</th>
-                <th scope="col" className="py-2 px-2 text-right">Current FY</th>
-                <th scope="col" className="py-2 px-2 text-right">Change</th>
-                <th scope="col" className="py-2 px-2">Best improving</th>
-                <th scope="col" className="py-2 px-2">Weakest</th>
-                <th scope="col" className="py-2 px-2 text-right">Schools / Coverage</th>
-                <th scope="col" className="py-2 pl-2">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[var(--color-edify-divider)]">
-              {districtSsaComparison.map((d) => {
-                const Icon = TREND_ICON[d.trend];
-                return (
-                  <tr key={d.district} className="hover:bg-[var(--color-edify-soft)]/30">
-                    <td className="py-2 pr-2 font-extrabold">{d.district}</td>
-                    <td className="py-2 px-2 text-right tabular">{d.previousFyAverage.toFixed(2)}</td>
-                    <td className="py-2 px-2 text-right tabular font-extrabold">{d.currentFyAverage.toFixed(2)}</td>
-                    <td className={cn("py-2 px-2 text-right tabular font-extrabold inline-flex items-center justify-end gap-0.5 w-full", TREND_TONE[d.trend])}>
-                      <Icon size={10} />
-                      {d.change > 0 ? `+${d.change.toFixed(2)}` : d.change.toFixed(2)}
-                    </td>
-                    <td className="py-2 px-2 muted">{d.bestImprovingIntervention}</td>
-                    <td className="py-2 px-2 muted">{d.weakestIntervention}</td>
-                    <td className="py-2 px-2 text-right tabular">{d.schoolsAssessed} / {d.coverage}%</td>
-                    <td className="py-2 pl-2">
-                      <span className={cn(
-                        "inline-flex items-center px-1.5 py-[2px] rounded-md text-[10px] font-extrabold whitespace-nowrap",
-                        d.status === "Improving"  && "bg-emerald-100 text-emerald-700",
-                        d.status === "Stable"     && "bg-sky-100     text-sky-700",
-                        d.status === "Declining"  && "bg-rose-100    text-rose-700",
-                      )}>{d.status}</span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {/* Cluster comparison */}
-      <section className="card p-3.5">
-        <h2 className="text-body-lg font-extrabold tracking-tight mb-2">Cluster comparison</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-[12px] min-w-[780px]">
-            <thead>
-              <tr className="text-left text-caption muted font-semibold uppercase tracking-wide border-b border-[var(--color-edify-border)]">
-                <th scope="col" className="py-2 pr-2">Cluster</th>
-                <th scope="col" className="py-2 px-2">District</th>
-                <th scope="col" className="py-2 px-2 text-right">Prev FY</th>
-                <th scope="col" className="py-2 px-2 text-right">Current FY</th>
-                <th scope="col" className="py-2 px-2 text-right">Change</th>
-                <th scope="col" className="py-2 px-2 text-right">Schools (Core/Client)</th>
-                <th scope="col" className="py-2 px-2">Weakest</th>
-                <th scope="col" className="py-2 pl-2">Focus</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[var(--color-edify-divider)]">
-              {clusterSsaComparison.map((c) => {
-                const Icon = TREND_ICON[c.trend];
-                return (
-                  <tr key={c.cluster}>
-                    <td className="py-2 pr-2 font-extrabold">{c.cluster}</td>
-                    <td className="py-2 px-2 muted">{c.district}</td>
-                    <td className="py-2 px-2 text-right tabular">{c.previousFyAverage.toFixed(2)}</td>
-                    <td className="py-2 px-2 text-right tabular font-extrabold">{c.currentFyAverage.toFixed(2)}</td>
-                    <td className={cn("py-2 px-2 text-right tabular font-extrabold inline-flex items-center justify-end gap-0.5 w-full", TREND_TONE[c.trend])}>
-                      <Icon size={10} />
-                      {c.change > 0 ? `+${c.change.toFixed(2)}` : c.change.toFixed(2)}
-                    </td>
-                    <td className="py-2 px-2 text-right tabular">{c.schoolsAssessed} ({c.coreSchoolsAssessed}/{c.clientSchoolsAssessed})</td>
-                    <td className="py-2 px-2 muted">{c.weakestIntervention}</td>
-                    <td className="py-2 pl-2 muted">{c.recommendedFocus}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {/* All 8 interventions */}
-      <section className="card p-3.5">
-        <h2 className="text-body-lg font-extrabold tracking-tight mb-2">Intervention comparison — all 8 areas</h2>
-        <ul className="space-y-2">
-          {interventionSsaComparison.map((i) => {
-            const Icon = TREND_ICON[i.trend];
-            const widthPct = (i.currentFyAverage / 10) * 100;
-            const barColor = i.currentFyAverage >= 7 ? "#10b981" : i.currentFyAverage >= 6 ? "#f59e0b" : "#ef4444";
+        <div className="divide-y divide-[var(--color-edify-divider)]">
+          {sorted.map((r) => {
+            const rate = r.improvementRate;
+            const Icon = rate == null ? Minus : rate >= 60 ? TrendingUp : rate <= 40 ? TrendingDown : Minus;
+            const tone = rate == null ? "text-slate-400" : rate >= 60 ? "text-emerald-600" : rate <= 40 ? "text-rose-600" : "text-amber-600";
             return (
-              <li key={i.intervention} className="flex items-center gap-3 text-[12px]">
-                <div className="w-[200px] font-extrabold tracking-tight shrink-0 truncate">{i.intervention}</div>
-                <div className="flex-1 h-1.5 rounded-full bg-[#eef2f4] overflow-hidden">
-                  <div className="h-full rounded-full" style={{ width: `${widthPct}%`, backgroundColor: barColor }} />
+              <div key={r.groupId} className="px-4 py-2.5 grid grid-cols-12 gap-2 items-center text-[12px]">
+                <div className="col-span-3 font-extrabold tracking-tight truncate">{r.groupName}</div>
+                <div className={cn("col-span-2 inline-flex items-center gap-1 font-extrabold", tone)}>
+                  <Icon size={12} /> {rate == null ? "—" : `${rate}%`}
                 </div>
-                <div className="w-16 text-right tabular font-extrabold shrink-0">{i.currentFyAverage.toFixed(2)}</div>
-                <div className={cn("inline-flex items-center gap-0.5 w-16 justify-end font-semibold tabular shrink-0", TREND_TONE[i.trend])}>
-                  <Icon size={10} />
-                  {i.change > 0 ? `+${i.change.toFixed(2)}` : i.change.toFixed(2)}
+                <div className="col-span-3 text-secondary">
+                  <span className="text-emerald-700 font-semibold">{r.schoolsImproved}↑</span>{" / "}
+                  <span className="text-rose-700 font-semibold">{r.schoolsDeclined}↓</span>
+                  {r.schoolsNoComparison ? <span className="muted"> · {r.schoolsNoComparison} no baseline</span> : null}
                 </div>
-                <div className="w-[120px] text-right muted text-caption shrink-0 truncate">Best: {i.bestDistrict}</div>
-                <div className="w-[120px] text-right muted text-caption shrink-0 truncate">Weak: {i.weakestDistrict}</div>
-              </li>
+                <div className="col-span-2 truncate text-emerald-700">
+                  {r.bestIntervention ? `${r.bestIntervention.label} +${r.bestIntervention.change}` : "—"}
+                </div>
+                <div className="col-span-2 truncate text-rose-700">
+                  {r.weakestIntervention ? `${r.weakestIntervention.label} ${r.weakestIntervention.currAvg ?? ""}` : "—"}
+                </div>
+              </div>
             );
           })}
-        </ul>
+        </div>
       </section>
     </StubPage>
   );
