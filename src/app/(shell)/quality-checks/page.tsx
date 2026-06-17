@@ -1,69 +1,66 @@
+import { ShieldCheck, ShieldAlert, Users, Copy, FileQuestion, CheckCircle2 } from "lucide-react";
 import { StubPage } from "@/components/shell/StubPage";
-import { QualityCheckStatusCard } from "@/components/ui/lazy-charts";
-import { TopIssuesCard } from "@/components/impact/TopIssuesCard";
-import { RunQualityCheckButton } from "@/components/quality/RunQualityCheckButton";
-import { qualityCheckSeverity, qualityCheckTotal } from "@/lib/impact-mock";
-import { latestQualityRun } from "@/lib/quality/quality-checks";
-import { isMockAllowed } from "@/lib/mock-policy";
 import { InsufficientData } from "@/components/ui/InsufficientData";
+import { getCurrentUser } from "@/lib/auth";
+import { fetchSchoolDirectorySummary, fetchLeadershipSummary } from "@/lib/api/surfaces";
+import { cn } from "@/lib/utils";
 
-function timeAgo(iso: string): string {
-  const mins = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins} min ago`;
-  const hrs = Math.round(mins / 60);
-  if (hrs < 24) return `${hrs} hr${hrs === 1 ? "" : "s"} ago`;
-  return new Date(iso).toLocaleDateString();
-}
+// Data-quality checks — LIVE from the backend. Real integrity counts over the
+// caller's scope: schools missing a current-FY SSA, schools with an unmatched
+// account owner, and potential duplicate schools. (Activity-level Salesforce/
+// evidence gaps surface in the IA verification queue as testing generates them.)
+export default async function QualityChecksPage() {
+  const user = await getCurrentUser();
+  const [dir, lead] = await Promise.all([
+    fetchSchoolDirectorySummary(user),
+    fetchLeadershipSummary(user),
+  ]);
+  if (!dir.live || !lead.live) return <InsufficientData surface="data-quality checks" />;
 
-export default function QualityChecksPage() {
-  // Severity/issue counts (e.g. "876 open issues") come from impact-mock, not a
-  // real data-quality scan. Withhold in production.
-  if (!isMockAllowed()) return <InsufficientData surface="data-quality checks" />;
-  const lastRun = latestQualityRun();
+  const missingSsa = lead.data.ssaPending;
+  const unmatchedOwners = dir.data.unmatchedOwners;
+  const duplicates = dir.data.potentialDuplicates;
+  const totalIssues = missingSsa + unmatchedOwners + duplicates;
+
+  const checks = [
+    { key: "ssa", label: "Schools missing current-FY SSA", value: missingSsa, Icon: FileQuestion, good: "All schools have a complete SSA" },
+    { key: "owners", label: "Schools with an unmatched owner", value: unmatchedOwners, Icon: Users, good: "Every school has a matched account owner" },
+    { key: "dupes", label: "Potential duplicate schools", value: duplicates, Icon: Copy, good: "No suspected duplicates" },
+  ];
 
   return (
     <StubPage
-      title="Quality Checks"
-      subtitle={`${qualityCheckTotal} open issues across ${qualityCheckSeverity.length} severity tiers. Resolve critical first — they block program counting.`}
+      title="Data Quality Checks"
+      subtitle={
+        totalIssues === 0
+          ? "No open data-quality issues across the schools in your scope. The directory is clean and ready for planning."
+          : `${totalIssues} data-quality issue${totalIssues === 1 ? "" : "s"} across the schools in your scope. Resolve these so program counting stays accurate.`
+      }
     >
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="min-w-0">
-          <h2 className="text-body-lg font-extrabold tracking-tight">Open Quality Issues</h2>
-          <p className="text-[11.5px] muted">Status breakdown and the top issues blocking impact verification.</p>
+      <section className={cn("rounded-xl border p-4 flex items-center gap-3", totalIssues === 0 ? "border-emerald-200 bg-emerald-50/60" : "border-amber-200 bg-amber-50/60")}>
+        {totalIssues === 0 ? <ShieldCheck className="text-emerald-600" size={22} /> : <ShieldAlert className="text-amber-600" size={22} />}
+        <div>
+          <div className="text-[14px] font-extrabold tracking-tight">
+            {totalIssues === 0 ? "Data quality: clean" : `Data quality: ${totalIssues} open issue${totalIssues === 1 ? "" : "s"}`}
+          </div>
+          <div className="text-[11.5px] muted">
+            {lead.data.schools.toLocaleString()} schools checked · SSA complete {lead.data.ssaCompletePct}%
+          </div>
         </div>
-        <RunQualityCheckButton />
-      </div>
+      </section>
 
-      {/* Last-run status banner — populated once a check has been run this session. */}
-      <div className="rounded-xl border border-[var(--color-edify-border)] bg-[var(--color-edify-soft)]/40 px-3.5 py-2.5 flex items-center justify-between gap-3 flex-wrap text-[12px]">
-        {lastRun ? (
-          <>
-            <span className="inline-flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              <b>Last run {timeAgo(lastRun.ranAt)}</b>
-              <span className="muted">by {lastRun.ranByName}</span>
-            </span>
-            <span className="muted tabular">
-              Scanned <b>{lastRun.scannedActivities}</b> activities · <b>{lastRun.totalIssues}</b> open issues ·{" "}
-              <b>{lastRun.liveSalesforceGaps}</b> missing Salesforce IDs
-            </span>
-          </>
-        ) : (
-          <span className="inline-flex items-center gap-2 muted">
-            <span className="w-2 h-2 rounded-full bg-slate-400" />
-            No quality check run yet this session — run one to scan submitted records for gaps.
-          </span>
-        )}
-      </div>
-
-      <section className="grid grid-cols-12 gap-4 items-start">
-        <div className="col-span-12 md:col-span-5">
-          <QualityCheckStatusCard />
-        </div>
-        <div className="col-span-12 md:col-span-7">
-          <TopIssuesCard />
-        </div>
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+        {checks.map((c) => (
+          <div key={c.key} className="card p-4">
+            <div className="flex items-center justify-between">
+              <c.Icon size={16} className={c.value === 0 ? "text-emerald-600" : "text-amber-600"} />
+              {c.value === 0 ? <CheckCircle2 size={15} className="text-emerald-500" /> : <span className="text-[11px] font-extrabold text-amber-700 bg-amber-100 rounded-full px-2 py-0.5">{c.value}</span>}
+            </div>
+            <div className={cn("text-2xl font-extrabold tracking-tight mt-2", c.value === 0 ? "text-emerald-600" : "text-amber-600")}>{c.value.toLocaleString()}</div>
+            <div className="text-[12px] font-semibold mt-0.5">{c.label}</div>
+            <div className="text-[11px] muted mt-1">{c.value === 0 ? c.good : "Needs attention before these schools count toward impact."}</div>
+          </div>
+        ))}
       </section>
     </StubPage>
   );

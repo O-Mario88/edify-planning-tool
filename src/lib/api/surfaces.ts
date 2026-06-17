@@ -146,6 +146,15 @@ export type BeDistrictRollup = {
 export function fetchDistrictRollups(user: BackendUser) {
   return live<{ districts: BeDistrictRollup[] }>("/analytics/districts", user);
 }
+export type BeSchoolDirectorySummary = {
+  byType: { schoolType: string; count: number }[];
+  byReadiness: { readiness: string; count: number }[];
+  unmatchedOwners: number;
+  potentialDuplicates: number;
+};
+export function fetchSchoolDirectorySummary(user: BackendUser) {
+  return live<BeSchoolDirectorySummary>("/analytics/school-directory", user);
+}
 
 export function fetchAnalyticsSsa(user: BackendUser) {
   return live<BeSsaPerformance>("/analytics/ssa-performance", user);
