@@ -44,16 +44,24 @@ export function InterventionImprovementGrid() {
   // when grouped by district (the only grouping carrying a district name).
   const selection = useActiveFilters();
   const fy = isFilterActive(selection.fy) ? selection.fy : undefined;
+  // Geography → backend so EVERY grouping narrows server-side (not just district).
+  const region = isFilterActive(selection.region) ? selection.region : undefined;
+  const district = isFilterActive(selection.district) ? selection.district : undefined;
+  const cluster = isFilterActive(selection.cluster) ? selection.cluster : undefined;
+  const geoQs =
+    (region ? `&region=${encodeURIComponent(region)}` : "") +
+    (district ? `&district=${encodeURIComponent(district)}` : "") +
+    (cluster ? `&cluster=${encodeURIComponent(cluster)}` : "");
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/analytics/intervention-improvement?groupBy=${groupBy}&schoolType=${schoolType}${fy ? `&currentFy=${encodeURIComponent(fy)}` : ""}`, { credentials: "include" });
+      const res = await fetch(`/api/analytics/intervention-improvement?groupBy=${groupBy}&schoolType=${schoolType}${fy ? `&currentFy=${encodeURIComponent(fy)}` : ""}${geoQs}`, { credentials: "include" });
       const j = await res.json();
       if (j.live) { setData(j); setOff(false); } else { setOff(true); }
     } catch { setOff(true); }
     setLoading(false);
-  }, [groupBy, schoolType, fy]);
+  }, [groupBy, schoolType, fy, geoQs]);
 
   useEffect(() => { void load(); }, [load]);
 

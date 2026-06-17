@@ -38,21 +38,29 @@ export function SsaPerformanceGrid() {
   const [off, setOff] = useState(false);
   const [drill, setDrill] = useState<{ name: string; rows: BeSsaDrilldownRow[]; loading: boolean } | null>(null);
 
-  // Header filters → data. FY goes to the backend; district/region scope the
-  // rows client-side when the grid is grouped by district (the only grouping
-  // whose rows carry a district name — region derives from it).
+  // Header filters → data. FY + geography (region/district/cluster) all go to the
+  // BACKEND so EVERY grouping narrows server-side — not just district-grouped rows
+  // filtered client-side (which silently ignored a district when grouped by
+  // region/cceo/cluster). The client scope below is now only a belt-and-braces.
   const selection = useActiveFilters();
   const fy = isFilterActive(selection.fy) ? selection.fy : undefined;
+  const region = isFilterActive(selection.region) ? selection.region : undefined;
+  const district = isFilterActive(selection.district) ? selection.district : undefined;
+  const cluster = isFilterActive(selection.cluster) ? selection.cluster : undefined;
+  const geoQs =
+    (region ? `&region=${encodeURIComponent(region)}` : "") +
+    (district ? `&district=${encodeURIComponent(district)}` : "") +
+    (cluster ? `&cluster=${encodeURIComponent(cluster)}` : "");
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/analytics/ssa-performance?groupBy=${groupBy}&schoolType=${schoolType}${fy ? `&fy=${encodeURIComponent(fy)}` : ""}`, { credentials: "include" });
+      const res = await fetch(`/api/analytics/ssa-performance?groupBy=${groupBy}&schoolType=${schoolType}${fy ? `&fy=${encodeURIComponent(fy)}` : ""}${geoQs}`, { credentials: "include" });
       const j = await res.json();
       if (j.live) { setData(j); setOff(false); } else { setOff(true); }
     } catch { setOff(true); }
     setLoading(false);
-  }, [groupBy, schoolType, fy]);
+  }, [groupBy, schoolType, fy, geoQs]);
 
   useEffect(() => { void load(); }, [load]);
 

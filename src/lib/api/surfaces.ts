@@ -105,6 +105,24 @@ export type BeActivityPipeline = {
 
 // ── Fetchers ────────────────────────────────────────────────────────
 
+// Shared geography filter as emitted by the FE filter bar. district is a *name*
+// ("Gulu"), region a *key* ("northern"), cluster a cuid — the backend resolves
+// names via relation filters. The `__all__` sentinel and empty values are dropped
+// so an unfiltered call stays unfiltered. Used by every role-scoped analytics
+// surface so a selected geography narrows the WHOLE page, not just grouped tables.
+export type GeoFilterParams = { region?: string; district?: string; cluster?: string };
+const ALL_SENTINEL = "__all__";
+function appendGeo(params: URLSearchParams, g?: GeoFilterParams): URLSearchParams {
+  if (g?.region && g.region !== ALL_SENTINEL) params.set("region", g.region);
+  if (g?.district && g.district !== ALL_SENTINEL) params.set("district", g.district);
+  if (g?.cluster && g.cluster !== ALL_SENTINEL) params.set("cluster", g.cluster);
+  return params;
+}
+function geoQuery(g?: GeoFilterParams): string {
+  const q = appendGeo(new URLSearchParams(), g).toString();
+  return q ? `?${q}` : "";
+}
+
 type SchoolQuery = {
   schoolType?: string;
   pageSize?: number;
@@ -113,7 +131,7 @@ type SchoolQuery = {
   clusterStatus?: string;
   ssaStatus?: string;
   planningReadiness?: string;
-};
+} & GeoFilterParams;
 
 export function fetchSchools(user: BackendUser, q: SchoolQuery = {}) {
   const params = new URLSearchParams();
@@ -124,6 +142,9 @@ export function fetchSchools(user: BackendUser, q: SchoolQuery = {}) {
   if (q.clusterStatus) params.set("clusterStatus", q.clusterStatus);
   if (q.ssaStatus) params.set("ssaStatus", q.ssaStatus);
   if (q.planningReadiness) params.set("planningReadiness", q.planningReadiness);
+  // Name/key geography from the filter bar — server-narrows the full universe so
+  // the directory list + strip aren't capped at the first `pageSize` rows.
+  appendGeo(params, q);
   return live<BePaginated<BeSchoolRow>>(`/schools?${params.toString()}`, user);
 }
 
@@ -131,11 +152,11 @@ export function fetchCoreHeader(user: BackendUser) {
   return live<BeCoreHeader>("/filters/core-header-summary", user);
 }
 
-export function fetchAnalyticsDashboard(user: BackendUser) {
-  return live<BeDashboard>("/analytics/dashboard", user);
+export function fetchAnalyticsDashboard(user: BackendUser, geo?: GeoFilterParams) {
+  return live<BeDashboard>(`/analytics/dashboard${geoQuery(geo)}`, user);
 }
-export function fetchLeadershipSummary(user: BackendUser) {
-  return live<BeLeadershipSummary>("/analytics/leadership-summary", user);
+export function fetchLeadershipSummary(user: BackendUser, geo?: GeoFilterParams) {
+  return live<BeLeadershipSummary>(`/analytics/leadership-summary${geoQuery(geo)}`, user);
 }
 export type BeDistrictRollup = {
   districtId: string; district: string; region: string;
@@ -143,8 +164,19 @@ export type BeDistrictRollup = {
   clustered: number; unclustered: number;
   ssaDone: number; ssaPct: number; avgSsa: number;
 };
-export function fetchDistrictRollups(user: BackendUser) {
-  return live<{ districts: BeDistrictRollup[] }>("/analytics/districts", user);
+export function fetchDistrictRollups(user: BackendUser, geo?: GeoFilterParams) {
+  return live<{ districts: BeDistrictRollup[] }>(`/analytics/districts${geoQuery(geo)}`, user);
+}
+
+// The district NAMES the user actually has live data for — used to build the
+// geography filter dropdowns from the real backend universe (so the bar offers
+// exactly the districts that exist, with a working region→district cascade and
+// an active label that resolves). Returns undefined when the backend is off, so
+// the caller falls back to the mock-derived filter scope.
+export async function liveDistrictNamesFor(user: BackendUser): Promise<string[] | undefined> {
+  const res = await fetchDistrictRollups(user);
+  if (!res.live) return undefined;
+  return res.data.districts.map((d) => d.district).filter(Boolean);
 }
 export type BeSchoolDirectorySummary = {
   byType: { schoolType: string; count: number }[];
@@ -152,24 +184,24 @@ export type BeSchoolDirectorySummary = {
   unmatchedOwners: number;
   potentialDuplicates: number;
 };
-export function fetchSchoolDirectorySummary(user: BackendUser) {
-  return live<BeSchoolDirectorySummary>("/analytics/school-directory", user);
+export function fetchSchoolDirectorySummary(user: BackendUser, geo?: GeoFilterParams) {
+  return live<BeSchoolDirectorySummary>(`/analytics/school-directory${geoQuery(geo)}`, user);
 }
 export type BeCoverageSummary = {
   totalClientSchools: number; assigned: number; unassigned: number;
   coveragePct: number; schoolsBelowSsaThreshold: number;
   priority: { schoolId: string; name: string; district: string; owner: string; avgSsa: number | null }[];
 };
-export function fetchCoverageSummary(user: BackendUser) {
-  return live<BeCoverageSummary>("/analytics/coverage", user);
+export function fetchCoverageSummary(user: BackendUser, geo?: GeoFilterParams) {
+  return live<BeCoverageSummary>(`/analytics/coverage${geoQuery(geo)}`, user);
 }
 
-export function fetchAnalyticsSsa(user: BackendUser) {
-  return live<BeSsaPerformance>("/analytics/ssa-performance", user);
+export function fetchAnalyticsSsa(user: BackendUser, geo?: GeoFilterParams) {
+  return live<BeSsaPerformance>(`/analytics/ssa-performance${geoQuery(geo)}`, user);
 }
 
-export function fetchActivityPipeline(user: BackendUser) {
-  return live<BeActivityPipeline>("/analytics/activity-pipeline", user);
+export function fetchActivityPipeline(user: BackendUser, geo?: GeoFilterParams) {
+  return live<BeActivityPipeline>(`/analytics/activity-pipeline${geoQuery(geo)}`, user);
 }
 
 // ── Contribution ("how much am I contributing?") — scope-enforced ──
@@ -215,7 +247,7 @@ export type ContributionSummary = {
   dataQuality: string[];
 };
 
-type ContributionParams = { lens?: ContributionLens; fy?: string; quarter?: string; districtId?: string; clusterId?: string };
+type ContributionParams = { lens?: ContributionLens; fy?: string; quarter?: string; districtId?: string; clusterId?: string } & GeoFilterParams;
 
 function contributionQuery(p: ContributionParams): string {
   const params = new URLSearchParams();
@@ -224,6 +256,7 @@ function contributionQuery(p: ContributionParams): string {
   if (p.quarter) params.set("quarter", p.quarter);
   if (p.districtId) params.set("districtId", p.districtId);
   if (p.clusterId) params.set("clusterId", p.clusterId);
+  appendGeo(params, p);
   return params.toString();
 }
 
@@ -261,11 +294,12 @@ export type BeSsaDrilldownRow = {
   interventions: Record<string, number | null>;
 };
 
-export function fetchSsaPerformanceGrouped(user: BackendUser, p: { groupBy?: string; schoolType?: string; fy?: string } = {}) {
+export function fetchSsaPerformanceGrouped(user: BackendUser, p: { groupBy?: string; schoolType?: string; fy?: string } & GeoFilterParams = {}) {
   const params = new URLSearchParams();
   if (p.groupBy) params.set("groupBy", p.groupBy);
   if (p.schoolType) params.set("schoolType", p.schoolType);
   if (p.fy) params.set("fy", p.fy);
+  appendGeo(params, p);
   const q = params.toString();
   return live<BeSsaPerformanceGrouped>(`/analytics/ssa-performance-grouped${q ? `?${q}` : ""}`, user);
 }
@@ -287,12 +321,13 @@ export type BeInterventionImprovement = {
   rows: BeImprovementRow[];
 };
 
-export function fetchInterventionImprovement(user: BackendUser, p: { groupBy?: string; schoolType?: string; currentFy?: string; prevFy?: string } = {}) {
+export function fetchInterventionImprovement(user: BackendUser, p: { groupBy?: string; schoolType?: string; currentFy?: string; prevFy?: string } & GeoFilterParams = {}) {
   const params = new URLSearchParams();
   if (p.groupBy) params.set("groupBy", p.groupBy);
   if (p.schoolType) params.set("schoolType", p.schoolType);
   if (p.currentFy) params.set("currentFy", p.currentFy);
   if (p.prevFy) params.set("prevFy", p.prevFy);
+  appendGeo(params, p);
   const q = params.toString();
   return live<BeInterventionImprovement>(`/analytics/intervention-improvement${q ? `?${q}` : ""}`, user);
 }

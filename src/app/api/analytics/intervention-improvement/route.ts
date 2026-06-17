@@ -11,6 +11,10 @@ export async function GET(req: NextRequest) {
     schoolType: sp.get("schoolType") ?? undefined,
     currentFy: sp.get("currentFy") ?? undefined,
     prevFy: sp.get("prevFy") ?? undefined,
+    // Geography filter from the bar — server-side narrowing.
+    region: sp.get("region") ?? undefined,
+    district: sp.get("district") ?? undefined,
+    cluster: sp.get("cluster") ?? undefined,
   });
   return r.live ? NextResponse.json({ ...r.data, live: true }) : NextResponse.json({ live: false, error: r.error }, { status: r.error ? 502 : 200 });
 }

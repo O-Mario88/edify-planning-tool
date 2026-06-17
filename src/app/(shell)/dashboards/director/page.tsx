@@ -11,6 +11,7 @@ import { DebriefReviewInbox } from "@/components/messages/DebriefReviewInbox";
 import { CountryKpiRow } from "@/components/director/CountryKpiRow";
 import { LeadershipKpiStrip } from "@/components/director/LeadershipKpiStrip";
 import { fetchLeadershipSummary } from "@/lib/api/surfaces";
+import { selectionFromSearchParams, geoParamsFromSelection } from "@/lib/filters/apply-filters";
 import { ExecutiveAlerts } from "@/components/director/ExecutiveAlerts";
 import { CdRiskSummaryCard } from "@/components/escalation/CdRiskSummaryCard";
 import { FlagToPlCard } from "@/components/director/FlagToPlCard";
@@ -65,15 +66,18 @@ import { BudgetIntelligenceEmbed } from "@/components/budget/BudgetIntelligenceE
 //
 // The CD never does field-level planning from here: every card is a
 // summary with a controlled drilldown, no operational action buttons.
-export default async function CountryDirectorDashboard() {
+export default async function CountryDirectorDashboard({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   // Defense-in-depth: middleware already gates /dashboards/director,
   // but the page re-checks so a guard gap can't expose this cockpit.
   const user = await getCurrentUser();
   if (!["CountryDirector", "Admin"].includes(user.role)) {
     redirect(ROLE_REDIRECT[user.role]);
   }
+  // Geography filter from the header bar — narrows the WHOLE cockpit (KPI strip,
+  // program snapshot, pipeline) server-side, so the numbers track the filter chip.
+  const geo = geoParamsFromSelection(selectionFromSearchParams(await searchParams));
   // Live country KPIs from the backend (real counts/aggregates over the CD's scope).
-  const leadership = await fetchLeadershipSummary(user);
+  const leadership = await fetchLeadershipSummary(user, geo);
 
   // National donor-reporting rollup — same builder as /donor-reporting,
   // so the dashboard snapshot and the full report never disagree.
@@ -94,7 +98,7 @@ export default async function CountryDirectorDashboard() {
         <DashboardGreetingHero user={user} />
 
         {/* Live program snapshot (backend analytics) — real KPIs + activity pipeline. */}
-        <CountryAnalyticsLive />
+        <CountryAnalyticsLive geo={geo} />
 
         {/* LEADERSHIP DECISION ENGINE — the executive intelligence layer:
             evidence-backed, human-reviewed recommendations (recruitment, staff,

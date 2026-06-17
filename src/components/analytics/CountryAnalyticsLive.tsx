@@ -5,7 +5,7 @@
 
 import { Network } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
-import { fetchAnalyticsDashboard, fetchActivityPipeline } from "@/lib/api/surfaces";
+import { fetchAnalyticsDashboard, fetchActivityPipeline, type GeoFilterParams } from "@/lib/api/surfaces";
 import { MetricStrip } from "@/components/ui/MetricStrip";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -13,9 +13,9 @@ const STATUS_LABEL: Record<string, string> = {
   awaiting_ia: "Awaiting IA", ia_confirmed: "IA confirmed", paid: "Paid", closed: "Closed", cancelled: "Cancelled",
 };
 
-export async function CountryAnalyticsLive() {
+export async function CountryAnalyticsLive({ geo }: { geo?: GeoFilterParams } = {}) {
   const user = await getCurrentUser();
-  const [dash, pipe] = await Promise.all([fetchAnalyticsDashboard(user), fetchActivityPipeline(user)]);
+  const [dash, pipe] = await Promise.all([fetchAnalyticsDashboard(user, geo), fetchActivityPipeline(user, geo)]);
   if (!dash.live) return null; // backend off → render nothing (page keeps its own content)
   const d = dash.data;
 

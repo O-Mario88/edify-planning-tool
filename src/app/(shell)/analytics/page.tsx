@@ -1,6 +1,6 @@
 import { getCurrentUser } from "@/lib/auth";
 import { getFilterScope } from "@/lib/filters/scope-service";
-import { fetchAnalyticsDashboard, fetchAnalyticsSsa, fetchActivityPipeline, fetchContributionSummary, type ContributionLens, type ContributionSummary } from "@/lib/api/surfaces";
+import { fetchAnalyticsDashboard, fetchAnalyticsSsa, fetchActivityPipeline, fetchContributionSummary, liveDistrictNamesFor, type ContributionLens, type ContributionSummary } from "@/lib/api/surfaces";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { HeaderFilterBar } from "@/components/shell/HeaderFilterBar";
 import { MetricStrip, type MetricCell } from "@/components/ui/MetricStrip";
@@ -9,6 +9,7 @@ import { MyContribution } from "@/components/analytics/MyContribution";
 import { FieldEngineAnalytics } from "@/components/analytics/field-engine/FieldEngineAnalytics";
 import { selectedFyId } from "@/lib/analytics/scope";
 import { ALL_SENTINEL, type FilterSelection } from "@/lib/filters/types";
+import { geoParamsFromSelection } from "@/lib/filters/apply-filters";
 
 // Field Performance & School Improvement Analytics — the truth layer.
 //
@@ -30,7 +31,10 @@ export default async function AnalyticsPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const user = await getCurrentUser();
-  const filterScope = getFilterScope({ user });
+  // Build the geography dropdowns from the LIVE backend district universe when
+  // the backend is on, so the bar offers exactly the districts that have data.
+  const liveDistrictNames = await liveDistrictNamesFor(user);
+  const filterScope = getFilterScope({ user, liveDistrictNames });
 
   // Resolve the active filter selection from the URL.
   const sp = await searchParams;
@@ -43,14 +47,17 @@ export default async function AnalyticsPage({
   ) as FilterSelection;
 
   const fyId = selectedFyId(selection);
+  // Geography filter → narrows the live band server-side so it tracks the SSA
+  // tables below (which already honor the filter), instead of staying national.
+  const geo = geoParamsFromSelection(selection);
 
   // Live backend band — scoped counts straight from edify-api (Postgres). Sits
   // above the workflow engine so the two truth layers are visible side by side;
   // renders only when the backend is enabled and reachable.
   const [beDash, beSsa, bePipe] = await Promise.all([
-    fetchAnalyticsDashboard(user),
-    fetchAnalyticsSsa(user),
-    fetchActivityPipeline(user),
+    fetchAnalyticsDashboard(user, geo),
+    fetchAnalyticsSsa(user, geo),
+    fetchActivityPipeline(user, geo),
   ]);
   const liveBand = buildLiveBand(beDash, beSsa, bePipe);
   const liveError = !beDash.live ? beDash.error : null;
@@ -58,7 +65,7 @@ export default async function AnalyticsPage({
   // Scope-enforced contribution lens. PL gets own / team / combined (team = the
   // CCEOs they supervise); CCEO gets own-schools only; country roles get a
   // country aggregate. Backend enforces — a CCEO asking for team is a 403.
-  const contributionLenses = await loadContributionLenses(user, fyId);
+  const contributionLenses = await loadContributionLenses(user, fyId, geo);
   const contributionTitle = contributionTitleFor(user.role);
 
   // CCEO (spec §22): the page reads as PERSONAL portfolio analytics — the
@@ -136,17 +143,18 @@ const CONTRIBUTION_ROLES = ["CCEO", "CountryProgramLead", "CountryDirector", "RV
 async function loadContributionLenses(
   user: Awaited<ReturnType<typeof getCurrentUser>>,
   fy: string,
+  geo: ReturnType<typeof geoParamsFromSelection>,
 ): Promise<Partial<Record<ContributionLens, ContributionSummary>> | null> {
   if (!CONTRIBUTION_ROLES.includes(user.role)) return null;
-  const own = await fetchContributionSummary(user, { lens: "own", fy });
+  const own = await fetchContributionSummary(user, { lens: "own", fy, ...geo });
   if (!own.live) return null; // backend off/unreachable → don't render the lens
   const lenses: Partial<Record<ContributionLens, ContributionSummary>> = { own: own.data };
   // Only PL has a genuine own-vs-team split worth tabbing; country roles' lenses
   // all resolve to the same country aggregate, so a single lens reads cleaner.
   if (user.role === "CountryProgramLead" && own.data.canViewTeam) {
     const [team, combined] = await Promise.all([
-      fetchContributionSummary(user, { lens: "team", fy }),
-      fetchContributionSummary(user, { lens: "combined", fy }),
+      fetchContributionSummary(user, { lens: "team", fy, ...geo }),
+      fetchContributionSummary(user, { lens: "combined", fy, ...geo }),
     ]);
     if (team.live) lenses.team = team.data;
     if (combined.live) lenses.combined = combined.data;

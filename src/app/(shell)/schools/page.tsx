@@ -31,8 +31,7 @@ import { getVisibleProjects, projectsForSchool } from "@/lib/special-projects-mo
 import { evaluateEligibility } from "@/lib/projects/project-eligibility";
 import { SSA_INTERVENTION_AREAS, deriveQuarterFromDate } from "@/lib/intake/intake-core";
 import { computePeriodTarget } from "@/lib/targets/period-target";
-import { applyGeographyScope, selectionFromSearchParams } from "@/lib/filters/apply-filters";
-import { ALL_SENTINEL } from "@/lib/filters/types";
+import { applyGeographyScope, selectionFromSearchParams, geoParamsFromSelection } from "@/lib/filters/apply-filters";
 import { activeFinancialYear } from "@/lib/fy-engine";
 import { engineNowIso } from "@/lib/clock";
 
@@ -126,29 +125,22 @@ export default async function SchoolsDashboard({
   const signals = directoryPlanningSignals(records);
 
   // Portfolio strip is live from edify-api when the backend is enabled; otherwise
-  // it falls back to the in-memory directory metrics (identical shape).
-  const liveSchools = await fetchSchools(me, { pageSize: 200 });
-  const liveRows = liveSchools.live
-    ? applyGeographyScope(liveSchools.data.data, selection, {
-        district: (r) => r.district?.name,
-      })
-    : [];
-  const geoActive = [selection.region, selection.district, selection.cluster].some(
-    (v) => v !== ALL_SENTINEL,
-  );
-  // Strip source of truth:
-  //  • Unfiltered → the backend's server-side AGGREGATE counts (full universe),
-  //    never the <=200-row page (counting the page made every breakdown wrong).
-  //  • Geo-filtered → the scoped row set IS the universe (and is < 200 for a
-  //    region/district), so counting it with itself as the denominator is
-  //    internally consistent.
-  const liveDashboard = !geoActive ? await fetchAnalyticsDashboard(me) : null;
+  // it falls back to the in-memory directory metrics (identical shape). The
+  // geography filter is threaded to BOTH the row list and the aggregate so the
+  // backend narrows server-side — the list is the full narrowed universe (not the
+  // first 200 rows of the unfiltered set) and the strip counts that same universe.
+  const geo = geoParamsFromSelection(selection);
+  const liveSchools = await fetchSchools(me, { pageSize: 200, ...geo });
+  const liveRows = liveSchools.live ? liveSchools.data.data : [];
+  // Strip source of truth: the backend's server-side AGGREGATE counts, computed
+  // over the SAME (role-scoped + geo-narrowed) universe as the row list — never
+  // the <=200-row page (counting the page made every breakdown wrong, and any
+  // district whose schools fell past row 200 was silently under-counted).
+  const liveDashboard = await fetchAnalyticsDashboard(me, geo);
   const metrics = liveSchools.live
-    ? geoActive
-      ? liveDirectoryMetrics(liveRows, liveRows.length)
-      : liveDashboard?.live
-        ? aggregateDirectoryMetrics(liveDashboard.data)
-        : liveDirectoryMetrics(liveRows, liveSchools.data.total)
+    ? liveDashboard.live
+      ? aggregateDirectoryMetrics(liveDashboard.data)
+      : liveDirectoryMetrics(liveRows, liveSchools.data.total)
     : mockMetrics;
   const metricsLive = liveSchools.live;
   const metricsError = liveSchools.live ? null : liveSchools.error;

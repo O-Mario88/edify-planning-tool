@@ -5,6 +5,7 @@ import {
   buildDateRangeFromFilters,
   applyDateScope,
   applyGeographyScope,
+  geoParamsFromSelection,
 } from "@/lib/filters/apply-filters";
 import { ALL_SENTINEL, type FilterSelection } from "@/lib/filters/types";
 
@@ -69,5 +70,29 @@ describe("applyGeographyScope", () => {
   it("backfills region from district when no region accessor", () => {
     const accNoRegion = { district: (r: (typeof rows)[number]) => r.district };
     expect(applyGeographyScope(rows, sel({ region: "East" }), accNoRegion).map((r) => r.district)).toEqual(["Jinja"]);
+  });
+});
+
+// The server-side bridge: a page maps its URL selection to the backend geo
+// params and the backend narrows the WHOLE page (strip + charts + tables), not
+// just the rows already on the client. This locks the mapping is faithful and
+// drops the "no filter" sentinel so an unfiltered page stays unfiltered.
+describe("geoParamsFromSelection", () => {
+  it("drops __all__ — an unfiltered selection yields no params", () => {
+    expect(geoParamsFromSelection(sel({}))).toEqual({});
+  });
+  it("passes a real district through (backend resolves the name)", () => {
+    expect(geoParamsFromSelection(sel({ district: "Gulu" }))).toEqual({ district: "Gulu" });
+  });
+  it("passes region + cluster, omitting the unselected district", () => {
+    expect(geoParamsFromSelection(sel({ region: "northern", cluster: "clu_x" }))).toEqual({
+      region: "northern",
+      cluster: "clu_x",
+    });
+  });
+  it("ignores non-geography selections (fy/cceo/ssa never leak into geo params)", () => {
+    expect(geoParamsFromSelection(sel({ fy: "2026", cceo: "staff1", ssa: "weak", district: "Mbale" }))).toEqual({
+      district: "Mbale",
+    });
   });
 });

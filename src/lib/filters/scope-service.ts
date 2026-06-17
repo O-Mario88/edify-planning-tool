@@ -263,12 +263,23 @@ const CHAMPION_OPTIONS: FilterOption[] = [
 
 export type GetFilterScopeArgs = {
   user: DemoUser;
+  // When the backend is live, a server page can pass the district NAMES the
+  // user actually has data for (from /analytics/districts). The geography
+  // dropdowns are then built from the LIVE universe — so the bar offers exactly
+  // the districts that exist in the data (and the region→district cascade +
+  // active-label resolve against real options), instead of the mock portfolio.
+  // Omitted → falls back to the mock-derived scope (dev / backend-off).
+  liveDistrictNames?: string[];
 };
 
-export function getFilterScope({ user }: GetFilterScopeArgs): FilterScope {
+export function getFilterScope({ user, liveDistrictNames }: GetFilterScopeArgs): FilterScope {
   const vis = visibilityFor(user.role);
   const schools = visibleSchoolsFor(user);
-  const allowed = scopedDistrictNames(user, schools);
+  // Live district universe takes precedence. `liveDistrictNames` already comes
+  // from the role-scoped /analytics/districts endpoint, so it IS the user's
+  // permitted set — trust it directly rather than re-intersecting with the mock
+  // portfolio (whose identity can differ from the live backend account).
+  const allowed = liveDistrictNames ? new Set(liveDistrictNames) : scopedDistrictNames(user, schools);
   const fyOpts = buildFyOptions();
   const activeFyId = fyOpts[0]?.id ?? "";
 

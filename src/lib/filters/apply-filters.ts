@@ -62,6 +62,24 @@ export function selectionFromSearchParams(
 }
 
 /**
+ * Map the URL filter selection to the backend geography filter params.
+ * The backend resolves these by NAME (district)/key (region)/cuid (cluster) via
+ * relation filters — so a server component can pass `geoParamsFromSelection(sel)`
+ * straight into the analytics surfaces and the WHOLE page narrows server-side
+ * (strip + charts + tables), not just the rows visible on the page. `__all__`
+ * and empty values are dropped so an unfiltered page stays unfiltered.
+ */
+export function geoParamsFromSelection(
+  selection: Pick<FilterSelection, "region" | "district" | "cluster">,
+): { region?: string; district?: string; cluster?: string } {
+  const out: { region?: string; district?: string; cluster?: string } = {};
+  if (isReal(selection.region)) out.region = selection.region;
+  if (isReal(selection.district)) out.district = selection.district;
+  if (isReal(selection.cluster)) out.cluster = selection.cluster;
+  return out;
+}
+
+/**
  * Resolve the selected FY (+ optional quarter) to an ISO date range.
  * FY only → the full FY window. FY + quarter → that quarter's window.
  * Falls back to the active FY when no FY is selected.

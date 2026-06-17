@@ -3,6 +3,7 @@ import { HeaderFilterBar } from "@/components/shell/HeaderFilterBar";
 import { schoolsHeader } from "@/lib/schools-mock";
 import { getCurrentUser } from "@/lib/auth";
 import { getFilterScope } from "@/lib/filters/scope-service";
+import { liveDistrictNamesFor } from "@/lib/api/surfaces";
 
 // Thin adapter over the canonical <PageHeader>. Async server component:
 // resolves the viewer, computes their role-scoped FilterScope, and mounts
@@ -11,7 +12,9 @@ import { getFilterScope } from "@/lib/filters/scope-service";
 // re-scope the KPI strip + directory, not just the chips.
 export async function SchoolsHeader() {
   const user = await getCurrentUser();
-  const scope = getFilterScope({ user });
+  // Geography dropdowns from the live backend district universe (mock fallback).
+  const liveDistrictNames = await liveDistrictNamesFor(user);
+  const scope = getFilterScope({ user, liveDistrictNames });
   return (
     <PageHeader
       title={schoolsHeader.title}

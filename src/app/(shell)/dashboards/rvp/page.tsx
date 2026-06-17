@@ -46,8 +46,9 @@ import { isMockAllowed } from "@/lib/mock-policy";
 import { InsufficientData } from "@/components/ui/InsufficientData";
 import { LeadershipKpiStrip } from "@/components/director/LeadershipKpiStrip";
 import { fetchLeadershipSummary } from "@/lib/api/surfaces";
+import { selectionFromSearchParams, geoParamsFromSelection } from "@/lib/filters/apply-filters";
 
-export default async function RVPDashboard() {
+export default async function RVPDashboard({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   // Defense-in-depth: middleware already gates /dashboards/rvp, but the
   // page re-checks so a guard gap can't expose the regional cockpit.
   const rawUser = await getCurrentUser();
@@ -55,10 +56,12 @@ export default async function RVPDashboard() {
     redirect(ROLE_REDIRECT[rawUser.role]);
   }
   const currentUser = toCurrentUser(rawUser);
+  // Geography filter from the header bar — narrows the whole cockpit server-side.
+  const geo = geoParamsFromSelection(selectionFromSearchParams(await searchParams));
   // Production: a clean LIVE regional cockpit — real KPIs from the backend plus
   // the live program-analytics band. (The fabricated "4-country comparison" body
   // below only renders in dev mock mode for design reference.)
-  const leadership = await fetchLeadershipSummary(rawUser);
+  const leadership = await fetchLeadershipSummary(rawUser, geo);
   if (!isMockAllowed()) {
     return (
       <>
@@ -69,7 +72,7 @@ export default async function RVPDashboard() {
             <SectionHeader tier="strategic" eyebrow="Region" title="Regional performance at a glance" description="Live school counts, SSA health, activity pipeline and finance across the schools in your scope." />
             {leadership.live ? <LeadershipKpiStrip s={leadership.data} scopeLabel="region" /> : <InsufficientData surface="regional KPIs" />}
           </section>
-          <CountryAnalyticsLive />
+          <CountryAnalyticsLive geo={geo} />
         </div>
       </>
     );
@@ -108,7 +111,7 @@ export default async function RVPDashboard() {
       <DashboardGreetingHero user={rawUser} />
 
       {/* Live program snapshot (backend analytics). */}
-      <CountryAnalyticsLive />
+      <CountryAnalyticsLive geo={geo} />
 
       {/* Leadership Decision Engine — region/country advisory boards, computed from live data. */}
       <DecisionEngineEmbed />

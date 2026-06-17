@@ -10,6 +10,10 @@ export async function GET(req: NextRequest) {
   const fy = sp.get("fy") ?? undefined;
   const schoolType = sp.get("schoolType") ?? undefined;
   const groupBy = sp.get("groupBy") ?? "district";
+  // Geography filter from the bar — forwarded so the grid narrows server-side.
+  const region = sp.get("region") ?? undefined;
+  const district = sp.get("district") ?? undefined;
+  const cluster = sp.get("cluster") ?? undefined;
 
   if (sp.get("drilldown") === "1") {
     const groupId = sp.get("groupId");
@@ -18,6 +22,6 @@ export async function GET(req: NextRequest) {
     return r.live ? NextResponse.json({ rows: r.data, live: true }) : NextResponse.json({ rows: [], live: false, error: r.error }, { status: r.error ? 502 : 200 });
   }
 
-  const r = await fetchSsaPerformanceGrouped(user, { groupBy, schoolType, fy });
+  const r = await fetchSsaPerformanceGrouped(user, { groupBy, schoolType, fy, region, district, cluster });
   return r.live ? NextResponse.json({ ...r.data, live: true }) : NextResponse.json({ live: false, error: r.error }, { status: r.error ? 502 : 200 });
 }
