@@ -137,6 +137,15 @@ export function fetchAnalyticsDashboard(user: BackendUser) {
 export function fetchLeadershipSummary(user: BackendUser) {
   return live<BeLeadershipSummary>("/analytics/leadership-summary", user);
 }
+export type BeDistrictRollup = {
+  districtId: string; district: string; region: string;
+  schools: number; coreSchools: number; clientSchools: number;
+  clustered: number; unclustered: number;
+  ssaDone: number; ssaPct: number; avgSsa: number;
+};
+export function fetchDistrictRollups(user: BackendUser) {
+  return live<{ districts: BeDistrictRollup[] }>("/analytics/districts", user);
+}
 
 export function fetchAnalyticsSsa(user: BackendUser) {
   return live<BeSsaPerformance>("/analytics/ssa-performance", user);
