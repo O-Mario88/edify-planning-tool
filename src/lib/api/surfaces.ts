@@ -201,9 +201,10 @@ export type BeGeoDistrict = {
   districtId: string; pcode: string | null; district: string; region: string; subRegion: string | null;
   centroidLat: number | null; centroidLng: number | null;
   schools: number; coreSchools: number; clientSchools: number;
-  clustered: number; unclustered: number; ssaDone: number; ssaPending: number; ssaPct: number;
+  clustered: number; unclustered: number; clusters: number; ssaDone: number; ssaPending: number; ssaPct: number;
   avgSsa: number | null; criticalCount: number; activitiesCompleted: number;
   status: "healthy" | "needs_attention" | "high_risk" | "insufficient_data";
+  weakestInterventions: { key: string; label: string; avg: number }[];
 };
 export type BeGeoSchoolPoint = { schoolId: string; name: string; lat: number; lng: number; type: string };
 export type BeGeoSubRegion = {
