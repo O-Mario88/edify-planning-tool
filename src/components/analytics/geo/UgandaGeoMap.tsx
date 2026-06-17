@@ -20,7 +20,7 @@ import { isFilterActive, useActiveFilters } from "@/hooks/use-active-filters";
 import { ErrorState, LoadingState } from "@/components/ui/DataStates";
 import { Modal } from "@/components/ui/Modal";
 import { cn } from "@/lib/utils";
-import type { BeGeoMap, BeGeoDistrict, BeGeoSchoolPoint, BeGeoCluster } from "@/lib/api/surfaces";
+import type { BeGeoMap, BeGeoDistrict, BeGeoSchoolPoint, BeGeoCluster, BeGeoDistrictDetail, BeGeoSummary } from "@/lib/api/surfaces";
 
 type GeoFeature = { properties: { pcode: string; name: string; region: string }; geometry: { type: string; coordinates: number[][][] | number[][][][] } };
 type GeoJson = { bbox: [number, number, number, number]; features: GeoFeature[] };
@@ -29,7 +29,27 @@ type DistrictMeta = { pcode: string; name: string; region: string; subRegion: st
 // Hover card content — district (default / low zoom) or sub-county (zoomed in).
 type HoverState =
   | { kind: "district"; x: number; y: number; d: BeGeoDistrict | null; name: string; sub: string | null; region: string | null }
-  | { kind: "subcounty"; x: number; y: number; name: string; districtName: string; sub: string | null; region: string | null };
+  | { kind: "subcounty"; x: number; y: number; name: string; districtPcode: string; districtId: string | null; districtName: string; sub: string | null; region: string | null };
+
+// What the detail panel / drawer is focused on. Defaults to the whole country.
+type Focus =
+  | { kind: "country" }
+  | { kind: "district"; d: BeGeoDistrict }
+  | { kind: "subcounty"; name: string; districtId: string | null; districtName: string; sub: string | null; region: string | null };
+
+// lg breakpoint — desktop shows the detail inline (75/25 split); mobile/tablet
+// opens it as a floating drawer.
+function useIsDesktop(): boolean {
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const update = () => setIsDesktop(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+  return isDesktop;
+}
 
 const METRICS: { key: keyof BeGeoDistrict; label: string; higherIsBetter: boolean; fmt?: (v: number) => string }[] = [
   { key: "schools", label: "Total Schools", higherIsBetter: true },
@@ -97,10 +117,13 @@ export function UgandaGeoMap() {
   const [showPins, setShowPins] = useState(true);
   const [showLabels, setShowLabels] = useState(true);
   const [hover, setHover] = useState<HoverState | null>(null);
-  const [pinned, setPinned] = useState<BeGeoDistrict | null>(null);
-  // Cluster list for the hover card — lazy-fetched per district + cached.
-  const clusterCache = useRef<Map<string, BeGeoCluster[]>>(new Map());
+  const [focus, setFocus] = useState<Focus>({ kind: "country" });
+  const isDesktop = useIsDesktop();
+  // District detail (clusters + sub-counties) — lazy-fetched per district + cached.
+  const detailCache = useRef<Map<string, BeGeoDistrictDetail>>(new Map());
   const [, bumpCache] = useState(0);
+  // Clicking focuses the detail; on mobile/tablet it also opens the floating drawer.
+  const pin = (f: Focus) => setFocus(f);
   const [view, setView] = useState({ scale: 1, tx: 0, ty: 0 });
   const [subCounties, setSubCounties] = useState<{ features: { properties: { pcode: string; name: string; district: string; lat: number; lng: number }; geometry: { type: string; coordinates: number[][][] | number[][][][] } }[] } | null>(null);
   const drag = useRef<{ x: number; y: number; tx: number; ty: number; moved: boolean } | null>(null);
@@ -123,18 +146,23 @@ export function UgandaGeoMap() {
     }
   }, [view.scale, subCounties]);
 
-  // When hovering a district that has live data, lazily fetch + cache its cluster
-  // list (name · school count) so the hover card can show it.
-  const hoverDistrictId = hover?.kind === "district" ? hover.d?.districtId ?? null : null;
-  useEffect(() => {
-    if (!hoverDistrictId || clusterCache.current.has(hoverDistrictId)) return;
-    let alive = true;
-    fetch(`/api/analytics/geo-map/district/${encodeURIComponent(hoverDistrictId)}`, { credentials: "include" })
+  // Lazily fetch + cache a district's detail (clusters + sub-county breakdown).
+  // Used by the hover card (cluster list / sub-county figures) and the detail
+  // panel. No-ops when already cached or in flight.
+  const inFlight = useRef<Set<string>>(new Set());
+  const ensureDetail = useCallback((id: string | null | undefined) => {
+    if (!id || detailCache.current.has(id) || inFlight.current.has(id)) return;
+    inFlight.current.add(id);
+    fetch(`/api/analytics/geo-map/district/${encodeURIComponent(id)}`, { credentials: "include" })
       .then((r) => r.json())
-      .then((j) => { if (alive && j.live) { clusterCache.current.set(hoverDistrictId, j.clusters); bumpCache((n) => n + 1); } })
-      .catch(() => {});
-    return () => { alive = false; };
-  }, [hoverDistrictId]);
+      .then((j) => { if (j.live) { detailCache.current.set(id, j as BeGeoDistrictDetail); bumpCache((n) => n + 1); } })
+      .catch(() => {})
+      .finally(() => inFlight.current.delete(id));
+  }, []);
+  const hoverDistrictId = hover?.kind === "district" ? hover.d?.districtId ?? null : hover?.kind === "subcounty" ? hover.districtId : null;
+  useEffect(() => { ensureDetail(hoverDistrictId); }, [hoverDistrictId, ensureDetail]);
+  const focusDistrictId = focus.kind === "district" ? focus.d.districtId : focus.kind === "subcounty" ? focus.districtId : null;
+  useEffect(() => { ensureDetail(focusDistrictId); }, [focusDistrictId, ensureDetail]);
 
   const load = useCallback(() => {
     setLoading(true); setError(null);
@@ -283,8 +311,11 @@ export function UgandaGeoMap() {
     return viewMode === "choropleth" ? scale.colorFor(d[metricKey] as number | null) : STATUS_TINT[d.status];
   };
 
+  const focusDetail = focusDistrictId ? detailCache.current.get(focusDistrictId) : undefined;
+
   return (
-    <section className="card p-0 overflow-hidden">
+    <div className="lg:grid lg:grid-cols-4 lg:gap-4 lg:items-start">
+    <section className="card p-0 overflow-hidden lg:col-span-3">
       <header className="px-4 py-3 border-b border-[var(--color-edify-divider)] flex items-center justify-between gap-3 flex-wrap">
         <div>
           <h3 className="text-[14px] font-extrabold tracking-tight inline-flex items-center gap-1.5"><MapIcon size={15} className="text-[var(--color-edify-primary)]" /> Uganda Geo-Analytics</h3>
@@ -363,13 +394,13 @@ export function UgandaGeoMap() {
             {paths.map((p) => {
               const d = byPcode.get(p.pcode);
               const m = metaByPcode.get(p.pcode);
-              const isActive = pinned?.pcode === p.pcode;
+              const isActive = focus.kind === "district" && focus.d.pcode === p.pcode;
               return (
                 <path key={p.pcode} data-pcode={p.pcode} d={p.d} fill={fillFor(p.pcode)}
                   stroke={isActive ? "var(--color-edify-primary)" : BORDER} strokeWidth={(isActive ? 2.5 : 0.9) / view.scale} strokeLinejoin="round"
                   className="cursor-pointer transition-[fill] duration-150 hover:brightness-95"
                   onMouseMove={(e) => { const r = (e.currentTarget.ownerSVGElement as SVGSVGElement).getBoundingClientRect(); setHover({ kind: "district", d: d ?? null, name: p.name, sub: m?.subRegion ?? d?.subRegion ?? null, region: m?.region ?? d?.region ?? null, x: e.clientX - r.left, y: e.clientY - r.top }); }}
-                  onClick={() => setPinned(districtFor(p.pcode, p.name))} />
+                  onClick={() => pin({ kind: "district", d: districtFor(p.pcode, p.name) })} />
               );
             })}
 
@@ -383,8 +414,8 @@ export function UgandaGeoMap() {
               return (
                 <path key={sc.pcode} d={sc.d} fill="transparent" stroke="#475569" strokeOpacity={0.8} strokeWidth={0.7 / view.scale} strokeLinejoin="round"
                   className="cursor-pointer hover:fill-[#3f6b94]/10"
-                  onMouseMove={(e) => { const r = (e.currentTarget.ownerSVGElement as SVGSVGElement).getBoundingClientRect(); setHover({ kind: "subcounty", name: sc.name, districtName: dm.name, sub: dm.subRegion, region: dm.region, x: e.clientX - r.left, y: e.clientY - r.top }); }}
-                  onClick={() => setPinned(districtFor(sc.district, dm.name))} />
+                  onMouseMove={(e) => { const r = (e.currentTarget.ownerSVGElement as SVGSVGElement).getBoundingClientRect(); setHover({ kind: "subcounty", name: sc.name, districtPcode: sc.district, districtId: byPcode.get(sc.district)?.districtId ?? null, districtName: dm.name, sub: dm.subRegion, region: dm.region, x: e.clientX - r.left, y: e.clientY - r.top }); }}
+                  onClick={() => pin({ kind: "subcounty", name: sc.name, districtId: byPcode.get(sc.district)?.districtId ?? null, districtName: dm.name, sub: dm.subRegion, region: dm.region })} />
               );
             })}
 
@@ -396,7 +427,7 @@ export function UgandaGeoMap() {
               return (
                 <circle key={d.districtId} cx={proj!.px(d.centroidLng)} cy={proj!.py(d.centroidLat)} r={r}
                   fill={STATUS_META[d.status].fill} fillOpacity={0.62} stroke="#fff" strokeWidth={1 / view.scale}
-                  className="cursor-pointer" onClick={() => setPinned(d)} />
+                  className="cursor-pointer" onClick={() => pin({ kind: "district", d })} />
               );
             })}
 
@@ -432,18 +463,37 @@ export function UgandaGeoMap() {
         {hover && (
           <div className="absolute z-20 pointer-events-none rounded-xl shadow-2xl ring-1 ring-black/10 overflow-hidden text-white"
             style={{ left: hover.x + 14, top: hover.y + 12, transform: `${hover.x > 520 ? "translateX(-105%)" : ""} ${hover.y > 300 ? "translateY(calc(-100% - 26px))" : ""}`.trim() || undefined, minWidth: 220, maxWidth: 270, background: "linear-gradient(160deg,#4a7aa7,#34597d)" }}>
-            {hover.kind === "subcounty" ? (
-              <div className="px-3.5 py-3">
-                <div className="text-[10px] uppercase tracking-wider text-white/60 font-bold inline-flex items-center gap-1"><MapPin size={10} /> Sub-county</div>
-                <div className="text-[14px] font-extrabold tracking-tight mt-0.5">{hover.name}</div>
-                <div className="mt-2 space-y-1.5 text-[11.5px]">
-                  <HRow icon={<Building2 size={12} />} label="District" value={hover.districtName} />
-                  <HRow icon={<Layers size={12} />} label="Sub-region" value={hover.sub ?? "—"} />
-                  <HRow icon={<MapPin size={12} />} label="Region" value={hover.region ?? "—"} />
+            {hover.kind === "subcounty" ? (() => {
+              const det = hover.districtId ? detailCache.current.get(hover.districtId) : undefined;
+              const sc = det?.subCounties.find((s) => s.name === hover.name);
+              return (
+                <div className="px-3.5 py-3">
+                  <div className="text-[10px] uppercase tracking-wider text-white/60 font-bold inline-flex items-center gap-1"><MapPin size={10} /> Sub-county · {hover.districtName}</div>
+                  <div className="text-[14px] font-extrabold tracking-tight mt-0.5">{hover.name}</div>
+                  {sc ? (
+                    <>
+                      <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-[11.5px]">
+                        <HRow icon={<Building2 size={12} />} label="Schools" value={sc.schools} />
+                        <HRow icon={<Briefcase size={12} />} label="Client" value={sc.clientSchools} />
+                        <HRow icon={<ShieldCheck size={12} />} label="Core" value={sc.coreSchools} />
+                        <HRow icon={<Network size={12} />} label="Clusters" value={sc.clusters} />
+                        <HRow icon={<Gauge size={12} />} label="SSA avg" value={sc.avgSsa ?? "—"} />
+                        <HRow icon={<Layers size={12} />} label="Sub-region" value={hover.sub ?? "—"} />
+                      </div>
+                      {sc.weakest && (
+                        <div className="mt-2 pt-2 border-t border-white/15 text-[11px] inline-flex items-center gap-1.5"><TrendingDown size={11} className="text-rose-200" /> Weakest: <b>{sc.weakest.label}</b> ({sc.weakest.avg.toFixed(1)})</div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="mt-2 space-y-1.5 text-[11.5px]">
+                      <HRow icon={<Building2 size={12} />} label="District" value={hover.districtName} />
+                      <HRow icon={<Layers size={12} />} label="Sub-region" value={hover.sub ?? "—"} />
+                      <div className="text-[10.5px] text-white/60">{hover.districtId == null ? "No schools recorded in this district" : det ? "No schools recorded in this sub-county" : "Loading sub-county figures…"}</div>
+                    </div>
+                  )}
                 </div>
-                <div className="mt-2 pt-2 border-t border-white/15 text-[10.5px] text-white/70">Click to open {hover.districtName} district</div>
-              </div>
-            ) : (
+              );
+            })() : (
               <div className="px-3.5 py-3">
                 <div className="flex items-start justify-between gap-2">
                   <div>
@@ -463,7 +513,7 @@ export function UgandaGeoMap() {
                       <HRow icon={<AlertTriangle size={12} />} label="Critical" value={hover.d.criticalCount} />
                     </div>
                     {(() => {
-                      const cl = clusterCache.current.get(hover.d.districtId);
+                      const cl = detailCache.current.get(hover.d.districtId)?.clusters;
                       return (
                         <div className="mt-2 pt-2 border-t border-white/15">
                           <div className="text-[9.5px] uppercase tracking-wider text-white/60 font-bold inline-flex items-center gap-1 mb-1"><Network size={10} /> Clusters</div>
@@ -493,8 +543,25 @@ export function UgandaGeoMap() {
         )}
       </div>
 
-      {pinned && <DistrictDrawer d={pinned} onClose={() => setPinned(null)} />}
-    </section>
+      </section>
+
+      {/* Desktop: inline detail panel (25%) — defaults to the whole country, switches
+          to a district / sub-county on click. */}
+      <aside className="hidden lg:block lg:col-span-1">
+        <div className="card p-0 overflow-hidden lg:sticky lg:top-4 max-h-[78vh] overflow-y-auto">
+          <DetailBody focus={focus} summary={s ?? null} detail={focusDetail} onClear={() => setFocus({ kind: "country" })} />
+        </div>
+      </aside>
+
+      {/* Mobile / tablet: the same detail as a sleek floating drawer on click. */}
+      {!isDesktop && focus.kind !== "country" && (
+        <Modal open onClose={() => setFocus({ kind: "country" })} variant="drawer-right" size="md" dim={false}
+          title={focus.kind === "district" ? focus.d.district : focus.name}
+          description={focus.kind === "district" ? `${focus.d.subRegion ?? "—"} sub-region · ${focus.d.region} region` : `${focus.districtName} district · ${focus.sub ?? "—"}`}>
+          <DetailBody focus={focus} summary={s ?? null} detail={focusDetail} onClear={() => setFocus({ kind: "country" })} headerless />
+        </Modal>
+      )}
+    </div>
   );
 }
 
@@ -526,39 +593,148 @@ function barColor(v: number): string {
   return v < 5 ? "#e11d48" : v < 7 ? "#f59e0b" : v < 9 ? "#22b07f" : "#0f7a57";
 }
 
-function DistrictDrawer({ d, onClose }: { d: BeGeoDistrict; onClose: () => void }) {
-  const sm = STATUS_META[d.status];
-  const [clusters, setClusters] = useState<BeGeoCluster[] | null>(null);
-  const [clusterErr, setClusterErr] = useState(false);
+function SectionTitle({ children }: { children: ReactNode }) {
+  return <h4 className="text-[11px] uppercase tracking-wider font-bold muted mb-2">{children}</h4>;
+}
 
-  // Lazy-load the district's clusters (each with its OWN SSA avg + weakest intervention).
-  useEffect(() => {
-    let live = true;
-    setClusters(null); setClusterErr(false);
-    fetch(`/api/analytics/geo-map/district/${encodeURIComponent(d.districtId)}`, { credentials: "include" })
-      .then((r) => r.json())
-      .then((j) => { if (live) j.live ? setClusters(j.clusters) : setClusterErr(true); })
-      .catch(() => { if (live) setClusterErr(true); });
-    return () => { live = false; };
-  }, [d.districtId]);
-
+// The 8-intervention bar list (shared by country / district panels).
+function InterventionBars({ interventions, scopeLabel }: { interventions: { key: string; label: string; avg: number | null }[]; scopeLabel: string }) {
+  if (interventions.every((i) => i.avg == null)) return <p className="text-[12px] muted">No SSA scores yet — per-intervention performance appears once schools are assessed.</p>;
   return (
-    <Modal
-      open
-      onClose={onClose}
-      variant="drawer-right"
-      size="md"
-      dim={false}
-      title={d.district}
-      description={`${d.subRegion ?? "—"} sub-region · ${d.region} region`}
-    >
-      <div className="space-y-5">
-        <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10.5px] font-bold border", sm.cls)}>
-          {d.status === "high_risk" ? <AlertTriangle size={11} /> : d.status === "healthy" ? <ShieldCheck size={11} /> : null}{sm.label}
-        </span>
+    <div className="space-y-1.5">
+      {interventions.map((iv) => (
+        <div key={iv.key} className="flex items-center gap-2 text-[11.5px]">
+          <span className="w-[42%] shrink-0 truncate font-medium">{iv.label}</span>
+          <div className="flex-1 h-2.5 rounded-full bg-[var(--color-edify-soft)] overflow-hidden">
+            {iv.avg != null && <div className="h-full rounded-full" style={{ width: `${(iv.avg / 10) * 100}%`, background: barColor(iv.avg) }} />}
+          </div>
+          <span className={cn("w-7 text-right font-extrabold tabular", ssaTone(iv.avg))}>{iv.avg == null ? "—" : iv.avg.toFixed(1)}</span>
+        </div>
+      ))}
+      <p className="text-[10.5px] muted pt-0.5">Average score (0–10) per intervention across {scopeLabel}.</p>
+    </div>
+  );
+}
 
+function StrugglingList({ weakest, scopeNoun }: { weakest: { key: string; label: string; avg: number }[]; scopeNoun: string }) {
+  if (weakest.length === 0) return <p className="text-[12px] muted">No SSA scores yet — interventions appear once schools are assessed.</p>;
+  return (
+    <div className="space-y-1.5">
+      {weakest.map((w, i) => (
+        <div key={w.key} className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-rose-200 bg-rose-50/50">
+          <span className="text-[12px] font-semibold inline-flex items-center gap-2"><span className="text-rose-600 font-extrabold">#{i + 1}</span> {w.label}</span>
+          <span className="text-[13px] font-extrabold tabular text-rose-600">{w.avg.toFixed(1)}</span>
+        </div>
+      ))}
+      <p className="text-[11px] muted">The interventions with the lowest {scopeNoun} SSA average — the focus for support.</p>
+    </div>
+  );
+}
+
+// Detail panel body — country (default) / district / sub-county. Used inline on
+// desktop (75/25 split) and inside the floating drawer on mobile/tablet.
+function DetailBody({ focus, summary, detail, onClear, headerless }: {
+  focus: Focus; summary: BeGeoSummary | null; detail?: BeGeoDistrictDetail; onClear: () => void; headerless?: boolean;
+}) {
+  const head = (eyebrow: string, title: string, subtitle: string, badge?: ReactNode) => (
+    <header className="px-4 py-3 border-b border-[var(--color-edify-divider)]">
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-[10px] uppercase tracking-wider muted font-bold">{eyebrow}</div>
+        {focus.kind !== "country" && <button onClick={onClear} className="text-[10.5px] font-semibold text-[var(--color-edify-primary)] hover:underline">← Country</button>}
+      </div>
+      <h3 className="text-[15px] font-extrabold tracking-tight mt-0.5">{title}</h3>
+      <p className="text-[11.5px] muted">{subtitle}</p>
+      {badge}
+    </header>
+  );
+
+  // ── Country (default) ──
+  if (focus.kind === "country") {
+    if (!summary) return <div className="p-4 text-[12px] muted">Loading…</div>;
+    return (
+      <div>
+        {!headerless && head("Geo-analytics", "Uganda", "Country overview — click a district for detail")}
+        <div className="p-4 space-y-5">
+          <section>
+            <SectionTitle>Portfolio</SectionTitle>
+            <div className="grid grid-cols-3 gap-2">
+              <Stat label="Schools" value={summary.schools} />
+              <Stat label="Client" value={summary.clientSchools} />
+              <Stat label="Core" value={summary.coreSchools} />
+              <Stat label="Districts" value={summary.districts} />
+              <Stat label="Clusters" value={summary.clusters} />
+              <Stat label="High-risk" value={summary.highRiskDistricts} tone={summary.highRiskDistricts ? "text-rose-600" : undefined} />
+            </div>
+          </section>
+          <section>
+            <SectionTitle>SSA performance</SectionTitle>
+            <div className="grid grid-cols-3 gap-2">
+              <Stat label="SSA average" value={summary.avgSsa ?? "—"} tone={ssaTone(summary.avgSsa)} />
+              <Stat label="Critical" value={summary.criticalSchools} tone={summary.criticalSchools ? "text-rose-600" : undefined} />
+              <Stat label="SSA pending" value={summary.ssaPending} />
+            </div>
+          </section>
+          <section><SectionTitle>SSA by intervention</SectionTitle><InterventionBars interventions={summary.interventions} scopeLabel="all assessed schools" /></section>
+          <section>
+            <h4 className="text-[11px] uppercase tracking-wider font-bold muted mb-2 inline-flex items-center gap-1.5"><TrendingDown size={13} className="text-rose-500" /> Struggling nationwide</h4>
+            <StrugglingList weakest={summary.weakestInterventions} scopeNoun="national" />
+          </section>
+          <section className="space-y-1.5"><SectionTitle>Quick actions</SectionTitle><Action href="/schools" label="View all schools" /><Action href="/coverage" label="Coverage & support needs" /></section>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Sub-county ──
+  if (focus.kind === "subcounty") {
+    const sc = detail?.subCounties.find((s) => s.name === focus.name);
+    return (
+      <div>
+        {!headerless && head(`Sub-county · ${focus.districtName}`, focus.name, `${focus.sub ?? "—"} sub-region · ${focus.region ?? "—"} region`)}
+        <div className="p-4 space-y-5">
+          {sc ? (
+            <>
+              <section>
+                <SectionTitle>School portfolio</SectionTitle>
+                <div className="grid grid-cols-3 gap-2">
+                  <Stat label="Schools" value={sc.schools} />
+                  <Stat label="Client" value={sc.clientSchools} />
+                  <Stat label="Core" value={sc.coreSchools} />
+                  <Stat label="Clusters" value={sc.clusters} />
+                  <Stat label="SSA avg" value={sc.avgSsa ?? "—"} tone={ssaTone(sc.avgSsa)} />
+                </div>
+              </section>
+              {sc.weakest && (
+                <section>
+                  <h4 className="text-[11px] uppercase tracking-wider font-bold muted mb-2 inline-flex items-center gap-1.5"><TrendingDown size={13} className="text-rose-500" /> Weakest intervention</h4>
+                  <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-rose-200 bg-rose-50/50">
+                    <span className="text-[12px] font-semibold">{sc.weakest.label}</span>
+                    <span className="text-[13px] font-extrabold tabular text-rose-600">{sc.weakest.avg.toFixed(1)}</span>
+                  </div>
+                </section>
+              )}
+            </>
+          ) : (
+            <p className="text-[12px] muted">{focus.districtId == null ? "No schools recorded in this district yet." : detail ? "No schools recorded in this sub-county yet." : "Loading sub-county figures…"}</p>
+          )}
+          <section className="space-y-1.5"><SectionTitle>Quick actions</SectionTitle><Action href={`/analytics?district=${encodeURIComponent(focus.districtName)}`} label={`Open ${focus.districtName} district`} /><Action href={`/schools?district=${encodeURIComponent(focus.districtName)}`} label="View schools in district" /></section>
+        </div>
+      </div>
+    );
+  }
+
+  // ── District ──
+  const d = focus.d;
+  const clusters = detail?.clusters;
+  return (
+    <div>
+      {!headerless && head(`${d.subRegion ?? "—"} · ${d.region}`, d.district, `${d.subRegion ?? "—"} sub-region · ${d.region} region`,
+        <span className={cn("mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10.5px] font-bold border", STATUS_META[d.status].cls)}>
+          {d.status === "high_risk" ? <AlertTriangle size={11} /> : d.status === "healthy" ? <ShieldCheck size={11} /> : null}{STATUS_META[d.status].label}
+        </span>)}
+      <div className="p-4 space-y-5">
         <section>
-          <h4 className="text-[11px] uppercase tracking-wider font-bold muted mb-2">School portfolio</h4>
+          <SectionTitle>School portfolio</SectionTitle>
           <div className="grid grid-cols-3 gap-2">
             <Stat label="Schools" value={d.schools} />
             <Stat label="Client" value={d.clientSchools} />
@@ -568,60 +744,22 @@ function DistrictDrawer({ d, onClose }: { d: BeGeoDistrict; onClose: () => void 
             <Stat label="Unclustered" value={d.unclustered} tone={d.unclustered ? "text-rose-600" : undefined} />
           </div>
         </section>
-
         <section>
-          <h4 className="text-[11px] uppercase tracking-wider font-bold muted mb-2">SSA performance</h4>
+          <SectionTitle>SSA performance</SectionTitle>
           <div className="grid grid-cols-3 gap-2">
             <Stat label="SSA average" value={d.avgSsa ?? "—"} tone={ssaTone(d.avgSsa)} />
             <Stat label="Critical" value={d.criticalCount} tone={d.criticalCount ? "text-rose-600" : undefined} />
             <Stat label="SSA pending" value={d.ssaPending} />
           </div>
         </section>
-
-        {/* Performance in EACH of the 8 interventions (not just one average). */}
-        <section>
-          <h4 className="text-[11px] uppercase tracking-wider font-bold muted mb-2">SSA by intervention</h4>
-          {d.interventions.every((i) => i.avg == null) ? (
-            <p className="text-[12px] muted">No SSA scores yet — per-intervention performance appears once schools are assessed.</p>
-          ) : (
-            <div className="space-y-1.5">
-              {d.interventions.map((iv) => (
-                <div key={iv.key} className="flex items-center gap-2 text-[11.5px]">
-                  <span className="w-[42%] shrink-0 truncate font-medium">{iv.label}</span>
-                  <div className="flex-1 h-2.5 rounded-full bg-[var(--color-edify-soft)] overflow-hidden">
-                    {iv.avg != null && <div className="h-full rounded-full" style={{ width: `${(iv.avg / 10) * 100}%`, background: barColor(iv.avg) }} />}
-                  </div>
-                  <span className={cn("w-7 text-right font-extrabold tabular", ssaTone(iv.avg))}>{iv.avg == null ? "—" : iv.avg.toFixed(1)}</span>
-                </div>
-              ))}
-              <p className="text-[10.5px] muted pt-0.5">Average score (0–10) per intervention across the district&apos;s assessed schools.</p>
-            </div>
-          )}
-        </section>
-
+        <section><SectionTitle>SSA by intervention</SectionTitle><InterventionBars interventions={d.interventions} scopeLabel="the district's assessed schools" /></section>
         <section>
           <h4 className="text-[11px] uppercase tracking-wider font-bold muted mb-2 inline-flex items-center gap-1.5"><TrendingDown size={13} className="text-rose-500" /> Struggling across the district</h4>
-          {d.weakestInterventions.length === 0 ? (
-            <p className="text-[12px] muted">No SSA scores yet — interventions appear once schools are assessed.</p>
-          ) : (
-            <div className="space-y-1.5">
-              {d.weakestInterventions.map((w, i) => (
-                <div key={w.key} className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-rose-200 bg-rose-50/50">
-                  <span className="text-[12px] font-semibold inline-flex items-center gap-2"><span className="text-rose-600 font-extrabold">#{i + 1}</span> {w.label}</span>
-                  <span className="text-[13px] font-extrabold tabular text-rose-600">{w.avg.toFixed(1)}</span>
-                </div>
-              ))}
-              <p className="text-[11px] muted">The two interventions with the lowest district-wide SSA average — the focus for support.</p>
-            </div>
-          )}
+          <StrugglingList weakest={d.weakestInterventions} scopeNoun="district-wide" />
         </section>
-
-        {/* Clusters — each with its OWN SSA average + the intervention IT is weakest in. */}
         <section>
-          <h4 className="text-[11px] uppercase tracking-wider font-bold muted mb-2">Clusters in this district {clusters && <span className="muted font-semibold">· {clusters.length}</span>}</h4>
-          {clusterErr ? (
-            <p className="text-[12px] muted">Couldn&apos;t load clusters.</p>
-          ) : clusters == null ? (
+          <SectionTitle>Clusters in this district {clusters && <span className="muted font-semibold">· {clusters.length}</span>}</SectionTitle>
+          {clusters == null ? (
             <p className="text-[12px] muted">Loading clusters…</p>
           ) : clusters.length === 0 ? (
             <p className="text-[12px] muted">No clusters formed in this district yet. Clusters appear here once schools are grouped, each with its own SSA average and weakest intervention.</p>
@@ -639,20 +777,18 @@ function DistrictDrawer({ d, onClose }: { d: BeGeoDistrict; onClose: () => void 
             </div>
           )}
         </section>
-
         <section>
-          <h4 className="text-[11px] uppercase tracking-wider font-bold muted mb-2">Execution</h4>
+          <SectionTitle>Execution</SectionTitle>
           <div className="grid grid-cols-3 gap-2"><Stat label="Activities done" value={d.activitiesCompleted} /><Stat label="SSA complete" value={`${d.ssaPct}%`} /></div>
         </section>
-
         <section className="space-y-1.5">
-          <h4 className="text-[11px] uppercase tracking-wider font-bold muted mb-1">Quick actions</h4>
+          <SectionTitle>Quick actions</SectionTitle>
           <Action href={`/analytics?district=${encodeURIComponent(d.district)}`} label="Filter analytics to this district" />
           <Action href={`/schools?district=${encodeURIComponent(d.district)}`} label="View schools in district" />
           <Action href={`/coverage?district=${encodeURIComponent(d.district)}`} label="View coverage & support needs" />
         </section>
       </div>
-    </Modal>
+    </div>
   );
 }
 
