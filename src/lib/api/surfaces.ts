@@ -196,6 +196,28 @@ export function fetchCoverageSummary(user: BackendUser, geo?: GeoFilterParams) {
   return live<BeCoverageSummary>(`/analytics/coverage${geoQuery(geo)}`, user);
 }
 
+// ── Geo-analytics map ──────────────────────────────────────────────
+export type BeGeoDistrict = {
+  districtId: string; pcode: string | null; district: string; region: string; subRegion: string | null;
+  schools: number; coreSchools: number; clientSchools: number;
+  clustered: number; unclustered: number; ssaDone: number; ssaPending: number; ssaPct: number;
+  avgSsa: number | null; criticalCount: number; activitiesCompleted: number;
+  status: "healthy" | "needs_attention" | "high_risk" | "insufficient_data";
+};
+export type BeGeoSubRegion = {
+  subRegion: string; region: string; districts: number; schools: number; coreSchools: number;
+  clustered: number; avgSsa: number | null; criticalCount: number; activitiesCompleted: number;
+};
+export type BeGeoMap = {
+  fy: string;
+  summary: { districts: number; subRegions: number; schools: number; coreSchools: number; clustered: number; criticalSchools: number; highRiskDistricts: number; activitiesCompleted: number };
+  districts: BeGeoDistrict[];
+  subRegions: BeGeoSubRegion[];
+};
+export function fetchGeoMap(user: BackendUser, geo?: GeoFilterParams) {
+  return live<BeGeoMap>(`/analytics/geo-map${geoQuery(geo)}`, user);
+}
+
 export function fetchAnalyticsSsa(user: BackendUser, geo?: GeoFilterParams) {
   return live<BeSsaPerformance>(`/analytics/ssa-performance${geoQuery(geo)}`, user);
 }

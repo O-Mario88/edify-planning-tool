@@ -8,6 +8,7 @@ import { LiveBadge, BackendOfflineBanner } from "@/components/ui/BackendStatus";
 import { MyContribution } from "@/components/analytics/MyContribution";
 import { FieldEngineAnalytics } from "@/components/analytics/field-engine/FieldEngineAnalytics";
 import { SubCountySsaPanel } from "@/components/ssa/SubCountySsaPanel";
+import { UgandaGeoMap } from "@/components/analytics/geo/UgandaGeoMap";
 import { selectedFyId } from "@/lib/analytics/scope";
 import { ALL_SENTINEL, type FilterSelection } from "@/lib/filters/types";
 import { geoParamsFromSelection } from "@/lib/filters/apply-filters";
@@ -100,6 +101,9 @@ export default async function AnalyticsPage({
             />
           </div>
         )}
+        {/* Geo-analytics map — the leadership intelligence surface. Real COD-AB
+            district geometry joined to live, role-scoped, filter-aware analytics. */}
+        <UgandaGeoMap />
         {/* Drill-down: appears only when a district is selected — SSA performance
             for the sub-counties inside that district (live, backend-filtered). */}
         <SubCountySsaPanel />
