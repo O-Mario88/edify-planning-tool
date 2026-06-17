@@ -94,7 +94,12 @@ export function UgandaGeoMap() {
   const [hover, setHover] = useState<{ d: BeGeoDistrict | null; name: string; sub: string | null; x: number; y: number } | null>(null);
   const [pinned, setPinned] = useState<BeGeoDistrict | null>(null);
   const [view, setView] = useState({ scale: 1, tx: 0, ty: 0 });
+  const [subCounties, setSubCounties] = useState<{ features: { properties: { pcode: string; name: string; district: string }; geometry: { type: string; coordinates: number[][][] | number[][][][] } }[] } | null>(null);
   const drag = useRef<{ x: number; y: number; tx: number; ty: number; moved: boolean } | null>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
+  // Zoom level at which sub-county boundaries (admin4) progressively appear —
+  // Google-Maps-style level-of-detail. Loaded lazily on first zoom-in.
+  const SUBCOUNTY_ZOOM = 2.4;
 
   useEffect(() => {
     Promise.all([
@@ -102,6 +107,13 @@ export function UgandaGeoMap() {
       fetch("/geo/district-meta.json").then((r) => r.json()),
     ]).then(([g, m]) => { setGeo(g); setMeta(m); }).catch(() => setError("Could not load map geometry"));
   }, []);
+
+  // Lazy-load sub-county geometry the first time the user zooms past the threshold.
+  useEffect(() => {
+    if (view.scale >= SUBCOUNTY_ZOOM && !subCounties) {
+      fetch("/geo/subcounties.geojson").then((r) => r.json()).then(setSubCounties).catch(() => {});
+    }
+  }, [view.scale, subCounties]);
 
   const load = useCallback(() => {
     setLoading(true); setError(null);
@@ -139,6 +151,19 @@ export function UgandaGeoMap() {
     });
   }, [geo, proj]);
 
+  // Sub-county boundary paths (admin4) — built once the geometry is loaded.
+  const subCountyPaths = useMemo(() => {
+    if (!subCounties || !proj) return [];
+    const ring = (coords: number[][]) => coords.map(([lng, lat], i) => `${i === 0 ? "M" : "L"}${proj.px(lng).toFixed(1)},${proj.py(lat).toFixed(1)}`).join("") + "Z";
+    return subCounties.features.map((f) => {
+      const g = f.geometry;
+      const d = g.type === "Polygon"
+        ? (g.coordinates as number[][][]).map(ring).join("")
+        : (g.coordinates as number[][][][]).flatMap((poly) => poly.map(ring)).join("");
+      return { pcode: f.properties.pcode, name: f.properties.name, district: f.properties.district, d };
+    });
+  }, [subCounties, proj]);
+
   // Sub-region label anchors — centroid = mean of member-district centroids.
   const subRegionLabels = useMemo(() => {
     if (!meta || !proj) return [];
@@ -172,9 +197,43 @@ export function UgandaGeoMap() {
     return (v: number | null | undefined) => (v == null || v <= 0 ? 0 : MIN_R + (MAX_R - MIN_R) * Math.sqrt(v / max));
   }, [data, metricKey]);
 
-  const onWheel = (e: React.WheelEvent) => { e.preventDefault(); setView((v) => ({ ...v, scale: Math.min(8, Math.max(1, v.scale * (e.deltaY < 0 ? 1.15 : 0.87))) })); };
-  const zoom = (f: number) => setView((v) => ({ ...v, scale: Math.min(8, Math.max(1, v.scale * f)) }));
+  // Zoom toward a focal point (Google-Maps feel): keep the map point under the
+  // cursor fixed while scaling. focalX/Y are in viewBox units (0..W, 0..H).
+  const MAX_ZOOM = 14;
+  const zoomAt = (factor: number, focalX: number, focalY: number) => {
+    setView((v) => {
+      const scale = Math.min(MAX_ZOOM, Math.max(1, v.scale * factor));
+      if (scale === v.scale) return v;
+      // map point currently under the focal point: (focal - t) / oldScale
+      const mapX = (focalX - v.tx) / v.scale;
+      const mapY = (focalY - v.ty) / v.scale;
+      let tx = focalX - mapX * scale;
+      let ty = focalY - mapY * scale;
+      // Clamp so the map can't be panned entirely off-screen.
+      const H = proj!.H;
+      tx = Math.min(0, Math.max(W - W * scale, tx));
+      ty = Math.min(0, Math.max(H - H * scale, ty));
+      return { scale, tx, ty };
+    });
+  };
+  const focalFromEvent = (e: React.WheelEvent | React.MouseEvent) => {
+    const r = svgRef.current?.getBoundingClientRect();
+    if (!r) return { fx: W / 2, fy: proj!.H / 2 };
+    return { fx: ((e.clientX - r.left) / r.width) * W, fy: ((e.clientY - r.top) / r.height) * proj!.H };
+  };
+  const onWheel = (e: React.WheelEvent) => { e.preventDefault(); const { fx, fy } = focalFromEvent(e); zoomAt(e.deltaY < 0 ? 1.2 : 1 / 1.2, fx, fy); };
+  const zoom = (f: number) => zoomAt(f, W / 2, proj!.H / 2);
   const reset = () => setView({ scale: 1, tx: 0, ty: 0 });
+
+  // Visible viewBox region (map units) → cull sub-counties to the zoomed area.
+  const visible = { x0: -view.tx / view.scale, x1: (W - view.tx) / view.scale, y0: -view.ty / view.scale, y1: ((proj?.H ?? 0) - view.ty) / view.scale };
+  const inView = (lng: number | null, lat: number | null) => {
+    if (lng == null || lat == null || !proj) return false;
+    const x = proj.px(lng), y = proj.py(lat);
+    const mx = (visible.x1 - visible.x0) * 0.15, my = (visible.y1 - visible.y0) * 0.15;
+    return x >= visible.x0 - mx && x <= visible.x1 + mx && y >= visible.y0 - my && y <= visible.y1 + my;
+  };
+  const showSubCounties = view.scale >= SUBCOUNTY_ZOOM && subCountyPaths.length > 0;
 
   if (error) return <section className="card p-3.5"><ErrorState message={error} onRetry={load} /></section>;
   if (!geo || !meta || (!data && loading)) return <section className="card p-3.5"><LoadingState /></section>;
@@ -193,7 +252,7 @@ export function UgandaGeoMap() {
       centroidLat: m?.lat ?? null, centroidLng: m?.lng ?? null,
       schools: 0, coreSchools: 0, clientSchools: 0, clustered: 0, unclustered: 0, clusters: 0,
       ssaDone: 0, ssaPending: 0, ssaPct: 0, avgSsa: null, criticalCount: 0, activitiesCompleted: 0,
-      status: "insufficient_data", weakestInterventions: [],
+      status: "insufficient_data", interventions: [], weakestInterventions: [],
     };
   };
   const fillFor = (pcode: string) => {
@@ -272,7 +331,7 @@ export function UgandaGeoMap() {
           )}
         </div>
 
-        <svg viewBox={`0 0 ${W} ${proj!.H}`} className="w-full h-auto max-h-[600px] select-none touch-none" style={{ background: "var(--surface-1)" }}
+        <svg ref={svgRef} viewBox={`0 0 ${W} ${proj!.H}`} className="w-full h-auto max-h-[600px] select-none touch-none" style={{ background: "var(--surface-1)" }}
           onWheel={onWheel}
           onMouseDown={(e) => { drag.current = { x: e.clientX, y: e.clientY, tx: view.tx, ty: view.ty, moved: false }; }}
           onMouseUp={() => (drag.current = null)}
@@ -291,6 +350,15 @@ export function UgandaGeoMap() {
                   onMouseMove={(e) => { const r = (e.currentTarget.ownerSVGElement as SVGSVGElement).getBoundingClientRect(); setHover({ d: d ?? null, name: p.name, sub: m?.subRegion ?? d?.subRegion ?? null, x: e.clientX - r.left, y: e.clientY - r.top }); }}
                   onClick={() => setPinned(districtFor(p.pcode, p.name))} />
               );
+            })}
+
+            {/* Sub-county boundaries (admin4) — appear on zoom-in (Google-Maps LOD),
+                culled to the districts in view. Thin, non-interactive overlay so
+                district clicks still register. */}
+            {showSubCounties && subCountyPaths.map((sc) => {
+              const dm = metaByPcode.get(sc.district);
+              if (!dm || !inView(dm.lng, dm.lat)) return null;
+              return <path key={sc.pcode} d={sc.d} fill="none" stroke="#475569" strokeOpacity={0.75} strokeWidth={0.7 / view.scale} strokeLinejoin="round" style={{ pointerEvents: "none" }} />;
             })}
 
             {/* Proportional bubbles — size = metric, colour = status */}
@@ -366,6 +434,9 @@ function ssaTone(v: number | null): string | undefined {
   if (v == null) return undefined;
   return v < 5 ? "text-rose-600" : v < 7 ? "text-amber-600" : "text-emerald-600";
 }
+function barColor(v: number): string {
+  return v < 5 ? "#e11d48" : v < 7 ? "#f59e0b" : v < 9 ? "#22b07f" : "#0f7a57";
+}
 
 function DistrictDrawer({ d, onClose }: { d: BeGeoDistrict; onClose: () => void }) {
   const sm = STATUS_META[d.status];
@@ -417,6 +488,27 @@ function DistrictDrawer({ d, onClose }: { d: BeGeoDistrict; onClose: () => void 
             <Stat label="Critical" value={d.criticalCount} tone={d.criticalCount ? "text-rose-600" : undefined} />
             <Stat label="SSA pending" value={d.ssaPending} />
           </div>
+        </section>
+
+        {/* Performance in EACH of the 8 interventions (not just one average). */}
+        <section>
+          <h4 className="text-[11px] uppercase tracking-wider font-bold muted mb-2">SSA by intervention</h4>
+          {d.interventions.every((i) => i.avg == null) ? (
+            <p className="text-[12px] muted">No SSA scores yet — per-intervention performance appears once schools are assessed.</p>
+          ) : (
+            <div className="space-y-1.5">
+              {d.interventions.map((iv) => (
+                <div key={iv.key} className="flex items-center gap-2 text-[11.5px]">
+                  <span className="w-[42%] shrink-0 truncate font-medium">{iv.label}</span>
+                  <div className="flex-1 h-2.5 rounded-full bg-[var(--color-edify-soft)] overflow-hidden">
+                    {iv.avg != null && <div className="h-full rounded-full" style={{ width: `${(iv.avg / 10) * 100}%`, background: barColor(iv.avg) }} />}
+                  </div>
+                  <span className={cn("w-7 text-right font-extrabold tabular", ssaTone(iv.avg))}>{iv.avg == null ? "—" : iv.avg.toFixed(1)}</span>
+                </div>
+              ))}
+              <p className="text-[10.5px] muted pt-0.5">Average score (0–10) per intervention across the district&apos;s assessed schools.</p>
+            </div>
+          )}
         </section>
 
         <section>

@@ -204,6 +204,7 @@ export type BeGeoDistrict = {
   clustered: number; unclustered: number; clusters: number; ssaDone: number; ssaPending: number; ssaPct: number;
   avgSsa: number | null; criticalCount: number; activitiesCompleted: number;
   status: "healthy" | "needs_attention" | "high_risk" | "insufficient_data";
+  interventions: { key: string; label: string; avg: number | null }[];
   weakestInterventions: { key: string; label: string; avg: number }[];
 };
 export type BeGeoSchoolPoint = { schoolId: string; name: string; lat: number; lng: number; type: string };
