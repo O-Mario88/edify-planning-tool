@@ -9,7 +9,7 @@ import {
 import { formatUgxBig } from "@/lib/cost-settings-mock";
 import { cn } from "@/lib/utils";
 import { isMockAllowed } from "@/lib/mock-policy";
-import { InsufficientData } from "@/components/ui/InsufficientData";
+import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
 
 const TONE = {
   edify: "bg-[var(--color-edify-soft)]/80 text-[var(--color-edify-primary)]",
@@ -30,7 +30,19 @@ const PRIORITY_TONE: Record<Priority, string> = {
 };
 
 export default function RvpFinalApprovalQueuePage() {
-  if (!isMockAllowed()) return <InsufficientData surface="the RVP approval queue" />;
+  if (!isMockAllowed())
+    return (
+      <ProductiveEmptyState
+        Icon={CheckCircle2}
+        tone="info"
+        title="The RVP approval queue isn't connected to the live approval chain yet"
+        description="Country fund requests awaiting RVP final sign-off are withheld until they trace to live FundRequest records."
+        actionLabel="Open Budget"
+        actionHref="/budget"
+        links={[{ label: "Fund requests", href: "/fund-requests" }]}
+        note="No fabricated money figures are shown."
+      />
+    );
   const queue   = monthlyPlanSubmissions.filter((s) => s.status === "Submitted to RVP");
   const pending = monthlyPlanSubmissions.filter((s) => s.status === "Approved by Country Director");
   const passed  = monthlyPlanSubmissions.filter((s) =>

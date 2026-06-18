@@ -11,7 +11,7 @@ import {
 } from "@/lib/fy-engine";
 import { schoolsMock } from "@/lib/schools-mock";
 import { isMockAllowed } from "@/lib/mock-policy";
-import { InsufficientData } from "@/components/ui/InsufficientData";
+import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
 import { cn } from "@/lib/utils";
 
 const GATEWAY_TONE: Record<GatewayStatus, string> = {
@@ -34,7 +34,15 @@ export default function GatewayPage() {
   if (!isMockAllowed()) {
     return (
       <StubPage title={`Gateway — FY ${active}`} subtitle="The school gateway register is not yet served from the backend.">
-        <InsufficientData surface="the FY gateway register" />
+        <ProductiveEmptyState
+          Icon={Lock}
+          title="The FY gateway register isn't wired to live data yet"
+          description="Per-school Gateway training and planning-lock levels are withheld until they trace to live source records."
+          actionLabel="Open Planning"
+          actionHref="/planning"
+          links={[{ label: "Analytics", href: "/analytics" }]}
+          note="No fabricated gateway statuses are shown."
+        />
       </StubPage>
     );
   }

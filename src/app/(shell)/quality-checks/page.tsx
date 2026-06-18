@@ -1,6 +1,6 @@
 import { ShieldCheck, ShieldAlert, Users, Copy, FileQuestion, CheckCircle2 } from "lucide-react";
 import { StubPage } from "@/components/shell/StubPage";
-import { InsufficientData } from "@/components/ui/InsufficientData";
+import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
 import { getCurrentUser } from "@/lib/auth";
 import { fetchSchoolDirectorySummary, fetchLeadershipSummary } from "@/lib/api/surfaces";
 import { cn } from "@/lib/utils";
@@ -15,7 +15,18 @@ export default async function QualityChecksPage() {
     fetchSchoolDirectorySummary(user),
     fetchLeadershipSummary(user),
   ]);
-  if (!dir.live || !lead.live) return <InsufficientData surface="data-quality checks" />;
+  if (!dir.live || !lead.live)
+    return (
+      <ProductiveEmptyState
+        Icon={ShieldCheck}
+        title="Data-quality checks aren't computed from live data yet"
+        description="SSA, account-owner, and duplicate-school integrity counts are withheld until they trace to live source records."
+        actionLabel="Open Analytics"
+        actionHref="/analytics"
+        links={[{ label: "Schools", href: "/schools" }]}
+        note="No fabricated integrity counts are shown."
+      />
+    );
 
   const missingSsa = lead.data.ssaPending;
   const unmatchedOwners = dir.data.unmatchedOwners;

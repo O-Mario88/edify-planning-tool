@@ -1,7 +1,7 @@
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { StubPage } from "@/components/shell/StubPage";
 import { cn } from "@/lib/utils";
-import { InsufficientData } from "@/components/ui/InsufficientData";
+import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
 import { getCurrentUser } from "@/lib/auth";
 import { fetchInterventionImprovement } from "@/lib/api/surfaces";
 
@@ -12,7 +12,18 @@ import { fetchInterventionImprovement } from "@/lib/api/surfaces";
 export default async function YearlyComparisonPage() {
   const user = await getCurrentUser();
   const res = await fetchInterventionImprovement(user, { groupBy: "district" });
-  if (!res.live) return <InsufficientData surface="the year-over-year SSA comparison" />;
+  if (!res.live)
+    return (
+      <ProductiveEmptyState
+        Icon={TrendingUp}
+        title="Year-over-year SSA comparison isn't connected to live data yet"
+        description="Prior-vs-current FY SSA impact is withheld until both years trace to live source records."
+        actionLabel="Open Analytics"
+        actionHref="/analytics"
+        links={[{ label: "Data room", href: "/analytics/data-room" }, { label: "Schools", href: "/schools" }]}
+        note="No fabricated comparison figures are shown."
+      />
+    );
   const { currentFy, prevFy, rows } = res.data;
 
   const totals = rows.reduce(

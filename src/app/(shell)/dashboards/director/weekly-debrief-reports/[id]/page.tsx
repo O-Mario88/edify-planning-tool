@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, FileText } from "lucide-react";
 import { ProgramLeadWeeklyReportRenderer } from "@/components/field-intelligence/ProgramLeadWeeklyReportRenderer";
 import { getCurrentUser } from "@/lib/auth";
 import { isMockAllowed } from "@/lib/mock-policy";
-import { InsufficientData } from "@/components/ui/InsufficientData";
+import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
 import { programLeadWeeklyFieldReportById, reportEventLog } from "@/lib/field-intelligence-mock";
 
 const ALLOWED = new Set(["CountryDirector", "Admin"]);
@@ -28,7 +28,14 @@ export default async function ProgramLeadWeeklyReportPage(props: { params: Promi
           </Link>
         </header>
         <div className="px-4 sm:px-5 md:px-6 pb-10 md:pb-6">
-          <InsufficientData surface="this weekly field report" detail="The Program-Lead weekly field report is withheld until the weekly-report backend is wired — no fabricated named report is shown." />
+          <ProductiveEmptyState
+            Icon={FileText}
+            title="This weekly field report isn't wired to the backend yet"
+            description="The Program-Lead weekly field report is withheld until it traces to the live weekly-report backend."
+            actionLabel="Open Reports"
+            actionHref="/reports"
+            links={[{ label: "Dashboard", href: "/dashboard" }]}
+          />
         </div>
       </>
     );

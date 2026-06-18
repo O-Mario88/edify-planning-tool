@@ -8,6 +8,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   ShieldAlert,
+  Database,
 } from "lucide-react";
 import { StubPage } from "@/components/shell/StubPage";
 import {
@@ -18,7 +19,7 @@ import {
 import { activeFinancialYear } from "@/lib/fy-engine";
 import { getCurrentUser } from "@/lib/auth";
 import { isMockAllowed } from "@/lib/mock-policy";
-import { InsufficientData } from "@/components/ui/InsufficientData";
+import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
 import { cn } from "@/lib/utils";
 import { IaIntakeActions } from "@/components/intake/IaIntakeActions";
 import { OwnerMappingQueue } from "@/components/intake/OwnerMappingQueue";
@@ -55,7 +56,15 @@ export default async function DataIntakeHubPage() {
             </p>
           </section>
         )}
-        <InsufficientData surface="the data intake & readiness engine" detail="Import batches, planning-data readiness, ownership distribution, and duplicate flags are withheld until the intake backend is wired — no fabricated batches or readiness figures are shown." />
+        <ProductiveEmptyState
+          Icon={Database}
+          title="The intake engine isn't wired to the backend yet"
+          description="Import batches, planning-data readiness, ownership distribution, and duplicate flags are withheld until the intake backend is wired."
+          actionLabel="Open Schools"
+          actionHref="/schools"
+          links={[{ label: "System health", href: "/system-health" }, { label: "Analytics", href: "/analytics" }]}
+          note="No fabricated batches or readiness figures are shown."
+        />
       </StubPage>
     );
   }

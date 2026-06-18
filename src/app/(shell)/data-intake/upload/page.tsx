@@ -5,7 +5,7 @@ import { ActionButton } from "@/components/ui/ActionButton";
 import { StopClickLink } from "@/components/ui/StopClickLink";
 import { dataTemplates, dataImportBatches } from "@/lib/data-intake-mock";
 import { isMockAllowed } from "@/lib/mock-policy";
-import { InsufficientData } from "@/components/ui/InsufficientData";
+import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
 import { cn } from "@/lib/utils";
 
 const STATUS_TONE = {
@@ -22,7 +22,15 @@ export default function UploadCenterPage() {
   if (!isMockAllowed()) {
     return (
       <StubPage title="Upload Center" subtitle="The upload pipeline is not yet served from the backend.">
-        <InsufficientData surface="the upload center" />
+        <ProductiveEmptyState
+          Icon={Upload}
+          title="The upload pipeline isn't wired to the backend yet"
+          description="Template downloads, validation, and submission are withheld until the intake backend is wired."
+          actionLabel="Open Schools"
+          actionHref="/schools"
+          links={[{ label: "System health", href: "/system-health" }]}
+          note="No fabricated batches are shown."
+        />
       </StubPage>
     );
   }

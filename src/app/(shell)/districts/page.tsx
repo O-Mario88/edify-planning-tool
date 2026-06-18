@@ -1,7 +1,7 @@
 import { MapPin } from "lucide-react";
 import { EntityIndex, IndexRow } from "@/components/shell/EntityIndex";
 import { isMockAllowed } from "@/lib/mock-policy";
-import { InsufficientData } from "@/components/ui/InsufficientData";
+import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
 import { getCurrentUser } from "@/lib/auth";
 import { fetchDistrictRollups } from "@/lib/api/surfaces";
 
@@ -14,7 +14,21 @@ export default async function DistrictsIndex() {
   // caller. Falls back to an empty state only when the backend is unreachable.
   const user = await getCurrentUser();
   const res = await fetchDistrictRollups(user);
-  if (!res.live) return <InsufficientData surface="district rollups" />;
+  if (!res.live)
+    return (
+      <ProductiveEmptyState
+        Icon={MapPin}
+        tone="info"
+        title="District roll-ups aren't connected to live data yet"
+        description="Per-district school counts and SSA health will appear here once the backend returns live roll-ups."
+        actionLabel="Open Analytics"
+        actionHref="/analytics"
+        links={[
+          { label: "Schools", href: "/schools" },
+          { label: "Data room", href: "/analytics/data-room" },
+        ]}
+      />
+    );
   const districts = res.data.districts;
 
   return (

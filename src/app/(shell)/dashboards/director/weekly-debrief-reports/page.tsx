@@ -14,7 +14,7 @@ import { ActionButton } from "@/components/ui/ActionButton";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { getCurrentUser } from "@/lib/auth";
 import { isMockAllowed } from "@/lib/mock-policy";
-import { InsufficientData } from "@/components/ui/InsufficientData";
+import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
 import {
   programLeadWeeklyFieldReports,
   countryWeeklyFieldIntelligence,
@@ -66,7 +66,15 @@ export default async function WeeklyDebriefReportCenterPage() {
           subtitle="One report per Program Lead. Daily debriefs stay with Program Leads — only weekly compiled reports surface here."
         />
         <div className="px-4 sm:px-5 md:px-6 pb-10 md:pb-6">
-          <InsufficientData surface="the weekly debrief report center" detail="Program-Lead weekly field reports and the country rollup are withheld until the weekly-report backend is wired — no fabricated named reports or achievement figures are shown." />
+          <ProductiveEmptyState
+            Icon={FileText}
+            title="Weekly field reports aren't wired to the backend yet"
+            description="Program-Lead weekly reports and the country rollup are withheld until they trace to the live weekly-report backend."
+            actionLabel="Open Reports"
+            actionHref="/reports"
+            links={[{ label: "Analytics", href: "/analytics" }]}
+            note="No fabricated named reports are shown."
+          />
         </div>
       </>
     );

@@ -9,7 +9,7 @@ import {
 import { formatUgxBig } from "@/lib/cost-settings-mock";
 import { cn } from "@/lib/utils";
 import { isMockAllowed } from "@/lib/mock-policy";
-import { InsufficientData } from "@/components/ui/InsufficientData";
+import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
 
 const PRIORITY_TONE: Record<Priority, string> = {
   Critical:   "bg-rose-100    text-rose-700",
@@ -20,7 +20,19 @@ const PRIORITY_TONE: Record<Priority, string> = {
 };
 
 export default function FundsMatchingPage() {
-  if (!isMockAllowed()) return <InsufficientData surface="funds matching" />;
+  if (!isMockAllowed())
+    return (
+      <ProductiveEmptyState
+        Icon={Wallet}
+        tone="info"
+        title="Funds matching isn't connected to the live approval chain yet"
+        description="Requested-against-available reconciliation is withheld until requests and fund sources trace to live records."
+        actionLabel="Open Budget"
+        actionHref="/budget"
+        links={[{ label: "Fund requests", href: "/fund-requests" }]}
+        note="No fabricated money figures are shown."
+      />
+    );
   const rows = generateFundsMatching();
   const k    = monthlyApprovalKpis();
   const totalCritical    = rows.reduce((a, r) => a + r.criticalActivities, 0);

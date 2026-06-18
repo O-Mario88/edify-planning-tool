@@ -6,8 +6,9 @@ import { messageByIdForUser } from "@/lib/messages-v2/access";
 import { threadMessages } from "@/lib/messages-v2/mock";
 import { replyMessageAction } from "../new/actions";
 import { markReadOnView } from "@/app/(shell)/messages/[id]/status-actions";
+import { MessageSquare } from "lucide-react";
 import { isMockAllowed } from "@/lib/mock-policy";
-import { InsufficientData } from "@/components/ui/InsufficientData";
+import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
 
 // /partner/messages/[id] — Spark-Mail-style thread reader.
 
@@ -22,7 +23,18 @@ export default async function PartnerMessageDetailPage({
 }) {
   const user = await getCurrentUser();
   if (!ALLOWED.has(user.role)) redirect(ROLE_REDIRECT[user.role]);
-  if (!isMockAllowed()) return <InsufficientData surface="partner messages" />;
+  if (!isMockAllowed())
+    return (
+      <ProductiveEmptyState
+        Icon={MessageSquare}
+        tone="neutral"
+        title="Partner messages aren't wired to the live inbox yet"
+        description="This thread is withheld until messages trace to the live messaging backend."
+        actionLabel="Open Today"
+        actionHref="/partner/today"
+        links={[{ label: "My plan", href: "/partner/my-plan" }]}
+      />
+    );
 
   const { id } = await params;
   const message = messageByIdForUser(id, user);

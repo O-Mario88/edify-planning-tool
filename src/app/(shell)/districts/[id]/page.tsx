@@ -3,7 +3,7 @@ import Link from "next/link";
 import { MapPin, Building2, Activity, ShieldCheck, Star, Calendar } from "lucide-react";
 import { EntityDetail, DetailKpi, DetailFacts } from "@/components/shell/EntityDetail";
 import { isMockAllowed } from "@/lib/mock-policy";
-import { InsufficientData } from "@/components/ui/InsufficientData";
+import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
 import { getCurrentUser } from "@/lib/auth";
 import { fetchDistrictRollups } from "@/lib/api/surfaces";
 
@@ -17,7 +17,18 @@ export default async function DistrictDetail({ params }: { params: Promise<{ id:
   // Live per-district rollup (real school counts + SSA health), scoped to the caller.
   const user = await getCurrentUser();
   const res = await fetchDistrictRollups(user);
-  if (!res.live) return <InsufficientData surface="district detail" />;
+  if (!res.live)
+    return (
+      <ProductiveEmptyState
+        Icon={MapPin}
+        tone="info"
+        title="District detail isn't connected to live data yet"
+        description="This district's school counts and SSA health will appear here once the backend returns live roll-ups."
+        actionLabel="Open Analytics"
+        actionHref="/analytics"
+        links={[{ label: "Schools", href: "/schools" }]}
+      />
+    );
   const district = res.data.districts.find((d) => slug(d.district) === id);
   if (!district) return notFound();
 

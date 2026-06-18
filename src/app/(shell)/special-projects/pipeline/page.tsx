@@ -1,3 +1,4 @@
+import { FolderKanban } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { SpHeader } from "@/components/special-projects/SpHeader";
 import { ProjectActivityPipeline, type PipelineRowVM } from "@/components/special-projects/ProjectActivityPipeline";
@@ -6,7 +7,7 @@ import { projectById } from "@/lib/special-projects-mock";
 import { intakeSchools } from "@/lib/intake/intake-mock";
 import { projectRates, paymentAmountFor } from "@/lib/projects/project-cost-rates";
 import { isMockAllowed } from "@/lib/mock-policy";
-import { InsufficientData } from "@/components/ui/InsufficientData";
+import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
 
 // Project Activity Pipeline — the consolidated, role-aware queue for partner-
 // delivered project work moving Assigned → Scheduled → Evidence → Salesforce
@@ -27,7 +28,15 @@ export default async function ProjectPipelinePage() {
             <h1 className="text-[17px] font-extrabold tracking-tight">Project Activity Pipeline</h1>
             <p className="text-[12px] muted">Partner-delivered project work — assigned → scheduled → evidence → Salesforce → IA verification → payment.</p>
           </header>
-          <InsufficientData surface="the project activity pipeline" detail="Partner project activities, Salesforce IDs, and payment amounts are withheld until the project-pipeline backend is wired — no fabricated IDs or amounts are shown." />
+          <ProductiveEmptyState
+            Icon={FolderKanban}
+            title="No project pipeline from live records yet — no fabricated Salesforce IDs or amounts are shown"
+            description="Partner project activities surface here once they trace to live source records through to IA verification and payment."
+            actionLabel="Open Special Projects"
+            actionHref="/special-projects"
+            links={[{ label: "Partners", href: "/partners" }]}
+            note="No fabricated Salesforce IDs or payment amounts are shown."
+          />
         </div>
       </>
     );

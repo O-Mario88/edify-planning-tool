@@ -6,14 +6,14 @@
 
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { PenSquare } from "lucide-react";
+import { PenSquare, MessageSquare } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { ROLE_REDIRECT } from "@/lib/auth-public";
 import { PartnerSubPageHeader } from "@/components/partner/PartnerSubPageHeader";
 import { MessageCenterLayout } from "@/components/messages/MessageCenterLayout";
 import { messagesForUser, type MessageFolder } from "@/lib/messages-v2/access";
 import { isMockAllowed } from "@/lib/mock-policy";
-import { InsufficientData } from "@/components/ui/InsufficientData";
+import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
 
 const ALLOWED = new Set([
   "PartnerAdmin", "PartnerFieldOfficer", "PartnerViewer", "Admin",
@@ -27,7 +27,18 @@ export default async function PartnerMessagesPage({
   const user = await getCurrentUser();
   if (!ALLOWED.has(user.role)) redirect(ROLE_REDIRECT[user.role]);
   // Threads/counts come from the messages-v2 mock, not the backend. Withhold in prod.
-  if (!isMockAllowed()) return <InsufficientData surface="partner messages" />;
+  if (!isMockAllowed())
+    return (
+      <ProductiveEmptyState
+        Icon={MessageSquare}
+        tone="neutral"
+        title="Partner messages aren't wired to the live inbox yet"
+        description="Threads and unread counts are withheld until they trace to the live messaging backend."
+        actionLabel="Open Today"
+        actionHref="/partner/today"
+        links={[{ label: "My plan", href: "/partner/my-plan" }]}
+      />
+    );
 
   const params = await searchParams;
   const folder: MessageFolder = params.folder === "sent" ? "sent" : "inbox";

@@ -2,14 +2,22 @@ import Link from "next/link";
 import { FileSpreadsheet, Download, ChevronRight } from "lucide-react";
 import { StubPage } from "@/components/shell/StubPage";
 import { isMockAllowed } from "@/lib/mock-policy";
-import { InsufficientData } from "@/components/ui/InsufficientData";
+import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
 import { dataTemplates } from "@/lib/data-intake-mock";
 
 export default function TemplateBuilderPage() {
   if (!isMockAllowed()) {
     return (
       <StubPage title="Template Builder" subtitle="Upload templates are not yet served from the backend.">
-        <InsufficientData surface="the template builder" />
+        <ProductiveEmptyState
+          Icon={FileSpreadsheet}
+          title="Upload templates aren't wired to the backend yet"
+          description="The system-generated upload templates are withheld until the intake backend is wired."
+          actionLabel="Open Schools"
+          actionHref="/schools"
+          links={[{ label: "System health", href: "/system-health" }]}
+          note="No fabricated templates are shown."
+        />
       </StubPage>
     );
   }

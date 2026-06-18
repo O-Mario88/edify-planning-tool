@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft, Sparkles, AlertTriangle, ArrowRight, ShieldCheck, Building2 } from "lucide-react";
 import { StubPage } from "@/components/shell/StubPage";
-import { InsufficientData } from "@/components/ui/InsufficientData";
+import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
 import { getCurrentUser } from "@/lib/auth";
 import { fetchCoverageSummary } from "@/lib/api/surfaces";
 
@@ -11,7 +11,18 @@ import { fetchCoverageSummary } from "@/lib/api/surfaces";
 export default async function CoverageRecommendationsPage() {
   const user = await getCurrentUser();
   const res = await fetchCoverageSummary(user);
-  if (!res.live) return <InsufficientData surface="coverage recommendations" />;
+  if (!res.live)
+    return (
+      <ProductiveEmptyState
+        Icon={Sparkles}
+        tone="info"
+        title="No coverage recommendations from live data yet"
+        description="Client schools ranked by SSA need will appear here once the backend returns live coverage data."
+        actionLabel="Open coverage"
+        actionHref="/coverage"
+        links={[{ label: "Analytics", href: "/analytics" }]}
+      />
+    );
   const c = res.data;
 
   return (

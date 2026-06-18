@@ -8,10 +8,22 @@ import {
 import { formatUgxBig } from "@/lib/cost-settings-mock";
 import { cn } from "@/lib/utils";
 import { isMockAllowed } from "@/lib/mock-policy";
-import { InsufficientData } from "@/components/ui/InsufficientData";
+import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
 
 export default function AmendmentHistoryPage() {
-  if (!isMockAllowed()) return <InsufficientData surface="amendment history" />;
+  if (!isMockAllowed())
+    return (
+      <ProductiveEmptyState
+        Icon={History}
+        tone="info"
+        title="Amendment history isn't connected to the live approval chain yet"
+        description="Budget amendment roll-ups are withheld until they trace to live FundRequest records."
+        actionLabel="Open Budget"
+        actionHref="/budget"
+        links={[{ label: "Fund requests", href: "/fund-requests" }]}
+        note="No fabricated money figures are shown."
+      />
+    );
   const amendments = monthlyPlanSubmissions.flatMap((s) =>
     s.amendments.map((a) => ({ submission: s, amendment: a })),
   );

@@ -6,7 +6,7 @@ import { CountryDataQualityCard } from "@/components/intake/CountryDataQualityCa
 import { activeFinancialYear } from "@/lib/fy-engine";
 import { getCurrentUser } from "@/lib/auth";
 import { isMockAllowed } from "@/lib/mock-policy";
-import { InsufficientData } from "@/components/ui/InsufficientData";
+import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
 import { cn } from "@/lib/utils";
 
 export default async function DataQualityCenterPage() {
@@ -29,7 +29,15 @@ export default async function DataQualityCenterPage() {
             <p className="text-[11.5px] muted">Only Impact Assessment and Admin own data quality.</p>
           </section>
         )}
-        <InsufficientData surface="the data quality center" detail="Integrity scores and issue logs are withheld until the data-quality backend is wired — no fabricated quality figures are shown." />
+        <ProductiveEmptyState
+          Icon={ShieldCheck}
+          title="Data-quality checks aren't wired to the backend yet"
+          description="Integrity scores and issue logs are withheld until the data-quality backend is wired."
+          actionLabel="Open Analytics"
+          actionHref="/analytics"
+          links={[{ label: "Data room", href: "/analytics/data-room" }, { label: "Schools", href: "/schools" }]}
+          note="No fabricated quality figures are shown."
+        />
       </StubPage>
     );
   }

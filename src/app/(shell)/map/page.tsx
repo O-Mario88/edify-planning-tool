@@ -4,7 +4,7 @@ import { StubPage } from "@/components/shell/StubPage";
 import { schoolsMock, distinctShippingAddresses } from "@/lib/schools-mock";
 import { cn } from "@/lib/utils";
 import { isMockAllowed } from "@/lib/mock-policy";
-import { InsufficientData } from "@/components/ui/InsufficientData";
+import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
 
 // Schools across the country. The top is a library-free "coverage map": each
 // school is a pin, anchored to its region's zone on an abstract canvas and
@@ -44,7 +44,18 @@ function ssaColor(status: string): string {
 export default function MapPage() {
   // The coverage map + SSA counts are not yet backed by live school records;
   // never show the mock universe as production data.
-  if (!isMockAllowed()) return <InsufficientData surface="the coverage map" />;
+  if (!isMockAllowed())
+    return (
+      <ProductiveEmptyState
+        Icon={MapPin}
+        title="The coverage map isn't connected to live geography data yet"
+        description="School pins and district coverage are withheld until they trace to live source records."
+        actionLabel="Open Analytics"
+        actionHref="/analytics"
+        links={[{ label: "Schools", href: "/schools" }]}
+        note="No fabricated pins are shown."
+      />
+    );
   const totalSchools = schoolsMock.length;
   const completed    = schoolsMock.filter((s) => s.ssaStatus === "Completed").length;
   const overdue      = schoolsMock.filter((s) => s.ssaStatus === "Overdue").length;

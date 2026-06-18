@@ -14,7 +14,7 @@ import { EntityDetail, DetailKpi } from "@/components/shell/EntityDetail";
 import { SectionCard, StatusBadge } from "@/components/ui/primitives";
 import { partnerTargetPerformance } from "@/lib/team-targets-mock";
 import { isMockAllowed } from "@/lib/mock-policy";
-import { InsufficientData } from "@/components/ui/InsufficientData";
+import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
 
 // ────────── Mock detail data ──────────
 //
@@ -67,7 +67,17 @@ export default async function PartnerDetail({ params }: { params: Promise<{ id: 
   const { id } = await params;
   // Partner detail is 100% hand-typed mock (same 3 projects/14 schools/78 visits
   // for every partner). Withhold until backed by real Partner records.
-  if (!isMockAllowed()) return <InsufficientData surface="partner detail" />;
+  if (!isMockAllowed())
+    return (
+      <ProductiveEmptyState
+        Icon={Handshake}
+        title="This partner's detail isn't wired to live records yet"
+        description="Projects, schools served, and verification history are withheld until they trace to live Partner records."
+        actionLabel="Open Partners"
+        actionHref="/partners"
+        links={[{ label: "Analytics", href: "/analytics" }]}
+      />
+    );
   const p = partnerTargetPerformance.find((x) => x.partnerId === id);
   if (!p) return notFound();
 

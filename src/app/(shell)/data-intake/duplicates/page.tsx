@@ -2,8 +2,9 @@ import { StubPage } from "@/components/shell/StubPage";
 import { getCurrentUser } from "@/lib/auth";
 import { openDuplicateCandidates, duplicateCandidates } from "@/lib/intake/duplicate-candidates-mock";
 import { DuplicateReviewQueue } from "@/components/intake/DuplicateReviewQueue";
+import { Copy } from "lucide-react";
 import { isMockAllowed } from "@/lib/mock-policy";
-import { InsufficientData } from "@/components/ui/InsufficientData";
+import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
 
 export default async function DuplicateReviewPage() {
   const me = await getCurrentUser();
@@ -23,7 +24,15 @@ export default async function DuplicateReviewPage() {
             <p className="text-[11.5px] muted">Only Impact Assessment and Admin resolve duplicate flags.</p>
           </section>
         )}
-        <InsufficientData surface="the duplicate review queue" detail="Duplicate-match flags are withheld until the duplicate-detection backend is wired — no fabricated look-alike matches are shown." />
+        <ProductiveEmptyState
+          Icon={Copy}
+          title="Duplicate detection isn't wired to the backend yet"
+          description="Duplicate-match flags are withheld until the duplicate-detection backend is wired."
+          actionLabel="Open Schools"
+          actionHref="/schools"
+          links={[{ label: "Analytics", href: "/analytics" }]}
+          note="No fabricated look-alike matches are shown."
+        />
       </StubPage>
     );
   }

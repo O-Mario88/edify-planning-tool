@@ -10,7 +10,7 @@ import {
 import { formatUgxBig } from "@/lib/cost-settings-mock";
 import { cn } from "@/lib/utils";
 import { isMockAllowed } from "@/lib/mock-policy";
-import { InsufficientData } from "@/components/ui/InsufficientData";
+import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
 
 const TONE = {
   edify: "bg-[var(--color-edify-soft)]/80 text-[var(--color-edify-primary)]",
@@ -31,7 +31,19 @@ const PRIORITY_TONE: Record<Priority, string> = {
 };
 
 export default function ActiveFundingPlanPage() {
-  if (!isMockAllowed()) return <InsufficientData surface="active funding plans" />;
+  if (!isMockAllowed())
+    return (
+      <ProductiveEmptyState
+        Icon={CheckCircle2}
+        tone="info"
+        title="Active funding plans aren't connected to the live approval chain yet"
+        description="Final-approved plans and their disbursement schedules are withheld until they trace to live FundRequest records."
+        actionLabel="Open Budget"
+        actionHref="/budget"
+        links={[{ label: "Fund requests", href: "/fund-requests" }]}
+        note="No fabricated money figures are shown."
+      />
+    );
   const active = monthlyPlanSubmissions.filter((s) =>
     s.status === "Final Approved" || s.status === "Active Funding Plan" || s.status === "Disbursed"
   );

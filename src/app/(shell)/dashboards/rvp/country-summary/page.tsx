@@ -3,8 +3,9 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { AggregatedFieldContextCard } from "@/components/field-intelligence/AggregatedFieldContextCard";
 import { DecisionActionsCard } from "@/components/decisions/DecisionActionsCard";
 import { getCurrentUser } from "@/lib/auth";
+import { Globe } from "lucide-react";
 import { isMockAllowed } from "@/lib/mock-policy";
-import { InsufficientData } from "@/components/ui/InsufficientData";
+import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
 import { rvpCountrySummary, decisionActionsForCreator } from "@/lib/field-intelligence-mock";
 
 // RVP country summary.
@@ -34,7 +35,15 @@ export default async function RvpCountrySummaryPage() {
             country summary a regional VP could act on. */}
         {!isMockAllowed() ? (
           <div className="px-4 sm:px-5 md:px-6 pb-10 md:pb-6">
-            <InsufficientData surface="the country weekly field intelligence" detail="The country-level rollup and RVP escalation list are withheld until the field-intelligence and decision backends are wired — no fabricated country figures are shown." />
+            <ProductiveEmptyState
+              Icon={Globe}
+              title="The country weekly field intelligence isn't wired to live data yet"
+              description="The country rollup and RVP escalation list are withheld until they trace to the live field-intelligence and decision backends."
+              actionLabel="Open Analytics"
+              actionHref="/analytics"
+              links={[{ label: "Reports", href: "/reports" }]}
+              note="No fabricated country figures are shown."
+            />
           </div>
         ) : (() => {
           const ctx = rvpCountrySummary();

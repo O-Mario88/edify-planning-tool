@@ -4,8 +4,9 @@ import { ActionButton } from "@/components/ui/ActionButton";
 import { ApproveImportButton } from "./ApproveImportButton";
 import { ValidateBatchButton, SendForReviewButton, RejectBatchButton } from "./BatchActions";
 import { dataImportBatches, type DataImportBatch } from "@/lib/data-intake-mock";
+import { Database } from "lucide-react";
 import { isMockAllowed } from "@/lib/mock-policy";
-import { InsufficientData } from "@/components/ui/InsufficientData";
+import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
 import { cn } from "@/lib/utils";
 
 const STATUS_TONE = {
@@ -77,7 +78,15 @@ export default function DataValidationQueuePage() {
         title="Data Validation Queue"
         subtitle="Every uploaded batch with row-level validation results, approval state, and reviewer audit trail."
       >
-        <InsufficientData surface="the data validation queue" detail="Import batches and validation results are withheld until the intake backend is wired — no fabricated batches are shown." />
+        <ProductiveEmptyState
+          Icon={Database}
+          title="The validation queue isn't wired to the backend yet"
+          description="Import batches and validation results are withheld until the intake backend is wired."
+          actionLabel="Open Schools"
+          actionHref="/schools"
+          links={[{ label: "System health", href: "/system-health" }]}
+          note="No fabricated batches are shown."
+        />
       </StubPage>
     );
   }

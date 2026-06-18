@@ -5,7 +5,7 @@ import { activeFinancialYear, nextFinancialYear } from "@/lib/fy-engine";
 import { planningDataReadiness } from "@/lib/data-intake-mock";
 import { validateCountryCostSettings } from "@/lib/cost-settings-mock";
 import { isMockAllowed } from "@/lib/mock-policy";
-import { InsufficientData } from "@/components/ui/InsufficientData";
+import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
 import { cn } from "@/lib/utils";
 
 type ReadinessItem = {
@@ -22,7 +22,15 @@ export default function NewFyReadinessCenterPage() {
   if (!isMockAllowed()) {
     return (
       <StubPage title={`FY ${next} readiness`} subtitle="Planning-gateway readiness is not yet served from the backend.">
-        <InsufficientData surface="the FY readiness checklist" />
+        <ProductiveEmptyState
+          Icon={ListChecks}
+          title="FY readiness isn't wired to live data yet"
+          description="The traffic-light readiness checklist is withheld until each check traces to live source records."
+          actionLabel="Open Planning"
+          actionHref="/planning"
+          links={[{ label: "Schools", href: "/schools" }]}
+          note="No fabricated readiness statuses are shown."
+        />
       </StubPage>
     );
   }

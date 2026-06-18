@@ -8,7 +8,7 @@ import {
 } from "@/lib/data-intake-mock";
 import { activeFinancialYear } from "@/lib/fy-engine";
 import { isMockAllowed } from "@/lib/mock-policy";
-import { InsufficientData } from "@/components/ui/InsufficientData";
+import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
 import { cn } from "@/lib/utils";
 
 export default function PlanningDataReadinessPage() {
@@ -23,7 +23,15 @@ export default function PlanningDataReadinessPage() {
         title="Planning Data Readiness"
         subtitle={`The Annual Operating Cycle checks readiness before opening a new FY, generating Gateway training, producing SSA-informed recommendations, building annual budgets, or activating monthly funding plans. ${fy.label}.`}
       >
-        <InsufficientData surface="planning data readiness" detail="The readiness verdict and per-area checks are withheld until the intake-readiness backend is wired — no fabricated readiness status is shown." />
+        <ProductiveEmptyState
+          Icon={CheckCircle2}
+          title="Planning-data readiness isn't wired to the backend yet"
+          description="The readiness verdict and per-area checks are withheld until the intake-readiness backend is wired."
+          actionLabel="Open Schools"
+          actionHref="/schools"
+          links={[{ label: "Analytics", href: "/analytics" }]}
+          note="No fabricated readiness status is shown."
+        />
       </StubPage>
     );
   }

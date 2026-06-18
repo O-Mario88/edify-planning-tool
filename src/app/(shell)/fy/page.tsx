@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   CalendarRange,
+  Calendar,
   ShieldCheck,
   GraduationCap,
   TrendingUp,
@@ -21,7 +22,7 @@ import {
 import { planningDataReadiness } from "@/lib/data-intake-mock";
 import { validateCountryCostSettings } from "@/lib/cost-settings-mock";
 import { isMockAllowed } from "@/lib/mock-policy";
-import { InsufficientData } from "@/components/ui/InsufficientData";
+import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
 import { cn } from "@/lib/utils";
 
 export default function AnnualOperatingCyclePage() {
@@ -32,7 +33,15 @@ export default function AnnualOperatingCyclePage() {
   if (!isMockAllowed()) {
     return (
       <StubPage title={`Annual operating cycle — FY ${active}`} subtitle="The annual cycle overview is not yet served from the backend.">
-        <InsufficientData surface="the annual operating cycle" />
+        <ProductiveEmptyState
+          Icon={Calendar}
+          title="The annual operating cycle isn't wired to live data yet"
+          description="FY status, Gateway, SSA freshness, planning locks, and budget readiness are withheld until they trace to live source records."
+          actionLabel="Open Planning"
+          actionHref="/planning"
+          links={[{ label: "Analytics", href: "/analytics" }]}
+          note="No fabricated cycle figures are shown."
+        />
       </StubPage>
     );
   }

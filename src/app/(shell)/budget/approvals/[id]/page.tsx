@@ -31,7 +31,7 @@ import {
 import { formatUgxBig } from "@/lib/cost-settings-mock";
 import { cn } from "@/lib/utils";
 import { isMockAllowed } from "@/lib/mock-policy";
-import { InsufficientData } from "@/components/ui/InsufficientData";
+import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
 
 const TONE = {
   edify: "bg-[var(--color-edify-soft)]/80 text-[var(--color-edify-primary)]",
@@ -57,7 +57,19 @@ export default async function ApprovalSubmissionDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  if (!isMockAllowed()) return <InsufficientData surface="the approval submission" />;
+  if (!isMockAllowed())
+    return (
+      <ProductiveEmptyState
+        Icon={CheckCircle2}
+        tone="info"
+        title="This approval submission isn't connected to the live approval chain yet"
+        description="The submission detail, budget summary, and audit trail are withheld until they trace to live FundRequest records."
+        actionLabel="Open approvals"
+        actionHref="/budget/approvals"
+        links={[{ label: "Budget", href: "/budget" }]}
+        note="No fabricated money figures are shown."
+      />
+    );
   const s = getMonthlySubmission(id);
   if (!s) return notFound();
   const me = await getCurrentUser();

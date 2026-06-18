@@ -1,9 +1,10 @@
 import { redirect } from "next/navigation";
+import { FileText } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ProgramLeadWeeklyReportEditor } from "@/components/field-intelligence/ProgramLeadWeeklyReportEditor";
 import { getCurrentUser } from "@/lib/auth";
 import { isMockAllowed } from "@/lib/mock-policy";
-import { InsufficientData } from "@/components/ui/InsufficientData";
+import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
 import { programLeadWeeklyFieldReports } from "@/lib/field-intelligence-mock";
 
 // Program Lead weekly report editor.
@@ -28,7 +29,15 @@ export default async function ProgramLeadWeeklyReportEditorPage() {
           backFallbackHref="/dashboard"
         />
         <div className="px-4 sm:px-5 md:px-6 pt-2 pb-10 md:pb-6">
-          <InsufficientData surface="the weekly field report editor" detail="The auto-filled weekly report is withheld until the weekly-report backend is wired — no fabricated team activity, achievement, or barrier figures are pre-populated." />
+          <ProductiveEmptyState
+            Icon={FileText}
+            title="Your weekly field report isn't wired to the backend yet"
+            description="The auto-filled report is withheld until team activity, debriefs, achievement, and barriers trace to live source records."
+            actionLabel="Open Dashboard"
+            actionHref="/dashboard"
+            links={[{ label: "Reports", href: "/reports" }]}
+            note="No fabricated team activity, achievement, or barrier figures are pre-populated."
+          />
         </div>
       </>
     );
