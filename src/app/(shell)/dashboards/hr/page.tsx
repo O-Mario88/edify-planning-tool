@@ -19,6 +19,7 @@ import { DecisionEngineEmbed } from "@/components/leadership/DecisionEngineEmbed
 import { DebriefReviewInbox } from "@/components/messages/DebriefReviewInbox";
 import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
+import { ResponsiveGrid } from "@/components/ui/ResponsiveGrid";
 import { HrKpiStrip } from "@/components/hr/HrKpiStrip";
 import { HrRosterLive } from "@/components/hr/HrRosterLive";
 import { HrMobileView } from "@/components/mobile/views/HrMobileView";
@@ -129,8 +130,9 @@ export default async function HrFieldContextPage() {
           )}
         </section>
 
-        {/* Closing utility row — three shortcut cards. */}
-        <section className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {/* Closing utility row — shortcut cards. ResponsiveGrid auto-fits them
+            (1→2→3 by width) so they never strand a column at any viewport. */}
+        <ResponsiveGrid min={240} gap={12}>
           {QUICK_ACTIONS.map((a) => (
             <Link
               key={a.title}
@@ -147,7 +149,7 @@ export default async function HrFieldContextPage() {
               <ChevronRight size={14} className="text-[var(--color-edify-muted)] shrink-0" />
             </Link>
           ))}
-        </section>
+        </ResponsiveGrid>
       </div>
     </>
   );

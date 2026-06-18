@@ -18,6 +18,7 @@ import { FundApprovalQueueLive } from "@/components/funds/FundApprovalQueueLive"
 import { CceoClusterScheduleCard } from "@/components/cceo/CceoClusterScheduleCard";
 import { CceoMomentumBanner } from "@/components/cceo/CceoMomentumBanner";
 import { SectionHeader } from "@/components/ui/SectionHeader";
+import { ResponsiveGrid } from "@/components/ui/ResponsiveGrid";
 import { PortfolioSummaryCard } from "@/components/portfolio/PortfolioSummaryCard";
 import { ClusterReadinessCard } from "@/components/cluster/ClusterReadinessCard";
 import { scopedClusterCounts } from "@/lib/cluster/cluster-scope";
@@ -137,11 +138,14 @@ export default async function CceoDashboardPage() {
             title="Which schools need you"
             description="Red alerts, missing SSAs, and the visits & trainings the SSA engine recommends — straight from your portfolio's two weakest interventions."
           />
-          <div className="grid grid-cols-12 gap-3 lg:gap-4 items-stretch">
-            <div className="col-span-12 lg:col-span-4"><RedAlertSchoolsCard staffId={user.staffId} role={user.role} /></div>
-            <div className="col-span-12 lg:col-span-4"><SsaNeededCard staffId={user.staffId} role={user.role} /></div>
-            <div className="col-span-12 lg:col-span-4"><RecommendedActionsCard staffId={user.staffId} role={user.role} /></div>
-          </div>
+          {/* Equal-peer cards → ResponsiveGrid auto-fit so they flow 3→2→1 by
+              width (the old col-span jumped straight from 1-col to 3-col with no
+              tablet state) and a compact card never strands a column. */}
+          <ResponsiveGrid min={300} gap={16} className="items-stretch">
+            <RedAlertSchoolsCard staffId={user.staffId} role={user.role} />
+            <SsaNeededCard staffId={user.staffId} role={user.role} />
+            <RecommendedActionsCard staffId={user.staffId} role={user.role} />
+          </ResponsiveGrid>
           <div className="grid grid-cols-12 gap-3 lg:gap-4 items-stretch">
             <div className="col-span-12 lg:col-span-7"><CoreSchoolsNeedingAttentionCard /></div>
             <div className="col-span-12 lg:col-span-5">{isMockAllowed() ? <CoreSsaHeatmapCard /> : <CoreSsaHeatmapLive />}</div>
