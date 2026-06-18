@@ -12,14 +12,22 @@ import { useMemo, useState, useTransition, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import {
   Network, MapPin, User, AlertTriangle, Plus, Users, Building2, CheckCircle2,
-  Sparkles, Handshake, X,
+  Sparkles, Handshake, X, UserCheck,
 } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
 import { cn } from "@/lib/utils";
-import { assignSchoolAction, createClusterAndAssignAction, markJoinedThroughClusterAction } from "@/lib/actions/cluster-actions";
+import { SUBCOUNTIES, subCountiesOf } from "@/lib/geography";
+import { candidateClusterLeaders } from "@/lib/cluster/cluster-core";
+import { assignSchoolAction, createEmptyClusterAction, markJoinedThroughClusterAction } from "@/lib/actions/cluster-actions";
+
+// Same source as the standalone "New cluster" form so the directory's create-new
+// experience offers the identical district picker.
+const DISTRICT_OPTIONS = Array.from(new Set(SUBCOUNTIES.map((s) => s.districtName)))
+  .sort()
+  .map((d) => ({ value: d, label: d }));
 import { assignSchoolToProjectAction, removeSchoolFromProjectAction } from "@/lib/actions/special-project-actions";
 import { assignPartnerToSchool, cancelPartnerAssignment } from "@/lib/actions/portfolio-actions";
 
@@ -99,6 +107,14 @@ export function DirectoryClusterDrawer({
   const [mode, setMode] = useState<"existing" | "create">("existing");
   const [selected, setSelected] = useState<string>("");
   const [newName, setNewName] = useState("");
+  // Create-new cluster form — mirrors the standalone CreateClusterButton: district
+  // dropdown, multi-select sub-counties, auto-suggested name, and a cluster leader.
+  const [newDistrict, setNewDistrict] = useState("");
+  const [newSubCounties, setNewSubCounties] = useState<string[]>([]);
+  const [newAutoName, setNewAutoName] = useState("");
+  const [leaderName, setLeaderName] = useState("");
+  const [leaderPhone, setLeaderPhone] = useState("");
+  const [leaderSchoolId, setLeaderSchoolId] = useState("");
   const [joinedVia, setJoinedVia] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -132,6 +148,17 @@ export function DirectoryClusterDrawer({
     [availableProjects, recommendedSet],
   );
 
+  // Create-new cluster: sub-county choices for the chosen district + candidate
+  // leaders drawn from schools in the chosen area (same helpers the standalone form uses).
+  const newSubCountyChoices = useMemo(
+    () => (newDistrict ? subCountiesOf(newDistrict).map((s) => s.name) : []),
+    [newDistrict],
+  );
+  const leaderCandidates = useMemo(
+    () => (newDistrict ? candidateClusterLeaders(newDistrict, newSubCounties) : []),
+    [newDistrict, newSubCounties],
+  );
+
   if (!school) return null;
   function flashError(msg: string) { setError(msg); }
   function close() { onClose(changed); setChanged(false); setError(null); }
@@ -153,20 +180,73 @@ export function DirectoryClusterDrawer({
     onClose(true);
   }
 
+  // Enter create-new mode, defaulting district + sub-county to the school's own
+  // geography (the common case: clustering THIS school). Editable thereafter.
+  function enterCreateMode() {
+    setMode("create");
+    setError(null);
+    if (!newDistrict) {
+      const d = school!.district;
+      const sc = school!.subCounty ? [school!.subCounty] : [];
+      setNewDistrict(d);
+      setNewSubCounties(sc);
+      const suggestion = suggestNewName(d, sc);
+      setNewName(suggestion);
+      setNewAutoName(suggestion);
+    }
+  }
+
+  function suggestNewName(d: string, subs: string[]): string {
+    if (subs.length === 1) return `${subs[0]} Cluster`;
+    if (subs.length > 1) return `${d} Cluster`;
+    return "";
+  }
+
+  function toggleNewSubCounty(sc: string) {
+    setNewSubCounties((prev) => {
+      const next = prev.includes(sc) ? prev.filter((x) => x !== sc) : [...prev, sc];
+      // Keep the name synced while the user hasn't typed a custom one.
+      if (newName === "" || newName === newAutoName) {
+        const suggestion = suggestNewName(newDistrict, next);
+        setNewName(suggestion);
+        setNewAutoName(suggestion);
+      }
+      return next;
+    });
+  }
+
+  function pickLeader(schoolId: string) {
+    setLeaderSchoolId(schoolId);
+    const c = leaderCandidates.find((x) => x.schoolId === schoolId);
+    if (c) { setLeaderName(c.leaderName); setLeaderPhone(c.phone ?? ""); }
+  }
+
   async function createAndAssign(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    if (newSubCounties.length === 0) { flashError("Select at least one sub-county."); return; }
     if (!newName.trim()) { flashError("Give the cluster a name."); return; }
     setBusy(true);
-    const res = await createClusterAndAssignAction([school!.schoolId], {
+    // 1) Create the cluster with its full geography + leader (persists to the backend).
+    const res = await createEmptyClusterAction({
       name: newName.trim(),
-      region: school!.region,
-      district: school!.district,
-      subCounties: school!.subCounty ? [school!.subCounty] : [],
+      district: newDistrict,
+      subCounties: newSubCounties,
+      clusterLeaderName: leaderName.trim() || undefined,
+      clusterLeaderPhone: leaderPhone.trim() || undefined,
+      clusterLeaderSchoolId: leaderSchoolId || undefined,
     });
     if (!res.ok) {
       setBusy(false);
-      flashError(res.reason === "INVALID_INPUT" ? (Object.values(res.errors)[0] ?? "Invalid.") : res.reason === "FAILED" ? res.message : "Failed.");
+      flashError(res.reason === "INVALID_INPUT" ? (Object.values(res.errors)[0] ?? "Invalid.") : res.reason === "FORBIDDEN" ? "You don't have permission." : res.reason === "FAILED" ? res.message : "Failed.");
+      return;
+    }
+    // 2) Add this school as the cluster's first member.
+    const assign = await assignSchoolAction(school!.schoolId, res.clusterId);
+    if (!assign.ok) {
+      setBusy(false);
+      flashError(`Cluster created, but adding ${school!.schoolName} failed${assign.reason === "FAILED" ? `: ${assign.message}` : "."} You can add it from the cluster page.`);
+      router.refresh();
       return;
     }
     if (joinedVia) await markJoinedThroughClusterAction(school!.schoolId, res.clusterId, "cluster_onboarding");
@@ -278,7 +358,7 @@ export function DirectoryClusterDrawer({
             <>
               <div className="grid grid-cols-2 gap-1 p-1 rounded-lg bg-[var(--color-edify-soft)]/50">
                 <ModeTab active={mode === "existing"} onClick={() => { setMode("existing"); setError(null); }}>Existing cluster</ModeTab>
-                <ModeTab active={mode === "create"} onClick={() => { setMode("create"); setError(null); if (!newName) setNewName(`${school.subCounty ?? school.district} Cluster`); }}>Create new</ModeTab>
+                <ModeTab active={mode === "create"} onClick={enterCreateMode}>Create new</ModeTab>
               </div>
 
               {mode === "existing" ? (
@@ -332,14 +412,79 @@ export function DirectoryClusterDrawer({
                 </div>
               ) : (
                 <form onSubmit={createAndAssign} className="space-y-3">
-                  <Input label="Cluster name" required value={newName} onChange={(e) => setNewName(e.target.value)} placeholder={`e.g. ${school.subCounty ?? school.district} Cluster`} />
-                  <div className="grid grid-cols-2 gap-3">
-                    <Input label="District" value={school.district} readOnly />
-                    <Input label="Sub-county" value={school.subCounty ?? "—"} readOnly />
+                  <Select
+                    label="District"
+                    required
+                    value={newDistrict}
+                    onChange={(e) => { setNewDistrict(e.target.value); setNewSubCounties([]); setLeaderSchoolId(""); }}
+                    options={DISTRICT_OPTIONS}
+                  />
+
+                  {/* Sub-counties — multi-select (a cluster may span several); the
+                      school's own sub-county is pre-checked so it's covered. */}
+                  <div className="space-y-1">
+                    <label className="block text-[12px] font-semibold text-[var(--color-edify-text)]">
+                      Sub-counties <span className="text-rose-500">*</span>
+                      <span className="ml-1 font-normal muted">({newSubCounties.length} selected)</span>
+                    </label>
+                    <div className="max-h-40 overflow-y-auto rounded-lg border border-[var(--color-edify-border)] divide-y divide-[var(--color-edify-divider)]">
+                      {newSubCountyChoices.length === 0 ? (
+                        <p className="px-3 py-3 text-[12px] muted">No sub-counties catalogued for this district.</p>
+                      ) : (
+                        newSubCountyChoices.map((sc) => {
+                          const checked = newSubCounties.includes(sc);
+                          return (
+                            <label
+                              key={sc}
+                              className={cn(
+                                "flex items-center gap-2.5 px-3 py-2 text-[12.5px] cursor-pointer transition-colors",
+                                checked ? "bg-[var(--color-edify-primary)]/5 font-semibold" : "hover:bg-[var(--color-edify-soft)]/40",
+                              )}
+                            >
+                              <input type="checkbox" checked={checked} onChange={() => toggleNewSubCounty(sc)} className="h-3.5 w-3.5 accent-[var(--color-edify-primary)]" />
+                              {sc}
+                            </label>
+                          );
+                        })
+                      )}
+                    </div>
                   </div>
+
+                  <Input
+                    label="Cluster name"
+                    required
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                    placeholder="e.g. Mukono Central Cluster"
+                    helper="Auto-suggested from your selection — edit if you like. Must be unique within the district."
+                  />
+
+                  {/* Cluster leader — a school leader from one of the cluster's schools. */}
+                  <div className="space-y-2 rounded-lg border border-[var(--color-edify-border)] p-3">
+                    <div className="flex items-center gap-1.5 text-[12px] font-extrabold tracking-tight">
+                      <UserCheck size={13} className="text-[var(--color-edify-primary)]" />
+                      Cluster leader
+                    </div>
+                    {leaderCandidates.length > 0 ? (
+                      <Select
+                        label="Pick a school leader"
+                        value={leaderSchoolId}
+                        onChange={(e) => pickLeader(e.target.value)}
+                        options={leaderCandidates.map((c) => ({ value: c.schoolId, label: `${c.leaderName} — ${c.schoolName}${c.subCounty ? ` (${c.subCounty})` : ""}` }))}
+                        placeholder="Select from schools in this area…"
+                      />
+                    ) : (
+                      <p className="text-[11px] muted">No school leaders on file for the selected area yet — enter the leader’s details below.</p>
+                    )}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <Input label="Leader name" value={leaderName} onChange={(e) => { setLeaderName(e.target.value); setLeaderSchoolId(""); }} placeholder="e.g. Esther Naluwu" />
+                      <Input label="Leader phone" value={leaderPhone} onChange={(e) => setLeaderPhone(e.target.value)} placeholder="e.g. +256 772 000 000" />
+                    </div>
+                  </div>
+
                   <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11.5px] text-emerald-800 inline-flex items-start gap-1.5">
                     <CheckCircle2 size={12} className="mt-0.5 shrink-0" />
-                    Creates the cluster in {school.district} and adds {school.schoolName} as its first school.
+                    Creates the cluster and adds {school.schoolName} as its first school.
                   </div>
                   <Button size="sm" Icon={Plus} disabled={busy} onClick={() => { const f = document.activeElement as HTMLElement; f?.blur(); }} type="submit">
                     {busy ? "Creating…" : "Create cluster & add school"}
