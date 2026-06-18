@@ -6,6 +6,8 @@ import { EmptyState } from "@/components/ui/DataStates";
 import { ConfirmCompletionButton } from "@/components/my-targets/ConfirmCompletionButton";
 import { getCurrentUser } from "@/lib/auth";
 import { ROLE_REDIRECT } from "@/lib/auth-public";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 import {
   buildEvidenceQueues,
   type AccountabilityQueueItem,
@@ -29,6 +31,29 @@ export default async function EvidencePage() {
   const user = await getCurrentUser();
   if (!["CCEO", "Admin"].includes(user.role)) {
     redirect(ROLE_REDIRECT[user.role]);
+  }
+
+  // This CCEO aggregator derives from the in-memory action store + weekly-fund
+  // fixtures, which are not the source of truth in production (writes persist to
+  // the backend; the accountability rows are fixtures). Withhold it until a
+  // backend evidence-queue endpoint exists, so prod never shows stale/fabricated
+  // rows. The live evidence pipeline is unaffected — upload/review/IA-verify/pay
+  // run through /activities/[id]/evidence, /data-verification and /disbursements.
+  if (!isMockAllowed()) {
+    return (
+      <>
+        <PageHeader
+          title="Evidence & Accountability"
+          subtitle="Your completed work that can't count yet — clear each queue so activities reach verification and payment."
+        />
+        <div className="px-3 sm:px-4 md:px-5 pb-24 md:pb-5 pt-3 md:pt-4">
+          <InsufficientData
+            surface="the evidence & accountability queues"
+            detail="This personal clean-up queue is not yet served from the backend. Use Data Verification (IA), the activity evidence panel, and Disbursements for the live evidence → verification → payment flow."
+          />
+        </div>
+      </>
+    );
   }
 
   const q = buildEvidenceQueues(user);

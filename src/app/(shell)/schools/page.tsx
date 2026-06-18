@@ -34,6 +34,7 @@ import { computePeriodTarget } from "@/lib/targets/period-target";
 import { applyGeographyScope, selectionFromSearchParams, geoParamsFromSelection } from "@/lib/filters/apply-filters";
 import { activeFinancialYear } from "@/lib/fy-engine";
 import { engineNowIso } from "@/lib/clock";
+import { isMockAllowed } from "@/lib/mock-policy";
 
 const PARTNER_SUGGESTIONS = [
   "Hope Education Partners",
@@ -259,6 +260,11 @@ export default async function SchoolsDashboard({
           weakAreas,
         };
       });
+  // The portfolio targets card + planning-review signals derive from in-memory
+  // mock (portfolioForStaffId, directoryPlanningSignals over the mock directory),
+  // not the live backend. The KPI strip + directory rows above ARE live — gate
+  // only these two mock-fed surfaces so production shows neither fabricated.
+  const mockOk = isMockAllowed();
   // Partner/HR cannot assign; everyone else with directory access can (server re-checks).
   const canManageDirectory = ["CCEO", "CountryProgramLead", "CountryDirector", "ImpactAssessment", "Admin"]
     .includes(currentUser.role);
@@ -279,8 +285,9 @@ export default async function SchoolsDashboard({
           <BackendOfflineBanner error={metricsError} />
           <DirectoryKpiStrip metrics={metrics} title="Portfolio at a glance" />
 
-          {/* Portfolio targets — cumulative FY progress (shown when you own schools) */}
-          {portfolio.schools.length > 0 && (
+          {/* Portfolio targets — cumulative FY progress (shown when you own schools).
+              Mock-derived; withheld in production. */}
+          {mockOk && portfolio.schools.length > 0 && (
             <TargetsByTimePeriodCard
               fyLabel={fy.label}
               fyTarget={portfolio.counts.total}
@@ -307,8 +314,9 @@ export default async function SchoolsDashboard({
           />
 
           {/* Planning-readiness signals — the actionable workflow stages
-              (counts duplicated by the strip above were removed). */}
-          <PlanningReviewSignals signals={signals} />
+              (counts duplicated by the strip above were removed). Mock-derived;
+              withheld in production. */}
+          {mockOk && <PlanningReviewSignals signals={signals} />}
 
           {/* Quick actions — permission-aware */}
           <SchoolQuickActions user={currentUser} />

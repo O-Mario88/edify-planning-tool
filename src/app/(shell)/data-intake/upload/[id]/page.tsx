@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, FileSpreadsheet, ChevronRight } from "lucide-react";
 import { StubPage } from "@/components/shell/StubPage";
+import { isMockAllowed } from "@/lib/mock-policy";
 import { recentUploads } from "@/lib/impact-mock";
 import { cn } from "@/lib/utils";
 
@@ -13,6 +14,7 @@ const STATUS = {
 
 export default async function DataUploadDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  if (!isMockAllowed()) return notFound();
   const upload = recentUploads.find((u) => u.key === id);
   if (!upload) return notFound();
 

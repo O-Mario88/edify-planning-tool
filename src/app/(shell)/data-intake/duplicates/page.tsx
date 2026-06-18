@@ -2,10 +2,31 @@ import { StubPage } from "@/components/shell/StubPage";
 import { getCurrentUser } from "@/lib/auth";
 import { openDuplicateCandidates, duplicateCandidates } from "@/lib/intake/duplicate-candidates-mock";
 import { DuplicateReviewQueue } from "@/components/intake/DuplicateReviewQueue";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 
 export default async function DuplicateReviewPage() {
   const me = await getCurrentUser();
   const allowed = ["ImpactAssessment", "Admin"].includes(me.role);
+
+  // Duplicate-match candidates are hand-mocked (duplicate-candidates-mock); no
+  // live duplicate-detection backend. Never render fabricated duplicate flags.
+  if (!isMockAllowed()) {
+    return (
+      <StubPage
+        title="Duplicate Review Queue"
+        subtitle="Possible duplicate schools are flagged on upload — never blocked, never auto-merged, never deleted. Review each and decide."
+      >
+        {!allowed && (
+          <section className="card p-3.5 border-amber-200 bg-amber-50/60">
+            <h2 className="text-[13px] font-extrabold tracking-tight">Duplicate review is restricted</h2>
+            <p className="text-[11.5px] muted">Only Impact Assessment and Admin resolve duplicate flags.</p>
+          </section>
+        )}
+        <InsufficientData surface="the duplicate review queue" detail="Duplicate-match flags are withheld until the duplicate-detection backend is wired — no fabricated look-alike matches are shown." />
+      </StubPage>
+    );
+  }
 
   const open = openDuplicateCandidates();
   const resolved = duplicateCandidates.filter((d) => d.status !== "Open");

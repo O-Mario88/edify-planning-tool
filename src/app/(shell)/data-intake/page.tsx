@@ -17,6 +17,8 @@ import {
 } from "@/lib/data-intake-mock";
 import { activeFinancialYear } from "@/lib/fy-engine";
 import { getCurrentUser } from "@/lib/auth";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 import { cn } from "@/lib/utils";
 import { IaIntakeActions } from "@/components/intake/IaIntakeActions";
 import { OwnerMappingQueue } from "@/components/intake/OwnerMappingQueue";
@@ -34,6 +36,29 @@ export default async function DataIntakeHubPage() {
   // Assessment + Admin job. Country Director sets cost/price only, not master
   // data, so CD (and everyone else) lands on a polite "no access" panel.
   const allowed = ["ImpactAssessment", "Admin"].includes(me.role);
+
+  // The intake hub (import batches, readiness KPIs, ownership distribution,
+  // duplicate flags, IA actions) all run off hand-mocked fixtures
+  // (data-intake-mock, intakeSchools, duplicate-candidates-mock) — there is no
+  // live intake backend. Never show fabricated batches/readiness in production.
+  if (!isMockAllowed()) {
+    return (
+      <StubPage
+        title="Data Intake & Readiness Engine"
+        subtitle={`The platform does not blindly use random uploads. Templates are system-generated. Files are validated. Only approved data enters the planning engine. ${fy.label}.`}
+      >
+        {!allowed && (
+          <section className="card p-3.5 border-amber-200 bg-amber-50/60">
+            <h2 className="text-[13px] font-extrabold tracking-tight">Master data upload is restricted</h2>
+            <p className="text-[11.5px] muted">
+              Only Impact Assessment and Admin upload master data (schools + SSA performance).
+            </p>
+          </section>
+        )}
+        <InsufficientData surface="the data intake & readiness engine" detail="Import batches, planning-data readiness, ownership distribution, and duplicate flags are withheld until the intake backend is wired — no fabricated batches or readiness figures are shown." />
+      </StubPage>
+    );
+  }
 
   // School-ownership distribution + the IA owner-mapping queue (unmatched owners).
   const ownership = ownerDistribution();

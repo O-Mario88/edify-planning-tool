@@ -4,6 +4,8 @@ import { ActionButton } from "@/components/ui/ActionButton";
 import { ApproveImportButton } from "./ApproveImportButton";
 import { ValidateBatchButton, SendForReviewButton, RejectBatchButton } from "./BatchActions";
 import { dataImportBatches, type DataImportBatch } from "@/lib/data-intake-mock";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 import { cn } from "@/lib/utils";
 
 const STATUS_TONE = {
@@ -67,6 +69,18 @@ function Metric({ label, value, tone }: { label: string; value: number; tone: st
 }
 
 export default function DataValidationQueuePage() {
+  // Import batches + validation results are hand-mocked (data-intake-mock); no
+  // live intake backend. Never render fabricated batches/reviewers in production.
+  if (!isMockAllowed()) {
+    return (
+      <StubPage
+        title="Data Validation Queue"
+        subtitle="Every uploaded batch with row-level validation results, approval state, and reviewer audit trail."
+      >
+        <InsufficientData surface="the data validation queue" detail="Import batches and validation results are withheld until the intake backend is wired — no fabricated batches are shown." />
+      </StubPage>
+    );
+  }
   return (
     <StubPage
       title="Data Validation Queue"

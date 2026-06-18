@@ -4,6 +4,8 @@ import { StubPage } from "@/components/shell/StubPage";
 import { activeFinancialYear, nextFinancialYear } from "@/lib/fy-engine";
 import { planningDataReadiness } from "@/lib/data-intake-mock";
 import { validateCountryCostSettings } from "@/lib/cost-settings-mock";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 import { cn } from "@/lib/utils";
 
 type ReadinessItem = {
@@ -17,6 +19,13 @@ type ReadinessItem = {
 export default function NewFyReadinessCenterPage() {
   const active = activeFinancialYear();
   const next   = nextFinancialYear();
+  if (!isMockAllowed()) {
+    return (
+      <StubPage title={`FY ${next} readiness`} subtitle="Planning-gateway readiness is not yet served from the backend.">
+        <InsufficientData surface="the FY readiness checklist" />
+      </StubPage>
+    );
+  }
   const r      = planningDataReadiness();
   const cs     = validateCountryCostSettings();
 

@@ -5,6 +5,8 @@ import { partnerPipelineActivities } from "@/lib/projects/project-activities";
 import { projectById } from "@/lib/special-projects-mock";
 import { intakeSchools } from "@/lib/intake/intake-mock";
 import { projectRates, paymentAmountFor } from "@/lib/projects/project-cost-rates";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 
 // Project Activity Pipeline — the consolidated, role-aware queue for partner-
 // delivered project work moving Assigned → Scheduled → Evidence → Salesforce
@@ -12,6 +14,24 @@ import { projectRates, paymentAmountFor } from "@/lib/projects/project-cost-rate
 // stages it owns (driven by the workflow state machine).
 export default async function ProjectPipelinePage() {
   const user = await getCurrentUser();
+
+  // The pipeline rows are hand-mocked partner project activities (fabricated
+  // Salesforce IDs, payment amounts) — no live project-pipeline backend. Never
+  // render fabricated Salesforce IDs / amounts in production.
+  if (!isMockAllowed()) {
+    return (
+      <>
+        <SpHeader />
+        <div className="px-3 sm:px-4 md:px-6 pb-24 md:pb-6 space-y-3 md:space-y-4">
+          <header>
+            <h1 className="text-[17px] font-extrabold tracking-tight">Project Activity Pipeline</h1>
+            <p className="text-[12px] muted">Partner-delivered project work — assigned → scheduled → evidence → Salesforce → IA verification → payment.</p>
+          </header>
+          <InsufficientData surface="the project activity pipeline" detail="Partner project activities, Salesforce IDs, and payment amounts are withheld until the project-pipeline backend is wired — no fabricated IDs or amounts are shown." />
+        </div>
+      </>
+    );
+  }
 
   const rows: PipelineRowVM[] = partnerPipelineActivities().map((a) => {
     const project = projectById(a.projectId);

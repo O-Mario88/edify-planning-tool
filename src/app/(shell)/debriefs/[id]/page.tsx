@@ -3,8 +3,13 @@ import { FileText, AlertTriangle, CheckCircle2, MessageCircle } from "lucide-rea
 import { EntityDetail, DetailKpi, DetailFacts } from "@/components/shell/EntityDetail";
 import { dailyDebriefs, debriefsForUser } from "@/lib/field-intelligence-mock";
 import { getCurrentUser, toCurrentUser } from "@/lib/auth";
+import { isMockAllowed } from "@/lib/mock-policy";
 
 export default async function DebriefDetail({ params }: { params: Promise<{ id: string }> }) {
+  // Fabricated daily debrief (named staff, reflections) — no live debrief backend
+  // behind this detail. Withhold rather than render an invented field report.
+  if (!isMockAllowed()) return notFound();
+
   const { id } = await params;
   const d = dailyDebriefs.find((x) => x.id === id);
   if (!d) return notFound();

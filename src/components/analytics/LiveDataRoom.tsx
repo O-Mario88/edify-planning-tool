@@ -6,7 +6,6 @@
 // data-room traces to source records — no placeholder numbers, no mock universe.
 
 import { Database } from "lucide-react";
-import { InterventionPerformanceCard } from "@/components/ssa/InterventionPerformanceCard";
 import { InterventionImprovementGrid } from "@/components/ssa/InterventionImprovementGrid";
 
 export function LiveDataRoom() {
@@ -19,14 +18,12 @@ export function LiveDataRoom() {
         <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)] px-2 py-0.5 text-[10px] font-bold border border-[var(--color-edify-border)]">Live · backend · filter-aware</span>
       </div>
 
-      {/* Performance in each of the 8 SSA interventions across the scope. */}
-      <InterventionPerformanceCard />
+      {/* SSA performance by district + the 8-intervention overview both live on the
+          interactive map above (choropleth + per-district / country detail panel
+          with the per-intervention bars), so they're intentionally not duplicated
+          here. District/region/CCEO/cluster grouping remains on the SSA page. */}
 
-      {/* SSA performance by district lives on the interactive map above (choropleth
-          + per-district detail panel), so it's intentionally not duplicated here.
-          District/region/CCEO/cluster grouping remains on the SSA Performance page. */}
-
-      {/* Impact: previous-FY vs current-FY intervention movement. */}
+      {/* Impact: previous-FY vs current-FY intervention movement (not on the map). */}
       <InterventionImprovementGrid />
     </div>
   );

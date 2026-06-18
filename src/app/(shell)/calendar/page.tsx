@@ -18,6 +18,7 @@ import { publicHolidays } from "@/lib/leave-mock";
 import { getCurrentUser } from "@/lib/auth";
 import { fetchApprovedLeave } from "@/lib/api/surfaces";
 import { todayDataForRole, type TodayTone } from "@/lib/today-mock";
+import { isMockAllowed } from "@/lib/mock-policy";
 
 type Bucket = "today" | "this-week" | "this-month" | "leave";
 type CalTone = "edify" | "amber" | "violet" | "rose" | "green";
@@ -58,7 +59,9 @@ export default async function CalendarPage() {
   // Program Lead and a CCEO see their own agenda + upcoming activities;
   // public holidays are shared by everyone.
   const user = await getCurrentUser();
-  const today = todayDataForRole(user.role);
+  // The "today / this-week" agenda is fixture data — withhold it in production so
+  // the calendar shows only live entries (approved leave + real public holidays).
+  const today = isMockAllowed() ? todayDataForRole(user.role) : { agenda: [], upcoming: [] };
 
   // Approved leave from the backend — the caller's own (HR/CD: the team's).
   // Linked here so leave schedules surface on the same timeline.

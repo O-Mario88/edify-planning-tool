@@ -10,6 +10,8 @@ import {
   type PlanningLockLevel,
 } from "@/lib/fy-engine";
 import { schoolsMock } from "@/lib/schools-mock";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 import { cn } from "@/lib/utils";
 
 const GATEWAY_TONE: Record<GatewayStatus, string> = {
@@ -29,6 +31,13 @@ const LOCK_TONE: Record<PlanningLockLevel, string> = {
 
 export default function GatewayPage() {
   const active = activeFinancialYear();
+  if (!isMockAllowed()) {
+    return (
+      <StubPage title={`Gateway — FY ${active}`} subtitle="The school gateway register is not yet served from the backend.">
+        <InsufficientData surface="the FY gateway register" />
+      </StubPage>
+    );
+  }
   const rows = schoolFinancialYearSummaries.map((s) => ({
     summary: s,
     school: schoolsMock.find((x) => x.schoolId === s.schoolId),

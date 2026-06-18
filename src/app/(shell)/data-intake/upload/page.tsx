@@ -4,6 +4,8 @@ import { StubPage } from "@/components/shell/StubPage";
 import { ActionButton } from "@/components/ui/ActionButton";
 import { StopClickLink } from "@/components/ui/StopClickLink";
 import { dataTemplates, dataImportBatches } from "@/lib/data-intake-mock";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 import { cn } from "@/lib/utils";
 
 const STATUS_TONE = {
@@ -17,6 +19,13 @@ const STATUS_TONE = {
 } as const;
 
 export default function UploadCenterPage() {
+  if (!isMockAllowed()) {
+    return (
+      <StubPage title="Upload Center" subtitle="The upload pipeline is not yet served from the backend.">
+        <InsufficientData surface="the upload center" />
+      </StubPage>
+    );
+  }
   return (
     <StubPage
       title="Upload Center"

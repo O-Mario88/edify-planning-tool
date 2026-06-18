@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { ClipboardList, MapPin } from "lucide-react";
 import { EntityDetail, DetailFacts } from "@/components/shell/EntityDetail";
+import { isMockAllowed } from "@/lib/mock-policy";
 import { planItems, type PlanItemStatus } from "@/lib/mobile-mock";
 
 const BADGE: Record<PlanItemStatus, { tone: "amber" | "blue" | "green" | "rose"; label: PlanItemStatus }> = {
@@ -12,6 +13,9 @@ const BADGE: Record<PlanItemStatus, { tone: "amber" | "blue" | "green" | "rose";
 
 export default async function PlanDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  // Legacy mobile plan detail backed by fixtures — the live plan list (/plans)
+  // is backend-driven. Withhold in production so no fixture plan can render.
+  if (!isMockAllowed()) return notFound();
   const plan = planItems.find((p) => p.id === id);
   if (!plan) return notFound();
 

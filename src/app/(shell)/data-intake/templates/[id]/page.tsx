@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Download, FileSpreadsheet } from "lucide-react";
 import { StubPage } from "@/components/shell/StubPage";
+import { isMockAllowed } from "@/lib/mock-policy";
 import { getTemplate } from "@/lib/data-intake-mock";
 
 export default async function TemplateDetailPage({
@@ -10,6 +11,7 @@ export default async function TemplateDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  if (!isMockAllowed()) return notFound();
   const t = getTemplate(id);
   if (!t) return notFound();
 

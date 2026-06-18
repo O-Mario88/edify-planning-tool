@@ -19,6 +19,8 @@ import { StubPage } from "@/components/shell/StubPage";
 import { DEMO_USERS } from "@/lib/auth-public";
 import { schoolsMock } from "@/lib/schools-mock";
 import { fundRequests, planApprovals, conflicts } from "@/lib/workflow-mock";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 import { cn } from "@/lib/utils";
 
 type AdminSection = {
@@ -68,6 +70,11 @@ const TONE: Record<ActivityKind, string> = {
 };
 
 export default function AdminPage() {
+  // Tenant KPIs (DEMO_USERS, schoolsMock, workflow-mock) and the RECENT_ACTIVITY
+  // feed are hand-mocked fixtures — no live admin/tenant backend. Never render
+  // fabricated tenant counts or a fabricated activity feed in production. The
+  // section cards below are honest navigation links and stay.
+  const mockOk = isMockAllowed();
   const userCount       = Object.keys(DEMO_USERS).length;
   const schoolCount     = schoolsMock.length;
   const openApprovals   = planApprovals.length + fundRequests.filter((f) => f.status !== "Disbursed").length;
@@ -78,13 +85,17 @@ export default function AdminPage() {
       title="Administration"
       subtitle="Tenant-level overview. The KPI strip surfaces what's outstanding across the platform; each section card opens the operational dashboard that governs it."
     >
-      {/* Tenant KPIs */}
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <Kpi label="Users"          value={String(userCount)}     Icon={Users}         tone="bg-violet-100 text-violet-700" sub="across 8 roles" />
-        <Kpi label="Schools"        value={String(schoolCount)}   Icon={Building2}     tone="bg-sky-100 text-sky-700"       sub="active in directory" />
-        <Kpi label="Open approvals" value={String(openApprovals)} Icon={Workflow}      tone="bg-emerald-100 text-emerald-700" sub="plans + fund requests" />
-        <Kpi label="High-severity"  value={String(openIncidents)} Icon={AlertTriangle} tone="bg-rose-100 text-rose-700"     sub="conflicts pending" />
-      </section>
+      {/* Tenant KPIs — hand-mocked; withheld in production. */}
+      {mockOk ? (
+        <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <Kpi label="Users"          value={String(userCount)}     Icon={Users}         tone="bg-violet-100 text-violet-700" sub="across 8 roles" />
+          <Kpi label="Schools"        value={String(schoolCount)}   Icon={Building2}     tone="bg-sky-100 text-sky-700"       sub="active in directory" />
+          <Kpi label="Open approvals" value={String(openApprovals)} Icon={Workflow}      tone="bg-emerald-100 text-emerald-700" sub="plans + fund requests" />
+          <Kpi label="High-severity"  value={String(openIncidents)} Icon={AlertTriangle} tone="bg-rose-100 text-rose-700"     sub="conflicts pending" />
+        </section>
+      ) : (
+        <InsufficientData surface="the tenant overview" detail="Tenant KPIs and the recent-activity feed are withheld until the admin backend is wired — no fabricated counts or activity are shown. Use the section cards below to open each operational dashboard." />
+      )}
 
       {/* Section cards */}
       <section className="grid grid-cols-12 gap-3 md:gap-4 items-start">
@@ -108,7 +119,8 @@ export default function AdminPage() {
         ))}
       </section>
 
-      {/* Recent admin activity */}
+      {/* Recent admin activity — hand-mocked feed; withheld in production. */}
+      {mockOk && (
       <article className="card p-3.5">
         <header className="flex items-baseline justify-between mb-2">
           <h2 className="text-body-lg font-extrabold tracking-tight">Recent admin activity</h2>
@@ -135,6 +147,7 @@ export default function AdminPage() {
           })}
         </ul>
       </article>
+      )}
     </StubPage>
   );
 }

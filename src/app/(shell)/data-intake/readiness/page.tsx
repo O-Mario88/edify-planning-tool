@@ -7,10 +7,27 @@ import {
   blockOrLimitPlanningFromReadiness,
 } from "@/lib/data-intake-mock";
 import { activeFinancialYear } from "@/lib/fy-engine";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 import { cn } from "@/lib/utils";
 
 export default function PlanningDataReadinessPage() {
   const fy   = activeFinancialYear();
+
+  // Readiness verdict + per-area checks run off hand-mocked fixtures
+  // (data-intake-mock); no live readiness backend. Never render a fabricated
+  // "planning unlocked / blocked" verdict in production.
+  if (!isMockAllowed()) {
+    return (
+      <StubPage
+        title="Planning Data Readiness"
+        subtitle={`The Annual Operating Cycle checks readiness before opening a new FY, generating Gateway training, producing SSA-informed recommendations, building annual budgets, or activating monthly funding plans. ${fy.label}.`}
+      >
+        <InsufficientData surface="planning data readiness" detail="The readiness verdict and per-area checks are withheld until the intake-readiness backend is wired — no fabricated readiness status is shown." />
+      </StubPage>
+    );
+  }
+
   const r    = planningDataReadiness();
   const summary = dataReadinessForCountry();
   const verdict = blockOrLimitPlanningFromReadiness();

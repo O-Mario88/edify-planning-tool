@@ -11,6 +11,7 @@ import { clusterCountsFor } from "@/lib/cluster/cluster-core";
 import { intakeSchools } from "@/lib/intake/intake-mock";
 import { resolveOwner } from "@/lib/portfolio/portfolio";
 import { visibleStaffIds } from "@/lib/org/supervision";
+import { isMockAllowed } from "@/lib/mock-policy";
 
 export default async function ClustersIndex() {
   // Cluster-first: surface the viewer's cluster-setup readiness + unclustered
@@ -26,6 +27,12 @@ export default async function ClustersIndex() {
     const r = resolveOwner(s.assignedCceo);
     return r.status === "matched" ? scope!.has(r.staffId) : true;
   });
+  // The setup-readiness counts, unclustered banner, and the CCEO cluster board
+  // all derive from in-memory intake mock (intakeSchools / directoryRecords), not
+  // the live backend. The cluster directory below self-fetches /api/clusters and
+  // stays. Gate only the mock-derived surfaces so production shows no fabricated
+  // counts.
+  const mockOk = isMockAllowed();
   const counts = clusterCountsFor(scopedSchools);
   const unclusteredCount = counts.unclustered;
 
@@ -37,19 +44,25 @@ export default async function ClustersIndex() {
       searchPlaceholder="Search clusters"
     >
       <div className="mb-3 space-y-3">
-        <UnclusteredSchoolsBanner count={unclusteredCount} />
+        {/* Mock-derived (intake counts) — withheld in production. */}
+        {mockOk && <UnclusteredSchoolsBanner count={unclusteredCount} />}
         {/* CCEO: parish-fellowship view of THEIR clusters — SSA coverage,
-            weakest interventions, discussion topics, next meeting (spec §11). */}
-        {user.role === "CCEO" && (
+            weakest interventions, discussion topics, next meeting (spec §11).
+            Mock-derived; withheld in production. */}
+        {mockOk && user.role === "CCEO" && (
           <CceoClusterBoard staffId={user.staffId} role={user.role} />
         )}
         <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-stretch">
-          <ClusterReadinessCard
-            clustered={counts.clustered}
-            unclustered={counts.unclustered}
-            needsReview={counts.needsReview}
-            title="Cluster setup readiness"
-          />
+          {mockOk ? (
+            <ClusterReadinessCard
+              clustered={counts.clustered}
+              unclustered={counts.unclustered}
+              needsReview={counts.needsReview}
+              title="Cluster setup readiness"
+            />
+          ) : (
+            <div /> /* keep the grid's first column so the nav stays right-aligned */
+          )}
           <nav className="card rounded-2xl p-3 flex md:flex-col gap-2 justify-center">
             <div className="md:mb-1"><CreateClusterButton /></div>
             <ClusterHubLink href="/schools" Icon={Building2} label="School directory" />

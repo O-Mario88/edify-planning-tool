@@ -21,6 +21,7 @@ import { recommendSchoolsForProject } from "@/lib/projects/project-eligibility";
 import { activitiesForProject } from "@/lib/projects/project-activities";
 import { ProjectMonitorLive } from "@/components/special-projects/ProjectMonitorLive";
 import { getCurrentUser } from "@/lib/auth";
+import { isMockAllowed } from "@/lib/mock-policy";
 
 const STATUS_BADGE: Record<ProjectStatus, { tone: "green" | "amber" | "rose" | "violet" | "edify"; label: string }> = {
   "Draft":                 { tone: "edify",  label: "Draft" },
@@ -42,6 +43,10 @@ function trendIcon(v: number) {
 
 export default async function ProjectDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  // Project identity, impact, comparison, and recommendations are all derived
+  // from hand-mocked fixtures (special-projects-mock); no live project backend
+  // behind this detail. Withhold rather than render an invented project.
+  if (!isMockAllowed()) return notFound();
   const project = specialProjects.find((p) => p.projectId === id);
   if (!project) return notFound();
   const currentUserRole = (await getCurrentUser()).role;

@@ -1,9 +1,18 @@
 import Link from "next/link";
 import { FileSpreadsheet, Download, ChevronRight } from "lucide-react";
 import { StubPage } from "@/components/shell/StubPage";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 import { dataTemplates } from "@/lib/data-intake-mock";
 
 export default function TemplateBuilderPage() {
+  if (!isMockAllowed()) {
+    return (
+      <StubPage title="Template Builder" subtitle="Upload templates are not yet served from the backend.">
+        <InsufficientData surface="the template builder" />
+      </StubPage>
+    );
+  }
   return (
     <StubPage
       title="Template Builder"

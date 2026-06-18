@@ -20,12 +20,22 @@ import {
 } from "@/lib/fy-engine";
 import { planningDataReadiness } from "@/lib/data-intake-mock";
 import { validateCountryCostSettings } from "@/lib/cost-settings-mock";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 import { cn } from "@/lib/utils";
 
 export default function AnnualOperatingCyclePage() {
   const active   = activeFinancialYear();
   const previous = previousFinancialYear();
   const next     = nextFinancialYear();
+
+  if (!isMockAllowed()) {
+    return (
+      <StubPage title={`Annual operating cycle — FY ${active}`} subtitle="The annual cycle overview is not yet served from the backend.">
+        <InsufficientData surface="the annual operating cycle" />
+      </StubPage>
+    );
+  }
 
   const gatewayDone = schoolFinancialYearSummaries.filter((s) => s.gatewayStatus === "Gateway Completed").length;
   const ssaVerified = schoolFinancialYearSummaries.filter((s) => s.ssaVerified).length;

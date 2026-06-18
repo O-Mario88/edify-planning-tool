@@ -127,6 +127,7 @@ export function UgandaGeoMap() {
   const [view, setView] = useState({ scale: 1, tx: 0, ty: 0 });
   const [subCounties, setSubCounties] = useState<{ features: { properties: { pcode: string; name: string; district: string; lat: number; lng: number }; geometry: { type: string; coordinates: number[][][] | number[][][][] } }[] } | null>(null);
   const drag = useRef<{ x: number; y: number; tx: number; ty: number; moved: boolean } | null>(null);
+  const lastDragMoved = useRef(false);
   const svgRef = useRef<SVGSVGElement>(null);
   // Zoom level at which sub-county boundaries (admin4) progressively appear —
   // Google-Maps-style level-of-detail. Loaded lazily on first zoom-in.
@@ -300,7 +301,7 @@ export function UgandaGeoMap() {
       districtId: pcode, pcode, district: m?.name ?? name, region: m?.region ?? "", subRegion: m?.subRegion ?? null,
       centroidLat: m?.lat ?? null, centroidLng: m?.lng ?? null,
       schools: 0, coreSchools: 0, clientSchools: 0, clustered: 0, unclustered: 0, clusters: 0,
-      ssaDone: 0, ssaPending: 0, ssaPct: 0, avgSsa: null, coreAvgSsa: null, clientAvgSsa: null, criticalCount: 0, activitiesCompleted: 0,
+      ssaDone: 0, ssaPending: 0, ssaPct: 0, avgSsa: null, coreAvgSsa: null, clientAvgSsa: null, criticalCount: 0, coreCriticalCount: 0, clientCriticalCount: 0, activitiesCompleted: 0,
       status: "insufficient_data", interventions: [], weakestInterventions: [],
     };
   };
@@ -386,9 +387,14 @@ export function UgandaGeoMap() {
         <svg ref={svgRef} viewBox={`0 0 ${W} ${proj!.H}`} className="w-full h-auto max-h-[600px] select-none touch-none" style={{ background: "var(--surface-1)" }}
           onWheel={onWheel}
           onMouseDown={(e) => { drag.current = { x: e.clientX, y: e.clientY, tx: view.tx, ty: view.ty, moved: false }; }}
-          onMouseUp={() => (drag.current = null)}
+          onMouseUp={() => { lastDragMoved.current = drag.current?.moved ?? false; drag.current = null; }}
           onMouseLeave={() => { drag.current = null; setHover(null); }}
           onMouseMove={(e) => { if (drag.current) { const dx = e.clientX - drag.current.x, dy = e.clientY - drag.current.y; if (Math.abs(dx) + Math.abs(dy) > 3) drag.current.moved = true; setView((v) => ({ ...v, tx: drag.current!.tx + dx, ty: drag.current!.ty + dy })); } }}>
+          {/* Blank-canvas backdrop — clicking empty map area (not a district/sub-county)
+              resets the detail back to the whole country. Behind everything; a real
+              pan (moved) doesn't count as a click. */}
+          <rect x={0} y={0} width={W} height={proj!.H} fill="var(--surface-1)"
+            onClick={() => { if (!lastDragMoved.current) setFocus({ kind: "country" }); }} />
           <g transform={`translate(${view.tx} ${view.ty}) scale(${view.scale})`}>
             {/* District polygons — strong borders, always visible */}
             {paths.map((p) => {
@@ -479,6 +485,8 @@ export function UgandaGeoMap() {
                         <HRow icon={<Network size={12} />} label="Clusters" value={sc.clusters} />
                         <HRow icon={<Gauge size={12} />} label="Core SSA" value={sc.coreAvgSsa ?? "—"} />
                         <HRow icon={<Gauge size={12} />} label="Client SSA" value={sc.clientAvgSsa ?? "—"} />
+                        <HRow icon={<AlertTriangle size={12} />} label="Core crit." value={sc.coreCriticalCount} />
+                        <HRow icon={<AlertTriangle size={12} />} label="Client crit." value={sc.clientCriticalCount} />
                       </div>
                       {sc.weakest && (
                         <div className="mt-2 pt-2 border-t border-white/15 text-[11px] inline-flex items-center gap-1.5"><TrendingDown size={11} className="text-rose-200" /> Weakest: <b>{sc.weakest.label}</b> ({sc.weakest.avg.toFixed(1)})</div>
@@ -509,9 +517,10 @@ export function UgandaGeoMap() {
                       <HRow icon={<Briefcase size={12} />} label="Client" value={hover.d.clientSchools} />
                       <HRow icon={<ShieldCheck size={12} />} label="Core" value={hover.d.coreSchools} />
                       <HRow icon={<Network size={12} />} label="Clusters" value={hover.d.clusters} />
-                      <HRow icon={<AlertTriangle size={12} />} label="Critical" value={hover.d.criticalCount} />
                       <HRow icon={<Gauge size={12} />} label="Core SSA" value={hover.d.coreAvgSsa ?? "—"} />
                       <HRow icon={<Gauge size={12} />} label="Client SSA" value={hover.d.clientAvgSsa ?? "—"} />
+                      <HRow icon={<AlertTriangle size={12} />} label="Core crit." value={hover.d.coreCriticalCount} />
+                      <HRow icon={<AlertTriangle size={12} />} label="Client crit." value={hover.d.clientCriticalCount} />
                     </div>
                     {(() => {
                       const cl = detailCache.current.get(hover.d.districtId)?.clusters;
@@ -672,7 +681,8 @@ function DetailBody({ focus, summary, detail, onClear, headerless }: {
             <div className="grid grid-cols-3 gap-2">
               <Stat label="Core SSA" value={summary.coreAvgSsa ?? "—"} tone={ssaTone(summary.coreAvgSsa)} />
               <Stat label="Client SSA" value={summary.clientAvgSsa ?? "—"} tone={ssaTone(summary.clientAvgSsa)} />
-              <Stat label="Critical" value={summary.criticalSchools} tone={summary.criticalSchools ? "text-rose-600" : undefined} />
+              <Stat label="Core critical" value={summary.coreCriticalSchools} tone={summary.coreCriticalSchools ? "text-rose-600" : undefined} />
+              <Stat label="Client critical" value={summary.clientCriticalSchools} tone={summary.clientCriticalSchools ? "text-rose-600" : undefined} />
               <Stat label="SSA pending" value={summary.ssaPending} />
             </div>
           </section>
@@ -705,6 +715,8 @@ function DetailBody({ focus, summary, detail, onClear, headerless }: {
                   <Stat label="Clusters" value={sc.clusters} />
                   <Stat label="Core SSA" value={sc.coreAvgSsa ?? "—"} tone={ssaTone(sc.coreAvgSsa)} />
                   <Stat label="Client SSA" value={sc.clientAvgSsa ?? "—"} tone={ssaTone(sc.clientAvgSsa)} />
+                  <Stat label="Core critical" value={sc.coreCriticalCount} tone={sc.coreCriticalCount ? "text-rose-600" : undefined} />
+                  <Stat label="Client critical" value={sc.clientCriticalCount} tone={sc.clientCriticalCount ? "text-rose-600" : undefined} />
                 </div>
               </section>
               {sc.weakest && (
@@ -752,7 +764,8 @@ function DetailBody({ focus, summary, detail, onClear, headerless }: {
           <div className="grid grid-cols-3 gap-2">
             <Stat label="Core SSA" value={d.coreAvgSsa ?? "—"} tone={ssaTone(d.coreAvgSsa)} />
             <Stat label="Client SSA" value={d.clientAvgSsa ?? "—"} tone={ssaTone(d.clientAvgSsa)} />
-            <Stat label="Critical" value={d.criticalCount} tone={d.criticalCount ? "text-rose-600" : undefined} />
+            <Stat label="Core critical" value={d.coreCriticalCount} tone={d.coreCriticalCount ? "text-rose-600" : undefined} />
+            <Stat label="Client critical" value={d.clientCriticalCount} tone={d.clientCriticalCount ? "text-rose-600" : undefined} />
             <Stat label="SSA pending" value={d.ssaPending} />
           </div>
         </section>

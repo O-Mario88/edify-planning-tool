@@ -24,6 +24,8 @@ import { HrRosterLive } from "@/components/hr/HrRosterLive";
 import { HrMobileView } from "@/components/mobile/views/HrMobileView";
 import { getCurrentUser } from "@/lib/auth";
 import { ROLE_REDIRECT } from "@/lib/auth-public";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 import { hrAggregatedFieldContext } from "@/lib/field-intelligence-mock";
 
 // HR — People & Performance dashboard.
@@ -49,7 +51,11 @@ export default async function HrFieldContextPage() {
   const user = await getCurrentUser();
   if (!ALLOWED.has(user.role)) redirect(ROLE_REDIRECT[user.role]);
 
-  const ctx = hrAggregatedFieldContext();
+  // Field-intelligence aggregate + the HR attention banners are hand-mocked
+  // (no live field-intelligence backend yet). Production NEVER renders them —
+  // the live KPI strip, roster, decision engine, and debrief inbox below stay.
+  const mockOk = isMockAllowed();
+  const ctx = mockOk ? hrAggregatedFieldContext() : null;
 
   const desktop = (
     <>
@@ -74,16 +80,19 @@ export default async function HrFieldContextPage() {
           <HrKpiStrip />
         </section>
 
-        {/* ATTENTION — decisions and flags this week, below the figures. */}
-        <section className="space-y-3">
-          <SectionHeader
-            tier="strategic"
-            eyebrow="Attention"
-            title="HR decisions and flags this week"
-            description="Escalations routed from CD/RVP, staff flagged for support, and performance reviews due."
-          />
-          <HrAttentionRow />
-        </section>
+        {/* ATTENTION — decisions and flags this week, below the figures.
+            Hand-mocked counts; withheld in production. */}
+        {mockOk && (
+          <section className="space-y-3">
+            <SectionHeader
+              tier="strategic"
+              eyebrow="Attention"
+              title="HR decisions and flags this week"
+              description="Escalations routed from CD/RVP, staff flagged for support, and performance reviews due."
+            />
+            <HrAttentionRow />
+          </section>
+        )}
 
         {/* TODAY — the work stack. */}
         <CommandStack user={user} hideMission />
@@ -109,11 +118,15 @@ export default async function HrFieldContextPage() {
             title="What's coming back from the field"
             description="Aggregated barriers, support themes, and team-health signals — no individual staff names, by design."
           />
-          <AggregatedFieldContextCard
-            ctx={ctx}
-            title="Country field intelligence (HR view)"
-            subtitle="Aggregated barriers · support themes · team health · open decisions in the leadership pipeline."
-          />
+          {ctx ? (
+            <AggregatedFieldContextCard
+              ctx={ctx}
+              title="Country field intelligence (HR view)"
+              subtitle="Aggregated barriers · support themes · team health · open decisions in the leadership pipeline."
+            />
+          ) : (
+            <InsufficientData surface="aggregated field intelligence" detail="Country-level field barriers and support themes are withheld until the field-intelligence backend is wired — no placeholder patterns are shown." />
+          )}
         </section>
 
         {/* Closing utility row — three shortcut cards. */}
@@ -142,7 +155,13 @@ export default async function HrFieldContextPage() {
   const mobile = (
     <>
       <DashboardPageHeader role="HumanResource" />
-      <HrMobileView ctx={ctx} />
+      {ctx ? (
+        <HrMobileView ctx={ctx} />
+      ) : (
+        <div className="px-4 pt-3 pb-24">
+          <InsufficientData surface="the HR field-intelligence dashboard" detail="Aggregated field intelligence and HR attention flags are withheld until the field-intelligence backend is wired — no placeholder patterns are shown." />
+        </div>
+      )}
     </>
   );
 

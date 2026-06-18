@@ -13,6 +13,8 @@ import {
 import { ActionButton } from "@/components/ui/ActionButton";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { getCurrentUser } from "@/lib/auth";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 import {
   programLeadWeeklyFieldReports,
   countryWeeklyFieldIntelligence,
@@ -51,6 +53,23 @@ export default async function WeeklyDebriefReportCenterPage() {
   const user = await getCurrentUser();
   if (!ALLOWED.has(user.role)) {
     redirect("/dashboard");
+  }
+
+  // The country rollup card and the per-PL weekly reports (named staff, achievement
+  // figures, decisions) are entirely hand-mocked — no live weekly-report backend.
+  // Never render fabricated leadership reports the CD would act on.
+  if (!isMockAllowed()) {
+    return (
+      <>
+        <PageHeader
+          title="CD Weekly Debrief Report Center"
+          subtitle="One report per Program Lead. Daily debriefs stay with Program Leads — only weekly compiled reports surface here."
+        />
+        <div className="px-4 sm:px-5 md:px-6 pb-10 md:pb-6">
+          <InsufficientData surface="the weekly debrief report center" detail="Program-Lead weekly field reports and the country rollup are withheld until the weekly-report backend is wired — no fabricated named reports or achievement figures are shown." />
+        </div>
+      </>
+    );
   }
 
   const reports = programLeadWeeklyFieldReports;

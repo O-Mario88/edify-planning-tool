@@ -2,6 +2,8 @@ import { FileText } from "lucide-react";
 import { EntityIndex, IndexRow } from "@/components/shell/EntityIndex";
 import { debriefsForUser, type DebriefClassification } from "@/lib/field-intelligence-mock";
 import { getCurrentUser, toCurrentUser } from "@/lib/auth";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 
 const CLASS_TONE: Record<DebriefClassification, "amber" | "rose" | "violet" | "blue" | "slate"> = {
   "School Availability Issue":     "amber",
@@ -22,6 +24,24 @@ export default async function DebriefsIndex() {
   // their team; CCEO sees their own.
   const demo = await getCurrentUser();
   const user = toCurrentUser(demo);
+
+  // Daily debriefs here are hand-mocked (fabricated named staff + reflections);
+  // the live debrief pipeline persists via the DailyDebrief backend, not this list.
+  // Never render fabricated field debriefs in production.
+  if (!isMockAllowed()) {
+    return (
+      <EntityIndex
+        title="Daily Field Debriefs"
+        subtitle="Every debrief submitted across the team. Pattern-detection rolls these up into weekly leadership decisions."
+        Icon={FileText}
+        count={0}
+        searchPlaceholder="Search by staff, date, classification"
+      >
+        <InsufficientData surface="the daily field debriefs" detail="Field debriefs are withheld until this list is wired to the live debrief backend — no fabricated staff debriefs are shown." />
+      </EntityIndex>
+    );
+  }
+
   const visible = debriefsForUser(user);
 
   return (

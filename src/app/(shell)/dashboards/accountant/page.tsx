@@ -12,6 +12,8 @@ import { StaffAccountabilityQueue } from "@/components/accountant-console/StaffA
 import type { CceoFunnelStage } from "@/lib/cceo-mock";
 import { getCurrentUser } from "@/lib/auth";
 import { ROLE_REDIRECT } from "@/lib/auth-public";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 import { activities, fundRequests, disbursements } from "@/lib/actions/store";
 
 // The finance leg of the workflow — where cleared money is on its way to
@@ -47,6 +49,13 @@ export default async function AccountantConsolePage() {
   if (!allowed) {
     redirect(ROLE_REDIRECT[user.role]);
   }
+  // The payment funnel (store-derived), the staff-accountability queue, and the
+  // AccountantConsoleDashboard read hand-mocked finance fixtures
+  // (@/lib/accountant-console-mock) — disbursement summaries, funds-received
+  // tables, budget approvals. NEVER show fabricated money in production: gate
+  // them behind isMockAllowed. The live BudgetIntelligenceEmbed, today queue,
+  // and the backend-wired partner-payment queues below stay.
+  const mockOk = isMockAllowed();
   // Phase 8: staff activities the IA has confirmed (status Verified) await
   // NetSuite accountability closure here — with the staff-entered Salesforce ID
   // as verified proof.
@@ -70,12 +79,14 @@ export default async function AccountantConsolePage() {
       {/* Budget Intelligence — finance-execution view: low-yield spend, spend at risk. */}
       <BudgetIntelligenceEmbed heading="Budget Intelligence" />
       {/* Payment pipeline — the statistics snapshot, directly below the
-          hero: where money is stuck before the queues. */}
-      <VerificationPaymentFunnel
-        stages={paymentPipelineStages()}
-        title="Payment Pipeline"
-        subtitle="IA verified → Sent to accountant → Cleared → Netsuite ID → Paid"
-      />
+          hero: where money is stuck before the queues. Store-derived; mock-gated. */}
+      {mockOk && (
+        <VerificationPaymentFunnel
+          stages={paymentPipelineStages()}
+          title="Payment Pipeline"
+          subtitle="IA verified → Sent to accountant → Cleared → Netsuite ID → Paid"
+        />
+      )}
       {/* WORK — today's queue, then the payment/accountability queues. */}
       <TodayCommandCenter />
       <CommandStack user={user} hideMission />
@@ -83,13 +94,20 @@ export default async function AccountantConsolePage() {
           gate: partner activities clear to paid only with evidence + SF ID +
           IA confirmation. Self-hides when the backend is disabled. */}
       <PartnerPaymentQueue />
-      {/* Staff NetSuite Accountability — IA-confirmed activities to close. */}
-      <StaffAccountabilityQueue rows={accountabilityRows} closed={closedRows} />
+      {/* Staff NetSuite Accountability — IA-confirmed activities to close.
+          Store-derived; mock-gated. */}
+      {mockOk && <StaffAccountabilityQueue rows={accountabilityRows} closed={closedRows} />}
       {/* Partner Payments Ready to Clear — final leg of the partner
           workflow. Only PL-approved requests appear here (gate
           enforced in partner-workflow.REQUIRED_PATH). */}
       <AccountantPartnerPaymentsQueue />
-      <AccountantConsoleDashboard />
+      {/* Accountant console — disbursement summaries, funds-received, budget
+          approvals. Hand-mocked finance fixtures: withheld in production. */}
+      {mockOk ? (
+        <AccountantConsoleDashboard />
+      ) : (
+        <InsufficientData surface="the accountant finance console" detail="Disbursement summaries, funds-received tables, and budget approvals are withheld until the finance backend is wired — no fabricated money figures are shown. The Budget Intelligence and partner-payment queues above are live." />
+      )}
       </div>
     </>
   );

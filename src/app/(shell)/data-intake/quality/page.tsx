@@ -5,12 +5,35 @@ import { runDataQualityScan } from "@/lib/intake/data-quality-mock";
 import { CountryDataQualityCard } from "@/components/intake/CountryDataQualityCard";
 import { activeFinancialYear } from "@/lib/fy-engine";
 import { getCurrentUser } from "@/lib/auth";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 import { cn } from "@/lib/utils";
 
 export default async function DataQualityCenterPage() {
   const me = await getCurrentUser();
   const fy = activeFinancialYear();
   const allowed = ["ImpactAssessment", "Admin"].includes(me.role);
+
+  // The integrity scan + country confidence card run off hand-mocked fixtures
+  // (data-quality-mock, country-data-quality) — no live data-quality backend.
+  // Never render fabricated quality scores in production.
+  if (!isMockAllowed()) {
+    return (
+      <StubPage
+        title="Data Quality Center"
+        subtitle={`Every school feeding the planning engine is scanned for the integrity issues that would poison targets, leaderboards, and donor reports. ${fy.label}.`}
+      >
+        {!allowed && (
+          <section className="card p-3.5 border-amber-200 bg-amber-50/60">
+            <h2 className="text-[13px] font-extrabold tracking-tight">Data quality is an Impact Assessment view</h2>
+            <p className="text-[11.5px] muted">Only Impact Assessment and Admin own data quality.</p>
+          </section>
+        )}
+        <InsufficientData surface="the data quality center" detail="Integrity scores and issue logs are withheld until the data-quality backend is wired — no fabricated quality figures are shown." />
+      </StubPage>
+    );
+  }
+
   const r = runDataQualityScan();
 
   const verdict = r.errors > 0 ? "Errors" : r.warnings > 0 ? "Warnings" : "Clean";

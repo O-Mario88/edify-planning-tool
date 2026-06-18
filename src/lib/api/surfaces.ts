@@ -202,7 +202,8 @@ export type BeGeoDistrict = {
   centroidLat: number | null; centroidLng: number | null;
   schools: number; coreSchools: number; clientSchools: number;
   clustered: number; unclustered: number; clusters: number; ssaDone: number; ssaPending: number; ssaPct: number;
-  avgSsa: number | null; coreAvgSsa: number | null; clientAvgSsa: number | null; criticalCount: number; activitiesCompleted: number;
+  avgSsa: number | null; coreAvgSsa: number | null; clientAvgSsa: number | null;
+  criticalCount: number; coreCriticalCount: number; clientCriticalCount: number; activitiesCompleted: number;
   status: "healthy" | "needs_attention" | "high_risk" | "insufficient_data";
   interventions: { key: string; label: string; avg: number | null }[];
   weakestInterventions: { key: string; label: string; avg: number }[];
@@ -216,7 +217,7 @@ export type BeGeoSummary = {
   districts: number; subRegions: number; schools: number; coreSchools: number; clientSchools: number;
   clustered: number; clusters: number; ssaDone: number; ssaPending: number; avgSsa: number | null;
   coreAvgSsa: number | null; clientAvgSsa: number | null;
-  criticalSchools: number; highRiskDistricts: number; activitiesCompleted: number;
+  criticalSchools: number; coreCriticalSchools: number; clientCriticalSchools: number; highRiskDistricts: number; activitiesCompleted: number;
   interventions: { key: string; label: string; avg: number | null }[];
   weakestInterventions: { key: string; label: string; avg: number }[];
 };
@@ -231,7 +232,7 @@ export function fetchGeoMap(user: BackendUser, geo?: GeoFilterParams) {
   return live<BeGeoMap>(`/analytics/geo-map${geoQuery(geo)}`, user);
 }
 export type BeGeoCluster = { id: string; name: string; schools: number; avgSsa: number | null; weakest: { key: string; label: string; avg: number } | null };
-export type BeGeoSubCounty = { name: string; schools: number; coreSchools: number; clientSchools: number; clusters: number; avgSsa: number | null; coreAvgSsa: number | null; clientAvgSsa: number | null; weakest: { key: string; label: string; avg: number } | null };
+export type BeGeoSubCounty = { name: string; schools: number; coreSchools: number; clientSchools: number; clusters: number; avgSsa: number | null; coreAvgSsa: number | null; clientAvgSsa: number | null; coreCriticalCount: number; clientCriticalCount: number; weakest: { key: string; label: string; avg: number } | null };
 export type BeGeoDistrictDetail = { districtId: string; clusters: BeGeoCluster[]; subCounties: BeGeoSubCounty[] };
 export function fetchGeoDistrictDetail(user: BackendUser, districtId: string) {
   return live<BeGeoDistrictDetail>(`/analytics/geo-map/district/${encodeURIComponent(districtId)}`, user);
