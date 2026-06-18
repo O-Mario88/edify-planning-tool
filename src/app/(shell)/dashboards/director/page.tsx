@@ -237,14 +237,14 @@ export default async function CountryDirectorDashboard({ searchParams }: { searc
             title="Are teams and partners delivering?"
             description="PL performance, staff pace with context flags, partner delivery and certification, debriefs routed up to you, and the 10% verification quota."
           />
-          <section className="grid grid-cols-12 gap-3 items-stretch [&>div>*]:h-full" id="program-leads">
-            <div className="col-span-12 lg:col-span-7">
-              <ProgramLeadsPerformanceTable />
-            </div>
-            <div className="col-span-12 lg:col-span-5">
-              <StaffPerformanceSummary />
-            </div>
-          </section>
+          {/* Country-lead performance gets its own full row — the table needs the
+              width. The staff-pace summary (a 6-metric strip) was cramped at
+              col-span-5; it reads better full width, so it moves to its own row
+              above partner performance. */}
+          <div id="program-leads">
+            <ProgramLeadsPerformanceTable />
+          </div>
+          <StaffPerformanceSummary />
           <PartnerPerformanceSummary />
           <DebriefReviewInbox user={user} audience="cd" />
           <ClientVerificationCard />
