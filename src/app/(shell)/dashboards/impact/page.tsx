@@ -127,7 +127,7 @@ export default async function ImpactDashboard() {
                 description="From plan to upload to verification — where every record sits today."
               />
               <IaPlanCard />
-              <div className="grid grid-cols-12 gap-4 items-stretch">
+              <div className="grid grid-cols-12 gap-4 items-stretch [&>div>*]:h-full">
                 {/* `flex flex-col` (not `flex` alone) is critical at tablet:
                     when the wrapper is `col-span-12`, row-direction flex
                     shrinks the article to its content min-width, leaving

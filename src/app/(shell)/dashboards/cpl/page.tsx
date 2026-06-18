@@ -123,7 +123,7 @@ export default async function CountryProgramLeadDashboard() {
           <div id="my-field-work">
             <CplFieldWorkCard />
           </div>
-          <section className="grid grid-cols-12 gap-3 md:gap-4 items-stretch">
+          <section className="grid grid-cols-12 gap-3 md:gap-4 items-stretch [&>div>*]:h-full">
             <div className="col-span-12 lg:col-span-8" id="my-plan">
               <MyPlanCard role="cpl" />
             </div>
@@ -145,7 +145,7 @@ export default async function CountryProgramLeadDashboard() {
           />
           <TeamPlanBoard rows={teamPlan.rows} summary={teamPlan.summary} />
           <TeamCapacityCard plStaffId={user.staffId} />
-          <section className="grid grid-cols-12 gap-3 md:gap-4 items-stretch" id="cceo-performance">
+          <section className="grid grid-cols-12 gap-3 md:gap-4 items-stretch [&>div>*]:h-full" id="cceo-performance">
             <div className="col-span-12 lg:col-span-7">
               <CceoPerformanceTable />
             </div>
@@ -153,7 +153,7 @@ export default async function CountryProgramLeadDashboard() {
               <ApprovalQueueCard />
             </div>
           </section>
-          <section className="grid grid-cols-12 gap-3 md:gap-4 items-stretch">
+          <section className="grid grid-cols-12 gap-3 md:gap-4 items-stretch [&>div>*]:h-full">
             <div className="col-span-12 lg:col-span-8" id="team-performance">
               <TeamPerformanceOverviewChart />
             </div>
@@ -204,7 +204,7 @@ export default async function CountryProgramLeadDashboard() {
             title="Are funds matching the planned work?"
             description="The schedule auto-costed from the CD rate card, the weekly envelope, and the monthly fund requests rolled up from your CCEOs."
           />
-          <section className="grid grid-cols-12 gap-3 md:gap-4 items-stretch" id="team-budget">
+          <section className="grid grid-cols-12 gap-3 md:gap-4 items-stretch [&>div>*]:h-full" id="team-budget">
             <div className="col-span-12 lg:col-span-7"><ScheduleBudgetCard /></div>
             <div className="col-span-12 lg:col-span-5"><WeeklyFundRequestCard /></div>
           </section>
@@ -225,7 +225,7 @@ export default async function CountryProgramLeadDashboard() {
             title="Are schools improving — and is the data keeping up?"
             description="Intervention performance by cluster, funding execution, the 10% verification quota, the evidence/Salesforce backlog, and team debrief compliance."
           />
-          <section className="grid grid-cols-12 gap-3 md:gap-4 items-stretch">
+          <section className="grid grid-cols-12 gap-3 md:gap-4 items-stretch [&>div>*]:h-full">
             <div className="col-span-12 lg:col-span-8" id="ssa-intelligence">
               <InterventionPerformanceByClusterCard />
             </div>

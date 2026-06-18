@@ -138,7 +138,7 @@ export default async function CountryDirectorDashboard({ searchParams }: { searc
             title="Is the program on track?"
             description="Country-wide trend, regional comparison, and cluster operations — monitored through analytics, not field planning."
           />
-          <section className="grid grid-cols-12 gap-3 items-stretch">
+          <section className="grid grid-cols-12 gap-3 items-stretch [&>div>*]:h-full">
             <div className="col-span-12 lg:col-span-8">
               <CountryPerformanceChart />
             </div>
@@ -182,7 +182,7 @@ export default async function CountryDirectorDashboard({ searchParams }: { searc
             title="What needs executive protection?"
             description="Operational backlogs, schools on red alert, and cluster readiness — the data-quality floor under every number above."
           />
-          <section className="grid grid-cols-12 gap-3 items-stretch" id="operational-risk">
+          <section className="grid grid-cols-12 gap-3 items-stretch [&>div>*]:h-full" id="operational-risk">
             <div className="col-span-12 lg:col-span-7">
               <OperationalRiskBacklogRow />
             </div>
@@ -215,11 +215,11 @@ export default async function CountryDirectorDashboard({ searchParams }: { searc
             title="Is money matching approved plans?"
             description="Annual budget vs plan, the cost catalogue you control, fund approvals awaiting sign-off, and funds parked without delivery."
           />
-          <section className="grid grid-cols-12 gap-3 items-stretch" id="country-budget">
+          <section className="grid grid-cols-12 gap-3 items-stretch [&>div>*]:h-full" id="country-budget">
             <div className="col-span-12 lg:col-span-7"><ScheduleBudgetCard /></div>
             <div className="col-span-12 lg:col-span-5"><CostSettingsCard /></div>
           </section>
-          <section className="grid grid-cols-12 gap-3 items-stretch" id="fund-approvals">
+          <section className="grid grid-cols-12 gap-3 items-stretch [&>div>*]:h-full" id="fund-approvals">
             <div className="col-span-12 lg:col-span-8">
               <FundApprovalFinanceSnapshot pendingFundRequests={cdPendingFundRequests()} />
             </div>
@@ -237,7 +237,7 @@ export default async function CountryDirectorDashboard({ searchParams }: { searc
             title="Are teams and partners delivering?"
             description="PL performance, staff pace with context flags, partner delivery and certification, debriefs routed up to you, and the 10% verification quota."
           />
-          <section className="grid grid-cols-12 gap-3 items-stretch" id="program-leads">
+          <section className="grid grid-cols-12 gap-3 items-stretch [&>div>*]:h-full" id="program-leads">
             <div className="col-span-12 lg:col-span-7">
               <ProgramLeadsPerformanceTable />
             </div>
