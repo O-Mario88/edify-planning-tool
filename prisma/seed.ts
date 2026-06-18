@@ -43,11 +43,22 @@ const districtIdFor = (name: string): string => `UG-D-${districtSlug(name).toUpp
 const MUKONO_ID = districtIdFor("Mukono");
 
 // We import @prisma/client lazily so a clone without `prisma generate`
-// run still passes typecheck.
+// run still passes typecheck. Use dynamic import (not require): the seed runs
+// via `node --experimental-strip-types`, which parses this file as an ES module
+// (it has top-level imports), where `require` is undefined.
 async function loadPrisma(): Promise<{ prisma: unknown }> {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { PrismaClient } = require("@prisma/client") as { PrismaClient: new () => unknown };
-  return { prisma: new PrismaClient() };
+  const url = process.env.DATABASE_URL;
+  if (!url) throw new Error("DATABASE_URL is not set — cannot seed.");
+  const { PrismaClient } = (await import("@prisma/client")) as unknown as {
+    PrismaClient: new (opts: { adapter: unknown }) => unknown;
+  };
+  const { PrismaPg } = (await import("@prisma/adapter-pg")) as unknown as {
+    PrismaPg: new (config: { connectionString: string }) => unknown;
+  };
+  // Prisma 7's default "client" engine requires a driver adapter (a bare
+  // connection string is no longer accepted). Connect via @prisma/adapter-pg.
+  const adapter = new PrismaPg({ connectionString: url });
+  return { prisma: new PrismaClient({ adapter }) };
 }
 
 // Deterministic ids so the seed plays well with CI snapshots.
