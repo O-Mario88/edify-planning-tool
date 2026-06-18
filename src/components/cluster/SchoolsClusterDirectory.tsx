@@ -90,6 +90,23 @@ export function SchoolsClusterDirectory({
   const owners = useMemo(() => [...new Set(schools.map((s) => s.assignedCceo).filter(Boolean) as string[])].sort(), [schools]);
   const clusterNames = useMemo(() => [...new Set(schools.map((s) => s.clusterName).filter(Boolean) as string[])].sort(), [schools]);
 
+  // Backend-accurate geography for the cluster-create forms: district → its
+  // sub-counties, derived from the (backend-sourced, scope-filtered) schools so
+  // every option in the New-cluster / Create-new forms resolves to REAL backend
+  // geography that's already in the user's scope. This is what makes the create
+  // actually persist (no FE-catalog name that the backend doesn't know, no
+  // out-of-scope district 403).
+  const geoByDistrict = useMemo(() => {
+    const m: Record<string, string[]> = {};
+    for (const s of schools) {
+      if (!s.district) continue;
+      (m[s.district] ??= []);
+      if (s.subCounty && !m[s.district].includes(s.subCounty)) m[s.district].push(s.subCounty);
+    }
+    Object.values(m).forEach((a) => a.sort());
+    return m;
+  }, [schools]);
+
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return schools.filter((s) => {
@@ -185,7 +202,7 @@ export function SchoolsClusterDirectory({
           {/* The full standalone "Create a new cluster" drawer (district →
               sub-counties → name → leader). Creates an empty cluster; schools are
               assigned from this directory afterwards. */}
-          {canManageClusters && <CreateClusterButton />}
+          {canManageClusters && <CreateClusterButton geoByDistrict={geoByDistrict} />}
           <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-extrabold",
             unclusteredCount ? "bg-rose-50 text-rose-700" : "bg-emerald-50 text-emerald-700")}>
             {unclusteredCount ? <AlertTriangle size={13} /> : <CheckCircle2 size={13} />}
@@ -435,6 +452,7 @@ export function SchoolsClusterDirectory({
         onClose={onDrawerClose}
         initialTab={drawerTab}
         canManageClusters={canManageClusters}
+        geoByDistrict={geoByDistrict}
         projectOptions={projectOptions}
         partnerOptions={partnerOptions}
         interventionAreas={interventionAreas}

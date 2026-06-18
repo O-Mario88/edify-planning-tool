@@ -296,12 +296,18 @@ export async function createEmptyClusterAction(
         revalidateClusterSurfaces();
         return { ok: true, clusterId: res.data.id, clusterName: res.data.name };
       }
-      // backend create failed (e.g. duplicate sub-county cluster) — surface it
-      if (res.error) return { ok: false, reason: "FAILED", message: res.error };
+      // Backend create failed (duplicate sub-county cluster, out-of-scope
+      // district, unreachable API). Surface the real reason and STOP — never
+      // silently fall back to the in-memory store, which looks saved but never
+      // reaches Postgres (the "New cluster not saving" class of bug).
+      return { ok: false, reason: "FAILED", message: res.error ?? "The backend could not create the cluster — check the API server is running on :4000." };
     }
-    // geo unresolved → fall through to the in-memory store (keeps dev working)
+    // Geography names didn't resolve to backend IDs — fail loudly rather than
+    // writing a phantom in-memory cluster.
+    return { ok: false, reason: "FAILED", message: `Could not match "${input.district}" and the selected sub-counties to the backend geography. Pick them from the lists and try again.` };
   }
 
+  // No backend (pure dev mock mode) — in-memory store.
   const cluster = createCluster(input, actor);
   emitAudit({
     action: "cluster.created",

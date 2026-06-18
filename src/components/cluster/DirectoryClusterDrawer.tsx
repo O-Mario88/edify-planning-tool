@@ -89,7 +89,7 @@ type Tab = "cluster" | "project" | "partner";
 
 export function DirectoryClusterDrawer({
   open, school, onClose, projectOptions = [], partnerOptions = [], interventionAreas = [], initialTab = "cluster",
-  canManageClusters = true,
+  canManageClusters = true, geoByDistrict = {},
 }: {
   open: boolean;
   school: DirectorySchoolVM | null;
@@ -101,6 +101,9 @@ export function DirectoryClusterDrawer({
   /** When false, the Cluster tab is read-only — cluster assignment is a
    *  CCEO/PL responsibility (e.g. the Project Coordinator only views it). */
   canManageClusters?: boolean;
+  /** Backend-accurate district → sub-counties map (from the directory's schools)
+   *  so the Create-new form offers only real, in-scope geography that resolves. */
+  geoByDistrict?: Record<string, string[]>;
 }) {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>(initialTab);
@@ -150,9 +153,15 @@ export function DirectoryClusterDrawer({
 
   // Create-new cluster: sub-county choices for the chosen district + candidate
   // leaders drawn from schools in the chosen area (same helpers the standalone form uses).
+  const useBackendGeo = Object.keys(geoByDistrict).length > 0;
+  const districtOpts = useBackendGeo
+    ? Object.keys(geoByDistrict).sort().map((d) => ({ value: d, label: d }))
+    : DISTRICT_OPTIONS;
   const newSubCountyChoices = useMemo(
-    () => (newDistrict ? subCountiesOf(newDistrict).map((s) => s.name) : []),
-    [newDistrict],
+    () => (useBackendGeo
+      ? (geoByDistrict[newDistrict] ?? [])
+      : (newDistrict ? subCountiesOf(newDistrict).map((s) => s.name) : [])),
+    [newDistrict, useBackendGeo, geoByDistrict],
   );
   const leaderCandidates = useMemo(
     () => (newDistrict ? candidateClusterLeaders(newDistrict, newSubCounties) : []),
@@ -417,7 +426,7 @@ export function DirectoryClusterDrawer({
                     required
                     value={newDistrict}
                     onChange={(e) => { setNewDistrict(e.target.value); setNewSubCounties([]); setLeaderSchoolId(""); }}
-                    options={DISTRICT_OPTIONS}
+                    options={districtOpts}
                   />
 
                   {/* Sub-counties — multi-select (a cluster may span several); the

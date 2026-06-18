@@ -21,12 +21,23 @@ const DISTRICT_OPTIONS = Array.from(new Set(SUBCOUNTIES.map((s) => s.districtNam
   .sort()
   .map((d) => ({ value: d, label: d }));
 
-export function CreateClusterButton() {
+export function CreateClusterButton({ geoByDistrict }: { geoByDistrict?: Record<string, string[]> } = {}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
 
-  const [district, setDistrict] = useState(DISTRICT_OPTIONS[0]?.value ?? "");
+  // Geography source. When the caller passes `geoByDistrict` (the School
+  // Directory derives it from the BACKEND schools it manages), the district +
+  // sub-county pickers offer ONLY real backend geography that's in the user's
+  // scope — so the name→ID resolution always succeeds and the backend never
+  // 403s on an out-of-scope district. Falls back to the static national
+  // catalogue for callers without it (e.g. the country-scoped Clusters page).
+  const useBackendGeo = !!geoByDistrict && Object.keys(geoByDistrict).length > 0;
+  const districtOpts = useBackendGeo
+    ? Object.keys(geoByDistrict!).sort().map((d) => ({ value: d, label: d }))
+    : DISTRICT_OPTIONS;
+
+  const [district, setDistrict] = useState(districtOpts[0]?.value ?? "");
   const [subCounties, setSubCounties] = useState<string[]>([]);
   const [name, setName] = useState("");
   const [autoName, setAutoName] = useState(""); // last auto-suggested name (so manual edits stick)
@@ -35,7 +46,10 @@ export function CreateClusterButton() {
   const [leaderSchoolId, setLeaderSchoolId] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const subCountyChoices = useMemo(() => subCountiesOf(district).map((s) => s.name), [district]);
+  const subCountyChoices = useMemo(
+    () => (useBackendGeo ? (geoByDistrict![district] ?? []) : subCountiesOf(district).map((s) => s.name)),
+    [district, useBackendGeo, geoByDistrict],
+  );
   // School leaders from schools in the chosen district + sub-counties.
   const leaderCandidates = useMemo(
     () => candidateClusterLeaders(district, subCounties),
@@ -102,7 +116,9 @@ export function CreateClusterButton() {
           ? (Object.values(res.errors)[0] ?? "Invalid cluster.")
           : res.reason === "FORBIDDEN"
             ? "You don't have permission to create clusters."
-            : "Could not create the cluster.",
+            : res.reason === "FAILED"
+              ? res.message  // surface the real backend reason (e.g. "District outside your scope")
+              : "Could not create the cluster.",
       );
       return;
     }
@@ -147,7 +163,7 @@ export function CreateClusterButton() {
             required
             value={district}
             onChange={(e) => { setDistrict(e.target.value); setSubCounties([]); setLeaderSchoolId(""); }}
-            options={DISTRICT_OPTIONS}
+            options={districtOpts}
           />
 
           {/* Sub-counties — multi-select via checkboxes (a cluster may span several). */}
