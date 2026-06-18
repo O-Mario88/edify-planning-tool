@@ -309,21 +309,24 @@
   --background: #0b0c0e;
   --foreground: #f5f7fa;
 
-  /* Surfaces — neutral black → charcoal scale (no blue tint), evenly stepped */
-  --bg-app:           #060708;
-  --bg-page:          #0b0c0e;
-  --surface-1:        #17181b;
-  --surface-2:        #202125;
-  --surface-3:        #292b30;
-  --surface-glass:    rgba(23, 24, 27, .82);
-  --surface-drawer:   #121316;
-  --surface-modal:    #17181b;
-  --surface-popover:  #202125;
-  --surface-table:    #17181b;
-  --surface-input:    #121316;
-  --surface-hover:    rgba(255,255,255,.04);
-  --surface-selected: rgba(20,184,166,.16);
-  --surface-row-hover: rgba(255,255,255,.025);
+  /* Surfaces — cool blue-graphite scale tuned to the "Live Sports" reference:
+   * the page is a deep near-black, and cards step up a clear ~+8 lightness with
+   * a faint cool tint so they read as FLOATING panels (not pasted rectangles).
+   * The page itself carries a subtle vignette (see html.dark body below). */
+  --bg-app:           #050608;
+  --bg-page:          #0a0b0e;
+  --surface-1:        #181b21;   /* card — clearly above the page, faint cool tint */
+  --surface-2:        #21242c;   /* elevated card / inner surface */
+  --surface-3:        #2a2e37;   /* hover / press / row-selected */
+  --surface-glass:    rgba(24, 27, 33, .82);
+  --surface-drawer:   #121419;
+  --surface-modal:    #181b21;
+  --surface-popover:  #21242c;
+  --surface-table:    #181b21;
+  --surface-input:    #121419;
+  --surface-hover:    rgba(255,255,255,.045);
+  --surface-selected: rgba(61,111,214,.18);
+  --surface-row-hover: rgba(255,255,255,.03);
 
   /* Text — neutral cool-white scale, AA-compliant on the card fill */
   --text-primary:   #f5f7fa;
@@ -333,11 +336,13 @@
   --text-inverse:   #0a0e15;
   --text-on-brand:  #ffffff;
 
-  /* Borders — neutral white, low opacity. Three intensities. */
-  --border-subtle:  rgba(255,255,255,.04);
-  --border-card:    rgba(255,255,255,.07);
-  --border-strong:  rgba(255,255,255,.14);
-  --border-focus:   rgba(20,184,166,.65);
+  /* Borders — neutral white, low opacity. Lifted vs. the prior pass so card
+   * edges read crisply against the page (the reference cards have a clear 1px
+   * rim, not a barely-there hairline). Three intensities. */
+  --border-subtle:  rgba(255,255,255,.055);
+  --border-card:    rgba(255,255,255,.095);
+  --border-strong:  rgba(255,255,255,.16);
+  --border-focus:   rgba(61,111,214,.65);
   --border-success: rgba(34,197,94,.32);
   --border-warn:    rgba(251,191,36,.32);
   --border-danger:  rgba(239,68,68,.32);
@@ -350,16 +355,18 @@
   --row-hover:      var(--surface-row-hover);
   --tab-hover:      var(--surface-hover);
   --dropdown-hover: rgba(255,255,255,.05);
-  --focus-ring:     rgba(20,184,166,.45);
-  --focus-ring-strong: rgba(20,184,166,.70);
+  --focus-ring:     rgba(61,111,214,.45);
+  --focus-ring-strong: rgba(61,111,214,.70);
 
-  /* Brand — Edify teal. The dashboard's signature active colour:
-   * sidebar selected row, segmented-toggle active pill, focus ring,
-   * primary CTA. Everything else stays graphite. */
-  --brand-primary:        #6b93ab;
-  --brand-primary-hover:  #84a8bd;
-  --brand-primary-press:  #50758b;
-  --brand-deep:           #3f5e70;
+  /* Brand — confident royal blue, matching the reference's primary CTA
+   * ("Follow" button) + active sidebar row. White text. The dashboard's
+   * signature active colour: sidebar selected row, segmented-toggle active
+   * pill, focus ring, primary CTA. Everything else stays graphite. (Light
+   * mode keeps the Edify slate-blue; this lift is dark-mode only.) */
+  --brand-primary:        #3d6fd6;
+  --brand-primary-hover:  #5483e6;
+  --brand-primary-press:  #3461c4;
+  --brand-deep:           #2b4f9e;
   --brand-accent:         #a78bfa;        /* violet — recommendations / secondary highlights */
   --brand-accent-hover:   #b9a0fb;
   --brand-success:        #22c55e;
@@ -376,9 +383,9 @@
    * without code changes. */
   --color-edify-primary:    var(--brand-primary);
   --color-edify-dark:       var(--brand-primary-press);
-  --color-edify-deep:       #121316;
-  --color-edify-darker:     #0b0c0e;
-  --color-edify-soft:       rgba(80,117,139,.16);
+  --color-edify-deep:       #121419;
+  --color-edify-darker:     #0a0b0e;
+  --color-edify-soft:       rgba(61,111,214,.16);
   --color-edify-border:     var(--border-card);
   --color-edify-divider:    var(--border-subtle);
   --color-edify-muted:      var(--text-muted);
@@ -567,6 +574,20 @@ html.glass {
   background-image:
     radial-gradient(120% 80% at 50% -10%, rgba(255, 255, 255, 0.035), transparent 55%),
     linear-gradient(180deg, #17181b 0%, #101113 55%, #0a0b0d 100%);
+  background-attachment: fixed;
+}
+
+/* Dark-mode page atmosphere — matches the "Live Sports" reference: a faint
+ * cool glow behind the top chrome + a gentle vertical graphite gradient that
+ * darkens toward the edges, so the floating cards read against an atmosphere
+ * rather than a flat slab. Applied at <html>/body so every (shell) page
+ * inherits it; cards layer their own --surface-1 on top. */
+html.dark body,
+html.dark {
+  background-color: #0a0b0e;
+  background-image:
+    radial-gradient(110% 70% at 50% -8%, rgba(61, 111, 214, 0.07), transparent 60%),
+    linear-gradient(180deg, #0d0f15 0%, #0a0b0e 58%, #08090b 100%);
   background-attachment: fixed;
 }
 
