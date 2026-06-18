@@ -16,6 +16,7 @@ import {
 import { cn } from "@/lib/utils";
 import { DirectoryClusterDrawer, type DirectorySchoolVM } from "./DirectoryClusterDrawer";
 import type { DirectoryProjectTag } from "./DirectoryClusterDrawer";
+import { CreateClusterButton } from "./CreateClusterButton";
 import { assignToExistingClusterAction } from "@/lib/actions/cluster-actions";
 import { assignSchoolsToProjectAction } from "@/lib/actions/special-project-actions";
 
@@ -180,11 +181,17 @@ export function SchoolsClusterDirectory({
             Every assignment starts here — cluster, special project, and partner. Clustering unlocks SSA / SIT and planning.
           </p>
         </div>
-        <span className={cn("ml-auto shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-extrabold",
-          unclusteredCount ? "bg-rose-50 text-rose-700" : "bg-emerald-50 text-emerald-700")}>
-          {unclusteredCount ? <AlertTriangle size={13} /> : <CheckCircle2 size={13} />}
-          {unclusteredCount} unclustered
-        </span>
+        <div className="ml-auto shrink-0 flex items-center gap-2">
+          {/* The full standalone "Create a new cluster" drawer (district →
+              sub-counties → name → leader). Creates an empty cluster; schools are
+              assigned from this directory afterwards. */}
+          {canManageClusters && <CreateClusterButton />}
+          <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-extrabold",
+            unclusteredCount ? "bg-rose-50 text-rose-700" : "bg-emerald-50 text-emerald-700")}>
+            {unclusteredCount ? <AlertTriangle size={13} /> : <CheckCircle2 size={13} />}
+            {unclusteredCount} unclustered
+          </span>
+        </div>
       </header>
 
       {/* Filters */}
