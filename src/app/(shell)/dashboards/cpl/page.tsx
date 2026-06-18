@@ -123,14 +123,13 @@ export default async function CountryProgramLeadDashboard() {
           <div id="my-field-work">
             <CplFieldWorkCard />
           </div>
-          <section className="grid grid-cols-12 gap-3 md:gap-4 items-stretch [&>div>*]:h-full">
-            <div className="col-span-12 lg:col-span-8" id="my-plan">
-              <MyPlanCard role="cpl" />
-            </div>
-            <div className="col-span-12 lg:col-span-4">
-              <PersonalTargetsCard />
-            </div>
-          </section>
+          {/* My Team Plan takes the full row — the plan list needs the width.
+              My Personal Targets moves to its own full-width row below (its
+              4-across metric layout reads well at full width). */}
+          <div id="my-plan">
+            <MyPlanCard role="cpl" />
+          </div>
+          <PersonalTargetsCard />
           <ProjectWorkCard user={user} />
         </section>
 
