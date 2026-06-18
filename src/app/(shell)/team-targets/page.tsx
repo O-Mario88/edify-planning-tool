@@ -131,14 +131,13 @@ export default async function TeamTargetsDashboard() {
       <TargetsLive title="Team target progress" />
       <OperatingTargetsView data={teamData} />
 
-      <section className="grid grid-cols-12 gap-4 items-start">
-        <div className="col-span-12 lg:col-span-7 space-y-4">
-          <FairMatrixPlot rows={fairMatrixRows} />
-        </div>
-        <div className="col-span-12 lg:col-span-5">
-          <RebalanceRecommendationsCard recs={rebalanceRecs} />
-        </div>
-      </section>
+      {/* The fairness matrix gets its own full row — at full width the staff
+          points spread out and overlap far less, so the quadrants read cleanly.
+          Its rebalance recommendations move to a full-width row below. */}
+      <div className="space-y-4">
+        <FairMatrixPlot rows={fairMatrixRows} />
+        <RebalanceRecommendationsCard recs={rebalanceRecs} />
+      </div>
 
       <section className="grid grid-cols-12 gap-4 items-start">
         <div className="col-span-12 space-y-4">

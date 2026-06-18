@@ -145,14 +145,15 @@ export default async function CountryProgramLeadDashboard() {
           />
           <TeamPlanBoard rows={teamPlan.rows} summary={teamPlan.summary} />
           <TeamCapacityCard plStaffId={user.staffId} />
-          <section className="grid grid-cols-12 gap-3 md:gap-4 items-stretch [&>div>*]:h-full" id="cceo-performance">
-            <div className="col-span-12 lg:col-span-7">
-              <CceoPerformanceTable />
-            </div>
-            <div className="col-span-12 lg:col-span-5" id="approvals">
-              <ApprovalQueueCard />
-            </div>
-          </section>
+          {/* CCEO (country-lead) performance gets its own full row — the table
+              needs the width. The approvals queue moves to its own full-width row
+              below (a list of requests reads better full width than at col-span-5). */}
+          <div id="cceo-performance">
+            <CceoPerformanceTable />
+          </div>
+          <div id="approvals">
+            <ApprovalQueueCard />
+          </div>
           <section className="grid grid-cols-12 gap-3 md:gap-4 items-stretch [&>div>*]:h-full">
             <div className="col-span-12 lg:col-span-8" id="team-performance">
               <TeamPerformanceOverviewChart />
