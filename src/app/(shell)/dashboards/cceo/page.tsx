@@ -146,7 +146,7 @@ export default async function CceoDashboardPage() {
             <SsaNeededCard staffId={user.staffId} role={user.role} />
             <RecommendedActionsCard staffId={user.staffId} role={user.role} />
           </ResponsiveGrid>
-          <div className="grid grid-cols-12 gap-3 lg:gap-4 items-stretch">
+          <div className="grid grid-cols-12 gap-3 lg:gap-4 items-stretch [&>div>*]:h-full">
             <div className="col-span-12 lg:col-span-7"><CoreSchoolsNeedingAttentionCard /></div>
             <div className="col-span-12 lg:col-span-5">{isMockAllowed() ? <CoreSsaHeatmapCard /> : <CoreSsaHeatmapLive />}</div>
           </div>
@@ -171,10 +171,12 @@ export default async function CceoDashboardPage() {
             title="What partners owe you — and what you owe them"
             description="Unscheduled assignments, evidence waiting on your review, returns, Salesforce hand-offs, and payment status."
           />
-          <div className="grid grid-cols-12 gap-3 lg:gap-4 items-stretch">
-            <div className="col-span-12 lg:col-span-7"><PartnerWorkMonitorCard /></div>
-            <div className="col-span-12 lg:col-span-5"><PartnerDebriefReviewCard /></div>
-          </div>
+          {/* The monitor is a 6-metric strip — it earns full width. The debrief
+              review card renders null when there are no partner debriefs, so a
+              fixed 5-col beside it stranded a dead void; stack it full-width
+              below instead and it simply disappears when empty. */}
+          <PartnerWorkMonitorCard />
+          <PartnerDebriefReviewCard />
         </section>
 
         {/* G — THIS WEEK'S MONEY. Auto-generated; the CCEO never adds it up. */}
@@ -185,7 +187,7 @@ export default async function CceoDashboardPage() {
             title="Weekly fund request"
             description="Generated from your scheduled activities at CD-approved catalogue rates — review, submit, account."
           />
-          <div className="grid grid-cols-12 gap-3 lg:gap-4 items-stretch">
+          <div className="grid grid-cols-12 gap-3 lg:gap-4 items-stretch [&>div>*]:h-full">
             <div className="col-span-12 lg:col-span-5"><FundSlipStatusCard staffId={user.staffId} /></div>
             <div className="col-span-12 lg:col-span-7"><WeeklyFundRequestCard /></div>
           </div>
@@ -202,7 +204,7 @@ export default async function CceoDashboardPage() {
             title="Evidence, Salesforce & IA follow-up"
             description="Completed work isn't done until evidence is up, the SV-/TS- ID is in, and IA has verified it."
           />
-          <div className="grid grid-cols-12 gap-3 lg:gap-4 items-stretch">
+          <div className="grid grid-cols-12 gap-3 lg:gap-4 items-stretch [&>div>*]:h-full">
             <div className="col-span-12 lg:col-span-5"><EvidenceFollowUpCard user={user} /></div>
             <div className="col-span-12 lg:col-span-7"><VerificationPaymentFunnel /></div>
           </div>

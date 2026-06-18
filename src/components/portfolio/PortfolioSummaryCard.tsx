@@ -10,7 +10,7 @@ export function PortfolioSummaryCard({ staffId }: { staffId: string }) {
   const { counts } = portfolioForStaffId(staffId);
 
   return (
-    <Link href="/portfolio" className="card p-3.5 block hover:bg-[var(--color-edify-soft)]/20 transition-colors">
+    <Link href="/portfolio" className="card p-3.5 flex flex-col h-full hover:bg-[var(--color-edify-soft)]/20 transition-colors">
       <div className="flex items-center justify-between gap-2 mb-2.5">
         <div className="flex items-center gap-1.5">
           <Building2 size={14} className="text-[var(--color-edify-primary)]" />
@@ -20,7 +20,9 @@ export function PortfolioSummaryCard({ staffId }: { staffId: string }) {
           View all <ArrowRight size={12} />
         </span>
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+      {/* flex-1 + stretched cells → the strip grows to fill its cell height when
+          paired with a taller card, so no dead space is left below it. */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 flex-1">
         <Metric label="Schools owned"   value={counts.total}          tone="edify" />
         <Metric label="Client / Core"   value={`${counts.client}/${counts.core}`} tone="slate" />
         <Metric label="Awaiting SSA"    value={counts.missingSsa}     tone={counts.missingSsa > 0 ? "amber" : "green"} Icon={Lock} />
@@ -40,7 +42,7 @@ const TONE: Record<string, string> = {
 
 function Metric({ label, value, tone, Icon }: { label: string; value: number | string; tone: string; Icon?: React.ComponentType<{ size?: number; className?: string }> }) {
   return (
-    <div className="rounded-lg border border-[var(--color-edify-divider)] p-2">
+    <div className="rounded-lg border border-[var(--color-edify-divider)] p-2 flex flex-col justify-center">
       <div className="flex items-center gap-1">
         {Icon && <Icon size={11} className={cn("shrink-0", TONE[tone])} />}
         <span className="text-[10px] muted font-semibold truncate">{label}</span>
