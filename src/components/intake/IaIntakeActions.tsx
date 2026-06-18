@@ -7,7 +7,7 @@
 // truth. FY + quarter for an SSA upload are DERIVED from the SSA date and shown
 // live so the user sees which cycle the scores land in before submitting.
 
-import { useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Upload, CheckCircle2, Lock, FileUp, AlertCircle, Download, Pencil } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
@@ -197,9 +197,13 @@ function NewSchoolDrawer({ open, onClose, existingIds, initialMode = "manual" }:
 
   // Manual form state
   const [form, setForm] = useState({
-    schoolId: "", schoolName: "", region: "", district: "", subCounty: "",
+    schoolId: "", schoolName: "", region: "", district: "", subCounty: "", parish: "",
     schoolType: "Client" as SchoolType, enrollment: "", assignedCceo: "", cluster: "",
   });
+  // Parish options (admin4, UG-AU-DS-2022) — loaded from the backend for the
+  // chosen district + sub-county. Empty until a sub-county the dataset covers
+  // is selected.
+  const [parishOptions, setParishOptions] = useState<{ value: string; label: string }[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [serverMsg, setServerMsg] = useState<string | null>(null);
 
@@ -221,6 +225,18 @@ function NewSchoolDrawer({ open, onClose, existingIds, initialMode = "manual" }:
     [form.district],
   );
 
+  // Load backend parishes whenever the district + sub-county are both chosen.
+  useEffect(() => {
+    if (!form.district || !form.subCounty) { setParishOptions([]); return; }
+    let cancelled = false;
+    const qs = new URLSearchParams({ district: form.district, subCounty: form.subCounty });
+    fetch(`/api/geography/parishes?${qs}`)
+      .then((r) => r.json())
+      .then((d) => { if (!cancelled) setParishOptions((d.parishes ?? []).map((p: { name: string }) => ({ value: p.name, label: p.name }))); })
+      .catch(() => { if (!cancelled) setParishOptions([]); });
+    return () => { cancelled = true; };
+  }, [form.district, form.subCounty]);
+
   function set<K extends keyof typeof form>(k: K, v: (typeof form)[K]) {
     setForm((f) => ({ ...f, [k]: v }));
   }
@@ -234,7 +250,7 @@ function NewSchoolDrawer({ open, onClose, existingIds, initialMode = "manual" }:
       const res = await createSchool(form);
       if (res.ok) {
         setServerMsg(`School ${res.id} added — planning-locked until its first SSA upload.`);
-        setForm({ schoolId: "", schoolName: "", region: "", district: "", subCounty: "", schoolType: "Client", enrollment: "", assignedCceo: "", cluster: "" });
+        setForm({ schoolId: "", schoolName: "", region: "", district: "", subCounty: "", parish: "", schoolType: "Client", enrollment: "", assignedCceo: "", cluster: "" });
         router.refresh();
         setTimeout(onClose, 900);
       } else if (res.reason === "INVALID_INPUT") {
@@ -329,10 +345,10 @@ function NewSchoolDrawer({ open, onClose, existingIds, initialMode = "manual" }:
                 onChange={(e) => set("schoolName", e.target.value)} />
               <Select label="Region *" placeholder="Select region" value={form.region} error={errors.region}
                 options={REGIONS.map((r) => ({ value: r.key, label: r.label }))}
-                onChange={(e) => { set("region", e.target.value); set("district", ""); set("subCounty", ""); }} />
+                onChange={(e) => { set("region", e.target.value); set("district", ""); set("subCounty", ""); set("parish", ""); }} />
               <Select label="District *" placeholder={form.region ? "Select district" : "Pick a region first"} value={form.district}
                 error={errors.district} disabled={!form.region} options={districtOptions}
-                onChange={(e) => { set("district", e.target.value); set("subCounty", ""); }} />
+                onChange={(e) => { set("district", e.target.value); set("subCounty", ""); set("parish", ""); }} />
               <Select label="School type *" value={form.schoolType}
                 options={SCHOOL_TYPES.map((t) => ({ value: t, label: t }))}
                 onChange={(e) => set("schoolType", e.target.value as SchoolType)} />
@@ -351,7 +367,11 @@ function NewSchoolDrawer({ open, onClose, existingIds, initialMode = "manual" }:
                 helper="IA can assign the school to a CCEO later." onChange={(e) => set("assignedCceo", e.target.value)} />
               <Select label="Sub-county" placeholder={form.district ? "Select sub-county" : "Pick a district first"}
                 value={form.subCounty} disabled={!form.district} options={subCountyOptions}
-                onChange={(e) => set("subCounty", e.target.value)} />
+                onChange={(e) => { set("subCounty", e.target.value); set("parish", ""); }} />
+              <Select label="Parish"
+                placeholder={!form.subCounty ? "Pick a sub-county first" : parishOptions.length ? "Select parish" : "No parishes on file"}
+                value={form.parish} disabled={!form.subCounty || parishOptions.length === 0} options={parishOptions}
+                onChange={(e) => set("parish", e.target.value)} />
               <Input label="Cluster" placeholder="Central Cluster 3" value={form.cluster}
                 onChange={(e) => set("cluster", e.target.value)} />
             </div>

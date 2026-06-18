@@ -33,7 +33,7 @@ import { getIntakeTemplate } from "@/lib/intake/intake-templates";
 import { validateIntakeValues } from "@/lib/intake/intake-validate";
 import { addIntakeRecords } from "@/lib/intake/intake-records-mock";
 import { isBackendEnabled, type BackendUser } from "@/lib/api/backend";
-import { backendCreateSchool, backendUploadSsa, backendSetSchoolType, fetchDistricts, fetchSubCounties } from "@/lib/api/surfaces";
+import { backendCreateSchool, backendUploadSsa, backendSetSchoolType, fetchDistricts, fetchSubCounties, fetchParishes } from "@/lib/api/surfaces";
 
 // FE school-type label → backend SchoolType enum key.
 const SCHOOL_TYPE_TO_BACKEND: Record<string, string> = {
@@ -64,17 +64,23 @@ async function resolveSchoolGeography(
   user: BackendUser,
   districtName: string,
   subCountyName?: string,
-): Promise<{ regionId: string; districtId: string; subCountyId?: string } | null> {
+  parishName?: string,
+): Promise<{ regionId: string; districtId: string; subCountyId?: string; parishId?: string } | null> {
   const dRes = await fetchDistricts(user);
   if (!dRes.live) return null;
   const district = dRes.data.find((d) => d.name.toLowerCase() === districtName.toLowerCase());
   if (!district) return null;
   let subCountyId: string | undefined;
+  let parishId: string | undefined;
   if (subCountyName) {
     const scRes = await fetchSubCounties(user, district.id);
     if (scRes.live) subCountyId = scRes.data.find((s) => s.name.toLowerCase() === subCountyName.toLowerCase())?.id;
+    if (subCountyId && parishName) {
+      const pRes = await fetchParishes(user, subCountyId);
+      if (pRes.live) parishId = pRes.data.find((p) => p.name.toLowerCase() === parishName.toLowerCase())?.id;
+    }
   }
-  return { regionId: district.regionId, districtId: district.id, subCountyId };
+  return { regionId: district.regionId, districtId: district.id, subCountyId, parishId };
 }
 
 function beUser(u: { email: string; role: string }): BackendUser {
@@ -125,7 +131,7 @@ export async function createSchool(input: NewSchoolInput): Promise<IntakeResult>
   // backend error (e.g. duplicate schoolId) surface it; otherwise mirror into
   // the in-memory store so the FE's mock-reading intake surfaces stay in sync. ──
   if (isBackendEnabled()) {
-    const geo = await resolveSchoolGeography(beUser(user), input.district, input.subCounty);
+    const geo = await resolveSchoolGeography(beUser(user), input.district, input.subCounty, input.parish);
     if (geo) {
       const r = await backendCreateSchool(beUser(user), {
         schoolId: input.schoolId.trim(),
@@ -133,6 +139,7 @@ export async function createSchool(input: NewSchoolInput): Promise<IntakeResult>
         regionId: geo.regionId,
         districtId: geo.districtId,
         subCountyId: geo.subCountyId,
+        parishId: geo.parishId,
         enrollment,
         schoolType: SCHOOL_TYPE_TO_BACKEND[input.schoolType] ?? "client",
         accountOwnerName: input.assignedCceo,

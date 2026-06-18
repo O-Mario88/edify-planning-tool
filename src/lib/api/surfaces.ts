@@ -980,6 +980,15 @@ export function fetchDistricts(user: BackendUser, regionId?: string) {
 export function fetchSubCounties(user: BackendUser, districtId: string) {
   return live<BeSubCounty[]>(`/geography/sub-counties?districtId=${encodeURIComponent(districtId)}`, user);
 }
+// Parish (admin4) + Village (admin5) — from UG-AU-DS-2022.
+export type BeParish = { id: string; name: string; source?: string | null };
+export type BeVillage = { id: string; name: string };
+export function fetchParishes(user: BackendUser, subCountyId: string) {
+  return live<BeParish[]>(`/geography/parishes?subCountyId=${encodeURIComponent(subCountyId)}`, user);
+}
+export function fetchVillages(user: BackendUser, parishId: string) {
+  return live<BeVillage[]>(`/geography/villages?parishId=${encodeURIComponent(parishId)}`, user);
+}
 export type BeClusterSchool = {
   schoolId: string; name: string; schoolType: string; subCounty?: string | null;
   phone?: string | null; primaryContact?: string | null;
