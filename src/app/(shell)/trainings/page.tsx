@@ -11,7 +11,7 @@ import { shortStatusLabel, fullStatusLabel } from "@/lib/status-labels";
 import { ConfirmCompletionButton } from "@/components/my-targets/ConfirmCompletionButton";
 import { cn } from "@/lib/utils";
 import { isMockAllowed } from "@/lib/mock-policy";
-import { InsufficientData } from "@/components/ui/InsufficientData";
+import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
 
 // Training status → ChipTone. "In Progress" / "Scheduled" / "Cancelled"
 // are not in the canonical STATUS_TONE_MAP so we pin them here.
@@ -39,7 +39,21 @@ const STATS: { key: string; label: string; value: string }[] = [
 export default function TrainingsIndex() {
   const [statusFilter, setStatusFilter] = useState<(typeof FILTERS)[number]>("All");
   // Training rows/counts are mock; never render them as live production data.
-  if (!isMockAllowed()) return <InsufficientData surface="the trainings log" />;
+  if (!isMockAllowed())
+    return (
+      <ProductiveEmptyState
+        Icon={GraduationCap}
+        title="The trainings log isn't wired to live activities yet"
+        description="Training sessions are withheld until this list reads live activity records. Schedule and complete trainings through the live flow."
+        actionLabel="Open My Plan"
+        actionHref="/my-plan"
+        links={[
+          { label: "Completed activities", href: "/completed-activities" },
+          { label: "Schools", href: "/schools" },
+        ]}
+        note="No placeholder training rows are shown."
+      />
+    );
 
   const rows = statusFilter === "All"
     ? TRAININGS

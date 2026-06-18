@@ -4,11 +4,23 @@ import { StubPage } from "@/components/shell/StubPage";
 import { topQualityIssues, qualityCheckSeverity } from "@/lib/impact-mock";
 import { cn } from "@/lib/utils";
 import { isMockAllowed } from "@/lib/mock-policy";
-import { InsufficientData } from "@/components/ui/InsufficientData";
+import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
 
 export default function AlertsPage() {
   // Alert counts/severity come from impact-mock; withhold in production.
-  if (!isMockAllowed()) return <InsufficientData surface="data-quality alerts" />;
+  if (!isMockAllowed())
+    return (
+      <ProductiveEmptyState
+        Icon={AlertTriangle}
+        tone="warn"
+        title="No data-quality alerts from live data yet"
+        description="Severity counts and flagged issues are withheld until they're computed from live source records — no fabricated alerts are shown."
+        actionLabel="Open Analytics"
+        actionHref="/analytics"
+        links={[{ label: "Data room", href: "/analytics/data-room" }]}
+        note="Withheld until alerts trace to real data-quality checks."
+      />
+    );
   const critical = qualityCheckSeverity.find((s) => s.key === "critical")?.value ?? 0;
   const major    = qualityCheckSeverity.find((s) => s.key === "major")?.value    ?? 0;
   const minor    = qualityCheckSeverity.find((s) => s.key === "minor")?.value    ?? 0;

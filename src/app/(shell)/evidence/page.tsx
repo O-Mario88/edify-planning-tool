@@ -7,7 +7,8 @@ import { ConfirmCompletionButton } from "@/components/my-targets/ConfirmCompleti
 import { getCurrentUser } from "@/lib/auth";
 import { ROLE_REDIRECT } from "@/lib/auth-public";
 import { isMockAllowed } from "@/lib/mock-policy";
-import { InsufficientData } from "@/components/ui/InsufficientData";
+import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
+import { ClipboardCheck } from "lucide-react";
 import {
   buildEvidenceQueues,
   type AccountabilityQueueItem,
@@ -47,9 +48,17 @@ export default async function EvidencePage() {
           subtitle="Your completed work that can't count yet — clear each queue so activities reach verification and payment."
         />
         <div className="px-3 sm:px-4 md:px-5 pb-24 md:pb-5 pt-3 md:pt-4">
-          <InsufficientData
-            surface="the evidence & accountability queues"
-            detail="This personal clean-up queue is not yet served from the backend. Use Data Verification (IA), the activity evidence panel, and Disbursements for the live evidence → verification → payment flow."
+          <ProductiveEmptyState
+            Icon={ClipboardCheck}
+            title="Track evidence in the live pipeline"
+            description="Your personal clean-up queue isn't served from the backend yet. Capture proof, enter Salesforce IDs, and close accountability through the live flow instead."
+            actionLabel="Open My Plan"
+            actionHref="/my-plan"
+            links={[
+              { label: "Completed activities", href: "/completed-activities" },
+              { label: "Weekly funds", href: "/weekly-funds" },
+            ]}
+            note="Withheld until a backend evidence-queue endpoint exists — no placeholder rows are shown."
           />
         </div>
       </>

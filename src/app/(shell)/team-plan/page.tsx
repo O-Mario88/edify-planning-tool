@@ -8,7 +8,8 @@ import { CdFlagQueue } from "@/components/cpl/CdFlagQueue";
 import { ClusterMeetingRecommendationsCard } from "@/components/cpl/ClusterMeetingRecommendations";
 import { clusterMeetingRecommendations } from "@/lib/cluster/cluster-meeting-recommendations";
 import { isMockAllowed } from "@/lib/mock-policy";
-import { InsufficientData } from "@/components/ui/InsufficientData";
+import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
+import { Users } from "lucide-react";
 
 // /team-plan — the Program Lead's team execution workspace.
 //
@@ -24,7 +25,21 @@ export default async function TeamPlanPage() {
   }
   // Supervision cards use a hardcoded org tree + in-memory store, not live
   // StaffSupervisorAssignment; withhold until wired to Postgres.
-  if (!isMockAllowed()) return <InsufficientData surface="the team plan" />;
+  if (!isMockAllowed())
+    return (
+      <ProductiveEmptyState
+        Icon={Users}
+        title="Your team plan isn't wired to live supervision yet"
+        description="Per-CCEO supervision cards need live StaffSupervisorAssignment + activity records. Until then, plan and track from the live workspaces."
+        actionLabel="Open Planning"
+        actionHref="/planning"
+        links={[
+          { label: "My Plan", href: "/my-plan" },
+          { label: "Schools", href: "/schools" },
+        ]}
+        note="Withheld until supervision reads Postgres — no hardcoded org tree is shown."
+      />
+    );
 
   const { rows, summary } = buildTeamPlan(user.staffId);
   const clusterRecs = clusterMeetingRecommendations(user.staffId);

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Building2, ShieldCheck, AlertTriangle, ArrowRight } from "lucide-react";
 import { StubPage } from "@/components/shell/StubPage";
-import { InsufficientData } from "@/components/ui/InsufficientData";
+import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
 import { getCurrentUser } from "@/lib/auth";
 import { fetchCoverageSummary } from "@/lib/api/surfaces";
 import { cn } from "@/lib/utils";
@@ -12,7 +12,21 @@ import { cn } from "@/lib/utils";
 export default async function ClientSchoolCoveragePage() {
   const user = await getCurrentUser();
   const res = await fetchCoverageSummary(user);
-  if (!res.live) return <InsufficientData surface="client-school coverage" />;
+  if (!res.live)
+    return (
+      <ProductiveEmptyState
+        Icon={Building2}
+        title="Client-school coverage isn't connected to live data yet"
+        description="Coverage counts — owned client schools and those below the SSA support threshold — are withheld until they trace to live source records."
+        actionLabel="Open Analytics"
+        actionHref="/analytics"
+        links={[
+          { label: "School directory", href: "/schools" },
+          { label: "Data room", href: "/analytics/data-room" },
+        ]}
+        note="No placeholder coverage figures are shown."
+      />
+    );
   const c = res.data;
 
   const Stat = ({ label, value, caption, tone }: { label: string; value: string | number; caption?: string; tone?: "good" | "alert" }) => (

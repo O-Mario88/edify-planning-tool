@@ -23,7 +23,7 @@ import { AlertTriangle, ChevronRight, ClipboardCheck, Inbox, Sparkles } from "lu
 import { getCurrentUser } from "@/lib/auth";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { isMockAllowed } from "@/lib/mock-policy";
-import { InsufficientData } from "@/components/ui/InsufficientData";
+import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
 import { decisionBoardFor } from "@/lib/decisions/decisions-mock";
 import { DecisionCard } from "@/components/decisions/DecisionCard";
 import {
@@ -55,7 +55,21 @@ export default async function DecisionsPage() {
   // The decision board is hand-mocked (no live leadership engine wiring yet) and
   // LeadershipDecisionInsight is empty. NEVER render fabricated recommendations a
   // leader could act on — withhold until the engine populates real insights.
-  if (!isMockAllowed()) return <InsufficientData surface="the decision engine" detail="The leadership decision engine has not yet produced insights from live source records. Recommendations are withheld until they can be traced to real staff, partner, and SSA data — no fabricated guidance is shown." />;
+  if (!isMockAllowed())
+    return (
+      <ProductiveEmptyState
+        Icon={Sparkles}
+        title="No leadership decisions from live data yet"
+        description="Recommendations are withheld until the engine produces insights traceable to real staff, partner, and SSA records — no fabricated guidance is shown."
+        actionLabel="Open Analytics"
+        actionHref="/analytics"
+        links={[
+          { label: "Staff performance", href: "/staff-performance" },
+          { label: "Reports", href: "/reports" },
+        ]}
+        note="A leader should never act on a fabricated recommendation — so none are shown until they trace to source records."
+      />
+    );
   const board = decisionBoardFor(user.role);
 
   // ─── Routed decisions (existing inbox) ───

@@ -8,7 +8,8 @@ import { AnnualBudgetDashboard } from "@/components/budget/dashboards/AnnualBudg
 import { RvpBudgetSummary } from "@/components/budget/dashboards/RvpBudgetSummary";
 import { PlBudgetOverview } from "@/components/budget/dashboards/PlBudgetOverview";
 import { isMockAllowed } from "@/lib/mock-policy";
-import { InsufficientData } from "@/components/ui/InsufficientData";
+import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
+import { Wallet } from "lucide-react";
 import { LiveBudgetView } from "@/components/budget/LiveBudgetView";
 import { fetchBudgetFromSchedule } from "@/lib/api/surfaces";
 
@@ -35,7 +36,22 @@ export default async function BudgetPage() {
     return (
       <>
         <PageHeader title="Annual Budget" subtitle="The financial expression of the annual plan — costed from scheduled activities via the Country Cost Register." />
-        {live.live ? <LiveBudgetView b={live.data} /> : <InsufficientData surface="the annual budget" />}
+        {live.live ? (
+          <LiveBudgetView b={live.data} />
+        ) : (
+          <ProductiveEmptyState
+            Icon={Wallet}
+            title="No budget to cost yet"
+            description="The annual budget is computed from scheduled activities × the Country Cost Register. Schedule activities and set costs, and the budget builds itself."
+            actionLabel="Open Planning"
+            actionHref="/planning"
+            links={[
+              { label: "Cost catalogue", href: "/cost-catalogue" },
+              { label: "Budget intelligence", href: "/budget/intelligence" },
+            ]}
+            note="No fabricated money figures are shown — the budget reflects real scheduled activities only."
+          />
+        )}
       </>
     );
   }

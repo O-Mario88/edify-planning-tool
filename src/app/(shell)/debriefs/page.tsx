@@ -3,7 +3,7 @@ import { EntityIndex, IndexRow } from "@/components/shell/EntityIndex";
 import { debriefsForUser, type DebriefClassification } from "@/lib/field-intelligence-mock";
 import { getCurrentUser, toCurrentUser } from "@/lib/auth";
 import { isMockAllowed } from "@/lib/mock-policy";
-import { InsufficientData } from "@/components/ui/InsufficientData";
+import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
 
 const CLASS_TONE: Record<DebriefClassification, "amber" | "rose" | "violet" | "blue" | "slate"> = {
   "School Availability Issue":     "amber",
@@ -37,7 +37,15 @@ export default async function DebriefsIndex() {
         count={0}
         searchPlaceholder="Search by staff, date, classification"
       >
-        <InsufficientData surface="the daily field debriefs" detail="Field debriefs are withheld until this list is wired to the live debrief backend — no fabricated staff debriefs are shown." />
+        <ProductiveEmptyState
+          Icon={FileText}
+          title="No field debriefs to roll up yet"
+          description="Live debriefs persist through the DailyDebrief backend (submitted from the debrief drawer). This roll-up list isn't wired to it yet, so no fabricated debriefs are shown."
+          actionLabel="Go to dashboard"
+          actionHref="/dashboard"
+          links={[{ label: "Reports", href: "/reports" }]}
+          note="Withheld until this list reads the live debrief backend."
+        />
       </EntityIndex>
     );
   }
