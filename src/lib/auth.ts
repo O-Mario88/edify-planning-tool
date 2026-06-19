@@ -36,6 +36,7 @@ export type EdifyRole =
 // Role → landing route. The canonical map lives in auth-public.ts (client
 // safe). We re-export it here so server callers don't need a second import.
 export { ROLE_REDIRECT } from "@/lib/auth-public";
+import { SUPER_ADMIN_EMAIL } from "@/lib/auth-public";
 
 // Sidebar subtitle per role.
 export const SUBTITLE_BY_ROLE: Record<EdifyRole, string> = {
@@ -94,6 +95,10 @@ export const DEMO_USERS: Record<string, DemoUser> = {
   "ia@edify.org":         { email: "ia@edify.org",         password: "edify", staffId: "STF-GA-042", salesforceOwnerId: "0050X000009ABCK", name: "Grace Alimo",   initials: "GA", role: "ImpactAssessment",   appRole: "ImpactAssessment",   scope: "M&E / Impact" },
   "accountant@edify.org": { email: "accountant@edify.org", password: "edify", staffId: "STF-MT-031", salesforceOwnerId: "0050X000009ABCJ", name: "Moses Tindi",   initials: "MT", role: "ProgramAccountant",  appRole: "ProgramAccountant",  scope: "Finance Console" },
   "admin@edify.org":      { email: "admin@edify.org",      password: "edify", staffId: "STF-AD-001", salesforceOwnerId: "0050X000009ABCL", name: "Edify Admin",   initials: "EA", role: "Admin",              appRole: "Admin",              scope: "Admin Console" },
+  // Named onboarding super-admin — always enabled, including production (see
+  // gateAdmin below). Password is seeded server-side from SUPER_ADMIN_PASSWORD
+  // (auth-runtime-store.ts); the field here is unused for validation.
+  "domario@edify.org":    { email: "domario@edify.org",    password: "edify", staffId: "STF-SA-001", salesforceOwnerId: "0050X000009ABDA", name: "Omario Edwin",  initials: "OE", role: "Admin",              appRole: "Admin",              scope: "Admin Console" },
 };
 
 // Internal fallback identity used ONLY in dev (NODE_ENV !== "production")
@@ -118,7 +123,12 @@ const IS_PRODUCTION = process.env.NODE_ENV === "production";
 // the primary control against role-forgery in general.
 const ADMIN_ENABLED = process.env.ENABLE_DEMO_ADMIN === "true" || !IS_PRODUCTION;
 function gateAdmin(u: DemoUser | null): DemoUser | null {
-  if (u && !ADMIN_ENABLED && (u.email.toLowerCase() === "admin@edify.org" || u.role === "Admin")) return null;
+  if (!u) return u;
+  // The named onboarding super-admin is ALWAYS enabled — it's the platform
+  // owner's real account, not the generic demo admin, so it bypasses the
+  // production admin gate.
+  if (u.email.toLowerCase() === SUPER_ADMIN_EMAIL) return u;
+  if (!ADMIN_ENABLED && (u.email.toLowerCase() === "admin@edify.org" || u.role === "Admin")) return null;
   return u;
 }
 

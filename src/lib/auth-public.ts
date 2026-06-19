@@ -55,6 +55,16 @@ export type ClientDemoUser = {
   role: EdifyRole;
 };
 
+// The named super-admin account. Unlike the generic demo `admin@edify.org`
+// (disabled in production unless ENABLE_DEMO_ADMIN=true), this account is a
+// real onboarding super-admin that is ALWAYS enabled — including production —
+// so the platform owner can sign in to manage users/roles on the live host.
+// Its password is NOT the shared demo password: it's seeded server-side in
+// lib/auth-runtime-store.ts from SUPER_ADMIN_PASSWORD (so the real secret never
+// ships to the browser bundle). The `password` field below is a placeholder
+// only — the login route validates against the server-side runtime store.
+export const SUPER_ADMIN_EMAIL = "domario@edify.org";
+
 // Demo accounts. Production swaps this for a real auth provider; the
 // shape is otherwise unchanged.
 // Online-test roster — 10 accounts (password "edify"), aligned 1:1 with the backend.
@@ -69,4 +79,8 @@ export const DEMO_USERS: Record<string, ClientDemoUser> = {
   "ia@edify.org":         { email: "ia@edify.org",         password: "edify", role: "ImpactAssessment",   name: "Grace Alimo" },
   "accountant@edify.org": { email: "accountant@edify.org", password: "edify", role: "ProgramAccountant",  name: "Moses Tindi" },
   "admin@edify.org":      { email: "admin@edify.org",      password: "edify", role: "Admin",              name: "Edify Admin" },
+  // Named onboarding super-admin — always enabled (see SUPER_ADMIN_EMAIL above).
+  // The `password` here is an unused placeholder; the real credential is seeded
+  // server-side from SUPER_ADMIN_PASSWORD and validated by the login route.
+  "domario@edify.org":    { email: "domario@edify.org",    password: "edify", role: "Admin",              name: "Omario Edwin" },
 };

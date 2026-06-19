@@ -14,7 +14,7 @@
 import "server-only";
 
 import bcrypt from "bcryptjs";
-import { DEMO_USERS, type ClientDemoUser } from "@/lib/auth-public";
+import { DEMO_USERS, SUPER_ADMIN_EMAIL, type ClientDemoUser } from "@/lib/auth-public";
 
 export type StoredUser = {
   email: string;
@@ -88,15 +88,30 @@ export function verifyPassword(password: string, hash: string): boolean {
 // they read the same var). The privileged admin account is disabled unless
 // ENABLE_DEMO_ADMIN=true (always available in dev so local testing is unaffected).
 const DEMO_PASSWORD = process.env.DEMO_LOGIN_PASSWORD || "edify";
+// The named onboarding super-admin (auth-public.SUPER_ADMIN_EMAIL) gets its OWN
+// credential — read ONLY from the environment, never hardcoded, so no real
+// secret ever lands in source or git history. In dev (no secret configured) it
+// falls back to the shared demo password so local sign-in works; in production,
+// if SUPER_ADMIN_PASSWORD is unset the account is simply NOT seeded (unusable)
+// until the secret is set on the host — a blank/guessable credential can never
+// be used.
+const SUPER_ADMIN_PASSWORD =
+  process.env.SUPER_ADMIN_PASSWORD ||
+  (process.env.NODE_ENV !== "production" ? DEMO_PASSWORD : "");
 const ADMIN_ENABLED =
   process.env.ENABLE_DEMO_ADMIN === "true" || process.env.NODE_ENV !== "production";
 for (const u of Object.values(DEMO_USERS)) {
-  if (u.email.toLowerCase() === "admin@edify.org" && !ADMIN_ENABLED) continue;
-  userStore.set(u.email.toLowerCase(), {
-    email: u.email.toLowerCase(),
+  const email = u.email.toLowerCase();
+  // The generic demo admin is gated in production; the named super-admin is not.
+  if (email === "admin@edify.org" && !ADMIN_ENABLED) continue;
+  const isSuperAdmin = email === SUPER_ADMIN_EMAIL;
+  // Super-admin with no configured secret (production, env unset) → don't seed.
+  if (isSuperAdmin && !SUPER_ADMIN_PASSWORD) continue;
+  userStore.set(email, {
+    email,
     name: u.name,
     role: u.role,
-    passwordHash: hashPassword(DEMO_PASSWORD),
+    passwordHash: hashPassword(isSuperAdmin ? SUPER_ADMIN_PASSWORD : DEMO_PASSWORD),
     createdAt: "2025-01-01T00:00:00.000Z",
     status: "Active",
   });
