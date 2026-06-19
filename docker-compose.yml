@@ -1,0 +1,70 @@
+# Edify Planning & Monitoring Tool — full stack (db + api + web).
+#
+#   cp .env.example .env   # set POSTGRES_PASSWORD + JWT_SECRET
+#   docker compose up --build
+#
+# The api applies migrations on boot (docker-entrypoint.sh) and waits for a
+# healthy Postgres. Seed once with:  RUN_SEED=true docker compose up api
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-edify}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-edify_pm}
+    volumes:
+      - edify_pgdata:/var/lib/postgresql/data
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-edify} -d ${POSTGRES_DB:-edify_pm}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: ./edify-api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-edify}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-edify_pm}?schema=public
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-12h}
+      # Production safety: real data, no dev endpoints.
+      ENABLE_MOCK_DATA: "false"
+      ENABLE_DEV_ENDPOINTS: "false"
+      ENABLE_SALESFORCE_INTEGRATION: "false"
+      # Comma-separated allowed CORS origins (the web app's public URL).
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      RUN_SEED: ${RUN_SEED:-false}
+      # Evidence files land on a persistent volume (mounted below).
+      EVIDENCE_STORAGE_DIR: /data/evidence
+    volumes:
+      - edify_evidence:/data/evidence
+    ports:
+      - "${API_PORT:-4000}:4000"
+
+  web:
+    build: ./edify-web
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_started
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      # Server-side base URL the Next proxies call (container DNS name).
+      EDIFY_API_URL: http://api:4000/api
+      EDIFY_USE_BACKEND: "true"
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+
+volumes:
+  edify_pgdata:
+  edify_evidence:
