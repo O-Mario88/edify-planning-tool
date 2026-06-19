@@ -18,7 +18,7 @@ export function SessionProviderClient({
   value,
   children,
 }: {
-  value: Session;
+  value: Session | null;
   children: ReactNode;
 }) {
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
