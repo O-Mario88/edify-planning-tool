@@ -3,6 +3,7 @@ import { prisma, type PrismaService } from "./prisma/prisma.service";
 import { AuditService } from "./common/audit/audit.service";
 import { ScopeService } from "./common/scope/scope.service";
 import { AuthorizationService } from "./common/authz/authorization.service";
+import { GeographyService } from "./modules/geography/geography.service";
 
 // Hand-rolled DI, replacing Nest's container. One instance of each service,
 // all sharing the single PrismaClient. Services are stateless beyond their
@@ -11,11 +12,14 @@ import { AuthorizationService } from "./common/authz/authorization.service";
 // As domains are ported (Wave 1+), their services are added here and the
 // surfaces dispatcher calls `container.<service>.<method>(...)` in-process
 // instead of proxying to edify-api.
-class Container {
+export class Container {
   readonly prisma: PrismaService = prisma;
   readonly audit = new AuditService(this.prisma);
   readonly scope = new ScopeService(this.prisma);
   readonly authz = new AuthorizationService(this.prisma, this.scope, this.audit);
+
+  // ── Wave 1 ──
+  readonly geography = new GeographyService(this.prisma);
 }
 
 const globalForContainer = globalThis as unknown as {

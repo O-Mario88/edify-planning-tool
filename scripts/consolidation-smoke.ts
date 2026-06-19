@@ -7,6 +7,7 @@
 import { prisma } from "../src/server/prisma/prisma.service";
 import { AuditService } from "../src/server/common/audit/audit.service";
 import { ScopeService } from "../src/server/common/scope/scope.service";
+import { GeographyService } from "../src/server/modules/geography/geography.service";
 import type { AuthUser } from "../src/server/common/auth/auth-user";
 
 const toAuthUser = (u: {
@@ -48,6 +49,13 @@ async function main() {
     const s = await scope.resolveUserScope(toAuthUser(cd));
     console.log(`R3 CD scope: canViewCountry=${s.canViewCountry} schools=${s.schoolIds.length}`);
   }
+
+  // Wave 1 — ported GeographyService returns live reference data.
+  const geo = new GeographyService(prisma);
+  const [regions, districts] = await Promise.all([geo.listRegions(), geo.listDistricts()]);
+  const subs = districts[0] ? await geo.listSubCounties(districts[0].id) : [];
+  console.log(`W1 geography: regions=${regions.length} districts=${districts.length} subCounties[${districts[0]?.name}]=${subs.length}`);
+  if (regions.length < 1 || districts.length < 1) throw new Error("geography service returned empty reference data");
 
   await prisma.$disconnect();
   console.log("\n✅ consolidation foundation smoke passed");

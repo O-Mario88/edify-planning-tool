@@ -11,12 +11,22 @@ import "server-only";
 // Server-only — the Bearer token never crosses to the browser.
 
 import { backendFetch, isBackendEnabled, type BackendUser } from "./backend";
+import { tryInProcess } from "@/server/dispatch";
 
 export type LiveResult<T> =
   | { live: true; data: T }
   | { live: false; error: string | null };
 
 async function live<T>(path: string, user: BackendUser, init?: RequestInit): Promise<LiveResult<T>> {
+  // Ported domains are served in-process (no edify-api hop). tryInProcess is a
+  // no-op fast path unless EDIFY_INPROC_DOMAINS enables the path's domain — so
+  // un-ported domains keep proxying, unchanged.
+  try {
+    const inproc = await tryInProcess<T>(path, init);
+    if (inproc.handled) return { live: true, data: inproc.data };
+  } catch (e) {
+    return { live: false, error: e instanceof Error ? e.message : "in-process dispatch error" };
+  }
   if (!isBackendEnabled()) return { live: false, error: null };
   const r = await backendFetch<T>(path, user, init);
   return r.ok ? { live: true, data: r.data } : { live: false, error: r.error };
