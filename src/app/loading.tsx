@@ -1,13 +1,25 @@
-import { EdifySidebarServer } from "@/components/shell/EdifySidebarServer";
 import { Skeleton } from "@/components/ui/Skeleton";
 
 // Global loading skeleton. Next.js renders this while the route segment
-// suspends (server data resolution / lazy chart imports). Mirrors the
-// shell layout so the user sees the right shape immediately.
+// suspends (server data resolution / lazy chart imports). It is the Suspense
+// fallback for EVERY route — including public, anonymous pages like /login —
+// so it MUST NOT render auth-dependent server components. (Rendering
+// <EdifySidebarServer/> here called getCurrentUser(), which hard-throws
+// "UNAUTHENTICATED" in production for anonymous visitors and 500'd the whole
+// site. The authenticated sidebar belongs to the (shell) layout, which gates
+// anonymous traffic first.) A neutral static skeleton rail mirrors the shape
+// without needing a session.
 export default function GlobalLoading() {
   return (
     <div className="flex min-h-screen w-full bg-[var(--color-page)]">
-      <EdifySidebarServer />
+      <aside className="hidden lg:flex w-60 shrink-0 flex-col gap-2 border-r border-[var(--color-edify-divider)] p-4">
+        <Skeleton className="h-8 w-32" />
+        <div className="mt-4 space-y-2">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <Skeleton key={i} className="h-7 w-full" />
+          ))}
+        </div>
+      </aside>
       <main className="flex-1 min-w-0">
         <header className="pl-16 pr-4 pt-5 lg:pl-6 lg:pr-6 pb-4 space-y-2">
           <Skeleton className="h-6 w-48" />
