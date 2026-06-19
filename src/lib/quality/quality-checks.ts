@@ -8,7 +8,8 @@
 //
 // Persistence mirrors the rest of the app: a globalThis-backed array, shaped
 // like a future Prisma `QualityCheckRun` row. The production swap replaces the
-// array push with `prisma.qualityCheckRun.create(...)`; call sites don't change.
+// array push with a real Prisma create on the QualityCheckRun model; call
+// sites don't change.
 
 import "server-only";
 import { activities } from "@/lib/actions/store";
