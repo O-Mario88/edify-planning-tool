@@ -6,6 +6,17 @@ import { getCurrentUser } from "@/lib/auth";
 import { fetchCoverageSummary } from "@/lib/api/surfaces";
 import { cn } from "@/lib/utils";
 
+// Module-scope so it isn't re-created on every render (react-hooks/static-components).
+function Stat({ label, value, caption, tone }: { label: string; value: string | number; caption?: string; tone?: "good" | "alert" }) {
+  return (
+    <div className="card p-4">
+      <div className="text-caption muted">{label}</div>
+      <div className={cn("text-2xl font-extrabold tracking-tight mt-1", tone === "good" ? "text-emerald-600" : tone === "alert" ? "text-rose-600" : "")}>{value}</div>
+      {caption ? <div className="text-[11px] muted mt-0.5">{caption}</div> : null}
+    </div>
+  );
+}
+
 // Client-school coverage — LIVE from the backend. Real counts of client schools,
 // how many have an account owner, and which are below the SSA support threshold
 // (avg < 5) and most need coverage/support.
@@ -28,14 +39,6 @@ export default async function ClientSchoolCoveragePage() {
       />
     );
   const c = res.data;
-
-  const Stat = ({ label, value, caption, tone }: { label: string; value: string | number; caption?: string; tone?: "good" | "alert" }) => (
-    <div className="card p-4">
-      <div className="text-caption muted">{label}</div>
-      <div className={cn("text-2xl font-extrabold tracking-tight mt-1", tone === "good" ? "text-emerald-600" : tone === "alert" ? "text-rose-600" : "")}>{value}</div>
-      {caption ? <div className="text-[11px] muted mt-0.5">{caption}</div> : null}
-    </div>
-  );
 
   return (
     <StubPage

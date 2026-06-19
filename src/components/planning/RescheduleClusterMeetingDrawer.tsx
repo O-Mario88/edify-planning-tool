@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { CalendarPlus, History, User, AlertTriangle, ChevronRight } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
@@ -70,7 +70,7 @@ export function RescheduleClusterMeetingDrawer({
   const [error,      setError]      = useState<string | null>(null);
 
   // Re-seed proposer when opening for a new context.
-  useMemo(() => {
+  useEffect(() => {
     if (open && slotData) {
       setProposedBy(slotData.by ?? "");
       setNewDate("");

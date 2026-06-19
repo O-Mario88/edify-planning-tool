@@ -5,6 +5,18 @@ import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
 import { getCurrentUser } from "@/lib/auth";
 import { fetchInterventionImprovement } from "@/lib/api/surfaces";
 
+// Module-scope so it isn't re-created on every render (react-hooks/static-components).
+function Stat({ label, value, tone }: { label: string; value: number; tone: "up" | "down" | "flat" }) {
+  return (
+    <div className="card p-3.5">
+      <div className="text-caption muted">{label}</div>
+      <div className={cn("text-2xl font-extrabold tracking-tight mt-1", tone === "up" ? "text-emerald-600" : tone === "down" ? "text-rose-600" : "text-slate-600")}>
+        {value.toLocaleString()}
+      </div>
+    </div>
+  );
+}
+
 // Year-over-year SSA movement — LIVE from the backend intervention-improvement
 // engine (prev-FY vs current-FY, per district, across the 8 interventions). Only
 // schools with BOTH a prior-FY and current-FY SSA are compared; the rest are shown
@@ -35,15 +47,6 @@ export default async function YearlyComparisonPage() {
     { improved: 0, declined: 0, noComp: 0 },
   );
   const sorted = [...rows].sort((a, b) => (b.improvementRate ?? -1) - (a.improvementRate ?? -1));
-
-  const Stat = ({ label, value, tone }: { label: string; value: number; tone: "up" | "down" | "flat" }) => (
-    <div className="card p-3.5">
-      <div className="text-caption muted">{label}</div>
-      <div className={cn("text-2xl font-extrabold tracking-tight mt-1", tone === "up" ? "text-emerald-600" : tone === "down" ? "text-rose-600" : "text-slate-600")}>
-        {value.toLocaleString()}
-      </div>
-    </div>
-  );
 
   return (
     <StubPage

@@ -312,6 +312,9 @@ export function UgandaGeoMap() {
     return viewMode === "choropleth" ? scale.colorFor(d[metricKey] as number | null) : STATUS_TINT[d.status];
   };
 
+  // Reading the ref-cache during render is safe here: every cache write calls
+  // bumpCache() (~L159) to force a re-render, so reads always reflect the latest.
+  // eslint-disable-next-line react-hooks/refs
   const focusDetail = focusDistrictId ? detailCache.current.get(focusDistrictId) : undefined;
 
   return (
@@ -469,6 +472,7 @@ export function UgandaGeoMap() {
         {hover && (
           <div className="absolute z-20 pointer-events-none rounded-xl shadow-2xl ring-1 ring-black/10 overflow-hidden text-white"
             style={{ left: hover.x + 14, top: hover.y + 12, transform: `${hover.x > 520 ? "translateX(-105%)" : ""} ${hover.y > 300 ? "translateY(calc(-100% - 26px))" : ""}`.trim() || undefined, minWidth: 220, maxWidth: 270, background: "linear-gradient(160deg,#4a7aa7,#34597d)" }}>
+            {/* eslint-disable-next-line react-hooks/refs -- ref-cache read; bumpCache() forces re-render on every write (~L159) */}
             {hover.kind === "subcounty" ? (() => {
               const det = hover.districtId ? detailCache.current.get(hover.districtId) : undefined;
               const sc = det?.subCounties.find((s) => s.name === hover.name);
@@ -522,6 +526,7 @@ export function UgandaGeoMap() {
                       <HRow icon={<AlertTriangle size={12} />} label="Core crit." value={hover.d.coreCriticalCount} />
                       <HRow icon={<AlertTriangle size={12} />} label="Client crit." value={hover.d.clientCriticalCount} />
                     </div>
+                    {/* eslint-disable-next-line react-hooks/refs -- ref-cache read; bumpCache() forces re-render on every write (~L159) */}
                     {(() => {
                       const cl = detailCache.current.get(hover.d.districtId)?.clusters;
                       return (

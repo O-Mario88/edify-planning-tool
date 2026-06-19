@@ -5,6 +5,7 @@
 // retires EntityHeader from the planning surface and gives planning real,
 // URL-synced filters instead of decorative pills.
 
+import Link from "next/link";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { HeaderFilterBar } from "@/components/shell/HeaderFilterBar";
 import { planningHeader } from "@/lib/planning-mock";
@@ -38,12 +39,12 @@ function PlanningHeaderBadges() {
         <span className="w-2 h-2 rounded-full bg-emerald-500" />
         Snapshot · just now
       </span>
-      <a
+      <Link
         href="/help"
         className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full border border-[var(--color-edify-border)] bg-[var(--color-card)] text-caption font-semibold text-[var(--color-edify-muted)] hover:bg-[var(--color-edify-soft)]/40"
       >
         ? Help
-      </a>
+      </Link>
     </div>
   );
 }
