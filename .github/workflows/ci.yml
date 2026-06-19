@@ -43,6 +43,11 @@ jobs:
       - name: Install
         run: npm ci
 
+      # Generate the Prisma Client so typecheck/build can resolve the 84-model
+      # types (e.g. EdifyRole) now that server code imports @prisma/client.
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
       - name: Typecheck
         run: npm run typecheck
 
@@ -107,8 +112,9 @@ jobs:
           if grep -rEn 'prisma\.[a-zA-Z]+\.(create|update|delete|upsert)' \
               src --include="*.ts" --include="*.tsx" \
               --exclude-dir=actions \
-              --exclude-dir=infra; then
-            echo "::error::Prisma writes outside src/lib/actions/ are not allowed."
+              --exclude-dir=infra \
+              --exclude-dir=server; then
+            echo "::error::Prisma writes are only allowed in src/lib/actions/ and src/server/."
             exit 1
           fi
 

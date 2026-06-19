@@ -19,7 +19,7 @@
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
     "db:reset": "prisma migrate reset --force",
-    "db:seed": "node --experimental-strip-types prisma/seed.ts",
+    "db:seed": "tsx prisma/seed.ts",
     "infra:check": "node --experimental-strip-types scripts/infra-check.ts"
   },
   "dependencies": {
@@ -52,6 +52,7 @@
     "eslint-config-next": "16.2.6",
     "prisma": "^7.8.0",
     "tailwindcss": "^4",
+    "tsx": "^4.22.4",
     "typescript": "^5",
     "vitest": "^4.1.7"
   }
