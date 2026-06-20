@@ -4,6 +4,7 @@ import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { PlanningMobileView } from "@/components/mobile/views/PlanningMobileView";
 import { coreBoardData, coreOwnershipRows } from "@/lib/core/core-board";
 import { getCurrentUser } from "@/lib/auth";
+import { isMockAllowed } from "@/lib/mock-policy";
 import { SmartGroupingCard } from "@/components/planning/SmartGroupingCard";
 
 // The gap-based planning board now lives inside PlanningToolPage as a
@@ -23,14 +24,19 @@ export default async function Page({
   if (sid) redirect(`/schools/${encodeURIComponent(sid)}?view=plan`);
 
   const user = await getCurrentUser();
-  const coreCards = coreBoardData(user.staffId, user.role);
+  // The mobile Core Plan board + ownership sections are fed from dev-only mock
+  // fixtures (no backend endpoint for the mobile core board yet). Gate them so
+  // production renders the controlled empty state, never fabricated core schools.
+  // (Desktop's Core Schools tab is backend-driven through PlanningToolPage.)
+  const mockOk = isMockAllowed();
+  const coreCards = mockOk ? coreBoardData(user.staffId, user.role) : [];
   const coreViewer = {
     canAssign: ["CCEO", "CountryProgramLead", "CountryDirector", "ImpactAssessment", "Admin"].includes(user.role),
     canExec: ["CCEO", "CountryProgramLead", "PartnerAdmin", "PartnerFieldOfficer", "Admin"].includes(user.role),
     canIa: ["ImpactAssessment", "Admin"].includes(user.role),
   };
   const canChampion = ["ImpactAssessment", "CountryProgramLead", "CountryDirector", "Admin"].includes(user.role);
-  const coreOwnership = coreOwnershipRows(user.staffId, user.role);
+  const coreOwnership = mockOk ? coreOwnershipRows(user.staffId, user.role) : undefined;
 
   return (
     <ResponsiveDashboard
@@ -41,14 +47,16 @@ export default async function Page({
            the canonical header stays the FIRST element on the page. */
         <PlanningToolPage
           searchParams={sp}
+          /* SmartGroupingCard derives its suggestions from the intake mock, so it
+             only renders when mock data is allowed (dev opt-in) — never in prod. */
           topSlot={
-            <SmartGroupingCard assignedCceo={user.role === "CCEO" ? user.name : undefined} />
+            mockOk ? <SmartGroupingCard assignedCceo={user.role === "CCEO" ? user.name : undefined} /> : undefined
           }
         />
       }
       mobile={
         <div className="px-3 pt-3 space-y-3">
-          <SmartGroupingCard assignedCceo={user.role === "CCEO" ? user.name : undefined} />
+          {mockOk && <SmartGroupingCard assignedCceo={user.role === "CCEO" ? user.name : undefined} />}
           <PlanningMobileView coreCards={coreCards} coreViewer={coreViewer} canChampion={canChampion} coreOwnership={coreOwnership} />
         </div>
       }

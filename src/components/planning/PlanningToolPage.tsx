@@ -19,6 +19,7 @@ import { computeProjectPlanningGaps } from "@/lib/projects/project-planning-gaps
 import { buildPlanningCategories } from "@/lib/planning/planning-categories";
 import { loadVisitCostRates, loadGroupActivityRates } from "@/lib/cost-engine/cost-engine-server";
 import { applyGeographyScope, selectionFromSearchParams } from "@/lib/filters/apply-filters";
+import { isMockAllowed } from "@/lib/mock-policy";
 
 // PlanningToolPage no longer renders its own sidebar — the (shell)
 // route-group layout mounts <EdifySidebarServer /> once for every
@@ -71,29 +72,42 @@ export async function PlanningToolPage({
   });
   const liveClusterGaps = backendClGaps !== null;
 
+  // Mock policy gate: in production (and this backend-on stack) frontend mock
+  // fixtures must never render. The school + cluster gap boards above are already
+  // backend-driven; the remaining mock-only surfaces (project follow-up gaps, the
+  // CorePlan board, ownership rows) are gated on this flag so they resolve to
+  // empty instead of leaking fabricated schools (e.g. "Nakaseke Hill Primary").
+  const mockOk = isMockAllowed();
+
   // Project follow-up gaps, scoped like the directory: CCEO/PL see their
   // portfolio/team schools; broader roles see all in-scope project schools.
+  // These derive from the special-projects mock (no backend project-gaps
+  // endpoint yet), so they only render when mock is allowed.
   const scoped: Set<string> | "all" =
     user.role === "CCEO" || user.role === "CountryProgramLead"
       ? new Set(directoryRecords(user.staffId, user.role).map((s) => s.schoolId))
       : "all";
   // ProjectGapItem carries district only (no cluster id, no date) — scope each
   // category's items so the section counts obey the header filters too.
-  const projectGaps = computeProjectPlanningGaps(toCurrentUser(user), scoped).map((cat) => ({
-    ...cat,
-    items: applyGeographyScope(cat.items, selection, { district: (i) => i.district }),
-  }));
+  const projectGaps = mockOk
+    ? computeProjectPlanningGaps(toCurrentUser(user), scoped).map((cat) => ({
+        ...cat,
+        items: applyGeographyScope(cat.items, selection, { district: (i) => i.district }),
+      }))
+    : [];
 
-  // Core Schools tab consumes the unified CorePlan model (same as the
-  // dedicated /planning/core-schools console).
-  // CorePlanCardVM.cluster is a display NAME, not a filter cluster id — district only.
-  const coreCards = applyGeographyScope(coreBoardData(user.staffId, user.role), selection, {
-    district: (c) => c.district,
-  });
   // Backend core-school gaps — when live, the Core Schools tab renders the SAME
   // detail-rich gap rows as Client Schools (schedule/assign → My Plan).
   const backendCoreGaps = await backendCoreSchoolGaps(user);
   const liveCoreGaps = backendCoreGaps !== null;
+  // The mock CorePlan board + ownership rows are dev-only fixtures. When the
+  // backend core gaps are live the Core Schools tab uses THEM (not coreCards),
+  // so mock coreCards/coreOwnership must never leak into a live board, the CCEO
+  // category summary, or the ownership sections — gate both on mockOk above.
+  // CorePlanCardVM.cluster is a display NAME, not a filter cluster id — district only.
+  const coreCards = mockOk
+    ? applyGeographyScope(coreBoardData(user.staffId, user.role), selection, { district: (c) => c.district })
+    : [];
   const coreViewer = {
     canAssign: ["CCEO", "CountryProgramLead", "CountryDirector", "ImpactAssessment", "Admin"].includes(user.role),
     canExec: ["CCEO", "CountryProgramLead", "PartnerAdmin", "PartnerFieldOfficer", "Admin"].includes(user.role),
@@ -101,7 +115,10 @@ export async function PlanningToolPage({
   };
   const canChampion = ["ImpactAssessment", "CountryProgramLead", "CountryDirector", "Admin"].includes(user.role);
   // CoreOwnershipRow carries no geography (schoolId/slot only) — left unscoped.
-  const coreOwnership = coreOwnershipRows(user.staffId, user.role);
+  // Mock-gated: the ownership rows are fixtures with no backend endpoint yet, so
+  // outside dev the sections render their controlled empty state instead of
+  // fabricated "assigned to me / partner" rows.
+  const coreOwnership = mockOk ? coreOwnershipRows(user.staffId, user.role) : undefined;
 
   // CCEO-only recommendation-led summary (spec §9): the SAME scoped gap data
   // the boards below consume, folded into 8 expandable categories. Built here
