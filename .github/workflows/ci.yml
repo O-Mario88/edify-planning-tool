@@ -139,3 +139,35 @@ jobs:
             echo "::error::Possible secret committed."
             exit 1
           fi
+
+  # ──────────────────────────────────────────────────────────────────────
+  # edify-api (NestJS) — the vendored backend service. Build it in CI so a
+  # monorepo change that breaks the API is caught here, not at deploy time.
+  # Runs in parallel with the edify-web `ci` job above.
+  # ──────────────────────────────────────────────────────────────────────
+  edify-api:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: edify-api
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: edify-api/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build

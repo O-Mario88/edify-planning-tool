@@ -36,6 +36,9 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-edify}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-edify_pm}?schema=public
       JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-12h}
+      # The web bridge logs role-mapped accounts into the API with this; it MUST
+      # equal the web service's DEMO_LOGIN_PASSWORD or every proxied call 401s.
+      DEMO_LOGIN_PASSWORD: ${DEMO_LOGIN_PASSWORD:-edify}
       # Production safety: real data, no dev endpoints.
       ENABLE_MOCK_DATA: "false"
       ENABLE_DEV_ENDPOINTS: "false"
@@ -51,7 +54,9 @@ services:
       - "${API_PORT:-4000}:4000"
 
   web:
-    build: ./edify-web
+    # edify-web is the repo root (edify-api lives inside it at ./edify-api), so
+    # the web build context is the repo root, not a ./edify-web subdir.
+    build: .
     restart: unless-stopped
     depends_on:
       api:
@@ -62,6 +67,17 @@ services:
       # Server-side base URL the Next proxies call (container DNS name).
       EDIFY_API_URL: http://api:4000/api
       EDIFY_USE_BACKEND: "true"
+      # Session signing — login returns 503 in production without it.
+      EDIFY_SESSION_SECRET: ${EDIFY_SESSION_SECRET:?set EDIFY_SESSION_SECRET in .env}
+      # Always-on super-admin login (the one persistent account).
+      SUPER_ADMIN_EMAIL: ${SUPER_ADMIN_EMAIL:-domario@edify.org}
+      SUPER_ADMIN_PASSWORD: ${SUPER_ADMIN_PASSWORD:?set SUPER_ADMIN_PASSWORD in .env}
+      # Bridge → edify-api login; MUST equal the api service's DEMO_LOGIN_PASSWORD.
+      DEMO_LOGIN_PASSWORD: ${DEMO_LOGIN_PASSWORD:-edify}
+      # Never render frontend mock data in this stack — the API is the source of truth.
+      NEXT_PUBLIC_USE_MOCK_DATA: "false"
+      # Do NOT set DATABASE_URL here: it flips web into its own Prisma mode (a second,
+      # divergent copy of the data). Data is proxied to edify-api. See DEPLOY.md §3.
     ports:
       - "${WEB_PORT:-3000}:3000"
 

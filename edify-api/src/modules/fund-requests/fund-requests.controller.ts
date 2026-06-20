@@ -1,0 +1,81 @@
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { FundRequestsService } from './fund-requests.service';
+import { JwtAuthGuard } from '../../common/auth/jwt-auth.guard';
+import { PermissionsGuard } from '../../common/rbac/permissions.guard';
+import { RequirePermissions } from '../../common/rbac/require-permissions.decorator';
+import { PERMISSIONS } from '../../common/rbac/permissions';
+import { CurrentUser } from '../../common/auth/current-user.decorator';
+import { AuthUser } from '../../common/auth/auth-user';
+
+@ApiTags('fund-requests')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard, PermissionsGuard)
+@Controller('fund-requests')
+export class FundRequestsController {
+  constructor(private readonly fundRequests: FundRequestsService) {}
+
+  // Submit a fund request for a period — the amount is computed from the
+  // schedule (never typed) and blocked while any activity is missing a cost.
+  @Post()
+  @RequirePermissions(PERMISSIONS.PLANNING_VIEW)
+  submit(@Body() body: { period?: string; month?: number; quarter?: string }, @CurrentUser() user: AuthUser) {
+    return this.fundRequests.submit(user, body);
+  }
+
+  @Get()
+  @RequirePermissions(PERMISSIONS.PLANNING_VIEW)
+  list(@CurrentUser() user: AuthUser) {
+    return this.fundRequests.list(user);
+  }
+
+  @Get(':id')
+  @RequirePermissions(PERMISSIONS.PLANNING_VIEW)
+  getOne(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.fundRequests.getOne(user, id);
+  }
+
+  @Post(':id/approve')
+  @RequirePermissions(PERMISSIONS.BUDGET_APPROVE)
+  approve(@Param('id') id: string, @Body() body: { note?: string }, @CurrentUser() user: AuthUser) {
+    return this.fundRequests.review(user, id, 'approve', body?.note);
+  }
+
+  @Post(':id/return')
+  @RequirePermissions(PERMISSIONS.BUDGET_APPROVE)
+  return(@Param('id') id: string, @Body() body: { note?: string }, @CurrentUser() user: AuthUser) {
+    return this.fundRequests.review(user, id, 'return', body?.note);
+  }
+
+  @Post(':id/reject')
+  @RequirePermissions(PERMISSIONS.BUDGET_APPROVE)
+  reject(@Param('id') id: string, @Body() body: { note?: string }, @CurrentUser() user: AuthUser) {
+    return this.fundRequests.review(user, id, 'reject', body?.note);
+  }
+
+  // Accountant clears an approved request → disbursed.
+  @Post(':id/disburse')
+  @RequirePermissions(PERMISSIONS.PAYMENT_ACT)
+  disburse(@Param('id') id: string, @Body() body: { amount?: number; method?: string; reference?: string }, @CurrentUser() user: AuthUser) {
+    return this.fundRequests.disburse(user, id, body ?? {});
+  }
+
+  // Requester accounts for spend after disbursement.
+  @Post(':id/account')
+  @RequirePermissions(PERMISSIONS.PLANNING_VIEW)
+  account(@Param('id') id: string, @Body() body: { netsuiteId?: string; amountSpent?: number; amountReturned?: number }, @CurrentUser() user: AuthUser) {
+    return this.fundRequests.submitAccountability(user, id, body ?? {});
+  }
+
+  @Post(':id/account-approve')
+  @RequirePermissions(PERMISSIONS.BUDGET_APPROVE)
+  accountApprove(@Param('id') id: string, @Body() body: { note?: string }, @CurrentUser() user: AuthUser) {
+    return this.fundRequests.reviewAccountability(user, id, 'approve', body?.note);
+  }
+
+  @Post(':id/account-return')
+  @RequirePermissions(PERMISSIONS.BUDGET_APPROVE)
+  accountReturn(@Param('id') id: string, @Body() body: { note?: string }, @CurrentUser() user: AuthUser) {
+    return this.fundRequests.reviewAccountability(user, id, 'return', body?.note);
+  }
+}
