@@ -910,8 +910,17 @@ export type BePlanningSchool = {
 export function fetchPlanningSetup(user: BackendUser, qs = "") {
   return live<BePlanningBucket[]>(`/planning/setup${qs}`, user);
 }
+// Core-school planning board: 12 backend-computed gap buckets, each carrying the
+// schools behind its count (collapsible sections in the UI).
+export type BeCorePlanningSchool = {
+  schoolId: string; name: string; district?: string | null; subCounty?: string | null;
+  cluster?: string | null; owner?: string | null; ssaStatus?: string | null;
+  latestSsa?: number | null; visitProgress?: string | null; trainingProgress?: string | null;
+  nextAction?: string | null;
+};
+export type BeCorePlanningBucket = { key: string; label: string; count: number; schools: BeCorePlanningSchool[] };
 export function fetchPlanningCore(user: BackendUser, qs = "") {
-  return live<unknown>(`/planning/core${qs}`, user);
+  return live<BeCorePlanningBucket[]>(`/planning/core${qs}`, user);
 }
 
 // ── SSA for a specific school (the View SSA drawer) ─────────────────
