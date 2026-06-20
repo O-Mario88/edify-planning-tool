@@ -2,6 +2,9 @@
 
 # dependencies
 /node_modules
+# edify-api (NestJS) — vendored service; ignore its deps + build output
+/edify-api/node_modules
+/edify-api/dist
 /.pnp
 .pnp.*
 .yarn/*

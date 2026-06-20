@@ -67,6 +67,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // edify-api is a vendored sibling service with its own toolchain (NestJS,
+    // its own tsconfig/eslint). edify-web's lint must not try to parse it.
+    "edify-api/**",
   ]),
 ]);
 

@@ -60,19 +60,35 @@ jobs:
           EDIFY_QUIET_BOOT: "1"
 
       - name: Build (production)
-        run: npm run build
+        run: |
+          export NEXT_PUBLIC_BUILD_TIME="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          echo "▶ Building commit ${GITHUB_SHA} on ${GITHUB_REF_NAME} at ${NEXT_PUBLIC_BUILD_TIME}"
+          npm run build
         env:
           # Build-time env stubs so the build doesn't fail on the
           # absence of real secrets. Real values come from the Vercel
           # / hosted environment.
           DATABASE_URL: postgresql://stub@localhost:5432/stub
           EDIFY_QUIET_BOOT: "1"
+          # Bake build provenance into the bundle so the CI artifact
+          # self-identifies and the /version page reports the real commit
+          # (mirrors the Dockerfile build args used on Railway).
+          NEXT_PUBLIC_GIT_COMMIT_SHA: ${{ github.sha }}
+          NEXT_PUBLIC_GIT_BRANCH: ${{ github.ref_name }}
 
       # ──────────────── Architectural invariants ────────────────
       #
       # These greps codify rules the human reviewer can't reliably
       # catch every time. Each rule fails the build with a clear
       # error line so the author can locate + fix locally.
+
+      - name: Invariant — deploy version endpoint exists
+        # Deploy verification (live SHA == GitHub SHA) depends on this route.
+        run: |
+          set -euo pipefail
+          f=src/app/api/health/version/route.ts
+          test -f "$f" || { echo "::error::$f is missing — /api/health/version is required for deploy verification."; exit 1; }
+          grep -q 'GIT_COMMIT_SHA' "$f" || { echo "::error::$f must read a *_GIT_COMMIT_SHA env to report the deployed commit."; exit 1; }
 
       - name: Invariant — every server action calls getCurrentUser
         run: |
@@ -139,3 +155,35 @@ jobs:
             echo "::error::Possible secret committed."
             exit 1
           fi
+
+  # ──────────────────────────────────────────────────────────────────────
+  # edify-api (NestJS) — the vendored backend service. Build it in CI so a
+  # monorepo change that breaks the API is caught here, not at deploy time.
+  # Runs in parallel with the edify-web `ci` job above.
+  # ──────────────────────────────────────────────────────────────────────
+  edify-api:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: edify-api
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: edify-api/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
