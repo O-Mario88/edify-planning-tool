@@ -13,7 +13,21 @@ RUN npm run db:generate
 # Server env (EDIFY_API_URL / EDIFY_USE_BACKEND) is read at REQUEST time, not
 # baked in, so it stays runtime-configurable. Build only needs the source.
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN npm run build
+
+# ── Build provenance — so the deployed bundle self-identifies its commit ──────
+# Railway populates these ARGs from its own RAILWAY_GIT_* variables when a
+# Dockerfile ARG of the same name is declared. NEXT_PUBLIC_* is INLINED into the
+# JS bundle at build, so the browser-visible /version page reports the exact
+# commit the bundle was built from — the source of truth for "is prod current?".
+ARG RAILWAY_GIT_COMMIT_SHA=""
+ARG RAILWAY_GIT_BRANCH=""
+ENV NEXT_PUBLIC_GIT_COMMIT_SHA=$RAILWAY_GIT_COMMIT_SHA
+ENV NEXT_PUBLIC_GIT_BRANCH=$RAILWAY_GIT_BRANCH
+RUN set -eu; \
+    BUILD_TIME="$(date -u +%Y-%m-%dT%H:%M:%SZ)"; \
+    export NEXT_PUBLIC_BUILD_TIME="$BUILD_TIME"; \
+    echo "▶ Building edify-web  commit=${RAILWAY_GIT_COMMIT_SHA:-unknown}  branch=${RAILWAY_GIT_BRANCH:-unknown}  buildTime=${BUILD_TIME}"; \
+    npm run build
 
 FROM node:22-slim AS runtime
 WORKDIR /app

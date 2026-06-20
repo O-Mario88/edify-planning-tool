@@ -3,15 +3,24 @@
 Two services — `edify-api` (NestJS + Prisma + Postgres) and `edify-web`
 (Next.js) — orchestrated by `docker-compose.yml`.
 
-**Source repositories** — each service deploys from its own GitHub repo:
+**Monorepo layout (current).** Both services live in **one repo**,
+`O-Mario88/edify-planning-tool`: `edify-web` is the repo root and `edify-api/`
+is a sub-directory. `docker-compose.yml` builds the API from `./edify-api` and
+the web from `.` (the root). The standalone `O-Mario88/edify-api` repo still
+exists as the upstream source of the vendored `edify-api/` — sync changes back
+to it if you keep it.
 
-| Service     | GitHub repo                                          |
-| ----------- | ---------------------------------------------------- |
-| `edify-api` | https://github.com/O-Mario88/edify-api               |
-| `edify-web` | https://github.com/O-Mario88/edify-planning-tool     |
+On **Railway**, this means both services deploy from the **same repo** with
+different **root directories**:
 
-Locally they live side by side under `Edify Planning Tool/` (siblings), which is
-what `docker-compose.yml`'s `./edify-api` / `./edify-web` build contexts expect.
+| Service     | GitHub repo (root dir)                          |
+| ----------- | ----------------------------------------------- |
+| `edify-api` | `O-Mario88/edify-planning-tool` (root `edify-api/`) |
+| `edify-web` | `O-Mario88/edify-planning-tool` (root `/`)      |
+
+> The "each service from its own repo" wording in the Railway section below
+> predates the monorepo — the wiring (env, private networking, domains) is
+> unchanged; only the source repo + root directory differ.
 
 ## Quick start (single host, Docker Compose)
 
