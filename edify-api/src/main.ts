@@ -50,8 +50,12 @@ async function bootstrap() {
   // 127.0.0.1) via dual-stack, so dev/public traffic is unaffected. A bare
   // listen(port) usually picks '::' anyway, but '0.0.0.0' would be IPv4-only and
   // silently unreachable on the internal network — pin it.
-  await app.listen(port, '::');
-  logger.log(`Edify API on http://localhost:${port}/api (docs: /api/docs)`);
+  // Bind dual-stack IPv6 by default (Railway/Fly internal DNS resolve to IPv6),
+  // but allow HOST to override it. Some IPv4-only environments (CI sandboxes,
+  // certain containers) reject '::' with EAFNOSUPPORT, so they set HOST=0.0.0.0.
+  const host = process.env.HOST ?? config.get<string>('HOST') ?? '::';
+  await app.listen(port, host);
+  logger.log(`Edify API on http://localhost:${port}/api (host ${host}, docs: /api/docs)`);
   logger.log(
     `flags: mock=${config.get('ENABLE_MOCK_DATA')} devEndpoints=${config.get('ENABLE_DEV_ENDPOINTS')} salesforce=${config.get('ENABLE_SALESFORCE_INTEGRATION')}`,
   );
