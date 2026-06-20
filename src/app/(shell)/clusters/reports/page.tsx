@@ -2,12 +2,24 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { MetricStrip } from "@/components/ui/MetricStrip";
 import { verifiedClusterImpact } from "@/lib/cluster/cluster-core";
 import { clusterAcquisitionMetrics } from "@/lib/cluster/cluster-join-source";
+import { isMockAllowed } from "@/lib/mock-policy";
 
 // Cluster donor/impact report — built ONLY from IA-confirmed (verified) cluster
 // activities. Every number traces back to a Salesforce TS- id + cluster.
+//
+// The verified-impact + acquisition figures come from the in-memory cluster
+// fixtures (there is no backend donor-report endpoint yet). Donor-facing numbers
+// must never be fabricated, so outside dev the report renders zeroed metrics and
+// an empty traceability table rather than mock impact.
+const EMPTY_IMPACT = {
+  verifiedMeetings: 0, teachersReached: 0, schoolLeadersReached: 0, attendanceTotal: 0,
+  clustersWithVerified: 0, schoolsInClusters: 0, rows: [] as ReturnType<typeof verifiedClusterImpact>["rows"],
+};
+
 export default async function ClusterReportsPage() {
-  const v = verifiedClusterImpact();
-  const acq = clusterAcquisitionMetrics();
+  const mockOk = isMockAllowed();
+  const v = mockOk ? verifiedClusterImpact() : EMPTY_IMPACT;
+  const acq = mockOk ? clusterAcquisitionMetrics() : { schoolsJoined: 0, learnersAdded: 0 };
 
   return (
     <>

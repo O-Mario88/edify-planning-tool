@@ -13,9 +13,15 @@ import {
   partnerClusterPaymentsReady,
   staffClusterAccountabilityPending,
 } from "@/lib/cluster/cluster-core";
+import { isMockAllowed } from "@/lib/mock-policy";
 
 export default async function PartnerClusterPaymentsPage() {
-  const items: PartnerClusterPaymentVM[] = partnerClusterPaymentsReady().map((m) => {
+  // These finance queues derive from the in-memory cluster-meeting fixtures
+  // (no backend cluster-payments endpoint yet). Outside dev they resolve to
+  // empty so the accountant never sees fabricated payments — the queues render
+  // their own "nothing awaiting clearance" empty state.
+  const mockOk = isMockAllowed();
+  const items: PartnerClusterPaymentVM[] = (mockOk ? partnerClusterPaymentsReady() : []).map((m) => {
     const cluster = clusterById(m.clusterId);
     return {
       id: m.id,
@@ -30,7 +36,7 @@ export default async function PartnerClusterPaymentsPage() {
     };
   });
 
-  const staffItems: StaffAccountabilityVM[] = staffClusterAccountabilityPending().map((m) => {
+  const staffItems: StaffAccountabilityVM[] = (mockOk ? staffClusterAccountabilityPending() : []).map((m) => {
     const cluster = clusterById(m.clusterId);
     return {
       id: m.id,
