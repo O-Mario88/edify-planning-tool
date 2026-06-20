@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { DEMO_USERS, type EdifyRole } from "@/lib/auth-public";
 import { requireCsrf } from "@/lib/csrf";
+import { cookieSecure } from "@/lib/cookie-security";
 import { signSession, sessionSigningActive, SESSION_SIG_COOKIE } from "@/lib/session-sig";
 
 // POST /api/demo/role-switch
@@ -39,13 +40,13 @@ const FALLBACK_BY_ROLE: Record<EdifyRole, string> = {
   PartnerViewer:       "sarah.nanyongo@edify.org",
 };
 
-async function setSession(res: NextResponse, email: string, role: EdifyRole, name: string) {
+async function setSession(req: Request, res: NextResponse, email: string, role: EdifyRole, name: string) {
   const opts = {
     httpOnly: true,
     sameSite: "lax" as const,
     path: "/",
     maxAge: 60 * 60 * 24 * 30,
-    secure: process.env.NODE_ENV === "production",
+    secure: cookieSecure(req),
   };
   res.cookies.set("edify-email", email, opts);
   res.cookies.set("edify-role",  role,  opts);
@@ -82,5 +83,5 @@ export async function POST(req: Request) {
   }
 
   const res = NextResponse.json({ ok: true, user: { email: user.email, role: user.role, name: user.name } });
-  return await setSession(res, user.email, user.role, user.name);
+  return await setSession(req, res, user.email, user.role, user.name);
 }

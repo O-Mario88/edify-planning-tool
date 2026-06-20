@@ -14,6 +14,7 @@ import { ROLE_REDIRECT } from "@/lib/auth-public";
 import { authenticateRuntime } from "@/lib/auth-runtime-store";
 import { signSession, sessionSigningActive, SESSION_SIG_COOKIE } from "@/lib/session-sig";
 import { requireCsrf } from "@/lib/csrf";
+import { cookieSecure } from "@/lib/cookie-security";
 import { ipFromRequest, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { log, telemetry } from "@/lib/log";
 
@@ -101,7 +102,9 @@ export async function POST(request: Request) {
     maxAge,
     httpOnly: true,
     sameSite: "lax" as const,
-    secure: isProd,
+    // Secure by request protocol, not NODE_ENV, so the session survives over
+    // http://localhost (docker-compose) while staying Secure behind TLS.
+    secure: cookieSecure(request),
   };
   res.cookies.set("edify-email", user.email, cookieOpts);
   res.cookies.set("edify-role", user.role, cookieOpts);

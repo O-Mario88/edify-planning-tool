@@ -21,6 +21,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { DEMO_USERS, ROLE_REDIRECT, type EdifyRole } from "@/lib/auth-public";
 import { CSRF_COOKIE_NAME, generateCsrfToken } from "@/lib/csrf";
+import { cookieSecure } from "@/lib/cookie-security";
 import { sessionSigningActive, signSession, verifySession, SESSION_SIG_COOKIE } from "@/lib/session-sig";
 
 // Dev-only `?as=<Role>` impersonation. Production: hard no-op.
@@ -333,7 +334,9 @@ function ensureCsrfCookie(req: NextRequest, res: NextResponse): NextResponse {
   res.cookies.set(CSRF_COOKIE_NAME, generateCsrfToken(), {
     path: "/",
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    // Secure by request protocol, not NODE_ENV: a Secure cookie is dropped over
+    // http://localhost (docker-compose), which broke the double-submit check.
+    secure: cookieSecure(req),
     // NOT HttpOnly — client JS needs to read this.
     httpOnly: false,
     maxAge: 60 * 60 * 24 * 365, // 1 year, rotation isn't necessary for double-submit

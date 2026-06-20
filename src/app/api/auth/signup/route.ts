@@ -17,6 +17,7 @@ import { NextResponse } from "next/server";
 import { ROLE_REDIRECT } from "@/lib/auth-public";
 import { createUser } from "@/lib/auth-runtime-store";
 import { requireCsrf } from "@/lib/csrf";
+import { cookieSecure } from "@/lib/cookie-security";
 import { signSession, sessionSigningActive, SESSION_SIG_COOKIE } from "@/lib/session-sig";
 import { ipFromRequest, rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
@@ -78,7 +79,6 @@ export async function POST(request: Request) {
   }
 
   const { user } = result;
-  const isProd = process.env.NODE_ENV === "production";
   const maxAge = 60 * 60 * 24 * 30; // 30 days for a fresh signup
 
   const res = NextResponse.json({
@@ -92,7 +92,7 @@ export async function POST(request: Request) {
     maxAge,
     httpOnly: true,
     sameSite: "lax" as const,
-    secure: isProd,
+    secure: cookieSecure(request),
   };
   res.cookies.set("edify-email", user.email, cookieOpts);
   res.cookies.set("edify-role", user.role, cookieOpts);

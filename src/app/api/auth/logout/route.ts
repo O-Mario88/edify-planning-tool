@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireCsrf } from "@/lib/csrf";
+import { cookieSecure } from "@/lib/cookie-security";
 import { SESSION_SIG_COOKIE } from "@/lib/session-sig";
 
 // POST /api/auth/logout
@@ -8,11 +9,13 @@ import { SESSION_SIG_COOKIE } from "@/lib/session-sig";
 // (edify-email, edify-role, edify-name) plus the legacy
 // `edify_session` cookie. The SignOutButton calls this and then
 // redirects the client to /login.
-function clearSession(res: NextResponse) {
+function clearSession(req: Request, res: NextResponse) {
   const opts = {
     httpOnly: true,
     sameSite: "lax" as const,
-    secure: process.env.NODE_ENV === "production",
+    // Match how the cookies were set (Secure by request protocol) so the
+    // deletion reliably clears them over http://localhost too.
+    secure: cookieSecure(req),
     path: "/",
     maxAge: 0,
   };
@@ -28,13 +31,14 @@ function clearSession(res: NextResponse) {
 export async function POST(request: Request) {
   const csrf = requireCsrf(request);
   if (csrf) return csrf;
-  return clearSession(NextResponse.json({ ok: true, redirect: "/login" }));
+  return clearSession(request, NextResponse.json({ ok: true, redirect: "/login" }));
 }
 
 // GET is supported so a plain anchor with `href="/api/auth/logout"` works
 // as a fallback if JS is disabled.
 export async function GET(request: Request) {
   return clearSession(
+    request,
     NextResponse.redirect(new URL("/login", request.url), { status: 302 }),
   );
 }
