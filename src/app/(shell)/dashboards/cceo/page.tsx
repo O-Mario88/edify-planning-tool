@@ -70,8 +70,7 @@ export default async function CceoDashboardPage() {
         <CceoKpiStrip />
         {/* A — today's required actions, before everything else. */}
         <MyNextActions assigneeId={user.staffId} />
-        <TodayCommandCenter />
-        <CommandStack user={user} hideMission />
+        {isMockAllowed() ? <CommandStack user={user} hideMission /> : <TodayCommandCenter />}
         {/* B–D — coaching radar. */}
         <RedAlertSchoolsCard staffId={user.staffId} role={user.role} />
         <SsaNeededCard staffId={user.staffId} role={user.role} />
@@ -126,8 +125,7 @@ export default async function CceoDashboardPage() {
             description="Visits, trainings, cluster meetings, reviews, and submissions due — each with its reason and one button."
           />
           <MyNextActions assigneeId={user.staffId} />
-          <TodayCommandCenter />
-          <CommandStack user={user} hideMission />
+          {isMockAllowed() ? <CommandStack user={user} hideMission /> : <TodayCommandCenter />}
         </section>
 
         {/* B–D — COACHING RADAR: which school, why, what next. */}

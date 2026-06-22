@@ -17,6 +17,11 @@ datasource db {
   provider = "postgresql"
   // Prisma 7+: the connection URL is supplied via prisma.config.ts (migrate/
   // studio) and via the PrismaPg driver adapter at runtime — not here.
+  //
+  // CANONICAL SCHEMA. This file is the single source of truth for all models,
+  // enums, and types. The edify-api mirror (edify-api/prisma/schema.prisma) is
+  // generated from this body — edit models HERE, then run `npm run schema:sync`.
+  // `npm run schema:check` (part of `npm run ci`) fails on any drift.
 }
 
 // ─────────────────────────── Enums ───────────────────────────

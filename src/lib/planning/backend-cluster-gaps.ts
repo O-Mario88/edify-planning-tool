@@ -10,13 +10,12 @@ import { fetchClusterPlanning } from "@/lib/api/surfaces";
 import { isBackendEnabled, type BackendUser } from "@/lib/api/backend";
 import type { ClusterGap, ClusterMeetingStatus } from "./planning-gaps-mock";
 
-export async function backendClusterGaps(user: BackendUser): Promise<ClusterGap[] | null> {
-  if (!isBackendEnabled()) return null;
-  const r = await fetchClusterPlanning(user);
-  if (!r.live) return null;
+export type BackendClusterGapsResult = { gaps: ClusterGap[] | null; error: string | null };
 
+function mapClusterGaps(r: Awaited<ReturnType<typeof fetchClusterPlanning>>): ClusterGap[] {
+  if (!r.live) return [];
   return r.data.map((c) => ({
-    id: c.id, // real cluster cuid → live writer resolves it
+    id: c.id,
     clusterName: c.clusterName,
     district: c.district,
     schoolsCount: c.schoolsCount,
@@ -28,4 +27,17 @@ export async function backendClusterGaps(user: BackendUser): Promise<ClusterGap[
     thirdMeeting: c.thirdMeeting as ClusterMeetingStatus,
     gapCategory: c.gapCategory,
   }));
+}
+
+/** Full fetch result — use when the caller must distinguish offline from empty. */
+export async function fetchBackendClusterGaps(user: BackendUser): Promise<BackendClusterGapsResult> {
+  if (!isBackendEnabled()) return { gaps: null, error: null };
+  const r = await fetchClusterPlanning(user);
+  if (!r.live) return { gaps: null, error: r.error ?? "Backend unreachable" };
+  return { gaps: mapClusterGaps(r), error: null };
+}
+
+export async function backendClusterGaps(user: BackendUser): Promise<ClusterGap[] | null> {
+  const { gaps } = await fetchBackendClusterGaps(user);
+  return gaps;
 }

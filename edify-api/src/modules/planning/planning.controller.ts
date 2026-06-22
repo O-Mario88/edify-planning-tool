@@ -38,6 +38,18 @@ export class PlanningController {
     return this.planning.corePlanning(user, { districtId, subCountyId });
   }
 
+  @Get('plan-builder')
+  @RequirePermissions(PERMISSIONS.PLANNING_VIEW)
+  planBuilder(
+    @CurrentUser() user: AuthUser,
+    @Query('regionId') regionId?: string,
+    @Query('districtId') districtId?: string,
+    @Query('subCountyId') subCountyId?: string,
+    @Query('fy') fy?: string,
+  ) {
+    return this.planning.planBuilder(user, { regionId, districtId, subCountyId, fy });
+  }
+
   @Post('recompute/:schoolId')
   @RequirePermissions(PERMISSIONS.PLANNING_RECALC)
   recompute(@Param('schoolId') schoolId: string) {

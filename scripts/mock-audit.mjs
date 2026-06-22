@@ -46,6 +46,17 @@ function walk(dir, out = []) {
   return out;
 }
 
+// Is this file itself a mock module? (`*-mock.ts(x)` or a file under a /mock/ dir
+// or a bare `mock.ts(x)`).
+function isMockFile(rel) {
+  return /(-mock|\/mock)\.tsx?$/.test(rel) || /\/mock\//.test(rel);
+}
+// The import specifier importers use for a mock file: "lib/schools-mock.ts" ->
+// "@/lib/schools-mock".
+function specForMockFile(rel) {
+  return "@/" + rel.replace(/\.(ts|tsx)$/, "");
+}
+
 function isPage(rel) {
   return rel.startsWith("app/") && /\/page\.tsx$/.test(rel);
 }
@@ -60,11 +71,12 @@ const pages = [];          // unguarded page leaks (the gate fails on these)
 const guardedPages = [];   // pages that import mock but gate it behind the policy
 const components = [];
 const byDomain = {};
+const mockFiles = [];      // every *-mock / /mock module (the inventory universe)
 let mockLibFiles = 0;
 
 for (const f of files) {
   const rel = relative(SRC, f);
-  if (/(-mock|\/mock)\.tsx?$/.test(rel) || /\/mock\//.test(rel)) mockLibFiles++;
+  if (isMockFile(rel)) { mockLibFiles++; mockFiles.push(rel); }
   const text = readFileSync(f, "utf8");
   // Only VALUE imports can leak data at runtime — skip `import type … from "…mock"`.
   const specs = [...text.matchAll(MOCK_IMPORT)]
@@ -106,7 +118,74 @@ const report = {
   productionSafe: (process.env.NEXT_PUBLIC_USE_MOCK_DATA ?? "false") !== "true",
 };
 
+// ── Per-mock-file inventory (the "spreadsheet" view) ──────────────────────
+// For every mock module, tally who imports it (split into unguarded page leaks,
+// guarded pages, and components) and derive a guard status + a best-effort live
+// wiring-target hint from the typed backend surfaces (src/lib/api/surfaces.ts).
+let surfacesText = "";
+try { surfacesText = readFileSync(join(SRC, "lib/api/surfaces.ts"), "utf8"); } catch { /* optional */ }
+
+function liveSurfaceHint(domain) {
+  // A domain is "wired" if a fetch*/backend* surface exists whose name contains
+  // the domain token (e.g. "schools" -> fetchSchools, "fund" -> fetchFundRequests).
+  const token = domain.replace(/[^a-z0-9]/gi, "").toLowerCase();
+  if (!token) return "";
+  const re = new RegExp(`\\b(?:fetch|backend|clear|submit|review|assign|set|generate)[A-Za-z0-9]*${token}`, "i");
+  return re.test(surfacesText) ? "live surface exists" : "no live surface yet";
+}
+
+function buildInventory() {
+  // specifier -> { unguardedPages, guardedPages, components }
+  const idx = new Map();
+  const bump = (spec, bucket) => {
+    const e = idx.get(spec) ?? { unguardedPages: 0, guardedPages: 0, components: 0 };
+    e[bucket]++;
+    idx.set(spec, e);
+  };
+  for (const p of pages) for (const s of p.mocks) bump(s, "unguardedPages");
+  for (const p of guardedPages) for (const s of p.mocks) bump(s, "guardedPages");
+  for (const c of components) for (const s of c.mocks) bump(s, "components");
+
+  return mockFiles.map((rel) => {
+    const spec = specForMockFile(rel);
+    const u = idx.get(spec) ?? { unguardedPages: 0, guardedPages: 0, components: 0 };
+    const total = u.unguardedPages + u.guardedPages + u.components;
+    const status =
+      u.unguardedPages > 0 ? "UNGUARDED_PAGE_LEAK"
+      : total === 0 ? "unused"
+      : u.guardedPages > 0 && u.components === 0 ? "guarded_pages_only"
+      : u.guardedPages > 0 ? "guarded_pages_+_components"
+      : "components_only";
+    const domain = domainOf(spec);
+    return { file: rel, domain, status, total, unguardedPages: u.unguardedPages, guardedPages: u.guardedPages, components: u.components, wiringTarget: liveSurfaceHint(domain) };
+  }).sort((a, b) => {
+    const rank = (s) => (s === "UNGUARDED_PAGE_LEAK" ? 0 : s === "unused" ? 3 : 1);
+    return rank(a.status) - rank(b.status) || b.total - a.total || a.file.localeCompare(b.file);
+  });
+}
+
 const args = process.argv.slice(2);
+
+if (args.includes("--inventory")) {
+  const inv = buildInventory();
+  const header = ["mock_file", "domain", "guard_status", "importers_total", "unguarded_page_leaks", "guarded_pages", "components", "wiring_target"];
+  const rows = inv.map((r) => [r.file, r.domain, r.status, r.total, r.unguardedPages, r.guardedPages, r.components, r.wiringTarget]);
+  const csv = [header, ...rows].map((cols) => cols.map((c) => {
+    const s = String(c);
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }).join(",")).join("\n") + "\n";
+  if (args.includes("--write")) {
+    writeFileSync(join(ROOT, "mock-inventory.csv"), csv);
+    console.log(`  wrote mock-inventory.csv (${inv.length} mock modules)`);
+  } else {
+    process.stdout.write(csv);
+  }
+  const leaks = inv.filter((r) => r.status === "UNGUARDED_PAGE_LEAK").length;
+  const unused = inv.filter((r) => r.status === "unused").length;
+  console.error(`\n  ${inv.length} mock modules · ${leaks} feeding UNGUARDED page leaks · ${unused} unused (safe to delete)\n`);
+  process.exit(0);
+}
+
 if (args.includes("--json")) {
   process.stdout.write(JSON.stringify(report, null, 2) + "\n");
 } else {

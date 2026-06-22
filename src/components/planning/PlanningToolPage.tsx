@@ -8,9 +8,11 @@ import { PlanningCategorySummary } from "./PlanningCategorySummary";
 import { ProjectPlanningGaps } from "@/components/special-projects/ProjectPlanningGaps";
 import { getCurrentUser, toCurrentUser } from "@/lib/auth";
 import { onboardedSchoolGaps, scopeGapsToViewer } from "@/lib/planning/onboarded-gaps";
-import { backendSchoolGaps } from "@/lib/planning/backend-school-gaps";
+import { fetchBackendSchoolGaps } from "@/lib/planning/backend-school-gaps";
 import { backendCoreSchoolGaps } from "@/lib/planning/backend-core-school-gaps";
-import { backendClusterGaps } from "@/lib/planning/backend-cluster-gaps";
+import { fetchBackendClusterGaps } from "@/lib/planning/backend-cluster-gaps";
+import { isBackendEnabled } from "@/lib/api/backend";
+import { isMockAllowed } from "@/lib/mock-policy";
 import { assignedGapIds } from "@/lib/planning/assignment-overlay";
 import { coreBoardData, coreOwnershipRows } from "@/lib/core/core-board";
 import { engineClusterGaps } from "@/lib/planning/engine-cluster-gaps";
@@ -45,17 +47,19 @@ export async function PlanningToolPage({
   // filter's clusterOptions id space (clustersMock CLT-*), so those dimensions
   // stay off here rather than faking matches.
   const selection = selectionFromSearchParams(searchParams);
-  // Prefer REAL backend gaps (live schools, live scheduling); fall back to the
-  // mock onboarded gaps only when the backend is disabled.
-  const backendGaps = await backendSchoolGaps(user);
+  // Prefer REAL backend gaps; fall back to mock onboarded gaps only in dev/mock mode.
+  const schoolFetch = await fetchBackendSchoolGaps(user);
+  const backendGaps = schoolFetch.gaps;
+  const gapsLoadError = schoolFetch.error;
   const assigned = assignedGapIds();
   const mockGaps = scopeGapsToViewer(onboardedSchoolGaps(), user.staffId, user.role)
     .filter((g) => !assigned.has(g.id));
-  // Backend gap rows carry no district yet (BePlanningSchool has no geography),
-  // so geography scope applies on the mock path only — scoping live rows by a
-  // field they lack would empty the board, not filter it.
   const onboardedGaps =
-    backendGaps ?? applyGeographyScope(mockGaps, selection, { district: (g) => g.district });
+    backendGaps !== null
+      ? backendGaps
+      : isMockAllowed()
+        ? applyGeographyScope(mockGaps, selection, { district: (g) => g.district })
+        : [];
   const liveGaps = backendGaps !== null;
   // Cluster-first: count the viewer's unclustered schools so the Planning Tool
   // leads with the cluster-assignment call to action when any are outstanding.
@@ -65,10 +69,14 @@ export async function PlanningToolPage({
   // real activities); fall back to the mock engine when the backend is off.
   // ClusterGap ids live in the cluster-engine/backend id space (CLU-*/cuid),
   // not the filter's clusterOptions space (CLT-*) — district only here.
-  const backendClGaps = await backendClusterGaps(user);
-  const clusterGaps = applyGeographyScope(backendClGaps ?? engineClusterGaps(), selection, {
-    district: (c) => c.district,
-  });
+  const clusterFetch = await fetchBackendClusterGaps(user);
+  const backendClGaps = clusterFetch.gaps;
+  const clusterLoadError = clusterFetch.error;
+  const clusterGaps = applyGeographyScope(
+    backendClGaps ?? (isMockAllowed() ? engineClusterGaps() : []),
+    selection,
+    { district: (c) => c.district },
+  );
   const liveClusterGaps = backendClGaps !== null;
 
   // Project follow-up gaps, scoped like the directory: CCEO/PL see their
@@ -134,6 +142,13 @@ export async function PlanningToolPage({
             5. Planned This Month
             (PlanningGapsHero retired per global hero removal pass.) */}
         <OperationalCycleBanner />
+
+        {isBackendEnabled() && (gapsLoadError || clusterLoadError) && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] text-amber-800 font-semibold">
+            Could not load planning data from the backend
+            {(gapsLoadError ?? clusterLoadError) ? ` (${gapsLoadError ?? clusterLoadError})` : ""}.
+          </div>
+        )}
 
         {/* Tabs sit DIRECTLY under the operational-cycle card — the single
             switcher (Client Schools · Clusters · Core Schools) that separates

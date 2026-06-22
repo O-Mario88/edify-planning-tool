@@ -8,7 +8,52 @@ import { CreatePlanDto, DraftActivityDto } from './dto/plans.dto';
 
 const APPROVER_ROLES = new Set(['CountryProgramLead', 'CountryDirector', 'Admin']);
 
+// Readable labels for the 8 canonical SSA interventions — mirrors SsaService so
+// planning-board recommendations and the SSA drawer never disagree on copy.
+const INTERVENTION_LABEL: Record<string, string> = {
+  teaching_and_learning: 'Teaching & Learning',
+  financial_health: 'Financial Health',
+  christlike_behaviour: 'Christ-like Behaviour',
+  exposure_to_word_of_god: 'Exposure to the Word of God',
+  government_requirements: 'Government Requirements',
+  leadership: 'Leadership',
+  education_technology: 'Education Technology',
+  learning_environment: 'Learning Environment',
+};
+
 type Filters = { regionId?: string; districtId?: string; subCountyId?: string; fy?: string };
+
+// A school leaves the "ready to plan" gap once it has an ACTIVE activity
+// (planned through accountant-confirmed) — it now lives on the owner's My Plan,
+// not the planning gap board. Terminal/returned states don't count. Shared by
+// the setup board and the plan-builder feed so both agree on "unplanned".
+const NO_ACTIVE_PLAN: Prisma.SchoolWhereInput = {
+  activities: {
+    none: {
+      deletedAt: null,
+      status: {
+        in: [
+          'planned', 'scheduled', 'rescheduled', 'assigned_to_partner', 'partner_scheduled',
+          'in_progress', 'evidence_uploaded', 'evidence_accepted',
+          'salesforce_id_required', 'awaiting_ia_verification', 'ia_verified',
+          'accountant_confirmed',
+        ] as never,
+      },
+    },
+  },
+};
+
+// A school row with the latest SSA + its scores attached (planning include shape).
+type SchoolWithSsa = School & {
+  subCounty?: { name: string } | null;
+  accountOwner?: { user: { name: string } } | null;
+  ssaRecords?: { scores: { intervention: string; score: number }[] }[];
+};
+
+// The two weakest interventions from a school's latest SSA — the SSA-driven
+// recommendation that planning consumes. Deterministic tie-break (score, then
+// intervention name) so it ALWAYS matches SsaService.recommendationForSchool.
+export type WeakestArea = { intervention: string; label: string; score: number };
 
 // Planning consumes the School Directory + cluster status. Unclustered schools
 // only appear in "Not Yet Clustered"; clustered-no-SSA in "Clustered, SSA
@@ -31,35 +76,35 @@ export class PlanningService {
     return where;
   }
 
-  private item(s: School & { subCounty?: { name: string } | null; accountOwner?: { user: { name: string } } | null }) {
+  /** The two weakest interventions from a school's latest SSA, or [] when none. */
+  private weakestFor(s: SchoolWithSsa): WeakestArea[] {
+    const scores = s.ssaRecords?.[0]?.scores;
+    if (!scores || !scores.length) return [];
+    return [...scores]
+      .sort((a, b) => a.score - b.score || a.intervention.localeCompare(b.intervention))
+      .slice(0, 2)
+      .map((x) => ({ intervention: x.intervention, label: INTERVENTION_LABEL[x.intervention] ?? x.intervention, score: x.score }));
+  }
+
+  private item(s: SchoolWithSsa) {
+    // Weakest areas are only meaningful when the current-FY SSA is complete —
+    // suppress stale prior-year scores on the not-clustered / SSA-missing buckets.
+    const weakest = s.currentFySsaStatus === 'done' ? this.weakestFor(s) : [];
     return {
       schoolId: s.schoolId, name: s.name, schoolType: s.schoolType, districtId: s.districtId,
       subCounty: s.subCounty?.name, owner: s.accountOwner?.user.name, ssaStatus: s.currentFySsaStatus,
       planningReadiness: s.planningReadiness, stage: this.readiness.stageFor(s),
+      // SSA-driven recommendation — the two weakest interventions (present only
+      // once a current-FY SSA exists, i.e. the readyToPlan / core buckets).
+      weakest,
+      weakestArea: weakest[0]?.label ?? null,
+      secondWeakArea: weakest[1]?.label ?? null,
     };
   }
 
   /** The planning setup buckets (§13/§15) — each consumes cluster + SSA status. */
   async setup(user: AuthUser, f: Filters, sample = 8) {
     const base = await this.baseWhere(user, f);
-    // A school leaves the "ready to plan" gap once it has an ACTIVE activity
-    // (planned through accountant-confirmed) — it now lives on the owner's My
-    // Plan, not the planning gap board. Terminal/returned states don't count.
-    const NO_ACTIVE_PLAN: Prisma.SchoolWhereInput = {
-      activities: {
-        none: {
-          deletedAt: null,
-          status: {
-            in: [
-              'planned', 'scheduled', 'rescheduled', 'assigned_to_partner', 'partner_scheduled',
-              'in_progress', 'evidence_uploaded', 'evidence_accepted',
-              'salesforce_id_required', 'awaiting_ia_verification', 'ia_verified',
-              'accountant_confirmed',
-            ] as never,
-          },
-        },
-      },
-    };
     const buckets: { key: string; label: string; where: Prisma.SchoolWhereInput }[] = [
       { key: 'notYetClustered', label: 'Not Yet Clustered', where: { ...base, clusterStatus: { in: ['unclustered', 'needs_review'] } } },
       { key: 'clusteredSsaRequired', label: 'Clustered Schools Missing SSA', where: { ...base, clusterStatus: 'clustered', currentFySsaStatus: { in: ['not_done', 'partner_assigned'] } } },
@@ -67,7 +112,13 @@ export class PlanningService {
       { key: 'readyToPlan', label: 'SSA Complete, Ready to Plan', where: { ...base, ...NO_ACTIVE_PLAN, clusterStatus: 'clustered', currentFySsaStatus: 'done', schoolType: { not: 'core' } } },
       { key: 'coreSchoolPlanning', label: 'Core School Planning', where: { ...base, ...NO_ACTIVE_PLAN, clusterStatus: 'clustered', currentFySsaStatus: 'done', schoolType: 'core' } },
     ];
-    const include = { subCounty: { select: { name: true } }, accountOwner: { include: { user: { select: { name: true } } } } } as const;
+    const include = {
+      subCounty: { select: { name: true } },
+      accountOwner: { include: { user: { select: { name: true } } } },
+      // Latest SSA + scores so SSA-complete buckets carry the two weakest
+      // interventions inline (no per-school recommendation round-trip).
+      ssaRecords: { where: { deletedAt: null }, orderBy: { dateOfSsa: 'desc' as const }, take: 1, include: { scores: true } },
+    } as const;
     return Promise.all(buckets.map(async (b) => {
       const [count, items] = await this.prisma.$transaction([
         this.prisma.school.count({ where: b.where }),
@@ -125,6 +176,69 @@ export class PlanningService {
     }
 
     return Object.entries(sections).map(([key, v]) => ({ key, label: v.label, count: v.schools.length, schools: v.schools }));
+  }
+
+  /** Plan-builder feed: the role-scoped, clustered + current-FY-SSA, not-yet-
+   *  planned schools — ranked weakest-first — plus the clusters they belong to
+   *  with live SSA averages and dominant weaknesses. This is the live data
+   *  source that replaces the frontend's mock `plan-builder-engine` arrays. */
+  async planBuilder(user: AuthUser, f: Filters) {
+    const base = await this.baseWhere(user, f);
+    const where: Prisma.SchoolWhereInput = {
+      ...base, ...NO_ACTIVE_PLAN, clusterStatus: 'clustered', currentFySsaStatus: 'done',
+    };
+    const rows = await this.prisma.school.findMany({
+      where, take: 400, orderBy: { name: 'asc' },
+      include: {
+        district: { select: { name: true } },
+        cluster: { select: { id: true, name: true } },
+        subCounty: { select: { name: true } },
+        accountOwner: { include: { user: { select: { name: true } } } },
+        ssaRecords: { where: { deletedAt: null }, orderBy: { dateOfSsa: 'desc' }, take: 1, include: { scores: true } },
+      },
+    });
+
+    const schools = rows.map((s) => {
+      const weakest = this.weakestFor(s as unknown as SchoolWithSsa);
+      return {
+        schoolId: s.schoolId, name: s.name, schoolType: s.schoolType,
+        district: s.district?.name ?? '', clusterId: s.clusterId, cluster: s.cluster?.name ?? '',
+        subCounty: s.subCounty?.name ?? null, owner: s.accountOwner?.user.name ?? null,
+        ssaScore: s.ssaRecords[0]?.averageScore ?? null,
+        weakest, weakestArea: weakest[0]?.label ?? null, secondWeakArea: weakest[1]?.label ?? null,
+        planningReadiness: s.planningReadiness, stage: this.readiness.stageFor(s),
+      };
+    });
+    // Weakest-first: lowest average SSA leads, missing average sinks to the end.
+    schools.sort((a, b) => (a.ssaScore ?? 99) - (b.ssaScore ?? 99) || a.name.localeCompare(b.name));
+
+    // Group the same live rows into cluster recommendations — avg SSA + the
+    // dominant (lowest-average) intervention across the cluster's schools.
+    type Group = { id: string; name: string; district: string; count: number; scores: number[]; weak: Map<string, { sum: number; n: number; label: string }> };
+    const byCluster = new Map<string, Group>();
+    for (const s of rows) {
+      if (!s.clusterId || !s.cluster) continue;
+      const g = byCluster.get(s.clusterId) ?? { id: s.clusterId, name: s.cluster.name, district: s.district?.name ?? '', count: 0, scores: [], weak: new Map() };
+      g.count += 1;
+      const latest = s.ssaRecords[0];
+      if (latest?.averageScore != null) g.scores.push(latest.averageScore);
+      for (const sc of latest?.scores ?? []) {
+        const e = g.weak.get(sc.intervention) ?? { sum: 0, n: 0, label: INTERVENTION_LABEL[sc.intervention] ?? sc.intervention };
+        e.sum += sc.score; e.n += 1; g.weak.set(sc.intervention, e);
+      }
+      byCluster.set(s.clusterId, g);
+    }
+    const clusters = [...byCluster.values()].map((g) => {
+      const averageSsa = g.scores.length ? Math.round((g.scores.reduce((a, b) => a + b, 0) / g.scores.length) * 10) / 10 : null;
+      let weakest: { intervention: string; label: string; avg: number } | null = null;
+      for (const [intervention, e] of g.weak) {
+        const avg = e.sum / e.n;
+        if (!weakest || avg < weakest.avg) weakest = { intervention, label: e.label, avg: Math.round(avg * 10) / 10 };
+      }
+      return { clusterId: g.id, clusterName: g.name, district: g.district, schoolCount: g.count, averageSsa, weakest };
+    }).sort((a, b) => (a.averageSsa ?? 99) - (b.averageSsa ?? 99));
+
+    return { schools, clusters };
   }
 
   /** Recalculate a single school's readiness on demand (admin/IA/CD). */

@@ -903,12 +903,38 @@ export function activityAction(user: BackendUser, id: string, action: string, bo
 
 // ── Planning (setup buckets + core) ─────────────────────────────────
 export type BePlanningBucket = { key: string; label: string; count: number; items: BePlanningSchool[] };
+export type BeWeakestArea = { intervention: string; label: string; score: number };
 export type BePlanningSchool = {
   schoolId: string; name: string; schoolType: string; districtId?: string | null;
   subCounty?: string | null; owner?: string | null; ssaStatus: string; planningReadiness: string; stage?: string;
+  // SSA-driven recommendation — the two weakest interventions (SSA-complete
+  // buckets only). `weakestArea`/`secondWeakArea` are the human labels.
+  weakest?: BeWeakestArea[];
+  weakestArea?: string | null;
+  secondWeakArea?: string | null;
 };
 export function fetchPlanningSetup(user: BackendUser, qs = "") {
   return live<BePlanningBucket[]>(`/planning/setup${qs}`, user);
+}
+
+// Plan-builder feed: live clustered + current-FY-SSA, not-yet-planned schools
+// (ranked weakest-first) + the clusters they belong to with live SSA averages +
+// dominant weaknesses. Replaces the frontend mock `plan-builder-engine` arrays.
+export type BePlanBuilderSchool = {
+  schoolId: string; name: string; schoolType: string;
+  district: string; clusterId?: string | null; cluster: string;
+  subCounty?: string | null; owner?: string | null;
+  ssaScore: number | null;
+  weakest: BeWeakestArea[]; weakestArea: string | null; secondWeakArea: string | null;
+  planningReadiness: string; stage?: string;
+};
+export type BePlanBuilderCluster = {
+  clusterId: string; clusterName: string; district: string; schoolCount: number;
+  averageSsa: number | null; weakest: { intervention: string; label: string; avg: number } | null;
+};
+export type BePlanBuilder = { schools: BePlanBuilderSchool[]; clusters: BePlanBuilderCluster[] };
+export function fetchPlanBuilder(user: BackendUser, qs = "") {
+  return live<BePlanBuilder>(`/planning/plan-builder${qs}`, user);
 }
 export function fetchPlanningCore(user: BackendUser, qs = "") {
   return live<unknown>(`/planning/core${qs}`, user);

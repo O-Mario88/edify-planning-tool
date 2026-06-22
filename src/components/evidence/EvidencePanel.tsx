@@ -82,14 +82,18 @@ export function EvidencePanel({ activityId, canReview = false }: { activityId: s
       if (!note) return;
     }
     setBusy(true);
+    setError(null);
     try {
-      await fetch(`/api/evidence/${id}/review`, {
+      const res = await fetch(`/api/evidence/${id}/review`, {
         method: "POST", headers: { "Content-Type": "application/json", ...csrfHeaders() },
         body: JSON.stringify({ action, note }),
       });
+      const d = await res.json();
+      if (!res.ok || !d.live) { setError(d.error ?? "Review failed."); return; }
       if (preview?.id === id) setPreview(null);
       await load();
-    } finally { setBusy(false); }
+    } catch { setError("Review failed — check your connection."); }
+    finally { setBusy(false); }
   }
 
   return (

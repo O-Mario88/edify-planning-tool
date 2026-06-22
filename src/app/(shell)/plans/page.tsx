@@ -26,7 +26,7 @@ function mapStatus(s: string): string {
   return "Planned";
 }
 
-function beToRow(a: BeActivity): MyPlanRow {
+function beToRow(a: BeActivity, source: "backend" | "store"): MyPlanRow {
   return {
     id: a.id,
     title: `${ACT_TITLE[a.activityType] ?? "Activity"}${a.school?.name ? ` — ${a.school.name}` : ""}`,
@@ -38,6 +38,7 @@ function beToRow(a: BeActivity): MyPlanRow {
     deliveryType: a.deliveryType as "staff" | "partner",
     rescheduleCount: a.rescheduleCount ?? 0,
     lastReason: a.lastReason ?? undefined,
+    source,
   };
 }
 
@@ -49,8 +50,9 @@ export default async function PlansIndex() {
   // (mock-id-school scheduling) when the backend is off or unreachable.
   const fy = activeFinancialYear().id;
   const be = await fetchMyPlanActivities(user, fy);
+  const source: "backend" | "store" = be.live ? "backend" : "store";
   const myRows: MyPlanRow[] = be.live
-    ? be.data.data.map(beToRow)
+    ? be.data.data.map((a) => beToRow(a, "backend"))
     : activities()
         .filter((a) => a.assigneeId === user.staffId)
         .sort((a, b) => (b.createdAt > a.createdAt ? 1 : -1))
@@ -59,8 +61,8 @@ export default async function PlansIndex() {
           kind: a.kind, scheduledDate: a.scheduledDate, status: a.status,
           deliveryType: a.deliveryType, partnerName: a.partnerName,
           rescheduleCount: a.rescheduleCount, lastReason: a.lastReason,
+          source: "store" as const,
         }));
-  const source = be.live ? "backend" : "store";
 
   return (
     <>

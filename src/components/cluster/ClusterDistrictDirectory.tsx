@@ -53,9 +53,9 @@ export function ClusterDistrictDirectory() {
     fetch("/api/clusters", { cache: "no-store", credentials: "include" })
       .then((r) => r.json())
       .then((j) => {
-        const list: BeCluster[] = Array.isArray(j) ? j : (j.clusters ?? j.data ?? []);
-        if (Array.isArray(list)) setClusters(list);
-        else setError("Could not load clusters");
+        if (!j.live) { setError(j.error || "Could not load clusters"); return; }
+        const list: BeCluster[] = j.clusters ?? [];
+        setClusters(list);
       })
       .catch(() => setError("Could not reach the server"))
       .finally(() => setLoading(false));

@@ -1,14 +1,16 @@
 "use client";
 
-// My Plan — the living list of the user's planned activities, with the four row
-// actions that close the plan-as-list loop: Reschedule (reason + slip limit),
-// Reassign (staff ↔ partner), Cancel/Defer, Complete. Each calls a store-backed
-// server action; the row updates optimistically.
+// My Plan — the living list of the user's planned activities, with row
+// actions that close the plan-as-list loop: Reschedule, Reassign, Cancel/Defer,
+// Complete. Backend-sourced rows call /api/activities/*; store rows use the
+// in-memory server actions (dev fallback).
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { CalendarClock, UserCog, Ban, PauseCircle, CheckCircle2, MapPin, Footprints, GraduationCap, Paperclip } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { csrfHeaders } from "@/lib/csrf-client";
 import { rescheduleActivity, reassignActivity, cancelActivity, deferActivity, completeActivity } from "@/lib/actions/my-plan-actions";
 import { RESCHEDULE_SLIP_LIMIT, reschedulesRemaining } from "@/lib/planning/planning-capacity";
 
@@ -29,6 +31,8 @@ export type MyPlanRow = {
   partnerName?: string;
   rescheduleCount?: number;
   lastReason?: string;
+  /** Where this row was loaded from — drives which mutation path runs. */
+  source?: "backend" | "store";
 };
 
 const STATUS_TONE: Record<string, string> = {
@@ -45,7 +49,17 @@ export function MyPlanList({ rows }: { rows: MyPlanRow[] }) {
   return <div className="space-y-2">{rows.map((r) => <PlanRow key={r.id} row={r} />)}</div>;
 }
 
+function backendPost(id: string, action: string, body: Record<string, unknown> = {}) {
+  return fetch(`/api/activities/${encodeURIComponent(id)}/${action}`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json", ...csrfHeaders() },
+    body: JSON.stringify(body),
+  });
+}
+
 function PlanRow({ row }: { row: MyPlanRow }) {
+  const router = useRouter();
   const [pending, start] = useTransition();
   const [status, setStatus] = useState(row.status);
   const [delivery, setDelivery] = useState(row.deliveryType ?? "staff");
@@ -54,13 +68,35 @@ function PlanRow({ row }: { row: MyPlanRow }) {
   const [mode, setMode] = useState<null | "reschedule" | "cancel" | "defer">(null);
   const [reason, setReason] = useState(REASONS[0]);
   const [newDate, setNewDate] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
+  const isBackend = row.source === "backend";
   const terminal = status === "Completed" || status === "Cancelled";
   const atLimit = moves >= RESCHEDULE_SLIP_LIMIT;
   const Icon = /training|meeting/i.test(row.kind) ? GraduationCap : Footprints;
 
-  function run(fn: () => Promise<unknown>, after: () => void) {
-    start(async () => { await fn(); after(); setMode(null); });
+  function run(
+    fn: () => Promise<{ ok: boolean; reason?: string; message?: string } | Response>,
+    after: () => void,
+  ) {
+    setError(null);
+    start(async () => {
+      try {
+        const r = await fn();
+        if (r instanceof Response) {
+          const j = await r.json();
+          if (!j.live) { setError(j.error || "The action was rejected"); return; }
+        } else if (!r.ok) {
+          setError(r.message || (r.reason === "SLIP_LIMIT" ? `Slip limit (${RESCHEDULE_SLIP_LIMIT}) reached.` : "The action was rejected"));
+          return;
+        }
+        after();
+        setMode(null);
+        window.setTimeout(() => router.refresh(), 220);
+      } catch {
+        setError("Could not reach the server");
+      }
+    });
   }
 
   return (
@@ -83,16 +119,28 @@ function PlanRow({ row }: { row: MyPlanRow }) {
         </Link>
       </div>
 
+      {error && (
+        <p className="px-3 pb-1 text-[11px] text-rose-600 font-semibold">{error}</p>
+      )}
+
       {/* Row actions */}
       {!terminal && (
         <div className="flex items-center gap-1.5 px-3 pb-2.5 flex-wrap">
           <ActionBtn Icon={CalendarClock} label="Reschedule" disabled={pending || atLimit} title={atLimit ? `Slip limit (${RESCHEDULE_SLIP_LIMIT}) reached — escalate or convert` : undefined} onClick={() => setMode(mode === "reschedule" ? null : "reschedule")} />
           <ActionBtn Icon={UserCog} label={delivery === "partner" ? "Reassign to Staff" : "Reassign to Partner"} disabled={pending}
-            onClick={() => run(() => reassignActivity(row.id, delivery === "partner" ? "staff" : "partner", delivery === "partner" ? undefined : "Partner"), () => setDelivery(delivery === "partner" ? "staff" : "partner"))} />
+            onClick={() => run(
+              () => isBackend
+                ? backendPost(row.id, "reassign", { deliveryType: delivery === "partner" ? "staff" : "partner" })
+                : reassignActivity(row.id, delivery === "partner" ? "staff" : "partner", delivery === "partner" ? undefined : "Partner"),
+              () => setDelivery(delivery === "partner" ? "staff" : "partner"),
+            )} />
           <ActionBtn Icon={PauseCircle} label="Defer" disabled={pending} onClick={() => setMode(mode === "defer" ? null : "defer")} />
           <ActionBtn Icon={Ban} label="Cancel" disabled={pending} tone="danger" onClick={() => setMode(mode === "cancel" ? null : "cancel")} />
           <ActionBtn Icon={CheckCircle2} label="Complete" disabled={pending} tone="good"
-            onClick={() => run(() => completeActivity(row.id), () => setStatus("Completed"))} />
+            onClick={() => run(
+              () => isBackend ? backendPost(row.id, "complete", {}) : completeActivity(row.id),
+              () => setStatus("Completed"),
+            )} />
         </div>
       )}
 
@@ -103,7 +151,9 @@ function PlanRow({ row }: { row: MyPlanRow }) {
           <ReasonSelect reason={reason} setReason={setReason} />
           <span className="text-[10.5px] muted">{reschedulesRemaining(moves)} left</span>
           <ConfirmBtn disabled={pending || !newDate} onClick={() => run(
-            () => rescheduleActivity(row.id, newDate, reason),
+            () => isBackend
+              ? backendPost(row.id, "reschedule", { scheduledDate: newDate, reason })
+              : rescheduleActivity(row.id, newDate, reason),
             () => { setDate(new Date(newDate).toLocaleDateString()); setMoves(moves + 1); setStatus("Planned"); },
           )} />
         </InlinePanel>
@@ -113,7 +163,9 @@ function PlanRow({ row }: { row: MyPlanRow }) {
           <span className="text-[11px] font-bold">{mode === "cancel" ? "Cancel" : "Defer"} — reason:</span>
           <ReasonSelect reason={reason} setReason={setReason} />
           <ConfirmBtn disabled={pending} onClick={() => run(
-            () => (mode === "cancel" ? cancelActivity(row.id, reason) : deferActivity(row.id, reason)),
+            () => isBackend
+              ? backendPost(row.id, mode === "cancel" ? "cancel" : "defer", { reason })
+              : (mode === "cancel" ? cancelActivity(row.id, reason) : deferActivity(row.id, reason)),
             () => setStatus(mode === "cancel" ? "Cancelled" : "Deferred"),
           )} />
         </InlinePanel>

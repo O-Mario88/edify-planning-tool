@@ -173,9 +173,26 @@ export class EvidenceService {
       where: { id },
       data: { status: status as never, reviewedBy: user.userId, reviewedAt: new Date(), reviewNote: note ?? null },
     });
+    // Advance the ACTIVITY workflow on acceptance. Once a CCEO accepts the
+    // (partner-uploaded) evidence and no Salesforce ID has been recorded yet,
+    // the activity now NEEDS that ID — move it to `salesforce_id_required` so it
+    // surfaces in the command-center "enter Salesforce ID" queue and My Plan's
+    // salesforceId section. complete() then transitions it to
+    // awaiting_ia_verification. If the SF ID is already on the record (the
+    // alternate order where the ID is entered before final review), we only
+    // update evidenceStatus and leave the workflow status untouched.
+    const activity = await this.prisma.activity.findUnique({
+      where: { id: rec.activityId }, select: { status: true, salesforceActivityId: true },
+    });
+    const NEEDS_SF_FROM = new Set(['assigned_to_partner', 'partner_scheduled', 'in_progress', 'evidence_uploaded', 'evidence_accepted']);
+    const advanceToSfRequired =
+      action === 'accept' && !!activity && !activity.salesforceActivityId && NEEDS_SF_FROM.has(activity.status);
     await this.prisma.activity.update({
       where: { id: rec.activityId },
-      data: { evidenceStatus: status as never },
+      data: {
+        evidenceStatus: status as never,
+        ...(advanceToSfRequired ? { status: 'salesforce_id_required' as never } : {}),
+      },
     });
     await this.audit.log({
       action: `evidence.${action}`, subjectKind: 'Activity', subjectId: rec.activityId,

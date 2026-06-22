@@ -15,6 +15,12 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  // GENERATED MIRROR — do NOT edit models in this file. The models/enums/types
+  // below are kept byte-identical with the canonical root schema
+  // (../../prisma/schema.prisma). Edit models there, then run `npm run schema:sync`.
+  // This file keeps its OWN datasource because edify-api is on Prisma 6 (inline
+  // url) while the root app is on Prisma 7 (prisma.config.ts) — a symlink would
+  // break one runtime's connection. `npm run schema:check` guards against drift.
   url      = env("DATABASE_URL")
 }
 

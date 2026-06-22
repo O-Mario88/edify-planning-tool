@@ -49,7 +49,14 @@ export type PlanActionResult<T = { id: string }> =
   | { ok: false; reason: "NOT_FOUND" }
   | { ok: false; reason: "INVALID_STATE"; current: PlanStatus | PlannedActivityStatus }
   | { ok: false; reason: "INVALID_INPUT"; field: string }
-  | { ok: false; reason: "DUPLICATE" };
+  | { ok: false; reason: "DUPLICATE" }
+  | { ok: false; reason: "BACKEND_ERROR"; message: string };
+
+type LiveResult<T> = { live: true; data: T } | { live: false; error: string | null };
+
+function backendFailure(r: LiveResult<unknown>): PlanActionResult {
+  return { ok: false, reason: "BACKEND_ERROR", message: r.error ?? "Could not sync to the backend" };
+}
 
 // ─── Authorisation maps ─────────────────────────────────────────────
 
@@ -177,7 +184,10 @@ export async function addActivityToPlan(
   activitiesStore().push(activity);
   recomputePlanTotal(planId);
   // Persist the line to the backend plan (planId is the backend id).
-  if (isBackendEnabled()) await backendAddPlanActivity(bePlanUser(user), planId, toBePlanActivity({ ...draft, title: activity.title })).catch(() => undefined);
+  if (isBackendEnabled()) {
+    const sync = await backendAddPlanActivity(bePlanUser(user), planId, toBePlanActivity({ ...draft, title: activity.title }));
+    if (!sync.live) return backendFailure(sync);
+  }
 
   emitAudit({
     action: "plan.activity.added",
@@ -460,7 +470,10 @@ export async function submitPlan(planId: string): Promise<PlanActionResult> {
   const now = new Date().toISOString();
   updatePlan(planId, { status: "SubmittedForApproval", submittedAt: now });
   // Persist the transition to the backend (the plan id IS the backend id).
-  if (isBackendEnabled()) await backendPlanAction(bePlanUser(user), planId, "submit").catch(() => undefined);
+  if (isBackendEnabled()) {
+    const sync = await backendPlanAction(bePlanUser(user), planId, "submit");
+    if (!sync.live) return backendFailure(sync);
+  }
 
   emitAudit({
     action: "plan.submitted",
@@ -515,7 +528,10 @@ export async function approvePlan(planId: string): Promise<PlanActionResult & { 
     approvedAt: now,
     approvedById: user.staffId,
   });
-  if (isBackendEnabled()) await backendPlanAction(bePlanUser(user), planId, "approve").catch(() => undefined);
+  if (isBackendEnabled()) {
+    const sync = await backendPlanAction(bePlanUser(user), planId, "approve");
+    if (!sync.live) return backendFailure(sync);
+  }
 
   emitAudit({
     action: "plan.approved",
@@ -580,7 +596,10 @@ export async function returnPlan(planId: string, reason: string): Promise<PlanAc
   }
 
   updatePlan(planId, { status: "Returned", returnedReason: reason.trim() });
-  if (isBackendEnabled()) await backendPlanAction(bePlanUser(user), planId, "return", { reason: reason.trim() }).catch(() => undefined);
+  if (isBackendEnabled()) {
+    const sync = await backendPlanAction(bePlanUser(user), planId, "return", { reason: reason.trim() });
+    if (!sync.live) return backendFailure(sync);
+  }
 
   emitAudit({
     action: "plan.returned",
