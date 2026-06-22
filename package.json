@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
+    "test:integration": "node scripts/smoke-integration.mjs",
     "analyze": "ANALYZE=true next build",
     "ci": "npm run schema:check && npm run typecheck && npm run lint && npm run test",
     "schema:check": "node scripts/schema-sync.mjs check",

@@ -17,11 +17,13 @@ type PendingRow = {
 
 export function FundApprovalFinanceSnapshot({
   pendingFundRequests = seedPending,
-}: { pendingFundRequests?: PendingRow[] } = {}) {
+  live = false,
+}: { pendingFundRequests?: PendingRow[]; live?: boolean } = {}) {
   const { pushToast } = useDemoStore();
   const [busyId, setBusyId] = useState<string | null>(null);
 
   function handleReview(id: string, region: string, amount: string) {
+    if (live) return;
     setBusyId(id);
     window.setTimeout(() => {
       setBusyId(null);
@@ -62,16 +64,25 @@ export function FundApprovalFinanceSnapshot({
                 <StatusBadge tone="amber">{r.stage}</StatusBadge>
               </td>
               <td className="text-right">
-                <button
-                  type="button"
-                  onClick={() => handleReview(r.id, r.region, r.amountLabel)}
-                  disabled={busyId === r.id}
-                  className="btn btn-sm btn-primary disabled:opacity-55 inline-flex items-center gap-1"
-                  aria-label={`Review fund request for ${r.region}`}
-                >
-                  {busyId === r.id ? <Loader2 size={11} className="animate-spin" /> : null}
-                  Review
-                </button>
+                {live ? (
+                  <Link
+                    href="/approvals"
+                    className="btn btn-sm btn-primary inline-flex items-center gap-1"
+                  >
+                    Review
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => handleReview(r.id, r.region, r.amountLabel)}
+                    disabled={busyId === r.id}
+                    className="btn btn-sm btn-primary disabled:opacity-55 inline-flex items-center gap-1"
+                    aria-label={`Review fund request for ${r.region}`}
+                  >
+                    {busyId === r.id ? <Loader2 size={11} className="animate-spin" /> : null}
+                    Review
+                  </button>
+                )}
               </td>
             </tr>
           ))}
@@ -103,27 +114,52 @@ export function FundApprovalFinanceSnapshot({
 
 export function FundedNotCompletedCard() {
   return (
-    <SectionCard icon={<AlertCircle size={13} />} title="Funded Not Completed">
+    <FundedNotCompletedLive
+      openCount={fundedNotCompleted.overdue}
+      totalLabel={fundedNotCompleted.totalLabel}
+      activityCount={fundedNotCompleted.activities}
+      partial={fundedNotCompleted.partial}
+      notStarted={fundedNotCompleted.notStarted}
+    />
+  );
+}
+
+export function FundedNotCompletedLive({
+  openCount,
+  totalLabel,
+  activityCount,
+  partial = 0,
+  notStarted = 0,
+}: {
+  openCount: number;
+  totalLabel: string;
+  activityCount: number;
+  partial?: number;
+  notStarted?: number;
+}) {
+  return (
+    <SectionCard icon={<AlertCircle size={13} />} title="Disbursed — Accountability Open">
       <div className="text-[26px] font-extrabold tabular leading-none">
-        {fundedNotCompleted.totalLabel}
+        {totalLabel}
       </div>
       <div className="text-[12px] muted mt-1">
-        Across {fundedNotCompleted.activities.toLocaleString()} activities
+        Across {activityCount.toLocaleString()} activities · {openCount} without accountability filed
       </div>
 
-      <div className="mt-4 space-y-2.5">
-        <Row label="Overdue Activities"  value={fundedNotCompleted.overdue}    tone="text-[var(--color-danger)]" />
-        <Row label="Partially Completed" value={fundedNotCompleted.partial}    tone="text-[var(--color-edify-orange)]" />
-        <Row label="Not Started"         value={fundedNotCompleted.notStarted} tone="text-[var(--color-edify-muted)]" />
-      </div>
+      {(partial > 0 || notStarted > 0) && (
+        <div className="mt-4 space-y-2.5">
+          {partial > 0 && <Row label="Partially Completed" value={partial} tone="text-[var(--color-edify-orange)]" />}
+          {notStarted > 0 && <Row label="Not Started" value={notStarted} tone="text-[var(--color-edify-muted)]" />}
+        </div>
+      )}
 
       <div className="mt-3 pt-3 border-t border-[#eef2f4] text-right">
-        <a
-          href="#operational-risk"
+        <Link
+          href="/disbursements"
           className="text-[12px] font-semibold text-[var(--color-edify-primary)]"
         >
-          View full aged analysis →
-        </a>
+          Open payments &amp; accountability →
+        </Link>
       </div>
     </SectionCard>
   );

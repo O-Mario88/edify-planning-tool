@@ -106,3 +106,43 @@ export function costForActivity(a: CostableActivity, rates: RateCard): ActivityC
   const amount = lines.reduce((s, l) => s + l.amount, 0);
   return { amount, lines, costMissing };
 }
+
+export type SnapshotCostLine = {
+  label: string;
+  costSettingKey: string;
+  unitCost: number;
+  quantity: number;
+  amount: number;
+};
+
+/** Prefer schedule-time snapshot; recalc from attendance when actuals exist. */
+export function resolveActivityCost(
+  a: CostableActivity & { estCostCents?: number | null; costMissing?: boolean | null },
+  rates: RateCard,
+  snapshotLines?: SnapshotCostLine[],
+): ActivityCost {
+  const attended =
+    (a.teachersAttended ?? 0) + (a.leadersAttended ?? 0) + (a.otherParticipants ?? 0);
+  if (attended > 0) return costForActivity(a, rates);
+
+  if (snapshotLines?.length) {
+    const lines: CostLine[] = snapshotLines.map((l) => ({
+      label: l.label,
+      key: l.costSettingKey,
+      unit: l.unitCost,
+      qty: l.quantity,
+      amount: l.amount,
+      missing: false,
+    }));
+    const amount = a.estCostCents != null && a.estCostCents > 0
+      ? a.estCostCents
+      : lines.reduce((s, l) => s + l.amount, 0);
+    return { amount, lines, costMissing: a.costMissing ?? false };
+  }
+
+  if (a.estCostCents != null && a.estCostCents > 0) {
+    return { amount: a.estCostCents, lines: [], costMissing: a.costMissing ?? false };
+  }
+
+  return costForActivity(a, rates);
+}

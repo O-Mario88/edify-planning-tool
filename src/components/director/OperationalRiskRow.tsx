@@ -14,6 +14,8 @@ import {
 import { SectionCard } from "@/components/ui/primitives";
 import { operationalRisks, type OperationalRiskTile } from "@/lib/director-mock";
 import { cn } from "@/lib/utils";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 
 const iconMap: Record<OperationalRiskTile["icon"], LucideIcon> = {
   database:      Database,
@@ -43,6 +45,13 @@ const valueColor: Record<OperationalRiskTile["tone"], string> = {
 };
 
 export function OperationalRiskBacklogRow() {
+  if (!isMockAllowed()) {
+    return (
+      <SectionCard icon={<Database size={13} />} title="Operational Risk Backlog">
+        <InsufficientData surface="operational risk backlog" />
+      </SectionCard>
+    );
+  }
   return (
     <SectionCard
       icon={<ShieldAlert size={13} />}

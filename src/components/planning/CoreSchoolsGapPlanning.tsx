@@ -74,7 +74,7 @@ export function CoreSchoolsGapPlanning({
    * Section 1 permissions contract. Defaults to PL — the most common
    * planning operator.
    */
-  assigningUserRole?: "CCEO" | "CountryProgramLead" | "ImpactAssessment" | "CountryDirector" | "Admin";
+  assigningUserRole?: "CCEO" | "CountryProgramLead" | "ImpactAssessment" | "Admin";
 } = {}) {
   const s = coreSchoolSummary();
   const [activeTab, setActiveTab] = useState<CorePlanningTab>("no_ssa");

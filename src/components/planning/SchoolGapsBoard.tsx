@@ -145,7 +145,7 @@ export function SchoolGapsBoard({
    * assign drawer so CCEOs see only the Partner owner option per the
    * operating-model permissions. Defaults to PL.
    */
-  assigningUserRole?: "CCEO" | "CountryProgramLead" | "ImpactAssessment" | "CountryDirector" | "Admin";
+  assigningUserRole?: "CCEO" | "CountryProgramLead" | "ImpactAssessment" | "Admin";
   /**
    * Onboarded-school gaps computed server-side from uploaded schools + SSA
    * (already scoped to the viewer's supervision chain). Merged in so uploaded
@@ -356,6 +356,7 @@ export function SchoolGapsBoard({
     const rec = recommendFor(s);
     return {
       gapId: s.id,
+      schoolId: s.id,
       title: ACTION_LABEL[assign.action],
       schoolOrCluster: s.schoolName,
       purpose: rec.purpose,

@@ -8,8 +8,7 @@ import { generateMonthlyFundRequest } from "@/lib/funds/monthly-fund-request-moc
 import { mfrStatus } from "@/lib/funds/mfr-status-store";
 import { getCurrentUser } from "@/lib/auth";
 import { isMockAllowed } from "@/lib/mock-policy";
-import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
-import { Wallet } from "lucide-react";
+import { MonthlyFundRequestLive } from "@/components/funds/monthly-fund-request/MonthlyFundRequestLive";
 import { ROLE_REDIRECT, type EdifyRole } from "@/lib/auth-public";
 
 // Monthly Fund Request page.
@@ -51,21 +50,21 @@ export default async function MonthlyFundRequestPage() {
   // The monthly country fund request is a hardcoded April-2026 mock artifact
   // (fabricated grand total, wrong period). Money for approval must be real —
   // withhold until derived from backend FundRequest + budget lines.
-  if (!isMockAllowed())
-    return (
-      <ProductiveEmptyState
-        Icon={Wallet}
-        title="Monthly fund requests run through the live approval chain"
-        description="The PL → CD → RVP → Accountant monthly request now persists in the backend. This roll-up isn't derived from those records yet, so no figures are shown."
-        actionLabel="Open Fund Requests"
-        actionHref="/fund-requests"
-        links={[
-          { label: "Weekly funds", href: "/weekly-funds" },
-          { label: "Budget", href: "/budget" },
-        ]}
-        note="Withheld until this view reads live FundRequest + budget lines — no fabricated grand total is shown."
-      />
+  if (!isMockAllowed()) {
+    const body = (
+      <>
+        <MonthlyFundRequestPageHeader
+          monthLabel={new Date().toLocaleString("en", { month: "long", year: "numeric" })}
+          countryName="Uganda"
+        />
+        <div className="px-3 sm:px-4 lg:px-6 pb-24 lg:pb-6 pt-3 space-y-3 lg:space-y-4">
+          <MonthlyFundRequestLive />
+        </div>
+        <RoleBottomNav />
+      </>
     );
+    return <ResponsiveDashboard mobile={body} desktop={body} />;
+  }
 
   const viewerRole: MfrViewerRole = ROLE_VIEW[user.role] ?? "PL";
 

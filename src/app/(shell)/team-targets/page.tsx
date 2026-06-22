@@ -34,8 +34,14 @@ function defaultTabForRole(role: string): TeamTargetsTab {
   return "team";
 }
 
-export default async function TeamTargetsDashboard() {
+export default async function TeamTargetsDashboard({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const user = await getCurrentUser();
+  const sp = await searchParams;
+  const staffIdParam = typeof sp.staffId === "string" ? sp.staffId : undefined;
   // Production: render the LIVE target engine (/targets/time-period) — real
   // per-period target vs achieved over the caller's scope. On a clean DB this
   // shows 0 achieved with an explanation (target achievement populates as
@@ -47,7 +53,10 @@ export default async function TeamTargetsDashboard() {
       <>
         <TeamTargetsHeader />
         <div className="px-3 sm:px-4 md:px-5 pb-12 pt-3 space-y-4">
-          <TargetsLive title={isLeader ? "Team target progress" : "My target progress"} />
+          <TargetsLive
+            title={staffIdParam ? "Individual target progress" : isLeader ? "Team target progress" : "My target progress"}
+            staffId={staffIdParam}
+          />
           <p className="text-[11.5px] muted text-center">
             No verified activity yet. Target achievement populates as activities are
             completed and IA-verified across {isLeader ? "your team" : "your portfolio"}.

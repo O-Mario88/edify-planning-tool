@@ -20,6 +20,7 @@ import { Handshake, School2, Inbox, RotateCcw, ArrowRight } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { fetchMyPartnerActivities, type BeMyPartnerActivity } from "@/lib/api/surfaces";
 import { MetricStrip } from "@/components/ui/MetricStrip";
+import { PartnerScheduleActions } from "@/components/partner/PartnerScheduleActions";
 import { isMockAllowed } from "@/lib/mock-policy";
 import { InsufficientData } from "@/components/ui/InsufficientData";
 
@@ -211,6 +212,7 @@ export async function PartnerActivityListLive({
                 <div className="flex-1 min-w-0">
                   <div className="text-body font-extrabold tracking-tight truncate">{a.schoolName ?? "—"}</div>
                   <div className="text-caption muted truncate">{fmtType(a.activityType)}{a.district ? ` · ${a.district}` : ""} · {fmtDate(a.scheduledDate)}</div>
+                  <PartnerScheduleActions activityId={a.id} status={a.status} />
                 </div>
                 <span className={`inline-flex items-center px-1.5 py-[2px] rounded-md text-[10px] font-extrabold whitespace-nowrap capitalize ${EVIDENCE_TONE[a.evidenceStatus] ?? "bg-[var(--color-edify-soft)]"}`}>
                   {evidenceLabel}

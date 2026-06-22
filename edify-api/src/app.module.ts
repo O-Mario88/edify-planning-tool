@@ -38,7 +38,13 @@ import { HealthController } from './health.controller';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true, validate: validateEnv }),
+    // Resolve .env from edify-api/ or monorepo root so `npm run start:dev` works
+    // whether the shell cwd is edify-api or the repo root.
+    ConfigModule.forRoot({
+      isGlobal: true,
+      validate: validateEnv,
+      envFilePath: ['.env', '../.env'],
+    }),
     PrismaModule,
     CommonModule,
     RealtimeModule,

@@ -17,6 +17,7 @@ import {
   Activity,
   ShieldCheck,
   Compass,
+  BarChart3,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -70,10 +71,9 @@ const DIRECTOR_LAYOUT: Layout = {
   kind: "flat",
   tabs: [
     { key: "home",     label: "Home",     href: "/dashboards/director", Icon: Home,           match: ["/dashboards/director"] },
-    // No Schools — the CD doesn't access the operational directory.
-    { key: "recruit",  label: "Recruit",  href: "/recruitment",         Icon: Compass,        match: ["/recruitment"] },
-    { key: "ssa",      label: "SSA",      href: "/ssa",                 Icon: Activity,       match: ["/ssa"] },
-    { key: "team",     label: "Team",     href: "/team-targets",        Icon: Users,          match: ["/team-targets"] },
+    { key: "analytics", label: "Analytics", href: "/analytics",         Icon: BarChart3,      match: ["/analytics", "/team-targets"] },
+    { key: "funds",    label: "Funds",    href: "/weekly-funds",        Icon: Wallet,         match: ["/weekly-funds", "/approvals", "/monthly-fund-request"] },
+    { key: "team",     label: "Team",     href: "/staff",               Icon: Users,          match: ["/staff", "/partners"] },
     { key: "more",     label: "More",     href: "/more",              Icon: MoreHorizontal, match: ["/more"] },
   ],
 };

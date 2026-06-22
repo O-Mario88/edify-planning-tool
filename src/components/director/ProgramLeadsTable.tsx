@@ -9,6 +9,8 @@ import {
 import { Users } from "lucide-react";
 import { SectionCard, StatusBadge } from "@/components/ui/primitives";
 import { programLeads, type ProgramLeadRow } from "@/lib/director-mock";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 
 const riskTone = (r: ProgramLeadRow["riskStatus"]) =>
   r === "On Track" ? "green" : r === "Watch" ? "amber" : "red";
@@ -105,6 +107,7 @@ const columns: ColumnDef<ProgramLeadRow>[] = [
 ];
 
 export function ProgramLeadsPerformanceTable() {
+  if (!isMockAllowed()) return <InsufficientData surface="program lead performance" />;
   // @tanstack/react-table isn't React-Compiler-compatible — the compiler
   // skips memoizing this component body. Documented and accepted; the
   // table's data is small (<200 rows) so non-memoization is fine.

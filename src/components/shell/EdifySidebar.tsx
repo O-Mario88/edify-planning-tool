@@ -219,8 +219,9 @@ function buildCdMenu(dashboardHref: string): MenuSection[] {
       label: "Program",
       items: [
         { label: "Analytics",         href: "/analytics",            Icon: BarChart3          },
+        { label: "Team Targets",      href: "/team-targets",         Icon: Target             },
         { label: "SSA Performance",   href: "/ssa",                  Icon: Activity           },
-        { label: "Special Projects",  href: "/special-projects",     Icon: Sparkles           },
+        { label: "Budget Intelligence", href: "/budget/intelligence", Icon: Calculator       },
       ],
     },
     {

@@ -300,7 +300,7 @@ export class ActivitiesService {
           recipientId: rid,
           title: `${dto.salesforceId.trim()} awaiting your review`,
           body: 'A CCEO submitted field completion for your confirmation.',
-          targetRoute: '/approvals',
+          targetRoute: '/pl/review',
           actionRequired: true,
           priority: 'high',
         })),
@@ -409,16 +409,69 @@ export class ActivitiesService {
   }
 
   async reassign(id: string, dto: { deliveryType: 'staff' | 'partner'; assignedPartnerId?: string; responsibleStaffId?: string }, user: AuthUser) {
-    await this.getInScope(id, user);
+    const a = await this.getInScope(id, user);
     const updated = await this.prisma.activity.update({
       where: { id },
       data: {
         deliveryType: dto.deliveryType,
         assignedPartnerId: dto.deliveryType === 'partner' ? (dto.assignedPartnerId ?? undefined) : null,
         responsibleStaffId: dto.deliveryType === 'staff' ? (dto.responsibleStaffId ?? undefined) : undefined,
+        status: dto.deliveryType === 'partner' && !dto.assignedPartnerId
+          ? a.status
+          : dto.deliveryType === 'partner'
+            ? 'assigned_to_partner'
+            : a.status === 'assigned_to_partner' ? 'scheduled' : a.status,
       },
     });
+    await this.attachScheduleCost(id, a.schoolId ?? undefined);
     await this.audit.log({ action: 'activity.reassign', subjectKind: 'Activity', subjectId: id, actorId: user.userId, actorRole: user.activeRole, payload: { deliveryType: dto.deliveryType } });
+    return updated;
+  }
+
+  /** Partner field officer sets a delivery date on work assigned to their org. */
+  async partnerSchedule(id: string, dto: { scheduledDate: string }, user: AuthUser) {
+    const partnerIds = await this.scope.resolvePartnerIds(user);
+    if (!partnerIds.length) throw new ForbiddenException('No partner organization is linked to this account.');
+    const activity = await this.prisma.activity.findFirst({
+      where: { id, deletedAt: null, assignedPartnerId: { in: partnerIds } },
+    });
+    if (!activity) throw new NotFoundException('Activity not found or not assigned to your organization.');
+    if (!['assigned_to_partner', 'planned', 'scheduled', 'returned'].includes(activity.status)) {
+      throw new BadRequestException('This activity cannot be scheduled in its current state.');
+    }
+    const newDate = new Date(dto.scheduledDate);
+    if (Number.isNaN(newDate.getTime())) throw new BadRequestException('scheduledDate is required.');
+    const updated = await this.prisma.activity.update({
+      where: { id },
+      data: {
+        scheduledDate: newDate,
+        status: 'partner_scheduled',
+        fy: getOperationalFY(newDate),
+        quarter: getQuarterForDate(newDate),
+        plannedMonth: newDate.getMonth() + 1,
+      },
+    });
+    await this.attachScheduleCost(id, activity.schoolId ?? undefined);
+    await this.audit.log({
+      action: 'activity.partner_scheduled', subjectKind: 'Activity', subjectId: id,
+      actorId: user.userId, actorRole: user.activeRole, payload: { scheduledDate: dto.scheduledDate },
+    });
+    const staffUserId = activity.responsibleStaffId ? await this.events.userForStaff(activity.responsibleStaffId) : null;
+    if (staffUserId) {
+      await this.events.notifyOnly({
+        type: 'Activity.PartnerScheduled',
+        subjectKind: 'Activity', subjectId: id, actorId: user.userId,
+        notify: [{
+          recipientId: staffUserId,
+          title: 'Partner scheduled assigned work',
+          body: `Your partner placed a delivery date on an assigned activity.`,
+          targetRoute: '/my-plan',
+          actionRequired: false,
+          priority: 'normal' as const,
+        }],
+        liveUserIds: [user.userId, staffUserId],
+      });
+    }
     return updated;
   }
 

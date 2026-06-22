@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { ActivityType, DeliveryType } from "@prisma/client";
-import { costForActivity, type RateCard } from "./costing";
+import { costForActivity, resolveActivityCost, type RateCard } from "./costing";
 
 // The CD rate card used across these cases.
 const RATES: RateCard = {
@@ -57,5 +57,26 @@ describe("costForActivity — the automatic costing engine", () => {
     expect(c.costMissing).toBe(true);
     expect(c.amount).toBe(0);
     expect(c.lines.some((l) => l.missing)).toBe(true);
+  });
+});
+
+describe("resolveActivityCost — snapshot vs live recalc", () => {
+  it("uses schedule snapshot when no attendance is recorded", () => {
+    const c = resolveActivityCost(
+      { activityType: ActivityType.school_visit, deliveryType: DeliveryType.staff, estCostCents: 65000, costMissing: false },
+      RATES,
+      [{ label: "Transport", costSettingKey: "staff_visit_transport_primary", unitCost: 50000, quantity: 1, amount: 50000 }],
+    );
+    expect(c.amount).toBe(65000);
+    expect(c.costMissing).toBe(false);
+  });
+
+  it("recalculates from attendance when actuals exist", () => {
+    const c = resolveActivityCost(
+      { activityType: ActivityType.training, deliveryType: DeliveryType.staff, estCostCents: 999, teachersAttended: 5 },
+      RATES,
+      [{ label: "Old", costSettingKey: "training_session_fee", unitCost: 1, quantity: 1, amount: 1 }],
+    );
+    expect(c.amount).toBe(200000 + 150000 + 12000 * 5);
   });
 });

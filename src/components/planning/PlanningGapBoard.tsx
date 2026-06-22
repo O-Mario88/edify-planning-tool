@@ -25,9 +25,9 @@ import type { SchoolGap, ClusterGap } from "@/lib/planning/planning-gaps-mock";
 import { cn } from "@/lib/utils";
 
 // Narrow an arbitrary role string to the assign drawer's recognised set.
-type AssignRole = "CCEO" | "CountryProgramLead" | "ImpactAssessment" | "CountryDirector" | "Admin";
+type AssignRole = "CCEO" | "CountryProgramLead" | "ImpactAssessment" | "Admin";
 function normalizeRole(role?: string): AssignRole {
-  return role === "CCEO" || role === "ImpactAssessment" || role === "CountryDirector" || role === "Admin"
+  return role === "CCEO" || role === "ImpactAssessment" || role === "Admin"
     ? role
     : "CountryProgramLead";
 }

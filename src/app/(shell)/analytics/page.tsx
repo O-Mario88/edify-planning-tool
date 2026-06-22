@@ -7,6 +7,7 @@ import { MetricStrip, type MetricCell } from "@/components/ui/MetricStrip";
 import { LiveBadge, BackendOfflineBanner } from "@/components/ui/BackendStatus";
 import { MyContribution } from "@/components/analytics/MyContribution";
 import { FieldEngineAnalytics } from "@/components/analytics/field-engine/FieldEngineAnalytics";
+import { CdPerformanceOversight } from "@/components/director/CdPerformanceOversight";
 import { LiveDataRoom } from "@/components/analytics/LiveDataRoom";
 import { isMockAllowed } from "@/lib/mock-policy";
 import { SubCountySsaPanel } from "@/components/ssa/SubCountySsaPanel";
@@ -77,20 +78,25 @@ export default async function AnalyticsPage({
   // surface leads with a personal metric strip (country-wide sections hidden).
   const personal = user.role === "CCEO";
 
+  const isCd = user.role === "CountryDirector";
+
   return (
     <>
       <PageHeader
-        title={personal ? "My Analytics" : "Analytics"}
+        title={personal ? "My Analytics" : isCd ? "Country Analytics" : "Analytics"}
         subtitle={
           personal
             ? "Your portfolio only — schools reached, gaps, target pace and pipeline. Every number traces to your own records."
-            : "Workflow-derived, filter-aware, drillable. Every number traces to the records behind it."
+            : isCd
+              ? "Staff & partner performance, team-plan budget, and SSA movement in the interventions your field team supported — filter by individual."
+              : "Workflow-derived, filter-aware, drillable. Every number traces to the records behind it."
         }
         filterBar={<HeaderFilterBar scope={filterScope} />}
         backFallbackHref="/dashboard"
       />
       <div className="px-3 sm:px-4 md:px-5 lg:px-6 pt-2 pb-24 space-y-4">
-        {contributionLenses && (
+        {isCd && <CdPerformanceOversight />}
+        {contributionLenses && !isCd && (
           <MyContribution title={contributionTitle} fy={fyId} lenses={contributionLenses} />
         )}
         {liveBand && (
@@ -110,7 +116,7 @@ export default async function AnalyticsPage({
             for the sub-counties inside that district (live, backend-filtered). */}
         <SubCountySsaPanel />
         <BackendOfflineBanner error={liveError} />
-        {isMockAllowed() ? <FieldEngineAnalytics role={user.role} scopeLabel={user.name} personal={personal} /> : <LiveDataRoom />}
+        {isMockAllowed() ? <FieldEngineAnalytics role={user.role} scopeLabel={user.name} personal={personal} /> : !isCd ? <LiveDataRoom /> : null}
       </div>
     </>
   );

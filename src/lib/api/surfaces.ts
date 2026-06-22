@@ -469,6 +469,13 @@ export function backendScheduleClusterTraining(user: BackendUser, body: Record<s
   return live<BeActivity>(`/planning/schedule-cluster-training`, user, { method: "POST", body: JSON.stringify(body) });
 }
 
+export function backendPartnerScheduleActivity(user: BackendUser, activityId: string, body: { scheduledDate: string }) {
+  return live<BeActivity>(`/partners/me/activities/${encodeURIComponent(activityId)}/schedule`, user, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
 /** Run a lifecycle action against a backend activity (My Plan row actions). */
 export function backendActivityAction(user: BackendUser, id: string, action: ActivityLifecycleAction, body: Record<string, unknown>) {
   return live<BeActivity>(`/activities/${encodeURIComponent(id)}/${action}`, user, { method: "POST", body: JSON.stringify(body) });

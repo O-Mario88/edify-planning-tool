@@ -22,7 +22,9 @@ export default async function AccessRestrictedPage({
   const isFieldPlanning =
     from.startsWith("/planning") ||
     from.startsWith("/my-plan") ||
-    from.startsWith("/completed-activities");
+    from.startsWith("/completed-activities") ||
+    from.startsWith("/trainings") ||
+    from.startsWith("/visits");
 
   return (
     <>
@@ -44,8 +46,9 @@ export default async function AccessRestrictedPage({
           <p className="text-[13px] text-slate-600 leading-relaxed mb-1">
             <strong>Field planning</strong> is an operational working surface for the
             CCEO and Program Lead roles. Your role ({user.role}) monitors execution
-            through the dashboard, analytics, and approvals — not row-level activity
-            planning.
+            through the dashboard, analytics, and finance — and can assign tickets
+            to Program Leads from the director dashboard. Field planning is not
+            part of your workflow.
           </p>
         ) : (
           <p className="text-[13px] text-slate-600 leading-relaxed mb-1">

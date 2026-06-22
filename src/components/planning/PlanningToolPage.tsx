@@ -103,11 +103,11 @@ export async function PlanningToolPage({
   const backendCoreGaps = await backendCoreSchoolGaps(user);
   const liveCoreGaps = backendCoreGaps !== null;
   const coreViewer = {
-    canAssign: ["CCEO", "CountryProgramLead", "CountryDirector", "ImpactAssessment", "Admin"].includes(user.role),
+    canAssign: ["CCEO", "CountryProgramLead", "ImpactAssessment", "Admin"].includes(user.role),
     canExec: ["CCEO", "CountryProgramLead", "PartnerAdmin", "PartnerFieldOfficer", "Admin"].includes(user.role),
     canIa: ["ImpactAssessment", "Admin"].includes(user.role),
   };
-  const canChampion = ["ImpactAssessment", "CountryProgramLead", "CountryDirector", "Admin"].includes(user.role);
+  const canChampion = ["ImpactAssessment", "CountryProgramLead", "Admin"].includes(user.role);
   // CoreOwnershipRow carries no geography (schoolId/slot only) — left unscoped.
   const coreOwnership = coreOwnershipRows(user.staffId, user.role);
 

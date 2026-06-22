@@ -237,8 +237,8 @@ const ROLE_RESTRICTED: Array<{ prefix: string; allow: EdifyRole[] }> = [
   // Field-execution queues (Confirm-completion / SVE- visit confirm). The write
   // is already server-gated, but these are field surfaces — RVP/HR/Accountant
   // monitor via analytics. CD retained (the completion action permits CD).
-  { prefix: "/trainings",             allow: ["CCEO", "CountryProgramLead", "ImpactAssessment", "CountryDirector", "ProjectCoordinator", "Admin"] },
-  { prefix: "/visits",                allow: ["CCEO", "CountryProgramLead", "ImpactAssessment", "CountryDirector", "ProjectCoordinator", "Admin"] },
+  { prefix: "/trainings",             allow: ["CCEO", "CountryProgramLead", "ImpactAssessment", "ProjectCoordinator", "Admin"] },
+  { prefix: "/visits",                allow: ["CCEO", "CountryProgramLead", "ImpactAssessment", "ProjectCoordinator", "Admin"] },
   // Operational cluster planning/assignment — the field + data roles that work
   // clusters (CCEO/PL assign their portfolios; IA stands up clusters at intake).
   // CD/RVP/HR/Accountant lead through summaries, never the cluster planning page
@@ -305,6 +305,8 @@ const SHOW_ACCESS_RESTRICTED = [
   "/clusters",
   "/special-projects",
   "/core-schools",
+  "/trainings",
+  "/visits",
 ];
 
 function isProtected(pathname: string): boolean {

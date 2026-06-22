@@ -280,8 +280,8 @@ export const leadershipActions: LeadershipActionTile[] = [
   { key: "review_funds",   title: "Review Fund Requests",      subtitle: "154 pending approvals",    icon: "wallet",        href: "/approvals",         tone: "edify" },
   { key: "high_risk",      title: "View High-Risk Regions",    subtitle: "2 regions need attention", icon: "alertTriangle", href: "/reports",           tone: "edify" },
   { key: "sf_backlog",     title: "Inspect Salesforce Backlog",subtitle: "7,842 pending records",   icon: "database",      href: "/quality-checks",   tone: "edify" },
-  { key: "core_delays",    title: "See Core School Delays",    subtitle: "842 schools behind",       icon: "shieldAlert",   href: "/core-schools",   tone: "edify" },
-  { key: "team_targets",   title: "Review Team Targets",       subtitle: "6 teams below target",     icon: "target",        href: "/team-targets",      tone: "edify" },
+  { key: "team_targets",   title: "Review Team Targets",       subtitle: "Individual achievement",   icon: "target",        href: "/team-targets",      tone: "edify" },
+  { key: "analytics",      title: "Country Analytics",         subtitle: "Staff & SSA oversight",  icon: "shieldAlert",   href: "/analytics",         tone: "edify" },
   { key: "country_report", title: "Open Country Report",       subtitle: "Comprehensive overview",   icon: "fileText",      href: "/reports",            tone: "edify" },
 ];
 
@@ -304,7 +304,7 @@ export const directorHeader = {
     month: "May 2025",
     countryRegion: "Uganda",
   },
-  searchPlaceholder: "Search schools, staff, regions…",
+  searchPlaceholder: "Search staff, partners, regions…",
 };
 
 export const notificationCount = 12;

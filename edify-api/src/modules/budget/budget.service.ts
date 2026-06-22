@@ -5,7 +5,7 @@ import { ScopeService, UserScope } from '../../common/scope/scope.service';
 import { AuthUser } from '../../common/auth/auth-user';
 import { getOperationalFY } from '../../common/fy/fy.util';
 import { AuditService } from '../../common/audit/audit.service';
-import { costForActivity, RateCard, CostableActivity } from './costing';
+import { costForActivity, RateCard, CostableActivity, resolveActivityCost, type SnapshotCostLine } from './costing';
 
 // ── Budget = the schedule, costed ────────────────────────────────────────────
 // There is NO manual budget building for program activities. The budget is the
@@ -147,6 +147,14 @@ export class BudgetService {
     };
   }
 
+  private resolveCost(
+    a: CostableActivity & { estCostCents?: number | null; costMissing?: boolean | null },
+    rates: RateCard,
+    snapshotLines?: SnapshotCostLine[],
+  ) {
+    return resolveActivityCost(a, rates, snapshotLines);
+  }
+
   // ── Activity scope (own work + work in own schools) ─────────────────────────
 
   private activityWhere(scope: UserScope): Prisma.ActivityWhereInput {
@@ -183,6 +191,8 @@ export class BudgetService {
         activityType: true,
         deliveryType: true,
         status: true,
+        estCostCents: true,
+        costMissing: true,
         quarter: true,
         month: true,
         plannedMonth: true,
@@ -191,6 +201,9 @@ export class BudgetService {
         leadersAttended: true,
         otherParticipants: true,
         school: { select: { schoolType: true } },
+        scheduleCostLines: {
+          select: { label: true, costSettingKey: true, unitCost: true, quantity: true, amount: true },
+        },
       },
     });
 
@@ -209,7 +222,11 @@ export class BudgetService {
         leadersAttended: a.leadersAttended,
         otherParticipants: a.otherParticipants,
       };
-      const cost = costForActivity(costable, rates);
+      const cost = this.resolveCost(
+        { ...costable, estCostCents: a.estCostCents, costMissing: a.costMissing },
+        rates,
+        a.scheduleCostLines,
+      );
       if (cost.costMissing) costMissingCount += 1;
       total += cost.amount;
 
@@ -287,10 +304,14 @@ export class BudgetService {
       where: { ...this.activityWhere(scope), fy },
       select: {
         id: true, activityType: true, deliveryType: true, status: true,
+        estCostCents: true, costMissing: true,
         quarter: true, month: true, plannedMonth: true, scheduledDate: true,
         teachersAttended: true, leadersAttended: true, otherParticipants: true,
         school: { select: { name: true, schoolType: true } },
         cluster: { select: { name: true } },
+        scheduleCostLines: {
+          select: { label: true, costSettingKey: true, unitCost: true, quantity: true, amount: true },
+        },
       },
     });
 
@@ -302,15 +323,18 @@ export class BudgetService {
         return true;
       })
       .map(({ a, month }) => {
-        const cost = costForActivity(
+        const cost = this.resolveCost(
           {
             activityType: a.activityType,
             deliveryType: a.deliveryType,
             teachersAttended: a.teachersAttended,
             leadersAttended: a.leadersAttended,
             otherParticipants: a.otherParticipants,
+            estCostCents: a.estCostCents,
+            costMissing: a.costMissing,
           },
           rates,
+          a.scheduleCostLines,
         );
         return {
           id: a.id,
@@ -346,6 +370,8 @@ export class BudgetService {
         activityType: true,
         deliveryType: true,
         status: true,
+        estCostCents: true,
+        costMissing: true,
         month: true,
         plannedMonth: true,
         plannedWeek: true,
@@ -361,6 +387,9 @@ export class BudgetService {
         cluster: { select: { name: true } },
         responsibleStaff: { select: { user: { select: { name: true } } } },
         assignedPartner: { select: { name: true } },
+        scheduleCostLines: {
+          select: { label: true, costSettingKey: true, unitCost: true, quantity: true, amount: true },
+        },
       },
       orderBy: [{ scheduledDate: 'asc' }, { plannedWeek: 'asc' }],
     });
@@ -369,15 +398,18 @@ export class BudgetService {
     const lines = activities
       .filter((a) => monthFilter == null || this.monthNumberOf(a) === monthFilter)
       .map((a) => {
-        const cost = costForActivity(
+        const cost = this.resolveCost(
           {
             activityType: a.activityType,
             deliveryType: a.deliveryType,
             teachersAttended: a.teachersAttended,
             leadersAttended: a.leadersAttended,
             otherParticipants: a.otherParticipants,
+            estCostCents: a.estCostCents,
+            costMissing: a.costMissing,
           },
           rates,
+          a.scheduleCostLines,
         );
         return {
           id: a.id,

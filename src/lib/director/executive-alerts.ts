@@ -105,8 +105,8 @@ export function buildExecutiveAlerts(inputs: ExecutiveAlertInputs = {}): Executi
       why: "The core package (4 visits + 4 trainings) is the contract behind core-school impact claims.",
       scope: "Country-wide",
       recommendedAction: "Review core-school pacing with PLs and rebalance staff/partner delivery where capacity is the blocker.",
-      actionLabel: "Open Core Schools Summary",
-      actionHref: "/core-schools",
+      actionLabel: "Open Core Analytics",
+      actionHref: "/analytics",
     });
   }
 
@@ -156,9 +156,9 @@ export function buildExecutiveAlerts(inputs: ExecutiveAlertInputs = {}): Executi
       issue: `${redAlert.length} schools are on red alert (weak SSA, no recent visit or training)`,
       why: "Unsupported weak schools decline — they are the schools donor impact claims depend on improving.",
       scope: regions,
-      recommendedAction: "Direct PLs to prioritise these schools in the next planning window (staff or partner delivery).",
-      actionLabel: "View Priority Schools",
-      actionHref: "#priority-schools",
+      recommendedAction: "Flag the relevant Program Lead to prioritise weak-SSA schools in their next planning cycle.",
+      actionLabel: "Open SSA Analytics",
+      actionHref: "/ssa",
     });
   }
 

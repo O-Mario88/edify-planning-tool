@@ -12,25 +12,19 @@ import { CountryKpiRow } from "@/components/director/CountryKpiRow";
 import { LeadershipKpiStrip } from "@/components/director/LeadershipKpiStrip";
 import { fetchLeadershipSummary } from "@/lib/api/surfaces";
 import { selectionFromSearchParams, geoParamsFromSelection } from "@/lib/filters/apply-filters";
-import { ExecutiveAlerts } from "@/components/director/ExecutiveAlerts";
+import { ExecutiveAlertsLive } from "@/components/director/ExecutiveAlertsLive";
+import { FundApprovalFinanceLive } from "@/components/director/FundApprovalFinanceLive";
 import { CdRiskSummaryCard } from "@/components/escalation/CdRiskSummaryCard";
 import { FlagToPlCard } from "@/components/director/FlagToPlCard";
 import { MissionSnapshotStrip } from "@/components/director/MissionSnapshotStrip";
-import { StaffPerformanceSummary } from "@/components/director/StaffPerformanceSummary";
-import { PartnerPerformanceSummary } from "@/components/director/PartnerPerformanceSummary";
+import { StaffPerformanceLive } from "@/components/director/StaffPerformanceLive";
+import { PartnerPerformanceLive } from "@/components/director/PartnerPerformanceLive";
 import {
   CountryPerformanceChart,
   RegionalPerformanceCard,
 } from "@/components/ui/lazy-charts";
 import { ProgramLeadsPerformanceTable } from "@/components/director/ProgramLeadsTable";
-import {
-  FundApprovalFinanceSnapshot,
-  FundedNotCompletedCard,
-} from "@/components/director/FundApprovalFinance";
-import { fundRequests as fundRequestsStore } from "@/lib/actions/store";
 import { OperationalRiskBacklogRow } from "@/components/director/OperationalRiskRow";
-import { SchoolSsaIntelligenceCard } from "@/components/director/SchoolSsaIntelligenceCard";
-import { PrioritySchoolsUrgentAttentionCard } from "@/components/director/PrioritySchoolsAttention";
 import { QuickLeadershipActions } from "@/components/director/QuickLeadershipActions";
 import { ClientVerificationCard } from "@/components/ssa/ClientVerificationCard";
 import { ClusterReadinessCard } from "@/components/cluster/ClusterReadinessCard";
@@ -160,7 +154,6 @@ export default async function CountryDirectorDashboard({ searchParams }: { searc
           <SsaPerformanceGrid />
           <InterventionImprovementGrid />
           <SupportImprovementCard />
-          <SchoolSsaIntelligenceCard />
         </section>
 
         {/* DONOR-READY IMPACT — what can the country report this period? */}
@@ -186,26 +179,19 @@ export default async function CountryDirectorDashboard({ searchParams }: { searc
             <div className="col-span-12 lg:col-span-7">
               <OperationalRiskBacklogRow />
             </div>
-            <div className="col-span-12 lg:col-span-5" id="priority-schools">
-              <PrioritySchoolsUrgentAttentionCard />
-            </div>
           </section>
           <ClusterReadinessCard clustered={clusterCounts.clustered} unclustered={clusterCounts.unclustered} needsReview={clusterCounts.needsReview} title="National cluster setup" actionable={false} />
         </section>
 
         {/* ── WORK & ACTION (below the figures) ────────────────────────── */}
 
-        {/* MAIN WORK — today's queue, then the executive alerts. */}
+        {/* TODAY'S WORK — CD monitors; flags issues to PLs (who plan). */}
         <TodayCommandCenter />
+        <FlagToPlCard />
         <CommandStack user={user} hideMission />
 
-        {/* TODAY'S EXECUTIVE ALERTS — issue · why · scope · recommended
-            action · one button. */}
-        <ExecutiveAlerts inputs={{ unclusteredSchools: clusterCounts.unclustered }} />
+        <ExecutiveAlertsLive inputs={{ unclusteredSchools: clusterCounts.unclustered }} />
         <CdRiskSummaryCard />
-        {/* The CD's sanctioned action on what they monitor: flag to a PL (who
-            plans) — never field-plan directly. Creates a tracked, notified item. */}
-        <FlagToPlCard />
 
         {/* BUDGET & FUND REQUEST HEALTH — financial stewardship. */}
         <section className="space-y-3">
@@ -220,11 +206,8 @@ export default async function CountryDirectorDashboard({ searchParams }: { searc
             <div className="col-span-12 lg:col-span-5"><CostSettingsCard /></div>
           </section>
           <section className="grid grid-cols-12 gap-3 items-stretch [&>div>*]:h-full" id="fund-approvals">
-            <div className="col-span-12 lg:col-span-8">
-              <FundApprovalFinanceSnapshot pendingFundRequests={cdPendingFundRequests()} />
-            </div>
-            <div className="col-span-12 lg:col-span-4">
-              <FundedNotCompletedCard />
+            <div className="col-span-12">
+              <FundApprovalFinanceLive />
             </div>
           </section>
         </section>
@@ -244,8 +227,8 @@ export default async function CountryDirectorDashboard({ searchParams }: { searc
           <div id="program-leads">
             <ProgramLeadsPerformanceTable />
           </div>
-          <StaffPerformanceSummary />
-          <PartnerPerformanceSummary />
+          <StaffPerformanceLive />
+          <PartnerPerformanceLive />
           <DebriefReviewInbox user={user} audience="cd" />
           <ClientVerificationCard />
         </section>
@@ -274,30 +257,3 @@ export default async function CountryDirectorDashboard({ searchParams }: { searc
   return <ResponsiveDashboard mobile={body} desktop={body} />;
 }
 
-// Live "pending fund requests" rows for the CD finance snapshot —
-// folds the fundRequestsStore() SUBMITTED + APPROVED rows into the
-// region-grouped shape FundApprovalFinanceSnapshot expects.
-function cdPendingFundRequests() {
-  const PENDING_STATUSES = new Set(["SUBMITTED", "APPROVED", "READY_TO_DISBURSE"]);
-  const byRegion = new Map<string, { id: string; region: string; amount: number; activities: number; stages: Set<string> }>();
-  for (const r of fundRequestsStore()) {
-    if (!PENDING_STATUSES.has(r.status)) continue;
-    const key = r.district || r.countryId || "—";
-    const acc = byRegion.get(key) ?? { id: `fr-${key}`, region: key, amount: 0, activities: 0, stages: new Set<string>() };
-    acc.amount += r.requestedAmount.amount;
-    acc.activities += r.activities.length;
-    acc.stages.add(r.status === "SUBMITTED" ? "Review" : "Approved");
-    byRegion.set(key, acc);
-  }
-  const fmt = (n: number) =>
-    n >= 1_000_000_000 ? `UGX ${(n / 1_000_000_000).toFixed(2)}B`
-    : n >= 1_000_000     ? `UGX ${(n / 1_000_000).toFixed(1)}M`
-    :                       `UGX ${n.toLocaleString()}`;
-  return Array.from(byRegion.values()).map((r) => ({
-    id: r.id,
-    region: r.region,
-    amountLabel: fmt(r.amount),
-    activitiesCovered: r.activities,
-    stage: r.stages.has("Review") ? "Review" : "Approved",
-  }));
-}

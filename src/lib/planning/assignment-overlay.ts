@@ -1,10 +1,6 @@
-// Gap-board assignment overlay — a durable record of every activity assigned
-// from the planning gap boards (assign to myself / staff / partner /
-// facilitator). The gap boards + My Plan render from a separate client mock
-// (core-school-plan-mock), so full gap re-derivation is a later data-layer
-// unification; this overlay gives the assignment a real, auditable server-side
-// record + drives the cross-role notification. Shaped for a future Prisma
-// `PlanActivityAssignment` table.
+// Gap-board assignment overlay — durable in-memory record for dev/mock gap
+// filtering. In production the backend Activity is the source of truth; this
+// overlay still records the assignment audit trail when mock mode is on.
 
 import "server-only";
 

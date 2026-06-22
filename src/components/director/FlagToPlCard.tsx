@@ -57,7 +57,7 @@ export function FlagToPlCard() {
         body: JSON.stringify({ assignedToUserId, category, priority, scopeName: scopeName || undefined, note, recommendedAction: recommendedAction || undefined }),
       }).then((r) => r.json());
       if (res.live) {
-        setMsg({ ok: true, text: "Flag sent to the Program Lead — it's now in their Team Plan queue." });
+        setMsg({ ok: true, text: "Ticket assigned to the Program Lead — it appears in their Team Plan queue." });
         setNote("");
         setScopeName("");
         setRecommendedAction("");
@@ -74,9 +74,9 @@ export function FlagToPlCard() {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/40">
       <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide muted">
-        <Flag className="h-3.5 w-3.5" /> Flag an issue to a Program Lead
+        <Flag className="h-3.5 w-3.5" /> Create ticket — assign Program Lead
       </div>
-      <p className="mt-1 text-xs muted">You monitor and flag; the PL plans. This creates a tracked, PL-assigned action item — not a field-planning action.</p>
+      <p className="mt-1 text-xs muted">You monitor execution; Program Leads plan and assign field work. This creates a tracked ticket in their Team Plan queue.</p>
 
       <div className="mt-3 grid grid-cols-2 gap-2">
         <label className="text-[11px] muted">
@@ -114,7 +114,7 @@ export function FlagToPlCard() {
           <span className={`text-[11px] ${msg.ok ? "text-emerald-600" : "text-rose-500"}`}>{msg.text}</span>
         ) : <span />}
         <button onClick={submit} disabled={busy} className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50 dark:bg-slate-100 dark:text-slate-900">
-          <Send className="h-3.5 w-3.5" /> Send to PL
+          <Send className="h-3.5 w-3.5" /> Assign ticket
         </button>
       </div>
     </div>

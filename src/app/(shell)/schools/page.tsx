@@ -266,7 +266,7 @@ export default async function SchoolsDashboard({
   // only these two mock-fed surfaces so production shows neither fabricated.
   const mockOk = isMockAllowed();
   // Partner/HR cannot assign; everyone else with directory access can (server re-checks).
-  const canManageDirectory = ["CCEO", "CountryProgramLead", "CountryDirector", "ImpactAssessment", "Admin"]
+  const canManageDirectory = ["CCEO", "CountryProgramLead", "ImpactAssessment", "Admin"]
     .includes(currentUser.role);
   // Cluster assignment is a CCEO/PL responsibility — the Project Coordinator
   // (whose appRole projects to CountryProgramLead) only views clusters.

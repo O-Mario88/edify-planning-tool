@@ -4,6 +4,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../../common/audit/audit.service';
 import { ScopeService } from '../../common/scope/scope.service';
 import { AuthUser } from '../../common/auth/auth-user';
+import { ActivitiesService } from '../activities/activities.service';
 
 // Partners — onboarded and governed by the Country Director. Eligibility for
 // assignment (active + geography + expertise + certification) is derived from
@@ -24,6 +25,7 @@ export class PartnersService {
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
     private readonly scope: ScopeService,
+    private readonly activities: ActivitiesService,
   ) {}
 
   /** Resolve the partner org the caller acts as. Uses the SAME identity bridge
@@ -120,6 +122,13 @@ export class PartnersService {
       scheduled: activities.filter((a) => a.scheduledDate != null).length,
     };
     return { partner: this.shape(partner), counts, activities };
+  }
+
+  /** Partner sets a delivery date on an activity assigned to their org. */
+  async scheduleActivity(user: AuthUser, activityId: string, body: { scheduledDate?: string }) {
+    const date = (body.scheduledDate ?? '').trim();
+    if (!date) throw new BadRequestException('scheduledDate is required.');
+    return this.activities.partnerSchedule(activityId, { scheduledDate: date }, user);
   }
 
   /** Eligible partners for an assignment: ACTIVE + (covers the district OR no

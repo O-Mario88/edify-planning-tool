@@ -18,14 +18,17 @@ const ONBOARD_TONE = (state: string): "green" | "amber" | "slate" =>
 
 export default async function StaffIndex() {
   const user = await getCurrentUser();
+  const isCd = user.role === "CountryDirector";
   const r = await fetchHrRoster(user);
 
   if (r.live) {
     const staff = r.data.staff;
     return (
       <EntityIndex
-        title="Staff Directory"
-        subtitle="Field roster — CCEOs, Program Leads, partners. Click a row for the 360° profile."
+        title={isCd ? "Staff Performance" : "Staff Directory"}
+        subtitle={isCd
+          ? "Monitor field staff — target achievement, visits, training & SSA by intervention. Click a row for the full profile."
+          : "Field roster — CCEOs, Program Leads, partners. Click a row for the 360° profile."}
         Icon={Users}
         count={staff.length}
         searchPlaceholder="Search by name, district, role"

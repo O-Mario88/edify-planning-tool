@@ -19,6 +19,8 @@ import {
 } from "recharts";
 import { monthlyPerformance } from "@/lib/director-mock";
 import { SectionCard } from "@/components/ui/primitives";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 
 const PRIMARY = "#527083";
 const PRIMARY_DARK = "#344f5f";
@@ -27,6 +29,14 @@ const PLANNED = "#cfe1e8";
 
 export function CountryPerformanceChart() {
   const [range] = useState("Last 11 Months");
+
+  if (!isMockAllowed()) {
+    return (
+      <SectionCard icon={<BarChart3 size={13} />} title="Country Performance Overview">
+        <InsufficientData surface="the country performance trend chart" />
+      </SectionCard>
+    );
+  }
 
   return (
     <SectionCard

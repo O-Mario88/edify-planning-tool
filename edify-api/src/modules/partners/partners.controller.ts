@@ -36,6 +36,16 @@ export class PartnersController {
     return this.partners.myActivities(user);
   }
 
+  @Post('me/activities/:id/schedule')
+  @RequirePermissions(PERMISSIONS.PLANNING_VIEW)
+  scheduleMyActivity(
+    @Param('id') id: string,
+    @Body() body: { scheduledDate?: string },
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.partners.scheduleActivity(user, id, body);
+  }
+
   // Eligible partners for an assignment (active + geography + expertise).
   @Get('eligible')
   @RequirePermissions(PERMISSIONS.PARTNER_VIEW)

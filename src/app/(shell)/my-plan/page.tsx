@@ -5,7 +5,7 @@ import { MyPlanBriefingHero } from "@/components/planning/MyPlanBriefingHero";
 import { MyPlanSnapshotStrip } from "@/components/planning/MyPlanSnapshotStrip";
 import { MyPlanPeriodSwitcher } from "@/components/planning/MyPlanPeriodSwitcher";
 import { getCurrentUser } from "@/lib/auth";
-import { fetchMyPlanActivities, fetchFundRequests } from "@/lib/api/surfaces";
+import { fetchMyPlanGrouped, fetchFundRequests, type BeMyPlanPeriod } from "@/lib/api/surfaces";
 import { isMockAllowed } from "@/lib/mock-policy";
 import { InsufficientData } from "@/components/ui/InsufficientData";
 import { activeFinancialYear } from "@/lib/fy-engine";
@@ -19,12 +19,19 @@ import { dailyBrief, snapshotChips } from "@/lib/planning/my-plan-brief";
 // Backend is the source of truth; mock store fallback only when explicitly allowed.
 export const dynamic = "force-dynamic";
 
-export default async function MyPlanPage() {
+export default async function MyPlanPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ period?: string }>;
+}) {
   const user = await getCurrentUser();
+  const params = await searchParams;
+  const period = (params.period ?? "month") as BeMyPlanPeriod;
   const today = new Date();
   const todayIso = today.toISOString().slice(0, 10);
+  const fy = activeFinancialYear().id;
 
-  const be = await fetchMyPlanActivities(user, activeFinancialYear().id);
+  const be = await fetchMyPlanGrouped(user, period, fy);
 
   if (!be.live && !isMockAllowed()) {
     return (
@@ -40,7 +47,7 @@ export default async function MyPlanPage() {
     const fundingByPeriod = buildFundingByPeriod(
       fr.live ? fr.data.filter((r) => r.isOwn ?? true).map((r) => ({ periodKey: r.periodKey, status: r.status })) : [],
     );
-    items = be.data.data
+    items = be.data.items
       .map((a) => fromBeActivity(a, todayIso, fundingByPeriod))
       .filter((i): i is MyPlanItem => i !== null);
   } else if (isMockAllowed()) {

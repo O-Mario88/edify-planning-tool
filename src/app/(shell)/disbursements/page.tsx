@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { StubPage } from "@/components/shell/StubPage";
 import { AccountantQueueLive } from "@/components/funds/accountant/AccountantQueueLive";
+import { AccountantOversightLive } from "@/components/funds/accountant/AccountantOversightLive";
 import { getCurrentUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -13,12 +14,18 @@ export default async function DisbursementsPage() {
   const allowed = ["ProgramAccountant", "Admin", "CountryDirector"].includes(user.role);
   if (!allowed) redirect("/dashboards/program-lead");
 
+  const isAccountant = user.role === "ProgramAccountant" || user.role === "Admin";
+
   return (
     <StubPage
       title="Payments & Accountability"
-      subtitle="Verified, IA-confirmed work ready to pay or clear. The system blocks any payment whose evidence, Salesforce ID, or IA confirmation is incomplete."
+      subtitle={
+        isAccountant
+          ? "Verified, IA-confirmed work ready to pay or clear. The system blocks any payment whose evidence, Salesforce ID, or IA confirmation is incomplete."
+          : "Monitor disbursements and the verification gate — read-only oversight. Payment clearance is handled by the Program Accountant."
+      }
     >
-      <AccountantQueueLive />
+      {isAccountant ? <AccountantQueueLive /> : <AccountantOversightLive />}
     </StubPage>
   );
 }

@@ -51,9 +51,9 @@ export type PlanningAssignContext = {
   title: string;             // "Schedule School Improvement Training"
   schoolOrCluster: string;   // "Hope Primary School" or "Bbaale Cluster"
   purpose: string;           // generated purpose text
-  /** Stable id of the gap-board item being resolved, when known. Persisted
-   *  with the assignment so server-owned gap lists can drop it on reload. */
+  /** Stable id of the gap-board item — the business schoolId when live. */
   gapId?: string;
+  schoolId?: string;
   /// Training assignments allow Partner-as-facilitator; visits don't.
   /// Set true for training/cluster meetings so the facilitator option
   /// renders.
@@ -78,7 +78,7 @@ export type PlanningAssignContext = {
 };
 
 /** Roles the assignment drawer recognises for permission gating. */
-export type AssigningRole = "CCEO" | "CountryProgramLead" | "ImpactAssessment" | "CountryDirector" | "Admin" | "Partner" | "Other";
+export type AssigningRole = "CCEO" | "CountryProgramLead" | "ImpactAssessment" | "Admin" | "Partner" | "Other";
 
 /** Returns the AssignOwner values a given role is allowed to pick. */
 function availableOwnersFor(role: AssigningRole | undefined, allowPartner: boolean, allowFacilitator: boolean): AssignOwner[] {
@@ -93,7 +93,7 @@ function availableOwnersFor(role: AssigningRole | undefined, allowPartner: boole
     // never to themselves and not as a facilitator.
     return allowPartner ? ["staff", "partner"] : ["staff"];
   }
-  if (role === "ImpactAssessment" || role === "CountryDirector" || role === "Admin") {
+  if (role === "ImpactAssessment" || role === "Admin") {
     const opts: AssignOwner[] = ["myself", "staff"];
     if (allowPartner) opts.push("partner");
     if (allowFacilitator) opts.push("partner_facilitator");
@@ -230,7 +230,8 @@ export function PlanningAssignDrawer({
     const payloadNotes = notes || undefined;
     startAssign(async () => {
       const res = await assignGapActivity({
-        gapId: context.gapId,
+        schoolId: context.schoolId ?? context.gapId,
+        gapId: context.gapId ?? context.schoolId,
         title: payloadTitle,
         schoolOrCluster: payloadSchool,
         owner,

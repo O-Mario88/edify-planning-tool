@@ -3,7 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeService } from '../../common/scope/scope.service';
 import { AuthUser } from '../../common/auth/auth-user';
 import { getOperationalFY, getQuarterForDate } from '../../common/fy/fy.util';
-import { costForActivity, RateCard } from '../budget/costing';
+import { costForActivity, RateCard, resolveActivityCost } from '../budget/costing';
 
 export type MyPlanPeriod = 'week' | 'month' | 'quarter' | 'fy';
 
@@ -62,9 +62,19 @@ export class MyPlanService {
     });
 
     const rows = activities.map((a) => {
-      const cost = a.estCostCents > 0
-        ? { amount: a.estCostCents, costMissing: a.costMissing }
-        : costForActivity({ activityType: a.activityType, deliveryType: a.deliveryType }, rates);
+      const cost = resolveActivityCost(
+        {
+          activityType: a.activityType,
+          deliveryType: a.deliveryType,
+          teachersAttended: a.teachersAttended,
+          leadersAttended: a.leadersAttended,
+          otherParticipants: a.otherParticipants,
+          estCostCents: a.estCostCents,
+          costMissing: a.costMissing,
+        },
+        rates,
+        a.scheduleCostLines,
+      );
       return {
         id: a.id,
         activityType: a.activityType,
@@ -81,11 +91,11 @@ export class MyPlanService {
         partner: a.assignedPartner,
         salesforceActivityId: a.salesforceActivityId,
         estCostCents: cost.amount,
-        costMissing: 'costMissing' in cost ? cost.costMissing : a.costMissing,
+        costMissing: cost.costMissing,
         rescheduleCount: a.rescheduleCount,
         periodKey: this.periodKey(a, period, now),
         canReschedule: !['completed', 'cancelled', 'ia_verified', 'accountant_confirmed'].includes(a.status),
-        canComplete: ['planned', 'scheduled', 'rescheduled', 'partner_scheduled', 'in_progress', 'completion_started', 'evidence_uploaded', 'evidence_accepted', 'salesforce_id_required'].includes(a.status),
+        canComplete: ['planned', 'scheduled', 'rescheduled', 'partner_scheduled', 'returned_by_pl', 'returned', 'in_progress', 'completion_started', 'evidence_uploaded', 'evidence_accepted', 'salesforce_id_required'].includes(a.status),
         completionUnlocked: ['completion_started', 'in_progress', 'evidence_uploaded', 'evidence_accepted', 'salesforce_id_required', 'submitted_to_pl', 'awaiting_ia_verification'].includes(a.status),
       };
     });

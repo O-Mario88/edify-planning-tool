@@ -19,13 +19,13 @@ export default async function Page() {
   const summary = coreBoardSummary(cards);
 
   const viewer = {
-    canAssign: ["CCEO", "CountryProgramLead", "CountryDirector", "ImpactAssessment", "Admin"].includes(user.role),
+    canAssign: ["CCEO", "CountryProgramLead", "ImpactAssessment", "Admin"].includes(user.role),
     canExec: ["CCEO", "CountryProgramLead", "PartnerAdmin", "PartnerFieldOfficer", "Admin"].includes(user.role),
     canIa: ["ImpactAssessment", "Admin"].includes(user.role),
     canPl: ["CountryProgramLead", "Admin"].includes(user.role),
     canAccountant: ["ProgramAccountant", "Admin"].includes(user.role),
   };
-  const canChampion = ["ImpactAssessment", "CountryProgramLead", "CountryDirector", "Admin"].includes(user.role);
+  const canChampion = ["ImpactAssessment", "CountryProgramLead", "Admin"].includes(user.role);
 
   return (
     <>

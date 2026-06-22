@@ -82,7 +82,7 @@ export function ClusterGapsBoard({
   liveGaps = false,
 }: {
   /** Role threaded to the assign drawer for owner-option gating. */
-  assigningUserRole?: "CCEO" | "CountryProgramLead" | "ImpactAssessment" | "CountryDirector" | "Admin";
+  assigningUserRole?: "CCEO" | "CountryProgramLead" | "ImpactAssessment" | "Admin";
   /** Engine-derived cluster gaps (from the real cluster engine). Falls back to
    *  the seed mock only when not provided (standalone/storybook use). */
   gaps?: ClusterGap[];
