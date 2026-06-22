@@ -35,7 +35,13 @@ const connectionString = process.env.DATABASE_URL;
 if (!connectionString) throw new Error('DATABASE_URL is required to seed.');
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
 const MOCK = ['1', 'true', 'yes'].includes((process.env.ENABLE_MOCK_DATA ?? '').toLowerCase());
+const DEV_SEED = ['1', 'true', 'yes'].includes((process.env.ENABLE_DEV_SEED ?? process.env.ENABLE_MOCK_DATA ?? '').toLowerCase());
 const IS_PROD = process.env.NODE_ENV === 'production';
+
+if (IS_PROD && (MOCK || DEV_SEED)) {
+  console.error('Refusing to seed: ENABLE_MOCK_DATA / ENABLE_DEV_SEED must be false in production.');
+  process.exit(1);
+}
 
 // ── Deterministic RNG so reseeds are stable ────────────────────────────────
 function mulberry32(seed: number) {
@@ -651,11 +657,11 @@ async function main() {
   // production. A demo / online-test deployment needs it so the edify-web bridge
   // has accounts to authenticate as and the dashboards have content — opt in
   // EXPLICITLY with ALLOW_DEMO_SEED_IN_PROD=true (deliberate, off by default).
-  const demoAllowed = MOCK || (IS_PROD && process.env.ALLOW_DEMO_SEED_IN_PROD === 'true');
+  const demoAllowed = DEV_SEED || (IS_PROD && process.env.ALLOW_DEMO_SEED_IN_PROD === 'true');
   if (!demoAllowed) {
     console.log(IS_PROD
       ? '• production: skipping demo data (set ALLOW_DEMO_SEED_IN_PROD=true to seed a demo/online-test deployment)'
-      : '• ENABLE_MOCK_DATA=false: skipping demo data');
+      : '• ENABLE_DEV_SEED=false: skipping demo data');
     return;
   }
   if (IS_PROD) console.log('• ALLOW_DEMO_SEED_IN_PROD=true → seeding demo data into a PRODUCTION database (demo/online-test deployment).');

@@ -17,6 +17,9 @@ import {
 } from "./CountryFundFooter";
 import { CreateAdminFundRequestDrawer } from "./CreateAdminFundRequestDrawer";
 import { CdFundApprovalQueue } from "@/components/funds/cd/CdFundApprovalQueue";
+import { FundApprovalQueueLive } from "@/components/funds/FundApprovalQueueLive";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 import type { WeeklyFundRequest } from "@/lib/funds/weekly-fund-types";
 
 // Full Country Director Fund Approvals view — assembles the header,
@@ -32,6 +35,7 @@ export function CountryFundApprovalsView({
   filterScope?: FilterScope;
 } = {}) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const mockOk = isMockAllowed();
   const exportRows = (cdRequests ?? []).map((r) => ({
     Requester: r.staffName,
     Role: r.requesterRole ?? r.staffRole,
@@ -59,34 +63,40 @@ export function CountryFundApprovalsView({
             requesters (PL / IA / Accountant / SP / Admin). CCEO weekly
             requests stay with the Program Lead. Sits at the top so the
             inbox is the first thing the CD sees. */}
-        <CdFundApprovalQueue requests={cdRequests} />
+        {mockOk ? (
+          <CdFundApprovalQueue requests={cdRequests} />
+        ) : (
+          <FundApprovalQueueLive />
+        )}
 
-        {/* Main row — Queue (5) over Recent Activity, paired with
-            Plan Detail (7) over Approval Rules. The Queue card is
-            now content-sized (no h-full) so Recent Activity slots
-            naturally beneath it in the same column, and the Budget
-            Mix card below the summary row can finally take the full
-            12-column width it needs to read clean. */}
-        <section className="grid grid-cols-12 gap-3 lg:gap-4 items-start">
-          <div className="col-span-12 lg:col-span-5 flex flex-col gap-3 lg:gap-4">
-            <CountryFundQueue />
-            <CountryRecentActivityCard />
-          </div>
-          <div className="col-span-12 lg:col-span-7 flex flex-col gap-3 lg:gap-4">
-            <CountryFundPlanDetail />
-            <CountryApprovalRulesCard />
-          </div>
-        </section>
+        {mockOk ? (
+          <>
+            <section className="grid grid-cols-12 gap-3 lg:gap-4 items-start">
+              <div className="col-span-12 lg:col-span-5 flex flex-col gap-3 lg:gap-4">
+                <CountryFundQueue />
+                <CountryRecentActivityCard />
+              </div>
+              <div className="col-span-12 lg:col-span-7 flex flex-col gap-3 lg:gap-4">
+                <CountryFundPlanDetail />
+                <CountryApprovalRulesCard />
+              </div>
+            </section>
 
-        <CountryFundSummaryRow />
+            <CountryFundSummaryRow />
 
-        {/* Budget Mix — full row width. With Recent Activity moved
-            into the left column above, the budget bar + 7-segment
-            legend get the whole 12 columns to spread across. */}
-        <CountryBudgetMixCard />
+            <CountryBudgetMixCard />
+          </>
+        ) : (
+          <InsufficientData
+            surface="the country fund-approval workbench"
+            detail="Submitted fund requests are approved in the live queue above. Country plan detail and budget mix are withheld until wired to the backend."
+          />
+        )}
       </div>
 
-      <CreateAdminFundRequestDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+      {mockOk && (
+        <CreateAdminFundRequestDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+      )}
     </>
   );
 }

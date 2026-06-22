@@ -1,30 +1,22 @@
+import { Suspense } from "react";
 import { StubPage } from "@/components/shell/StubPage";
 import { MyPlanSections } from "@/components/planning/MyPlanSections";
 import { MyPlanBriefingHero } from "@/components/planning/MyPlanBriefingHero";
 import { MyPlanSnapshotStrip } from "@/components/planning/MyPlanSnapshotStrip";
+import { MyPlanPeriodSwitcher } from "@/components/planning/MyPlanPeriodSwitcher";
 import { getCurrentUser } from "@/lib/auth";
-import { activities, fundRequests } from "@/lib/actions/store";
 import { fetchMyPlanActivities, fetchFundRequests } from "@/lib/api/surfaces";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 import { activeFinancialYear } from "@/lib/fy-engine";
 import {
-  buildFundingByActivity, buildFundingByPeriod, fromBeActivity, fromStoreActivity, fromClusterMeeting, sectionMyPlan,
+  buildFundingByPeriod, fromBeActivity, sectionMyPlan,
   type MyPlanItem,
 } from "@/lib/planning/my-plan-sections";
-import { clusterMeetingsForStaff } from "@/lib/cluster/cluster-core";
 import { dailyBrief, snapshotChips } from "@/lib/planning/my-plan-brief";
 
-// My Plan — the CCEO / Program Lead daily field cockpit (spec §10).
-//
-// Page shape:
-//   1. Header (StubPage)               — who, where, plan-as-list framing
-//   2. Daily Field Briefing hero       — greeting + one smart sentence + verdict
-//   3. Personal Execution snapshot     — 5 urgency chips that scroll to the lane
-//   4. Five urgency lanes              — Waiting · Attention · Today · Week · Month
-//
-// Backend-first: fetchMyPlanActivities reads the enforced list when the
-// backend is on; the in-memory store is the dev fallback. The brief and
-// the snapshot derive purely from the same sectioned items the lanes
-// render, so the numbers are guaranteed to match.
+// My Plan — planned work by week, month, quarter, and fiscal year (spec §11).
+// Backend is the source of truth; mock store fallback only when explicitly allowed.
 export const dynamic = "force-dynamic";
 
 export default async function MyPlanPage() {
@@ -33,33 +25,37 @@ export default async function MyPlanPage() {
   const todayIso = today.toISOString().slice(0, 10);
 
   const be = await fetchMyPlanActivities(user, activeFinancialYear().id);
-  let items: MyPlanItem[];
+
+  if (!be.live && !isMockAllowed()) {
+    return (
+      <StubPage title="My Plan" subtitle="Your scheduled work, ordered by urgency.">
+        <InsufficientData surface="My Plan" />
+      </StubPage>
+    );
+  }
+
+  let items: MyPlanItem[] = [];
   if (be.live) {
-    // Pre-execution funding: the caller's fund requests by period, so a planned
-    // activity's pill reflects requested/approved/disbursed (or Not Requested).
     const fr = await fetchFundRequests(user);
-    // Only the caller's OWN requests drive their pill — an approver's queue also
-    // contains supervisees' requests, which must not colour the approver's plan.
-    const fundingByPeriod = buildFundingByPeriod(fr.live ? fr.data.filter((r) => r.isOwn ?? true).map((r) => ({ periodKey: r.periodKey, status: r.status })) : []);
+    const fundingByPeriod = buildFundingByPeriod(
+      fr.live ? fr.data.filter((r) => r.isOwn ?? true).map((r) => ({ periodKey: r.periodKey, status: r.status })) : [],
+    );
     items = be.data.data
       .map((a) => fromBeActivity(a, todayIso, fundingByPeriod))
       .filter((i): i is MyPlanItem => i !== null);
-  } else {
+  } else if (isMockAllowed()) {
+    const { activities, fundRequests } = await import("@/lib/actions/store");
+    const { buildFundingByActivity, fromStoreActivity } = await import("@/lib/planning/my-plan-sections");
+    const { clusterMeetingsForStaff } = await import("@/lib/cluster/cluster-core");
+    const { fromClusterMeeting } = await import("@/lib/planning/my-plan-sections");
     const funding = buildFundingByActivity(fundRequests());
     items = activities()
       .filter((a) => a.assigneeId === user.staffId)
       .map((a) => fromStoreActivity(a, funding, todayIso))
       .filter((i): i is MyPlanItem => i !== null);
-  }
-
-  // Cluster meetings are stored separately from school activities. Merge them
-  // in so scheduled meetings (SIT, 1st/2nd/3rd cluster meetings) appear in
-  // the correct urgency lane without a backend round-trip.
-  if (!be.live) {
     const clusterItems = clusterMeetingsForStaff(user.name)
       .map((m) => fromClusterMeeting(m, todayIso))
       .filter((i): i is MyPlanItem => i !== null);
-    // De-duplicate by id in case the same meeting somehow lands in both.
     const existingIds = new Set(items.map((i) => i.id));
     items = [...items, ...clusterItems.filter((i) => !existingIds.has(i.id))];
   }
@@ -71,9 +67,12 @@ export default async function MyPlanPage() {
   return (
     <StubPage
       title="My Plan"
-      subtitle="Your scheduled work, ordered by urgency."
+      subtitle="Your scheduled work — switch between week, month, quarter, and fiscal year."
     >
       <div className="space-y-4">
+        <Suspense fallback={null}>
+          <MyPlanPeriodSwitcher />
+        </Suspense>
         <MyPlanBriefingHero brief={brief} />
         <MyPlanSnapshotStrip chips={chips} />
         <MyPlanSections sections={sections} live={be.live} />

@@ -8,6 +8,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { isMockAllowed } from "@/lib/mock-policy";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { LiveWeeklyFunds } from "@/components/funds/LiveWeeklyFunds";
+import { FundApprovalQueueLive } from "@/components/funds/FundApprovalQueueLive";
 
 // Role-aware /weekly-funds.
 //
@@ -22,12 +23,22 @@ export default async function WeeklyFundsPage() {
   // reconciles with the activity budget lines. Empty until activities are
   // scheduled. The fabricated roster views below render in dev mock mode only.
   if (!isMockAllowed()) {
+    const canDisburse = user.role === "ProgramAccountant" || user.role === "Admin";
+    const isCceo = user.role === "CCEO";
+    const isApprover =
+      user.role === "CountryProgramLead" ||
+      user.role === "CountryDirector" ||
+      user.role === "Admin" ||
+      canDisburse;
+
     return (
       <>
         <PageHeader title="Weekly Funds" subtitle="Fund needs for the week, costed from scheduled activities via the Country Cost Register." />
         <div className="px-3 sm:px-4 md:px-5 pb-12 pt-3 space-y-4">
           <LiveWeeklyFunds />
-          {user.role === "CCEO" && <StaffAccountabilityLive />}
+          {isCceo && <FundApprovalQueueLive canSubmit />}
+          {!isCceo && isApprover && <FundApprovalQueueLive canDisburse={canDisburse} />}
+          {isCceo && <StaffAccountabilityLive />}
         </div>
       </>
     );

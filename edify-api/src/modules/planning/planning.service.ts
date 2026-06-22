@@ -5,6 +5,8 @@ import { ScopeService } from '../../common/scope/scope.service';
 import { ReadinessService } from '../../common/readiness/readiness.service';
 import { AuthUser } from '../../common/auth/auth-user';
 import { CreatePlanDto, DraftActivityDto } from './dto/plans.dto';
+import { ActivitiesService } from '../activities/activities.service';
+import { AssignSchoolVisitToPartnerDto, ScheduleClusterTrainingDto, ScheduleSchoolVisitDto } from './dto/planning-workflow.dto';
 
 const APPROVER_ROLES = new Set(['CountryProgramLead', 'CountryDirector', 'Admin']);
 
@@ -65,6 +67,7 @@ export class PlanningService {
     private readonly prisma: PrismaService,
     private readonly scope: ScopeService,
     private readonly readiness: ReadinessService,
+    private readonly activities: ActivitiesService,
   ) {}
 
   private async baseWhere(user: AuthUser, f: Filters): Promise<Prisma.SchoolWhereInput> {
@@ -218,10 +221,10 @@ export class PlanningService {
     const byCluster = new Map<string, Group>();
     for (const s of rows) {
       if (!s.clusterId || !s.cluster) continue;
-      const g = byCluster.get(s.clusterId) ?? { id: s.clusterId, name: s.cluster.name, district: s.district?.name ?? '', count: 0, scores: [], weak: new Map() };
+      const g = byCluster.get(s.clusterId) ?? { id: s.clusterId, name: s.cluster.name, district: s.district?.name ?? '', count: 0, scores: [] as number[], weak: new Map<string, { sum: number; n: number; label: string }>() };
       g.count += 1;
       const latest = s.ssaRecords[0];
-      if (latest?.averageScore != null) g.scores.push(latest.averageScore);
+      if (latest?.averageScore != null) g.scores.push(Number(latest.averageScore));
       for (const sc of latest?.scores ?? []) {
         const e = g.weak.get(sc.intervention) ?? { sum: 0, n: 0, label: INTERVENTION_LABEL[sc.intervention] ?? sc.intervention };
         e.sum += sc.score; e.n += 1; g.weak.set(sc.intervention, e);
@@ -340,5 +343,58 @@ export class PlanningService {
     const isApprover = APPROVER_ROLES.has(user.activeRole);
     if (plan.ownerStaffId !== user.staffProfileId && !isApprover) throw new ForbiddenException('Not visible to you');
     return plan;
+  }
+
+  // ── Operational planning workflow (school visits + partner assign + cluster training) ──
+
+  /** Schedule a school visit for staff — trainings are NOT allowed here. */
+  async scheduleSchoolVisit(user: AuthUser, dto: ScheduleSchoolVisitDto) {
+    return this.activities.create({
+      activityType: 'school_visit',
+      schoolId: dto.schoolId,
+      fy: dto.fy,
+      quarter: dto.quarter,
+      plannedMonth: dto.plannedMonth,
+      plannedWeek: dto.plannedWeek,
+      scheduledDate: dto.scheduledDate,
+      responsibleStaffId: dto.responsibleStaffId,
+      deliveryType: 'staff',
+    }, user);
+  }
+
+  /** Assign a school visit to a partner — appears in Partner Planning + staff My Plan. */
+  async assignSchoolVisitToPartner(user: AuthUser, dto: AssignSchoolVisitToPartnerDto) {
+    return this.activities.create({
+      activityType: 'school_visit',
+      schoolId: dto.schoolId,
+      fy: dto.fy,
+      quarter: dto.quarter,
+      plannedMonth: dto.plannedMonth,
+      plannedWeek: dto.plannedWeek,
+      assignedPartnerId: dto.assignedPartnerId,
+      responsibleStaffId: dto.responsibleStaffId ?? user.staffProfileId ?? undefined,
+      deliveryType: 'partner',
+    }, user);
+  }
+
+  /** Schedule cluster training / SIT / meeting — the ONLY path for trainings. */
+  async scheduleClusterTraining(user: AuthUser, dto: ScheduleClusterTrainingDto) {
+    const allowed: string[] = ['training', 'school_improvement_training', 'cluster_training', 'core_training', 'cluster_meeting'];
+    if (!allowed.includes(dto.activityType)) {
+      throw new BadRequestException('Only training and cluster-meeting activity types may be scheduled through a cluster.');
+    }
+    const isPartner = dto.deliveryType === 'partner' || !!dto.assignedPartnerId;
+    return this.activities.create({
+      activityType: dto.activityType,
+      clusterId: dto.clusterId,
+      fy: dto.fy,
+      quarter: dto.quarter,
+      plannedMonth: dto.plannedMonth,
+      plannedWeek: dto.plannedWeek,
+      scheduledDate: dto.scheduledDate,
+      clusterSlot: dto.clusterSlot,
+      assignedPartnerId: dto.assignedPartnerId,
+      deliveryType: isPartner ? 'partner' : 'staff',
+    }, user);
   }
 }

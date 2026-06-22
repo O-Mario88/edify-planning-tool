@@ -52,9 +52,7 @@ export type PlanActionResult<T = { id: string }> =
   | { ok: false; reason: "DUPLICATE" }
   | { ok: false; reason: "BACKEND_ERROR"; message: string };
 
-type LiveResult<T> = { live: true; data: T } | { live: false; error: string | null };
-
-function backendFailure(r: LiveResult<unknown>): PlanActionResult {
+function backendFailure(r: { live: false; error: string | null }): PlanActionResult {
   return { ok: false, reason: "BACKEND_ERROR", message: r.error ?? "Could not sync to the backend" };
 }
 

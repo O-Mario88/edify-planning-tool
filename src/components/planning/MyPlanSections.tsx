@@ -434,21 +434,56 @@ function ActivityRow({
     });
   }
 
-  const doComplete = () =>
-    run(
-      () =>
-        item.source === "backend"
-          ? fetch(`/api/activities/${item.id}/complete`, {
+  const COMPLETION_UNLOCKED = new Set([
+    "completion_started", "in_progress", "evidence_uploaded", "evidence_accepted", "salesforce_id_required",
+  ]);
+
+  const doComplete = () => {
+    setError(null);
+    start(async () => {
+      try {
+        if (item.source === "backend" && item.backendStatus && !COMPLETION_UNLOCKED.has(item.backendStatus)) {
+          const start = await fetch(`/api/activities/${item.id}/start-completion`, {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json", ...csrfHeaders() },
+            body: "{}",
+          });
+          const sj = await start.json();
+          if (!start.ok || !sj.live) {
+            setError(sj.error || "Could not start completion");
+            return;
+          }
+          setMode("complete");
+          onToast("Upload evidence, then enter your Activity Code and submit.");
+          router.refresh();
+          return;
+        }
+        const r = item.source === "backend"
+          ? await fetch(`/api/activities/${item.id}/complete`, {
               method: "POST",
               credentials: "include",
               headers: { "Content-Type": "application/json", ...csrfHeaders() },
-              body: JSON.stringify(field.trim() ? { salesforceId: field.trim() } : {}),
+              body: JSON.stringify({ salesforceId: field.trim() }),
             })
-          : completeActivity(item.id, field.trim() || undefined),
-      item.nextAction === "enterSalesforceId"
-        ? "Salesforce ID saved. Sent to IA."
-        : "Activity completed. Moved to Completed Activities.",
-    );
+          : await completeActivity(item.id, field.trim() || undefined);
+        if (r instanceof Response) {
+          const j = await r.json();
+          if (!r.ok || !j.live) { setError(j.error || "The action was rejected"); return; }
+        } else if (!r.ok) {
+          setError(r.message || "The action was rejected");
+          return;
+        }
+        setMode(null);
+        setField("");
+        onToast("Submitted for review.");
+        setExiting(true);
+        window.setTimeout(() => router.refresh(), 220);
+      } catch {
+        setError("Could not reach the server");
+      }
+    });
+  };
 
   const doReschedule = () => {
     const remainingAfter = reschedulesRemaining((item.rescheduleCount ?? 0) + 1);

@@ -144,9 +144,12 @@ enum ActivityStatus {
   assigned_to_partner
   partner_scheduled
   in_progress
+  completion_started
   evidence_uploaded
   evidence_accepted
   salesforce_id_required
+  submitted_to_pl
+  returned_by_pl
   awaiting_ia_verification
   ia_verified
   accountant_confirmed
@@ -917,6 +920,16 @@ model Activity {
   rescheduleCount Int     @default(0)
   lastReason      String?
 
+  // Auto-cost from the CD rate card at schedule time (spec §20–§21).
+  estCostCents    Int     @default(0)
+  costMissing     Boolean @default(false)
+  scheduleCostLines ActivityScheduleCostLine[]
+
+  // PL review handoff when a CCEO completes field work (spec §17).
+  plReviewNote    String?
+  plReviewedAt    DateTime?
+  plReviewedBy    String?
+
   // Training/cluster-meeting completion detail
   teachersAttended  Int?
   leadersAttended   Int?
@@ -941,6 +954,23 @@ model Activity {
   @@index([assignedPartnerId])
   @@index([iaVerificationStatus, paymentStatus])
   @@index([evidenceStatus])
+}
+
+// Persisted cost breakdown for a live scheduled activity — sourced from
+// CostSetting at schedule time so fund requests reconcile to catalogue version.
+model ActivityScheduleCostLine {
+  id                 String   @id @default(cuid())
+  activity           Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  activityId         String
+  costSettingKey     String
+  label              String
+  unitCost           Int
+  quantity           Int      @default(1)
+  amount             Int
+  costSettingVersion Int      @default(1)
+  createdAt          DateTime @default(now())
+
+  @@index([activityId])
 }
 
 // ─────────────────────── Evidence ───────────────────────

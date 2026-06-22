@@ -28,6 +28,12 @@ export class ActivitiesController {
     return this.activities.create(dto, user);
   }
 
+  @Post(':id/start-completion')
+  @RequirePermissions(PERMISSIONS.ACTIVITY_COMPLETE)
+  startCompletion(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.activities.startCompletion(id, user);
+  }
+
   @Post(':id/complete')
   @RequirePermissions(PERMISSIONS.ACTIVITY_COMPLETE)
   complete(@Param('id') id: string, @Body() dto: CompleteActivityDto, @CurrentUser() user: AuthUser) {

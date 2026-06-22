@@ -31,6 +31,7 @@ import {
   RecommendedActionsCard,
 } from "@/components/cceo/CoachingRadar";
 import { FundSlipStatusCard } from "@/components/cceo/FundSlipStatusCard";
+import { FundSlipStatusCardLive } from "@/components/cceo/FundSlipStatusCardLive";
 import { PartnerWorkMonitorCard } from "@/components/cceo/PartnerWorkMonitorCard";
 import { EvidenceFollowUpCard } from "@/components/cceo/EvidenceFollowUpCard";
 import { MyNextActions } from "@/components/next-action/MyNextActions";
@@ -82,7 +83,7 @@ export default async function CceoDashboardPage() {
         <PartnerWorkMonitorCard />
         <PartnerDebriefReviewCard />
         {/* G — this week's money. */}
-        <FundSlipStatusCard staffId={user.staffId} />
+        {isMockAllowed() ? <FundSlipStatusCard staffId={user.staffId} /> : <FundSlipStatusCardLive />}
         <WeeklyFundRequestCard />
         {/* H — proof: evidence / Salesforce / IA. */}
         <EvidenceFollowUpCard user={user} />
@@ -186,7 +187,9 @@ export default async function CceoDashboardPage() {
             description="Generated from your scheduled activities at CD-approved catalogue rates — review, submit, account."
           />
           <div className="grid grid-cols-12 gap-3 lg:gap-4 items-stretch [&>div>*]:h-full">
-            <div className="col-span-12 lg:col-span-5"><FundSlipStatusCard staffId={user.staffId} /></div>
+            <div className="col-span-12 lg:col-span-5">
+              {isMockAllowed() ? <FundSlipStatusCard staffId={user.staffId} /> : <FundSlipStatusCardLive />}
+            </div>
             <div className="col-span-12 lg:col-span-7"><WeeklyFundRequestCard /></div>
           </div>
           <div id="fund-approvals">

@@ -109,6 +109,58 @@ export class SystemHealthService {
     if (this.config.get('NODE_ENV') === 'production' && this.config.get<boolean>('ENABLE_MOCK_DATA')) {
       findings.push({ rule: 'mock-data-enabled-in-production', severity: 'error', count: 1, message: 'ENABLE_MOCK_DATA is true in production' });
     }
+    if (this.config.get('NODE_ENV') === 'production' && this.config.get<boolean>('ENABLE_DEV_SEED')) {
+      findings.push({ rule: 'dev-seed-enabled-in-production', severity: 'error', count: 1, message: 'ENABLE_DEV_SEED is true in production' });
+    }
+
+    // ── Workflow integrity (planning → budget → completion) ─────────
+    const TRAINING_TYPES = ['training', 'school_improvement_training', 'cluster_training', 'core_training', 'cluster_meeting'];
+    const [
+      schoolTrainingOutsideCluster,
+      scheduledWithoutCost,
+      completionWithoutEvidence,
+      iaConfirmedWithoutEvidence,
+      accountantBeforeIa,
+    ] = await Promise.all([
+      this.prisma.activity.count({
+        where: {
+          deletedAt: null,
+          activityType: { in: TRAINING_TYPES as never },
+          schoolId: { not: null },
+          clusterId: null,
+        },
+      }),
+      this.prisma.activity.count({
+        where: {
+          deletedAt: null,
+          status: { in: ['planned', 'scheduled', 'partner_scheduled', 'rescheduled'] as never },
+          estCostCents: 0,
+          costMissing: false,
+        },
+      }),
+      this.prisma.activity.count({
+        where: {
+          deletedAt: null,
+          status: { in: ['awaiting_ia_verification', 'submitted_to_pl', 'ia_verified'] as never },
+          evidence: { none: {} },
+        },
+      }),
+      this.prisma.activity.count({
+        where: { deletedAt: null, iaVerificationStatus: 'confirmed', evidence: { none: {} } },
+      }),
+      this.prisma.activity.count({
+        where: {
+          deletedAt: null,
+          paymentStatus: { in: ['accountant_cleared', 'paid'] as never },
+          iaVerificationStatus: { not: 'confirmed' },
+        },
+      }),
+    ]);
+    add('school-training-outside-cluster', 'error', schoolTrainingOutsideCluster, 'Trainings scheduled on a school without a cluster (must use cluster workflow)');
+    add('scheduled-activity-zero-cost', 'warning', scheduledWithoutCost, 'Scheduled activities with zero cost and no costMissing flag');
+    add('completion-without-evidence', 'error', completionWithoutEvidence, 'Activities in completion/IA pipeline without any evidence');
+    add('ia-confirmed-without-evidence', 'error', iaConfirmedWithoutEvidence, 'IA-confirmed activities without evidence records');
+    add('accountant-action-before-ia', 'error', accountantBeforeIa, 'Accountant cleared/paid before IA confirmation');
 
     const errors = findings.filter((f) => f.severity === 'error').length;
     const warnings = findings.filter((f) => f.severity === 'warning').length;

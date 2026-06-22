@@ -42,7 +42,8 @@ import { partners } from "@/lib/partner/partner-mock";
 import { getCurrentPartner } from "@/lib/partner/partner-identity";
 import { markJoinedThroughCluster, type ClusterJoinSourceType } from "@/lib/cluster/cluster-join-source";
 import { isBackendEnabled } from "@/lib/api/backend";
-import { backendAssignCluster, backendCreateClusterFromSchool, backendCreateActivity, backendCreateCluster, backendActivityAction, activityAction, fetchDistricts, fetchSubCounties } from "@/lib/api/surfaces";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { backendAssignCluster, backendCreateClusterFromSchool, backendCreateCluster, backendActivityAction, activityAction, fetchDistricts, fetchSubCounties, backendScheduleClusterTraining } from "@/lib/api/surfaces";
 
 // Resolve mock geography NAMES (district + sub-counties, as the create form
 // collects them) to the backend's geography IDs so a new cluster persists to
@@ -415,11 +416,12 @@ export async function scheduleClusterMeetingAction(
     const user = await getCurrentUser();
     const map = CLUSTER_KIND_TO_BE[kind];
     const { fy, quarter } = clusterFyQuarter(isoDate);
-    const r = await backendCreateActivity(backendUserFor(user), {
+    const r = await backendScheduleClusterTraining(backendUserFor(user), {
       activityType: map.activityType,
       clusterId,
       ...(map.clusterSlot ? { clusterSlot: map.clusterSlot } : {}),
-      fy, quarter,
+      fy,
+      quarter,
       scheduledDate: new Date(isoDate).toISOString(),
       deliveryType: organizer === "partner" ? "partner" : "staff",
     });
@@ -439,7 +441,14 @@ export async function scheduleClusterMeetingAction(
       revalidateClusterSurfaces();
       return { ok: true, label: CLUSTER_MEETING_LABEL[kind], organizer };
     }
+    if (!isMockAllowed()) {
+      return { ok: false, reason: "FAILED", message: "Backend unavailable — cannot schedule cluster activity." };
+    }
     // fall through to in-memory for mock-id clusters / backend miss
+  }
+
+  if (!isMockAllowed()) {
+    return { ok: false, reason: "FAILED", message: "Cluster scheduling requires the live backend." };
   }
 
   const cluster = clusterById(clusterId);

@@ -56,6 +56,8 @@ export type MyPlanItem = {
   lastReason?: string;
   /** The ONE next-action button for the card. */
   nextAction: MyPlanNextAction;
+  /** Raw backend status — drives the two-step Complete workflow. */
+  backendStatus?: string;
 };
 
 export type MyPlanSection = {
@@ -96,7 +98,7 @@ const BE_EXACT_DATE = new Set([
 // Completed Activities Log instead).
 const BE_HIDDEN = new Set([
   "completed", "awaiting_ia_verification", "ia_verified", "evidence_accepted",
-  "accountant_confirmed", "cancelled",
+  "accountant_confirmed", "cancelled", "submitted_to_pl",
 ]);
 
 // Store statuses that are terminal for My Plan. SubmittedForVerification is
@@ -201,9 +203,11 @@ export function fromBeActivity(a: BeActivity, todayIso: string, fundingByPeriod?
   if (BE_HIDDEN.has(a.status)) return null;
   const ev = (a.evidenceStatus ?? "").toLowerCase();
   const waitingOn: MyPlanWaiting | undefined =
-    a.status === "salesforce_id_required" ? "salesforceId"
-    : a.status === "returned" ? "returned"
+    a.status === "completion_started" || a.status === "in_progress" ? "evidence"
+    : a.status === "salesforce_id_required" ? "salesforceId"
+    : a.status === "returned_by_pl" || a.status === "returned" ? "returned"
     : ev === "required" || ev === "missing" || ev === "rejected" ? "evidence"
+    : (a.status === "evidence_uploaded" || a.status === "evidence_accepted") && !a.salesforceActivityId ? "salesforceId"
     : undefined;
   const rescheduleCount = a.rescheduleCount ?? 0;
   // Resolve the activity's calendar month (1-12) for the funding lookup: an exact
@@ -220,8 +224,7 @@ export function fromBeActivity(a: BeActivity, todayIso: string, fundingByPeriod?
     entityName: a.school?.name ?? a.cluster?.name ?? "—",
     exactDate: BE_EXACT_DATE.has(a.activityType),
     dateIso: a.scheduledDate ?? undefined,
-    // Backend rows don't expose a cost field yet — the card shows no cost.
-    costCents: undefined,
+    costCents: a.estCostCents ?? undefined,
     // Funding pill: the post-execution PAYMENT status if present, else the
     // PRE-execution fund-request status for the activity's month (date OR
     // planned-month), else "Not Requested" so the planner sees un-funded
@@ -236,6 +239,7 @@ export function fromBeActivity(a: BeActivity, todayIso: string, fundingByPeriod?
     atSlipLimit: rescheduleCount >= RESCHEDULE_SLIP_LIMIT,
     lastReason: a.lastReason ?? undefined,
     nextAction: "reschedule",
+    backendStatus: a.status,
   };
   item.nextAction = resolveNextAction(item, todayIso);
   return item;

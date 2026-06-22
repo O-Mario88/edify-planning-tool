@@ -8,6 +8,8 @@ import { Handshake, School2 } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { fetchMyPartnerActivities } from "@/lib/api/surfaces";
 import { MetricStrip } from "@/components/ui/MetricStrip";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 
 const STATUS_TONE: Record<string, string> = {
   completed: "bg-emerald-100 text-emerald-700",
@@ -34,7 +36,10 @@ function fmtDate(iso: string | null): string {
 export async function PartnerWorkQueueLive({ limit = 12 }: { limit?: number }) {
   const user = await getCurrentUser();
   const r = await fetchMyPartnerActivities(user);
-  if (!r.live) return null;
+  if (!r.live) {
+    if (!isMockAllowed()) return <InsufficientData surface="partner assigned work" />;
+    return null;
+  }
   const { partner, counts, activities } = r.data;
 
   return (

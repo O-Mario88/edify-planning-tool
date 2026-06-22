@@ -6,6 +6,12 @@
 // off. Real pages must not depend on this to invent data — when mock is not
 // allowed they must fetch from the backend and render empty/error states.
 
+/** True when dev database seed may load demo fixtures. */
+export function isDevSeedAllowed(): boolean {
+  if (process.env.NODE_ENV === "production") return false;
+  return ["1", "true", "yes"].includes((process.env.ENABLE_DEV_SEED ?? process.env.ENABLE_MOCK_DATA ?? "").toLowerCase());
+}
+
 /** True only when mock fallback may render (dev, opt-in, backend off). */
 export function isMockAllowed(): boolean {
   if (process.env.NODE_ENV === "production") return false;

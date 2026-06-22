@@ -8,6 +8,7 @@ import { PERMISSIONS } from '../../common/rbac/permissions';
 import { CurrentUser } from '../../common/auth/current-user.decorator';
 import { AuthUser } from '../../common/auth/auth-user';
 import { CreatePlanDto, DraftActivityDto, ReturnPlanDto } from './dto/plans.dto';
+import { AssignSchoolVisitToPartnerDto, ScheduleClusterTrainingDto, ScheduleSchoolVisitDto } from './dto/planning-workflow.dto';
 
 @ApiTags('planning')
 @ApiBearerAuth()
@@ -54,6 +55,24 @@ export class PlanningController {
   @RequirePermissions(PERMISSIONS.PLANNING_RECALC)
   recompute(@Param('schoolId') schoolId: string) {
     return this.planning.recompute(schoolId);
+  }
+
+  @Post('schedule-school-visit')
+  @RequirePermissions(PERMISSIONS.ACTIVITY_ASSIGN)
+  scheduleSchoolVisit(@Body() dto: ScheduleSchoolVisitDto, @CurrentUser() user: AuthUser) {
+    return this.planning.scheduleSchoolVisit(user, dto);
+  }
+
+  @Post('assign-school-visit-to-partner')
+  @RequirePermissions(PERMISSIONS.ACTIVITY_ASSIGN)
+  assignSchoolVisitToPartner(@Body() dto: AssignSchoolVisitToPartnerDto, @CurrentUser() user: AuthUser) {
+    return this.planning.assignSchoolVisitToPartner(user, dto);
+  }
+
+  @Post('schedule-cluster-training')
+  @RequirePermissions(PERMISSIONS.ACTIVITY_ASSIGN)
+  scheduleClusterTraining(@Body() dto: ScheduleClusterTrainingDto, @CurrentUser() user: AuthUser) {
+    return this.planning.scheduleClusterTraining(user, dto);
   }
 
   // ─── Monthly plan lifecycle ───────────────────────────────────────

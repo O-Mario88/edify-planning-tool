@@ -10,6 +10,8 @@ import { SchoolsModule } from './modules/schools/schools.module';
 import { ClustersModule } from './modules/clusters/clusters.module';
 import { SsaModule } from './modules/ssa/ssa.module';
 import { ActivitiesModule } from './modules/activities/activities.module';
+import { MyPlanModule } from './modules/my-plan/my-plan.module';
+import { PlReviewModule } from './modules/pl-review/pl-review.module';
 import { AssignmentModule } from './modules/assignment/assignment.module';
 import { TargetsModule } from './modules/targets/targets.module';
 import { PlanningModule } from './modules/planning/planning.module';
@@ -46,6 +48,8 @@ import { HealthController } from './health.controller';
     ClustersModule,
     SsaModule,
     ActivitiesModule,
+    MyPlanModule,
+    PlReviewModule,
     AssignmentModule,
     TargetsModule,
     PlanningModule,

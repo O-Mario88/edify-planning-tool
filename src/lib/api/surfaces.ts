@@ -419,16 +419,55 @@ export type BeActivity = {
   evidenceStatus?: string;
   iaVerificationStatus?: string;
   paymentStatus?: string;
+  estCostCents?: number | null;
+  costMissing?: boolean | null;
 };
 
-/** The caller's own activities (My Plan), from the backend. */
+export type BeMyPlanPeriod = "week" | "month" | "quarter" | "fy";
+
+export type BeMyPlanGroup = {
+  key: string;
+  label: string;
+  isCurrent: boolean;
+  items: BeActivity[];
+};
+
+export type BeMyPlanFeed = {
+  live: true;
+  period: BeMyPlanPeriod;
+  fy: string;
+  currentKey: string;
+  summary: { total: number; costCents: number; partnerPlanned: number };
+  groups: BeMyPlanGroup[];
+  items: BeActivity[];
+};
+
+/** Grouped My Plan feed with week/month/quarter/FY views. */
+export function fetchMyPlanGrouped(user: BackendUser, period: BeMyPlanPeriod = "month", fy?: string) {
+  const params = new URLSearchParams({ period });
+  if (fy) params.set("fy", fy);
+  return live<BeMyPlanFeed>(`/my-plan?${params.toString()}`, user);
+}
 export function fetchMyPlanActivities(user: BackendUser, fy?: string) {
   const params = new URLSearchParams({ mine: "true", pageSize: "100" });
   if (fy) params.set("fy", fy);
   return live<BePaginated<BeActivity>>(`/activities?${params.toString()}`, user);
 }
 
-export type ActivityLifecycleAction = "reschedule" | "reassign" | "cancel" | "defer" | "complete";
+export type ActivityLifecycleAction = "reschedule" | "reassign" | "cancel" | "defer" | "complete" | "start-completion";
+
+/** Schedule a school visit from Planning (visits only — no school-level trainings). */
+export function backendScheduleSchoolVisit(user: BackendUser, body: Record<string, unknown>) {
+  return live<BeActivity>(`/planning/schedule-school-visit`, user, { method: "POST", body: JSON.stringify(body) });
+}
+
+export function backendAssignSchoolVisitToPartner(user: BackendUser, body: Record<string, unknown>) {
+  return live<BeActivity>(`/planning/assign-school-visit-to-partner`, user, { method: "POST", body: JSON.stringify(body) });
+}
+
+export function backendScheduleClusterTraining(user: BackendUser, body: Record<string, unknown>) {
+  return live<BeActivity>(`/planning/schedule-cluster-training`, user, { method: "POST", body: JSON.stringify(body) });
+}
 
 /** Run a lifecycle action against a backend activity (My Plan row actions). */
 export function backendActivityAction(user: BackendUser, id: string, action: ActivityLifecycleAction, body: Record<string, unknown>) {
@@ -1224,6 +1263,27 @@ export function fetchMyPartner(user: BackendUser) {
 /** Activities assigned to the caller's partner — the round-tripped work queue. */
 export function fetchMyPartnerActivities(user: BackendUser) {
   return live<BeMyPartner>(`/partners/me/activities`, user);
+}
+
+// ── PL completion review queue (CCEO → PL handoff) ──────────────────
+export type BePlReviewItem = {
+  id: string;
+  activityType: string;
+  status: string;
+  salesforceActivityId?: string | null;
+  evidenceStatus?: string;
+  school?: { schoolId: string; name: string } | null;
+  cluster?: { name: string } | null;
+  responsibleStaff?: { user: { name: string } } | null;
+  evidence: Array<{ id: string; kind: string; status: string; originalName: string | null }>;
+};
+
+export function fetchPlReviewQueue(user: BackendUser) {
+  return live<{ items: BePlReviewItem[] }>(`/pl/review-queue`, user);
+}
+
+export function backendPlReviewAction(user: BackendUser, id: string, action: "confirm" | "return", body: Record<string, unknown> = {}) {
+  return live<unknown>(`/pl/review-queue/${encodeURIComponent(id)}/${action}`, user, { method: "POST", body: JSON.stringify(body) });
 }
 
 // ── Budget Intelligence & Financial Decision Engine ─────────────────

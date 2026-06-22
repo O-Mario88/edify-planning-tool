@@ -19,13 +19,16 @@ import { costForActivity, RateCard, CostableActivity } from './costing';
 const BUDGETABLE_STATUSES: ActivityStatus[] = [
   ActivityStatus.planned,
   ActivityStatus.scheduled,
-  ActivityStatus.rescheduled, // a moved activity is still committed, funded work
+  ActivityStatus.rescheduled,
   ActivityStatus.assigned_to_partner,
   ActivityStatus.partner_scheduled,
   ActivityStatus.in_progress,
+  ActivityStatus.completion_started,
   ActivityStatus.evidence_uploaded,
   ActivityStatus.evidence_accepted,
   ActivityStatus.salesforce_id_required,
+  ActivityStatus.submitted_to_pl,
+  ActivityStatus.returned_by_pl,
   ActivityStatus.awaiting_ia_verification,
   ActivityStatus.ia_verified,
   ActivityStatus.accountant_confirmed,

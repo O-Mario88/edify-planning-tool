@@ -14,6 +14,8 @@ import { RvpFundApprovalsView } from "@/components/approvals/rvp/RvpFundApproval
 import { getCurrentUser } from "@/lib/auth";
 import { ROLE_REDIRECT, type EdifyRole } from "@/lib/auth-public";
 import { redirect } from "next/navigation";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
 import {
   liveApprovalsForPl,
   liveApprovalsForAccountant,
@@ -130,33 +132,31 @@ export default async function FundApprovalsPage({
             routed to this approver. The richer plan workbench below stays mock. */}
         <FundApprovalQueueLive canDisburse={user.role === "ProgramAccountant" || user.role === "Admin"} />
 
-        {/* Responsive layout for the approvals workbench:
-            • Mobile + tablet (< xl): queue is full width and each row
-              expands inline, so PLs/Accountants can review and act on
-              a plan without losing scroll context.
-            • Desktop (xl+): queue stays compact on the left (7/12) and
-              the selected plan renders in its own card on the right
-              (5/12) — clicking a row just highlights it; the side
-              pane carries the funding breakdown + Approve / Return
-              actions. ApprovalRulesCard docks below the detail. */}
-        <section className="grid grid-cols-12 gap-3 lg:gap-4 items-start">
-          <div className="col-span-12 xl:col-span-7">
-            <FundApprovalQueue queue={liveQueue} />
-          </div>
-          <div className="col-span-12 xl:col-span-5 flex flex-col gap-3 lg:gap-4">
-            {/* Side detail pane — desktop only. Reads the same ?plan=
-                URL key the queue writes, so clicking a row updates
-                this pane. Hidden below xl since the queue handles its
-                own inline expansion there. */}
-            <div className="hidden xl:block">
-              <FundPlanDetail queue={liveQueue} />
+        {isMockAllowed() ? (
+          <section className="grid grid-cols-12 gap-3 lg:gap-4 items-start">
+            <div className="col-span-12 xl:col-span-7">
+              <FundApprovalQueue queue={liveQueue} />
             </div>
-            <ApprovalRulesCard />
-          </div>
-        </section>
+            <div className="col-span-12 xl:col-span-5 flex flex-col gap-3 lg:gap-4">
+              <div className="hidden xl:block">
+                <FundPlanDetail queue={liveQueue} />
+              </div>
+              <ApprovalRulesCard />
+            </div>
+          </section>
+        ) : (
+          <InsufficientData
+            surface="the legacy fund-approval workbench"
+            detail="Submitted fund requests are approved in the live queue above. The detailed plan workbench is withheld until it reads from the backend."
+          />
+        )}
 
-        <FundApprovalsSummaryRow />
-        <FundApprovalsFooter />
+        {isMockAllowed() && (
+          <>
+            <FundApprovalsSummaryRow />
+            <FundApprovalsFooter />
+          </>
+        )}
       </div>
     </>
   );

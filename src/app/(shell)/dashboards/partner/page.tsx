@@ -39,8 +39,7 @@ import { PartnerSchoolImpactSummary } from "@/components/partner/PartnerSchoolIm
 import { PartnerDashboardMobileView } from "@/components/mobile/views/PartnerDashboardMobileView";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { isMockAllowed } from "@/lib/mock-policy";
-import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
-import { Handshake } from "lucide-react";
+import { PartnerDashboardLive } from "@/components/partner/PartnerDashboardLive";
 import {
   partnerPriorityActions,
   doneForTodayItems,
@@ -77,24 +76,15 @@ export default async function PartnerCommandCenter({
   if (!previewMode && !ALLOWED.has(user.role)) {
     redirect(ROLE_REDIRECT[user.role]);
   }
-  // The entire command center is mock + unscoped (every partner sees identical
-  // fabricated totals). Withhold until wired to the partner's own live records.
-  if (!isMockAllowed())
+  // Production: scoped live partner surfaces (assigned work + activity list).
+  if (!isMockAllowed()) {
     return (
-      <ProductiveEmptyState
-        Icon={Handshake}
-        tone="violet"
-        title="Your assigned work lives in the live planner"
-        description="The roll-up command center isn't wired to your organisation's own records yet. Your real assignments, schedule, and evidence run through the live partner flow."
-        actionLabel="Open Today"
-        actionHref="/partner/today"
-        links={[
-          { label: "My Plan", href: "/partner/my-plan" },
-          { label: "Planning", href: "/partner/planning" },
-        ]}
-        note="Withheld until the command center is scoped to your organisation — no shared/fabricated totals are shown."
+      <ResponsiveDashboard
+        mobile={<PartnerDashboardLive />}
+        desktop={<PartnerDashboardLive />}
       />
     );
+  }
 
   const trackerCounts = [
     { key: "assigned"   as const, count: workflowStepCounts.assigned },

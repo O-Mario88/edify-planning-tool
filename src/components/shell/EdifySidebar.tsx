@@ -337,6 +337,7 @@ function buildCplMenu(dashboardHref: string): MenuSection[] {
       items: [
         { label: "Budget",           href: "/budget",               Icon: Calculator         },
         { label: "Approvals",        href: "/approvals",            Icon: ClipboardCheckIcon },
+        { label: "Completion Review", href: "/pl/review",           Icon: ShieldCheck        },
         { label: "Monthly Request",  href: "/monthly-fund-request", Icon: ClipboardCheckIcon },
         { label: "Weekly Funds",     href: "/weekly-funds",         Icon: Wallet             },
         { label: "Visits",           href: "/visits",               Icon: Footprints         },

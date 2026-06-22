@@ -44,6 +44,11 @@ import { ClusterMeetingRecommendationsCard } from "@/components/cpl/ClusterMeeti
 import { clusterMeetingRecommendations } from "@/lib/cluster/cluster-meeting-recommendations";
 import { PartnerOversightCard } from "@/components/cpl/PartnerOversightCard";
 import { TeamDebriefComplianceCard } from "@/components/cpl/TeamDebriefComplianceCard";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { MockOnly } from "@/components/ui/MockOnly";
+import { InsufficientData } from "@/components/ui/InsufficientData";
+import { PlReviewQueue } from "@/components/pl/PlReviewQueue";
+import Link from "next/link";
 
 // Country Program Lead Dashboard — Team Field Command Center.
 //
@@ -69,9 +74,10 @@ export default async function CountryProgramLeadDashboard() {
   if (!["CountryProgramLead", "Admin"].includes(user.role)) {
     redirect(ROLE_REDIRECT[user.role]);
   }
+  const mockOk = isMockAllowed();
   const clusterCounts = scopedClusterCounts(user.staffId, user.role);
-  const teamPlan = buildTeamPlan(user.staffId);
-  const clusterRecs = clusterMeetingRecommendations(user.staffId);
+  const teamPlan = mockOk ? buildTeamPlan(user.staffId) : null;
+  const clusterRecs = mockOk ? clusterMeetingRecommendations(user.staffId) : [];
 
   const body = (
     <>
@@ -101,14 +107,17 @@ export default async function CountryProgramLeadDashboard() {
 
         {/* TEAM SNAPSHOT — the program statistics band, directly below
             the hero: eight team KPIs before any work content. */}
-        <TeamKpiRow />
+        <MockOnly surface="team KPI snapshot">
+          <TeamKpiRow />
+        </MockOnly>
 
         {/* A. TODAY'S REQUIRED ACTIONS — file the debrief first, then the
             command stack and the leadership-attention alerts. */}
         <DebriefPromoterCard submitterRole="CountryProgramLead" />
-        <TodayCommandCenter />
-        <CommandStack user={user} hideMission />
-        <CplLeadershipAttentionRow />
+        {mockOk ? <CommandStack user={user} hideMission /> : <TodayCommandCenter />}
+        <MockOnly surface="leadership attention alerts">
+          <CplLeadershipAttentionRow />
+        </MockOnly>
 
         {/* B. MY FIELD WORK — the player half of the player-coach split:
             the PL's own schools, plan, and personal targets. */}
@@ -119,17 +128,25 @@ export default async function CountryProgramLeadDashboard() {
             title="What you must personally do this week"
             description="Your own visits, trainings, cluster meetings, and targets — separate from the team's work."
           />
-          <PlCommandLanes />
+          <MockOnly surface="PL command lanes">
+            <PlCommandLanes />
+          </MockOnly>
           <div id="my-field-work">
-            <CplFieldWorkCard />
+            <MockOnly surface="PL field work card">
+              <CplFieldWorkCard />
+            </MockOnly>
           </div>
           {/* My Team Plan takes the full row — the plan list needs the width.
               My Personal Targets moves to its own full-width row below (its
               4-across metric layout reads well at full width). */}
           <div id="my-plan">
-            <MyPlanCard role="cpl" />
+            <MockOnly surface="my plan card">
+              <MyPlanCard role="cpl" />
+            </MockOnly>
           </div>
-          <PersonalTargetsCard />
+          <MockOnly surface="personal targets">
+            <PersonalTargetsCard />
+          </MockOnly>
           <ProjectWorkCard user={user} />
         </section>
 
@@ -142,23 +159,50 @@ export default async function CountryProgramLeadDashboard() {
             title="What your CCEOs are doing"
             description="Per-CCEO status with the why behind it, team KPIs, workload capacity, plan approvals, and route quality — without opening every CCEO page."
           />
-          <TeamPlanBoard rows={teamPlan.rows} summary={teamPlan.summary} />
-          <TeamCapacityCard plStaffId={user.staffId} />
+          {mockOk && teamPlan ? (
+            <TeamPlanBoard rows={teamPlan.rows} summary={teamPlan.summary} />
+          ) : (
+            <InsufficientData surface="team plan board" />
+          )}
+          <MockOnly surface="team capacity">
+            <TeamCapacityCard plStaffId={user.staffId} />
+          </MockOnly>
           {/* CCEO (country-lead) performance gets its own full row — the table
               needs the width. The approvals queue moves to its own full-width row
               below (a list of requests reads better full width than at col-span-5). */}
           <div id="cceo-performance">
-            <CceoPerformanceTable />
+            <MockOnly surface="CCEO performance table">
+              <CceoPerformanceTable />
+            </MockOnly>
           </div>
           <div id="approvals">
-            <ApprovalQueueCard />
+            {mockOk ? (
+              <ApprovalQueueCard />
+            ) : (
+              <section className="space-y-3">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <h3 className="text-[15px] font-extrabold tracking-tight">Completion review queue</h3>
+                  <Link
+                    href="/pl/review"
+                    className="text-[12px] font-bold text-[var(--color-edify-primary)] hover:underline"
+                  >
+                    Open full review page
+                  </Link>
+                </div>
+                <PlReviewQueue />
+              </section>
+            )}
           </div>
           <section className="grid grid-cols-12 gap-3 md:gap-4 items-stretch [&>div>*]:h-full">
             <div className="col-span-12 lg:col-span-8" id="team-performance">
-              <TeamPerformanceOverviewChart />
+              <MockOnly surface="team performance chart">
+                <TeamPerformanceOverviewChart />
+              </MockOnly>
             </div>
             <div className="col-span-12 lg:col-span-4" id="smart-route">
-              <SmartRouteCapacityCard />
+              <MockOnly surface="smart route capacity">
+                <SmartRouteCapacityCard />
+              </MockOnly>
             </div>
           </section>
         </section>
@@ -173,9 +217,15 @@ export default async function CountryProgramLeadDashboard() {
             description="Red-alert schools, cluster setup, cluster operations, and SSA-guided meeting recommendations — the two weakest interventions per cluster with a ready discussion topic."
           />
           <div id="urgent-schools">
-            <SchoolsNeedingUrgentAttentionCard />
+            <MockOnly surface="urgent schools">
+              <SchoolsNeedingUrgentAttentionCard />
+            </MockOnly>
           </div>
-          <ClusterMeetingRecommendationsCard recommendations={clusterRecs} />
+          {mockOk ? (
+            <ClusterMeetingRecommendationsCard recommendations={clusterRecs} />
+          ) : (
+            <InsufficientData surface="cluster meeting recommendations" />
+          )}
           <ClusterReadinessCard clustered={clusterCounts.clustered} unclustered={clusterCounts.unclustered} needsReview={clusterCounts.needsReview} title="Team cluster setup" />
           <ClusterOperationsCard scope="team" />
           <RecruitmentIntelligenceCard />
@@ -190,7 +240,9 @@ export default async function CountryProgramLeadDashboard() {
             title="Partner work needing attention"
             description="Payments awaiting your approval, evidence status, and partners at delivery risk — escalate to the CD when quality doesn't recover."
           />
-          <PartnerOversightCard />
+          <MockOnly surface="partner oversight">
+            <PartnerOversightCard />
+          </MockOnly>
           <div id="partner-payments">
             <PlPartnerPaymentsQueue />
           </div>
@@ -227,21 +279,29 @@ export default async function CountryProgramLeadDashboard() {
           />
           <section className="grid grid-cols-12 gap-3 md:gap-4 items-stretch [&>div>*]:h-full">
             <div className="col-span-12 lg:col-span-8" id="ssa-intelligence">
-              <InterventionPerformanceByClusterCard />
+              <MockOnly surface="intervention performance by cluster">
+                <InterventionPerformanceByClusterCard />
+              </MockOnly>
             </div>
             <div className="col-span-12 lg:col-span-4" id="finance">
-              <FundingExecutionCard />
+              <MockOnly surface="funding execution">
+                <FundingExecutionCard />
+              </MockOnly>
             </div>
           </section>
           <ClientVerificationCard highlightStaffId={user.staffId} />
           <div id="backlog-snapshot">
-            <TeamBacklogSnapshotCard />
+            <MockOnly surface="team backlog snapshot">
+              <TeamBacklogSnapshotCard />
+            </MockOnly>
           </div>
           <TeamDebriefComplianceCard plStaffId={user.staffId} />
         </section>
 
         {/* Quick Actions — its own self-contained card, no chapter. */}
-        <QuickActionsRow />
+        <MockOnly surface="quick actions">
+          <QuickActionsRow />
+        </MockOnly>
       </div>
     </>
   );

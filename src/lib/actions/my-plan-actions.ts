@@ -20,7 +20,8 @@ import { computeStaffCapacity, staffAlreadySupportsSchool, type StaffCapacity } 
 import { cceosSupervisedBy, supervisorOf } from "@/lib/org/supervision";
 import { DEMO_USERS } from "@/lib/auth";
 import { isBackendEnabled } from "@/lib/api/backend";
-import { backendActivityAction, backendCreateActivity, type ActivityLifecycleAction } from "@/lib/api/surfaces";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { backendActivityAction, backendScheduleSchoolVisit, backendAssignSchoolVisitToPartner, type ActivityLifecycleAction } from "@/lib/api/surfaces";
 
 // Backend-first: when EDIFY_USE_BACKEND is on, run the lifecycle action against
 // the backend (the enforced, authoritative source). Returns true if the backend
@@ -147,29 +148,55 @@ export async function scheduleSchoolActivity(input: {
 
   const toPartner = input.deliveryType === "partner";
 
-  // ── Backend-first create (write-path migration) ──────────────────
-  // When the backend is on AND the school exists there (backend schoolId), the
-  // create is persisted + enforced by the API. A 403 is the real capacity block
-  // (surface it); a 404 means the school only exists in the mock store (fall back).
+  // ── Backend-first create (planning workflow APIs) ─────────────────
   if (isBackendEnabled()) {
     const { fy, quarter } = fyQuarter(input.dateIso);
-    const r = await backendCreateActivity(user, {
-      activityType: input.backendActivityType ?? KIND_TO_BE[input.kind] ?? "school_visit",
-      schoolId: input.schoolId, fy, quarter,
-      deliveryType: toPartner ? "partner" : "staff",
-      ...(toPartner && input.partnerId ? { assignedPartnerId: input.partnerId } : {}),
+    const activityType = input.backendActivityType ?? KIND_TO_BE[input.kind] ?? "school_visit";
+    const CLUSTER_ONLY = new Set([
+      "training", "school_improvement_training", "cluster_training", "core_training", "cluster_meeting",
+    ]);
+    if (CLUSTER_ONLY.has(activityType)) {
+      return {
+        ok: false,
+        reason: "FORBIDDEN",
+        message: "Trainings must be scheduled through a cluster — open the Clusters tab in Planning.",
+      };
+    }
+
+    const body: Record<string, unknown> = {
+      schoolId: input.schoolId,
+      fy,
+      quarter,
       ...(input.plannedMonth ? { plannedMonth: input.plannedMonth } : {}),
       ...(input.plannedWeek ? { plannedWeek: input.plannedWeek } : {}),
       ...(input.dateIso ? { scheduledDate: input.dateIso } : {}),
-    });
-    if (r.live) { revalidate(input.schoolId); return { ok: true, id: r.data.id }; }
-    if (r.error && r.error.includes("403")) {
+    };
+
+    const r = toPartner
+      ? await backendAssignSchoolVisitToPartner(user, {
+          ...body,
+          assignedPartnerId: input.partnerId ?? "",
+        })
+      : await backendScheduleSchoolVisit(user, body);
+
+    if (r.live) {
+      revalidate(input.schoolId);
+      return { ok: true, id: r.data.id };
+    }
+    if (r.error?.includes("403") || r.error?.toLowerCase().includes("capacity")) {
       return { ok: false, reason: "CAPACITY_FULL", message: "Direct support limit reached. Assign this to a partner." };
     }
-    // 404 / other → fall through to the in-memory store (mock-id school).
+    if (!isMockAllowed()) {
+      return { ok: false, reason: "FORBIDDEN", message: r.error ?? "Could not schedule — backend unavailable." };
+    }
+    // Dev mock fallback when school only exists in the store.
   }
 
-  // ── Backend assignment enforcement (spec §6/§9) — never frontend-only. ──
+  if (!isMockAllowed()) {
+    return { ok: false, reason: "FORBIDDEN", message: "Scheduling requires the live backend." };
+  }
+
+  // ── Mock store path (dev only) ────────────────────────────────────
   if (!toPartner) {
     // Self / staff-delivered support: role + direct support capacity gate.
     if (user.role !== "CCEO" && user.role !== "CountryProgramLead") {

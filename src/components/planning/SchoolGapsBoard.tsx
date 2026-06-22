@@ -122,6 +122,12 @@ const ACTION_LABEL: Record<SchoolGapAction, string> = {
   view_ssa:               "View SSA",
 };
 
+/** Trainings are planned through clusters only — strip school-level training in live mode. */
+function schoolLevelActions(actions: SchoolGapAction[], liveGaps: boolean): SchoolGapAction[] {
+  if (!liveGaps) return actions;
+  return actions.filter((a) => a !== "schedule_training");
+}
+
 export function SchoolGapsBoard({
   assigningUserRole = "CountryProgramLead",
   extraGaps = [],
@@ -449,6 +455,7 @@ export function SchoolGapsBoard({
                       <SchoolRow
                         key={s.id}
                         school={s}
+                        liveGaps={liveGaps}
                         onSchedule={(school) => {
                           setScheduleVisit({
                             school,
@@ -613,11 +620,13 @@ export function SchoolGapsBoard({
 
 function SchoolRow({
   school: s,
+  liveGaps,
   onAction,
   onSchedule,
   onAssign,
 }: {
   school: SchoolGap;
+  liveGaps: boolean;
   onAction: (action: SchoolGapAction) => void;
   onSchedule: (school: SchoolGap) => void;
   onAssign: (school: SchoolGap) => void;
@@ -628,11 +637,14 @@ function SchoolRow({
   const [open, setOpen] = useState(false);
   const contact = primaryContactOf(s);
 
-  const buttons: SchoolGapAction[] = clusterBlocked
-    ? ["add_to_cluster", "view_school"]
-    : ssaBlocked
-      ? ["schedule_training", "assign_partner", "schedule_ssa", "view_school"]
-      : rec.allowedActions;
+  const buttons: SchoolGapAction[] = schoolLevelActions(
+    clusterBlocked
+      ? ["add_to_cluster", "view_school"]
+      : ssaBlocked
+        ? ["assign_partner", "schedule_ssa", "view_school"]
+        : rec.allowedActions,
+    liveGaps,
+  );
 
   const weakAreas = [s.weakestArea, s.secondWeakArea].filter(Boolean) as Array<{ area: string; score: number }>;
 

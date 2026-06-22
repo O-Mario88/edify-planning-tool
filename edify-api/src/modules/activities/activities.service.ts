@@ -15,9 +15,11 @@ import { AssignmentService } from '../assignment/assignment.service';
 import { CompleteActivityDto, CreateActivityDto, QueryActivitiesDto } from './dto/activities.dto';
 
 const TRAINING_TYPES: ActivityType[] = ['training', 'school_improvement_training', 'cluster_meeting', 'cluster_training', 'core_training', 'project_activity'];
+const CLUSTER_ONLY_TYPES: ActivityType[] = ['training', 'school_improvement_training', 'cluster_meeting', 'cluster_training', 'core_training'];
+const SCHOOL_VISIT_TYPES: ActivityType[] = ['school_visit', 'follow_up_visit', 'coaching_visit', 'in_school_support', 'core_visit'];
 const RESCHEDULE_SLIP_LIMIT = 3; // an activity may be moved at most this many times
 // Active = still actionable (Planning / My Plan). Completed = the log.
-const ACTIVE_STATUSES = ['planned', 'scheduled', 'assigned_to_partner', 'partner_scheduled', 'in_progress', 'evidence_uploaded', 'evidence_accepted', 'salesforce_id_required', 'awaiting_ia_verification', 'returned', 'deferred'];
+const ACTIVE_STATUSES = ['planned', 'scheduled', 'assigned_to_partner', 'partner_scheduled', 'in_progress', 'completion_started', 'evidence_uploaded', 'evidence_accepted', 'salesforce_id_required', 'submitted_to_pl', 'returned_by_pl', 'awaiting_ia_verification', 'returned', 'deferred'];
 const COMPLETED_STATUSES = ['ia_verified', 'accountant_confirmed', 'completed', 'cancelled', 'rejected'];
 const sfKind = (t: ActivityType): SalesforceActivityType => (TRAINING_TYPES.includes(t) ? 'training' : 'visit');
 
@@ -96,6 +98,15 @@ export class ActivitiesService {
     }
     if (!schoolId && !dto.clusterId) throw new BadRequestException('Activity must reference a school or cluster');
 
+    // Trainings and cluster meetings MUST be scheduled through clusters — never
+    // directly on an individual school (spec §8).
+    if (CLUSTER_ONLY_TYPES.includes(dto.activityType) && !dto.clusterId) {
+      throw new BadRequestException('Trainings and cluster meetings must be scheduled through a cluster, not on an individual school.');
+    }
+    if (schoolId && !dto.clusterId && !SCHOOL_VISIT_TYPES.includes(dto.activityType)) {
+      throw new BadRequestException('Only school visits may be scheduled directly from a school. Trainings must go through clusters.');
+    }
+
     const isPartner = dto.deliveryType === 'partner' || !!dto.assignedPartnerId;
     // API-enforced assignment policy + staff support capacity (spec §6/§9).
     // Throws ForbiddenException (403) with a clear reason + writes an AssignmentAudit.
@@ -124,10 +135,11 @@ export class ActivitiesService {
         scheduledDate,
         assignedPartnerId: dto.assignedPartnerId, deliveryType: isPartner ? 'partner' : 'staff',
         clusterSlot: dto.clusterSlot ?? undefined,
-        status: isPartner ? 'assigned_to_partner' : 'planned',
+        status: isPartner ? 'assigned_to_partner' : (dto.scheduledDate ? 'scheduled' : 'planned'),
         salesforceActivityType: sfKind(dto.activityType),
       },
     });
+    await this.attachScheduleCost(activity.id, schoolId);
     await this.audit.log({ action: 'activity.create', subjectKind: 'Activity', subjectId: activity.id, actorId: user.userId, actorRole: user.activeRole, payload: { type: dto.activityType } });
     // Handoff: if this was assigned to someone OTHER than the creator (a PL
     // scheduling for a supervised CCEO), notify them it's in their My Plan —
@@ -154,12 +166,93 @@ export class ActivitiesService {
     return activity;
   }
 
+  /** Persist cost lines from the CD rate card when an activity is scheduled. */
+  private async attachScheduleCost(activityId: string, internalSchoolId?: string) {
+    const activity = await this.prisma.activity.findUnique({
+      where: { id: activityId },
+      include: {
+        school: { select: { districtId: true } },
+        responsibleStaff: { select: { primaryDistrictId: true } },
+      },
+    });
+    if (!activity) return;
+
+    const rateRows = await this.prisma.costSetting.findMany({ select: { key: true, unitCost: true, version: true, label: true } });
+    const rates: RateCard = {};
+    const versions: Record<string, number> = {};
+    const labels: Record<string, string> = {};
+    for (const r of rateRows) {
+      rates[r.key] = r.unitCost;
+      versions[r.key] = r.version;
+      labels[r.key] = r.label;
+    }
+
+    const districtType =
+      activity.school?.districtId && activity.responsibleStaff?.primaryDistrictId &&
+      activity.school.districtId === activity.responsibleStaff.primaryDistrictId
+        ? 'primary'
+        : 'secondary';
+
+    const cost = costForActivity(
+      {
+        activityType: activity.activityType,
+        deliveryType: activity.deliveryType,
+        districtType,
+        teachersAttended: activity.teachersAttended,
+        leadersAttended: activity.leadersAttended,
+        otherParticipants: activity.otherParticipants,
+      },
+      rates,
+    );
+
+    await this.prisma.$transaction([
+      this.prisma.activityScheduleCostLine.deleteMany({ where: { activityId } }),
+      ...cost.lines.map((line) =>
+        this.prisma.activityScheduleCostLine.create({
+          data: {
+            activityId,
+            costSettingKey: line.key,
+            label: line.label,
+            unitCost: line.unit ?? 0,
+            quantity: line.qty,
+            amount: line.amount,
+            costSettingVersion: versions[line.key] ?? 1,
+          },
+        }),
+      ),
+      this.prisma.activity.update({
+        where: { id: activityId },
+        data: { estCostCents: cost.amount, costMissing: cost.costMissing },
+      }),
+    ]);
+  }
+
+  // Complete click — unlocks evidence upload + Activity Code entry (spec §13–§14).
+  async startCompletion(id: string, user: AuthUser) {
+    const activity = await this.getInScope(id, user);
+    const allowed = ['planned', 'scheduled', 'rescheduled', 'partner_scheduled', 'returned_by_pl', 'returned'];
+    if (!allowed.includes(activity.status)) {
+      throw new BadRequestException('This activity is not ready to start completion.');
+    }
+    return this.prisma.activity.update({
+      where: { id },
+      data: { status: 'completion_started' },
+    });
+  }
+
   // Enter the Salesforce ID (manual; Salesforce not integrated). SV- visits,
-  // TS- trainings. Moves to awaiting IA verification.
+  // TS- trainings. Routes CCEO completions to PL review; others go to IA.
   async complete(id: string, dto: CompleteActivityDto, user: AuthUser) {
     const activity = await this.prisma.activity.findUnique({ where: { id } });
     if (!activity) throw new NotFoundException('Activity not found');
     await this.assertInScope(activity, user);
+    if (!['completion_started', 'in_progress', 'evidence_uploaded', 'evidence_accepted', 'salesforce_id_required'].includes(activity.status)) {
+      throw new BadRequestException('Click Complete first to unlock evidence upload and Activity Code entry.');
+    }
+    const evidenceCount = await this.prisma.evidenceRecord.count({ where: { activityId: id, quarantined: false } });
+    if (evidenceCount === 0) {
+      throw new BadRequestException('Upload evidence before submitting completion.');
+    }
     // ID-integrity lock: once IA has confirmed, the Salesforce ID is frozen. A
     // correction requires IA to RETURN the activity first (resets the status),
     // so a confirmed verification can never be silently overwritten.
@@ -174,21 +267,48 @@ export class ActivitiesService {
     if (kind === 'training' && !((dto.teachersAttended ?? 0) > 0 || (dto.leadersAttended ?? 0) > 0)) {
       throw new BadRequestException('Training completion requires attendance (teachers and/or school leaders)');
     }
-    // Partner-delivered evidence must be reviewed (accepted) before it counts;
+    // Partner-delivered evidence must be reviewed (accepted) before submission;
     // staff-delivered work is accepted on entry.
-    const evidenceStatus = activity.deliveryType === 'partner' ? 'uploaded' : 'accepted';
+    const evidenceStatus = activity.deliveryType === 'partner' ? activity.evidenceStatus : 'accepted';
+    if (activity.deliveryType === 'partner' && evidenceStatus !== 'accepted') {
+      throw new BadRequestException('Partner evidence must be accepted by staff before submission.');
+    }
+
+    const isCceo = user.activeRole === 'CCEO';
+    const nextStatus = isCceo ? 'submitted_to_pl' as const : 'awaiting_ia_verification' as const;
+
     const updated = await this.prisma.activity.update({
       where: { id },
       data: {
         salesforceActivityId: dto.salesforceId.trim(), salesforceActivityType: kind,
         teachersAttended: dto.teachersAttended, leadersAttended: dto.leadersAttended, otherParticipants: dto.otherParticipants,
-        status: 'awaiting_ia_verification', evidenceStatus,
+        status: nextStatus, evidenceStatus: evidenceStatus === 'none' ? 'accepted' : evidenceStatus,
       },
     });
     await this.prisma.activityCompletionVerification.upsert({
       where: { activityId: id }, update: { salesforceId: dto.salesforceId.trim(), enteredBy: user.userId, status: 'pending' },
       create: { activityId: id, salesforceId: dto.salesforceId.trim(), enteredBy: user.userId, status: 'pending' },
     });
+
+    if (isCceo) {
+      const plUserIds = await this.events.usersWithRole('CountryProgramLead');
+      await this.events.emit({
+        type: 'CompletionSubmittedToPL',
+        actorId: user.userId, actorRole: user.activeRole, subjectKind: 'Activity', subjectId: id,
+        payload: { salesforceId: dto.salesforceId.trim() },
+        notify: plUserIds.map((rid): NotifySpec => ({
+          recipientId: rid,
+          title: `${dto.salesforceId.trim()} awaiting your review`,
+          body: 'A CCEO submitted field completion for your confirmation.',
+          targetRoute: '/approvals',
+          actionRequired: true,
+          priority: 'high',
+        })),
+        liveUserIds: [user.userId, ...plUserIds],
+      });
+      return updated;
+    }
+
     // Live: the activity is now in the IA verification queue — push it there.
     const iaUserIds = await this.events.usersWithRole('ImpactAssessment');
     await this.events.emit({
@@ -283,6 +403,7 @@ export class ActivitiesService {
         status: a.status === 'cancelled' || a.status === 'deferred' ? 'planned' : 'rescheduled',
       },
     });
+    await this.attachScheduleCost(id, a.schoolId ?? undefined);
     await this.audit.log({ action: 'activity.reschedule', subjectKind: 'Activity', subjectId: id, actorId: user.userId, actorRole: user.activeRole, payload: { reason: dto.reason, moveNo: (a.rescheduleCount ?? 0) + 1 } });
     return updated;
   }
