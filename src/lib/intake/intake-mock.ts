@@ -70,11 +70,19 @@ export type SsaUpload = {
   createdAt: string;
 };
 
-// Seed rows so the surface isn't empty on first load. Owners are entered as
-// names; the portfolio engine resolves them to registered staff. "James Okot"
-// below is intentionally NOT on the roster — it demonstrates the IA
-// owner-mapping (unmatched) queue.
-export const intakeSchools: IntakeSchool[] = [
+// Seed fixtures are DEV/demo ONLY — never ship fabricated schools to production.
+// In a production build (NODE_ENV=production) the store starts EMPTY and is
+// populated only by real, backend-authoritative server actions (the post-write
+// mirror). This is the single global guarantee that no mock school/SSA data
+// renders in production, regardless of which of the many planning/analytics/
+// directory surfaces reads this store. NODE_ENV is inlined into both the server
+// and client bundles, so the guarantee holds on both sides.
+const SEED_FIXTURES = process.env.NODE_ENV !== "production";
+
+// Owners are entered as names; the portfolio engine resolves them to registered
+// staff. "James Okot" below is intentionally NOT on the roster — it demonstrates
+// the IA owner-mapping (unmatched) queue.
+const SEED_INTAKE_SCHOOLS: IntakeSchool[] = [
   {
     schoolId: "32791", schoolName: "Nakaseke Hill Primary", region: "Central Region", district: "Nakaseke",
     subCounty: "Nakaseke TC", schoolType: "Client", enrollment: 318, assignedCceo: "Paul Chinyama",
@@ -124,6 +132,8 @@ export const intakeSchools: IntakeSchool[] = [
   { schoolId: "90050", schoolName: "Gulu Pece Primary", region: "Northern Region", district: "Gulu", subCounty: "Pece", schoolType: "Core", enrollment: 588, assignedCceo: "James Okot", status: "Active", ssaStatus: "SSA Not Done", planningLocked: true, dateAdded: "2026-05-15", addedBy: "Grace Alimo" },
   { schoolId: "40250", schoolName: "Arua Hill Primary", region: "Northern Region", district: "Arua", subCounty: "Arua Hill", schoolType: "Client", enrollment: 333, assignedCceo: "Daniel Mwangi", status: "Active", ssaStatus: "SSA Not Done", planningLocked: true, dateAdded: "2026-05-20", addedBy: "Grace Alimo" },
 ];
+
+export const intakeSchools: IntakeSchool[] = SEED_FIXTURES ? [...SEED_INTAKE_SCHOOLS] : [];
 
 export const ssaUploads: SsaUpload[] = [];
 
