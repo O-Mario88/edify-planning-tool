@@ -12,7 +12,7 @@ import { backendSchoolGaps } from "@/lib/planning/backend-school-gaps";
 import { backendClusterGaps } from "@/lib/planning/backend-cluster-gaps";
 import { engineClusterGaps } from "@/lib/planning/engine-cluster-gaps";
 import { assignedGapIds } from "@/lib/planning/assignment-overlay";
-import { coreBoardData } from "@/lib/core/core-board";
+import { resolveCoreBoardData } from "@/lib/core/core-board";
 import { directoryRecords } from "@/lib/school-directory/directory";
 import { computeProjectPlanningGaps } from "@/lib/projects/project-planning-gaps";
 import { buildPlanningCategories, formatUgx } from "@/lib/planning/planning-categories";
@@ -43,8 +43,12 @@ export async function GET() {
       : "all";
   const projectGaps = computeProjectPlanningGaps(toCurrentUser(user), scoped);
 
-  // Core-package cards (4 visits + 4 trainings slots).
-  const coreCards = coreBoardData(user.staffId, user.role);
+  // Core-package cards (4 visits + 4 trainings slots) — backend when live.
+  const coreCards = await resolveCoreBoardData(
+    { email: user.email, role: user.role },
+    user.staffId,
+    user.role,
+  );
 
   const categories = buildPlanningCategories({
     schoolGaps,

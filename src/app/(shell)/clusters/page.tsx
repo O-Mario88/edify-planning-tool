@@ -12,11 +12,15 @@ import { intakeSchools } from "@/lib/intake/intake-mock";
 import { resolveOwner } from "@/lib/portfolio/portfolio";
 import { visibleStaffIds } from "@/lib/org/supervision";
 import { isMockAllowed } from "@/lib/mock-policy";
+import { isBackendEnabled } from "@/lib/api/backend";
+import {
+  fetchClusters,
+  fetchAnalyticsDashboard,
+  fetchBackendGeoByDistrict,
+  type BeCluster,
+} from "@/lib/api/surfaces";
 
 export default async function ClustersIndex() {
-  // Cluster-first: surface the viewer's cluster-setup readiness + unclustered
-  // backlog at the top of the clusters hub, with jumps into the workspace,
-  // analytics, and audit.
   const user = await getCurrentUser();
   const seesAll =
     user.role === "Admin" || user.role === "CountryDirector" ||
@@ -27,14 +31,40 @@ export default async function ClustersIndex() {
     const r = resolveOwner(s.assignedCceo);
     return r.status === "matched" ? scope!.has(r.staffId) : true;
   });
-  // The setup-readiness counts, unclustered banner, and the CCEO cluster board
-  // all derive from in-memory intake mock (intakeSchools / directoryRecords), not
-  // the live backend. The cluster directory below self-fetches /api/clusters and
-  // stays. Gate only the mock-derived surfaces so production shows no fabricated
-  // counts.
   const mockOk = isMockAllowed();
-  const counts = clusterCountsFor(scopedSchools);
-  const unclusteredCount = counts.unclustered;
+  const mockCounts = clusterCountsFor(scopedSchools);
+
+  // Live backend: prefetch clusters + geo so create/list stay in sync on production.
+  const bu = { email: user.email, role: user.role };
+  let initialClusters: BeCluster[] | null = null;
+  let initialClusterError: string | null = null;
+  let geoByDistrict: Record<string, string[]> | undefined;
+  let liveCounts: { clustered: number; unclustered: number; needsReview: number } | null = null;
+
+  if (isBackendEnabled()) {
+    const [clusterRes, dashRes, geo] = await Promise.all([
+      fetchClusters(bu),
+      fetchAnalyticsDashboard(bu),
+      fetchBackendGeoByDistrict(bu),
+    ]);
+    if (clusterRes.live) {
+      initialClusters = clusterRes.data;
+      if (dashRes.live) {
+        liveCounts = {
+          clustered: dashRes.data.schools - dashRes.data.unclustered,
+          unclustered: dashRes.data.unclustered,
+          needsReview: 0,
+        };
+      }
+    } else {
+      initialClusterError = clusterRes.error;
+    }
+    if (geo && Object.keys(geo).length) geoByDistrict = geo;
+  }
+
+  const counts = liveCounts ?? mockCounts;
+  const unclusteredCount = liveCounts?.unclustered ?? mockCounts.unclustered;
+  const showReadiness = mockOk || liveCounts !== null;
 
   return (
     <EntityIndex
@@ -44,16 +74,14 @@ export default async function ClustersIndex() {
       searchPlaceholder="Search clusters"
     >
       <div className="mb-3 space-y-3">
-        {/* Mock-derived (intake counts) — withheld in production. */}
-        {mockOk && <UnclusteredSchoolsBanner count={unclusteredCount} />}
-        {/* CCEO: parish-fellowship view of THEIR clusters — SSA coverage,
-            weakest interventions, discussion topics, next meeting (spec §11).
-            Mock-derived; withheld in production. */}
+        {(mockOk || liveCounts) && unclusteredCount > 0 && (
+          <UnclusteredSchoolsBanner count={unclusteredCount} />
+        )}
         {mockOk && user.role === "CCEO" && (
           <CceoClusterBoard staffId={user.staffId} role={user.role} />
         )}
         <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-stretch">
-          {mockOk ? (
+          {showReadiness ? (
             <ClusterReadinessCard
               clustered={counts.clustered}
               unclustered={counts.unclustered}
@@ -61,10 +89,10 @@ export default async function ClustersIndex() {
               title="Cluster setup readiness"
             />
           ) : (
-            <div /> /* keep the grid's first column so the nav stays right-aligned */
+            <div />
           )}
           <nav className="card rounded-2xl p-3 flex md:flex-col gap-2 justify-center">
-            <div className="md:mb-1"><CreateClusterButton /></div>
+            <div className="md:mb-1"><CreateClusterButton geoByDistrict={geoByDistrict} /></div>
             <ClusterHubLink href="/schools" Icon={Building2} label="School directory" />
             <ClusterHubLink href="/clusters/analytics" Icon={BarChart3} label="Cluster analytics" />
             <ClusterHubLink href="/clusters/reports" Icon={FileText} label="Impact report" />
@@ -73,9 +101,10 @@ export default async function ClustersIndex() {
           </nav>
         </div>
       </div>
-      {/* Cluster dashboard — live clusters grouped by district; each expands to
-          its school roster (ID, name, sub-county, phone, contact, SSA area). */}
-      <ClusterDistrictDirectory />
+      <ClusterDistrictDirectory
+        initialClusters={initialClusters}
+        initialError={initialClusterError}
+      />
     </EntityIndex>
   );
 }

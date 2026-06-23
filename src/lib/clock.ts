@@ -10,8 +10,8 @@
 //
 // Client-safe (no `server-only`) so client components can use it too.
 
-/** Frozen demo "today" as an ISO date (YYYY-MM-DD). */
-export const ENGINE_NOW_ISO = "2025-11-15";
+/** Frozen demo "today" — aligned with backend seed data (June 2026). */
+export const ENGINE_NOW_ISO = "2026-06-12";
 
 /** The app's current date as an ISO `YYYY-MM-DD` string. */
 export function engineNowIso(): string {

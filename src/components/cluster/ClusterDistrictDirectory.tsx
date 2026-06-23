@@ -14,6 +14,7 @@ import {
 import { cn } from "@/lib/utils";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/DataStates";
 import type { BeCluster, BeClusterSchool } from "@/lib/api/surfaces";
+import { CLUSTERS_UPDATED } from "@/lib/cluster/cluster-events";
 
 type SchoolsState =
   | { kind: "idle" }
@@ -42,10 +43,16 @@ function schoolCountOf(c: BeCluster): number {
   return c.schoolCount ?? c._count?.schools ?? 0;
 }
 
-export function ClusterDistrictDirectory() {
-  const [clusters, setClusters] = useState<BeCluster[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+type Props = {
+  /** Server-rendered list so production shows clusters on first paint (not after client fetch). */
+  initialClusters?: BeCluster[] | null;
+  initialError?: string | null;
+};
+
+export function ClusterDistrictDirectory({ initialClusters = null, initialError = null }: Props) {
+  const [clusters, setClusters] = useState<BeCluster[] | null>(initialClusters);
+  const [error, setError] = useState<string | null>(initialError);
+  const [loading, setLoading] = useState(initialClusters === null && !initialError);
   const [expanded, setExpanded] = useState<Record<string, SchoolsState>>({});
 
   const load = () => {
@@ -53,14 +60,19 @@ export function ClusterDistrictDirectory() {
     fetch("/api/clusters", { cache: "no-store", credentials: "include" })
       .then((r) => r.json())
       .then((j) => {
-        if (!j.live) { setError(j.error || "Could not load clusters"); return; }
+        if (!j.live) { setError(j.error || "Could not load clusters"); setClusters(null); return; }
         const list: BeCluster[] = j.clusters ?? [];
         setClusters(list);
       })
       .catch(() => setError("Could not reach the server"))
       .finally(() => setLoading(false));
   };
-  useEffect(load, []);
+  useEffect(() => {
+    load();
+    const onUpdated = () => load();
+    window.addEventListener(CLUSTERS_UPDATED, onUpdated);
+    return () => window.removeEventListener(CLUSTERS_UPDATED, onUpdated);
+  }, []);
 
   function toggle(clusterId: string) {
     setExpanded((prev) => {
@@ -101,7 +113,7 @@ export function ClusterDistrictDirectory() {
       .sort((a, b) => a.district.localeCompare(b.district));
   }, [clusters]);
 
-  if (loading) return <LoadingState />;
+  if (loading && clusters === null && !error) return <LoadingState />;
   if (error) return <ErrorState message={error} onRetry={load} />;
   if (!clusters || clusters.length === 0) {
     return <EmptyState title="No clusters yet" message="Create a cluster, then assign schools to it from the School Directory." />;

@@ -22,8 +22,10 @@ export class ClustersService {
   // ── Lists ─────────────────────────────────────────────────────────
   async list(user: AuthUser) {
     const scope = await this.scope.resolveUserScope(user);
-    const where: Prisma.ClusterWhereInput = { deletedAt: null };
-    if (!scope.countryScope && !scope.canViewSummaryOnly) where.districtId = { in: scope.districtIds.length ? scope.districtIds : ['__none__'] };
+    const where: Prisma.ClusterWhereInput = { deletedAt: null, status: { in: ['active', 'needs_review'] } };
+    if (!scope.countryScope && !scope.canViewSummaryOnly) {
+      where.districtId = { in: scope.districtIds.length ? scope.districtIds : ['__none__'] };
+    }
     const rows = await this.prisma.cluster.findMany({
       where, orderBy: { name: 'asc' }, take: 1000, // safety bound on payload
       include: {

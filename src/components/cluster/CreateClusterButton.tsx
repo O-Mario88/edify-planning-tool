@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/Button";
 import { SUBCOUNTIES, subCountiesOf } from "@/lib/geography";
 import { candidateClusterLeaders } from "@/lib/cluster/cluster-core";
 import { createEmptyClusterAction } from "@/lib/actions/cluster-actions";
+import { notifyClustersUpdated } from "@/lib/cluster/cluster-events";
 import { cn } from "@/lib/utils";
 
 const DISTRICT_OPTIONS = Array.from(new Set(SUBCOUNTIES.map((s) => s.districtName)))
@@ -124,6 +125,7 @@ export function CreateClusterButton({ geoByDistrict }: { geoByDistrict?: Record<
     }
     setOpen(false);
     reset();
+    notifyClustersUpdated();
     router.refresh();
   }
 

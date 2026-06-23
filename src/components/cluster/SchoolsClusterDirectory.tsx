@@ -276,7 +276,6 @@ export function SchoolsClusterDirectory({
         </div>
       )}
 
-      {/* Rows — unclustered schools first (full opacity), clustered greyed out at end */}
       <ul className="divide-y divide-[var(--color-edify-divider)] max-h-[60vh] overflow-y-auto">
         {filtered.length === 0 ? (
           <li className="px-4 py-8 text-center text-[12px] muted">No schools match these filters.</li>
@@ -291,11 +290,11 @@ export function SchoolsClusterDirectory({
           return (
             <li
               key={s.schoolId}
-              className={cn("flex flex-col transition-colors", isClustered && "opacity-50")}
+              className="flex flex-col transition-colors"
             >
               {/* ── Main row ── */}
               <div className="px-3.5 py-3 flex items-start gap-3">
-                {canManage && !isClustered && (
+                {canManage && (
                   <input type="checkbox" checked={selected.has(s.schoolId)} onChange={() => toggleOne(s.schoolId)}
                     className="mt-1.5 h-3.5 w-3.5 accent-[var(--color-edify-primary)] shrink-0" />
                 )}
@@ -313,6 +312,11 @@ export function SchoolsClusterDirectory({
                     <Link href={`/schools/${s.schoolId}`} className="text-[12.5px] font-extrabold tracking-tight truncate hover:underline">{s.schoolName}</Link>
                     <span className={cn("px-1.5 py-[1px] rounded text-[10px] font-bold", s.schoolType === "Core" ? "bg-violet-50 text-violet-700" : "bg-blue-50 text-blue-700")}>{s.schoolType}</span>
                     <span className={cn("px-1.5 py-[1px] rounded text-[10px] font-bold", meta.cls)}>{meta.label}</span>
+                    {isClustered && (
+                      <span className="px-1.5 py-[1px] rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 inline-flex items-center gap-1">
+                        <Network size={9} /> Clustered
+                      </span>
+                    )}
                     {s.duplicate && <span className="px-1.5 py-[1px] rounded text-[10px] font-bold bg-amber-50 text-amber-700 inline-flex items-center gap-1"><AlertTriangle size={9} />Dup</span>}
                   </div>
                   <p className="text-[11px] muted leading-tight inline-flex items-center gap-1 mt-0.5">
@@ -357,11 +361,12 @@ export function SchoolsClusterDirectory({
                     <div className="flex items-center gap-1.5">
                       <button
                         type="button"
-                        onClick={() => openDrawer(s, "cluster")}
+                        disabled={isClustered}
+                        onClick={() => !isClustered && openDrawer(s, "cluster")}
                         className={cn(
                           "inline-flex items-center gap-1 h-8 px-2.5 rounded-lg text-[11.5px] font-extrabold transition-colors whitespace-nowrap",
                           isClustered
-                            ? "border border-[var(--color-edify-border)] bg-white text-[var(--color-edify-muted)] hover:text-[var(--color-edify-text)]"
+                            ? "border border-[var(--color-edify-border)] bg-[var(--color-edify-soft)]/60 text-[var(--color-edify-muted)] cursor-not-allowed opacity-60"
                             : "bg-[var(--color-edify-primary)] text-white hover:bg-[var(--color-edify-dark)]",
                         )}
                       >
@@ -370,9 +375,9 @@ export function SchoolsClusterDirectory({
                       <button
                         type="button"
                         onClick={() => openDrawer(s, "project")}
-                        className="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg border border-[var(--color-edify-border)] bg-white text-[11.5px] font-semibold text-violet-700 hover:bg-violet-50 transition-colors whitespace-nowrap"
+                        className="inline-flex items-center gap-1 h-8 px-2.5 rounded-lg border border-violet-200 bg-violet-50 text-[11.5px] font-extrabold text-violet-800 hover:bg-violet-100 transition-colors whitespace-nowrap"
                       >
-                        <Briefcase size={11} /> Assign to Project
+                        <Briefcase size={11} /> Add to Project
                       </button>
                     </div>
                   )}

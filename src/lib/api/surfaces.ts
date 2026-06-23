@@ -135,6 +135,7 @@ function geoQuery(g?: GeoFilterParams): string {
 
 type SchoolQuery = {
   schoolType?: string;
+  page?: number;
   pageSize?: number;
   search?: string;
   districtId?: string;
@@ -146,6 +147,7 @@ type SchoolQuery = {
 export function fetchSchools(user: BackendUser, q: SchoolQuery = {}) {
   const params = new URLSearchParams();
   if (q.schoolType) params.set("schoolType", q.schoolType);
+  if (q.page) params.set("page", String(q.page));
   params.set("pageSize", String(q.pageSize ?? 200));
   if (q.search) params.set("search", q.search);
   if (q.districtId) params.set("districtId", q.districtId);
@@ -156,6 +158,22 @@ export function fetchSchools(user: BackendUser, q: SchoolQuery = {}) {
   // the directory list + strip aren't capped at the first `pageSize` rows.
   appendGeo(params, q);
   return live<BePaginated<BeSchoolRow>>(`/schools?${params.toString()}`, user);
+}
+
+/** Walk every page so the directory shows the full scoped universe (not just the first 200). */
+export async function fetchAllSchoolsForDirectory(user: BackendUser, q: Omit<SchoolQuery, "page" | "pageSize"> = {}) {
+  const all: BeSchoolRow[] = [];
+  let page = 1;
+  let totalPages = 1;
+  while (page <= totalPages) {
+    const r = await fetchSchools(user, { ...q, page, pageSize: 200 });
+    if (!r.live) return r;
+    all.push(...r.data.data);
+    totalPages = r.data.totalPages;
+    if (r.data.data.length === 0) break;
+    page += 1;
+  }
+  return { live: true as const, data: all, total: all.length };
 }
 
 export function fetchCoreHeader(user: BackendUser) {
@@ -1122,6 +1140,24 @@ export function fetchClusterPlanning(user: BackendUser) {
 export function fetchClusters(user: BackendUser) {
   return live<BeCluster[]>(`/clusters`, user);
 }
+
+/** District → sub-county names from the live backend geography (for cluster create forms). */
+export async function fetchBackendGeoByDistrict(user: BackendUser): Promise<Record<string, string[]> | null> {
+  const dRes = await fetchDistricts(user);
+  if (!dRes.live) return null;
+  const entries = await Promise.all(
+    dRes.data.map(async (d) => {
+      const sc = await fetchSubCounties(user, d.id);
+      return [d.name, sc.live ? sc.data.map((s) => s.name).sort() : []] as const;
+    }),
+  );
+  const out: Record<string, string[]> = {};
+  for (const [name, subs] of entries) {
+    if (subs.length) out[name] = subs;
+  }
+  return out;
+}
+
 export function fetchClusterSchools(user: BackendUser, clusterId: string) {
   return live<{
     cluster: { id: string; name: string; status: string; type: string };

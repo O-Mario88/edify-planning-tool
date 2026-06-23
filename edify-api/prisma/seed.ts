@@ -672,6 +672,35 @@ async function main() {
   await seedActivities(rows, cceos, coord, partnerIds, sample);
   await relaxDemoClusters(cceos[0].id);
   await seedMessagesAndNotifications();
+  await fixMislabeledSsaFy();
+  try {
+    const { NestFactory } = await import('@nestjs/core');
+    const { AppModule } = await import('../src/app.module');
+    const { LeadershipEngineService } = await import('../src/modules/leadership/leadership-engine.service');
+    const app = await NestFactory.createApplicationContext(AppModule, { logger: ['error'] });
+    try {
+      const engine = app.get(LeadershipEngineService);
+      const r = await engine.recompute('2026');
+      console.log(`✓ leadership recompute: ${r.generated} insight(s)`);
+    } finally {
+      await app.close();
+    }
+  } catch (e) {
+    console.warn('• leadership recompute skipped (run npm run seed:leadership-recompute):', (e as Error).message);
+  }
   console.log('\n✅ Final demo seed complete.');
 }
+
+async function fixMislabeledSsaFy() {
+  const n = await prisma.$executeRaw`
+    UPDATE "SsaRecord"
+    SET fy = '2026'
+    WHERE "dateOfSsa" >= TIMESTAMP '2025-10-01'
+      AND "dateOfSsa" < TIMESTAMP '2026-10-01'
+      AND fy IS DISTINCT FROM '2026'
+      AND "deletedAt" IS NULL
+  `;
+  if (Number(n) > 0) console.log(`✓ fixed ${n} mislabeled SSA FY row(s)`);
+}
+
 main().then(() => prisma.$disconnect()).catch(async (e) => { console.error(e); await prisma.$disconnect(); process.exit(1); });

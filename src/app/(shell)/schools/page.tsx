@@ -22,7 +22,7 @@ import {
 } from "@/lib/school-directory/directory";
 import { openDuplicateCandidates } from "@/lib/intake/duplicate-candidates-mock";
 import { getCurrentUser, toCurrentUser } from "@/lib/auth";
-import { fetchSchools, fetchClusters, fetchAnalyticsDashboard, type BeSchoolRow, type BeCluster, type BeDashboard } from "@/lib/api/surfaces";
+import { fetchAllSchoolsForDirectory, fetchClusters, fetchAnalyticsDashboard, type BeSchoolRow, type BeCluster, type BeDashboard } from "@/lib/api/surfaces";
 import { LiveBadge, BackendOfflineBanner } from "@/components/ui/BackendStatus";
 import type { DirectoryMetric } from "@/lib/school-directory/directory";
 import { portfolioForStaffId } from "@/lib/portfolio/portfolio";
@@ -131,8 +131,8 @@ export default async function SchoolsDashboard({
   // backend narrows server-side — the list is the full narrowed universe (not the
   // first 200 rows of the unfiltered set) and the strip counts that same universe.
   const geo = geoParamsFromSelection(selection);
-  const liveSchools = await fetchSchools(me, { pageSize: 200, ...geo });
-  const liveRows = liveSchools.live ? liveSchools.data.data : [];
+  const liveSchools = await fetchAllSchoolsForDirectory(me, geo);
+  const liveRows = liveSchools.live ? liveSchools.data : [];
   // Strip source of truth: the backend's server-side AGGREGATE counts, computed
   // over the SAME (role-scoped + geo-narrowed) universe as the row list — never
   // the <=200-row page (counting the page made every breakdown wrong, and any
@@ -141,7 +141,7 @@ export default async function SchoolsDashboard({
   const metrics = liveSchools.live
     ? liveDashboard.live
       ? aggregateDirectoryMetrics(liveDashboard.data)
-      : liveDirectoryMetrics(liveRows, liveSchools.data.total)
+      : liveDirectoryMetrics(liveRows, liveSchools.total)
     : mockMetrics;
   const metricsLive = liveSchools.live;
   const metricsError = liveSchools.live ? null : liveSchools.error;

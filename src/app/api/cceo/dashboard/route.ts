@@ -15,7 +15,7 @@ import { backendSchoolGaps } from "@/lib/planning/backend-school-gaps";
 import { backendClusterGaps } from "@/lib/planning/backend-cluster-gaps";
 import { engineClusterGaps } from "@/lib/planning/engine-cluster-gaps";
 import { assignedGapIds } from "@/lib/planning/assignment-overlay";
-import { coreBoardData } from "@/lib/core/core-board";
+import { resolveCoreBoardData } from "@/lib/core/core-board";
 import { computeProjectPlanningGaps } from "@/lib/projects/project-planning-gaps";
 import { buildPlanningCategories } from "@/lib/planning/planning-categories";
 import { loadVisitCostRates, loadGroupActivityRates } from "@/lib/cost-engine/cost-engine-server";
@@ -63,10 +63,15 @@ export async function GET(req: NextRequest) {
     toCurrentUser(user),
     user.role === "CCEO" ? new Set(schools.map((s) => s.schoolId)) : "all",
   );
+  const coreCards = await resolveCoreBoardData(
+    { email: user.email, role: user.role },
+    user.staffId,
+    user.role,
+  );
   const categories = buildPlanningCategories({
     schoolGaps,
     clusterGaps,
-    coreCards: coreBoardData(user.staffId, user.role),
+    coreCards,
     projectGaps,
     rates: { visit: loadVisitCostRates(), group: loadGroupActivityRates() },
   });

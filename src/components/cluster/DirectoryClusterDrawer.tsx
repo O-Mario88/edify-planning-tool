@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 import { SUBCOUNTIES, subCountiesOf } from "@/lib/geography";
 import { candidateClusterLeaders } from "@/lib/cluster/cluster-core";
 import { assignSchoolAction, createEmptyClusterAction, markJoinedThroughClusterAction } from "@/lib/actions/cluster-actions";
+import { notifyClustersUpdated } from "@/lib/cluster/cluster-events";
 
 // Same source as the standalone "New cluster" form so the directory's create-new
 // experience offers the identical district picker.
@@ -106,6 +107,10 @@ export function DirectoryClusterDrawer({
   geoByDistrict?: Record<string, string[]>;
 }) {
   const router = useRouter();
+  function refreshClusters() {
+    notifyClustersUpdated();
+    router.refresh();
+  }
   const [tab, setTab] = useState<Tab>(initialTab);
   const [mode, setMode] = useState<"existing" | "create">("existing");
   const [selected, setSelected] = useState<string>("");
@@ -185,12 +190,11 @@ export function DirectoryClusterDrawer({
     }
     if (joinedVia) await markJoinedThroughClusterAction(school!.schoolId, selected, "cluster_referral");
     setBusy(false);
-    router.refresh();
+    refreshClusters();
     onClose(true);
   }
 
-  // Enter create-new mode, defaulting district + sub-county to the school's own
-  // geography (the common case: clustering THIS school). Editable thereafter.
+  // Enter create-new mode — default district + sub-county to the school's geography.
   function enterCreateMode() {
     setMode("create");
     setError(null);
@@ -255,12 +259,12 @@ export function DirectoryClusterDrawer({
     if (!assign.ok) {
       setBusy(false);
       flashError(`Cluster created, but adding ${school!.schoolName} failed${assign.reason === "FAILED" ? `: ${assign.message}` : "."} You can add it from the cluster page.`);
-      router.refresh();
+      refreshClusters();
       return;
     }
     if (joinedVia) await markJoinedThroughClusterAction(school!.schoolId, res.clusterId, "cluster_onboarding");
     setBusy(false);
-    router.refresh();
+    refreshClusters();
     onClose(true);
   }
 

@@ -14,7 +14,7 @@ import { fetchBackendClusterGaps } from "@/lib/planning/backend-cluster-gaps";
 import { isBackendEnabled } from "@/lib/api/backend";
 import { isMockAllowed } from "@/lib/mock-policy";
 import { assignedGapIds } from "@/lib/planning/assignment-overlay";
-import { coreBoardData, coreOwnershipRows } from "@/lib/core/core-board";
+import { coreOwnershipRows, resolveCoreBoardData } from "@/lib/core/core-board";
 import { engineClusterGaps } from "@/lib/planning/engine-cluster-gaps";
 import { directoryRecords } from "@/lib/school-directory/directory";
 import { computeProjectPlanningGaps } from "@/lib/projects/project-planning-gaps";
@@ -92,10 +92,13 @@ export async function PlanningToolPage({
     items: applyGeographyScope(cat.items, selection, { district: (i) => i.district }),
   }));
 
-  // Core Schools tab consumes the unified CorePlan model (same as the
-  // dedicated /planning/core-schools console).
-  // CorePlanCardVM.cluster is a display NAME, not a filter cluster id — district only.
-  const coreCards = applyGeographyScope(coreBoardData(user.staffId, user.role), selection, {
+  // Core Schools tab — backend plans when the bridge is live.
+  const coreCardsRaw = await resolveCoreBoardData(
+    { email: user.email, role: user.role },
+    user.staffId,
+    user.role,
+  );
+  const coreCards = applyGeographyScope(coreCardsRaw, selection, {
     district: (c) => c.district,
   });
   // Backend core-school gaps — when live, the Core Schools tab renders the SAME

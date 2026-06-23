@@ -18,6 +18,7 @@
     "validate": "ts-node --transpile-only scripts/validate-online-test.ts",
     "trim:users": "ts-node --transpile-only scripts/trim-users-online-test.ts",
     "seed:online-test-workflows": "ts-node --transpile-only scripts/seed-online-test-workflows.ts",
+    "seed:leadership-recompute": "ts-node --transpile-only scripts/seed-leadership-recompute.ts",
     "validate:online-test-workflows": "ts-node --transpile-only scripts/validate-online-test-workflows.ts",
     "validate:ssa-fy": "ts-node --transpile-only scripts/validate-ssa-fy.ts",
     "geo:subregions": "ts-node --transpile-only scripts/geo-subregions.ts",

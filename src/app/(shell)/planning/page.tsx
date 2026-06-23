@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { PlanningToolPage } from "@/components/planning/PlanningToolPage";
 import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { PlanningMobileView } from "@/components/mobile/views/PlanningMobileView";
-import { coreBoardData, coreOwnershipRows } from "@/lib/core/core-board";
+import { coreOwnershipRows, resolveCoreBoardData } from "@/lib/core/core-board";
 import { getCurrentUser } from "@/lib/auth";
 import { SmartGroupingCard } from "@/components/planning/SmartGroupingCard";
 
@@ -23,7 +23,11 @@ export default async function Page({
   if (sid) redirect(`/schools/${encodeURIComponent(sid)}?view=plan`);
 
   const user = await getCurrentUser();
-  const coreCards = coreBoardData(user.staffId, user.role);
+  const coreCards = await resolveCoreBoardData(
+    { email: user.email, role: user.role },
+    user.staffId,
+    user.role,
+  );
   const coreViewer = {
     canAssign: ["CCEO", "CountryProgramLead", "ImpactAssessment", "Admin"].includes(user.role),
     canExec: ["CCEO", "CountryProgramLead", "PartnerAdmin", "PartnerFieldOfficer", "Admin"].includes(user.role),
