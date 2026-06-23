@@ -1198,6 +1198,38 @@ export function backendUploadSsa(user: BackendUser, body: {
   return live<{ id: string; averageScore?: number }>(`/ssa`, user, { method: "POST", body: JSON.stringify(body) });
 }
 
+// ── Core School lifecycle (candidates → plan → impact → champion) ───
+export function fetchCoreCandidates(user: BackendUser) {
+  return live<unknown[]>(`/core/candidates`, user);
+}
+export function fetchCorePlans(user: BackendUser) {
+  return live<unknown[]>(`/core/plans`, user);
+}
+export function fetchCoreDetail(user: BackendUser, schoolId: string) {
+  return live<unknown>(`/core/schools/${encodeURIComponent(schoolId)}`, user);
+}
+export function backendVerifyCoreCandidate(user: BackendUser, schoolId: string, body: { verificationId: string; comments?: string }) {
+  return live<{ ok: boolean; schoolId: string }>(`/core/candidates/${encodeURIComponent(schoolId)}/verify`, user, { method: "POST", body: JSON.stringify(body) });
+}
+export function backendRejectCoreCandidate(user: BackendUser, schoolId: string, body: { reason: string }) {
+  return live<{ ok: boolean; schoolId: string }>(`/core/candidates/${encodeURIComponent(schoolId)}/reject`, user, { method: "POST", body: JSON.stringify(body) });
+}
+export function backendOnboardCoreSchool(user: BackendUser, schoolId: string, body: { reason?: string } = {}) {
+  return live<{ ok: boolean; schoolId: string; planId: string }>(`/core/candidates/${encodeURIComponent(schoolId)}/onboard`, user, { method: "POST", body: JSON.stringify(body) });
+}
+export function backendCoreSlotAction(user: BackendUser, slotId: string, action: string, body: Record<string, unknown> = {}) {
+  return live<{ ok: boolean; slotId: string }>(`/core/slots/${encodeURIComponent(slotId)}/${encodeURIComponent(action)}`, user, { method: "POST", body: JSON.stringify(body) });
+}
+export function backendScheduleCoreFollowUp(user: BackendUser, planId: string, body: { assignee: string; monthLabel: string; week?: number }) {
+  return live<{ ok: boolean; planId: string }>(`/core/plans/${encodeURIComponent(planId)}/follow-up/schedule`, user, { method: "POST", body: JSON.stringify(body) });
+}
+export function backendUploadCoreFollowUpSsa(user: BackendUser, planId: string, body: { dateOfSsa?: string; scores: { intervention: string; score: number }[] }) {
+  return live<{ ok: boolean; planId: string; averageChange: number; championCandidate: boolean }>(`/core/plans/${encodeURIComponent(planId)}/follow-up/ssa`, user, { method: "POST", body: JSON.stringify(body) });
+}
+export function backendAdvanceChampion(user: BackendUser, schoolId: string) {
+  return live<{ ok: boolean; schoolId: string; status: string }>(`/core/schools/${encodeURIComponent(schoolId)}/champion/advance`, user, { method: "POST", body: JSON.stringify({}) });
+}
+
 // ── Partners (for assignment pickers — real backend partner IDs) ────
 export type BePartner = {
   id: string; name: string; isCertified: boolean;

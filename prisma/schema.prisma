@@ -1125,10 +1125,16 @@ model CorePlan {
   trainingsCompleted Int                @default(0)
   baselineAverage    Float?
   followUpAverage    Float?
+  baselineSsaRecordId String? // SsaRecord.id — baseline measurement at onboarding
+  followUpSsaRecordId String? // SsaRecord.id — follow-up impact measurement
+  followUpScheduledFor String?
+  followUpAssignee     String?
   interventions      Json? // [{ area, rank, baselineScore }]
   createdById        String?
   createdByName      String?
   slots              CoreActivitySlot[]
+  profile            CoreSchoolProfile?
+  onboarding         CoreSchoolOnboarding?
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
 
@@ -1153,13 +1159,68 @@ model CoreActivitySlot {
   assignedPartnerName String?
   scheduledMonth      String?
   scheduledWeek       Int?
+  scheduledFor        String?
   salesforceId        String?
+  activityId          String? // FK to Activity ledger when mirrored
+  evidenceUri         String?
+  evidenceNotes       String?
+  plVerificationStatus   String?
+  iaVerificationStatus   String?
+  accountantStatus       String?
+  teachers            Int?
+  leaders             Int?
+  participants        Int?
+  returnedReason      String?
   completedAt         DateTime?
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
   @@index([corePlanId])
   @@index([schoolId])
+}
+
+// Champion pipeline + active plan pointer for an onboarded core school.
+model CoreSchoolProfile {
+  id               String   @id // "cprof-{schoolId}"
+  schoolId         String   @unique
+  corePlan         CorePlan @relation(fields: [corePlanId], references: [id], onDelete: Cascade)
+  corePlanId       String   @unique
+  coreStartFy      String
+  championStatus   String   @default("Not Eligible")
+  status           String   @default("Active")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+// IA verification of a Potential Core candidate (SSA ≥ 7.5 gate).
+model CoreCandidateVerification {
+  id             String   @id @default(cuid())
+  schoolId       String   @unique
+  ssaRecordId    String // SsaRecord.id
+  verificationId String
+  verifiedById   String
+  verifiedByName String
+  verifiedAt     DateTime @default(now())
+  status         String // Verified Potential Core | Rejected
+  comments       String?
+  createdAt      DateTime @default(now())
+}
+
+// Record of Client → Core transition at onboarding.
+model CoreSchoolOnboarding {
+  id                   String   @id @default(cuid())
+  schoolId             String   @unique
+  corePlan             CorePlan @relation(fields: [corePlanId], references: [id], onDelete: Cascade)
+  corePlanId           String   @unique
+  fy                   String
+  previousSchoolType   String
+  baselineSsaRecordId  String
+  baselineAverageScore Float
+  onboardedById        String
+  onboardedByName      String
+  onboardedAt          DateTime @default(now())
+  onboardingReason     String?
+  status               String   @default("Onboarded")
 }
 
 model AnnualPlanActivity {

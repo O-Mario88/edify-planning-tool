@@ -9,7 +9,11 @@ import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/auth";
 import { ssaAverage, deriveFyFromDate, SSA_AREA_TO_BACKEND, SSA_INTERVENTION_AREAS, type SsaInterventionArea } from "@/lib/intake/intake-core";
 import { isBackendEnabled } from "@/lib/api/backend";
-import { backendUploadSsa } from "@/lib/api/surfaces";
+import {
+  backendAdvanceChampion, backendCoreSlotAction, backendOnboardCoreSchool,
+  backendRejectCoreCandidate, backendScheduleCoreFollowUp, backendUploadCoreFollowUpSsa,
+  backendVerifyCoreCandidate,
+} from "@/lib/api/surfaces";
 import { emitAudit, emitNotification, emitNotificationFanOut } from "./audit";
 import {
   candidateSnapshotFor,
@@ -76,6 +80,10 @@ function rev(...paths: string[]) {
 }
 const CORE_SURFACES = ["/ssa/core-candidates", "/core-onboarding", "/planning/core-schools", "/planning", "/core-schools", "/notifications"];
 
+function beUser(user: { email: string; role: string }) {
+  return { email: user.email, role: user.role };
+}
+
 // ─── 1. Verify candidate → Verified Potential Core ──────────────────
 
 export type CoreVerifyResult =
@@ -85,6 +93,12 @@ export type CoreVerifyResult =
 export async function verifyCoreCandidate(schoolId: string, verificationId: string, comments?: string): Promise<CoreVerifyResult> {
   const user = await getCurrentUser();
   if (!VERIFY_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+  if (isBackendEnabled()) {
+    const r = await backendVerifyCoreCandidate(beUser(user), schoolId, { verificationId, comments });
+    if (!r.live) return { ok: false, reason: "INVALID_INPUT" };
+    rev(...CORE_SURFACES);
+    return { ok: true, schoolId };
+  }
   const snap = candidateSnapshotFor(schoolId);
   if (!snap) return { ok: false, reason: "NOT_FOUND" };
   const vid = verificationId?.trim() ?? "";
@@ -117,6 +131,12 @@ export type CoreOnboardResult =
 export async function onboardCoreSchool(schoolId: string, reason?: string): Promise<CoreOnboardResult> {
   const user = await getCurrentUser();
   if (!ONBOARD_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+  if (isBackendEnabled()) {
+    const r = await backendOnboardCoreSchool(beUser(user), schoolId, { reason });
+    if (!r.live) return { ok: false, reason: "NOT_VERIFIED" };
+    rev(...CORE_SURFACES);
+    return { ok: true, schoolId, planId: r.data!.planId };
+  }
   if (effectiveSchoolType(schoolId) === "Core" || onboardingFor(schoolId)?.status === "Onboarded") return { ok: false, reason: "ALREADY_CORE" };
   const v = verificationFor(schoolId);
   if (!v || v.status !== "Verified Potential Core") return { ok: false, reason: "NOT_VERIFIED" };
@@ -182,6 +202,12 @@ export async function onboardCoreSchool(schoolId: string, reason?: string): Prom
 export async function rejectCoreCandidate(schoolId: string, reason: string): Promise<CoreVerifyResult> {
   const user = await getCurrentUser();
   if (!ONBOARD_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+  if (isBackendEnabled()) {
+    const r = await backendRejectCoreCandidate(beUser(user), schoolId, { reason });
+    if (!r.live) return { ok: false, reason: "INVALID_INPUT" };
+    rev(...CORE_SURFACES);
+    return { ok: true, schoolId };
+  }
   if (!candidateSnapshotFor(schoolId)) return { ok: false, reason: "NOT_FOUND" };
   if ((reason?.trim() ?? "").length < 5) return { ok: false, reason: "INVALID_INPUT" };
   if (verificationFor(schoolId)) return { ok: false, reason: "DUPLICATE" };
@@ -209,6 +235,12 @@ export async function assignCoreSlot(
 ): Promise<CoreSlotResult> {
   const user = await getCurrentUser();
   if (!ASSIGN_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+  if (isBackendEnabled()) {
+    const r = await backendCoreSlotAction(beUser(user), slotId, "assign", input as Record<string, unknown>);
+    if (!r.live) return { ok: false, reason: "NOT_FOUND" };
+    rev(...CORE_SURFACES);
+    return { ok: true, slotId };
+  }
   const slot = slotById(slotId);
   if (!slot) return { ok: false, reason: "NOT_FOUND" };
 
@@ -243,6 +275,12 @@ export async function assignCoreSlot(
 export async function scheduleCoreSlot(slotId: string, monthLabel: string, week: number): Promise<CoreSlotResult> {
   const user = await getCurrentUser();
   if (!ASSIGN_ROLES.has(user.role) && !EXEC_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+  if (isBackendEnabled()) {
+    const r = await backendCoreSlotAction(beUser(user), slotId, "schedule", { monthLabel, week });
+    if (!r.live) return { ok: false, reason: "NOT_FOUND" };
+    rev(...CORE_SURFACES);
+    return { ok: true, slotId };
+  }
   const slot = slotById(slotId);
   if (!slot) return { ok: false, reason: "NOT_FOUND" };
   updateSlot(slotId, { status: "Scheduled", scheduledMonth: monthLabel, scheduledWeek: week, scheduledFor: `${monthLabel} · Wk ${week}` });
@@ -255,6 +293,12 @@ export async function scheduleCoreSlot(slotId: string, monthLabel: string, week:
 export async function startCoreSlot(slotId: string): Promise<CoreSlotResult> {
   const user = await getCurrentUser();
   if (!EXEC_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+  if (isBackendEnabled()) {
+    const r = await backendCoreSlotAction(beUser(user), slotId, "start", {});
+    if (!r.live) return { ok: false, reason: "NOT_FOUND" };
+    rev(...CORE_SURFACES);
+    return { ok: true, slotId };
+  }
   const slot = slotById(slotId);
   if (!slot) return { ok: false, reason: "NOT_FOUND" };
   updateSlot(slotId, { status: "In Progress" });
@@ -267,6 +311,13 @@ export async function startCoreSlot(slotId: string): Promise<CoreSlotResult> {
 export async function uploadCoreEvidence(slotId: string, evidenceUri: string, notes?: string): Promise<CoreSlotResult> {
   const user = await getCurrentUser();
   if (!EXEC_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+  if (isBackendEnabled()) {
+    if (!evidenceUri?.trim()) return { ok: false, reason: "INVALID_INPUT" };
+    const r = await backendCoreSlotAction(beUser(user), slotId, "evidence", { evidenceUri, notes });
+    if (!r.live) return { ok: false, reason: "NOT_FOUND" };
+    rev(...CORE_SURFACES);
+    return { ok: true, slotId };
+  }
   const slot = slotById(slotId);
   if (!slot) return { ok: false, reason: "NOT_FOUND" };
   if (!evidenceUri?.trim()) return { ok: false, reason: "INVALID_INPUT" };
@@ -283,6 +334,12 @@ export async function uploadCoreEvidence(slotId: string, evidenceUri: string, no
 export async function acceptCoreEvidence(slotId: string): Promise<CoreSlotResult> {
   const user = await getCurrentUser();
   if (!REVIEW_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+  if (isBackendEnabled()) {
+    const r = await backendCoreSlotAction(beUser(user), slotId, "acceptEvidence", {});
+    if (!r.live) return { ok: false, reason: "INVALID_STATE" };
+    rev(...CORE_SURFACES);
+    return { ok: true, slotId };
+  }
   const slot = slotById(slotId);
   if (!slot) return { ok: false, reason: "NOT_FOUND" };
   if (slot.status !== "Evidence Uploaded") return { ok: false, reason: "INVALID_STATE" };
@@ -297,6 +354,13 @@ export async function acceptCoreEvidence(slotId: string): Promise<CoreSlotResult
 export async function returnCoreEvidence(slotId: string, reason: string): Promise<CoreSlotResult> {
   const user = await getCurrentUser();
   if (!REVIEW_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+  if (isBackendEnabled()) {
+    if ((reason?.trim() ?? "").length < 5) return { ok: false, reason: "INVALID_INPUT" };
+    const r = await backendCoreSlotAction(beUser(user), slotId, "returnEvidence", { reason });
+    if (!r.live) return { ok: false, reason: "INVALID_STATE" };
+    rev(...CORE_SURFACES);
+    return { ok: true, slotId };
+  }
   const slot = slotById(slotId);
   if (!slot) return { ok: false, reason: "NOT_FOUND" };
   if (slot.status !== "Evidence Uploaded") return { ok: false, reason: "INVALID_STATE" };
@@ -320,6 +384,12 @@ export type CoreCompleteInput = {
 export async function completeCoreSlot(slotId: string, input: CoreCompleteInput): Promise<CoreSlotResult> {
   const user = await getCurrentUser();
   if (!EXEC_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+  if (isBackendEnabled()) {
+    const r = await backendCoreSlotAction(beUser(user), slotId, "complete", input as Record<string, unknown>);
+    if (!r.live) return { ok: false, reason: "INVALID_INPUT" };
+    rev(...CORE_SURFACES, "/data-verification");
+    return { ok: true, slotId };
+  }
   const slot = slotById(slotId);
   if (!slot) return { ok: false, reason: "NOT_FOUND" };
 
@@ -378,6 +448,12 @@ export async function completeCoreSlot(slotId: string, input: CoreCompleteInput)
 export async function plVerifyCoreSlot(slotId: string): Promise<CoreSlotResult> {
   const user = await getCurrentUser();
   if (!PL_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+  if (isBackendEnabled()) {
+    const r = await backendCoreSlotAction(beUser(user), slotId, "plVerify", {});
+    if (!r.live) return { ok: false, reason: "INVALID_STATE" };
+    rev(...CORE_SURFACES, "/data-verification");
+    return { ok: true, slotId };
+  }
   const slot = slotById(slotId);
   if (!slot) return { ok: false, reason: "NOT_FOUND" };
   if (slot.plVerificationStatus !== "Pending") return { ok: false, reason: "INVALID_STATE" };
@@ -394,6 +470,12 @@ export async function plVerifyCoreSlot(slotId: string): Promise<CoreSlotResult> 
 export async function iaVerifyCoreSlot(slotId: string): Promise<CoreSlotResult> {
   const user = await getCurrentUser();
   if (!IA_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+  if (isBackendEnabled()) {
+    const r = await backendCoreSlotAction(beUser(user), slotId, "iaVerify", {});
+    if (!r.live) return { ok: false, reason: "INVALID_STATE" };
+    rev(...CORE_SURFACES, "/data-verification", "/disbursements");
+    return { ok: true, slotId };
+  }
   const slot = slotById(slotId);
   if (!slot) return { ok: false, reason: "NOT_FOUND" };
   if (slot.status !== "Awaiting IA Verification") return { ok: false, reason: "INVALID_STATE" };
@@ -427,6 +509,13 @@ export async function iaVerifyCoreSlot(slotId: string): Promise<CoreSlotResult> 
 export async function returnCoreSlot(slotId: string, reason: string): Promise<CoreSlotResult> {
   const user = await getCurrentUser();
   if (!IA_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+  if (isBackendEnabled()) {
+    if ((reason?.trim() ?? "").length < 5) return { ok: false, reason: "INVALID_INPUT" };
+    const r = await backendCoreSlotAction(beUser(user), slotId, "return", { reason });
+    if (!r.live) return { ok: false, reason: "NOT_FOUND" };
+    rev(...CORE_SURFACES, "/data-verification");
+    return { ok: true, slotId };
+  }
   const slot = slotById(slotId);
   if (!slot) return { ok: false, reason: "NOT_FOUND" };
   if ((reason?.trim() ?? "").length < 5) return { ok: false, reason: "INVALID_INPUT" };
@@ -440,6 +529,12 @@ export async function returnCoreSlot(slotId: string, reason: string): Promise<Co
 export async function accountantConfirmCoreSlot(slotId: string, netsuiteExpenseId?: string): Promise<CoreSlotResult> {
   const user = await getCurrentUser();
   if (!ACCOUNTANT_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+  if (isBackendEnabled()) {
+    const r = await backendCoreSlotAction(beUser(user), slotId, "accountantConfirm", { netsuiteExpenseId });
+    if (!r.live) return { ok: false, reason: "NOT_FOUND" };
+    rev(...CORE_SURFACES, "/disbursements", "/dashboards/accountant");
+    return { ok: true, slotId };
+  }
   const slot = slotById(slotId);
   if (!slot) return { ok: false, reason: "NOT_FOUND" };
   updateSlot(slotId, { accountantStatus: "Confirmed" });
@@ -458,6 +553,17 @@ export async function scheduleCoreFollowUpSsa(
 ): Promise<CoreSlotResult> {
   const user = await getCurrentUser();
   if (!ASSIGN_ROLES.has(user.role) && !EXEC_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+  if (isBackendEnabled()) {
+    const assigneeLabel = input.assignee === "partner" ? (input.partnerName?.trim() || "Partner team") : user.name;
+    const r = await backendScheduleCoreFollowUp(beUser(user), planId, {
+      assignee: assigneeLabel,
+      monthLabel: input.monthLabel,
+      week: input.week,
+    });
+    if (!r.live) return { ok: false, reason: "INVALID_STATE" };
+    rev(...CORE_SURFACES);
+    return { ok: true, slotId: planId };
+  }
   const plan = planById(planId);
   if (!plan) return { ok: false, reason: "NOT_FOUND" };
   if (plan.status !== "Completed Pending Follow-Up SSA" && plan.status !== "Follow-Up SSA Scheduled") return { ok: false, reason: "INVALID_STATE" };
@@ -483,34 +589,35 @@ export type CoreFollowUpResult =
 export async function uploadCoreFollowUpSsa(planId: string, scores: CoreSsaScores, dateIso?: string): Promise<CoreFollowUpResult> {
   const user = await getCurrentUser();
   if (!IA_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+  const avg = ssaAverage(scores);
+  if (avg <= 0) return { ok: false, reason: "INVALID_INPUT" };
+
+  if (isBackendEnabled()) {
+    const beScores = SSA_INTERVENTION_AREAS
+      .map((area) => ({ intervention: SSA_AREA_TO_BACKEND[area], score: Number(scores[area]) }))
+      .filter((s) => s.intervention && Number.isFinite(s.score));
+    if (beScores.length !== 8) return { ok: false, reason: "INVALID_INPUT" };
+    const r = await backendUploadCoreFollowUpSsa(beUser(user), planId, {
+      dateOfSsa: new Date(dateIso || new Date().toISOString().slice(0, 10)).toISOString(),
+      scores: beScores,
+    });
+    if (!r.live) return { ok: false, reason: "NOT_READY" };
+    rev(...CORE_SURFACES);
+    return {
+      ok: true,
+      planId,
+      averageChange: r.data?.averageChange ?? 0,
+      championCandidate: !!r.data?.championCandidate,
+    };
+  }
+
   const plan = planById(planId);
   if (!plan) return { ok: false, reason: "NOT_FOUND" };
   if (plan.followUpSSARecordId) return { ok: false, reason: "DUPLICATE" };
   const progress = corePlanProgress(planId);
   if (!progress.readyForFollowUpSSA) return { ok: false, reason: "NOT_READY" };
-  const avg = ssaAverage(scores);
-  if (avg <= 0) return { ok: false, reason: "INVALID_INPUT" };
 
   const date = dateIso || new Date().toISOString().slice(0, 10);
-
-  // Backend-first: a follow-up SSA is a real SSA measurement, so persist it to
-  // the backend SsaRecord (the same store the normal SSA upload writes). That
-  // lands it in the school's SSA history + impact analytics where other features
-  // fetch it. The mock core store below still drives the core-plan board's
-  // baseline-vs-new impact view (the core subsystem has no backend equivalent).
-  if (isBackendEnabled()) {
-    const beScores = SSA_INTERVENTION_AREAS
-      .map((area) => ({ intervention: SSA_AREA_TO_BACKEND[area], score: Number(scores[area]) }))
-      .filter((s) => s.intervention && Number.isFinite(s.score));
-    if (beScores.length === 8) {
-      const r = await backendUploadSsa({ email: user.email, role: user.role }, {
-        schoolId: plan.schoolId,
-        dateOfSsa: new Date(date).toISOString(),
-        scores: beScores,
-      });
-      if (!r.live) return { ok: false, reason: "INVALID_INPUT" };
-    }
-  }
 
   const followId = `cssa-${plan.schoolId}-follow-${Date.now().toString(36)}`;
   addFollowUp({ id: followId, corePlanId: planId, schoolId: plan.schoolId, baselineSSARecordId: plan.baselineSSARecordId, fy: deriveFyFromDate(date), date, scores, average: avg, uploadedById: user.staffId, uploadedByName: user.name });
@@ -549,6 +656,12 @@ export type ChampionResult = { ok: true; schoolId: string; status: string } | { 
 
 export async function advanceChampion(schoolId: string): Promise<ChampionResult> {
   const user = await getCurrentUser();
+  if (isBackendEnabled()) {
+    const r = await backendAdvanceChampion(beUser(user), schoolId);
+    if (!r.live) return { ok: false, reason: "INVALID_STATE" };
+    rev(...CORE_SURFACES);
+    return { ok: true, schoolId, status: r.data!.status };
+  }
   const profile = profileFor(schoolId);
   if (!profile) return { ok: false, reason: "NOT_FOUND" };
   const step = CHAMPION_FLOW[profile.championStatus];

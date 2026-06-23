@@ -4,9 +4,10 @@ import { SsaCoreCandidatesMobileView } from "@/components/mobile/views/SsaCoreCa
 import { SsaHeader } from "@/components/ssa/SsaHeader";
 import { SectionCard } from "@/components/ui/primitives";
 import { ArrowRight } from "lucide-react";
-import { coreCandidates, coreCandidateSummary } from "@/lib/core/core-candidates";
+import { resolveCoreCandidates, resolveCoreCandidateSummary } from "@/lib/core/core-candidates";
 import { CoreCandidateVerifyCell } from "@/components/core/CoreCandidateVerifyCell";
 import type { CoreCandidateStatus } from "@/lib/core/core-types";
+import { getCurrentUser } from "@/lib/auth";
 
 const STATUS_TONE: Record<CoreCandidateStatus, string> = {
   "Candidate":               "bg-sky-100    text-sky-700",
@@ -18,9 +19,10 @@ const STATUS_TONE: Record<CoreCandidateStatus, string> = {
   "Onboarded as Core":       "bg-violet-100 text-violet-700",
 };
 
-export default function CoreCandidateQueuePage() {
-  const candidates = coreCandidates();
-  const summary = coreCandidateSummary();
+export default async function CoreCandidateQueuePage() {
+  const user = await getCurrentUser();
+  const candidates = await resolveCoreCandidates({ email: user.email, role: user.role });
+  const summary = await resolveCoreCandidateSummary({ email: user.email, role: user.role });
 
   return (
     <ResponsiveDashboard mobile={<SsaCoreCandidatesMobileView candidates={candidates} summary={summary} />} desktop={

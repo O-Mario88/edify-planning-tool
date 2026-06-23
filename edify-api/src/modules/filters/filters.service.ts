@@ -59,21 +59,27 @@ export class FiltersService {
   async counts(user: AuthUser, q: FilterQuery) {
     const scope = await this.scope.resolveUserScope(user);
     const base = this.where(scope, q);
-    const [total, core, unclustered, planningReady, awaitingSsa, clusteredMissingSsa] = await Promise.all([
+    const [total, core, champions, unclustered, planningReady, awaitingSsa, clusteredMissingSsa, corePlans] = await Promise.all([
       this.prisma.school.count({ where: base }),
       this.prisma.school.count({ where: { ...base, schoolType: 'core' } }),
+      this.prisma.school.count({ where: { ...base, schoolType: 'champion' } }),
       this.prisma.school.count({ where: { ...base, clusterStatus: { in: ['unclustered', 'needs_review'] } } }),
       this.prisma.school.count({ where: { ...base, planningReadiness: 'ready' } }),
       this.prisma.school.count({ where: { ...base, schoolType: 'core', currentFySsaStatus: { not: 'done' } } }),
       this.prisma.school.count({ where: { ...base, clusterStatus: 'clustered', currentFySsaStatus: { not: 'done' } } }),
+      this.prisma.corePlan.count({
+        where: scope.countryScope || scope.canViewSummaryOnly
+          ? {}
+          : { schoolId: { in: (await this.prisma.school.findMany({ where: base, select: { schoolId: true } })).map((s) => s.schoolId) } },
+      }),
     ]);
     return {
       fy: q.fy ?? getOperationalFY(),
       totalSchools: total, coreSchools: core, clientSchools: total - core,
-      corePlans: core,            // backend: a core school == a core plan record
+      corePlans,
       awaitingSSA: awaitingSsa,   // core schools missing current-FY SSA
       unclustered, planningReady, clusteredMissingSsa,
-      champions: 0,               // champion lifecycle lives in the frontend core-store (not yet a backend model)
+      champions,
     };
   }
 

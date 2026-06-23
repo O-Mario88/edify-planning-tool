@@ -4,6 +4,9 @@
 
 import "server-only";
 import type { EdifyRole } from "@/lib/auth-public";
+import { isBackendEnabled } from "@/lib/api/backend";
+import { fetchCorePlans } from "@/lib/api/surfaces";
+import type { BackendUser } from "@/lib/api/backend";
 import { directoryRecords } from "@/lib/school-directory/directory";
 import { intakeSchools } from "@/lib/intake/intake-mock";
 import {
@@ -44,6 +47,15 @@ function scopeIds(staffId: string, role: EdifyRole): Set<string> | "all" {
     return ids;
   }
   return "all";
+}
+
+export async function resolveCoreBoardData(user: BackendUser, staffId: string, role: EdifyRole): Promise<CorePlanCardVM[]> {
+  if (isBackendEnabled()) {
+    const r = await fetchCorePlans(user);
+    if (r.live && Array.isArray(r.data)) return r.data as CorePlanCardVM[];
+    return [];
+  }
+  return coreBoardData(staffId, role);
 }
 
 export function coreBoardData(staffId: string, role: EdifyRole): CorePlanCardVM[] {

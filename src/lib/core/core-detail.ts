@@ -4,6 +4,9 @@
 // SSA, computed impact, champion review, and a derived timeline. One identity.
 
 import "server-only";
+import { isBackendEnabled } from "@/lib/api/backend";
+import { fetchCoreDetail } from "@/lib/api/surfaces";
+import type { BackendUser } from "@/lib/api/backend";
 import { intakeSchools } from "@/lib/intake/intake-mock";
 import { SSA_INTERVENTION_AREAS, type SsaInterventionArea } from "@/lib/intake/intake-core";
 import {
@@ -47,6 +50,15 @@ export type CoreSchoolDetailVM = {
   areas: readonly SsaInterventionArea[];
   timeline: CoreTimelineEvent[];
 };
+
+export async function resolveCoreSchoolDetail(user: BackendUser, schoolId: string): Promise<CoreSchoolDetailVM | undefined> {
+  if (isBackendEnabled()) {
+    const r = await fetchCoreDetail(user, schoolId);
+    if (r.live && r.data) return r.data as CoreSchoolDetailVM;
+    return undefined;
+  }
+  return coreSchoolDetail(schoolId);
+}
 
 export function coreSchoolDetail(schoolId: string): CoreSchoolDetailVM | undefined {
   const school = intakeSchools.find((s) => s.schoolId === schoolId);

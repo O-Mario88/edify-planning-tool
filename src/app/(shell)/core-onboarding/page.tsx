@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { GraduationCap, ArrowRight, School } from "lucide-react";
 import { EntityIndex } from "@/components/shell/EntityIndex";
-import { coreOnboardingQueue } from "@/lib/core/core-candidates";
+import { resolveCoreOnboardingQueue } from "@/lib/core/core-candidates";
 import { CoreOnboardControls } from "@/components/core/CoreOnboardControls";
 import { getCurrentUser } from "@/lib/auth";
 import { ROLE_REDIRECT } from "@/lib/auth-public";
@@ -17,7 +17,7 @@ export default async function CoreOnboardingPage() {
   const user = await getCurrentUser();
   if (!ALLOWED.has(user.role)) redirect(ROLE_REDIRECT[user.role]);
 
-  const queue = coreOnboardingQueue();
+  const queue = await resolveCoreOnboardingQueue({ email: user.email, role: user.role });
 
   return (
     <EntityIndex

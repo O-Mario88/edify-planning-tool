@@ -8,14 +8,14 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { CorePageHeader } from "@/components/core/CorePageHeader";
 import { CorePlanningWorkspace } from "@/components/core/CorePlanningWorkspace";
-import { coreBoardData, coreBoardSummary } from "@/lib/core/core-board";
+import { coreBoardSummary, resolveCoreBoardData } from "@/lib/core/core-board";
 import { getCurrentUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export default async function Page() {
   const user = await getCurrentUser();
-  const cards = coreBoardData(user.staffId, user.role);
+  const cards = await resolveCoreBoardData({ email: user.email, role: user.role }, user.staffId, user.role);
   const summary = coreBoardSummary(cards);
 
   const viewer = {

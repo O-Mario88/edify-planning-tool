@@ -5,6 +5,9 @@
 
 import "server-only";
 import { SSA_INTERVENTION_AREAS } from "@/lib/intake/intake-core";
+import { isBackendEnabled } from "@/lib/api/backend";
+import { fetchCoreCandidates } from "@/lib/api/surfaces";
+import type { BackendUser } from "@/lib/api/backend";
 import { intakeSchools } from "@/lib/intake/intake-mock";
 import {
   candidateSnapshotFor,
@@ -81,12 +84,34 @@ export function coreOnboardingQueue(): CoreCandidate[] {
   return coreCandidates().filter((c) => c.candidateStatus === "Verified Potential Core");
 }
 
-export function coreCandidateSummary() {
-  const all = coreCandidates();
+export function coreCandidateSummaryFrom(all: CoreCandidate[]) {
   return {
     total: all.length,
     candidate: all.filter((c) => c.candidateStatus === "Candidate").length,
     verified: all.filter((c) => c.candidateStatus === "Verified Potential Core").length,
     rejected: all.filter((c) => c.candidateStatus === "Rejected Candidate").length,
   };
+}
+
+/** Backend-first candidate list; mock only when backend is off. */
+export async function resolveCoreCandidates(user: BackendUser): Promise<CoreCandidate[]> {
+  if (isBackendEnabled()) {
+    const r = await fetchCoreCandidates(user);
+    if (r.live && Array.isArray(r.data)) return r.data as CoreCandidate[];
+    return [];
+  }
+  return coreCandidates();
+}
+
+export async function resolveCoreOnboardingQueue(user: BackendUser): Promise<CoreCandidate[]> {
+  const all = await resolveCoreCandidates(user);
+  return all.filter((c) => c.candidateStatus === "Verified Potential Core");
+}
+
+export async function resolveCoreCandidateSummary(user: BackendUser) {
+  return coreCandidateSummaryFrom(await resolveCoreCandidates(user));
+}
+
+export function coreCandidateSummary() {
+  return coreCandidateSummaryFrom(coreCandidates());
 }
