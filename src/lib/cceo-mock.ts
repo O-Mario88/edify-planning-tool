@@ -491,6 +491,7 @@ export const cceoSidebarItems: CceoMenuItem[] = [
   // Activity — proof + money
   { section: "Activity", label: "Evidence",             href: "/evidence",             icon: "shieldCheck" },
   { section: "Activity", label: "Fund Requests",        href: "/weekly-funds",         icon: "wallet" },
+  { section: "Activity", label: "My Budget",            href: "/budget",               icon: "wallet" },
   { section: "Activity", label: "Completed Activities", href: "/completed-activities", icon: "listChecks" },
 
   // Insights — read-and-think surfaces

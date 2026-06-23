@@ -436,6 +436,8 @@ function buildImpactMenu(dashboardHref: string): MenuSection[] {
       label: "My Work",
       items: [
         { label: "Dashboard",        href: dashboardHref,    Icon: LayoutDashboard },
+        { label: "Planning",         href: "/planning",      Icon: ClipboardList },
+        { label: "My Plan",          href: "/my-plan",       Icon: CalendarCheck },
         { label: "Calendar",         href: "/calendar",      Icon: CalendarRange },
       ],
     },

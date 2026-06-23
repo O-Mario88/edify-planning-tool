@@ -254,8 +254,8 @@ const ROLE_RESTRICTED: Array<{ prefix: string; allow: EdifyRole[] }> = [
   // executive dashboard, analytics, and approvals — never row-level field
   // planning — so the CD (and every non-field role) is bounced to the
   // Access Restricted page that explains the executive view instead.
-  { prefix: "/planning",              allow: ["CCEO", "CountryProgramLead", "Admin"] },
-  { prefix: "/my-plan",               allow: ["CCEO", "CountryProgramLead", "Admin"] },
+  { prefix: "/planning",              allow: ["CCEO", "CountryProgramLead", "ImpactAssessment", "Admin"] },
+  { prefix: "/my-plan",               allow: ["CCEO", "CountryProgramLead", "ImpactAssessment", "Admin"] },
   { prefix: "/completed-activities",  allow: ["CCEO", "CountryProgramLead", "Admin"] },
   // Team Plan — the PL's per-CCEO supervision workspace. Scoped to the
   // supervision chain, so only the PL (and Admin) can open it.

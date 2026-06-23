@@ -65,4 +65,24 @@ export class BudgetController {
   weekly(@CurrentUser() user: AuthUser, @Query('fy') fy?: string, @Query('month') month?: string) {
     return this.budget.weekly(user, { fy, month: month ? Number(month) : undefined });
   }
+
+  /** Monthly budget template — grouped rows, period lens, summary KPIs. */
+  @Get('board')
+  @RequirePermissions(PERMISSIONS.PLANNING_VIEW)
+  board(
+    @CurrentUser() user: AuthUser,
+    @Query('fy') fy?: string,
+    @Query('lens') lens?: string,
+    @Query('month') month?: string,
+    @Query('quarter') quarter?: string,
+    @Query('week') week?: string,
+  ) {
+    return this.budget.board(user, {
+      fy,
+      lens,
+      month: month ? Number(month) : undefined,
+      quarter,
+      week: week ? Number(week) : undefined,
+    });
+  }
 }

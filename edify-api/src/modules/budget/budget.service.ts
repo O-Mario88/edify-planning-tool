@@ -3,7 +3,7 @@ import { ActivityStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeService, UserScope } from '../../common/scope/scope.service';
 import { AuthUser } from '../../common/auth/auth-user';
-import { getOperationalFY } from '../../common/fy/fy.util';
+import { getOperationalFY, getQuarterForDate, type Quarter } from '../../common/fy/fy.util';
 import { AuditService } from '../../common/audit/audit.service';
 import { costForActivity, RateCard, CostableActivity, resolveActivityCost, type SnapshotCostLine } from './costing';
 
@@ -36,6 +36,24 @@ const BUDGETABLE_STATUSES: ActivityStatus[] = [
 ];
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const QMONTHS: Record<Quarter, number[]> = { Q1: [10, 11, 12], Q2: [1, 2, 3], Q3: [4, 5, 6], Q4: [7, 8, 9] };
+
+const VISIT_TYPES = new Set([
+  'school_visit', 'follow_up_visit', 'coaching_visit', 'in_school_support', 'core_visit',
+]);
+const TRAINING_TYPES = new Set(['training', 'school_improvement_training', 'core_training']);
+
+type BudgetLens = 'week' | 'month' | 'quarter' | 'year';
+
+const ROLE_SHORT: Record<string, string> = {
+  CCEO: 'CCEO',
+  CountryProgramLead: 'PL',
+  CountryDirector: 'CD',
+  ImpactAssessment: 'IA',
+  ProgramAccountant: 'Accountant',
+  RegionalVicePresident: 'RVP',
+  Admin: 'Admin',
+};
 
 @Injectable()
 export class BudgetService {
@@ -156,6 +174,16 @@ export class BudgetService {
   }
 
   // ── Activity scope (own work + work in own schools) ─────────────────────────
+
+  /** Budget reads: country roles + RVP see the full country schedule. */
+  private budgetActivityWhere(scope: UserScope): Prisma.ActivityWhereInput {
+    const base: Prisma.ActivityWhereInput = {
+      deletedAt: null,
+      status: { in: BUDGETABLE_STATUSES },
+    };
+    if (scope.countryScope || scope.canViewSummaryOnly) return base;
+    return this.activityWhere(scope);
+  }
 
   private activityWhere(scope: UserScope): Prisma.ActivityWhereInput {
     const base: Prisma.ActivityWhereInput = {
@@ -453,7 +481,293 @@ export class BudgetService {
     };
   }
 
+  /**
+   * Monthly budget template board — grouped activity rows by category, period
+   * lens (week / month / quarter / year), and summary KPIs (this week, next week,
+   * this month, etc.). Powers the role-aware budget dashboard UI.
+   */
+  async board(
+    user: AuthUser,
+    opts: { fy?: string; lens?: string; month?: number; quarter?: string; week?: number } = {},
+  ) {
+    const scope = await this.scope.resolveUserScope(user);
+    const fy = opts.fy || getOperationalFY();
+    const lens = (['week', 'month', 'quarter', 'year'].includes(opts.lens ?? '')
+      ? opts.lens
+      : 'month') as BudgetLens;
+    const rates = await this.rateCard();
+    const now = new Date();
+    const currentMonth = now.getUTCMonth() + 1;
+    const currentWeek = this.weekOfMonth(now);
+    const currentQuarter = getQuarterForDate(now);
+
+    const activities = await this.prisma.activity.findMany({
+      where: { ...this.budgetActivityWhere(scope), fy },
+      select: {
+        id: true,
+        activityType: true,
+        deliveryType: true,
+        estCostCents: true,
+        costMissing: true,
+        month: true,
+        plannedMonth: true,
+        plannedWeek: true,
+        week: true,
+        scheduledDate: true,
+        teachersAttended: true,
+        leadersAttended: true,
+        otherParticipants: true,
+        responsibleStaff: {
+          select: { user: { select: { name: true, roles: true } } },
+        },
+        assignedPartner: { select: { name: true } },
+        scheduleCostLines: {
+          select: { label: true, costSettingKey: true, unitCost: true, quantity: true, amount: true },
+        },
+      },
+    });
+
+    type Costed = {
+      activityType: string;
+      month: number | null;
+      week: number | null;
+      amount: number;
+      costMissing: boolean;
+      schoolCount: number;
+      responsible: string;
+      unitCost: number | null;
+      category: string;
+      activityLabel: string;
+    };
+
+    const costed: Costed[] = activities.map((a) => {
+      const cost = this.resolveCost(
+        {
+          activityType: a.activityType,
+          deliveryType: a.deliveryType,
+          teachersAttended: a.teachersAttended,
+          leadersAttended: a.leadersAttended,
+          otherParticipants: a.otherParticipants,
+          estCostCents: a.estCostCents,
+          costMissing: a.costMissing,
+        },
+        rates,
+        a.scheduleCostLines,
+      );
+      const schoolCount = this.schoolCountFor(a);
+      const unitLine = cost.lines.find((l) => !l.missing && l.unit != null);
+      const unitCost = unitLine?.unit ?? (schoolCount > 0 ? Math.round(cost.amount / schoolCount) : null);
+      return {
+        activityType: a.activityType,
+        month: this.monthNumberOf(a),
+        week: a.plannedWeek ?? a.week ?? (a.scheduledDate ? this.weekOfMonth(a.scheduledDate) : null),
+        amount: cost.amount,
+        costMissing: cost.costMissing,
+        schoolCount,
+        responsible: this.responsibleLabel(a),
+        unitCost,
+        category: this.activityCategory(a.activityType),
+        activityLabel: titleCaseActivity(a.activityType),
+      };
+    });
+
+    const sum = (rows: Costed[]) => rows.reduce((s, r) => s + r.amount, 0);
+
+    const thisWeekRows = costed.filter((r) => r.month === currentMonth && (r.week ?? 1) === currentWeek);
+    const nextWeekNum = currentWeek >= 4 ? 1 : currentWeek + 1;
+    const nextWeekMonth = currentWeek >= 4 ? (currentMonth === 12 ? 1 : currentMonth + 1) : currentMonth;
+    const nextWeekRows = costed.filter((r) => r.month === nextWeekMonth && (r.week ?? 1) === nextWeekNum);
+    const thisMonthRows = costed.filter((r) => r.month === currentMonth);
+    const thisQuarterRows = costed.filter(
+      (r) => r.month != null && QMONTHS[currentQuarter].includes(r.month),
+    );
+
+    const targetMonth = opts.month ?? currentMonth;
+    const targetQuarter = (opts.quarter?.toUpperCase() as Quarter) || currentQuarter;
+    const targetWeek = opts.week ?? currentWeek;
+
+    const periodRows = costed.filter((r) => {
+      if (lens === 'year') return true;
+      if (lens === 'month') return r.month === targetMonth;
+      if (lens === 'quarter') {
+        return r.month != null && QMONTHS[targetQuarter]?.includes(r.month);
+      }
+      // week
+      const wMonth = opts.month ?? currentMonth;
+      return r.month === wMonth && (r.week ?? 1) === targetWeek;
+    });
+
+    // Group rows: category → activity+responsible
+    const groupMap = new Map<string, {
+      category: string;
+      activity: string;
+      responsible: string;
+      schoolCount: number;
+      total: number;
+      unitCost: number | null;
+      costMissing: boolean;
+    }>();
+
+    for (const r of periodRows) {
+      const key = `${r.category}|${r.activityLabel}|${r.responsible}`;
+      const g = groupMap.get(key) ?? {
+        category: r.category,
+        activity: r.activityLabel,
+        responsible: r.responsible,
+        schoolCount: 0,
+        total: 0,
+        unitCost: r.unitCost,
+        costMissing: false,
+      };
+      g.schoolCount += r.schoolCount;
+      g.total += r.amount;
+      if (r.costMissing) g.costMissing = true;
+      if (g.unitCost == null && r.unitCost != null) g.unitCost = r.unitCost;
+      groupMap.set(key, g);
+    }
+
+    const categories = new Map<string, typeof groupMap extends Map<string, infer V> ? V[] : never>();
+    for (const g of groupMap.values()) {
+      const list = categories.get(g.category) ?? [];
+      list.push(g);
+      categories.set(g.category, list);
+    }
+
+    const categoryOrder = [
+      'School Visits', 'Training', 'Cluster Activities', 'SSA Activities',
+      'Special Projects', 'Partner Delivery', 'Other Activities',
+    ];
+
+    let rowIndex = 0;
+    const grouped = categoryOrder
+      .filter((cat) => categories.has(cat))
+      .map((category) => ({
+        category,
+        rows: (categories.get(category) ?? [])
+          .sort((a, b) => b.total - a.total)
+          .map((r) => {
+            rowIndex += 1;
+            const unitCost = r.unitCost ?? (r.schoolCount > 0 ? Math.round(r.total / r.schoolCount) : null);
+            return {
+              index: rowIndex,
+              activity: r.activity,
+              schoolCount: r.schoolCount,
+              responsible: r.responsible,
+              unitCost,
+              total: r.total,
+              costMissing: r.costMissing,
+            };
+          }),
+      }));
+
+    const byType = new Map<string, number>();
+    for (const r of periodRows) {
+      byType.set(r.category, (byType.get(r.category) ?? 0) + r.amount);
+    }
+    const periodTotal = sum(periodRows);
+    const byCategory = Array.from(byType.entries())
+      .map(([label, amount]) => ({
+        label,
+        amount,
+        pct: periodTotal > 0 ? Math.round((amount / periodTotal) * 1000) / 10 : 0,
+      }))
+      .sort((a, b) => b.amount - a.amount);
+
+    const byMonth = MONTHS.map((label, i) => {
+      const month = i + 1;
+      const rows = costed.filter((r) => r.month === month);
+      return { month, label, amount: sum(rows), count: rows.length };
+    });
+
+    const lensLabel =
+      lens === 'week'
+        ? `Week ${targetWeek} · ${MONTHS[targetMonth - 1]} FY${fy}`
+        : lens === 'month'
+          ? `${MONTHS[targetMonth - 1]} FY${fy}`
+          : lens === 'quarter'
+            ? `${targetQuarter} FY${fy}`
+            : `FY ${fy}`;
+
+    const viewMode =
+      scope.canViewSummaryOnly
+        ? 'country_summary'
+        : scope.countryScope
+          ? 'country'
+          : scope.canViewTeam
+            ? 'team'
+            : 'own';
+
+    return {
+      live: true,
+      fy,
+      role: scope.activeRole,
+      scope: scope.countryScope || scope.canViewSummaryOnly ? 'country' : scope.canViewTeam ? 'team' : 'own',
+      viewMode,
+      lens,
+      lensLabel,
+      period: { month: targetMonth, quarter: targetQuarter, week: targetWeek },
+      summary: {
+        thisWeek: sum(thisWeekRows),
+        nextWeek: sum(nextWeekRows),
+        thisMonth: sum(thisMonthRows),
+        thisQuarter: sum(thisQuarterRows),
+        fiscalYear: sum(costed),
+        periodTotal,
+        activityCount: periodRows.length,
+        costMissingCount: periodRows.filter((r) => r.costMissing).length,
+      },
+      grouped,
+      byCategory,
+      byMonth,
+      workflow: [
+        { step: 1, label: 'Plan & cost from catalogue', detail: 'Staff schedule activities; costs auto-calculated from the Country Cost Register.' },
+        { step: 2, label: 'CCEO → PL review', detail: 'CCEO plans route to their Program Lead for fund approval.' },
+        { step: 3, label: 'PL / IA / Accountant → CD', detail: 'PL, IA, and Accountant plans route to the Country Director.' },
+        { step: 4, label: 'CD approval + admin cost', detail: 'CD approves the plan and budget, then adds administrative costs.' },
+        { step: 5, label: 'RVP final approval', detail: 'Consolidated country budget goes to RVP for final sign-off.' },
+      ],
+    };
+  }
+
   // ── helpers ──────────────────────────────────────────────────────────────
+
+  private activityCategory(type: string): string {
+    if (VISIT_TYPES.has(type)) return 'School Visits';
+    if (TRAINING_TYPES.has(type)) return 'Training';
+    if (type.startsWith('cluster_')) return 'Cluster Activities';
+    if (type === 'ssa_activity') return 'SSA Activities';
+    if (type === 'project_activity') return 'Special Projects';
+    if (type === 'partner_activity') return 'Partner Delivery';
+    return 'Other Activities';
+  }
+
+  private schoolCountFor(a: {
+    activityType: string;
+    teachersAttended?: number | null;
+    leadersAttended?: number | null;
+    otherParticipants?: number | null;
+  }): number {
+    if (TRAINING_TYPES.has(a.activityType)) {
+      const n = (a.teachersAttended ?? 0) + (a.leadersAttended ?? 0) + (a.otherParticipants ?? 0);
+      return n > 0 ? n : 1;
+    }
+    return 1;
+  }
+
+  private responsibleLabel(a: {
+    responsibleStaff?: { user?: { name?: string | null; roles?: string[] } | null } | null;
+    assignedPartner?: { name?: string | null } | null;
+  }): string {
+    if (a.assignedPartner?.name) return `${a.assignedPartner.name} (Partner)`;
+    const name = a.responsibleStaff?.user?.name ?? 'Unassigned';
+    const role = a.responsibleStaff?.user?.roles?.[0] ?? '';
+    const short = ROLE_SHORT[role] ?? (role || 'Staff');
+    return `${name} (${short})`;
+  }
+
+  private weekOfMonth(d: Date): number {
+    return Math.min(4, Math.ceil(d.getUTCDate() / 7));
+  }
 
   private monthNumberOf(a: { scheduledDate?: Date | null; month?: number | null; plannedMonth?: number | null }): number | null {
     if (a.scheduledDate) return a.scheduledDate.getMonth() + 1;
@@ -473,6 +787,10 @@ export class BudgetService {
       return { quarter: q, amount: rows.reduce((s, r) => s + r.amount, 0), count: rows.reduce((s, r) => s + r.count, 0) };
     });
   }
+}
+
+function titleCaseActivity(s: string): string {
+  return s.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 function ugx(n: number): string {

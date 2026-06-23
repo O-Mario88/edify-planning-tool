@@ -795,6 +795,38 @@ export type BeBudgetWeekly = {
   weeks: { key: string; month: number | null; week: number | null; amount: number; count: number }[];
   lines: BeBudgetWeeklyLine[];
 };
+export type BeBudgetBoardRow = {
+  index: number; activity: string; schoolCount: number; responsible: string;
+  unitCost: number | null; total: number; costMissing: boolean;
+};
+export type BeBudgetBoardCategory = { category: string; rows: BeBudgetBoardRow[] };
+export type BeBudgetBoard = {
+  live: true; fy: string; role: string; scope: "own" | "team" | "country";
+  viewMode: "own" | "team" | "country" | "country_summary";
+  lens: "week" | "month" | "quarter" | "year"; lensLabel: string;
+  period: { month: number; quarter: string; week: number };
+  summary: {
+    thisWeek: number; nextWeek: number; thisMonth: number; thisQuarter: number;
+    fiscalYear: number; periodTotal: number; activityCount: number; costMissingCount: number;
+  };
+  grouped: BeBudgetBoardCategory[];
+  byCategory: { label: string; amount: number; pct: number }[];
+  byMonth: { month: number; label: string; amount: number; count: number }[];
+  workflow: { step: number; label: string; detail: string }[];
+};
+export function fetchBudgetBoard(
+  user: BackendUser,
+  opts: { fy?: string; lens?: string; month?: number; quarter?: string; week?: number } = {},
+) {
+  const q = new URLSearchParams();
+  if (opts.fy) q.set("fy", opts.fy);
+  if (opts.lens) q.set("lens", opts.lens);
+  if (opts.month) q.set("month", String(opts.month));
+  if (opts.quarter) q.set("quarter", opts.quarter);
+  if (opts.week) q.set("week", String(opts.week));
+  const qs = q.toString();
+  return live<Omit<BeBudgetBoard, "live">>(`/budget/board${qs ? `?${qs}` : ""}`, user);
+}
 export function fetchBudgetFromSchedule(user: BackendUser, fy?: string) {
   return live<Omit<BeBudgetFromSchedule, "live">>(`/budget/from-schedule${fy ? `?fy=${encodeURIComponent(fy)}` : ""}`, user);
 }
