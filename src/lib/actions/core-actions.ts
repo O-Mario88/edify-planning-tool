@@ -7,7 +7,9 @@
 
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/auth";
-import { ssaAverage, deriveFyFromDate, type SsaInterventionArea } from "@/lib/intake/intake-core";
+import { ssaAverage, deriveFyFromDate, SSA_AREA_TO_BACKEND, SSA_INTERVENTION_AREAS, type SsaInterventionArea } from "@/lib/intake/intake-core";
+import { isBackendEnabled } from "@/lib/api/backend";
+import { backendUploadSsa } from "@/lib/api/surfaces";
 import { emitAudit, emitNotification, emitNotificationFanOut } from "./audit";
 import {
   candidateSnapshotFor,
@@ -490,6 +492,26 @@ export async function uploadCoreFollowUpSsa(planId: string, scores: CoreSsaScore
   if (avg <= 0) return { ok: false, reason: "INVALID_INPUT" };
 
   const date = dateIso || new Date().toISOString().slice(0, 10);
+
+  // Backend-first: a follow-up SSA is a real SSA measurement, so persist it to
+  // the backend SsaRecord (the same store the normal SSA upload writes). That
+  // lands it in the school's SSA history + impact analytics where other features
+  // fetch it. The mock core store below still drives the core-plan board's
+  // baseline-vs-new impact view (the core subsystem has no backend equivalent).
+  if (isBackendEnabled()) {
+    const beScores = SSA_INTERVENTION_AREAS
+      .map((area) => ({ intervention: SSA_AREA_TO_BACKEND[area], score: Number(scores[area]) }))
+      .filter((s) => s.intervention && Number.isFinite(s.score));
+    if (beScores.length === 8) {
+      const r = await backendUploadSsa({ email: user.email, role: user.role }, {
+        schoolId: plan.schoolId,
+        dateOfSsa: new Date(date).toISOString(),
+        scores: beScores,
+      });
+      if (!r.live) return { ok: false, reason: "INVALID_INPUT" };
+    }
+  }
+
   const followId = `cssa-${plan.schoolId}-follow-${Date.now().toString(36)}`;
   addFollowUp({ id: followId, corePlanId: planId, schoolId: plan.schoolId, baselineSSARecordId: plan.baselineSSARecordId, fy: deriveFyFromDate(date), date, scores, average: avg, uploadedById: user.staffId, uploadedByName: user.name });
   addSsaSnapshot({ id: followId, schoolId: plan.schoolId, kind: "followup", fy: deriveFyFromDate(date), date, scores, average: avg });

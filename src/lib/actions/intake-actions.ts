@@ -19,6 +19,7 @@ import {
   ssaAverage,
   validateNewSchool,
   validateSsaUpload,
+  SSA_AREA_TO_BACKEND,
   type NewSchoolInput,
   type SsaInterventionArea,
   type SsaUploadInput,
@@ -33,7 +34,7 @@ import { getIntakeTemplate } from "@/lib/intake/intake-templates";
 import { validateIntakeValues } from "@/lib/intake/intake-validate";
 import { addIntakeRecords } from "@/lib/intake/intake-records-mock";
 import { isBackendEnabled, type BackendUser } from "@/lib/api/backend";
-import { backendCreateSchool, backendUploadSsa, backendSetSchoolType, fetchDistricts, fetchSubCounties, fetchParishes } from "@/lib/api/surfaces";
+import { backendCreateSchool, backendBulkSchools, backendUploadSsa, backendSetSchoolType, fetchDistricts, fetchSubCounties, fetchParishes, type BackendSchoolWrite } from "@/lib/api/surfaces";
 
 // FE school-type label → backend SchoolType enum key.
 const SCHOOL_TYPE_TO_BACKEND: Record<string, string> = {
@@ -43,18 +44,6 @@ const SCHOOL_TYPE_TO_BACKEND: Record<string, string> = {
   Champion: "champion",
   "Potential Champion": "potential_champion",
   Other: "other",
-};
-
-// FE SSA display label → backend SsaIntervention enum key. The 8 areas map 1:1.
-const SSA_AREA_TO_BACKEND: Record<string, string> = {
-  "Christlike Behaviour": "christlike_behaviour",
-  "Exposure to the Word of God": "exposure_to_word_of_god",
-  "Fees/Budget and Accounts": "financial_health",
-  "Government Requirement": "government_requirements",
-  "Leadership Best Practice": "leadership",
-  "Learning Environment": "learning_environment",
-  "Teaching Environment": "teaching_and_learning",
-  "Education Technology": "education_technology",
 };
 
 // Resolve a school's region/district/sub-county NAMES to backend geography IDs
@@ -237,30 +226,31 @@ export async function createSchoolsBulk(inputs: NewSchoolInput[]): Promise<BulkS
   const failed: Array<{ schoolId: string; errors: Record<string, string> }> = [];
   const today = new Date().toISOString().slice(0, 10);
 
+  // Re-validate every row server-side against the live id set first.
+  const validInputs: NewSchoolInput[] = [];
   for (const input of inputs) {
-    // Re-validate server-side against the live id set (incl. rows just created).
     const v = validateNewSchool(input, intakeSchoolIds());
-    if (!v.ok) {
-      failed.push({ schoolId: input.schoolId, errors: v.errors });
-      continue;
-    }
-    const enrollment =
-      input.enrollment === undefined || input.enrollment === "" ? undefined : Number(input.enrollment);
+    if (!v.ok) { failed.push({ schoolId: input.schoolId, errors: v.errors }); continue; }
+    validInputs.push(input);
+  }
 
-    // Backend-first per row (mirrors createSchool's backend branch). CSV bulk
-    // upload previously called only addIntakeSchool (in-memory) with no backend
-    // branch, so bulk-onboarded schools never reached the live directory under
-    // EDIFY_USE_BACKEND=true — the whole bulk-import journey dead-ended.
-    if (isBackendEnabled()) {
+  // Backend-first: resolve each row's geography → IDs and submit ONE tracked
+  // batch (POST /schools/bulk creates an UploadBatch + per-row dedupe/owner-map).
+  // Previously bulk CSV did N individual POSTs with no batch record. Rows whose
+  // district can't be resolved are recorded as failures, never silently saved to
+  // the in-memory mirror only.
+  const persistedInputs: NewSchoolInput[] = [];
+  if (isBackendEnabled()) {
+    const beRows: BackendSchoolWrite[] = [];
+    const inputBySchoolId = new Map<string, NewSchoolInput>();
+    for (const input of validInputs) {
       const geo = await resolveSchoolGeography(beUser(user), input.district, input.subCounty);
-      // Backend-authoritative (see createSchool): an unresolved district means
-      // the row cannot be persisted. Record it as a failed row with a precise
-      // reason rather than mirroring it into the in-memory store only.
       if (!geo) {
         failed.push({ schoolId: input.schoolId, errors: { district: `"${input.district}" did not match a backend district.` } });
         continue;
       }
-      const r = await backendCreateSchool(beUser(user), {
+      const enrollment = input.enrollment === undefined || input.enrollment === "" ? undefined : Number(input.enrollment);
+      const beRow: BackendSchoolWrite = {
         schoolId: input.schoolId.trim(),
         name: input.schoolName.trim(),
         regionId: geo.regionId,
@@ -269,13 +259,34 @@ export async function createSchoolsBulk(inputs: NewSchoolInput[]): Promise<BulkS
         enrollment,
         schoolType: SCHOOL_TYPE_TO_BACKEND[input.schoolType] ?? "client",
         accountOwnerName: input.assignedCceo,
-      });
-      if (!r.live) {
-        failed.push({ schoolId: input.schoolId, errors: { schoolId: `Backend rejected: ${r.error ?? "the school could not be saved."}` } });
-        continue;
-      }
+      };
+      beRows.push(beRow);
+      inputBySchoolId.set(beRow.schoolId, input);
     }
 
+    if (beRows.length > 0) {
+      const res = await backendBulkSchools(beUser(user), "intake-csv-upload.csv", beRows);
+      if (!res.live) {
+        for (const r of beRows) {
+          failed.push({ schoolId: r.schoolId, errors: { schoolId: `Backend rejected: ${res.error ?? "the bulk import could not be saved."}` } });
+        }
+      } else {
+        for (const result of res.data.results) {
+          const input = inputBySchoolId.get(result.schoolId);
+          if (result.ok && input) persistedInputs.push(input);
+          else failed.push({ schoolId: result.schoolId, errors: { schoolId: `Backend rejected: ${result.reason ?? "duplicate or invalid row"}` } });
+        }
+      }
+    }
+  } else {
+    // Mock mode (dev only): the in-memory store is the source of truth.
+    persistedInputs.push(...validInputs);
+  }
+
+  // Mirror persisted rows into the in-memory store so the dev/mock intake
+  // surfaces stay in sync. In production nothing reads this mirror.
+  for (const input of persistedInputs) {
+    const enrollment = input.enrollment === undefined || input.enrollment === "" ? undefined : Number(input.enrollment);
     const row = addIntakeSchool({
       schoolId: input.schoolId.trim(),
       schoolName: input.schoolName.trim(),
@@ -365,7 +376,7 @@ export async function uploadSsaPerformance(input: SsaUploadInput): Promise<
   // planning interventions). On a backend error, surface it. ──
   if (isBackendEnabled()) {
     const beScores = Object.entries(input.scores)
-      .map(([area, raw]) => ({ intervention: SSA_AREA_TO_BACKEND[area], score: Number(raw) }))
+      .map(([area, raw]) => ({ intervention: SSA_AREA_TO_BACKEND[area as SsaInterventionArea], score: Number(raw) }))
       .filter((s) => s.intervention && Number.isFinite(s.score));
     // Backend-authoritative: all 8 intervention areas must map to a backend enum
     // and persist. If fewer than 8 mapped, the FE labels drifted from

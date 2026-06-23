@@ -13,6 +13,7 @@
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/auth";
 import { storage, observability } from "@/lib/infra";
+import { isBackendEnabled } from "@/lib/api/backend";
 import { emitAudit, emitNotificationFanOut } from "./audit";
 import {
   type DonorEvidenceStatus,
@@ -158,12 +159,17 @@ export async function partnerUploadEvidence(args: {
 }): Promise<PartnerActionResult & { uri?: string }> {
   const user = await getCurrentUser();
   if (!PARTNER_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
+  // Backend-first: real evidence is uploaded via POST /api/evidence/upload
+  // (multipart → on-disk file + EvidenceRecord). This legacy path only writes a
+  // stub URI into the in-memory store and is invisible to backend evidence
+  // queries, so it is inert whenever the backend is on (mock/demo use only).
+  if (isBackendEnabled()) return { ok: false, reason: "FORBIDDEN" };
   const a = findPartnerActivity(args.activityId);
   if (!a) return { ok: false, reason: "NOT_FOUND" };
   if (a.status !== "Delivered") {
     return { ok: false, reason: "INVALID_STATE", current: a.status };
   }
-  if (args.contentLength <= 0 || args.contentLength > 25 * 1024 * 1024) {
+  if (args.contentLength <= 0 || args.contentLength > 10 * 1024 * 1024) {
     return { ok: false, reason: "INVALID_INPUT", field: "contentLength" };
   }
   if (!args.filename) return { ok: false, reason: "INVALID_INPUT", field: "filename" };

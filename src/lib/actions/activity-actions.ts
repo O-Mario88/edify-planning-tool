@@ -17,6 +17,7 @@
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/auth";
 import { storage } from "@/lib/infra";
+import { isBackendEnabled } from "@/lib/api/backend";
 import { emitAudit, emitNotificationFanOut } from "./audit";
 import { isValidId } from "@/lib/intake/id-formats";
 import {
@@ -364,7 +365,11 @@ export async function uploadEvidence(args: {
   // or Admin may upload. Without this, any session could push a training
   // participant into the donor-count pipeline (donorCountStatus flip).
   if (!ASSIGNEE_ROLES.has(user.role)) return { ok: false, reason: "FORBIDDEN" };
-  if (args.contentLength <= 0 || args.contentLength > 25 * 1024 * 1024) {
+  // Backend-first: real evidence flows through POST /api/evidence/upload
+  // (on-disk file + EvidenceRecord). This legacy stub-URI path is mock/demo only
+  // and is inert when the backend is on.
+  if (isBackendEnabled()) return { ok: false, reason: "FORBIDDEN" };
+  if (args.contentLength <= 0 || args.contentLength > 10 * 1024 * 1024) {
     return { ok: false, reason: "INVALID_INPUT", field: "contentLength" };
   }
   if (!args.filename || args.filename.length < 1) {

@@ -2,10 +2,10 @@
 
 // EvidenceBulkDropzone — drag-drop / file-picker for partner evidence.
 //
-// AUDIT FIX: the previous version's onDrop was a no-op — files were
-// silently discarded. This version wires every accepted file through
-// the `partnerUploadEvidence` server action and surfaces per-file
-// success/failure status inline.
+// Each accepted file is sent as a real multipart POST to /api/evidence/upload
+// (→ edify-api: on-disk file + EvidenceRecord on the partner Activity), with
+// per-file success/failure status surfaced inline. The legacy stub-URI server
+// action is no longer used here.
 //
 // Routing rule: every uploaded file goes to the activity selected in
 // the top control. If exactly one Delivered activity is available, it

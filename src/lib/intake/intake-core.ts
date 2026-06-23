@@ -31,6 +31,20 @@ export const SSA_INTERVENTION_AREAS = [
 
 export type SsaInterventionArea = (typeof SSA_INTERVENTION_AREAS)[number];
 
+/** FE SSA display label → backend SsaIntervention enum key (1:1 across the 8
+ *  areas). Single source of truth so every SSA write path (manual intake, CSV,
+ *  core follow-up) maps to the backend identically. */
+export const SSA_AREA_TO_BACKEND: Record<SsaInterventionArea, string> = {
+  "Christlike Behaviour": "christlike_behaviour",
+  "Exposure to the Word of God": "exposure_to_word_of_god",
+  "Fees/Budget and Accounts": "financial_health",
+  "Government Requirement": "government_requirements",
+  "Leadership Best Practice": "leadership",
+  "Learning Environment": "learning_environment",
+  "Teaching Environment": "teaching_and_learning",
+  "Education Technology": "education_technology",
+};
+
 export type SchoolType = "Client" | "Core" | "Potential Core" | "Champion" | "Potential Champion" | "Other";
 
 /** FY id ("2026") for an SSA/intake date — Oct 1 starts the next FY. */

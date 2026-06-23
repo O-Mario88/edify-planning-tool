@@ -1162,13 +1162,25 @@ export function backendPlanAction(user: BackendUser, planId: string, action: "su
 }
 
 // ── Data intake (Add School + Upload SSA) — backend writes ──────────
-export function backendCreateSchool(user: BackendUser, body: {
+export type BackendSchoolWrite = {
   schoolId: string; name: string; regionId: string; districtId: string;
   subCountyId?: string; parishId?: string; shippingAddress?: string;
   schoolPhone?: string; primaryContactName?: string; primaryContactPhone?: string;
   enrollment?: number; accountOwnerName?: string; schoolType?: string;
-}) {
+};
+export function backendCreateSchool(user: BackendUser, body: BackendSchoolWrite) {
   return live<{ id: string; schoolId: string }>(`/schools`, user, { method: "POST", body: JSON.stringify(body) });
+}
+/** CSV bulk school onboarding (POST /schools/bulk). One request creates an
+ *  UploadBatch + dedupe/owner-map per row, so the IA gets a tracked import
+ *  instead of N individual POSTs. Geography must already be resolved to IDs. */
+export function backendBulkSchools(user: BackendUser, fileName: string | undefined, rows: BackendSchoolWrite[]) {
+  return live<{
+    batchId: string;
+    accepted: number;
+    flagged: number;
+    results: Array<{ schoolId: string; ok: boolean; reason?: string; duplicateOf?: string[] }>;
+  }>(`/schools/bulk`, user, { method: "POST", body: JSON.stringify({ fileName, rows }) });
 }
 /** Change a school's type (Client → Core → Champion). Moves it on/off the core dashboard. */
 export function backendSetSchoolType(user: BackendUser, schoolId: string, schoolType: string) {
