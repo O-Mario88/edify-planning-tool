@@ -18,10 +18,11 @@ import {
 } from "@/lib/data-intake-mock";
 import { activeFinancialYear } from "@/lib/fy-engine";
 import { getCurrentUser } from "@/lib/auth";
-import { isMockAllowed } from "@/lib/mock-policy";
+import { isMockAllowed, isProductionSafe } from "@/lib/mock-policy";
+import { fetchSchools, type BeSchoolRow } from "@/lib/api/surfaces";
 import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
 import { cn } from "@/lib/utils";
-import { IaIntakeActions } from "@/components/intake/IaIntakeActions";
+import { IaIntakeActions, type IntakeSchoolLite } from "@/components/intake/IaIntakeActions";
 import { OwnerMappingQueue } from "@/components/intake/OwnerMappingQueue";
 import { intakeSchools } from "@/lib/intake/intake-mock";
 import { ownerDistribution, unmatchedOwners } from "@/lib/portfolio/portfolio";
@@ -43,6 +44,43 @@ export default async function DataIntakeHubPage() {
   // (data-intake-mock, intakeSchools, duplicate-candidates-mock) — there is no
   // live intake backend. Never show fabricated batches/readiness in production.
   if (!isMockAllowed()) {
+    // Production / backend mode. The mock-only surfaces (import batches,
+    // readiness KPIs, ownership distribution, duplicate flags) stay withheld —
+    // never fabricated — BUT school + SSA master-data upload IS live and writes
+    // straight to Postgres via the intake server actions. Previously this whole
+    // page was a dead stub in production, so IA/Admin had no way to onboard a
+    // school or upload an SSA at all. The school picker + recently-added list are
+    // sourced from the backend directory, not mock fixtures.
+    if (isProductionSafe() && allowed) {
+      const liveSchools = await fetchSchools(me, { pageSize: 200 });
+      const lite: IntakeSchoolLite[] = (liveSchools.live ? liveSchools.data.data : []).map(toIntakeLite);
+      return (
+        <StubPage
+          title="Data Intake & Readiness Engine"
+          subtitle={`Upload schools + SSA performance straight to the planning database. Templates are system-generated and validated. ${fy.label}.`}
+        >
+          <IaIntakeActions existingIds={lite.map((s) => s.schoolId)} schools={lite} />
+          {!liveSchools.live && (
+            <section className="card p-3.5 border-amber-200 bg-amber-50/60">
+              <h2 className="text-[13px] font-extrabold tracking-tight">School directory unavailable</h2>
+              <p className="text-[11.5px] muted">
+                Could not reach the backend to load the school list for SSA upload. New schools can still be created;
+                refresh once the backend is reachable to upload SSA performance.
+              </p>
+            </section>
+          )}
+          <ProductiveEmptyState
+            Icon={Database}
+            title="Validation queue & readiness are computed from live data"
+            description="Import batches, planning-data readiness, ownership distribution, and duplicate flags are derived from the backend — no fabricated figures are shown."
+            actionLabel="Open Schools"
+            actionHref="/schools"
+            links={[{ label: "System health", href: "/system-health" }, { label: "Analytics", href: "/analytics" }]}
+            note="Schools and SSA uploaded above persist to the planning database immediately."
+          />
+        </StubPage>
+      );
+    }
     return (
       <StubPage
         title="Data Intake & Readiness Engine"
@@ -249,6 +287,37 @@ export default async function DataIntakeHubPage() {
       </section>
     </StubPage>
   );
+}
+
+// Backend SchoolType enum → human label (mirrors SCHOOL_TYPE_TO_BACKEND in
+// intake-actions, reversed). Display-only.
+const BE_SCHOOL_TYPE_LABEL: Record<string, string> = {
+  client: "Client", core: "Core", potential_core: "Potential Core",
+  champion: "Champion", potential_champion: "Potential Champion", other: "Other",
+};
+
+// Map a backend school row to the lite shape the intake UI consumes (SSA school
+// picker + recently-added list). The backend is the source of truth — no mock.
+function toIntakeLite(r: BeSchoolRow): IntakeSchoolLite {
+  return {
+    schoolId: r.schoolId,
+    schoolName: r.name,
+    district: r.district?.name ?? "",
+    region: r.region?.name ?? "",
+    schoolType: BE_SCHOOL_TYPE_LABEL[r.schoolType] ?? r.schoolType,
+    ssaStatus: r.currentFySsaStatus,
+    // "Planning open" once the school is planning-ready; otherwise SSA pending.
+    planningLocked: r.planningReadiness !== "ready",
+    dateAdded: "",
+    addedBy: "",
+    subCounty: r.subCounty?.name ?? undefined,
+    enrollment: r.enrollment ?? undefined,
+    assignedCceo: r.accountOwner?.user?.name ?? r.accountOwnerNameRaw ?? undefined,
+    cluster: r.cluster?.name ?? undefined,
+    phone: r.schoolPhone ?? undefined,
+    primaryContact: r.primaryContactName ?? undefined,
+    shippingAddress: r.shippingAddress ?? undefined,
+  };
 }
 
 function Kpi({ label, value, sub, tone = "edify" }: { label: string; value: string; sub: string; tone?: "edify" | "green" | "amber" | "rose" }) {

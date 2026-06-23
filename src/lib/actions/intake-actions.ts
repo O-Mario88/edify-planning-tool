@@ -132,21 +132,31 @@ export async function createSchool(input: NewSchoolInput): Promise<IntakeResult>
   // the in-memory store so the FE's mock-reading intake surfaces stay in sync. ──
   if (isBackendEnabled()) {
     const geo = await resolveSchoolGeography(beUser(user), input.district, input.subCounty, input.parish);
-    if (geo) {
-      const r = await backendCreateSchool(beUser(user), {
-        schoolId: input.schoolId.trim(),
-        name: input.schoolName.trim(),
-        regionId: geo.regionId,
-        districtId: geo.districtId,
-        subCountyId: geo.subCountyId,
-        parishId: geo.parishId,
-        enrollment,
-        schoolType: SCHOOL_TYPE_TO_BACKEND[input.schoolType] ?? "client",
-        accountOwnerName: input.assignedCceo,
-      });
-      if (!r.live && r.error) {
-        return { ok: false, reason: "INVALID_INPUT", errors: { schoolId: `Backend rejected: ${r.error}` } };
-      }
+    // Backend-authoritative: if the district/sub-county can't be resolved to a
+    // backend geography ID, the school CANNOT be persisted to Postgres. We must
+    // NOT silently fall back to the in-memory mirror and report success — that's
+    // exactly how an "uploaded" school went missing from the live directory.
+    // Surface a precise, correctable error instead.
+    if (!geo) {
+      return {
+        ok: false,
+        reason: "INVALID_INPUT",
+        errors: { district: `"${input.district}" did not match a district in the backend geography. Check the spelling against the official district list.` },
+      };
+    }
+    const r = await backendCreateSchool(beUser(user), {
+      schoolId: input.schoolId.trim(),
+      name: input.schoolName.trim(),
+      regionId: geo.regionId,
+      districtId: geo.districtId,
+      subCountyId: geo.subCountyId,
+      parishId: geo.parishId,
+      enrollment,
+      schoolType: SCHOOL_TYPE_TO_BACKEND[input.schoolType] ?? "client",
+      accountOwnerName: input.assignedCceo,
+    });
+    if (!r.live) {
+      return { ok: false, reason: "INVALID_INPUT", errors: { schoolId: `Backend rejected: ${r.error ?? "the school could not be saved."}` } };
     }
   }
 
@@ -243,21 +253,26 @@ export async function createSchoolsBulk(inputs: NewSchoolInput[]): Promise<BulkS
     // EDIFY_USE_BACKEND=true — the whole bulk-import journey dead-ended.
     if (isBackendEnabled()) {
       const geo = await resolveSchoolGeography(beUser(user), input.district, input.subCounty);
-      if (geo) {
-        const r = await backendCreateSchool(beUser(user), {
-          schoolId: input.schoolId.trim(),
-          name: input.schoolName.trim(),
-          regionId: geo.regionId,
-          districtId: geo.districtId,
-          subCountyId: geo.subCountyId,
-          enrollment,
-          schoolType: SCHOOL_TYPE_TO_BACKEND[input.schoolType] ?? "client",
-          accountOwnerName: input.assignedCceo,
-        });
-        if (!r.live && r.error) {
-          failed.push({ schoolId: input.schoolId, errors: { schoolId: `Backend rejected: ${r.error}` } });
-          continue;
-        }
+      // Backend-authoritative (see createSchool): an unresolved district means
+      // the row cannot be persisted. Record it as a failed row with a precise
+      // reason rather than mirroring it into the in-memory store only.
+      if (!geo) {
+        failed.push({ schoolId: input.schoolId, errors: { district: `"${input.district}" did not match a backend district.` } });
+        continue;
+      }
+      const r = await backendCreateSchool(beUser(user), {
+        schoolId: input.schoolId.trim(),
+        name: input.schoolName.trim(),
+        regionId: geo.regionId,
+        districtId: geo.districtId,
+        subCountyId: geo.subCountyId,
+        enrollment,
+        schoolType: SCHOOL_TYPE_TO_BACKEND[input.schoolType] ?? "client",
+        accountOwnerName: input.assignedCceo,
+      });
+      if (!r.live) {
+        failed.push({ schoolId: input.schoolId, errors: { schoolId: `Backend rejected: ${r.error ?? "the school could not be saved."}` } });
+        continue;
       }
     }
 
@@ -352,16 +367,21 @@ export async function uploadSsaPerformance(input: SsaUploadInput): Promise<
     const beScores = Object.entries(input.scores)
       .map(([area, raw]) => ({ intervention: SSA_AREA_TO_BACKEND[area], score: Number(raw) }))
       .filter((s) => s.intervention && Number.isFinite(s.score));
-    if (beScores.length >= 8) {
-      const r = await backendUploadSsa(beUser(user), {
-        schoolId: input.schoolId,
-        dateOfSsa: new Date(input.ssaDate).toISOString(),
-        newEnrollment,
-        scores: beScores,
-      });
-      if (!r.live && r.error) {
-        return { ok: false, reason: "INVALID_INPUT", errors: { schoolId: `Backend rejected: ${r.error}` } };
-      }
+    // Backend-authoritative: all 8 intervention areas must map to a backend enum
+    // and persist. If fewer than 8 mapped, the FE labels drifted from
+    // SSA_AREA_TO_BACKEND — fail loudly instead of writing a mock-only row that
+    // never reaches the SSA-driven planning/recommendation engine.
+    if (beScores.length < 8) {
+      return { ok: false, reason: "INVALID_INPUT", errors: { scores: "Could not map all 8 SSA intervention areas to the backend. Refresh and re-enter the scores." } };
+    }
+    const r = await backendUploadSsa(beUser(user), {
+      schoolId: input.schoolId,
+      dateOfSsa: new Date(input.ssaDate).toISOString(),
+      newEnrollment,
+      scores: beScores,
+    });
+    if (!r.live) {
+      return { ok: false, reason: "INVALID_INPUT", errors: { schoolId: `Backend rejected: ${r.error ?? "the SSA could not be saved. Confirm the school exists in the directory first."}` } };
     }
   }
 

@@ -105,15 +105,23 @@ export class EvidenceService {
     });
     // Partner-delivered work moves to "evidence uploaded" awaiting staff review;
     // staff-delivered just flags evidence present.
+    //
+    // The status must advance from ANY pre-evidence active status, not only
+    // assigned_to_partner/partner_scheduled. Previously a partner who pressed
+    // "Complete" (→ completion_started) or whose work sat in_progress before
+    // uploading left the activity stuck — evidenceStatus said "uploaded" but the
+    // workflow status never reached evidence_uploaded, so the CCEO/staff review
+    // queue and command-center counts (which key off status === evidence_uploaded)
+    // never surfaced the upload. We now advance from the full pre-evidence set.
+    const PRE_EVIDENCE_STATUSES = new Set([
+      'assigned_to_partner', 'partner_scheduled', 'scheduled', 'in_progress', 'completion_started',
+    ]);
+    const advancePartner = activity.deliveryType === 'partner' && PRE_EVIDENCE_STATUSES.has(activity.status);
     await this.prisma.activity.update({
       where: { id: activityId },
       data: {
         evidenceStatus: 'uploaded',
-        ...(activity.deliveryType === 'partner' && activity.status === 'assigned_to_partner'
-          ? { status: 'evidence_uploaded' as never }
-          : activity.deliveryType === 'partner' && activity.status === 'partner_scheduled'
-            ? { status: 'evidence_uploaded' as never }
-            : {}),
+        ...(advancePartner ? { status: 'evidence_uploaded' as never } : {}),
       },
     });
     await this.audit.log({

@@ -36,7 +36,10 @@ type UploadEntry = {
   uri?:      string;
 };
 
-const MAX_FILE_BYTES = 25 * 1024 * 1024;
+// Must match the backend multer cap (evidence.controller FileInterceptor
+// limits.fileSize = 10 MB). A larger client cap let 10–25 MB files start
+// uploading only to be rejected by the server with a confusing error.
+const MAX_FILE_BYTES = 10 * 1024 * 1024;
 
 // The backend's accepted evidence kinds (evidence.service VALID_KINDS).
 const EVIDENCE_KINDS: { value: string; label: string }[] = [
@@ -175,7 +178,7 @@ export function EvidenceBulkDropzone({
             </span>
             <span>•</span>
             <span className="inline-flex items-center gap-1">
-              <CheckCircle2 size={11} className="text-emerald-600" /> Up to 25 MB per file
+              <CheckCircle2 size={11} className="text-emerald-600" /> Up to 10 MB per file
             </span>
           </div>
         </div>
