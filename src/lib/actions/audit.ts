@@ -130,6 +130,18 @@ export function emitNotificationFanOut(
 // Lazy import to avoid an import cycle: dispatch.ts imports audit.ts
 // (for the NotificationRecord type) so we resolve at call time.
 function dispatchSafely(note: NotificationRecord): void {
+  // Single adapter seam (spec §3): funnel every legacy emit through the adapter
+  // so it either forwards to DomainEventService or records a health warning that
+  // the legacy path is being used directly. Never let this throw into the caller.
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { routeLegacyNotification } = require("@/lib/infra/notification-adapter") as {
+      routeLegacyNotification: (n: NotificationRecord) => void;
+    };
+    routeLegacyNotification(note);
+  } catch {
+    // Adapter unavailable (isolated unit test) — fall through to dispatch.
+  }
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { dispatchAfterEmit } = require("@/lib/infra/dispatch") as {

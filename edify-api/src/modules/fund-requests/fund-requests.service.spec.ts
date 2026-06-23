@@ -33,6 +33,7 @@ function svc(opts: { fr?: Fr | null; supLinks?: { superviseeId: string }[]; supP
   const budget = {};
   const events = {
     notifyOnly: vi.fn(async () => undefined),
+    emitFromRule: vi.fn(async () => undefined),
     usersWithRole: vi.fn(async () => ['acc1']),
     userForStaff: vi.fn(async () => 'sup-user'),
   };

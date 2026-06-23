@@ -162,6 +162,33 @@ export class SystemHealthService {
     add('ia-confirmed-without-evidence', 'error', iaConfirmedWithoutEvidence, 'IA-confirmed activities without evidence records');
     add('accountant-action-before-ia', 'error', accountantBeforeIa, 'Accountant cleared/paid before IA confirmation');
 
+    // ── Communication system integrity (spec §19) ──────────────────
+    // Notifications must always carry a way to act on them, and every persisted
+    // domain event must be processed into notifications (a stuck event = a
+    // missed alert). These are the comms-rebuild health gates.
+    const staleEventCutoff = new Date(Date.now() - 5 * 60 * 1000);
+    const [
+      notifNoRoute,
+      notifNoContext,
+      unprocessedEvents,
+      fundRequestsStuck,
+    ] = await Promise.all([
+      // An actionable notification with no target route dead-ends the recipient.
+      this.prisma.notification.count({ where: { status: { not: 'archived' }, actionRequired: true, OR: [{ targetRoute: null }, { targetRoute: '' }] } }),
+      // An actionable notification with no context can't deep-link to the record.
+      this.prisma.notification.count({ where: { status: { not: 'archived' }, actionRequired: true, contextType: null } }),
+      // Domain events recorded but never turned into notifications (processedAt
+      // null) older than the grace window — the rule engine dropped them.
+      this.prisma.domainEventLog.count({ where: { processedAt: null, createdAt: { lt: staleEventCutoff } } }),
+      // A submitted fund request that has sat unreviewed — the approval chain has
+      // no pending notification driving it forward.
+      this.prisma.fundRequest.count({ where: { status: 'submitted', createdAt: { lt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000) } } }),
+    ]);
+    add('notification-without-target-route', 'error', notifNoRoute, 'Actionable notifications with no target route (recipient cannot act)');
+    add('notification-without-context', 'warning', notifNoContext, 'Actionable notifications with no context type (no deep link)');
+    add('domain-event-unprocessed', 'error', unprocessedEvents, 'Domain events recorded but never processed into notifications');
+    add('fund-request-stuck-unreviewed', 'warning', fundRequestsStuck, 'Submitted fund requests unreviewed for over two weeks');
+
     const errors = findings.filter((f) => f.severity === 'error').length;
     const warnings = findings.filter((f) => f.severity === 'warning').length;
     return { ok: errors === 0, errors, warnings, findings };

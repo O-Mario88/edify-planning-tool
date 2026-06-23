@@ -4,6 +4,7 @@ import { TodayConsole } from "./TodayConsole";
 import { isMockAllowed } from "@/lib/mock-policy";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { TodayCommandCenter } from "@/components/command/TodayCommandCenter";
+import { CommandCenterAlerts } from "@/components/command/CommandCenterAlerts";
 
 // Today's Tasks — role-scoped. Production renders the LIVE command-center feed
 // (/api/command-center/today): the real, priority-ranked "what must I do next"
@@ -16,7 +17,8 @@ export default async function TodayPage() {
     return (
       <>
         <PageHeader title="Today" subtitle="The work waiting on you right now — ranked by urgency, each with one next action." />
-        <div className="px-3 sm:px-4 md:px-5 pb-12 pt-3">
+        <div className="px-3 sm:px-4 md:px-5 pb-12 pt-3 space-y-5">
+          <CommandCenterAlerts />
           <TodayCommandCenter />
         </div>
       </>

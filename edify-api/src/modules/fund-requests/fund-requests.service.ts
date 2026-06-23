@@ -1,5 +1,5 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { EdifyRole, Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeService } from '../../common/scope/scope.service';
 import { AuditService } from '../../common/audit/audit.service';
@@ -10,6 +10,15 @@ import { BudgetService } from '../budget/budget.service';
 import { DomainEventService } from '../../common/realtime/domain-events.service';
 
 const ugx = (n: number) => `UGX ${Math.round(n || 0).toLocaleString()}`;
+
+// The approving role → the §11 routing event the rule engine notifies on. A PL
+// approval routes to the CD, a CD approval to the RVP (summary), an RVP approval
+// to CD + Accountant — the PL → CD → RVP → Accountant notification chain.
+const APPROVE_EVENT_BY_ROLE: Partial<Record<EdifyRole, string>> = {
+  CountryProgramLead: 'FundRequestApprovedByPL',
+  CountryDirector: 'FundRequestApprovedByCD',
+  RegionalVicePresident: 'FundRequestApprovedByRVP',
+};
 
 type Period = 'weekly' | 'monthly' | 'quarterly' | 'annual';
 
@@ -238,32 +247,52 @@ export class FundRequestsService {
       action: `fundRequest.${action}`, subjectKind: 'FundRequest', subjectId: id,
       actorId: user.userId, actorRole: user.activeRole, payload: { note: note ?? null },
     });
-    // Notify the submitter of the outcome; on approve also alert the accountants
-    // that an approved request is now waiting to be disbursed.
-    const reviewNotify = [{
-      recipientId: fr.submittedByUserId,
-      title: action === 'approve' ? 'Fund request approved' : action === 'return' ? 'Fund request returned' : 'Fund request rejected',
-      body: `Your ${fr.periodKey} request — ${ugx(fr.totalAmount)}${note ? ` · ${note}` : ''}.`,
-      targetRoute: '/fund-requests', actionRequired: action !== 'approve', priority: 'normal' as const,
-    }];
+    // Notification routing (spec §11). On approve, fire the role-specific event
+    // through the rule engine so the PL → CD → RVP → Accountant chain reaches the
+    // notification rail with the right audience (submitter + next approver). On
+    // return/reject, notify the submitter to correct + resubmit.
     let accountants: string[] = [];
     if (action === 'approve') {
+      const approveEvent = APPROVE_EVENT_BY_ROLE[user.activeRole];
+      if (approveEvent) {
+        await this.events.emitFromRule({
+          event: approveEvent, actorId: user.userId, actorRole: user.activeRole,
+          subjectKind: 'FundRequest', subjectId: id, contextId: id,
+          vars: { detail: `${fr.periodKey} — ${ugx(fr.totalAmount)}${note ? ` · ${note}` : ''}` },
+          audience: { submitter: fr.submittedByUserId },
+          notifyOnly: true, // the action is already in the hash-chained audit above
+        });
+      }
+      // The accountant queue: an approved request is now waiting to be disbursed.
       accountants = await this.events.usersWithRole('ProgramAccountant');
       const submitterName = (await this.prisma.user.findUnique({ where: { id: fr.submittedByUserId }, select: { name: true } }))?.name ?? 'A planner';
-      for (const rid of accountants) {
-        reviewNotify.push({
+      await this.events.notifyOnly({
+        type: 'FundRequest.SentToAccountant', subjectKind: 'FundRequest', subjectId: id, actorId: user.userId,
+        notify: accountants.map((rid) => ({
           recipientId: rid, title: 'Fund request ready to disburse',
           body: `${submitterName}: ${fr.periodKey} — ${ugx(fr.totalAmount)} approved.`,
           // The fund-request Disburse button lives on /approvals (FundApprovalQueueLive
           // with canDisburse), NOT /disbursements (the per-activity partner queue).
-          targetRoute: '/approvals', actionRequired: true, priority: 'normal' as const,
-        });
-      }
+          contextType: 'fund_request', contextId: id, targetRoute: '/approvals',
+          actionLabel: 'Disburse', actionRequired: true, priority: 'normal' as const,
+          sourceEventType: 'FundRequest.SentToAccountant', sourceEventId: id,
+        })),
+        liveUserIds: [user.userId, ...accountants],
+      });
+    } else {
+      await this.events.notifyOnly({
+        type: `FundRequest.${status}`, subjectKind: 'FundRequest', subjectId: id, actorId: user.userId,
+        notify: [{
+          recipientId: fr.submittedByUserId,
+          title: action === 'return' ? 'Fund request returned' : 'Fund request rejected',
+          body: `Your ${fr.periodKey} request — ${ugx(fr.totalAmount)}${note ? ` · ${note}` : ''}.`,
+          contextType: 'fund_request', contextId: id, targetRoute: '/fund-requests',
+          actionLabel: 'Correct & resubmit', actionRequired: true, priority: 'high' as const,
+          sourceEventType: `FundRequest.${status}`, sourceEventId: id,
+        }],
+        liveUserIds: [user.userId, fr.submittedByUserId],
+      });
     }
-    await this.events.notifyOnly({
-      type: `FundRequest.${status}`, subjectKind: 'FundRequest', subjectId: id, actorId: user.userId,
-      notify: reviewNotify, liveUserIds: [user.userId, fr.submittedByUserId, ...accountants],
-    });
     return updated;
   }
 

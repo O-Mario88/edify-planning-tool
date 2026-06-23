@@ -3,7 +3,8 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AuthUser } from '../../common/auth/auth-user';
 import { paginate, PaginationDto } from '../../common/dto/pagination.dto';
 import { DomainEventService } from '../../common/realtime/domain-events.service';
-import { resolveContextRoute } from '../../common/notifications/context-route';
+import { resolveContextRoute, ContextType } from '../../common/notifications/context-route';
+import { allowedContexts, allowedRecipientRoles, checkMessagePolicy } from '../../common/messages/message-policy';
 
 // Per-user workflow messages, scoped to the recipient.
 @Injectable()
@@ -40,17 +41,14 @@ export class MessagesService {
     return this.prisma.message.update({ where: { id }, data: { status: 'read' } });
   }
 
-  // Active users this caller may address. Partners can only reach Edify staff;
-  // staff reach other active users. (Body is free-text typed by the user — the
-  // scope here governs WHO can be a recipient, not what's written.)
-  async recipients(user: AuthUser) {
-    const isPartner = (user.roles ?? []).some((r) => r.startsWith('Partner'));
+  // Active users this caller may address — filtered by the role-specific message
+  // policy (spec §7). The composer never shows a recipient the sender's role is
+  // not allowed to message (e.g. a Partner can't reach an RVP).
+  async recipients(user: AuthUser, contextType?: string) {
+    const roles = allowedRecipientRoles(user.activeRole);
+    if (roles.length === 0) return [];
     const rows = await this.prisma.user.findMany({
-      where: {
-        isActive: true,
-        id: { not: user.userId },
-        ...(isPartner ? { roles: { hasSome: ['CCEO', 'CountryProgramLead', 'ProjectCoordinator', 'Admin'] } } : {}),
-      },
+      where: { isActive: true, id: { not: user.userId }, activeRole: { in: roles } },
       select: { id: true, name: true, activeRole: true },
       orderBy: { name: 'asc' },
       take: 200,
@@ -58,29 +56,60 @@ export class MessagesService {
     return rows.map((r) => ({ id: r.id, name: r.name, role: r.activeRole }));
   }
 
+  // The role-specific context options the sender may pick for THIS recipient
+  // (spec §6/§8 step 2). Drives the composer's context selector. Empty when the
+  // pairing is off-policy.
+  async contexts(user: AuthUser, recipientId: string) {
+    if (!recipientId) throw new BadRequestException('A recipient is required to resolve contexts.');
+    const recipient = await this.prisma.user.findFirst({ where: { id: recipientId, isActive: true }, select: { activeRole: true } });
+    if (!recipient) throw new BadRequestException('Recipient not found or inactive.');
+    return allowedContexts(user.activeRole, recipient.activeRole).map((d) => ({
+      key: d.key,
+      label: d.label,
+      requiresLinkedRecord: d.requiresLinkedRecord,
+      recordTypes: d.recordTypes,
+    }));
+  }
+
   // Start a new thread to a recipient (context-tagged), notifying them.
-  async send(user: AuthUser, dto: { recipientId?: string; subject?: string; body?: string; contextType?: string; contextId?: string; category?: string }) {
+  // `contextKey` is the role-specific topic (spec §6); `contextType`/`contextId`
+  // are the optional linked record used for the recipient-role deep link.
+  async send(user: AuthUser, dto: { recipientId?: string; subject?: string; body?: string; contextKey?: string; contextType?: string; contextId?: string; category?: string }) {
     if (!dto.recipientId) throw new BadRequestException('A recipient is required.');
     if (!dto.body?.trim()) throw new BadRequestException('Message body is required.');
-    if (!dto.contextType?.trim()) throw new BadRequestException('A context is required for a new message.');
     if (dto.recipientId === user.userId) throw new BadRequestException('You cannot message yourself.');
     const recipient = await this.prisma.user.findFirst({ where: { id: dto.recipientId, isActive: true }, select: { id: true, activeRole: true } });
     if (!recipient) throw new BadRequestException('Recipient not found or inactive.');
-    // Deep-link the message to the EXACT record, routed for the recipient's role
-    // (so a CD doesn't land on a planning route they can't use).
-    const route = resolveContextRoute(recipient.activeRole, dto.contextType, dto.contextId);
+
+    // Enforce the role-specific message policy (spec §5/§6/§7): recipient in
+    // scope, a context selected, the context allowed for this pairing, and a
+    // linked record present when the context demands one.
+    const contextKey = dto.contextKey?.trim() ?? dto.category?.trim();
+    const check = checkMessagePolicy({
+      senderRole: user.activeRole, recipientRole: recipient.activeRole,
+      contextKey, contextId: dto.contextId,
+    });
+    if (!check.ok) throw new BadRequestException(check.reason);
+    const def = check.context;
+
+    // The linked-record type that backs the recipient-role deep link: honour the
+    // caller's choice when valid for this context, else the context's primary.
+    const recordType = (dto.contextType && def.recordTypes.includes(dto.contextType as ContextType)
+      ? (dto.contextType as ContextType)
+      : def.recordTypes[0]) as ContextType | undefined;
+    const route = recordType ? resolveContextRoute(recipient.activeRole, recordType, dto.contextId) : '/messages';
     const thread = await this.prisma.messageThread.create({
-      data: { subject: dto.subject?.trim() || `${dto.contextType} message`, contextType: dto.contextType, contextId: dto.contextId },
+      data: { subject: dto.subject?.trim() || def.label, contextType: recordType ?? def.key, contextId: dto.contextId },
     });
     const msg = await this.prisma.message.create({
       data: {
         threadId: thread.id, senderId: user.userId, recipientId: recipient.id, body: dto.body.trim(),
-        category: dto.category, contextType: dto.contextType, contextId: dto.contextId, targetRoute: route, status: 'unread',
+        category: def.key, contextType: recordType ?? def.key, contextId: dto.contextId, targetRoute: route, status: 'unread',
       },
     });
     await this.events.notifyOnly({
       type: 'Message.Sent', subjectKind: 'Message', subjectId: msg.id, actorId: user.userId,
-      notify: [{ recipientId: recipient.id, title: `New message from ${user.name}`, body: dto.body.trim().slice(0, 140), contextType: dto.contextType, contextId: dto.contextId, targetRoute: route, actionRequired: false, priority: 'normal' as const }],
+      notify: [{ recipientId: recipient.id, title: `New message from ${user.name}`, body: dto.body.trim().slice(0, 140), contextType: recordType ?? def.key, contextId: dto.contextId, targetRoute: route, actionRequired: false, priority: 'normal' as const }],
       liveUserIds: [user.userId, recipient.id],
     });
     return { threadId: thread.id, id: msg.id };

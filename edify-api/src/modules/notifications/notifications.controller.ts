@@ -22,6 +22,12 @@ export class NotificationsController {
   @Get('counts')
   counts(@CurrentUser() user: AuthUser) { return this.notifications.counts(user); }
 
+  @Get('unread-count')
+  unreadCount(@CurrentUser() user: AuthUser) { return this.notifications.unreadCount(user); }
+
+  @Get('rail')
+  rail(@CurrentUser() user: AuthUser) { return this.notifications.rail(user); }
+
   @Patch(':id/read')
   markRead(@Param('id') id: string, @CurrentUser() user: AuthUser) { return this.notifications.markRead(id, user); }
 

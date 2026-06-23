@@ -1370,17 +1370,107 @@ model Notification {
   id             String               @id @default(cuid())
   recipient      User                 @relation(fields: [recipientId], references: [id])
   recipientId    String
+  recipientRole  EdifyRole?
   title          String
   body           String?
   contextType    String?
   contextId      String?
   targetRoute    String?
+  actionLabel    String?
   actionRequired Boolean              @default(false)
   priority       NotificationPriority @default(normal)
   status         MessageStatus        @default(unread)
+  // Provenance — which workflow domain event produced this notification (spec
+  // §16). Lets the system trace every alert back to its source + dedupe.
+  sourceEventType String?
+  sourceEventId   String?
+  expiresAt       DateTime?
   createdAt      DateTime             @default(now())
+  readAt         DateTime?
 
   @@index([recipientId, status])
+  @@index([sourceEventId])
+}
+
+// ── Role-specific message context policy (spec §6/§16) ──────────────────────
+// The DB-backed mirror of the in-code MESSAGE_CONTEXT_MATRIX, so the policy can
+// be audited + tuned without a deploy. The code matrix is the runtime default;
+// active rows here override/extend it per (senderRole → recipientRole → topic).
+model MessageContextPolicy {
+  id                 String    @id @default(cuid())
+  senderRole         EdifyRole
+  recipientRole      EdifyRole
+  allowedContextType String // the topic key (e.g. "fund-request-clarification")
+  label              String?
+  requiresLinkedRecord Boolean @default(false)
+  allowedRecordTypes String[]  @default([])
+  isActive           Boolean   @default(true)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@unique([senderRole, recipientRole, allowedContextType])
+  @@index([senderRole, recipientRole, isActive])
+}
+
+// ── Persisted domain event log (spec §16) ───────────────────────────────────
+// The append-only record of every workflow event the notification rule engine
+// reacts to. `processedAt` lets a health check find events created but never
+// turned into notifications (spec §19).
+model DomainEventLog {
+  id            String    @id @default(cuid())
+  eventType     String
+  aggregateType String?
+  aggregateId   String?
+  actorId       String?
+  payload       Json?
+  createdAt     DateTime  @default(now())
+  processedAt   DateTime?
+
+  @@index([eventType])
+  @@index([aggregateType, aggregateId])
+  @@index([processedAt])
+}
+
+// ── Command-center alerts (spec §13) ────────────────────────────────────────
+// Persistent operational risks generated from data conditions. An alert is keyed
+// by a conditionHash so the SAME unresolved condition maps to ONE open row; it is
+// resolved only when the underlying issue clears. Users may dismiss temporarily
+// (CommandCenterAlertDismissal) — but it REAPPEARS while still unresolved.
+model CommandCenterAlert {
+  id            String    @id @default(cuid())
+  alertType     String // "schools_without_ssa" | "schools_not_visited" | ...
+  severity      NotificationPriority @default(high)
+  scope         String? // country | team | own | cluster:<id> | district:<id>
+  contextType   String?
+  contextId     String?
+  title         String
+  body          String?
+  targetRoute   String?
+  // Stable identity for the underlying condition — re-running the generator
+  // upserts the same row instead of creating a duplicate.
+  conditionHash String    @unique
+  status        String    @default("open") // open | resolved
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  resolvedAt    DateTime?
+  dismissals    CommandCenterAlertDismissal[]
+
+  @@index([status])
+  @@index([alertType, status])
+}
+
+model CommandCenterAlertDismissal {
+  id            String   @id @default(cuid())
+  alert         CommandCenterAlert @relation(fields: [alertId], references: [id], onDelete: Cascade)
+  alertId       String
+  userId        String
+  // The alert stays hidden for this user until this moment; after it, the alert
+  // reappears IF still unresolved (spec §13 — by design, not a bug).
+  dismissedUntil DateTime
+  createdAt     DateTime @default(now())
+
+  @@unique([alertId, userId])
+  @@index([userId])
 }
 
 // ─────────────────────── Audit ───────────────────────
@@ -1637,11 +1727,27 @@ enum FundRequestPeriod {
 }
 
 enum FundRequestStatus {
+  // Legacy single-hop statuses (kept for back-compat with existing rows).
   submitted
   approved
   returned
   rejected
   disbursed
+  // Multi-hop routing chain (spec §11): PL → CD → RVP → Accountant.
+  draft
+  submitted_to_pl
+  approved_by_pl
+  submitted_to_cd
+  approved_by_cd
+  submitted_to_rvp
+  approved_by_rvp
+  sent_to_accountant
+  closed
+  // Return states — route back to the submitter for correction.
+  returned_by_pl
+  returned_by_cd
+  returned_by_rvp
+  returned_by_accountant
 }
 
 model FundRequest {

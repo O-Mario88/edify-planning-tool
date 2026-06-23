@@ -23,13 +23,16 @@ export class MessagesController {
   counts(@CurrentUser() user: AuthUser) { return this.messages.counts(user); }
 
   @Get('recipients')
-  recipients(@CurrentUser() user: AuthUser) { return this.messages.recipients(user); }
+  recipients(@CurrentUser() user: AuthUser, @Query('contextType') contextType?: string) { return this.messages.recipients(user, contextType); }
+
+  @Get('contexts')
+  contexts(@CurrentUser() user: AuthUser, @Query('recipientId') recipientId: string) { return this.messages.contexts(user, recipientId); }
 
   @Get('thread/:id')
   thread(@Param('id') id: string, @CurrentUser() user: AuthUser) { return this.messages.thread(user, id); }
 
   @Post()
-  send(@Body() dto: { recipientId?: string; subject?: string; body?: string; contextType?: string; contextId?: string; category?: string }, @CurrentUser() user: AuthUser) {
+  send(@Body() dto: { recipientId?: string; subject?: string; body?: string; contextKey?: string; contextType?: string; contextId?: string; category?: string }, @CurrentUser() user: AuthUser) {
     return this.messages.send(user, dto);
   }
 
