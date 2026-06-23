@@ -57,7 +57,7 @@ export default async function ClustersIndex() {
         };
       }
     } else {
-      initialClusterError = clusterRes.error;
+      initialClusterError = clusterRes.error ?? "Could not load clusters from edify-api.";
     }
     if (geo && Object.keys(geo).length) geoByDistrict = geo;
   }

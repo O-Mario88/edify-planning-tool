@@ -55,23 +55,34 @@ export function ClusterDistrictDirectory({ initialClusters = null, initialError 
   const [loading, setLoading] = useState(initialClusters === null && !initialError);
   const [expanded, setExpanded] = useState<Record<string, SchoolsState>>({});
 
-  const load = () => {
-    setLoading(true); setError(null);
+  const load = (opts?: { silent?: boolean }) => {
+    if (!opts?.silent) { setLoading(true); setError(null); }
     fetch("/api/clusters", { cache: "no-store", credentials: "include" })
-      .then((r) => r.json())
-      .then((j) => {
-        if (!j.live) { setError(j.error || "Could not load clusters"); setClusters(null); return; }
+      .then(async (r) => {
+        const j = await r.json().catch(() => null);
+        if (!j || typeof j !== "object") {
+          setError(`Could not load clusters (HTTP ${r.status})`);
+          return;
+        }
+        if (!j.live) {
+          setError(j.error || "Could not load clusters");
+          if (!initialClusters?.length) setClusters(null);
+          return;
+        }
         const list: BeCluster[] = j.clusters ?? [];
         setClusters(list);
+        setError(null);
       })
-      .catch(() => setError("Could not reach the server"))
+      .catch(() => setError("Could not reach the server — check you are signed in."))
       .finally(() => setLoading(false));
   };
   useEffect(() => {
-    load();
+    // Server already prefetched clusters — don't clobber good SSR data on mount.
+    if (initialClusters === null && !initialError) load();
     const onUpdated = () => load();
     window.addEventListener(CLUSTERS_UPDATED, onUpdated);
     return () => window.removeEventListener(CLUSTERS_UPDATED, onUpdated);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount + event wiring only
   }, []);
 
   function toggle(clusterId: string) {
@@ -114,7 +125,7 @@ export function ClusterDistrictDirectory({ initialClusters = null, initialError 
   }, [clusters]);
 
   if (loading && clusters === null && !error) return <LoadingState />;
-  if (error) return <ErrorState message={error} onRetry={load} />;
+  if (error && (!clusters || clusters.length === 0)) return <ErrorState message={error} onRetry={() => load()} />;
   if (!clusters || clusters.length === 0) {
     return <EmptyState title="No clusters yet" message="Create a cluster, then assign schools to it from the School Directory." />;
   }

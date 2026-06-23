@@ -27,7 +27,12 @@ async function live<T>(path: string, user: BackendUser, init?: RequestInit): Pro
   } catch (e) {
     return { live: false, error: e instanceof Error ? e.message : "in-process dispatch error" };
   }
-  if (!isBackendEnabled()) return { live: false, error: null };
+  if (!isBackendEnabled()) {
+    return {
+      live: false,
+      error: "Live backend is disabled — set EDIFY_USE_BACKEND=true on edify-web.",
+    };
+  }
   const r = await backendFetch<T>(path, user, init);
   return r.ok ? { live: true, data: r.data } : { live: false, error: r.error };
 }

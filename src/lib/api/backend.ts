@@ -19,6 +19,14 @@ export function isBackendEnabled(): boolean {
   return (process.env.EDIFY_USE_BACKEND ?? "").toLowerCase() === "true";
 }
 
+function apiBaseMisconfigured(): string | null {
+  const base = process.env.EDIFY_API_URL ?? "http://localhost:4000/api";
+  if (!base.endsWith("/api")) {
+    return `EDIFY_API_URL must end with /api (got "${base}")`;
+  }
+  return null;
+}
+
 // edify-web role → backend demo account with the matching scope. The backend
 // resolves the real role/scope from its own user record, so role-string
 // differences (RVP vs RegionalVicePresident) don't matter here.
@@ -94,17 +102,36 @@ export async function backendTokenFor(user: BackendUser): Promise<string | null>
 
 /** Fetch a scoped backend endpoint as the current edify-web user. */
 export async function backendFetch<T>(path: string, user: BackendUser, init?: RequestInit): Promise<BackendResult<T>> {
-  const token = await loginToBackend(backendEmailFor(user));
-  if (!token) return { ok: false, error: "Backend auth unavailable" };
+  const misconfigured = apiBaseMisconfigured();
+  if (misconfigured) return { ok: false, error: misconfigured };
+
+  const email = backendEmailFor(user);
+  const token = await loginToBackend(email);
+  if (!token) {
+    return {
+      ok: false,
+      error: "Backend auth unavailable — check EDIFY_API_URL reaches edify-api and DEMO_LOGIN_PASSWORD matches on web + api.",
+    };
+  }
   try {
     const res = await fetch(`${API}${path}`, {
       ...init,
       headers: { ...(init?.headers ?? {}), Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       cache: "no-store",
     });
-    if (!res.ok) return { ok: false, error: `Backend ${res.status}` };
+    if (!res.ok) {
+      let detail = "";
+      try {
+        const body = (await res.json()) as { message?: string | string[] };
+        if (body.message) detail = `: ${Array.isArray(body.message) ? body.message.join(", ") : body.message}`;
+      } catch {
+        /* non-json error body */
+      }
+      return { ok: false, error: `Backend ${res.status}${detail}` };
+    }
     return { ok: true, data: (await res.json()) as T };
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Network error" };
+    const msg = e instanceof Error ? e.message : "Network error";
+    return { ok: false, error: `Cannot reach edify-api (${msg}). Check EDIFY_API_URL=${API}.` };
   }
 }
