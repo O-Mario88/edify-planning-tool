@@ -6,7 +6,8 @@ import { orgStaff } from "@/lib/org/supervision";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ClusterProfileView } from "@/components/cluster/ClusterProfileView";
 import { ClusterMemberSchoolsLive } from "@/components/cluster/ClusterMemberSchoolsLive";
-import { clusterProfile, clusterById, activeClusters, CLUSTER_MEETING_LABEL, feedbackForCluster, CLUSTER_FEEDBACK_LABEL } from "@/lib/cluster/cluster-core";
+import { ClusterIntelligencePanel } from "@/components/cluster/ClusterIntelligencePanel";
+import { clusterProfile, clusterById, activeClusters, CLUSTER_MEETING_LABEL, feedbackForCluster, CLUSTER_FEEDBACK_LABEL, meetingsForCluster, schoolsInCluster } from "@/lib/cluster/cluster-core";
 import { getCurrentUser } from "@/lib/auth";
 import { isBackendEnabled } from "@/lib/api/backend";
 import { fetchClusters } from "@/lib/api/surfaces";
@@ -14,6 +15,9 @@ import { getCurrentPartner } from "@/lib/partner/partner-identity";
 import { NextActionCard } from "@/components/next-action/NextActionCard";
 import { nextActionForCluster } from "@/lib/next-action/next-action";
 import { unifiedActivitiesForCluster } from "@/lib/activity/unified-activity-source";
+import { historyFor } from "@/lib/planning/ssa-performance-mock";
+import { computeClusterIntelligence, type ClusterIntelActivity, type ClusterIntelSchool } from "@/lib/cluster/cluster-intelligence";
+import type { SsaInterventionArea } from "@/lib/planning/planning-gaps-mock";
 
 export default async function ClusterDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -160,6 +164,88 @@ async function EngineClusterProfile({ clusterId }: { clusterId: string }) {
     .filter((c) => c.id !== clusterId)
     .map((c) => ({ id: c.id, name: c.name, district: c.district }));
 
+  // Build the cluster intelligence inputs from the in-memory engine
+  // store. The same compute function powers `/clusters/:id/intelligence`
+  // on the backend, so the math is identical.
+  const meetings = meetingsForCluster(clusterId);
+  const memberSchools = schoolsInCluster(clusterId);
+  const intelSchools: ClusterIntelSchool[] = memberSchools.map((s) => {
+    const hist = historyFor(s.schoolId);
+    const curr = hist[0];
+    const prev = hist[1];
+    const currScores: Partial<Record<SsaInterventionArea, number>> | undefined = curr
+      ? Object.fromEntries(curr.scores.map((sc) => [sc.intervention, sc.score])) as Partial<Record<SsaInterventionArea, number>>
+      : undefined;
+    const prevScores: Partial<Record<SsaInterventionArea, number>> | undefined = prev
+      ? Object.fromEntries(prev.scores.map((sc) => [sc.intervention, sc.score])) as Partial<Record<SsaInterventionArea, number>>
+      : undefined;
+    const hasCompletedTraining = meetings.some(
+      (m) => (m.kind === "sit" || m.kind === "training" || m.kind === "cluster_training") &&
+             (m.status === "IA Confirmed" || m.status === "Paid" || m.status === "Closed"),
+    );
+    const hasCompletedMeeting = meetings.some(
+      (m) => m.kind !== "sit" && m.kind !== "training" && m.kind !== "cluster_training" &&
+             (m.status === "IA Confirmed" || m.status === "Paid" || m.status === "Closed"),
+    );
+    return {
+      schoolId: s.schoolId,
+      schoolName: s.schoolName,
+      schoolType: s.schoolType === "Core" ? "Core" : "Client",
+      hasCurrentFySsa: s.ssaStatus === "SSA Done",
+      currentSsa: currScores,
+      previousSsa: prevScores,
+      visitedThisPeriod: hasCompletedMeeting,
+      trainedThisPeriod: hasCompletedTraining,
+    };
+  });
+  const intelActivities: ClusterIntelActivity[] = meetings.map((m) => ({
+    id: m.id,
+    activityType: m.kind === "sit" ? "school_improvement_training"
+                : m.kind === "training" || m.kind === "cluster_training" ? "cluster_training"
+                : m.kind === "follow_up" ? "follow_up"
+                : "cluster_meeting",
+    date: m.date,
+    status: m.status === "IA Confirmed" || m.status === "Paid" || m.status === "Closed" ? "Completed"
+          : m.status === "Scheduled" || m.status === "Awaiting IA" ? "Scheduled"
+          : "Other",
+    teachersTrained: m.teachersCount,
+    schoolLeadersTrained: m.schoolLeadersCount,
+  }));
+  const intel = computeClusterIntelligence({ schools: intelSchools, activities: intelActivities });
+
+  const intelHistory = profile.activities.map((a) => ({
+    id: a.id,
+    title: CLUSTER_MEETING_LABEL[a.kind],
+    type: (a.kind === "sit" ? "sit"
+        : a.kind === "training" || a.kind === "cluster_training" ? "training"
+        : a.kind === "follow_up" ? "follow_up"
+        : "meeting") as "meeting" | "training" | "sit" | "follow_up" | "project_session",
+    date: a.date,
+    attendance: a.totalParticipants,
+    teachersTrained: a.teachersCount,
+    schoolLeadersTrained: a.schoolLeadersCount,
+    evidenceStatus: a.evidenceUploaded ? "complete" : undefined,
+    activityCode: a.salesforceTrainingId,
+    iaStatus: a.iaConfirmedAt ? "verified" : a.status === "Awaiting IA" ? "pending" : undefined,
+    resolutions: a.resolutionsText,
+    nextActions: a.minutesText,
+  }));
+  const intelSchoolRows = memberSchools.map((s) => {
+    const hist = historyFor(s.schoolId);
+    const curr = hist[0];
+    return {
+      schoolId: s.schoolId,
+      schoolName: s.schoolName,
+      schoolType: (s.schoolType === "Core" ? "Core" : "Client") as "Client" | "Core" | "Potential Core",
+      accountOwner: s.assignedCceo,
+      ssaStatus: (s.ssaStatus === "SSA Done" ? "complete" : "missing") as "complete" | "missing" | "pending",
+      latestSsa: curr?.averageScore,
+      weakestIntervention: curr ? curr.scores.reduce((w, sc) => sc.score < w.score ? sc : w).intervention : undefined,
+      visitStatus: ("not_visited") as "visited" | "not_visited",
+      trainingStatus: ("not_trained") as "trained" | "not_trained",
+    };
+  });
+
   return (
     <>
       <PageHeader
@@ -168,13 +254,30 @@ async function EngineClusterProfile({ clusterId }: { clusterId: string }) {
         backFallbackHref="/clusters"
         breadcrumbTrailingLabel={profile.cluster.name}
       />
-      <div className="px-4 sm:px-5 lg:px-6 pt-3">
+      <div className="px-4 sm:px-5 lg:px-6 pt-3 space-y-3">
         <NextActionCard
           action={nextActionForCluster(
             { hasSchools: profile.schools.length > 0, hasScheduledCycle: profile.meetingsScheduled > 0 },
             unifiedActivitiesForCluster(clusterId),
           )}
           title="Cluster next action"
+        />
+
+        <ClusterIntelligencePanel
+          header={{
+            id: profile.cluster.id,
+            name: profile.cluster.name,
+            district: profile.cluster.district,
+            subCounties: profile.cluster.subCounties ?? [],
+            region: profile.cluster.region,
+            type: profile.managementType,
+            cceoName: profile.cluster.clusterLeaderName,
+            partnerName: profile.cluster.managedByPartnerName,
+          }}
+          intel={intel}
+          history={intelHistory}
+          schools={intelSchoolRows}
+          scheduleHref={`/planning?cluster=${encodeURIComponent(clusterId)}`}
         />
       </div>
       <ClusterProfileView profile={vm} flags={flags} reassignTargets={reassignTargets} canReassign={staffRole} />

@@ -107,16 +107,17 @@ const columns: ColumnDef<ProgramLeadRow>[] = [
 ];
 
 export function ProgramLeadsPerformanceTable() {
-  if (!isMockAllowed()) return <InsufficientData surface="program lead performance" />;
   // @tanstack/react-table isn't React-Compiler-compatible — the compiler
   // skips memoizing this component body. Documented and accepted; the
-  // table's data is small (<200 rows) so non-memoization is fine.
-  // eslint-disable-next-line react-hooks/incompatible-library
+  // table's data is small (<200 rows) so non-memoization is fine. We call
+  // the hook UNCONDITIONALLY (no early return before it) to satisfy
+  // react-hooks/rules-of-hooks.
   const table = useReactTable({
     data: programLeads,
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
+  if (!isMockAllowed()) return <InsufficientData surface="program lead performance" />;
   return (
     <SectionCard
       icon={<Users size={13} />}

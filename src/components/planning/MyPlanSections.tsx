@@ -40,8 +40,8 @@ const RESCHEDULE_REASONS = [
 ];
 
 // Lane order matches the snapshot strip + spec §10: blockers first, then
-// rescheduled work, then today, then forward calendar.
-const LANE_ORDER: MyPlanSectionKey[] = ["waitingOnMe", "needsAttention", "dueToday", "thisWeek", "thisMonth"];
+// rescheduled work, then today, then forward calendar (week → month → quarter).
+const LANE_ORDER: MyPlanSectionKey[] = ["waitingOnMe", "needsAttention", "dueToday", "thisWeek", "thisMonth", "thisQuarter"];
 
 type LaneMeta = {
   number: number;
@@ -93,6 +93,14 @@ const LANE_META: Record<MyPlanSectionKey, LaneMeta> = {
     numberTone: "bg-slate-100 text-slate-600",
     countTone: "bg-slate-100 text-slate-600",
     anchor: "lane-month",
+  },
+  thisQuarter: {
+    number: 6, icon: CalendarRange,
+    subtitle: "Open scheduled work later this quarter.",
+    accent: "bg-violet-300",
+    numberTone: "bg-violet-100 text-violet-700",
+    countTone: "bg-violet-100 text-violet-700",
+    anchor: "lane-quarter",
   },
 };
 
@@ -310,6 +318,7 @@ const EMPTY_COPY: Record<MyPlanSectionKey, { headline: string; sub: string }> = 
   dueToday:       { headline: "No activities due today.",          sub: "You can breathe." },
   thisWeek:       { headline: "No more scheduled work this week.", sub: "Tomorrow's calendar is open." },
   thisMonth:      { headline: "Nothing further planned this month.", sub: "Open Planning to schedule the next slot." },
+  thisQuarter:    { headline: "Nothing planned later this quarter.", sub: "Work beyond this month lands here as you schedule it." },
 };
 
 function LaneEmptyState({ sectionKey }: { sectionKey: MyPlanSectionKey }) {

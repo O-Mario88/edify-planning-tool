@@ -13,6 +13,14 @@ import { csrfHeaders } from "@/lib/csrf-client";
 type EvidenceItem = {
   id: string; kind: string; status: string; originalName: string | null;
   mimeType: string | null; uploadedBy: string; uploadedAt: string; reviewNote: string | null;
+  // Preview pipeline fields (added when the backend EvidenceRecord row carries
+  // DOCX rendition metadata). Older rows return these as undefined; the panel
+  // falls back to "ready" so PDFs/images keep rendering inline.
+  fileExtension?: string | null;
+  fileSize?: number | null;
+  previewStatus?: "not_required" | "pending" | "ready" | "failed";
+  pdfRenditionStatus?: "pending" | "ready" | "failed" | null;
+  viewCount?: number;
 };
 
 const KINDS: { value: string; label: string }[] = [
@@ -38,6 +46,19 @@ const STATUS_TONE: Record<string, string> = {
 
 function isImage(m: string | null) { return !!m && m.startsWith("image/"); }
 function isPdf(m: string | null) { return m === "application/pdf"; }
+function isDocx(item: EvidenceItem) {
+  const ext = (item.fileExtension ?? "").toLowerCase();
+  return ext === ".docx" || ext === ".doc" ||
+    item.mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+    item.mimeType === "application/msword";
+}
+
+type PreviewState =
+  | { kind: "image"; id: string; label: string }
+  | { kind: "pdf"; id: string; label: string }
+  | { kind: "pdf_rendition"; id: string; label: string } // DOCX → cached PDF
+  | { kind: "preparing"; id: string; label: string }      // DOCX conversion in flight
+  | { kind: "failed"; id: string; label: string; message: string }; // conversion failed
 
 export function EvidencePanel({ activityId, canReview = false }: { activityId: string; canReview?: boolean }) {
   const [items, setItems] = useState<EvidenceItem[]>([]);
@@ -45,7 +66,7 @@ export function EvidencePanel({ activityId, canReview = false }: { activityId: s
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [kind, setKind] = useState("visit_form");
-  const [preview, setPreview] = useState<EvidenceItem | null>(null);
+  const [preview, setPreview] = useState<PreviewState | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
@@ -73,6 +94,58 @@ export function EvidencePanel({ activityId, canReview = false }: { activityId: s
       await load();
     } catch { setError("Upload failed — check your connection."); }
     finally { setBusy(false); }
+  }
+
+  // Open the inline preview for an evidence row. The branching:
+  //   • image / PDF  → render immediately
+  //   • DOCX/DOC     → POST /api/evidence/:id/prepare-view
+  //       - already-cached rendition → render pdf_rendition
+  //       - first viewer            → show "Preparing PDF preview..." then render
+  //       - converter not installed → show "failed" with download fallback
+  async function openPreview(item: EvidenceItem) {
+    const label = item.originalName ?? item.kind;
+    if (isImage(item.mimeType)) {
+      setPreview({ kind: "image", id: item.id, label });
+      return;
+    }
+    if (isPdf(item.mimeType)) {
+      setPreview({ kind: "pdf", id: item.id, label });
+      return;
+    }
+    if (isDocx(item)) {
+      setPreview({ kind: "preparing", id: item.id, label });
+      try {
+        const res = await fetch(`/api/evidence/${item.id}/prepare-view`, {
+          method: "POST", headers: { ...csrfHeaders() },
+        });
+        const d = await res.json().catch(() => ({}));
+        if (!res.ok || !d.live) {
+          setPreview({ kind: "failed", id: item.id, label, message: d.error ?? "Could not prepare PDF preview." });
+          return;
+        }
+        if (d.data?.previewStatus === "ready" && d.data?.viewKind === "pdf_rendition") {
+          setPreview({ kind: "pdf_rendition", id: item.id, label });
+          await load(); // refresh status pill (Preview: Ready)
+          return;
+        }
+        if (d.data?.previewStatus === "ready") {
+          setPreview({ kind: "pdf", id: item.id, label });
+          return;
+        }
+        setPreview({
+          kind: "failed", id: item.id, label,
+          message: d.data?.message ?? "Could not prepare PDF preview. Download original DOCX if permitted.",
+        });
+      } catch {
+        setPreview({ kind: "failed", id: item.id, label, message: "Could not prepare PDF preview." });
+      }
+      return;
+    }
+    // Fallback for unsupported types — show download-only message.
+    setPreview({
+      kind: "failed", id: item.id, label,
+      message: "This file type cannot be previewed inline. Use Download instead.",
+    });
   }
 
   async function review(id: string, action: "accept" | "return") {
@@ -148,7 +221,7 @@ export function EvidencePanel({ activityId, canReview = false }: { activityId: s
               </div>
               <span className={`inline-flex items-center px-1.5 py-[2px] rounded-md text-[10px] font-extrabold capitalize ${STATUS_TONE[it.status] ?? "bg-[var(--color-edify-soft)]"}`}>{it.status}</span>
               <div className="flex items-center gap-1 shrink-0">
-                <button type="button" onClick={() => setPreview(preview?.id === it.id ? null : it)} aria-label="Preview"
+                <button type="button" onClick={() => preview?.id === it.id ? setPreview(null) : void openPreview(it)} aria-label="View Evidence"
                   className="h-7 w-7 rounded-md border border-[var(--color-edify-border)] inline-flex items-center justify-center hover:bg-[var(--color-edify-soft)]/40"><Eye size={13} /></button>
                 <a href={`/api/evidence/${it.id}/file?download=1`} aria-label="Download" download
                   className="h-7 w-7 rounded-md border border-[var(--color-edify-border)] inline-flex items-center justify-center hover:bg-[var(--color-edify-soft)]/40"><Download size={13} /></a>
@@ -166,22 +239,28 @@ export function EvidencePanel({ activityId, canReview = false }: { activityId: s
         </ul>
       )}
 
-      {/* Inline preview */}
+      {/* Inline preview — image, PDF, DOCX-as-PDF rendition, or failure msg. */}
       {preview && (
         <div className="mt-3 rounded-xl border border-[var(--color-edify-divider)] overflow-hidden">
           <div className="flex items-center justify-between px-3 py-2 bg-[var(--color-edify-soft)]/40">
-            <span className="text-[12px] font-bold truncate">{preview.originalName ?? preview.kind}</span>
+            <span className="text-[12px] font-bold truncate">{preview.label}</span>
             <button type="button" onClick={() => setPreview(null)} className="text-[11px] font-semibold text-[var(--color-edify-primary)]">Close</button>
           </div>
-          {isImage(preview.mimeType) ? (
+          {preview.kind === "image" ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={`/api/evidence/${preview.id}/file`} alt={preview.originalName ?? "evidence"} className="max-h-[480px] w-full object-contain bg-black/5" />
-          ) : isPdf(preview.mimeType) ? (
-            <iframe src={`/api/evidence/${preview.id}/file`} title={preview.originalName ?? "evidence"} className="w-full h-[480px] bg-white" />
+            <img src={`/api/evidence/${preview.id}/file`} alt={preview.label} className="max-h-[480px] w-full object-contain bg-black/5" />
+          ) : preview.kind === "pdf" ? (
+            <iframe src={`/api/evidence/${preview.id}/file`} title={preview.label} className="w-full h-[480px] bg-white" />
+          ) : preview.kind === "pdf_rendition" ? (
+            <iframe src={`/api/evidence/${preview.id}/rendition`} title={preview.label} className="w-full h-[480px] bg-white" />
+          ) : preview.kind === "preparing" ? (
+            <div className="p-6 text-center text-[12px] muted inline-flex items-center gap-2 justify-center w-full">
+              <Loader2 size={14} className="animate-spin" /> Preparing PDF preview…
+            </div>
           ) : (
             <div className="p-6 text-center text-[12px] muted">
-              This file type can&apos;t preview inline.{" "}
-              <a href={`/api/evidence/${preview.id}/file?download=1`} download className="text-[var(--color-edify-primary)] font-semibold underline">Download to view</a>.
+              {preview.message}{" "}
+              <a href={`/api/evidence/${preview.id}/file?download=1`} download className="text-[var(--color-edify-primary)] font-semibold underline">Download original</a>.
             </div>
           )}
         </div>

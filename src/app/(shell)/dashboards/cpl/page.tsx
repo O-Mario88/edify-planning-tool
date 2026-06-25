@@ -1,6 +1,7 @@
 import { CommandStack } from "@/components/actions/CommandStack";
 import { RecruitmentIntelligenceCard } from "@/components/analytics/RecruitmentIntelligenceCard";
 import { DecisionEngineEmbed } from "@/components/leadership/DecisionEngineEmbed";
+import { SectionBoundary } from "@/components/ui/SectionBoundary";
 import { ProjectWorkCard } from "@/components/special-projects/ProjectWorkCard";
 import { DashboardPageHeader } from "@/components/dashboards/DashboardPageHeader";
 import { DashboardGreetingHero } from "@/components/dashboards/DashboardGreetingHero";
@@ -103,7 +104,9 @@ export default async function CountryProgramLeadDashboard() {
         <TargetsLive title="Team target progress" />
 
         {/* Leadership Decision Engine — supervised-team staff & staffing advisory. */}
-        <DecisionEngineEmbed board="staff_hr" heading="Team & Staff Decisions" />
+        <SectionBoundary label="team & staff decisions">
+          <DecisionEngineEmbed board="staff_hr" heading="Team & Staff Decisions" />
+        </SectionBoundary>
 
         {/* TEAM SNAPSHOT — the program statistics band, directly below
             the hero: eight team KPIs before any work content. */}

@@ -91,4 +91,38 @@ export class EvidenceController {
   ) {
     return this.evidence.review(user, id, body?.action === 'return' ? 'return' : 'accept', body?.note);
   }
+
+  // Prepare an evidence record for inline viewing. For DOCX uploads, this is
+  // where the server-side LibreOffice headless conversion is triggered and
+  // its result (PDF rendition or "failed") is cached on the record so the
+  // SECOND viewer never pays the conversion latency again. For PDF / image
+  // uploads this just resolves immediately.
+  @Post(':id/prepare-view')
+  @RequirePermissions(PERMISSIONS.PLANNING_VIEW)
+  prepareView(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.evidence.prepareInlineView(user, id);
+  }
+
+  // Stream the cached PDF rendition (DOCX→PDF) — the FE inline viewer points
+  // its iframe at this URL once `prepare-view` reports previewStatus=ready
+  // with viewKind=pdf_rendition.
+  @Get(':id/rendition')
+  @RequirePermissions(PERMISSIONS.PLANNING_VIEW)
+  async rendition(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthUser,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<StreamableFile> {
+    const { absPath, mimeType, originalName } = await this.evidence.renditionFor(user, id);
+    res.set({
+      'Content-Type': mimeType,
+      'Content-Disposition': `inline; filename="${originalName.replace(/"/g, '')}"`,
+      'X-Content-Type-Options': 'nosniff',
+      'Content-Security-Policy': "default-src 'none'; img-src 'self' data:; object-src 'none'; sandbox",
+      'X-Frame-Options': 'DENY',
+      'Referrer-Policy': 'no-referrer',
+      'Cache-Control': 'private, no-store',
+    });
+    return new StreamableFile(createReadStream(absPath));
+  }
 }

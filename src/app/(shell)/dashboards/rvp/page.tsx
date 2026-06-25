@@ -26,6 +26,7 @@ import { DashboardPageHeader } from "@/components/dashboards/DashboardPageHeader
 import { DashboardGreetingHero } from "@/components/dashboards/DashboardGreetingHero";
 import { CountryAnalyticsLive } from "@/components/analytics/CountryAnalyticsLive";
 import { DecisionEngineEmbed } from "@/components/leadership/DecisionEngineEmbed";
+import { SectionBoundary } from "@/components/ui/SectionBoundary";
 import { SectionCard, StatusBadge, ProgressRing } from "@/components/ui/primitives";
 import { MetricStrip } from "@/components/ui/MetricStrip";
 import { countryRollups, specialProjects } from "@/lib/workflow-mock";
@@ -70,9 +71,13 @@ export default async function RVPDashboard({ searchParams }: { searchParams: Pro
           <DashboardGreetingHero user={rawUser} />
           <section className="space-y-3">
             <SectionHeader tier="strategic" eyebrow="Region" title="Regional performance at a glance" description="Live school counts, SSA health, activity pipeline and finance across the schools in your scope." />
-            {leadership.live ? <LeadershipKpiStrip s={leadership.data} scopeLabel="region" /> : <InsufficientData surface="regional KPIs" />}
+            <SectionBoundary label="regional KPIs">
+              {leadership.live ? <LeadershipKpiStrip s={leadership.data} scopeLabel="region" /> : <InsufficientData surface="regional KPIs" />}
+            </SectionBoundary>
           </section>
-          <CountryAnalyticsLive geo={geo} />
+          <SectionBoundary label="the program snapshot">
+            <CountryAnalyticsLive geo={geo} />
+          </SectionBoundary>
         </div>
       </>
     );
@@ -111,10 +116,14 @@ export default async function RVPDashboard({ searchParams }: { searchParams: Pro
       <DashboardGreetingHero user={rawUser} />
 
       {/* Live program snapshot (backend analytics). */}
-      <CountryAnalyticsLive geo={geo} />
+      <SectionBoundary label="the program snapshot">
+        <CountryAnalyticsLive geo={geo} />
+      </SectionBoundary>
 
       {/* Leadership Decision Engine — region/country advisory boards, computed from live data. */}
-      <DecisionEngineEmbed />
+      <SectionBoundary label="leadership decisions">
+        <DecisionEngineEmbed />
+      </SectionBoundary>
 
       {/* REGIONAL SIGNALS — the statistics snapshot, directly below the
           hero: region-weighted KPIs, system insights, training coverage. */}

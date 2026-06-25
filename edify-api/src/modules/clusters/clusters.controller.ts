@@ -28,12 +28,22 @@ export class ClustersController {
     return this.clusters.subCountiesWithoutClusters(user);
   }
 
-  // Per-cluster meeting-slot planning status (SIT + 1st/2nd/3rd meetings),
-  // derived from real cluster activities. Powers the live cluster gap board.
+  // Per-cluster planning intelligence (open-ended, NO 3-meeting cap):
+  // unlimited cadence counts, SSA + coverage signals, intelligence-derived
+  // recommendation category. Powers the live cluster gap board.
   @Get('planning')
   @RequirePermissions(PERMISSIONS.CLUSTER_VIEW)
   planning(@CurrentUser() user: AuthUser) {
     return this.clusters.clusterPlanning(user);
+  }
+
+  // Single-cluster intelligence — full SSA performance, coverage, cadence,
+  // and recommendation, computed identically to the per-cluster mock.
+  // Backs the cluster detail page's intelligence panel.
+  @Get(':id/intelligence')
+  @RequirePermissions(PERMISSIONS.CLUSTER_VIEW)
+  clusterIntelligence(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.clusters.clusterIntelligence(id, user);
   }
 
   @Get(':id/schools')

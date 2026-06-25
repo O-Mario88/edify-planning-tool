@@ -530,15 +530,29 @@ async function seedDomains(rows: SchoolRow[], coord: Staff): Promise<string[]> {
   }
 
   if ((await prisma.costSetting.count()) === 0) {
+    // Complete CD Cost Catalogue — every key the costing engine can look
+    // up at planning time. Includes:
+    //   • staff transport (primary/secondary)
+    //   • per-diem package (breakfast, lunch, dinner)
+    //   • overnight accommodation
+    //   • trainings (session fee + venue + meals + mobilisation)
+    //   • cluster meeting (per-participant unit)
+    //   • partner lump sums (visit + training tiers)
+    //   • admin (stationery as the first example; CD adds others)
     const COSTS = [
       { key: 'staff_visit_transport_primary', label: 'Staff visit transport (primary)', unitCost: 50000 },
       { key: 'staff_visit_transport_secondary', label: 'Staff visit transport (secondary)', unitCost: 30000 },
-      { key: 'lunch', label: 'Lunch', unitCost: 15000 },
+      { key: 'breakfast', label: 'Breakfast (per day)', unitCost: 8000 },
+      { key: 'lunch', label: 'Lunch (per day)', unitCost: 15000 },
+      { key: 'dinner', label: 'Dinner (per day)', unitCost: 20000 },
+      { key: 'accommodation', label: 'Accommodation (per night)', unitCost: 80000 },
       { key: 'partner_visit_lump_sum', label: 'Partner visit lump sum', unitCost: 120000 },
+      { key: 'partner_training_lump_sum', label: 'Partner training lump sum', unitCost: 250000 },
       { key: 'training_session_fee', label: 'Training session fee', unitCost: 200000 },
       { key: 'venue', label: 'Venue', unitCost: 150000 },
       { key: 'meals_per_participant', label: 'Meals per participant', unitCost: 12000 },
-      { key: 'cluster_meeting_cost', label: 'Cluster meeting cost', unitCost: 300000 },
+      { key: 'mobilisation_per_participant', label: 'Mobilisation per participant', unitCost: 5000 },
+      { key: 'cluster_meeting_cost', label: 'Cluster meeting (per participant)', unitCost: 10000 },
       { key: 'admin_stationery', label: 'Admin — stationery', unitCost: 80000 },
     ];
     for (const c of COSTS) await prisma.costSetting.create({ data: { ...c, fy: '2026', createdBy: 'seed' } });

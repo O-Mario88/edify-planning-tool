@@ -1,6 +1,6 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { closeSync, existsSync, openSync, readSync, rmSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { extname, join, resolve } from 'node:path';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScopeService } from '../../common/scope/scope.service';
 import { AuditService } from '../../common/audit/audit.service';
@@ -9,6 +9,7 @@ import { DomainEventService } from '../../common/realtime/domain-events.service'
 import { AuthUser } from '../../common/auth/auth-user';
 import { assertSafeUpload, sanitizeOriginalName } from './file-validation';
 import { EVIDENCE_SCANNER, type EvidenceScanner } from './evidence-scanner';
+import { DocxConverterService } from './docx-converter.service';
 
 // Where uploaded evidence files live. On Railway, mount a persistent volume at
 // this path (EVIDENCE_STORAGE_DIR) so files survive redeploys.
@@ -36,6 +37,7 @@ export class EvidenceService {
     private readonly audit: AuditService,
     private readonly authz: AuthorizationService,
     private readonly events: DomainEventService,
+    private readonly docxConverter: DocxConverterService,
     @Inject(EVIDENCE_SCANNER) private readonly scanner: EvidenceScanner,
   ) {}
 
@@ -95,13 +97,35 @@ export class EvidenceService {
       throw new BadRequestException('The file was rejected by the malware scan.');
     }
 
+    // Preview routing — set previewStatus based on file type so the FE viewer
+    // knows whether to render immediately (PDF/image) or wait for a server
+    // conversion (DOCX). The on-demand DOCX→PDF converter is called from
+    // `prepareInlineView` the first time the user opens a DOCX rendition.
+    const ext = extname(file.originalname || '').toLowerCase();
+    const isPdf = file.mimetype === 'application/pdf' || ext === '.pdf';
+    const isImage = file.mimetype.startsWith('image/');
+    const isDocx =
+      file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+      file.mimetype === 'application/msword' ||
+      ext === '.docx' || ext === '.doc';
+    const previewStatus = isPdf || isImage
+      ? 'ready'
+      : isDocx
+        ? 'pending'
+        : 'not_required';
+
     // The on-disk filename is the stored reference (relative to EVIDENCE_DIR).
     const rec = await this.prisma.evidenceRecord.create({
       data: {
         activityId, kind: kind as never, uri: file.filename,
         originalName: sanitizeOriginalName(file.originalname), mimeType: file.mimetype,
-        uploadedBy: user.userId, status: 'uploaded', scanStatus,
-      },
+        fileExtension: ext || null,
+        fileSize: file.size,
+        storageProvider: 'local',
+        uploadedBy: user.userId, uploaderRole: user.activeRole as never,
+        status: 'uploaded', scanStatus,
+        previewStatus,
+      } as never,
     });
     // Partner-delivered work moves to "evidence uploaded" awaiting staff review;
     // staff-delivered just flags evidence present.
@@ -138,8 +162,165 @@ export class EvidenceService {
     });
     return rows.map((r) => ({
       id: r.id, kind: r.kind, status: r.status, originalName: r.originalName, mimeType: r.mimeType,
-      uploadedBy: r.uploadedBy, uploadedAt: r.createdAt, reviewNote: r.reviewNote,
+      uploadedBy: r.uploadedBy, uploaderRole: (r as never as { uploaderRole?: string }).uploaderRole ?? null,
+      uploadedAt: r.createdAt, reviewNote: r.reviewNote,
+      fileSize: (r as never as { fileSize?: number }).fileSize ?? null,
+      fileExtension: (r as never as { fileExtension?: string }).fileExtension ?? null,
+      previewStatus: (r as never as { previewStatus?: string }).previewStatus ?? 'ready',
+      pdfRenditionStatus: (r as never as { pdfRenditionStatus?: string }).pdfRenditionStatus ?? null,
+      viewCount: (r as never as { viewCount?: number }).viewCount ?? 0,
     }));
+  }
+
+  /** Prepare a DOCX evidence record for inline viewing.
+   *
+   *  The View Evidence flow (spec §22):
+   *    1. FE clicks View Evidence on a DOCX row
+   *    2. FE calls POST /evidence/:id/prepare-view
+   *    3. Backend checks the row — if `previewStatus === 'ready'` (PDF/image
+   *       OR a cached DOCX rendition), it returns immediately.
+   *    4. Otherwise it kicks the DOCX→PDF converter. Success → caches the
+   *       rendition next to the original under `<base>.pdf` and sets
+   *       `pdfRenditionStorageKey + pdfRenditionStatus = 'ready' +
+   *       previewStatus = 'ready'`. Failure → `previewStatus = 'failed'`
+   *       and the FE shows the "download original" fallback.
+   *
+   *  This is the SINGLE place the converter is invoked, so the failure mode
+   *  is centralized + audited. */
+  async prepareInlineView(user: AuthUser, id: string) {
+    const rec = await this.prisma.evidenceRecord.findUnique({
+      where: { id },
+      select: {
+        id: true, activityId: true, uploadedBy: true, uri: true, mimeType: true,
+        originalName: true, quarantined: true,
+        fileExtension: true, previewStatus: true,
+        pdfRenditionStorageKey: true, pdfRenditionStatus: true,
+      } as never,
+    });
+    if (!rec) throw new NotFoundException('Evidence not found');
+    const r = rec as never as {
+      id: string; activityId: string; uri: string; mimeType: string | null;
+      fileExtension: string | null; previewStatus: string | null;
+      pdfRenditionStorageKey: string | null; pdfRenditionStatus: string | null;
+      quarantined: boolean; uploadedBy: string;
+    };
+    if (r.quarantined) throw new NotFoundException('Evidence file is unavailable');
+    await this.authz.assertCanAccess(user, { kind: 'evidence', id, loadedEntity: rec }, 'download');
+
+    // Already ready — PDF, image, or DOCX with cached rendition.
+    if (r.previewStatus === 'ready' || (r.pdfRenditionStorageKey && r.pdfRenditionStatus === 'ready')) {
+      return {
+        id: r.id,
+        previewStatus: 'ready',
+        viewKind: r.pdfRenditionStorageKey ? 'pdf_rendition' : (r.mimeType?.startsWith('image/') ? 'image' : 'pdf'),
+        renditionId: r.pdfRenditionStorageKey ? r.id : null,
+      };
+    }
+
+    // DOCX needs conversion.
+    const ext = (r.fileExtension ?? '').toLowerCase();
+    const isDocx = ext === '.docx' || ext === '.doc' ||
+      r.mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+      r.mimeType === 'application/msword';
+
+    if (!isDocx) {
+      // Not a DOCX and not pre-marked ready: treat as PDF/image (the upload
+      // flow already set previewStatus on those — this is a defensive default).
+      await this.prisma.evidenceRecord.update({
+        where: { id },
+        data: { previewStatus: 'ready' } as never,
+      });
+      return { id, previewStatus: 'ready', viewKind: r.mimeType?.startsWith('image/') ? 'image' : 'pdf', renditionId: null };
+    }
+
+    // Convert.
+    const sourceAbs = join(EVIDENCE_DIR, r.uri.replace(/[/\\]/g, ''));
+    if (!existsSync(sourceAbs)) {
+      throw new NotFoundException('Evidence file missing on disk');
+    }
+    const renditionName = `${r.uri.replace(/\.[^.]+$/, '')}.pdf`;
+    const result = await this.docxConverter.convert(sourceAbs, EVIDENCE_DIR, renditionName);
+
+    if (!result.ok) {
+      await this.prisma.evidenceRecord.update({
+        where: { id },
+        data: {
+          previewStatus: 'failed',
+          pdfRenditionStatus: 'failed',
+          pdfRenditionError: result.message,
+          pdfRenditionAt: new Date(),
+        } as never,
+      });
+      await this.audit.log({
+        action: 'evidence.convert.failed',
+        subjectKind: 'Activity', subjectId: r.activityId,
+        actorId: user.userId, actorRole: user.activeRole,
+        payload: { evidenceId: id, reason: result.reason, message: result.message },
+      });
+      return { id, previewStatus: 'failed', viewKind: 'docx', renditionId: null, reason: result.reason, message: result.message };
+    }
+
+    await this.prisma.evidenceRecord.update({
+      where: { id },
+      data: {
+        previewStatus: 'ready',
+        pdfRenditionStorageKey: result.pdfFilename,
+        pdfRenditionStatus: 'ready',
+        pdfRenditionAt: new Date(),
+      } as never,
+    });
+    await this.audit.log({
+      action: 'evidence.convert.success',
+      subjectKind: 'Activity', subjectId: r.activityId,
+      actorId: user.userId, actorRole: user.activeRole,
+      payload: { evidenceId: id, durationMs: result.durationMs },
+    });
+
+    return { id, previewStatus: 'ready', viewKind: 'pdf_rendition', renditionId: id };
+  }
+
+  /** Resolve a PDF rendition (DOCX→PDF cached output) for inline viewing.
+   *  Streamed by the controller through the same authorization path as the
+   *  original file. */
+  async renditionFor(user: AuthUser, id: string): Promise<{ absPath: string; mimeType: string; originalName: string }> {
+    const rec = await this.prisma.evidenceRecord.findUnique({
+      where: { id },
+      select: {
+        id: true, activityId: true, uploadedBy: true, originalName: true, quarantined: true,
+        pdfRenditionStorageKey: true, pdfRenditionStatus: true,
+      } as never,
+    });
+    if (!rec) throw new NotFoundException('Evidence not found');
+    const r = rec as never as {
+      pdfRenditionStorageKey: string | null; pdfRenditionStatus: string | null;
+      originalName: string | null; quarantined: boolean;
+    };
+    if (r.quarantined) throw new NotFoundException('Evidence file is unavailable');
+    await this.authz.assertCanAccess(user, { kind: 'evidence', id, loadedEntity: rec }, 'download');
+    if (!r.pdfRenditionStorageKey || r.pdfRenditionStatus !== 'ready') {
+      throw new NotFoundException('PDF rendition is not ready');
+    }
+    const safe = r.pdfRenditionStorageKey.replace(/[/\\]/g, '');
+    const absPath = join(EVIDENCE_DIR, safe);
+    if (!existsSync(absPath)) throw new NotFoundException('Rendition file missing on disk');
+
+    // Count + audit the view — every successful authorized inline view leaves
+    // a trail.
+    await this.prisma.evidenceRecord.update({
+      where: { id },
+      data: { viewCount: { increment: 1 } } as never,
+    }).catch(() => undefined);
+    await this.audit.log({
+      action: 'evidence.view',
+      subjectKind: 'Activity', subjectId: (rec as never as { activityId: string }).activityId,
+      actorId: user.userId, actorRole: user.activeRole,
+      payload: { evidenceId: id, viewKind: 'pdf_rendition' },
+    });
+    return {
+      absPath,
+      mimeType: 'application/pdf',
+      originalName: sanitizeOriginalName((r.originalName ?? 'evidence').replace(/\.[^.]+$/, '') + '.pdf'),
+    };
   }
 
   /** Resolve an evidence record to its absolute on-disk path (for streaming).
@@ -159,6 +340,19 @@ export class EvidenceService {
     const safe = record.uri.replace(/[/\\]/g, '');
     const absPath = join(EVIDENCE_DIR, safe);
     if (!existsSync(absPath)) throw new NotFoundException('Evidence file missing on disk');
+    // Audit + view counter — every authorized download / inline view leaves
+    // a trail (spec §22 audit logs). The audit row carries actor/time; the
+    // counter is the cheap aggregate for the viewer chip.
+    await this.prisma.evidenceRecord.update({
+      where: { id },
+      data: { viewCount: { increment: 1 } } as never,
+    }).catch(() => undefined);
+    await this.audit.log({
+      action: 'evidence.view',
+      subjectKind: 'Activity', subjectId: record.activityId,
+      actorId: user.userId, actorRole: user.activeRole,
+      payload: { evidenceId: id, viewKind: record.mimeType?.startsWith('image/') ? 'image' : 'pdf' },
+    });
     return {
       absPath,
       mimeType: record.mimeType ?? 'application/octet-stream',

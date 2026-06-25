@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { ROLE_REDIRECT } from "@/lib/auth-public";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { MockLeakageCard } from "@/components/system-health/MockLeakageCard";
+import { ContractHealthCard } from "@/components/system-health/ContractHealthCard";
 import { OnlineTestReadinessCard } from "@/components/system-health/OnlineTestReadinessCard";
 import { WorkflowHealthCard } from "@/components/system-health/WorkflowHealthCard";
 import { DemoReadinessCard } from "@/components/system-health/DemoReadinessCard";
@@ -23,6 +24,7 @@ export default async function SystemHealthPage() {
       />
       <div className="px-4 sm:px-6 pt-2 pb-24 space-y-4">
         <OnlineTestReadinessCard />
+        <ContractHealthCard />
         <DemoReadinessCard />
         <WorkflowHealthCard />
         <EscalationLadderCard />

@@ -70,12 +70,14 @@ async function resolveBackendGeography(
 // numbered meetings are cluster_meeting + their slot; follow-up/training carry
 // no slot.
 const CLUSTER_KIND_TO_BE: Record<ClusterMeetingKind, { activityType: string; clusterSlot?: string }> = {
-  sit:            { activityType: "school_improvement_training", clusterSlot: "sit" },
-  first_meeting:  { activityType: "cluster_meeting", clusterSlot: "first_meeting" },
-  second_meeting: { activityType: "cluster_meeting", clusterSlot: "second_meeting" },
-  third_meeting:  { activityType: "cluster_meeting", clusterSlot: "third_meeting" },
-  follow_up:      { activityType: "cluster_meeting" },
-  training:       { activityType: "cluster_training" },
+  sit:              { activityType: "school_improvement_training", clusterSlot: "sit" },
+  first_meeting:    { activityType: "cluster_meeting", clusterSlot: "first_meeting" },
+  second_meeting:   { activityType: "cluster_meeting", clusterSlot: "second_meeting" },
+  third_meeting:    { activityType: "cluster_meeting", clusterSlot: "third_meeting" },
+  follow_up:        { activityType: "cluster_meeting" },
+  training:         { activityType: "cluster_training" },
+  cluster_meeting:  { activityType: "cluster_meeting" },   // unlimited — no fixed slot
+  cluster_training: { activityType: "cluster_training" },
 };
 
 // FY ("2026") + quarter from an ISO date (FY starts Oct).

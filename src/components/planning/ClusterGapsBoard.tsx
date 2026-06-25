@@ -8,7 +8,7 @@
 import { useMemo, useState } from "react";
 import { formatUgxShort as formatUgx } from "@/lib/format-utils";
 import {
-  Users, Calendar, AlertTriangle, ArrowRight, CheckCircle2, Circle, Clock, RotateCw,
+  Users, Calendar, AlertTriangle, ArrowRight, CheckCircle2, Clock, RotateCw,
   Handshake, ChevronDown, ChevronRight, ChevronUp, CalendarCheck, Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -17,7 +17,6 @@ import {
   CLUSTER_MEETING_SLOT_LABEL,
   recommendForCluster,
   type ClusterGap,
-  type ClusterMeetingStatus,
   type ClusterMeetingSlot,
 } from "@/lib/planning/planning-gaps-mock";
 import {
@@ -41,16 +40,27 @@ import {
 } from "@/components/planning/ClusterActivityProfileDrawer";
 import { scheduleClusterMeetingAction } from "@/lib/actions/cluster-actions";
 import type { ClusterMeetingKind } from "@/lib/cluster/cluster-core";
+import { CLUSTER_GAP_CATEGORY_LABEL } from "@/lib/cluster/cluster-intelligence";
 
 /**
  * Translate a cluster gap + slot into the unified ScheduleActivityDrawer's
  * context. Centralized so the drawer doesn't have to know about cluster
  * vs. school terminology, and so the SIP eligibility warning (cluster SIT
- * only) lives in one obvious place.
+ * only) lives in one obvious place. In the open-ended model the slot is
+ * a routing hint — `sit` still means training, anything else routes a
+ * cluster meeting with no ordinal slot.
  */
 function buildClusterScheduleContext(c: ClusterGap, slot: ClusterMeetingSlot): ScheduleActivityContext {
   const isTraining = slot === "sit";
   const missing    = Math.max(0, c.schoolsCount - c.schoolsWithSsa);
+  // Prefill SSA focus from the intelligence-engine recommendation when one
+  // exists — the user mandated "if the user selected an intervention from
+  // the SSA table, prefill the focus intervention". The recommendation IS
+  // that selection for open-ended planning. Score 0 here is a placeholder
+  // (the drawer shows it as a label, not a chart).
+  const ssaFocus = c.recommendation?.focusIntervention
+    ? { area: c.recommendation.focusIntervention, score: 0 }
+    : undefined;
   return {
     target: { kind: "cluster", id: c.id, name: c.clusterName },
     activityType:        CLUSTER_MEETING_SLOT_LABEL[slot],
@@ -59,6 +69,7 @@ function buildClusterScheduleContext(c: ClusterGap, slot: ClusterMeetingSlot): S
     defaultProposedBy:   `${c.assignedCceo} (CCEO)`,
     locationLine:        c.district,
     clusterSummary:      `${c.schoolsCount} schools · ${c.schoolsWithSsa} with SSA · CCEO ${c.assignedCceo}`,
+    ssaFocus,
     // SIP eligibility warning — only meaningful for SIT (training is
     // gated on SSA). For routine meetings every school in the cluster
     // attends regardless of SSA status.
@@ -68,13 +79,17 @@ function buildClusterScheduleContext(c: ClusterGap, slot: ClusterMeetingSlot): S
   };
 }
 
-const MEETING_TONE: Record<ClusterMeetingStatus, { bg: string; text: string; Icon: typeof CheckCircle2 }> = {
-  Completed:    { bg: "bg-emerald-50", text: "text-emerald-700", Icon: CheckCircle2 },
-  Scheduled:    { bg: "bg-sky-50",     text: "text-sky-700",     Icon: Clock        },
-  Rescheduled:  { bg: "bg-amber-50",   text: "text-amber-700",   Icon: RotateCw     },
-  Missing:      { bg: "bg-rose-50",    text: "text-rose-700",    Icon: AlertTriangle },
-  "Not Yet Due":{ bg: "bg-slate-100",  text: "text-slate-600",   Icon: Circle },
-};
+/** Map the open-ended recommendation's `suggestedActivity` to the legacy
+ *  scheduling slot the existing drawer routing expects. The drawer is
+ *  slot-aware (it persists a clusterSlot tag for in-flight meetings) —
+ *  for the new open-ended path we still pick a slot here so the existing
+ *  scheduleClusterMeetingAction can persist the activity. `training`
+ *  routes to SIT-style scheduling; `meeting` / `follow_up` /
+ *  `support_visit` route to a generic cluster meeting. */
+function slotForSuggestedActivity(activity: string | undefined): ClusterMeetingSlot {
+  if (activity === "training") return "sit";
+  return "first";
+}
 
 export function ClusterGapsBoard({
   assigningUserRole = "CountryProgramLead",
@@ -211,11 +226,11 @@ export function ClusterGapsBoard({
       const [clusterId, slot] = key.split(":") as [string, ClusterMeetingSlot];
       const cluster = data.find((cg) => cg.id === clusterId);
       if (!cluster) continue;
+      // Open-ended labels — every cluster meeting reads "Cluster meeting"
+      // regardless of historical ordinal slot; SIT is the only label that
+      // remains semantically distinct (training, not a routine meeting).
       const slotLabel =
-        slot === "first"  ? "1st cluster meeting" :
-        slot === "second" ? "2nd cluster meeting" :
-        slot === "third"  ? "3rd cluster meeting" :
-                            "School Improvement Training";
+        slot === "sit" ? "School Improvement Training" : "Cluster meeting";
       items.push({
         clusterId,
         clusterName: cluster.clusterName,
@@ -230,8 +245,13 @@ export function ClusterGapsBoard({
     return items;
   }, [scheduleOverlay]);
 
-  /** Maps a cluster primaryAction to the matching meeting slot. */
-  function slotForPrimaryAction(action: string): ClusterMeetingSlot | null {
+  /** Maps a cluster primaryAction to the matching scheduling slot. The
+   *  open-ended model only emits `schedule_cluster_activity` from the new
+   *  recommendation engine; legacy `schedule_first/second/third/sit`
+   *  routes are kept ONLY so the older ClusterActivityProfileDrawer
+   *  (which still uses ordinal labels internally) keeps working. */
+  function slotForPrimaryAction(action: string, suggested?: string): ClusterMeetingSlot | null {
+    if (action === "schedule_cluster_activity") return slotForSuggestedActivity(suggested);
     if (action === "schedule_first")  return "first";
     if (action === "schedule_second") return "second";
     if (action === "schedule_third")  return "third";
@@ -264,7 +284,7 @@ export function ClusterGapsBoard({
             </span>
           </h2>
           <p className="text-[12px] muted mt-0.5">
-            Clusters with missing meetings or School Improvement Trainings. Schedule any meeting or SIT freely — schools can complete SSA at a later meeting, and new schools can join through a cluster meeting or training.
+            Clusters needing a meeting, training, or SIT. Clusters support unlimited meetings this FY. Use the cluster intelligence page for SSA performance, coverage gaps (not visited / not trained), and the right focus intervention.
           </p>
         </div>
         <span className="text-[var(--color-edify-muted)] shrink-0 mt-1">
@@ -340,7 +360,7 @@ export function ClusterGapsBoard({
                 // ScheduleActivityDrawer. Anything else (e.g.
                 // add_schools, partner-facilitator) stays on the
                 // generic owner picker.
-                const slot = slotForPrimaryAction(payload.primaryAction);
+                const slot = slotForPrimaryAction(payload.primaryAction, payload.suggestedActivity);
                 if (slot) {
                   setScheduleAssign({
                     cluster: c,
@@ -445,6 +465,7 @@ function ClusterRow({
     purpose: string;
     isTraining: boolean;
     primaryAction: string;     // routes initial-schedule actions to the calendar drawer
+    suggestedActivity?: string;
   }) => void;
   onReschedule: (slot: ClusterMeetingSlot) => void;
   onViewCluster: () => void;
@@ -463,27 +484,27 @@ function ClusterRow({
   const sitShortfallNote = rec.sitDisabledReason;
   const [open, setOpen] = useState(false);
 
-  // Per-slot effective status + date. The overlay represents work the
-  // user just did this session; it forces the chip into the Scheduled
-  // state with the chosen date even though the underlying mock still
-  // says Missing.
-  function chipStatus(slot: ClusterMeetingSlot, base: typeof c.firstMeeting) {
-    return overlay[slot] ? "Scheduled" : base;
-  }
-  function chipDate(slot: ClusterMeetingSlot, base: string | undefined) {
-    return overlay[slot]?.date ?? base;
-  }
+  // Intelligence-driven summary signals. Replaces the legacy ordinal-slot
+  // chips ("SIT / 1st / 2nd / 3rd") with cadence + coverage signals from
+  // the recommendation engine, so the planner sees WHY a cluster is open
+  // — not just which arbitrary slot is empty.
+  const categoryLabel = CLUSTER_GAP_CATEGORY_LABEL[c.gapCategory];
+  // Aggregated reschedule count across legacy ordinal-tagged meetings —
+  // surfaced so planners can still spot churn at a glance.
+  const totalReschedules =
+    (c.firstMeetingReschedules?.length ?? 0) +
+    (c.secondMeetingReschedules?.length ?? 0) +
+    (c.thirdMeetingReschedules?.length ?? 0) +
+    (c.sitReschedules?.length ?? 0);
 
   return (
     <li className={cn(
       "rounded-xl border border-[var(--color-edify-divider)] bg-white overflow-hidden transition-colors",
       open && "bg-[var(--color-edify-soft)]/30",
     )}>
-      {/* Collapsed header — identity + slot chips so the planner sees
-          which meetings are missing / scheduled at a glance. Click
-          anywhere on the header to expand. The meeting chips remain
-          tappable for reschedule — clicks inside them stop propagation
-          via their own onClick. */}
+      {/* Collapsed header — identity + intelligence chips so the planner
+          sees the cluster's open-ended cadence + the planning category at
+          a glance. Click anywhere on the header to expand. */}
       <div
         role="button"
         tabIndex={0}
@@ -507,37 +528,67 @@ function ClusterRow({
             {c.district} · {c.schoolsCount} schools · {c.schoolsWithSsa} with SSA · CCEO {c.assignedCceo}
           </p>
           <div
-            className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3"
+            className="flex flex-wrap items-center gap-1.5 mt-3"
             onClick={(e) => e.stopPropagation()}
           >
-            <MeetingChip
-              label="SIT"
-              status={chipStatus("sit", c.schoolImprovementTraining)}
-              date={chipDate("sit", c.sitDate)}
-              rescheduleCount={c.sitReschedules?.length ?? 0}
-              onReschedule={() => onReschedule("sit")}
-            />
-            <MeetingChip
-              label="1st meeting"
-              status={chipStatus("first", c.firstMeeting)}
-              date={chipDate("first", c.firstMeetingDate)}
-              rescheduleCount={c.firstMeetingReschedules?.length ?? 0}
-              onReschedule={() => onReschedule("first")}
-            />
-            <MeetingChip
-              label="2nd meeting"
-              status={chipStatus("second", c.secondMeeting)}
-              date={chipDate("second", c.secondMeetingDate)}
-              rescheduleCount={c.secondMeetingReschedules?.length ?? 0}
-              onReschedule={() => onReschedule("second")}
-            />
-            <MeetingChip
-              label="3rd meeting"
-              status={chipStatus("third", c.thirdMeeting)}
-              date={chipDate("third", c.thirdMeetingDate)}
-              rescheduleCount={c.thirdMeetingReschedules?.length ?? 0}
-              onReschedule={() => onReschedule("third")}
-            />
+            <span
+              className="inline-flex items-center gap-1 px-2 py-[3px] rounded-md text-[10px] font-extrabold bg-[var(--color-edify-soft)] text-[var(--color-edify-text)]"
+              title={`${c.meetingsThisFy} completed cluster meeting${c.meetingsThisFy === 1 ? "" : "s"} this FY`}
+            >
+              <CheckCircle2 size={10} className="text-emerald-600" />
+              {c.meetingsThisFy} meeting{c.meetingsThisFy === 1 ? "" : "s"} FY
+            </span>
+            {c.trainingsThisFy > 0 && (
+              <span
+                className="inline-flex items-center gap-1 px-2 py-[3px] rounded-md text-[10px] font-extrabold bg-[var(--color-edify-soft)] text-[var(--color-edify-text)]"
+                title={`${c.trainingsThisFy} completed cluster training${c.trainingsThisFy === 1 ? "" : "s"} this FY`}
+              >
+                <Sparkles size={10} className="text-sky-600" />
+                {c.trainingsThisFy} training{c.trainingsThisFy === 1 ? "" : "s"}
+              </span>
+            )}
+            {c.lastMeetingDate && (
+              <span
+                className="inline-flex items-center gap-1 px-2 py-[3px] rounded-md text-[10px] font-extrabold bg-[var(--color-edify-soft)] text-[var(--color-edify-text)]"
+                title={`Last meeting ${c.lastMeetingDate}`}
+              >
+                <Calendar size={10} />
+                Last {c.lastMeetingDate}
+              </span>
+            )}
+            {!c.metThisQuarter && c.meetingsThisFy > 0 && (
+              <span
+                className="inline-flex items-center gap-1 px-2 py-[3px] rounded-md text-[10px] font-extrabold bg-amber-50 text-amber-700"
+                title="No completed cluster meeting this calendar quarter"
+              >
+                <Clock size={10} />
+                Not met this quarter
+              </span>
+            )}
+            {c.schoolsNeitherVisitNorTraining > 0 && (
+              <span
+                className="inline-flex items-center gap-1 px-2 py-[3px] rounded-md text-[10px] font-extrabold bg-rose-50 text-rose-700"
+                title={`${c.schoolsNeitherVisitNorTraining} schools with neither visit nor training`}
+              >
+                <AlertTriangle size={10} />
+                {c.schoolsNeitherVisitNorTraining} urgent
+              </span>
+            )}
+            {totalReschedules > 0 && (
+              <span
+                className="inline-flex items-center gap-1 px-2 py-[3px] rounded-md text-[10px] font-extrabold bg-amber-50 text-amber-700"
+                title={`Cluster activities moved ${totalReschedules} time${totalReschedules === 1 ? "" : "s"}`}
+              >
+                <RotateCw size={10} />
+                ×{totalReschedules}
+              </span>
+            )}
+            <span
+              className="inline-flex items-center gap-1 px-2 py-[3px] rounded-md text-[10px] font-extrabold border border-[var(--color-edify-divider)] text-[var(--color-edify-muted)]"
+              title="Planning category"
+            >
+              {categoryLabel}
+            </span>
           </div>
         </div>
         <ChevronRight
@@ -574,7 +625,7 @@ function ClusterRow({
                 <CalendarCheck size={12} />
                 {rec.primaryLabel}
               </button>
-            ) : rec.primaryAction === "schedule_sit" ? (
+            ) : rec.primaryAction === "schedule_cluster_activity" && rec.suggestedActivity === "training" ? (
               <>
                 <button
                   type="button"
@@ -584,6 +635,7 @@ function ClusterRow({
                     purpose: rec.purpose,
                     isTraining: true,
                     primaryAction: rec.primaryAction,
+                    suggestedActivity: rec.suggestedActivity,
                   })}
                   disabled={sitBlocked}
                   title={sitBlocked ? rec.sitDisabledReason : undefined}
@@ -613,6 +665,7 @@ function ClusterRow({
                   purpose: rec.purpose,
                   isTraining: false,
                   primaryAction: rec.primaryAction,
+                  suggestedActivity: rec.suggestedActivity,
                 })}
                 className="w-full inline-flex items-center justify-center gap-1 h-9 px-3 rounded-md bg-[var(--color-edify-primary)] text-white text-[12px] font-extrabold hover:bg-[var(--color-edify-dark)]"
               >
@@ -650,52 +703,8 @@ function ClusterRow({
   );
 }
 
-function MeetingChip({
-  label, status, date, rescheduleCount = 0, onReschedule,
-}: {
-  label: string;
-  status: ClusterMeetingStatus;
-  date?: string;
-  rescheduleCount?: number;
-  onReschedule?: () => void;
-}) {
-  const tone        = MEETING_TONE[status];
-  const isClickable = (status === "Scheduled" || status === "Rescheduled") && !!onReschedule;
-
-  const body = (
-    <div className={cn("rounded-md px-2 py-1.5 flex items-center gap-1.5 transition-colors", tone.bg, isClickable && "hover:brightness-95")}>
-      <tone.Icon size={11} className={tone.text} />
-      <div className="min-w-0 flex-1">
-        <div className={cn("text-[10px] uppercase tracking-wide font-bold inline-flex items-center gap-1", tone.text)}>
-          {label}
-          {rescheduleCount > 0 && (
-            <span
-              title={`Moved ${rescheduleCount} time${rescheduleCount === 1 ? "" : "s"}`}
-              className="inline-flex items-center justify-center min-w-[14px] h-[14px] px-1 rounded-full bg-white/70 text-[9px] font-extrabold tabular text-amber-700 ring-1 ring-amber-200"
-            >
-              ×{rescheduleCount}
-            </span>
-          )}
-        </div>
-        <div className="text-[12px] font-extrabold text-[var(--color-edify-text)] leading-tight truncate">
-          {date ? date : status}
-        </div>
-        {date && status !== "Completed" && (
-          <div className="text-[10px] muted leading-tight truncate">{status}{isClickable ? " · Tap to reschedule" : ""}</div>
-        )}
-      </div>
-    </div>
-  );
-
-  if (!isClickable) return body;
-  return (
-    <button
-      type="button"
-      onClick={onReschedule}
-      aria-label={`Reschedule ${label} (currently ${status}${date ? ` for ${date}` : ""})`}
-      className="text-left w-full"
-    >
-      {body}
-    </button>
-  );
-}
+// MeetingChip + MEETING_TONE removed when the 3-slot model was retired —
+// the row now renders intelligence-driven cadence/coverage chips inline.
+// Reschedule of already-scheduled meetings still happens via the
+// RescheduleClusterMeetingDrawer (entered from the row's expanded view
+// or from the "Scheduled this session" panel above).

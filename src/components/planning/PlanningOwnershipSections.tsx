@@ -1,17 +1,19 @@
 "use client";
 
-// PlanningOwnershipSections — the four follow-on cards that complete
-// the planning page flow defined by CCEO/PL:
+// PlanningOwnershipSections — the follow-on ownership cards for the planning
+// flow. There are four section definitions:
 //   • Assigned to Me              (owner = myself)
 //   • Assigned to Partner         (owner ∈ {partner, partner_facilitator})
 //   • Awaiting Partner Schedule   (partner-owned, status = not_started)
 //   • Planned This Month          (scheduledFor lies in current month)
 //
-// Each section is a compact list — 5 rows visible, "View All" links
-// out to the dedicated dashboards. Activities are sourced from the
-// existing core-school plans so the data lines up with the gap section
-// above; the same plumbing can be extended to non-core activities once
-// that mock lands.
+// Which sections render is controlled by the `show` prop, because the cards
+// that track ALREADY-PLANNED work (Awaiting Partner Schedule · Planned This
+// Month) now live on /my-plan, while the Planning page keeps only the
+// assignment cards (Assigned to Me · Assigned to Partner). Default = all four.
+//
+// Each section is a compact list — 5 rows visible, "View All" links out to the
+// dedicated dashboards. Activities are sourced from the core-school plans.
 
 import Link from "next/link";
 import {
@@ -31,59 +33,80 @@ const ACTIVITY_LIMIT = 5;
 
 const EMPTY_OWNERSHIP: CoreOwnership = { assignedToMe: [], assignedToPartner: [], awaitingPartner: [], plannedThisMonth: [] };
 
-export function PlanningOwnershipSections({ ownership = EMPTY_OWNERSHIP }: { ownership?: CoreOwnership } = {}) {
-  const assignedToMe   = ownership.assignedToMe;
-  const assignedToPart = ownership.assignedToPartner;
-  const awaitingPart   = ownership.awaitingPartner;
-  const plannedMonth   = ownership.plannedThisMonth;
+export type OwnershipSectionKey = keyof CoreOwnership;
 
+type OwnershipSectionDef = {
+  title: string;
+  subtitle: string;
+  Icon: LucideIcon;
+  tone: "info" | "warn" | "good";
+  emptyTitle: string;
+  emptyBody: string;
+  emptyVariant: "calm" | "good";
+  viewAllHref: string;
+  showBump?: boolean;
+};
+
+// One definition per section, keyed by its CoreOwnership field. Both the
+// Planning page and My Plan render a subset of these via `show`.
+const SECTION_DEFS: Record<OwnershipSectionKey, OwnershipSectionDef> = {
+  assignedToMe: {
+    title: "Assigned to Me",
+    subtitle: "Core activities you personally own. Complete date, route, cost, and evidence before delivery.",
+    Icon: User,
+    tone: "info",
+    emptyTitle: "Nothing on your queue.",
+    emptyBody: "When a core activity is assigned to you, it lands here. Tap Assign to Myself from any gap card to populate this view.",
+    emptyVariant: "calm",
+    viewAllHref: "/plans",
+  },
+  assignedToPartner: {
+    title: "Assigned to Partner",
+    subtitle: "Core activities a partner is either owning or facilitating. Status tracks back through your monitoring queue.",
+    Icon: Handshake,
+    tone: "info",
+    emptyTitle: "No partner-assigned activities yet.",
+    emptyBody: "Assign a visit or training to a partner from the Core Schools section and it will appear here with its delivery status.",
+    emptyVariant: "calm",
+    viewAllHref: "/partner/assignments",
+  },
+  awaitingPartner: {
+    title: "Awaiting Partner Schedule",
+    subtitle: "Activities sent to partners that still need a delivery date. Bump if the schedule is overdue.",
+    Icon: Clock,
+    tone: "warn",
+    showBump: true,
+    emptyTitle: "Every partner activity has a date.",
+    emptyBody: "When a partner-owned activity is overdue for scheduling it will surface here so you can bump them.",
+    emptyVariant: "good",
+    viewAllHref: "/partner/schedule",
+  },
+  plannedThisMonth: {
+    title: "Planned This Month",
+    subtitle: "Every core activity with a delivery date inside this calendar month — yours, staff, or partner.",
+    Icon: Calendar,
+    tone: "good",
+    emptyTitle: "No core activities this month.",
+    emptyBody: "As visits and trainings get scheduled, they appear here grouped by their delivery week.",
+    emptyVariant: "calm",
+    viewAllHref: "/plans",
+  },
+};
+
+const ALL_SECTIONS: OwnershipSectionKey[] = ["assignedToMe", "assignedToPartner", "awaitingPartner", "plannedThisMonth"];
+
+export function PlanningOwnershipSections({
+  ownership = EMPTY_OWNERSHIP,
+  show = ALL_SECTIONS,
+}: {
+  ownership?: CoreOwnership;
+  show?: OwnershipSectionKey[];
+} = {}) {
   return (
     <>
-      <OwnershipSection
-        title="Assigned to Me"
-        subtitle="Core activities you personally own. Complete date, route, cost, and evidence before delivery."
-        Icon={User}
-        tone="info"
-        rows={assignedToMe}
-        emptyTitle="Nothing on your queue."
-        emptyBody="When a core activity is assigned to you, it lands here. Tap Assign to Myself from any gap card to populate this view."
-        emptyVariant="calm"
-        viewAllHref="/plans"
-      />
-      <OwnershipSection
-        title="Assigned to Partner"
-        subtitle="Core activities a partner is either owning or facilitating. Status tracks back through your monitoring queue."
-        Icon={Handshake}
-        tone="info"
-        rows={assignedToPart}
-        emptyTitle="No partner-assigned activities yet."
-        emptyBody="Assign a visit or training to a partner from the Core Schools section and it will appear here with its delivery status."
-        emptyVariant="calm"
-        viewAllHref="/partner/assignments"
-      />
-      <OwnershipSection
-        title="Awaiting Partner Schedule"
-        subtitle="Activities sent to partners that still need a delivery date. Bump if the schedule is overdue."
-        Icon={Clock}
-        tone="warn"
-        rows={awaitingPart}
-        showBump
-        emptyTitle="Every partner activity has a date."
-        emptyBody="When a partner-owned activity is overdue for scheduling it will surface here so you can bump them."
-        emptyVariant="good"
-        viewAllHref="/partner/schedule"
-      />
-      <OwnershipSection
-        title="Planned This Month"
-        subtitle="Every core activity with a delivery date inside this calendar month — yours, staff, or partner."
-        Icon={Calendar}
-        tone="good"
-        rows={plannedMonth}
-        emptyTitle="No core activities this month."
-        emptyBody="As visits and trainings get scheduled, they appear here grouped by their delivery week."
-        emptyVariant="calm"
-        viewAllHref="/plans"
-      />
+      {show.map((key) => (
+        <OwnershipSection key={key} {...SECTION_DEFS[key]} rows={ownership[key]} />
+      ))}
     </>
   );
 }

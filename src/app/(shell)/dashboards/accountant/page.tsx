@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { DashboardPageHeader } from "@/components/dashboards/DashboardPageHeader";
 import { DashboardGreetingHero } from "@/components/dashboards/DashboardGreetingHero";
 import { BudgetIntelligenceEmbed } from "@/components/budget/BudgetIntelligenceEmbed";
+import { SectionBoundary } from "@/components/ui/SectionBoundary";
 import { AccountantConsoleDashboard } from "@/components/accountant-console/AccountantConsoleDashboard";
 import { CommandStack } from "@/components/actions/CommandStack";
 import { TodayCommandCenter } from "@/components/command/TodayCommandCenter";
@@ -77,7 +78,9 @@ export default async function AccountantConsolePage() {
       <DashboardGreetingHero user={user} />
 
       {/* Budget Intelligence — finance-execution view: low-yield spend, spend at risk. */}
-      <BudgetIntelligenceEmbed heading="Budget Intelligence" />
+      <SectionBoundary label="budget intelligence">
+        <BudgetIntelligenceEmbed heading="Budget Intelligence" />
+      </SectionBoundary>
       {/* Payment pipeline — the statistics snapshot, directly below the
           hero: where money is stuck before the queues. Store-derived; mock-gated. */}
       {mockOk && (

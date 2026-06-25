@@ -88,10 +88,20 @@ describe("section derivation", () => {
     }
   });
 
-  it("always returns the five sections, even when empty", () => {
+  it("always returns the six sections, even when empty", () => {
     const sections = sectionMyPlan([], TODAY);
-    expect(sections.map((s) => s.key)).toEqual(["dueToday", "thisWeek", "thisMonth", "waitingOnMe", "needsAttention"]);
+    expect(sections.map((s) => s.key)).toEqual([
+      "dueToday", "thisWeek", "thisMonth", "thisQuarter", "waitingOnMe", "needsAttention",
+    ]);
     expect(sections.every((s) => s.emptyCopy.length > 0)).toBe(true);
+  });
+
+  it("exact-dated work after this month but within ~3 months → thisQuarter", () => {
+    // TODAY = 2026-06-10. Month-end = 2026-06-30. Quarter window extends through 2026-08-31.
+    expect(bucketOf(fromStoreActivity(storeAct({ kind: "CLUSTER_TRAINING", scheduledDate: "2026-07-15", weekOfMonth: undefined }), NO_FUNDING, TODAY_ISO))).toBe("thisQuarter");
+    expect(bucketOf(fromStoreActivity(storeAct({ kind: "CLUSTER_TRAINING", scheduledDate: "2026-08-20", weekOfMonth: undefined }), NO_FUNDING, TODAY_ISO))).toBe("thisQuarter");
+    // Far-future + undated also land in thisQuarter (catch-all so nothing disappears).
+    expect(bucketOf(fromStoreActivity(storeAct({ kind: "CLUSTER_TRAINING", scheduledDate: "2027-01-15", weekOfMonth: undefined }), NO_FUNDING, TODAY_ISO))).toBe("thisQuarter");
   });
 });
 

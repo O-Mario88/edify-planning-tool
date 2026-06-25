@@ -1,6 +1,8 @@
 import { Suspense } from "react";
 import { StubPage } from "@/components/shell/StubPage";
 import { MyPlanSections } from "@/components/planning/MyPlanSections";
+import { PartnerPlannedSections } from "@/components/planning/PartnerPlannedSections";
+import { coreOwnershipRows } from "@/lib/core/core-board";
 import { MyPlanBriefingHero } from "@/components/planning/MyPlanBriefingHero";
 import { MyPlanSnapshotStrip } from "@/components/planning/MyPlanSnapshotStrip";
 import { MyPlanPeriodSwitcher } from "@/components/planning/MyPlanPeriodSwitcher";
@@ -71,6 +73,12 @@ export default async function MyPlanPage({
   const brief = dailyBrief({ name: user.name, now: today, sections });
   const chips = snapshotChips(sections, today);
 
+  // Partner-owned core activities the user is monitoring — rendered as a
+  // dedicated "Planned by Partner" card below the personal lanes (organized by
+  // Week / Month). Lives on /my-plan because it's already-planned work; the
+  // gap-focused Planning page no longer carries these monitoring cards.
+  const coreOwnership = coreOwnershipRows(user.staffId, user.role);
+
   return (
     <StubPage
       title="My Plan"
@@ -83,6 +91,7 @@ export default async function MyPlanPage({
         <MyPlanBriefingHero brief={brief} />
         <MyPlanSnapshotStrip chips={chips} />
         <MyPlanSections sections={sections} live={be.live} />
+        <PartnerPlannedSections rows={coreOwnership.assignedToPartner} now={today} />
       </div>
     </StubPage>
   );

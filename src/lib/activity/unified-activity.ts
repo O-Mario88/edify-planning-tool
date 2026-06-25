@@ -243,6 +243,8 @@ const CLUSTER_TYPE: Record<ClusterMeeting["kind"], UnifiedActivityType> = {
   follow_up: "Cluster Meeting",
   sit: "SIT",
   training: "Cluster Training",
+  cluster_meeting: "Cluster Meeting",
+  cluster_training: "Cluster Training",
 };
 
 export function fromClusterMeeting(m: ClusterMeeting): UnifiedActivity {

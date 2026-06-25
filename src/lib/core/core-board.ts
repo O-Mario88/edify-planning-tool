@@ -101,7 +101,13 @@ export type CoreOwnershipRow = {
   number: number;
   intervention: string;
   planningStatus: PlanningStatus;
+  /** Display label, e.g. "May 2026 · Wk 2". */
   scheduledFor?: string;
+  /** Canonical schedule fields (separate from the display label) — used by
+   *  My Plan's Partner section to bucket partner work by week/month without
+   *  re-parsing the label. */
+  scheduledMonth?: string;
+  scheduledWeek?: number;
   ownerName?: string;
 };
 
@@ -140,6 +146,8 @@ export function coreOwnershipRows(staffId: string, role: EdifyRole): CoreOwnersh
         intervention: s.intervention,
         planningStatus: slotPlanningStatus(s.status),
         scheduledFor: s.scheduledFor,
+        scheduledMonth: s.scheduledMonth,
+        scheduledWeek: s.scheduledWeek,
         ownerName: s.assignedStaffName ?? s.assignedPartnerName,
       };
       const isPartner = s.owner === "partner" || s.owner === "partner_facilitator" || !!s.assignedPartnerId;

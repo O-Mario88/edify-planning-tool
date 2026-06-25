@@ -2,9 +2,9 @@
 //
 // Pure functions: normalize an activity (backend BeActivity OR in-memory
 // store PlannedActivityRecord) into a MyPlanItem, then bucket the items into
-// the five sections:
+// the six sections:
 //
-//   Due Today · Planned This Week · Planned This Month ·
+//   Due Today · Planned This Week · Planned This Month · Planned This Quarter ·
 //   Waiting on Me · Rescheduled / Needs Attention
 //
 // Precedence (first match wins):
@@ -15,8 +15,13 @@
 //                             deferred items that need a decision.
 //   3. Due Today            — scheduled today or already overdue.
 //   4. Planned This Week    — scheduled in the remainder of the current week.
-//   5. Planned This Month   — everything else still open (rest of the month,
-//                             later, or not yet dated).
+//   5. Planned This Month   — scheduled later this calendar month (or visits
+//                             whose week-of-month falls after the current one).
+//   6. Planned This Quarter — scheduled after this month but within the next
+//                             three calendar months (rest of the current FY
+//                             quarter). Anything further out also lands here
+//                             rather than disappearing, so no scheduled work
+//                             is ever silently dropped.
 //
 // Completed/closed/cancelled work NEVER appears here — it lives in the
 // Completed Activities Log (/completed-activities).
@@ -33,7 +38,7 @@ import { clusterById, CLUSTER_MEETING_LABEL } from "@/lib/cluster/cluster-core";
 export type MyPlanFunding = "Not Requested" | "Requested" | "Approved" | "Disbursed" | "Accounted" | "Returned";
 export type MyPlanWaiting = "salesforceId" | "evidence" | "returned";
 export type MyPlanNextAction = "complete" | "reschedule" | "uploadEvidence" | "enterSalesforceId";
-export type MyPlanSectionKey = "dueToday" | "thisWeek" | "thisMonth" | "waitingOnMe" | "needsAttention";
+export type MyPlanSectionKey = "dueToday" | "thisWeek" | "thisMonth" | "thisQuarter" | "waitingOnMe" | "needsAttention";
 
 export type MyPlanItem = {
   id: string;
@@ -316,12 +321,21 @@ function weekEndIso(today: Date): string {
   return isoDay(d);
 }
 
+/** Last day of the current calendar month, as yyyy-mm-dd (UTC). The Quarter
+ *  lane is defined as everything dated AFTER this — see the bucketing loop. */
+function monthEndIso(today: Date): string {
+  // Day 0 of the next month = last day of this month.
+  const d = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + 1, 0));
+  return isoDay(d);
+}
+
 export function sectionMyPlan(items: MyPlanItem[], today: Date = new Date()): MyPlanSection[] {
   const todayIso = isoDay(today);
   const weekEnd = weekEndIso(today);
+  const monthEnd = monthEndIso(today);
 
   const buckets: Record<MyPlanSectionKey, MyPlanItem[]> = {
-    dueToday: [], thisWeek: [], thisMonth: [], waitingOnMe: [], needsAttention: [],
+    dueToday: [], thisWeek: [], thisMonth: [], thisQuarter: [], waitingOnMe: [], needsAttention: [],
   };
 
   // Current week-of-month (1-4) so visit-typed items can land in thisWeek.
@@ -341,13 +355,22 @@ export function sectionMyPlan(items: MyPlanItem[], today: Date = new Date()): My
       buckets.dueToday.push(i);
     } else if (i.weekOfMonth !== undefined) {
       // Visit scheduled by week-of-month (no exact date). Route to thisWeek if
-      // it's the current week, otherwise thisMonth.
+      // it's the current week, otherwise thisMonth (week-grained visits don't
+      // carry a far-future date, so they never reach thisQuarter).
       if (i.weekOfMonth === currentWeekOfMonth) buckets.thisWeek.push(i);
       else buckets.thisMonth.push(i);
     } else if (date && date <= weekEnd) {
       buckets.thisWeek.push(i);
+    } else if (date && date <= monthEnd) {
+      buckets.thisMonth.push(i);
+    } else if (date && date > monthEnd) {
+      // Dated past this month — including beyond the quarter end — lives in
+      // thisQuarter so nothing scheduled silently disappears off the page.
+      buckets.thisQuarter.push(i);
     } else {
-      buckets.thisMonth.push(i); // rest of month, later, or not yet dated
+      // Not yet dated. Keep these in thisMonth (the planner's close-in view)
+      // so they stay top-of-mind for scheduling, not buried in the quarter lane.
+      buckets.thisMonth.push(i);
     }
   }
 
@@ -358,6 +381,7 @@ export function sectionMyPlan(items: MyPlanItem[], today: Date = new Date()): My
   buckets.dueToday.sort(byDate);
   buckets.thisWeek.sort(byDate);
   buckets.thisMonth.sort(byDate);
+  buckets.thisQuarter.sort(byDate);
   buckets.waitingOnMe.sort(byDate);
   buckets.needsAttention.sort(byAttention);
 
@@ -366,6 +390,7 @@ export function sectionMyPlan(items: MyPlanItem[], today: Date = new Date()): My
     { key: "dueToday", title: "Due Today", emptyCopy: "Nothing due today — you're clear.", items: buckets.dueToday },
     { key: "thisWeek", title: "Planned This Week", emptyCopy: "Nothing else scheduled this week.", items: buckets.thisWeek },
     { key: "thisMonth", title: "Planned This Month", emptyCopy: `Nothing further planned in ${monthLabel}.`, items: buckets.thisMonth },
+    { key: "thisQuarter", title: "Planned This Quarter", emptyCopy: "Nothing scheduled later this quarter.", items: buckets.thisQuarter },
     { key: "waitingOnMe", title: "Waiting on Me", emptyCopy: "Nothing is blocked on you — no Salesforce IDs, evidence, or returned items pending.", items: buckets.waitingOnMe },
     { key: "needsAttention", title: "Rescheduled / Needs Attention", emptyCopy: "No rescheduled or deferred activities.", items: buckets.needsAttention },
   ];

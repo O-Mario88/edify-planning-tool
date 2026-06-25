@@ -21,6 +21,7 @@ import {
 import { CompleteClusterMeetingDrawer, type CompleteMeetingTarget } from "./CompleteClusterMeetingDrawer";
 import { ClusterFeedbackSection, type ClusterFeedbackVM } from "./ClusterFeedbackSection";
 import { ReassignSchoolButton, type ReassignTarget } from "./ReassignSchoolButton";
+import { SSA_INTERVENTION_AREAS } from "@/lib/intake/intake-core";
 
 export type ActivityVM = {
   id: string; kind: string; label: string; date: string;
@@ -104,12 +105,12 @@ export function ClusterProfileView({
         {/* Activities + lifecycle */}
         <section className="card rounded-2xl overflow-hidden">
           <header className="px-4 pt-3.5 pb-2">
-            <h2 className="text-[14px] font-extrabold tracking-tight">Meetings &amp; trainings</h2>
-            <p className="text-[11.5px] muted mt-0.5">A meeting only counts once IA confirms its Salesforce TS- record. Partner payment clears only after that.</p>
+            <h2 className="text-[14px] font-extrabold tracking-tight">Meetings &amp; trainings (unlimited this FY)</h2>
+            <p className="text-[11.5px] muted mt-0.5">A cluster can have any number of meetings or trainings. Exact calendar date required. TS- code + evidence unlock completion.</p>
           </header>
           <ul className="divide-y divide-[var(--color-edify-divider)] border-t border-[var(--color-edify-divider)]">
             {profile.activities.length === 0 ? (
-              <li className="px-4 py-6 text-center text-[12px] muted">No meetings scheduled yet.</li>
+              <li className="px-4 py-6 text-center text-[12px] muted">No meetings or trainings scheduled yet. Use the Schedule button above to create the first (or next) one.</li>
             ) : profile.activities.map((a) => (
               <ActivityRow key={a.id} a={a} flags={flags} cluster={{ name: profile.name, district: profile.district, subCounty: profile.subCounties[0] }} />
             ))}
@@ -143,12 +144,43 @@ export function ClusterProfileView({
               </ul>
             )}
           </section>
+
+          {/* Coverage gaps — priority signals for cluster planning (demo; live surfaces will compute from activity history) */}
+          <section className="card rounded-2xl p-4">
+            <h2 className="text-[14px] font-extrabold tracking-tight mb-1">School coverage in this cluster</h2>
+            <p className="text-[11px] muted">Schools without recent staff/partner activity are the strongest reason to schedule next.</p>
+            <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px]">
+              <div className="rounded border border-rose-200 bg-rose-50/40 px-2 py-1">Not visited recently: <span className="font-extrabold">~{Math.max(0, Math.floor(profile.schoolCount * 0.35))}</span></div>
+              <div className="rounded border border-amber-200 bg-amber-50/40 px-2 py-1">Not trained this FY: <span className="font-extrabold">~{Math.max(0, Math.floor(profile.schoolCount * 0.4))}</span></div>
+              <div className="rounded border border-slate-200 bg-slate-50 px-2 py-1">Neither visit nor training: <span className="font-extrabold">~{Math.max(0, Math.floor(profile.schoolCount * 0.2))}</span></div>
+            </div>
+          </section>
+
           <section className="card rounded-2xl p-4">
             <h2 className="text-[14px] font-extrabold tracking-tight mb-2">SSA performance</h2>
             <div className="h-2 w-full rounded-full bg-[var(--color-edify-soft)] overflow-hidden">
               <div className="h-full rounded-full bg-emerald-500" style={{ width: `${profile.ssaCompletionRate}%` }} />
             </div>
             <p className="text-[12px] muted mt-1.5">{profile.ssaDone} of {profile.schoolCount} schools have a current SSA ({profile.ssaCompletionRate}%). {profile.ssaMissing} still pending.</p>
+
+            {/* 8-intervention snapshot (demo values — replace with live cluster averages from /clusters/:id/ssa-performance) */}
+            <div className="mt-3">
+              <div className="text-[10px] uppercase tracking-wider font-bold muted mb-1">By intervention (avg across schools with SSA)</div>
+              <div className="grid grid-cols-1 gap-1 text-[11px]">
+                {SSA_INTERVENTION_AREAS.slice(0, 8).map((area, idx) => {
+                  // Simple deterministic demo score for visibility (real data will come from surfaces)
+                  const base = 5.5 + ((idx % 3) - 1) * 1.2;
+                  const score = Math.max(3.5, Math.min(9.2, Math.round(base * 10) / 10));
+                  const tone = score >= 8 ? "emerald" : score >= 6 ? "sky" : score >= 5 ? "amber" : "rose";
+                  return (
+                    <div key={area} className="flex items-center gap-2 rounded border border-[var(--color-edify-divider)] px-2 py-0.5">
+                      <span className="flex-1 truncate">{area}</span>
+                      <span className={cn("tabular font-extrabold", tone === "emerald" ? "text-emerald-700" : tone === "sky" ? "text-sky-700" : tone === "amber" ? "text-amber-700" : "text-rose-700")}>{score.toFixed(1)}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </section>
           <ClusterFeedbackSection clusterId={profile.id} feedback={profile.feedback} />
         </aside>

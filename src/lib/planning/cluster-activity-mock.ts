@@ -311,12 +311,17 @@ function buildMeetings(
 ): ClusterMeetingSummary[] {
   const slots: ClusterMeetingSlot[] = ["first", "second", "third", "sit"];
   return slots.map((slot) => {
-    const status = (
+    // Legacy slot status fields are now optional on ClusterGap (the
+    // open-ended cadence model doesn't promise them). The activity
+    // profile drawer still operates on the per-slot summary, so we
+    // default to "Missing" when the cluster never had an ordinal-tagged
+    // activity in that slot.
+    const status: ClusterMeetingStatus = (
       slot === "first"  ? cluster.firstMeeting  :
       slot === "second" ? cluster.secondMeeting :
       slot === "third"  ? cluster.thirdMeeting  :
                           cluster.schoolImprovementTraining
-    );
+    ) ?? "Missing";
     const scheduledDate = (
       slot === "first"  ? cluster.firstMeetingDate  :
       slot === "second" ? cluster.secondMeetingDate :

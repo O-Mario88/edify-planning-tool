@@ -201,6 +201,7 @@ export class ActivitiesService {
         teachersAttended: activity.teachersAttended,
         leadersAttended: activity.leadersAttended,
         otherParticipants: activity.otherParticipants,
+        projectId: activity.projectId,
       },
       rates,
     );
@@ -395,16 +396,47 @@ export class ActivitiesService {
     // its NEW quarter/FY, not the old one (otherwise rollups double-count or
     // miscount across period boundaries).
     const newDate = new Date(dto.scheduledDate);
+    const newFy = getOperationalFY(newDate);
+    const newQuarter = getQuarterForDate(newDate);
+    const newMonth = newDate.getMonth() + 1;
+    const oldMonth = a.scheduledDate ? a.scheduledDate.getMonth() + 1 : null;
+    const oldFy = a.fy;
+    const oldQuarter = a.quarter;
     const updated = await this.prisma.activity.update({
       where: { id },
       data: {
-        scheduledDate: newDate, fy: getOperationalFY(newDate), quarter: getQuarterForDate(newDate),
+        scheduledDate: newDate, fy: newFy, quarter: newQuarter,
         rescheduleCount: { increment: 1 }, lastReason: dto.reason,
         status: a.status === 'cancelled' || a.status === 'deferred' ? 'planned' : 'rescheduled',
       },
     });
     await this.attachScheduleCost(id, a.schoolId ?? undefined);
-    await this.audit.log({ action: 'activity.reschedule', subjectKind: 'Activity', subjectId: id, actorId: user.userId, actorRole: user.activeRole, payload: { reason: dto.reason, moveNo: (a.rescheduleCount ?? 0) + 1 } });
+
+    // Period-boundary detection: if the new date lands in a different week,
+    // month, quarter, or FY than the old date, emit a BudgetRevision audit
+    // row so weekly/monthly fund requests know to drop the line from the
+    // OLD period and add it to the NEW one. This is the safety net for
+    // "rescheduled activity counted in old AND new period".
+    const crossedFy = oldFy && oldFy !== newFy;
+    const crossedQuarter = oldQuarter && oldQuarter !== newQuarter;
+    const crossedMonth = oldMonth != null && oldMonth !== newMonth;
+    if (crossedFy || crossedQuarter || crossedMonth) {
+      await this.prisma.budgetRevision.create({
+        data: {
+          activityId: id,
+          fromFy: oldFy ?? newFy,
+          fromQuarter: oldQuarter ?? newQuarter,
+          fromMonth: oldMonth,
+          toFy: newFy,
+          toQuarter: newQuarter,
+          toMonth: newMonth,
+          reason: dto.reason || 'reschedule',
+          actorUserId: user.userId,
+        },
+      }).catch(() => undefined);
+    }
+
+    await this.audit.log({ action: 'activity.reschedule', subjectKind: 'Activity', subjectId: id, actorId: user.userId, actorRole: user.activeRole, payload: { reason: dto.reason, moveNo: (a.rescheduleCount ?? 0) + 1, crossedFy, crossedQuarter, crossedMonth } });
     return updated;
   }
 

@@ -91,11 +91,20 @@ export const RESCHEDULE_REASONS = [
   "Other",
 ] as const;
 
-export type ClusterGapCategory =
-  | "no_first_meeting"
-  | "no_second_meeting"
-  | "no_third_meeting"
-  | "no_sit";
+// Open-ended cluster planning categories — replaces the legacy 3-slot model
+// (no_first_meeting / no_second_meeting / no_third_meeting / no_sit). A
+// cluster may have any number of meetings per FY; categories now classify
+// the cluster by INTELLIGENCE signal (cadence, SSA, coverage), not by an
+// ordinal meeting slot. See `cluster-intelligence.ts` for the producer.
+export type {
+  ClusterGapCategory,
+  ClusterRecommendation,
+  RecommendationPriority,
+} from "@/lib/cluster/cluster-intelligence";
+import type {
+  ClusterGapCategory as _ClusterGapCategory,
+  ClusterRecommendation as _ClusterRecommendation,
+} from "@/lib/cluster/cluster-intelligence";
 
 export type ClusterGap = {
   id: string;
@@ -105,17 +114,43 @@ export type ClusterGap = {
   schoolsWithSsa: number;
   assignedCceo: string;
   partnerFacilitator?: string;
-  firstMeeting: ClusterMeetingStatus;
-  secondMeeting: ClusterMeetingStatus;
-  thirdMeeting: ClusterMeetingStatus;
-  schoolImprovementTraining: ClusterMeetingStatus;
-  gapCategory: ClusterGapCategory;
-  // ─ Scheduled-date provision ─
-  // Each meeting slot carries an optional date (current scheduled
-  // date) + the cluster leader who proposed it + the reschedule
-  // history. When the date is interfered with — exam week, weather,
-  // leader unavailable — the planning UI opens a reschedule modal
-  // that captures the new date + reason + appends a history entry.
+
+  // ── Open-ended cadence (the new model) ─────────────────────────────
+  /** Completed (IA-confirmed) cluster meetings this FY. Unlimited. */
+  meetingsThisFy: number;
+  /** Scheduled-but-not-yet-completed cluster meetings this FY. */
+  meetingsScheduledThisFy: number;
+  /** Completed cluster trainings (cluster_training + SIT) this FY. */
+  trainingsThisFy: number;
+  /** ISO date of the last completed cluster meeting, if any. */
+  lastMeetingDate?: string;
+  /** ISO date of the next upcoming scheduled cluster activity, if any. */
+  nextScheduledMeetingDate?: string;
+  /** True when the cluster met (completed a meeting) this calendar quarter. */
+  metThisQuarter: boolean;
+  /** Schools with no visit this period. */
+  schoolsNotVisited: number;
+  /** Schools with no training this period. */
+  schoolsNotTrained: number;
+  /** Schools with NEITHER visit NOR training — the priority signal. */
+  schoolsNeitherVisitNorTraining: number;
+
+  /** The planning category the recommendation engine assigned. */
+  gapCategory: _ClusterGapCategory;
+  /** Headline recommendation for this cluster (intelligence-derived). */
+  recommendation?: _ClusterRecommendation;
+
+  // ── Legacy slot fields (preserved for in-flight RESCHEDULES of meetings
+  // that were scheduled under the old model). New scheduling no longer
+  // uses ordinal slots — the backend persists meetings as plain
+  // cluster_meeting Activity rows with no `clusterSlot`. These fields
+  // remain OPTIONAL so the reschedule drawer can still operate on old
+  // already-scheduled meetings without crashing. They MUST NOT drive
+  // recommendation logic.
+  firstMeeting?: ClusterMeetingStatus;
+  secondMeeting?: ClusterMeetingStatus;
+  thirdMeeting?: ClusterMeetingStatus;
+  schoolImprovementTraining?: ClusterMeetingStatus;
   firstMeetingDate?:                string;
   firstMeetingProposedBy?:          string;
   firstMeetingReschedules?:         ClusterMeetingReschedule[];
@@ -134,9 +169,9 @@ export type ClusterGap = {
 export type ClusterMeetingSlot = "first" | "second" | "third" | "sit";
 
 export const CLUSTER_MEETING_SLOT_LABEL: Record<ClusterMeetingSlot, string> = {
-  first:  "1st Cluster Meeting",
-  second: "2nd Cluster Meeting",
-  third:  "3rd Cluster Meeting",
+  first:  "Cluster Meeting",
+  second: "Cluster Meeting",
+  third:  "Cluster Meeting",
   sit:    "School Improvement Training",
 };
 
@@ -243,24 +278,39 @@ export function recommendFor(g: SchoolGap): RecommendedAction {
   };
 }
 
+/**
+ * Open-ended cluster recommendation. The new "primary action" surface no
+ * longer encodes ordinal meeting slots (1st/2nd/3rd) — every recommended
+ * activity routes through the unified `schedule_cluster_activity` action
+ * with a focus intervention + suggested activity type. The board owns the
+ * scheduling drawer, so this object just carries enough copy + signal for
+ * the UI to render the recommendation card and route the click.
+ */
 export type ClusterRecommendedAction = {
   headline: string;
   purpose: string;
-  primaryAction: "schedule_first" | "schedule_second" | "schedule_third" | "schedule_sit" | "add_schools" | "view";
+  /** UI action keys — `view` is the on-track fallback, `add_schools` is
+   *  the empty-cluster fallback. Every other recommendation routes to
+   *  `schedule_cluster_activity` and supplies activityType + focus. */
+  primaryAction: "schedule_cluster_activity" | "add_schools" | "view";
   primaryLabel: string;
-  /// School Improvement Training is gated on SSA completion within
-  /// the cluster. UI uses this to disable + explain.
+  /** Suggested activity type for the schedule drawer. Always present when
+   *  primaryAction is `schedule_cluster_activity`. */
+  suggestedActivity?: "meeting" | "training" | "support_visit" | "follow_up" | "review";
+  /** SSA intervention to prefill in the drawer (where applicable). */
+  focusIntervention?: SsaInterventionArea;
+  /** SIT gating note — retained for back-compat with the school-improvement
+   *  -training-blocked surface (used when no school has SSA yet). */
   sitDisabledReason?: string;
 };
 
 /**
- * Optional per-slot overlay that the caller can pass to reflect work
- * the user just did in-session — without having to mutate the
- * underlying ClusterGap. Any slot present in the overlay is treated
- * as effectively "Scheduled" for the purpose of picking the primary
- * CTA. This is what flips the cluster's primary action from
- * "Schedule First Meeting" to the next gap (or to the on-track view
- * recommendation) as soon as the user lands a date on the calendar.
+ * In-session schedule overlay. Records the cluster activities the user
+ * just scheduled in the current page session, so the recommendation
+ * engine can effectively "advance past" them without mutating the
+ * underlying ClusterGap. The legacy 3-slot keys are preserved for
+ * existing reschedule chips; new opaque-id overlays (keyed by activity
+ * id) live alongside.
  */
 export type ClusterScheduleOverlay = Partial<
   Record<ClusterMeetingSlot, { date?: string } | undefined>
@@ -268,106 +318,60 @@ export type ClusterScheduleOverlay = Partial<
 
 export function recommendForCluster(
   c: ClusterGap,
-  overlay: ClusterScheduleOverlay = {},
+  _overlay: ClusterScheduleOverlay = {},
 ): ClusterRecommendedAction {
-  // Effective per-slot status. Slots present in the overlay are
-  // treated as Scheduled so the recommendation engine advances past
-  // them — the chip already shows the chosen date, the underlying
-  // ClusterGap stays untouched.
-  const eff = (slot: ClusterMeetingSlot, base: ClusterMeetingStatus): ClusterMeetingStatus =>
-    overlay[slot] ? "Scheduled" : base;
+  // The intelligence engine already classified this cluster — reuse its
+  // recommendation directly so the planning board, the cluster detail
+  // page, and System Health all speak with one voice. Overlays no longer
+  // influence the headline (the intelligence engine reads from authoritative
+  // counts), but they still tell the board that the user just took action
+  // — the board uses that to show a Scheduled chip locally.
+  void _overlay;
 
-  const effSit    = eff("sit",    c.schoolImprovementTraining);
-  const effFirst  = eff("first",  c.firstMeeting);
-  const effSecond = eff("second", c.secondMeeting);
-  const effThird  = eff("third",  c.thirdMeeting);
-
-  // SIT is the FIRST activity in the cluster training cycle. If it's
-  // missing, recommend it before any of the 3 meetings — gated only by
-  // SSA coverage (the only thing that can actually block training).
-  if (effSit === "Missing") {
-    const noSsaCount = c.schoolsCount - c.schoolsWithSsa;
-    if (noSsaCount === c.schoolsCount) {
+  const rec = c.recommendation;
+  // No intelligence available yet — fall through to a benign view action.
+  if (!rec) {
+    if (c.schoolsCount === 0) {
       return {
-        headline: `School Improvement Training blocked for ${c.clusterName}`,
-        purpose:
-          "None of the schools in this cluster have completed SSA. Complete SSA for at least one client school before scheduling intervention-based training.",
-        primaryAction: "schedule_sit",
-        primaryLabel: "School Improvement Training",
-        sitDisabledReason: "Complete SSA for at least one client school first.",
-      };
-    }
-    if (noSsaCount > 0) {
-      return {
-        headline: `Schedule School Improvement Training for ${c.clusterName}`,
-        purpose:
-          `${noSsaCount} of ${c.schoolsCount} schools in this cluster have no SSA. ` +
-          `Training can be planned for the ${c.schoolsWithSsa} schools with completed SSA, ` +
-          `or you can schedule the missing SSAs first.`,
-        primaryAction: "schedule_sit",
-        primaryLabel: "Schedule SIT (SSA-completed only)",
+        headline: `${c.clusterName} has no schools yet`,
+        purpose: "Add schools to this cluster before planning meetings or trainings.",
+        primaryAction: "add_schools",
+        primaryLabel: "Add schools to cluster",
       };
     }
     return {
-      headline: `Schedule School Improvement Training for ${c.clusterName}`,
-      purpose:
-        "All schools have current SSAs — schedule the SIT and pull the topic from the weakest cluster intervention area.",
-      primaryAction: "schedule_sit",
-      primaryLabel: "Schedule SIT",
-    };
-  }
-
-  // Once SIT is done (or scheduled this session), fall through to the
-  // 3 meetings in order. Overlay-aware: a meeting freshly scheduled
-  // in-session reads as Scheduled, advancing the rec to the next gap.
-  if (effFirst === "Missing") {
-    return {
-      headline: `Schedule first cluster meeting for ${c.clusterName}`,
-      purpose:
-        "Introduce cluster structure, confirm participating schools, and agree on school improvement priorities.",
-      primaryAction: "schedule_first",
-      primaryLabel: "Schedule First Meeting",
-    };
-  }
-  if (effSecond === "Missing") {
-    return {
-      headline: `Schedule second cluster meeting for ${c.clusterName}`,
-      purpose:
-        "Review school progress, follow up on action points, and address common school improvement gaps.",
-      primaryAction: "schedule_second",
-      primaryLabel: "Schedule Second Meeting",
-    };
-  }
-  if (effThird === "Missing") {
-    return {
-      headline: `Schedule third cluster meeting for ${c.clusterName}`,
-      purpose:
-        "Review implementation progress, share learning, and prepare next support actions.",
-      primaryAction: "schedule_third",
-      primaryLabel: "Schedule Third Meeting",
-    };
-  }
-
-  // Nothing missing — fall through to a benign "view" recommendation
-  // so callers always get a well-formed action object. When the last
-  // gap was just closed in this session (any overlay slot present),
-  // the wording switches to "Scheduled — view detail" so the planner
-  // gets immediate feedback that the action landed.
-  const justScheduled = !!(overlay.sit || overlay.first || overlay.second || overlay.third);
-  if (justScheduled) {
-    return {
-      headline: `${c.clusterName} — scheduled. View detail.`,
-      purpose:
-        "Recent in-session schedule landed on the calendar. Open the cluster to confirm participants, venue, and projected cost.",
+      headline: `${c.clusterName} — view cluster`,
+      purpose: "Open the cluster intelligence page to review SSA performance, coverage, and recent activities.",
       primaryAction: "view",
-      primaryLabel: "Scheduled — view detail",
+      primaryLabel: "View cluster",
     };
   }
+
+  if (rec.priority === "on_track") {
+    return {
+      headline: `${c.clusterName} is on track`,
+      purpose: rec.reason,
+      primaryAction: "view",
+      primaryLabel: "View cluster",
+      focusIntervention: rec.focusIntervention,
+    };
+  }
+
+  // SIT-blocked surface — keep the explanatory disabled reason for the
+  // shrinking case where no school in the cluster has any SSA at all.
+  const sitBlocked = rec.suggestedActivity === "training" && c.schoolsWithSsa === 0 && c.schoolsCount > 0;
   return {
-    headline: `Cluster ${c.clusterName} is on track`,
-    purpose: "SIT and all three cluster meetings are accounted for.",
-    primaryAction: "view",
-    primaryLabel: "View cluster",
+    headline: rec.focusIntervention
+      ? `Recommended Focus: ${rec.headline}`
+      : rec.headline,
+    purpose: rec.reason,
+    primaryAction: "schedule_cluster_activity",
+    primaryLabel: rec.suggestedActivityLabel,
+    suggestedActivity: rec.suggestedActivity,
+    focusIntervention: rec.focusIntervention,
+    sitDisabledReason: sitBlocked
+      ? "Complete SSA for at least one client school first."
+      : undefined,
   };
 }
 
@@ -547,117 +551,181 @@ export const schoolGaps: SchoolGap[] = [
   },
 ];
 
+// Mock cluster gaps — representative of the OPEN-ENDED intelligence model.
+// Each row carries the new cadence + coverage signals + intelligence-derived
+// `recommendation`. The legacy slot fields stay populated when the cluster
+// has already-scheduled meetings (so the reschedule drawer can still
+// operate on them) but they no longer drive bucket assignment.
 export const clusterGaps: ClusterGap[] = [
-  // No first meeting
+  // No meetings this FY — newly-onboarded cluster, no cadence yet.
   {
     id: "CG-1",
     clusterName: "Galiraaya Cluster", district: "Kayunga",
     schoolsCount: 7, schoolsWithSsa: 4,
     assignedCceo: "Sarah Nanyongo",
-    firstMeeting: "Missing",
-    secondMeeting: "Not Yet Due",
-    thirdMeeting: "Not Yet Due",
-    schoolImprovementTraining: "Missing",
-    gapCategory: "no_first_meeting",
+    meetingsThisFy: 0, meetingsScheduledThisFy: 0, trainingsThisFy: 0,
+    metThisQuarter: false,
+    schoolsNotVisited: 5, schoolsNotTrained: 7, schoolsNeitherVisitNorTraining: 4,
+    gapCategory: "no_meetings_this_fy",
+    recommendation: {
+      priority: "no_meetings_this_fy",
+      suggestedActivity: "meeting",
+      suggestedActivityLabel: "Schedule Cluster Meeting",
+      headline: "Cluster has not met this fiscal year",
+      reason: "Schedule a cluster meeting to establish the planning rhythm for this FY.",
+      schoolsAffected: 7,
+    },
   },
-  // No second meeting — 1st meeting completed, 2nd needs scheduling
-  // by the cluster leader. SIT scheduled but already rescheduled
-  // once after the cluster leader flagged exam week conflict.
+  // SSA performance drop — Teaching & Learning declined across multiple
+  // schools; recommendation surfaces it as the focus intervention.
   {
     id: "CG-2",
     clusterName: "Ntenjeru Cluster", district: "Mukono",
     schoolsCount: 6, schoolsWithSsa: 6,
     assignedCceo: "Sarah Nanyongo",
     partnerFacilitator: "Bright Future Education Partners",
-    firstMeeting: "Completed",
-    secondMeeting: "Missing",
-    thirdMeeting: "Not Yet Due",
-    schoolImprovementTraining: "Completed",
-    gapCategory: "no_second_meeting",
+    meetingsThisFy: 2, meetingsScheduledThisFy: 0, trainingsThisFy: 1,
+    lastMeetingDate: "2026-04-24",
+    metThisQuarter: true,
+    schoolsNotVisited: 1, schoolsNotTrained: 0, schoolsNeitherVisitNorTraining: 0,
+    gapCategory: "ssa_performance_drop",
+    recommendation: {
+      priority: "ssa_drop",
+      focusIntervention: "Teaching & Learning",
+      suggestedActivity: "training",
+      suggestedActivityLabel: "Schedule Cluster Training",
+      headline: "Teaching & Learning",
+      reason: "Average score dropped from 6.2 to 4.8 (1.4 point drop) across 4 schools.",
+      schoolsAffected: 4,
+    },
     firstMeetingDate: "Apr 24, 2026", firstMeetingProposedBy: "Esther Naluwu (Ntenjeru CL)",
+    firstMeeting: "Completed", schoolImprovementTraining: "Completed",
   },
-  // Cluster with a scheduled 2nd meeting that's been rescheduled twice.
-  // Shows the audit-trail story end-to-end in the demo.
+  // Not met this quarter — last meeting ~70 days ago, cadence slipping.
   {
     id: "CG-3",
     clusterName: "Kayunga Cluster", district: "Kayunga",
     schoolsCount: 5, schoolsWithSsa: 4,
     assignedCceo: "Sarah Nanyongo",
     partnerFacilitator: "Bright Future Education Partners",
-    firstMeeting: "Completed",
-    secondMeeting: "Rescheduled",
-    thirdMeeting: "Not Yet Due",
-    schoolImprovementTraining: "Missing",
-    gapCategory: "no_second_meeting",
-    firstMeetingDate:    "Apr 18, 2026", firstMeetingProposedBy:  "John Mubiru (Kayunga CL)",
-    secondMeetingDate:   "Jun 20, 2026", secondMeetingProposedBy: "John Mubiru (Kayunga CL)",
-    secondMeetingReschedules: [
-      { from: "May 22, 2026", to: "Jun 5, 2026",  reason: "Exam week — schools unavailable",       movedBy: "John Mubiru (Kayunga CL)", movedAt: "May 12, 2026 09:14" },
-      { from: "Jun 5, 2026",  to: "Jun 20, 2026", reason: "Cluster leader unavailable (funeral)",  movedBy: "Sarah Nanyongo (CCEO)",    movedAt: "Jun 1, 2026 14:22" },
-    ],
+    meetingsThisFy: 1, meetingsScheduledThisFy: 0, trainingsThisFy: 0,
+    lastMeetingDate: "2026-04-18",
+    metThisQuarter: false,
+    schoolsNotVisited: 2, schoolsNotTrained: 4, schoolsNeitherVisitNorTraining: 1,
+    gapCategory: "not_met_this_quarter",
+    recommendation: {
+      priority: "no_meeting_this_quarter",
+      suggestedActivity: "meeting",
+      suggestedActivityLabel: "Schedule Cluster Meeting",
+      headline: "Cluster has not met this quarter",
+      reason: "Last cluster meeting was 67 days ago. Schedule a cluster meeting to maintain cadence.",
+      schoolsAffected: 5,
+      focusIntervention: "Leadership",
+    },
+    firstMeeting: "Completed", firstMeetingDate: "Apr 18, 2026", firstMeetingProposedBy: "John Mubiru (Kayunga CL)",
   },
-  // No third meeting — 1st + 2nd done, 3rd has a confirmed scheduled
-  // date from the cluster leader.
+  // Weak SSA intervention — Financial Health critical across the cluster.
   {
     id: "CG-4",
     clusterName: "Mukono Central Cluster", district: "Mukono",
     schoolsCount: 5, schoolsWithSsa: 5,
     assignedCceo: "Sarah Nanyongo",
-    firstMeeting: "Completed",
-    secondMeeting: "Completed",
-    thirdMeeting: "Scheduled",
-    schoolImprovementTraining: "Completed",
-    gapCategory: "no_third_meeting",
-    firstMeetingDate:  "Apr 10, 2026", firstMeetingProposedBy:  "Peter Wamala (Mukono CL)",
-    secondMeetingDate: "May 14, 2026", secondMeetingProposedBy: "Peter Wamala (Mukono CL)",
-    thirdMeetingDate:  "Jul 8, 2026",  thirdMeetingProposedBy:  "Peter Wamala (Mukono CL)",
+    meetingsThisFy: 2, meetingsScheduledThisFy: 1, trainingsThisFy: 1,
+    lastMeetingDate: "2026-05-14",
+    nextScheduledMeetingDate: "2026-07-08",
+    metThisQuarter: true,
+    schoolsNotVisited: 0, schoolsNotTrained: 0, schoolsNeitherVisitNorTraining: 0,
+    gapCategory: "weak_ssa_intervention",
+    recommendation: {
+      priority: "weak_intervention",
+      focusIntervention: "Financial Health",
+      suggestedActivity: "training",
+      suggestedActivityLabel: "Schedule Cluster Training",
+      headline: "Financial Health",
+      reason: "Cluster average is 4.6/10 (Critical) across 5 schools with SSA.",
+      schoolsAffected: 5,
+    },
+    firstMeeting: "Completed", firstMeetingDate: "Apr 10, 2026",
+    secondMeeting: "Completed", secondMeetingDate: "May 14, 2026",
   },
-  // No SIT — meetings 1 + 2 done, 3rd not yet due, SIT outstanding.
+  // Schools not trained — 4 of 6 schools without any training this FY.
   {
     id: "CG-5",
     clusterName: "Bbaale Cluster", district: "Kayunga",
     schoolsCount: 6, schoolsWithSsa: 3,
     assignedCceo: "Sarah Nanyongo",
-    firstMeeting: "Completed",
-    secondMeeting: "Completed",
-    thirdMeeting: "Not Yet Due",
-    schoolImprovementTraining: "Missing",
-    gapCategory: "no_sit",
-    firstMeetingDate:  "Apr 22, 2026", firstMeetingProposedBy:  "Grace Atim (Bbaale CL)",
-    secondMeetingDate: "May 27, 2026", secondMeetingProposedBy: "Grace Atim (Bbaale CL)",
+    meetingsThisFy: 2, meetingsScheduledThisFy: 0, trainingsThisFy: 0,
+    lastMeetingDate: "2026-05-27",
+    metThisQuarter: true,
+    schoolsNotVisited: 1, schoolsNotTrained: 4, schoolsNeitherVisitNorTraining: 1,
+    gapCategory: "schools_not_trained",
+    recommendation: {
+      priority: "schools_not_trained",
+      suggestedActivity: "training",
+      suggestedActivityLabel: "Schedule Cluster Training",
+      headline: "4 schools have not been trained",
+      reason: "Schedule cluster training to reach 4 schools that haven't participated in any training this period.",
+      schoolsAffected: 4,
+      focusIntervention: "Leadership",
+    },
+    firstMeeting: "Completed", firstMeetingDate: "Apr 22, 2026",
+    secondMeeting: "Completed", secondMeetingDate: "May 27, 2026",
   },
-  // SIT scheduled and once-rescheduled — shows the SIT slot also
-  // supports the rescheduling provision.
+  // Schools with neither visit nor training — the URGENT category.
   {
     id: "CG-6",
     clusterName: "Kireka Cluster", district: "Mukono",
     schoolsCount: 4, schoolsWithSsa: 4,
     assignedCceo: "Sarah Nanyongo",
     partnerFacilitator: "Bright Future Education Partners",
-    firstMeeting: "Completed",
-    secondMeeting: "Completed",
-    thirdMeeting: "Not Yet Due",
-    schoolImprovementTraining: "Rescheduled",
-    gapCategory: "no_sit",
-    firstMeetingDate:  "Apr 15, 2026", firstMeetingProposedBy: "Daniel Mwangi (Kireka CL)",
-    secondMeetingDate: "May 20, 2026", secondMeetingProposedBy: "Daniel Mwangi (Kireka CL)",
-    sitDate:           "Jul 15, 2026", sitProposedBy:           "Daniel Mwangi (Kireka CL)",
-    sitReschedules: [
-      { from: "Jun 24, 2026", to: "Jul 15, 2026", reason: "Weather / road impassable", movedBy: "Daniel Mwangi (Kireka CL)", movedAt: "Jun 18, 2026 16:40" },
-    ],
+    meetingsThisFy: 1, meetingsScheduledThisFy: 1, trainingsThisFy: 0,
+    lastMeetingDate: "2026-04-15",
+    nextScheduledMeetingDate: "2026-07-15",
+    metThisQuarter: false,
+    schoolsNotVisited: 3, schoolsNotTrained: 4, schoolsNeitherVisitNorTraining: 3,
+    gapCategory: "schools_neither_visit_nor_training",
+    recommendation: {
+      priority: "schools_neither",
+      suggestedActivity: "support_visit",
+      suggestedActivityLabel: "Schedule Urgent Cluster Support",
+      headline: "Urgent: 3 schools without visit or training",
+      reason: "3 of 4 schools in this cluster have received neither a visit nor a training this period. Prioritise targeted cluster support.",
+      schoolsAffected: 3,
+    },
+    firstMeeting: "Completed", firstMeetingDate: "Apr 15, 2026",
   },
 ];
 
 // ────────── Aggregates ──────────
 
 export function planningSummary() {
+  const clusterOpen = clusterGaps.filter((c) => c.gapCategory !== "on_track");
   return {
     noSsa:                     schoolGaps.filter((s) => s.gapCategory === "no_ssa").length,
     noVisit:                   schoolGaps.filter((s) => s.gapCategory === "no_visit").length,
     noTraining:                schoolGaps.filter((s) => s.gapCategory === "no_training").length,
     noCluster:                 schoolGaps.filter((s) => s.gapCategory === "no_cluster").length,
-    clusterMeetingsMissing:    clusterGaps.filter((c) => c.gapCategory !== "no_sit").length,
-    clusterSitMissing:         clusterGaps.filter((c) => c.gapCategory === "no_sit" || c.schoolImprovementTraining === "Missing").length,
+    /** Open cluster planning items — count of clusters with any recommendation
+     *  signal (no-meetings, missed-quarter, weak/declining SSA, coverage gap). */
+    clusterMeetingsMissing:    clusterOpen.length,
+    /** Clusters with training-related recommendations (weak intervention,
+     *  SSA drop, schools-not-trained, training-needed). */
+    clusterTrainingNeeded:     clusterGaps.filter(
+      (c) =>
+        c.gapCategory === "weak_ssa_intervention" ||
+        c.gapCategory === "ssa_performance_drop" ||
+        c.gapCategory === "schools_not_trained" ||
+        c.gapCategory === "training_needed",
+    ).length,
+    /** Back-compat alias for callers still reading the legacy "SIT missing"
+     *  signal — now means "training is the recommended next activity". */
+    clusterSitMissing:         clusterGaps.filter(
+      (c) =>
+        c.gapCategory === "weak_ssa_intervention" ||
+        c.gapCategory === "ssa_performance_drop" ||
+        c.gapCategory === "schools_not_trained" ||
+        c.gapCategory === "training_needed",
+    ).length,
   };
 }
 

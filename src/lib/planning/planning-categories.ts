@@ -131,6 +131,14 @@ function clusterMeetingCostUgx(rates: PlanningCostRates | undefined, c: ClusterG
   return breakdown.totalUgx > 0 ? breakdown.totalUgx : undefined;
 }
 
+/** A cluster is "open" (needs planning) when its intelligence-derived gap
+ *  category is anything other than on-track. The open-ended model means we
+ *  no longer test ordinal slot status (firstMeeting === "Missing" etc.) —
+ *  the recommendation engine already classified each cluster by signal. */
+function isClusterOpen(c: ClusterGap): boolean {
+  return c.gapCategory !== "on_track";
+}
+
 function makeCategory(
   key: PlanningCategoryKey,
   label: string,
@@ -221,26 +229,25 @@ export function buildPlanningCategories(args: {
       scheduleHref: schoolHref(g),
     }));
 
-  // 4 · Cluster Meetings / Parish Fellowships — only clusters with a genuinely
-  // MISSING slot (the engine emits every active cluster; on-track ones aren't
-  // unscheduled work, so they don't belong in a planning category).
-  const openClusters = clusterGaps.filter(
-    (c) =>
-      c.firstMeeting === "Missing" ||
-      c.secondMeeting === "Missing" ||
-      c.thirdMeeting === "Missing" ||
-      c.schoolImprovementTraining === "Missing",
-  );
+  // 4 · Cluster Planning — clusters that need a meeting, training, or
+  // urgent support. The intelligence engine classifies every cluster by
+  // signal (cadence / SSA / coverage); we surface anything NOT on-track.
+  const openClusters = clusterGaps.filter(isClusterOpen);
   const clusterRows: PlanningCategoryRow[] = openClusters.map((c) => {
     const rec = recommendForCluster(c);
+    // Red-alert drivers: SIT blocked outright (no SSA), schools-with-neither
+    // visit-nor-training above the threshold, or a major SSA performance drop.
+    const redAlert =
+      c.schoolsWithSsa === 0 ||
+      c.gapCategory === "schools_neither_visit_nor_training" ||
+      c.gapCategory === "ssa_performance_drop";
     return {
       key: c.id,
       name: c.clusterName,
       district: c.district,
       recommendation: rec.headline,
       delivery: (c.partnerFacilitator ? "partner" : "staff") as DeliveryType,
-      // SIT blocked outright (no school has an SSA) is the cluster red alert.
-      redAlert: c.schoolsWithSsa === 0,
+      redAlert,
       costUgx: clusterMeetingCostUgx(rates, c),
       scheduleHref: `/clusters/${encodeURIComponent(c.id)}`,
     };
@@ -326,7 +333,7 @@ export function buildPlanningCategories(args: {
     makeCategory("ssa_sit", "Schools Needing SSA/SIT", ssaRows),
     makeCategory("school_visits", "School Visits", visitRows),
     makeCategory("trainings", "Trainings", trainingRows),
-    makeCategory("cluster_meetings", "Cluster Meetings / Parish Fellowships", clusterRows),
+    makeCategory("cluster_meetings", "Clusters Needing Planning (Unlimited Meetings)", clusterRows),
     makeCategory("core_visits", "Core School Visits", coreVisitRows),
     makeCategory("core_trainings", "Core School Trainings", coreTrainingRows),
     makeCategory("partner_assignments", "Partner Assignments", partnerRows),

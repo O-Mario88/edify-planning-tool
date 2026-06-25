@@ -17,6 +17,7 @@ import { DashboardPageHeader } from "@/components/dashboards/DashboardPageHeader
 import { DashboardGreetingHero } from "@/components/dashboards/DashboardGreetingHero";
 import { DecisionEngineEmbed } from "@/components/leadership/DecisionEngineEmbed";
 import { DebriefReviewInbox } from "@/components/messages/DebriefReviewInbox";
+import { SectionBoundary } from "@/components/ui/SectionBoundary";
 import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { ResponsiveGrid } from "@/components/ui/ResponsiveGrid";
@@ -67,7 +68,9 @@ export default async function HrFieldContextPage() {
         <DashboardGreetingHero user={user} />
 
         {/* Leadership Decision Engine — context-fair staff/HR + staffing advisory. */}
-        <DecisionEngineEmbed board="staff_hr" heading="Staff & HR Decisions" />
+        <SectionBoundary label="staff & HR decisions">
+          <DecisionEngineEmbed board="staff_hr" heading="Staff & HR Decisions" />
+        </SectionBoundary>
 
         {/* STATISTICS FIRST — the KPI snapshot is the first thing under the
             hero so the numbers are seen before the attention queues. */}
@@ -106,9 +109,13 @@ export default async function HrFieldContextPage() {
             title="Performance signals and recognition"
             description="Debriefs the routing engine flagged for HR, plus the period's top performers across program leads and CCEOs."
           />
-          <DebriefReviewInbox user={user} audience="hr" />
+          <SectionBoundary label="the debrief review inbox">
+            <DebriefReviewInbox user={user} audience="hr" />
+          </SectionBoundary>
           {/* Live, backend-driven staff roster. */}
-          <HrRosterLive />
+          <SectionBoundary label="the staff roster">
+            <HrRosterLive />
+          </SectionBoundary>
         </section>
 
         {/* FIELD — aggregated intelligence. */}

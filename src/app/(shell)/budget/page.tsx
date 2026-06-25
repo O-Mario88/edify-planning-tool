@@ -51,7 +51,7 @@ export default async function BudgetPage() {
   // Dev mock: still render the template shell with mock rollup figures when backend is off.
   const summary = buildBudgetSummary(role);
   const mockBoard = buildMockBoard(summary, role);
-  let body: ReactNode = <BudgetTemplateView data={mockBoard} role={role} />;
+  const body: ReactNode = <BudgetTemplateView data={mockBoard} role={role} />;
 
   return (
     <>

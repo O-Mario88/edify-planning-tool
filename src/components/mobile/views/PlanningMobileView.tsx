@@ -17,8 +17,8 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
   AlertOctagon, Footprints, GraduationCap, Users,
-  Building2, ChevronDown, ChevronUp, ArrowRight, Lock, CheckCircle2,
-  AlertTriangle, Circle, Clock, RotateCw, Handshake, Layers, type LucideIcon,
+  Building2, ChevronDown, ChevronUp, ArrowRight, Lock,
+  Handshake, Layers, type LucideIcon,
 } from "lucide-react";
 import { MobileShell } from "@/components/mobile/MobileShell";
 import { MobileBottomNav } from "@/components/mobile/MobileBottomNav";
@@ -34,7 +34,6 @@ import {
   type SchoolGapCategory,
   type SchoolGapAction,
   type ClusterGap,
-  type ClusterMeetingStatus,
 } from "@/lib/planning/planning-gaps-mock";
 import {
   PlanningAssignDrawer,
@@ -179,8 +178,9 @@ export function PlanningMobileView({
         {/* ── Core Schools (unified CorePlan model) ─────── */}
         <CorePlanBoard cards={coreCards} viewer={coreViewer} canChampion={canChampion} />
 
-        {/* ── Ownership sections (Me / Partner / Awaiting / This Month) ── */}
-        <PlanningOwnershipSectionsMobile ownership={coreOwnership} />
+        {/* ── Assignment sections (Me / Partner). Awaiting Partner Schedule +
+            Planned This Month moved to /my-plan (already-planned work). ── */}
+        <PlanningOwnershipSectionsMobile ownership={coreOwnership} show={["assignedToMe", "assignedToPartner"]} />
 
         {/* ── Scheduling-only banner ────────────────────── */}
         <Link
@@ -445,14 +445,6 @@ function SchoolRowMobile({
 
 // ────────── Clusters board (mobile) ──────────
 
-const MEETING_TONE: Record<ClusterMeetingStatus, { bg: string; text: string; Icon: LucideIcon }> = {
-  Completed:     { bg: "bg-emerald-50", text: "text-emerald-700", Icon: CheckCircle2 },
-  Scheduled:     { bg: "bg-sky-50",     text: "text-sky-700",     Icon: Clock },
-  Rescheduled:   { bg: "bg-amber-50",   text: "text-amber-700",   Icon: RotateCw },
-  Missing:       { bg: "bg-rose-50",    text: "text-rose-700",    Icon: AlertTriangle },
-  "Not Yet Due": { bg: "bg-slate-100",  text: "text-slate-600",   Icon: Circle },
-};
-
 function ClustersBoardMobile({
   onAssignCluster,
 }: {
@@ -476,7 +468,7 @@ function ClustersBoardMobile({
             </span>
           </h2>
           <p className="text-[11px] muted leading-tight mt-0.5">
-            Missing meetings + School Improvement Trainings. SIT is gated on SSA coverage.
+            Clusters needing a meeting or training. Unlimited meetings per FY — recommendations are intelligence-driven (SSA, cadence, coverage).
           </p>
         </div>
         <span className="text-[var(--color-edify-muted)] shrink-0 mt-0.5">
@@ -503,7 +495,9 @@ function ClusterRowMobile({
   const [expanded, setExpanded] = useState(false);
   const rec = recommendForCluster(c);
   const sitBlocked = !!rec.sitDisabledReason;
-  const isPrimaryTraining = rec.primaryAction === "schedule_sit";
+  // "Primary action is training" now spans both cluster training + SIT —
+  // the suggestedActivity carries that signal under the open-ended model.
+  const isPrimaryTraining = rec.suggestedActivity === "training";
 
   return (
     <li className="px-3 py-2.5">
@@ -520,13 +514,40 @@ function ClusterRowMobile({
           <div className="text-[10px] muted leading-tight">
             {c.district} · {c.schoolsCount} schools · {c.schoolsWithSsa} with SSA
           </div>
-          {/* 4 mini chips — SIT first (it's the first activity in the
-              cluster training cycle), then meetings 1 → 2 → 3. */}
+          {/* Intelligence-driven signal chips — meeting count + cadence flag.
+              The legacy 3-slot MTG chips were removed when the planning
+              model switched to unlimited meetings. */}
           <div className="flex items-center gap-1 mt-1.5 flex-wrap">
-            <MiniMeetingChip label="SIT" status={c.schoolImprovementTraining} />
-            <MiniMeetingChip label="M1"  status={c.firstMeeting} />
-            <MiniMeetingChip label="M2"  status={c.secondMeeting} />
-            <MiniMeetingChip label="M3"  status={c.thirdMeeting} />
+            <span
+              className="inline-flex items-center gap-0.5 px-1.5 py-[2px] rounded-md text-[10px] font-extrabold bg-[var(--color-edify-soft)] text-[var(--color-edify-text)]"
+              title={`${c.meetingsThisFy} completed cluster meeting${c.meetingsThisFy === 1 ? "" : "s"} this FY`}
+            >
+              MTG · {c.meetingsThisFy}
+            </span>
+            {c.trainingsThisFy > 0 && (
+              <span
+                className="inline-flex items-center gap-0.5 px-1.5 py-[2px] rounded-md text-[10px] font-extrabold bg-[var(--color-edify-soft)] text-[var(--color-edify-text)]"
+                title={`${c.trainingsThisFy} completed cluster training${c.trainingsThisFy === 1 ? "" : "s"} this FY`}
+              >
+                TRN · {c.trainingsThisFy}
+              </span>
+            )}
+            {!c.metThisQuarter && (
+              <span
+                className="inline-flex items-center gap-0.5 px-1.5 py-[2px] rounded-md text-[10px] font-extrabold bg-amber-50 text-amber-700"
+                title="No meeting this quarter"
+              >
+                NOT MET QTR
+              </span>
+            )}
+            {c.schoolsNeitherVisitNorTraining > 0 && (
+              <span
+                className="inline-flex items-center gap-0.5 px-1.5 py-[2px] rounded-md text-[10px] font-extrabold bg-rose-50 text-rose-700"
+                title={`${c.schoolsNeitherVisitNorTraining} schools with neither visit nor training`}
+              >
+                {c.schoolsNeitherVisitNorTraining} URGENT
+              </span>
+            )}
           </div>
         </div>
         {expanded ? <ChevronUp size={13} className="text-[var(--color-edify-muted)] mt-1 shrink-0" />
@@ -579,15 +600,3 @@ function ClusterRowMobile({
   );
 }
 
-function MiniMeetingChip({ label, status }: { label: string; status: ClusterMeetingStatus }) {
-  const tone = MEETING_TONE[status];
-  return (
-    <span
-      className={cn("inline-flex items-center gap-0.5 px-1.5 py-[2px] rounded-md text-[10px] font-extrabold", tone.bg, tone.text)}
-      title={`${label} — ${status}`}
-    >
-      <tone.Icon size={9} />
-      {label}
-    </span>
-  );
-}

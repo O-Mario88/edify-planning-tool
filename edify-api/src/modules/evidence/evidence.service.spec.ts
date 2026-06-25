@@ -34,7 +34,8 @@ function makeService(activity: ActivityRow) {
   const authz = { assertCanAccess: async () => undefined } as never;
   const events = {} as never;
   const scanner = { scan: async () => 'skipped' as const };
-  const svc = new EvidenceService(prisma as never, scope, audit, authz, events, scanner as never);
+  const docxConverter = { convert: async () => ({ ok: false, reason: 'converter_unavailable', message: 'noop' } as const), isAvailable: async () => false } as never;
+  const svc = new EvidenceService(prisma as never, scope, audit, authz, events, docxConverter, scanner as never);
   return { svc, updateCalls };
 }
 

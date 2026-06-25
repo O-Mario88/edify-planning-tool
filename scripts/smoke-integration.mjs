@@ -61,6 +61,19 @@ const webPagesByRole = {
   "cd@edify.org": ["/dashboard", "/weekly-funds", "/approvals", "/monthly-fund-request"],
 };
 
+// Production-like SSR smoke: every major role cockpit + the data-heavy planning
+// surfaces must render WITHOUT a server error (HTTP < 500). A 200 or an auth/role
+// redirect (3xx) both mean "rendered without throwing"; a 500 is the exact crash
+// class this contract work eliminates (undefined array reaching .map() in SSR).
+const dashboardSsrByRole = {
+  "cd@edify.org": ["/dashboards/director", "/planning", "/clusters", "/plans", "/special-projects", "/budget/intelligence"],
+  "cceo@edify.org": ["/dashboards/cceo", "/planning", "/clusters"],
+  "pl1@edify.org": ["/dashboards/cpl", "/planning", "/plans"],
+  "ia@edify.org": ["/dashboards/impact"],
+  "accountant@edify.org": ["/dashboards/accountant", "/budget/intelligence"],
+  "partner@edify.org": ["/dashboards/partner"],
+};
+
 const results = { pass: 0, fail: 0, warn: 0, timings: [] };
 
 function record(ok, label, detail, ms) {
@@ -113,6 +126,16 @@ function parseCookies(setCookie) {
     if (eq > 0) jar.set(pair.slice(0, eq), pair.slice(eq + 1));
   }
   return jar;
+}
+
+// One web session per email per run — repeated logins trip the login rate
+// limiter and make the suite un-rerunnable. Cache + reuse instead.
+const _sessionCache = new Map();
+async function getWebSession(email) {
+  if (_sessionCache.has(email)) return _sessionCache.get(email);
+  const session = await webLogin(email);
+  _sessionCache.set(email, session);
+  return session;
 }
 
 async function webLogin(email) {
@@ -201,6 +224,22 @@ async function testWebPages(email, cookies, label) {
   }
 }
 
+async function testDashboardSSR() {
+  console.log("\n── Dashboard SSR smoke (renders without 500) ──");
+  for (const [email, paths] of Object.entries(dashboardSsrByRole)) {
+    const session = await getWebSession(email);
+    if (!session.ok) {
+      record(false, `web login ${email}`, session.error ?? "login failed");
+      continue;
+    }
+    for (const path of paths) {
+      const { status, ms } = await webGet(path, session.cookies);
+      // < 500 == rendered without throwing (200 or an auth/role redirect).
+      record(status < 500, `SSR ${email.split("@")[0]} ${path}`, `HTTP ${status}`, ms);
+    }
+  }
+}
+
 async function testStability(tokens) {
   console.log("\n── Stability (20 concurrent my-plan reads) ──");
   const token = tokens.get("pl1@edify.org");
@@ -261,6 +300,7 @@ async function main() {
   const tokens = await testBackendAuth();
   await testBackendEndpoints(tokens);
   await testDataShape(tokens);
+  await testDashboardSSR();
   await testStability(tokens);
   await testBackendStillUp();
 
@@ -270,7 +310,7 @@ async function main() {
     ["cceo@edify.org", "CCEO"],
     ["cd@edify.org", "CD"],
   ]) {
-    const session = await webLogin(email);
+    const session = await getWebSession(email);
     record(session.ok, `web login ${email}`, session.ok ? session.role : session.error);
     if (session.ok) {
       await testWebBridge(email, session.cookies, label);

@@ -12,11 +12,10 @@ import { scheduleClusterMeetingAction } from "@/lib/actions/cluster-actions";
 import { GlassDatePicker } from "@/components/ui/GlassDatePicker";
 
 const KIND_OPTIONS: { value: string; label: string }[] = [
-  { value: "first_meeting", label: "1st Cluster Meeting" },
-  { value: "second_meeting", label: "2nd Cluster Meeting" },
-  { value: "third_meeting", label: "3rd Cluster Meeting" },
-  { value: "sit", label: "School Improvement Training" },
-  { value: "training", label: "Cluster Training" },
+  { value: "cluster_meeting", label: "Cluster Meeting" },
+  { value: "cluster_training", label: "Cluster Training" },
+  { value: "sit", label: "School Improvement Training (SIT)" },
+  { value: "training", label: "Targeted Cluster Training" },
 ];
 
 export function ClusterMeetingScheduler({
@@ -35,7 +34,7 @@ export function ClusterMeetingScheduler({
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
-  const [kind, setKind] = useState(defaultKind ?? "first_meeting");
+  const [kind, setKind] = useState(defaultKind ?? "cluster_meeting");
   const [date, setDate] = useState("");
   const [participants, setParticipants] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +45,7 @@ export function ClusterMeetingScheduler({
     startTransition(async () => {
       const res = await scheduleClusterMeetingAction(
         clusterId,
-        kind as "first_meeting" | "second_meeting" | "third_meeting" | "sit" | "training",
+        kind as "cluster_meeting" | "cluster_training" | "sit" | "training",
         date,
         participants ? Number(participants) : undefined,
       );

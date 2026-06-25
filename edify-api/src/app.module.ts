@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { validateEnv } from './config/env.validation';
 import { PrismaModule } from './prisma/prisma.module';
 import { CommonModule } from './common/common.module';
@@ -46,6 +47,9 @@ import { HealthController } from './health.controller';
       validate: validateEnv,
       envFilePath: ['.env', '../.env'],
     }),
+    // Cron infrastructure for the Friday weekly-fund-request job and the
+    // 25th monthly-work-plan-budget job. Schedulers live in FundRequestsModule.
+    ScheduleModule.forRoot(),
     PrismaModule,
     CommonModule,
     RealtimeModule,

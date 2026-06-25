@@ -141,8 +141,8 @@ export async function PlanningToolPage({
                Core Schools), each a neat collapsible, detail-rich board.
             2. Assigned to Me
             3. Assigned to Partner
-            4. Awaiting Partner Schedule
-            5. Planned This Month
+            (Awaiting Partner Schedule + Planned This Month moved to /my-plan —
+             they track already-planned work, not gaps.)
             (PlanningGapsHero retired per global hero removal pass.) */}
         <OperationalCycleBanner />
 
@@ -169,7 +169,7 @@ export async function PlanningToolPage({
 
         <PlansFamilyNav current="planning" className="flex items-center gap-1" />
 
-        <PlanningOwnershipSections ownership={coreOwnership} />
+        <PlanningOwnershipSections ownership={coreOwnership} show={["assignedToMe", "assignedToPartner"]} />
 
         <ProjectPlanningGaps categories={projectGaps} />
       </div>

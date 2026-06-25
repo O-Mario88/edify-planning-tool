@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { FundRequestsService } from './fund-requests.service';
+import { BudgetAutomationService } from './budget-automation.service';
 import { JwtAuthGuard } from '../../common/auth/jwt-auth.guard';
 import { PermissionsGuard } from '../../common/rbac/permissions.guard';
 import { RequirePermissions } from '../../common/rbac/require-permissions.decorator';
@@ -13,7 +14,25 @@ import { AuthUser } from '../../common/auth/auth-user';
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('fund-requests')
 export class FundRequestsController {
-  constructor(private readonly fundRequests: FundRequestsService) {}
+  constructor(
+    private readonly fundRequests: FundRequestsService,
+    private readonly automation: BudgetAutomationService,
+  ) {}
+
+  // ── Manual regeneration (admin/CD-safe — protected by BUDGET_APPROVE) ──
+  // Idempotent: re-running the job UPDATES drafts, never duplicates approved
+  // or disbursed requests.
+  @Post('regenerate-weekly')
+  @RequirePermissions(PERMISSIONS.BUDGET_APPROVE)
+  regenerateWeekly(@CurrentUser() user: AuthUser) {
+    return this.automation.generateWeeklyFundRequests(new Date(), { actor: user.userId });
+  }
+
+  @Post('regenerate-monthly')
+  @RequirePermissions(PERMISSIONS.BUDGET_APPROVE)
+  regenerateMonthly(@CurrentUser() user: AuthUser) {
+    return this.automation.generateMonthlyWorkPlanBudget(new Date(), { actor: user.userId });
+  }
 
   // Submit a fund request for a period — the amount is computed from the
   // schedule (never typed) and blocked while any activity is missing a cost.

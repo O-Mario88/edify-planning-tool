@@ -142,9 +142,13 @@ export class BudgetService {
   async costPreview(input: {
     activityType?: string; deliveryType?: string; districtType?: string;
     teachersAttended?: number; leadersAttended?: number; otherParticipants?: number;
+    expectedParticipants?: number; nights?: number; projectId?: string;
   }) {
     if (!input.activityType) throw new BadRequestException('activityType is required for a cost preview.');
     const rates = await this.rateCard();
+    // Catalogue version snapshot — every line carries the CostSetting.version
+    // it was sourced from, so the FE can show "Catalogue v3" and System Health
+    // can detect rate drift between snapshot and current.
     const cost = costForActivity(
       {
         activityType: input.activityType as CostableActivity['activityType'],
@@ -153,14 +157,34 @@ export class BudgetService {
         teachersAttended: input.teachersAttended,
         leadersAttended: input.leadersAttended,
         otherParticipants: input.otherParticipants,
+        expectedParticipants: input.expectedParticipants,
+        nights: input.nights,
+        projectId: input.projectId,
       },
       rates,
     );
+    // Pull the max version across the keys actually used — gives the FE a
+    // single "as-of" number to display without exposing the whole catalogue.
+    const usedKeys = cost.lines.map((l) => l.key);
+    const verRows = await this.prisma.costSetting.findMany({
+      where: { key: { in: usedKeys } },
+      select: { key: true, version: true },
+    });
+    const catalogueVersion = verRows.length
+      ? Math.max(...verRows.map((r) => r.version))
+      : 1;
     return {
       source: `Uganda · FY ${getOperationalFY()} Country Cost Register`,
       currency: 'UGX',
       amount: cost.amount,
       costMissing: cost.costMissing,
+      missingItems: cost.missingItems,
+      catalogueVersion,
+      // canSchedule is false when ANY required rate is missing — this is the
+      // single boolean the FE schedule drawer reads to decide whether the
+      // Schedule button is enabled (a Draft fallback may still be allowed
+      // by the workflow if the schema supports drafts).
+      canSchedule: !cost.costMissing,
       lines: cost.lines,
     };
   }

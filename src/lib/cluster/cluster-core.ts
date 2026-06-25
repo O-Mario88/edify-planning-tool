@@ -190,13 +190,17 @@ export type ClusterMeetingKind =
   | "third_meeting"
   | "follow_up"
   | "sit"
-  | "training";
+  | "training"
+  | "cluster_meeting"
+  | "cluster_training";
 
 export const CLUSTER_MEETING_LABEL: Record<ClusterMeetingKind, string> = {
-  first_meeting: "1st Cluster Meeting",
-  second_meeting: "2nd Cluster Meeting",
-  third_meeting: "3rd Cluster Meeting",
+  first_meeting: "1st Cluster Meeting (legacy)",
+  second_meeting: "2nd Cluster Meeting (legacy)",
+  third_meeting: "3rd Cluster Meeting (legacy)",
   follow_up: "Follow-up Cluster Meeting",
+  cluster_meeting: "Cluster Meeting",
+  cluster_training: "Cluster Training",
   sit: "School Improvement Training",
   training: "Cluster Training",
 };

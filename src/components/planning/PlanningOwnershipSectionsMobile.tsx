@@ -20,18 +20,31 @@ const ROW_LIMIT = 4;
 
 const EMPTY_OWNERSHIP: CoreOwnership = { assignedToMe: [], assignedToPartner: [], awaitingPartner: [], plannedThisMonth: [] };
 
-export function PlanningOwnershipSectionsMobile({ ownership = EMPTY_OWNERSHIP }: { ownership?: CoreOwnership } = {}) {
-  const me      = ownership.assignedToMe;
-  const partner = ownership.assignedToPartner;
-  const waiting = ownership.awaitingPartner;
-  const month   = ownership.plannedThisMonth;
+export type OwnershipSectionKey = keyof CoreOwnership;
 
+type CompactDef = { title: string; Icon: LucideIcon; tone: "info" | "warn" | "good"; href: string };
+
+const SECTION_DEFS: Record<OwnershipSectionKey, CompactDef> = {
+  assignedToMe:      { title: "Assigned to Me",            Icon: User,      tone: "info", href: "/plans" },
+  assignedToPartner: { title: "Assigned to Partner",       Icon: Handshake, tone: "info", href: "/partner/assignments" },
+  awaitingPartner:   { title: "Awaiting Partner Schedule", Icon: Clock,     tone: "warn", href: "/partner/schedule" },
+  plannedThisMonth:  { title: "Planned This Month",        Icon: Calendar,  tone: "good", href: "/plans" },
+};
+
+const ALL_SECTIONS: OwnershipSectionKey[] = ["assignedToMe", "assignedToPartner", "awaitingPartner", "plannedThisMonth"];
+
+export function PlanningOwnershipSectionsMobile({
+  ownership = EMPTY_OWNERSHIP,
+  show = ALL_SECTIONS,
+}: {
+  ownership?: CoreOwnership;
+  show?: OwnershipSectionKey[];
+} = {}) {
   return (
     <>
-      <CompactSection title="Assigned to Me"           Icon={User}       tone="info" rows={me}      href="/plans" />
-      <CompactSection title="Assigned to Partner"      Icon={Handshake}  tone="info" rows={partner} href="/partner/assignments" />
-      <CompactSection title="Awaiting Partner Schedule" Icon={Clock}     tone="warn" rows={waiting} href="/partner/schedule" />
-      <CompactSection title="Planned This Month"       Icon={Calendar}   tone="good" rows={month}   href="/plans" />
+      {show.map((key) => (
+        <CompactSection key={key} {...SECTION_DEFS[key]} rows={ownership[key]} />
+      ))}
     </>
   );
 }

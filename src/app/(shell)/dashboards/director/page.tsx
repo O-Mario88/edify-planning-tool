@@ -32,6 +32,7 @@ import { ClusterOperationsCard } from "@/components/cluster/ClusterOperationsCar
 import { scopedClusterCounts } from "@/lib/cluster/cluster-scope";
 import { ResponsiveDashboard } from "@/components/mobile/ResponsiveDashboard";
 import { SectionHeader } from "@/components/ui/SectionHeader";
+import { SectionBoundary } from "@/components/ui/SectionBoundary";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { ROLE_REDIRECT } from "@/lib/auth-public";
@@ -92,17 +93,23 @@ export default async function CountryDirectorDashboard({ searchParams }: { searc
         <DashboardGreetingHero user={user} />
 
         {/* Live program snapshot (backend analytics) — real KPIs + activity pipeline. */}
-        <CountryAnalyticsLive geo={geo} />
+        <SectionBoundary label="the program snapshot">
+          <CountryAnalyticsLive geo={geo} />
+        </SectionBoundary>
 
         {/* LEADERSHIP DECISION ENGINE — the executive intelligence layer:
             evidence-backed, human-reviewed recommendations (recruitment, staff,
             partner MOUs, regional investment) computed from live SSA, workload,
             partner & target data. The engine recommends; leadership decides. */}
-        <DecisionEngineEmbed />
+        <SectionBoundary label="the leadership decision engine">
+          <DecisionEngineEmbed />
+        </SectionBoundary>
 
         {/* BUDGET INTELLIGENCE — the financial brain: cost ↔ verified activity ↔
             SSA impact, low-yield spend + reallocation advisory. */}
-        <BudgetIntelligenceEmbed />
+        <SectionBoundary label="budget intelligence">
+          <BudgetIntelligenceEmbed />
+        </SectionBoundary>
 
         {/* COUNTRY MISSION SNAPSHOT + KPI ROW — the program statistics
             band, directly below the hero and before any work content. */}
@@ -114,7 +121,9 @@ export default async function CountryDirectorDashboard({ searchParams }: { searc
             description="Reach, training, improvement, and coverage — from the same builder as the donor report — plus the country's headline KPIs."
           />
           <MissionSnapshotStrip snapshot={donorSnapshot} />
-          {leadership.live ? <LeadershipKpiStrip s={leadership.data} scopeLabel="country" /> : <CountryKpiRow />}
+          <SectionBoundary label="the country KPI strip">
+            {leadership.live ? <LeadershipKpiStrip s={leadership.data} scopeLabel="country" /> : <CountryKpiRow />}
+          </SectionBoundary>
         </section>
 
         {/* ── STATISTICS FIRST ──────────────────────────────────────────
@@ -190,8 +199,12 @@ export default async function CountryDirectorDashboard({ searchParams }: { searc
         <FlagToPlCard />
         <CommandStack user={user} hideMission />
 
-        <ExecutiveAlertsLive inputs={{ unclusteredSchools: clusterCounts.unclustered }} />
-        <CdRiskSummaryCard />
+        <SectionBoundary label="executive alerts">
+          <ExecutiveAlertsLive inputs={{ unclusteredSchools: clusterCounts.unclustered }} />
+        </SectionBoundary>
+        <SectionBoundary label="the risk summary">
+          <CdRiskSummaryCard />
+        </SectionBoundary>
 
         {/* BUDGET & FUND REQUEST HEALTH — financial stewardship. */}
         <section className="space-y-3">
@@ -207,7 +220,9 @@ export default async function CountryDirectorDashboard({ searchParams }: { searc
           </section>
           <section className="grid grid-cols-12 gap-3 items-stretch [&>div>*]:h-full" id="fund-approvals">
             <div className="col-span-12">
-              <FundApprovalFinanceLive />
+              <SectionBoundary label="fund approvals">
+                <FundApprovalFinanceLive />
+              </SectionBoundary>
             </div>
           </section>
         </section>
@@ -227,9 +242,15 @@ export default async function CountryDirectorDashboard({ searchParams }: { searc
           <div id="program-leads">
             <ProgramLeadsPerformanceTable />
           </div>
-          <StaffPerformanceLive />
-          <PartnerPerformanceLive />
-          <DebriefReviewInbox user={user} audience="cd" />
+          <SectionBoundary label="staff performance">
+            <StaffPerformanceLive />
+          </SectionBoundary>
+          <SectionBoundary label="partner performance">
+            <PartnerPerformanceLive />
+          </SectionBoundary>
+          <SectionBoundary label="the debrief review inbox">
+            <DebriefReviewInbox user={user} audience="cd" />
+          </SectionBoundary>
           <ClientVerificationCard />
         </section>
 

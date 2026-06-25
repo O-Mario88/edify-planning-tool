@@ -17,9 +17,9 @@ const quarterFor = (m: number) => (m >= 7 && m <= 9 ? "Q1" : m >= 10 ? "Q2" : m 
 const VISIT = new Set(["school_visit", "follow_up_visit", "coaching_visit", "in_school_support", "core_visit"]);
 const TRAINING = new Set(["training", "school_improvement_training", "cluster_training", "core_training"]);
 
-// Each option: v = unique select key, type = real ActivityType, slot = explicit
-// cluster slot (cluster options only). The composite key lets the 3 cluster
-// meetings share the cluster_meeting type but carry distinct slot tags.
+// Each option: v = unique select key, type = real ActivityType, slot = optional tag
+// for legacy slot-based flows (SIT). Cluster meetings/trainings are unlimited;
+// no "first/second/third" slots.
 type ActOption = { v: string; l: string; type: string; slot?: string };
 const CLIENT_TYPES: ActOption[] = [
   { v: "school_visit", l: "School visit", type: "school_visit" },
@@ -35,11 +35,10 @@ const CORE_TYPES: ActOption[] = [
   { v: "core_training", l: "Core training", type: "core_training" },
 ];
 const CLUSTER_TYPES: ActOption[] = [
-  { v: "sit", l: "SIT / SSA", type: "school_improvement_training", slot: "sit" },
-  { v: "meeting1", l: "First cluster meeting", type: "cluster_meeting", slot: "first_meeting" },
-  { v: "meeting2", l: "Second cluster meeting", type: "cluster_meeting", slot: "second_meeting" },
-  { v: "meeting3", l: "Third cluster meeting", type: "cluster_meeting", slot: "third_meeting" },
-  { v: "cluster_training", l: "Cluster training", type: "cluster_training" },
+  { v: "cluster_meeting", l: "Cluster Meeting", type: "cluster_meeting" },
+  { v: "cluster_training", l: "Cluster Training", type: "cluster_training" },
+  { v: "sit", l: "School Improvement Training (SIT)", type: "school_improvement_training", slot: "sit" },
+  { v: "cluster_sit", l: "Cluster SIT", type: "school_improvement_training", slot: "sit" },
 ];
 
 const ugx = (n: number) => `UGX ${Math.round(n).toLocaleString()}`;

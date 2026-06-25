@@ -12,18 +12,59 @@ import "server-only";
 
 import { backendFetch, isBackendEnabled, type BackendUser } from "./backend";
 import { tryInProcess } from "@/server/dispatch";
+import { z, type ZodTypeAny } from "zod";
+import { validateContract } from "./contract";
+import {
+  dashboardSchema,
+  activityPipelineSchema,
+  leadershipSummarySchema,
+  leadershipBoardsSchema,
+  leadershipSnapshotSchema,
+  budgetBoardsSchema,
+  budgetSnapshotSchema,
+  rosterSchema,
+  districtRollupsSchema,
+  paginatedEnvelopeSchema,
+  clusterPlanningSchema,
+  clusterIntelligenceSchema,
+} from "./schemas";
 
 export type LiveResult<T> =
   | { live: true; data: T }
   | { live: false; error: string | null };
 
-async function live<T>(path: string, user: BackendUser, init?: RequestInit): Promise<LiveResult<T>> {
+// Optional contract enforcement for a surface. When `schema` is supplied, a
+// `live: true` result is ONLY returned if the raw payload passes the schema
+// (arrays normalized to [] per schema defaults). An off-spec payload is
+// downgraded to `live: false` with a DATA_CONTRACT_VIOLATION error + a recorded
+// violation (logged, surfaced in System Health) — so invalid data can never
+// reach a component's .map(). This is the enforcement point for the golden rule.
+type ContractOpts = { schema: ZodTypeAny; component?: string };
+
+async function live<T>(
+  path: string,
+  user: BackendUser,
+  init?: RequestInit,
+  validate?: ContractOpts,
+): Promise<LiveResult<T>> {
+  const enforce = (raw: T): LiveResult<T> => {
+    if (!validate) return { live: true, data: raw };
+    const checked = validateContract<T>(validate.schema, raw, {
+      endpoint: path.split("?")[0],
+      role: user.role,
+      component: validate.component,
+    });
+    return checked.ok
+      ? { live: true, data: checked.data }
+      : { live: false, error: `DATA_CONTRACT_VIOLATION: ${checked.violation.message}` };
+  };
+
   // Ported domains are served in-process (no edify-api hop). tryInProcess is a
   // no-op fast path unless EDIFY_INPROC_DOMAINS enables the path's domain — so
   // un-ported domains keep proxying, unchanged.
   try {
     const inproc = await tryInProcess<T>(path, init);
-    if (inproc.handled) return { live: true, data: inproc.data };
+    if (inproc.handled) return enforce(inproc.data);
   } catch (e) {
     return { live: false, error: e instanceof Error ? e.message : "in-process dispatch error" };
   }
@@ -34,7 +75,7 @@ async function live<T>(path: string, user: BackendUser, init?: RequestInit): Pro
     };
   }
   const r = await backendFetch<T>(path, user, init);
-  return r.ok ? { live: true, data: r.data } : { live: false, error: r.error };
+  return r.ok ? enforce(r.data) : { live: false, error: r.error };
 }
 
 // ── Backend response shapes (mirror edify-api controllers) ──────────
@@ -186,10 +227,16 @@ export function fetchCoreHeader(user: BackendUser) {
 }
 
 export function fetchAnalyticsDashboard(user: BackendUser, geo?: GeoFilterParams) {
-  return live<BeDashboard>(`/analytics/dashboard${geoQuery(geo)}`, user);
+  return live<BeDashboard>(`/analytics/dashboard${geoQuery(geo)}`, user, undefined, {
+    schema: dashboardSchema,
+    component: "CountryAnalyticsLive",
+  });
 }
 export function fetchLeadershipSummary(user: BackendUser, geo?: GeoFilterParams) {
-  return live<BeLeadershipSummary>(`/analytics/leadership-summary${geoQuery(geo)}`, user);
+  return live<BeLeadershipSummary>(`/analytics/leadership-summary${geoQuery(geo)}`, user, undefined, {
+    schema: leadershipSummarySchema,
+    component: "LeadershipKpiStrip",
+  });
 }
 export type BeDistrictRollup = {
   districtId: string; district: string; region: string;
@@ -198,7 +245,10 @@ export type BeDistrictRollup = {
   ssaDone: number; ssaPct: number; avgSsa: number;
 };
 export function fetchDistrictRollups(user: BackendUser, geo?: GeoFilterParams) {
-  return live<{ districts: BeDistrictRollup[] }>(`/analytics/districts${geoQuery(geo)}`, user);
+  return live<{ districts: BeDistrictRollup[] }>(`/analytics/districts${geoQuery(geo)}`, user, undefined, {
+    schema: districtRollupsSchema,
+    component: "liveDistrictNamesFor",
+  });
 }
 
 // The district NAMES the user actually has live data for — used to build the
@@ -276,7 +326,10 @@ export function fetchAnalyticsSsa(user: BackendUser, geo?: GeoFilterParams) {
 }
 
 export function fetchActivityPipeline(user: BackendUser, geo?: GeoFilterParams) {
-  return live<BeActivityPipeline>(`/analytics/activity-pipeline${geoQuery(geo)}`, user);
+  return live<BeActivityPipeline>(`/analytics/activity-pipeline${geoQuery(geo)}`, user, undefined, {
+    schema: activityPipelineSchema,
+    component: "CountryAnalyticsLive",
+  });
 }
 
 // ── Contribution ("how much am I contributing?") — scope-enforced ──
@@ -474,7 +527,10 @@ export function fetchMyPlanGrouped(user: BackendUser, period: BeMyPlanPeriod = "
 export function fetchMyPlanActivities(user: BackendUser, fy?: string) {
   const params = new URLSearchParams({ mine: "true", pageSize: "100" });
   if (fy) params.set("fy", fy);
-  return live<BePaginated<BeActivity>>(`/activities?${params.toString()}`, user);
+  return live<BePaginated<BeActivity>>(`/activities?${params.toString()}`, user, undefined, {
+    schema: paginatedEnvelopeSchema,
+    component: "PlansIndex",
+  });
 }
 
 export type ActivityLifecycleAction = "reschedule" | "reassign" | "cancel" | "defer" | "complete" | "start-completion";
@@ -510,12 +566,102 @@ export function backendCreateActivity(user: BackendUser, body: Record<string, un
   return live<BeActivity>(`/activities`, user, { method: "POST", body: JSON.stringify(body) });
 }
 
+// ── Monthly Work Plan Budget (CD finance dashboard) ────────────────
+// The 25th cron emits a per-country envelope of next-month planned
+// activities; the CD adds admin items, submits to RVP, then releases
+// to Accountant. All endpoints are country-scope (CD/RVP/Accountant).
+export type BeAdminBudgetLine = {
+  id: string; monthlyBudgetId: string;
+  costCategory: string; description: string;
+  quantity: number; unitCost: number; totalCost: number;
+  justification?: string | null;
+  createdByUserId: string; status: string;
+  createdAt: string; updatedAt: string;
+};
+export type BeMonthlyWorkPlanItem = {
+  id: string; monthlyBudgetId: string;
+  activityId: string; activityScheduleCostLineId: string;
+  amount: number;
+  activityType: string; deliveryType: string;
+  responsibleStaffId?: string | null;
+  districtId?: string | null;
+  partnerId?: string | null;
+  projectId?: string | null;
+  clusterId?: string | null;
+  schoolId?: string | null;
+  addedAfterGeneration: boolean;
+  createdAt: string;
+};
+export type BeMonthlyWorkPlanBudget = {
+  id: string; fy: string; monthKey: string;
+  countryId?: string | null;
+  generatedAt: string; generatedBy?: string | null;
+  status: string;
+  programTotal: number; adminTotal: number; totalAmount: number;
+  activityCount: number;
+  submittedAt?: string | null;
+  submittedByUserId?: string | null;
+  rvpReviewedAt?: string | null;
+  rvpReviewedByUserId?: string | null;
+  rvpReviewNote?: string | null;
+  sentToAccountantAt?: string | null;
+  programItems?: BeMonthlyWorkPlanItem[];
+  adminLines?: BeAdminBudgetLine[];
+  _count?: { programItems: number; adminLines: number };
+};
+export function fetchMonthlyWorkPlanBudgets(user: BackendUser, fy?: string) {
+  const q = fy ? `?fy=${encodeURIComponent(fy)}` : "";
+  return live<BeMonthlyWorkPlanBudget[]>(`/monthly-work-plan-budget${q}`, user);
+}
+export function fetchMonthlyWorkPlanBudget(user: BackendUser, id: string) {
+  return live<BeMonthlyWorkPlanBudget>(`/monthly-work-plan-budget/${encodeURIComponent(id)}`, user);
+}
+export function addMonthlyAdminLine(user: BackendUser, id: string, body: {
+  costCategory: string; description: string; quantity?: number; unitCost: number; justification?: string;
+}) {
+  return live<BeAdminBudgetLine>(
+    `/monthly-work-plan-budget/${encodeURIComponent(id)}/admin-lines`,
+    user, { method: "POST", body: JSON.stringify(body) },
+  );
+}
+export function submitMonthlyToRvp(user: BackendUser, id: string) {
+  return live<BeMonthlyWorkPlanBudget>(
+    `/monthly-work-plan-budget/${encodeURIComponent(id)}/submit-to-rvp`,
+    user, { method: "POST" },
+  );
+}
+export function regenerateWeeklyFundRequests(user: BackendUser) {
+  return live<{ requestsCreated: number; requestsRefreshed: number; skipped: number; periodKey: string }>(
+    `/fund-requests/regenerate-weekly`,
+    user, { method: "POST" },
+  );
+}
+export function regenerateMonthlyWorkPlanBudget(user: BackendUser) {
+  return live<{ budgetsCreated: number; budgetsRefreshed: number; skipped: number; monthKey: string }>(
+    `/fund-requests/regenerate-monthly`,
+    user, { method: "POST" },
+  );
+}
+
 // ── Cost preview from the CD Country Cost Register (scheduling drawer) ──
 export type BeCostLine = { label: string; key: string; unit: number | null; qty: number; amount: number; missing: boolean };
-export type BeCostPreview = { source: string; currency: string; amount: number; costMissing: boolean; lines: BeCostLine[] };
+export type BeCostPreview = {
+  source: string; currency: string; amount: number; costMissing: boolean;
+  /** Stable list of missing CostSetting keys — drives the Cost Blocker UI. */
+  missingItems?: string[];
+  /** Single "as-of" version across the keys actually used in this preview. */
+  catalogueVersion?: number;
+  /** False when ANY required rate is missing; controls Schedule button enable. */
+  canSchedule?: boolean;
+  lines: BeCostLine[];
+};
 export function backendCostPreview(
   user: BackendUser,
-  body: { activityType: string; deliveryType?: string; districtType?: string; teachersAttended?: number; leadersAttended?: number; otherParticipants?: number },
+  body: {
+    activityType: string; deliveryType?: string; districtType?: string;
+    teachersAttended?: number; leadersAttended?: number; otherParticipants?: number;
+    expectedParticipants?: number; nights?: number; projectId?: string;
+  },
 ) {
   return live<BeCostPreview>(`/budget/costing/preview`, user, { method: "POST", body: JSON.stringify(body) });
 }
@@ -684,10 +830,16 @@ export function fetchLeadershipBoards(user: BackendUser, q: { fy?: string; decis
   const sp = new URLSearchParams();
   for (const [k, v] of Object.entries(q)) if (v) sp.set(k, v);
   const qs = sp.toString();
-  return live<BeLeadershipBoards>(`/leadership/decision-engine${qs ? `?${qs}` : ""}`, user);
+  return live<BeLeadershipBoards>(`/leadership/decision-engine${qs ? `?${qs}` : ""}`, user, undefined, {
+    schema: leadershipBoardsSchema,
+    component: "DecisionEngineEmbed",
+  });
 }
 export function fetchLeadershipSnapshot(user: BackendUser, fy?: string) {
-  return live<BeLeadershipSnapshot>(`/leadership/decision-engine/snapshot${fy ? `?fy=${encodeURIComponent(fy)}` : ""}`, user);
+  return live<BeLeadershipSnapshot>(`/leadership/decision-engine/snapshot${fy ? `?fy=${encodeURIComponent(fy)}` : ""}`, user, undefined, {
+    schema: leadershipSnapshotSchema,
+    component: "DecisionEngineEmbed",
+  });
 }
 
 // ── Layer 3: Support-to-Improvement correlation ─────────────────────
@@ -994,7 +1146,10 @@ export function submitFundRequest(user: BackendUser, body: { period?: string; mo
 // ── Activities — generic scoped list (IA queue, etc.; My Plan uses
 //    fetchMyPlanActivities; actions use backendActivityAction above) ──
 export function fetchActivities(user: BackendUser, qs = "") {
-  return live<BePaginated<BeActivity>>(`/activities${qs}`, user);
+  return live<BePaginated<BeActivity>>(`/activities${qs}`, user, undefined, {
+    schema: paginatedEnvelopeSchema,
+    component: "fetchActivities",
+  });
 }
 // Generic action caller — covers the full row state machine incl. ia-confirm /
 // clear-payment (backendActivityAction above is typed to the 5 plan-row actions).
@@ -1133,17 +1288,72 @@ export type BeClusterSchool = {
   latestSsa: number | null; stage: string;
   weakestIntervention?: { area: string; score: number } | null;
 };
+/** Open-ended cluster planning shape — unlimited meetings, intelligence-derived
+ *  category. Legacy slot status fields stay optional so the FE reschedule
+ *  drawer can still operate on in-flight ordinal-tagged meetings. */
 export type BeClusterPlanning = {
   id: string; clusterName: string; district: string; subCounty: string;
   schoolsCount: number; schoolsWithSsa: number;
-  sit: string; firstMeeting: string; secondMeeting: string; thirdMeeting: string;
-  gapCategory: "no_sit" | "no_first_meeting" | "no_second_meeting" | "no_third_meeting";
+  /** Open-ended cadence (counts ALL meetings/trainings — no 3-slot cap). */
+  meetingsThisFy: number;
+  meetingsScheduledThisFy: number;
+  trainingsThisFy: number;
+  lastMeetingDate: string | null;
+  nextScheduledMeetingDate: string | null;
+  metThisQuarter: boolean;
+  schoolsNotVisited: number;
+  schoolsNotTrained: number;
+  schoolsNeitherVisitNorTraining: number;
+  /** Planning bucket from the intelligence engine. */
+  gapCategory:
+    | "no_meetings_this_fy"
+    | "not_met_this_quarter"
+    | "schools_need_support"
+    | "weak_ssa_intervention"
+    | "ssa_performance_drop"
+    | "schools_not_visited"
+    | "schools_not_trained"
+    | "schools_neither_visit_nor_training"
+    | "training_needed"
+    | "follow_up_needed"
+    | "meeting_due"
+    | "on_track";
+  /** Headline recommendation copy (already localized server-side). */
+  recommendationHeadline: string | null;
+  recommendationReason: string | null;
+  recommendationActivityLabel: string | null;
+  recommendationFocusIntervention: string | null;
+  // Legacy slot fields — present only when an ordinal-tagged meeting still
+  // exists in the cluster's activity history. Optional so new clusters
+  // don't carry empty placeholders.
+  sit?: string;
+  firstMeeting?: string;
+  secondMeeting?: string;
+  thirdMeeting?: string;
 };
 export function fetchClusterPlanning(user: BackendUser) {
-  return live<BeClusterPlanning[]>(`/clusters/planning`, user);
+  return live<BeClusterPlanning[]>(
+    `/clusters/planning`,
+    user,
+    undefined,
+    { schema: clusterPlanningSchema, component: "ClusterPlanningBoard" },
+  );
 }
 export function fetchClusters(user: BackendUser) {
   return live<BeCluster[]>(`/clusters`, user);
+}
+
+/** Single cluster's open-ended planning intelligence — SSA performance,
+ *  coverage, cadence, recommendation. Schema-validated so the cluster
+ *  detail page can never crash on a missing array. */
+export type BeClusterIntelligence = z.infer<typeof clusterIntelligenceSchema>;
+export function fetchClusterIntelligence(user: BackendUser, clusterId: string) {
+  return live<BeClusterIntelligence>(
+    `/clusters/${encodeURIComponent(clusterId)}/intelligence`,
+    user,
+    undefined,
+    { schema: clusterIntelligenceSchema, component: "ClusterIntelligencePanel" },
+  );
 }
 
 /** District → sub-county names from the live backend geography (for cluster create forms). */
@@ -1340,7 +1550,10 @@ export type BeRosterRow = {
 };
 export type BeRoster = { counts: { total: number; active: number; pending: number }; staff: BeRosterRow[] };
 export function fetchHrRoster(user: BackendUser) {
-  return live<BeRoster>(`/hr/roster`, user);
+  return live<BeRoster>(`/hr/roster`, user, undefined, {
+    schema: rosterSchema,
+    component: "StaffPerformanceLive",
+  });
 }
 export type BeLeaveRow = {
   id: string; staffName: string; type: string; startDate: string; endDate: string;
@@ -1452,10 +1665,16 @@ export function fetchBudgetIntelligenceBoards(
   if (q.insightType) sp.set("insightType", q.insightType);
   if (q.impactYield) sp.set("impactYield", q.impactYield);
   const qs = sp.toString();
-  return live<BeBudgetBoards>(`/budget-intelligence${qs ? `?${qs}` : ""}`, user);
+  return live<BeBudgetBoards>(`/budget-intelligence${qs ? `?${qs}` : ""}`, user, undefined, {
+    schema: budgetBoardsSchema,
+    component: "BudgetIntelligenceEmbed",
+  });
 }
 export function fetchBudgetIntelligenceSnapshot(user: BackendUser, fy?: string) {
-  return live<BeBudgetSnapshot>(`/budget-intelligence/snapshot${fy ? `?fy=${encodeURIComponent(fy)}` : ""}`, user);
+  return live<BeBudgetSnapshot>(`/budget-intelligence/snapshot${fy ? `?fy=${encodeURIComponent(fy)}` : ""}`, user, undefined, {
+    schema: budgetSnapshotSchema,
+    component: "BudgetIntelligenceEmbed",
+  });
 }
 
 // ── CD → PL flags ───────────────────────────────────────────────────

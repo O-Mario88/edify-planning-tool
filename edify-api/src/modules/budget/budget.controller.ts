@@ -47,7 +47,11 @@ export class BudgetController {
   @Post('costing/preview')
   @RequirePermissions(PERMISSIONS.PLANNING_VIEW)
   costPreview(
-    @Body() body: { activityType?: string; deliveryType?: string; districtType?: string; teachersAttended?: number; leadersAttended?: number; otherParticipants?: number },
+    @Body() body: {
+      activityType?: string; deliveryType?: string; districtType?: string;
+      teachersAttended?: number; leadersAttended?: number; otherParticipants?: number;
+      expectedParticipants?: number; nights?: number; projectId?: string;
+    },
   ) {
     return this.budget.costPreview(body);
   }

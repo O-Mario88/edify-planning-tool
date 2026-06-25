@@ -1,30 +1,58 @@
 // Engine → planning cluster gaps.
 //
-// Bridges the real cluster engine (activeClusters + their scheduled/completed
-// meetings) into the ClusterGap shape the planning Cluster Gaps board renders.
-// This is what makes "completing a real cluster meeting reduces a planning gap"
-// true: the board now reflects engine truth, not a static mock.
+// Bridges the real cluster engine (activeClusters + their unlimited
+// scheduled/completed meetings) through `computeClusterIntelligence` into
+// the `ClusterGap` shape the planning Cluster Gaps board renders. This is
+// what makes the board reflect real cluster cadence + SSA + coverage — no
+// hardcoded 3-meeting model, no "1st/2nd/3rd meeting" slots.
 
 import {
   activeClusters,
   meetingsForCluster,
   schoolsInCluster,
   type ClusterMeeting,
-  type ClusterMeetingKind,
 } from "@/lib/cluster/cluster-core";
-import type { ClusterGap, ClusterMeetingStatus, ClusterGapCategory } from "./planning-gaps-mock";
+import { historyFor } from "@/lib/planning/ssa-performance-mock";
+import {
+  computeClusterIntelligence,
+  type ClusterIntelActivity,
+  type ClusterIntelSchool,
+} from "@/lib/cluster/cluster-intelligence";
+import type {
+  ClusterGap,
+  ClusterMeetingStatus,
+  SsaInterventionArea,
+} from "./planning-gaps-mock";
 
-/** Map an activity's lifecycle status to the board's meeting-status vocabulary. */
-function statusOf(a: ClusterMeeting | undefined): ClusterMeetingStatus | null {
-  if (!a) return null;
-  if (a.status === "IA Confirmed" || a.status === "Paid") return "Completed";
-  if (a.status === "Returned") return "Rescheduled";
-  return "Scheduled"; // Scheduled / Awaiting IA
+/** Map an activity's lifecycle status to the OPEN-ENDED 3-state vocabulary
+ *  the intelligence engine consumes. The board still renders a richer
+ *  per-chip status (Scheduled / Rescheduled / Awaiting IA / etc.) for
+ *  individual already-scheduled meetings — that's separate from the
+ *  cadence count this maps to. */
+function intelStatusOf(a: ClusterMeeting): "Completed" | "Scheduled" | "Other" {
+  if (a.status === "IA Confirmed" || a.status === "Paid" || a.status === "Closed") return "Completed";
+  if (a.status === "Scheduled" || a.status === "Awaiting IA") return "Scheduled";
+  return "Other";
 }
 
-function findKind(meetings: ClusterMeeting[], kind: ClusterMeetingKind): ClusterMeeting | undefined {
-  // The most recent activity of this kind (meetings are date-sorted asc).
-  return [...meetings].reverse().find((m) => m.kind === kind);
+/** Map an activity kind to the intelligence engine's activity type. */
+function intelActivityType(kind: ClusterMeeting["kind"]): ClusterIntelActivity["activityType"] {
+  if (kind === "sit") return "school_improvement_training";
+  if (kind === "training" || kind === "cluster_training") return "cluster_training";
+  if (kind === "follow_up") return "follow_up";
+  // first_meeting, second_meeting, third_meeting all collapse to the
+  // generic cluster_meeting — the ordinal label is informational only.
+  return "cluster_meeting";
+}
+
+/** Legacy slot status — kept ONLY so the reschedule drawer can still
+ *  surface in-flight meetings tagged with an ordinal slot. New meetings
+ *  scheduled through the open-ended drawer don't get a slot. */
+function legacyStatusOf(a: ClusterMeeting | undefined): ClusterMeetingStatus | undefined {
+  if (!a) return undefined;
+  if (a.status === "IA Confirmed" || a.status === "Paid" || a.status === "Closed") return "Completed";
+  if (a.status === "Returned") return "Rescheduled";
+  return "Scheduled";
 }
 
 export function engineClusterGaps(): ClusterGap[] {
@@ -33,24 +61,68 @@ export function engineClusterGaps(): ClusterGap[] {
     const schools = schoolsInCluster(c.id);
     const schoolsWithSsa = schools.filter((s) => s.ssaStatus === "SSA Done").length;
 
-    const sitA = findKind(meetings, "sit");
-    const firstA = findKind(meetings, "first_meeting");
-    const secondA = findKind(meetings, "second_meeting");
-    const thirdA = findKind(meetings, "third_meeting");
+    // Build intelligence inputs. The cluster-core in-memory store only
+    // tracks coarse SSA status per school; we enrich with per-intervention
+    // current/previous scores from ssa-performance-mock when available so
+    // the intelligence engine can compute deltas + the recommendation.
+    const intelSchools: ClusterIntelSchool[] = schools.map((s) => {
+      const hist = historyFor(s.schoolId);
+      const curr = hist[0];
+      const prev = hist[1];
+      const currScores: Partial<Record<SsaInterventionArea, number>> | undefined = curr
+        ? Object.fromEntries(curr.scores.map((sc) => [sc.intervention, sc.score])) as Partial<Record<SsaInterventionArea, number>>
+        : undefined;
+      const prevScores: Partial<Record<SsaInterventionArea, number>> | undefined = prev
+        ? Object.fromEntries(prev.scores.map((sc) => [sc.intervention, sc.score])) as Partial<Record<SsaInterventionArea, number>>
+        : undefined;
+      // Coverage: the in-memory store doesn't track per-school visit/training
+      // attendance directly. Approximate from the cluster's activity list:
+      // any IA-confirmed cluster training or visit in the FY counts the
+      // school as trained/visited. (The backend-derived gaps replace this
+      // with a real per-school join.)
+      const hasCompletedTraining = meetings.some(
+        (m) => (m.kind === "sit" || m.kind === "training" || m.kind === "cluster_training") &&
+               (m.status === "IA Confirmed" || m.status === "Paid" || m.status === "Closed"),
+      );
+      const hasCompletedMeeting = meetings.some(
+        (m) => m.kind !== "sit" && m.kind !== "training" && m.kind !== "cluster_training" &&
+               (m.status === "IA Confirmed" || m.status === "Paid" || m.status === "Closed"),
+      );
+      return {
+        schoolId: s.schoolId,
+        schoolName: s.schoolName,
+        schoolType: s.schoolType === "Core" ? "Core" : "Client",
+        hasCurrentFySsa: s.ssaStatus === "SSA Done",
+        currentSsa: currScores,
+        previousSsa: prevScores,
+        visitedThisPeriod: hasCompletedMeeting,   // cluster meetings double as visits
+        trainedThisPeriod: hasCompletedTraining,
+      };
+    });
 
-    const sit: ClusterMeetingStatus = statusOf(sitA) ?? "Missing";
-    const first: ClusterMeetingStatus = statusOf(firstA) ?? "Missing";
-    // Later meetings aren't "due" until the prior one is completed.
-    const second: ClusterMeetingStatus = first === "Completed" ? (statusOf(secondA) ?? "Missing") : "Not Yet Due";
-    const third: ClusterMeetingStatus = second === "Completed" ? (statusOf(thirdA) ?? "Missing") : "Not Yet Due";
+    const intelActivities: ClusterIntelActivity[] = meetings.map((m) => ({
+      id: m.id,
+      activityType: intelActivityType(m.kind),
+      date: m.date,
+      status: intelStatusOf(m),
+      teachersTrained: m.teachersCount,
+      schoolLeadersTrained: m.schoolLeadersCount,
+    }));
 
-    // First outstanding gap drives the bucket (SIT first, then meetings in order).
-    const gapCategory: ClusterGapCategory =
-      sit === "Missing" ? "no_sit"
-      : first === "Missing" ? "no_first_meeting"
-      : second === "Missing" ? "no_second_meeting"
-      : third === "Missing" ? "no_third_meeting"
-      : "no_third_meeting";
+    const intel = computeClusterIntelligence({
+      schools: intelSchools,
+      activities: intelActivities,
+    });
+
+    // Find the most-recent legacy-tagged activity for each ordinal slot so
+    // the reschedule drawer can still operate on in-flight meetings that
+    // were scheduled under the old model.
+    const findKind = (kind: ClusterMeeting["kind"]): ClusterMeeting | undefined =>
+      [...meetings].reverse().find((m) => m.kind === kind);
+    const sitA = findKind("sit");
+    const firstA = findKind("first_meeting");
+    const secondA = findKind("second_meeting");
+    const thirdA = findKind("third_meeting");
 
     return {
       id: c.id,
@@ -60,11 +132,27 @@ export function engineClusterGaps(): ClusterGap[] {
       schoolsWithSsa,
       assignedCceo: c.clusterLeaderName ?? c.createdBy,
       partnerFacilitator: c.managedByPartnerName,
-      firstMeeting: first,
-      secondMeeting: second,
-      thirdMeeting: third,
-      schoolImprovementTraining: sit,
-      gapCategory,
+
+      // Open-ended cadence (from the intelligence engine)
+      meetingsThisFy: intel.cadence.meetingsThisFy,
+      meetingsScheduledThisFy: intel.cadence.meetingsScheduledThisFy,
+      trainingsThisFy: intel.cadence.trainingsThisFy,
+      lastMeetingDate: intel.cadence.lastMeetingDate,
+      nextScheduledMeetingDate: intel.cadence.nextScheduledDate,
+      metThisQuarter: intel.cadence.metThisQuarter,
+      schoolsNotVisited: intel.coverage.notVisited.length,
+      schoolsNotTrained: intel.coverage.notTrained.length,
+      schoolsNeitherVisitNorTraining: intel.coverage.neitherVisitNorTraining.length,
+
+      gapCategory: intel.gapCategory,
+      recommendation: intel.recommendation,
+
+      // Legacy slot fields — populated only when an ordinal-tagged meeting
+      // exists, so the reschedule drawer can still operate on it.
+      firstMeeting: legacyStatusOf(firstA),
+      secondMeeting: legacyStatusOf(secondA),
+      thirdMeeting: legacyStatusOf(thirdA),
+      schoolImprovementTraining: legacyStatusOf(sitA),
       firstMeetingDate: firstA?.date,
       firstMeetingProposedBy: firstA?.scheduledBy,
       secondMeetingDate: secondA?.date,
