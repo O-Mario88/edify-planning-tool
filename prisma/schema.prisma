@@ -18,10 +18,13 @@ datasource db {
   // Prisma 7+: the connection URL is supplied via prisma.config.ts (migrate/
   // studio) and via the PrismaPg driver adapter at runtime — not here.
   //
-  // CANONICAL SCHEMA. This file is the single source of truth for all models,
-  // enums, and types. The edify-api mirror (edify-api/prisma/schema.prisma) is
-  // generated from this body — edit models HERE, then run `npm run schema:sync`.
-  // `npm run schema:check` (part of `npm run ci`) fails on any drift.
+  // GENERATED MIRROR — do NOT edit models in this file. The canonical schema is
+  // edify-api/prisma/schema.prisma (the app that owns the database + migrations).
+  // This root file is kept in lock-step so the Prisma-7 client generated here
+  // (used by the in-process ported services) matches the Prisma-6 client the API
+  // uses. Edit models in edify-api/prisma/schema.prisma, then run
+  // `npm run schema:sync` (API → root). `npm run schema:check` (part of ci) fails
+  // on any drift — model/enum counts included.
 }
 
 // ─────────────────────────── Enums ───────────────────────────
@@ -921,14 +924,14 @@ model Activity {
   lastReason      String?
 
   // Auto-cost from the CD rate card at schedule time (spec §20–§21).
-  estCostCents    Int     @default(0)
-  costMissing     Boolean @default(false)
+  estCostCents      Int                        @default(0)
+  costMissing       Boolean                    @default(false)
   scheduleCostLines ActivityScheduleCostLine[]
 
   // PL review handoff when a CCEO completes field work (spec §17).
-  plReviewNote    String?
-  plReviewedAt    DateTime?
-  plReviewedBy    String?
+  plReviewNote String?
+  plReviewedAt DateTime?
+  plReviewedBy String?
 
   // Training/cluster-meeting completion detail
   teachersAttended  Int?
@@ -976,27 +979,48 @@ model ActivityScheduleCostLine {
 // ─────────────────────── Evidence ───────────────────────
 
 model EvidenceRecord {
-  id           String         @id @default(cuid())
-  activity     Activity       @relation(fields: [activityId], references: [id])
-  activityId   String
-  kind         EvidenceKind
-  uri          String
-  originalName String? // the uploader's filename (for download + display)
-  mimeType     String? // for correct Content-Type on preview/download
-  notes        String?
-  uploadedBy   String // userId (staff or partner)
-  status       EvidenceStatus @default(uploaded)
-  reviewedBy   String?
-  reviewedAt   DateTime?
-  reviewNote   String?
+  id                     String         @id @default(cuid())
+  activity               Activity       @relation(fields: [activityId], references: [id])
+  activityId             String
+  kind                   EvidenceKind
+  uri                    String
+  originalName           String? // the uploader's filename (for download + display)
+  mimeType               String? // for correct Content-Type on preview/download
+  fileExtension          String? // ".pdf" | ".docx" | ".jpg" — convenience for preview routing
+  fileSize               Int? // bytes — surfaces in viewer + System Health
+  storageProvider        String         @default("local") // "local" | "s3" | …
+  notes                  String?
+  uploadedBy             String // userId (staff or partner)
+  uploaderRole           String? // staff | partner | cceo | pl | ia — display on viewer
+  status                 EvidenceStatus @default(uploaded)
+  reviewedBy             String?
+  reviewedAt             DateTime?
+  reviewNote             String?
   // Malware-scan seam (spec §11). scanStatus: pending | clean | infected |
   // skipped (no scanner configured). A quarantined file is never downloadable.
-  scanStatus   String         @default("pending")
-  quarantined  Boolean        @default(false)
-  createdAt    DateTime       @default(now())
+  scanStatus             String         @default("pending")
+  quarantined            Boolean        @default(false)
+  // ── Preview pipeline (spec §22–25) ─────────────────────────────────────
+  //   • PDF / image           → previewStatus = "ready" immediately
+  //   • DOCX                  → previewStatus = "pending" until the
+  //     server-side converter (LibreOffice headless) emits a PDF rendition;
+  //     then previewStatus = "ready" and pdfRenditionStorageKey is set.
+  //     A failed conversion sets previewStatus = "failed" so the UI shows
+  //     "Could not prepare PDF preview" with a download-original fallback.
+  previewStatus          String         @default("not_required") // not_required | pending | ready | failed
+  pdfRenditionStorageKey String? // filename in EVIDENCE_DIR for the converted PDF
+  pdfRenditionStatus     String? // pending | ready | failed
+  pdfRenditionError      String?
+  pdfRenditionAt         DateTime?
+  // Audit-friendly view counter — incremented every successful authorized
+  // view (the audit log carries the actor/time; this is the running total).
+  viewCount              Int            @default(0)
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @default(now()) @updatedAt
 
   @@index([activityId])
   @@index([quarantined])
+  @@index([previewStatus])
 }
 
 // ─────────────── Salesforce verification (manual) ───────────────
@@ -1115,28 +1139,28 @@ model MonthlyPlanActivity {
 // Deterministic id "cplan-{schoolId}" so the FE core-store and the backend
 // share ids (no mapping drift).
 model CorePlan {
-  id                 String             @id // "cplan-{schoolId}"
-  schoolId           String             @unique // operational schoolId
-  fy                 String
-  status             String             @default("Active")
-  visitsTarget       Int                @default(4)
-  trainingsTarget    Int                @default(4)
-  visitsCompleted    Int                @default(0)
-  trainingsCompleted Int                @default(0)
-  baselineAverage    Float?
-  followUpAverage    Float?
-  baselineSsaRecordId String? // SsaRecord.id — baseline measurement at onboarding
-  followUpSsaRecordId String? // SsaRecord.id — follow-up impact measurement
+  id                   String                @id // "cplan-{schoolId}"
+  schoolId             String                @unique // operational schoolId
+  fy                   String
+  status               String                @default("Active")
+  visitsTarget         Int                   @default(4)
+  trainingsTarget      Int                   @default(4)
+  visitsCompleted      Int                   @default(0)
+  trainingsCompleted   Int                   @default(0)
+  baselineAverage      Float?
+  followUpAverage      Float?
+  baselineSsaRecordId  String? // SsaRecord.id — baseline measurement at onboarding
+  followUpSsaRecordId  String? // SsaRecord.id — follow-up impact measurement
   followUpScheduledFor String?
   followUpAssignee     String?
-  interventions      Json? // [{ area, rank, baselineScore }]
-  createdById        String?
-  createdByName      String?
-  slots              CoreActivitySlot[]
-  profile            CoreSchoolProfile?
-  onboarding         CoreSchoolOnboarding?
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
+  interventions        Json? // [{ area, rank, baselineScore }]
+  createdById          String?
+  createdByName        String?
+  slots                CoreActivitySlot[]
+  profile              CoreSchoolProfile?
+  onboarding           CoreSchoolOnboarding?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
 
   @@index([status])
 }
@@ -1144,36 +1168,36 @@ model CorePlan {
 // The 8 core slots (4 visit + 4 training). Deterministic id
 // "cslot-{schoolId}-{v|t}{seq}" to match the FE core-store.
 model CoreActivitySlot {
-  id                  String    @id // "cslot-{schoolId}-v1"
-  corePlan            CorePlan  @relation(fields: [corePlanId], references: [id], onDelete: Cascade)
-  corePlanId          String
-  schoolId            String
-  intervention        String
-  activityType        String // "visit" | "training"
-  sequenceNumber      Int
-  status              String    @default("Planned")
-  owner               String    @default("unassigned") // unassigned|myself|staff|partner
-  assignedStaffId     String?
-  assignedStaffName   String?
-  assignedPartnerId   String?
-  assignedPartnerName String?
-  scheduledMonth      String?
-  scheduledWeek       Int?
-  scheduledFor        String?
-  salesforceId        String?
-  activityId          String? // FK to Activity ledger when mirrored
-  evidenceUri         String?
-  evidenceNotes       String?
-  plVerificationStatus   String?
-  iaVerificationStatus   String?
-  accountantStatus       String?
-  teachers            Int?
-  leaders             Int?
-  participants        Int?
-  returnedReason      String?
-  completedAt         DateTime?
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  id                   String    @id // "cslot-{schoolId}-v1"
+  corePlan             CorePlan  @relation(fields: [corePlanId], references: [id], onDelete: Cascade)
+  corePlanId           String
+  schoolId             String
+  intervention         String
+  activityType         String // "visit" | "training"
+  sequenceNumber       Int
+  status               String    @default("Planned")
+  owner                String    @default("unassigned") // unassigned|myself|staff|partner
+  assignedStaffId      String?
+  assignedStaffName    String?
+  assignedPartnerId    String?
+  assignedPartnerName  String?
+  scheduledMonth       String?
+  scheduledWeek        Int?
+  scheduledFor         String?
+  salesforceId         String?
+  activityId           String? // FK to Activity ledger when mirrored
+  evidenceUri          String?
+  evidenceNotes        String?
+  plVerificationStatus String?
+  iaVerificationStatus String?
+  accountantStatus     String?
+  teachers             Int?
+  leaders              Int?
+  participants         Int?
+  returnedReason       String?
+  completedAt          DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
   @@index([corePlanId])
   @@index([schoolId])
@@ -1181,15 +1205,15 @@ model CoreActivitySlot {
 
 // Champion pipeline + active plan pointer for an onboarded core school.
 model CoreSchoolProfile {
-  id               String   @id // "cprof-{schoolId}"
-  schoolId         String   @unique
-  corePlan         CorePlan @relation(fields: [corePlanId], references: [id], onDelete: Cascade)
-  corePlanId       String   @unique
-  coreStartFy      String
-  championStatus   String   @default("Not Eligible")
-  status           String   @default("Active")
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id             String   @id // "cprof-{schoolId}"
+  schoolId       String   @unique
+  corePlan       CorePlan @relation(fields: [corePlanId], references: [id], onDelete: Cascade)
+  corePlanId     String   @unique
+  coreStartFy    String
+  championStatus String   @default("Not Eligible")
+  status         String   @default("Active")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 }
 
 // IA verification of a Potential Core candidate (SSA ≥ 7.5 gate).
@@ -1428,26 +1452,26 @@ model Message {
 }
 
 model Notification {
-  id             String               @id @default(cuid())
-  recipient      User                 @relation(fields: [recipientId], references: [id])
-  recipientId    String
-  recipientRole  EdifyRole?
-  title          String
-  body           String?
-  contextType    String?
-  contextId      String?
-  targetRoute    String?
-  actionLabel    String?
-  actionRequired Boolean              @default(false)
-  priority       NotificationPriority @default(normal)
-  status         MessageStatus        @default(unread)
+  id              String               @id @default(cuid())
+  recipient       User                 @relation(fields: [recipientId], references: [id])
+  recipientId     String
+  recipientRole   EdifyRole?
+  title           String
+  body            String?
+  contextType     String?
+  contextId       String?
+  targetRoute     String?
+  actionLabel     String?
+  actionRequired  Boolean              @default(false)
+  priority        NotificationPriority @default(normal)
+  status          MessageStatus        @default(unread)
   // Provenance — which workflow domain event produced this notification (spec
   // §16). Lets the system trace every alert back to its source + dedupe.
   sourceEventType String?
   sourceEventId   String?
   expiresAt       DateTime?
-  createdAt      DateTime             @default(now())
-  readAt         DateTime?
+  createdAt       DateTime             @default(now())
+  readAt          DateTime?
 
   @@index([recipientId, status])
   @@index([sourceEventId])
@@ -1458,16 +1482,16 @@ model Notification {
 // be audited + tuned without a deploy. The code matrix is the runtime default;
 // active rows here override/extend it per (senderRole → recipientRole → topic).
 model MessageContextPolicy {
-  id                 String    @id @default(cuid())
-  senderRole         EdifyRole
-  recipientRole      EdifyRole
-  allowedContextType String // the topic key (e.g. "fund-request-clarification")
-  label              String?
-  requiresLinkedRecord Boolean @default(false)
-  allowedRecordTypes String[]  @default([])
-  isActive           Boolean   @default(true)
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
+  id                   String    @id @default(cuid())
+  senderRole           EdifyRole
+  recipientRole        EdifyRole
+  allowedContextType   String // the topic key (e.g. "fund-request-clarification")
+  label                String?
+  requiresLinkedRecord Boolean   @default(false)
+  allowedRecordTypes   String[]  @default([])
+  isActive             Boolean   @default(true)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
   @@unique([senderRole, recipientRole, allowedContextType])
   @@index([senderRole, recipientRole, isActive])
@@ -1498,9 +1522,9 @@ model DomainEventLog {
 // resolved only when the underlying issue clears. Users may dismiss temporarily
 // (CommandCenterAlertDismissal) — but it REAPPEARS while still unresolved.
 model CommandCenterAlert {
-  id            String    @id @default(cuid())
+  id            String                        @id @default(cuid())
   alertType     String // "schools_without_ssa" | "schools_not_visited" | ...
-  severity      NotificationPriority @default(high)
+  severity      NotificationPriority          @default(high)
   scope         String? // country | team | own | cluster:<id> | district:<id>
   contextType   String?
   contextId     String?
@@ -1509,10 +1533,10 @@ model CommandCenterAlert {
   targetRoute   String?
   // Stable identity for the underlying condition — re-running the generator
   // upserts the same row instead of creating a duplicate.
-  conditionHash String    @unique
-  status        String    @default("open") // open | resolved
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  conditionHash String                        @unique
+  status        String                        @default("open") // open | resolved
+  createdAt     DateTime                      @default(now())
+  updatedAt     DateTime                      @updatedAt
   resolvedAt    DateTime?
   dismissals    CommandCenterAlertDismissal[]
 
@@ -1521,14 +1545,14 @@ model CommandCenterAlert {
 }
 
 model CommandCenterAlertDismissal {
-  id            String   @id @default(cuid())
-  alert         CommandCenterAlert @relation(fields: [alertId], references: [id], onDelete: Cascade)
-  alertId       String
-  userId        String
+  id             String             @id @default(cuid())
+  alert          CommandCenterAlert @relation(fields: [alertId], references: [id], onDelete: Cascade)
+  alertId        String
+  userId         String
   // The alert stays hidden for this user until this moment; after it, the alert
   // reappears IF still unresolved (spec §13 — by design, not a bug).
   dismissedUntil DateTime
-  createdAt     DateTime @default(now())
+  createdAt      DateTime           @default(now())
 
   @@unique([alertId, userId])
   @@index([userId])
@@ -1838,9 +1862,17 @@ model FundRequest {
   accountabilityNetsuiteId  String?
   accountabilitySubmittedAt DateTime?
   accountabilityReviewedAt  DateTime?
+  // Items costed into this request — joined via the unique
+  // (activityScheduleCostLineId, period) constraint so the same line cannot
+  // appear in two competing weekly/monthly requests.
+  items                     FundRequestItem[]
   createdAt                 DateTime          @default(now())
   updatedAt                 DateTime          @updatedAt
 
+  // Idempotency guard for the Friday job: only one draft/pending request per
+  // (submitter, period, periodKey) at a time. Repeated job runs UPDATE the
+  // existing draft, they don't create a second one.
+  @@unique([submittedByUserId, period, periodKey], name: "uniq_request_period_owner")
   @@index([status])
   @@index([fy, period])
   @@index([submittedByUserId])
@@ -2162,4 +2194,160 @@ model CdFlag {
 
   @@index([assignedToUserId, status])
   @@index([raisedByUserId])
+}
+
+// ───────────────────── Activity ↔ FundRequest link (duplicate-safe) ────────────
+// Each row links exactly ONE costed schedule line to exactly ONE FundRequest
+// (weekly OR monthly). The unique constraint on (activityScheduleCostLineId,
+// fundRequestId) makes "include the same line twice in the same request"
+// impossible at the database level. The unique constraint on
+// (activityScheduleCostLineId, period) makes "approve the same line in two
+// weekly requests" impossible.
+model FundRequestItem {
+  id                         String            @id @default(cuid())
+  fundRequest                FundRequest       @relation(fields: [fundRequestId], references: [id], onDelete: Cascade)
+  fundRequestId              String
+  activityId                 String
+  activityScheduleCostLineId String
+  amount                     Float
+  period                     FundRequestPeriod
+  periodKey                  String
+  // Mark a row "late" when it's added AFTER the request was first generated —
+  // used by the Friday refresh job and the PL approval card to flag late
+  // additions explicitly instead of silently bloating an approved total.
+  addedAfterGeneration       Boolean           @default(false)
+  createdAt                  DateTime          @default(now())
+
+  @@unique([fundRequestId, activityScheduleCostLineId], name: "uniq_request_costline")
+  @@unique([activityScheduleCostLineId, period, periodKey], name: "uniq_costline_period")
+  @@index([activityId])
+  @@index([fundRequestId])
+}
+
+// ───────────────────────── Monthly Work Plan Budget ─────────────────────────
+// Generated on the 25th of every month by `MonthlyWorkPlanBudgetJob` for the
+// NEXT calendar month. Mirrors the weekly fund request structure but at the
+// monthly approval envelope level: program (auto from scheduled activities)
+// + admin (added by the CD). Submitted to RVP for approval, then released
+// to Accountant for disbursement planning.
+
+enum MonthlyWorkPlanBudgetStatus {
+  draft_generated
+  cd_review
+  admin_plan_added
+  submitted_to_rvp
+  approved_by_rvp
+  returned_by_rvp
+  sent_to_accountant
+  disbursed
+  closed
+}
+
+model MonthlyWorkPlanBudget {
+  id                  String                      @id @default(cuid())
+  fy                  String
+  /**
+   * "2026-03" — the calendar month this envelope covers (next month vs
+   * the generation date).
+   */
+  monthKey            String
+  countryId           String?
+  generatedAt         DateTime                    @default(now())
+  generatedBy         String? // null = scheduler-generated; userId = manual regenerate
+  status              MonthlyWorkPlanBudgetStatus @default(draft_generated)
+  // Totals — computed from items + admin lines at submission time.
+  programTotal        Float                       @default(0)
+  adminTotal          Float                       @default(0)
+  totalAmount         Float                       @default(0)
+  activityCount       Int                         @default(0)
+  // CD → RVP routing.
+  submittedAt         DateTime?
+  submittedByUserId   String?
+  rvpReviewedAt       DateTime?
+  rvpReviewedByUserId String?
+  rvpReviewNote       String?
+  sentToAccountantAt  DateTime?
+  // Sub-tables.
+  programItems        MonthlyWorkPlanItem[]
+  adminLines          AdminBudgetLine[]
+  createdAt           DateTime                    @default(now())
+  updatedAt           DateTime                    @updatedAt
+
+  // One envelope per (country, month) — repeated job runs UPDATE the draft,
+  // they don't insert a second envelope.
+  @@unique([countryId, monthKey], name: "uniq_country_month")
+  @@index([status])
+  @@index([fy, monthKey])
+}
+
+model MonthlyWorkPlanItem {
+  id                         String                @id @default(cuid())
+  monthlyBudget              MonthlyWorkPlanBudget @relation(fields: [monthlyBudgetId], references: [id], onDelete: Cascade)
+  monthlyBudgetId            String
+  activityId                 String
+  activityScheduleCostLineId String
+  amount                     Float
+  // Provenance — these are filled at generation time so reports don't have
+  // to join 5 tables to ask "what was this row?"
+  activityType               String
+  deliveryType               String
+  responsibleStaffId         String?
+  districtId                 String?
+  partnerId                  String?
+  projectId                  String?
+  clusterId                  String?
+  schoolId                   String?
+  // Late changes flag — added after the envelope was first generated.
+  addedAfterGeneration       Boolean               @default(false)
+  createdAt                  DateTime              @default(now())
+
+  // A single line can appear once per monthly envelope.
+  @@unique([monthlyBudgetId, activityScheduleCostLineId], name: "uniq_month_costline")
+  @@index([activityId])
+}
+
+model AdminBudgetLine {
+  id              String                @id @default(cuid())
+  monthlyBudget   MonthlyWorkPlanBudget @relation(fields: [monthlyBudgetId], references: [id], onDelete: Cascade)
+  monthlyBudgetId String
+  costCategory    String // rent | airtime | internet | utilities | printing | stationery | office_supplies | communication | bank_charges | other
+  description     String
+  quantity        Float                 @default(1)
+  unitCost        Float
+  totalCost       Float
+  justification   String?
+  createdByUserId String
+  status          String                @default("active") // active | revised | cancelled
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  @@index([monthlyBudgetId])
+}
+
+// ───────────────────────── Budget Revision (reschedule audit) ──────────────
+// When a scheduled activity moves to a different week / month / quarter AND
+// it was already in an approved fund request or monthly budget, we DON'T
+// silently edit the original totals — we create a BudgetRevision row that
+// makes the move auditable end-to-end.
+model BudgetRevision {
+  id                         String   @id @default(cuid())
+  activityId                 String
+  activityScheduleCostLineId String?
+  fromFy                     String
+  fromQuarter                String
+  fromMonth                  Int?
+  fromWeek                   Int?
+  toFy                       String
+  toQuarter                  String
+  toMonth                    Int?
+  toWeek                     Int?
+  fundRequestId              String?
+  monthlyBudgetId            String?
+  reason                     String?
+  actorUserId                String
+  createdAt                  DateTime @default(now())
+
+  @@index([activityId])
+  @@index([fundRequestId])
+  @@index([monthlyBudgetId])
 }
