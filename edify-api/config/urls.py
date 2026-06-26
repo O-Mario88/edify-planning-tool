@@ -103,6 +103,10 @@ urlpatterns = [
     *api("messages", "apps.messaging.urls"),
     # Notifications — per-user rail.
     *api("notifications", "apps.notifications.urls"),
+    # Planning — plan authoring + scheduling + lifecycle.
+    *api("planning", "apps.planning.urls"),
+    # Fund requests — the Budget → Fund Request approval chain.
+    *api("fund-requests", "apps.fund_requests.urls"),
 ]
 
 

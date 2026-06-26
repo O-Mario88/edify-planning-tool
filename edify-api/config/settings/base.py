@@ -94,6 +94,8 @@ INSTALLED_APPS = [
     "apps.projects",
     "apps.messaging",
     "apps.notifications",
+    "apps.planning",
+    "apps.fund_requests",
     # ... (registered as each module is built)
 ]
 
