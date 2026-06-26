@@ -60,6 +60,8 @@ urlpatterns = [
     *api("clusters", "apps.clusters.urls"),
     # SSA — School Self-Assessment.
     *api("ssa", "apps.ssa.urls"),
+    # Activities — the 21-state field-work lifecycle.
+    *api("activities", "apps.activities.urls"),
 ]
 
 
