@@ -64,7 +64,7 @@ INSTALLED_APPS = [
     # declared before any app that references them in a FK.
     "apps.core",
     "apps.accounts",
-    # "apps.geography",
+    "apps.geography",
     # ... (registered as each module is built)
 ]
 

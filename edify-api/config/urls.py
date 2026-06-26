@@ -16,6 +16,8 @@ urlpatterns = [
     path("api/health/", lambda r: _health(r), name="health"),
     # Auth — public login/refresh/reset + JWT-gated /me.
     path("api/auth/", include("apps.accounts.urls")),
+    # Geography — cascading admin-boundary reads.
+    path("api/geography/", include("apps.geography.urls")),
 ]
 
 
