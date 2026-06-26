@@ -51,7 +51,7 @@ async function ensureRoles() {
   // HR — reactivate (created by the base seed, deactivated by trim:users).
   await prisma.user.upsert({
     where: { email: 'hr@edify.org' },
-    update: { isActive: true, roles: ['HumanResources'], activeRole: 'HumanResources' },
+    update: { isActive: true, roles: ['HumanResources'], activeRole: 'HumanResources', passwordHash: hash },
     create: { email: 'hr@edify.org', name: 'Hellen Auma', passwordHash: hash, roles: ['HumanResources'], activeRole: 'HumanResources', isActive: true },
   });
 

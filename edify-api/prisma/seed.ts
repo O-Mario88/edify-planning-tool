@@ -152,7 +152,7 @@ async function seedStaff(districtIds: string[]) {
   const adminEnabled = process.env.ENABLE_DEMO_ADMIN === 'true' || process.env.NODE_ENV !== 'production';
   for (const u of baseUsers) {
     if (u.email === 'admin@edify.org' && !adminEnabled) continue;
-    await prisma.user.upsert({ where: { email: u.email }, update: { name: u.name, roles: [u.role], activeRole: u.role }, create: { email: u.email, name: u.name, passwordHash: hash, roles: [u.role], activeRole: u.role } });
+    await prisma.user.upsert({ where: { email: u.email }, update: { name: u.name, roles: [u.role], activeRole: u.role, passwordHash: hash }, create: { email: u.email, name: u.name, passwordHash: hash, roles: [u.role], activeRole: u.role } });
   }
 
   // Project Coordinator gets a staff profile (so coordinator activities show in My Plan).
@@ -163,7 +163,7 @@ async function seedStaff(districtIds: string[]) {
   const pls: Staff[] = [];
   for (let i = 1; i <= NUM_PLS; i++) {
     const name = PL_NAMES[i - 1] ?? `Program Lead ${i}`;
-    const u = await prisma.user.upsert({ where: { email: `pl${i}@edify.org` }, update: { name }, create: { email: `pl${i}@edify.org`, name, passwordHash: hash, roles: ['CountryProgramLead'], activeRole: 'CountryProgramLead' } });
+    const u = await prisma.user.upsert({ where: { email: `pl${i}@edify.org` }, update: { name, passwordHash: hash }, create: { email: `pl${i}@edify.org`, name, passwordHash: hash, roles: ['CountryProgramLead'], activeRole: 'CountryProgramLead' } });
     const sp = await prisma.staffProfile.upsert({ where: { userId: u.id }, update: {}, create: { userId: u.id, onboardingState: 'active', primaryDistrictId: districtIds[i % districtIds.length] } });
     pls.push({ id: sp.id, userId: u.id, name });
   }
@@ -172,7 +172,7 @@ async function seedStaff(districtIds: string[]) {
   for (let i = 0; i < NUM_CCEOS; i++) {
     const email = i === 0 ? 'cceo@edify.org' : `cceo${i}@edify.org`;
     const name = CCEO_NAMES[i % CCEO_NAMES.length] + (i >= CCEO_NAMES.length ? ` ${Math.floor(i / CCEO_NAMES.length) + 1}` : '');
-    const u = await prisma.user.upsert({ where: { email }, update: { name }, create: { email, name, passwordHash: hash, roles: ['CCEO'], activeRole: 'CCEO' } });
+    const u = await prisma.user.upsert({ where: { email }, update: { name, passwordHash: hash }, create: { email, name, passwordHash: hash, roles: ['CCEO'], activeRole: 'CCEO' } });
     const sp = await prisma.staffProfile.upsert({ where: { userId: u.id }, update: {}, create: { userId: u.id, onboardingState: 'active', primaryDistrictId: districtIds[i % districtIds.length] } });
     await prisma.staffSupervisorAssignment.create({ data: { superviseeId: sp.id, supervisorId: pls[Math.floor(i / CCEOS_PER_PL)].id } });
     cceos.push({ id: sp.id, userId: u.id, name });
