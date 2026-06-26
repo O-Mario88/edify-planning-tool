@@ -7,6 +7,7 @@ import { Network } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { fetchAnalyticsDashboard, fetchActivityPipeline, type GeoFilterParams } from "@/lib/api/surfaces";
 import { MetricStrip } from "@/components/ui/MetricStrip";
+import { ErrorState } from "@/components/ui/DataStates";
 
 const STATUS_LABEL: Record<string, string> = {
   planned: "Planned", assigned_to_partner: "With partner", completed: "Completed",
@@ -16,7 +17,13 @@ const STATUS_LABEL: Record<string, string> = {
 export async function CountryAnalyticsLive({ geo }: { geo?: GeoFilterParams } = {}) {
   const user = await getCurrentUser();
   const [dash, pipe] = await Promise.all([fetchAnalyticsDashboard(user, geo), fetchActivityPipeline(user, geo)]);
-  if (!dash.live) return null; // backend off → render nothing (page keeps its own content)
+  // Backend disabled (dev) → null so the page's mock/own content renders.
+  // Backend ON but unreachable/failed → show an error so the outage is visible,
+  // not a silent blank. "Backend failure = error. Never fake data."
+  if (!dash.live) {
+    if (dash.error) return <section className="card p-3.5"><ErrorState message="Couldn't load the program snapshot." /></section>;
+    return null;
+  }
   const d = dash.data;
 
   return (

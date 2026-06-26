@@ -6,6 +6,7 @@
 import { Users, MapPin, School2, GitBranch } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { fetchHrRoster } from "@/lib/api/surfaces";
+import { ErrorState } from "@/components/ui/DataStates";
 
 const ROLE_LABEL: Record<string, string> = {
   CCEO: "CCEO", CountryProgramLead: "Program Lead", CountryDirector: "Country Director",
@@ -16,7 +17,12 @@ const ROLE_LABEL: Record<string, string> = {
 export async function HrRosterLive() {
   const user = await getCurrentUser();
   const r = await fetchHrRoster(user);
-  if (!r.live) return null;
+  // Backend disabled (dev) → null so the HR dashboard keeps its mock view.
+  // Backend ON but failed → error card so an outage isn't a silent blank.
+  if (!r.live) {
+    if (r.error) return <section className="card p-3.5"><ErrorState message="Couldn't load the staff roster." /></section>;
+    return null;
+  }
   const { counts, staff } = r.data;
 
   const byRole = new Map<string, number>();
