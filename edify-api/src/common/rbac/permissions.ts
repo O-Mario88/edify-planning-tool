@@ -38,6 +38,9 @@ export const PERMISSIONS = {
   // edit official cost settings — no staff invents costs. Spec §10.
   COST_SETTINGS_MANAGE: 'costSettings.manage',
   STAFF_MANAGE: 'staff.manage',
+  // Provision + onboard user accounts (create, invite, suspend, reset). Held by
+  // the people/onboarding roles. Distinct from STAFF_MANAGE (performance/scope).
+  USER_MANAGE: 'user.manage',
   PARTNER_VIEW: 'partner.view',
   // CD onboards/activates partners and sets coverage/certification. Eligibility
   // for assignment is driven by this onboarding data.
@@ -82,7 +85,7 @@ export const ROLE_PERMISSIONS: Record<EdifyRole, PermissionKey[]> = {
     // requests. Approval lives in the field chain: CCEO → PL. (Spec correction.)
     P.EVIDENCE_REVIEW, P.BUDGET_VIEW_SUMMARY, P.BUDGET_VIEW_DETAIL,
     P.COST_SETTINGS_MANAGE,
-    P.STAFF_MANAGE, P.STAFF_PERFORMANCE_VIEW, P.PARTNER_VIEW, P.PARTNER_MANAGE, P.PROJECT_MANAGE, P.ANALYTICS_VIEW, P.EXPORT,
+    P.STAFF_MANAGE, P.USER_MANAGE, P.STAFF_PERFORMANCE_VIEW, P.PARTNER_VIEW, P.PARTNER_MANAGE, P.PROJECT_MANAGE, P.ANALYTICS_VIEW, P.EXPORT,
     P.RECRUITMENT_INTELLIGENCE_VIEW,
     // Full country leadership decision authority.
     P.LEADERSHIP_ENGINE_VIEW, P.LEADERSHIP_DECISION_REVIEW,
@@ -143,7 +146,7 @@ export const ROLE_PERMISSIONS: Record<EdifyRole, PermissionKey[]> = {
   HumanResources: [
     // People surfaces only — staff performance, leave planner, daily debrief.
     // No SCHOOL_DIRECTORY_VIEW.
-    P.STAFF_MANAGE, P.ANALYTICS_VIEW,
+    P.STAFF_MANAGE, P.USER_MANAGE, P.ANALYTICS_VIEW,
     P.STAFF_PERFORMANCE_VIEW, P.LEAVE_PLANNER_VIEW, P.DAILY_DEBRIEF_VIEW,
     // Staff & HR decision board + review (promotion/PIP/workload — human-decided).
     P.LEADERSHIP_ENGINE_VIEW, P.LEADERSHIP_DECISION_REVIEW,

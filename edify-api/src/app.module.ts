@@ -31,6 +31,7 @@ import { FundRequestsModule } from './modules/fund-requests/fund-requests.module
 import { SystemHealthModule } from './modules/system-health/system-health.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { HrModule } from './modules/hr/hr.module';
+import { AdminUsersModule } from './modules/admin-users/admin-users.module';
 import { SecurityModule } from './modules/security/security.module';
 import { LeadershipModule } from './modules/leadership/leadership.module';
 import { BudgetIntelligenceModule } from './modules/budget-intelligence/budget-intelligence.module';
@@ -79,6 +80,7 @@ import { HealthController } from './health.controller';
     SystemHealthModule,
     ReportsModule,
     HrModule,
+    AdminUsersModule,
     SecurityModule,
     LeadershipModule,
     BudgetIntelligenceModule,
