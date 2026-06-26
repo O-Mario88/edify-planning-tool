@@ -101,6 +101,8 @@ INSTALLED_APPS = [
     "apps.analytics",
     "apps.leadership",
     "apps.budget_intelligence",
+    "apps.audit",
+    "apps.realtime",
     # ... (registered as each module is built)
 ]
 

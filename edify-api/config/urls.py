@@ -118,6 +118,8 @@ urlpatterns = [
     path("api/leadership/decision-engine/", include("apps.leadership.urls")),
     # Budget Intelligence — the financial decision engine.
     *api("budget-intelligence", "apps.budget_intelligence.urls"),
+    # Realtime — SSE live stream.
+    *api("realtime", "apps.realtime.urls"),
 ]
 
 
