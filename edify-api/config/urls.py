@@ -93,6 +93,10 @@ urlpatterns = [
     path("api/pl/review-queue/", include("apps.pl_review.urls")),
     # Command center — recommendation-led home feed + alerts.
     *api("command-center", "apps.command_center.urls"),
+    # Admin users — account provisioning.
+    *api("admin/users", "apps.admin_users.urls"),
+    # Evidence — file pipeline.
+    *api("evidence", "apps.evidence.urls"),
 ]
 
 

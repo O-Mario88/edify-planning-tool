@@ -89,6 +89,8 @@ INSTALLED_APPS = [
     "apps.flags",
     "apps.pl_review",
     "apps.command_center",
+    "apps.admin_users",
+    "apps.evidence",
     # ... (registered as each module is built)
 ]
 
