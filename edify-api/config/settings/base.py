@@ -75,6 +75,7 @@ INSTALLED_APPS = [
     "apps.ssa",
     "apps.activities",
     "apps.budget",
+    "apps.partners",
     # ... (registered as each module is built)
 ]
 
