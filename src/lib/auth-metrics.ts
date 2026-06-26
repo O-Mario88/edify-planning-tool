@@ -35,7 +35,10 @@ export type LoginHeroMetric = {
 export type LoginHeroMetrics = {
   schoolsReached: LoginHeroMetric;
   targetProgress: LoginHeroMetric;
-  source: "live" | "mock";    // tell the UI when it's reading mock data
+  /** "live" = real backend numbers. "mock" = dev seed (dev only).
+   *  "unavailable" = backend disabled/unreachable — numbers are zeroed and the
+   *  UI should hide the hero rather than display fabricated figures. */
+  source: "live" | "mock" | "unavailable";
   generatedAt: string;
 };
 
@@ -142,31 +145,32 @@ async function getLiveLoginHeroMetrics(): Promise<LoginHeroMetrics | null> {
 }
 
 export async function getLoginHeroMetrics(): Promise<LoginHeroMetrics> {
-  // Prefer live backend numbers; fall back to the mock engines only when the
-  // backend is disabled or unreachable.
+  // Prefer live backend numbers. On backend failure or when the backend is
+  // disabled, NEVER fabricate figures — return an "unavailable" signal so the
+  // UI hides the hero instead of showing fake numbers to real users.
   if (isBackendEnabled()) {
     try {
       const live = await getLiveLoginHeroMetrics();
       if (live) return live;
     } catch {
-      // fall through to mock
+      // fall through to unavailable — do NOT fabricate
     }
+    // Backend was on but returned nothing / threw: production must not show
+    // fabricated metrics. Signal unavailable so the hero is withheld.
+    return {
+      schoolsReached: { value: 0, trendPercent: 0, comparisonLabel: "" },
+      targetProgress: { value: 0, trendPercent: 0, comparisonLabel: "" },
+      source: "unavailable",
+      generatedAt: new Date().toISOString(),
+    };
   }
-  // In production:
-  //   const [schoolsReached, lastMonthSchoolsReached] = await Promise.all([
-  //     db.activities.countDistinctSchoolsVerifiedInMonth(currentMonth),
-  //     db.activities.countDistinctSchoolsVerifiedInMonth(previousMonth),
-  //   ]);
-  //   const [targetProgress, lastMonthTargetProgress] = await Promise.all([
-  //     db.targets.verifiedCompletionPercentForMonth(currentMonth),
-  //     db.targets.verifiedCompletionPercentForMonth(previousMonth),
-  //   ]);
+  // Backend disabled — dev/demo only: derive from the seed engines so the
+  // login hero stays in sync with the rest of the dev dashboards.
   const schoolsReached = calculateSchoolsReached();
   const targetProgress = calculateTargetProgress();
 
   // Previous-month numbers — derived deterministically from the same engines
-  // (so the trend stays self-consistent as the seed changes). In production
-  // these are an identical query on the previous month's window.
+  // (so the trend stays self-consistent as the seed changes).
   const previousSchoolsReached = Math.round(schoolsReached * 0.875); // ~14% trend
   const previousTargetProgress = Math.max(0, targetProgress - 12);   // ~12pp trend
 

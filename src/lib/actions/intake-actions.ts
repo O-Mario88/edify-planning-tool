@@ -34,6 +34,7 @@ import { getIntakeTemplate } from "@/lib/intake/intake-templates";
 import { validateIntakeValues } from "@/lib/intake/intake-validate";
 import { addIntakeRecords } from "@/lib/intake/intake-records-mock";
 import { isBackendEnabled, type BackendUser } from "@/lib/api/backend";
+import { isMockAllowed } from "@/lib/mock-policy";
 import { backendCreateSchool, backendBulkSchools, backendUploadSsa, backendSetSchoolType, fetchDistricts, fetchSubCounties, fetchParishes, type BackendSchoolWrite } from "@/lib/api/surfaces";
 
 // FE school-type label → backend SchoolType enum key.
@@ -78,7 +79,7 @@ function beUser(u: { email: string; role: string }): BackendUser {
 
 export type IntakeResult<T = { id: string }> =
   | ({ ok: true } & T)
-  | { ok: false; reason: "FORBIDDEN" }
+  | { ok: false; reason: "FORBIDDEN"; message?: string }
   | { ok: false; reason: "INVALID_INPUT"; errors: Record<string, string> };
 
 const INTAKE_ROLES = new Set<string>(DATA_INTAKE_ROLES);
@@ -147,6 +148,16 @@ export async function createSchool(input: NewSchoolInput): Promise<IntakeResult>
     if (!r.live) {
       return { ok: false, reason: "INVALID_INPUT", errors: { schoolId: `Backend rejected: ${r.error ?? "the school could not be saved."}` } };
     }
+    // Backend authoritative: do NOT mirror into the in-memory store — it would
+    // silently substitute fabricated data if the backend later diverges. The
+    // live directory is the single source of truth.
+    revalidatePath("/data-intake");
+    return { ok: true, id: input.schoolId.trim() };
+  }
+
+  // Backend disabled — dev/demo only. The in-memory store is the seed.
+  if (!isMockAllowed()) {
+    return { ok: false, reason: "FORBIDDEN", message: "Adding schools requires the live backend." };
   }
 
   const row = addIntakeSchool({
@@ -283,9 +294,12 @@ export async function createSchoolsBulk(inputs: NewSchoolInput[]): Promise<BulkS
     persistedInputs.push(...validInputs);
   }
 
-  // Mirror persisted rows into the in-memory store so the dev/mock intake
-  // surfaces stay in sync. In production nothing reads this mirror.
+  // Track the IDs of every successfully-persisted row (used for audit +
+  // notifications below). The in-memory store mirror is dev-only.
   for (const input of persistedInputs) {
+    createdIds.push(input.schoolId.trim());
+  }
+  if (isMockAllowed()) for (const input of persistedInputs) {
     const enrollment = input.enrollment === undefined || input.enrollment === "" ? undefined : Number(input.enrollment);
     const row = addIntakeSchool({
       schoolId: input.schoolId.trim(),
@@ -301,7 +315,6 @@ export async function createSchoolsBulk(inputs: NewSchoolInput[]): Promise<BulkS
       dateAdded: today,
       addedBy: user.name,
     });
-    createdIds.push(row.schoolId);
     createdRows.push(row);
   }
 

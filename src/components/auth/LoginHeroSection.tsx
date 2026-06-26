@@ -99,7 +99,10 @@ export function LoginHeroSection({ metrics }: { metrics: LoginHeroMetrics }) {
 
         {/* Floating stats — DATABASE-DRIVEN. Fixed, comfortable gap below the
             feature card on mobile + tablet; only auto-pushed to the bottom on
-            large screens where the hero height is fixed. */}
+            large screens where the hero height is fixed.
+            Withheld entirely when the backend is unreachable (source:
+            "unavailable") so no fabricated numbers reach a real user. */}
+        {metrics.source !== "unavailable" && (
         <div className="mt-6 sm:mt-8 lg:mt-auto relative">
           {/* Two comfortable columns on mobile + tablet; the decorative bar
               chart only joins as a third column on large screens where there's
@@ -122,7 +125,7 @@ export function LoginHeroSection({ metrics }: { metrics: LoginHeroMetrics }) {
                   style={{
                     height: `${h}%`,
                     background:
-                      "linear-gradient(180deg, rgba(125,170,200,0.85) 0%, rgba(82,112,131,0.55) 60%, rgba(40,70,95,0.2) 100%)",
+                          "linear-gradient(180deg, rgba(125,170,200,0.85) 0%, rgba(82,112,131,0.55) 60%, rgba(40,70,95,0.2) 100%)",
                   }}
                 />
               ))}
@@ -138,6 +141,7 @@ export function LoginHeroSection({ metrics }: { metrics: LoginHeroMetrics }) {
             />
           </div>
         </div>
+        )}
       </div>
     </section>
   );
