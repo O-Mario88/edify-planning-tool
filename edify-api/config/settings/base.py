@@ -44,6 +44,11 @@ ALLOWED_HOSTS = [h.strip() for h in os.environ.get("ALLOWED_HOSTS", "*").split("
 # compatible. BigAutoField is used only for AuditLog.seq (hash-chain ordering).
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# The NestJS routes have NO trailing slash (/api/schools, /api/auth/login) and
+# the frontend calls them that way. APPEND_SLASH only redirects GETs (POSTs to a
+# slash-less URL 500), so disable it and define all URL patterns without slashes.
+APPEND_SLASH = False
+
 INSTALLED_APPS = [
     "daphne",  # ASGI server (for streaming SSE) — takes precedence over wsgi
     "django.contrib.admin",
@@ -65,6 +70,7 @@ INSTALLED_APPS = [
     "apps.core",
     "apps.accounts",
     "apps.geography",
+    "apps.schools",
     # ... (registered as each module is built)
 ]
 
