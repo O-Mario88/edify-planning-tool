@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import { Network, MapPin, User } from "lucide-react";
 import { EntityDetail, DetailFacts } from "@/components/shell/EntityDetail";
-import { clustersMock } from "@/lib/schools-mock";
 import { orgStaff } from "@/lib/org/supervision";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ClusterProfileView } from "@/components/cluster/ClusterProfileView";
@@ -15,16 +14,17 @@ import { getCurrentPartner } from "@/lib/partner/partner-identity";
 import { NextActionCard } from "@/components/next-action/NextActionCard";
 import { nextActionForCluster } from "@/lib/next-action/next-action";
 import { unifiedActivitiesForCluster } from "@/lib/activity/unified-activity-source";
-import { historyFor } from "@/lib/planning/ssa-performance-mock";
 import { computeClusterIntelligence, type ClusterIntelActivity, type ClusterIntelSchool } from "@/lib/cluster/cluster-intelligence";
 import type { SsaInterventionArea } from "@/lib/planning/planning-gaps-mock";
+import { isMockAllowed } from "@/lib/mock-policy";
 
 export default async function ClusterDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  // Engine cluster (CLU-*) → the real, performance-computed profile. Falls
-  // through to the legacy clustersMock detail for old saved-group ids.
-  if (clusterById(id)) {
+  // Engine cluster (CLU-*) → the in-memory engine profile. Dev/demo only: the
+  // engine store is mock-backed. In production, real clusters resolve via the
+  // backend branch below (cuid lookup); legacy CLU-* ids 404.
+  if (isMockAllowed() && clusterById(id)) {
     return <EngineClusterProfile clusterId={id} />;
   }
 
@@ -64,6 +64,11 @@ export default async function ClusterDetail({ params }: { params: Promise<{ id: 
     }
   }
 
+  // Legacy mock id-space (CLU-* demo ids) — only reachable in dev (mock on).
+  // In production a non-backend, non-engine cluster id 404s.
+  if (!isMockAllowed()) return notFound();
+  const { clustersMock } = await import("@/lib/schools-mock");
+  const { historyFor } = await import("@/lib/planning/ssa-performance-mock");
   const cluster = clustersMock.find((c) => c.id === id);
   if (!cluster) return notFound();
 
@@ -104,6 +109,7 @@ async function EngineClusterProfile({ clusterId }: { clusterId: string }) {
   if (!profile) return notFound();
   const user = await getCurrentUser();
   const partner = await getCurrentPartner();
+  const { historyFor } = await import("@/lib/planning/ssa-performance-mock");
 
   const staffRole = ["CCEO", "CountryProgramLead", "CountryDirector", "ImpactAssessment", "Admin"].includes(user.role);
   const isManagingPartner = !!partner && profile.cluster.managedByPartnerId === partner.id;

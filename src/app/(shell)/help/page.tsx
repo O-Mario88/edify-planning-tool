@@ -13,7 +13,9 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { StubPage } from "@/components/shell/StubPage";
-import { helpArticles, type HelpArticle, type HelpCategory } from "@/lib/help-mock";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { InsufficientData } from "@/components/ui/InsufficientData";
+import type { HelpArticle, HelpCategory } from "@/lib/help-mock";
 
 const ICON: Record<HelpArticle["iconKey"], LucideIcon> = {
   bookOpen:      BookOpen,
@@ -26,7 +28,14 @@ const ICON: Record<HelpArticle["iconKey"], LucideIcon> = {
 
 const CATEGORIES: HelpCategory[] = ["Getting Started", "SSA", "Planning", "Funds", "People"];
 
-export default function HelpPage() {
+// Help articles are static reference content, not backend business data. In
+// dev (mock enabled) we render the seed articles; in production we show an
+// honest empty state rather than importing the mock module at runtime.
+export default async function HelpPage() {
+  const helpArticles = isMockAllowed()
+    ? (await import("@/lib/help-mock")).helpArticles
+    : [];
+
   return (
     <StubPage
       title="Help Center"
@@ -43,6 +52,10 @@ export default function HelpPage() {
           Advanced search →
         </Link>
       </div>
+
+      {helpArticles.length === 0 && (
+        <InsufficientData surface="the Help Center" detail="Help articles are not available in this environment." />
+      )}
 
       {CATEGORIES.map((cat) => {
         const items = helpArticles.filter((a) => a.category === cat);

@@ -7,7 +7,9 @@ import { getCurrentUser } from "@/lib/auth";
 import { createdOrgStaff } from "@/lib/org/supervision";
 import { computeActivationReadiness } from "@/lib/org/staff-activation";
 import { labelForRole } from "@/lib/intake/staff-creation-core";
-import { intakeSchools } from "@/lib/intake/intake-mock";
+import { isMockAllowed } from "@/lib/mock-policy";
+import { fetchAllSchoolsForDirectory } from "@/lib/api/surfaces";
+import { isBackendEnabled, type BackendUser } from "@/lib/api/backend";
 import { AddStaffControl } from "@/components/admin/AddStaffControl";
 import { AssignSchoolsControl } from "@/components/admin/AssignSchoolsControl";
 import { PrimaryDistrictControl } from "@/components/admin/PrimaryDistrictControl";
@@ -59,9 +61,23 @@ export default async function AdminUsersIndex() {
   const canSetPrimaryDistrict = STAFF_ADMIN_ROLES.includes(me.role);
   const canAssignTargets = ["CountryProgramLead", "CountryDirector", "HumanResource", "Admin"].includes(me.role);
   const fy = activeFinancialYear().id;
-  const assignableSchools = intakeSchools.map((s) => ({
-    schoolId: s.schoolId, schoolName: s.schoolName, district: s.district, assignedCceo: s.assignedCceo,
-  }));
+  // Assignable schools come from the backend directory when live; fall back to
+  // the dev intake mock only when mock is explicitly allowed (dev, backend off).
+  let assignableSchools: { schoolId: string; schoolName: string; district: string; assignedCceo?: string }[] = [];
+  if (isBackendEnabled()) {
+    const res = await fetchAllSchoolsForDirectory(me as BackendUser);
+    if (res.live) {
+      assignableSchools = res.data.map((s) => ({
+        schoolId: s.schoolId, schoolName: s.name, district: s.district?.name ?? "",
+        assignedCceo: s.accountOwner?.user?.name ?? undefined,
+      }));
+    }
+  } else if (isMockAllowed()) {
+    const { intakeSchools } = await import("@/lib/intake/intake-mock");
+    assignableSchools = intakeSchools.map((s) => ({
+      schoolId: s.schoolId, schoolName: s.schoolName, district: s.district, assignedCceo: s.assignedCceo,
+    }));
+  }
   const demo = Object.values(DEMO_USERS);
   const created = createdOrgStaff();
   const existingEmails = [

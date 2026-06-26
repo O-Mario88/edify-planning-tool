@@ -13,7 +13,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { StubPage } from "@/components/shell/StubPage";
-import { helpArticles, type HelpArticle } from "@/lib/help-mock";
+import { isMockAllowed } from "@/lib/mock-policy";
+import type { HelpArticle } from "@/lib/help-mock";
 
 const ICON: Record<HelpArticle["iconKey"], LucideIcon> = {
   bookOpen:      BookOpen,
@@ -30,6 +31,12 @@ export default async function HelpArticlePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  // Help articles are static reference content. In dev (mock enabled) we load
+  // the seed articles; in production the mock module is never imported, so the
+  // detail page 404s — which is the honest "not available" signal.
+  const helpArticles = isMockAllowed()
+    ? (await import("@/lib/help-mock")).helpArticles
+    : [];
   const article = helpArticles.find((a) => a.slug === slug);
   if (!article) return notFound();
   const Icon = ICON[article.iconKey];

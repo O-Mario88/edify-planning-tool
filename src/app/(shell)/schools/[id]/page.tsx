@@ -26,6 +26,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { computeStaffCapacity, staffAlreadySupportsSchool, getAssignmentOptions } from "@/lib/planning/assignment-policy";
 import { cceosSupervisedBy } from "@/lib/org/supervision";
 import { isBackendEnabled } from "@/lib/api/backend";
+import { isMockAllowed } from "@/lib/mock-policy";
 import { fetchSchoolDetail, fetchAssignmentOptions, fetchSchoolWorkflow, fetchActivities, type BeAssignmentOptions } from "@/lib/api/surfaces";
 import type { School360Activity } from "@/components/cluster/School360View";
 import { SchoolWorkflowJourney } from "@/components/schools/SchoolWorkflowJourney";
@@ -147,6 +148,9 @@ export default async function School360({
   // Source of truth: an uploaded School Directory record. Render the School 360
   // for it; fall back to the legacy catalogue (sch-N) and the mobile schools-mock
   // set (SCH-###) for old ids so a school action button never dead-ends.
+  // Legacy mock id-spaces exist only in dev (mock enabled); in production a
+  // non-backend school id 404s rather than rendering fabricated data.
+  if (!isMockAllowed()) return notFound();
   const intake = intakeSchools.find((x) => x.schoolId === id);
   if (intake) return <IntakeSchool360 schoolId={id} view={view} />;
 

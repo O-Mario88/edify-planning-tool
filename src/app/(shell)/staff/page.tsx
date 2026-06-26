@@ -7,9 +7,9 @@ import { fetchHrRoster, type BeRosterRow } from "@/lib/api/surfaces";
 // Live: HR roster from the backend (counts + staff[]). The roster has no
 // achievement% — so the index drops the per-row achievement readout and pace
 // badge rather than fanning out a target fetch per row. Onboarding state is the
-// only per-row badge. Falls back to the team-targets mock (loaded lazily, so the
-// page file has no top-level `*-mock` import) when the backend is off, keeping
-// the build green and the mock-leakage gate clear.
+// only per-row badge. Backend-only: no mock fallback — a disabled/unreachable
+// backend shows a clear error so the failure is visible, not hidden behind
+// fabricated rows.
 
 const ONBOARD_TONE = (state: string): "green" | "amber" | "slate" =>
   /active|onboard|complete/i.test(state) ? "green" :
@@ -65,33 +65,11 @@ export default async function StaffIndex() {
     );
   }
 
-  // Backend disabled — fall back to the mock so the build/demo stays green.
-  // Lazy import keeps any `*-mock` specifier out of the top-level import graph
-  // (the mock-leakage gate keys on `from "…-mock"`).
-  const { staffTargetPerformance } = await import("@/lib/team-targets-mock");
-  const staff = staffTargetPerformance;
+  // Backend off or unreachable — show a clear error. No mock fallback: faking
+  // a roster would hide an outage behind fabricated staff rows.
   return (
-    <EntityIndex
-      title="Staff Directory"
-      subtitle="Everyone with a target — CCEOs, Program Leads, partners. Click a row for the 360° profile."
-      Icon={Users}
-      count={staff.length}
-      searchPlaceholder="Search by name, region, role"
-    >
-      <section className="card rounded-2xl divide-y divide-[var(--color-edify-divider)] overflow-hidden">
-        {staff.map((s) => (
-          <IndexRow
-            key={s.staffId}
-            href={`/staff/${s.staffId}`}
-            Icon={Users}
-            title={s.staffName}
-            subtitle={`${s.role} · ${s.region}`}
-            meta={`${s.completedActivities}/${s.monthlyTargetActivities} this month · SF compliance ${s.salesforceCompliancePercent}%`}
-            rightTop={`${s.achievementPercent}%`}
-            rightBottom="achievement"
-          />
-        ))}
-      </section>
+    <EntityIndex title="Staff Directory" Icon={Users} searchPlaceholder="Search by name, district, role">
+      <ErrorState message="Could not load the staff roster." />
     </EntityIndex>
   );
 }
