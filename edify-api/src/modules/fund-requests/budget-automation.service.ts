@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
+import { ConfigService } from '@nestjs/config';
 import { Prisma, FundRequestPeriod, FundRequestStatus, MonthlyWorkPlanBudgetStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../../common/audit/audit.service';
@@ -54,7 +55,15 @@ export class BudgetAutomationService {
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
     private readonly events: DomainEventService,
+    private readonly config: ConfigService,
   ) {}
+
+  /** Cron jobs run only on the replica flagged as the background worker
+   *  (ENABLE_BACKGROUND_JOBS=true). In a multi-replica deploy this prevents
+   *  every replica from firing the Friday/25th jobs simultaneously. */
+  private get cronEnabled(): boolean {
+    return this.config.get<boolean>('ENABLE_BACKGROUND_JOBS') ?? false;
+  }
 
   // ── Helpers ────────────────────────────────────────────────────────────
 
@@ -94,9 +103,10 @@ export class BudgetAutomationService {
 
   // ── Friday Weekly Fund Request Job (idempotent) ────────────────────────
 
-  /** Cron: every Friday at 06:00 local. */
+  /** Cron: every Friday at 06:00 local. Runs only on the worker replica. */
   @Cron('0 6 * * 5', { name: 'WeeklyFundRequestJob' })
   async runWeeklyFundRequestJob() {
+    if (!this.cronEnabled) return;
     try {
       const out = await this.generateWeeklyFundRequests(new Date(), { actor: 'cron' });
       this.log.log(`WeeklyFundRequestJob: ${out.requestsCreated} created, ${out.requestsRefreshed} refreshed, ${out.skipped} skipped (approved/disbursed)`);
@@ -227,9 +237,10 @@ export class BudgetAutomationService {
 
   // ── 25th Monthly Work Plan Budget Job (idempotent) ─────────────────────
 
-  /** Cron: every 25th of the month at 06:00 local. */
+  /** Cron: every 25th of the month at 06:00 local. Runs only on the worker replica. */
   @Cron('0 6 25 * *', { name: 'MonthlyWorkPlanBudgetJob' })
   async runMonthlyWorkPlanBudgetJob() {
+    if (!this.cronEnabled) return;
     try {
       const out = await this.generateMonthlyWorkPlanBudget(new Date(), { actor: 'cron' });
       this.log.log(`MonthlyWorkPlanBudgetJob: ${out.budgetsCreated} created, ${out.budgetsRefreshed} refreshed, ${out.skipped} skipped`);
