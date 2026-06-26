@@ -82,6 +82,13 @@ INSTALLED_APPS = [
     "apps.system_health",
     "apps.security",
     "apps.my_plan",
+    "apps.hr",
+    "apps.debriefs",
+    "apps.targets",
+    "apps.reports",
+    "apps.flags",
+    "apps.pl_review",
+    "apps.command_center",
     # ... (registered as each module is built)
 ]
 

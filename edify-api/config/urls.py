@@ -78,6 +78,21 @@ urlpatterns = [
     *api("security", "apps.security.urls"),
     # My-plan — the caller's own plan feed.
     *api("my-plan", "apps.my_plan.urls"),
+    # HR — staff roster (PII-gated) + leave.
+    *api("hr", "apps.hr.urls"),
+    # Debriefs — daily field debriefs.
+    *api("debriefs", "apps.debriefs.urls"),
+    # Targets — CD/IA annual commitments.
+    *api("targets", "apps.targets.urls"),
+    # Reports — saved/generated reports.
+    *api("reports", "apps.reports.urls"),
+    # Flags — CD→PL flag handoff.
+    *api("flags", "apps.flags.urls"),
+    # PL review queue.
+    path("api/pl/review-queue", include("apps.pl_review.urls")),
+    path("api/pl/review-queue/", include("apps.pl_review.urls")),
+    # Command center — recommendation-led home feed + alerts.
+    *api("command-center", "apps.command_center.urls"),
 ]
 
 
