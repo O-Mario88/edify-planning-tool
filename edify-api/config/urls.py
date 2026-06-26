@@ -62,6 +62,8 @@ urlpatterns = [
     *api("ssa", "apps.ssa.urls"),
     # Activities — the 21-state field-work lifecycle.
     *api("activities", "apps.activities.urls"),
+    # Budget — the cost spine.
+    *api("budget", "apps.budget.urls"),
 ]
 
 

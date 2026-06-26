@@ -74,6 +74,7 @@ INSTALLED_APPS = [
     "apps.clusters",
     "apps.ssa",
     "apps.activities",
+    "apps.budget",
     # ... (registered as each module is built)
 ]
 
@@ -280,9 +281,9 @@ REST_FRAMEWORK = {
     "DEFAULT_FILTER_BACKENDS": [
         "django_filters.rest_framework.DjangoFilterBackend",
     ],
-    "DEFAULT_THROTTLE_CLASSES": [
-        "apps.core.throttling.LoginRateThrottle",
-    ],
+    # Throttling is applied PER-VIEW (auth/login, auth/forgot-password) via
+    # `throttle_classes`, NOT globally — the rate limiter is only for those
+    # brute-force-sensitive endpoints.
     "EXCEPTION_HANDLER": "apps.core.exceptions.edify_exception_handler",
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "TEST_REQUEST_DEFAULT_FORMAT": "json",
