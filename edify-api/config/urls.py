@@ -107,6 +107,10 @@ urlpatterns = [
     *api("planning", "apps.planning.urls"),
     # Fund requests — the Budget → Fund Request approval chain.
     *api("fund-requests", "apps.fund_requests.urls"),
+    # Core schools — the Core/Champion pipeline.
+    *api("core", "apps.core_schools.urls"),
+    # Monthly work-plan budget — CD→RVP routing.
+    *api("monthly-work-plan-budget", "apps.monthly_work_plan.urls"),
 ]
 
 
