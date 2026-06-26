@@ -253,32 +253,86 @@ enum StaffOnboardingState {
 // ─────────────────────── Auth / RBAC ───────────────────────
 
 model User {
-  id                     String        @id @default(cuid())
-  email                  String        @unique
-  passwordHash           String
+  id                     String              @id @default(cuid())
+  email                  String              @unique
+  // Nullable so admin-invited users can exist BEFORE they set a password.
+  passwordHash           String?
   name                   String
+  phone                  String?
   roles                  EdifyRole[]
   activeRole             EdifyRole
-  isActive               Boolean       @default(true)
+  isActive               Boolean             @default(true)
+  // Lifecycle: invited (awaiting set-password) → active → suspended/disabled.
+  // Drives the login gate (suspended/disabled/pending-invited can't sign in).
+  status                 UserStatus          @default(active)
+  // Null until the user sets their password via the invite link — a non-null
+  // value means the invitation was accepted.
+  passwordSetAt          DateTime?
+  lastLoginAt            DateTime?
   // Brute-force protection: lock after repeated failures (auth.service).
-  failedLoginCount       Int           @default(0)
+  failedLoginCount       Int                 @default(0)
   lockedUntil            DateTime?
   // MFA seam (Phase 8 design): high-risk roles enrol TOTP; secret is stored
   // encrypted (field-crypto) when enrolment ships.
-  mfaEnabled             Boolean       @default(false)
+  mfaEnabled             Boolean             @default(false)
   mfaSecret              String?
   // Password-reset seam: store only a HASH of the reset token + its expiry.
   passwordResetTokenHash String?
   passwordResetExpires   DateTime?
   staffProfile           StaffProfile?
-  createdAt              DateTime      @default(now())
-  updatedAt              DateTime      @updatedAt
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
   deletedAt              DateTime?
 
-  auditLogs     AuditLog[]     @relation("AuditActor")
-  notifications Notification[]
-  sentMessages  Message[]      @relation("MessageSender")
-  partner       Partner?
+  auditLogs      AuditLog[]         @relation("AuditActor")
+  notifications  Notification[]
+  sentMessages   Message[]          @relation("MessageSender")
+  partner        Partner?
+  invitations    UserInvitation[]   @relation("InvitedUser")
+  invitedBy      UserInvitation[]   @relation("InvitedBy")
+  refreshTokens  RefreshToken[]
+}
+
+// User lifecycle — admin-managed onboarding + suspension. `active` is the
+// only status that may sign in. `pending_invited` must set a password first.
+enum UserStatus {
+  pending_invited
+  active
+  suspended
+  disabled
+}
+
+// One-time invitation token issued when an admin creates a user. The raw token
+// is never stored — only its SHA-256 hash. Single-use (acceptedAt set) +
+// revocable (revokedAt) + expiring (7d default).
+model UserInvitation {
+  id          String    @id @default(cuid())
+  user        User      @relation("InvitedUser", fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  tokenHash   String    @unique
+  invitedBy   User      @relation("InvitedBy", fields: [invitedById], references: [id])
+  invitedById String
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  revokedAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+}
+
+// Rotating refresh tokens (revocable server-side). The access JWT is short-lived
+// (15m); this 7-day refresh lets a user stay signed in without re-entering
+// credentials, and logout revokes it so the session can't be refreshed.
+model RefreshToken {
+  id         String    @id @default(cuid())
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
 }
 
 model Permission {

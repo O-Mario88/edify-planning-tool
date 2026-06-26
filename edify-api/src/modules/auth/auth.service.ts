@@ -31,7 +31,17 @@ export class AuthService {
       throw new ForbiddenException('Account is temporarily locked due to repeated failed sign-ins. Try again later.');
     }
 
-    const passwordOk = user ? await bcrypt.compare(dto.password, user.passwordHash) : false;
+    // Lifecycle gate: only `active` users may sign in. pending_invited must set
+    // a password first; suspended/disabled are blocked. Generic error so the
+    // caller can't distinguish "wrong status" from "wrong password".
+    if (user && user.status !== 'active') {
+      await this.audit.log({ action: 'auth.login.blocked', actorId: user.id, actorRole: user.activeRole, success: false, reason: `status:${user.status}`, payload: { email } });
+      throw new UnauthorizedException('Invalid email or password.');
+    }
+
+    // A null passwordHash means the user was admin-invited but hasn't set a
+    // password yet — treat as a failed login (they must use the invite link).
+    const passwordOk = user?.passwordHash ? await bcrypt.compare(dto.password, user.passwordHash) : false;
     if (!user || !passwordOk || !user.isActive) {
       // Count the failure + lock at the threshold. Generic error either way to
       // avoid user enumeration.
@@ -49,10 +59,11 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Success — clear any failure counter.
-    if (user.failedLoginCount !== 0 || user.lockedUntil) {
-      await this.prisma.user.update({ where: { id: user.id }, data: { failedLoginCount: 0, lockedUntil: null } });
-    }
+    // Success — clear any failure counter + stamp the last-login time.
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { failedLoginCount: 0, lockedUntil: null, lastLoginAt: new Date() },
+    });
 
     const activeRole =
       dto.activeRole && user.roles.includes(dto.activeRole) ? dto.activeRole : user.activeRole;
