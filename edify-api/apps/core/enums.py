@@ -64,6 +64,14 @@ class PlanningReadiness(models.TextChoices):
     READY = "ready", "Ready"
 
 
+class SsaCollectorType(models.TextChoices):
+    STAFF = "staff", "Staff"
+    PARTNER = "partner", "Partner"
+    IA = "ia", "IA"
+    IMPORTED_PREVIOUS_FY = "imported_previous_fy", "Imported (previous FY)"
+    SYSTEM_MIGRATION = "system_migration", "System Migration"
+
+
 class SsaIntervention(models.TextChoices):
     TEACHING_AND_LEARNING = "teaching_and_learning", "Teaching & Learning"
     FINANCIAL_HEALTH = "financial_health", "Financial Health"
@@ -206,6 +214,7 @@ __all__ = [
     "ClusterType",
     "SsaStatus",
     "PlanningReadiness",
+    "SsaCollectorType",
     "SsaIntervention",
     "ActivityType",
     "ClusterMeetingSlot",

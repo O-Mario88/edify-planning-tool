@@ -72,6 +72,7 @@ INSTALLED_APPS = [
     "apps.geography",
     "apps.schools",
     "apps.clusters",
+    "apps.ssa",
     # ... (registered as each module is built)
 ]
 

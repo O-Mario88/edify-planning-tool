@@ -58,6 +58,8 @@ urlpatterns = [
     *api("schools", "apps.schools.urls"),
     # Clusters — school grouping by sub-county.
     *api("clusters", "apps.clusters.urls"),
+    # SSA — School Self-Assessment.
+    *api("ssa", "apps.ssa.urls"),
 ]
 
 
