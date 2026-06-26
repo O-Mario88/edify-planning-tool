@@ -111,6 +111,13 @@ urlpatterns = [
     *api("core", "apps.core_schools.urls"),
     # Monthly work-plan budget — CD→RVP routing.
     *api("monthly-work-plan-budget", "apps.monthly_work_plan.urls"),
+    # Analytics — role-scoped summaries.
+    *api("analytics", "apps.analytics.urls"),
+    # Leadership Decision Engine — recommends; leadership decides.
+    path("api/leadership/decision-engine", include("apps.leadership.urls")),
+    path("api/leadership/decision-engine/", include("apps.leadership.urls")),
+    # Budget Intelligence — the financial decision engine.
+    *api("budget-intelligence", "apps.budget_intelligence.urls"),
 ]
 
 

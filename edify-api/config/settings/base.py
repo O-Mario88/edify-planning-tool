@@ -98,6 +98,9 @@ INSTALLED_APPS = [
     "apps.fund_requests",
     "apps.core_schools",
     "apps.monthly_work_plan",
+    "apps.analytics",
+    "apps.leadership",
+    "apps.budget_intelligence",
     # ... (registered as each module is built)
 ]
 
