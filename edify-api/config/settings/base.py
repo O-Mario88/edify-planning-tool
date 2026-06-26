@@ -91,6 +91,9 @@ INSTALLED_APPS = [
     "apps.command_center",
     "apps.admin_users",
     "apps.evidence",
+    "apps.projects",
+    "apps.messaging",
+    "apps.notifications",
     # ... (registered as each module is built)
 ]
 

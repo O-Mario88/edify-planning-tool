@@ -97,6 +97,12 @@ urlpatterns = [
     *api("admin/users", "apps.admin_users.urls"),
     # Evidence — file pipeline.
     *api("evidence", "apps.evidence.urls"),
+    # Special projects.
+    *api("special-projects", "apps.projects.urls"),
+    # Messaging — in-app threads.
+    *api("messages", "apps.messaging.urls"),
+    # Notifications — per-user rail.
+    *api("notifications", "apps.notifications.urls"),
 ]
 
 
