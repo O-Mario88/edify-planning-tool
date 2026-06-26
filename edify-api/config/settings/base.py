@@ -76,6 +76,12 @@ INSTALLED_APPS = [
     "apps.activities",
     "apps.budget",
     "apps.partners",
+    "apps.assignment",
+    "apps.filters",
+    "apps.search",
+    "apps.system_health",
+    "apps.security",
+    "apps.my_plan",
     # ... (registered as each module is built)
 ]
 

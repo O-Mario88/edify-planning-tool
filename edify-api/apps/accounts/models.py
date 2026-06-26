@@ -276,6 +276,112 @@ class StaffSchoolAssignment(TimeStampedModel):
         ]
 
 
+class StaffSupportCapacity(TimeStampedModel):
+    """CD/IA-set cap on direct schools a staff supports per FY. Once reached,
+    self-assignment to a NEW school is blocked; partner assignment is the route."""
+
+    id = CuidField()
+    staff = models.ForeignKey(StaffProfile, on_delete=models.CASCADE, related_name="support_capacities")
+    fy = models.CharField(max_length=16)
+    max_direct_schools_supported = models.IntegerField()
+    set_by_user_id = models.CharField(max_length=30)
+    set_by_role = models.CharField(max_length=64, choices=[(r.value, r.value) for r in EdifyRole])
+    effective_from = models.DateTimeField(null=True, blank=True)
+    effective_to = models.DateTimeField(null=True, blank=True)
+    notes = models.TextField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = "staff_support_capacity"
+        constraints = [
+            models.UniqueConstraint(fields=["staff", "fy"], name="uniq_staff_capacity_fy"),
+        ]
+        indexes = [models.Index(fields=["fy"])]
+
+
+class AssignmentAudit(TimeStampedModel):
+    """Every assignment attempt — allowed or blocked — for accountability."""
+
+    id = CuidField()
+    action = models.CharField(max_length=64)  # assign.self | assign.partner | assign.staff
+    school_id = models.CharField(max_length=30, null=True, blank=True)
+    activity_id = models.CharField(max_length=30, null=True, blank=True)
+    assigner_id = models.CharField(max_length=30)
+    assigner_role = models.CharField(max_length=64, choices=[(r.value, r.value) for r in EdifyRole])
+    assigned_to_type = models.CharField(max_length=16)  # staff | partner
+    assigned_staff_id = models.CharField(max_length=30, null=True, blank=True)
+    assigned_partner_id = models.CharField(max_length=30, null=True, blank=True)
+    allowed = models.BooleanField()
+    blocked_reason = models.CharField(max_length=512, null=True, blank=True)
+    override_used = models.BooleanField(default=False)
+    override_reason = models.CharField(max_length=512, null=True, blank=True)
+
+    class Meta:
+        db_table = "assignment_audit"
+        indexes = [
+            models.Index(fields=["assigner_id"]),
+            models.Index(fields=["school_id"]),
+            models.Index(fields=["created_at"]),
+        ]
+
+
+class StaffTargetProfile(TimeStampedModel):
+    """Annual visit/training targets for a staff member."""
+
+    id = CuidField()
+    staff = models.ForeignKey(StaffProfile, on_delete=models.CASCADE, related_name="target_profiles")
+    fy = models.CharField(max_length=16)
+    visits_target = models.IntegerField(default=0)
+    trainings_target = models.IntegerField(default=0)
+
+    class Meta:
+        db_table = "staff_target_profile"
+        constraints = [
+            models.UniqueConstraint(fields=["staff", "fy"], name="uniq_staff_target_fy"),
+        ]
+
+
+class Leave(TimeStampedModel):
+    """HR leave requests. type/status are plain strings (legacy convention)."""
+
+    id = CuidField()
+    staff = models.ForeignKey(StaffProfile, on_delete=models.CASCADE, related_name="leaves")
+    type = models.CharField(max_length=64)  # annual|sick|compassionate|unpaid
+    start_date = models.CharField(max_length=32)
+    end_date = models.CharField(max_length=32)
+    days = models.IntegerField()
+    status = models.CharField(max_length=32, default="pending")
+    reason = models.TextField(null=True, blank=True)
+    reviewed_by_user_id = models.CharField(max_length=30, null=True, blank=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "leave"
+        indexes = [
+            models.Index(fields=["staff"]),
+            models.Index(fields=["status"]),
+        ]
+
+
+class Report(TimeStampedModel):
+    """A saved/generated report."""
+
+    id = CuidField()
+    title = models.CharField(max_length=255)
+    type = models.CharField(max_length=64)
+    fy = models.CharField(max_length=16)
+    scope = models.CharField(max_length=64, default="country")
+    created_by_user_id = models.CharField(max_length=30, null=True, blank=True)
+    summary_json = models.JSONField(default=dict)
+
+    class Meta:
+        db_table = "report"
+        indexes = [
+            models.Index(fields=["type"]),
+            models.Index(fields=["fy"]),
+        ]
+
+
 __all__ = [
     "UserStatus",
     "User",
@@ -289,4 +395,9 @@ __all__ = [
     "StaffSupervisorAssignment",
     "StaffGeographyAssignment",
     "StaffSchoolAssignment",
+    "StaffSupportCapacity",
+    "AssignmentAudit",
+    "StaffTargetProfile",
+    "Leave",
+    "Report",
 ]

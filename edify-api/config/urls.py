@@ -66,6 +66,18 @@ urlpatterns = [
     *api("budget", "apps.budget.urls"),
     # Partners — partner-org directory + self-service.
     *api("partners", "apps.partners.urls"),
+    # Assignment — capacity + valid options.
+    *api("assignment", "apps.assignment.urls"),
+    # Filters — shared filter-bar options + counts.
+    *api("filters", "apps.filters.urls"),
+    # Search — global search.
+    *api("search", "apps.search.urls"),
+    # System health — org-wide health counts.
+    *api("system-health", "apps.system_health.urls"),
+    # Security — data-protection posture (SYSTEM_ADMIN).
+    *api("security", "apps.security.urls"),
+    # My-plan — the caller's own plan feed.
+    *api("my-plan", "apps.my_plan.urls"),
 ]
 
 
