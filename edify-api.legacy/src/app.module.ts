@@ -32,6 +32,7 @@ import { SystemHealthModule } from './modules/system-health/system-health.module
 import { ReportsModule } from './modules/reports/reports.module';
 import { HrModule } from './modules/hr/hr.module';
 import { AdminUsersModule } from './modules/admin-users/admin-users.module';
+import { EmailModule } from './common/email/email.module';
 import { SecurityModule } from './modules/security/security.module';
 import { LeadershipModule } from './modules/leadership/leadership.module';
 import { BudgetIntelligenceModule } from './modules/budget-intelligence/budget-intelligence.module';
@@ -81,6 +82,7 @@ import { HealthController } from './health.controller';
     ReportsModule,
     HrModule,
     AdminUsersModule,
+    EmailModule,
     SecurityModule,
     LeadershipModule,
     BudgetIntelligenceModule,

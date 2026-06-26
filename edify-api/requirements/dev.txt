@@ -1,0 +1,15 @@
+# Development / test dependencies.
+-r base.txt
+
+# Test runner.
+pytest==8.3.4
+pytest-django==4.9.0
+pytest-cov==6.0.0
+factory-boy==3.3.1
+
+# Linting / formatting.
+ruff==0.8.4
+
+# Debugging.
+django-debug-toolbar==4.4.6
+ipdb==0.13.13

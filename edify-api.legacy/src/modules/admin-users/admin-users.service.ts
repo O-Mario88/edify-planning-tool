@@ -2,6 +2,7 @@ import { BadRequestException, ConflictException, Injectable, NotFoundException }
 import { EdifyRole } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../../common/audit/audit.service';
+import { MailerService } from '../../common/email/mailer.service';
 import { generateToken, hashToken, expiryFromNow, expiryFromNowDays } from '../../common/security/auth-tokens';
 
 // How long a (re)sent invitation remains valid.
@@ -21,6 +22,7 @@ export class AdminUsersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly mailer: MailerService,
   ) {}
 
   /** Roster with status, last login, invitation + onboarding state. */
@@ -85,8 +87,12 @@ export class AdminUsersService {
     });
 
     const inviteToken = await this.createInvitation(user.id, actorId);
-    await this.audit.log({ action: 'admin.user.invited', actorId, subjectKind: 'User', subjectId: user.id, success: true, payload: { email, role: dto.role } });
-    return { user: { id: user.id, email, name: user.name, status: user.status }, inviteToken };
+    // Email the invite link. In dev the link is also returned so the admin UI
+    // can display it (no email provider needed locally).
+    const inviter = await this.prisma.user.findUnique({ where: { id: actorId }, select: { name: true } });
+    const mail = await this.mailer.sendInvitation({ to: email, name: user.name, invitedByName: inviter?.name ?? 'An administrator', token: inviteToken });
+    await this.audit.log({ action: 'admin.user.invited', actorId, subjectKind: 'User', subjectId: user.id, success: true, payload: { email, role: dto.role, emailDelivered: mail.delivered } });
+    return { user: { id: user.id, email, name: user.name, status: user.status }, inviteToken: mail.delivered ? undefined : inviteToken };
   }
 
   /** Issue (or re-issue) an invitation token for a user. Returns the raw token. */
@@ -111,8 +117,10 @@ export class AdminUsersService {
       throw new BadRequestException('This user has already accepted their invitation.');
     }
     const inviteToken = await this.createInvitation(userId, actorId);
-    await this.audit.log({ action: 'admin.user.invite_resent', actorId, subjectKind: 'User', subjectId: userId, success: true });
-    return { inviteToken };
+    const inviter = await this.prisma.user.findUnique({ where: { id: actorId }, select: { name: true } });
+    const mail = await this.mailer.sendInvitation({ to: user.email, name: user.name, invitedByName: inviter?.name ?? 'An administrator', token: inviteToken });
+    await this.audit.log({ action: 'admin.user.invite_resent', actorId, subjectKind: 'User', subjectId: userId, success: true, payload: { emailDelivered: mail.delivered } });
+    return { inviteToken: mail.delivered ? undefined : inviteToken };
   }
 
   /** Revoke all pending invitations for a user. */

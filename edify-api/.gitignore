@@ -1,10 +1,30 @@
-node_modules
-dist
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+
+# Virtualenv
+.venv/
+venv/
+env/
+
+# Local env
 .env
 .env.local
+
+# Django
+staticfiles/
+media/
 *.log
-.DS_Store
-coverage
-# Uploaded evidence files (live on a mounted volume in production).
+db.sqlite3
+
+# Evidence storage (runtime)
 uploads/
-backups/
+
+# Coverage
+.coverage
+htmlcov/
+
+# OS
+.DS_Store

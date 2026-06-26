@@ -1,0 +1,36 @@
+# Core runtime dependencies for the Edify API (Django + DRF).
+# Pin to known-good versions for reproducible builds.
+
+Django==5.2.4
+djangorestframework==3.16.0
+django-filter==25.2
+django-cors-headers==4.6.0
+django-environ==0.11.2
+drf-spectacular==0.29.0
+drf-nested-routers==0.95.0
+django-apscheduler==0.7.0
+
+# Postgres driver (the NestJS backend ran on Postgres via Prisma).
+psycopg[binary]==3.2.3
+
+# JWT auth — access tokens signed with JWT_SECRET + rotating refresh tokens.
+# We use PyJWT directly (custom issuance) for parity with NestJS @nestjs/jwt.
+PyJWT==2.10.1
+
+# Password hashing parity with NestJS bcryptjs (cost 12). Django's bcrypt
+# hasher verifies those hashes natively.
+bcrypt==4.2.1
+
+# ASGI server for streaming SSE + the in-process scheduler.
+daphne==4.1.2
+uvicorn==0.32.1
+gunicorn==23.0.0
+
+# AES-256-GCM field-level encryption (port of field-crypto.ts).
+cryptography==44.0.0
+
+# Image / file validation for evidence uploads.
+Pillow==11.0.0
+
+# Date utilities (FY math, scheduler cadence).
+python-dateutil==2.9.0.post0
