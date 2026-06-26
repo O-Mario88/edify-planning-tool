@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { AuthService } from './auth.service';
+import { AuthTokensService } from './auth-tokens.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from '../../common/auth/jwt.strategy';
 
@@ -14,11 +15,13 @@ import { JwtStrategy } from '../../common/auth/jwt.strategy';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         secret: config.get<string>('JWT_SECRET'),
-        signOptions: { expiresIn: config.get<string>('JWT_EXPIRES_IN') ?? '12h' },
+        // Short-lived access token — refresh tokens (7d) handle re-auth, so a
+        // stolen access token is only useful for ~15 minutes.
+        signOptions: { expiresIn: config.get<string>('ACCESS_TOKEN_TTL') ?? '15m' },
       }),
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, AuthTokensService, JwtStrategy],
 })
 export class AuthModule {}

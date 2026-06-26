@@ -1,7 +1,9 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
+import { AuthTokensService } from './auth-tokens.service';
 import { LoginDto } from './dto/login.dto';
+import { ForgotPasswordDto, LogoutDto, RefreshDto, ResetPasswordDto, SetPasswordDto } from './dto/auth-tokens.dto';
 import { JwtAuthGuard } from '../../common/auth/jwt-auth.guard';
 import { CurrentUser } from '../../common/auth/current-user.decorator';
 import { AuthUser } from '../../common/auth/auth-user';
@@ -14,6 +16,7 @@ import { RateLimitGuard, RateLimit } from '../../common/security/rate-limit';
 export class AuthController {
   constructor(
     private readonly auth: AuthService,
+    private readonly tokens: AuthTokensService,
     private readonly scope: ScopeService,
   ) {}
 
@@ -47,5 +50,41 @@ export class AuthController {
         schoolsInScope: s.countryScope ? null : s.schoolIds.length,
       },
     };
+  }
+
+  // ── Refresh + logout (rotating, revocable refresh tokens) ────────────
+  @Post('refresh')
+  refresh(@Body() dto: RefreshDto) {
+    return this.tokens.refresh(dto.refreshToken);
+  }
+
+  @Post('logout')
+  logout(@Body() dto: LogoutDto) {
+    return this.tokens.logout(dto.refreshToken);
+  }
+
+  // ── Forgot / reset password ──────────────────────────────────────────
+  // Rate-limited so a reset-link flood can't enumerate or abuse the endpoint.
+  @Post('forgot-password')
+  @UseGuards(RateLimitGuard)
+  @RateLimit({ name: 'forgot-password', limit: 4, windowMs: 10 * 60_000 })
+  forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.tokens.forgotPassword(dto.email);
+  }
+
+  @Post('reset-password')
+  resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.tokens.resetPassword(dto.token, dto.password, dto.confirm);
+  }
+
+  // ── Invitation: validate (GET) + set-password (POST) ─────────────────
+  @Get('invite/validate')
+  validateInvite(@Query('token') token: string) {
+    return this.tokens.validateInvite(token);
+  }
+
+  @Post('set-password')
+  setPassword(@Body() dto: SetPasswordDto) {
+    return this.tokens.setPassword(dto.token, dto.password, dto.confirm);
   }
 }

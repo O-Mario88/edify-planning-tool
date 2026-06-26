@@ -5,6 +5,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../../common/audit/audit.service';
 import { permissionsForRole } from '../../common/rbac/permissions';
 import { LoginDto } from './dto/login.dto';
+import { AuthTokensService } from './auth-tokens.service';
 
 // Brute-force protection (spec §5): lock an account after N consecutive failed
 // sign-ins for a cool-off window. Tunable via env.
@@ -17,6 +18,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
     private readonly audit: AuditService,
+    private readonly tokens: AuthTokensService,
   ) {}
 
   async login(dto: LoginDto) {
@@ -68,11 +70,13 @@ export class AuthService {
     const activeRole =
       dto.activeRole && user.roles.includes(dto.activeRole) ? dto.activeRole : user.activeRole;
 
-    const token = await this.jwt.signAsync({ sub: user.id, activeRole });
+    // Issue the full token pair: short-lived access JWT + rotating refresh token.
+    const { accessToken, refreshToken } = await this.tokens.issueTokenPair(user.id, activeRole);
     await this.audit.log({ action: 'auth.login', actorId: user.id, actorRole: activeRole, success: true });
 
     return {
-      accessToken: token,
+      accessToken,
+      refreshToken,
       user: {
         id: user.id,
         email: user.email,

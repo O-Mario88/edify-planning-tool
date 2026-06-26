@@ -155,6 +155,19 @@ async function seedStaff(districtIds: string[]) {
     await prisma.user.upsert({ where: { email: u.email }, update: { name: u.name, roles: [u.role], activeRole: u.role, passwordHash: hash }, create: { email: u.email, name: u.name, passwordHash: hash, roles: [u.role], activeRole: u.role } });
   }
 
+  // Named onboarding super-admin (domario@edify.org) — the platform owner's
+  // real account, always enabled across environments. Its password comes ONLY
+  // from SUPER_ADMIN_PASSWORD (never hardcoded in source). In production, if
+  // the env var is unset the account is created status=active but with no
+  // passwordHash (must set one via the admin invite/reset flow).
+  const SUPER_ADMIN_EMAIL = 'domario@edify.org';
+  const superAdminPw = process.env.SUPER_ADMIN_PASSWORD;
+  await prisma.user.upsert({
+    where: { email: SUPER_ADMIN_EMAIL },
+    update: { name: 'Omario Edwin', roles: ['Admin'], activeRole: 'Admin', status: 'active', isActive: true, ...(superAdminPw ? { passwordHash: await bcrypt.hash(superAdminPw, 10), passwordSetAt: new Date() } : {}) },
+    create: { email: SUPER_ADMIN_EMAIL, name: 'Omario Edwin', roles: ['Admin'], activeRole: 'Admin', status: 'active', isActive: true, ...(superAdminPw ? { passwordHash: await bcrypt.hash(superAdminPw, 10), passwordSetAt: new Date() } : {}) },
+  });
+
   // Project Coordinator gets a staff profile (so coordinator activities show in My Plan).
   const coordUser = await prisma.user.findUniqueOrThrow({ where: { email: 'coordinator@edify.org' } });
   const coordProfile = await prisma.staffProfile.upsert({ where: { userId: coordUser.id }, update: {}, create: { userId: coordUser.id, onboardingState: 'active', primaryDistrictId: districtIds[0] } });
