@@ -56,6 +56,8 @@ urlpatterns = [
     *api("geography", "apps.geography.urls"),
     # Schools — the source-of-truth directory.
     *api("schools", "apps.schools.urls"),
+    # Clusters — school grouping by sub-county.
+    *api("clusters", "apps.clusters.urls"),
 ]
 
 

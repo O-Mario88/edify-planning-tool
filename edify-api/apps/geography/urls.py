@@ -3,8 +3,6 @@ from django.urls import path
 
 from . import views
 
-app_name = "geography"
-
 urlpatterns = [
     path("regions", views.RegionListView.as_view(), name="regions"),
     path("districts", views.DistrictListView.as_view(), name="districts"),
