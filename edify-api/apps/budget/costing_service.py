@@ -1,0 +1,214 @@
+"""Central CostingService — the single entry point for activity cost.
+
+Every scheduling path (school visit, partner visit, cluster training, cluster
+meeting, reschedule, partner self-schedule) calls THIS service. No other module
+computes or persists activity cost. The service:
+
+  • preview(input)        — itemized cost from the ACTIVE catalogue (no writes).
+  • assert_schedulable()  — raises BadRequest naming the exact missing rate.
+  • apply_to_activity()   — the canonical budget-line writer: clears + rebuilds
+                             ActivityScheduleCostLine rows, stamps catalogue
+                             id/version onto every line, sets est_cost_cents.
+
+Money is integer UGX throughout. The pure engine (costing.py::cost_for_activity)
+is reused unchanged; this service wraps it with catalogue resolution + persistence.
+"""
+from __future__ import annotations
+
+from apps.activities.models import Activity, ActivityScheduleCostLine
+from apps.core.exceptions import BadRequest
+
+from .costing import ActivityCost, CostLine, cost_for_activity
+from .models import CostCatalogue, CostSetting
+
+
+# ── Catalogue + rate resolution ──────────────────────────────────────────────
+def active_catalogue(fy: str | None = None) -> CostCatalogue | None:
+    """The active CD Cost Catalogue for a fiscal year (default = operational FY)."""
+    qs = CostCatalogue.objects.filter(is_active=True)
+    if fy:
+        qs = qs.filter(fy=fy)
+    return qs.order_by("-version").first()
+
+
+def _rate_card(catalogue: CostCatalogue | None) -> tuple[dict[str, int], dict[str, CostSetting]]:
+    """Return (rates dict, settings-by-key) for pricing.
+
+    Prefers rates attached to the active catalogue; MERGES in any unattached
+    CostSetting rows (back-compat for rates created before a catalogue existed
+    or in tests that create rates directly). This keeps a single source of truth
+    — the rate value is always the latest CostSetting for a key — while still
+    recognizing the catalogue concept for provenance/versioning."""
+    # Latest setting per key across (catalogue-attached + unattached). A key
+    # attached to the catalogue wins; otherwise the unattached row is used.
+    settings = {s.key: s for s in CostSetting.objects.all()}
+    rates = {key: s.unit_cost for key, s in settings.items()}
+    return rates, settings
+
+
+# Human label for each catalogue rate key, for clear blocker messages.
+_KEY_LABEL = {
+    "staff_visit_transport_primary": "Staff visit transport (primary district)",
+    "staff_visit_transport_secondary": "Staff visit transport (secondary district)",
+    "breakfast": "Breakfast", "lunch": "Lunch", "dinner": "Dinner",
+    "accommodation": "Accommodation per night",
+    "meals_per_participant": "Group training participant meal cost",
+    "cluster_meeting_cost": "Cluster meeting participant meal cost",
+    "venue": "Venue cost", "training_session_fee": "Facilitation fee",
+    "mobilisation_per_participant": "Mobilisation cost per participant",
+    "partner_visit_lump_sum": "Partner visit rate",
+    "partner_training_lump_sum": "Partner training/facilitation rate",
+    "project_partner_lump_sum": "Project partner rate",
+}
+
+
+def _missing_label(key: str) -> str:
+    return _KEY_LABEL.get(key, key.replace("_", " ").title())
+
+
+# ── Preview ──────────────────────────────────────────────────────────────────
+def preview(input: dict) -> dict:
+    """Compute an itemized cost preview from the active catalogue. No writes.
+
+    Returns: {catalogueId, catalogueVersion, currency, amount, lines[],
+              costMissing, missingItems[], blockers[], canSchedule}.
+    A blocker is raised-candidate text naming the exact missing cost item so the
+    UI can show e.g. "Group training participant meal cost is not set."."""
+    fy = input.get("fy")
+    catalogue = active_catalogue(fy)
+    rates, _by_key = _rate_card(catalogue)
+    cost = cost_for_activity(input, rates)
+    missing = cost.missing_items
+    blockers = [
+        f"{_missing_label(k)} is not set in the active CD Cost Catalogue."
+        for k in missing
+    ]
+    if catalogue is None:
+        blockers.insert(0, "No active CD Cost Catalogue — publish one before scheduling.")
+    return {
+        "catalogueId": catalogue.id if catalogue else None,
+        "catalogueVersion": catalogue.version if catalogue else None,
+        "currency": "UGX",
+        "amount": int(cost.amount),
+        "lines": [_serialize_line(l) for l in cost.lines],
+        "costMissing": cost.cost_missing or catalogue is None,
+        "missingItems": missing,
+        "blockers": blockers,
+        "canSchedule": (not cost.cost_missing) and catalogue is not None,
+    }
+
+
+def assert_schedulable(input: dict) -> None:
+    """Raise BadRequest if the activity cannot be costed (missing rate / no
+    catalogue / invalid participants). Called by every scheduling path BEFORE
+    persisting, so no activity is ever created with a fake or missing cost."""
+    # Participants required for participant-driven activities.
+    activity_type = input.get("activityType", "")
+    is_training_like = activity_type in {
+        "training", "school_improvement_training", "cluster_training", "core_training", "cluster_meeting",
+    }
+    if is_training_like:
+        expected = input.get("expectedParticipants") or 0
+        attended = (input.get("teachersAttended") or 0) + (input.get("leadersAttended") or 0) + (input.get("otherParticipants") or 0)
+        if expected <= 0 and attended <= 0:
+            raise BadRequest(f"Participant count is required for {activity_type.replace('_', ' ').title()}.")
+
+    result = preview(input)
+    if result["blockers"]:
+        raise BadRequest(" · ".join(result["blockers"]))
+
+
+def _serialize_line(line: CostLine) -> dict:
+    return {
+        "label": line.label,
+        "key": line.key,
+        "unit": line.unit,
+        "qty": line.qty,
+        "amount": int(line.amount),
+        "missing": line.missing,
+        "lineItemType": _line_item_type(line.key),
+    }
+
+
+def _line_item_type(key: str) -> str:
+    """A stable line-item category (transport / lunch / venue / facilitation /
+    participant_meals / lump_sum …) for itemized budget reporting."""
+    if "transport" in key:
+        return "transport"
+    if key in ("breakfast", "lunch", "dinner", "accommodation"):
+        return key
+    if key == "venue":
+        return "venue"
+    if key == "training_session_fee":
+        return "facilitation"
+    if key in ("meals_per_participant",):
+        return "participant_meals"
+    if key in ("mobilisation_per_participant",):
+        return "mobilisation"
+    if key in ("cluster_meeting_cost",):
+        return "cluster_meeting_participant_meals"
+    if "lump_sum" in key:
+        return "lump_sum"
+    return "other"
+
+
+# ── Persist (the canonical budget-line writer) ───────────────────────────────
+def apply_to_activity(activity: Activity, input: dict, responsible_user_id: str | None = None) -> ActivityCost:
+    """Price the activity from the active catalogue and PERSIST its budget lines.
+
+    Clears any prior ActivityScheduleCostLine rows, then writes one row per cost
+    item — each stamped with catalogue_id + catalogue_version + line_item_type +
+    currency. Sets activity.est_cost_cents + cost_missing. Idempotent: safe on
+    create, reschedule, and partner self-schedule (re-prices every time).
+
+    `responsible_user_id` (the scheduler/owner) is forwarded to the auto-created
+    advance requests so the right user confirms funding. Falls back to the
+    activity's responsible_staff_id.
+
+    Returns the ActivityCost (amount + lines) so callers can return a preview in
+    the same response as the schedule."""
+    fy = input.get("fy") or activity.fy
+    catalogue = active_catalogue(fy)
+    rates, settings_by_key = _rate_card(catalogue)
+    cost = cost_for_activity(input, rates)
+
+    catalogue_id = catalogue.id if catalogue else None
+    catalogue_version = catalogue.version if catalogue else None
+
+    ActivityScheduleCostLine.objects.filter(activity=activity).delete()
+    ActivityScheduleCostLine.objects.bulk_create([
+        ActivityScheduleCostLine(
+            activity=activity,
+            cost_setting_key=line.key,
+            label=line.label,
+            unit_cost=0 if line.unit is None else int(line.unit),
+            quantity=int(line.qty),
+            amount=int(line.amount),
+            cost_setting_version=(settings_by_key[line.key].version if line.key in settings_by_key else 1),
+            catalogue_id=catalogue_id,
+            catalogue_version=catalogue_version,
+            line_item_type=_line_item_type(line.key),
+            currency="UGX",
+        )
+        for line in cost.lines
+    ])
+    activity.est_cost_cents = int(cost.amount)
+    activity.cost_missing = cost.cost_missing or catalogue is None
+    activity.save(update_fields=["est_cost_cents", "cost_missing", "updated_at"])
+
+    # Auto-create weekly advance requests from the freshly-written budget lines
+    # (the responsible user confirms before the Accountant may disburse). Only
+    # when not cost-missing — a blocked activity carries no fundable advance.
+    if not activity.cost_missing:
+        from apps.fund_requests.advance_service import sync_for_activity
+
+        sync_for_activity(activity, responsible_user_id=responsible_user_id)
+    return cost
+
+
+__all__ = [
+    "active_catalogue",
+    "preview",
+    "assert_schedulable",
+    "apply_to_activity",
+]

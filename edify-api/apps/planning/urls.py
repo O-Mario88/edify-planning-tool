@@ -10,6 +10,7 @@ urlpatterns = [
     path("schedule-school-visit", views.ScheduleSchoolVisitView.as_view(), name="schedule-visit"),
     path("assign-school-visit-to-partner", views.AssignSchoolVisitToPartnerView.as_view(), name="assign-visit-partner"),
     path("schedule-cluster-training", views.ScheduleClusterTrainingView.as_view(), name="schedule-training"),
+    path("schedule-cluster-activity", views.ScheduleClusterActivityView.as_view(), name="schedule-cluster-activity"),
     # plans list (GET) + create (POST) share the path.
     path("plans", views.PlanListCreateView.as_view(), name="plans-list-create"),
     path("plans/<str:plan_id>", views.PlanDetailView.as_view(), name="plan-detail"),

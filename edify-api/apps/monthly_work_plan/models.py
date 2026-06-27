@@ -28,9 +28,9 @@ class MonthlyWorkPlanBudget(TimeStampedModel):
     generated_at = models.DateTimeField(auto_now_add=True)
     generated_by = models.CharField(max_length=30, null=True, blank=True)
     status = models.CharField(max_length=32, choices=MonthlyWorkPlanBudgetStatus.choices, default=MonthlyWorkPlanBudgetStatus.DRAFT_GENERATED)
-    program_total = models.FloatField(default=0)
-    admin_total = models.FloatField(default=0)
-    total_amount = models.FloatField(default=0)
+    program_total = models.BigIntegerField(default=0)  # UGX
+    admin_total = models.BigIntegerField(default=0)  # UGX
+    total_amount = models.BigIntegerField(default=0)  # UGX
     activity_count = models.IntegerField(default=0)
     submitted_at = models.DateTimeField(null=True, blank=True)
     submitted_by_user_id = models.CharField(max_length=30, null=True, blank=True)
@@ -52,9 +52,9 @@ class AdminBudgetLine(TimeStampedModel):
     monthly_budget = models.ForeignKey(MonthlyWorkPlanBudget, on_delete=models.CASCADE, related_name="admin_lines")
     cost_category = models.CharField(max_length=64)
     description = models.CharField(max_length=512)
-    quantity = models.FloatField(default=1)
-    unit_cost = models.FloatField()
-    total_cost = models.FloatField()
+    quantity = models.DecimalField(max_digits=12, decimal_places=2, default=1)  # qty may be fractional (days)
+    unit_cost = models.BigIntegerField()  # UGX
+    total_cost = models.BigIntegerField()  # UGX
     justification = models.TextField(null=True, blank=True)
     created_by_user_id = models.CharField(max_length=30)
     status = models.CharField(max_length=32, default="active")

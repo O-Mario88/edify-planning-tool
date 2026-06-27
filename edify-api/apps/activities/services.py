@@ -153,47 +153,34 @@ def _serialize(a: Activity) -> dict:
     }
 
 
-def _apply_schedule_cost_snapshot(activity: Activity, data: dict) -> None:
-    """Persist schedule-time cost lines from the CD-owned rate card.
+def _costing_input(activity: Activity, data: dict) -> dict:
+    """Build the canonical CostingService input from an activity + schedule data."""
+    return {
+        "activityType": activity.activity_type,
+        "deliveryType": activity.delivery_type,
+        "teachersAttended": data.get("teachersAttended"),
+        "leadersAttended": data.get("leadersAttended"),
+        "otherParticipants": data.get("otherParticipants"),
+        "expectedParticipants": data.get("expectedParticipants"),
+        "districtType": data.get("districtType"),
+        "nights": data.get("nights"),
+        "projectId": activity.project_id,
+        "fy": activity.fy,
+    }
 
-    Clears any prior snapshot first, so re-scheduling re-prices the activity
-    against the current catalogue (the budget line must follow the activity, not
-    freeze at the original schedule). Idempotent: safe on create and reschedule."""
-    from apps.budget.costing import cost_for_activity
-    from apps.budget.models import CostSetting
 
-    settings_by_key = {c.key: c for c in CostSetting.objects.all()}
-    rates = {key: setting.unit_cost for key, setting in settings_by_key.items()}
-    cost = cost_for_activity(
-        {
-            "activityType": activity.activity_type,
-            "deliveryType": activity.delivery_type,
-            "teachersAttended": data.get("teachersAttended"),
-            "leadersAttended": data.get("leadersAttended"),
-            "otherParticipants": data.get("otherParticipants"),
-            "expectedParticipants": data.get("expectedParticipants"),
-            "districtType": data.get("districtType"),
-            "nights": data.get("nights"),
-            "projectId": activity.project_id,
-        },
-        rates,
-    )
-    ActivityScheduleCostLine.objects.filter(activity=activity).delete()
-    ActivityScheduleCostLine.objects.bulk_create([
-        ActivityScheduleCostLine(
-            activity=activity,
-            cost_setting_key=line.key,
-            label=line.label,
-            unit_cost=0 if line.unit is None else int(line.unit),
-            quantity=line.qty,
-            amount=int(line.amount),
-            cost_setting_version=settings_by_key[line.key].version if line.key in settings_by_key else 0,
-        )
-        for line in cost.lines
-    ])
-    activity.est_cost_cents = int(cost.amount)
-    activity.cost_missing = cost.cost_missing
-    activity.save(update_fields=["est_cost_cents", "cost_missing", "updated_at"])
+def _apply_schedule_cost_snapshot(activity: Activity, data: dict, principal=None) -> None:
+    """Delegate to the central CostingService — the SINGLE cost writer.
+
+    All scheduling paths (create, reschedule, partner self-schedule) funnel here.
+    The service clears prior budget lines, re-prices against the active CD Cost
+    Catalogue, stamps catalogue id/version onto every line, and sets
+    est_cost_cents + cost_missing. Idempotent. The principal (scheduler) is
+    forwarded so auto-created advance requests attribute to the right user."""
+    from apps.budget.costing_service import apply_to_activity
+
+    responsible = getattr(principal, "user_id", None) if principal else None
+    apply_to_activity(activity, _costing_input(activity, data), responsible_user_id=responsible)
 
 
 # ── Create ───────────────────────────────────────────────────────────────────
@@ -231,6 +218,24 @@ def create(data: dict, principal) -> dict:
     fy = get_operational_fy(scheduled_date) if scheduled_date else data.get("fy", get_operational_fy())
     quarter = get_quarter_for_date(scheduled_date) if scheduled_date else data.get("quarter", get_quarter_for_date())
 
+    # Central cost gate: block scheduling if the activity cannot be priced from
+    # the active CD Cost Catalogue (missing rate / no catalogue / missing
+    # participants for training). No activity is ever created with a fake cost.
+    from apps.budget.costing_service import assert_schedulable
+
+    assert_schedulable({
+        "activityType": activity_type,
+        "deliveryType": "partner" if is_partner else "staff",
+        "teachersAttended": data.get("teachersAttended"),
+        "leadersAttended": data.get("leadersAttended"),
+        "otherParticipants": data.get("otherParticipants"),
+        "expectedParticipants": data.get("expectedParticipants"),
+        "districtType": data.get("districtType"),
+        "nights": data.get("nights"),
+        "projectId": data.get("projectId"),
+        "fy": fy,
+    })
+
     status = "assigned_to_partner" if is_partner else ("scheduled" if scheduled_date else "planned")
     activity = Activity.objects.create(
         activity_type=activity_type,
@@ -250,7 +255,7 @@ def create(data: dict, principal) -> dict:
         status=status,
         salesforce_activity_type=sf_kind(activity_type),
     )
-    _apply_schedule_cost_snapshot(activity, data)
+    _apply_schedule_cost_snapshot(activity, data, principal=principal)
     return _serialize(activity)
 
 
@@ -379,7 +384,7 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
     ])
     # Re-price against the current catalogue so the budget line follows the new
     # schedule (rates may have changed; participant/period inputs may have too).
-    _apply_schedule_cost_snapshot(a, data)
+    _apply_schedule_cost_snapshot(a, data, principal=principal)
     a.save(update_fields=["est_cost_cents", "cost_missing", "updated_at"])
     return _serialize(a)
 
@@ -402,8 +407,20 @@ def partner_schedule(activity_id: str, data: dict, principal) -> dict:
     a.scheduled_date = new_date
     a.fy = get_operational_fy(new_date)
     a.quarter = get_quarter_for_date(new_date)
+    # Keep the period fields the fund-request/advance period filter groups on.
+    if data.get("plannedMonth") is not None:
+        a.planned_month = data["plannedMonth"]
+    elif new_date:
+        a.planned_month = new_date.month
+    if data.get("plannedWeek") is not None:
+        a.planned_week = data["plannedWeek"]
     a.status = "partner_scheduled"
-    a.save(update_fields=["scheduled_date", "fy", "quarter", "status", "updated_at"])
+    a.save(update_fields=["scheduled_date", "fy", "quarter", "planned_month", "planned_week", "status", "updated_at"])
+    # Re-price through the central CostingService so the budget line follows the
+    # partner's new schedule (previously partner self-schedule moved the date but
+    # never re-priced — a stale-budget-line gap).
+    _apply_schedule_cost_snapshot(a, data, principal=principal)
+    a.save(update_fields=["est_cost_cents", "cost_missing", "updated_at"])
     return _serialize(a)
 
 

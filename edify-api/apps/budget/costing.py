@@ -21,15 +21,15 @@ RateCard = dict  # CostSetting.key -> unitCost
 class CostLine:
     label: str
     key: str
-    unit: float | None  # None = rate missing
+    unit: int | None  # None = rate missing; integer UGX when present
     qty: int
-    amount: float  # 0 when the rate is missing
+    amount: int  # integer UGX (0 when the rate is missing)
     missing: bool
 
 
 @dataclass
 class ActivityCost:
-    amount: float = 0.0
+    amount: int = 0  # integer UGX
     lines: list[CostLine] = field(default_factory=list)
     cost_missing: bool = False
     missing_items: list[str] = field(default_factory=list)

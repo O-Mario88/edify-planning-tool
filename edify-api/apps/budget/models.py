@@ -13,16 +13,60 @@ from django.db import models
 from apps.core.models import CuidField, TimeStampedModel
 
 
+class CostCatalogue(TimeStampedModel):
+    """The active CD Country Cost Catalogue — one per country + fiscal year.
+
+    Versioned: the CD publishes a new version when rates change. Exactly one
+    catalogue may be `is_active=True` per (country, fy). The CostSetting rate
+    rows belong to a catalogue; every activity cost snapshot stamps the
+    catalogue id + version so an activity always traces back to the rate card
+    it was priced against (the financial source of truth)."""
+
+    id = CuidField()
+    country = models.CharField(max_length=64, default="Uganda")
+    fy = models.CharField(max_length=16)
+    version = models.IntegerField(default=1)
+    is_active = models.BooleanField(default=True)
+    label = models.CharField(max_length=255, null=True, blank=True)
+    published_by = models.CharField(max_length=30, null=True, blank=True)
+    activated_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "cost_catalogue"
+        ordering = ["-fy", "-version"]
+        constraints = [
+            # One active catalogue per (country, fy). Partial unique index so
+            # inactive/draft catalogues don't collide.
+            models.UniqueConstraint(
+                fields=["country", "fy", "is_active"],
+                name="uniq_active_catalogue_per_country_fy",
+                condition=models.Q(is_active=True),
+            ),
+            models.UniqueConstraint(fields=["country", "fy", "version"], name="uniq_catalogue_country_fy_version"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.country} FY{self.fy} v{self.version}"
+
+
 class CostSetting(TimeStampedModel):
-    """The CD-owned Country Cost Register rate card. key = stable string."""
+    """The CD-owned Country Cost Register rate card. key = stable string.
+
+    unit_cost is stored as integer UGX (whole shillings); all money math is
+    integer-based to avoid float rounding. 1 unit = 1 UGX."""
 
     id = CuidField()
     key = models.CharField(max_length=128, unique=True)
     label = models.CharField(max_length=255)
-    unit_cost = models.FloatField()
+    unit_cost = models.BigIntegerField()  # UGX, integer (whole shillings)
     fy = models.CharField(max_length=16, null=True, blank=True)
     version = models.IntegerField(default=1)  # bumped on every rate change
     created_by = models.CharField(max_length=30, null=True, blank=True)  # CD userId
+    # The catalogue this rate belongs to. Nullable for back-compat with rows
+    # created before catalogues existed (they attach to the seeded active one).
+    catalogue = models.ForeignKey(
+        CostCatalogue, on_delete=models.CASCADE, related_name="rates", null=True, blank=True
+    )
 
     class Meta:
         db_table = "cost_setting"
@@ -35,8 +79,8 @@ class CostSettingHistory(TimeStampedModel):
     id = CuidField()
     key = models.CharField(max_length=128)
     label = models.CharField(max_length=255)
-    old_unit_cost = models.FloatField(null=True, blank=True)  # null on first create
-    new_unit_cost = models.FloatField()
+    old_unit_cost = models.BigIntegerField(null=True, blank=True)  # UGX; null on first create
+    new_unit_cost = models.BigIntegerField()  # UGX
     version = models.IntegerField()  # the new version after this change
     fy = models.CharField(max_length=16, null=True, blank=True)
     changed_by_user_id = models.CharField(max_length=30)
@@ -58,11 +102,11 @@ class MonthlyFundRequest(TimeStampedModel):
     fy = models.CharField(max_length=16)
     month = models.IntegerField()
     staff_id = models.CharField(max_length=30, null=True, blank=True)
-    amount = models.FloatField()
+    amount = models.BigIntegerField()  # UGX
     status = models.CharField(max_length=32, default="submitted")
 
     class Meta:
         db_table = "monthly_fund_request"
 
 
-__all__ = ["CostSetting", "CostSettingHistory", "MonthlyFundRequest"]
+__all__ = ["CostCatalogue", "CostSetting", "CostSettingHistory", "MonthlyFundRequest"]

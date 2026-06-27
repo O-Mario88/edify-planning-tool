@@ -46,11 +46,16 @@ class CostSettingsHistoryView(APIView):
 
 
 class CostingPreviewView(APIView):
+    """POST /api/budget/costing/preview — the central CostingService preview.
+    Returns the itemized cost (lines with lineItemType), catalogue provenance,
+    missingItems/blockers, and canSchedule. No writes."""
     permission_classes = [IsAuthenticated, RequirePermissions]
     required_permissions = VIEW
 
     def post(self, request: Request) -> Response:
-        return Response(services.cost_preview(request.data, request.user))
+        from .costing_service import preview
+
+        return Response(preview(request.data))
 
 
 class BudgetFromScheduleView(APIView):

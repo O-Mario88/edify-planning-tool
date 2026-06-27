@@ -10,6 +10,7 @@ from apps.core.permissions import RequirePermissions
 from apps.core.rbac import Permission
 
 from . import services
+from . import advance_service
 
 VIEW = [Permission.PLANNING_VIEW.value]
 APPROVE = [Permission.BUDGET_APPROVE.value]
@@ -91,3 +92,59 @@ class AccountReturnView(APIView):
 
     def post(self, request: Request, request_id: str) -> Response:
         return Response(services.review_accountability(request_id, "return", request.data, request.user))
+
+
+# ── Weekly advance-request endpoints ─────────────────────────────────────────
+# The responsible user confirms their own advances (VIEW perm — the actor is the
+# owner). Disbursement/accountability/reimbursement are PAYMENT (Accountant).
+def _advance_view(fn, perm, takes_data=True):
+    class _V(APIView):
+        permission_classes = [IsAuthenticated, RequirePermissions]
+        required_permissions = perm
+
+        def post(self, request: Request, advance_id: str) -> Response:
+            data = request.data if takes_data else {}
+            return Response(fn(advance_id, data, request.user))
+
+    return _V
+
+
+class AdvanceQueuesView(APIView):
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = PAYMENT
+
+    def get(self, request: Request) -> Response:
+        return Response(advance_service.accountant_queues())
+
+
+# Responsible-user confirmation actions (the owner confirms their own advance).
+class ConfirmAdvanceView(APIView):
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = VIEW
+
+    def post(self, request: Request, advance_id: str) -> Response:
+        return Response(advance_service.confirm_advance(advance_id, request.user))
+
+
+class SelfFundedView(APIView):
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = VIEW
+
+    def post(self, request: Request, advance_id: str) -> Response:
+        return Response(advance_service.self_funded(advance_id, request.user))
+
+
+class NotRequestedView(APIView):
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = VIEW
+
+    def post(self, request: Request, advance_id: str) -> Response:
+        return Response(advance_service.not_requested(advance_id, request.user))
+
+
+# Accountant actions (PAYMENT permission).
+AdvanceDisburseView = _advance_view(advance_service.disburse, PAYMENT)
+AdvanceAccountView = _advance_view(advance_service.submit_accountability, VIEW)
+AdvanceAccountApproveView = _advance_view(advance_service.approve_accountability, PAYMENT, takes_data=False)
+AdvanceReimburseSubmitView = _advance_view(advance_service.submit_reimbursement, VIEW)
+AdvanceReimburseView = _advance_view(advance_service.reimburse, PAYMENT)

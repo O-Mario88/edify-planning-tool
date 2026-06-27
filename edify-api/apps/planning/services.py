@@ -129,6 +129,34 @@ def schedule_cluster_training(data: dict, principal) -> dict:
     return create_activity({**data, "activityType": "cluster_training"}, principal)
 
 
+# The two cluster-activity kinds the spec requires the user to choose between.
+CLUSTER_ACTIVITY_KINDS = {"cluster_training", "cluster_meeting"}
+
+
+def schedule_cluster_activity(data: dict, principal) -> dict:
+    """Schedule a cluster activity (Group Training OR Cluster Meeting).
+
+    The user MUST choose the kind — this drives the cost computation:
+      • cluster_training (group training) → venue + facilitation + group-training
+        participant meals (+ mobilisation if configured).
+      • cluster_meeting → cluster-meeting participant meals ONLY (no venue, no
+        facilitation, never the group-training meal rate).
+    Both require a cluster + an expected participant count > 0, enforced by the
+    central CostingService.assert_schedulable before the activity is created."""
+    from apps.activities.services import create as create_activity
+    from apps.core.exceptions import BadRequest
+
+    kind = data.get("activityType")
+    if kind not in CLUSTER_ACTIVITY_KINDS:
+        raise BadRequest(
+            "Choose a cluster activity kind: 'cluster_training' (Group Training) "
+            "or 'cluster_meeting' (Cluster Meeting)."
+        )
+    if not data.get("clusterId"):
+        raise BadRequest("A cluster is required for a cluster activity.")
+    return create_activity({**data, "activityType": kind}, principal)
+
+
 def _serialize_plan(p: MonthlyPlan, include_activities: bool = False) -> dict:
     out = {
         "id": p.id,

@@ -125,3 +125,16 @@ class ScheduleClusterTrainingView(APIView):
 
     def post(self, request: Request) -> Response:
         return Response(services.schedule_cluster_training(request.data, request.user), status=201)
+
+
+class ScheduleClusterActivityView(APIView):
+    """Schedule a cluster activity (Group Training OR Cluster Meeting). The body
+    carries activityType ('cluster_training'|'cluster_meeting'), clusterId,
+    expectedParticipants, scheduledDate, plannedMonth/Week. The central
+    CostingService prices it before the activity is persisted."""
+
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = ASSIGN
+
+    def post(self, request: Request) -> Response:
+        return Response(services.schedule_cluster_activity(request.data, request.user), status=201)

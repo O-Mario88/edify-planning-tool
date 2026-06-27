@@ -98,16 +98,27 @@ class Activity(SoftDeleteModel):
 
 class ActivityScheduleCostLine(TimeStampedModel):
     """Persisted cost breakdown for a scheduled activity — sourced from
-    CostSetting at schedule time so fund requests reconcile to the catalogue."""
+    CostSetting at schedule time so fund requests reconcile to the catalogue.
+
+    This IS the activity budget line: one row per cost item (transport, lunch,
+    venue, facilitation, meals...), each tracing to the catalogue version it was
+    priced against. Amounts are integer UGX (whole shillings)."""
 
     id = CuidField()
     activity = models.ForeignKey(Activity, on_delete=models.CASCADE, related_name="schedule_cost_lines")
     cost_setting_key = models.CharField(max_length=128)
     label = models.CharField(max_length=255)
-    unit_cost = models.IntegerField()  # cents
+    unit_cost = models.IntegerField()  # UGX, integer
     quantity = models.IntegerField(default=1)
-    amount = models.IntegerField()  # cents
+    amount = models.IntegerField()  # UGX, integer
     cost_setting_version = models.IntegerField(default=1)
+    # Catalogue provenance — the catalogue + version this line was priced from.
+    catalogue_id = models.CharField(max_length=30, null=True, blank=True)
+    catalogue_version = models.IntegerField(null=True, blank=True)
+    # Itemized line type (transport / breakfast / lunch / dinner / accommodation
+    # / venue / facilitation / participant_meals / mobilisation / lump_sum ...).
+    line_item_type = models.CharField(max_length=64, null=True, blank=True)
+    currency = models.CharField(max_length=8, default="UGX")
 
     class Meta:
         db_table = "activity_schedule_cost_line"
