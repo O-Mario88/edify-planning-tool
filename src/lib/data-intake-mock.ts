@@ -90,7 +90,7 @@ export const dataTemplates: DataTemplate[] = [
     ],
     optionalColumns: [
       // Added later by IA / staff once the school exists — a row need not carry these.
-      "Account Owner",
+      "Staff Name",
       "Enrolment",
       "Last Date of Enrolment",
       "Phone",
@@ -102,7 +102,7 @@ export const dataTemplates: DataTemplate[] = [
     },
     exampleRows: [
       {
-        "Account Owner": "Aisha Dar",
+        "Staff Name": "Aisha Dar",
         "School ID": "51230",
         "School Name": "St. Mary Primary School",
         "District": "Wakiso",
@@ -116,9 +116,9 @@ export const dataTemplates: DataTemplate[] = [
     ],
     validationRules: [
       "REQUIRED: School ID (digits only, e.g. 32791, unique), School Name, District, Current Partner Type (Client or Core)",
-      "OPTIONAL — can be added later by IA or staff: Account Owner, Enrolment, Last Date of Enrolment, Phone, Primary Contact, School Shipping Address",
+      "OPTIONAL — can be added later by IA or staff: Staff Name, Enrolment, Last Date of Enrolment, Phone, Primary Contact, School Shipping Address",
       "Region is derived automatically from District — you don't enter it",
-      "When provided: Enrolment must be a whole number ≥ 0; Last Date of Enrolment must be a valid date; Account Owner must match an active CCEO/PL",
+      "When provided: Enrolment must be a whole number ≥ 0; Last Date of Enrolment must be a valid date; Staff Name should match an active CCEO/PL (unmatched names are queued for Admin setup)",
     ],
     createdBy: "Edify HQ",
     updatedAt: "2026-06-01",

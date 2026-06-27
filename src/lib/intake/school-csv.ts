@@ -9,9 +9,11 @@
 import { regionForDistrict, regionLabel } from "@/lib/geography";
 import { validateNewSchool, type NewSchoolInput, type SchoolType } from "./intake-core";
 
-/** Header → NewSchoolInput field. Matches the School Onboarding template. */
+/** Header → NewSchoolInput field. Matches the School Onboarding template.
+ *  "Staff Name" is the preferred owner column; "Account Owner" still accepted
+ *  as a backward-compatible alias (Staff Name wins when both are present). */
 export const SCHOOL_CSV_HEADERS = [
-  "Account Owner",
+  "Staff Name",
   "School ID",
   "School Name",
   "District",
@@ -103,7 +105,8 @@ export function mapSchoolCsv(text: string, existingIds: ReadonlySet<string>): Sc
       region: region ? regionLabel(region) : "",
       schoolType: type ?? "Other",
       enrollment: cell(cells, "Enrolment"),
-      assignedCceo: cell(cells, "Account Owner"),
+      // Prefer "Staff Name"; fall back to the legacy "Account Owner" column.
+      assignedCceo: cell(cells, "Staff Name") || cell(cells, "Account Owner"),
     };
 
     const v = validateNewSchool(input, seenInBatch);

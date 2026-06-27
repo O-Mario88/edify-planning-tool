@@ -378,8 +378,8 @@ function NewSchoolDrawer({ open, onClose, existingIds, initialMode = "manual" }:
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Input label="Enrolment" type="number" placeholder="320" value={form.enrollment} error={errors.enrollment}
                 helper="Or it arrives with the first SSA upload." onChange={(e) => set("enrollment", e.target.value)} />
-              <Input label="Account Owner (CCEO)" placeholder="Aisha Dar" value={form.assignedCceo}
-                helper="IA can assign the school to a CCEO later." onChange={(e) => set("assignedCceo", e.target.value)} />
+              <Input label="Staff Name (CCEO/PL)" placeholder="Aisha Dar" value={form.assignedCceo}
+                helper="The CCEO/PL attached to the school. Unmatched names queue for Admin setup." onChange={(e) => set("assignedCceo", e.target.value)} />
               <Select label="Sub-county" placeholder={form.district ? "Select sub-county" : "Pick a district first"}
                 value={form.subCounty} disabled={!form.district} options={subCountyOptions}
                 onChange={(e) => { set("subCounty", e.target.value); set("parish", ""); }} />
@@ -459,7 +459,7 @@ function CsvUploadPanel({
         <summary className="cursor-pointer font-semibold text-[var(--color-edify-muted)]">…or paste CSV rows</summary>
         <textarea
           className="mt-2 w-full h-24 rounded-lg border border-[var(--color-edify-divider)] bg-transparent p-2 text-[11.5px] font-mono"
-          placeholder="Account Owner,School ID,School Name,District,Current Partner Type,Enrolment,Last Date of Enrolment"
+          placeholder="Staff Name,School ID,School Name,District,Current Partner Type,Enrolment,Last Date of Enrolment"
           value={csvText}
           onChange={(e) => onPasteText(e.target.value)}
         />
@@ -606,7 +606,7 @@ function EditSchoolDrawer({ school, onClose }: { school: IntakeSchoolLite | null
           <div>
             <h4 className="text-[10.5px] font-extrabold uppercase tracking-[0.08em] text-[var(--color-edify-muted)] mb-2">Ownership &amp; enrolment</h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Input label="Account Owner (CCEO)" placeholder="Aisha Dar" value={form.assignedCceo}
+              <Input label="Staff Name (CCEO/PL)" placeholder="Aisha Dar" value={form.assignedCceo}
                 helper="Who this school's portfolio belongs to." onChange={(e) => set("assignedCceo", e.target.value)} />
               <Input label="Enrolment" type="number" placeholder="320" value={form.enrollment} error={errors.enrollment}
                 onChange={(e) => set("enrollment", e.target.value)} />

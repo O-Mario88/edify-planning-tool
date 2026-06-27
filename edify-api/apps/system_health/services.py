@@ -132,6 +132,23 @@ def _workflow_issues() -> dict:
         confirmed_at__isnull=True,
     ).count()
 
+    # ── Staff-ownership integrity checks ─────────────────────────────────────
+    from apps.schools.models import School as _School
+    from apps.accounts.models import StaffProfile, StaffSetupCandidate, StaffSupervisorAssignment
+    from django.db.models import Count
+
+    unmatched_staff_schools = _School.objects.filter(account_owner_status="unmatched").count()
+    ambiguous_staff_schools = _School.objects.filter(account_owner_status="ambiguous").count()
+    pending_candidates = StaffSetupCandidate.objects.filter(status="pending_profile").count()
+    # CCEOs without a PL supervisor (the chain gap that blocks PL team scope).
+    cceo_ids = StaffProfile.objects.filter(
+        user__active_role="CCEO", deleted_at__isnull=True
+    ).values_list("id", flat=True)
+    cceos_without_supervisor = sum(
+        1 for cid in cceo_ids
+        if not StaffSupervisorAssignment.objects.filter(supervisee_id=cid).exists()
+    )
+
     blockers = []
     if missing_cost_lines:
         blockers.append(f"{missing_cost_lines} scheduled activities have no persisted cost lines.")
@@ -153,6 +170,14 @@ def _workflow_issues() -> dict:
         blockers.append("No active CD Cost Catalogue — publish one before scheduling activities.")
     if early_disbursement:
         blockers.append(f"{early_disbursement} advance(s) disbursed before responsible confirmation.")
+    if unmatched_staff_schools:
+        blockers.append(f"{unmatched_staff_schools} school(s) have unmatched staff — Admin setup required.")
+    if ambiguous_staff_schools:
+        blockers.append(f"{ambiguous_staff_schools} school(s) have ambiguous staff matches — Admin must disambiguate.")
+    if pending_candidates:
+        blockers.append(f"{pending_candidates} staff candidate(s) pending Admin profile setup.")
+    if cceos_without_supervisor:
+        blockers.append(f"{cceos_without_supervisor} CCEO(s) have no PL supervisor — PL team scope is incomplete.")
 
     return {
         "scheduledActivitiesMissingCostLines": missing_cost_lines,
@@ -165,6 +190,10 @@ def _workflow_issues() -> dict:
         "trainingWithoutParticipants": training_no_participants,
         "missingActiveCatalogue": missing_active_catalogue,
         "earlyDisbursement": early_disbursement,
+        "unmatchedStaffSchools": unmatched_staff_schools,
+        "ambiguousStaffSchools": ambiguous_staff_schools,
+        "pendingStaffCandidates": pending_candidates,
+        "cceosWithoutSupervisor": cceos_without_supervisor,
         "clean": len(blockers) == 0,
         "blockers": blockers,
     }
