@@ -90,6 +90,8 @@ urlpatterns = [
     *api("debriefs", "apps.debriefs.urls"),
     # Targets — CD/IA annual commitments.
     *api("targets", "apps.targets.urls"),
+    # Performance — backend-driven staff performance (My/Team/Country/HR targets).
+    *api("performance", "apps.targets.performance_urls"),
     # Reports — saved/generated reports.
     *api("reports", "apps.reports.urls"),
     # Flags — CD→PL flag handoff.

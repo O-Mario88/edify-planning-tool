@@ -326,13 +326,22 @@ class AssignmentAudit(TimeStampedModel):
 
 
 class StaffTargetProfile(TimeStampedModel):
-    """Annual visit/training targets for a staff member."""
+    """Annual targets for a staff member — configurable by CD/HR. Each metric
+    has a target value; 0 means 'not set' for that metric."""
 
     id = CuidField()
     staff = models.ForeignKey(StaffProfile, on_delete=models.CASCADE, related_name="target_profiles")
     fy = models.CharField(max_length=16)
     visits_target = models.IntegerField(default=0)
     trainings_target = models.IntegerField(default=0)
+    # Extended target types for the performance engine.
+    ssa_target = models.IntegerField(default=0)
+    cluster_meetings_target = models.IntegerField(default=0)
+    group_trainings_target = models.IntegerField(default=0)
+    evidence_target = models.IntegerField(default=0)
+    activity_codes_target = models.IntegerField(default=0)
+    ia_verified_target = models.IntegerField(default=0)
+    accountability_target = models.IntegerField(default=0)
 
     class Meta:
         db_table = "staff_target_profile"
