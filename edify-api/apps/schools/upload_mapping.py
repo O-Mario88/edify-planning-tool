@@ -47,8 +47,16 @@ SCHOOL_HEADER_MAP: dict[str, str] = {
     "current partner type": "school_type",
     "partner type": "school_type",
     "school type": "school_type",
-    # Account Owner
+    # Account Owner / Staff Name (preferred column is "Staff Name"; "Account
+    # Owner" kept for backward compatibility). When both exist, Staff Name wins
+    # because build_field_index records the first mapped column for a field.
+    "staff name": "account_owner_name_raw",
+    "staff": "account_owner_name_raw",
+    "ccoe": "account_owner_name_raw",
+    "pl": "account_owner_name_raw",
+    "staff_name": "account_owner_name_raw",
     "account owner": "account_owner_name_raw",
+    "account_owner": "account_owner_name_raw",
     # Enrolment
     "enrolment": "enrollment",
     "enrollment": "enrollment",
@@ -71,13 +79,14 @@ SCHOOL_HEADER_MAP: dict[str, str] = {
 
 SCHOOL_REQUIRED_FIELDS = ("school_id", "name", "district")
 
-# Human-friendly expected headers (for error messages).
+# Human-friendly expected headers (for error messages). "Staff Name" is the
+# preferred owner column; "Account Owner" remains accepted as a fallback.
 SCHOOL_EXPECTED_HEADERS = [
+    "Staff Name",
     "School ID",
     "School Name",
     "District",
     "Current Partner Type",
-    "Account Owner",
     "Enrolment",
     "Last Date of Enrolment",
     "Phone",

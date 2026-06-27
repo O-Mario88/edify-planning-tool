@@ -22,6 +22,7 @@ class SchoolType(models.TextChoices):
 class AccountOwnerStatus(models.TextChoices):
     MATCHED = "matched", "Matched"
     UNMATCHED = "unmatched", "Unmatched"
+    AMBIGUOUS = "ambiguous", "Ambiguous"
     PENDING = "pending", "Pending"
 
 

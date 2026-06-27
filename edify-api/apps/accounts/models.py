@@ -382,6 +382,51 @@ class Report(TimeStampedModel):
         ]
 
 
+class StaffSetupCandidateStatus(models.TextChoices):
+    """Lifecycle of an uploaded staff name that didn't match an existing user."""
+    PENDING_PROFILE = "pending_profile", "Pending Profile"
+    INVITED = "invited", "Invited"
+    ACTIVE = "active", "Active"
+    MERGED = "merged", "Merged"
+    IGNORED = "ignored", "Ignored"
+
+
+class StaffSetupCandidate(TimeStampedModel):
+    """An uploaded staff name that did not match an existing user — Admin's queue
+    to add an email and create/merge the profile.
+
+    One candidate per NORMALIZED name (no duplicates across uploads). When the
+    Admin creates or matches a user, ALL schools whose account_owner_name_raw
+    normalizes to this name are linked to that user via StaffSchoolAssignment and
+    their account_owner_status flips to matched."""
+
+    id = CuidField()
+    full_name = models.CharField(max_length=255)
+    normalized_name = models.CharField(max_length=255, unique=True)
+    source_upload_batch = models.CharField(max_length=30, null=True, blank=True)
+    school_count = models.IntegerField(default=0)
+    sample_school_ids = ArrayField(base_field=models.CharField(max_length=30), default=list, blank=True)
+    suggested_role = models.CharField(max_length=32, null=True, blank=True)  # CCEO | PL if inferable
+    email = models.EmailField(null=True, blank=True)
+    phone = models.CharField(max_length=64, null=True, blank=True)
+    status = models.CharField(
+        max_length=32, choices=StaffSetupCandidateStatus.choices,
+        default=StaffSetupCandidateStatus.PENDING_PROFILE,
+    )
+    matched_user_id = models.CharField(max_length=30, null=True, blank=True)
+
+    class Meta:
+        db_table = "staff_setup_candidate"
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["status"]),
+            models.Index(fields=["normalized_name"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.full_name} ({self.status})"
+
+
 __all__ = [
     "UserStatus",
     "User",
@@ -400,4 +445,6 @@ __all__ = [
     "StaffTargetProfile",
     "Leave",
     "Report",
+    "StaffSetupCandidateStatus",
+    "StaffSetupCandidate",
 ]

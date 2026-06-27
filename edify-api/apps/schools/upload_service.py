@@ -19,6 +19,7 @@ from django.db import transaction
 from apps.core.exceptions import BadRequest
 from apps.core.enums import AccountOwnerStatus
 from apps.geography.models import District
+from apps.accounts.models import StaffSchoolAssignment
 
 from . import upload_mapping as M
 from .models import School, UploadBatch, UploadBatchRowResult
@@ -119,20 +120,39 @@ def _parse_date(value: str) -> date:
     raise ValueError(f"Unrecognized date '{value}'")
 
 
-def _match_account_owner(name: str) -> str | None:
-    """Match a raw owner name to a StaffProfile id (by the linked user's name)."""
-    if not name:
-        return None
-    try:
-        from apps.accounts.models import StaffProfile  # noqa: PLC0415
-    except Exception:  # noqa: BLE001
-        return None
-    sp = (
-        StaffProfile.objects.select_related("user")
-        .filter(user__name__iexact=name.strip(), deleted_at__isnull=True)
-        .first()
+def _match_account_owner(name: str) -> tuple[str | None, str]:
+    """Match a raw staff name via the StaffMatchingService. Returns
+    (staff_profile_id | None, status). Replaces the old single-user iexact match
+    with role-aware matching + ambiguity detection."""
+    from apps.accounts.staff_matching import match as staff_match
+
+    return staff_match(name)
+
+
+def _upsert_staff_candidate(name: str, batch_id: str, school_pk: str) -> None:
+    """Create/update a StaffSetupCandidate for an unmatched/ambiguous staff name.
+    One candidate per normalized name (no duplicates across uploads); each new
+    school increments the count and is appended to the sample list."""
+    from apps.accounts.models import StaffSetupCandidate
+    from apps.accounts.staff_matching import normalize_name
+
+    norm = normalize_name(name)
+    if not norm:
+        return
+    cand, created = StaffSetupCandidate.objects.get_or_create(
+        normalized_name=norm,
+        defaults={"full_name": name.strip(), "source_upload_batch": batch_id},
     )
-    return sp.id if sp else None
+    if created:
+        cand.school_count = 1
+        cand.sample_school_ids = [school_pk]
+    else:
+        cand.school_count = (cand.school_count or 0) + 1
+        sample = list(cand.sample_school_ids or [])
+        if school_pk not in sample:
+            sample.append(school_pk)
+            cand.sample_school_ids = sample[:20]  # cap the sample list
+    cand.save(update_fields=["school_count", "sample_school_ids"])
 
 
 # ── Main entry ───────────────────────────────────────────────────────────────
@@ -164,6 +184,8 @@ def upload_school_file(file, principal, update_existing: bool = False) -> dict:
     )
 
     counts = {"created": 0, "updated": 0, "skipped": 0, "failed": 0, "duplicate": 0}
+    # Staff-ownership matching tallies (for the upload response summary).
+    staff_counts = {"matched": 0, "unmatched": 0, "ambiguous": 0}
     errors: list[dict] = []
     row_results: list[UploadBatchRowResult] = []
 
@@ -248,11 +270,8 @@ def upload_school_file(file, principal, update_existing: bool = False) -> dict:
 
         school_type, _recognized = M.map_school_type(_value(field_index, "school_type", cells))
         owner_raw = _value(field_index, "account_owner_name_raw", cells) or None
-        owner_id = _match_account_owner(owner_raw) if owner_raw else None
-        owner_status = (
-            AccountOwnerStatus.MATCHED if owner_id
-            else (AccountOwnerStatus.UNMATCHED if owner_raw else AccountOwnerStatus.PENDING)
-        )
+        # Role-aware matching: only field-staff (CCEO/PL) users auto-link.
+        owner_id, owner_status = _match_account_owner(owner_raw) if owner_raw else (None, AccountOwnerStatus.PENDING.value)
 
         defaults = {
             "name": name,
@@ -287,18 +306,36 @@ def upload_school_file(file, principal, update_existing: bool = False) -> dict:
                     for k, v in defaults.items():
                         setattr(existing, k, v)
                     existing.save()
+                    saved_school = existing
                     counts["updated"] += 1
                     row_results.append(UploadBatchRowResult(
                         upload_batch=batch, row_number=row_number, school_id=school_id,
                         status="updated", raw_data_json=raw_map,
                     ))
                 else:
-                    School.objects.create(school_id=school_id, **defaults)
+                    saved_school = School.objects.create(school_id=school_id, **defaults)
                     counts["created"] += 1
                     row_results.append(UploadBatchRowResult(
                         upload_batch=batch, row_number=row_number, school_id=school_id,
                         status="created", raw_data_json=raw_map,
                     ))
+
+                # ── Ownership bridge ──────────────────────────────────────────
+                # On MATCHED: write StaffSchoolAssignment so the school enters the
+                # CCEO/PL's planning scope automatically (resolve_user_scope reads
+                # StaffSchoolAssignment, not account_owner_id). On UNMATCHED /
+                # AMBIGUOUS: enqueue a StaffSetupCandidate for Admin to resolve.
+                if owner_status == AccountOwnerStatus.MATCHED.value and owner_id:
+                    StaffSchoolAssignment.objects.get_or_create(
+                        staff_id=owner_id, school_id=saved_school.id,
+                    )
+                    staff_counts["matched"] += 1
+                elif owner_status in (AccountOwnerStatus.UNMATCHED.value, AccountOwnerStatus.AMBIGUOUS.value):
+                    _upsert_staff_candidate(owner_raw, batch.id, saved_school.id)
+                    if owner_status == AccountOwnerStatus.AMBIGUOUS.value:
+                        staff_counts["ambiguous"] += 1
+                    else:
+                        staff_counts["unmatched"] += 1
         except Exception as exc:  # noqa: BLE001 — never let one row break the batch
             msg = f"Could not save row: {exc}"
             counts["failed"] += 1
@@ -329,6 +366,18 @@ def upload_school_file(file, principal, update_existing: bool = False) -> dict:
     batch.save()
 
     message = _build_message(success, counts, total)
+    # Staff-matching summary: which uploaded names matched a field-staff user,
+    # and which need Admin setup. Sourced from the candidates touched this batch
+    # so the response is truthful (no fabricated rows).
+    from apps.accounts.models import StaffSetupCandidate
+
+    pending_candidates = list(
+        StaffSetupCandidate.objects.filter(source_upload_batch=batch.id).exclude(status="ignored")
+    )
+    unmatched_staff = [
+        {"staff_name": c.full_name, "school_count": c.school_count, "status": c.status}
+        for c in pending_candidates
+    ]
     return {
         "success": success,
         "upload_batch_id": batch.id,
@@ -338,6 +387,10 @@ def upload_school_file(file, principal, update_existing: bool = False) -> dict:
         "failed_rows": counts["failed"],
         "duplicate_rows": counts["duplicate"],
         "skipped_rows": counts["skipped"],
+        "matched_staff_count": staff_counts["matched"],
+        "unmatched_staff_count": staff_counts["unmatched"],
+        "ambiguous_staff_count": staff_counts["ambiguous"],
+        "unmatched_staff": unmatched_staff,
         "message": message,
         "errors": errors,
     }

@@ -32,12 +32,20 @@ class SchoolUploadTest(APITestCase):
         self.region = Region.objects.create(name="Northern")
         self.district = District.objects.create(name="Gulu", region=self.region)
         self.ia = User.objects.create_user(
-            email="ia@upload.test", name="Aisha Dar",
+            email="ia@upload.test", name="IA Tester",
             roles=[EdifyRole.IMPACT_ASSESSMENT.value],
             active_role=EdifyRole.IMPACT_ASSESSMENT.value,
             password="x", is_active=True,
         )
-        self.staff = StaffProfile.objects.create(user=self.ia, title="IA")
+        # A field-staff CCEO named "Aisha Dar" — the upload matches a school's
+        # Staff Name to this CCEO (role-aware: only CCEO/PL users auto-link).
+        self.cceo = User.objects.create_user(
+            email="cceo@upload.test", name="Aisha Dar",
+            roles=[EdifyRole.CCEO.value],
+            active_role=EdifyRole.CCEO.value,
+            password="x", is_active=True,
+        )
+        self.staff = StaffProfile.objects.create(user=self.cceo, title="CCEO")
         self._auth(self.ia)
 
     # ── helpers ──────────────────────────────────────────────────────────
