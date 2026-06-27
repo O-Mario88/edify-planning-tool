@@ -1,21 +1,22 @@
-// Mock-data policy — the single switch that decides whether frontend mock data
-// is ever allowed to render. Part of the purge migration (backend-only data).
+// Mock-data policy — LOCKED OFF. The database is the only runtime source of truth.
 //
-// Rule: production NEVER shows mock data. In development it's allowed only when
-// explicitly opted in (NEXT_PUBLIC_USE_MOCK_DATA=true) AND the backend bridge is
-// off. Real pages must not depend on this to invent data — when mock is not
-// allowed they must fetch from the backend and render empty/error states.
+// Mock/demo data has been purged from the app. Every page fetches from the
+// backend/database APIs and renders a real empty state when there are no records
+// (e.g. "No schools uploaded yet."). These functions are retained for backwards
+// compatibility with call sites but are now hard-locked to false so no mock
+// array can ever render in any environment — development included. Local
+// testing data is uploaded into the local DATABASE, never fabricated in code.
 
-/** True when dev database seed may load demo fixtures. */
+/** True when dev database seed may load demo fixtures — now always false. */
 export function isDevSeedAllowed(): boolean {
-  if (process.env.NODE_ENV === "production") return false;
-  return ["1", "true", "yes"].includes((process.env.ENABLE_DEV_SEED ?? process.env.ENABLE_MOCK_DATA ?? "").toLowerCase());
+  // Demo data is uploaded into the local database via the backend import
+  // commands (import_schools_local / import_ssa_local), never fabricated here.
+  return false;
 }
 
-/** True only when mock fallback may render (dev, opt-in, backend off). */
+/** True only when mock fallback may render — now always false. The runtime
+ *  dependency on mock arrays is removed completely. */
 export function isMockAllowed(): boolean {
-  if (process.env.NODE_ENV === "production") return false;
-  if (process.env.NEXT_PUBLIC_USE_MOCK_DATA === "true") return true;
   return false;
 }
 
@@ -24,7 +25,7 @@ export function isBackendOn(): boolean {
   return (process.env.EDIFY_USE_BACKEND ?? "").toLowerCase() === "true";
 }
 
-/** Production safety: mock data disabled, backend on. */
+/** Production safety: backend on (mocks are structurally impossible now). */
 export function isProductionSafe(): boolean {
-  return !isMockAllowed() && isBackendOn();
+  return isBackendOn();
 }
