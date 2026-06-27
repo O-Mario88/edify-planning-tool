@@ -1,10 +1,10 @@
 # Edify Planning & Monitoring Tool — full stack (db + api + web).
 #
-#   cp .env.example .env   # set POSTGRES_PASSWORD + JWT_SECRET
+#   cp .env.example .env   # set POSTGRES_PASSWORD + JWT_SECRET + SUPER_ADMIN_PASSWORD
 #   docker compose up --build
 #
-# The api applies migrations on boot (docker-entrypoint.sh) and waits for a
-# healthy Postgres. Seed once with:  RUN_SEED=true docker compose up api
+# The api (Django + DRF) applies migrations on boot (docker-entrypoint.sh) and
+# waits for a healthy Postgres. Seed once with:  RUN_SEED=true docker compose up api
 
 services:
   db:
@@ -25,6 +25,7 @@ services:
       retries: 10
 
   api:
+    # edify-api is the Django + DRF backend.
     build: ./edify-api
     restart: unless-stopped
     depends_on:
@@ -32,17 +33,24 @@ services:
         condition: service_healthy
     environment:
       NODE_ENV: production
+      DJANGO_SETTINGS_MODULE: config.settings.prod
       PORT: 4000
-      DATABASE_URL: postgresql://${POSTGRES_USER:-edify}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-edify_pm}?schema=public
-      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
-      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-12h}
-      # The web bridge logs role-mapped accounts into the API with this; it MUST
-      # equal the web service's DEMO_LOGIN_PASSWORD or every proxied call 401s.
+      DATABASE_URL: postgresql://${POSTGRES_USER:-edify}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-edify_pm}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env (>=16 chars)}
+      ACCESS_TOKEN_TTL_MINUTES: ${ACCESS_TOKEN_TTL_MINUTES:-15}
+      REFRESH_TOKEN_TTL_DAYS: ${REFRESH_TOKEN_TTL_DAYS:-7}
+      # The demo-role password the seed uses for the seeded accounts. The web
+      # service authenticates users directly against this API, so a user's own
+      # password is used (not this shared demo secret) — this only sets the
+      # seeded demo accounts' initial password.
       DEMO_LOGIN_PASSWORD: ${DEMO_LOGIN_PASSWORD:-edify}
-      # Production safety: real data, no dev endpoints.
+      SUPER_ADMIN_EMAIL: ${SUPER_ADMIN_EMAIL:-domario@edify.org}
+      SUPER_ADMIN_PASSWORD: ${SUPER_ADMIN_PASSWORD:?set SUPER_ADMIN_PASSWORD in .env}
+      # Production safety gates (config/settings/prod.py enforces these).
       ENABLE_MOCK_DATA: "false"
       ENABLE_DEV_ENDPOINTS: "false"
-      ENABLE_SALESFORCE_INTEGRATION: "false"
+      AUTHZ_MODE: enforce
+      ENABLE_BACKGROUND_JOBS: ${ENABLE_BACKGROUND_JOBS:-false}
       # Comma-separated allowed CORS origins (the web app's public URL).
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
       RUN_SEED: ${RUN_SEED:-false}
@@ -72,14 +80,10 @@ services:
       # Always-on super-admin login (the one persistent account).
       SUPER_ADMIN_EMAIL: ${SUPER_ADMIN_EMAIL:-domario@edify.org}
       SUPER_ADMIN_PASSWORD: ${SUPER_ADMIN_PASSWORD:?set SUPER_ADMIN_PASSWORD in .env}
-      # Bridge → edify-api login; MUST equal the api service's DEMO_LOGIN_PASSWORD.
-      DEMO_LOGIN_PASSWORD: ${DEMO_LOGIN_PASSWORD:-edify}
       # Never render frontend mock data in this stack — the API is the source of truth.
       NEXT_PUBLIC_USE_MOCK_DATA: "false"
       # Do NOT set DATABASE_URL here: it flips web into its own Prisma mode (a second,
       # divergent copy of the data). Data is proxied to edify-api. See DEPLOY.md §3.
-    ports:
-      - "${WEB_PORT:-3000}:3000"
 
 volumes:
   edify_pgdata:
