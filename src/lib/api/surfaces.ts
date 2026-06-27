@@ -726,6 +726,56 @@ export function fetchTargetsByPeriod(user: BackendUser, fy?: string, staffId?: s
   return live<BeTargets>(`/targets/time-period${q ? `?${q}` : ""}`, user);
 }
 
+// ── Performance (My/Team/Country/HR targets) ──────────────────────────
+export type BePerfCard = {
+  metric: string; target: number; achieved: number;
+  remaining: number; percentage: number; status: string;
+};
+export type BeMyTargets = {
+  fy: string;
+  metrics: Record<string, number>;
+  cards: Record<string, BePerfCard>;
+  total_planned: number; total_completed: number; completion_rate: number;
+};
+export type BeTeamTargets = {
+  fy: string;
+  teamTotals: Record<string, number>;
+  members: Array<{ staffId: string; name: string; metrics: Record<string, number>; cards: Record<string, BePerfCard>; total_planned: number; total_completed: number; completion_rate: number }>;
+  supervisedCount: number;
+};
+export type BeCountryTargets = {
+  fy: string;
+  countryTotals: Record<string, number>;
+  byRole: Record<string, Record<string, number>>;
+  staffCount: number;
+};
+export type BePerfDrilldown = {
+  metric: string; fy: string; count: number;
+  items: Array<{ id: string; activityType?: string; status?: string; schoolId?: string; schoolName?: string; scheduledDate?: string; evidenceStatus?: string; activityCode?: string; dateOfSsa?: string; averageScore?: number }>;
+};
+
+export function fetchMyTargets(user: BackendUser, fy?: string, period?: string) {
+  const params = new URLSearchParams();
+  if (fy) params.set("fy", fy);
+  if (period) params.set("period", period);
+  const q = params.toString();
+  return live<BeMyTargets>(`/performance/my-targets${q ? `?${q}` : ""}`, user);
+}
+export function fetchTeamTargets(user: BackendUser, fy?: string, period?: string) {
+  const params = new URLSearchParams();
+  if (fy) params.set("fy", fy);
+  if (period) params.set("period", period);
+  const q = params.toString();
+  return live<BeTeamTargets>(`/performance/team-targets${q ? `?${q}` : ""}`, user);
+}
+export function fetchCountryTargets(user: BackendUser, fy?: string, period?: string) {
+  const params = new URLSearchParams();
+  if (fy) params.set("fy", fy);
+  if (period) params.set("period", period);
+  const q = params.toString();
+  return live<BeCountryTargets>(`/performance/country-targets${q ? `?${q}` : ""}`, user);
+}
+
 export type BeWorkflowStep = { key: string; label: string; done: boolean; status: "done" | "current" | "pending" };
 export type BeSchoolWorkflow = {
   school: { schoolId: string; name: string; schoolType: string; owner?: string | null };

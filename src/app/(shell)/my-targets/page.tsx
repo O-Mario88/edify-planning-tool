@@ -4,14 +4,16 @@ import { CplTargetsDesktopView } from "@/components/mobile/desktop-variants/CplT
 import { CommandStack } from "@/components/actions/CommandStack";
 import { StaffPartnerMonitoring } from "@/components/partner/StaffPartnerMonitoring";
 import { TargetsLive } from "@/components/targets/TargetsLive";
+import { MyTargetsPerformanceLive } from "@/components/targets/MyTargetsPerformanceLive";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { getCurrentUser } from "@/lib/auth";
 
 // /my-targets — personal command center.
 //
-//   • CCEO and CountryProgramLead → live target progress (TargetsLive,
-//     fed by real backend target data) + action queue (CommandStack) +
-//     partner-activity monitoring, under the canonical PageHeader.
+//   • CCEO and CountryProgramLead → live target progress. The PerformanceService
+//     cards (backend-driven, every metric) sit above the legacy TargetsLive
+//     visit/training strip, so the CCEO sees real achievement across visits,
+//     trainings, SSA, evidence, IA — not just two target numbers.
 //   • Other roles → CPL-style My Targets view, unchanged.
 export default async function MyTargetsPage() {
   const user = await getCurrentUser();
@@ -26,11 +28,11 @@ export default async function MyTargetsPage() {
         />
         <div className="px-4 sm:px-5 md:px-6 pb-24 md:pb-6 space-y-4">
           <CommandStack user={user} />
-          <TargetsLive title="My target progress" />
-          {/* Partner activity monitoring — the staff's window into
-              every partner activity they assigned, from schedule
-              through evidence to payment. Solves the "lose sight of
-              partner work" problem from the workflow spec. */}
+          {/* Backend-driven performance cards (every metric, strict achievement
+              rules, target status). The central PerformanceService is the source
+              of truth — no mock numbers. */}
+          <MyTargetsPerformanceLive />
+          <TargetsLive title="Visit & training targets" />
           <StaffPartnerMonitoring />
         </div>
       </>
@@ -47,6 +49,7 @@ export default async function MyTargetsPage() {
         />
         <div className="px-4 sm:px-5 md:px-6 pb-24 md:pb-6 space-y-4">
           <CommandStack user={user} />
+          <MyTargetsPerformanceLive />
           <TargetsLive title="My team-lead target progress" />
           <StaffPartnerMonitoring />
         </div>
