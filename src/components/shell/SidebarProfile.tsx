@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { ProfileAvatar } from "@/components/ui/ProfileAvatar";
 import { MenuLink, RoleSwitchButton, ThemeToggle } from "@/components/shell/AvatarMenu";
+import { signOut } from "@/lib/csrf-client";
 import { cn } from "@/lib/utils";
 import { ROLE_LABEL_CONCISE } from "@/lib/role-labels";
 import type { EdifyRole } from "@/lib/auth";
@@ -128,15 +129,14 @@ export function SidebarProfile({
 
           {/* Sign Out */}
           <div className="border-t border-[var(--color-edify-divider)] py-1.5">
-            <form action="/api/auth/logout" method="post">
-              <button
-                type="submit"
-                className="w-full flex items-center gap-3 px-4 py-2 text-body font-semibold text-[#b42318] hover:bg-rose-50/40 dark:hover:bg-rose-500/10"
-              >
-                <LogOut size={14} />
-                Sign Out
-              </button>
-            </form>
+            <button
+              type="button"
+              onClick={() => { close(); void signOut(); }}
+              className="w-full flex items-center gap-3 px-4 py-2 text-body font-semibold text-[#b42318] hover:bg-rose-50/40 dark:hover:bg-rose-500/10"
+            >
+              <LogOut size={14} />
+              Sign Out
+            </button>
           </div>
         </div>
       )}

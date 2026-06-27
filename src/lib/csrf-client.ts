@@ -40,6 +40,22 @@ export type FetchJsonOptions = Omit<RequestInit, "body" | "method"> & {
   body?: unknown; // JSON-serialised automatically
 };
 
+// Sign the current user out. POSTs to /api/auth/logout WITH the CSRF
+// header (a native <form method="post"> can't send headers, so it would
+// 403 with "Missing CSRF token"), then hard-redirects to /login so all
+// client state is cleared. Falls through to the redirect even if the API
+// call fails, so the user is never stranded on a half-signed-out screen.
+export async function signOut(): Promise<void> {
+  try {
+    await fetchJson("/api/auth/logout");
+  } catch {
+    // ignore — we still redirect to /login below
+  }
+  if (typeof window !== "undefined") {
+    window.location.href = "/login";
+  }
+}
+
 export async function fetchJson<T = unknown>(
   url: string,
   opts: FetchJsonOptions = {},

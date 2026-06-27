@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { useShellIdentity } from "@/components/shell/PageTitleContext";
 import { useTheme, type ThemeMode } from "@/components/theme/ThemeProvider";
+import { signOut } from "@/lib/csrf-client";
 import { cn } from "@/lib/utils";
 
 export type AvatarMenuVariant = "default" | "dark";
@@ -118,15 +119,14 @@ export function AvatarMenu({ variant = "default" }: { variant?: AvatarMenuVarian
 
           {/* Sign Out */}
           <div className="border-t border-[var(--color-edify-divider)] py-1.5">
-            <form action="/api/auth/logout" method="post">
-              <button
-                type="submit"
-                className="w-full flex items-center gap-3 px-4 py-2 text-body font-semibold text-[#b42318] hover:bg-rose-50/40 dark:hover:bg-rose-500/10"
-              >
-                <LogOut size={14} />
-                Sign Out
-              </button>
-            </form>
+            <button
+              type="button"
+              onClick={() => { setOpen(false); void signOut(); }}
+              className="w-full flex items-center gap-3 px-4 py-2 text-body font-semibold text-[#b42318] hover:bg-rose-50/40 dark:hover:bg-rose-500/10"
+            >
+              <LogOut size={14} />
+              Sign Out
+            </button>
           </div>
         </div>
       )}
