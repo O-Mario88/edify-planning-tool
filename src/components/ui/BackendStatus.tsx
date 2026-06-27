@@ -12,13 +12,13 @@ export function LiveBadge({ fy, label }: { fy?: string; label?: string }) {
   );
 }
 
-/** Amber pill — backend was enabled but unreachable; the surface fell back to
- *  local data. Renders nothing when there is no error (backend simply off). */
+/** Amber pill — backend is disabled or unreachable; surfaces should render
+ *  honest empty/error states instead of local mock data. */
 export function BackendOfflineBanner({ error }: { error: string | null }) {
   if (!error) return null;
   return (
     <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 text-amber-700 px-2.5 py-1 text-[11px] font-bold border border-amber-200">
-      <CloudOff size={12} /> Backend offline — showing local data ({error})
+      <CloudOff size={12} /> Backend unavailable — showing no local mock data ({error})
     </div>
   );
 }

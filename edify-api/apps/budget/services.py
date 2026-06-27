@@ -14,7 +14,7 @@ from apps.core.exceptions import BadRequest
 from apps.core.fy import get_fy_date_range, get_month_date_range, get_operational_fy
 from apps.core.scoping import resolve_user_scope
 
-from .costing import cost_for_activity
+from .costing import cost_for_activity, resolve_activity_cost
 from .models import CostSetting, CostSettingHistory
 
 
@@ -150,7 +150,7 @@ def from_schedule(principal, query: dict) -> dict:
     total = 0.0
     by_type: dict[str, float] = {}
     for a in qs:
-        cost = cost_for_activity(_activity_to_costable(a), rates)
+        cost = resolve_activity_cost(_activity_to_costable(a), rates, _snapshot_lines(a))
         total += cost.amount
         by_type[a.activity_type] = by_type.get(a.activity_type, 0.0) + cost.amount
     return {
@@ -174,7 +174,7 @@ def weekly(principal, query: dict) -> list[dict]:
     rates = _rate_card()
     out = []
     for a in qs:
-        cost = cost_for_activity(_activity_to_costable(a), rates)
+        cost = resolve_activity_cost(_activity_to_costable(a), rates, _snapshot_lines(a))
         out.append({
             "activityId": a.id,
             "activityType": a.activity_type,
@@ -210,7 +210,7 @@ def board(principal, query: dict) -> dict:
     total = 0.0
     rows = []
     for a in qs:
-        cost = cost_for_activity(_activity_to_costable(a), rates)
+        cost = resolve_activity_cost(_activity_to_costable(a), rates, _snapshot_lines(a))
         total += cost.amount
         rows.append({
             "activityId": a.id,
@@ -232,6 +232,20 @@ def _activity_to_costable(a) -> dict:
         "otherParticipants": a.other_participants,
         "projectId": a.project_id,
     }
+
+
+def _snapshot_lines(a) -> list[dict]:
+    return [
+        {
+            "label": line.label,
+            "costSettingKey": line.cost_setting_key,
+            "unitCost": line.unit_cost,
+            "quantity": line.quantity,
+            "amount": line.amount,
+            "costSettingVersion": line.cost_setting_version,
+        }
+        for line in a.schedule_cost_lines.all()
+    ]
 
 
 __all__ = [

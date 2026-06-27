@@ -192,6 +192,7 @@ export function ScheduleActivityLive({
           ...(effDelivery === "staff" && cceoStaffId ? { responsibleStaffId: cceoStaffId } : {}),
           ...(exactDate ? { scheduledDate: new Date(exactDate + "T09:00:00").toISOString() } : {}),
           ...(!isAssign && isVisit ? { plannedWeek: week } : {}),
+          ...(isTraining || isCluster ? { expectedParticipants: participants } : {}),
         }),
       });
       const j = await res.json();

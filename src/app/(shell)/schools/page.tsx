@@ -48,8 +48,8 @@ const PARTNER_SUGGESTIONS = [
 // Portfolio "at a glance" cells computed from the live backend school list
 // (scoped server-side by the caller's role). Mirrors directoryMetrics, minus the
 // partner-supported cell (the backend directory feed doesn't carry partner
-// assignments yet). When the backend is off/unreachable the page uses the
-// in-memory directoryMetrics instead — same shape, so the strip is identical.
+// assignments yet). When the backend is off/unreachable and mock policy is off,
+// the page renders honest zeros and the directory's empty state.
 // TRUE portfolio aggregates from the backend's server-side counts (full 700-row
 // universe, role-scoped) — NOT derived from the page-capped (<=200) row list.
 // This is the correct source for the unfiltered "at a glance" strip; counting a
@@ -138,11 +138,15 @@ export default async function SchoolsDashboard({
   // the <=200-row page (counting the page made every breakdown wrong, and any
   // district whose schools fell past row 200 was silently under-counted).
   const liveDashboard = await fetchAnalyticsDashboard(me, geo);
+  const mockOk = isMockAllowed();
+  const emptyMetrics = liveDirectoryMetrics([], 0);
   const metrics = liveSchools.live
     ? liveDashboard.live
       ? aggregateDirectoryMetrics(liveDashboard.data)
       : liveDirectoryMetrics(liveRows, liveSchools.total)
-    : mockMetrics;
+    : mockOk
+      ? mockMetrics
+      : emptyMetrics;
   const metricsLive = liveSchools.live;
   const metricsError = liveSchools.live ? null : liveSchools.error;
 
@@ -223,11 +227,14 @@ export default async function SchoolsDashboard({
 
   const clusterOptions: DirectoryClusterOption[] = liveSchools.live
     ? beClusters.map((c) => ({ id: c.id, name: c.name, district: c.district?.name ?? "" }))
-    : activeClusters().map((c) => ({ id: c.id, name: c.name, district: c.district }));
+    : mockOk
+      ? activeClusters().map((c) => ({ id: c.id, name: c.name, district: c.district }))
+      : [];
 
   const directorySchools: DirectorySchoolVM[] = liveSchools.live
     ? liveRows.map(beDirectoryVM)
-    : records.map((s) => {
+    : mockOk
+      ? records.map((s) => {
         const g = recommendClustersFor(s);
         const rec = recommendInterventionsForSchool(s.schoolId);
         const weakAreas = rec.hasSsa
@@ -259,12 +266,12 @@ export default async function SchoolsDashboard({
           primaryContact: s.primaryContact,
           weakAreas,
         };
-      });
+      })
+      : [];
   // The portfolio targets card + planning-review signals derive from in-memory
   // mock (portfolioForStaffId, directoryPlanningSignals over the mock directory),
   // not the live backend. The KPI strip + directory rows above ARE live — gate
   // only these two mock-fed surfaces so production shows neither fabricated.
-  const mockOk = isMockAllowed();
   // Partner/HR cannot assign; everyone else with directory access can (server re-checks).
   const canManageDirectory = ["CCEO", "CountryProgramLead", "ImpactAssessment", "Admin"]
     .includes(currentUser.role);

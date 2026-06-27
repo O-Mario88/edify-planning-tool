@@ -7,7 +7,10 @@ any signal that local-test data has leaked into a production deployment.
 """
 from __future__ import annotations
 
+import os
+
 from django.conf import settings
+from django.db.models import Count
 
 from apps.core.models import DataSource
 from apps.schools.models import School
@@ -26,6 +29,7 @@ def report() -> dict:
         "planningReady": schools.filter(planning_readiness="ready").count(),
     }
     data["mockDataLeakage"] = _mock_leakage()
+    data["workflowIssues"] = _workflow_issues()
     return data
 
 
@@ -59,6 +63,38 @@ def _mock_leakage() -> dict:
         "flags": flags,
         "violations": violations,
         "clean": len(violations) == 0,
+    }
+
+
+def _workflow_issues() -> dict:
+    """Detect data/workflow conditions that make a demo or approval chain unsafe."""
+    from apps.activities.models import Activity
+    from apps.evidence.models import EvidenceRecord
+
+    active = Activity.objects.filter(deleted_at__isnull=True)
+    scheduled = active.exclude(status__in=["not_planned", "cancelled", "deferred", "rejected"])
+    missing_cost_lines = scheduled.annotate(cost_line_count=Count("schedule_cost_lines")).filter(cost_line_count=0).count()
+    missing_rates = scheduled.filter(cost_missing=True).count()
+
+    missing_evidence_files = 0
+    for evidence in EvidenceRecord.objects.filter(quarantined=False).only("uri"):
+        if not os.path.exists(os.path.join(settings.EVIDENCE_STORAGE_DIR, evidence.uri)):
+            missing_evidence_files += 1
+
+    blockers = []
+    if missing_cost_lines:
+        blockers.append(f"{missing_cost_lines} scheduled activities have no persisted cost lines.")
+    if missing_rates:
+        blockers.append(f"{missing_rates} scheduled activities are missing cost rates.")
+    if missing_evidence_files:
+        blockers.append(f"{missing_evidence_files} evidence records point to missing files.")
+
+    return {
+        "scheduledActivitiesMissingCostLines": missing_cost_lines,
+        "scheduledActivitiesMissingRates": missing_rates,
+        "evidenceFilesMissingOnDisk": missing_evidence_files,
+        "clean": len(blockers) == 0,
+        "blockers": blockers,
     }
 
 

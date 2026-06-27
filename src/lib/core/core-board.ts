@@ -7,6 +7,7 @@ import type { EdifyRole } from "@/lib/auth-public";
 import { isBackendEnabled } from "@/lib/api/backend";
 import { fetchCorePlans } from "@/lib/api/surfaces";
 import type { BackendUser } from "@/lib/api/backend";
+import { isMockAllowed } from "@/lib/mock-policy";
 import { directoryRecords } from "@/lib/school-directory/directory";
 import { intakeSchools } from "@/lib/intake/intake-mock";
 import {
@@ -55,6 +56,7 @@ export async function resolveCoreBoardData(user: BackendUser, staffId: string, r
     if (r.live && Array.isArray(r.data)) return r.data as CorePlanCardVM[];
     return [];
   }
+  if (!isMockAllowed()) return [];
   return coreBoardData(staffId, role);
 }
 

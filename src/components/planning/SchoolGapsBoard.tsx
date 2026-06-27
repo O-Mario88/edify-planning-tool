@@ -55,6 +55,7 @@ import { PlanningEmptyState } from "@/components/planning/PlanningEmptyState";
 import { RISK_TONE } from "@/lib/planning/status-tokens";
 import { useActiveFilters } from "@/hooks/use-active-filters";
 import { applyGeographyScope } from "@/lib/filters/apply-filters";
+import { isMockAllowed } from "@/lib/mock-policy";
 
 /**
  * Translate a SchoolGap into the unified ScheduleActivityDrawer's
@@ -202,14 +203,13 @@ export function SchoolGapsBoard({
   // Cluster filter — narrows every bucket to one cluster ("" = all clusters).
   const [clusterFilter, setClusterFilter] = useState<string>("");
 
-  // Header filters → data: extraGaps arrive already geo-scoped server-side,
-  // but the static seed merges in client-side — scope it here too so the
-  // bucket counts obey the header geography selection (district + derived
-  // region; the seed carries no filter-space cluster id or planning date).
+  // Header filters → data: extraGaps arrive already geo-scoped server-side.
+  // Static seed gaps are allowed only when the global mock policy explicitly
+  // permits mock runtime data; otherwise an empty backend returns an empty board.
   const selection = useActiveFilters();
   const seedGaps = useMemo(
     () =>
-      liveGaps
+      liveGaps || !isMockAllowed()
         ? []
         : applyGeographyScope(schoolGaps, selection, { district: (g) => g.district }),
     [liveGaps, selection],

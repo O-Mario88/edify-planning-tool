@@ -79,7 +79,7 @@ AccountView = _action_view(services.submit_accountability, VIEW)
 
 class AccountApproveView(APIView):
     permission_classes = [IsAuthenticated, RequirePermissions]
-    required_permissions = APPROVE
+    required_permissions = PAYMENT
 
     def post(self, request: Request, request_id: str) -> Response:
         return Response(services.review_accountability(request_id, "approve", request.data, request.user))
@@ -87,7 +87,7 @@ class AccountApproveView(APIView):
 
 class AccountReturnView(APIView):
     permission_classes = [IsAuthenticated, RequirePermissions]
-    required_permissions = APPROVE
+    required_permissions = PAYMENT
 
     def post(self, request: Request, request_id: str) -> Response:
         return Response(services.review_accountability(request_id, "return", request.data, request.user))

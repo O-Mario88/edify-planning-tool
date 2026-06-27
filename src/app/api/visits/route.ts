@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUserOrNull } from "@/lib/auth";
 import { backendFetch, isBackendEnabled } from "@/lib/api/backend";
 import type { BeActivity, BePaginated } from "@/lib/api/surfaces";
 
@@ -40,7 +40,10 @@ export type VisitRow = {
 };
 
 export async function GET() {
-  const user = await getCurrentUser();
+  const user = await getCurrentUserOrNull();
+  if (!user) {
+    return NextResponse.json({ live: false, error: "Authentication required" }, { status: 401 });
+  }
   if (!isBackendEnabled()) {
     return NextResponse.json({ live: false, error: null });
   }

@@ -17,7 +17,7 @@ from django.utils import timezone
 
 from apps.activities.models import Activity
 from apps.core.enums import EvidenceKind, EvidenceStatus
-from apps.core.exceptions import BadRequest, NotFoundError
+from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.scoping import resolve_user_scope
 
 from .models import EvidenceRecord
@@ -25,6 +25,21 @@ from .validation import assert_safe_upload
 
 
 VALID_KINDS = {k.value for k in EvidenceKind}
+
+
+def _assert_activity_in_scope(activity: Activity, principal) -> None:
+    scope = resolve_user_scope(principal)
+    if scope.country_scope:
+        return
+    if scope.staff_ids and activity.responsible_staff_id in scope.staff_ids:
+        return
+    if scope.partner_ids and activity.assigned_partner_id in scope.partner_ids:
+        return
+    if scope.school_ids and activity.school_id in scope.school_ids:
+        return
+    if scope.cluster_ids and activity.cluster_id in scope.cluster_ids:
+        return
+    raise Forbidden("Activity outside your scope.")
 
 
 def evidence_dir() -> str:
@@ -42,6 +57,7 @@ def record_upload(*, principal, activity_id: str, kind: str, file_obj) -> dict:
     activity = Activity.objects.filter(id=activity_id, deleted_at__isnull=True).first()
     if not activity:
         raise NotFoundError("Activity not found")
+    _assert_activity_in_scope(activity, principal)
 
     original_name = getattr(file_obj, "name", "upload")
     mime_type = getattr(file_obj, "content_type", "") or ""
@@ -96,6 +112,7 @@ def list_for_activity(activity_id: str, principal) -> list[dict]:
     activity = Activity.objects.filter(id=activity_id, deleted_at__isnull=True).first()
     if not activity:
         raise NotFoundError("Activity not found.")
+    _assert_activity_in_scope(activity, principal)
     qs = EvidenceRecord.objects.filter(activity=activity).exclude(quarantined=True)
     return [_serialize(e) for e in qs]
 
@@ -105,6 +122,7 @@ def file_for(record_id: str, principal, *, download: bool = False):
     record = EvidenceRecord.objects.filter(id=record_id).first()
     if not record:
         raise NotFoundError("Evidence not found.")
+    _assert_activity_in_scope(record.activity, principal)
     if record.quarantined:
         raise BadRequest("This file has been quarantined and cannot be viewed.")
     path = os.path.join(evidence_dir(), record.uri)
@@ -126,6 +144,7 @@ def review(record_id: str, data: dict, principal) -> dict:
     record = EvidenceRecord.objects.filter(id=record_id).first()
     if not record:
         raise NotFoundError("Evidence not found.")
+    _assert_activity_in_scope(record.activity, principal)
     action = data.get("action")
     if action == "accept":
         record.status = "accepted"
@@ -148,6 +167,7 @@ def prepare_inline_view(record_id: str, principal) -> dict:
     record = EvidenceRecord.objects.filter(id=record_id).first()
     if not record:
         raise NotFoundError("Evidence not found.")
+    _assert_activity_in_scope(record.activity, principal)
     if record.preview_status == "ready":
         return {"previewStatus": "ready", "viewKind": _view_kind(record)}
     if record.file_extension not in (".docx", ".doc"):
@@ -198,6 +218,7 @@ def rendition_for(record_id: str, principal):
     record = EvidenceRecord.objects.filter(id=record_id).first()
     if not record or not record.pdf_rendition_storage_key:
         raise NotFoundError("PDF rendition not available.")
+    _assert_activity_in_scope(record.activity, principal)
     path = os.path.join(evidence_dir(), record.pdf_rendition_storage_key)
     if not os.path.exists(path):
         raise NotFoundError("Rendition file not found.")

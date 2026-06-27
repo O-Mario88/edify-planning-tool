@@ -22,7 +22,7 @@ from apps.core.fy import get_operational_fy, get_quarter_for_date
 from apps.core.scoping import resolve_user_scope
 from apps.schools.models import School
 
-from .models import Activity, ActivityCompletionVerification
+from .models import Activity, ActivityCompletionVerification, ActivityScheduleCostLine
 from .salesforce import is_valid_salesforce_id
 
 
@@ -104,6 +104,18 @@ def _assert_in_scope(activity: Activity, principal) -> None:
     raise Forbidden("Activity outside your scope.")
 
 
+def _assert_target_in_scope(*, school: School | None, cluster_id: str | None, principal) -> None:
+    """Validate create-time targets before an Activity exists."""
+    scope = resolve_user_scope(principal)
+    if scope.country_scope:
+        return
+    if school and scope.school_ids and school.id in scope.school_ids:
+        return
+    if cluster_id and scope.cluster_ids and cluster_id in scope.cluster_ids:
+        return
+    raise Forbidden("Activity target outside your scope.")
+
+
 def _get_in_scope(activity_id: str, principal) -> Activity:
     a = Activity.objects.filter(id=activity_id, deleted_at__isnull=True).first()
     if not a:
@@ -141,6 +153,44 @@ def _serialize(a: Activity) -> dict:
     }
 
 
+def _apply_schedule_cost_snapshot(activity: Activity, data: dict) -> None:
+    """Persist schedule-time cost lines from the CD-owned rate card."""
+    from apps.budget.costing import cost_for_activity
+    from apps.budget.models import CostSetting
+
+    settings_by_key = {c.key: c for c in CostSetting.objects.all()}
+    rates = {key: setting.unit_cost for key, setting in settings_by_key.items()}
+    cost = cost_for_activity(
+        {
+            "activityType": activity.activity_type,
+            "deliveryType": activity.delivery_type,
+            "teachersAttended": data.get("teachersAttended"),
+            "leadersAttended": data.get("leadersAttended"),
+            "otherParticipants": data.get("otherParticipants"),
+            "expectedParticipants": data.get("expectedParticipants"),
+            "districtType": data.get("districtType"),
+            "nights": data.get("nights"),
+            "projectId": activity.project_id,
+        },
+        rates,
+    )
+    ActivityScheduleCostLine.objects.bulk_create([
+        ActivityScheduleCostLine(
+            activity=activity,
+            cost_setting_key=line.key,
+            label=line.label,
+            unit_cost=0 if line.unit is None else int(line.unit),
+            quantity=line.qty,
+            amount=int(line.amount),
+            cost_setting_version=settings_by_key[line.key].version if line.key in settings_by_key else 0,
+        )
+        for line in cost.lines
+    ])
+    activity.est_cost_cents = int(cost.amount)
+    activity.cost_missing = cost.cost_missing
+    activity.save(update_fields=["est_cost_cents", "cost_missing", "updated_at"])
+
+
 # ── Create ───────────────────────────────────────────────────────────────────
 def create(data: dict, principal) -> dict:
     """Create + schedule an activity (SSA gate, cluster-type rules, FY-derivation)."""
@@ -160,6 +210,7 @@ def create(data: dict, principal) -> dict:
             )
     if not school and not cluster_id:
         raise BadRequest("Activity must reference a school or cluster")
+    _assert_target_in_scope(school=school, cluster_id=cluster_id, principal=principal)
     if activity_type in CLUSTER_ONLY_TYPES and not cluster_id:
         raise BadRequest("Trainings and cluster meetings must be scheduled through a cluster, not on an individual school.")
     if school and not cluster_id and activity_type not in SCHOOL_VISIT_TYPES:
@@ -194,6 +245,7 @@ def create(data: dict, principal) -> dict:
         status=status,
         salesforce_activity_type=sf_kind(activity_type),
     )
+    _apply_schedule_cost_snapshot(activity, data)
     return _serialize(activity)
 
 

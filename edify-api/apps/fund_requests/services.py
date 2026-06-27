@@ -1,10 +1,14 @@
 """Fund-requests service — submit/approve/disburse + accountability."""
 from __future__ import annotations
 
+import re
+
+from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from apps.activities.models import Activity
-from apps.budget.costing import cost_for_activity
+from apps.budget.costing import resolve_activity_cost
 from apps.budget.models import CostSetting
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.fy import get_operational_fy
@@ -18,32 +22,75 @@ def submit(data: dict, principal) -> dict:
     blocked if any activity is cost-missing."""
     fy = data.get("fy") or get_operational_fy()
     period = data.get("period", "monthly")
-    period_key = data.get("periodKey") or fy
+    period_key = data.get("periodKey") or _period_key(fy, period, data)
     scope = resolve_user_scope(principal)
     qs = Activity.objects.filter(deleted_at__isnull=True, fy=fy)
     if scope.staff_ids:
         qs = qs.filter(responsible_staff_id__in=scope.staff_ids)
+    qs = _filter_period(qs, period, period_key, data)
     rates = {c.key: c.unit_cost for c in CostSetting.objects.all()}
     total = 0.0
     cost_missing = False
+    request_items: list[tuple[Activity, object]] = []
     for a in qs:
-        cost = cost_for_activity(_to_costable(a), rates)
+        cost = resolve_activity_cost(_to_costable(a), rates, _snapshot_lines(a))
         if cost.cost_missing:
             cost_missing = True
         total += cost.amount
+        request_items.extend((a, line) for line in a.schedule_cost_lines.all())
     if cost_missing:
         raise BadRequest("Cannot submit — one or more activities are missing a cost rate.")
 
     lens = "country" if scope.country_scope else ("team" if scope.can_view_team else "own")
-    fr, created = FundRequest.objects.update_or_create(
-        submitted_by_user_id=principal.user_id, period=period, period_key=period_key,
-        defaults={
-            "fy": fy, "scope": lens, "submitted_by_role": principal.active_role,
-            "total_amount": total, "activity_count": qs.count(),
-            "status": FundRequestStatus.SUBMITTED,
-        },
-    )
+    with transaction.atomic():
+        fr, created = FundRequest.objects.update_or_create(
+            submitted_by_user_id=principal.user_id, period=period, period_key=period_key,
+            defaults={
+                "fy": fy, "scope": lens, "submitted_by_role": principal.active_role,
+                "total_amount": total, "activity_count": qs.count(),
+                "status": FundRequestStatus.SUBMITTED,
+            },
+        )
+        fr.items.all().delete()
+        FundRequestItem.objects.bulk_create([
+            FundRequestItem(
+                fund_request=fr,
+                activity_id=activity.id,
+                activity_schedule_cost_line_id=line.id,
+                amount=line.amount,
+                period=period,
+                period_key=period_key,
+            )
+            for activity, line in request_items
+        ])
     return _serialize(fr)
+
+
+def _period_key(fy: str, period: str, data: dict) -> str:
+    if period == FundRequestPeriod.MONTHLY:
+        month = data.get("month")
+        return f"{fy}-M{int(month)}" if month else fy
+    if period == FundRequestPeriod.QUARTERLY and data.get("quarter"):
+        return f"{fy}-{data['quarter']}"
+    return fy
+
+
+def _filter_period(qs, period: str, period_key: str, data: dict):
+    if period == FundRequestPeriod.MONTHLY:
+        month = data.get("month")
+        if not month:
+            match = re.search(r"-M(\d+)$", period_key or "")
+            month = int(match.group(1)) if match else None
+        if month:
+            qs = qs.filter(planned_month=int(month))
+    elif period == FundRequestPeriod.QUARTERLY:
+        quarter = data.get("quarter")
+        if not quarter:
+            match = re.search(r"-(Q[1-4])$", period_key or "")
+            quarter = match.group(1) if match else None
+        if quarter:
+            qs = qs.filter(quarter=quarter)
+    return qs
 
 
 def list_requests(query: dict, principal) -> list[dict]:
@@ -54,7 +101,15 @@ def list_requests(query: dict, principal) -> list[dict]:
     if query.get("status"):
         qs = qs.filter(status=query["status"])
     if not scope.country_scope and scope.staff_ids:
-        qs = qs.filter(submitted_by_user_id=principal.user_id)
+        q = Q(submitted_by_user_id=principal.user_id)
+        if scope.supervised_staff_ids:
+            from apps.accounts.models import StaffProfile
+
+            supervised_user_ids = StaffProfile.objects.filter(
+                id__in=scope.supervised_staff_ids,
+            ).values_list("user_id", flat=True)
+            q |= Q(submitted_by_user_id__in=supervised_user_ids)
+        qs = qs.filter(q)
     return [_serialize(fr) for fr in qs]
 
 
@@ -146,7 +201,22 @@ def _to_costable(a: Activity) -> dict:
         "activityType": a.activity_type, "deliveryType": a.delivery_type,
         "teachersAttended": a.teachers_attended, "leadersAttended": a.leaders_attended,
         "otherParticipants": a.other_participants, "projectId": a.project_id,
+        "estCostCents": a.est_cost_cents, "costMissing": a.cost_missing,
     }
+
+
+def _snapshot_lines(a: Activity) -> list[dict]:
+    return [
+        {
+            "label": line.label,
+            "costSettingKey": line.cost_setting_key,
+            "unitCost": line.unit_cost,
+            "quantity": line.quantity,
+            "amount": line.amount,
+            "costSettingVersion": line.cost_setting_version,
+        }
+        for line in a.schedule_cost_lines.all()
+    ]
 
 
 def _serialize(fr: FundRequest) -> dict:

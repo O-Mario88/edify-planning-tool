@@ -54,10 +54,11 @@ export async function PlanningToolPage({
   const assigned = assignedGapIds();
   const mockGaps = scopeGapsToViewer(onboardedSchoolGaps(), user.staffId, user.role)
     .filter((g) => !assigned.has(g.id));
+  const mockOk = isMockAllowed();
   const onboardedGaps =
     backendGaps !== null
       ? backendGaps
-      : isMockAllowed()
+      : mockOk
         ? applyGeographyScope(mockGaps, selection, { district: (g) => g.district })
         : [];
   const liveGaps = backendGaps !== null;
@@ -73,7 +74,7 @@ export async function PlanningToolPage({
   const backendClGaps = clusterFetch.gaps;
   const clusterLoadError = clusterFetch.error;
   const clusterGaps = applyGeographyScope(
-    backendClGaps ?? (isMockAllowed() ? engineClusterGaps() : []),
+    backendClGaps ?? (mockOk ? engineClusterGaps() : []),
     selection,
     { district: (c) => c.district },
   );
@@ -82,15 +83,19 @@ export async function PlanningToolPage({
   // Project follow-up gaps, scoped like the directory: CCEO/PL see their
   // portfolio/team schools; broader roles see all in-scope project schools.
   const scoped: Set<string> | "all" =
-    user.role === "CCEO" || user.role === "CountryProgramLead"
+    !mockOk
+      ? new Set<string>()
+      : user.role === "CCEO" || user.role === "CountryProgramLead"
       ? new Set(directoryRecords(user.staffId, user.role).map((s) => s.schoolId))
       : "all";
   // ProjectGapItem carries district only (no cluster id, no date) — scope each
   // category's items so the section counts obey the header filters too.
-  const projectGaps = computeProjectPlanningGaps(toCurrentUser(user), scoped).map((cat) => ({
-    ...cat,
-    items: applyGeographyScope(cat.items, selection, { district: (i) => i.district }),
-  }));
+  const projectGaps = mockOk
+    ? computeProjectPlanningGaps(toCurrentUser(user), scoped).map((cat) => ({
+        ...cat,
+        items: applyGeographyScope(cat.items, selection, { district: (i) => i.district }),
+      }))
+    : [];
 
   // Core Schools tab — backend plans when the bridge is live.
   const coreCardsRaw = await resolveCoreBoardData(
@@ -112,7 +117,9 @@ export async function PlanningToolPage({
   };
   const canChampion = ["ImpactAssessment", "CountryProgramLead", "Admin"].includes(user.role);
   // CoreOwnershipRow carries no geography (schoolId/slot only) — left unscoped.
-  const coreOwnership = coreOwnershipRows(user.staffId, user.role);
+  const coreOwnership = mockOk
+    ? coreOwnershipRows(user.staffId, user.role)
+    : { assignedToMe: [], assignedToPartner: [], awaitingPartner: [], plannedThisMonth: [] };
 
   // CCEO-only recommendation-led summary (spec §9): the SAME scoped gap data
   // the boards below consume, folded into 8 expandable categories. Built here
