@@ -32,14 +32,46 @@ export NODE_ENV=development
 export PORT=4000
 
 python manage.py migrate
-python manage.py seed --mock --reset     # permissions + 700 schools + demo data
+python manage.py seed                    # REFERENCE DATA ONLY (permissions). Safe on every deploy.
+# Local development only — demo accounts + sample data (refuses production):
+python manage.py seed --demo             # demo users + geography + 700 schools/SSA/partners
 python manage.py runserver               # or: daphne -b 0.0.0.0 -p 4000 config.asgi:application
 ```
+
+> **CORE RULE: the database is the only runtime source of truth.** Production
+> must never contain demo/mock data. `seed` alone seeds only the RBAC permission
+> matrix; `seed --demo` is local-only and refuses to run in production. Real
+> operational data arrives through backend upload/admin workflows.
+
+## Data source of truth — local vs production
+
+**Local development:**
+```bash
+# Upload test data into the LOCAL database (never fabricated in code):
+python manage.py seed --demo                # demo accounts + sample schools/SSA (local only)
+python manage.py import_schools_local schools.csv    # CSV → School rows (tagged source=local_test_upload)
+python manage.py import_ssa_local ssa.csv            # CSV → SSA records; updates readiness
+python manage.py purge_local_test_data --yes         # remove local-test records (keeps reference data)
+python manage.py audit_mock_data                    # scan for mock/demo leakage
+```
+
+**Production:**
+- Deploys with **reference data only** (permissions). No demo schools/users/SSA.
+- The dev-only commands (`seed --demo`, `import_*_local`, `purge_local_test_data`)
+  **refuse to run in production**.
+- Real data is uploaded through the backend API / admin / `ALLOW_PRODUCTION_IMPORTS`
+  workflows after deployment.
+- Production gates (`config/settings/prod.py`) fail-closed if `ENABLE_MOCK_DATA`,
+  `ENABLE_DEV_SEED`, `ENABLE_DEV_IMPORTS`, or `PARTNER_ROLE_BRIDGE` are on.
+
 
 The API is served at `http://localhost:4000/api` (global `/api` prefix, matching
 the legacy contract). OpenAPI docs at `/api/docs` (non-production).
 
-## Demo accounts (shared `DEMO_LOGIN_PASSWORD`, default `edify`)
+## Demo accounts (local development only — shared `DEMO_LOGIN_PASSWORD`, default `edify`)
+
+Created by `seed --demo` (refuses production). Production creates real users
+through the admin user-management workflow.
 
 | Email | Role |
 |---|---|

@@ -45,3 +45,22 @@ next-env.d.ts
 
 # evidence storage (runtime; seed writes sample files here)
 /uploads
+
+# ── Local test data must NEVER be committed ──────────────────────────────────
+# Local DB files / dumps
+*.sqlite3
+*.db
+*.dump
+*.sql.gz
+# Local media / evidence uploads
+edify-api/media/
+edify-api/uploads/
+# Local import files (CSV/XLSX used for local-test uploads)
+/imports/
+/edify-api/imports/
+*.local.csv
+*.local.xlsx
+# Dev seed output / local generated data
+/seed-output/
+# Test evidence uploads
+/test-uploads/

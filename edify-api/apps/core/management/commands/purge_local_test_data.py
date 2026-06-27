@@ -57,13 +57,16 @@ class Command(BaseCommand):
             )
 
         # Count first so the summary is honest + the confirmation is informed.
+        # Only models that actually carry the `source` field are purgeable.
         counts = {}
         for path in OPERATIONAL_MODELS:
             try:
                 model = _load(path)
+                if "source" not in {f.name for f in model._meta.get_fields()}:
+                    continue
                 counts[path] = model.objects.filter(source=DataSource.LOCAL_TEST_UPLOAD.value).count()
-            except Exception:  # noqa: BLE001 — model may not be installed yet
-                counts[path] = 0
+            except Exception:  # noqa: BLE001 — model/app may not be installed
+                continue
         total = sum(counts.values())
 
         if total == 0:
@@ -82,11 +85,11 @@ class Command(BaseCommand):
                 return
 
         deleted = 0
-        for path in OPERATIONAL_MODELS:
+        for path in counts:
             try:
                 model = _load(path)
                 qs = model.objects.filter(source=DataSource.LOCAL_TEST_UPLOAD.value)
-                _, n = qs.delete() if hasattr(qs, "delete") else (0, 0)
+                qs.delete()
                 deleted += counts[path]
             except Exception as exc:  # noqa: BLE001
                 self.stderr.write(f"  could not purge {path}: {exc}")
