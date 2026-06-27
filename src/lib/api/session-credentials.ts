@@ -16,7 +16,23 @@
 // (recordCredentials / credentialsFor / clearCredentials) stays the same.
 import "server-only";
 
-const store = new Map<string, { email: string; password: string; at: number }>();
+// IMPORTANT: pin the store to globalThis.
+//
+// In a Next.js production build, this module is bundled SEPARATELY into the
+// route-handler graph (/api/* — including /api/auth/login) and the RSC/server-
+// component graph (the pages). A plain module-level `new Map()` therefore yields
+// TWO independent instances: login records credentials in the route-handler copy,
+// but server components read an empty RSC copy → every page-level backendFetch
+// fails with "No backend session" and falls back to empty data, even though the
+// /api/* proxies work. Anchoring the Map on globalThis gives all bundles ONE
+// shared instance. (In dev the module graph is shared, so this is a no-op there.)
+type CredEntry = { email: string; password: string; at: number };
+const globalForCreds = globalThis as unknown as {
+  __edifySessionCredentials?: Map<string, CredEntry>;
+};
+const store: Map<string, CredEntry> =
+  globalForCreds.__edifySessionCredentials ?? new Map<string, CredEntry>();
+globalForCreds.__edifySessionCredentials = store;
 
 const MAX_AGE_MS = 1000 * 60 * 60 * 12; // 12h — matches the session cookie maxAge.
 

@@ -143,10 +143,27 @@ function gateAdmin(u: DemoUser | null): DemoUser | null {
 // roster); in that case we synthesize a DemoUser from the (signed) cookie so the
 // rest of the app keeps working. The cookie signature is verified when signing
 // is active, so the synthesized identity can't be forged.
+// next/headers `cookies()` returns the RAW (percent-encoded) cookie value in the
+// Node runtime, whereas the Edge middleware's NextRequest.cookies decodes it. The
+// session signature is computed over the DECODED identity (login signs the plain
+// email), and the credential store / DEMO_USERS map are keyed by the plain email
+// too. So we must decode here before verifying or looking up — otherwise an
+// email's "@" arrives as "%40", the HMAC never matches (signed sessions are
+// rejected → pages crash with UNAUTHENTICATED) and the encoded key misses the
+// credential store (proxies fall back to "no session" → empty data).
+function decodeCookieValue(v: string | undefined): string | undefined {
+  if (v == null) return v;
+  try {
+    return decodeURIComponent(v);
+  } catch {
+    return v;
+  }
+}
+
 export async function getCurrentUserOrNull(): Promise<DemoUser | null> {
   const jar = await cookies();
-  const rawEmail = jar.get("edify-email")?.value;
-  const rawRole = jar.get("edify-role")?.value;
+  const rawEmail = decodeCookieValue(jar.get("edify-email")?.value);
+  const rawRole = decodeCookieValue(jar.get("edify-role")?.value);
   const sig = jar.get(SESSION_SIG_COOKIE)?.value;
   // Reject a tampered / forged identity when signing is active (production with
   // EDIFY_SESSION_SECRET set). Without a valid HMAC over (email, role) the
