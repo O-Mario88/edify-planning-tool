@@ -6,13 +6,14 @@ NestJS controller declaration order.
 """
 from django.urls import path
 
-from . import views
+from . import upload_views, views
 
 urlpatterns = [
     # Static segments first.
     path("", views.SchoolListCreateView.as_view(), name="list"),
     path("proposals", views.SchoolProposalsView.as_view(), name="proposals"),
     path("bulk", views.SchoolBulkUploadView.as_view(), name="bulk"),
+    path("upload", upload_views.SchoolFileUploadView.as_view(), name="upload"),
     # Then the parametrized routes.
     path("<str:school_id>", views.SchoolDetailView.as_view(), name="detail"),
     path("<str:school_id>/workflow", views.SchoolWorkflowView.as_view(), name="workflow"),

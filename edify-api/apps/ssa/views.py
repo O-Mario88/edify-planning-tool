@@ -1,10 +1,13 @@
 """SSA endpoints — /api/ssa/*."""
 from __future__ import annotations
 
+from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from apps.core.exceptions import BadRequest
 
 from apps.core.pagination import EdifyPagination
 from apps.core.permissions import RequirePermissions
@@ -82,3 +85,20 @@ class SsaUploadView(APIView):
 
     def post(self, request: Request) -> Response:
         return Response(services.upload(request.data, request.user), status=201)
+
+
+class SsaFileUploadView(APIView):
+    """POST /api/ssa/upload — multipart SSA file (CSV / XLSX), field `file`."""
+
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = UPLOAD
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request: Request) -> Response:
+        from .upload_service import upload_ssa_file
+
+        file = request.FILES.get("file")
+        if file is None:
+            raise BadRequest("A file is required (multipart field 'file').")
+        result = upload_ssa_file(file, request.user)
+        return Response(result, status=200 if result["success"] else 422)

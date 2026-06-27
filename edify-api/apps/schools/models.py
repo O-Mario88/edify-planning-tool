@@ -71,6 +71,8 @@ class School(SoftDeleteModel):
     primary_contact_name = models.CharField(max_length=255, null=True, blank=True)
     primary_contact_phone = models.CharField(max_length=64, null=True, blank=True)
     enrollment = models.IntegerField(null=True, blank=True)
+    # Date the enrolment figure was last captured (from the onboarding upload).
+    last_enrollment_date = models.DateField(null=True, blank=True)
 
     school_type = models.CharField(
         max_length=32, choices=SchoolType.choices, default=SchoolType.CLIENT
@@ -125,7 +127,19 @@ class School(SoftDeleteModel):
 
 
 class UploadBatch(TimeStampedModel):
-    """A batch of school uploads (manual / csv / future: salesforce)."""
+    """A batch of uploads (schools / SSA; manual / csv / xlsx / future: salesforce).
+
+    The original `row_count / accepted_count / flagged_count` columns are kept for
+    back-compat with the legacy `POST /schools/bulk` flow; the file-upload endpoint
+    additionally populates the truthful created/updated/skipped/failed/duplicate
+    breakdown + per-row results (UploadBatchRowResult)."""
+
+    UPLOAD_TYPES = (("schools", "Schools"), ("ssa", "SSA"))
+    STATUSES = (
+        ("completed", "Completed"),
+        ("completed_with_errors", "Completed with errors"),
+        ("failed", "Failed"),
+    )
 
     id = CuidField()
     source = models.CharField(max_length=64, default="manual")
@@ -135,9 +149,48 @@ class UploadBatch(TimeStampedModel):
     accepted_count = models.IntegerField(default=0)
     flagged_count = models.IntegerField(default=0)
 
+    # Truthful file-upload breakdown.
+    upload_type = models.CharField(max_length=16, choices=UPLOAD_TYPES, default="schools")
+    original_file_name = models.CharField(max_length=512, null=True, blank=True)
+    total_rows = models.IntegerField(default=0)
+    created_rows = models.IntegerField(default=0)
+    updated_rows = models.IntegerField(default=0)
+    skipped_rows = models.IntegerField(default=0)
+    failed_rows = models.IntegerField(default=0)
+    duplicate_rows = models.IntegerField(default=0)
+    status = models.CharField(max_length=32, choices=STATUSES, default="completed")
+    error_summary = models.TextField(null=True, blank=True)
+
     class Meta:
         db_table = "upload_batch"
         ordering = ["-created_at"]
+
+
+class UploadBatchRowResult(TimeStampedModel):
+    """One row outcome within an UploadBatch — the per-row audit trail."""
+
+    STATUSES = (
+        ("created", "Created"),
+        ("updated", "Updated"),
+        ("skipped", "Skipped"),
+        ("failed", "Failed"),
+        ("duplicate", "Duplicate"),
+    )
+
+    id = CuidField()
+    upload_batch = models.ForeignKey(
+        UploadBatch, on_delete=models.CASCADE, related_name="row_results"
+    )
+    row_number = models.IntegerField()
+    school_id = models.CharField(max_length=128, null=True, blank=True)
+    status = models.CharField(max_length=16, choices=STATUSES)
+    error_message = models.TextField(null=True, blank=True)
+    raw_data_json = models.JSONField(null=True, blank=True)
+
+    class Meta:
+        db_table = "upload_batch_row_result"
+        ordering = ["upload_batch", "row_number"]
+        indexes = [models.Index(fields=["upload_batch"]), models.Index(fields=["status"])]
 
 
 class SchoolAccountOwnerUploadMap(TimeStampedModel):
@@ -197,6 +250,7 @@ class SchoolEnrollmentHistory(TimeStampedModel):
 __all__ = [
     "School",
     "UploadBatch",
+    "UploadBatchRowResult",
     "SchoolAccountOwnerUploadMap",
     "SchoolDuplicateCandidate",
     "SchoolEnrollmentHistory",

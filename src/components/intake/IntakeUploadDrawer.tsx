@@ -18,6 +18,8 @@ import { cn } from "@/lib/utils";
 import { type IntakeTemplate, type TemplateField, requiredColumns } from "@/lib/intake/intake-templates";
 import { validateIntakeValues, mapIntakeCsv, type IntakeCsvResult } from "@/lib/intake/intake-validate";
 import { submitIntakeRecords } from "@/lib/actions/intake-actions";
+import { uploadSsaFile, type UploadSummary } from "@/lib/intake/upload-client";
+import { UploadSummaryCard } from "./UploadSummaryCard";
 import type { IntakeSchoolLite } from "./IaIntakeActions";
 
 export function IntakeUploadDrawer({
@@ -43,6 +45,9 @@ export function IntakeUploadDrawer({
   const fileRef = useRef<HTMLInputElement>(null);
   const [csvText, setCsvText] = useState("");
   const [csvName, setCsvName] = useState<string | null>(null);
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [uploadResult, setUploadResult] = useState<UploadSummary | null>(null);
+  const isSsa = template?.id === "tpl-ssa-performance";
 
   const idSet = useMemo(() => new Set(existingIds), [existingIds]);
   const parsed: IntakeCsvResult | null = useMemo(
@@ -57,7 +62,7 @@ export function IntakeUploadDrawer({
   }
 
   function reset() {
-    setValues({}); setErrors({}); setCsvText(""); setCsvName(null);
+    setValues({}); setErrors({}); setCsvText(""); setCsvName(null); setCsvFile(null); setUploadResult(null);
     if (fileRef.current) fileRef.current.value = "";
   }
 
@@ -82,12 +87,32 @@ export function IntakeUploadDrawer({
     const f = e.target.files?.[0];
     if (!f) return;
     setCsvName(f.name);
+    setCsvFile(f);
+    setUploadResult(null);
     f.text().then(setCsvText);
   }
 
   function submitCsv() {
-    if (!template || !parsed || parsed.validCount === 0) return;
+    if (!template) return;
     setServerMsg(null);
+
+    // SSA-by-CSV posts the RAW file to the backend (the single source of truth):
+    // Django validates + saves each row and reports the truthful breakdown.
+    if (isSsa) {
+      const file = csvFile
+        ?? (csvText.trim() ? new File([csvText], csvName ?? "ssa.csv", { type: "text/csv" }) : null);
+      if (!file) return;
+      setUploadResult(null);
+      start(async () => {
+        const res = await uploadSsaFile(file);
+        if (!res.ok) { setServerMsg(res.error); return; }
+        setUploadResult(res.summary);
+        router.refresh();
+      });
+      return;
+    }
+
+    if (!parsed || parsed.validCount === 0) return;
     const rows = parsed.rows.filter((r) => r.valid).map((r) => r.values);
     start(async () => {
       const res = await submitIntakeRecords(template.id, rows);
@@ -100,7 +125,10 @@ export function IntakeUploadDrawer({
     });
   }
 
-  const canSubmit = mode === "manual" ? !pending : !pending && (parsed?.validCount ?? 0) > 0;
+  const hasUploadSource = !!csvFile || csvText.trim().length > 0;
+  const canSubmit = mode === "manual"
+    ? !pending
+    : !pending && (isSsa ? hasUploadSource : (parsed?.validCount ?? 0) > 0);
   const csvHref = `/api/templates/${template.id}/csv`;
 
   return (
@@ -122,7 +150,7 @@ export function IntakeUploadDrawer({
               </Button>
             ) : (
               <Button variant="primary" size="sm" onClick={submitCsv} disabled={!canSubmit} Icon={FileUp}>
-                {pending ? "Importing…" : `Import ${parsed?.validCount ?? 0} record${(parsed?.validCount ?? 0) === 1 ? "" : "s"}`}
+                {pending ? "Uploading…" : isSsa ? "Upload SSA file" : `Import ${parsed?.validCount ?? 0} record${(parsed?.validCount ?? 0) === 1 ? "" : "s"}`}
               </Button>
             )}
           </div>
@@ -151,7 +179,9 @@ export function IntakeUploadDrawer({
       ) : (
         <CsvPanel
           template={template} fileRef={fileRef} csvName={csvName} csvText={csvText}
-          parsed={parsed} csvHref={csvHref} onPickFile={onPickFile} onPasteText={setCsvText}
+          parsed={parsed} csvHref={csvHref} uploadResult={uploadResult} isSsa={isSsa}
+          onPickFile={onPickFile}
+          onPasteText={(v) => { setCsvText(v); setCsvFile(null); setUploadResult(null); }}
         />
       )}
     </Modal>
@@ -202,7 +232,7 @@ function ManualField({
 }
 
 function CsvPanel({
-  template, fileRef, csvName, csvText, parsed, csvHref, onPickFile, onPasteText,
+  template, fileRef, csvName, csvText, parsed, csvHref, uploadResult, isSsa, onPickFile, onPasteText,
 }: {
   template: IntakeTemplate;
   fileRef: React.RefObject<HTMLInputElement | null>;
@@ -210,19 +240,24 @@ function CsvPanel({
   csvText: string;
   parsed: IntakeCsvResult | null;
   csvHref: string;
+  uploadResult: UploadSummary | null;
+  isSsa: boolean;
   onPickFile: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onPasteText: (v: string) => void;
 }) {
   return (
     <div className="space-y-3">
+      {/* Truthful, backend-reported result (SSA file upload). */}
+      {uploadResult && <UploadSummaryCard summary={uploadResult} fileName={csvName} />}
+
       <div className="rounded-lg border border-dashed border-[var(--color-edify-divider)] p-4 text-center">
         <FileUp size={20} className="mx-auto text-[var(--color-edify-muted)]" />
-        <p className="text-[12px] font-extrabold mt-1.5">Upload the {template.name} CSV</p>
+        <p className="text-[12px] font-extrabold mt-1.5">Upload the {template.name} {isSsa ? "CSV or XLSX" : "CSV"}</p>
         <p className="text-[11px] muted">
           {template.schoolLinked ? "Each row must carry a School ID for an onboarded school." : "Use the template headers."}
         </p>
         <div className="flex items-center justify-center gap-2 mt-2.5">
-          <input ref={fileRef} type="file" accept=".csv,text/csv" className="hidden" onChange={onPickFile} />
+          <input ref={fileRef} type="file" accept={isSsa ? ".csv,text/csv,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" : ".csv,text/csv"} className="hidden" onChange={onPickFile} />
           <Button variant="secondary" size="sm" Icon={FileUp} onClick={() => fileRef.current?.click()}>
             {csvName ? "Choose another file" : "Choose CSV file"}
           </Button>

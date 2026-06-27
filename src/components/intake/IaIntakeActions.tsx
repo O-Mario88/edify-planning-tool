@@ -30,7 +30,9 @@ import {
 import { ID_FORMATS } from "@/lib/intake/id-formats";
 import { mapSchoolCsv, type SchoolCsvResult } from "@/lib/intake/school-csv";
 import { getIntakeTemplate } from "@/lib/intake/intake-templates";
-import { createSchool, createSchoolsBulk, uploadSsaPerformance, updateSchoolDetails } from "@/lib/actions/intake-actions";
+import { createSchool, uploadSsaPerformance, updateSchoolDetails } from "@/lib/actions/intake-actions";
+import { uploadSchoolFile, type UploadSummary } from "@/lib/intake/upload-client";
+import { UploadSummaryCard } from "./UploadSummaryCard";
 import { IntakeUploadDrawer } from "./IntakeUploadDrawer";
 
 type UploadKind = { id: string; name: string; sub: string };
@@ -211,6 +213,9 @@ function NewSchoolDrawer({ open, onClose, existingIds, initialMode = "manual" }:
   const fileRef = useRef<HTMLInputElement>(null);
   const [csvText, setCsvText] = useState("");
   const [csvName, setCsvName] = useState<string | null>(null);
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [updateExisting, setUpdateExisting] = useState(false);
+  const [uploadResult, setUploadResult] = useState<UploadSummary | null>(null);
   const parsed: SchoolCsvResult | null = useMemo(
     () => (csvText.trim() ? mapSchoolCsv(csvText, new Set(existingIds)) : null),
     [csvText, existingIds],
@@ -265,28 +270,38 @@ function NewSchoolDrawer({ open, onClose, existingIds, initialMode = "manual" }:
     const f = e.target.files?.[0];
     if (!f) return;
     setCsvName(f.name);
+    setCsvFile(f);
+    setUploadResult(null);
     f.text().then(setCsvText);
   }
 
+  // Submit the RAW file to the backend (the single source of truth). The backend
+  // parses, validates, and SAVES the rows in Postgres, then reports the truthful
+  // breakdown — no client-side mock fallback. The preview above is informational.
   function submitCsv() {
-    if (!parsed || parsed.validCount === 0) return;
     setServerMsg(null);
-    const valid = parsed.rows.filter((r) => r.valid).map((r) => r.input);
+    setUploadResult(null);
+    // Prefer the picked file; otherwise build one from pasted CSV text.
+    const file = csvFile
+      ?? (csvText.trim() ? new File([csvText], csvName ?? "schools.csv", { type: "text/csv" }) : null);
+    if (!file) return;
     start(async () => {
-      const res = await createSchoolsBulk(valid);
-      if (res.ok) {
-        setServerMsg(`Imported ${res.created} school${res.created === 1 ? "" : "s"}${res.failed.length ? `, ${res.failed.length} skipped` : ""}.`);
-        setCsvText(""); setCsvName(null);
-        if (fileRef.current) fileRef.current.value = "";
-        router.refresh();
-        setTimeout(onClose, 1200);
-      } else {
-        setServerMsg("You don't have permission to add schools.");
+      const res = await uploadSchoolFile(file, updateExisting);
+      if (!res.ok) {
+        setServerMsg(res.error);
+        return;
+      }
+      setUploadResult(res.summary);
+      // Refetch the directory + intake surfaces so the uploaded rows show live.
+      router.refresh();
+      if (res.summary.success) {
+        setServerMsg(null);
       }
     });
   }
 
-  const canSubmit = mode === "manual" ? !pending : !pending && (parsed?.validCount ?? 0) > 0;
+  const hasUploadSource = !!csvFile || csvText.trim().length > 0;
+  const canSubmit = mode === "manual" ? !pending : !pending && hasUploadSource;
 
   return (
     <Modal
@@ -307,7 +322,7 @@ function NewSchoolDrawer({ open, onClose, existingIds, initialMode = "manual" }:
               </Button>
             ) : (
               <Button variant="primary" size="sm" onClick={submitCsv} disabled={!canSubmit} Icon={FileUp}>
-                {pending ? "Importing…" : `Import ${parsed?.validCount ?? 0} school${(parsed?.validCount ?? 0) === 1 ? "" : "s"}`}
+                {pending ? "Uploading…" : "Upload to directory"}
               </Button>
             )}
           </div>
@@ -386,8 +401,11 @@ function NewSchoolDrawer({ open, onClose, existingIds, initialMode = "manual" }:
           csvName={csvName}
           csvText={csvText}
           parsed={parsed}
+          uploadResult={uploadResult}
+          updateExisting={updateExisting}
+          onToggleUpdateExisting={setUpdateExisting}
           onPickFile={onPickFile}
-          onPasteText={setCsvText}
+          onPasteText={(v) => { setCsvText(v); setCsvFile(null); setUploadResult(null); }}
         />
       )}
     </Modal>
@@ -395,28 +413,34 @@ function NewSchoolDrawer({ open, onClose, existingIds, initialMode = "manual" }:
 }
 
 function CsvUploadPanel({
-  fileRef, csvName, csvText, parsed, onPickFile, onPasteText,
+  fileRef, csvName, csvText, parsed, uploadResult, updateExisting, onToggleUpdateExisting, onPickFile, onPasteText,
 }: {
   fileRef: React.RefObject<HTMLInputElement | null>;
   csvName: string | null;
   csvText: string;
   parsed: SchoolCsvResult | null;
+  uploadResult: UploadSummary | null;
+  updateExisting: boolean;
+  onToggleUpdateExisting: (v: boolean) => void;
   onPickFile: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onPasteText: (v: string) => void;
 }) {
   return (
     <div className="space-y-3">
+      {/* Truthful, backend-reported result (shown after upload). */}
+      {uploadResult && <UploadSummaryCard summary={uploadResult} fileName={csvName} />}
+
       <div className="rounded-lg border border-dashed border-[var(--color-edify-divider)] p-4 text-center">
         <FileUp size={20} className="mx-auto text-[var(--color-edify-muted)]" />
-        <p className="text-[12px] font-extrabold mt-1.5">Upload the School Onboarding CSV</p>
+        <p className="text-[12px] font-extrabold mt-1.5">Upload the School Onboarding CSV or XLSX</p>
         <p className="text-[11px] muted">
-          Required columns: <span className="font-extrabold text-[var(--color-edify-text)]">School ID, School Name, District, Current Partner Type</span>.
-          Owner, enrolment, contact &amp; address are optional — leave blank if unknown. School ID must be {ID_FORMATS.school.hint}.
+          Required columns: <span className="font-extrabold text-[var(--color-edify-text)]">School ID, School Name, District</span>.
+          Partner Type, owner, enrolment, contact &amp; address are optional — leave blank if unknown. School ID must be {ID_FORMATS.school.hint}.
         </p>
         <div className="flex items-center justify-center gap-2 mt-2.5">
-          <input ref={fileRef} type="file" accept=".csv,text/csv" className="hidden" onChange={onPickFile} />
+          <input ref={fileRef} type="file" accept=".csv,text/csv,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className="hidden" onChange={onPickFile} />
           <Button variant="secondary" size="sm" Icon={FileUp} onClick={() => fileRef.current?.click()}>
-            {csvName ? "Choose another file" : "Choose CSV file"}
+            {csvName ? "Choose another file" : "Choose CSV / XLSX file"}
           </Button>
           <a href="/api/templates/tpl-school-onboarding/csv"
             className="inline-flex items-center gap-1 text-[11.5px] font-semibold text-[var(--color-edify-primary)] hover:underline">
@@ -425,6 +449,11 @@ function CsvUploadPanel({
         </div>
         {csvName && <p className="text-[11px] muted mt-2">{csvName}</p>}
       </div>
+
+      <label className="flex items-center gap-2 text-[11.5px] font-semibold text-[var(--color-edify-text)]">
+        <input type="checkbox" checked={updateExisting} onChange={(e) => onToggleUpdateExisting(e.target.checked)} />
+        Update existing schools (overwrite rows whose School ID already exists)
+      </label>
 
       <details className="text-[11.5px]">
         <summary className="cursor-pointer font-semibold text-[var(--color-edify-muted)]">…or paste CSV rows</summary>

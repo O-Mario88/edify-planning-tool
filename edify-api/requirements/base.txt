@@ -32,5 +32,8 @@ cryptography==44.0.0
 # Image / file validation for evidence uploads.
 Pillow==11.0.0
 
+# XLSX parsing for school / SSA spreadsheet uploads.
+openpyxl==3.1.5
+
 # Date utilities (FY math, scheduler cadence).
 python-dateutil==2.9.0.post0

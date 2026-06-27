@@ -56,6 +56,8 @@ urlpatterns = [
     *api("geography", "apps.geography.urls"),
     # Schools — the source-of-truth directory.
     *api("schools", "apps.schools.urls"),
+    # Upload batches — file-upload audit (schools + SSA).
+    *api("uploads", "apps.schools.upload_urls"),
     # Clusters — school grouping by sub-county.
     *api("clusters", "apps.clusters.urls"),
     # SSA — School Self-Assessment.

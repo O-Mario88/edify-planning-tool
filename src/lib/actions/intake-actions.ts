@@ -150,8 +150,14 @@ export async function createSchool(input: NewSchoolInput): Promise<IntakeResult>
     }
     // Backend authoritative: do NOT mirror into the in-memory store — it would
     // silently substitute fabricated data if the backend later diverges. The
-    // live directory is the single source of truth.
-    revalidatePath("/data-intake");
+    // live directory is the single source of truth. Revalidate the directory
+    // (and the analytics surfaces it feeds) so the new school shows live.
+    try {
+      revalidatePath("/schools");
+      revalidatePath("/data-intake");
+      revalidatePath("/dashboards/impact");
+      revalidatePath("/analytics");
+    } catch { /* outside request */ }
     return { ok: true, id: input.schoolId.trim() };
   }
 
@@ -711,6 +717,10 @@ export async function changeSchoolType(schoolId: string, label: string): Promise
 
 function revalidateIntakeSurfaces(schoolId?: string) {
   try {
+    // The School Directory is the source of truth — always refresh it after an
+    // intake mutation so uploaded/updated rows show live (previously /schools was
+    // never revalidated here, leaving the directory stale after an upload).
+    revalidatePath("/schools");
     revalidatePath("/data-intake");
     revalidatePath("/data-intake/upload");
     revalidatePath("/data-intake/queue");
