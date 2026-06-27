@@ -137,8 +137,9 @@ def from_schedule(principal, query: dict) -> dict:
 
     Sums the persisted ActivityScheduleCostLine amounts (the authoritative
     schedule-time snapshot) with a single prefetch — no per-activity line query.
-    Activities flagged cost-missing still contribute their snapshot total so the
-    number matches what a fund request would raise; the UI marks them blocked."""
+    Returns the full contract the frontend monthly/quarterly/FY budget views need:
+    per-month totals + counts (every activity type: visits, training, cluster
+    meetings), per-type, per-delivery, and cost-missing counts."""
     from apps.activities.models import Activity
 
     fy = query.get("fy") or get_operational_fy()
@@ -153,21 +154,103 @@ def from_schedule(principal, query: dict) -> dict:
             qs = qs.none()
     activities = list(qs.prefetch_related("schedule_cost_lines"))
 
+    MONTH_LABELS = {1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr", 5: "May", 6: "Jun",
+                     7: "Jul", 8: "Aug", 9: "Sep", 10: "Oct", 11: "Nov", 12: "Dec"}
+
     total = 0
+    scheduled_total = 0
+    cost_missing_count = 0
+    unscheduled_count = 0
+    unscheduled_amount = 0
     by_type: dict[str, int] = {}
+    by_type_count: dict[str, int] = {}
+    by_month_amount: dict[int, int] = {}
+    by_month_count: dict[int, int] = {}
+    by_month_trainings: dict[int, int] = {}
+    staff_amount = staff_count = 0
+    partner_amount = partner_count = 0
+
+    TRAINING_TYPES = {"training", "school_improvement_training", "cluster_training", "core_training", "cluster_meeting"}
+
     for a in activities:
         amount = sum(line.amount for line in a.schedule_cost_lines.all())
         # Fall back to the stored estimate if no lines were ever snapshotted.
         if not amount and a.est_cost_cents:
             amount = a.est_cost_cents
         total += amount
+        if a.cost_missing:
+            cost_missing_count += 1
+        if not a.scheduled_date:
+            unscheduled_count += 1
+            unscheduled_amount += amount
+        else:
+            scheduled_total += amount
+        # By activity type.
         by_type[a.activity_type] = by_type.get(a.activity_type, 0) + amount
+        by_type_count[a.activity_type] = by_type_count.get(a.activity_type, 0) + 1
+        # By month (1-12 calendar month). Only activities with a planned month
+        # roll into a month bucket; an activity with no planned_month is unscheduled.
+        if a.planned_month:
+            by_month_amount[a.planned_month] = by_month_amount.get(a.planned_month, 0) + amount
+            by_month_count[a.planned_month] = by_month_count.get(a.planned_month, 0) + 1
+            if a.activity_type in TRAINING_TYPES:
+                by_month_trainings[a.planned_month] = by_month_trainings.get(a.planned_month, 0) + 1
+        # By delivery.
+        if a.delivery_type == "partner":
+            partner_amount += amount
+            partner_count += 1
+        else:
+            staff_amount += amount
+            staff_count += 1
+
+    by_month = [
+        {
+            "month": m,
+            "label": MONTH_LABELS.get(m, str(m)),
+            "amount": by_month_amount.get(m, 0),
+            "count": by_month_count.get(m, 0),
+            "trainings": by_month_trainings.get(m, 0),
+        }
+        for m in range(1, 13)
+        if by_month_count.get(m, 0) > 0
+    ]
+    by_type_list = [
+        {"type": t, "amount": amt, "count": by_type_count.get(t, 0)}
+        for t, amt in by_type.items()
+    ]
+
     return {
         "fy": fy,
+        "role": scope.active_role,
+        "scope": "country" if scope.country_scope else ("team" if scope.can_view_team else "own"),
         "total": total,
+        "scheduledTotal": scheduled_total,
         "activityCount": len(activities),
-        "byActivityType": by_type,
+        "costMissingCount": cost_missing_count,
+        "unscheduledCount": unscheduled_count,
+        "unscheduledAmount": unscheduled_amount,
+        "byMonth": by_month,
+        "byQuarter": _by_quarter_from_activities(activities),
+        "byType": by_type_list,
+        "byActivityType": by_type,  # legacy field kept for older consumers
+        "byDelivery": {
+            "staff": {"amount": staff_amount, "count": staff_count},
+            "partner": {"amount": partner_amount, "count": partner_count},
+        },
+        "avgMonthlyCost": round(total / 12) if total else 0,
     }
+
+
+def _by_quarter_from_activities(activities) -> list[dict]:
+    """Per-quarter amount + count across all activity types."""
+    amt: dict[str, int] = {}
+    cnt: dict[str, int] = {}
+    for a in activities:
+        amount = sum(line.amount for line in a.schedule_cost_lines.all()) or a.est_cost_cents
+        q = a.quarter
+        amt[q] = amt.get(q, 0) + amount
+        cnt[q] = cnt.get(q, 0) + 1
+    return [{"quarter": q, "amount": amt.get(q, 0), "count": cnt.get(q, 0)} for q in ("Q1", "Q2", "Q3", "Q4") if cnt.get(q, 0)]
 
 
 def weekly(principal, query: dict) -> list[dict]:
