@@ -119,7 +119,7 @@ class UploadWiringTest(TestCase):
         school.current_fy_ssa_status = "done"
         school.save(update_fields=["current_fy_ssa_status"])
         record = ssa_upload(
-            {"schoolId": "UPL-3", "dateOfSsa": "2026-05-15",
+            {"schoolId": "UPL-3", "dateOfSsa": "2026-05-15T09:00:00+03:00",
              "scores": [
                  {"intervention": "teaching_and_learning", "score": 7},
                  {"intervention": "financial_health", "score": 6},

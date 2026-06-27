@@ -46,7 +46,10 @@ def my_partner(principal) -> dict:
 
 
 def my_activities(principal) -> list[dict]:
-    """The partner's work queue (assigned activities)."""
+    """The partner's work queue — only activities where the partner still has a
+    pending action (assigned, scheduled, or mid-completion). Once the activity is
+    submitted for PL/IA review or reaches a terminal state it leaves the partner's
+    queue: their part is done and the handoff has moved on."""
     from apps.activities.models import Activity
     from apps.activities.services import _serialize as serialize_activity
 
@@ -55,7 +58,13 @@ def my_activities(principal) -> list[dict]:
         return []
     qs = Activity.objects.filter(
         assigned_partner_id__in=partner_ids, deleted_at__isnull=True
-    ).exclude(status__in=["completed", "cancelled", "rejected"])
+    ).exclude(status__in=[
+        # Terminal states.
+        "completed", "cancelled", "rejected", "deferred",
+        # Handed off past the partner — PL review / IA verification / payment.
+        "submitted_to_pl", "awaiting_ia_verification", "ia_verified",
+        "accountant_confirmed",
+    ])
     return [serialize_activity(a) for a in qs.select_related("school")]
 
 
