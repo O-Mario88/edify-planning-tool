@@ -133,7 +133,12 @@ def cost_preview(data: dict, principal) -> dict:
 
 # ── Schedule-derived budget ──────────────────────────────────────────────────
 def from_schedule(principal, query: dict) -> dict:
-    """Annual budget derived from the caller's scheduled activities."""
+    """Annual budget derived from the caller's scheduled activities.
+
+    Sums the persisted ActivityScheduleCostLine amounts (the authoritative
+    schedule-time snapshot) with a single prefetch — no per-activity line query.
+    Activities flagged cost-missing still contribute their snapshot total so the
+    number matches what a fund request would raise; the UI marks them blocked."""
     from apps.activities.models import Activity
 
     fy = query.get("fy") or get_operational_fy()
@@ -146,23 +151,28 @@ def from_schedule(principal, query: dict) -> dict:
             qs = qs.filter(assigned_partner_id__in=scope.partner_ids)
         else:
             qs = qs.none()
-    rates = _rate_card()
-    total = 0.0
-    by_type: dict[str, float] = {}
-    for a in qs:
-        cost = resolve_activity_cost(_activity_to_costable(a), rates, _snapshot_lines(a))
-        total += cost.amount
-        by_type[a.activity_type] = by_type.get(a.activity_type, 0.0) + cost.amount
+    activities = list(qs.prefetch_related("schedule_cost_lines"))
+
+    total = 0
+    by_type: dict[str, int] = {}
+    for a in activities:
+        amount = sum(line.amount for line in a.schedule_cost_lines.all())
+        # Fall back to the stored estimate if no lines were ever snapshotted.
+        if not amount and a.est_cost_cents:
+            amount = a.est_cost_cents
+        total += amount
+        by_type[a.activity_type] = by_type.get(a.activity_type, 0) + amount
     return {
         "fy": fy,
         "total": total,
-        "activityCount": qs.count(),
+        "activityCount": len(activities),
         "byActivityType": by_type,
     }
 
 
 def weekly(principal, query: dict) -> list[dict]:
-    """Weekly fund-request line items for a month."""
+    """Weekly fund-request line items for a month. Sums the persisted schedule
+    cost lines (prefetched) instead of re-deriving per activity."""
     from apps.activities.models import Activity
 
     fy = query.get("fy") or get_operational_fy()
@@ -171,16 +181,17 @@ def weekly(principal, query: dict) -> list[dict]:
     qs = Activity.objects.filter(deleted_at__isnull=True, fy=fy, planned_month=month)
     if not scope.country_scope and scope.staff_ids:
         qs = qs.filter(responsible_staff_id__in=scope.staff_ids)
-    rates = _rate_card()
     out = []
-    for a in qs:
-        cost = resolve_activity_cost(_activity_to_costable(a), rates, _snapshot_lines(a))
+    for a in qs.prefetch_related("schedule_cost_lines"):
+        amount = sum(line.amount for line in a.schedule_cost_lines.all())
+        if not amount and a.est_cost_cents:
+            amount = a.est_cost_cents
         out.append({
             "activityId": a.id,
             "activityType": a.activity_type,
             "week": a.planned_week or 1,
-            "amount": cost.amount,
-            "costMissing": cost.cost_missing,
+            "amount": amount,
+            "costMissing": a.cost_missing,
         })
     return out
 

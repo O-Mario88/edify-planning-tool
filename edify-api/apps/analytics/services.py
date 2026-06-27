@@ -23,18 +23,30 @@ def _scoped_schools(principal):
 
 
 def dashboard_summary(principal, query: dict) -> dict:
+    """One conditional-aggregation query instead of 9 separate COUNTs — a single
+    pass over the scoped school set returns every breakdown the dashboard strip
+    needs. With 1,000 schools this turns 9 scans into 1."""
     schools, scope = _scoped_schools(principal)
     fy = query.get("fy") or get_operational_fy()
+    agg = schools.aggregate(
+        total=Count("id"),
+        core=Count("id", filter=Q(school_type="core")),
+        champion=Count("id", filter=Q(school_type="champion")),
+        client=Count("id", filter=Q(school_type="client")),
+        ssa_done=Count("id", filter=Q(current_fy_ssa_status="done")),
+        clustered=Count("id", filter=Q(cluster_status="clustered")),
+        planning_ready=Count("id", filter=Q(planning_readiness="ready")),
+    )
     return {
         "fy": fy,
-        "schoolsTotal": schools.count(),
-        "coreSchools": schools.filter(school_type="core").count(),
-        "championSchools": schools.filter(school_type="champion").count(),
-        "clientSchools": schools.filter(school_type="client").count(),
-        "ssaDone": schools.filter(current_fy_ssa_status="done").count(),
-        "ssaMissing": schools.exclude(current_fy_ssa_status="done").count(),
-        "clustered": schools.filter(cluster_status="clustered").count(),
-        "planningReady": schools.filter(planning_readiness="ready").count(),
+        "schoolsTotal": agg["total"],
+        "coreSchools": agg["core"],
+        "championSchools": agg["champion"],
+        "clientSchools": agg["client"],
+        "ssaDone": agg["ssa_done"],
+        "ssaMissing": (agg["total"] or 0) - (agg["ssa_done"] or 0),
+        "clustered": agg["clustered"],
+        "planningReady": agg["planning_ready"],
         "countryScope": scope.country_scope,
         "summaryOnly": scope.can_view_summary_only,
     }

@@ -7,6 +7,12 @@ from apps.core.scoping import resolve_user_scope
 
 
 def get(principal, query: dict) -> dict:
+    """The caller's own plan feed. `period` narrows the window:
+      • week    → planned_week (and optional month) in the FY
+      • month   → planned_month in the FY
+      • quarter → quarter in the FY
+      • fy      → the whole fiscal year (no period narrowing)
+    The scope (own staff id / partner id) is enforced first; period only narrows."""
     period = query.get("period", "month")
     fy = query.get("fy") or get_operational_fy()
     scope = resolve_user_scope(principal)
@@ -18,6 +24,20 @@ def get(principal, query: dict) -> dict:
     else:
         qs = qs.none()
 
+    # Period narrowing (fy = no narrowing).
+    if period == "week":
+        if query.get("week"):
+            qs = qs.filter(planned_week=int(query["week"]))
+        if query.get("month"):
+            qs = qs.filter(planned_month=int(query["month"]))
+    elif period == "month":
+        if query.get("month"):
+            qs = qs.filter(planned_month=int(query["month"]))
+    elif period == "quarter":
+        if query.get("quarter"):
+            qs = qs.filter(quarter=query["quarter"])
+    # period == "fy" (or unknown) → whole fiscal year.
+
     items = [
         {
             "id": a.id,
@@ -25,8 +45,13 @@ def get(principal, query: dict) -> dict:
             "status": a.status,
             "scheduledDate": a.scheduled_date.isoformat() if a.scheduled_date else None,
             "schoolId": a.school.school_id if a.school_id else None,
+            "schoolName": a.school.name if a.school_id else None,
             "month": a.planned_month,
             "week": a.planned_week,
+            "quarter": a.quarter,
+            "costCents": a.est_cost_cents,
+            "costMissing": a.cost_missing,
+            "evidenceStatus": a.evidence_status,
         }
         for a in qs.select_related("school").order_by("planned_month", "planned_week")
     ]

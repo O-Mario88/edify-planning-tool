@@ -120,6 +120,12 @@ class School(SoftDeleteModel):
             models.Index(fields=["district"]),
             models.Index(fields=["cluster_id"]),
             models.Index(fields=["school_type"]),
+            # Directory filter-bar + dashboard conditional-COUNT fields.
+            models.Index(fields=["cluster_status"], name="school_cluster_st_idx"),
+            models.Index(fields=["current_fy_ssa_status"], name="school_ssa_status_idx"),
+            models.Index(fields=["planning_readiness"], name="school_plan_ready_idx"),
+            models.Index(fields=["account_owner_status"], name="school_owner_st_idx"),
+            models.Index(fields=["duplicate_status"], name="school_dup_status_idx"),
         ]
 
     def __str__(self) -> str:

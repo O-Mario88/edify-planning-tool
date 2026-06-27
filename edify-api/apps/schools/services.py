@@ -60,13 +60,15 @@ def _build_q(query: dict, scope) -> Q:
 
 
 def list_schools(query: dict, principal):
-    """Scope-constrained, paginated school list. Returns (queryset,)."""
+    """Scope-constrained, paginated school list. Eager-loads the geography FKs
+    the row serializer dereferences (region/district/sub_county/parish) so the
+    directory page isn't an N+1 (4 queries × page-size per page)."""
     scope = resolve_user_scope(principal)
     base = school_queryset(scope)
     if base is None:
         return School.objects.none()
     base = base.filter(_build_q(query, scope))
-    return base
+    return _with_relations(base)
 
 
 def _with_relations(qs):

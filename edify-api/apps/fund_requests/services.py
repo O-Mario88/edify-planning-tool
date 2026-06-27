@@ -18,8 +18,13 @@ from .models import FundRequest, FundRequestItem, FundRequestPeriod, FundRequest
 
 
 def submit(data: dict, principal) -> dict:
-    """Submit a fund request. Amount computed from the schedule at submit time;
-    blocked if any activity is cost-missing."""
+    """Submit a fund request.
+
+    The fund request is generated FROM the persisted activity budget lines
+    (ActivityScheduleCostLine) — they are the authoritative cost snapshot taken
+    at schedule time, so the request total is provably the sum of its line items.
+    Blocked if any in-period activity is cost-missing or has no budget lines.
+    The cost lines are prefetched (one query) instead of queried per activity."""
     fy = data.get("fy") or get_operational_fy()
     period = data.get("period", "monthly")
     period_key = data.get("periodKey") or _period_key(fy, period, data)
@@ -27,19 +32,22 @@ def submit(data: dict, principal) -> dict:
     qs = Activity.objects.filter(deleted_at__isnull=True, fy=fy)
     if scope.staff_ids:
         qs = qs.filter(responsible_staff_id__in=scope.staff_ids)
-    qs = _filter_period(qs, period, period_key, data)
-    rates = {c.key: c.unit_cost for c in CostSetting.objects.all()}
-    total = 0.0
-    cost_missing = False
+    qs = _filter_period(qs, period, period_key, data).prefetch_related("schedule_cost_lines")
+
+    activities = list(qs)
+    # Cost blocker: any in-period activity flagged cost-missing, or with no lines.
+    bad = [a for a in activities if a.cost_missing or not list(a.schedule_cost_lines.all())]
+    if bad:
+        raise BadRequest(
+            f"Cannot submit — {len(bad)} activity(ies) are missing a cost rate or budget lines."
+        )
+
     request_items: list[tuple[Activity, object]] = []
-    for a in qs:
-        cost = resolve_activity_cost(_to_costable(a), rates, _snapshot_lines(a))
-        if cost.cost_missing:
-            cost_missing = True
-        total += cost.amount
-        request_items.extend((a, line) for line in a.schedule_cost_lines.all())
-    if cost_missing:
-        raise BadRequest("Cannot submit — one or more activities are missing a cost rate.")
+    total = 0
+    for a in activities:
+        for line in a.schedule_cost_lines.all():
+            request_items.append((a, line))
+            total += line.amount
 
     lens = "country" if scope.country_scope else ("team" if scope.can_view_team else "own")
     with transaction.atomic():
@@ -47,7 +55,7 @@ def submit(data: dict, principal) -> dict:
             submitted_by_user_id=principal.user_id, period=period, period_key=period_key,
             defaults={
                 "fy": fy, "scope": lens, "submitted_by_role": principal.active_role,
-                "total_amount": total, "activity_count": qs.count(),
+                "total_amount": total, "activity_count": len(activities),
                 "status": FundRequestStatus.SUBMITTED,
             },
         )

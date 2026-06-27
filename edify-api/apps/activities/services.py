@@ -154,7 +154,11 @@ def _serialize(a: Activity) -> dict:
 
 
 def _apply_schedule_cost_snapshot(activity: Activity, data: dict) -> None:
-    """Persist schedule-time cost lines from the CD-owned rate card."""
+    """Persist schedule-time cost lines from the CD-owned rate card.
+
+    Clears any prior snapshot first, so re-scheduling re-prices the activity
+    against the current catalogue (the budget line must follow the activity, not
+    freeze at the original schedule). Idempotent: safe on create and reschedule."""
     from apps.budget.costing import cost_for_activity
     from apps.budget.models import CostSetting
 
@@ -174,6 +178,7 @@ def _apply_schedule_cost_snapshot(activity: Activity, data: dict) -> None:
         },
         rates,
     )
+    ActivityScheduleCostLine.objects.filter(activity=activity).delete()
     ActivityScheduleCostLine.objects.bulk_create([
         ActivityScheduleCostLine(
             activity=activity,
@@ -356,10 +361,26 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
     a.scheduled_date = new_date
     a.fy = new_fy
     a.quarter = new_quarter
+    # Keep the period fields the fund-request period filter groups on in sync
+    # with the new schedule — a reschedule that crosses a month/week must move
+    # the activity to the right fund-request bucket.
+    if data.get("plannedMonth") is not None:
+        a.planned_month = data["plannedMonth"]
+    elif new_date:
+        a.planned_month = new_date.month
+    if data.get("plannedWeek") is not None:
+        a.planned_week = data["plannedWeek"]
     a.reschedule_count += 1
     a.last_reason = data.get("reason")
     a.status = "planned" if a.status in ("cancelled", "deferred") else "rescheduled"
-    a.save(update_fields=["scheduled_date", "fy", "quarter", "reschedule_count", "last_reason", "status", "updated_at"])
+    a.save(update_fields=[
+        "scheduled_date", "fy", "quarter", "planned_month", "planned_week",
+        "reschedule_count", "last_reason", "status", "updated_at",
+    ])
+    # Re-price against the current catalogue so the budget line follows the new
+    # schedule (rates may have changed; participant/period inputs may have too).
+    _apply_schedule_cost_snapshot(a, data)
+    a.save(update_fields=["est_cost_cents", "cost_missing", "updated_at"])
     return _serialize(a)
 
 

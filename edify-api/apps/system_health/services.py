@@ -10,7 +10,7 @@ from __future__ import annotations
 import os
 
 from django.conf import settings
-from django.db.models import Count
+from django.db.models import Count, Q
 
 from apps.core.models import DataSource
 from apps.schools.models import School
@@ -18,15 +18,29 @@ from apps.schools.models import School
 
 def report() -> dict:
     schools = School.objects.filter(deleted_at__isnull=True)
+    # Single conditional-aggregation query (8 COUNTs → 1 pass) for the org-wide
+    # health strip. bySchoolType is built from the same aggregate.
+    agg = schools.aggregate(
+        total=Count("id"),
+        client=Count("id", filter=Q(school_type="client")),
+        core=Count("id", filter=Q(school_type="core")),
+        champion=Count("id", filter=Q(school_type="champion")),
+        ssa_done=Count("id", filter=Q(current_fy_ssa_status="done")),
+        clustered=Count("id", filter=Q(cluster_status="clustered")),
+        unclustered=Count("id", filter=Q(cluster_status="unclustered")),
+        planning_ready=Count("id", filter=Q(planning_readiness="ready")),
+    )
+    total = agg["total"] or 0
+    ssa_done = agg["ssa_done"] or 0
     data = {
         "fy": _fy(),
-        "schoolsTotal": schools.count(),
-        "bySchoolType": {t: schools.filter(school_type=t).count() for t in ("client", "core", "champion")},
-        "ssaDone": schools.filter(current_fy_ssa_status="done").count(),
-        "ssaMissing": schools.exclude(current_fy_ssa_status="done").count(),
-        "clustered": schools.filter(cluster_status="clustered").count(),
-        "unclustered": schools.filter(cluster_status="unclustered").count(),
-        "planningReady": schools.filter(planning_readiness="ready").count(),
+        "schoolsTotal": total,
+        "bySchoolType": {"client": agg["client"], "core": agg["core"], "champion": agg["champion"]},
+        "ssaDone": ssa_done,
+        "ssaMissing": total - ssa_done,
+        "clustered": agg["clustered"],
+        "unclustered": agg["unclustered"],
+        "planningReady": agg["planning_ready"],
     }
     data["mockDataLeakage"] = _mock_leakage()
     data["workflowIssues"] = _workflow_issues()
