@@ -149,6 +149,17 @@ def _workflow_issues() -> dict:
         if not StaffSupervisorAssignment.objects.filter(supervisee_id=cid).exists()
     )
 
+    # ── Performance-integrity checks ─────────────────────────────────────────
+    from apps.targets.performance import ACHIEVED_STATUSES as _DONE
+    # Completed activities missing evidence or Activity Code (counted as achieved
+    # by status but not by the strict evidence rule — a counting risk).
+    done_no_evidence = Activity.objects.filter(
+        status__in=_DONE, deleted_at__isnull=True
+    ).exclude(evidence_status="accepted").count()
+    done_no_code = Activity.objects.filter(
+        status__in=_DONE, deleted_at__isnull=True, salesforce_activity_id=""
+    ).count()
+
     blockers = []
     if missing_cost_lines:
         blockers.append(f"{missing_cost_lines} scheduled activities have no persisted cost lines.")
@@ -178,6 +189,10 @@ def _workflow_issues() -> dict:
         blockers.append(f"{pending_candidates} staff candidate(s) pending Admin profile setup.")
     if cceos_without_supervisor:
         blockers.append(f"{cceos_without_supervisor} CCEO(s) have no PL supervisor — PL team scope is incomplete.")
+    if done_no_evidence:
+        blockers.append(f"{done_no_evidence} completed activity(ies) lack accepted evidence — may inflate achievement.")
+    if done_no_code:
+        blockers.append(f"{done_no_code} completed activity(ies) lack an Activity Code — may inflate achievement.")
 
     return {
         "scheduledActivitiesMissingCostLines": missing_cost_lines,
@@ -194,6 +209,8 @@ def _workflow_issues() -> dict:
         "ambiguousStaffSchools": ambiguous_staff_schools,
         "pendingStaffCandidates": pending_candidates,
         "cceosWithoutSupervisor": cceos_without_supervisor,
+        "completedActivitiesWithoutEvidence": done_no_evidence,
+        "completedActivitiesWithoutActivityCode": done_no_code,
         "clean": len(blockers) == 0,
         "blockers": blockers,
     }

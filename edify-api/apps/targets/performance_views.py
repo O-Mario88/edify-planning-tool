@@ -127,7 +127,7 @@ class CountryTargetsView(APIView):
 class HrStaffView(APIView):
     """GET /api/performance/hr/staff — every staff member's metrics + workload."""
     permission_classes = [IsAuthenticated, RequirePermissions]
-    required_permissions = ["staff.performance.view"]
+    required_permissions = ["staffPerformance.view"]
 
     def get(self, request: Request) -> Response:
         from apps.accounts.models import StaffProfile
@@ -156,7 +156,7 @@ class HrStaffView(APIView):
 class HrRisksView(APIView):
     """GET /api/performance/hr/risks — staff at risk / underperforming / over-workload."""
     permission_classes = [IsAuthenticated, RequirePermissions]
-    required_permissions = ["staff.performance.view"]
+    required_permissions = ["staffPerformance.view"]
 
     def get(self, request: Request) -> Response:
         from apps.accounts.models import StaffProfile
