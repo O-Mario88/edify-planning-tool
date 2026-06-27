@@ -18,4 +18,11 @@ urlpatterns = [
     path("activity-pipeline", views.AnalyticsActivityPipelineView.as_view(), name="activity-pipeline"),
     path("contribution-summary", views.AnalyticsContributionSummaryView.as_view(), name="contribution-summary"),
     path("recruitment-recommendation", views.AnalyticsRecruitmentView.as_view(), name="recruitment"),
+    # Decision engine — SSA improvement, interventions, recommendations.
+    path("ssa/improvement", views.AnalyticsSsaImprovementView.as_view(), name="ssa-improvement"),
+    path("ssa/interventions", views.AnalyticsInterventionAnalyticsView.as_view(), name="ssa-interventions"),
+    path("ssa/district-rollup", views.AnalyticsDistrictSsaRollupView.as_view(), name="ssa-district-rollup"),
+    path("ssa/cluster-rollup", views.AnalyticsClusterSsaRollupView.as_view(), name="ssa-cluster-rollup"),
+    path("recommendations", views.AnalyticsRecommendationsView.as_view(), name="recommendations"),
+    path("role-overview", views.AnalyticsRoleOverviewView.as_view(), name="role-overview"),
 ]

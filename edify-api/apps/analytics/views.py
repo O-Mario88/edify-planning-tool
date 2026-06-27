@@ -107,3 +107,48 @@ class AnalyticsRecruitmentView(APIView):
     permission_classes = [IsAuthenticated, RequirePermissions]
     required_permissions = RECRUITMENT
     def get(self, request): return Response(services.recruitment_recommendation(request.user, _q(request)))
+
+
+# ── Decision engine: SSA improvement, interventions, recommendations ─────────
+from . import decision_engine as de  # noqa: E402
+
+
+class AnalyticsSsaImprovementView(APIView):
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = ANALYTICS
+    def get(self, request): return Response(de.ssa_improvement(request.user, _q(request)))
+
+
+class AnalyticsInterventionAnalyticsView(APIView):
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = ANALYTICS
+    def get(self, request): return Response(de.intervention_analytics(request.user, _q(request)))
+
+
+class AnalyticsDistrictSsaRollupView(APIView):
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = ANALYTICS
+    def get(self, request): return Response(de.district_ssa_rollup(request.user, _q(request)))
+
+
+class AnalyticsClusterSsaRollupView(APIView):
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = ANALYTICS
+    def get(self, request): return Response(de.cluster_ssa_rollup(request.user, _q(request)))
+
+
+class AnalyticsRecommendationsView(APIView):
+    """Role-specific decision recommendations generated from real risk conditions."""
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = ANALYTICS
+    def get(self, request): return Response(de.recommendations(request.user, _q(request)))
+
+
+class AnalyticsRoleOverviewView(APIView):
+    """A role-specific analytics overview — combines the most decision-relevant
+    metrics for the caller's role into one response."""
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = ANALYTICS
+    def get(self, request):
+        from .role_analytics import role_overview
+        return Response(role_overview(request.user, _q(request)))
