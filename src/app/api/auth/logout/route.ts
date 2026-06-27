@@ -2,14 +2,19 @@ import { NextResponse } from "next/server";
 import { requireCsrf } from "@/lib/csrf";
 import { cookieSecure } from "@/lib/cookie-security";
 import { SESSION_SIG_COOKIE } from "@/lib/session-sig";
+import { clearCredentials } from "@/lib/api/session-credentials";
 
 // POST /api/auth/logout
 //
 // Clears the three session cookies set by /api/auth/login
 // (edify-email, edify-role, edify-name) plus the legacy
-// `edify_session` cookie. The SignOutButton calls this and then
-// redirects the client to /login.
+// `edify_session` cookie, AND drops the in-memory backend credentials so the
+// proxy can no longer authenticate as that user. The SignOutButton calls this
+// and then redirects the client to /login.
 function clearSession(req: Request, res: NextResponse) {
+  // Drop the per-user backend credentials recorded at login.
+  const email = req.headers.get("cookie")?.match(/edify-email=([^;]+)/)?.[1];
+  if (email) clearCredentials(decodeURIComponent(email));
   const opts = {
     httpOnly: true,
     sameSite: "lax" as const,

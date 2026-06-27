@@ -137,6 +137,12 @@ function gateAdmin(u: DemoUser | null): DemoUser | null {
 // Reads the session cookie and returns the active user, or null if no
 // valid session cookie is present. Use this when the page handles the
 // unauthenticated case itself (e.g. /login, /signup).
+//
+// Django is the single source of truth for identity + role. A signed-in user
+// may not be in the static DEMO_USERS map (Django has more accounts than the FE
+// roster); in that case we synthesize a DemoUser from the (signed) cookie so the
+// rest of the app keeps working. The cookie signature is verified when signing
+// is active, so the synthesized identity can't be forged.
 export async function getCurrentUserOrNull(): Promise<DemoUser | null> {
   const jar = await cookies();
   const rawEmail = jar.get("edify-email")?.value;
@@ -158,6 +164,23 @@ export async function getCurrentUserOrNull(): Promise<DemoUser | null> {
       (u) => u.role === role && (!name || decodeURIComponent(name) === u.name),
     );
     if (match) return gateAdmin(match);
+  }
+  // Django-sourced identity not in the static FE roster: synthesize a DemoUser
+  // from the signed cookie. Email + role are trusted (signature-verified above
+  // when signing is active); the staffId/salesforce fields are placeholders the
+  // proxy layer doesn't use (the real identity comes from the Django JWT).
+  if (email && role) {
+    return gateAdmin({
+      email,
+      password: "", // never used for FE-side validation now (Django is authoritative)
+      staffId: "",
+      salesforceOwnerId: "",
+      name: name ? decodeURIComponent(name) : email,
+      initials: (name ? decodeURIComponent(name) : email).slice(0, 2).toUpperCase(),
+      role,
+      appRole: role as AppRole,
+      scope: role,
+    });
   }
   return null;
 }
