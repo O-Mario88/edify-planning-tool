@@ -84,6 +84,8 @@ urlpatterns = [
     *api("my-plan", "apps.my_plan.urls"),
     # HR — staff roster (PII-gated) + leave.
     *api("hr", "apps.hr.urls"),
+    # Staff — roster + supervisor assignment (CD/HR/Admin).
+    *api("staff", "apps.accounts.staff_urls"),
     # Debriefs — daily field debriefs.
     *api("debriefs", "apps.debriefs.urls"),
     # Targets — CD/IA annual commitments.
@@ -99,6 +101,8 @@ urlpatterns = [
     *api("command-center", "apps.command_center.urls"),
     # Admin users — account provisioning.
     *api("admin/users", "apps.admin_users.urls"),
+    # Staff-setup candidates — admin resolution of uploaded staff names.
+    *api("staff-candidates", "apps.staff_setup.urls"),
     # Evidence — file pipeline.
     *api("evidence", "apps.evidence.urls"),
     # Special projects.

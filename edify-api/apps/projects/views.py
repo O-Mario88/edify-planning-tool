@@ -27,7 +27,21 @@ class ProjectDetailView(APIView):
     permission_classes = [IsAuthenticated, RequirePermissions]
     required_permissions = VIEW
 
+    def get_permissions(self):
+        # PATCH (set manager) requires PROJECT_MANAGE; GET only needs VIEW.
+        if self.request.method == "PATCH":
+            self.required_permissions = [Permission.PROJECT_MANAGE.value]
+        else:
+            self.required_permissions = VIEW
+        return [IsAuthenticated(), RequirePermissions()]
+
     def get(self, request: Request, project_id: str) -> Response:
+        return Response(services.get_one(project_id))
+
+    def patch(self, request: Request, project_id: str) -> Response:
+        # CD/ProjectCoordinator/Admin sets the project manager (single staff id).
+        if "managerStaffId" in request.data:
+            return Response(services.set_manager(project_id, request.data))
         return Response(services.get_one(project_id))
 
 

@@ -90,6 +90,7 @@ INSTALLED_APPS = [
     "apps.pl_review",
     "apps.command_center",
     "apps.admin_users",
+    "apps.staff_setup",
     "apps.evidence",
     "apps.projects",
     "apps.messaging",

@@ -70,6 +70,20 @@ def remove_partner(project_id: str, partner_id: str) -> dict:
     return {"ok": True}
 
 
+def set_manager(project_id: str, data: dict) -> dict:
+    """Set the project's manager (a single staff user id). CD assigns a staff
+    member to own the project; clears it when managerStaffId is empty."""
+    from apps.core.exceptions import NotFoundError
+
+    p = Project.objects.filter(id=project_id, deleted_at__isnull=True).first()
+    if not p:
+        raise NotFoundError("Project not found.")
+    manager_id = (data.get("managerStaffId") or "").strip() or None
+    p.manager_staff_id = manager_id
+    p.save(update_fields=["manager_staff_id", "updated_at"])
+    return _serialize(p)
+
+
 def _serialize(p: Project) -> dict:
     return {
         "id": p.id,
