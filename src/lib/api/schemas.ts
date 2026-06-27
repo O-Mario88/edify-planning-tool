@@ -140,6 +140,74 @@ export const budgetSnapshotSchema = z.object({
   headline: z.string(),
 });
 
+// ── Support-to-improvement correlation (SupportImprovementCard) ──────
+const nullableNumber = z.number().nullable();
+
+const correlationSummarySchema = z.object({
+  schoolsWithComparison: z.number(),
+  correlation: nullableNumber,
+  strength: z.string(),
+  avgSupport: nullableNumber,
+  avgImprovement: nullableNumber,
+  interpretation: z.string(),
+});
+
+const supportChartPointSchema = z
+  .object({
+    schoolId: z.string(),
+    name: z.string(),
+    support: z.number(),
+    improvement: z.number(),
+    supportClass: z.string(),
+  })
+  .passthrough();
+
+const interventionBinSchema = z
+  .object({
+    code: z.string(),
+    label: z.string(),
+    zero: nullableNumber,
+    zeroN: z.number(),
+    low: nullableNumber,
+    lowN: z.number(),
+    high: nullableNumber,
+    highN: z.number(),
+  })
+  .passthrough();
+
+export const supportCorrelationSchema = z.object({
+  currentFy: z.string(),
+  prevFy: z.string(),
+  support: z
+    .enum(["all", "staff", "partner", "certified_partner", "visit", "training", "project"])
+    .optional()
+    .default("all"),
+  summary: correlationSummarySchema,
+  chartPoints: arr(supportChartPointSchema),
+  interventionBins: arr(interventionBinSchema),
+  dataQuality: arr(z.string()),
+});
+
+const staffVsPartnerGroupSchema = z
+  .object({
+    supportClass: z.string(),
+    schools: z.number(),
+    avgOverallImprovement: nullableNumber,
+    avgInterventionImprovement: nullableNumber,
+    schoolsImprovedPct: nullableNumber,
+    schoolsDeclinedPct: nullableNumber,
+    avgVerifiedSupport: nullableNumber,
+  })
+  .passthrough();
+
+export const staffVsPartnerSchema = z.object({
+  currentFy: z.string(),
+  prevFy: z.string(),
+  groups: arr(staffVsPartnerGroupSchema),
+  note: z.string().optional().default(""),
+  dataQuality: arr(z.string()),
+});
+
 // ── HR roster (StaffPerformanceLive) ────────────────────────────────
 const rosterRowSchema = z
   .object({

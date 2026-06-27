@@ -220,13 +220,26 @@ ENABLE_BACKGROUND_JOBS = _truthy(
     os.environ.get("ENABLE_BACKGROUND_JOBS"), fallback=False
 )
 
+# Local-development data import flags. Both default OFF; a developer must opt in
+# to seed demo data or run the import_*_local commands. Hard-blocked in prod.py.
+ENABLE_DEV_SEED = _truthy(os.environ.get("ENABLE_DEV_SEED"), fallback=False)
+ENABLE_DEV_IMPORTS = _truthy(os.environ.get("ENABLE_DEV_IMPORTS"), fallback=False)
+ALLOW_LOCAL_TEST_UPLOADS = _truthy(
+    os.environ.get("ALLOW_LOCAL_TEST_UPLOADS"), fallback=True
+)  # true in dev; forced false in prod
+ALLOW_PRODUCTION_IMPORTS = _truthy(
+    os.environ.get("ALLOW_PRODUCTION_IMPORTS"), fallback=False
+)  # authorized real-data upload only
+
 # Object-level authorization: 'shadow' logs would-be denials; 'enforce' blocks.
 # Prod must run 'enforce' (gated in prod.py).
 AUTHZ_MODE = os.environ.get("AUTHZ_MODE", "shadow")
 
 # Partner identity bridge: when a partner user has no Partner.userId link, pin
-# them to the first active partner (demo seed). Off in real production.
-PARTNER_ROLE_BRIDGE = _truthy(os.environ.get("PARTNER_ROLE_BRIDGE"), fallback=True)
+# them to the first active partner (demo convenience). OFF by default — a real
+# partner must be linked to a Partner org via Partner.userId. Enable only for
+# local dev with the demo seed.
+PARTNER_ROLE_BRIDGE = _truthy(os.environ.get("PARTNER_ROLE_BRIDGE"), fallback=False)
 
 REDIS_URL = os.environ.get("REDIS_URL") or None
 

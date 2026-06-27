@@ -39,6 +39,42 @@ class TimeStampedModel(models.Model):
         abstract = True
 
 
+class DataSource(models.TextChoices):
+    """Provenance for an operational record — how it entered the database.
+    Used for audit + cleanup (purge_local_test_data targets source=local_test_upload)."""
+
+    MANUAL_UPLOAD = "manual_upload", "Manual Upload"
+    ADMIN_CREATED = "admin_created", "Admin Created"
+    API_IMPORT = "api_import", "API Import"
+    LOCAL_TEST_UPLOAD = "local_test_upload", "Local Test Upload"
+    PRODUCTION_UPLOAD = "production_upload", "Production Upload"
+
+
+class DataEnvironment(models.TextChoices):
+    LOCAL = "local", "Local"
+    STAGING = "staging", "Staging"
+    PRODUCTION = "production", "Production"
+
+
+class SourcedModel(TimeStampedModel):
+    """Operational records carry provenance: how + where they were created. This
+    lets `purge_local_test_data` clean up local test records without touching
+    production data, and lets audits distinguish real uploads from test data.
+
+    Security note: source is for audit/cleanup only — NEVER the sole gate for
+    authorization (the RBAC + scope layer is authoritative)."""
+
+    source = models.CharField(
+        max_length=32, choices=DataSource.choices, default=DataSource.MANUAL_UPLOAD, db_index=True
+    )
+    environment = models.CharField(
+        max_length=16, choices=DataEnvironment.choices, default=DataEnvironment.PRODUCTION, db_index=True
+    )
+
+    class Meta:
+        abstract = True
+
+
 class SoftDeleteManager(models.Manager):
     """Default manager that excludes soft-deleted rows. Use
     `SoftDeleteManager(include_deleted=True)` (or the `all_objects` alias) for
@@ -55,11 +91,11 @@ class SoftDeleteManager(models.Manager):
         return qs.filter(deleted_at__isnull=True)
 
 
-class SoftDeleteModel(TimeStampedModel):
-    """Adds a nullable `deletedAt`. Tombstones are never hard-removed for the
-    operational tables (schools, staff, activities, SSA, evidence, partners,
-    projects, debriefs, …). Reference/lookup tables (geography, RBAC) don't
-    use this."""
+class SoftDeleteModel(SourcedModel):
+    """Adds a nullable `deletedAt` + source/environment provenance. Tombstones
+    are never hard-removed for the operational tables (schools, staff,
+    activities, SSA, evidence, partners, projects, debriefs, …).
+    Reference/lookup tables (geography, RBAC) don't use this."""
 
     deleted_at = models.DateTimeField(null=True, blank=True, db_index=True)
 
@@ -78,4 +114,12 @@ class SoftDeleteModel(TimeStampedModel):
         self.save(using=using, update_fields=["deleted_at", "updated_at"])
 
 
-__all__ = ["CuidField", "TimeStampedModel", "SoftDeleteModel", "SoftDeleteManager"]
+__all__ = [
+    "CuidField",
+    "TimeStampedModel",
+    "SourcedModel",
+    "DataSource",
+    "DataEnvironment",
+    "SoftDeleteModel",
+    "SoftDeleteManager",
+]

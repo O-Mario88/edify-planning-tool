@@ -21,6 +21,12 @@ if ENABLE_MOCK_DATA:
     _issues.append("ENABLE_MOCK_DATA must be false in production.")
 if ENABLE_DEV_ENDPOINTS:
     _issues.append("ENABLE_DEV_ENDPOINTS must be false in production.")
+if ENABLE_DEV_SEED:
+    _issues.append("ENABLE_DEV_SEED must be false in production (no demo seeding).")
+if ENABLE_DEV_IMPORTS:
+    _issues.append("ENABLE_DEV_IMPORTS must be false in production (no local test imports).")
+if PARTNER_ROLE_BRIDGE:
+    _issues.append("PARTNER_ROLE_BRIDGE must be false in production (real Partner.userId links required).")
 if (
     len(JWT_SECRET) < 16
     or "change-me" in JWT_SECRET
@@ -61,3 +67,13 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_REFERRER_POLICY = "same-origin"
+
+# Defense in depth: force all local-test/mock flags off in production regardless
+# of env. Production starts with reference data only; real operational data
+# arrives through backend upload/admin workflows after deployment.
+ENABLE_MOCK_DATA = False
+ENABLE_DEV_ENDPOINTS = False
+ENABLE_DEV_SEED = False
+ENABLE_DEV_IMPORTS = False
+ALLOW_LOCAL_TEST_UPLOADS = False
+PARTNER_ROLE_BRIDGE = False

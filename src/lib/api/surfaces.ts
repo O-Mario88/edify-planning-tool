@@ -27,6 +27,8 @@ import {
   paginatedEnvelopeSchema,
   clusterPlanningSchema,
   clusterIntelligenceSchema,
+  supportCorrelationSchema,
+  staffVsPartnerSchema,
 } from "./schemas";
 
 export type LiveResult<T> =
@@ -876,14 +878,20 @@ export function fetchSupportSsaCorrelation(user: BackendUser, params: { support?
   const q = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) if (v) q.set(k, v);
   const s = q.toString();
-  return live<BeSupportCorrelation>(`/analytics/support-ssa-correlation${s ? `?${s}` : ""}`, user);
+  return live<BeSupportCorrelation>(`/analytics/support-ssa-correlation${s ? `?${s}` : ""}`, user, undefined, {
+    schema: supportCorrelationSchema,
+    component: "SupportImprovementCard",
+  });
 }
 
 export function fetchStaffVsPartner(user: BackendUser, params: { schoolType?: string; districtId?: string; regionId?: string } = {}) {
   const q = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) if (v) q.set(k, v);
   const s = q.toString();
-  return live<BeStaffVsPartner>(`/analytics/staff-vs-partner-correlation${s ? `?${s}` : ""}`, user);
+  return live<BeStaffVsPartner>(`/analytics/staff-vs-partner-correlation${s ? `?${s}` : ""}`, user, undefined, {
+    schema: staffVsPartnerSchema,
+    component: "SupportImprovementCard",
+  });
 }
 
 // ── Recruitment Intelligence ────────────────────────────────────────

@@ -16,6 +16,12 @@ const SSE_HEADERS = {
 };
 
 export async function GET(req: Request) {
+  // Local Django/Daphne runserver can be starved by long-lived SSE sockets.
+  // Keep live data reads enabled, but only open realtime when explicitly asked.
+  if (process.env.EDIFY_ENABLE_REALTIME !== "true") {
+    return new Response(`data: {"type":"off"}\n\n`, { headers: SSE_HEADERS });
+  }
+
   const user = await getCurrentUserOrNull();
   if (!user || !isBackendEnabled()) {
     // One "off" frame so the client stops trying when there's no live backend.
