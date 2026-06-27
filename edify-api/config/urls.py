@@ -66,6 +66,8 @@ urlpatterns = [
     *api("activities", "apps.activities.urls"),
     # Budget — the cost spine.
     *api("budget", "apps.budget.urls"),
+    # Budgets — program + admin aggregation by period (monthly/quarterly/fy).
+    *api("budgets", "apps.budget.budgets_urls"),
     # Partners — partner-org directory + self-service.
     *api("partners", "apps.partners.urls"),
     # Assignment — capacity + valid options.

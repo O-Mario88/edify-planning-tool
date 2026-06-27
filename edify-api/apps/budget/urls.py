@@ -1,4 +1,8 @@
-"""Budget URL routes — /api/budget/*."""
+"""Budget URL routes — /api/budget/* (the cost spine).
+
+Aggregation by period (monthly/quarterly/fy) lives at /api/budgets/* — see
+budgets_urls.py.
+"""
 from django.urls import path
 
 from . import views

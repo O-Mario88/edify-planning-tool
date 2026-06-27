@@ -81,8 +81,10 @@ def _mock_leakage() -> dict:
 
 
 def _workflow_issues() -> dict:
-    """Detect data/workflow conditions that make a demo or approval chain unsafe."""
-    from apps.activities.models import Activity
+    """Detect data/workflow + finance-integrity conditions that make a demo or
+    approval chain unsafe. Every check is a DB aggregation, not a Python loop."""
+    from apps.activities.models import Activity, ActivityScheduleCostLine
+    from apps.budget.models import CostCatalogue
     from apps.evidence.models import EvidenceRecord
 
     active = Activity.objects.filter(deleted_at__isnull=True)
@@ -95,6 +97,41 @@ def _workflow_issues() -> dict:
         if not os.path.exists(os.path.join(settings.EVIDENCE_STORAGE_DIR, evidence.uri)):
             missing_evidence_files += 1
 
+    # ── Finance-integrity checks ─────────────────────────────────────────────
+    # Activity total ≠ sum of its budget lines (a reconciliation break).
+    line_sum_mismatch = 0
+    for act in scheduled.exclude(est_cost_cents=0).only("id", "est_cost_cents"):
+        line_total = sum(l.amount for l in act.schedule_cost_lines.all())
+        if line_total and line_total != act.est_cost_cents:
+            line_sum_mismatch += 1
+
+    # Cluster meeting must NEVER carry venue or facilitation cost lines.
+    cluster_meeting_with_venue = ActivityScheduleCostLine.objects.filter(
+        activity__activity_type="cluster_meeting", cost_setting_key="venue"
+    ).count()
+    cluster_meeting_with_facilitation = ActivityScheduleCostLine.objects.filter(
+        activity__activity_type="cluster_meeting", cost_setting_key="training_session_fee"
+    ).count()
+    # Cluster meeting must NEVER use the group-training meal rate.
+    cluster_meeting_with_group_meal = ActivityScheduleCostLine.objects.filter(
+        activity__activity_type="cluster_meeting", cost_setting_key="meals_per_participant"
+    ).count()
+
+    # Trainings (group training) without a participant count.
+    training_no_participants = scheduled.filter(
+        activity_type__in=["training", "cluster_training", "core_training", "school_improvement_training"]
+    ).filter(teachers_attended__isnull=True, leaders_attended__isnull=True, other_participants__isnull=True).count()
+
+    # No active CD Cost Catalogue.
+    missing_active_catalogue = 0 if CostCatalogue.objects.filter(is_active=True).exists() else 1
+
+    # Advance disbursed before responsible confirmation (finance-safety breach).
+    from apps.fund_requests.models import AdvanceRequest, AdvanceRequestStatus
+    early_disbursement = AdvanceRequest.objects.filter(
+        status=AdvanceRequestStatus.DISBURSED,
+        confirmed_at__isnull=True,
+    ).count()
+
     blockers = []
     if missing_cost_lines:
         blockers.append(f"{missing_cost_lines} scheduled activities have no persisted cost lines.")
@@ -102,11 +139,32 @@ def _workflow_issues() -> dict:
         blockers.append(f"{missing_rates} scheduled activities are missing cost rates.")
     if missing_evidence_files:
         blockers.append(f"{missing_evidence_files} evidence records point to missing files.")
+    if line_sum_mismatch:
+        blockers.append(f"{line_sum_mismatch} activities have a total that doesn't match its budget-line sum.")
+    if cluster_meeting_with_venue:
+        blockers.append(f"{cluster_meeting_with_venue} cluster meeting(s) incorrectly carry a venue cost.")
+    if cluster_meeting_with_facilitation:
+        blockers.append(f"{cluster_meeting_with_facilitation} cluster meeting(s) incorrectly carry a facilitation fee.")
+    if cluster_meeting_with_group_meal:
+        blockers.append(f"{cluster_meeting_with_group_meal} cluster meeting(s) use the group-training meal rate.")
+    if training_no_participants:
+        blockers.append(f"{training_no_participants} training(s) have no participant count.")
+    if missing_active_catalogue:
+        blockers.append("No active CD Cost Catalogue — publish one before scheduling activities.")
+    if early_disbursement:
+        blockers.append(f"{early_disbursement} advance(s) disbursed before responsible confirmation.")
 
     return {
         "scheduledActivitiesMissingCostLines": missing_cost_lines,
         "scheduledActivitiesMissingRates": missing_rates,
         "evidenceFilesMissingOnDisk": missing_evidence_files,
+        "activityTotalLineSumMismatch": line_sum_mismatch,
+        "clusterMeetingWithVenue": cluster_meeting_with_venue,
+        "clusterMeetingWithFacilitation": cluster_meeting_with_facilitation,
+        "clusterMeetingWithGroupMealRate": cluster_meeting_with_group_meal,
+        "trainingWithoutParticipants": training_no_participants,
+        "missingActiveCatalogue": missing_active_catalogue,
+        "earlyDisbursement": early_disbursement,
         "clean": len(blockers) == 0,
         "blockers": blockers,
     }

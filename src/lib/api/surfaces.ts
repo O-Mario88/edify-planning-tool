@@ -550,6 +550,23 @@ export function backendScheduleClusterTraining(user: BackendUser, body: Record<s
   return live<BeActivity>(`/planning/schedule-cluster-training`, user, { method: "POST", body: JSON.stringify(body) });
 }
 
+/** Schedule a cluster activity (Group Training OR Cluster Meeting) through the
+ *  central CostingService. The body carries activityType, clusterId,
+ *  expectedParticipants (required for participant-driven costing), scheduledDate,
+ *  plannedMonth/Week. The backend prices + creates budget lines before persist. */
+export function backendScheduleClusterActivity(user: BackendUser, body: {
+  activityType: "cluster_training" | "cluster_meeting";
+  clusterId: string;
+  expectedParticipants: number;
+  scheduledDate: string;
+  plannedMonth?: number;
+  plannedWeek?: number;
+  clusterSlot?: string;
+  deliveryType?: "staff" | "partner";
+}) {
+  return live<BeActivity>(`/planning/schedule-cluster-activity`, user, { method: "POST", body: JSON.stringify(body) });
+}
+
 export function backendPartnerScheduleActivity(user: BackendUser, activityId: string, body: { scheduledDate: string }) {
   return live<BeActivity>(`/partners/me/activities/${encodeURIComponent(activityId)}/schedule`, user, {
     method: "POST",

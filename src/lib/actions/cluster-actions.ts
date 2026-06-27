@@ -43,7 +43,7 @@ import { getCurrentPartner } from "@/lib/partner/partner-identity";
 import { markJoinedThroughCluster, type ClusterJoinSourceType } from "@/lib/cluster/cluster-join-source";
 import { isBackendEnabled } from "@/lib/api/backend";
 import { isMockAllowed } from "@/lib/mock-policy";
-import { backendAssignCluster, backendCreateClusterFromSchool, backendCreateCluster, backendActivityAction, activityAction, fetchDistricts, fetchSubCounties, backendScheduleClusterTraining } from "@/lib/api/surfaces";
+import { backendAssignCluster, backendCreateClusterFromSchool, backendCreateCluster, backendActivityAction, activityAction, fetchDistricts, fetchSubCounties, backendScheduleClusterTraining, backendScheduleClusterActivity } from "@/lib/api/surfaces";
 
 // Resolve mock geography NAMES (district + sub-counties, as the create form
 // collects them) to the backend's geography IDs so a new cluster persists to
@@ -418,15 +418,31 @@ export async function scheduleClusterMeetingAction(
     const user = await getCurrentUser();
     const map = CLUSTER_KIND_TO_BE[kind];
     const { fy, quarter } = clusterFyQuarter(isoDate);
-    const r = await backendScheduleClusterTraining(backendUserFor(user), {
-      activityType: map.activityType,
+    const baseBody = {
       clusterId,
-      ...(map.clusterSlot ? { clusterSlot: map.clusterSlot } : {}),
       fy,
       quarter,
       scheduledDate: new Date(isoDate).toISOString(),
-      deliveryType: organizer === "partner" ? "partner" : "staff",
-    });
+      deliveryType: (organizer === "partner" ? "partner" : "staff") as "staff" | "partner",
+    };
+    // The two first-class kinds route through the central CostingService endpoint
+    // (which requires expectedParticipants and prices group-training vs cluster-
+    // meeting correctly). Slot-based kinds keep the legacy training endpoint.
+    const usesCentralCosting = kind === "cluster_meeting" || kind === "cluster_training";
+    const r = usesCentralCosting
+      ? await backendScheduleClusterActivity(backendUserFor(user), {
+          activityType: map.activityType as "cluster_training" | "cluster_meeting",
+          ...baseBody,
+          // Participant count is REQUIRED for participant-driven costing. The
+          // central service blocks scheduling without it.
+          expectedParticipants: participants && participants > 0 ? participants : 0,
+        })
+      : await backendScheduleClusterTraining(backendUserFor(user), {
+          activityType: map.activityType,
+          ...baseBody,
+          ...(map.clusterSlot ? { clusterSlot: map.clusterSlot } : {}),
+          expectedParticipants: participants,
+        });
     if (r.live) {
       emitAudit({
         action: "cluster.meetingScheduled", subjectKind: "Cluster", subjectId: clusterId,

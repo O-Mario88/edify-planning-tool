@@ -80,3 +80,28 @@ class BudgetBoardView(APIView):
 
     def get(self, request: Request) -> Response:
         return Response(services.board(request.user, _q(request)))
+
+
+# ── /api/budgets/* — program + admin aggregation by period ──────────────────
+class MonthlyBudgetView(APIView):
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = VIEW
+
+    def get(self, request: Request) -> Response:
+        return Response(services.monthly_budget(_q(request)))
+
+
+class QuarterlyBudgetView(APIView):
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = VIEW
+
+    def get(self, request: Request) -> Response:
+        return Response(services.quarterly_budget(_q(request)))
+
+
+class FyBudgetView(APIView):
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = VIEW
+
+    def get(self, request: Request) -> Response:
+        return Response(services.fy_budget(_q(request)))

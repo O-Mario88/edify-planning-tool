@@ -75,6 +75,14 @@ def submit(data: dict, principal) -> dict:
 
 
 def _period_key(fy: str, period: str, data: dict) -> str:
+    if period == FundRequestPeriod.WEEKLY:
+        week = data.get("week")
+        month = data.get("month")
+        if week and month:
+            return f"{fy}-M{int(month)}-W{int(week)}"
+        if week:
+            return f"{fy}-W{int(week)}"
+        return fy
     if period == FundRequestPeriod.MONTHLY:
         month = data.get("month")
         return f"{fy}-M{int(month)}" if month else fy
@@ -84,7 +92,20 @@ def _period_key(fy: str, period: str, data: dict) -> str:
 
 
 def _filter_period(qs, period: str, period_key: str, data: dict):
-    if period == FundRequestPeriod.MONTHLY:
+    if period == FundRequestPeriod.WEEKLY:
+        # A weekly fund request is scoped to a specific week (and optionally a
+        # month). Previously weekly had no filter — it silently matched the whole
+        # FY. Now it narrows by planned_week (+ planned_month when given).
+        week = data.get("week")
+        if not week:
+            match = re.search(r"-W(\d+)$", period_key or "")
+            week = int(match.group(1)) if match else None
+        if week:
+            qs = qs.filter(planned_week=int(week))
+        month = data.get("month")
+        if month:
+            qs = qs.filter(planned_month=int(month))
+    elif period == FundRequestPeriod.MONTHLY:
         month = data.get("month")
         if not month:
             match = re.search(r"-M(\d+)$", period_key or "")

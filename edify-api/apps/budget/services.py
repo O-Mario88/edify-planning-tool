@@ -197,7 +197,8 @@ def weekly(principal, query: dict) -> list[dict]:
 
 
 def board(principal, query: dict) -> dict:
-    """The monthly budget board (lens + period filtered)."""
+    """The monthly budget board (lens + period filtered). Sums the persisted
+    budget lines per activity (prefetched) — the authoritative cost snapshot."""
     from apps.activities.models import Activity
 
     fy = query.get("fy") or get_operational_fy()
@@ -217,21 +218,134 @@ def board(principal, query: dict) -> dict:
             qs = qs.filter(assigned_partner_id__in=scope.partner_ids)
         else:
             qs = qs.none()
-    rates = _rate_card()
-    total = 0.0
+    total = 0
     rows = []
-    for a in qs:
-        cost = resolve_activity_cost(_activity_to_costable(a), rates, _snapshot_lines(a))
-        total += cost.amount
+    for a in qs.prefetch_related("schedule_cost_lines"):
+        amount = sum(line.amount for line in a.schedule_cost_lines.all())
+        if not amount and a.est_cost_cents:
+            amount = a.est_cost_cents
+        total += amount
         rows.append({
             "activityId": a.id,
             "activityType": a.activity_type,
             "status": a.status,
-            "amount": cost.amount,
-            "costMissing": cost.cost_missing,
+            "amount": amount,
+            "costMissing": a.cost_missing,
             "month": a.planned_month,
         })
     return {"fy": fy, "total": total, "count": len(rows), "items": rows}
+
+
+# ── Program + admin budget aggregation (monthly / quarterly / FY) ────────────
+def _program_lines_total(fy: str, *, quarter: str | None = None, month: int | None = None) -> tuple[int, int]:
+    """Sum persisted ActivityScheduleCostLine amounts + count distinct activities
+    for a period. Returns (total, activity_count). Single aggregation query."""
+    from apps.activities.models import ActivityScheduleCostLine
+
+    qs = ActivityScheduleCostLine.objects.filter(
+        activity__deleted_at__isnull=True, activity__fy=fy
+    )
+    if quarter:
+        qs = qs.filter(activity__quarter=quarter)
+    if month is not None:
+        qs = qs.filter(activity__planned_month=month)
+    agg = qs.aggregate(total=Sum("amount"))
+    count = qs.values("activity_id").distinct().count()
+    return int(agg["total"] or 0), count
+
+
+def _admin_lines_total(fy: str, *, month_key: str | None = None) -> int:
+    """Sum CD admin budget lines for a period (FY or a month_key 'YYYY-MM')."""
+    from apps.monthly_work_plan.models import AdminBudgetLine
+
+    qs = AdminBudgetLine.objects.filter(monthly_budget__fy=fy)
+    if month_key:
+        qs = qs.filter(monthly_budget__month_key=month_key)
+    return int(qs.aggregate(total=Sum("total_cost"))["total"] or 0)
+
+
+def monthly_budget(query: dict) -> dict:
+    """Monthly budget = program activity budget lines for the month + CD admin
+    items for that month. The auto-generated program portion + the CD-added
+    administrative portion."""
+    fy = query.get("fy") or get_operational_fy()
+    month = int(query.get("month") or 1)
+    program_total, activity_count = _program_lines_total(fy, month=month)
+    month_key = _month_key(fy, month)
+    admin_total = _admin_lines_total(fy, month_key=month_key)
+    return {
+        "fy": fy, "month": month, "monthKey": month_key,
+        "programTotal": program_total, "adminTotal": admin_total,
+        "total": program_total + admin_total, "activityCount": activity_count,
+    }
+
+
+def quarterly_budget(query: dict) -> dict:
+    """Quarterly budget = program lines + admin items for the quarter."""
+    fy = query.get("fy") or get_operational_fy()
+    quarter = query.get("quarter") or "Q1"
+    program_total, activity_count = _program_lines_total(fy, quarter=quarter)
+    # Admin items are monthly; approximate the quarter as the union of its months.
+    quarter_months = _quarter_months(quarter)
+    admin_total = sum(
+        _admin_lines_total(fy, month_key=_month_key(fy, m)) for m in quarter_months
+    )
+    return {
+        "fy": fy, "quarter": quarter,
+        "programTotal": program_total, "adminTotal": admin_total,
+        "total": program_total + admin_total, "activityCount": activity_count,
+    }
+
+
+def fy_budget(query: dict) -> dict:
+    """FY budget (RVP summary) = all program lines + all admin items in the FY,
+    with by-quarter and by-activity-type breakdowns."""
+    from apps.activities.models import ActivityScheduleCostLine
+
+    fy = query.get("fy") or get_operational_fy()
+    program_total, activity_count = _program_lines_total(fy)
+    admin_total = _admin_lines_total(fy)
+
+    by_quarter = {}
+    for q in ("Q1", "Q2", "Q3", "Q4"):
+        q_total, _ = _program_lines_total(fy, quarter=q)
+        by_quarter[q] = q_total
+
+    by_activity_type = {}
+    type_qs = ActivityScheduleCostLine.objects.filter(
+        activity__deleted_at__isnull=True, activity__fy=fy
+    ).values("activity__activity_type").annotate(total=Sum("amount"))
+    for row in type_qs:
+        by_activity_type[row["activity__activity_type"]] = int(row["total"])
+
+    return {
+        "fy": fy,
+        "programTotal": program_total,
+        "adminTotal": admin_total,
+        "total": program_total + admin_total,
+        "activityCount": activity_count,
+        "byQuarter": by_quarter,
+        "byActivityType": by_activity_type,
+    }
+
+
+# month_of_fy (1=Oct) → calendar month; quarter → its months-of-fy.
+_FY_START_MONTH = 10  # October
+
+def _month_key(fy: str, month_of_fy: int) -> str:
+    """month_of_fy (1=Oct) → 'YYYY-MM' calendar key."""
+    fy_int = int(fy)
+    cal_month = _FY_START_MONTH + (month_of_fy - 1)
+    cal_year = fy_int - 1
+    while cal_month > 12:
+        cal_month -= 12
+        cal_year += 1
+    return f"{cal_year:04d}-{cal_month:02d}"
+
+
+def _quarter_months(quarter: str) -> list[int]:
+    """Quarter → the 3 months-of-fy it spans (1-based, Oct=1)."""
+    return {"Q1": [1, 2, 3], "Q2": [4, 5, 6], "Q3": [7, 8, 9], "Q4": [10, 11, 12]}[quarter]
 
 
 def _activity_to_costable(a) -> dict:
