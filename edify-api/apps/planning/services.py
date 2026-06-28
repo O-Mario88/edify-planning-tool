@@ -10,13 +10,118 @@ from apps.core.fy import get_operational_fy
 from .models import AnnualPlan, MonthlyPlan, MonthlyPlanActivity
 
 
-def setup(query: dict, principal) -> dict:
+def setup(query: dict, principal) -> list[dict]:
     """Planning setup surface (region/district/fy context)."""
+    from django.db.models import Q
+    from apps.core.enums import SsaIntervention
+    from apps.schools.models import School
+    from apps.activities.models import Activity
+    from apps.analytics.services import _scoped_schools
+
+    schools, scope = _scoped_schools(principal)
     fy = query.get("fy") or get_operational_fy()
-    return {"fy": fy, "ownerStaffId": principal.staff_profile_id}
+
+    sit_scheduled_school_ids = set(
+        Activity.objects.filter(
+            deleted_at__isnull=True,
+            fy=fy,
+            activity_type="school_improvement_training",
+            school_id__isnull=False
+        ).values_list("school_id", flat=True)
+    )
+
+    from apps.ssa.models import SsaRecord
+    records = SsaRecord.objects.filter(school__in=schools, fy=fy, deleted_at__isnull=True).prefetch_related("scores")
+    
+    school_weakest = {}
+    for r in records:
+        scores = sorted(r.scores.all().values("intervention", "score"), key=lambda s: s["score"])
+        weakest_list = []
+        for s in scores[:2]:
+            code = s["intervention"]
+            label = dict(SsaIntervention.choices).get(code, code)
+            weakest_list.append({
+                "intervention": code,
+                "label": label,
+                "score": s["score"]
+            })
+        school_weakest[r.school_id] = weakest_list
+
+    def _serialize_planning_school(school):
+        weak = school_weakest.get(school.id, [])
+        weakest_area = weak[0]["label"] if len(weak) > 0 else None
+        second_weak_area = weak[1]["label"] if len(weak) > 1 else None
+        
+        return {
+            "schoolId": school.school_id,
+            "name": school.name,
+            "schoolType": school.school_type,
+            "districtId": school.district_id,
+            "subCounty": school.sub_county.name if school.sub_county else None,
+            "owner": school.account_owner_name_raw or school.account_owner_id or "—",
+            "ssaStatus": school.current_fy_ssa_status,
+            "planningReadiness": school.planning_readiness,
+            "stage": school.planning_readiness,
+            "weakest": weak,
+            "weakestArea": weakest_area,
+            "secondWeakArea": second_weak_area
+        }
+
+    not_yet_clustered_list = schools.filter(Q(cluster_id__isnull=True) | Q(cluster_id="")).select_related("sub_county")
+    not_yet_clustered_items = [_serialize_planning_school(s) for s in not_yet_clustered_list]
+    
+    ready_to_plan_list = schools.filter(cluster_id__isnull=False).exclude(cluster_id="").filter(current_fy_ssa_status="done", school_type="client").select_related("sub_county")
+    ready_to_plan_items = [_serialize_planning_school(s) for s in ready_to_plan_list]
+    
+    core_school_list = schools.filter(cluster_id__isnull=False).exclude(cluster_id="").filter(school_type__in=["core", "champion"]).select_related("sub_county")
+    core_school_items = [_serialize_planning_school(s) for s in core_school_list]
+    
+    unassessed_list = schools.filter(cluster_id__isnull=False).exclude(cluster_id="").exclude(current_fy_ssa_status="done").select_related("sub_county")
+    
+    sit_scheduled_items = []
+    clustered_ssa_required_items = []
+    
+    for s in unassessed_list:
+        if s.id in sit_scheduled_school_ids:
+            sit_scheduled_items.append(_serialize_planning_school(s))
+        else:
+            clustered_ssa_required_items.append(_serialize_planning_school(s))
+
+    return [
+        {
+            "key": "notYetClustered",
+            "label": "Not clustered",
+            "count": len(not_yet_clustered_items),
+            "items": not_yet_clustered_items
+        },
+        {
+            "key": "clusteredSsaRequired",
+            "label": "Clustered, SSA required",
+            "count": len(clustered_ssa_required_items),
+            "items": clustered_ssa_required_items
+        },
+        {
+            "key": "sitScheduledSsaMissing",
+            "label": "SIT scheduled, SSA missing",
+            "count": len(sit_scheduled_items),
+            "items": sit_scheduled_items
+        },
+        {
+            "key": "readyToPlan",
+            "label": "Ready to plan",
+            "count": len(ready_to_plan_items),
+            "items": ready_to_plan_items
+        },
+        {
+            "key": "coreSchoolPlanning",
+            "label": "Plan core package",
+            "count": len(core_school_items),
+            "items": core_school_items
+        }
+    ]
 
 
-def core_planning(query: dict, principal) -> dict:
+def core_planning(query: dict, principal) -> list[dict]:
     return setup(query, principal)
 
 
