@@ -10,7 +10,8 @@ from apps.leadership.models import DecisionStatus
 from .models import BudgetIntelligenceInsight, FinanceDecisionNote
 
 
-def boards(principal, query: dict) -> list[dict]:
+def boards(principal, query: dict) -> dict:
+    fy = query.get("fy") or get_operational_fy()
     qs = BudgetIntelligenceInsight.objects.all().order_by("-generated_at")
     if query.get("fy"):
         qs = qs.filter(fy=query["fy"])
@@ -18,7 +19,10 @@ def boards(principal, query: dict) -> list[dict]:
         qs = qs.filter(insight_type=query["insightType"])
     if query.get("impactYield"):
         qs = qs.filter(impact_yield=query["impactYield"])
-    return [_serialize(i) for i in qs]
+    return {
+        "fy": fy,
+        "insights": [_serialize(i) for i in qs]
+    }
 
 
 def snapshot(principal, query: dict) -> dict:
@@ -88,8 +92,13 @@ def _serialize(i: BudgetIntelligenceInsight) -> dict:
     return {
         "id": i.id, "fy": i.fy, "insightType": i.insight_type, "period": i.period,
         "scopeType": i.scope_type, "scopeName": i.scope_name,
-        "recommendation": i.recommendation, "riskLevel": i.risk_level,
-        "impactYield": i.impact_yield, "confidenceLevel": i.confidence_level,
-        "confidenceScore": i.confidence_score, "amountAffected": i.amount_affected,
+        "recommendation": i.recommendation, "reason": i.reason,
+        "riskLevel": i.risk_level, "impactYield": i.impact_yield,
+        "confidenceLevel": i.confidence_level, "confidenceScore": i.confidence_score,
+        "amountAffected": i.amount_affected, "financialImplication": i.financial_implication,
+        "suggestedAction": i.suggested_action, "riskFlags": i.risk_flags or [],
+        "evidenceSummary": i.evidence_summary or [],
+        "alternatives": i.alternatives or [],
+        "metrics": i.metrics or {},
         "status": i.status, "generatedAt": i.generated_at.isoformat(),
     }
