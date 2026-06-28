@@ -153,10 +153,11 @@ def leadership_summary(principal, query: dict) -> dict:
     }
 
 
-def district_rollups(principal, query: dict) -> list[dict]:
+def district_rollups(principal, query: dict) -> dict:
     schools, scope = _scoped_schools(principal)
     rows = (
-        schools.values("district__name")
+        schools.filter(district_id__isnull=False)
+        .values("district_id", "district__name")
         .annotate(
             total=Count("id"),
             ssa_done=Count("id", filter=Q(current_fy_ssa_status="done")),
@@ -164,8 +165,9 @@ def district_rollups(principal, query: dict) -> list[dict]:
         )
         .order_by("district__name")
     )
-    return [
+    districts = [
         {
+            "districtId": r["district_id"],
             "district": r["district__name"],
             "total": r["total"],
             "ssaDone": r["ssa_done"],
@@ -174,6 +176,7 @@ def district_rollups(principal, query: dict) -> list[dict]:
         }
         for r in rows
     ]
+    return {"districts": districts}
 
 
 def coverage_summary(principal, query: dict) -> dict:
