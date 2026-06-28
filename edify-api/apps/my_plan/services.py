@@ -55,9 +55,21 @@ def get(principal, query: dict) -> dict:
         }
         for a in qs.select_related("school").order_by("planned_month", "planned_week")
     ]
+    
+    total_cost = sum(i["costCents"] for i in items)
+    partner_planned = qs.filter(delivery_type="partner").count()
+    
     return {
+        "live": True,
         "period": period,
         "fy": fy,
+        "currentKey": str(query.get("month") or ""),
+        "summary": {
+            "total": len(items),
+            "costCents": total_cost,
+            "partnerPlanned": partner_planned,
+        },
+        "groups": [],
         "items": items,
         "total": len(items),
     }

@@ -304,7 +304,141 @@ def sub_counties_without_clusters(principal) -> list[dict]:
 
 def cluster_planning(principal) -> list[dict]:
     """Per-cluster planning intelligence (cadence, SSA, coverage)."""
-    return [cluster_intelligence(c.id, principal) for c in Cluster.objects.filter(deleted_at__isnull=True, status="active")]
+    from apps.activities.models import Activity
+    from apps.core.enums import ActivityStatus
+    from django.utils import timezone
+    from apps.core.enums import ActivityType
+
+    # Resolve user scope to filter clusters
+    scope_q, scope = _scope_filter(principal)
+
+    clusters = (
+        Cluster.objects.filter(scope_q, deleted_at__isnull=True, status="active")
+        .select_related("district", "sub_county")
+        .prefetch_related("covered_sub_counties__sub_county")
+    )
+
+    out = []
+    for c in clusters:
+        schools = School.objects.filter(cluster_assignments__cluster=c, deleted_at__isnull=True)
+        total_schools = schools.count()
+        ssa_done = schools.filter(current_fy_ssa_status="done").count()
+
+        # Activities for this cluster
+        acts = Activity.objects.filter(cluster=c, deleted_at__isnull=True)
+        
+        meetings_completed = acts.filter(
+            activity_type__in=["cluster_meeting"],
+            status__in=["completed", "ia_verified", "accountant_confirmed"]
+        ).count()
+        
+        meetings_scheduled = acts.filter(
+            activity_type__in=["cluster_meeting"],
+            status__in=["scheduled", "partner_scheduled", "assigned_to_partner", "evidence_uploaded", "in_progress", "awaiting_ia_verification"]
+        ).count()
+
+        trainings_completed = acts.filter(
+            activity_type__in=["cluster_training", "school_improvement_training"],
+            status__in=["completed", "ia_verified", "accountant_confirmed"]
+        ).count()
+
+        # Last completed meeting date
+        last_meet = acts.filter(
+            activity_type__in=["cluster_meeting"],
+            status__in=["completed", "ia_verified", "accountant_confirmed"]
+        ).order_by("-scheduled_date").first()
+        last_meeting_date = last_meet.scheduled_date.isoformat() if last_meet and last_meet.scheduled_date else None
+
+        # Next scheduled meeting date
+        next_meet = acts.filter(
+            activity_type__in=["cluster_meeting"],
+            status__in=["scheduled", "partner_scheduled", "assigned_to_partner", "evidence_uploaded", "in_progress", "awaiting_ia_verification"]
+        ).order_by("scheduled_date").first()
+        next_scheduled_meeting_date = next_meet.scheduled_date.isoformat() if next_meet and next_meet.scheduled_date else None
+
+        met_this_quarter = (meetings_completed > 0 or meetings_scheduled > 0)
+
+        # Schools not visited / trained / neither
+        visited_school_ids = set(
+            Activity.objects.filter(
+                school__in=schools,
+                activity_type="school_visit",
+                status__in=["completed", "ia_verified", "accountant_confirmed"],
+                deleted_at__isnull=True
+            ).values_list("school_id", flat=True)
+        )
+        schools_not_visited = max(0, total_schools - len(visited_school_ids))
+
+        trained_school_ids = set(
+            Activity.objects.filter(
+                school__in=schools,
+                activity_type__in=["school_training", "core_training", "project_activity"],
+                status__in=["completed", "ia_verified", "accountant_confirmed"],
+                deleted_at__isnull=True
+            ).values_list("school_id", flat=True)
+        )
+        schools_not_trained = max(0, total_schools - len(trained_school_ids))
+
+        neither_count = max(0, total_schools - len(visited_school_ids.union(trained_school_ids)))
+
+        if meetings_completed == 0:
+            gap_cat = "no_meetings_this_fy"
+        elif not met_this_quarter:
+            gap_cat = "not_met_this_quarter"
+        elif schools_not_visited > 0:
+            gap_cat = "schools_not_visited"
+        elif schools_not_trained > 0:
+            gap_cat = "schools_not_trained"
+        else:
+            gap_cat = "on_track"
+
+        recommendation_headline = None
+        recommendation_reason = None
+        recommendation_activity_label = None
+        recommendation_focus_intervention = None
+
+        if gap_cat == "no_meetings_this_fy":
+            recommendation_headline = "No cluster meetings held this FY"
+            recommendation_reason = "Organize the first cluster meeting to align plans."
+            recommendation_activity_label = "Schedule Cluster Meeting"
+        elif gap_cat == "not_met_this_quarter":
+            recommendation_headline = "No cluster meeting this quarter"
+            recommendation_reason = "Keep up the quarterly cadence."
+            recommendation_activity_label = "Schedule Cluster Meeting"
+        elif gap_cat == "schools_not_visited":
+            recommendation_headline = "Schools need visits"
+            recommendation_reason = f"{schools_not_visited} schools haven't been visited."
+            recommendation_activity_label = "Schedule Visit"
+        elif gap_cat == "schools_not_trained":
+            recommendation_headline = "Schools need training"
+            recommendation_reason = f"{schools_not_trained} schools need training."
+            recommendation_activity_label = "Schedule Training"
+
+        out.append(
+            {
+                "id": c.id,
+                "clusterName": c.name,
+                "district": c.district.name if c.district else "",
+                "subCounty": (c.sub_county.name if c.sub_county else "") or c.sub_county_name or "",
+                "schoolsCount": total_schools,
+                "schoolsWithSsa": ssa_done,
+                "meetingsThisFy": meetings_completed,
+                "meetingsScheduledThisFy": meetings_scheduled,
+                "trainingsThisFy": trainings_completed,
+                "lastMeetingDate": last_meeting_date,
+                "nextScheduledMeetingDate": next_scheduled_meeting_date,
+                "metThisQuarter": met_this_quarter,
+                "schoolsNotVisited": schools_not_visited,
+                "schoolsNotTrained": schools_not_trained,
+                "schoolsNeitherVisitNorTraining": neither_count,
+                "gapCategory": gap_cat,
+                "recommendationHeadline": recommendation_headline,
+                "recommendationReason": recommendation_reason,
+                "recommendationActivityLabel": recommendation_activity_label,
+                "recommendationFocusIntervention": recommendation_focus_intervention,
+            }
+        )
+    return out
 
 
 __all__ = [

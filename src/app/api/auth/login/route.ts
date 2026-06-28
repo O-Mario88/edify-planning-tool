@@ -56,9 +56,11 @@ export async function POST(request: Request) {
   if (csrf) return csrf;
 
   const ip = ipFromRequest(request);
-  const rl = await rateLimit(`login:${ip}`, LOGIN_RATE);
-  if (!rl.ok) {
-    return rateLimitResponse(rl, "Too many login attempts. Please wait and try again.");
+  if (process.env.NODE_ENV !== "development") {
+    const rl = await rateLimit(`login:${ip}`, LOGIN_RATE);
+    if (!rl.ok) {
+      return rateLimitResponse(rl, "Too many login attempts. Please wait and try again.");
+    }
   }
 
   let body: LoginBody;

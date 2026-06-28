@@ -253,30 +253,97 @@ def _by_quarter_from_activities(activities) -> list[dict]:
     return [{"quarter": q, "amount": amt.get(q, 0), "count": cnt.get(q, 0)} for q in ("Q1", "Q2", "Q3", "Q4") if cnt.get(q, 0)]
 
 
-def weekly(principal, query: dict) -> list[dict]:
-    """Weekly fund-request line items for a month. Sums the persisted schedule
-    cost lines (prefetched) instead of re-deriving per activity."""
+def weekly(principal, query: dict) -> dict:
+    """Weekly fund-request rollup for a month. Returns the full BeBudgetWeekly contract."""
     from apps.activities.models import Activity
-
+    
     fy = query.get("fy") or get_operational_fy()
-    month = int(query.get("month") or 1)
+    month_val = query.get("month")
+    month = int(month_val) if month_val else 1
     scope = resolve_user_scope(principal)
+    
     qs = Activity.objects.filter(deleted_at__isnull=True, fy=fy, planned_month=month)
-    if not scope.country_scope and scope.staff_ids:
-        qs = qs.filter(responsible_staff_id__in=scope.staff_ids)
-    out = []
-    for a in qs.prefetch_related("schedule_cost_lines"):
-        amount = sum(line.amount for line in a.schedule_cost_lines.all())
-        if not amount and a.est_cost_cents:
-            amount = a.est_cost_cents
-        out.append({
-            "activityId": a.id,
+    if not scope.country_scope:
+        if scope.staff_ids:
+            qs = qs.filter(responsible_staff_id__in=scope.staff_ids)
+        elif scope.partner_ids:
+            qs = qs.filter(assigned_partner_id__in=scope.partner_ids)
+        else:
+            qs = qs.none()
+            
+    activities = list(qs.select_related("school", "cluster").prefetch_related("schedule_cost_lines"))
+    
+    lines = []
+    total_cents = 0
+    cost_missing_count = 0
+    
+    # Weeks rollup: weeks 1 to 5
+    week_amounts = {w: 0 for w in range(1, 6)}
+    week_counts = {w: 0 for w in range(1, 6)}
+    
+    for a in activities:
+        amount = sum(line.amount for line in a.schedule_cost_lines.all()) or a.est_cost_cents
+        total_cents += amount
+        if a.cost_missing:
+            cost_missing_count += 1
+            
+        w = a.planned_week or 1
+        if w in week_amounts:
+            week_amounts[w] += amount
+            week_counts[w] += 1
+            
+        # Serialize cost lines
+        cost_lines = [
+            {
+                "label": line.label,
+                "key": line.cost_setting_key,
+                "unit": line.unit_cost,
+                "qty": line.qty,
+                "amount": line.amount,
+                "missing": False
+            }
+            for line in a.schedule_cost_lines.all()
+        ]
+        
+        lines.append({
+            "id": a.id,
             "activityType": a.activity_type,
-            "week": a.planned_week or 1,
+            "deliveryType": a.delivery_type,
+            "status": a.status,
+            "month": a.planned_month,
+            "week": a.planned_week,
+            "scheduledDate": a.scheduled_date.isoformat() if a.scheduled_date else None,
+            "place": a.school.name if a.school else (a.cluster.name if a.cluster else ""),
+            "district": a.school.district.name if a.school and a.school.district else "",
+            "staff": a.responsible_staff_id or "",
+            "partner": a.assigned_partner_id or "",
             "amount": amount,
             "costMissing": a.cost_missing,
+            "lines": cost_lines,
+            "paymentStatus": a.payment_status,
+            "iaVerificationStatus": a.ia_verification_status,
         })
-    return out
+        
+    weeks = [
+        {
+            "key": f"W{w}",
+            "month": month,
+            "week": w,
+            "amount": week_amounts[w],
+            "count": week_counts[w],
+        }
+        for w in range(1, 6)
+    ]
+    
+    return {
+        "fy": fy,
+        "role": scope.active_role or "",
+        "total": total_cents,
+        "count": len(activities),
+        "costMissingCount": cost_missing_count,
+        "weeks": weeks,
+        "lines": lines,
+    }
 
 
 def board(principal, query: dict) -> dict:

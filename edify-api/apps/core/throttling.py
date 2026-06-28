@@ -87,8 +87,13 @@ class RouteRateThrottle(SimpleRateThrottle):
 
 class LoginRateThrottle(RouteRateThrottle):
     rate_name = "auth.login"
-    rate_limit = 10
     rate_window_ms = 60_000
+
+    def __init__(self):
+        super().__init__()
+        from django.conf import settings
+        self.rate_limit = getattr(settings, "RATE_LIMIT_LOGIN_PER_MIN", 10)
+
 
 
 class ForgotPasswordRateThrottle(RouteRateThrottle):

@@ -72,6 +72,7 @@ export async function fetchBackendSchoolGaps(user: BackendUser): Promise<Backend
   if (!isBackendEnabled()) return { gaps: null, error: null };
   const r = await fetchPlanningSetup(user, "");
   if (!r.live) return { gaps: null, error: r.error ?? "Backend unreachable" };
+  if (!Array.isArray(r.data)) return { gaps: null, error: "Invalid data shape" };
   return { gaps: mapSchoolGaps(r), error: null };
 }
 

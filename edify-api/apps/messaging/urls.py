@@ -4,6 +4,7 @@ from . import views
 
 urlpatterns = [
     path("", views.MessageListSendView.as_view(), name="list"),
+    path("recent", views.MessageListSendView.as_view(), name="recent"),
     path("counts", views.MessageCountsView.as_view(), name="counts"),
     path("recipients", views.MessageRecipientsView.as_view(), name="recipients"),
     path("contexts", views.MessageContextsView.as_view(), name="contexts"),
