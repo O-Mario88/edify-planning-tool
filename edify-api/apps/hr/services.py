@@ -8,9 +8,11 @@ from apps.core.rbac import EdifyRole
 from apps.core.scoping import resolve_user_scope
 
 
-def roster(principal) -> list[dict]:
-    """Staff directory. Emails stripped for non-managers; scoped to supervisees
-    for PL, to region for RVP."""
+def roster(principal) -> dict:
+    """Staff directory. Conforms to BeRoster contract."""
+    from apps.schools.models import School
+    from apps.geography.models import District
+
     scope = resolve_user_scope(principal)
     qs = StaffProfile.objects.filter(deleted_at__isnull=True).select_related("user")
     if principal.active_role == EdifyRole.COUNTRY_PROGRAM_LEAD.value and scope.supervised_staff_ids:
@@ -19,20 +21,47 @@ def roster(principal) -> list[dict]:
         EdifyRole.ADMIN.value, EdifyRole.HUMAN_RESOURCES.value,
         EdifyRole.COUNTRY_DIRECTOR.value, EdifyRole.COUNTRY_PROGRAM_LEAD.value,
     )
-    out = []
+    staff = []
+    total_count = qs.count()
+    active_count = 0
+    pending_count = 0
+    
+    district_ids = [sp.primary_district_id for sp in qs if sp.primary_district_id]
+    district_map = {d.id: d.name for d in District.objects.filter(id__in=district_ids)}
+    
     for sp in qs:
         email = None if strip_email else sp.user.email
-        out.append({
-            "id": sp.id,
+        schools_count = School.objects.filter(account_owner_id=sp.id, deleted_at__isnull=True).count()
+        supervisees_count = sp.supervisee_links.count()
+        primary_district_name = district_map.get(sp.primary_district_id) if sp.primary_district_id else None
+        
+        if sp.onboarding_state == "active":
+            active_count += 1
+        elif sp.onboarding_state == "pending":
+            pending_count += 1
+            
+        role_label = sp.user.roles[0] if sp.user.roles else (sp.title or "")
+        
+        staff.append({
+            "staffProfileId": sp.id,
             "name": sp.user.name,
-            "email": email,
-            "title": sp.title,
-            "staffNumber": sp.staff_number,
-            "primaryDistrictId": sp.primary_district_id,
+            "email": email or "",
+            "role": role_label,
             "onboardingState": sp.onboarding_state,
-            "roles": sp.user.roles,
+            "active": sp.onboarding_state == "active",
+            "primaryDistrict": primary_district_name,
+            "schools": schools_count,
+            "supervisees": supervisees_count,
         })
-    return out
+        
+    return {
+        "counts": {
+            "total": total_count,
+            "active": active_count,
+            "pending": pending_count,
+        },
+        "staff": staff
+    }
 
 
 def list_leave(principal, query: dict) -> list[dict]:
