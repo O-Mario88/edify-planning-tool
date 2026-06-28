@@ -373,17 +373,14 @@ def weekly(principal, query: dict) -> dict:
 
 
 def board(principal, query: dict) -> dict:
-    """The monthly budget board (lens + period filtered). Sums the persisted
-    budget lines per activity (prefetched) — the authoritative cost snapshot."""
+    from django.db.models import Sum, Q, Count
     from apps.activities.models import Activity
+    from apps.core.fy import get_operational_fy
 
     fy = query.get("fy") or get_operational_fy()
     scope = resolve_user_scope(principal)
     qs = Activity.objects.filter(deleted_at__isnull=True, fy=fy)
-    if query.get("quarter"):
-        qs = qs.filter(quarter=query["quarter"])
-    if query.get("month"):
-        qs = qs.filter(planned_month=int(query["month"]))
+    
     lens = query.get("lens", "own")
     if not scope.country_scope:
         if lens == "team" and scope.supervised_staff_ids:
@@ -394,22 +391,159 @@ def board(principal, query: dict) -> dict:
             qs = qs.filter(assigned_partner_id__in=scope.partner_ids)
         else:
             qs = qs.none()
-    total = 0
-    rows = []
-    for a in qs.prefetch_related("schedule_cost_lines"):
+
+    activities = list(qs.prefetch_related("schedule_cost_lines"))
+
+    total_fy = 0
+    cost_missing_count = 0
+    
+    month_data = {}
+    category_data = {}
+    
+    import datetime
+    today = datetime.date.today()
+    this_week_num = today.isocalendar()[1]
+    next_week_num = this_week_num + 1
+    
+    this_week_total = 0
+    next_week_total = 0
+    this_month_total = 0
+    this_quarter_total = 0
+    
+    MONTH_NAMES = {
+        1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr", 5: "May", 6: "Jun",
+        7: "Jul", 8: "Aug", 9: "Sep", 10: "Oct", 11: "Nov", 12: "Dec"
+    }
+
+    category_groups = {}
+    activity_index = 1
+
+    for a in activities:
         amount = sum(line.amount for line in a.schedule_cost_lines.all())
         if not amount and a.est_cost_cents:
             amount = a.est_cost_cents
-        total += amount
-        rows.append({
-            "activityId": a.id,
-            "activityType": a.activity_type,
-            "status": a.status,
-            "amount": amount,
+            
+        total_fy += amount
+        if a.cost_missing:
+            cost_missing_count += 1
+            
+        m = a.planned_month
+        if m:
+            if m not in month_data:
+                month_data[m] = {"amount": 0, "count": 0}
+            month_data[m]["amount"] += amount
+            month_data[m]["count"] += 1
+            
+        cat = a.activity_type.replace("_", " ").title()
+        category_data[cat] = category_data.get(cat, 0) + amount
+        
+        if a.scheduled_date:
+            act_date = a.scheduled_date.date()
+            if act_date.year == today.year:
+                act_wk = act_date.isocalendar()[1]
+                if act_wk == this_week_num:
+                    this_week_total += amount
+                elif act_wk == next_week_num:
+                    next_week_total += amount
+        
+        if a.planned_month:
+            if a.planned_month == today.month:
+                this_month_total += amount
+            
+            q_map = {1: "Q1", 2: "Q1", 3: "Q1", 4: "Q2", 5: "Q2", 6: "Q2", 7: "Q3", 8: "Q3", 9: "Q3", 10: "Q4", 11: "Q4", 12: "Q4"}
+            this_q = q_map.get(today.month, "Q1")
+            if q_map.get(a.planned_month) == this_q:
+                this_quarter_total += amount
+
+        if cat not in category_groups:
+            category_groups[cat] = []
+        
+        resp = a.responsible_staff_id or a.assigned_partner_id or "—"
+        
+        category_groups[cat].append({
+            "index": activity_index,
+            "activity": a.activity_type.replace("_", " ").title(),
+            "schoolCount": 1 if a.school_id else 0,
+            "responsible": resp,
+            "unitCost": amount,
+            "total": amount,
             "costMissing": a.cost_missing,
-            "month": a.planned_month,
         })
-    return {"fy": fy, "total": total, "count": len(rows), "items": rows}
+        activity_index += 1
+
+    by_category = []
+    for cat, amt in category_data.items():
+        by_category.append({
+            "label": cat,
+            "amount": amt,
+            "pct": round(amt / total_fy * 100) if total_fy else 0
+        })
+    by_category.sort(key=lambda x: x["amount"], reverse=True)
+
+    by_month = []
+    for m in range(1, 13):
+        m_info = month_data.get(m, {"amount": 0, "count": 0})
+        by_month.append({
+            "month": m,
+            "label": MONTH_NAMES[m],
+            "amount": m_info["amount"],
+            "count": m_info["count"]
+        })
+
+    grouped = []
+    for cat, rows in category_groups.items():
+        grouped.append({
+            "category": cat,
+            "rows": rows
+        })
+
+    period_total = total_fy
+    req_month = query.get("month")
+    req_quarter = query.get("quarter")
+    if req_month:
+        period_total = month_data.get(int(req_month), {}).get("amount", 0)
+    elif req_quarter:
+        q_months = {"Q1": [10, 11, 12], "Q2": [1, 2, 3], "Q3": [4, 5, 6], "Q4": [7, 8, 9]}.get(req_quarter, [])
+        period_total = sum(month_data.get(m, {}).get("amount", 0) for m in q_months)
+
+    role_str = scope.active_role or "CCEO"
+    scope_str = "country" if scope.country_scope else ("team" if scope.can_view_team else "own")
+    view_mode_str = "country_summary" if role_str == "RVP" else ("team" if role_str == "CountryProgramLead" else ("own" if role_str == "CCEO" else "country"))
+
+    workflow = [
+        { "step": 1, "label": "Plan & cost from catalogue", "detail": "Staff schedule activities; costs auto-calculated." },
+        { "step": 2, "label": "CCEO → PL review", "detail": "CCEO plans route to Program Lead." },
+        { "step": 3, "label": "PL / IA / Accountant → CD", "detail": "Other roles route to Country Director." },
+        { "step": 4, "label": "CD approval + admin cost", "detail": "CD adds administrative costs." },
+        { "step": 5, "label": "RVP final approval", "detail": "Country consolidation for RVP sign-off." },
+    ]
+
+    return {
+        "fy": fy,
+        "role": role_str,
+        "scope": scope_str,
+        "viewMode": view_mode_str,
+        "lens": query.get("lens", "month"),
+        "lensLabel": f"FY{fy} Budget",
+        "period": {
+            "month": int(req_month) if req_month else None,
+            "quarter": req_quarter,
+        },
+        "summary": {
+            "thisWeek": this_week_total,
+            "nextWeek": next_week_total,
+            "thisMonth": this_month_total,
+            "thisQuarter": this_quarter_total,
+            "fiscalYear": total_fy,
+            "periodTotal": period_total,
+            "activityCount": len(activities),
+            "costMissingCount": cost_missing_count,
+        },
+        "grouped": grouped,
+        "byCategory": by_category,
+        "byMonth": by_month,
+        "workflow": workflow
+    }
 
 
 # ── Program + admin budget aggregation (monthly / quarterly / FY) ────────────
