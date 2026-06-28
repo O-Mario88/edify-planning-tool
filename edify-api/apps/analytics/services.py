@@ -228,17 +228,135 @@ def ssa_performance(principal, query: dict) -> dict:
     }
 
 
-def ssa_performance_grouped(principal, query: dict) -> list[dict]:
-    from apps.ssa.models import SsaRecord
+def ssa_performance_grouped(principal, query: dict) -> dict:
+    from apps.ssa.models import SsaRecord, SsaScore
+    from apps.core.enums import SsaIntervention
 
     schools, scope = _scoped_schools(principal)
     fy = query.get("fy") or get_operational_fy()
     group_by = query.get("groupBy", "district")
-    relation = {"region": "school__region__name", "district": "school__district__name",
-                "cluster": "school__cluster_id", "subCounty": "school__sub_county__name"}.get(group_by, "school__district__name")
-    records = SsaRecord.objects.filter(school__in=schools, fy=fy, deleted_at__isnull=True)
-    rows = records.values(relation).annotate(avg=Avg("average_score"), count=Count("id")).order_by(relation)
-    return [{"group": r[relation], "averageScore": round(r["avg"], 2), "count": r["count"]} for r in rows]
+    school_type = query.get("schoolType") or "all"
+    
+    if school_type == "core":
+        schools = schools.filter(school_type__in=["core", "champion"])
+    elif school_type == "client":
+        schools = schools.filter(school_type="client")
+
+    if group_by == "region":
+        group_field = "region_id"
+        name_field = "region__name"
+    elif group_by == "subCounty":
+        group_field = "sub_county_id"
+        name_field = "sub_county__name"
+    elif group_by == "cluster":
+        group_field = "cluster_id"
+        name_field = "cluster_id"
+    else:
+        group_field = "district_id"
+        name_field = "district__name"
+
+    school_groups = (
+        schools.filter(**{f"{group_field}__isnull": False})
+        .values(group_field, name_field)
+        .annotate(total=Count("id"))
+    )
+
+    if not school_groups:
+        return {
+            "fy": fy,
+            "groupBy": group_by,
+            "schoolType": school_type,
+            "canGroupByCceo": principal.active_role in ("Admin", "CountryDirector", "CountryProgramLead", "IA"),
+            "interventions": [{"code": i.value, "label": i.label} for i in SsaIntervention],
+            "rows": []
+        }
+
+    group_map = {}
+    for sg in school_groups:
+        gid = sg[group_field]
+        gname = sg[name_field]
+        if group_by == "cluster":
+            from apps.clusters.models import Cluster
+            cluster_obj = Cluster.objects.filter(id=gid).first()
+            gname = cluster_obj.name if cluster_obj else f"Cluster {gid}"
+
+        group_map[gid] = {
+            "groupId": gid,
+            "groupName": gname or "Unknown",
+            "schoolCount": sg["total"],
+            "schoolsAssessed": 0,
+            "overallAverage": None,
+            "interventions": {i.value: None for i in SsaIntervention},
+            "records": []
+        }
+
+    records = SsaRecord.objects.filter(
+        school__in=schools,
+        fy=fy,
+        deleted_at__isnull=True
+    ).values("id", f"school__{group_field}", "average_score")
+
+    record_ids = []
+    for r in records:
+        gid = r[f"school__{group_field}"]
+        if gid in group_map:
+            group_map[gid]["records"].append(r)
+            record_ids.append(r["id"])
+
+    assessed_counts = (
+        SsaRecord.objects.filter(school__in=schools, fy=fy, deleted_at__isnull=True)
+        .values(f"school__{group_field}")
+        .annotate(unique_schools=Count("school_id", distinct=True))
+    )
+    for ac in assessed_counts:
+        gid = ac[f"school__{group_field}"]
+        if gid in group_map:
+            group_map[gid]["schoolsAssessed"] = ac["unique_schools"]
+
+    scores = (
+        SsaScore.objects.filter(ssa_record_id__in=record_ids)
+        .values("ssa_record__school__{}".format(group_field), "intervention")
+        .annotate(avg_score=Avg("score"))
+    )
+
+    for s in scores:
+        gid = s["ssa_record__school__{}".format(group_field)]
+        intervention = s["intervention"]
+        avg_score = s["avg_score"]
+        if gid in group_map:
+            group_map[gid]["interventions"][intervention] = round(avg_score, 1) if avg_score is not None else None
+
+    for gid, gdata in group_map.items():
+        recs = gdata["records"]
+        if recs:
+            avg_sum = sum(r["average_score"] for r in recs if r["average_score"] is not None)
+            count = sum(1 for r in recs if r["average_score"] is not None)
+            gdata["overallAverage"] = round(avg_sum / count, 1) if count > 0 else None
+
+    rows_data = []
+    for gid, gdata in group_map.items():
+        school_count = gdata["schoolCount"]
+        schools_assessed = gdata["schoolsAssessed"]
+        rows_data.append({
+            "groupId": gdata["groupId"],
+            "groupName": gdata["groupName"],
+            "schoolCount": school_count,
+            "schoolsAssessed": schools_assessed,
+            "schoolsMissingSSA": max(0, school_count - schools_assessed),
+            "interventions": gdata["interventions"],
+            "overallAverage": gdata["overallAverage"]
+        })
+
+    rows_data.sort(key=lambda r: r["groupName"])
+
+    return {
+        "fy": fy,
+        "groupBy": group_by,
+        "schoolType": school_type,
+        "canGroupByCceo": principal.active_role in ("Admin", "CountryDirector", "CountryProgramLead", "IA"),
+        "interventions": [{"code": i.value, "label": i.label} for i in SsaIntervention],
+        "rows": rows_data
+    }
 
 
 def intervention_improvement(principal, query: dict) -> dict:
