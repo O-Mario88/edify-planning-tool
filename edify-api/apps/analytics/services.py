@@ -635,23 +635,116 @@ def activity_pipeline(principal, query: dict) -> dict:
 
 
 def contribution_summary(principal, query: dict) -> dict:
-    """Contribution by lens (own/team/combined)."""
+    from django.db.models import Sum, Q, Count
     from apps.activities.models import Activity
+    from apps.schools.models import School
+    from apps.ssa.models import SsaRecord
 
-    scope = resolve_user_scope(principal)
+    schools, scope = _scoped_schools(principal)
     fy = query.get("fy") or get_operational_fy()
+    prev_fy = str(int(fy) - 1)
     lens = query.get("lens", "own")
-    qs = Activity.objects.filter(deleted_at__isnull=True, fy=fy, status__in=["completed", "ia_verified"])
+
     if lens == "team" and scope.supervised_staff_ids:
-        qs = qs.filter(responsible_staff_id__in=scope.supervised_staff_ids)
-    elif scope.staff_ids:
-        qs = qs.filter(responsible_staff_id__in=scope.staff_ids)
+        schools_in_lens = School.objects.filter(deleted_at__isnull=True, account_owner_id__in=scope.supervised_staff_ids)
+    elif lens == "combined" and scope.supervised_staff_ids:
+        schools_in_lens = School.objects.filter(deleted_at__isnull=True, account_owner_id__in=list(scope.supervised_staff_ids) + list(scope.staff_ids or []))
     else:
-        qs = qs.none()
+        schools_in_lens = schools
+
+    completed_qs = Activity.objects.filter(deleted_at__isnull=True, fy=fy, status__in=["completed", "ia_verified", "accountant_confirmed"])
+    if lens == "team" and scope.supervised_staff_ids:
+        completed_qs = completed_qs.filter(responsible_staff_id__in=scope.supervised_staff_ids)
+    elif lens == "combined" and scope.supervised_staff_ids:
+        completed_qs = completed_qs.filter(responsible_staff_id__in=list(scope.supervised_staff_ids) + list(scope.staff_ids or []))
+    elif scope.staff_ids:
+        completed_qs = completed_qs.filter(responsible_staff_id__in=scope.staff_ids)
+    else:
+        completed_qs = completed_qs.none()
+
+    reached_school_ids = list(completed_qs.filter(school_id__isnull=False).values_list("school_id", flat=True).distinct())
+    reached_schools = School.objects.filter(id__in=reached_school_ids, deleted_at__isnull=True)
+    
+    schools_reached_count = reached_schools.count()
+    core_schools_supported = reached_schools.filter(school_type__in=["core", "champion"]).count()
+    
+    learners_impacted = reached_schools.aggregate(total=Sum("enrollment"))["total"] or 0
+    
+    totals_trained = completed_qs.aggregate(
+        teachers=Sum("teachers_attended"),
+        leaders=Sum("leaders_attended")
+    )
+    teachers_trained = totals_trained["teachers"] or 0
+    leaders_trained = totals_trained["leaders"] or 0
+
+    districts_covered = reached_schools.values("district_id").distinct().count()
+    clusters_covered = reached_schools.values("cluster_id").exclude(Q(cluster_id__isnull=True) | Q(cluster_id="")).distinct().count()
+
+    VISIT_TYPES = {"school_visit", "follow_up_visit", "coaching_visit", "core_visit"}
+    TRAINING_TYPES = {"training", "school_improvement_training", "cluster_training", "core_training"}
+
+    visits_completed = completed_qs.filter(activity_type__in=VISIT_TYPES).count()
+    trainings_completed = completed_qs.filter(activity_type__in=TRAINING_TYPES).count()
+
+    ssa_completed = SsaRecord.objects.filter(school__in=schools_in_lens, fy=fy, deleted_at__isnull=True).count()
+
+    records_curr = {
+        r["school_id"]: r
+        for r in SsaRecord.objects.filter(school__in=schools_in_lens, fy=fy, deleted_at__isnull=True).values("id", "school_id", "average_score")
+    }
+    records_prev = {
+        r["school_id"]: r
+        for r in SsaRecord.objects.filter(school__in=schools_in_lens, fy=prev_fy, deleted_at__isnull=True).values("id", "school_id", "average_score")
+    }
+    
+    schools_improved = 0
+    for sid in records_curr:
+        r_curr = records_curr[sid]
+        r_prev = records_prev.get(sid)
+        if r_curr and r_prev:
+            diff = (r_curr["average_score"] or 0) - (r_prev["average_score"] or 0)
+            if diff > 0.05:
+                schools_improved += 1
+
+    partner_activities = completed_qs.filter(delivery_type="partner").count()
+    ia_verified_activities = completed_qs.filter(status__in=["ia_verified", "accountant_confirmed"]).count()
+
+    pending_qs = Activity.objects.filter(deleted_at__isnull=True, fy=fy, status="evidence_uploaded")
+    if lens == "team" and scope.supervised_staff_ids:
+        pending_qs = pending_qs.filter(responsible_staff_id__in=scope.supervised_staff_ids)
+    elif lens == "combined" and scope.supervised_staff_ids:
+        pending_qs = pending_qs.filter(responsible_staff_id__in=list(scope.supervised_staff_ids) + list(scope.staff_ids or []))
+    elif scope.staff_ids:
+        pending_qs = pending_qs.filter(responsible_staff_id__in=scope.staff_ids)
+    else:
+        pending_qs = pending_qs.none()
+        
+    evidence_pending = pending_qs.count()
+
+    metrics = {
+        "schoolsReached": schools_reached_count,
+        "coreSchoolsSupported": core_schools_supported,
+        "learnersImpacted": learners_impacted,
+        "teachersTrained": teachers_trained,
+        "schoolLeadersTrained": leaders_trained,
+        "districtsCovered": districts_covered,
+        "clustersCovered": clusters_covered,
+        "visitsCompleted": visits_completed,
+        "trainingsCompleted": trainings_completed,
+        "ssaCompleted": ssa_completed,
+        "schoolsImproved": schools_improved,
+        "partnerActivities": partner_activities,
+        "iaVerifiedActivities": ia_verified_activities,
+        "evidencePending": evidence_pending,
+    }
+
     return {
-        "fy": fy, "lens": lens,
-        "completedActivities": qs.count(),
-        "byType": dict(qs.values_list("activity_type").annotate(c=Count("id")).values_list("activity_type", "c")),
+        "fy": fy,
+        "lens": lens,
+        "canViewTeam": scope.can_view_team,
+        "summaryOnly": False,
+        "schoolsInScope": schools_in_lens.count(),
+        "metrics": metrics
     }
 
 
