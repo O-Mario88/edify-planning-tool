@@ -38,17 +38,18 @@ def dashboard_summary(principal, query: dict) -> dict:
         planning_ready=Count("id", filter=Q(planning_readiness="ready")),
     )
     return {
-        "fy": fy,
-        "schoolsTotal": agg["total"],
+        "role": scope.active_role or "",
+        "scope": {
+            "countryScope": scope.country_scope,
+            "schoolsInScope": agg["total"],
+        },
+        "schools": agg["total"],
         "coreSchools": agg["core"],
-        "championSchools": agg["champion"],
         "clientSchools": agg["client"],
-        "ssaDone": agg["ssa_done"],
-        "ssaMissing": (agg["total"] or 0) - (agg["ssa_done"] or 0),
-        "clustered": agg["clustered"],
         "planningReady": agg["planning_ready"],
-        "countryScope": scope.country_scope,
-        "summaryOnly": scope.can_view_summary_only,
+        "unclustered": (agg["total"] or 0) - (agg["clustered"] or 0),
+        "ssaDone": agg["ssa_done"],
+        "fy": fy,
     }
 
 
