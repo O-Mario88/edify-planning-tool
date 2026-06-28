@@ -706,6 +706,32 @@ def contribution_summary(principal, query: dict) -> dict:
             if diff > 0.05:
                 schools_improved += 1
 
+    # Calculate best/worst interventions
+    from apps.core.enums import SsaIntervention
+    from apps.ssa.models import SsaScore
+    curr_rec_ids = [r["id"] for r in records_curr.values()]
+    prev_rec_ids = [r["id"] for r in records_prev.values()]
+    
+    curr_avgs = dict(SsaScore.objects.filter(ssa_record_id__in=curr_rec_ids).values("intervention").annotate(a=Avg("score")).values_list("intervention", "a"))
+    prev_avgs = dict(SsaScore.objects.filter(ssa_record_id__in=prev_rec_ids).values("intervention").annotate(a=Avg("score")).values_list("intervention", "a"))
+    
+    best_intervention = None
+    worst_intervention = None
+    best_change = -999.0
+    worst_change = 999.0
+    
+    for i in SsaIntervention:
+        curr_val = curr_avgs.get(i.value)
+        prev_val = prev_avgs.get(i.value)
+        if curr_val is not None and prev_val is not None:
+            change = float(curr_val) - float(prev_val)
+            if change > best_change:
+                best_change = change
+                best_intervention = i.value
+            if change < worst_change:
+                worst_change = change
+                worst_intervention = i.value
+
     partner_activities = completed_qs.filter(delivery_type="partner").count()
     ia_verified_activities = completed_qs.filter(status__in=["ia_verified", "accountant_confirmed"]).count()
 
@@ -736,6 +762,8 @@ def contribution_summary(principal, query: dict) -> dict:
         "partnerActivities": partner_activities,
         "iaVerifiedActivities": ia_verified_activities,
         "evidencePending": evidence_pending,
+        "bestIntervention": best_intervention,
+        "worstIntervention": worst_intervention,
     }
 
     return {
@@ -744,7 +772,8 @@ def contribution_summary(principal, query: dict) -> dict:
         "canViewTeam": scope.can_view_team,
         "summaryOnly": False,
         "schoolsInScope": schools_in_lens.count(),
-        "metrics": metrics
+        "metrics": metrics,
+        "dataQuality": []
     }
 
 
