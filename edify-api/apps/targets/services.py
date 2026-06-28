@@ -9,15 +9,117 @@ from apps.core.rbac import EdifyRole
 from .models import TargetSetting
 
 
-def time_period(query: dict) -> dict:
+def time_period(query: dict, principal=None) -> dict:
+    from apps.core.fy import get_operational_fy
+    from apps.accounts.models import StaffProfile, StaffTargetProfile
+    from apps.schools.models import School
+    from apps.activities.models import Activity
+
     fy = query.get("fy") or get_operational_fy()
     staff_id = query.get("staffId")
-    targets = {"visitsTarget": 0, "trainingsTarget": 0}
-    if staff_id:
-        tp = StaffTargetProfile.objects.filter(staff_id=staff_id, fy=fy).first()
-        if tp:
-            targets = {"visitsTarget": tp.visits_target, "trainingsTarget": tp.trainings_target}
-    return {"fy": fy, "staffId": staff_id, **targets}
+    if not staff_id and principal:
+        staff_profile = getattr(principal, "staff_profile", None)
+        if staff_profile:
+            staff_id = staff_profile.id
+
+    if not staff_id:
+        return {
+            "live": False,
+            "fy": fy,
+            "staffId": "",
+            "totalPortfolio": 0,
+            "annual": {"staffTarget": 0, "partnerTarget": 0, "total": 0},
+            "rows": [],
+            "dataQuality": []
+        }
+
+    sp = StaffProfile.objects.filter(id=staff_id).first()
+    if not sp:
+        return {
+            "live": False,
+            "fy": fy,
+            "staffId": staff_id,
+            "totalPortfolio": 0,
+            "annual": {"staffTarget": 0, "partnerTarget": 0, "total": 0},
+            "rows": [],
+            "dataQuality": [f"Staff profile not found for ID {staff_id}."]
+        }
+
+    total_portfolio = School.objects.filter(account_owner_id=sp.id, deleted_at__isnull=True).count()
+
+    tp = StaffTargetProfile.objects.filter(staff=sp, fy=fy).first()
+    staff_target = (tp.visits_target + tp.trainings_target) if tp else 0
+    partner_target = 0
+    total_target = staff_target + partner_target
+
+    staff_achieved_q1 = Activity.objects.filter(deleted_at__isnull=True, fy=fy, responsible_staff_id=sp.id, delivery_type="staff", status__in=["completed", "ia_verified", "accountant_confirmed"], quarter="Q1").count()
+    staff_achieved_q2 = Activity.objects.filter(deleted_at__isnull=True, fy=fy, responsible_staff_id=sp.id, delivery_type="staff", status__in=["completed", "ia_verified", "accountant_confirmed"], quarter="Q2").count()
+    staff_achieved_q3 = Activity.objects.filter(deleted_at__isnull=True, fy=fy, responsible_staff_id=sp.id, delivery_type="staff", status__in=["completed", "ia_verified", "accountant_confirmed"], quarter="Q3").count()
+    staff_achieved_q4 = Activity.objects.filter(deleted_at__isnull=True, fy=fy, responsible_staff_id=sp.id, delivery_type="staff", status__in=["completed", "ia_verified", "accountant_confirmed"], quarter="Q4").count()
+
+    partner_achieved_q1 = Activity.objects.filter(deleted_at__isnull=True, fy=fy, assigned_partner_id=sp.id, delivery_type="partner", status__in=["completed", "ia_verified", "accountant_confirmed"], quarter="Q1").count()
+    partner_achieved_q2 = Activity.objects.filter(deleted_at__isnull=True, fy=fy, assigned_partner_id=sp.id, delivery_type="partner", status__in=["completed", "ia_verified", "accountant_confirmed"], quarter="Q2").count()
+    partner_achieved_q3 = Activity.objects.filter(deleted_at__isnull=True, fy=fy, assigned_partner_id=sp.id, delivery_type="partner", status__in=["completed", "ia_verified", "accountant_confirmed"], quarter="Q3").count()
+    partner_achieved_q4 = Activity.objects.filter(deleted_at__isnull=True, fy=fy, assigned_partner_id=sp.id, delivery_type="partner", status__in=["completed", "ia_verified", "accountant_confirmed"], quarter="Q4").count()
+
+    rows = []
+    periods_data = [
+        ("Q1", 0.25, staff_achieved_q1, partner_achieved_q1),
+        ("Mid-Year", 0.50, staff_achieved_q1 + staff_achieved_q2, partner_achieved_q1 + partner_achieved_q2),
+        ("Q3", 0.75, staff_achieved_q1 + staff_achieved_q2 + staff_achieved_q3, partner_achieved_q1 + partner_achieved_q2 + partner_achieved_q3),
+        ("End of Year", 1.00, staff_achieved_q1 + staff_achieved_q2 + staff_achieved_q3 + staff_achieved_q4, partner_achieved_q1 + partner_achieved_q2 + partner_achieved_q3 + partner_achieved_q4),
+    ]
+
+    for period, fraction, staff_ach, partner_ach in periods_data:
+        st_tar = round(staff_target * fraction)
+        pt_tar = round(partner_target * fraction)
+        tot_tar = st_tar + pt_tar
+        
+        tot_ach = staff_ach + partner_ach
+        
+        st_pct = round(staff_ach / st_tar * 100) if st_tar else (100 if staff_ach else None)
+        pt_pct = round(partner_ach / pt_tar * 100) if pt_tar else (100 if partner_ach else None)
+        tot_pct = round(tot_ach / tot_tar * 100) if tot_tar else (100 if tot_ach else None)
+        
+        gap = max(0, tot_tar - tot_ach)
+        
+        if tot_pct is None:
+            status = "No Target"
+        elif tot_pct >= 100:
+            status = "Ahead"
+        elif tot_pct >= 90:
+            status = "On Track"
+        elif tot_pct >= 75:
+            status = "Slightly Behind"
+        elif tot_pct >= 50:
+            status = "Behind"
+        else:
+            status = "Critical"
+
+        rows.append({
+            "period": period,
+            "staff": {"target": st_tar, "achieved": staff_ach, "pct": st_pct},
+            "partner": {"target": pt_tar, "achieved": partner_ach, "pct": pt_pct},
+            "total": {"target": tot_tar, "achieved": tot_ach, "pct": tot_pct},
+            "gap": gap,
+            "status": status,
+        })
+
+    data_quality = []
+    if staff_target == 0:
+        data_quality.append("No annual target configured for this staff member.")
+    if total_portfolio == 0:
+        data_quality.append("No schools assigned to this staff member's portfolio.")
+
+    return {
+        "live": True,
+        "fy": fy,
+        "staffId": staff_id,
+        "totalPortfolio": total_portfolio,
+        "annual": {"staffTarget": staff_target, "partnerTarget": partner_target, "total": total_target},
+        "rows": rows,
+        "dataQuality": data_quality
+    }
 
 
 def summary(query: dict) -> dict:

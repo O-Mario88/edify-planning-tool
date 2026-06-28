@@ -24,7 +24,7 @@ class TargetTimePeriodView(APIView):
     required_permissions = VIEW
 
     def get(self, request: Request) -> Response:
-        return Response(services.time_period(_q(request)))
+        return Response(services.time_period(_q(request), request.user))
 
 
 class TargetSummaryView(APIView):
