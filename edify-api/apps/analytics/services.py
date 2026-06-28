@@ -54,17 +54,102 @@ def dashboard_summary(principal, query: dict) -> dict:
 
 
 def leadership_summary(principal, query: dict) -> dict:
+    from apps.activities.models import Activity
+    from apps.ssa.models import SsaRecord, SsaScore
+    
     schools, scope = _scoped_schools(principal)
     fy = query.get("fy") or get_operational_fy()
-    total = schools.count()
+    total_schools = schools.count()
+    
+    if total_schools == 0:
+        return {
+            "countryScope": scope.country_scope,
+            "schools": 0, "coreSchools": 0, "clientSchools": 0,
+            "clustered": 0, "unclustered": 0, "ssaDone": 0, "ssaPending": 0,
+            "ssaCompletePct": 0.0, "ssaAverage": 0.0,
+            "byIntervention": [], "weakestInterventions": [],
+            "pipeline": { "planned": 0, "scheduled": 0, "inProgress": 0, "evidenceUploaded": 0, "awaitingIa": 0, "iaVerified": 0, "completed": 0 },
+            "activitiesTotal": 0,
+            "staffCount": 0, "partnerCount": 0,
+            "fundRequests": 0, "paymentsCleared": 0, "disbursedTotalUgx": 0,
+        }
+        
+    core = schools.filter(school_type="core").count()
+    client = schools.filter(school_type="client").count()
+    clustered = schools.filter(cluster_status="clustered").count()
+    unclustered = max(0, total_schools - clustered)
     ssa_done = schools.filter(current_fy_ssa_status="done").count()
+    ssa_pending = schools.filter(current_fy_ssa_status="pending").count()
+    
+    coverage = round((ssa_done / total_schools * 100), 1) if total_schools else 0.0
+    
+    ssa_avg_val = SsaRecord.objects.filter(school__in=schools, fy=fy, deleted_at__isnull=True).aggregate(a=Avg("average_score"))["a"]
+    ssa_average = round(ssa_avg_val, 1) if ssa_avg_val is not None else 0.0
+    
+    scores = SsaScore.objects.filter(ssa_record__school__in=schools, ssa_record__fy=fy, ssa_record__deleted_at__isnull=True)
+    interventions_grouped = (
+        scores.values("intervention")
+        .annotate(avg=Avg("score"))
+        .order_by("avg")
+    )
+    by_intervention = [
+        {"intervention": item["intervention"], "average": round(item["avg"], 1) if item["avg"] is not None else 0.0}
+        for item in interventions_grouped
+    ]
+    
+    acts = Activity.objects.filter(deleted_at__isnull=True, fy=fy)
+    if not scope.country_scope:
+        if scope.staff_ids:
+            acts = acts.filter(responsible_staff_id__in=scope.staff_ids)
+        elif scope.partner_ids:
+            acts = acts.filter(assigned_partner_id__in=scope.partner_ids)
+        else:
+            acts = acts.none()
+            
+    planned = acts.filter(status="planned").count()
+    scheduled = acts.filter(status="scheduled").count()
+    in_progress = acts.filter(status="in_progress").count()
+    evidence_uploaded = acts.filter(status="evidence_uploaded").count()
+    awaiting_ia = acts.filter(status="awaiting_ia_verification").count()
+    ia_verified = acts.filter(status="ia_verified").count()
+    completed = acts.filter(status__in=["completed", "ia_verified", "accountant_confirmed"]).count()
+    
+    pipeline = {
+        "planned": planned,
+        "scheduled": scheduled,
+        "inProgress": in_progress,
+        "evidenceUploaded": evidence_uploaded,
+        "awaitingIa": awaiting_ia,
+        "iaVerified": ia_verified,
+        "completed": completed,
+    }
+    
+    staff_count = acts.exclude(responsible_staff_id__isnull=True).values("responsible_staff_id").distinct().count()
+    partner_count = acts.exclude(assigned_partner_id__isnull=True).values("assigned_partner_id").distinct().count()
+    
+    disbursed_cents = acts.filter(status__in=["completed", "ia_verified", "accountant_confirmed"]).aggregate(s=Sum("est_cost_cents"))["s"] or 0
+    disbursed_total_ugx = disbursed_cents // 100
+    
     return {
-        "fy": fy,
-        "coverage": round((ssa_done / total * 100), 1) if total else 0,
-        "schoolsTotal": total,
-        "coreSchools": schools.filter(school_type__in=["core", "champion"]).count(),
-        "readySchools": schools.filter(planning_readiness="ready").count(),
-        "avgEnrollment": schools.aggregate(a=Avg("enrollment"))["a"] or 0,
+        "countryScope": scope.country_scope,
+        "schools": total_schools,
+        "coreSchools": core,
+        "clientSchools": client,
+        "clustered": clustered,
+        "unclustered": unclustered,
+        "ssaDone": ssa_done,
+        "ssaPending": ssa_pending,
+        "ssaCompletePct": coverage,
+        "ssaAverage": ssa_average,
+        "byIntervention": by_intervention,
+        "weakestInterventions": by_intervention[:3],
+        "pipeline": pipeline,
+        "activitiesTotal": acts.count(),
+        "staffCount": staff_count,
+        "partnerCount": partner_count,
+        "fundRequests": 0,
+        "paymentsCleared": completed,
+        "disbursedTotalUgx": disbursed_total_ugx,
     }
 
 
