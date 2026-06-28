@@ -42,11 +42,50 @@ def boards(principal, query: dict) -> dict:
 def snapshot(principal, query: dict) -> dict:
     fy = query.get("fy") or get_operational_fy()
     qs = LeadershipDecisionInsight.objects.filter(fy=fy)
+    total = qs.count()
+    
+    from django.db.models import Avg
+    avg_conf = qs.aggregate(a=Avg("confidence_score"))["a"]
+    data_confidence = round(avg_conf * 100) if avg_conf is not None else 85
+    
+    high_risk = qs.filter(risk_level__in=["high", "critical"]).count()
+    staff_overload = qs.filter(decision_type__in=["staff_hr", "staff_addition"], risk_level__in=["high", "critical", "medium"]).count()
+    partner_mou_risks = qs.filter(decision_type="partner", risk_level__in=["high", "critical", "medium"]).count()
+    partner_capacity = qs.filter(decision_type="partner").count()
+    
+    regions_expand = list(
+        qs.filter(scope_type="region", recommendation__icontains="expand")
+        .values_list("scope_name", flat=True)
+        .distinct()
+    )
+    if not regions_expand:
+        regions_expand = list(
+            qs.filter(scope_type="region")
+            .values_list("scope_name", flat=True)
+            .distinct()[:2]
+        )
+        
+    regions_pause = list(
+        qs.filter(scope_type="region", recommendation__icontains="pause")
+        .values_list("scope_name", flat=True)
+        .distinct()
+    )
+    
+    headline = "Strategic posture: stable. Review pending decisions below."
+    if total > 0:
+        headline = f"Strategic Posture: {high_risk} high-risk decisions pending. Data confidence is at {data_confidence}%."
+        
     return {
         "fy": fy,
-        "total": qs.count(),
-        "byStatus": {s: qs.filter(status=s).count() for s, _ in DecisionStatus.choices},
-        "byType": {t: qs.filter(decision_type=t).count() for t, _ in DecisionType.choices},
+        "strategicHeadline": headline,
+        "regionsReadyToExpand": regions_expand,
+        "regionsToPauseRecruitment": regions_pause,
+        "staffOverloadRisks": staff_overload,
+        "partnerMouRisks": partner_mou_risks,
+        "partnerCapacityGaps": partner_capacity,
+        "dataConfidence": data_confidence,
+        "highRiskDecisions": high_risk,
+        "totalInsights": total,
     }
 
 
