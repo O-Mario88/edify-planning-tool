@@ -360,22 +360,202 @@ def ssa_performance_grouped(principal, query: dict) -> dict:
 
 
 def intervention_improvement(principal, query: dict) -> dict:
-    """Previous vs current FY SSA change per intervention."""
-    from apps.ssa.models import SsaScore
+    from django.db.models import Avg, Count, Q
+    from apps.core.enums import SsaIntervention
+    from apps.ssa.models import SsaRecord, SsaScore
 
     schools, scope = _scoped_schools(principal)
-    fy = query.get("fy") or get_operational_fy()
-    prev_fy = str(int(fy) - 1)
-    out = {}
-    for intervention, _ in SsaScore._meta.get_field("intervention").choices:
-        curr = SsaScore.objects.filter(
-            ssa_record__school__in=schools, ssa_record__fy=fy, intervention=intervention
-        ).aggregate(a=Avg("score"))["a"]
-        prev = SsaScore.objects.filter(
-            ssa_record__school__in=schools, ssa_record__fy=prev_fy, intervention=intervention
-        ).aggregate(a=Avg("score"))["a"]
-        out[intervention] = {"current": round(curr, 2) if curr else None, "previous": round(prev, 2) if prev else None}
-    return out
+    
+    current_fy = query.get("currentFy") or get_operational_fy()
+    prev_fy = str(int(current_fy) - 1)
+    
+    group_by = query.get("groupBy", "district")
+    school_type = query.get("schoolType") or "core"
+    
+    if school_type == "core":
+        schools = schools.filter(school_type__in=["core", "champion"])
+    elif school_type == "client":
+        schools = schools.filter(school_type="client")
+
+    if group_by == "region":
+        group_field = "region_id"
+        name_field = "region__name"
+    elif group_by == "subCounty":
+        group_field = "sub_county_id"
+        name_field = "sub_county__name"
+    elif group_by == "cluster":
+        group_field = "cluster_id"
+        name_field = "cluster_id"
+    else:
+        group_field = "district_id"
+        name_field = "district__name"
+
+    school_groups = (
+        schools.filter(**{f"{group_field}__isnull": False})
+        .values(group_field, name_field)
+        .annotate(total=Count("id"))
+    )
+
+    if not school_groups:
+        return {
+            "currentFy": current_fy,
+            "prevFy": prev_fy,
+            "groupBy": group_by,
+            "schoolType": school_type,
+            "canGroupByCceo": principal.active_role in ("Admin", "CountryDirector", "CountryProgramLead", "IA"),
+            "interventions": [{"code": i.value, "label": i.label} for i in SsaIntervention],
+            "rows": []
+        }
+
+    group_map = {}
+    for sg in school_groups:
+        gid = sg[group_field]
+        gname = sg[name_field]
+        if group_by == "cluster":
+            from apps.clusters.models import Cluster
+            cluster_obj = Cluster.objects.filter(id=gid).first()
+            gname = cluster_obj.name if cluster_obj else f"Cluster {gid}"
+
+        group_map[gid] = {
+            "groupId": gid,
+            "groupName": gname or "Unknown",
+            "schools": [],
+            "schoolsImproved": 0,
+            "schoolsDeclined": 0,
+            "schoolsNoChange": 0,
+            "schoolsNoComparison": 0,
+        }
+
+    school_list = list(schools.values("id", group_field))
+    for s in school_list:
+        gid = s[group_field]
+        if gid in group_map:
+            group_map[gid]["schools"].append(s["id"])
+
+    records_curr = {
+        r["school_id"]: r
+        for r in SsaRecord.objects.filter(school__in=schools, fy=current_fy, deleted_at__isnull=True).values("id", "school_id", "average_score")
+    }
+    records_prev = {
+        r["school_id"]: r
+        for r in SsaRecord.objects.filter(school__in=schools, fy=prev_fy, deleted_at__isnull=True).values("id", "school_id", "average_score")
+    }
+
+    curr_record_ids = []
+    prev_record_ids = []
+    
+    for s in school_list:
+        sid = s["id"]
+        gid = s[group_field]
+        if gid not in group_map:
+            continue
+            
+        r_curr = records_curr.get(sid)
+        r_prev = records_prev.get(sid)
+        
+        if r_curr and r_prev:
+            curr_record_ids.append(r_curr["id"])
+            prev_record_ids.append(r_prev["id"])
+            
+            diff = (r_curr["average_score"] or 0) - (r_prev["average_score"] or 0)
+            if diff > 0.05:
+                group_map[gid]["schoolsImproved"] += 1
+            elif diff < -0.05:
+                group_map[gid]["schoolsDeclined"] += 1
+            else:
+                group_map[gid]["schoolsNoChange"] += 1
+        else:
+            group_map[gid]["schoolsNoComparison"] += 1
+
+    scores_curr = (
+        SsaScore.objects.filter(ssa_record_id__in=curr_record_ids)
+        .values("ssa_record__school__{}".format(group_field), "intervention")
+        .annotate(avg=Avg("score"))
+    )
+    scores_prev = (
+        SsaScore.objects.filter(ssa_record_id__in=prev_record_ids)
+        .values("ssa_record__school__{}".format(group_field), "intervention")
+        .annotate(avg=Avg("score"))
+    )
+
+    curr_avgs = {}
+    prev_avgs = {}
+    
+    for s in scores_curr:
+        gid = s["ssa_record__school__{}".format(group_field)]
+        if gid not in curr_avgs:
+            curr_avgs[gid] = {}
+        curr_avgs[gid][s["intervention"]] = s["avg"]
+        
+    for s in scores_prev:
+        gid = s["ssa_record__school__{}".format(group_field)]
+        if gid not in prev_avgs:
+            prev_avgs[gid] = {}
+        prev_avgs[gid][s["intervention"]] = s["avg"]
+
+    rows = []
+    for gid, gdata in group_map.items():
+        total_compared = gdata["schoolsImproved"] + gdata["schoolsDeclined"] + gdata["schoolsNoChange"]
+        improvement_rate = round(gdata["schoolsImproved"] / total_compared * 100) if total_compared > 0 else None
+        
+        interventions_data = []
+        best_intervention = None
+        declining_intervention = None
+        weakest_intervention = None
+        
+        for i in SsaIntervention:
+            curr_val = curr_avgs.get(gid, {}).get(i.value)
+            prev_val = prev_avgs.get(gid, {}).get(i.value)
+            
+            curr_avg = round(curr_val, 2) if curr_val is not None else None
+            prev_avg = round(prev_val, 2) if prev_val is not None else None
+            change = round(curr_val - prev_val, 2) if (curr_val is not None and prev_val is not None) else None
+            
+            interventions_data.append({
+                "code": i.value,
+                "label": i.label,
+                "prevAvg": prev_avg,
+                "currAvg": curr_avg,
+                "change": change
+            })
+            
+            if change is not None:
+                if change > 0:
+                    if best_intervention is None or change > best_intervention["change"]:
+                        best_intervention = {"code": i.value, "label": i.label, "change": change}
+                elif change < 0:
+                    if declining_intervention is None or change < declining_intervention["change"]:
+                        declining_intervention = {"code": i.value, "label": i.label, "change": change}
+                        
+            if curr_avg is not None:
+                if weakest_intervention is None or curr_avg < weakest_intervention["currAvg"]:
+                    weakest_intervention = {"code": i.value, "label": i.label, "currAvg": curr_avg}
+
+        rows.append({
+            "groupId": gid,
+            "groupName": gdata["groupName"],
+            "schoolsImproved": gdata["schoolsImproved"],
+            "schoolsDeclined": gdata["schoolsDeclined"],
+            "schoolsNoChange": gdata["schoolsNoChange"],
+            "schoolsNoComparison": gdata["schoolsNoComparison"],
+            "improvementRate": improvement_rate,
+            "bestIntervention": best_intervention,
+            "decliningIntervention": declining_intervention,
+            "weakestIntervention": weakest_intervention,
+            "interventions": interventions_data
+        })
+
+    rows.sort(key=lambda r: r["groupName"])
+
+    return {
+        "currentFy": current_fy,
+        "prevFy": prev_fy,
+        "groupBy": group_by,
+        "schoolType": school_type,
+        "canGroupByCceo": principal.active_role in ("Admin", "CountryDirector", "CountryProgramLead", "IA"),
+        "interventions": [{"code": i.value, "label": i.label} for i in SsaIntervention],
+        "rows": rows
+    }
 
 
 def support_ssa_correlation(principal, query: dict) -> dict:
