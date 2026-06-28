@@ -19,14 +19,14 @@ export function canIntakeData(role: string): boolean {
  *  SSA Performance template column headers (7 performance areas + Education
  *  Technology). Enrolment is captured separately, not as a performance area. */
 export const SSA_INTERVENTION_AREAS = [
+  "Teaching & Learning",
+  "Financial Health",
   "Christlike Behaviour",
   "Exposure to the Word of God",
-  "Fees/Budget and Accounts",
-  "Government Requirement",
-  "Leadership Best Practice",
-  "Learning Environment",
-  "Teaching Environment",
+  "Government Requirements & Compliance",
+  "Leadership",
   "Education Technology",
+  "Learning Environment",
 ] as const;
 
 export type SsaInterventionArea = (typeof SSA_INTERVENTION_AREAS)[number];
@@ -35,14 +35,14 @@ export type SsaInterventionArea = (typeof SSA_INTERVENTION_AREAS)[number];
  *  areas). Single source of truth so every SSA write path (manual intake, CSV,
  *  core follow-up) maps to the backend identically. */
 export const SSA_AREA_TO_BACKEND: Record<SsaInterventionArea, string> = {
+  "Teaching & Learning": "teaching_and_learning",
+  "Financial Health": "financial_health",
   "Christlike Behaviour": "christlike_behaviour",
   "Exposure to the Word of God": "exposure_to_word_of_god",
-  "Fees/Budget and Accounts": "financial_health",
-  "Government Requirement": "government_requirements",
-  "Leadership Best Practice": "leadership",
-  "Learning Environment": "learning_environment",
-  "Teaching Environment": "teaching_and_learning",
+  "Government Requirements & Compliance": "government_requirements",
+  "Leadership": "leadership",
   "Education Technology": "education_technology",
+  "Learning Environment": "learning_environment",
 };
 
 export type SchoolType = "Client" | "Core" | "Potential Core" | "Champion" | "Potential Champion" | "Other";

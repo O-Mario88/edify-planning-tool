@@ -51,13 +51,13 @@ export const INTAKE_TEMPLATES: IntakeTemplate[] = [
   {
     id: "tpl-ssa-performance",
     name: "SSA Performance",
-    description: "A school's SSA assessment. FY + quarter are derived from the SSA Date. One row per assessment.",
+    description: "A school's SSA assessment. FY + quarter are derived from the Assessment Date. One row per assessment.",
     schoolLinked: true,
     fields: [
       schoolIdField,
-      { key: "SSA Date", label: "SSA Date", type: "date", required: true, example: "2026-02-10" },
+      { key: "Assessment Date", label: "Assessment Date", type: "date", required: true, example: "2026-02-10" },
       ...ssaScoreFields,
-      { key: "Enrolment", label: "Enrolment", type: "number", min: 0, required: true, example: 335 },
+      { key: "Enrolment", label: "Enrolment", type: "number", min: 0, required: false, example: 335 },
     ],
   },
   {

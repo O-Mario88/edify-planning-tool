@@ -480,7 +480,7 @@ export async function submitIntakeRecords(
       for (const area of SSA_INTERVENTION_AREAS) scores[area] = rows[i][area];
       const res = await uploadSsaPerformance({
         schoolId: rows[i]["School ID"],
-        ssaDate: rows[i]["SSA Date"],
+        ssaDate: rows[i]["Assessment Date"] || rows[i]["SSA Date"],
         newEnrollment: rows[i]["Enrolment"],
         scores,
       });
