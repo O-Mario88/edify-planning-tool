@@ -226,10 +226,24 @@ def activity_pipeline(principal, query: dict) -> dict:
             qs = qs.filter(assigned_partner_id__in=scope.partner_ids)
         else:
             qs = qs.none()
+
+    statuses = ("not_planned", "planned", "scheduled", "completed", "awaiting_ia_verification", "ia_verified")
+    by_status = [
+        {"status": s, "count": qs.filter(status=s).count()}
+        for s in statuses
+    ]
+
+    deliveries = ("staff", "partner")
+    by_delivery = [
+        {"deliveryType": d, "count": qs.filter(delivery_type=d).count()}
+        for d in deliveries
+    ]
+
     return {
         "fy": fy,
         "total": qs.count(),
-        "byStatus": {s: qs.filter(status=s).count() for s in ("planned", "scheduled", "completed", "awaiting_ia_verification")},
+        "byStatus": by_status,
+        "byDelivery": by_delivery,
         "completed": qs.filter(status__in=["completed", "ia_verified"]).count(),
     }
 
