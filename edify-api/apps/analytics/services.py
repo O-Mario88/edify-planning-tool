@@ -656,19 +656,221 @@ def contribution_summary(principal, query: dict) -> dict:
 
 
 def recruitment_recommendation(principal, query: dict) -> dict:
-    """Recruit-more vs focus-advisory recommendation."""
+    from django.db.models import Avg, Count, Sum, Q
+    from apps.ssa.models import SsaRecord
+    from apps.activities.models import Activity
+
     schools, scope = _scoped_schools(principal)
     fy = query.get("fy") or get_operational_fy()
+    prev_fy = str(int(fy) - 1)
+    
     total = schools.count()
+    if total == 0:
+        return {
+            "fy": fy,
+            "scope": "country" if scope.country_scope else "team",
+            "readinessScore": 0,
+            "recommendation": "Pause Recruitment and Support Current Schools",
+            "reason": "No schools in scope.",
+            "capacity": { "totalSchools": 0, "core": 0, "client": 0, "reachedPct": 0, "partnerPaymentBacklog": 0, "partnerEvidencePending": 0, "partnerStrainPct": 0 },
+            "ssaReadiness": { "currentSsaPct": 0, "previousSsaPct": 0, "impactReadyPct": 0, "missingCurrentSsa": 0 },
+            "dataQuality": { "missingCluster": 0, "unmatchedOwner": 0, "duplicates": 0, "missingEnrollment": 0, "penaltyPct": 0 },
+            "impact": { "schoolsImproved": 0, "schoolsDeclined": 0 },
+            "suggestedRecruitDistricts": [],
+            "pauseDistricts": [],
+            "districts": [],
+            "nextAction": "Consolidate current school portfolio.",
+            "disclaimer": "Advisory only."
+        }
+
+    core = schools.filter(school_type="core").count()
+    client = schools.filter(school_type="client").count()
+    
     ssa_done = schools.filter(current_fy_ssa_status="done").count()
-    coverage = (ssa_done / total * 100) if total else 0
-    if coverage < 50:
-        rec = "focus_advisory"
-        reason = f"SSA coverage is {coverage:.0f}% — consolidate before recruiting."
+    missing_current_ssa = max(0, total - ssa_done)
+    current_ssa_pct = round(ssa_done / total * 100, 1) if total else 0.0
+    
+    prev_ssa_done = SsaRecord.objects.filter(school__in=schools, fy=prev_fy, deleted_at__isnull=True).values("school_id").distinct().count()
+    previous_ssa_pct = round(prev_ssa_done / total * 100, 1) if total else 0.0
+    
+    completed_acts = Activity.objects.filter(deleted_at__isnull=True, fy=fy, status__in=["completed", "ia_verified", "accountant_confirmed"])
+    if not scope.country_scope:
+        if scope.staff_ids:
+            completed_acts = completed_acts.filter(responsible_staff_id__in=scope.staff_ids)
+        elif scope.partner_ids:
+            completed_acts = completed_acts.filter(assigned_partner_id__in=scope.partner_ids)
+        else:
+            completed_acts = completed_acts.none()
+            
+    reached_schools = completed_acts.filter(school__isnull=False).values("school_id").distinct().count()
+    reached_pct = round(reached_schools / total * 100, 1) if total else 0.0
+
+    partner_backlog = Activity.objects.filter(deleted_at__isnull=True, fy=fy, delivery_type="partner", status="awaiting_ia_verification").count()
+    partner_evidence_pending = Activity.objects.filter(deleted_at__isnull=True, fy=fy, delivery_type="partner", status="evidence_uploaded").count()
+    partner_total = Activity.objects.filter(deleted_at__isnull=True, fy=fy, delivery_type="partner").count()
+    partner_strain = round((partner_evidence_pending / partner_total * 100), 1) if partner_total else 0.0
+
+    records_curr = {
+        r["school_id"]: r
+        for r in SsaRecord.objects.filter(school__in=schools, fy=fy, deleted_at__isnull=True).values("id", "school_id", "average_score")
+    }
+    records_prev = {
+        r["school_id"]: r
+        for r in SsaRecord.objects.filter(school__in=schools, fy=prev_fy, deleted_at__isnull=True).values("id", "school_id", "average_score")
+    }
+    
+    improved = 0
+    declined = 0
+    no_change = 0
+    for sid in records_curr:
+        r_curr = records_curr[sid]
+        r_prev = records_prev.get(sid)
+        if r_curr and r_prev:
+            diff = (r_curr["average_score"] or 0) - (r_prev["average_score"] or 0)
+            if diff > 0.05:
+                improved += 1
+            elif diff < -0.05:
+                declined += 1
+            else:
+                no_change += 1
+                
+    total_compared = improved + declined + no_change
+    impact_ready_pct = round(improved / total_compared * 100, 1) if total_compared > 0 else 0.0
+
+    missing_cluster = schools.filter(Q(cluster_id__isnull=True) | Q(cluster_id="")).count()
+    unmatched_owner = schools.filter(Q(account_owner_id__isnull=True) | Q(account_owner_id="")).count()
+    duplicates_count = schools.exclude(duplicate_status="none").count()
+    missing_enrollment = schools.filter(Q(enrollment__isnull=True) | Q(enrollment__lte=0)).count()
+    
+    total_gaps = missing_cluster + unmatched_owner + duplicates_count + missing_enrollment
+    penalty_pct = min(100, round((total_gaps / total * 25), 1)) if total else 0.0
+
+    readiness_score = max(0, min(100, round(current_ssa_pct - penalty_pct)))
+    
+    if readiness_score >= 80:
+        recommendation = "Continue Recruiting"
+        reason = f"Readiness score is {readiness_score}%. Data quality is high and SSA coverage is at {current_ssa_pct}%. Continue recruiting according to target plan."
+    elif readiness_score >= 60:
+        recommendation = "Recruit Carefully"
+        reason = f"Readiness score is {readiness_score}%. Consolidated SSA coverage is good, but some data quality penalties apply. Monitor active portfolios."
     else:
-        rec = "recruit_more"
-        reason = f"SSA coverage is {coverage:.0f}% — capacity to recruit."
-    return {"fy": fy, "recommendation": rec, "reason": reason, "coverage": round(coverage, 1)}
+        recommendation = "Pause Recruitment and Support Current Schools"
+        reason = f"Readiness score is {readiness_score}%. Considering SSA coverage ({current_ssa_pct}%) and portfolio data quality gaps, focus on current schools before expanding."
+
+    district_list = (
+        schools.filter(district_id__isnull=False)
+        .values("district_id", "district__name")
+        .annotate(total_schools=Count("id"))
+    )
+    
+    ssa_done_by_district = {
+        item["district_id"]: item["done_count"]
+        for item in schools.filter(district_id__isnull=False)
+        .values("district_id")
+        .annotate(done_count=Count("id", filter=Q(current_fy_ssa_status="done")))
+    }
+    
+    clustered_by_district = {
+        item["district_id"]: item["clustered_count"]
+        for item in schools.filter(district_id__isnull=False)
+        .values("district_id")
+        .annotate(clustered_count=Count("id", filter=Q(cluster_status="clustered")))
+    }
+    
+    reached_by_district = {
+        item["school__district_id"]: item["reached_count"]
+        for item in completed_acts.filter(school__district_id__isnull=False)
+        .values("school__district_id")
+        .annotate(reached_count=Count("school_id", distinct=True))
+    }
+    
+    suggested_recruit_districts = []
+    pause_districts = []
+    districts_data = []
+    
+    for d in district_list:
+        did = d["district_id"]
+        dname = d["district__name"]
+        dschools = d["total_schools"]
+        
+        ddone = ssa_done_by_district.get(did, 0)
+        dclustered = clustered_by_district.get(did, 0)
+        dreached = reached_by_district.get(did, 0)
+        
+        ssa_pct = round(ddone / dschools * 100) if dschools else 0
+        clustered_pct = round(dclustered / dschools * 100) if dschools else 0
+        reached_pct = round(dreached / dschools * 100) if dschools else 0
+        
+        dscore = max(0, min(100, ssa_pct))
+        
+        if dscore >= 80:
+            signal = "expand"
+            suggested_recruit_districts.append({
+                "districtId": did,
+                "district": dname,
+                "ssaCompletionPct": ssa_pct,
+                "score": dscore
+            })
+        elif dscore <= 50:
+            signal = "pause"
+            pause_districts.append({
+                "districtId": did,
+                "district": dname,
+                "ssaCompletionPct": ssa_pct,
+                "score": dscore
+            })
+        else:
+            signal = "hold"
+            
+        districts_data.append({
+            "districtId": did,
+            "district": dname,
+            "schools": dschools,
+            "ssaCompletionPct": ssa_pct,
+            "clusteredPct": clustered_pct,
+            "reachedPct": reached_pct,
+            "score": dscore,
+            "signal": signal
+        })
+
+    return {
+        "fy": fy,
+        "scope": "country" if scope.country_scope else "team",
+        "readinessScore": readiness_score,
+        "recommendation": recommendation,
+        "reason": reason,
+        "capacity": {
+            "totalSchools": total,
+            "core": core,
+            "client": client,
+            "reachedPct": reached_pct,
+            "partnerPaymentBacklog": partner_backlog,
+            "partnerEvidencePending": partner_evidence_pending,
+            "partnerStrainPct": partner_strain
+        },
+        "ssaReadiness": {
+            "currentSsaPct": current_ssa_pct,
+            "previousSsaPct": previous_ssa_pct,
+            "impactReadyPct": impact_ready_pct,
+            "missingCurrentSsa": missing_current_ssa
+        },
+        "dataQuality": {
+            "missingCluster": missing_cluster,
+            "unmatchedOwner": unmatched_owner,
+            "duplicates": duplicates_count,
+            "missingEnrollment": missing_enrollment,
+            "penaltyPct": penalty_pct
+        },
+        "impact": {
+            "schoolsImproved": improved,
+            "schoolsDeclined": declined
+        },
+        "suggestedRecruitDistricts": suggested_recruit_districts,
+        "pauseDistricts": pause_districts,
+        "districts": districts_data,
+        "nextAction": "Review active portfolios and complete missing current-FY SSAs before initiating new recruitment rounds.",
+        "disclaimer": "This is an advisory decision aid based on reported planning metrics. It does not replace manual executive alignment."
+    }
 
 
 __all__ = [
