@@ -11,8 +11,32 @@ from .models import (
 )
 
 
-def boards(principal, query: dict) -> list[dict]:
-    return _list(query)
+def boards(principal, query: dict) -> dict:
+    fy = query.get("fy") or get_operational_fy()
+    insights_list = _list(query)
+    
+    by_type = {}
+    for i in insights_list:
+        dtype = i["decisionType"]
+        if dtype not in by_type:
+            by_type[dtype] = []
+        by_type[dtype].append(i)
+        
+    boards_data = []
+    visible_boards = list(by_type.keys())
+    
+    for dtype, items in by_type.items():
+        boards_data.append({
+            "decisionType": dtype,
+            "canReview": principal.active_role in ("CountryDirector", "CountryProgramLead"),
+            "insights": items
+        })
+        
+    return {
+        "fy": fy,
+        "visibleBoards": visible_boards,
+        "boards": boards_data
+    }
 
 
 def snapshot(principal, query: dict) -> dict:
@@ -58,11 +82,6 @@ def memo(insight_id: str) -> dict:
         "riskLevel": i.risk_level,
         "confidenceLevel": i.confidence_level,
         "confidenceScore": i.confidence_score,
-        "suggestedAction": i.suggested_action,
-        "financialImplication": i.financial_implication,
-        "contextAdjustment": i.context_adjustment,
-        "riskFlags": i.risk_flags,
-        "evidenceSummary": i.evidence_summary,
     }
 
 
@@ -70,12 +89,7 @@ def review(insight_id: str, data: dict, principal) -> dict:
     i = LeadershipDecisionInsight.objects.filter(id=insight_id).first()
     if not i:
         raise NotFoundError("Insight not found.")
-    status = data.get("status")
-    valid = {s for s, _ in DecisionStatus.choices}
-    if status not in valid:
-        from apps.core.exceptions import BadRequest
-        raise BadRequest("Invalid status.")
-    i.status = status
+    i.status = data.get("status", "accepted")
     i.reviewed_by_user_id = principal.user_id
     i.reviewed_by_role = principal.active_role
     i.reviewed_at = timezone.now()
@@ -111,4 +125,10 @@ def _serialize(i: LeadershipDecisionInsight) -> dict:
         "riskLevel": i.risk_level, "confidenceLevel": i.confidence_level,
         "confidenceScore": i.confidence_score, "status": i.status,
         "suggestedAction": i.suggested_action, "generatedAt": i.generated_at.isoformat(),
+        "riskFlags": i.risk_flags or [],
+        "evidencePoints": i.evidence_summary or [],
+        "alternatives": i.alternatives or [],
+        "metrics": i.metrics or {},
+        "contextAdjustment": i.context_adjustment,
+        "financialImplication": i.financial_implication,
     }
