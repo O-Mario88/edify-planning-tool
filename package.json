@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:all": "npx -y concurrently -n \"web,api\" -c \"blue,green\" \"next dev\" \"cd edify-api && export \\$(cat ../.env | grep -v '^#' | xargs) && .venv/bin/python manage.py runserver 4000\"",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
