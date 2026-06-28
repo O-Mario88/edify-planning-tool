@@ -219,6 +219,30 @@ def from_schedule(principal, query: dict) -> dict:
         for t, amt in by_type.items()
     ]
 
+    active_months = [m for m in by_month if m["amount"] > 0]
+    avg_amount = (sum(m["amount"] for m in active_months) / len(active_months)) if active_months else 0
+    
+    busy_months = []
+    slow_months = []
+    
+    for m in by_month:
+        amt = m["amount"]
+        if amt > 0:
+            if avg_amount > 0 and amt > avg_amount * 1.15:
+                busy_months.append({
+                    "month": m["month"],
+                    "amount": amt,
+                    "count": m["count"],
+                    "insight": f"{m['label']} is a busy month with above-average scheduled activity."
+                })
+            elif avg_amount > 0 and amt < avg_amount * 0.85:
+                slow_months.append({
+                    "month": m["month"],
+                    "amount": amt,
+                    "count": m["count"],
+                    "insight": f"{m['label']} is a slow month with below-average activity."
+                })
+
     return {
         "fy": fy,
         "role": scope.active_role,
@@ -238,6 +262,8 @@ def from_schedule(principal, query: dict) -> dict:
             "partner": {"amount": partner_amount, "count": partner_count},
         },
         "avgMonthlyCost": round(total / 12) if total else 0,
+        "busyMonths": busy_months,
+        "slowMonths": slow_months,
     }
 
 
