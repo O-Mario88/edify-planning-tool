@@ -26,12 +26,25 @@ def boards(principal, query: dict) -> dict:
 
 
 def snapshot(principal, query: dict) -> dict:
+    from django.db.models import Sum
     fy = query.get("fy") or get_operational_fy()
-    qs = BudgetIntelligenceInsight.objects.filter(fy=fy)
+    qs = BudgetIntelligenceInsight.objects.filter(fy=fy, deleted_at__isnull=True)
+    total = qs.count()
+    low_yield = qs.filter(impact_yield__in=["low", "weak"]).count()
+    high_yield = qs.filter(impact_yield__in=["high", "healthy"]).count()
+    amount_at_risk = qs.aggregate(t=Sum("amount_affected"))["t"] or 0.0
+    
+    headline = "Budget posture is healthy. No critical financial risks detected."
+    if total > 0:
+        headline = f"Strategic Posture: {total} financial insights generated. {low_yield} low-yield items detected."
+        
     return {
-        "fy": fy, "total": qs.count(),
-        "byStatus": {s: qs.filter(status=s).count() for s, _ in DecisionStatus.choices},
-        "amountAffected": qs.aggregate(t=__import__("django.db.models", fromlist=["Sum"]).Sum("amount_affected"))["t"] or 0,
+        "fy": fy,
+        "totalInsights": total,
+        "lowYieldCount": low_yield,
+        "highYieldCount": high_yield,
+        "amountAtRisk": amount_at_risk,
+        "headline": headline,
     }
 
 
