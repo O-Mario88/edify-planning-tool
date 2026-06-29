@@ -662,15 +662,20 @@ def contribution_summary(principal, query: dict) -> dict:
     else:
         completed_qs = completed_qs.none()
 
-    reached_school_ids = list(completed_qs.filter(school_id__isnull=False).values_list("school_id", flat=True).distinct())
+    # Headline statistics should only count verified activities (ia_verified or accountant_confirmed)
+    verified_completed_qs = completed_qs.filter(status__in=["ia_verified", "accountant_confirmed"])
+
+    reached_school_ids = list(verified_completed_qs.filter(school_id__isnull=False).values_list("school_id", flat=True).distinct())
     reached_schools = School.objects.filter(id__in=reached_school_ids, deleted_at__isnull=True)
     
     schools_reached_count = reached_schools.count()
-    core_schools_supported = reached_schools.filter(school_type__in=["core", "champion"]).count()
+    client_schools_reached = reached_schools.filter(school_type="client").count()
+    core_schools_supported = reached_schools.filter(school_type="core").count()
+    project_schools_supported = reached_schools.filter(school_type="champion").count()
     
     learners_impacted = reached_schools.aggregate(total=Sum("enrollment"))["total"] or 0
     
-    totals_trained = completed_qs.aggregate(
+    totals_trained = verified_completed_qs.aggregate(
         teachers=Sum("teachers_attended"),
         leaders=Sum("leaders_attended")
     )
@@ -678,13 +683,16 @@ def contribution_summary(principal, query: dict) -> dict:
     leaders_trained = totals_trained["leaders"] or 0
 
     districts_covered = reached_schools.values("district_id").distinct().count()
+    sub_counties_covered = reached_schools.values("sub_county_id").distinct().count()
     clusters_covered = reached_schools.values("cluster_id").exclude(Q(cluster_id__isnull=True) | Q(cluster_id="")).distinct().count()
+    regions_covered = reached_schools.values("region_id").distinct().count()
 
     VISIT_TYPES = {"school_visit", "follow_up_visit", "coaching_visit", "core_visit"}
     TRAINING_TYPES = {"training", "school_improvement_training", "cluster_training", "core_training"}
 
-    visits_completed = completed_qs.filter(activity_type__in=VISIT_TYPES).count()
-    trainings_completed = completed_qs.filter(activity_type__in=TRAINING_TYPES).count()
+    visits_completed = verified_completed_qs.filter(activity_type__in=VISIT_TYPES).count()
+    trainings_completed = verified_completed_qs.filter(activity_type__in=TRAINING_TYPES).count()
+    cluster_meetings_completed = verified_completed_qs.filter(activity_type="cluster_meeting").count()
 
     ssa_completed = SsaRecord.objects.filter(school__in=schools_in_lens, fy=fy, deleted_at__isnull=True).count()
 
@@ -732,9 +740,12 @@ def contribution_summary(principal, query: dict) -> dict:
                 worst_change = change
                 worst_intervention = i.value
 
+    # Staff vs partner activities are counted from all completed/delivered activities
     partner_activities = completed_qs.filter(delivery_type="partner").count()
+    staff_activities = completed_qs.filter(delivery_type="staff").count()
     ia_verified_activities = completed_qs.filter(status__in=["ia_verified", "accountant_confirmed"]).count()
 
+    # Evidence pending query
     pending_qs = Activity.objects.filter(deleted_at__isnull=True, fy=fy, status="evidence_uploaded")
     if lens == "team" and scope.supervised_staff_ids:
         pending_qs = pending_qs.filter(responsible_staff_id__in=scope.supervised_staff_ids)
@@ -746,22 +757,30 @@ def contribution_summary(principal, query: dict) -> dict:
         pending_qs = pending_qs.none()
         
     evidence_pending = pending_qs.count()
+    salesforce_ids_pending = completed_qs.filter(Q(salesforce_activity_id__isnull=True) | Q(salesforce_activity_id="")).count()
 
     metrics = {
         "schoolsReached": schools_reached_count,
+        "clientSchoolsReached": client_schools_reached,
         "coreSchoolsSupported": core_schools_supported,
+        "projectSchoolsSupported": project_schools_supported,
         "learnersImpacted": learners_impacted,
         "teachersTrained": teachers_trained,
         "schoolLeadersTrained": leaders_trained,
         "districtsCovered": districts_covered,
+        "subCountiesCovered": sub_counties_covered,
         "clustersCovered": clusters_covered,
+        "regionsCovered": regions_covered,
         "visitsCompleted": visits_completed,
         "trainingsCompleted": trainings_completed,
+        "clusterMeetingsCompleted": cluster_meetings_completed,
         "ssaCompleted": ssa_completed,
         "schoolsImproved": schools_improved,
         "partnerActivities": partner_activities,
+        "staffActivities": staff_activities,
         "iaVerifiedActivities": ia_verified_activities,
         "evidencePending": evidence_pending,
+        "salesforceIdsPending": salesforce_ids_pending,
         "bestIntervention": best_intervention,
         "worstIntervention": worst_intervention,
     }

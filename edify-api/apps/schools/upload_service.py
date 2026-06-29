@@ -225,7 +225,21 @@ def upload_school_file(file, principal, update_existing: bool = False) -> dict:
             continue
 
         # Geography — district name → district + region.
+        # 3-tier lookup: exact (iexact) → alias table → partial contains.
         district = District.objects.select_related("region").filter(name__iexact=district_name).first()
+        if not district:
+            from apps.geography.models import GeographyAlias
+            norm = district_name.strip().lower()
+            alias = GeographyAlias.objects.filter(admin_level="district", normalized_alias=norm).first()
+            if alias:
+                district = District.objects.select_related("region").filter(id=alias.admin_id).first()
+        if not district:
+            # Last resort: partial contains (catches "Fort Portal" matching "Fort Portal (Kabarole)")
+            district = District.objects.select_related("region").filter(
+                name__icontains=district_name.strip()
+            ).first() or District.objects.select_related("region").filter(
+                name__icontains=district_name.strip().split("(")[0].strip()
+            ).first()
         if not district:
             msg = f'District "{district_name}" did not match any district in the geography directory.'
             counts["failed"] += 1
@@ -291,53 +305,61 @@ def upload_school_file(file, principal, update_existing: bool = False) -> dict:
         }
 
         try:
-            with transaction.atomic():  # per-row savepoint
-                existing = School.objects.filter(school_id=school_id).first()
-                if existing and not update_existing:
-                    counts["duplicate"] += 1
-                    row_results.append(UploadBatchRowResult(
-                        upload_batch=batch, row_number=row_number, school_id=school_id,
-                        status="duplicate",
-                        error_message="School ID already exists (update_existing=false).",
-                        raw_data_json=raw_map,
-                    ))
-                    continue
-                if existing and update_existing:
-                    for k, v in defaults.items():
-                        setattr(existing, k, v)
-                    existing.save()
-                    saved_school = existing
-                    counts["updated"] += 1
-                    row_results.append(UploadBatchRowResult(
-                        upload_batch=batch, row_number=row_number, school_id=school_id,
-                        status="updated", raw_data_json=raw_map,
-                    ))
-                else:
-                    saved_school = School.objects.create(school_id=school_id, **defaults)
-                    counts["created"] += 1
-                    row_results.append(UploadBatchRowResult(
-                        upload_batch=batch, row_number=row_number, school_id=school_id,
-                        status="created", raw_data_json=raw_map,
-                    ))
+            # Store resolved defaults in raw_map for deferred import
+            raw_map["_defaults"] = {
+                "name": name,
+                "region_id": district.region_id,
+                "district_id": district.id,
+                "school_type": school_type,
+                "enrollment": enrollment,
+                "last_enrollment_date": last_enrollment_date.isoformat() if last_enrollment_date else None,
+                "school_phone": _value(field_index, "school_phone", cells) or None,
+                "primary_contact_name": _value(field_index, "primary_contact_name", cells) or None,
+                "shipping_address": _value(field_index, "shipping_address", cells) or None,
+                "account_owner_name_raw": owner_raw,
+                "account_owner_id": owner_id,
+                "account_owner_status": owner_status,
+                "uploaded_district_text": district_name,
+            }
 
-                # ── Ownership bridge ──────────────────────────────────────────
-                # On MATCHED: write StaffSchoolAssignment so the school enters the
-                # CCEO/PL's planning scope automatically (resolve_user_scope reads
-                # StaffSchoolAssignment, not account_owner_id). On UNMATCHED /
-                # AMBIGUOUS: enqueue a StaffSetupCandidate for Admin to resolve.
+            existing = School.objects.filter(school_id=school_id).first()
+            if existing and not update_existing:
+                counts["duplicate"] += 1
+                row_results.append(UploadBatchRowResult(
+                    upload_batch=batch, row_number=row_number, school_id=school_id,
+                    status="duplicate",
+                    error_message="School ID already exists (update_existing=false).",
+                    raw_data_json=raw_map,
+                ))
+                continue
+            if existing and update_existing:
+                counts["updated"] += 1
+                row_results.append(UploadBatchRowResult(
+                    upload_batch=batch, row_number=row_number, school_id=school_id,
+                    status="updated", raw_data_json=raw_map,
+                ))
                 if owner_status == AccountOwnerStatus.MATCHED.value and owner_id:
-                    StaffSchoolAssignment.objects.get_or_create(
-                        staff_id=owner_id, school_id=saved_school.id,
-                    )
                     staff_counts["matched"] += 1
                 elif owner_status in (AccountOwnerStatus.UNMATCHED.value, AccountOwnerStatus.AMBIGUOUS.value):
-                    _upsert_staff_candidate(owner_raw, batch.id, saved_school.id)
+                    if owner_status == AccountOwnerStatus.AMBIGUOUS.value:
+                        staff_counts["ambiguous"] += 1
+                    else:
+                        staff_counts["unmatched"] += 1
+            else:
+                counts["created"] += 1
+                row_results.append(UploadBatchRowResult(
+                    upload_batch=batch, row_number=row_number, school_id=school_id,
+                    status="created", raw_data_json=raw_map,
+                ))
+                if owner_status == AccountOwnerStatus.MATCHED.value and owner_id:
+                    staff_counts["matched"] += 1
+                elif owner_status in (AccountOwnerStatus.UNMATCHED.value, AccountOwnerStatus.AMBIGUOUS.value):
                     if owner_status == AccountOwnerStatus.AMBIGUOUS.value:
                         staff_counts["ambiguous"] += 1
                     else:
                         staff_counts["unmatched"] += 1
         except Exception as exc:  # noqa: BLE001 — never let one row break the batch
-            msg = f"Could not save row: {exc}"
+            msg = f"Could not validate row: {exc}"
             counts["failed"] += 1
             errors.append({"row": row_number, "school_id": school_id, "error": msg})
             row_results.append(UploadBatchRowResult(
@@ -360,10 +382,15 @@ def upload_school_file(file, principal, update_existing: bool = False) -> dict:
     batch.duplicate_rows = counts["duplicate"]
     batch.accepted_count = saved
     batch.flagged_count = counts["failed"] + counts["duplicate"]
-    batch.status = "completed" if not counts["failed"] else "completed_with_errors"
+    batch.status = "validated" if not counts["failed"] else "completed_with_errors"
     if errors:
         batch.error_summary = "; ".join(f"row {e['row']}: {e['error']}" for e in errors[:50])
     batch.save()
+
+    if success:
+        import_school_batch(batch, principal)
+        batch.status = "imported"
+        batch.save(update_fields=["status"])
 
     message = _build_message(success, counts, total)
     # Staff-matching summary: which uploaded names matched a field-staff user,
@@ -396,6 +423,59 @@ def upload_school_file(file, principal, update_existing: bool = False) -> dict:
     }
 
 
+def import_school_batch(batch: UploadBatch, principal) -> None:
+    rows = batch.row_results.filter(status__in=("created", "updated"))
+    for r in rows:
+        defaults = r.raw_data_json.get("_defaults")
+        if not defaults:
+            continue
+        
+        school_id = r.school_id
+        if defaults.get("last_enrollment_date"):
+            defaults["last_enrollment_date"] = date.fromisoformat(defaults["last_enrollment_date"])
+        
+        # Region and District ForeignKeys must be set to models on import
+        region_id = defaults.pop("region_id", None)
+        district_id = defaults.pop("district_id", None)
+        if region_id:
+            defaults["region_id"] = region_id
+        if district_id:
+            defaults["district_id"] = district_id
+
+        owner_status = defaults.get("account_owner_status")
+        owner_id = defaults.get("account_owner_id")
+        owner_raw = defaults.get("account_owner_name_raw")
+
+        try:
+            with transaction.atomic():
+                existing = School.objects.filter(school_id=school_id).first()
+                if existing:
+                    # Update existing
+                    for k, v in defaults.items():
+                        setattr(existing, k, v)
+                    existing.save()
+                    saved_school = existing
+                else:
+                    saved_school = School.objects.create(school_id=school_id, **defaults)
+
+                # Ownership assignment bridge
+                if owner_status == AccountOwnerStatus.MATCHED.value and owner_id:
+                    StaffSchoolAssignment.objects.get_or_create(
+                        staff_id=owner_id, school_id=saved_school.id,
+                    )
+                    # remove ghost assignments
+                    live_ids = set(School.objects.filter(deleted_at__isnull=True).values_list("id", flat=True))
+                    StaffSchoolAssignment.objects.filter(staff_id=owner_id).exclude(
+                        school_id__in=live_ids
+                    ).delete()
+                elif owner_status in (AccountOwnerStatus.UNMATCHED.value, AccountOwnerStatus.AMBIGUOUS.value) and owner_raw:
+                    _upsert_staff_candidate(owner_raw, batch.id, saved_school.id)
+        except Exception as exc:
+            r.status = "failed"
+            r.error_message = f"Could not save school: {exc}"
+            r.save()
+
+
 def _build_message(success: bool, counts: dict, total: int) -> str:
     if total == 0:
         return "No data rows were found in the file."
@@ -419,4 +499,4 @@ def _build_message(success: bool, counts: dict, total: int) -> str:
     return "Nothing was saved — no rows were created or updated."
 
 
-__all__ = ["upload_school_file"]
+__all__ = ["upload_school_file", "import_school_batch"]

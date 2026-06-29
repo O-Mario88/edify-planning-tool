@@ -47,13 +47,20 @@ class SsaUploadTest(APITestCase):
     def _post(self, file):
         return self.client.post("/api/ssa/upload", {"file": file}, format="multipart")
 
+    def _post_and_import(self, file):
+        res = self._post(file)
+        if res.status_code == 200:
+            batch_id = res.json()["upload_batch_id"]
+            import_res = self.client.post(f"/api/uploads/{batch_id}/import")
+            return import_res
+        return res
+
     def test_valid_rows_save_and_link(self):
         body = f"{SSA_HEADERS}\nSSA-SCH-1,2026-07-01,{SCORES}\n"
-        res = self._post(self._csv(body))
+        res = self._post_and_import(self._csv(body))
         self.assertEqual(res.status_code, 200, res.content)
         data = res.json()
-        self.assertTrue(data["success"])
-        self.assertEqual(data["created_rows"], 1)
+        self.assertEqual(data["createdRows"], 1)
         record = SsaRecord.objects.get(school=self.school)
         self.assertEqual(record.scores.count(), 8)
         self.school.refresh_from_db()
@@ -105,9 +112,9 @@ class SsaUploadTest(APITestCase):
             f"GHOST,2026-07-01,{SCORES}\n"
             f"SSA-SCH-2,2026-07-02,{SCORES}\n"
         )
-        res = self._post(self._csv(body))
+        res = self._post_and_import(self._csv(body))
         self.assertEqual(res.status_code, 200, res.content)
         data = res.json()
-        self.assertEqual(data["created_rows"], 2)
-        self.assertEqual(data["failed_rows"], 1)
+        self.assertEqual(data["createdRows"], 2)
+        self.assertEqual(data["failedRows"], 1)
         self.assertEqual(SsaRecord.objects.count(), 2)

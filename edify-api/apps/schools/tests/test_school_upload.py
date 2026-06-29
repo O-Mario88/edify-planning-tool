@@ -61,18 +61,26 @@ class SchoolUploadTest(APITestCase):
             data["update_existing"] = "true"
         return self.client.post("/api/schools/upload", data, format="multipart")
 
+    def _post_and_import(self, file, update_existing=False):
+        res = self._post(file, update_existing=update_existing)
+        if res.status_code == 200:
+            batch_id = res.json()["upload_batch_id"]
+            import_res = self.client.post(f"/api/uploads/{batch_id}/import")
+            # Return the combined details or the import response
+            return import_res
+        return res
+
     # ── tests ────────────────────────────────────────────────────────────
     def test_exact_template_headers_save_rows(self):
         body = (
             f"{EXACT_HEADERS}\n"
             ",SCH-1,Gulu Primary,Gulu,Client,320,2026-01-15,+256700000001,Head Teacher,PO Box 1\n"
         )
-        res = self._post(self._csv(body))
+        res = self._post_and_import(self._csv(body))
         self.assertEqual(res.status_code, 200, res.content)
         data = res.json()
-        self.assertTrue(data["success"])
-        self.assertEqual(data["created_rows"], 1)
-        self.assertEqual(data["total_rows"], 1)
+        self.assertEqual(data["createdRows"], 1)
+        self.assertEqual(data["totalRows"], 1)
         school = School.objects.get(school_id="SCH-1")
         self.assertEqual(school.name, "Gulu Primary")
         self.assertEqual(school.district_id, self.district.id)
@@ -85,10 +93,10 @@ class SchoolUploadTest(APITestCase):
             "schoolid,Name,district,Partner Type,enrollment,Last Date of Enrollment\n"
             "SCH-2,Variant Primary,Gulu,core,410,2026-02-01\n"
         )
-        res = self._post(self._csv(body))
+        res = self._post_and_import(self._csv(body))
         self.assertEqual(res.status_code, 200, res.content)
         data = res.json()
-        self.assertEqual(data["created_rows"], 1)
+        self.assertEqual(data["createdRows"], 1)
         school = School.objects.get(school_id="SCH-2")
         self.assertEqual(school.name, "Variant Primary")
         self.assertEqual(school.school_type, "core")
@@ -107,9 +115,9 @@ class SchoolUploadTest(APITestCase):
             "schools.xlsx", buf.getvalue(),
             content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
-        res = self._post(f)
+        res = self._post_and_import(f)
         self.assertEqual(res.status_code, 200, res.content)
-        self.assertEqual(res.json()["created_rows"], 1)
+        self.assertEqual(res.json()["createdRows"], 1)
         self.assertTrue(School.objects.filter(school_id="SCH-XLSX").exists())
 
     def test_missing_required_values_fail_rows(self):
@@ -120,12 +128,11 @@ class SchoolUploadTest(APITestCase):
             ",SCH-NO-DIST,Has No District,,Client,1,,,,\n"  # missing District
             ",SCH-OK,Valid Primary,Gulu,Client,100,,,,\n"   # valid
         )
-        res = self._post(self._csv(body))
+        res = self._post_and_import(self._csv(body))
         self.assertEqual(res.status_code, 200, res.content)
         data = res.json()
-        self.assertEqual(data["created_rows"], 1)
-        self.assertEqual(data["failed_rows"], 3)
-        self.assertEqual(len(data["errors"]), 3)
+        self.assertEqual(data["createdRows"], 1)
+        self.assertEqual(data["failedRows"], 3)
         self.assertTrue(School.objects.filter(school_id="SCH-OK").exists())
         self.assertFalse(School.objects.filter(school_id="SCH-NO-NAME").exists())
 
@@ -145,15 +152,15 @@ class SchoolUploadTest(APITestCase):
             ",,,,,,,,,\n"  # fully blank
             "\n"
         )
-        res = self._post(self._csv(body))
+        res = self._post_and_import(self._csv(body))
         self.assertEqual(res.status_code, 200, res.content)
         data = res.json()
-        self.assertEqual(data["created_rows"], 1)
-        self.assertEqual(data["skipped_rows"], 1)
+        self.assertEqual(data["createdRows"], 1)
+        self.assertEqual(data["skippedRows"], 1)
 
     def test_duplicate_then_update_existing(self):
         body = f"{EXACT_HEADERS}\n,SCH-DUP,First Name,Gulu,Client,100,,,,\n"
-        self.assertEqual(self._post(self._csv(body)).status_code, 200)
+        self.assertEqual(self._post_and_import(self._csv(body)).status_code, 200)
 
         # Second upload, same id, no update_existing → duplicate, nothing saved.
         dup_body = f"{EXACT_HEADERS}\n,SCH-DUP,Second Name,Gulu,Client,200,,,,\n"
@@ -165,11 +172,10 @@ class SchoolUploadTest(APITestCase):
         self.assertEqual(School.objects.get(school_id="SCH-DUP").name, "First Name")
 
         # Third upload, same id, update_existing → updated.
-        res2 = self._post(self._csv(dup_body), update_existing=True)
+        res2 = self._post_and_import(self._csv(dup_body), update_existing=True)
         self.assertEqual(res2.status_code, 200, res2.content)
         data2 = res2.json()
-        self.assertTrue(data2["success"])
-        self.assertEqual(data2["updated_rows"], 1)
+        self.assertEqual(data2["updatedRows"], 1)
         self.assertEqual(School.objects.get(school_id="SCH-DUP").name, "Second Name")
         self.assertEqual(School.objects.filter(school_id="SCH-DUP").count(), 1)
 
@@ -187,7 +193,7 @@ class SchoolUploadTest(APITestCase):
             "Aisha Dar,SCH-OWN-1,Owned Primary,Gulu,Client,100,,,,\n"
             "Ghost Person,SCH-OWN-2,Orphan Primary,Gulu,Client,100,,,,\n"
         )
-        res = self._post(self._csv(body))
+        res = self._post_and_import(self._csv(body))
         self.assertEqual(res.status_code, 200, res.content)
         matched = School.objects.get(school_id="SCH-OWN-1")
         self.assertEqual(matched.account_owner_status, "matched")
@@ -211,7 +217,7 @@ class SchoolUploadTest(APITestCase):
 
     def test_directory_returns_uploaded_rows(self):
         body = f"{EXACT_HEADERS}\n,SCH-DIR,Directory Primary,Gulu,Client,100,,,,\n"
-        self.assertEqual(self._post(self._csv(body)).status_code, 200)
+        self.assertEqual(self._post_and_import(self._csv(body)).status_code, 200)
         res = self.client.get("/api/schools?pageSize=200")
         self.assertEqual(res.status_code, 200, res.content)
         ids = [r["schoolId"] for r in res.json()["data"]]

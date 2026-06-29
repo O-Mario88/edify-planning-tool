@@ -194,7 +194,7 @@ def schedule_follow_up(plan_id: str, data: dict, principal) -> dict:
 
 
 def upload_follow_up_ssa(plan_id: str, data: dict, principal) -> dict:
-    """Upload the follow-up SSA (impact measurement)."""
+    """Upload the follow-up SSA (impact measurement) and check for graduation candidacy."""
     plan = CorePlan.objects.filter(id=plan_id).first()
     if not plan:
         raise NotFoundError("Plan not found.")
@@ -204,8 +204,34 @@ def upload_follow_up_ssa(plan_id: str, data: dict, principal) -> dict:
     record = ssa_upload({"schoolId": plan.school_id, "dateOfSsa": data.get("dateOfSsa"), "scores": data.get("scores", [])}, principal)
     plan.follow_up_ssa_record_id = record["id"]
     plan.follow_up_average = record["averageScore"]
-    plan.save(update_fields=["follow_up_ssa_record_id", "follow_up_average"])
-    return _serialize_plan(plan)
+    
+    baseline = plan.baseline_average or 0.0
+    followup = record["averageScore"] or 0.0
+    average_change = followup - baseline
+    
+    completed_slots_count = plan.slots.filter(status__in=["Completed", "Accountant Confirmed", "iaVerify", "ia_verified", "accountant_confirmed"]).count()
+    slots_complete = completed_slots_count >= 8
+    
+    is_champion_candidate = followup >= 7.5 and average_change > 0.0 and slots_complete
+    
+    if is_champion_candidate:
+        plan.status = "Champion Candidate"
+        profile = getattr(plan, "profile", None)
+        if profile:
+            profile.champion_status = "Potential Champion"
+            profile.save(update_fields=["champion_status"])
+    else:
+        plan.status = "Impact Measured"
+
+    plan.save(update_fields=["follow_up_ssa_record_id", "follow_up_average", "status"])
+    
+    return {
+        "ok": True,
+        "planId": plan.id,
+        "averageChange": round(average_change, 2),
+        "championCandidate": is_champion_candidate,
+        "status": plan.status,
+    }
 
 
 def advance_champion(school_id: str, principal) -> dict:

@@ -39,16 +39,44 @@ def _parse_date(value) -> datetime:
 def _recompute_readiness(school: School) -> None:
     """Centralized readiness recompute (§16) — the bridge to planning lists.
 
-    Driven by SSA status: done -> ready, scheduled/partner_assigned -> limited,
-    not_done -> locked. Mirrors the legacy PlanningReadiness recompute."""
-    ssa = school.current_fy_ssa_status
+    Derives current_fy_ssa_status from actual SsaRecord rows (source of truth),
+    then sets planning_readiness accordingly:
+      confirmed record → done → ready
+      pending record   → scheduled/partner_assigned → limited
+      no record        → not_done → locked
+
+    This avoids stale-cache bugs where the denormalized field is never updated
+    (e.g. bulk/CSV uploads that bypass the upload() service path)."""
+    from apps.core.fy import get_operational_fy
+    fy = get_operational_fy()
+
+    # Derive status from the actual SSA records for the current FY.
+    confirmed = SsaRecord.objects.filter(
+        school=school, fy=fy, deleted_at__isnull=True, verification_status="confirmed"
+    ).exists()
+    pending = SsaRecord.objects.filter(
+        school=school, fy=fy, deleted_at__isnull=True, verification_status="pending"
+    ).exists()
+
+    if confirmed:
+        ssa = "done"
+    elif pending:
+        ssa = "partner_assigned"
+    else:
+        # Fall back to whatever the field already holds (e.g. "scheduled")
+        ssa = school.current_fy_ssa_status
+
+    # Persist the recomputed status if it changed.
+    if school.current_fy_ssa_status != ssa:
+        school.current_fy_ssa_status = ssa
+
     if ssa == "done":
         school.planning_readiness = "ready"
     elif ssa in ("scheduled", "partner_assigned"):
         school.planning_readiness = "limited"
     else:
         school.planning_readiness = "locked"
-    school.save(update_fields=["planning_readiness", "updated_at"])
+    school.save(update_fields=["current_fy_ssa_status", "planning_readiness", "updated_at"])
 
 
 def upload(data: dict, principal) -> dict:

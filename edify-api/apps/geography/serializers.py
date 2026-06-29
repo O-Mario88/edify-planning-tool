@@ -14,10 +14,11 @@ class RegionSerializer(serializers.ModelSerializer):
 
 class DistrictSerializer(serializers.ModelSerializer):
     region = serializers.SerializerMethodField()
+    regionId = serializers.CharField(source="region_id", read_only=True)
 
     class Meta:
         model = District
-        fields = ["id", "name", "code", "pcode", "region_id", "region", "latitude", "longitude"]
+        fields = ["id", "name", "code", "pcode", "region_id", "regionId", "region", "latitude", "longitude"]
 
     def get_region(self, obj):
         return {"name": obj.region.name} if obj.region_id else None

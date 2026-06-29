@@ -125,29 +125,24 @@ def upload_ssa_file(file, principal) -> dict:
                 continue
 
         try:
-            with transaction.atomic():
-                # Attach the project timezone (local noon) so the SSA record's
-                # date_of_ssa is timezone-aware (USE_TZ=True) — a bare date string
-                # would otherwise produce a naive-datetime RuntimeWarning.
-                from django.utils import timezone
-                tz = timezone.get_current_timezone()
-                aware = timezone.make_aware(datetime.combine(ssa_date, time(12, 0)), tz)
-                services.upload(
-                    {
-                        "schoolId": school_id,
-                        "dateOfSsa": aware.isoformat(),
-                        "newEnrollment": new_enrollment,
-                        "scores": scores,
-                    },
-                    principal,
-                )
+            from django.utils import timezone
+            tz = timezone.get_current_timezone()
+            aware = timezone.make_aware(datetime.combine(ssa_date, time(12, 0)), tz)
+            
+            raw_map["_defaults"] = {
+                "schoolId": school_id,
+                "dateOfSsa": aware.isoformat(),
+                "newEnrollment": new_enrollment,
+                "scores": scores,
+            }
+            
             counts["created"] += 1
             row_results.append(UploadBatchRowResult(
                 upload_batch=batch, row_number=row_number, school_id=school_id,
                 status="created", raw_data_json=raw_map,
             ))
         except Exception as exc:  # noqa: BLE001
-            fail(f"Could not save SSA: {exc}")
+            fail(f"Could not validate SSA: {exc}")
 
     if row_results:
         UploadBatchRowResult.objects.bulk_create(row_results)
@@ -162,19 +157,24 @@ def upload_ssa_file(file, principal) -> dict:
     batch.failed_rows = counts["failed"]
     batch.accepted_count = saved
     batch.flagged_count = counts["failed"]
-    batch.status = "completed" if not counts["failed"] else "completed_with_errors"
+    batch.status = "validated" if not counts["failed"] else "completed_with_errors"
     if errors:
         batch.error_summary = "; ".join(f"row {e['row']}: {e['error']}" for e in errors[:50])
     batch.save()
 
+    if success:
+        import_ssa_batch(batch, principal)
+        batch.status = "imported"
+        batch.save(update_fields=["status"])
+
     if total == 0:
         message = "No data rows were found in the file."
     elif success:
-        message = f"Upload complete — {saved} SSA record(s) saved" + (
+        message = f"Upload complete — {saved} SSA record(s) validated" + (
             f", {counts['failed']} failed." if counts["failed"] else "."
         )
     else:
-        message = f"Nothing saved — all {counts['failed']} row(s) failed validation. See the errors below."
+        message = f"Nothing validated — all {counts['failed']} row(s) failed validation. See the errors below."
 
     return {
         "success": success,
@@ -190,4 +190,20 @@ def upload_ssa_file(file, principal) -> dict:
     }
 
 
-__all__ = ["upload_ssa_file"]
+def import_ssa_batch(batch: UploadBatch, principal) -> None:
+    rows = batch.row_results.filter(status="created")
+    for r in rows:
+        defaults = r.raw_data_json.get("_defaults")
+        if not defaults:
+            continue
+        
+        try:
+            with transaction.atomic():
+                services.upload(defaults, principal)
+        except Exception as exc:
+            r.status = "failed"
+            r.error_message = f"Could not save SSA: {exc}"
+            r.save()
+
+
+__all__ = ["upload_ssa_file", "import_ssa_batch"]

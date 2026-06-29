@@ -22,6 +22,7 @@ import {
   type PlanRecommendationBundle,
   type Priority,
   type Intervention,
+  type ClusterActivityType,
 } from "@/lib/plan-builder-engine";
 
 // Backend SSA intervention enum value → the plan-builder `Intervention` union.
@@ -37,6 +38,17 @@ const INTERVENTION_FROM_ENUM: Record<string, Intervention> = {
   leadership: "Leadership Best Practice",
   education_technology: "Learning Environment",
   learning_environment: "Learning Environment",
+};
+
+const TRAINING_ACTIVITY_FROM_INTERVENTION: Record<Intervention, ClusterActivityType> = {
+  "Teaching Environment": "Teaching Environment Training",
+  "Fees / Budget / Accounts": "Fees / Budget / Accounts Training",
+  "Christ-like Behavior": "Christ-like Behaviour Training",
+  "Exposure to the Word of God": "Exposure to the Word of God Training",
+  "Government Requirements": "Government Requirements Training",
+  "Leadership Best Practice": "Leadership Training",
+  "Learning Environment": "Learning Environment Training",
+  "Enrollment": "School Improvement Training",
 };
 
 function interventionFor(school: BePlanBuilderSchool): Intervention {
@@ -66,11 +78,26 @@ function schoolReason(s: BePlanBuilderSchool): string {
   return `SSA average ${s.ssaScore.toFixed(1)} — maintain support.`;
 }
 
-function mapSchool(s: BePlanBuilderSchool, i: number): SchoolVisitRecommendation {
+function mapSchool(s: BePlanBuilderSchool, i: number, clusters: ClusterRecommendation[]): SchoolVisitRecommendation {
   const weakestIntervention = interventionFor(s);
   const priorityLevel = priorityFromSsa(s.ssaScore);
+
+  const matchedCluster = clusters.find(
+    (c) =>
+      c.clusterName === s.cluster &&
+      c.mainWeakness === weakestIntervention &&
+      c.recommendedActivity.endsWith("Training")
+  );
+
   const recommendedActivity: SchoolVisitRecommendation["recommendedActivity"] =
-    s.ssaScore == null ? "SSA Verification" : priorityLevel === "Critical" ? "Follow-Up Visit" : "School Visit";
+    s.ssaScore == null
+      ? "SSA Verification"
+      : s.ssaScore < 5
+        ? "Follow-Up Visit"
+        : matchedCluster
+          ? "Cluster Training"
+          : "School Visit";
+
   const suggestedWeek = ((i % 4) + 1) as 1 | 2 | 3 | 4;
   return {
     schoolId: s.schoolId,
@@ -85,11 +112,17 @@ function mapSchool(s: BePlanBuilderSchool, i: number): SchoolVisitRecommendation
     lastVisitDate: "—",
     lastTrainingDate: "—",
     recommendedActivity,
-    recommendedTrainingCluster: null,
+    recommendedTrainingCluster: recommendedActivity === "Cluster Training" ? s.cluster : null,
     suggestedWeek,
     routeGroup: `${s.cluster || s.district} · Week ${suggestedWeek}`,
     estimatedCost:
-      recommendedActivity === "Follow-Up Visit" ? 105_000 : recommendedActivity === "SSA Verification" ? 65_000 : 95_000,
+      recommendedActivity === "Follow-Up Visit"
+        ? 105_000
+        : recommendedActivity === "SSA Verification"
+          ? 65_000
+          : recommendedActivity === "Cluster Training"
+            ? 38_000
+            : 95_000,
   };
 }
 
@@ -105,6 +138,9 @@ function mapCluster(c: BePlanBuilderCluster): ClusterRecommendation {
   const mainWeakness = (c.weakest && INTERVENTION_FROM_ENUM[c.weakest.intervention]) || "Teaching Environment";
   const priorityLevel = clusterPriority(c.averageSsa);
   const expectedParticipants = Math.max(2, c.schoolCount * 2);
+  const recommendedActivity = c.weakest
+    ? (TRAINING_ACTIVITY_FROM_INTERVENTION[mainWeakness] || "School Improvement Training")
+    : "Cluster Meeting";
   return {
     clusterId: c.clusterId,
     clusterName: c.clusterName,
@@ -112,7 +148,7 @@ function mapCluster(c: BePlanBuilderCluster): ClusterRecommendation {
     schoolCount: c.schoolCount,
     averageSsa: c.averageSsa ?? 0,
     mainWeakness,
-    recommendedActivity: c.weakest ? "School Improvement Training" : "Cluster Meeting",
+    recommendedActivity,
     expectedParticipants,
     suggestedDate: "TBD",
     estimatedCost: c.weakest
@@ -195,11 +231,11 @@ export async function backendPlanBuilderBundle(user: BackendUser): Promise<LiveP
   const feed = await fetchPlanBuilder(user, "");
   if (!feed.live) return null;
 
-  const highPrioritySchoolVisits = feed.data.schools
-    .map(mapSchool)
-    .sort((a, b) => priorityRank(b.priorityLevel) - priorityRank(a.priorityLevel));
   const highPriorityClusters = feed.data.clusters
     .map(mapCluster)
+    .sort((a, b) => priorityRank(b.priorityLevel) - priorityRank(a.priorityLevel));
+  const highPrioritySchoolVisits = feed.data.schools
+    .map((s, i) => mapSchool(s, i, highPriorityClusters))
     .sort((a, b) => priorityRank(b.priorityLevel) - priorityRank(a.priorityLevel));
 
   // Live partner roster (identities real; capacity estimated — see mapPartner).

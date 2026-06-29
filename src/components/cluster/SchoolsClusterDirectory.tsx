@@ -47,6 +47,7 @@ export function SchoolsClusterDirectory({
   projectOptions = [],
   partnerOptions = [],
   interventionAreas = [],
+  geoByDistrict: geoByDistrictProp,
 }: {
   schools: DirectorySchoolVM[];
   canManage: boolean;
@@ -61,6 +62,7 @@ export function SchoolsClusterDirectory({
   projectOptions?: DirectoryProjectTag[];
   partnerOptions?: string[];
   interventionAreas?: string[];
+  geoByDistrict?: Record<string, string[]>;
 }) {
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<StageFilter>("all");
@@ -97,6 +99,9 @@ export function SchoolsClusterDirectory({
   // actually persist (no FE-catalog name that the backend doesn't know, no
   // out-of-scope district 403).
   const geoByDistrict = useMemo(() => {
+    if (geoByDistrictProp && Object.keys(geoByDistrictProp).length > 0) {
+      return geoByDistrictProp;
+    }
     const m: Record<string, string[]> = {};
     for (const s of schools) {
       if (!s.district) continue;
@@ -105,7 +110,7 @@ export function SchoolsClusterDirectory({
     }
     Object.values(m).forEach((a) => a.sort());
     return m;
-  }, [schools]);
+  }, [schools, geoByDistrictProp]);
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();

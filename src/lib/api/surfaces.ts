@@ -1524,6 +1524,43 @@ export function backendUploadSsa(user: BackendUser, body: {
   return live<{ id: string; averageScore?: number }>(`/ssa`, user, { method: "POST", body: JSON.stringify(body) });
 }
 
+export type BeUploadBatch = {
+  id: string;
+  uploadType: "schools" | "ssa";
+  source: string;
+  fileName: string;
+  uploadedBy: string;
+  status: string;
+  totalRows: number;
+  createdRows: number;
+  updatedRows: number;
+  skippedRows: number;
+  failedRows: number;
+  duplicateRows: number;
+  errorSummary?: string;
+  createdAt: string;
+};
+
+export type BeUploadBatchRow = {
+  rowNumber: number;
+  schoolId?: string;
+  status: string;
+  errorMessage?: string;
+  rawData: Record<string, string>;
+};
+
+export function fetchBackendUploadBatches(user: BackendUser) {
+  return live<BeUploadBatch[]>(`/uploads`, user);
+}
+
+export function fetchBackendUploadBatchDetail(user: BackendUser, batchId: string) {
+  return live<BeUploadBatch>(`/uploads/${encodeURIComponent(batchId)}`, user);
+}
+
+export function fetchBackendUploadBatchRows(user: BackendUser, batchId: string) {
+  return live<BeUploadBatchRow[]>(`/uploads/${encodeURIComponent(batchId)}/rows`, user);
+}
+
 // ── Core School lifecycle (candidates → plan → impact → champion) ───
 export function fetchCoreCandidates(user: BackendUser) {
   return live<unknown[]>(`/core/candidates`, user);

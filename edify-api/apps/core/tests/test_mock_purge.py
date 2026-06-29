@@ -50,11 +50,11 @@ class EmptyDatabaseContractTest(TestCase):
         class _P:
             user_id = "u"; active_role = "Admin"; staff_profile_id = None
         d = dashboard_summary(_P(), {})
-        self.assertEqual(d["schoolsTotal"], 0)
+        self.assertEqual(d["schools"], 0)
         self.assertEqual(d["ssaDone"], 0)
         self.assertEqual(d["coreSchools"], 0)
         # No hardcoded fake numbers.
-        self.assertNotIn(72, [d["schoolsTotal"], d["ssaDone"]])
+        self.assertNotIn(72, [d["schools"], d["ssaDone"]])
 
     def test_filters_options_empty(self):
         from apps.filters.services import options

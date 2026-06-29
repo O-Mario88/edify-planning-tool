@@ -1,4 +1,5 @@
 import { SchoolsHeader } from "@/components/schools/SchoolsHeader";
+export const revalidate = 60;
 import { DirectoryKpiStrip } from "@/components/schools/DirectoryKpiStrip";
 import { PlanningReviewSignals } from "@/components/schools/PlanningReviewSignals";
 import { SchoolQuickActions } from "@/components/schools/SchoolQuickActions";
@@ -22,7 +23,8 @@ import {
 } from "@/lib/school-directory/directory";
 import { openDuplicateCandidates } from "@/lib/intake/duplicate-candidates-mock";
 import { getCurrentUser, toCurrentUser } from "@/lib/auth";
-import { fetchAllSchoolsForDirectory, fetchClusters, fetchAnalyticsDashboard, type BeSchoolRow, type BeCluster, type BeDashboard } from "@/lib/api/surfaces";
+import { isBackendEnabled } from "@/lib/api/backend";
+import { fetchAllSchoolsForDirectory, fetchClusters, fetchAnalyticsDashboard, fetchBackendGeoByDistrict, type BeSchoolRow, type BeCluster, type BeDashboard } from "@/lib/api/surfaces";
 import { LiveBadge, BackendOfflineBanner } from "@/components/ui/BackendStatus";
 import type { DirectoryMetric } from "@/lib/school-directory/directory";
 import { portfolioForStaffId } from "@/lib/portfolio/portfolio";
@@ -131,13 +133,13 @@ export default async function SchoolsDashboard({
   // backend narrows server-side — the list is the full narrowed universe (not the
   // first 200 rows of the unfiltered set) and the strip counts that same universe.
   const geo = geoParamsFromSelection(selection);
-  const liveSchools = await fetchAllSchoolsForDirectory(me, geo);
+  const [liveSchools, liveDashboard, geoByDistrictRes] = await Promise.all([
+    fetchAllSchoolsForDirectory(me, geo),
+    fetchAnalyticsDashboard(me, geo),
+    isBackendEnabled() ? fetchBackendGeoByDistrict(me) : Promise.resolve(null),
+  ]);
   const liveRows = liveSchools.live ? liveSchools.data : [];
-  // Strip source of truth: the backend's server-side AGGREGATE counts, computed
-  // over the SAME (role-scoped + geo-narrowed) universe as the row list — never
-  // the <=200-row page (counting the page made every breakdown wrong, and any
-  // district whose schools fell past row 200 was silently under-counted).
-  const liveDashboard = await fetchAnalyticsDashboard(me, geo);
+  const geoByDistrict = geoByDistrictRes ?? undefined;
   const mockOk = isMockAllowed();
   const emptyMetrics = liveDirectoryMetrics([], 0);
   const metrics = liveSchools.live
@@ -318,6 +320,7 @@ export default async function SchoolsDashboard({
             projectOptions={projectOptions}
             partnerOptions={PARTNER_SUGGESTIONS}
             interventionAreas={interventionAreas}
+            geoByDistrict={geoByDistrict}
           />
 
           {/* Planning-readiness signals — the actionable workflow stages

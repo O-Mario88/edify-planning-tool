@@ -131,6 +131,59 @@ class School(SoftDeleteModel):
     def __str__(self) -> str:
         return f"{self.name} ({self.school_id})"
 
+    def save(self, *args, **kwargs):
+        from django.db.models import Q
+        from apps.clusters.models import Cluster, SchoolClusterAssignment
+
+        is_new = self._state.adding
+        old_sub_county_id = None
+        old_district_id = None
+        if not is_new:
+            try:
+                orig = School.objects.get(pk=self.pk)
+                old_sub_county_id = orig.sub_county_id
+                old_district_id = orig.district_id
+            except School.DoesNotExist:
+                pass
+
+        sub_county_changed = is_new or (self.sub_county_id != old_sub_county_id)
+        district_changed = is_new or (self.district_id != old_district_id)
+
+        if sub_county_changed or district_changed:
+            current_cluster = None
+            if self.cluster_id:
+                current_cluster = Cluster.objects.filter(id=self.cluster_id, deleted_at__isnull=True, status="active").first()
+
+            still_covered = False
+            if current_cluster and self.sub_county_id:
+                still_covered = current_cluster.covered_sub_counties.filter(sub_county_id=self.sub_county_id).exists() or current_cluster.sub_county_id == self.sub_county_id
+
+            if not still_covered:
+                new_cluster = None
+                if self.sub_county_id:
+                    new_cluster = Cluster.objects.filter(
+                        deleted_at__isnull=True,
+                        status="active"
+                    ).filter(Q(sub_county_id=self.sub_county_id) | Q(covered_sub_counties__sub_county_id=self.sub_county_id)).distinct().first()
+
+                if new_cluster:
+                    self.cluster_id = new_cluster.id
+                    self.cluster_status = "clustered"
+                else:
+                    self.cluster_id = None
+                    self.cluster_status = "unclustered"
+
+        super().save(*args, **kwargs)
+
+        if sub_county_changed or district_changed:
+            SchoolClusterAssignment.objects.filter(school=self).delete()
+            if self.cluster_id:
+                SchoolClusterAssignment.objects.get_or_create(
+                    school=self,
+                    cluster_id=self.cluster_id,
+                    defaults={"assigned_by": "system_reassign"}
+                )
+
 
 class UploadBatch(TimeStampedModel):
     """A batch of uploads (schools / SSA; manual / csv / xlsx / future: salesforce).
@@ -145,6 +198,10 @@ class UploadBatch(TimeStampedModel):
         ("completed", "Completed"),
         ("completed_with_errors", "Completed with errors"),
         ("failed", "Failed"),
+        ("uploaded", "Uploaded"),
+        ("validated", "Validated"),
+        ("imported", "Imported"),
+        ("rejected", "Rejected"),
     )
 
     id = CuidField()

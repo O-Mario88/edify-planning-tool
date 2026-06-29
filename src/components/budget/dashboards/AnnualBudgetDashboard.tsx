@@ -13,7 +13,7 @@ import { SectionCard } from "@/components/ui/primitives";
 import { BudgetKpiRow, type BudgetKpi } from "../BudgetKpiRow";
 import { ApprovalWorkflowStepper, type WorkflowStep } from "../ApprovalWorkflowStepper";
 import { BudgetHealthGauge } from "../BudgetHealthGauge";
-import { BudgetByQuarterBars, MonthlyBurnReleases, BudgetByDimensionBars, ProgramAdminDonut } from "../BudgetCharts";
+import { BudgetByQuarterBars, MonthlyBurnReleases, BudgetByDimensionBars, ProgramAdminDonut } from "@/components/ui/lazy-charts";
 import { BudgetRiskAlerts, FundRequestStatusRow, RecentFundRequestsCard, SectionEyebrow, type RecentFundRequest } from "../BudgetCards";
 import { BudgetLedgerTable } from "../BudgetLedgerTable";
 import { fmtUgxShort, fmtPct } from "@/lib/funds/budget/budget-format";

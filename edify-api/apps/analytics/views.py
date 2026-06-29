@@ -15,32 +15,69 @@ ANALYTICS = [Permission.ANALYTICS_VIEW.value]
 RECRUITMENT = [Permission.RECRUITMENT_INTELLIGENCE_VIEW.value]
 
 
+import hashlib
+import json
+from django.core.cache import cache
+
 def _q(request: Request) -> dict:
     return {k: request.query_params.get(k) for k in request.query_params}
+
+def _get_cache_key(prefix: str, user, params: dict) -> str:
+    param_str = json.dumps(params, sort_keys=True)
+    param_hash = hashlib.md5(param_str.encode("utf-8")).hexdigest()
+    return f"analytics:{prefix}:{user.id}:{user.active_role}:{param_hash}"
 
 
 class AnalyticsDashboardView(APIView):
     permission_classes = [IsAuthenticated, RequirePermissions]
     required_permissions = ANALYTICS
-    def get(self, request): return Response(services.dashboard_summary(request.user, _q(request)))
+    def get(self, request):
+        params = _q(request)
+        key = _get_cache_key("dashboard", request.user, params)
+        data = cache.get(key)
+        if data is None:
+            data = services.dashboard_summary(request.user, params)
+            cache.set(key, data, timeout=300)
+        return Response(data)
 
 
 class AnalyticsLeadershipSummaryView(APIView):
     permission_classes = [IsAuthenticated, RequirePermissions]
     required_permissions = ANALYTICS
-    def get(self, request): return Response(services.leadership_summary(request.user, _q(request)))
+    def get(self, request):
+        params = _q(request)
+        key = _get_cache_key("leadership_summary", request.user, params)
+        data = cache.get(key)
+        if data is None:
+            data = services.leadership_summary(request.user, params)
+            cache.set(key, data, timeout=300)
+        return Response(data)
 
 
 class AnalyticsDistrictsView(APIView):
     permission_classes = [IsAuthenticated, RequirePermissions]
     required_permissions = ANALYTICS
-    def get(self, request): return Response(services.district_rollups(request.user, _q(request)))
+    def get(self, request):
+        params = _q(request)
+        key = _get_cache_key("districts", request.user, params)
+        data = cache.get(key)
+        if data is None:
+            data = services.district_rollups(request.user, params)
+            cache.set(key, data, timeout=300)
+        return Response(data)
 
 
 class AnalyticsCoverageView(APIView):
     permission_classes = [IsAuthenticated, RequirePermissions]
     required_permissions = ANALYTICS
-    def get(self, request): return Response(services.coverage_summary(request.user, _q(request)))
+    def get(self, request):
+        params = _q(request)
+        key = _get_cache_key("coverage", request.user, params)
+        data = cache.get(key)
+        if data is None:
+            data = services.coverage_summary(request.user, params)
+            cache.set(key, data, timeout=300)
+        return Response(data)
 
 
 class AnalyticsGeoMapView(APIView):

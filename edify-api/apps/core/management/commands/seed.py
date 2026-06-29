@@ -107,10 +107,10 @@ class Command(BaseCommand):
         if demo:
             if settings.IS_PRODUCTION:  # defensive double-check
                 raise CommandError("Demo seed blocked in production.")
-            self._seed_demo_accounts()
-            self._seed_geography()
             if options["reset"]:
                 self._purge_operational()
+            self._seed_demo_accounts()
+            self._seed_geography()
             self._seed_sample_data()
             self.stdout.write(self.style.WARNING(
                 "  ⚠ Demo data seeded — LOCAL DEVELOPMENT ONLY. Do NOT deploy this database."
@@ -176,9 +176,10 @@ class Command(BaseCommand):
         cceos = []
         for i in range(20):
             email = "cceo@edify.org" if i == 0 else f"cceo{i}@edify.org"
+            name = "Paul Chinyama" if i == 0 else f"CCEO {i + 1}"
             u, _ = User.objects.update_or_create(
                 email=email,
-                defaults={"name": f"CCEO {i + 1}", "roles": [EdifyRole.CCEO.value],
+                defaults={"name": name, "roles": [EdifyRole.CCEO.value],
                           "active_role": EdifyRole.CCEO.value, "status": "active", "is_active": True},
             )
             u.set_password(demo_pw); u.save()
@@ -191,17 +192,44 @@ class Command(BaseCommand):
 
     # ── Geography (reference admin boundaries — local-test seed) ────────────
     def _seed_geography(self):
-        from apps.geography.models import Region, District, SubCounty
+        import csv
+        from pathlib import Path
+        from django.conf import settings
+        from apps.geography.models import Region, District, SubCounty, Parish
 
-        for r in GEOGRAPHY:
-            region, _ = Region.objects.get_or_create(name=f"{r['name']} Region")
-            for d in r["districts"]:
-                district, _ = District.objects.get_or_create(name=d["name"], region=region)
-                for sc in d["subCounties"]:
-                    SubCounty.objects.get_or_create(name=sc, district=district)
+        csv_path = Path(settings.BASE_DIR).parent / "uganda_complete_administrative_mapping.csv"
+        if not csv_path.exists():
+            self.stdout.write(f"  Geography CSV not found at {csv_path}")
+            return
+
+        regions_cache = {}
+        districts_cache = {}
+
+        with open(csv_path, encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                region_name = row["Region"].strip()
+                district_name = row["District"].strip()
+                sub_county_name = row["Sub_County"].strip()
+
+                if region_name not in regions_cache:
+                    region, _ = Region.objects.get_or_create(name=region_name)
+                    regions_cache[region_name] = region
+                region = regions_cache[region_name]
+
+                key = (region_name, district_name)
+                if key not in districts_cache:
+                    district, _ = District.objects.get_or_create(name=district_name, region=region)
+                    districts_cache[key] = district
+                district = districts_cache[key]
+
+                sub_county, _ = SubCounty.objects.get_or_create(name=sub_county_name, district=district)
+                Parish.objects.get_or_create(name=f"{sub_county_name} Central", sub_county=sub_county)
+
         self.stdout.write(
             f"  geography: {Region.objects.count()} regions, "
-            f"{District.objects.count()} districts, {SubCounty.objects.count()} sub-counties."
+            f"{District.objects.count()} districts, {SubCounty.objects.count()} sub-counties, "
+            f"{Parish.objects.count()} parishes."
         )
 
     def _purge_operational(self):
@@ -211,13 +239,22 @@ class Command(BaseCommand):
         from apps.ssa.models import SsaRecord
         from apps.clusters.models import Cluster
         from apps.partners.models import Partner
+        from apps.geography.models import Region, District, SubCounty, Parish
+        from apps.accounts.models import StaffSchoolAssignment
 
         Activity.objects.all().delete()
         SsaRecord.objects.all().delete()
         School.objects.all().delete()
         Cluster.objects.all().delete()
         Partner.objects.all().delete()
-        self.stdout.write("  purged operational data.")
+        StaffSchoolAssignment.objects.all().delete()
+        
+        # Clean up geography to replace with complete scraped dataset
+        Parish.objects.all().delete()
+        SubCounty.objects.all().delete()
+        District.objects.all().delete()
+        Region.objects.all().delete()
+        self.stdout.write("  purged operational and geography data.")
 
     def _seed_sample_data(self):
         from apps.geography.models import District, SubCounty
@@ -230,6 +267,12 @@ class Command(BaseCommand):
         subs = list(SubCounty.objects.all())
         rnd = random.Random(42)
         name_frags = ["Primary School", "UMEA Primary School", "Church of Uganda Primary", "Hill Primary"]
+        from apps.core.rbac import EdifyRole
+        from apps.accounts.models import StaffProfile, StaffSchoolAssignment
+        from apps.core.enums import AccountOwnerStatus
+
+        cceos = list(StaffProfile.objects.filter(user__active_role=EdifyRole.CCEO.value).order_by("user__email"))
+
         for i in range(700):
             d = rnd.choice(districts)
             sc = rnd.choice([s for s in subs if s.district_id == d.id] or subs)
@@ -242,6 +285,25 @@ class Command(BaseCommand):
                 current_fy_ssa_status="done" if rnd.random() < 0.15 else "not_done",
                 source="local_test_upload",
             )
+            if cceos:
+                # Primary owner: Paul Chinyama (cceos[0]) gets all schools assigned
+                cceo = cceos[0]
+                s.account_owner_id = cceo.id
+                s.account_owner_name_raw = cceo.user.name
+                s.account_owner_status = AccountOwnerStatus.MATCHED.value
+                s.save()
+                StaffSchoolAssignment.objects.get_or_create(
+                    staff=cceo,
+                    school_id=s.id
+                )
+                
+                # Also link other CCEOs round-robin to a slice of schools
+                other_cceo = cceos[i % len(cceos)]
+                if other_cceo != cceo:
+                    StaffSchoolAssignment.objects.get_or_create(
+                        staff=other_cceo,
+                        school_id=s.id
+                    )
             from apps.ssa.services import _recompute_readiness
             _recompute_readiness(s)
         self.stdout.write(f"  sample schools: {School.objects.count()} (local only)")

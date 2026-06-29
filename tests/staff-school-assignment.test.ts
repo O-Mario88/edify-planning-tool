@@ -1,9 +1,23 @@
 // IA school assignment advances the activation engine (schools gate clears).
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { addOrgStaff } from "@/lib/org/supervision";
 import { addIntakeSchool, assignSchoolToCceo } from "@/lib/intake/intake-mock";
 import { computeActivationReadiness } from "@/lib/org/staff-activation";
+
+vi.mock("next/headers", () => {
+  return {
+    cookies: () => {
+      return {
+        get: (name: string) => {
+          if (name === "edify-email") return { value: encodeURIComponent("ia@upload.test") };
+          if (name === "edify-role") return { value: encodeURIComponent("ImpactAssessment") };
+          return undefined;
+        }
+      };
+    }
+  };
+});
 
 describe("assigning schools clears the school-assignment gate", () => {
   // A created CCEO with a supervisor but no schools.
@@ -32,4 +46,15 @@ describe("assigning schools clears the school-assignment gate", () => {
     // Next unmet gate is primary district.
     expect(r.status).toBe("PendingPrimaryDistrict");
   });
+
+  it("verifies createEmptyClusterAction with backend", async () => {
+    const { createEmptyClusterAction } = await import("@/lib/actions/cluster-actions");
+    const res = await createEmptyClusterAction({
+      name: "Vitest New Cluster",
+      district: "Mukono",
+      subCounties: ["Ntunga"],
+    });
+    console.log("CLUSTER ACTION RESULT:", res);
+    expect(res.ok).toBe(true);
+  }, 30000);
 });

@@ -33,7 +33,21 @@ function apiBaseMisconfigured(): string | null {
 export type BackendUser = { email?: string; role: string };
 
 type CacheEntry = { token: string; exp: number };
-const tokenCache = new Map<string, CacheEntry>();
+type LoginPromise = Promise<LoginOutcome>;
+
+const GLOBAL_TOKEN_CACHE_KEY = "__edify_token_cache__";
+const GLOBAL_LOGIN_PROMISES_KEY = "__edify_login_promises__";
+
+const globalForTokens = globalThis as unknown as {
+  [GLOBAL_TOKEN_CACHE_KEY]?: Map<string, CacheEntry>;
+  [GLOBAL_LOGIN_PROMISES_KEY]?: Map<string, LoginPromise>;
+};
+
+const tokenCache = globalForTokens[GLOBAL_TOKEN_CACHE_KEY] ?? new Map<string, CacheEntry>();
+globalForTokens[GLOBAL_TOKEN_CACHE_KEY] = tokenCache;
+
+const loginPromises = globalForTokens[GLOBAL_LOGIN_PROMISES_KEY] ?? new Map<string, LoginPromise>();
+globalForTokens[GLOBAL_LOGIN_PROMISES_KEY] = loginPromises;
 
 // Distinguish the three login failure modes so the caller surfaces an
 // actionable error instead of one opaque "auth unavailable" message.
@@ -54,42 +68,61 @@ async function loginToBackend(user: BackendUser): Promise<LoginOutcome> {
       detail: "No backend session. Sign in again — your credentials are used to authenticate against the data backend.",
     };
   }
-  const cached = tokenCache.get(creds.email);
+
+  const key = creds.email.toLowerCase();
+
+  // 1. Check cache
+  const cached = tokenCache.get(key);
   if (cached && cached.exp > Date.now()) return { ok: true, token: cached.token };
-  try {
-    const res = await fetch(`${API}/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: creds.email, password: creds.password }),
-      cache: "no-store",
-    });
-    if (!res.ok) {
-      if (res.status === 401 || res.status === 403) {
+
+  // 2. Check in-progress promise
+  let promise = loginPromises.get(key);
+  if (promise) {
+    return promise;
+  }
+
+  // 3. Start login
+  promise = (async (): Promise<LoginOutcome> => {
+    try {
+      const res = await fetch(`${API}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: creds.email, password: creds.password }),
+        cache: "no-store",
+      });
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          return {
+            ok: false, reason: "rejected",
+            detail: `Backend rejected the login (HTTP ${res.status}). Your password does not match the account in the backend — sign in again, or ask an admin to reset it.`,
+          };
+        }
+        let body = "";
+        try { body = ` — ${((await res.json()) as { message?: string }).message ?? res.statusText}`; } catch { body = ` — ${res.statusText}`; }
         return {
-          ok: false, reason: "rejected",
-          detail: `Backend rejected the login (HTTP ${res.status}). Your password does not match the account in the backend — sign in again, or ask an admin to reset it.`,
+          ok: false, reason: "config",
+          detail: `Backend login returned HTTP ${res.status}${body}. Check EDIFY_API_URL="${API}" ends with /api and points at edify-api.`,
         };
       }
-      let body = "";
-      try { body = ` — ${((await res.json()) as { message?: string }).message ?? res.statusText}`; } catch { body = ` — ${res.statusText}`; }
+      const data = (await res.json()) as { accessToken?: string };
+      if (!data.accessToken) {
+        return { ok: false, reason: "config", detail: "Backend returned 200 but no accessToken in the response body." };
+      }
+      tokenCache.set(key, { token: data.accessToken, exp: Date.now() + 10 * 60 * 1000 });
+      return { ok: true, token: data.accessToken };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Network error";
       return {
-        ok: false, reason: "config",
-        detail: `Backend login returned HTTP ${res.status}${body}. Check EDIFY_API_URL="${API}" ends with /api and points at edify-api.`,
+        ok: false, reason: "unreachable",
+        detail: `Cannot reach edify-api at ${API} (${msg}). The API is down, or EDIFY_API_URL points at the wrong host/port.`,
       };
+    } finally {
+      loginPromises.delete(key);
     }
-    const data = (await res.json()) as { accessToken?: string };
-    if (!data.accessToken) {
-      return { ok: false, reason: "config", detail: "Backend returned 200 but no accessToken in the response body." };
-    }
-    tokenCache.set(creds.email, { token: data.accessToken, exp: Date.now() + 10 * 60 * 1000 });
-    return { ok: true, token: data.accessToken };
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : "Network error";
-    return {
-      ok: false, reason: "unreachable",
-      detail: `Cannot reach edify-api at ${API} (${msg}). The API is down, or EDIFY_API_URL points at the wrong host/port.`,
-    };
-  }
+  })();
+
+  loginPromises.set(key, promise);
+  return promise;
 }
 
 export type BackendResult<T> =

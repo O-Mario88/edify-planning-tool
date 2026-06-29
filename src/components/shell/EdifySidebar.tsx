@@ -744,7 +744,7 @@ export function EdifySidebar({
                     <Link
                       key={m.label}
                       href={m.href}
-                      prefetch={false}
+                      prefetch={true}
                       // Belt-and-braces close: when the user taps the
                       // *currently active* link, `pathname` doesn't
                       // change so the effect above won't fire — close

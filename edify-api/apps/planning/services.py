@@ -126,7 +126,139 @@ def core_planning(query: dict, principal) -> list[dict]:
 
 
 def plan_builder(query: dict, principal) -> dict:
+    from django.db.models import Q
+    from apps.schools.models import School
+    from apps.clusters.models import Cluster
+    from apps.ssa.models import SsaRecord, SsaScore
+    from apps.core.enums import SsaIntervention
+    from apps.analytics.services import _scoped_schools
+
     fy = query.get("fy") or get_operational_fy()
+
+    # 1. Fetch schools in user scope
+    scoped_schools, scope = _scoped_schools(principal)
+    
+    # 2. Filter schools that are clustered, have a current-FY SSA, and are client type
+    ready_schools = scoped_schools.filter(
+        deleted_at__isnull=True,
+        current_fy_ssa_status="done"
+    ).exclude(cluster_id__isnull=True).exclude(cluster_id="").select_related("district", "sub_county")
+    
+    # Prefetch verified/confirmed SsaRecords for current FY for these schools to get weakest areas
+    records = SsaRecord.objects.filter(
+        school__in=ready_schools,
+        fy=fy,
+        verification_status="confirmed",
+        deleted_at__isnull=True
+    ).prefetch_related("scores")
+    
+    school_weakest = {}
+    school_ssa_score = {}
+    for r in records:
+        scores = sorted(r.scores.all().values("intervention", "score"), key=lambda s: s["score"])
+        weakest_list = []
+        for s in scores[:2]:
+            code = s["intervention"]
+            label = dict(SsaIntervention.choices).get(code, code)
+            weakest_list.append({
+                "intervention": code,
+                "label": label,
+                "score": s["score"]
+            })
+        school_weakest[r.school_id] = weakest_list
+        school_ssa_score[r.school_id] = r.average_score
+
+    # Fetch cluster names
+    cluster_ids = set(ready_schools.values_list("cluster_id", flat=True))
+    clusters_in_scope = Cluster.objects.filter(id__in=cluster_ids, deleted_at__isnull=True).select_related("district")
+    cluster_name_map = {c.id: c.name for c in clusters_in_scope}
+
+    serialized_schools = []
+    for s in ready_schools:
+        weak = school_weakest.get(s.id, [])
+        weakest_area = weak[0]["label"] if len(weak) > 0 else None
+        second_weak_area = weak[1]["label"] if len(weak) > 1 else None
+        
+        serialized_schools.append({
+            "schoolId": s.school_id,
+            "name": s.name,
+            "schoolType": s.school_type,
+            "district": s.district.name if s.district else "",
+            "clusterId": s.cluster_id,
+            "cluster": cluster_name_map.get(s.cluster_id, "—"),
+            "subCounty": s.sub_county.name if s.sub_county else None,
+            "owner": s.account_owner_name_raw or s.account_owner_id or "—",
+            "ssaScore": school_ssa_score.get(s.id),
+            "weakest": weak,
+            "weakestArea": weakest_area,
+            "secondWeakArea": second_weak_area,
+            "planningReadiness": s.planning_readiness,
+            "stage": s.planning_readiness
+        })
+
+    # 3. Calculate cluster statistics dynamically based on member schools' most recent confirmed SSA scores
+    serialized_clusters = []
+    for c in clusters_in_scope:
+        # Member schools of this cluster
+        member_schools = School.objects.filter(cluster_id=c.id, deleted_at__isnull=True)
+        school_count = member_schools.count()
+        
+        # Most recent confirmed SsaRecord for each member school
+        member_records_qs = SsaRecord.objects.filter(
+            school__in=member_schools,
+            verification_status="confirmed",
+            deleted_at__isnull=True
+        ).prefetch_related("scores").order_by("school_id", "-date_of_ssa")
+        
+        most_recent_records = {}
+        for r in member_records_qs:
+            if r.school_id not in most_recent_records:
+                most_recent_records[r.school_id] = r
+                
+        total_score = 0.0
+        record_count = 0
+        
+        interv_sums = {}
+        interv_counts = {}
+        
+        for r in most_recent_records.values():
+            if r.average_score is not None:
+                total_score += r.average_score
+                record_count += 1
+            for s in r.scores.all():
+                interv_sums[s.intervention] = interv_sums.get(s.intervention, 0.0) + s.score
+                interv_counts[s.intervention] = interv_counts.get(s.intervention, 0) + 1
+                
+        average_ssa = round(total_score / record_count, 2) if record_count > 0 else None
+        
+        weakest_cluster_interv = None
+        interv_averages = []
+        for code, label in SsaIntervention.choices:
+            if code in interv_sums:
+                avg_val = round(interv_sums[code] / interv_counts[code], 2)
+                interv_averages.append({
+                    "intervention": code,
+                    "label": label,
+                    "avg": avg_val
+                })
+        
+        if interv_averages:
+            interv_averages.sort(key=lambda x: x["avg"])
+            weakest_cluster_interv = {
+                "intervention": interv_averages[0]["intervention"],
+                "label": interv_averages[0]["label"],
+                "avg": interv_averages[0]["avg"]
+            }
+            
+        serialized_clusters.append({
+            "clusterId": c.id,
+            "clusterName": c.name,
+            "district": c.district.name if c.district else "",
+            "schoolCount": school_count,
+            "averageSsa": average_ssa,
+            "weakest": weakest_cluster_interv
+        })
+
     plans = MonthlyPlan.objects.filter(owner_staff_id=principal.staff_profile_id, month_iso__startswith=fy)
     return {
         "fy": fy,
@@ -134,6 +266,8 @@ def plan_builder(query: dict, principal) -> dict:
             {"id": p.id, "monthIso": p.month_iso, "status": p.status, "activityCount": p.activities.count()}
             for p in plans
         ],
+        "schools": serialized_schools,
+        "clusters": serialized_clusters
     }
 
 

@@ -157,7 +157,9 @@ _db_url = os.environ.get(
     f"{os.environ.get('DB_PORT', '5432')}/"
     f"{os.environ.get('POSTGRES_DB', 'edify_pm')}",
 )
+import sys
 _db = urlparse(_db_url)
+_is_testing = "test" in sys.argv or "pytest" in sys.modules
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
@@ -169,8 +171,35 @@ DATABASES = {
         # Prisma used no special args; mirror that with sensible Postgres
         # connection options. Persist the conn so the ASGI stream is cheap.
         "CONN_HEALTH_CHECKS": True,
+        "CONN_MAX_AGE": 0 if _is_testing else 60,
     }
 }
+
+# ── Caching (Redis-backed with dynamic fallback to LocMemCache) ──────────────
+_redis_url = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0")
+_use_redis = False
+try:
+    import redis
+    _conn = redis.Redis.from_url(_redis_url, socket_timeout=1)
+    _conn.ping()
+    _use_redis = True
+except Exception:
+    _use_redis = False
+
+if _use_redis:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": _redis_url,
+        }
+    }
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "edify-pm-locmem-cache",
+        }
+    }
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

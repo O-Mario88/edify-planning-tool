@@ -200,6 +200,28 @@ def create(data: dict, principal) -> dict:
                 f'Cannot schedule activity — "{school.name}" has no complete current-FY SSA. '
                 "Planning is locked until the SSA is recorded."
             )
+
+        # Validate that purposeIntervention is justified by school's SSA scores
+        purpose = data.get("purposeIntervention")
+        if purpose:
+            from apps.ssa.models import SsaRecord
+            latest_ssa = SsaRecord.objects.filter(school=school, deleted_at__isnull=True).order_by("-date_of_ssa").first()
+            if latest_ssa:
+                score_obj = latest_ssa.scores.filter(intervention=purpose).first()
+                if score_obj:
+                    all_scores = list(latest_ssa.scores.all().values("intervention", "score"))
+                    sorted_scores = sorted(all_scores, key=lambda s: s["score"])
+                    weakest_interventions = [s["intervention"] for s in sorted_scores[:2]]
+                    
+                    is_weak = score_obj.score < 7.0
+                    is_in_weakest = purpose in weakest_interventions
+                    
+                    if not (is_weak or is_in_weakest):
+                        raise BadRequest(
+                            f"Cannot schedule activity for '{purpose}' — recommendation not justified by SSA scores. "
+                            f"The school's score is {score_obj.score}/10, which is not weak (< 7.0) and not in the two weakest areas."
+                        )
+
     if not school and not cluster_id:
         raise BadRequest("Activity must reference a school or cluster")
     _assert_target_in_scope(school=school, cluster_id=cluster_id, principal=principal)

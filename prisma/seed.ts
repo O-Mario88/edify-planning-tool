@@ -23,11 +23,11 @@ import {
   PaymentStatus, DeliveryType, VerificationStatus,
 } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
-import { mkdirSync, writeFileSync } from 'fs';
+import { readFileSync, mkdirSync, writeFileSync } from 'fs';
 import { resolve } from 'path';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { ROLE_PERMISSIONS } from '../src/server/common/rbac/permissions';
-import { UGANDA_GEOGRAPHY, DISTRICT_CENTROIDS } from './geography-data';
+import { DISTRICT_CENTROIDS } from './geography-data';
 
 // Prisma 7: the datasource declares no `url`, so the client connects through
 // the pg driver adapter (edify-web standardised on @prisma/adapter-pg).
@@ -102,30 +102,73 @@ async function seedGeography(): Promise<ScRow[]> {
   await prisma.parish.deleteMany();
   await prisma.subCounty.deleteMany();
 
+  const csvPath = resolve(__dirname, '../uganda_complete_administrative_mapping.csv');
+  const csvData = readFileSync(csvPath, 'utf8');
+  const lines = csvData.split('\n').map(l => l.trim()).filter(Boolean);
+
+  const geoMap = new Map<string, Map<string, Set<string>>>();
   const datasetDistricts = new Set<string>();
-  for (const r of UGANDA_GEOGRAPHY) for (const d of r.districts) datasetDistricts.add(`${r.name}::${d.name}`);
+
+  for (let i = 1; i < lines.length; i++) {
+    const [subCounty, district, region] = lines[i].split(',').map(s => s.trim());
+    if (!subCounty || !district || !region) continue;
+
+    datasetDistricts.add(`${region}::${district}`);
+
+    let distMap = geoMap.get(region);
+    if (!distMap) {
+      distMap = new Map<string, Set<string>>();
+      geoMap.set(region, distMap);
+    }
+    let scSet = distMap.get(district);
+    if (!scSet) {
+      scSet = new Set<string>();
+      distMap.set(district, scSet);
+    }
+    scSet.add(subCounty);
+  }
 
   const subCounties: ScRow[] = [];
-  for (const region of UGANDA_GEOGRAPHY) {
-    const reg = await prisma.region.upsert({ where: { name: region.name }, update: {}, create: { name: region.name } });
-    for (const district of region.districts) {
-      const cc = DISTRICT_CENTROIDS[district.name];
+
+  for (const [regionName, distMap] of geoMap.entries()) {
+    const reg = await prisma.region.upsert({
+      where: { name: regionName },
+      update: {},
+      create: { name: regionName },
+    });
+
+    for (const [districtName, scSet] of distMap.entries()) {
+      const cc = DISTRICT_CENTROIDS[districtName];
       const dist = await prisma.district.upsert({
-        where: { regionId_name: { regionId: reg.id, name: district.name } },
+        where: { regionId_name: { regionId: reg.id, name: districtName } },
         update: { regionId: reg.id, latitude: cc?.lat, longitude: cc?.lng },
-        create: { name: district.name, regionId: reg.id, latitude: cc?.lat, longitude: cc?.lng },
+        create: { name: districtName, regionId: reg.id, latitude: cc?.lat, longitude: cc?.lng },
       });
-      for (const sc of district.subCounties) {
-        const sub = await prisma.subCounty.create({ data: { name: sc.name, districtId: dist.id, seeded: false } });
-        const parishIds: string[] = [];
-        for (const p of sc.parishes) {
-          const par = await prisma.parish.create({ data: { name: p, subCountyId: sub.id } });
-          parishIds.push(par.id);
-        }
-        subCounties.push({ id: sub.id, name: sc.name, districtId: dist.id, districtName: district.name, regionId: reg.id, regionName: region.name, parishIds });
+
+      for (const scName of scSet) {
+        const sub = await prisma.subCounty.create({
+          data: { name: scName, districtId: dist.id, seeded: true },
+        });
+
+        // Seed a default parish so parishIds is not empty and school seeding succeeds
+        const defaultParishName = `${scName} Central`;
+        const par = await prisma.parish.create({
+          data: { name: defaultParishName, subCountyId: sub.id },
+        });
+
+        subCounties.push({
+          id: sub.id,
+          name: scName,
+          districtId: dist.id,
+          districtName: districtName,
+          regionId: reg.id,
+          regionName: regionName,
+          parishIds: [par.id],
+        });
       }
     }
   }
+
   // Remove stray districts from old fixtures (no FK refs remain after purge).
   const allDistricts = await prisma.district.findMany({ include: { region: true } });
   for (const d of allDistricts) {
@@ -133,6 +176,7 @@ async function seedGeography(): Promise<ScRow[]> {
       await prisma.district.delete({ where: { id: d.id } }).catch(() => undefined);
     }
   }
+
   const regions = await prisma.region.count();
   const districts = await prisma.district.count();
   console.log(`✓ geography: ${regions} regions, ${districts} districts, ${subCounties.length} sub-counties, ${subCounties.reduce((a, s) => a + s.parishIds.length, 0)} parishes`);

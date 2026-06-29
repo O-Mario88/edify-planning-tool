@@ -47,6 +47,36 @@ export const QualityCheckStatusCard = dynamic(
   { ssr: false, loading: () => <ChartSkeletonCard variant="donut" /> },
 );
 
+export const BudgetByQuarterBars = dynamic(
+  () => import("@/components/budget/BudgetCharts").then((m) => m.BudgetByQuarterBars),
+  { ssr: false, loading: () => <ChartSkeletonCard variant="bar" /> },
+);
+
+export const MonthlyBurnReleases = dynamic(
+  () => import("@/components/budget/BudgetCharts").then((m) => m.MonthlyBurnReleases),
+  { ssr: false, loading: () => <ChartSkeletonCard variant="line" /> },
+);
+
+export const BudgetByDimensionBars = dynamic(
+  () => import("@/components/budget/BudgetCharts").then((m) => m.BudgetByDimensionBars),
+  { ssr: false, loading: () => <ChartSkeletonCard variant="bar" /> },
+);
+
+export const ProgramAdminDonut = dynamic(
+  () => import("@/components/budget/BudgetCharts").then((m) => m.ProgramAdminDonut),
+  { ssr: false, loading: () => <ChartSkeletonCard variant="donut" /> },
+);
+
+export const BudgetMixDonut = dynamic(
+  () => import("@/components/budget/BudgetCharts").then((m) => m.BudgetMixDonut),
+  { ssr: false, loading: () => <ChartSkeletonCard variant="donut" /> },
+);
+
+export const AnnualOverviewLines = dynamic(
+  () => import("@/components/budget/BudgetCharts").then((m) => m.AnnualOverviewLines),
+  { ssr: false, loading: () => <ChartSkeletonCard variant="line" /> },
+);
+
 function ChartSkeletonCard({ variant }: { variant: "bar" | "line" | "donut" }) {
   return (
     <section className="card p-3.5">

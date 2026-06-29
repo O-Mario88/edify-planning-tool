@@ -1,4 +1,5 @@
 import { StubPage } from "@/components/shell/StubPage";
+export const revalidate = 60;
 import { getCurrentUser } from "@/lib/auth";
 import { ResourcesView } from "@/components/resources/ResourcesView";
 

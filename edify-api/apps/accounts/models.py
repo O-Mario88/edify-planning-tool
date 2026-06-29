@@ -145,6 +145,17 @@ class User(AbstractBaseUser, PermissionsMixin, SoftDeleteModel):
     def get_short_name(self) -> str:
         return self.name
 
+    @property
+    def staff_profile_id(self) -> str | None:
+        try:
+            return self.staff_profile.id
+        except Exception:
+            return None
+
+    @property
+    def user_id(self) -> str:
+        return self.id
+
 
 class UserInvitation(TimeStampedModel):
     """One-time invitation token issued when an admin creates a user. The raw

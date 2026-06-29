@@ -63,10 +63,10 @@ function seed(s: CoreStore) {
   // 1. Candidate SSA snapshots (avg ≥ 7.5) for Client schools with SSA done —
   //    makes them Potential Core candidates derived from the directory.
   const candidates: { id: string; date: string; sc: CoreSsaScores }[] = [
-    { id: "40118", date: "2026-03-14", sc: scoresOf({ "Teaching Environment": 8, "Leadership Best Practice": 8, "Learning Environment": 7, "Education Technology": 7 }, 8) },     // ~7.6
+    { id: "40118", date: "2026-03-14", sc: scoresOf({ "Teaching & Learning": 8, "Leadership": 8, "Learning Environment": 7, "Education Technology": 7 }, 8) },     // ~7.6
     { id: "61015", date: "2026-02-18", sc: scoresOf({ "Christlike Behaviour": 9, "Exposure to the Word of God": 8, "Learning Environment": 7, "Education Technology": 7 }, 8) }, // ~7.8
-    { id: "70233", date: "2026-03-20", sc: scoresOf({ "Teaching Environment": 8, "Government Requirement": 7, "Fees/Budget and Accounts": 7, "Education Technology": 6 }, 8) },   // ~7.5
-    { id: "52066", date: "2026-04-28", sc: scoresOf({ "Leadership Best Practice": 9, "Teaching Environment": 8, "Learning Environment": 8, "Education Technology": 7 }, 8) },     // ~8.1
+    { id: "70233", date: "2026-03-20", sc: scoresOf({ "Teaching & Learning": 8, "Government Requirements & Compliance": 7, "Financial Health": 7, "Education Technology": 6 }, 8) },   // ~7.5
+    { id: "52066", date: "2026-04-28", sc: scoresOf({ "Leadership": 9, "Teaching & Learning": 8, "Learning Environment": 8, "Education Technology": 7 }, 8) },     // ~8.1
   ];
   for (const c of candidates) {
     s.ssaSnapshots.push({
@@ -80,25 +80,25 @@ function seed(s: CoreStore) {
   //    interventions + 8 slots, at varying progress.
   seedCoreSchool(s, {
     schoolId: "51884", baselineDate: "2026-01-20",
-    baseline: scoresOf({ "Teaching Environment": 8, "Leadership Best Practice": 8, "Learning Environment": 7, "Education Technology": 6 }, 8),
+    baseline: scoresOf({ "Teaching & Learning": 8, "Leadership": 8, "Learning Environment": 7, "Education Technology": 6 }, 8),
     visitsDone: 2, trainingsDone: 1, onboardedAt: "2025-10-02",
   });
   seedCoreSchool(s, {
     schoolId: "61140", baselineDate: "2026-03-02",
-    baseline: scoresOf({ "Government Requirement": 7, "Fees/Budget and Accounts": 7, "Teaching Environment": 8, "Education Technology": 7 }, 8),
+    baseline: scoresOf({ "Government Requirements & Compliance": 7, "Financial Health": 7, "Teaching & Learning": 8, "Education Technology": 7 }, 8),
     visitsDone: 1, trainingsDone: 0, onboardedAt: "2025-10-02",
   });
   seedCoreSchool(s, {
     schoolId: "90050", baselineDate: "2026-05-15",
-    baseline: scoresOf({ "Leadership Best Practice": 8, "Learning Environment": 7, "Education Technology": 6, "Government Requirement": 7 }, 8),
+    baseline: scoresOf({ "Leadership": 8, "Learning Environment": 7, "Education Technology": 6, "Government Requirements & Compliance": 7 }, 8),
     visitsDone: 0, trainingsDone: 0, onboardedAt: "2025-10-02",
   });
   // 33145 Goma Hill — completed package + follow-up SSA on file (drives impact).
   seedCoreSchool(s, {
     schoolId: "33145", baselineDate: "2025-11-10",
-    baseline: scoresOf({ "Teaching Environment": 7, "Leadership Best Practice": 7, "Learning Environment": 7, "Education Technology": 6 }, 7),
+    baseline: scoresOf({ "Teaching & Learning": 7, "Leadership": 7, "Learning Environment": 7, "Education Technology": 6 }, 7),
     visitsDone: 4, trainingsDone: 4, onboardedAt: "2025-10-02",
-    followUp: { date: "2026-05-20", scores: scoresOf({ "Teaching Environment": 9, "Leadership Best Practice": 9, "Learning Environment": 8, "Education Technology": 8 }, 9) },
+    followUp: { date: "2026-05-20", scores: scoresOf({ "Teaching & Learning": 9, "Leadership": 9, "Learning Environment": 8, "Education Technology": 8 }, 9) },
   });
 }
 

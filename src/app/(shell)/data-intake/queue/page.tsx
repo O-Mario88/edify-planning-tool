@@ -5,9 +5,12 @@ import { ApproveImportButton } from "./ApproveImportButton";
 import { ValidateBatchButton, SendForReviewButton, RejectBatchButton } from "./BatchActions";
 import { dataImportBatches, type DataImportBatch } from "@/lib/data-intake-mock";
 import { Database } from "lucide-react";
-import { isMockAllowed } from "@/lib/mock-policy";
+import { isMockAllowed, isBackendOn } from "@/lib/mock-policy";
 import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
 import { cn } from "@/lib/utils";
+import { getCurrentUser } from "@/lib/auth";
+import { fetchBackendUploadBatches, type BeUploadBatch } from "@/lib/api/surfaces";
+import { mapBackendStatusToFrontend } from "@/lib/data-intake-actions";
 
 const STATUS_TONE = {
   "Uploaded":            "bg-slate-100   text-slate-700",
@@ -25,7 +28,7 @@ const STATUS_TONE = {
 function batchAction(b: DataImportBatch) {
   if (b.status === "Ready for Review") return (
     <span className="inline-flex items-center gap-2.5">
-      <ApproveImportButton batchId={b.id} fileName={b.sourceFileName} />
+      <ApproveImportButton batchId={b.id} fileName={b.sourceFileName} label="Import" />
       <RejectBatchButton batchId={b.id} />
     </span>
   );
@@ -44,7 +47,7 @@ function batchAction(b: DataImportBatch) {
   );
   if (b.status === "Validated") return (
     <span className="inline-flex items-center gap-2.5">
-      <SendForReviewButton batchId={b.id} />
+      <ApproveImportButton batchId={b.id} fileName={b.sourceFileName} label="Import →" />
       <RejectBatchButton batchId={b.id} />
     </span>
   );
@@ -69,10 +72,40 @@ function Metric({ label, value, tone }: { label: string; value: number; tone: st
   );
 }
 
-export default function DataValidationQueuePage() {
-  // Import batches + validation results are hand-mocked (data-intake-mock); no
-  // live intake backend. Never render fabricated batches/reviewers in production.
-  if (!isMockAllowed()) {
+function mapBackendBatchToFrontend(b: BeUploadBatch): DataImportBatch {
+  const status = mapBackendStatusToFrontend(b.status);
+  
+  let uploadedAt = b.createdAt;
+  try {
+    const d = new Date(b.createdAt);
+    uploadedAt = d.toISOString().replace("T", " · ").slice(0, 16);
+  } catch {}
+
+  return {
+    id: b.id,
+    templateId: "default",
+    dataType: b.uploadType === "schools" ? "School Register" : "SSA Results",
+    sourceFileName: b.fileName,
+    uploadedBy: b.uploadedBy,
+    uploadedAt,
+    status,
+    totalRows: b.totalRows,
+    validRows: b.createdRows + b.updatedRows,
+    errorRows: b.failedRows,
+    warningRows: b.duplicateRows,
+    notes: b.errorSummary || undefined,
+    validationSummary: {
+      missingRequiredFields: 0,
+      duplicateRecords: b.duplicateRows,
+      invalidMappings: 0,
+      warnings: 0,
+    }
+  };
+}
+
+export default async function DataValidationQueuePage() {
+  const isBe = isBackendOn();
+  if (!isMockAllowed() && !isBe) {
     return (
       <StubPage
         title="Data Validation Queue"
@@ -90,6 +123,18 @@ export default function DataValidationQueuePage() {
       </StubPage>
     );
   }
+
+  const user = await getCurrentUser();
+  let batches: DataImportBatch[] = [];
+  if (isBe) {
+    const rawBatches = await fetchBackendUploadBatches(user);
+    if (rawBatches.live) {
+      batches = rawBatches.data.map(mapBackendBatchToFrontend);
+    }
+  } else {
+    batches = dataImportBatches;
+  }
+
   return (
     <StubPage
       title="Data Validation Queue"
@@ -97,7 +142,7 @@ export default function DataValidationQueuePage() {
     >
       {/* Mobile — one card per batch (the table doesn't fit a phone). */}
       <section className="md:hidden flex flex-col gap-2.5">
-        {dataImportBatches.map((b) => {
+        {batches.map((b) => {
           const action = batchAction(b);
           return (
             <article key={b.id} className="card p-3.5">
@@ -143,7 +188,7 @@ export default function DataValidationQueuePage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--color-edify-divider)]">
-              {dataImportBatches.map((b) => (
+              {batches.map((b) => (
                 <tr key={b.id} className="hover:bg-[var(--color-edify-soft)]/30 align-top">
                   <td className="py-2.5 pr-2">
                     <div className="font-extrabold tracking-tight">{b.sourceFileName}</div>

@@ -13,9 +13,11 @@ import { useDemoStore } from "@/components/demo/DemoStore";
 export function ApproveImportButton({
   batchId,
   fileName,
+  label = "Approve →",
 }: {
   batchId: string;
   fileName: string;
+  label?: string;
 }) {
   const { pushToast } = useDemoStore();
   const [pending, startTransition] = useTransition();
@@ -27,19 +29,19 @@ export function ApproveImportButton({
       if (!res.ok) {
         pushToast({
           tone: "warning",
-          title: "Could not approve batch",
+          title: "Could not import batch",
           body:
-            res.reason === "FORBIDDEN" ? "Your role cannot approve imports." :
+            res.reason === "FORBIDDEN" ? "Your role cannot import batches." :
             res.reason === "NOT_FOUND" ? "Batch no longer exists." :
-            "Batch is not in a reviewable state.",
+            "Batch is not in a validated state.",
         });
         return;
       }
       setDone(true);
       pushToast({
         tone: "success",
-        title: "Batch approved for import",
-        body: `${fileName} queued for the planning engine.`,
+        title: "Batch imported successfully",
+        body: `${fileName} merged into school directory.`,
       });
     });
   }
@@ -48,7 +50,7 @@ export function ApproveImportButton({
     return (
       <span className="text-[11px] font-bold text-emerald-700 inline-flex items-center gap-1">
         <CheckCircle2 size={11} />
-        Approved
+        Imported
       </span>
     );
   }
@@ -61,7 +63,7 @@ export function ApproveImportButton({
       className="text-[11px] font-semibold text-[var(--color-edify-primary)] hover:underline disabled:opacity-55 inline-flex items-center gap-1"
     >
       {pending && <Loader2 size={11} className="animate-spin" />}
-      Approve →
+      {label}
     </button>
   );
 }

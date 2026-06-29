@@ -32,7 +32,10 @@ def today(principal) -> dict:
                 "priority": "critical" if n > 5 else "high",
                 "title": "Awaiting IA Verification",
                 "reason": f"{n} activities need your impact review and verification.",
-                "href": "/queue",
+                "action": {
+                    "label": "Review",
+                    "href": "/queue"
+                },
                 "count": n
             })
 
@@ -47,7 +50,10 @@ def today(principal) -> dict:
                 "priority": "critical" if n > 10 else "high",
                 "title": "Pending Payments",
                 "reason": f"{n} partner payments need to be cleared.",
-                "href": "/payments",
+                "action": {
+                    "label": "Clear",
+                    "href": "/payments"
+                },
                 "count": n
             })
 
@@ -61,7 +67,10 @@ def today(principal) -> dict:
                 "priority": "critical",
                 "title": "SSA Missing",
                 "reason": f"{n} schools in your scope need an SSA before you can plan visits.",
-                "href": "/schools",
+                "action": {
+                    "label": "Assess",
+                    "href": "/schools"
+                },
                 "count": n
             })
 
