@@ -1,0 +1,84 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}My Targets — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="p-6 max-w-5xl mx-auto space-y-6">
+  <!-- Header -->
+  <div>
+    <h1 class="text-[26px] font-extrabold text-slate-800 tracking-tight">My Targets</h1>
+    <p class="text-[12.5px] text-[var(--text-secondary)] mt-1 font-semibold">FY{{ fy }} personal KPIs — live from your activity data</p>
+  </div>
+
+  <!-- Week Summary Banner -->
+  <div class="bg-gradient-to-r from-indigo-600 to-violet-600 rounded-2xl p-5 text-white">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-bold uppercase tracking-wider text-indigo-200">This Week Progress</p>
+        <p class="text-[28px] font-extrabold mt-1">{{ week_completed }} / {{ week_total }}</p>
+        <p class="text-[12px] text-indigo-200 mt-0.5">activities completed this week ({{ week_start|date:"j M" }} – {{ week_end|date:"j M" }})</p>
+      </div>
+      <div class="h-16 w-16 rounded-full border-4 border-indigo-400/50 flex items-center justify-center">
+        {% if week_total > 0 %}
+        <span class="text-[16px] font-extrabold">{{ week_completed|floatformat:0 }}/{{ week_total }}</span>
+        {% else %}
+        <span class="text-[20px]">🎯</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI Cards Grid -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    {% for kpi in kpis %}
+    <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm">
+      <div class="flex items-start justify-between mb-4">
+        <div>
+          <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ kpi.label }}</p>
+          <p class="text-[32px] font-extrabold mt-1 
+            {% if kpi.lower_is_better %}
+              {% if kpi.value == 0 %}text-emerald-600{% elif kpi.value <= 2 %}text-amber-500{% else %}text-rose-600{% endif %}
+            {% else %}
+              {% if kpi.value >= kpi.target %}text-emerald-600{% else %}text-indigo-600{% endif %}
+            {% endif %}
+          ">{{ kpi.value }}</p>
+          <p class="text-[11.5px] text-slate-400 font-semibold">{{ kpi.unit }}</p>
+        </div>
+        <div class="text-right">
+          <p class="text-[10px] text-slate-400 font-bold uppercase">Target</p>
+          <p class="text-[18px] font-extrabold text-slate-300 mt-0.5">{{ kpi.target }}</p>
+        </div>
+      </div>
+      <!-- Progress Bar -->
+      {% if not kpi.lower_is_better and kpi.target > 0 %}
+      <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+        {% with pct=kpi.value|floatformat:0 %}
+        <div class="h-full rounded-full transition-all duration-500
+          {% if kpi.value >= kpi.target %}bg-emerald-500{% else %}bg-indigo-500{% endif %}"
+          style="width: {% widthratio kpi.value kpi.target 100 %}%">
+        </div>
+        {% endwith %}
+      </div>
+      <p class="text-[10.5px] text-slate-400 mt-1.5 font-semibold text-right">{% widthratio kpi.value kpi.target 100 %}% complete</p>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Quick Links -->
+  <div class="grid grid-cols-3 gap-4">
+    <a href="/visits" class="bg-white rounded-2xl border border-[var(--border-card)] p-4 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all text-center">
+      <p class="text-[22px] mb-1">🏫</p>
+      <p class="text-[12px] font-bold text-slate-700">Visits Log</p>
+    </a>
+    <a href="/trainings" class="bg-white rounded-2xl border border-[var(--border-card)] p-4 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all text-center">
+      <p class="text-[22px] mb-1">📚</p>
+      <p class="text-[12px] font-bold text-slate-700">Trainings Log</p>
+    </a>
+    <a href="/evidence" class="bg-white rounded-2xl border border-[var(--border-card)] p-4 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all text-center">
+      <p class="text-[22px] mb-1">📎</p>
+      <p class="text-[12px] font-bold text-slate-700">Evidence</p>
+    </a>
+  </div>
+</div>
+{% endblock %}

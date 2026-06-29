@@ -1,0 +1,79 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Notifications — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="p-6 max-w-3xl mx-auto space-y-6">
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-[26px] font-extrabold text-slate-800 tracking-tight">Notifications</h1>
+      <p class="text-[12.5px] text-[var(--text-secondary)] mt-1 font-semibold">
+        {% if unread_count %}{{ unread_count }} unread · {% endif %}{{ notifications|length }} total
+      </p>
+    </div>
+    <!-- Filter -->
+    <form method="get" action="/notifications" class="flex gap-2">
+      <select name="status" class="h-9 px-3 rounded-lg border border-[var(--color-edify-border)] text-[12px] bg-slate-50 focus:outline-none" onchange="this.form.submit()">
+        <option value="" {% if not status_filter %}selected{% endif %}>All</option>
+        <option value="unread" {% if status_filter == 'unread' %}selected{% endif %}>Unread</option>
+        <option value="read" {% if status_filter == 'read' %}selected{% endif %}>Read</option>
+      </select>
+    </form>
+  </div>
+
+  <!-- Notifications Feed -->
+  <div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm divide-y divide-slate-100">
+    {% if notifications %}
+      {% for n in notifications %}
+      <div class="px-5 py-4 flex items-start gap-4 {% if n.status == 'unread' %}bg-indigo-50/30{% endif %} hover:bg-slate-50/60 transition-colors">
+        <!-- Priority Icon -->
+        <div class="h-9 w-9 rounded-xl shrink-0 grid place-items-center
+          {% if n.priority == 'urgent' %}bg-rose-100{% elif n.priority == 'high' %}bg-amber-100{% else %}bg-indigo-50{% endif %}">
+          {% if n.priority == 'urgent' %}
+            <svg class="h-4 w-4 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+          {% elif n.priority == 'high' %}
+            <svg class="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          {% else %}
+            <svg class="h-4 w-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+          {% endif %}
+        </div>
+        <!-- Content -->
+        <div class="flex-1 min-w-0">
+          <div class="flex items-start justify-between gap-3">
+            <p class="text-[13px] font-bold text-slate-800 leading-snug">{{ n.title }}</p>
+            <span class="text-[10px] text-slate-400 font-semibold whitespace-nowrap shrink-0">{{ n.created_at|date:"j M H:i" }}</span>
+          </div>
+          {% if n.body %}
+          <p class="text-[12px] text-slate-500 mt-1 leading-relaxed">{{ n.body }}</p>
+          {% endif %}
+          <div class="flex items-center gap-3 mt-2">
+            {% if n.target_route %}
+            <a href="{{ n.target_route }}" class="text-[11px] font-bold text-[var(--color-edify-primary)] hover:underline">
+              {{ n.action_label|default:"View" }} →
+            </a>
+            {% endif %}
+            {% if n.status == 'unread' %}
+            <form action="/notifications/{{ n.id }}/read" method="post" class="m-0">
+              {% csrf_token %}
+              <button type="submit" class="text-[11px] text-slate-400 hover:text-slate-600 transition-colors">Mark read</button>
+            </form>
+            {% endif %}
+          </div>
+        </div>
+        <!-- Unread dot -->
+        {% if n.status == 'unread' %}
+        <div class="h-2 w-2 rounded-full bg-indigo-500 shrink-0 mt-2"></div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    {% else %}
+    <div class="p-12 text-center">
+      <p class="text-[36px] mb-3">🔔</p>
+      <p class="text-[14px] font-bold text-slate-600">All caught up!</p>
+      <p class="text-[12px] text-slate-400 mt-1">You have no {% if status_filter %}{{ status_filter }}{% endif %} notifications</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

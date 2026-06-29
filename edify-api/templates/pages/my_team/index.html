@@ -1,0 +1,91 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}My Team — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="p-6 max-w-6xl mx-auto space-y-6">
+  <!-- Header -->
+  <div>
+    <h1 class="text-[26px] font-extrabold text-slate-800 tracking-tight">My Team</h1>
+    <p class="text-[12.5px] text-[var(--text-secondary)] mt-1 font-semibold">{{ total }} CCEOs on your team · click a row for their full profile</p>
+  </div>
+
+  <!-- Risk Summary Strip -->
+  <div class="grid grid-cols-3 gap-4">
+    {% with high=0 medium=0 low=0 %}
+    <div class="bg-rose-50 border border-rose-200 rounded-2xl p-4 text-center">
+      <p class="text-[26px] font-extrabold text-rose-600">{{ team|length }}</p>
+      <p class="text-[11px] font-bold uppercase tracking-wider text-rose-400">Total CCEOs</p>
+    </div>
+    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-center">
+      {% with count=0 %}
+      {% for m in team %}{% if m.risk == 'high' or m.risk == 'medium' %}{% with count=count|add:1 %}{% endwith %}{% endif %}{% endfor %}
+      {% endwith %}
+      <p class="text-[26px] font-extrabold text-amber-600">—</p>
+      <p class="text-[11px] font-bold uppercase tracking-wider text-amber-400">With Overdue</p>
+    </div>
+    <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-center">
+      <p class="text-[26px] font-extrabold text-emerald-600">—</p>
+      <p class="text-[11px] font-bold uppercase tracking-wider text-emerald-400">All Caught Up</p>
+    </div>
+    {% endwith %}
+  </div>
+
+  <!-- Team Table -->
+  <div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm overflow-hidden">
+    {% if team %}
+    <table class="w-full text-[12.5px]">
+      <thead>
+        <tr class="bg-slate-50/60 border-b border-slate-100">
+          <th class="text-left px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">CCEO</th>
+          <th class="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Completed</th>
+          <th class="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Overdue</th>
+          <th class="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Evidence Gap</th>
+          <th class="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Risk</th>
+          <th class="px-4 py-3"></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for m in team %}
+        <tr class="hover:bg-slate-50/60 transition-colors group cursor-pointer" onclick="window.location='/staff/{{ m.id }}'">
+          <td class="px-5 py-3.5">
+            <div class="flex items-center gap-3">
+              <div class="h-9 w-9 rounded-full bg-indigo-100 text-indigo-700 font-bold text-[13px] grid place-items-center shrink-0">{{ m.initials }}</div>
+              <div>
+                <p class="font-bold text-slate-800 text-[13px] leading-tight">{{ m.name }}</p>
+                <p class="text-[11px] text-slate-400">{{ m.email }}</p>
+              </div>
+            </div>
+          </td>
+          <td class="px-4 py-3.5 text-center">
+            <span class="font-bold text-emerald-600">{{ m.completed }}</span>
+          </td>
+          <td class="px-4 py-3.5 text-center">
+            <span class="font-bold {% if m.overdue > 0 %}text-rose-600{% else %}text-slate-300{% endif %}">{{ m.overdue }}</span>
+          </td>
+          <td class="px-4 py-3.5 text-center">
+            <span class="font-bold {% if m.evidence_gap > 0 %}text-amber-600{% else %}text-slate-300{% endif %}">{{ m.evidence_gap }}</span>
+          </td>
+          <td class="px-4 py-3.5">
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10.5px] font-bold
+              {% if m.risk == 'high' %}bg-rose-50 text-rose-700{% elif m.risk == 'medium' %}bg-amber-50 text-amber-700{% else %}bg-emerald-50 text-emerald-700{% endif %}">
+              <span class="h-1.5 w-1.5 rounded-full {% if m.risk == 'high' %}bg-rose-500{% elif m.risk == 'medium' %}bg-amber-400{% else %}bg-emerald-500{% endif %}"></span>
+              {{ m.risk|title }}
+            </span>
+          </td>
+          <td class="px-4 py-3.5 text-right">
+            <span class="opacity-0 group-hover:opacity-100 text-[11px] font-bold text-[var(--color-edify-primary)] transition-opacity">View →</span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="p-12 text-center">
+      <p class="text-[36px] mb-3">👥</p>
+      <p class="text-[14px] font-bold text-slate-600">No CCEOs found on your team</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

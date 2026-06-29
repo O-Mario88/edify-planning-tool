@@ -94,3 +94,116 @@
   </svg>
   <span>Analytics</span>
 </a>
+
+<!-- ─── GROUP 1: Core Operations ─── -->
+
+<!-- Today -->
+<a 
+  href="/today" 
+  class="group flex items-center gap-2.5 px-3 py-2 text-[12.5px] font-bold rounded-lg transition-colors {% if request.path == '/today' %}bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)]{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}"
+>
+  <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+  </svg>
+  <span>Today</span>
+</a>
+
+<!-- My Targets (CCEO) -->
+{% if request.user.active_role in 'CCEO,PartnerFieldOfficer' %}
+<a 
+  href="/my-targets" 
+  class="group flex items-center gap-2.5 px-3 py-2 text-[12.5px] font-bold rounded-lg transition-colors {% if request.path == '/my-targets' %}bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)]{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}"
+>
+  <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+  </svg>
+  <span>My Targets</span>
+</a>
+{% endif %}
+
+<!-- Visits -->
+{% if request.user.active_role in 'CCEO,CountryProgramLead,CountryDirector' %}
+<a 
+  href="/visits" 
+  class="group flex items-center gap-2.5 px-3 py-2 text-[12.5px] font-bold rounded-lg transition-colors {% if request.path == '/visits' %}bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)]{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}"
+>
+  <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
+  </svg>
+  <span>Visits</span>
+</a>
+{% endif %}
+
+<!-- Trainings -->
+{% if request.user.active_role in 'CCEO,CountryProgramLead,CountryDirector' %}
+<a 
+  href="/trainings" 
+  class="group flex items-center gap-2.5 px-3 py-2 text-[12.5px] font-bold rounded-lg transition-colors {% if request.path == '/trainings' %}bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)]{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}"
+>
+  <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+  </svg>
+  <span>Trainings</span>
+</a>
+{% endif %}
+
+<!-- Evidence -->
+{% if request.user.active_role in 'CCEO,ImpactAssessment,CountryProgramLead' %}
+<a 
+  href="/evidence" 
+  class="group flex items-center gap-2.5 px-3 py-2 text-[12.5px] font-bold rounded-lg transition-colors {% if request.path == '/evidence' %}bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)]{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}"
+>
+  <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+  </svg>
+  <span>Evidence</span>
+</a>
+{% endif %}
+
+<!-- My Team (PL only) -->
+{% if request.user.active_role == 'CountryProgramLead' %}
+<a 
+  href="/my-team" 
+  class="group flex items-center gap-2.5 px-3 py-2 text-[12.5px] font-bold rounded-lg transition-colors {% if request.path == '/my-team' %}bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)]{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}"
+>
+  <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+  </svg>
+  <span>My Team</span>
+</a>
+{% endif %}
+
+<!-- Staff Directory (CD, PL, Admin) -->
+{% if request.user.active_role in 'CountryDirector,CountryProgramLead,Admin' %}
+<a 
+  href="/staff" 
+  class="group flex items-center gap-2.5 px-3 py-2 text-[12.5px] font-bold rounded-lg transition-colors {% if request.path == '/staff' %}bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)]{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}"
+>
+  <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+  </svg>
+  <span>Staff</span>
+</a>
+{% endif %}
+
+<!-- Notifications -->
+<a 
+  href="/notifications" 
+  class="group flex items-center gap-2.5 px-3 py-2 text-[12.5px] font-bold rounded-lg transition-colors {% if request.path == '/notifications' %}bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)]{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}"
+>
+  <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+  </svg>
+  <span>Notifications</span>
+</a>
+
+<!-- Profile (All) -->
+<a 
+  href="/profile" 
+  class="group flex items-center gap-2.5 px-3 py-2 text-[12.5px] font-bold rounded-lg transition-colors {% if request.path == '/profile' %}bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)]{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}"
+>
+  <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+  </svg>
+  <span>Profile</span>
+</a>

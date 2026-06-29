@@ -1,0 +1,98 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Evidence & Accountability — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="p-6 max-w-7xl mx-auto space-y-6">
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-[26px] font-extrabold text-slate-800 tracking-tight">Evidence & Accountability</h1>
+      <p class="text-[12.5px] text-[var(--text-secondary)] mt-1 font-semibold">{{ total }} evidence records submitted</p>
+    </div>
+  </div>
+
+  <!-- Pending Evidence Warning -->
+  {% if pending_evidence %}
+  <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+    <div class="flex items-center gap-3 mb-3">
+      <div class="h-8 w-8 rounded-lg bg-amber-100 grid place-items-center">
+        <svg class="h-4 w-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+        </svg>
+      </div>
+      <div>
+        <p class="text-[13px] font-extrabold text-amber-800">{{ pending_evidence|length }} Activities Missing Evidence</p>
+        <p class="text-[11px] text-amber-600">These completed activities need evidence uploaded before they can be verified</p>
+      </div>
+    </div>
+    <div class="space-y-2">
+      {% for act in pending_evidence %}
+      <div class="flex items-center justify-between bg-white rounded-xl px-4 py-2.5 border border-amber-100">
+        <div>
+          <p class="text-[12.5px] font-bold text-slate-700">{{ act.activity_type|title }}{% if act.school %} @ {{ act.school.name }}{% endif %}</p>
+          <p class="text-[11px] text-slate-400">Completed {{ act.planned_date }}</p>
+        </div>
+        <a href="/my-plan/{{ act.id }}" class="text-[11px] font-bold text-amber-700 hover:underline">Upload →</a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Filter -->
+  <div class="bg-white rounded-2xl border border-[var(--border-card)] p-4 shadow-sm">
+    <form method="get" action="/evidence" class="flex flex-wrap gap-3">
+      <select name="kind" class="h-9 px-3 rounded-lg border border-[var(--color-edify-border)] text-[12px] bg-slate-50 focus:outline-none">
+        <option value="" {% if not kind_filter %}selected{% endif %}>All Types</option>
+        {% for k in kinds %}
+          <option value="{{ k }}" {% if kind_filter == k %}selected{% endif %}>{{ k|title }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="h-9 px-4 bg-[var(--color-edify-primary)] text-white rounded-lg text-[12px] font-bold hover:bg-[var(--color-edify-dark)] transition-all">Filter</button>
+    </form>
+  </div>
+
+  <!-- Evidence Grid -->
+  {% if evidence_list %}
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    {% for ev in evidence_list %}
+    <div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm overflow-hidden hover:shadow-md transition-shadow group">
+      <!-- Kind Badge -->
+      <div class="h-32 bg-gradient-to-br from-slate-100 to-indigo-50 flex items-center justify-center">
+        {% if ev.kind == 'photo' %}
+          <svg class="h-10 w-10 text-indigo-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+        {% else %}
+          <svg class="h-10 w-10 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+        {% endif %}
+      </div>
+      <div class="p-4">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-[10.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-600">{{ ev.kind }}</span>
+          <span class="text-[10px] text-slate-400">{{ ev.created_at|date:"j M Y" }}</span>
+        </div>
+        <p class="text-[12.5px] font-bold text-slate-800 leading-snug">
+          {% if ev.activity.school %}{{ ev.activity.school.name }}{% else %}{{ ev.activity.activity_type|title }}{% endif %}
+        </p>
+        <p class="text-[11px] text-slate-400 mt-0.5">{{ ev.activity.activity_type|title }}</p>
+        {% if ev.file_url %}
+        <a href="{{ ev.file_url }}" target="_blank" class="mt-3 inline-flex items-center text-[11px] font-bold text-[var(--color-edify-primary)] hover:underline">View File →</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="bg-white rounded-2xl border border-[var(--border-card)] p-12 text-center shadow-sm">
+    <p class="text-[36px] mb-3">📎</p>
+    <p class="text-[14px] font-bold text-slate-600">No evidence submitted yet</p>
+    <p class="text-[12px] text-slate-400 mt-1">Evidence is attached when completing activities in My Plan</p>
+    <a href="/my-plan" class="mt-4 inline-flex items-center px-4 py-2 bg-[var(--color-edify-primary)] text-white rounded-lg text-[12px] font-bold hover:bg-[var(--color-edify-dark)] transition-all">Go to My Plan</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
