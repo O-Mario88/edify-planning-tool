@@ -1,0 +1,18 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}{{ member.name }} — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="p-6 max-w-7xl mx-auto space-y-6">
+  
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-[26px] font-extrabold text-slate-800 tracking-tight">{{ member.name }}</h1>
+      <p class="text-[12.5px] text-[var(--text-secondary)] mt-1 font-semibold">Edify Operations · {{ member.name }}</p>
+    </div>
+  </div>
+  
+  <div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm"><h2 class="text-[20px] font-extrabold text-slate-800">{{ member.name }}</h2><p class="text-[12.5px] text-slate-400">{{ member.email }}</p><p class="text-[12px] text-slate-500 mt-2">Status: {{ member.status }} · Roles: {{ member.roles|join:", " }}</p></div>
+
+</div>
+{% endblock %}

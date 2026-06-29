@@ -1,0 +1,38 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}{{ partner.name }} — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="p-6 max-w-7xl mx-auto space-y-6">
+  <a href="/partners" class="text-[11.5px] text-slate-400 hover:text-[var(--color-edify-primary)] font-semibold transition-colors">← Partners</a>
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-[26px] font-extrabold text-slate-800 tracking-tight">{{ partner.name }}</h1>
+      <p class="text-[12.5px] text-[var(--text-secondary)] mt-1 font-semibold">Partner organisation profile</p>
+    </div>
+  </div>
+  
+  <div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm">
+    <div class="flex items-start gap-5">
+      <div class="h-14 w-14 rounded-2xl bg-teal-100 text-teal-700 font-extrabold text-[20px] grid place-items-center shrink-0">{{ partner.name|slice:":2"|upper }}</div>
+      <div class="flex-1">
+        <h2 class="text-[20px] font-extrabold text-slate-800">{{ partner.name }}</h2>
+        <p class="text-[12px] text-slate-400 mt-0.5">{{ partner.region_name|default:"No region" }} · Contract: {{ partner.contract_status|default:"N/A" }}</p>
+      </div>
+      <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full {% if partner.active_status %}bg-emerald-50 text-emerald-700{% else %}bg-slate-100 text-slate-500{% endif %} text-[11px] font-bold">{% if partner.active_status %}Active{% else %}Inactive{% endif %}</span>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 gap-4">
+    <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm text-center">
+      <p class="text-[28px] font-extrabold text-indigo-600">{{ activities|length }}</p>
+      <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-1">Total Activities</p>
+    </div>
+    <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm text-center">
+      <p class="text-[28px] font-extrabold text-emerald-600">{{ completed }}</p>
+      <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-1">Completed</p>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

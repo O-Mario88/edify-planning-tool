@@ -1,0 +1,18 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Debrief — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="p-6 max-w-7xl mx-auto space-y-6">
+  
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-[26px] font-extrabold text-slate-800 tracking-tight">Debrief</h1>
+      <p class="text-[12.5px] text-[var(--text-secondary)] mt-1 font-semibold">Edify Operations · Debrief</p>
+    </div>
+  </div>
+  
+  <div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm"><h2 class="text-[16px] font-extrabold text-slate-800">{{ debrief.title|default:"Debrief" }}</h2><p class="text-[12.5px] text-slate-500 mt-2">{{ debrief.body|default:"No content" }}</p><p class="text-[11px] text-slate-400 mt-3">Status: {{ debrief.status }} · Created: {{ debrief.created_at }}</p></div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Budget Overview — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="p-6 max-w-7xl mx-auto space-y-6">
+  
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-[26px] font-extrabold text-slate-800 tracking-tight">Budget Overview</h1>
+      <p class="text-[12.5px] text-[var(--text-secondary)] mt-1 font-semibold">FY{{ fy }} budget performance across all requests</p>
+    </div>
+  </div>
+  <div class="grid grid-cols-3 gap-4">
+    <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm text-center">
+      <p class="text-[28px] font-extrabold text-indigo-600">UGX {{ total_budget.total_requested|default:0|floatformat:0 }}</p>
+      <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-1">Total Requested</p>
+    </div>
+    <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm text-center">
+      <p class="text-[28px] font-extrabold text-emerald-600">UGX {{ total_budget.total_approved|default:0|floatformat:0 }}</p>
+      <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-1">Total Approved</p>
+    </div>
+    <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm text-center">
+      <p class="text-[28px] font-extrabold text-violet-600">UGX {{ total_budget.total_disbursed|default:0|floatformat:0 }}</p>
+      <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-1">Total Disbursed</p>
+    </div>
+  </div>
+
+  {% if pending_approvals %}
+  <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center gap-3">
+    <span class="text-[22px]">⏳</span>
+    <p class="text-[13px] font-bold text-amber-800">{{ pending_approvals }} request{{ pending_approvals|pluralize }} awaiting approval</p>
+    <a href="/fund-requests?status=pending_pl_approval" class="text-[11px] font-bold text-amber-700 hover:underline ml-auto">Review →</a>
+  </div>
+  {% endif %}
+
+  <div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm">
+    <div class="px-5 py-4 border-b border-slate-100"><h2 class="text-[14px] font-extrabold text-slate-700">Monthly Breakdown</h2></div>
+    {% if monthly_data %}
+    <table class="w-full text-[12.5px]">
+      <thead><tr class="bg-slate-50/60 border-b border-slate-100">
+        <th class="text-left px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Month</th>
+        <th class="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Requested</th>
+        <th class="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Disbursed</th>
+        <th class="text-center px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Requests</th>
+      </tr></thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for m in monthly_data %}
+        <tr class="hover:bg-slate-50/60">
+          <td class="px-5 py-3.5 font-bold text-slate-700">Month {{ m.week_start_date__month }}</td>
+          <td class="px-4 py-3.5 text-right text-slate-600">UGX {{ m.requested|default:0|floatformat:0 }}</td>
+          <td class="px-4 py-3.5 text-right text-emerald-600 font-bold">UGX {{ m.disbursed|default:0|floatformat:0 }}</td>
+          <td class="px-4 py-3.5 text-center text-slate-500">{{ m.count }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}<div class="p-12 text-center"><p class="text-[36px] mb-3">📊</p><p class="text-[14px] font-bold text-slate-600">No budget data for this FY</p></div>{% endif %}
+  </div>
+</div>
+{% endblock %}

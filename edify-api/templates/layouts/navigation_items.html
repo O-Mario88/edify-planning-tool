@@ -207,3 +207,220 @@
   </svg>
   <span>Profile</span>
 </a>
+
+<!-- ─── GROUP 2: Finance ─── -->
+{% if request.user.active_role in 'ProgramAccountant,CountryProgramLead,CountryDirector,Admin' %}
+<a 
+  href="/fund-requests" 
+  class="group flex items-center gap-2.5 px-3 py-2 text-[12.5px] font-bold rounded-lg transition-colors {% if request.path == '/fund-requests' %}bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)]{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}"
+>
+  <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+  </svg>
+  <span>All Fund Requests</span>
+</a>
+
+<a 
+  href="/disbursements" 
+  class="group flex items-center gap-2.5 px-3 py-2 text-[12.5px] font-bold rounded-lg transition-colors {% if request.path == '/disbursements' %}bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)]{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}"
+>
+  <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+  </svg>
+  <span>Disbursements</span>
+</a>
+
+<a 
+  href="/budgets/overview" 
+  class="group flex items-center gap-2.5 px-3 py-2 text-[12.5px] font-bold rounded-lg transition-colors {% if request.path == '/budgets/overview' %}bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)]{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}"
+>
+  <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/>
+  </svg>
+  <span>Budget Overview</span>
+</a>
+
+<a 
+  href="/cost-settings" 
+  class="group flex items-center gap-2.5 px-3 py-2 text-[12.5px] font-bold rounded-lg transition-colors {% if request.path == '/cost-settings' %}bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)]{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}"
+>
+  <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+  </svg>
+  <span>Cost Catalogue</span>
+</a>
+{% endif %}
+
+<!-- ─── GROUP 3: Partners ─── -->
+{% if request.user.active_role in 'CountryDirector,CountryProgramLead,Admin,PartnerFieldOfficer' %}
+<a 
+  href="/partners" 
+  class="group flex items-center gap-2.5 px-3 py-2 text-[12.5px] font-bold rounded-lg transition-colors {% if request.path == '/partners' %}bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)]{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}"
+>
+  <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+  </svg>
+  <span>Partners Directory</span>
+</a>
+{% endif %}
+
+{% if request.user.active_role == 'PartnerFieldOfficer' %}
+<a 
+  href="/partner/today" 
+  class="group flex items-center gap-2.5 px-3 py-2 text-[12.5px] font-bold rounded-lg transition-colors {% if request.path == '/partner/today' %}bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)]{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}"
+>
+  <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+  </svg>
+  <span>Partner Portal</span>
+</a>
+{% endif %}
+
+<!-- ─── GROUP 4: SSA & Planning ─── -->
+<a 
+  href="/ssa" 
+  class="group flex items-center gap-2.5 px-3 py-2 text-[12.5px] font-bold rounded-lg transition-colors {% if request.path == '/ssa' %}bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)]{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}"
+>
+  <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z"/>
+  </svg>
+  <span>SSA Matrix</span>
+</a>
+
+<a 
+  href="/fy" 
+  class="group flex items-center gap-2.5 px-3 py-2 text-[12.5px] font-bold rounded-lg transition-colors {% if request.path == '/fy' %}bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)]{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}"
+>
+  <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+  </svg>
+  <span>FY Timeline</span>
+</a>
+
+<a 
+  href="/calendar" 
+  class="group flex items-center gap-2.5 px-3 py-2 text-[12.5px] font-bold rounded-lg transition-colors {% if request.path == '/calendar' %}bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)]{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}"
+>
+  <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+  </svg>
+  <span>Calendar</span>
+</a>
+
+<a 
+  href="/work-plan" 
+  class="group flex items-center gap-2.5 px-3 py-2 text-[12.5px] font-bold rounded-lg transition-colors {% if request.path == '/work-plan' %}bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)]{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}"
+>
+  <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+  </svg>
+  <span>Annual Work Plan</span>
+</a>
+
+<!-- ─── GROUP 5: Districts & Coverage ─── -->
+<a 
+  href="/districts" 
+  class="group flex items-center gap-2.5 px-3 py-2 text-[12.5px] font-bold rounded-lg transition-colors {% if request.path == '/districts' %}bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)]{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}"
+>
+  <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+    <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+  </svg>
+  <span>Districts</span>
+</a>
+
+<a 
+  href="/reports" 
+  class="group flex items-center gap-2.5 px-3 py-2 text-[12.5px] font-bold rounded-lg transition-colors {% if request.path == '/reports' %}bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)]{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}"
+>
+  <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+  </svg>
+  <span>Reports</span>
+</a>
+
+<!-- ─── GROUP 6: Administration & Messaging ─── -->
+{% if request.user.active_role in 'Admin,CountryDirector' %}
+<a 
+  href="/admin-panel" 
+  class="group flex items-center gap-2.5 px-3 py-2 text-[12.5px] font-bold rounded-lg transition-colors {% if request.path == '/admin-panel' %}bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)]{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}"
+>
+  <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+  </svg>
+  <span>Admin Panel</span>
+</a>
+{% endif %}
+
+<a 
+  href="/search" 
+  class="group flex items-center gap-2.5 px-3 py-2 text-[12.5px] font-bold rounded-lg transition-colors {% if request.path == '/search' %}bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)]{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}"
+>
+  <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+  </svg>
+  <span>Global Search</span>
+</a>
+
+<a 
+  href="/messages" 
+  class="group flex items-center gap-2.5 px-3 py-2 text-[12.5px] font-bold rounded-lg transition-colors {% if request.path == '/messages' %}bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)]{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}"
+>
+  <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+  </svg>
+  <span>Messages</span>
+</a>
+
+<a 
+  href="/leave-requests" 
+  class="group flex items-center gap-2.5 px-3 py-2 text-[12.5px] font-bold rounded-lg transition-colors {% if request.path == '/leave-requests' %}bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)]{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}"
+>
+  <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707.707M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+  </svg>
+  <span>Leave Requests</span>
+</a>
+
+<!-- ─── GROUP 7: Core Projects & Debriefs ─── -->
+<a 
+  href="/core-schools" 
+  class="group flex items-center gap-2.5 px-3 py-2 text-[12.5px] font-bold rounded-lg transition-colors {% if request.path == '/core-schools' %}bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)]{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}"
+>
+  <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+  </svg>
+  <span>Core Schools</span>
+</a>
+
+<a 
+  href="/projects" 
+  class="group flex items-center gap-2.5 px-3 py-2 text-[12.5px] font-bold rounded-lg transition-colors {% if request.path == '/projects' %}bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)]{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}"
+>
+  <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+  </svg>
+  <span>Projects</span>
+</a>
+
+<a 
+  href="/debriefs" 
+  class="group flex items-center gap-2.5 px-3 py-2 text-[12.5px] font-bold rounded-lg transition-colors {% if request.path == '/debriefs' %}bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)]{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}"
+>
+  <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+  </svg>
+  <span>Daily Debriefs</span>
+</a>
+
+<a 
+  href="/help" 
+  class="group flex items-center gap-2.5 px-3 py-2 text-[12.5px] font-bold rounded-lg transition-colors {% if request.path == '/help' %}bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)]{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}"
+>
+  <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/>
+  </svg>
+  <span>Help Center</span>
+</a>
+
