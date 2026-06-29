@@ -9,6 +9,7 @@ in the payments app.
 from __future__ import annotations
 
 from django.db import models
+from django.contrib.postgres.fields import ArrayField
 
 from apps.core.enums import (
     ActivityStatus,
@@ -37,6 +38,10 @@ class Activity(SoftDeleteModel):
     month = models.IntegerField(null=True, blank=True)
     week = models.IntegerField(null=True, blank=True)
     scheduled_date = models.DateTimeField(null=True, blank=True)
+    planned_date = models.DateField(null=True, blank=True)
+    week_start_date = models.DateField(null=True, blank=True)
+    week_end_date = models.DateField(null=True, blank=True)
+    fiscal_year = models.CharField(max_length=16, null=True, blank=True)
     planned_month = models.IntegerField(null=True, blank=True)
     planned_week = models.IntegerField(null=True, blank=True)
 
@@ -47,6 +52,12 @@ class Activity(SoftDeleteModel):
     cluster_slot = models.CharField(max_length=16, choices=ClusterMeetingSlot.choices, null=True, blank=True)
 
     purpose_intervention = models.CharField(max_length=64, choices=SsaIntervention.choices, null=True, blank=True)
+    activity_purpose_text = models.TextField(null=True, blank=True)
+    purpose_type = models.CharField(max_length=64, null=True, blank=True)
+    focus_intervention = models.CharField(max_length=64, choices=SsaIntervention.choices, null=True, blank=True)
+    secondary_focus_interventions = ArrayField(base_field=models.CharField(max_length=64, choices=SsaIntervention.choices), default=list, blank=True)
+    expected_outcome = models.TextField(null=True, blank=True)
+
     status = models.CharField(max_length=32, choices=ActivityStatus.choices, default=ActivityStatus.NOT_PLANNED)
     evidence_status = models.CharField(max_length=16, choices=EvidenceStatus.choices, default=EvidenceStatus.NONE)
 
@@ -119,6 +130,20 @@ class ActivityScheduleCostLine(TimeStampedModel):
     # / venue / facilitation / participant_meals / mobilisation / lump_sum ...).
     line_item_type = models.CharField(max_length=64, null=True, blank=True)
     currency = models.CharField(max_length=8, default="UGX")
+    description = models.CharField(max_length=255, null=True, blank=True)
+    total_cost = models.BigIntegerField(null=True, blank=True)
+    planned_date = models.DateField(null=True, blank=True)
+    week_start_date = models.DateField(null=True, blank=True)
+    week_end_date = models.DateField(null=True, blank=True)
+    month = models.IntegerField(null=True, blank=True)
+    quarter = models.CharField(max_length=8, null=True, blank=True)
+    fiscal_year = models.CharField(max_length=16, null=True, blank=True)
+    responsible_user = models.CharField(max_length=30, null=True, blank=True)
+    responsible_role = models.CharField(max_length=64, null=True, blank=True)
+    school = models.ForeignKey("schools.School", on_delete=models.SET_NULL, null=True, blank=True)
+    cluster = models.ForeignKey("clusters.Cluster", on_delete=models.SET_NULL, null=True, blank=True)
+    partner = models.ForeignKey("partners.Partner", on_delete=models.SET_NULL, null=True, blank=True)
+    project = models.ForeignKey("projects.Project", on_delete=models.SET_NULL, null=True, blank=True)
 
     class Meta:
         db_table = "activity_schedule_cost_line"

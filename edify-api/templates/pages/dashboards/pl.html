@@ -1,0 +1,139 @@
+{% extends "layouts/shell.html" %}
+{% load frontend_filters %}
+
+{% block title %}PL Dashboard - Edify Command Center{% endblock %}
+
+{% block shell_content %}
+<div class="p-6 max-w-7xl mx-auto space-y-6">
+  <!-- Alerts / Attention Banner -->
+  {% if alerts %}
+    <div class="space-y-3">
+      <h2 class="text-[15px] font-extrabold text-slate-700 tracking-tight">System Alerts</h2>
+      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {% for a in alerts %}
+          <div class="bg-white rounded-xl border p-4 shadow-sm {% if a.severity == 'urgent' %}border-rose-200 bg-rose-50/10{% else %}border-[var(--border-card)]{% endif %}">
+            <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-rose-100 text-rose-700">
+              {{ a.severity }}
+            </span>
+            <h3 class="text-[13.5px] font-bold text-slate-800 mt-2">{{ a.title }}</h3>
+            <p class="text-[11.5px] text-slate-500 mt-1 leading-relaxed">{{ a.body }}</p>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="grid lg:grid-cols-3 gap-6">
+    <!-- Main Column: Activities pending review and fund requests -->
+    <div class="lg:col-span-2 space-y-6">
+      <!-- Activities Pending Review -->
+      <div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-[var(--color-edify-divider)] flex items-center justify-between">
+          <h2 class="text-[15px] font-extrabold text-slate-800 tracking-tight">Activities Pending Your Review</h2>
+          <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">{{ pending_reviews|length }}</span>
+        </div>
+        <div class="divide-y divide-[var(--color-edify-divider)]">
+          {% if pending_reviews %}
+            {% for act in pending_reviews %}
+              <div class="p-4 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
+                <div>
+                  <h4 class="text-[13.5px] font-bold text-slate-800">{{ act.school.name|default:act.cluster.name }}</h4>
+                  <p class="text-[11.5px] text-slate-500 font-semibold mt-0.5">
+                    {{ act.activity_type|title|replace_underscore }} &bull; Assigned: {{ act.responsible_staff.name }} &bull; Planned: {{ act.planned_date }}
+                  </p>
+                  {% if act.activity_purpose_text %}
+                    <p class="text-[11px] text-slate-400 mt-1 italic">"{{ act.activity_purpose_text }}"</p>
+                  {% endif %}
+                </div>
+                <a href="/pl/review" class="h-8 px-3 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[11.5px] font-extrabold flex items-center justify-center transition-colors">
+                  Review
+                </a>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="p-8 text-center text-slate-400 text-[12.5px] font-semibold">
+              No activities pending review. Nice work!
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Fund Requests Awaiting Approval -->
+      <div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-[var(--color-edify-divider)] flex items-center justify-between">
+          <h2 class="text-[15px] font-extrabold text-slate-800 tracking-tight">Weekly Advances Awaiting Your Approval</h2>
+          <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">{{ pending_funds|length }}</span>
+        </div>
+        <div class="divide-y divide-[var(--color-edify-divider)]">
+          {% if pending_funds %}
+            {% for fr in pending_funds %}
+              <div class="p-4 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
+                <div>
+                  <h4 class="text-[13.5px] font-bold text-slate-800">Week: {{ fr.week_start_date }}</h4>
+                  <p class="text-[11.5px] text-slate-500 font-semibold mt-0.5">
+                    Total: {{ fr.total_budget|ugx }} &bull; Submitter: {{ fr.requester.name }}
+                  </p>
+                </div>
+                <a href="/fund-requests/weekly" class="h-8 px-3 rounded-lg border border-[var(--color-edify-border)] hover:bg-slate-50 text-[11.5px] font-bold text-slate-600 flex items-center justify-center">
+                  Review &amp; Approve
+                </a>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="p-8 text-center text-slate-400 text-[12.5px] font-semibold">
+              No pending fund approvals.
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Weak Clusters & Staff Overdue -->
+    <div class="space-y-6">
+      <!-- CCEOs Needing Support -->
+      <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm space-y-4">
+        <h2 class="text-[15px] font-extrabold text-slate-800 tracking-tight">CCEO Workload &amp; Overdue</h2>
+        <div class="space-y-3">
+          {% if cceos_overdue %}
+            {% for staff in cceos_overdue %}
+              <div class="flex items-center justify-between text-[12.5px]">
+                <div class="min-w-0">
+                  <p class="font-bold text-slate-800 truncate">{{ staff.name }}</p>
+                  <p class="text-[10px] text-slate-400 uppercase font-bold mt-0.5">CCEO</p>
+                </div>
+                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10.5px] font-extrabold bg-rose-50 text-rose-700 border border-rose-200">
+                  {{ staff.overdue_count }} Overdue
+                </span>
+              </div>
+            {% endfor %}
+          {% else %}
+            <p class="text-[11.5px] text-slate-400 font-semibold">All staff are currently up-to-date.</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Clusters with Weak SSA -->
+      <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm space-y-4">
+        <h2 class="text-[15px] font-extrabold text-slate-800 tracking-tight">Struggling Clusters (SSA &lt; 5.5)</h2>
+        <div class="space-y-3">
+          {% if weak_clusters %}
+            {% for clus in weak_clusters %}
+              <div class="flex items-center justify-between text-[12.5px]">
+                <div class="min-w-0">
+                  <a href="/clusters/{{ clus.id }}" class="font-bold text-slate-800 hover:text-[var(--color-edify-primary)] truncate">{{ clus.name }}</a>
+                  <p class="text-[10.5px] text-slate-400 font-semibold mt-0.5">{{ clus.district }}</p>
+                </div>
+                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10.5px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200">
+                  Avg: {{ clus.avg_ssa|default:0|floatformat:1 }}
+                </span>
+              </div>
+            {% endfor %}
+          {% else %}
+            <p class="text-[11.5px] text-slate-400 font-semibold">No clusters currently averaging below 5.5.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

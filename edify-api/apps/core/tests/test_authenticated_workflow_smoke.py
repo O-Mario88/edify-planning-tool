@@ -110,7 +110,7 @@ class AuthenticatedWorkflowSmokeTest(APITestCase):
         self.assertEqual(scheduled["status"], "scheduled")
         self.assertEqual(scheduled["estCostCents"], 15000)
 
-        my_plan = self._get("/api/my-plan?fy=2026&period=month", 200)
+        my_plan = self._get("/api/my-plan?fy=2026&period=month&month=7", 200)
         self.assertEqual(my_plan["total"], 1)
         self.assertEqual(my_plan["items"][0]["id"], activity_id)
 

@@ -183,7 +183,61 @@ class AdvanceRequest(TimeStampedModel):
         ]
 
 
+class WeeklyFundRequest(TimeStampedModel):
+    """A weekly advance request aggregating all scheduled activities for that week."""
+
+    id = CuidField()
+    fy = models.CharField(max_length=16)
+    week_start_date = models.DateField()
+    week_end_date = models.DateField()
+    responsible_user = models.CharField(max_length=30)  # responsible user id
+    responsible_role = models.CharField(max_length=64, null=True, blank=True)
+    total_amount = models.BigIntegerField(default=0)  # UGX
+    status = models.CharField(max_length=40, default="pending_responsible_confirmation")
+
+    # Disbursement (advance path)
+    disbursed_amount = models.BigIntegerField(null=True, blank=True)
+    disbursed_at = models.DateTimeField(null=True, blank=True)
+    disbursed_by_user_id = models.CharField(max_length=30, null=True, blank=True)
+    disburse_method = models.CharField(max_length=64, null=True, blank=True)
+    disburse_reference = models.CharField(max_length=128, null=True, blank=True)
+
+    # Accountability (advance path, after disbursement)
+    accounted_amount = models.BigIntegerField(null=True, blank=True)
+    returned_amount = models.BigIntegerField(null=True, blank=True)
+    accountability_netsuite_id = models.CharField(max_length=128, null=True, blank=True)
+    accountability_submitted_at = models.DateTimeField(null=True, blank=True)
+    accountability_reviewed_at = models.DateTimeField(null=True, blank=True)
+    confirmed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "weekly_fund_request"
+        constraints = [
+            models.UniqueConstraint(fields=["responsible_user", "week_start_date"], name="uniq_weekly_request_owner_week"),
+        ]
+
+
+class WeeklyFundRequestLine(TimeStampedModel):
+    """An itemized line in a WeeklyFundRequest, linked to the original ActivityScheduleCostLine."""
+
+    id = CuidField()
+    weekly_fund_request = models.ForeignKey(WeeklyFundRequest, on_delete=models.CASCADE, related_name="lines")
+    activity_budget_line = models.ForeignKey("activities.ActivityScheduleCostLine", on_delete=models.CASCADE, related_name="weekly_request_lines")
+    line_item_type = models.CharField(max_length=64)
+    description = models.CharField(max_length=255)
+    quantity = models.IntegerField(default=1)
+    unit_cost = models.BigIntegerField()
+    total_cost = models.BigIntegerField()
+    currency = models.CharField(max_length=8, default="UGX")
+
+    class Meta:
+        db_table = "weekly_fund_request_line"
+        constraints = [
+            models.UniqueConstraint(fields=["weekly_fund_request", "activity_budget_line"], name="uniq_weekly_line_budget_line"),
+        ]
+
+
 __all__ = [
     "FundRequestPeriod", "FundRequestStatus", "FundRequest", "FundRequestItem",
-    "AdvanceRequestStatus", "AdvanceRequest",
+    "AdvanceRequestStatus", "AdvanceRequest", "WeeklyFundRequest", "WeeklyFundRequestLine",
 ]

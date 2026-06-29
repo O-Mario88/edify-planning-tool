@@ -52,6 +52,7 @@ export type MyPlanItem = {
   exactDate: boolean;
   dateIso?: string;
   weekOfMonth?: number;
+  plannedMonth?: number;
   costCents?: number;
   funding?: MyPlanFunding;
   statusLabel: string;
@@ -63,6 +64,11 @@ export type MyPlanItem = {
   nextAction: MyPlanNextAction;
   /** Raw backend status — drives the two-step Complete workflow. */
   backendStatus?: string;
+  activityPurposeText?: string;
+  purposeType?: string;
+  focusIntervention?: string;
+  secondaryFocusInterventions?: string[];
+  expectedOutcome?: string;
 };
 
 export type MyPlanSection = {
@@ -203,7 +209,6 @@ function resolveNextAction(i: Pick<MyPlanItem, "waitingOn" | "atSlipLimit" | "da
 
 // ── Normalizers ──────────────────────────────────────────────────────
 
-/** Backend row → MyPlanItem. Returns null for completed/closed rows. */
 export function fromBeActivity(a: BeActivity, todayIso: string, fundingByPeriod?: Map<string, MyPlanFunding>): MyPlanItem | null {
   if (BE_HIDDEN.has(a.status)) return null;
   const ev = (a.evidenceStatus ?? "").toLowerCase();
@@ -226,9 +231,11 @@ export function fromBeActivity(a: BeActivity, todayIso: string, fundingByPeriod?
     id: a.id,
     source: "backend",
     typeLabel: BE_TITLE[a.activityType] ?? titleCase(a.activityType),
-    entityName: a.school?.name ?? a.cluster?.name ?? "—",
+    entityName: a.school?.name ?? (a as any).schoolName ?? a.cluster?.name ?? (a as any).clusterName ?? "—",
     exactDate: BE_EXACT_DATE.has(a.activityType),
     dateIso: a.scheduledDate ?? undefined,
+    weekOfMonth: a.plannedWeek ?? a.week ?? undefined,
+    plannedMonth: periodMonth,
     costCents: a.estCostCents ?? undefined,
     // Funding pill: the post-execution PAYMENT status if present, else the
     // PRE-execution fund-request status for the activity's month (date OR
@@ -245,10 +252,16 @@ export function fromBeActivity(a: BeActivity, todayIso: string, fundingByPeriod?
     lastReason: a.lastReason ?? undefined,
     nextAction: "reschedule",
     backendStatus: a.status,
+    activityPurposeText: a.activityPurposeText ?? undefined,
+    purposeType: a.purposeType ?? undefined,
+    focusIntervention: a.focusIntervention ?? undefined,
+    secondaryFocusInterventions: a.secondaryFocusInterventions ?? undefined,
+    expectedOutcome: a.expectedOutcome ?? undefined,
   };
   item.nextAction = resolveNextAction(item, todayIso);
   return item;
 }
+
 
 /** In-memory store row → MyPlanItem. Returns null for completed/closed rows. */
 export function fromStoreActivity(
@@ -311,7 +324,13 @@ export function fromClusterMeeting(m: ClusterMeeting, todayIso: string): MyPlanI
 
 // ── Sectioning ───────────────────────────────────────────────────────
 
-const isoDay = (d: Date) => d.toISOString().slice(0, 10);
+const isoDay = (d: Date) => {
+  try {
+    return d.toISOString().slice(0, 10);
+  } catch {
+    return new Date().toISOString().slice(0, 10);
+  }
+};
 
 /** Monday-start week bounds around `today`, as ISO yyyy-mm-dd strings. */
 function weekEndIso(today: Date): string {
@@ -321,26 +340,21 @@ function weekEndIso(today: Date): string {
   return isoDay(d);
 }
 
-/** Last day of the current calendar month, as yyyy-mm-dd (UTC). The Quarter
- *  lane is defined as everything dated AFTER this — see the bucketing loop. */
-function monthEndIso(today: Date): string {
-  // Day 0 of the next month = last day of this month.
-  const d = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + 1, 0));
-  return isoDay(d);
-}
-
 export function sectionMyPlan(items: MyPlanItem[], today: Date = new Date()): MyPlanSection[] {
   const todayIso = isoDay(today);
   const weekEnd = weekEndIso(today);
-  const monthEnd = monthEndIso(today);
+
+  // Last day of current month
+  const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  const monthEnd = isoDay(lastDay);
 
   const buckets: Record<MyPlanSectionKey, MyPlanItem[]> = {
     dueToday: [], thisWeek: [], thisMonth: [], thisQuarter: [], waitingOnMe: [], needsAttention: [],
   };
 
-  // Current week-of-month (1-4) so visit-typed items can land in thisWeek.
-  const todayDate = today.getUTCDate();
+  const todayDate = today.getDate();
   const currentWeekOfMonth = Math.min(4, Math.ceil(todayDate / 7));
+  const currentMonth = today.getMonth() + 1;
 
   for (const i of items) {
     const date = i.dateIso?.slice(0, 10);
@@ -349,27 +363,24 @@ export function sectionMyPlan(items: MyPlanItem[], today: Date = new Date()): My
     } else if (i.rescheduleCount > 0 || i.statusLabel === "Deferred" || i.statusLabel === "Rescheduled") {
       buckets.needsAttention.push(i);
     } else if (i.exactDate && date && date <= todayIso) {
-      // Only training, SIT, and cluster meetings (exactDate=true) can appear in
-      // "Due Today". School visits carry a month+week approximation and should
-      // never appear as overdue — they go to thisWeek or thisMonth.
       buckets.dueToday.push(i);
     } else if (i.weekOfMonth !== undefined) {
-      // Visit scheduled by week-of-month (no exact date). Route to thisWeek if
-      // it's the current week, otherwise thisMonth (week-grained visits don't
-      // carry a far-future date, so they never reach thisQuarter).
-      if (i.weekOfMonth === currentWeekOfMonth) buckets.thisWeek.push(i);
-      else buckets.thisMonth.push(i);
+      const pMonth = i.plannedMonth ?? currentMonth;
+      if (pMonth === currentMonth) {
+        if (i.weekOfMonth === currentWeekOfMonth) buckets.thisWeek.push(i);
+        else buckets.thisMonth.push(i);
+      } else if (pMonth > currentMonth) {
+        buckets.thisQuarter.push(i);
+      } else {
+        buckets.dueToday.push(i);
+      }
     } else if (date && date <= weekEnd) {
       buckets.thisWeek.push(i);
     } else if (date && date <= monthEnd) {
       buckets.thisMonth.push(i);
     } else if (date && date > monthEnd) {
-      // Dated past this month — including beyond the quarter end — lives in
-      // thisQuarter so nothing scheduled silently disappears off the page.
       buckets.thisQuarter.push(i);
     } else {
-      // Not yet dated. Keep these in thisMonth (the planner's close-in view)
-      // so they stay top-of-mind for scheduling, not buried in the quarter lane.
       buckets.thisMonth.push(i);
     }
   }

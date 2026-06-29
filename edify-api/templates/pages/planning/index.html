@@ -1,0 +1,103 @@
+{% extends "layouts/shell.html" %}
+{% load frontend_filters %}
+
+{% block title %}Planning Dashboard - Edify Command Center{% endblock %}
+
+{% block shell_content %}
+<div class="p-6 max-w-7xl mx-auto space-y-6">
+  <!-- Page Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-[26px] font-extrabold text-slate-800 tracking-tight">Planning &amp; Scheduling Dashboard</h1>
+      <p class="text-[12.5px] text-[var(--text-secondary)] mt-0.5 font-semibold font-sans">
+        Review school onboarding status, track SSA assessments, and schedule field visits or group trainings.
+      </p>
+    </div>
+    
+    <!-- Quick Actions Panel -->
+    <div class="flex items-center gap-2">
+      <a href="/planning/schedule?action=visit" class="h-10 px-4 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[12.5px] font-extrabold flex items-center justify-center transition-colors">
+        Schedule School Visit
+      </a>
+      <a href="/planning/schedule?action=training" class="h-10 px-4 rounded-lg border border-[var(--color-edify-border)] hover:bg-slate-50 text-[12.5px] font-bold text-slate-600 flex items-center justify-center transition-colors">
+        Schedule Training/Meeting
+      </a>
+    </div>
+  </div>
+
+  <!-- Planning Lanes Board -->
+  <div class="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 items-start">
+    {% for lane in lanes %}
+      <div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm flex flex-col max-h-[75vh] overflow-hidden">
+        <!-- Lane Header -->
+        <div class="p-4 border-b border-[var(--color-edify-divider)] bg-slate-50/50 flex items-center justify-between">
+          <h3 class="text-[13px] font-extrabold text-slate-800 uppercase tracking-wider truncate mr-2">{{ lane.label }}</h3>
+          <span class="inline-flex h-5.5 px-2 items-center justify-center rounded-full text-[10px] font-extrabold bg-slate-100 text-slate-600">
+            {{ lane.count }}
+          </span>
+        </div>
+
+        <!-- Lane Items -->
+        <div class="p-4 overflow-y-auto space-y-3 divide-y divide-slate-100/50">
+          {% if lane.items %}
+            {% for item in lane.items %}
+              <div class="pt-3 {% if forloop.first %}pt-0{% endif %} space-y-2.5">
+                <div>
+                  <h4 class="text-[12.5px] font-extrabold text-slate-800 hover:text-[var(--color-edify-primary)] transition-colors">
+                    <a href="/schools/{{ item.schoolId }}">{{ item.name }}</a>
+                  </h4>
+                  <p class="text-[10.5px] text-slate-400 font-semibold mt-0.5">ID: {{ item.schoolId }} &bull; {{ item.subCounty|default:"No sub-county" }}</p>
+                </div>
+
+                <!-- Struggling areas indicators -->
+                {% if item.weakest %}
+                  <div class="flex flex-wrap gap-1 pt-1">
+                    {% for w in item.weakest %}
+                      <span class="inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-extrabold bg-rose-50 text-rose-700 border border-rose-200/50">
+                        {{ w.label }}
+                      </span>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+
+                <!-- Lane Action triggers -->
+                <div class="pt-1.5 flex items-center justify-between border-t border-slate-50/50">
+                  <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    Staff: {{ item.owner|truncatechars:12 }}
+                  </span>
+                  
+                  {% if lane.key == 'readyToPlan' %}
+                    <div class="flex items-center gap-1.5">
+                      <a href="/planning/schedule?action=visit&school={{ item.schoolId }}" class="text-[10.5px] font-extrabold text-[var(--color-edify-primary)] hover:underline">
+                        Schedule
+                      </a>
+                      <span class="text-slate-300">|</span>
+                      <a href="/planning/schedule?action=visit&school={{ item.schoolId }}&delivery=partner" class="text-[10.5px] font-extrabold text-indigo-600 hover:underline">
+                        Assign
+                      </a>
+                    </div>
+                  {% elif lane.key == 'coreSchoolPlanning' %}
+                    <a href="/planning/schedule?action=visit&school={{ item.schoolId }}" class="text-[10.5px] font-extrabold text-[var(--color-edify-primary)] hover:underline">
+                      Schedule Visit
+                    </a>
+                  {% elif lane.key == 'clusteredSsaRequired' %}
+                    <a href="/schools/upload" class="text-[10.5px] font-extrabold text-rose-600 hover:underline">
+                      Record SSA
+                    </a>
+                  {% else %}
+                    <a href="/schools/{{ item.schoolId }}" class="text-[10.5px] font-extrabold text-slate-400 hover:underline">
+                      View details
+                    </a>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          {% else %}
+            <p class="text-center text-slate-400 text-[11.5px] font-semibold py-8">All clear in this stage.</p>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,95 @@
+{% extends "layouts/shell.html" %}
+{% load frontend_filters %}
+
+{% block title %}Clusters Directory - Edify Command Center{% endblock %}
+
+{% block shell_content %}
+<div class="p-6 max-w-7xl mx-auto space-y-6">
+  <!-- Page Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-[26px] font-extrabold text-slate-800 tracking-tight">Cluster Directory</h1>
+      <p class="text-[12.5px] text-[var(--text-secondary)] mt-0.5 font-semibold">Operational clusters for group training and cluster meetings.</p>
+    </div>
+  </div>
+
+  <!-- Cluster List Cards -->
+  <div class="grid gap-6">
+    {% if clusters %}
+      {% for c in clusters %}
+        <div 
+          x-data="{ expanded: false }" 
+          class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm overflow-hidden transition-all duration-200"
+        >
+          <!-- Cluster Info Bar -->
+          <div class="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="space-y-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <h3 class="text-[16px] font-extrabold text-slate-800 truncate leading-none">
+                  <a href="/clusters/{{ c.id }}" class="hover:text-[var(--color-edify-primary)]">{{ c.name }}</a>
+                </h3>
+                <span class="inline-flex items-center rounded px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)] border border-[var(--color-edify-border)]/50">
+                  {{ c.clusterType|default:"Mixed" }}
+                </span>
+              </div>
+              <p class="text-[12px] text-slate-500 font-semibold leading-none">
+                District: {{ c.district.name|default:c.district }} &bull; Sub-county: {{ c.subCounty.name|default:c.subCounty }}
+              </p>
+            </div>
+
+            <div class="flex items-center gap-6 text-[12px] font-semibold text-slate-500">
+              <div>
+                <p class="text-[10px] uppercase font-bold text-slate-400">Schools</p>
+                <p class="font-extrabold text-slate-700 text-[13.5px] mt-0.5">{{ c.schoolCount }}</p>
+              </div>
+              <div>
+                <p class="text-[10px] uppercase font-bold text-slate-400">SSA Complete</p>
+                <p class="font-extrabold text-slate-700 text-[13.5px] mt-0.5">{{ c.schoolsWithSsa }}</p>
+              </div>
+              
+              <!-- Expand and View details buttons -->
+              <div class="flex items-center gap-2 pl-4 border-l border-slate-100">
+                <button 
+                  @click="expanded = !expanded"
+                  hx-get="/partials/clusters/{{ c.id }}/schools"
+                  hx-target="#cluster-schools-{{ c.id }}"
+                  hx-trigger="click once"
+                  class="h-8 px-3 rounded-lg border border-[var(--color-edify-border)] hover:bg-slate-50 text-slate-600 font-bold text-[11.5px] flex items-center justify-center gap-1 focus:outline-none"
+                >
+                  <span x-text="expanded ? 'Collapse' : 'Expand'">Expand</span>
+                </button>
+                <a 
+                  href="/clusters/{{ c.id }}"
+                  class="h-8 px-3 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white font-extrabold text-[11.5px] flex items-center justify-center transition-colors"
+                >
+                  View Details
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Lazy-loaded Schools List (HTMX target) -->
+          <div 
+            x-show="expanded" 
+            x-transition
+            id="cluster-schools-{{ c.id }}" 
+            class="border-t border-[var(--color-edify-divider)] bg-slate-50/30"
+          >
+            <div class="p-6 flex items-center justify-center text-slate-400 font-semibold text-[12px]">
+              <svg class="animate-spin h-4 w-4 mr-2 text-[var(--color-edify-primary)]" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span>Loading cluster schools...</span>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="bg-white rounded-2xl border border-[var(--border-card)] p-12 text-center text-slate-400 font-semibold">
+        No clusters found.
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

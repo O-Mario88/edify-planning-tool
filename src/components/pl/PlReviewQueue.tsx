@@ -99,6 +99,30 @@ export function PlReviewQueue() {
                   ))}
                 </div>
               )}
+              {it.activityPurposeText && (
+                <div className="mt-2 p-2 rounded-lg bg-[var(--color-edify-soft)]/20 border border-[var(--color-edify-border)]/50 text-[11.5px] space-y-1">
+                  <div className="font-extrabold text-slate-800">
+                    Purpose: <span className="font-normal text-slate-600">{it.activityPurposeText}</span>
+                  </div>
+                  <div className="flex gap-2 flex-wrap items-center mt-1">
+                    {it.focusIntervention && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-extrabold bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-200">
+                        Focus: {humanizeIntervention(it.focusIntervention)}
+                      </span>
+                    )}
+                    {it.secondaryFocusInterventions && it.secondaryFocusInterventions.length > 0 && (
+                      <span className="text-[10px] font-semibold text-slate-500">
+                        Secondary Focus: {it.secondaryFocusInterventions.map(humanizeIntervention).join(", ")}
+                      </span>
+                    )}
+                  </div>
+                  {it.expectedOutcome && (
+                    <div className="text-[10.5px] text-slate-500 mt-0.5">
+                      <span className="font-bold">Expected Outcome:</span> {it.expectedOutcome}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <button
@@ -126,4 +150,11 @@ export function PlReviewQueue() {
       </p>
     </div>
   );
+}
+
+function humanizeIntervention(key: string): string {
+  return key
+    .split("_")
+    .map((w) => (w === "and" ? "&" : w.charAt(0).toUpperCase() + w.slice(1)))
+    .join(" ");
 }

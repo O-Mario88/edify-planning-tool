@@ -561,6 +561,30 @@ function ActivityRow({
                 </span>
               )}
             </div>
+            {item.activityPurposeText && (
+              <div className="mt-1.5 p-2 rounded-lg bg-[var(--color-edify-soft)]/20 border border-[var(--color-edify-border)]/50 text-[11.5px] space-y-1">
+                <div className="font-extrabold text-slate-800 dark:text-slate-200">
+                  Purpose: <span className="font-normal text-slate-600 dark:text-slate-400">{item.activityPurposeText}</span>
+                </div>
+                <div className="flex gap-2 flex-wrap items-center mt-1">
+                  {item.focusIntervention && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-extrabold bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-200">
+                      <Sparkles size={9} /> Focus: {humanizeIntervention(item.focusIntervention)}
+                    </span>
+                  )}
+                  {item.secondaryFocusInterventions && item.secondaryFocusInterventions.length > 0 && (
+                    <span className="text-[10px] font-semibold text-slate-500">
+                      Secondary Focus: {item.secondaryFocusInterventions.map(humanizeIntervention).join(", ")}
+                    </span>
+                  )}
+                </div>
+                {item.expectedOutcome && (
+                  <div className="text-[10.5px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    <span className="font-bold">Expected Outcome:</span> {item.expectedOutcome}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="flex items-center justify-start sm:justify-end gap-2 shrink-0 flex-wrap">
@@ -828,4 +852,9 @@ function CloseBtn({ onClick }: { onClick: () => void }) {
     </button>
   );
 }
-
+function humanizeIntervention(key: string): string {
+  return key
+    .split("_")
+    .map((w) => (w === "and" ? "&" : w.charAt(0).toUpperCase() + w.slice(1)))
+    .join(" ");
+}

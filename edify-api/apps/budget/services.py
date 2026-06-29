@@ -19,11 +19,11 @@ from .models import CostSetting, CostSettingHistory
 
 
 # ── Rate card ────────────────────────────────────────────────────────────────
-def list_cost_settings(principal, query: dict) -> list[dict]:
+def list_cost_settings(principal, query: dict) -> dict:
     qs = CostSetting.objects.all().order_by("label")
     if query.get("fy"):
         qs = qs.filter(Q(fy=query["fy"]) | Q(fy__isnull=True))
-    return [
+    settings_list = [
         {
             "id": c.id,
             "key": c.key,
@@ -34,6 +34,10 @@ def list_cost_settings(principal, query: dict) -> list[dict]:
         }
         for c in qs
     ]
+    return {
+        "settings": settings_list,
+        "count": len(settings_list),
+    }
 
 
 def upsert_cost_setting(data: dict, principal) -> dict:

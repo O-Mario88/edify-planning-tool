@@ -17,6 +17,43 @@ const quarterFor = (m: number) => (m >= 7 && m <= 9 ? "Q1" : m >= 10 ? "Q2" : m 
 const VISIT = new Set(["school_visit", "follow_up_visit", "coaching_visit", "in_school_support", "core_visit"]);
 const TRAINING = new Set(["training", "school_improvement_training", "cluster_training", "core_training"]);
 
+const VISIT_PURPOSES = [
+  { value: "ssa_follow_up", label: "SSA Follow-up" },
+  { value: "leadership_support", label: "Leadership Support" },
+  { value: "teaching_learning_support", label: "Teaching & Learning Support" },
+  { value: "financial_health_support", label: "Financial Health Support" },
+  { value: "compliance_follow_up", label: "Compliance Follow-up" },
+  { value: "education_tech_support", label: "Education Technology Support" },
+  { value: "learning_env_follow_up", label: "Learning Environment Follow-up" },
+  { value: "christlike_behaviour_support", label: "Christlike Behaviour Support" },
+  { value: "exposure_word_of_god_support", label: "Exposure to the Word of God Support" },
+  { value: "evidence_verification", label: "Evidence Verification" },
+  { value: "general_monitoring", label: "General Monitoring" },
+  { value: "other", label: "Other" }
+];
+
+const CLUSTER_PURPOSES = [
+  { value: "group_training", label: "Group Training" },
+  { value: "cluster_meeting", label: "Cluster Meeting" },
+  { value: "sit", label: "SIT" },
+  { value: "ssa_review_meeting", label: "SSA Review Meeting" },
+  { value: "intervention_support_meeting", label: "Intervention Support Meeting" },
+  { value: "planning_meeting", label: "Planning Meeting" },
+  { value: "follow_up_meeting", label: "Follow-up Meeting" },
+  { value: "other", label: "Other" }
+];
+
+const INTERVENTIONS = [
+  { value: "teaching_and_learning", label: "Teaching & Learning" },
+  { value: "financial_health", label: "Financial Health" },
+  { value: "christlike_behaviour", label: "Christlike Behaviour" },
+  { value: "exposure_to_word_of_god", label: "Exposure to Word of God" },
+  { value: "government_requirements", label: "Government Requirements" },
+  { value: "leadership", label: "Leadership" },
+  { value: "education_technology", label: "Education Technology" },
+  { value: "learning_environment", label: "Learning Environment" }
+];
+
 // Each option: v = unique select key, type = real ActivityType, slot = optional tag
 // for legacy slot-based flows (SIT). Cluster meetings/trainings are unlimited;
 // no "first/second/third" slots.
@@ -112,21 +149,38 @@ export function ScheduleActivityLive({
       .catch(() => undefined);
   }, []);
 
-  // Assign mode: auto-recommend the intervention from the school's weakest SSA
-  // area (lowest-scoring intervention on the latest SSA record).
+  // Auto-recommend focus intervention from school/cluster weakest areas
   useEffect(() => {
-    if (!isAssign || isCluster || !schoolId || intervention) return;
-    fetch(`/api/ssa/school/${encodeURIComponent(schoolId)}`, { credentials: "include" })
-      .then((r) => r.json())
-      .then((j) => {
-        const recs: Array<{ scores?: Array<{ intervention: string; score: number }> }> = j?.records ?? [];
-        const scores = recs[0]?.scores ?? [];
-        if (!scores.length) return;
-        const weakest = scores.reduce((a, b) => (b.score < a.score ? b : a));
-        setAutoIntervention(humanizeIntervention(weakest.intervention));
-      })
-      .catch(() => undefined);
-  }, [isAssign, isCluster, schoolId, intervention]);
+    if (schoolId) {
+      fetch(`/api/ssa/school/${encodeURIComponent(schoolId)}`, { credentials: "include" })
+        .then((r) => r.json())
+        .then((j) => {
+          const recs: Array<{ scores?: Array<{ intervention: string; score: number }> }> = j?.records ?? [];
+          const scores = recs[0]?.scores ?? [];
+          if (!scores.length) return;
+          const weakest = scores.reduce((a, b) => (b.score < a.score ? b : a));
+          setAutoIntervention(weakest.intervention);
+          setFocusIntervention(weakest.intervention);
+        })
+        .catch(() => undefined);
+    } else if (clusterId) {
+      fetch(`/api/clusters/${encodeURIComponent(clusterId)}/weakest-interventions`, { credentials: "include" })
+        .then((r) => r.json())
+        .then((j) => {
+          if (Array.isArray(j) && j.length > 0) {
+            setAutoIntervention(j[0].intervention);
+            setFocusIntervention(j[0].intervention);
+          }
+        })
+        .catch(() => undefined);
+    }
+  }, [schoolId, clusterId]);
+
+  useEffect(() => {
+    if (intervention) {
+      setFocusIntervention(intervention);
+    }
+  }, [intervention]);
 
   // Assign mode: ask the backend who this school can be assigned to (role +
   // capacity aware). PL gets the school's owner CCEO as a "staff" target;
@@ -149,9 +203,6 @@ export function ScheduleActivityLive({
       .catch(() => undefined);
   }, [isAssign, isCluster, schoolId]);
 
-  const cceoStaffId = assignTarget === "staff" ? cceoOption?.staffId : undefined;
-  // Effective delivery: in assign mode the target toggle wins; otherwise the
-  // schedule-mode staff/partner toggle.
   const effDelivery: "staff" | "partner" = isAssign ? assignTarget : deliveryType;
 
   // Resolve the selected option → real ActivityType + explicit cluster slot.
@@ -165,21 +216,70 @@ export function ScheduleActivityLive({
   const dateRequired = !isVisit;
   const effMonth = exactDate ? Number(exactDate.slice(5, 7)) : month;
 
-  // Same costing the backend budget engine applies.
-  const cost = useMemo(() => {
-    const lines: { label: string; amount: number }[] = [];
-    const add = (label: string, key: string, qty = 1) => { if (rates[key] != null) lines.push({ label, amount: rates[key] * qty }); };
-    if (realType === "cluster_meeting") add("Cluster meeting", "cluster_meeting_cost");
-    else if (effDelivery === "partner") add("Partner lump sum", "partner_visit_lump_sum");
-    else if (VISIT.has(realType)) { add("Transport", "staff_visit_transport_primary"); add("Lunch", "lunch"); }
-    else if (isTraining) { add("Training session", "training_session_fee"); add("Venue", "venue"); add("Meals", "meals_per_participant", participants); }
-    return { lines, total: lines.reduce((s, l) => s + l.amount, 0) };
-  }, [rates, realType, effDelivery, participants, isTraining]);
+  const [activityPurposeText, setActivityPurposeText] = useState("");
+  const [focusIntervention, setFocusIntervention] = useState("teaching_and_learning");
+  const [secondaryFocusInterventions, setSecondaryFocusInterventions] = useState<string[]>([]);
+  const [expectedOutcome, setExpectedOutcome] = useState("");
+  const [purposeType, setPurposeType] = useState(isVisit ? "teaching_learning_support" : "group_training");
+
+  useEffect(() => {
+    setPurposeType(isVisit ? "teaching_learning_support" : "group_training");
+  }, [isVisit]);
+
+  // Cost preview state — loaded dynamically from backend preview API.
+  const [costPreview, setCostPreview] = useState<{
+    amount: number;
+    lines: Array<{ label: string; amount: number; missing?: boolean }>;
+    canSchedule: boolean;
+    blockers: string[];
+  } | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const body = {
+      activityType: realType,
+      ...(isCluster ? { clusterId } : { schoolId }),
+      deliveryType: effDelivery,
+      plannedMonth: effMonth,
+      assignedPartnerId: partnerId || undefined,
+      scheduledDate: exactDate ? new Date(exactDate + "T09:00:00").toISOString() : new Date().toISOString(),
+      expectedParticipants: (isTraining || isCluster) ? participants : undefined,
+    };
+
+    fetch("/api/costing/preview", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json", ...csrfHeaders() },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    })
+      .then((r) => r.json())
+      .then((j) => {
+        if (j.amount != null) {
+          setCostPreview({
+            amount: j.amount,
+            lines: j.lines || [],
+            canSchedule: j.canSchedule !== false,
+            blockers: j.blockers || [],
+          });
+        }
+      })
+      .catch(() => undefined);
+
+    return () => controller.abort();
+  }, [realType, effDelivery, participants, exactDate, schoolId, clusterId, partnerId, effMonth, isCluster, isTraining]);
 
   const submit = async () => {
     setBusy(true); setError(null);
     try {
-      const res = await fetch("/api/activities", {
+      let endpoint = "/api/activities/schedule-school-visit";
+      if (effDelivery === "partner") {
+        endpoint = "/api/activities/schedule-partner-visit";
+      } else if (isCluster || isTraining) {
+        endpoint = "/api/activities/schedule-cluster-activity";
+      }
+
+      const res = await fetch(endpoint, {
         method: "POST", credentials: "include", headers: { "Content-Type": "application/json", ...csrfHeaders() },
         body: JSON.stringify({
           activityType: realType,
@@ -189,18 +289,29 @@ export function ScheduleActivityLive({
           // delivery week on their own dashboard. Schedule mode sets them.
           ...(isAssign ? {} : { plannedMonth: effMonth }),
           ...(effDelivery === "partner" && partnerId ? { assignedPartnerId: partnerId } : {}),
-          ...(effDelivery === "staff" && cceoStaffId ? { responsibleStaffId: cceoStaffId } : {}),
+          ...(effDelivery === "staff" && assignTarget === "staff" && cceoOption ? { responsibleStaffId: cceoOption.staffId } : {}),
           ...(exactDate ? { scheduledDate: new Date(exactDate + "T09:00:00").toISOString() } : {}),
           ...(!isAssign && isVisit ? { plannedWeek: week } : {}),
           ...(isTraining || isCluster ? { expectedParticipants: participants } : {}),
+          activityPurposeText,
+          purposeType,
+          focusIntervention,
+          secondaryFocusInterventions,
+          expectedOutcome,
         }),
       });
       const j = await res.json();
-      if (j.live) { setDone(true); onScheduled?.(); }
-      else setError(j.error || "The backend rejected this (capacity or scope).");
+      if (res.status === 201 || j.live || j.id) {
+        setDone(true);
+        onScheduled?.();
+      } else {
+        setError(j.message || j.error || "The backend rejected this (capacity or scope).");
+      }
     } catch { setError("Could not reach the server"); }
     setBusy(false);
   };
+
+  const hasBlockers = costPreview ? !costPreview.canSchedule : false;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
@@ -226,10 +337,6 @@ export function ScheduleActivityLive({
                   {types.map((t) => <option key={t.v} value={t.v}>{t.l}</option>)}
                 </select>
               </Field>
-              {/* Delivery owner. Schedule mode: a CCEO may deliver themselves
-                  (self-assign) or route to a partner; other roles get the full
-                  toggle. Assign mode: partner by default, plus the school's
-                  owner CCEO when the backend allows it (PL → CCEO or Partner). */}
               {!isAssign && (
                 <Field label="Delivered by">
                   <div className="flex gap-1.5">
@@ -258,18 +365,71 @@ export function ScheduleActivityLive({
                   )}
                 </Field>
               )}
-              {/* Intervention — auto-recommended from the school's weakest SSA
-                  area so the partner knows what to focus on. Read-only. */}
-              {isAssign && (
-                <Field label="Intervention (auto from SSA)">
-                  <div className="w-full min-h-9 px-2.5 py-2 rounded-lg border border-[var(--color-edify-border)] bg-[var(--color-edify-soft)]/40 text-[12px] font-semibold inline-flex items-center gap-1.5">
-                    <Sparkles size={12} className="text-[var(--color-edify-primary)] shrink-0" />
-                    {shownIntervention ?? "Will be set from the school's SSA"}
+              <Field label={isVisit ? "Visit Purpose (Required)" : "Purpose for Meeting (Required)"}>
+                <textarea
+                  required
+                  value={activityPurposeText}
+                  onChange={(e) => setActivityPurposeText(e.target.value)}
+                  placeholder={isVisit ? "Describe the specific visit purpose..." : "Describe the purpose of this meeting/training..."}
+                  className="w-full min-h-[60px] px-2.5 py-1.5 rounded-lg border border-[var(--color-edify-border)] bg-transparent text-[12px] font-semibold"
+                />
+              </Field>
+
+              <Field label="Purpose Type">
+                <select
+                  value={purposeType}
+                  onChange={(e) => setPurposeType(e.target.value)}
+                  className="w-full h-9 px-2 rounded-lg border border-[var(--color-edify-border)] text-[12px]"
+                >
+                  {(isVisit ? VISIT_PURPOSES : CLUSTER_PURPOSES).map((p) => (
+                    <option key={p.value} value={p.value}>{p.label}</option>
+                  ))}
+                </select>
+              </Field>
+
+              <Field label="Primary Focus Intervention">
+                <select
+                  value={focusIntervention}
+                  onChange={(e) => setFocusIntervention(e.target.value)}
+                  className="w-full h-9 px-2 rounded-lg border border-[var(--color-edify-border)] text-[12px]"
+                >
+                  {INTERVENTIONS.map((i) => (
+                    <option key={i.value} value={i.value}>{i.label}</option>
+                  ))}
+                </select>
+              </Field>
+
+              {isTraining && (
+                <Field label="Secondary Focus Interventions (Optional)">
+                  <div className="grid grid-cols-2 gap-1 rounded-lg border border-[var(--color-edify-border)] p-2 max-h-[100px] overflow-y-auto">
+                    {INTERVENTIONS.map((i) => (
+                      <label key={i.value} className="flex items-center gap-1.5 text-[11px] font-medium text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={secondaryFocusInterventions.includes(i.value)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSecondaryFocusInterventions([...secondaryFocusInterventions, i.value]);
+                            } else {
+                              setSecondaryFocusInterventions(secondaryFocusInterventions.filter((v) => v !== i.value));
+                            }
+                          }}
+                        />
+                        {i.label}
+                      </label>
+                    ))}
                   </div>
                 </Field>
               )}
-              {/* Assign mode has NO date — the partner picks the delivery week on
-                  their own dashboard. Schedule mode keeps the date/month+week. */}
+
+              <Field label="Expected Outcome">
+                <textarea
+                  value={expectedOutcome}
+                  onChange={(e) => setExpectedOutcome(e.target.value)}
+                  placeholder="What is the expected outcome of this activity?"
+                  className="w-full min-h-[60px] px-2.5 py-1.5 rounded-lg border border-[var(--color-edify-border)] bg-transparent text-[12px] font-semibold"
+                />
+              </Field>
               {isAssign ? null : dateRequired ? (
                 <Field label="Date — required for this activity">
                   <input type="date" value={exactDate} onChange={(e) => setExactDate(e.target.value)}
@@ -300,20 +460,35 @@ export function ScheduleActivityLive({
               )}
             </div>
 
-            {/* Cost preview — auto from the CD rate card */}
             <div className="mt-3 rounded-lg border border-[var(--color-edify-border)] bg-[var(--color-edify-soft)]/30 p-2.5">
               <div className="text-[10px] font-bold uppercase tracking-wide muted mb-1 inline-flex items-center gap-1"><Wallet size={11} /> Estimated cost</div>
-              {cost.lines.map((l) => (
-                <div key={l.label} className="flex items-center justify-between text-[11px]"><span className="muted">{l.label}</span><span className="tabular">{ugx(l.amount)}</span></div>
+              {costPreview?.lines.map((l) => (
+                <div key={l.label} className={cn("flex items-center justify-between text-[11px]", l.missing && "text-rose-600 font-semibold")}>
+                  <span>{l.label} {l.missing && "(Missing Rate)"}</span>
+                  <span className="tabular">{l.missing ? "Blocked" : ugx(l.amount)}</span>
+                </div>
               ))}
-              <div className="flex items-center justify-between text-[12.5px] font-extrabold border-t border-[var(--color-edify-divider)] mt-1 pt-1"><span>Total</span><span className="tabular">{ugx(cost.total)}</span></div>
+              <div className="flex items-center justify-between text-[12.5px] font-extrabold border-t border-[var(--color-edify-divider)] mt-1 pt-1">
+                <span>Total</span>
+                <span className="tabular">{costPreview ? ugx(costPreview.amount) : "Calculating..."}</span>
+              </div>
               <p className="text-[9.5px] muted mt-1">{isAssign ? "Drawn from the CD cost catalogue. The partner confirms the delivery week." : `Added to ${MONTHS[effMonth]} fund request automatically.`}</p>
             </div>
 
+            {costPreview && costPreview.blockers.length > 0 && (
+              <div className="mt-2.5 p-2 rounded bg-rose-50 border border-rose-200 text-[10.5px] text-rose-700 font-bold space-y-1">
+                <div>Cannot Schedule — Missing rate in CD catalogue:</div>
+                <ul className="list-disc pl-4 font-semibold text-[10px]">
+                  {costPreview.blockers.map((b) => <li key={b}>{b}</li>)}
+                </ul>
+              </div>
+            )}
+
             {error && <div className="mt-2 text-[11px] text-rose-600 font-semibold">{error}</div>}
 
-            <button disabled={busy || (!isAssign && dateRequired && !exactDate) || (effDelivery === "partner" && !partnerId)} onClick={submit} className="mt-3 w-full h-10 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[13px] font-extrabold disabled:opacity-50 disabled:cursor-not-allowed">
+            <button disabled={busy || hasBlockers || (!isAssign && dateRequired && !exactDate) || (effDelivery === "partner" && !partnerId) || !activityPurposeText.trim()} onClick={submit} className="mt-3 w-full h-10 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[13px] font-extrabold disabled:opacity-50 disabled:cursor-not-allowed">
               {busy ? (isAssign ? "Assigning…" : "Scheduling…")
+                : hasBlockers ? "Blocked — Missing Catalogue Cost"
                 : !isAssign && dateRequired && !exactDate ? "Pick a date to schedule"
                 : effDelivery === "partner" && !partnerId ? "Choose a partner"
                 : isAssign && effDelivery === "staff" ? `Assign to ${cceoOption?.label?.replace("Assign to ", "") ?? "CCEO"}`

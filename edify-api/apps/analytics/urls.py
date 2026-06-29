@@ -16,6 +16,7 @@ urlpatterns = [
     path("support-ssa-correlation", views.AnalyticsSupportSsaCorrelationView.as_view(), name="support-ssa-correlation"),
     path("staff-vs-partner-correlation", views.AnalyticsStaffVsPartnerView.as_view(), name="staff-vs-partner"),
     path("activity-pipeline", views.AnalyticsActivityPipelineView.as_view(), name="activity-pipeline"),
+    path("activity-impact", views.AnalyticsActivityImpactView.as_view(), name="activity-impact"),
     path("contribution-summary", views.AnalyticsContributionSummaryView.as_view(), name="contribution-summary"),
     path("recruitment-recommendation", views.AnalyticsRecruitmentView.as_view(), name="recruitment"),
     # Decision engine — SSA improvement, interventions, recommendations.

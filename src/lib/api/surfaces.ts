@@ -499,6 +499,11 @@ export type BeActivity = {
   paymentStatus?: string;
   estCostCents?: number | null;
   costMissing?: boolean | null;
+  activityPurposeText?: string | null;
+  purposeType?: string | null;
+  focusIntervention?: string | null;
+  secondaryFocusInterventions?: string[] | null;
+  expectedOutcome?: string | null;
 };
 
 export type BeMyPlanPeriod = "week" | "month" | "quarter" | "fy";
@@ -790,6 +795,10 @@ export type BeSchoolWorkflow = {
 export function fetchSchoolWorkflow(user: BackendUser, schoolId: string, fy?: string) {
   const q = fy ? `?fy=${encodeURIComponent(fy)}` : "";
   return live<BeSchoolWorkflow>(`/schools/${encodeURIComponent(schoolId)}/workflow${q}`, user);
+}
+
+export function fetchSchoolImpact(user: BackendUser, schoolId: string) {
+  return live<any[]>(`/schools/${encodeURIComponent(schoolId)}/impact`, user);
 }
 
 export type BeAssignmentOption = { type: "self" | "staff" | "partner"; label: string; enabled: boolean; reason?: string; staffId?: string };
@@ -1357,11 +1366,22 @@ export function fetchVillages(user: BackendUser, parishId: string) {
   return live<BeVillage[]>(`/geography/villages?parishId=${encodeURIComponent(parishId)}`, user);
 }
 export type BeClusterSchool = {
-  schoolId: string; name: string; schoolType: string; subCounty?: string | null;
-  phone?: string | null; primaryContact?: string | null;
-  accountOwner?: string | null; ssaStatus: string; planningReadiness: string;
-  latestSsa: number | null; stage: string;
-  weakestIntervention?: { area: string; score: number } | null;
+  id: string;
+  schoolId: string;
+  name: string;
+  district?: string | null;
+  subCounty?: string | null;
+  parish?: string | null;
+  schoolType: string;
+  assignedStaff: string;
+  currentSsaAverage?: number | null;
+  weakestSsaIntervention: string;
+  topStrugglingInterventions: string[];
+  lastVisitDate: string;
+  lastTrainingDate: string;
+  planningStatus: string;
+  ssaStatus: string;
+  recommendedAction: string;
 };
 /** Open-ended cluster planning shape — unlimited meetings, intelligence-derived
  *  category. Legacy slot status fields stay optional so the FE reschedule
@@ -1433,17 +1453,25 @@ export function fetchClusterIntelligence(user: BackendUser, clusterId: string) {
 
 /** District → sub-county names from the live backend geography (for cluster create forms). */
 export async function fetchBackendGeoByDistrict(user: BackendUser): Promise<Record<string, string[]> | null> {
-  const dRes = await fetchDistricts(user);
-  if (!dRes.live) return null;
-  const entries = await Promise.all(
-    dRes.data.map(async (d) => {
-      const sc = await fetchSubCounties(user, d.id);
-      return [d.name, sc.live ? sc.data.map((s) => s.name).sort() : []] as const;
-    }),
-  );
+  const [dRes, scRes] = await Promise.all([
+    fetchDistricts(user),
+    live<BeSubCounty[]>(`/geography/sub-counties`, user),
+  ]);
+  if (!dRes.live || !scRes.live) return null;
+
+  const distMap = new Map(dRes.data.map((d) => [d.id, d.name]));
   const out: Record<string, string[]> = {};
-  for (const [name, subs] of entries) {
-    if (subs.length) out[name] = subs;
+
+  for (const sc of scRes.data) {
+    const dId = sc.districtId || (sc as any).district_id;
+    const dName = distMap.get(dId);
+    if (!dName) continue;
+    if (!out[dName]) out[dName] = [];
+    out[dName].push(sc.name);
+  }
+
+  for (const name of Object.keys(out)) {
+    out[name].sort();
   }
   return out;
 }
@@ -1471,8 +1499,10 @@ export type BeMonthlyPlan = {
   submittedAt?: string | null; approvedAt?: string | null; returnedReason?: string | null;
   activities?: (BePlanActivity & { id: string })[];
 };
-export function fetchPlans(user: BackendUser) {
-  return live<BeMonthlyPlan[]>(`/planning/plans`, user);
+export function fetchPlans(user: BackendUser, query?: Record<string, string>) {
+  const params = new URLSearchParams(query);
+  const qs = params.toString();
+  return live<BeMonthlyPlan[]>(`/planning/plans${qs ? `?${qs}` : ""}`, user);
 }
 export function fetchPlan(user: BackendUser, id: string) {
   return live<BeMonthlyPlan>(`/planning/plans/${encodeURIComponent(id)}`, user);
@@ -1725,6 +1755,11 @@ export type BePlReviewItem = {
   cluster?: { name: string } | null;
   responsibleStaff?: { user: { name: string } } | null;
   evidence: Array<{ id: string; kind: string; status: string; originalName: string | null }>;
+  activityPurposeText?: string | null;
+  purposeType?: string | null;
+  focusIntervention?: string | null;
+  secondaryFocusInterventions?: string[] | null;
+  expectedOutcome?: string | null;
 };
 
 export function fetchPlReviewQueue(user: BackendUser) {

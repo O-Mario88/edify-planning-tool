@@ -216,48 +216,69 @@ export function ClusterDistrictDirectory({ initialClusters = null, initialError 
 function ClusterSchoolTable({ schools, common }: { schools: BeClusterSchool[]; common: { area: string; avgScore: number } | null }) {
   return (
     <div>
-      {/* Cluster-wide common weak intervention (shared SSA recommendation). */}
       {common && (
         <div className="mb-2.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 inline-flex items-start gap-1.5 w-full">
           <Sparkles size={12} className="text-amber-600 mt-0.5 shrink-0" />
-          <span className="text-[11.5px] text-amber-800">
-            <span className="font-extrabold">Cluster-wide priority:</span>{" "}
-            <span className="font-extrabold">{humanizeIntervention(common.area)}</span> is the SSA area the whole cluster is weakest in (avg {common.avgScore}/10) — a good shared cluster-meeting / SIT topic.
+          <span className="text-[11.5px] text-amber-800 font-semibold">
+            Cluster-wide priority: <span className="font-extrabold text-amber-900">{humanizeIntervention(common.area)}</span> is the SSA area the whole cluster is weakest in (avg {common.avgScore.toFixed(1)}/10).
           </span>
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-lg border border-[var(--color-edify-divider)] bg-white">
-        <table className="w-full text-[11.5px]">
+      <div className="overflow-x-auto rounded-lg border border-[var(--color-edify-divider)] bg-white shadow-sm">
+        <table className="w-full text-[11.5px] min-w-[1000px]">
           <thead>
-            <tr className="text-left text-[10px] uppercase tracking-wider font-bold muted border-b border-[var(--color-edify-divider)]">
-              <th className="px-2.5 py-2">School ID</th>
-              <th className="px-2.5 py-2">School Name</th>
-              <th className="px-2.5 py-2">Sub-county</th>
-              <th className="px-2.5 py-2">Phone</th>
-              <th className="px-2.5 py-2">Primary Contact</th>
-              <th className="px-2.5 py-2">SSA Recommendation</th>
+            <tr className="text-left text-[10px] uppercase tracking-wider font-bold muted bg-slate-50 border-b border-[var(--color-edify-divider)]">
+              <th className="px-3 py-2.5">School ID</th>
+              <th className="px-3 py-2.5">School Name</th>
+              <th className="px-3 py-2.5">Geography</th>
+              <th className="px-3 py-2.5">Type</th>
+              <th className="px-3 py-2.5">Assigned Staff</th>
+              <th className="px-3 py-2.5 text-center">SSA Avg</th>
+              <th className="px-3 py-2.5">Weakest Intervention</th>
+              <th className="px-3 py-2.5">Struggling Areas</th>
+              <th className="px-3 py-2.5">Last Visit</th>
+              <th className="px-3 py-2.5">Action</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[var(--color-edify-divider)]">
             {schools.map((s) => (
-              <tr key={s.schoolId} className="hover:bg-[var(--color-edify-soft)]/40">
-                <td className="px-2.5 py-2 tabular font-semibold whitespace-nowrap">{s.schoolId}</td>
-                <td className="px-2.5 py-2 font-extrabold tracking-tight">{s.name}</td>
-                <td className="px-2.5 py-2 muted whitespace-nowrap">{s.subCounty ?? "—"}</td>
-                <td className="px-2.5 py-2 whitespace-nowrap">
-                  {s.phone ? <a href={`tel:${s.phone.replace(/\s+/g, "")}`} className="tabular hover:underline">{s.phone}</a> : <span className="muted">—</span>}
+              <tr key={s.schoolId} className="hover:bg-slate-50/80 transition-colors">
+                <td className="px-3 py-2.5 tabular font-bold text-slate-700 whitespace-nowrap">{s.schoolId}</td>
+                <td className="px-3 py-2.5 font-extrabold text-slate-900">
+                  <a href={`/schools/${s.schoolId}`} className="hover:text-[var(--color-edify-primary)] hover:underline">
+                    {s.name}
+                  </a>
                 </td>
-                <td className="px-2.5 py-2 whitespace-nowrap">{s.primaryContact ?? <span className="muted">—</span>}</td>
-                <td className="px-2.5 py-2">
-                  {s.weakestIntervention ? (
-                    <span className="inline-flex items-center gap-1 px-1.5 py-[2px] rounded-md bg-rose-50 border border-rose-200 text-rose-700 text-[10.5px] font-extrabold whitespace-nowrap">
-                      <AlertTriangle size={9} />
-                      {humanizeIntervention(s.weakestIntervention.area)} · {s.weakestIntervention.score}/10
+                <td className="px-3 py-2.5 whitespace-nowrap">
+                  <div className="font-medium text-slate-700">{s.district ?? "—"}</div>
+                  <div className="text-[10px] text-slate-500">
+                    {s.subCounty ? s.subCounty : ""}
+                    {s.parish ? ` · ${s.parish}` : ""}
+                  </div>
+                </td>
+                <td className="px-3 py-2.5 capitalize font-semibold text-slate-700">{s.schoolType}</td>
+                <td className="px-3 py-2.5 text-slate-700 font-semibold">{s.assignedStaff}</td>
+                <td className="px-3 py-2.5 text-center tabular font-extrabold text-slate-800">
+                  {s.currentSsaAverage != null ? `${s.currentSsaAverage.toFixed(1)}/10` : "—"}
+                </td>
+                <td className="px-3 py-2.5">
+                  {s.ssaStatus === "done" ? (
+                    <span className="inline-flex items-center gap-1 px-1.5 py-[2px] rounded bg-rose-50 border border-rose-100 text-rose-700 text-[10.5px] font-extrabold">
+                      {s.weakestSsaIntervention}
                     </span>
                   ) : (
-                    <span className="muted text-[10.5px]">No SSA yet</span>
+                    <span className="text-amber-600 font-bold text-[10.5px] inline-flex items-center gap-0.5">
+                      <AlertTriangle size={10} /> Pending SSA
+                    </span>
                   )}
+                </td>
+                <td className="px-3 py-2.5 max-w-[200px] truncate text-[11px] font-medium text-slate-600">
+                  {s.topStrugglingInterventions.length > 0 ? s.topStrugglingInterventions.join(", ") : "—"}
+                </td>
+                <td className="px-3 py-2.5 whitespace-nowrap text-slate-700 font-medium">{s.lastVisitDate}</td>
+                <td className="px-3 py-2.5 text-[11px] font-semibold text-[var(--color-edify-primary)] whitespace-nowrap">
+                  {s.recommendedAction}
                 </td>
               </tr>
             ))}

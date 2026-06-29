@@ -210,6 +210,68 @@ def proposals(principal, limit: int = 10) -> list[dict]:
 def workflow(school_id: str, principal, fy: str | None = None) -> dict:
     """The school improvement journey surface."""
     school = get_one(school_id, principal)
+    
+    # Calculate stage
+    if school.cluster_status != "clustered":
+        stage = "cluster_setup"
+    elif school.current_fy_ssa_status != "done":
+        stage = "ssa_assessment"
+    else:
+        stage = "planning"
+
+    # Calculate steps
+    steps = [
+        {
+            "key": "cluster",
+            "label": "Add to Cluster",
+            "done": school.cluster_status == "clustered",
+            "status": "done" if school.cluster_status == "clustered" else "current",
+        },
+        {
+            "key": "ssa",
+            "label": "School Self-Assessment",
+            "done": school.current_fy_ssa_status == "done",
+            "status": "done" if school.current_fy_ssa_status == "done" else ("current" if school.cluster_status == "clustered" else "pending"),
+        },
+        {
+            "key": "planning",
+            "label": "Plan Support",
+            "done": False,
+            "status": "current" if (school.cluster_status == "clustered" and school.current_fy_ssa_status == "done") else "pending",
+        }
+    ]
+
+    # Calculate nextAction and blockers
+    next_action = None
+    blockers = []
+    if school.cluster_status != "clustered":
+        next_action = {
+            "type": "ADD_TO_CLUSTER",
+            "label": "Add to Cluster",
+            "reason": "School is unclustered — planning is locked until it joins a cluster.",
+        }
+        blockers = ["NO_CLUSTER"]
+    elif school.current_fy_ssa_status != "done":
+        next_action = {
+            "type": "SCHEDULE_SIT",
+            "label": "Activate SSA",
+            "reason": "Clustered, but missing this FY's SSA — schedule/assign the SSA to unlock planning.",
+        }
+        blockers = ["NO_CURRENT_FY_SSA"]
+    else:
+        if school.school_type == "core":
+            next_action = {
+                "type": "PLAN_CORE_PACKAGE",
+                "label": "Plan Core Package",
+                "reason": "Core school with current SSA — plan the next item in its 4-visit + 4-training package.",
+            }
+        else:
+            next_action = {
+                "type": "PLAN_RECOMMENDED",
+                "label": "Plan Recommended Support",
+                "reason": "SSA complete — plan the recommended visit/training for its weakest interventions.",
+            }
+
     return {
         "school": {
             "id": school.id,
@@ -220,8 +282,10 @@ def workflow(school_id: str, principal, fy: str | None = None) -> dict:
             "currentFySsaStatus": school.current_fy_ssa_status,
         },
         "fy": fy,
-        # The full journey (SSA history, activities, budget) is assembled as the
-        # SSA + activities + planning modules land.
+        "stage": stage,
+        "steps": steps,
+        "nextAction": next_action,
+        "blockers": blockers,
         "ssaHistory": [],
         "activities": [],
     }

@@ -1,0 +1,94 @@
+{% extends "layouts/shell.html" %}
+{% load frontend_filters %}
+
+{% block title %}School Directory - Edify Command Center{% endblock %}
+
+{% block shell_content %}
+<div class="p-6 max-w-7xl mx-auto space-y-6">
+  <!-- Page Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-[26px] font-extrabold text-slate-800 tracking-tight font-sans">School Directory</h1>
+      <p class="text-[12.5px] text-[var(--text-secondary)] mt-1 font-semibold">Central source of truth for all operational schools.</p>
+    </div>
+    {% if request.user.active_role in 'Admin,ImpactAssessment' %}
+      <a href="/schools/upload" class="h-10 px-4 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[12.5px] font-extrabold flex items-center justify-center transition-all">
+        Upload Schools/SSA
+      </a>
+    {% endif %}
+  </div>
+
+  <!-- Filter Toolbar (HTMX Bindings) -->
+  <div class="bg-white rounded-2xl border border-[var(--border-card)] p-4 shadow-sm">
+    <form 
+      hx-get="/schools" 
+      hx-target="#schools-table-container" 
+      hx-trigger="change, keyup delay:300ms from:#search-input"
+      class="grid gap-3 sm:grid-cols-2 md:grid-cols-5"
+    >
+      <!-- Search -->
+      <div class="md:col-span-2">
+        <label for="search-input" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Search school name or ID</label>
+        <input 
+          type="text" 
+          name="q" 
+          id="search-input"
+          value="{{ q|default:'' }}"
+          placeholder="Search..."
+          class="w-full h-9 px-3 rounded-lg border border-[var(--color-edify-border)] text-[12px] bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-[var(--color-edify-primary)]/20"
+        >
+      </div>
+
+      <!-- District Filter -->
+      <div>
+        <label for="district-filter" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">District</label>
+        <select 
+          name="district" 
+          id="district-filter"
+          class="w-full h-9 px-2 rounded-lg border border-[var(--color-edify-border)] text-[12px] bg-slate-50 mt-1 focus:outline-none"
+        >
+          <option value="">All Districts</option>
+          {% for d in districts %}
+            <option value="{{ d.id }}" {% if selected_district == d.id|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- School Type Filter -->
+      <div>
+        <label for="type-filter" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">School Type</label>
+        <select 
+          name="school_type" 
+          id="type-filter"
+          class="w-full h-9 px-2 rounded-lg border border-[var(--color-edify-border)] text-[12px] bg-slate-50 mt-1 focus:outline-none"
+        >
+          <option value="">All Types</option>
+          {% for val, label in school_types %}
+            <option value="{{ val }}" {% if selected_type == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Planning Readiness Filter -->
+      <div>
+        <label for="readiness-filter" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Readiness</label>
+        <select 
+          name="readiness" 
+          id="readiness-filter"
+          class="w-full h-9 px-2 rounded-lg border border-[var(--color-edify-border)] text-[12px] bg-slate-50 mt-1 focus:outline-none"
+        >
+          <option value="">All Readiness</option>
+          {% for val, label in readiness_choices %}
+            <option value="{{ val }}" {% if selected_readiness == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </form>
+  </div>
+
+  <!-- Schools Table Container -->
+  <div id="schools-table-container" class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm overflow-hidden">
+    {% include "partials/schools_table.html" %}
+  </div>
+</div>
+{% endblock %}

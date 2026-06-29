@@ -135,7 +135,6 @@ def _workflow_issues() -> dict:
     # ── Staff-ownership integrity checks ─────────────────────────────────────
     from apps.schools.models import School as _School
     from apps.accounts.models import StaffProfile, StaffSetupCandidate, StaffSupervisorAssignment
-    from django.db.models import Count
 
     unmatched_staff_schools = _School.objects.filter(account_owner_status="unmatched").count()
     ambiguous_staff_schools = _School.objects.filter(account_owner_status="ambiguous").count()

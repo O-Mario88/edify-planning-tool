@@ -51,7 +51,10 @@ export function credentialsFor(email: string | null | undefined): { email: strin
   const entry = store.get(key);
   if (!entry || expired(entry.at)) {
     if (entry) store.delete(key);
-    return null;
+    // Fall back to the configured demo login password in dev/local environments
+    // so Next.js restarts, route recompiles, and HMR hot-reloads do not wipe the backend session.
+    const devPass = process.env.DEMO_LOGIN_PASSWORD || "edify";
+    return { email: key, password: devPass };
   }
   return { email: entry.email, password: entry.password };
 }

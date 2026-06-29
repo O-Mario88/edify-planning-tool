@@ -1,0 +1,146 @@
+{% extends "layouts/shell.html" %}
+{% load frontend_filters %}
+
+{% block title %}CCEO Dashboard - Edify Command Center{% endblock %}
+
+{% block shell_content %}
+<div class="p-6 max-w-7xl mx-auto space-y-6">
+  <!-- Header KPI row -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- Overdue Widget -->
+    <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm relative overflow-hidden flex flex-col justify-between min-h-[110px]">
+      <div>
+        <p class="text-[10px] uppercase font-bold tracking-wider text-slate-400">Overdue Activities</p>
+        <h3 class="text-[26px] font-extrabold text-slate-800 tracking-tight mt-1">{{ overdue_activities|length }}</h3>
+      </div>
+      <div class="mt-2 text-[11px] text-slate-500 font-semibold">Scheduled visits past planned date.</div>
+    </div>
+
+    <!-- Missing SSA Widget -->
+    <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm relative overflow-hidden flex flex-col justify-between min-h-[110px]">
+      <div>
+        <p class="text-[10px] uppercase font-bold tracking-wider text-slate-400">Schools missing SSA</p>
+        <h3 class="text-[26px] font-extrabold text-slate-800 tracking-tight mt-1">{{ schools_no_ssa|length }}</h3>
+      </div>
+      <div class="mt-2 text-[11px] text-slate-500 font-semibold">Locked until SSA is completed.</div>
+    </div>
+
+    <!-- Evidence Pending Widget -->
+    <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm relative overflow-hidden flex flex-col justify-between min-h-[110px]">
+      <div>
+        <p class="text-[10px] uppercase font-bold tracking-wider text-slate-400">Evidence Pending</p>
+        <h3 class="text-[26px] font-extrabold text-slate-800 tracking-tight mt-1">{{ evidence_pending|length }}</h3>
+      </div>
+      <div class="mt-2 text-[11px] text-slate-500 font-semibold">Completed visits needing uploads.</div>
+    </div>
+
+    <!-- Pending Confirmation Widget -->
+    <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm relative overflow-hidden flex flex-col justify-between min-h-[110px]">
+      <div>
+        <p class="text-[10px] uppercase font-bold tracking-wider text-slate-400">Advance confirmation</p>
+        <h3 class="text-[26px] font-extrabold text-slate-800 tracking-tight mt-1">{{ pending_advances|length }}</h3>
+      </div>
+      <div class="mt-2 text-[11px] text-slate-500 font-semibold">Awaiting CCEO signature.</div>
+    </div>
+  </div>
+
+  <div class="grid lg:grid-cols-3 gap-6">
+    <!-- Main content: Weekly / Today activities -->
+    <div class="lg:col-span-2 space-y-6">
+      <div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-[var(--color-edify-divider)] flex items-center justify-between">
+          <h2 class="text-[15px] font-extrabold text-slate-800 tracking-tight">Scheduled This Week</h2>
+          <a href="/my-plan" class="text-[11px] font-extrabold text-[var(--color-edify-primary)] hover:underline uppercase tracking-wider">My Plan &rarr;</a>
+        </div>
+        <div class="divide-y divide-[var(--color-edify-divider)]">
+          {% if week_activities %}
+            {% for act in week_activities %}
+              <div class="p-4 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
+                <div class="flex items-center gap-3">
+                  <div class="h-8 w-8 rounded-lg bg-[var(--color-edify-soft)]/50 text-[var(--color-edify-primary)] grid place-items-center">
+                    <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 class="text-[13px] font-bold text-slate-800">{{ act.school.name|default:act.cluster.name }}</h4>
+                    <p class="text-[11px] text-slate-500 font-semibold mt-0.5">{{ act.activity_type|title|replace_underscore }} &bull; {{ act.planned_date }}</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider {% if act.status == 'completed' %}bg-emerald-50 text-emerald-700 border-emerald-200{% else %}bg-amber-50 text-amber-700 border-amber-200{% endif %}">
+                    {{ act.status|title }}
+                  </span>
+                </div>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="p-6 text-center text-slate-400 text-[12.5px] font-semibold">
+              No activities scheduled for this week.
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Overdue Section -->
+      {% if overdue_activities %}
+        <div class="bg-white rounded-2xl border border-rose-200 shadow-sm overflow-hidden">
+          <div class="px-6 py-4 border-b border-rose-100 bg-rose-50/10 flex items-center justify-between">
+            <h2 class="text-[15px] font-extrabold text-rose-800 tracking-tight">Overdue Scheduled Activities</h2>
+          </div>
+          <div class="divide-y divide-rose-100">
+            {% for act in overdue_activities %}
+              <div class="p-4 flex items-center justify-between hover:bg-rose-50/5 transition-colors">
+                <div>
+                  <h4 class="text-[13px] font-bold text-slate-800">{{ act.school.name|default:act.cluster.name }}</h4>
+                  <p class="text-[11px] text-rose-600 font-semibold mt-0.5">Planned for {{ act.planned_date }} (Overdue)</p>
+                </div>
+                <a href="/my-plan" class="h-8 px-3 rounded-lg border border-[var(--color-edify-border)] hover:bg-slate-50 text-[11.5px] font-bold text-slate-600 flex items-center justify-center">
+                  Reschedule
+                </a>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Right Column: Today Alerts & Action Panel -->
+    <div class="space-y-6">
+      <div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm space-y-4">
+        <h2 class="text-[15px] font-extrabold text-slate-800 tracking-tight">Quick Actions</h2>
+        <div class="grid gap-2">
+          <a href="/planning" class="w-full h-10 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[12.5px] font-extrabold flex items-center justify-center transition-all">
+            Open Planning Dashboard
+          </a>
+          <a href="/schools" class="w-full h-10 rounded-lg border border-[var(--color-edify-border)] hover:bg-slate-50 text-slate-600 text-[12.5px] font-bold flex items-center justify-center transition-all">
+            Browse School Directory
+          </a>
+        </div>
+      </div>
+
+      <!-- Attention Items -->
+      {% if today_context.groups %}
+        {% for grp in today_context.groups %}
+          <div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm space-y-4">
+            <h2 class="text-[15px] font-extrabold text-slate-800 tracking-tight">{{ grp.label }}</h2>
+            <div class="space-y-3">
+              {% for item in grp.items %}
+                <div class="p-3 rounded-xl border border-slate-100 bg-slate-50/50 flex flex-col justify-between gap-3">
+                  <div>
+                    <h4 class="text-[12.5px] font-bold text-slate-800">{{ item.title }}</h4>
+                    <p class="text-[11px] text-slate-500 font-semibold mt-0.5 leading-relaxed">{{ item.reason }}</p>
+                  </div>
+                  <a href="{{ item.action.href }}" class="text-[11px] font-extrabold text-[var(--color-edify-primary)] hover:underline uppercase tracking-wider">
+                    {{ item.action.label }} &rarr;
+                  </a>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        {% endfor %}
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

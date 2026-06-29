@@ -1014,10 +1014,107 @@ def recruitment_recommendation(principal, query: dict) -> dict:
     }
 
 
+def activity_impact_report(principal, query: dict) -> list[dict]:
+    from apps.activities.models import Activity
+    from apps.activities.services import calculate_activity_impact
+
+    qs = Activity.objects.filter(
+        status="completed",
+        focus_intervention__isnull=False,
+        deleted_at__isnull=True
+    ).order_by("-planned_date")
+
+    out = []
+    for a in qs[:200]:
+        impact = calculate_activity_impact(a)
+        out.append({
+            "id": a.id,
+            "activityType": a.activity_type,
+            "plannedDate": a.planned_date.isoformat() if a.planned_date else None,
+            "focusIntervention": a.focus_intervention,
+            "schoolName": a.school.name if a.school_id else None,
+            "clusterName": a.cluster.name if a.cluster_id else None,
+            "impact": impact,
+        })
+    return out
+
+
+def school_impact(school_id: str, principal) -> dict:
+    from apps.activities.models import Activity
+    from apps.activities.services import calculate_activity_impact
+    from apps.schools.models import School
+
+    school = School.objects.filter(school_id=school_id, deleted_at__isnull=True).first()
+    if not school:
+        raise NotFoundError("School not found.")
+
+    activities = Activity.objects.filter(
+        school=school,
+        status="completed",
+        deleted_at__isnull=True
+    ).order_by("-planned_date")
+
+    improved_count = 0
+    declined_count = 0
+    no_change_count = 0
+    activities_out = []
+
+    for a in activities:
+        impact = calculate_activity_impact(a)
+        status = impact.get("status")
+        if status == "Improved":
+            improved_count += 1
+        elif status == "Declined":
+            declined_count += 1
+        elif status == "No Change":
+            no_change_count += 1
+
+        activities_out.append({
+            "id": a.id,
+            "activityType": a.activity_type,
+            "plannedDate": a.planned_date.isoformat() if a.planned_date else None,
+            "focusIntervention": a.focus_intervention,
+            "impact": impact,
+        })
+
+    return {
+        "schoolId": school.school_id,
+        "name": school.name,
+        "improvedCount": improved_count,
+        "declinedCount": declined_count,
+        "noChangeCount": no_change_count,
+        "activities": activities_out,
+    }
+
+
+def cluster_impact(cluster_id: str, principal) -> dict:
+    from apps.clusters.services import cluster_activity_impact
+    from apps.clusters.models import Cluster
+
+    cluster = Cluster.objects.filter(id=cluster_id, deleted_at__isnull=True).first()
+    if not cluster:
+        raise NotFoundError("Cluster not found.")
+
+    activities_out = cluster_activity_impact(cluster_id, principal)
+    improved_count = sum(1 for a in activities_out if a.get("impact", {}).get("status") == "Improved")
+    declined_count = sum(1 for a in activities_out if a.get("impact", {}).get("status") == "Declined")
+    no_change_count = sum(1 for a in activities_out if a.get("impact", {}).get("status") == "No Change")
+
+    return {
+        "clusterId": cluster.id,
+        "name": cluster.name,
+        "improvedCount": improved_count,
+        "declinedCount": declined_count,
+        "noChangeCount": no_change_count,
+        "activities": activities_out,
+    }
+
+
 __all__ = [
     "dashboard_summary", "leadership_summary", "district_rollups", "coverage_summary",
     "geo_map_districts", "geo_map_district_detail", "school_directory_summary",
     "ssa_performance", "ssa_performance_grouped", "intervention_improvement",
     "support_ssa_correlation", "staff_vs_partner_correlation", "activity_pipeline",
     "contribution_summary", "recruitment_recommendation",
+    "activity_impact_report", "school_impact", "cluster_impact",
 ]

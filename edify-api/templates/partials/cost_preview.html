@@ -1,0 +1,62 @@
+{% load frontend_filters %}
+
+{% if not success %}
+  <div class="bg-rose-50 border border-rose-200 rounded-xl p-4 text-[12px] font-semibold text-rose-700 space-y-1">
+    <div class="font-extrabold text-[13px]">Preview Error</div>
+    <p>{{ error_msg }}</p>
+  </div>
+{% else %}
+  <div class="space-y-4">
+    <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+      <div>
+        <h4 class="text-[13.5px] font-extrabold text-slate-800">Catalogue Cost Preview</h4>
+        <p class="text-[10.5px] text-slate-400 font-semibold mt-0.5">Version: <span class="font-bold text-slate-600 font-mono">{{ preview.catalogueVersion|default:"None active" }}</span></p>
+      </div>
+      <div class="text-right">
+        <p class="text-[10px] uppercase font-bold text-slate-400">Total Activity Cost</p>
+        <p class="text-[18px] font-extrabold text-[var(--color-edify-primary)] mt-0.5">{{ preview.amount|ugx }}</p>
+      </div>
+    </div>
+
+    <!-- Blockers Warnings -->
+    {% if preview.blockers %}
+      <div class="bg-rose-50 border border-rose-200 rounded-xl p-3 text-[11.5px] font-semibold text-rose-700 space-y-1">
+        <div class="font-extrabold text-[12.5px] uppercase tracking-wider">Costing Blockers</div>
+        <ul class="list-disc list-inside space-y-0.5 font-bold">
+          {% for b in preview.blockers %}
+            <li>{{ b }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    <!-- Itemized Cost Lines -->
+    {% if preview.lines %}
+      <div class="space-y-2.5">
+        <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Itemized Line Items</p>
+        <div class="divide-y divide-slate-100 text-[12px] font-semibold text-slate-700">
+          {% for line in preview.lines %}
+            <div class="py-2 flex justify-between items-center">
+              <div>
+                <p class="font-bold text-slate-800">{{ line.lineItemType|title|replace_underscore }}</p>
+                <p class="text-[10px] text-slate-400 mt-0.5 font-bold">Qty: {{ line.quantity }} &bull; Rate: {{ line.unitCost|ugx }}</p>
+              </div>
+              <span class="font-extrabold text-slate-700">{{ line.total|ugx }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- Status indicator for Schedule button -->
+    {% if preview.canSchedule %}
+      <div class="p-3 bg-emerald-50 text-emerald-800 rounded-xl border border-emerald-200 text-[11.5px] font-bold text-center">
+        &check; Fully costed and ready to schedule.
+      </div>
+    {% else %}
+      <div class="p-3 bg-slate-100 text-slate-500 rounded-xl border border-slate-200 text-[11.5px] font-bold text-center">
+        &#9888; Scheduling is locked due to costing blockers.
+      </div>
+    {% endif %}
+  </div>
+{% endif %}

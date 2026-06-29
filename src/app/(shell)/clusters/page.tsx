@@ -1,4 +1,5 @@
 import Link from "next/link";
+export const dynamic = "force-dynamic";
 import { Network, BarChart3, History, ShieldCheck, FileText, Building2 } from "lucide-react";
 import { EntityIndex } from "@/components/shell/EntityIndex";
 import { UnclusteredSchoolsBanner } from "@/components/planning/UnclusteredSchoolsBanner";

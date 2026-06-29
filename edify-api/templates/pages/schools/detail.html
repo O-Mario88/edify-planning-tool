@@ -1,0 +1,200 @@
+{% extends "layouts/shell.html" %}
+{% load frontend_filters %}
+
+{% block title %}{{ school.name }} - School 360{% endblock %}
+
+{% block shell_content %}
+<div class="p-6 max-w-7xl mx-auto space-y-6">
+  <!-- Back navigation and Header -->
+  <div>
+    <a href="/schools" class="text-[11px] font-extrabold text-[var(--color-edify-primary)] hover:underline uppercase tracking-wider">&larr; Back to School Directory</a>
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-2">
+      <div>
+        <h1 class="text-[26px] font-extrabold text-slate-800 tracking-tight">{{ school.name }}</h1>
+        <p class="text-[12.5px] text-[var(--text-secondary)] mt-0.5 font-semibold">School ID: <span class="font-mono text-slate-600 font-bold">{{ school.school_id }}</span></p>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider {% if school.planning_readiness == 'ready' %}bg-emerald-50 text-emerald-700 border border-emerald-200{% elif school.planning_readiness == 'limited' %}bg-amber-50 text-amber-700 border border-amber-200{% else %}bg-slate-100 text-slate-500{% endif %}">
+          Readiness: {{ school.get_planning_readiness_display }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid lg:grid-cols-3 gap-6">
+    <!-- Left Column: School Profile & Activities -->
+    <div class="lg:col-span-2 space-y-6">
+      <!-- School Information Card -->
+      <div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm space-y-6">
+        <h3 class="text-[15px] font-extrabold text-slate-800 border-b border-slate-100 pb-3">School Demographics &amp; Assignment</h3>
+        <div class="grid grid-cols-2 gap-y-4 gap-x-6 text-[12.5px]">
+          <div>
+            <p class="text-[10px] uppercase font-bold text-slate-400">Region</p>
+            <p class="font-semibold text-slate-800 mt-0.5">{{ school.region.name }}</p>
+          </div>
+          <div>
+            <p class="text-[10px] uppercase font-bold text-slate-400">District</p>
+            <p class="font-semibold text-slate-800 mt-0.5">{{ school.district.name }}</p>
+          </div>
+          <div>
+            <p class="text-[10px] uppercase font-bold text-slate-400">Sub-county</p>
+            <p class="font-semibold text-slate-800 mt-0.5">{{ school.sub_county.name|default:"Not specified" }}</p>
+          </div>
+          <div>
+            <p class="text-[10px] uppercase font-bold text-slate-400">Parish</p>
+            <p class="font-semibold text-slate-800 mt-0.5">{{ school.parish.name|default:"Not specified" }}</p>
+          </div>
+          <div>
+            <p class="text-[10px] uppercase font-bold text-slate-400">School Type</p>
+            <p class="font-semibold text-slate-800 mt-0.5">{{ school.get_school_type_display }}</p>
+          </div>
+          <div>
+            <p class="text-[10px] uppercase font-bold text-slate-400">Assigned Staff</p>
+            <p class="font-extrabold text-[var(--color-edify-primary)] mt-0.5">{{ school.assigned_staff }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- SSA Intervention Impact Tracking -->
+      <div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-[var(--color-edify-divider)] flex items-center justify-between">
+          <h3 class="text-[15px] font-extrabold text-slate-800 tracking-tight">Intervention Impact Timeline</h3>
+          <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold bg-slate-100 text-slate-600">
+            Improved: {{ impact_data.improvedCount }}
+          </span>
+        </div>
+        
+        <div class="p-6 space-y-6">
+          {% if impact_data.activities %}
+            <div class="relative pl-6 border-l border-slate-100 space-y-6">
+              {% for act in impact_data.activities %}
+                <div class="relative">
+                  <!-- Bullet point on timeline -->
+                  <div class="absolute -left-[30px] top-1 h-4.5 w-4.5 rounded-full border-4 border-white bg-slate-300 {% if act.impact.status == 'Improved' %}bg-emerald-500{% elif act.impact.status == 'Declined' %}bg-rose-500{% endif %}"></div>
+                  
+                  <div class="bg-slate-50/50 rounded-xl border border-slate-100 p-4 space-y-3">
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <h4 class="text-[13px] font-extrabold text-slate-800">{{ act.activityType|title|replace_underscore }}</h4>
+                        <p class="text-[11px] text-slate-400 font-semibold mt-0.5">Focus: {{ act.focusIntervention|title|replace_underscore }} &bull; Completed: {{ act.plannedDate }}</p>
+                      </div>
+                      <span class="inline-flex items-center rounded px-2 py-0.5 text-[10px] font-extrabold {% if act.impact.status == 'Improved' %}bg-emerald-50 text-emerald-700{% elif act.impact.status == 'Declined' %}bg-rose-50 text-rose-700{% else %}bg-slate-100 text-slate-600{% endif %}">
+                        {{ act.impact.status }}
+                      </span>
+                    </div>
+
+                    <!-- Impact details row -->
+                    <div class="grid grid-cols-3 gap-4 border-t border-slate-100/50 pt-2 text-center text-[12px]">
+                      <div>
+                        <p class="text-[10px] uppercase font-bold text-slate-400">Pre-Score</p>
+                        <p class="font-extrabold text-slate-700 mt-0.5">{{ act.impact.pre_score|default:"-" }}</p>
+                      </div>
+                      <div>
+                        <p class="text-[10px] uppercase font-bold text-slate-400">Post-Score</p>
+                        <p class="font-extrabold text-slate-700 mt-0.5">{{ act.impact.post_score|default:"-" }}</p>
+                      </div>
+                      <div>
+                        <p class="text-[10px] uppercase font-bold text-slate-400">Delta</p>
+                        <p class="font-extrabold mt-0.5 {% if act.impact.delta > 0 %}text-emerald-600{% elif act.impact.delta < 0 %}text-rose-600{% else %}text-slate-500{% endif %}">
+                          {% if act.impact.delta > 0 %}+{% endif %}{{ act.impact.delta|default:"-" }}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="text-center text-slate-400 text-[12.5px] font-semibold py-4">No completed intervention visits found for this school.</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Activities History -->
+      <div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-[var(--color-edify-divider)]">
+          <h3 class="text-[15px] font-extrabold text-slate-800 tracking-tight">Recent Field Work</h3>
+        </div>
+        <div class="divide-y divide-[var(--color-edify-divider)] text-[12.5px]">
+          {% if activities %}
+            {% for act in activities %}
+              <div class="p-4 flex justify-between hover:bg-slate-50/50 transition-colors">
+                <div>
+                  <h4 class="font-extrabold text-slate-800">{{ act.activity_type|title|replace_underscore }}</h4>
+                  <p class="text-[11px] text-slate-500 mt-0.5 font-semibold">Planned for {{ act.planned_date }} &bull; Staff: {{ act.responsible_staff.name }}</p>
+                  {% if act.activity_purpose_text %}
+                    <p class="text-[11.5px] text-slate-400 mt-1 italic leading-normal">"{{ act.activity_purpose_text }}"</p>
+                  {% endif %}
+                </div>
+                <div class="text-right">
+                  <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[9.5px] font-extrabold uppercase tracking-wider {% if act.status == 'completed' or act.status == 'ia_verified' %}bg-emerald-50 text-emerald-700{% else %}bg-slate-100 text-slate-600{% endif %}">
+                    {{ act.status }}
+                  </span>
+                </div>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="p-8 text-center text-slate-400 font-semibold">No planned or completed activities recorded.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: SSA Assessment scores -->
+    <div class="space-y-6">
+      <!-- Latest SSA Scorecard -->
+      <div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm space-y-4">
+        <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+          <div>
+            <h3 class="text-[15px] font-extrabold text-slate-800">Current SSA Assessment</h3>
+            <p class="text-[11px] text-slate-400 font-semibold mt-0.5">FY: {{ latest_ssa.fy }} &bull; Q: {{ latest_ssa.quarter }}</p>
+          </div>
+          <div class="text-right">
+            <p class="text-[10px] uppercase font-bold text-slate-400">Average</p>
+            <p class="text-[20px] font-extrabold text-slate-800 mt-0.5">{{ latest_ssa.average_score|floatformat:1|default:"-" }}</p>
+          </div>
+        </div>
+
+        {% if ssa_scores %}
+          <div class="space-y-3">
+            {% for sc in ssa_scores %}
+              <div>
+                <div class="flex items-center justify-between text-[11.5px] font-semibold text-slate-700">
+                  <span class="truncate">{{ sc.get_intervention_display }}</span>
+                  <span class="font-extrabold">{{ sc.score }}</span>
+                </div>
+                <!-- Progress bar -->
+                <div class="h-1.5 w-full bg-slate-100 rounded-full mt-1 overflow-hidden">
+                  <div class="h-full bg-[var(--color-edify-primary)] rounded-full" style="width: {{ sc.score|multiply:10 }}%"></div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-[11.5px] text-slate-400 font-semibold py-2">No SSA assessment recorded for this school in the current FY.</p>
+        {% endif %}
+      </div>
+
+      <!-- Historical Assessments -->
+      {% if historical_ssas %}
+        <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm space-y-4">
+          <h3 class="text-[15px] font-extrabold text-slate-800">Historical Averages</h3>
+          <div class="space-y-2.5">
+            {% for h_ssa in historical_ssas %}
+              <div class="flex items-center justify-between text-[12.5px]">
+                <div>
+                  <p class="font-bold text-slate-700">SSA Date: {{ h_ssa.date_of_ssa|date:"Y-m-d" }}</p>
+                  <p class="text-[10px] text-slate-400 font-semibold mt-0.5">FY{{ h_ssa.fy }} &bull; Quarter {{ h_ssa.quarter }}</p>
+                </div>
+                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-bold bg-slate-50 text-slate-700 border border-slate-200">
+                  {{ h_ssa.average_score|floatformat:1 }}
+                </span>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

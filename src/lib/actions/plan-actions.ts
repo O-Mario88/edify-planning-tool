@@ -15,7 +15,7 @@ import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/auth";
 import { emitAudit, emitNotification, emitNotificationFanOut } from "./audit";
 import { isBackendEnabled, type BackendUser } from "@/lib/api/backend";
-import { backendCreatePlan, backendAddPlanActivity, backendPlanAction, type BePlanActivity } from "@/lib/api/surfaces";
+import { backendCreatePlan, backendAddPlanActivity, backendPlanAction, type BePlanActivity, fetchPlans, type BeMonthlyPlan } from "@/lib/api/surfaces";
 
 const bePlanUser = (u: { email: string; role: string }): BackendUser => ({ email: u.email, role: u.role });
 // FE DraftActivity → backend plan-activity body.
@@ -720,5 +720,43 @@ function revalidatePlanSurfaces(planId?: string) {
     revalidatePath("/notifications");
   } catch {
     /* outside request context */
+  }
+}
+
+export async function getTeamPlansForApproval(): Promise<{ ok: boolean; plans?: BeMonthlyPlan[]; error?: string }> {
+  const user = await getCurrentUser();
+  if (isBackendEnabled()) {
+    const res = await fetchPlans(bePlanUser(user), { supervised: "true", status: "submitted" });
+    if (res.live) {
+      return { ok: true, plans: res.data };
+    }
+    return { ok: false, error: res.error ?? "Failed to fetch plans" };
+  } else {
+    // Return mock data for plans with status SubmittedForApproval
+    const mockPlans = plansStore()
+      .filter((p) => p.status === "SubmittedForApproval")
+      .map((p) => {
+        return {
+          id: p.id,
+          monthIso: p.monthIso,
+          ownerStaffId: p.authorId ?? "",
+          ownerName: p.authorName,
+          status: p.status,
+          totalCostCents: p.totalCostCents,
+          submittedAt: p.submittedAt,
+          activities: activitiesStore()
+            .filter((a) => a.planId === p.id)
+            .map((a) => ({
+              id: a.id,
+              kind: a.kind,
+              title: a.title,
+              weekOfMonth: a.weekOfMonth,
+              schoolId: a.schoolId,
+              estCostCents: a.estCostCents,
+              status: a.status,
+            })),
+        };
+      });
+    return { ok: true, plans: mockPlans };
   }
 }

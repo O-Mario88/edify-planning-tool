@@ -1,0 +1,42 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Dashboard - Edify Command Center{% endblock %}
+
+{% block shell_content %}
+<div class="p-6 max-w-7xl mx-auto space-y-6">
+  <!-- Welcome banner -->
+  <div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm flex items-center justify-between">
+    <div>
+      <h1 class="text-[26px] font-extrabold text-slate-800 tracking-tight">Welcome, {{ request.user.name }}</h1>
+      <p class="text-[12.5px] text-[var(--text-secondary)] mt-1 font-semibold">Logged in as {{ request.user.active_role }}. Use the role switcher to switch contexts if available.</p>
+    </div>
+  </div>
+
+  <!-- Critical Alerts Section -->
+  {% if alerts %}
+    <div class="space-y-3">
+      <h2 class="text-[15px] font-extrabold text-slate-700 tracking-tight">Attention Required</h2>
+      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {% for a in alerts %}
+          <div class="bg-white rounded-xl border p-4 shadow-sm relative overflow-hidden flex flex-col justify-between min-h-[140px] {% if a.severity == 'urgent' %}border-rose-200 bg-rose-50/10{% elif a.severity == 'high' %}border-amber-200 bg-amber-50/10{% else %}border-[var(--border-card)]{% endif %}">
+            <div>
+              <div class="flex items-center justify-between">
+                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider {% if a.severity == 'urgent' %}bg-rose-100 text-rose-700{% elif a.severity == 'high' %}bg-amber-100 text-amber-700{% else %}bg-slate-100 text-slate-700{% endif %}">
+                  {{ a.severity }}
+                </span>
+              </div>
+              <h3 class="text-[13.5px] font-bold text-slate-800 mt-2 truncate">{{ a.title }}</h3>
+              <p class="text-[11.5px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">{{ a.body }}</p>
+            </div>
+            {% if a.targetRoute %}
+              <div class="mt-4 pt-3 border-t border-slate-100 flex justify-end">
+                <a href="{{ a.targetRoute }}" class="text-[11px] font-extrabold text-[var(--color-edify-primary)] hover:underline uppercase tracking-wider">Take Action &rarr;</a>
+              </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

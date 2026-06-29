@@ -19,6 +19,18 @@ urlpatterns = [
     path("advances/<str:advance_id>/account-approve", views.AdvanceAccountApproveView.as_view(), name="advance-account-approve"),
     path("advances/<str:advance_id>/submit-reimbursement", views.AdvanceReimburseSubmitView.as_view(), name="advance-reimburse-submit"),
     path("advances/<str:advance_id>/reimburse", views.AdvanceReimburseView.as_view(), name="advance-reimburse"),
+    # Weekly fund request routes (must be declared before parametrized request_id)
+    path("weekly/generate", views.WeeklyGenerateView.as_view(), name="weekly-generate"),
+    path("weekly", views.WeeklyRequestListView.as_view(), name="weekly-list"),
+    path("weekly/<str:request_id>", views.WeeklyRequestDetailView.as_view(), name="weekly-detail"),
+    path("weekly/<str:request_id>/request-advance", views.WeeklyRequestConfirmView.as_view(), name="weekly-request-advance"),
+    path("weekly/<str:request_id>/self-funded", views.WeeklyRequestSelfFundedView.as_view(), name="weekly-self-funded"),
+    path("weekly/<str:request_id>/not-requested", views.WeeklyRequestNotRequestedView.as_view(), name="weekly-not-requested"),
+    path("weekly/<str:request_id>/disburse", views.WeeklyRequestDisburseView.as_view(), name="weekly-disburse"),
+    # Direct weekly request confirm routes (without weekly/ prefix)
+    path("<str:request_id>/request-advance", views.WeeklyRequestConfirmView.as_view(), name="weekly-request-advance-direct"),
+    path("<str:request_id>/self-funded", views.WeeklyRequestSelfFundedView.as_view(), name="weekly-self-funded-direct"),
+    path("<str:request_id>/not-requested", views.WeeklyRequestNotRequestedView.as_view(), name="weekly-not-requested-direct"),
     # Then the parametrized fund-request routes.
     path("<str:request_id>", views.FundRequestDetailView.as_view(), name="detail"),
     path("<str:request_id>/approve", views.ApproveView.as_view(), name="approve"),

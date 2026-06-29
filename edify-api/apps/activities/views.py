@@ -80,3 +80,41 @@ class ActivityClearPaymentView(APIView):
 
     def post(self, request: Request, activity_id: str) -> Response:
         return Response(services.clear_payment(activity_id, request.user))
+
+
+class ScheduleSchoolVisitView(APIView):
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = ASSIGN
+
+    def post(self, request: Request) -> Response:
+        from apps.planning.services import schedule_school_visit
+        return Response(schedule_school_visit(request.data, request.user), status=201)
+
+
+class ScheduleClusterActivityView(APIView):
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = ASSIGN
+
+    def post(self, request: Request) -> Response:
+        from apps.planning.services import schedule_cluster_activity
+        return Response(schedule_cluster_activity(request.data, request.user), status=201)
+
+
+class SchedulePartnerVisitView(APIView):
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = ASSIGN
+
+    def post(self, request: Request) -> Response:
+        from apps.planning.services import assign_school_visit_to_partner
+        return Response(assign_school_visit_to_partner(request.data, request.user), status=201)
+
+
+class ActivityDetailView(APIView):
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = PLANNING_VIEW
+
+    def get(self, request: Request, activity_id: str) -> Response:
+        return Response(services.get_activity(activity_id, request.user))
+
+    def patch(self, request: Request, activity_id: str) -> Response:
+        return Response(services.patch_activity(activity_id, request.data, request.user))

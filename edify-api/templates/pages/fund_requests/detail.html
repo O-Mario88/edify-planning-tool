@@ -1,0 +1,146 @@
+{% extends "layouts/shell.html" %}
+{% load frontend_filters %}
+
+{% block title %}Weekly Request details - Edify Command Center{% endblock %}
+
+{% block shell_content %}
+<div class="p-6 max-w-5xl mx-auto space-y-6">
+  <!-- Back Nav & Header -->
+  <div>
+    <a href="/fund-requests/weekly" class="text-[11px] font-extrabold text-[var(--color-edify-primary)] hover:underline uppercase tracking-wider">&larr; Back to Weekly Requests</a>
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-2">
+      <div>
+        <h1 class="text-[24px] font-extrabold text-slate-800 tracking-tight">Request Details</h1>
+        <p class="text-[12.5px] text-[var(--text-secondary)] mt-0.5 font-semibold">
+          Week: {{ req.weekStartDate }} to {{ req.weekEndDate }} &bull; Owner: <span class="font-extrabold text-slate-700">{{ req.responsibleUser }}</span>
+        </p>
+      </div>
+      <span class="inline-flex items-center rounded-full px-3 py-0.5 text-[11px] font-bold uppercase tracking-wider {% if req.status == 'disbursed' %}bg-emerald-50 text-emerald-700 border border-emerald-200{% elif req.status == 'confirmed_for_advance' %}bg-indigo-50 text-indigo-700 border border-indigo-200{% else %}bg-slate-100 text-slate-600{% endif %}">
+        {{ req.status|replace_underscore }}
+      </span>
+    </div>
+  </div>
+
+  <div class="grid md:grid-cols-3 gap-6 items-start">
+    <!-- Main Itemized Lines -->
+    <div class="md:col-span-2 space-y-6">
+      <div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-[var(--color-edify-divider)] bg-slate-50/50">
+          <h3 class="text-[14px] font-extrabold text-slate-800 uppercase tracking-wider">Itemized Line Items</h3>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-[12px] font-sans border-collapse">
+            <thead>
+              <tr class="bg-slate-50/30 border-b border-[var(--color-edify-divider)] text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                <th class="px-4 py-2.5">Line Type</th>
+                <th class="px-4 py-2.5">Description</th>
+                <th class="px-4 py-2.5">Qty</th>
+                <th class="px-4 py-2.5">Rate</th>
+                <th class="px-4 py-2.5 text-right">Total</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-[var(--color-edify-divider)]">
+              {% if req.lines %}
+                {% for line in req.lines %}
+                  <tr class="hover:bg-slate-50/20">
+                    <td class="px-4 py-3 font-bold text-slate-800">{{ line.line_item_type|title|replace_underscore }}</td>
+                    <td class="px-4 py-3 text-slate-500 font-semibold leading-normal">{{ line.description }}</td>
+                    <td class="px-4 py-3 font-bold text-slate-600">{{ line.quantity }}</td>
+                    <td class="px-4 py-3 text-slate-500">{{ line.unit_cost|ugx }}</td>
+                    <td class="px-4 py-3 text-right font-extrabold text-slate-800">{{ line.total_cost|ugx }}</td>
+                  </tr>
+                {% endfor %}
+              {% else %}
+                <tr>
+                  <td colspan="5" class="px-4 py-8 text-center text-slate-400 font-semibold">No lines generated for this weekly request.</td>
+                </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions Sidebar Panel -->
+    <div class="space-y-6">
+      <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm space-y-4">
+        <div>
+          <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Total Request Amount</p>
+          <p class="text-[24px] font-extrabold text-[var(--color-edify-primary)] mt-0.5">{{ req.totalAmount|ugx }}</p>
+        </div>
+
+        <!-- Confirm action (CCEO / Owner) -->
+        {% if req.status == 'pending_responsible_confirmation' or req.status == 'not_requested' %}
+          <form method="POST" action="/fund-requests/weekly/{{ req.id }}/confirm" class="pt-3 border-t border-slate-100">
+            {% csrf_token %}
+            <button 
+              type="submit" 
+              class="w-full h-10 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[12px] font-extrabold transition-colors flex items-center justify-center"
+            >
+              Confirm &amp; Request Advance
+            </button>
+            <p class="text-[10.5px] text-slate-400 font-semibold text-center mt-2 leading-normal">
+              Confirming routes this request to the accountant queue for disbursement.
+            </p>
+          </form>
+        {% endif %}
+
+        <!-- Disburse action (Accountant) -->
+        {% if req.status == 'confirmed_for_advance' and request.user.active_role == 'ProgramAccountant' %}
+          <form method="POST" action="/fund-requests/weekly/{{ req.id }}/disburse" class="pt-3 border-t border-slate-100 space-y-3">
+            {% csrf_token %}
+            <div class="space-y-2">
+              <h4 class="text-[12px] font-extrabold text-slate-800">Process Disbursement</h4>
+              
+              <div>
+                <label for="amount" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Disbursed Amount (UGX)</label>
+                <input 
+                  type="number" 
+                  name="amount" 
+                  id="amount"
+                  value="{{ req.totalAmount }}"
+                  required
+                  class="w-full h-9 px-2 rounded-lg border border-slate-200 text-[12px] mt-1 bg-slate-50"
+                >
+              </div>
+
+              <div>
+                <label for="method" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Payment Method</label>
+                <select 
+                  name="method" 
+                  id="method"
+                  class="w-full h-9 px-2 rounded-lg border border-slate-200 text-[12px] mt-1 bg-slate-50"
+                >
+                  <option value="mobile_money">Mobile Money</option>
+                  <option value="bank_transfer">Bank Transfer</option>
+                  <option value="cheque">Cheque</option>
+                  <option value="cash">Cash / Petty Cash</option>
+                </select>
+              </div>
+
+              <div>
+                <label for="reference" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Reference / Txn Code</label>
+                <input 
+                  type="text" 
+                  name="reference" 
+                  id="reference"
+                  placeholder="e.g. TXN-998877"
+                  required
+                  class="w-full h-9 px-2 rounded-lg border border-slate-200 text-[12px] mt-1 bg-slate-50"
+                >
+              </div>
+            </div>
+
+            <button 
+              type="submit" 
+              class="w-full h-10 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-extrabold transition-colors flex items-center justify-center"
+            >
+              Disburse Funds
+            </button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

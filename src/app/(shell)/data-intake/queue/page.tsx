@@ -10,7 +10,19 @@ import { ProductiveEmptyState } from "@/components/ui/ProductiveEmptyState";
 import { cn } from "@/lib/utils";
 import { getCurrentUser } from "@/lib/auth";
 import { fetchBackendUploadBatches, type BeUploadBatch } from "@/lib/api/surfaces";
-import { mapBackendStatusToFrontend } from "@/lib/data-intake-actions";
+
+function mapBackendStatusToFrontend(status: string): DataImportBatch["status"] {
+  switch (status?.toLowerCase()) {
+    case "uploaded": return "Uploaded";
+    case "validated": return "Validated";
+    case "imported": return "Imported";
+    case "rejected": return "Rejected";
+    case "completed": return "Validated";
+    case "completed_with_errors": return "Needs Correction";
+    case "failed": return "Needs Correction";
+    default: return "Uploaded";
+  }
+}
 
 const STATUS_TONE = {
   "Uploaded":            "bg-slate-100   text-slate-700",

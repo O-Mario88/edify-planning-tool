@@ -1,5 +1,5 @@
 import { SchoolsHeader } from "@/components/schools/SchoolsHeader";
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 import { DirectoryKpiStrip } from "@/components/schools/DirectoryKpiStrip";
 import { PlanningReviewSignals } from "@/components/schools/PlanningReviewSignals";
 import { SchoolQuickActions } from "@/components/schools/SchoolQuickActions";

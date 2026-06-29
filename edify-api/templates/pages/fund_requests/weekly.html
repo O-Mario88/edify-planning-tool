@@ -1,0 +1,62 @@
+{% extends "layouts/shell.html" %}
+{% load frontend_filters %}
+
+{% block title %}Weekly Fund Requests - Edify Command Center{% endblock %}
+
+{% block shell_content %}
+<div class="p-6 max-w-7xl mx-auto space-y-6">
+  <!-- Page Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-[26px] font-extrabold text-slate-800 tracking-tight">Weekly Fund Requests</h1>
+      <p class="text-[12.5px] text-[var(--text-secondary)] mt-0.5 font-semibold">
+        Track weekly rollups of scheduled field work, route confirmations, and disburse advances.
+      </p>
+    </div>
+  </div>
+
+  <!-- Requests list table -->
+  <div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse text-[12.5px] font-sans">
+        <thead>
+          <tr class="bg-slate-50 border-b border-[var(--color-edify-divider)] text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+            <th class="px-6 py-3">Week Start</th>
+            <th class="px-6 py-3">Week End</th>
+            <th class="px-6 py-3">Responsible Owner</th>
+            <th class="px-6 py-3">Total Amount</th>
+            <th class="px-6 py-3">Status</th>
+            <th class="px-6 py-3 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-[var(--color-edify-divider)]">
+          {% if requests %}
+            {% for r in requests %}
+              <tr class="hover:bg-slate-50/50 transition-colors">
+                <td class="px-6 py-3.5 font-bold text-slate-800">{{ r.weekStartDate }}</td>
+                <td class="px-6 py-3.5 font-semibold text-slate-500">{{ r.weekEndDate }}</td>
+                <td class="px-6 py-3.5 font-bold text-[var(--color-edify-primary)]">{{ r.responsibleUser }}</td>
+                <td class="px-6 py-3.5 font-extrabold text-slate-800">{{ r.totalAmount|ugx }}</td>
+                <td class="px-6 py-3.5">
+                  <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider {% if r.status == 'disbursed' %}bg-emerald-50 text-emerald-700{% elif r.status == 'confirmed_for_advance' %}bg-indigo-50 text-indigo-700{% else %}bg-slate-100 text-slate-600{% endif %}">
+                    {{ r.status|replace_underscore }}
+                  </span>
+                </td>
+                <td class="px-6 py-3.5 text-right font-extrabold">
+                  <a href="/fund-requests/weekly/{{ r.id }}" class="text-[11.5px] font-bold text-[var(--color-edify-primary)] hover:underline">View details &rarr;</a>
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="6" class="px-6 py-12 text-center text-slate-400 font-semibold">
+                No weekly fund requests have been generated yet.
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

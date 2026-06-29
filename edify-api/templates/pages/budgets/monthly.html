@@ -1,0 +1,91 @@
+{% extends "layouts/shell.html" %}
+{% load frontend_filters %}
+
+{% block title %}Monthly Budget - Edify Command Center{% endblock %}
+
+{% block shell_content %}
+<div class="p-6 max-w-7xl mx-auto space-y-6">
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-[26px] font-extrabold text-slate-800 tracking-tight">Program Budget Board</h1>
+      <p class="text-[12.5px] text-[var(--text-secondary)] mt-0.5 font-semibold">
+        Aggregated program activity budgets for the current fiscal year (FY{{ fy }}).
+      </p>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm">
+      <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">This Week's Budget</p>
+      <p class="text-[22px] font-extrabold text-slate-800 mt-1">{{ board.this_week_total|ugx }}</p>
+    </div>
+    <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm">
+      <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">This Month's Budget</p>
+      <p class="text-[22px] font-extrabold text-slate-800 mt-1">{{ board.this_month_total|ugx }}</p>
+    </div>
+    <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm">
+      <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">This Quarter's Budget</p>
+      <p class="text-[22px] font-extrabold text-slate-800 mt-1">{{ board.this_quarter_total|ugx }}</p>
+    </div>
+    <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm">
+      <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Annual FY Total</p>
+      <p class="text-[22px] font-extrabold text-[var(--color-edify-primary)] mt-1">{{ board.total_fy|ugx }}</p>
+    </div>
+  </div>
+
+  <!-- Budget Breakdown by Category -->
+  <div class="space-y-6">
+    <h2 class="text-[18px] font-extrabold text-slate-800 tracking-tight">Category Breakdown &amp; Scheduled Activities</h2>
+
+    {% if board.category_groups %}
+      {% for cat, items in board.category_groups.items %}
+        <div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm overflow-hidden">
+          <!-- Category Header -->
+          <div class="px-6 py-4 border-b border-[var(--color-edify-divider)] bg-slate-50/50 flex items-center justify-between">
+            <h3 class="text-[14px] font-extrabold text-slate-800 uppercase tracking-wider">{{ cat }}</h3>
+            <span class="text-[12px] font-extrabold text-slate-600">Total: {{ board.category_data|lookup:cat|ugx }}</span>
+          </div>
+
+          <!-- Items Table -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-[12px] font-sans border-collapse">
+              <thead>
+                <tr class="bg-slate-50/30 border-b border-[var(--color-edify-divider)] text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  <th class="px-6 py-2.5">#</th>
+                  <th class="px-6 py-2.5">Activity Description</th>
+                  <th class="px-6 py-2.5">Target Schools</th>
+                  <th class="px-6 py-2.5">Responsible Staff</th>
+                  <th class="px-6 py-2.5 text-right">Cost</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-[var(--color-edify-divider)]">
+                {% for item in items %}
+                  <tr class="hover:bg-slate-50/30">
+                    <td class="px-6 py-3 text-slate-400 font-bold">#{{ item.index }}</td>
+                    <td class="px-6 py-3 font-extrabold text-slate-800">{{ item.activity }}</td>
+                    <td class="px-6 py-3 text-slate-500 font-semibold">{{ item.schoolCount }} School(s)</td>
+                    <td class="px-6 py-3 font-semibold text-slate-700">{{ item.responsible }}</td>
+                    <td class="px-6 py-3 text-right font-extrabold text-slate-800">
+                      {% if item.costMissing %}
+                        <span class="text-rose-600 font-bold">Catalogue rate error</span>
+                      {% else %}
+                        {{ item.total|ugx }}
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="bg-white rounded-2xl border border-[var(--border-card)] p-12 text-center text-slate-400 font-semibold">
+        No scheduled activities in the budget system for this FY.
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

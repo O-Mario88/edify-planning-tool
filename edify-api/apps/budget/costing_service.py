@@ -59,6 +59,14 @@ _KEY_LABEL = {
     "partner_visit_lump_sum": "Partner visit rate",
     "partner_training_lump_sum": "Partner training/facilitation rate",
     "project_partner_lump_sum": "Project partner rate",
+    "school_visit_cost_per_school": "School visit cost per school",
+    "school_visit_cost_per_school_primary": "School visit cost per school (primary)",
+    "school_visit_cost_per_school_secondary": "School visit cost per school (secondary)",
+    "group_training_participant_meal_cost_per_head": "Group training participant meal cost per head",
+    "group_training_venue_cost": "Group training venue cost",
+    "group_training_facilitation_fee": "Group training facilitation fee",
+    "cluster_meeting_participant_meal_cost_per_head": "Cluster meeting participant meal cost per head",
+    "partner_visit_rate": "Partner visit rate",
 }
 
 
@@ -102,16 +110,39 @@ def assert_schedulable(input: dict) -> None:
     """Raise BadRequest if the activity cannot be costed (missing rate / no
     catalogue / invalid participants). Called by every scheduling path BEFORE
     persisting, so no activity is ever created with a fake or missing cost."""
-    # Participants required for participant-driven activities.
+    # Check scheduled date is present
+    scheduled_date_raw = input.get("scheduledDate")
+    if not scheduled_date_raw:
+        raise BadRequest("Scheduled date is required.")
+
+    # Check fiscal year can be calculated
+    from apps.core.fy import get_operational_fy
+    from datetime import datetime
+    try:
+        dt = datetime.fromisoformat(str(scheduled_date_raw).replace("Z", "+00:00"))
+        fy = get_operational_fy(dt)
+        if not fy:
+            raise ValueError()
+    except Exception as exc:
+        raise BadRequest("Fiscal year cannot be calculated from scheduled date.") from exc
+
     activity_type = input.get("activityType", "")
-    is_training_like = activity_type in {
-        "training", "school_improvement_training", "cluster_training", "core_training", "cluster_meeting",
+    is_training = activity_type in {
+        "training", "school_improvement_training", "cluster_training", "core_training",
     }
+    is_cluster_meeting = activity_type == "cluster_meeting"
+    is_training_like = is_training or is_cluster_meeting
+
     if is_training_like:
-        expected = input.get("expectedParticipants") or 0
-        attended = (input.get("teachersAttended") or 0) + (input.get("leadersAttended") or 0) + (input.get("otherParticipants") or 0)
-        if expected <= 0 and attended <= 0:
-            raise BadRequest(f"Participant count is required for {activity_type.replace('_', ' ').title()}.")
+        expected = input.get("expectedParticipants")
+        if expected is None:
+            raise BadRequest("Participant count is required.")
+        try:
+            expected_int = int(expected)
+            if expected_int <= 0:
+                raise ValueError()
+        except ValueError:
+            raise BadRequest("Participant count must be greater than zero.")
 
     result = preview(input)
     if result["blockers"]:
@@ -133,6 +164,18 @@ def _serialize_line(line: CostLine) -> dict:
 def _line_item_type(key: str) -> str:
     """A stable line-item category (transport / lunch / venue / facilitation /
     participant_meals / lump_sum …) for itemized budget reporting."""
+    if "school_visit_cost_per_school" in key:
+        return "school_visit"
+    if key == "group_training_participant_meal_cost_per_head":
+        return "participant_meals"
+    if key == "group_training_venue_cost":
+        return "venue"
+    if key == "group_training_facilitation_fee":
+        return "facilitation"
+    if key == "cluster_meeting_participant_meal_cost_per_head":
+        return "cluster_meeting_participant_meals"
+    if key == "partner_visit_rate":
+        return "partner_visit"
     if "transport" in key:
         return "transport"
     if key in ("breakfast", "lunch", "dinner", "accommodation"):
@@ -175,6 +218,36 @@ def apply_to_activity(activity: Activity, input: dict, responsible_user_id: str 
     catalogue_id = catalogue.id if catalogue else None
     catalogue_version = catalogue.version if catalogue else None
 
+    # Determine planned_date, week_start_date, week_end_date, month, quarter, fiscal_year
+    from datetime import timedelta
+    from apps.core.fy import get_operational_fy, get_quarter_for_date
+
+    scheduled_date = activity.scheduled_date
+    planned_date = None
+    week_start = None
+    week_end = None
+    month = None
+    quarter = None
+    fiscal_year = None
+
+    if scheduled_date:
+        planned_date = scheduled_date.date()
+        # Monday is weekday 0, Sunday is 6
+        week_start = planned_date - timedelta(days=planned_date.weekday())
+        week_end = week_start + timedelta(days=6)
+        month = planned_date.month
+        quarter = get_quarter_for_date(planned_date)
+        fiscal_year = get_operational_fy(planned_date)
+
+        # Save these on the activity
+        activity.planned_date = planned_date
+        activity.week_start_date = week_start
+        activity.week_end_date = week_end
+        activity.fiscal_year = fiscal_year
+        activity.month = month
+        activity.quarter = quarter
+        activity.fy = fiscal_year
+
     ActivityScheduleCostLine.objects.filter(activity=activity).delete()
     ActivityScheduleCostLine.objects.bulk_create([
         ActivityScheduleCostLine(
@@ -189,12 +262,29 @@ def apply_to_activity(activity: Activity, input: dict, responsible_user_id: str 
             catalogue_version=catalogue_version,
             line_item_type=_line_item_type(line.key),
             currency="UGX",
+            description=line.label,
+            total_cost=int(line.amount),
+            planned_date=planned_date,
+            week_start_date=week_start,
+            week_end_date=week_end,
+            month=month,
+            quarter=quarter,
+            fiscal_year=fiscal_year,
+            responsible_user=responsible_user_id or activity.responsible_staff_id,
+            responsible_role=None, # can be derived/set if needed, but defaults to null or a placeholder
+            school=activity.school,
+            cluster=activity.cluster,
+            partner_id=activity.assigned_partner_id,
+            project_id=activity.project_id,
         )
         for line in cost.lines
     ])
     activity.est_cost_cents = int(cost.amount)
     activity.cost_missing = cost.cost_missing or catalogue is None
-    activity.save(update_fields=["est_cost_cents", "cost_missing", "updated_at"])
+    activity.save(update_fields=[
+        "est_cost_cents", "cost_missing", "planned_date", "week_start_date",
+        "week_end_date", "fiscal_year", "month", "quarter", "fy", "updated_at"
+    ])
 
     # Auto-create weekly advance requests from the freshly-written budget lines
     # (the responsible user confirms before the Accountant may disburse). Only

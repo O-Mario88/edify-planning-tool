@@ -259,7 +259,13 @@ def plan_builder(query: dict, principal) -> dict:
             "weakest": weakest_cluster_interv
         })
 
-    plans = MonthlyPlan.objects.filter(owner_staff_id=principal.staff_profile_id, month_iso__startswith=fy)
+    fy_months = [
+        f"{int(fy) - 1}-10", f"{int(fy) - 1}-11", f"{int(fy) - 1}-12",
+        f"{fy}-01", f"{fy}-02", f"{fy}-03",
+        f"{fy}-04", f"{fy}-05", f"{fy}-06",
+        f"{fy}-07", f"{fy}-08", f"{fy}-09",
+    ]
+    plans = MonthlyPlan.objects.filter(owner_staff_id=principal.staff_profile_id, month_iso__in=fy_months)
     return {
         "fy": fy,
         "plans": [
@@ -285,10 +291,33 @@ def recompute(school_id: str, principal) -> dict:
 
 def list_plans(query: dict, principal) -> list[dict]:
     fy = query.get("fy") or get_operational_fy()
-    qs = MonthlyPlan.objects.filter(month_iso__startswith=fy)
-    if principal.staff_profile_id:
-        qs = qs.filter(owner_staff_id=principal.staff_profile_id)
-    return [_serialize_plan(p) for p in qs.order_by("-month_iso")]
+    fy_months = [
+        f"{int(fy) - 1}-10", f"{int(fy) - 1}-11", f"{int(fy) - 1}-12",
+        f"{fy}-01", f"{fy}-02", f"{fy}-03",
+        f"{fy}-04", f"{fy}-05", f"{fy}-06",
+        f"{fy}-07", f"{fy}-08", f"{fy}-09",
+    ]
+    qs = MonthlyPlan.objects.filter(month_iso__in=fy_months)
+    
+    if query.get("supervised") == "true" or query.get("team") == "true":
+        from apps.accounts.models import StaffSupervisorAssignment
+        if principal.staff_profile_id:
+            supervised_ids = list(StaffSupervisorAssignment.objects.filter(
+                supervisor_id=principal.staff_profile_id
+            ).values_list("supervisee_id", flat=True))
+            qs = qs.filter(owner_staff_id__in=supervised_ids)
+        else:
+            qs = qs.none()
+        if query.get("status"):
+            qs = qs.filter(status=query["status"])
+    else:
+        if principal.staff_profile_id:
+            qs = qs.filter(owner_staff_id=principal.staff_profile_id)
+        else:
+            qs = qs.none()
+            
+    inc_acts = (query.get("supervised") == "true" or query.get("team") == "true" or query.get("includeActivities") == "true")
+    return [_serialize_plan(p, include_activities=inc_acts) for p in qs.order_by("-month_iso")]
 
 
 def get_plan(plan_id: str, principal) -> dict:

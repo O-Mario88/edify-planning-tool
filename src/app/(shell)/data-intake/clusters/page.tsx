@@ -13,6 +13,10 @@ import { getCurrentUser } from "@/lib/auth";
 import { isBackendEnabled } from "@/lib/api/backend";
 import { fetchActivities, type BeActivity } from "@/lib/api/surfaces";
 
+function asArray<T>(value: unknown): T[] {
+  return Array.isArray(value) ? value : [];
+}
+
 // Readable label for a backend cluster activity (activityType is the raw enum).
 function backendClusterLabel(a: BeActivity): string {
   if (a.activityType === "cluster_meeting") return "Cluster Meeting";
@@ -86,7 +90,7 @@ export default async function ClusterQualityPage() {
       { email: user.email, role: user.role },
       "?status=awaiting_ia_verification&pageSize=200",
     );
-    confirmations = r.live ? fromBackend(r.data.data) : fromMock();
+    confirmations = r.live ? fromBackend(asArray(r.data?.data)) : fromMock();
   } else {
     confirmations = fromMock();
   }

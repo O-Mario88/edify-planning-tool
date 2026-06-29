@@ -201,7 +201,7 @@ class PartnerAndClusterFlowTest(APITestCase):
         self.assertGreater(ActivityScheduleCostLine.objects.filter(activity_id=activity_id).count(), 0)
 
         # My Plan shows the training.
-        my_plan = self._get("/api/my-plan?fy=2026&period=month", 200)
+        my_plan = self._get("/api/my-plan?fy=2026&period=month&month=7", 200)
         self.assertTrue(any(item["id"] == activity_id for item in my_plan["items"]))
 
         # Completion unlocks; upload a DOCX evidence file.

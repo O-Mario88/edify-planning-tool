@@ -244,26 +244,221 @@ def assign(data: dict, principal) -> dict:
 
 
 def cluster_schools(cluster_id: str, principal) -> list[dict]:
-    """Schools in a cluster."""
+    """Schools in a cluster, enriched with 14 requested properties."""
     cluster = Cluster.objects.filter(id=cluster_id, deleted_at__isnull=True).first()
     if not cluster:
         raise NotFoundError("Cluster not found.")
     schools = (
         School.objects.filter(cluster_assignments__cluster=cluster, deleted_at__isnull=True)
+        .select_related("district", "sub_county", "parish")
+        .prefetch_related("ssa_records__scores", "activities")
         .order_by("name")
-        .values("id", "school_id", "name", "school_type", "current_fy_ssa_status", "enrollment")
     )
-    return [
-        {
-            "id": s["id"],
-            "schoolId": s["school_id"],
-            "name": s["name"],
-            "schoolType": s["school_type"],
-            "currentFySsaStatus": s["current_fy_ssa_status"],
-            "enrollment": s["enrollment"],
-        }
-        for s in schools
-    ]
+    out = []
+    for s in schools:
+        latest_ssa = s.ssa_records.filter(deleted_at__isnull=True).order_by("-date_of_ssa").first()
+        avg_score = None
+        weakest_label = "None"
+        struggling = []
+        rec_action = "No recommended action (no SSA)"
+
+        if latest_ssa:
+            avg_score = latest_ssa.average_score
+            scores = sorted(list(latest_ssa.scores.all()), key=lambda x: x.score)
+            if scores:
+                weakest_label = scores[0].get_intervention_display()
+                weakest_key = scores[0].intervention
+                for idx, x in enumerate(scores):
+                    if idx < 3 or x.score < 5.5:
+                        struggling.append(f"{x.get_intervention_display()}: {x.score:.1f}")
+                if weakest_key == "leadership":
+                    rec_action = "Schedule leadership-focused cluster training."
+                else:
+                    rec_action = f"Schedule {weakest_label}-focused school visit."
+
+        # Fetch last completed visit
+        last_visit = s.activities.filter(activity_type="school_visit", status="completed", deleted_at__isnull=True).order_by("-planned_date").first()
+        last_visit_date = last_visit.planned_date.strftime("%Y-%m-%d") if last_visit and last_visit.planned_date else "Never"
+
+        # Fetch last completed training
+        last_training = s.activities.filter(activity_type__in=["training", "school_improvement_training"], status="completed", deleted_at__isnull=True).order_by("-planned_date").first()
+        last_training_date = last_training.planned_date.strftime("%Y-%m-%d") if last_training and last_training.planned_date else "Never"
+
+        # Assigned staff
+        assigned_staff = "Unassigned"
+        if s.account_owner_id:
+            assigned_staff = s.account_owner_name_raw or s.account_owner_id
+
+        out.append({
+            "id": s.id,
+            "schoolId": s.school_id,
+            "name": s.name,
+            "district": s.district.name if s.district_id else None,
+            "subCounty": s.sub_county.name if s.sub_county_id else None,
+            "parish": s.parish.name if s.parish_id else None,
+            "schoolType": s.school_type,
+            "assignedStaff": assigned_staff,
+            "currentSsaAverage": avg_score,
+            "weakestSsaIntervention": weakest_label,
+            "topStrugglingInterventions": struggling,
+            "lastVisitDate": last_visit_date,
+            "lastTrainingDate": last_training_date,
+            "planningStatus": s.planning_readiness,
+            "ssaStatus": s.current_fy_ssa_status,
+            "recommendedAction": rec_action,
+        })
+    return out
+
+
+def cluster_detail(cluster_id: str, principal) -> dict:
+    cluster = Cluster.objects.filter(id=cluster_id, deleted_at__isnull=True).first()
+    if not cluster:
+        raise NotFoundError("Cluster not found.")
+
+    schools = School.objects.filter(cluster_assignments__cluster=cluster, deleted_at__isnull=True)
+    school_count = schools.count()
+
+    # Calculate average SSA
+    latest_ssas = []
+    for s in schools:
+        latest = s.ssa_records.filter(deleted_at__isnull=True).order_by("-date_of_ssa").first()
+        if latest and latest.average_score is not None:
+            latest_ssas.append(latest.average_score)
+    avg_ssa = round(sum(latest_ssas) / len(latest_ssas), 1) if latest_ssas else None
+
+    # Last meeting
+    last_meeting = cluster.activities.filter(activity_type="cluster_meeting", status="completed", deleted_at__isnull=True).order_by("-planned_date").first()
+    last_meeting_str = last_meeting.planned_date.strftime("%Y-%m-%d") if last_meeting and last_meeting.planned_date else "Never"
+
+    # Last training
+    last_training = cluster.activities.filter(activity_type__in=["training", "school_improvement_training"], status="completed", deleted_at__isnull=True).order_by("-planned_date").first()
+    last_training_str = last_training.planned_date.strftime("%Y-%m-%d") if last_training and last_training.planned_date else "Never"
+
+    assigned_staff = "Unassigned"
+    if cluster.responsible_staff_id:
+        from apps.accounts.models import StaffProfile
+        staff = StaffProfile.objects.filter(staff_id=cluster.responsible_staff_id).first()
+        if staff:
+            assigned_staff = staff.user.name if staff.user else staff.staff_id
+
+    return {
+        "id": cluster.id,
+        "name": cluster.name,
+        "district": {"name": cluster.district.name} if cluster.district else None,
+        "subCounty": {"name": cluster.sub_county.name} if cluster.sub_county else None,
+        "schoolCount": school_count,
+        "assignedStaff": assigned_staff,
+        "averageSsa": avg_ssa,
+        "lastMeeting": last_meeting_str,
+        "lastTraining": last_training_str,
+    }
+
+
+def cluster_weakest_interventions(cluster_id: str, principal) -> list[dict]:
+    cluster = Cluster.objects.filter(id=cluster_id, deleted_at__isnull=True).first()
+    if not cluster:
+        raise NotFoundError("Cluster not found.")
+
+    schools = School.objects.filter(cluster_assignments__cluster=cluster, deleted_at__isnull=True)
+
+    # Collect all scores for latest SSAs of the schools
+    from apps.core.enums import SsaIntervention
+    intervention_scores = {key.value: [] for key in SsaIntervention}
+
+    for s in schools:
+        latest = s.ssa_records.filter(deleted_at__isnull=True).order_by("-date_of_ssa").first()
+        if latest:
+            for score in latest.scores.all():
+                if score.score is not None:
+                    intervention_scores[score.intervention].append(score.score)
+
+    results = []
+    for key in SsaIntervention:
+        scores = intervention_scores[key.value]
+        avg = round(sum(scores) / len(scores), 1) if scores else None
+        below_count = sum(1 for x in scores if x < 5.5)
+
+        # Recommended action based on intervention key
+        label = key.label
+        if key.value == "leadership":
+            rec = "Schedule leadership-focused cluster training."
+        else:
+            rec = f"Schedule {label}-focused cluster training or school visits."
+
+        results.append({
+            "intervention": key.value,
+            "label": label,
+            "avg": avg,
+            "schoolsBelowThreshold": below_count,
+            "recommendedAction": rec,
+        })
+
+    # Filter out interventions with no scores to prevent ranking empty data, but fallback if empty
+    scored = [r for r in results if r["avg"] is not None]
+    if not scored:
+        # Fallback if no SSAs recorded yet
+        scored = results[:4]
+        for item in scored:
+            item["avg"] = 0.0
+        return scored
+
+    # Sort ascending by average score
+    scored.sort(key=lambda x: x["avg"])
+    return scored[:4]
+
+
+def cluster_intervention_summary(cluster_id: str, principal) -> list[dict]:
+    cluster = Cluster.objects.filter(id=cluster_id, deleted_at__isnull=True).first()
+    if not cluster:
+        raise NotFoundError("Cluster not found.")
+    schools = School.objects.filter(cluster_assignments__cluster=cluster, deleted_at__isnull=True)
+    from apps.core.enums import SsaIntervention
+    intervention_scores = {key.value: [] for key in SsaIntervention}
+    for s in schools:
+        latest = s.ssa_records.filter(deleted_at__isnull=True).order_by("-date_of_ssa").first()
+        if latest:
+            for score in latest.scores.all():
+                if score.score is not None:
+                    intervention_scores[score.intervention].append(score.score)
+    results = []
+    for key in SsaIntervention:
+        scores = intervention_scores[key.value]
+        avg = round(sum(scores) / len(scores), 1) if scores else 0.0
+        below_count = sum(1 for x in scores if x < 5.5)
+        results.append({
+            "intervention": key.value,
+            "label": key.label,
+            "avg": avg,
+            "schoolsBelowThreshold": below_count,
+        })
+    return results
+
+
+def cluster_activity_impact(cluster_id: str, principal) -> list[dict]:
+    cluster = Cluster.objects.filter(id=cluster_id, deleted_at__isnull=True).first()
+    if not cluster:
+        raise NotFoundError("Cluster not found.")
+
+    activities = cluster.activities.filter(
+        status="completed",
+        deleted_at__isnull=True
+    ).order_by("-planned_date")
+
+    from apps.activities.services import calculate_activity_impact
+
+    out = []
+    for a in activities:
+        impact = calculate_activity_impact(a)
+        out.append({
+            "id": a.id,
+            "activityType": a.activity_type,
+            "plannedDate": a.planned_date.isoformat() if a.planned_date else None,
+            "focusIntervention": a.focus_intervention,
+            "activityPurposeText": a.activity_purpose_text,
+            "expectedOutcome": a.expected_outcome,
+            "impact": impact,
+        })
+    return out
 
 
 def cluster_intelligence(cluster_id: str, principal) -> dict:
@@ -450,6 +645,10 @@ __all__ = [
     "assign_school",
     "assign",
     "cluster_schools",
+    "cluster_detail",
+    "cluster_weakest_interventions",
+    "cluster_intervention_summary",
+    "cluster_activity_impact",
     "cluster_intelligence",
     "sub_counties_without_clusters",
     "cluster_planning",

@@ -136,3 +136,12 @@ class SchoolTypeView(APIView):
     def post(self, request: Request, school_id: str) -> Response:
         school_type = (request.data or {}).get("schoolType")
         return Response(services.set_type(request.user, school_id, school_type))
+
+
+class SchoolImpactView(APIView):
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = DIR_VIEW
+
+    def get(self, request: Request, school_id: str) -> Response:
+        from apps.analytics.services import school_impact
+        return Response(school_impact(school_id, request.user))

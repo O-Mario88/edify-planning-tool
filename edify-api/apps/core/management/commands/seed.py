@@ -273,9 +273,17 @@ class Command(BaseCommand):
 
         cceos = list(StaffProfile.objects.filter(user__active_role=EdifyRole.CCEO.value).order_by("user__email"))
 
+        mukono_district = District.objects.filter(name__iexact="Mukono").first()
+        if mukono_district:
+            districts = [mukono_district]
+            subs = list(SubCounty.objects.filter(district=mukono_district))
+        else:
+            districts = list(District.objects.all())
+            subs = list(SubCounty.objects.all())
+
         for i in range(700):
             d = rnd.choice(districts)
-            sc = rnd.choice([s for s in subs if s.district_id == d.id] or subs)
+            sc = subs[i % len(subs)] if subs else rnd.choice(subs)
             s = School.objects.create(
                 school_id=f"S-{1000 + i}",
                 name=f"{sc.name} {name_frags[i % len(name_frags)]}",
@@ -296,14 +304,6 @@ class Command(BaseCommand):
                     staff=cceo,
                     school_id=s.id
                 )
-                
-                # Also link other CCEOs round-robin to a slice of schools
-                other_cceo = cceos[i % len(cceos)]
-                if other_cceo != cceo:
-                    StaffSchoolAssignment.objects.get_or_create(
-                        staff=other_cceo,
-                        school_id=s.id
-                    )
             from apps.ssa.services import _recompute_readiness
             _recompute_readiness(s)
         self.stdout.write(f"  sample schools: {School.objects.count()} (local only)")

@@ -102,3 +102,44 @@ class ClusterEligibleForSchoolView(APIView):
 
     def get(self, request: Request, school_id: str) -> Response:
         return Response(services.eligible_for_school(school_id, request.user))
+
+
+class ClusterDetailView(APIView):
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = VIEW
+
+    def get(self, request: Request, cluster_id: str) -> Response:
+        return Response(services.cluster_detail(cluster_id, request.user))
+
+
+class ClusterInterventionSummaryView(APIView):
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = VIEW
+
+    def get(self, request: Request, cluster_id: str) -> Response:
+        return Response(services.cluster_intervention_summary(cluster_id, request.user))
+
+
+class ClusterWeakestInterventionsView(APIView):
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = VIEW
+
+    def get(self, request: Request, cluster_id: str) -> Response:
+        return Response(services.cluster_weakest_interventions(cluster_id, request.user))
+
+
+class ClusterActivityImpactView(APIView):
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = VIEW
+
+    def get(self, request: Request, cluster_id: str) -> Response:
+        return Response(services.cluster_activity_impact(cluster_id, request.user))
+
+
+class ClusterImpactView(APIView):
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = VIEW
+
+    def get(self, request: Request, cluster_id: str) -> Response:
+        from apps.analytics.services import cluster_impact
+        return Response(cluster_impact(cluster_id, request.user))

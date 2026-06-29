@@ -189,3 +189,11 @@ class AnalyticsRoleOverviewView(APIView):
     def get(self, request):
         from .role_analytics import role_overview
         return Response(role_overview(request.user, _q(request)))
+
+
+class AnalyticsActivityImpactView(APIView):
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = ANALYTICS
+
+    def get(self, request: Request) -> Response:
+        return Response(services.activity_impact_report(request.user, _q(request)))

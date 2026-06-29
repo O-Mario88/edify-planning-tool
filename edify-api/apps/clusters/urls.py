@@ -15,6 +15,11 @@ urlpatterns = [
     path("assign", views.ClusterAssignView.as_view(), name="assign"),
     path("recommendations/<str:school_id>", views.ClusterRecommendationsView.as_view(), name="recommendations"),
     path("eligible-for-school/<str:school_id>", views.ClusterEligibleForSchoolView.as_view(), name="eligible"),
+    path("<str:cluster_id>", views.ClusterDetailView.as_view(), name="detail"),
     path("<str:cluster_id>/intelligence", views.ClusterIntelligenceView.as_view(), name="intelligence"),
     path("<str:cluster_id>/schools", views.ClusterSchoolsView.as_view(), name="schools"),
+    path("<str:cluster_id>/intervention-summary", views.ClusterInterventionSummaryView.as_view(), name="intervention-summary"),
+    path("<str:cluster_id>/weakest-interventions", views.ClusterWeakestInterventionsView.as_view(), name="weakest-interventions"),
+    path("<str:cluster_id>/activity-impact", views.ClusterActivityImpactView.as_view(), name="activity-impact"),
+    path("<str:cluster_id>/impact", views.ClusterImpactView.as_view(), name="impact"),
 ]

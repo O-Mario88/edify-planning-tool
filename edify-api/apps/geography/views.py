@@ -40,8 +40,11 @@ class SubCountyListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request: Request) -> Response:
-        district_id = request.query_params.get("districtId", "")
-        qs = SubCounty.objects.filter(district_id=district_id).order_by("name")
+        district_id = request.query_params.get("districtId")
+        if district_id:
+            qs = SubCounty.objects.filter(district_id=district_id).order_by("name")
+        else:
+            qs = SubCounty.objects.all().order_by("name")
         return Response(SubCountySerializer(qs, many=True).data)
 
 

@@ -182,18 +182,25 @@ export default async function CountryProgramLeadDashboard() {
             {mockOk ? (
               <ApprovalQueueCard />
             ) : (
-              <section className="space-y-3">
-                <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <h3 className="text-[15px] font-extrabold tracking-tight">Completion review queue</h3>
-                  <Link
-                    href="/pl/review"
-                    className="text-[12px] font-bold text-[var(--color-edify-primary)] hover:underline"
-                  >
-                    Open full review page
-                  </Link>
+              <div className="grid grid-cols-12 gap-3 md:gap-4 items-start">
+                <div className="col-span-12 xl:col-span-7">
+                  <ApprovalQueueCard />
                 </div>
-                <PlReviewQueue />
-              </section>
+                <div className="col-span-12 xl:col-span-5">
+                  <section className="card p-4 space-y-3">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <h3 className="text-[13px] font-extrabold tracking-tight inline-flex items-center gap-1.5">Completion review queue</h3>
+                      <Link
+                        href="/pl/review"
+                        className="text-[11px] font-bold text-[var(--color-edify-primary)] hover:underline"
+                      >
+                        Open full page →
+                      </Link>
+                    </div>
+                    <PlReviewQueue />
+                  </section>
+                </div>
+              </div>
             )}
           </div>
           <section className="grid grid-cols-12 gap-3 md:gap-4 items-stretch [&>div>*]:h-full">

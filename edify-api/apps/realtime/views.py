@@ -38,6 +38,12 @@ def stream(request):
     principal = user_auth[0]
     user_id = principal.user_id
 
+    # SSE streams are long-lived and run on a loop without doing DB operations.
+    # We must close the Django database connection here so it is not held open
+    # indefinitely, which would otherwise exhaust the Postgres connection pool.
+    from django.db import connections
+    connections.close_all()
+
     def event_stream():
         yield _sse({"type": "connected", "at": _now_iso()})
         q = bus.subscribe(user_id)

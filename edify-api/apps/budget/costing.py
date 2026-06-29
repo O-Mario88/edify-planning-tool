@@ -82,36 +82,55 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
     is_secondary = a.get("districtType") == "secondary"
 
     if is_partner:
-        project_key = "project_partner_lump_sum" if a.get("projectId") else None
-        training_key = "partner_training_lump_sum" if activity_type in TRAINING_TYPES else None
-        fallback = "partner_visit_lump_sum"
-        key = fallback
-        if project_key and rates.get(project_key) is not None:
-            key = project_key
-        elif training_key and rates.get(training_key) is not None:
-            key = training_key
-        add("Partner lump sum", key)
+        if "partner_visit_rate" in rates:
+            add("Partner visit rate", "partner_visit_rate")
+        else:
+            project_key = "project_partner_lump_sum" if a.get("projectId") else None
+            training_key = "partner_training_lump_sum" if activity_type in TRAINING_TYPES else None
+            fallback = "partner_visit_lump_sum"
+            key = fallback
+            if project_key and rates.get(project_key) is not None:
+                key = project_key
+            elif training_key and rates.get(training_key) is not None:
+                key = training_key
+            add("Partner lump sum", key)
     elif activity_type in VISIT_TYPES:
         if is_secondary:
-            add("Transport (secondary)", "staff_visit_transport_secondary")
-            add("Breakfast", "breakfast")
-            add("Lunch", "lunch")
-            add("Dinner", "dinner")
-            nights = max(0, a.get("nights") or 0)
-            if nights > 0:
-                add("Accommodation", "accommodation", nights)
+            if "school_visit_cost_per_school_secondary" in rates or "school_visit_cost_per_school" in rates:
+                key = "school_visit_cost_per_school_secondary" if "school_visit_cost_per_school_secondary" in rates else "school_visit_cost_per_school"
+                add("School visit (secondary)", key)
+            else:
+                add("Transport (secondary)", "staff_visit_transport_secondary")
+                add("Breakfast", "breakfast")
+                add("Lunch", "lunch")
+                add("Dinner", "dinner")
+                nights = max(0, a.get("nights") or 0)
+                if nights > 0:
+                    add("Accommodation", "accommodation", nights)
         else:
-            add("Transport (primary)", "staff_visit_transport_primary")
-            add("Lunch", "lunch")
+            if "school_visit_cost_per_school_primary" in rates or "school_visit_cost_per_school" in rates:
+                key = "school_visit_cost_per_school_primary" if "school_visit_cost_per_school_primary" in rates else "school_visit_cost_per_school"
+                add("School visit (primary)", key)
+            else:
+                add("Transport (primary)", "staff_visit_transport_primary")
+                add("Lunch", "lunch")
     elif activity_type in TRAINING_TYPES:
         n = _participants_of(a, DEFAULT_TRAINING_PARTICIPANTS)
-        add("Training session", "training_session_fee")
-        add("Venue", "venue")
-        add("Meals", "meals_per_participant", n)
-        add("Mobilisation", "mobilisation_per_participant", n)
+        if "group_training_facilitation_fee" in rates or "group_training_venue_cost" in rates or "group_training_participant_meal_cost_per_head" in rates:
+            add("Facilitation", "group_training_facilitation_fee")
+            add("Venue", "group_training_venue_cost")
+            add("Meals", "group_training_participant_meal_cost_per_head", n)
+        else:
+            add("Training session", "training_session_fee")
+            add("Venue", "venue")
+            add("Meals", "meals_per_participant", n)
+            add("Mobilisation", "mobilisation_per_participant", n)
     elif activity_type == "cluster_meeting":
         n = _participants_of(a, DEFAULT_CLUSTER_MEETING_PARTICIPANTS)
-        add("Cluster meeting (per participant)", "cluster_meeting_cost", n)
+        if "cluster_meeting_participant_meal_cost_per_head" in rates:
+            add("Cluster meeting participant meals", "cluster_meeting_participant_meal_cost_per_head", n)
+        else:
+            add("Cluster meeting (per participant)", "cluster_meeting_cost", n)
     elif activity_type in ("partner_activity", "project_activity"):
         project_key = "project_partner_lump_sum" if a.get("projectId") else None
         key = project_key if (project_key and rates.get(project_key) is not None) else "partner_visit_lump_sum"

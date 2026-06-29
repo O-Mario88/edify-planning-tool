@@ -26,37 +26,61 @@ def get(principal, query: dict) -> dict:
 
     # Period narrowing (fy = no narrowing).
     if period == "week":
-        if query.get("week"):
-            qs = qs.filter(planned_week=int(query["week"]))
-        if query.get("month"):
-            qs = qs.filter(planned_month=int(query["month"]))
+        w_val = query.get("week")
+        m_val = query.get("month")
+        if w_val:
+            qs = qs.filter(planned_week=int(w_val))
+        if m_val:
+            qs = qs.filter(planned_month=int(m_val))
     elif period == "month":
-        if query.get("month"):
-            qs = qs.filter(planned_month=int(query["month"]))
+        m_val = query.get("month")
+        if m_val:
+            qs = qs.filter(planned_month=int(m_val))
     elif period == "quarter":
-        if query.get("quarter"):
-            qs = qs.filter(quarter=query["quarter"])
+        q_val = query.get("quarter")
+        if q_val:
+            qs = qs.filter(quarter=q_val)
     # period == "fy" (or unknown) → whole fiscal year.
 
-    items = [
-        {
+    items = []
+    for a in qs.select_related("school", "cluster").order_by("planned_month", "planned_week"):
+        items.append({
             "id": a.id,
             "activityType": a.activity_type,
             "status": a.status,
             "scheduledDate": a.scheduled_date.isoformat() if a.scheduled_date else None,
-            "schoolId": a.school.school_id if a.school_id else None,
-            "schoolName": a.school.name if a.school_id else None,
+            "schoolId": a.school.school_id if a.school else None,
+            "schoolName": a.school.name if a.school else None,
+            "school": {
+                "id": a.school.id,
+                "schoolId": a.school.school_id,
+                "name": a.school.name,
+            } if a.school else None,
+            "clusterId": a.cluster_id,
+            "cluster": {
+                "id": a.cluster.id,
+                "name": a.cluster.name,
+            } if a.cluster else None,
+            "fy": a.fy,
+            "quarter": a.quarter,
+            "plannedMonth": a.planned_month,
+            "plannedWeek": a.planned_week,
             "month": a.planned_month,
             "week": a.planned_week,
-            "quarter": a.quarter,
+            "responsibleStaffId": a.responsible_staff_id,
+            "assignedPartnerId": a.assigned_partner_id,
+            "deliveryType": a.delivery_type,
+            "evidenceStatus": a.evidence_status,
+            "paymentStatus": a.payment_status,
+            "salesforceActivityId": a.salesforce_activity_id,
+            "rescheduleCount": a.reschedule_count,
+            "lastReason": a.last_reason,
+            "estCostCents": a.est_cost_cents,
             "costCents": a.est_cost_cents,
             "costMissing": a.cost_missing,
-            "evidenceStatus": a.evidence_status,
-        }
-        for a in qs.select_related("school").order_by("planned_month", "planned_week")
-    ]
+        })
     
-    total_cost = sum(i["costCents"] for i in items)
+    total_cost = sum(i["estCostCents"] for i in items)
     partner_planned = qs.filter(delivery_type="partner").count()
     
     return {

@@ -50,12 +50,12 @@ def _recompute_readiness(school: School) -> None:
     from apps.core.fy import get_operational_fy
     fy = get_operational_fy()
 
-    # Derive status from the actual SSA records for the current FY.
+    # Derive status from the actual SSA records for the current FY or any confirmed record.
     confirmed = SsaRecord.objects.filter(
-        school=school, fy=fy, deleted_at__isnull=True, verification_status="confirmed"
+        school=school, deleted_at__isnull=True, verification_status="confirmed"
     ).exists()
     pending = SsaRecord.objects.filter(
-        school=school, fy=fy, deleted_at__isnull=True, verification_status="pending"
+        school=school, deleted_at__isnull=True, verification_status="pending"
     ).exists()
 
     if confirmed:

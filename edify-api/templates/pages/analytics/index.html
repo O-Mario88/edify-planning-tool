@@ -1,0 +1,118 @@
+{% extends "layouts/shell.html" %}
+{% load frontend_filters %}
+
+{% block title %}Analytics - Edify Command Center{% endblock %}
+
+{% block shell_content %}
+<div class="p-6 max-w-7xl mx-auto space-y-6">
+  <!-- Page Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-[26px] font-extrabold text-slate-800 tracking-tight">Analytics Dashboard</h1>
+      <p class="text-[12.5px] text-[var(--text-secondary)] mt-0.5 font-semibold">National and regional operational performance metrics.</p>
+    </div>
+  </div>
+
+  <!-- Performance Summary metrics strip -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm">
+      <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Total Schools</p>
+      <p class="text-[22px] font-extrabold text-slate-800 mt-1">{{ summary.schools }}</p>
+      <p class="text-[11px] text-slate-500 font-semibold mt-1">Clustered: {{ summary.clustered }} &bull; Unclustered: {{ summary.unclustered }}</p>
+    </div>
+    <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm">
+      <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">SSA Coverage</p>
+      <p class="text-[22px] font-extrabold text-slate-800 mt-1">{{ summary.ssaCompletePct }}%</p>
+      <p class="text-[11px] text-slate-500 font-semibold mt-1">Done: {{ summary.ssaDone }} &bull; Pending: {{ summary.ssaPending }}</p>
+    </div>
+    <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm">
+      <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">SSA National Average</p>
+      <p class="text-[22px] font-extrabold text-[var(--color-edify-primary)] mt-1">{{ summary.ssaAverage }}</p>
+      <p class="text-[11px] text-slate-500 font-semibold mt-1">Across all confirmed reports</p>
+    </div>
+    <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm">
+      <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Active Field Activities</p>
+      <p class="text-[22px] font-extrabold text-slate-800 mt-1">{{ summary.activitiesTotal }}</p>
+      <p class="text-[11px] text-slate-500 font-semibold mt-1">Staff: {{ summary.staffCount }} &bull; Partners: {{ summary.partnerCount }}</p>
+    </div>
+  </div>
+
+  <div class="grid lg:grid-cols-3 gap-6">
+    <!-- Left: Recruitment recommendations -->
+    <div class="lg:col-span-2 space-y-6">
+      <div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-[var(--color-edify-divider)] bg-slate-50/50">
+          <h3 class="text-[15px] font-extrabold text-slate-800 tracking-tight">Partner Recruitment Recommendations</h3>
+        </div>
+        
+        <div class="divide-y divide-slate-100 text-[12.5px]">
+          {% if recommendations %}
+            {% for rec in recommendations %}
+              <div class="p-4 flex justify-between items-start hover:bg-slate-50/50 transition-colors">
+                <div class="space-y-1">
+                  <h4 class="font-extrabold text-slate-800">Sub-county: {{ rec.sub_county_name }}</h4>
+                  <p class="text-[11.5px] text-slate-500 font-semibold leading-normal">{{ rec.reason }}</p>
+                  <p class="text-[11px] text-slate-400 font-bold">Struggling Area: {{ rec.weakest_intervention|title|replace_underscore }}</p>
+                </div>
+                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider {% if rec.priority == 'Critical' %}bg-rose-50 text-rose-700{% elif rec.priority == 'High' %}bg-amber-50 text-amber-700{% else %}bg-slate-100 text-slate-600{% endif %}">
+                  {{ rec.priority }}
+                </span>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="p-8 text-center text-slate-400 font-semibold">All sub-counties are sufficiently covered. No recommendations.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Pipeline and scorecards -->
+    <div class="space-y-6">
+      <!-- Weakest Interventions -->
+      <div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm space-y-4">
+        <h3 class="text-[15px] font-extrabold text-slate-800 border-b border-slate-100 pb-3">Struggling Interventions</h3>
+        <div class="space-y-3.5">
+          {% if summary.weakestInterventions %}
+            {% for item in summary.weakestInterventions %}
+              <div>
+                <div class="flex items-center justify-between text-[11.5px] font-semibold text-slate-700">
+                  <span class="truncate">{{ item.intervention|title|replace_underscore }}</span>
+                  <span class="font-extrabold text-slate-800">{{ item.average|floatformat:1 }}</span>
+                </div>
+                <div class="h-1.5 w-full bg-slate-100 rounded-full mt-1 overflow-hidden">
+                  <div class="h-full bg-[var(--color-edify-primary)] rounded-full" style="width: {{ item.average|multiply:10 }}%"></div>
+                </div>
+              </div>
+            {% endfor %}
+          {% else %}
+            <p class="text-[11.5px] text-slate-400 font-semibold">No scores recorded.</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Activity Pipeline Statuses -->
+      <div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm space-y-4">
+        <h3 class="text-[15px] font-extrabold text-slate-800 border-b border-slate-100 pb-3">Activity Status Breakdown</h3>
+        <div class="grid grid-cols-2 gap-4 text-[12px] font-semibold text-slate-600">
+          <div class="p-3 bg-slate-50 rounded-xl">
+            <p class="text-[9.5px] uppercase font-bold text-slate-400">Planned</p>
+            <p class="text-[16px] font-extrabold text-slate-700 mt-0.5">{{ summary.pipeline.planned }}</p>
+          </div>
+          <div class="p-3 bg-slate-50 rounded-xl">
+            <p class="text-[9.5px] uppercase font-bold text-slate-400">Scheduled</p>
+            <p class="text-[16px] font-extrabold text-slate-700 mt-0.5">{{ summary.pipeline.scheduled }}</p>
+          </div>
+          <div class="p-3 bg-slate-50 rounded-xl">
+            <p class="text-[9.5px] uppercase font-bold text-slate-400">In Progress</p>
+            <p class="text-[16px] font-extrabold text-slate-700 mt-0.5">{{ summary.pipeline.inProgress }}</p>
+          </div>
+          <div class="p-3 bg-emerald-50/20 rounded-xl border border-emerald-100">
+            <p class="text-[9.5px] uppercase font-bold text-emerald-600">Completed</p>
+            <p class="text-[16px] font-extrabold text-emerald-700 mt-0.5">{{ summary.pipeline.completed }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -14,6 +14,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { SectionCard, StatusBadge, ProgressRing } from "@/components/ui/primitives";
+import { cn } from "@/lib/utils";
 import { MetricStrip } from "@/components/ui/MetricStrip";
 import { ActionButton } from "@/components/ui/ActionButton";
 import { schoolsCatalog, salesforceMatches, validVisitRules, type WorkflowSchoolRow } from "@/lib/workflow-mock";
@@ -27,7 +28,7 @@ import { computeStaffCapacity, staffAlreadySupportsSchool, getAssignmentOptions 
 import { cceosSupervisedBy } from "@/lib/org/supervision";
 import { isBackendEnabled } from "@/lib/api/backend";
 import { isMockAllowed } from "@/lib/mock-policy";
-import { fetchSchoolDetail, fetchAssignmentOptions, fetchSchoolWorkflow, fetchActivities, type BeAssignmentOptions } from "@/lib/api/surfaces";
+import { fetchSchoolDetail, fetchAssignmentOptions, fetchSchoolWorkflow, fetchActivities, fetchSchoolImpact, type BeAssignmentOptions, type BeAssignmentOption } from "@/lib/api/surfaces";
 import type { School360Activity } from "@/components/cluster/School360View";
 import { SchoolWorkflowJourney } from "@/components/schools/SchoolWorkflowJourney";
 import { SchoolSsaLive } from "@/components/ssa/SchoolSsaLive";
@@ -36,6 +37,10 @@ import { resolveSchoolNextAction as resolveNextAction } from "@/lib/planning/sch
 import { CorePageHeader } from "@/components/core/CorePageHeader";
 import { RoleBottomNav } from "@/components/mobile/RoleBottomNav";
 import { Database } from "lucide-react";
+
+function asArray<T>(value: unknown): T[] {
+  return Array.isArray(value) ? value : [];
+}
 
 // Per-school planning capacity from the live planned-activity store (the gray-out
 // rule): client = 1 visit; core = 4 visits + 4 trainings. Cancelled/returned
@@ -611,29 +616,31 @@ async function IntakeSchool360({ schoolId, view }: { schoolId: string; view?: Sc
   );
 }
 
-// ── Backend-backed school profile (write-path migration) ────────────
-// Identity + assignment/capacity from the backend (/schools/:id, /assignment/
-// options). Scheduling here writes to the API (capacity-enforced) because the
-// schoolId is a real backend id.
-function assignmentVmFromBackend(d: BeAssignmentOptions, canPlanVisit: boolean): AssignmentVM {
-  const self = d.options.find((o) => o.type === "self");
-  const partner = d.options.find((o) => o.type === "partner");
+function assignmentVmFromBackend(d: BeAssignmentOptions | undefined | null, canPlanVisit: boolean): AssignmentVM {
+  const options = asArray<BeAssignmentOption>(d?.options);
+  const capacity = d?.capacity;
+  const self = options.find((o) => o.type === "self");
+  const partner = options.find((o) => o.type === "partner");
   return {
-    staffUsed: d.capacity.used, staffMax: d.capacity.max, staffAtLimit: d.capacity.atLimit, staffNearLimit: d.capacity.nearLimit,
+    staffUsed: capacity?.used ?? 0,
+    staffMax: capacity?.max ?? 0,
+    staffAtLimit: !!capacity?.atLimit,
+    staffNearLimit: !!capacity?.nearLimit,
     showSelf: !!self,
     selfEnabled: !!self?.enabled && canPlanVisit,
     selfReason: self && !self.enabled ? self.reason : (!canPlanVisit ? "Visit quota for this school is full." : undefined),
     partnerEnabled: !!partner?.enabled,
     partnerReason: partner && !partner.enabled ? partner.reason : undefined,
-    team: d.options.filter((o) => o.type === "staff").map((t) => ({ name: t.label.replace("Assign to ", ""), staffId: t.staffId ?? "", enabled: t.enabled, reason: t.reason })),
+    team: options.filter((o) => o.type === "staff").map((t) => ({ name: t.label?.replace("Assign to ", "") ?? "", staffId: t.staffId ?? "", enabled: t.enabled, reason: t.reason })),
   };
 }
 
 async function BackendSchool360({ school }: { school: import("@/lib/api/surfaces").BeSchoolDetail }) {
   const user = await getCurrentUser();
-  const [opts, wf] = await Promise.all([
+  const [opts, wf, impactData] = await Promise.all([
     fetchAssignmentOptions(user, school.schoolId),
     fetchSchoolWorkflow(user, school.schoolId),
+    fetchSchoolImpact(user, school.schoolId),
   ]);
   const capacity = resolvePlanningCapacity({ schoolType: school.schoolType, visitsPlanned: 0, trainingsPlanned: 0 });
   const assignment = opts.live ? assignmentVmFromBackend(opts.data, capacity.canPlanVisit) : undefined;
@@ -642,7 +649,8 @@ async function BackendSchool360({ school }: { school: import("@/lib/api/surfaces
     currentFySsaStatus: school.currentFySsaStatus === "done" ? "done" : "not_done",
     schoolType: school.schoolType === "core" ? "core" : "client",
   });
-  const latestSsa = (school.ssaRecords ?? []).slice().sort((a, b) => (b.dateOfSsa > a.dateOfSsa ? 1 : -1))[0];
+  const latestSsa = (asArray(school?.ssaRecords) as any[]).slice().sort((a, b) => (b.dateOfSsa > a.dateOfSsa ? 1 : -1))[0];
+  const impacts = impactData.live ? impactData.data : [];
 
   return (
     <>
@@ -683,9 +691,9 @@ async function BackendSchool360({ school }: { school: import("@/lib/api/surfaces
 
         <section className="card p-3.5">
           <h2 className="text-[12px] font-extrabold uppercase tracking-wide muted mb-2">SSA history</h2>
-          {school.ssaRecords && school.ssaRecords.length > 0 ? (
+          {(asArray(school?.ssaRecords) as any[]).length > 0 ? (
             <ul className="divide-y divide-[var(--color-edify-divider)] text-[12px]">
-              {school.ssaRecords.slice().sort((a, b) => (b.dateOfSsa > a.dateOfSsa ? 1 : -1)).map((r) => (
+              {(asArray(school?.ssaRecords) as any[]).slice().sort((a, b) => (b.dateOfSsa > a.dateOfSsa ? 1 : -1)).map((r) => (
                 <li key={r.id} className="py-1.5 flex items-center justify-between">
                   <span className="muted">{r.fy} · {new Date(r.dateOfSsa).toLocaleDateString()}</span>
                   <span className="font-extrabold tabular">{r.averageScore != null ? `${r.averageScore.toFixed(1)}/10` : "—"}</span>
@@ -696,6 +704,85 @@ async function BackendSchool360({ school }: { school: import("@/lib/api/surfaces
             <p className="text-[12px] muted italic">No SSA on record for this school yet.</p>
           )}
           {latestSsa && <p className="text-[10.5px] muted mt-2">Latest: {latestSsa.fy}</p>}
+        </section>
+
+        <section className="card p-3.5">
+          <h2 className="text-[12px] font-extrabold uppercase tracking-wide muted mb-2 inline-flex items-center gap-1">
+            <Sparkles size={13} className="text-[var(--color-edify-primary)]" /> SSA Intervention Impact Tracking
+          </h2>
+          {impacts.length > 0 ? (
+            <div className="space-y-3">
+              {impacts.map((imp: any) => {
+                const isCompleted = imp.status === "completed";
+                const hasImpact = !!imp.impact;
+                const details = imp.impact;
+                
+                return (
+                  <div key={imp.id} className="p-3 rounded-lg border border-[var(--color-edify-border)] bg-[var(--color-edify-soft)]/10 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <span className="inline-flex items-center rounded bg-blue-50 text-blue-700 px-1.5 py-0.5 text-[10px] font-extrabold border border-blue-100 uppercase">
+                          {humanizeIntervention(imp.focus_intervention)}
+                        </span>
+                        <div className="text-[12.5px] font-extrabold mt-1">
+                          {imp.activity_purpose_text}
+                        </div>
+                      </div>
+                      <span className={cn(
+                        "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide border",
+                        isCompleted ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-amber-50 text-amber-700 border-amber-200"
+                      )}>
+                        {imp.status}
+                      </span>
+                    </div>
+
+                    <div className="text-[11px] text-slate-500">
+                      Planned Date: {new Date(imp.planned_date).toLocaleDateString()}
+                    </div>
+
+                    {isCompleted && (
+                      <div className="mt-2 border-t border-[var(--color-edify-divider)] pt-2 space-y-1.5">
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Impact Timeline</div>
+                        {hasImpact ? (
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11.5px] items-center">
+                            <div className="p-2 rounded bg-slate-50 border border-slate-100">
+                              <div className="muted font-bold text-[9.5px] uppercase">Pre-Activity SSA</div>
+                              <div className="font-extrabold text-slate-700 mt-0.5">{details.preScore.toFixed(1)}/10</div>
+                              <div className="muted text-[9.5px]">{new Date(details.preDate).toLocaleDateString()}</div>
+                            </div>
+                            <div className="flex justify-center text-slate-300 hidden sm:flex">
+                              →
+                            </div>
+                            <div className="p-2 rounded bg-slate-50 border border-slate-100">
+                              <div className="muted font-bold text-[9.5px] uppercase">Post-Activity SSA</div>
+                              <div className="font-extrabold text-slate-700 mt-0.5">{details.postScore.toFixed(1)}/10</div>
+                              <div className="muted text-[9.5px]">{new Date(details.postDate).toLocaleDateString()}</div>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-[11px] muted italic">No matching pre/post SSA record cycle found to measure direct score impact yet.</p>
+                        )}
+
+                        {hasImpact && (
+                          <div className="mt-1.5 flex items-center justify-between text-[11.5px] font-extrabold">
+                            <span>Improvement Delta</span>
+                            <span className={cn(
+                              "inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded",
+                              details.delta > 0 ? "bg-emerald-50 text-emerald-700" : details.delta === 0 ? "bg-slate-50 text-slate-600" : "bg-rose-50 text-rose-700"
+                            )}>
+                              {details.delta > 0 ? `+${details.delta.toFixed(1)}` : details.delta.toFixed(1)} ({details.status})
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-[12px] muted italic">No activities planned or completed yet to trace SSA intervention impact delta.</p>
+          )}
         </section>
       </div>
       <RoleBottomNav />
@@ -710,4 +797,11 @@ function Fact({ label, value }: { label: string; value: string }) {
       <dd className="font-semibold capitalize">{value}</dd>
     </div>
   );
+}
+
+function humanizeIntervention(key: string): string {
+  return key
+    .split("_")
+    .map((w) => (w === "and" ? "&" : w.charAt(0).toUpperCase() + w.slice(1)))
+    .join(" ");
 }

@@ -105,3 +105,53 @@ class FyBudgetView(APIView):
 
     def get(self, request: Request) -> Response:
         return Response(services.fy_budget(_q(request)))
+
+
+class BudgetLinesListView(APIView):
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = VIEW
+
+    def get(self, request: Request) -> Response:
+        from apps.activities.models import ActivityScheduleCostLine
+        from django.db.models import Q
+        
+        qs = ActivityScheduleCostLine.objects.all().order_by("-planned_date")
+        
+        user = request.user
+        from apps.core.scoping import resolve_user_scope
+        scope = resolve_user_scope(user)
+        if not scope.country_scope and scope.staff_ids:
+            q = Q(responsible_user=user.user_id)
+            if scope.supervised_staff_ids:
+                from apps.accounts.models import StaffProfile
+                supervised_user_ids = StaffProfile.objects.filter(
+                    id__in=scope.supervised_staff_ids,
+                ).values_list("user_id", flat=True)
+                q |= Q(responsible_user__in=supervised_user_ids)
+            qs = qs.filter(q)
+            
+        if request.query_params.get("weekStartDate"):
+            qs = qs.filter(week_start_date=request.query_params["weekStartDate"])
+        if request.query_params.get("responsibleUser"):
+            qs = qs.filter(responsible_user=request.query_params["responsibleUser"])
+            
+        data = []
+        for line in qs.select_related("activity"):
+            data.append({
+                "id": line.id,
+                "activityId": line.activity_id,
+                "activityType": line.activity.activity_type,
+                "label": line.label,
+                "unitCost": line.unit_cost,
+                "quantity": line.quantity,
+                "amount": line.amount,
+                "plannedDate": line.planned_date.isoformat() if line.planned_date else None,
+                "weekStartDate": line.week_start_date.isoformat() if line.week_start_date else None,
+                "weekEndDate": line.week_end_date.isoformat() if line.week_end_date else None,
+                "month": line.month,
+                "quarter": line.quarter,
+                "fiscalYear": line.fiscal_year,
+                "responsibleUser": line.responsible_user,
+                "lineItemType": line.line_item_type,
+            })
+        return Response(data)

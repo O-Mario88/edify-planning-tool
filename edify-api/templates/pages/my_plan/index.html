@@ -1,0 +1,126 @@
+{% extends "layouts/shell.html" %}
+{% load frontend_filters %}
+
+{% block title %}My Plan - Edify Command Center{% endblock %}
+
+{% block shell_content %}
+<div class="p-6 max-w-7xl mx-auto space-y-6">
+  <!-- Page Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-[26px] font-extrabold text-slate-800 tracking-tight">My Plan</h1>
+      <p class="text-[12.5px] text-[var(--text-secondary)] mt-0.5 font-semibold">Your scheduled activities and field tasks feed.</p>
+    </div>
+  </div>
+
+  <!-- Filters Toolbar -->
+  <div class="bg-white rounded-2xl border border-[var(--border-card)] p-4 shadow-sm space-y-4">
+    <!-- Period Tabs -->
+    <div class="flex items-center gap-1 border-b border-slate-100 pb-3">
+      <a href="/my-plan?period=week" class="h-8 px-4 rounded-lg flex items-center justify-center text-[12px] font-extrabold {% if period == 'week' %}bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)]{% else %}text-slate-500 hover:bg-slate-50{% endif %}">
+        This Week
+      </a>
+      <a href="/my-plan?period=month" class="h-8 px-4 rounded-lg flex items-center justify-center text-[12px] font-extrabold {% if period == 'month' %}bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)]{% else %}text-slate-500 hover:bg-slate-50{% endif %}">
+        This Month
+      </a>
+      <a href="/my-plan?period=quarter" class="h-8 px-4 rounded-lg flex items-center justify-center text-[12px] font-extrabold {% if period == 'quarter' %}bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)]{% else %}text-slate-500 hover:bg-slate-50{% endif %}">
+        This Quarter
+      </a>
+      <a href="/my-plan?period=fy" class="h-8 px-4 rounded-lg flex items-center justify-center text-[12px] font-extrabold {% if period == 'fy' %}bg-[var(--color-edify-soft)] text-[var(--color-edify-primary)]{% else %}text-slate-500 hover:bg-slate-50{% endif %}">
+        This FY
+      </a>
+    </div>
+
+    <!-- Period Context Selectors -->
+    <form method="GET" action="/my-plan" class="flex flex-wrap items-center gap-3">
+      <input type="hidden" name="period" value="{{ period }}">
+
+      {% if period == 'week' %}
+        <div class="flex items-center gap-2">
+          <select name="month" class="h-9 px-2 rounded-lg border border-slate-200 text-[12px] bg-slate-50">
+            {% for m in months %}
+              <option value="{{ m.val }}" {% if selected_month == m.val %}selected{% endif %}>{{ m.label }}</option>
+            {% endfor %}
+          </select>
+          <select name="week" class="h-9 px-2 rounded-lg border border-slate-200 text-[12px] bg-slate-50">
+            {% for w in weeks %}
+              <option value="{{ w }}" {% if selected_week == w %}selected{% endif %}>Week {{ w }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      {% elif period == 'month' %}
+        <select name="month" class="h-9 px-2 rounded-lg border border-slate-200 text-[12px] bg-slate-50">
+          {% for m in months %}
+            <option value="{{ m.val }}" {% if selected_month == m.val %}selected{% endif %}>{{ m.label }}</option>
+          {% endfor %}
+        </select>
+      {% elif period == 'quarter' %}
+        <select name="quarter" class="h-9 px-2 rounded-lg border border-slate-200 text-[12px] bg-slate-50">
+          {% for q in quarters %}
+            <option value="{{ q }}" {% if selected_quarter == q %}selected{% endif %}>Quarter {{ q }}</option>
+          {% endfor %}
+        </select>
+      {% endif %}
+
+      <button type="submit" class="h-9 px-4 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[12px] font-extrabold">
+        Filter Feed
+      </button>
+    </form>
+  </div>
+
+  <!-- Plan Summary & Activity Feed List -->
+  <div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm overflow-hidden">
+    <div class="px-6 py-4 border-b border-[var(--color-edify-divider)] bg-slate-50/50 flex items-center justify-between">
+      <div>
+        <h3 class="text-[14px] font-extrabold text-slate-800 uppercase tracking-wider">Scheduled Work Feed</h3>
+        <p class="text-[11px] text-slate-400 font-semibold mt-0.5">Total Activities: {{ feed.summary.total }} &bull; Budget Value: {{ feed.summary.costCents|ugx }}</p>
+      </div>
+    </div>
+
+    <div class="divide-y divide-[var(--color-edify-divider)] text-[12.5px]">
+      {% if feed.items %}
+        {% for act in feed.items %}
+          <div class="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50/30 transition-colors">
+            <div class="space-y-1">
+              <div class="flex items-center gap-2">
+                <h4 class="font-extrabold text-slate-800">
+                  <a href="/my-plan/{{ act.id }}" class="hover:text-[var(--color-edify-primary)]">{{ act.activityType|title|replace_underscore }}</a>
+                </h4>
+                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[9.5px] font-extrabold uppercase tracking-wider {% if act.status == 'completed' or act.status == 'ia_verified' %}bg-emerald-50 text-emerald-700{% elif act.status == 'submitted_to_pl' %}bg-indigo-50 text-indigo-700{% else %}bg-slate-100 text-slate-600{% endif %}">
+                  {{ act.status|replace_underscore }}
+                </span>
+              </div>
+              
+              {% if act.school %}
+                <p class="text-[11.5px] text-slate-500 font-semibold leading-none">
+                  School: <a href="/schools/{{ act.school.schoolId }}" class="font-bold hover:underline text-[var(--color-edify-primary)]">{{ act.schoolName }}</a>
+                </p>
+              {% elif act.cluster %}
+                <p class="text-[11.5px] text-slate-500 font-semibold leading-none">
+                  Cluster: <a href="/clusters/{{ act.cluster.id }}" class="font-bold hover:underline text-[var(--color-edify-primary)]">{{ act.cluster.name }}</a>
+                </p>
+              {% endif %}
+              
+              <p class="text-[11px] text-slate-400 font-semibold">
+                Scheduled for: {{ act.scheduledDate|default:"Not scheduled" }} &bull; Quarter: {{ act.quarter }}
+              </p>
+            </div>
+
+            <div class="flex items-center gap-4 text-right">
+              <div>
+                <p class="text-[9px] uppercase font-bold text-slate-400">Est. Cost</p>
+                <p class="font-extrabold text-slate-700 mt-0.5">{{ act.estCostCents|ugx }}</p>
+              </div>
+              <a href="/my-plan/{{ act.id }}" class="h-8 px-3 rounded-lg border border-[var(--color-edify-border)] hover:bg-slate-50 text-[11.5px] font-bold text-slate-600 flex items-center justify-center transition-colors">
+                View &amp; Manage
+              </a>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="p-12 text-center text-slate-400 font-semibold">No scheduled work matching those filters.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

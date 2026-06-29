@@ -15,18 +15,101 @@ def get_options(query: dict, principal) -> dict:
     school_id = query.get("schoolId")
     fy = query.get("fy") or get_operational_fy()
     school = School.objects.filter(school_id=school_id).first() if school_id else None
-    # Candidate staff: those in the school's district (simplified; legacy uses
-    # geography + supervisor scoping).
-    qs = StaffSchoolAssignment.objects.all()
+    
     if school:
         same = StaffSchoolAssignment.objects.filter(school_id=school.id).values_list("staff_id", flat=True)
+        
+        # 1. Capacity
+        staff_id = principal.staff_profile_id
+        cap = StaffSupportCapacity.objects.filter(staff_id=staff_id, fy=fy, is_active=True).first()
+        used = StaffSchoolAssignment.objects.filter(staff_id=staff_id).count()
+        limit = cap.max_direct_schools_supported if cap else 10
+        remaining = max(0, limit - used)
+        at_limit = (used >= limit)
+        near_limit = (limit > 0 and used / limit >= 0.9 and used < limit)
+        capacity_dict = {
+            "staffId": staff_id or "",
+            "fy": fy,
+            "max": limit,
+            "used": used,
+            "remaining": remaining,
+            "atLimit": at_limit,
+            "nearLimit": near_limit,
+        }
+
+        # 2. Options
+        options = []
+        is_direct_owner = (school.account_owner_id == staff_id)
+        
+        # Supervised schools & CCEOs
+        is_supervised_school = False
+        supervised_cceos = []
+        if staff_id:
+            from apps.accounts.models import StaffSupervisorAssignment
+            supervised_cceo_ids = list(StaffSupervisorAssignment.objects.filter(
+                supervisor_id=staff_id
+            ).values_list("supervisee_id", flat=True))
+            if school.account_owner_id in supervised_cceo_ids:
+                is_supervised_school = True
+            
+            # Retrieve details of supervised CCEOs
+            from apps.accounts.models import StaffProfile
+            profiles = StaffProfile.objects.filter(id__in=supervised_cceo_ids).select_related("user")
+            for p in profiles:
+                supervised_cceos.append({
+                    "staffId": p.id,
+                    "name": p.user.name if p.user else "Staff"
+                })
+
+        role = principal.active_role
+        
+        # Self option
+        if role == "CCEO" or (role == "CountryProgramLead" and is_direct_owner):
+            school_already_supported = StaffSchoolAssignment.objects.filter(staff_id=staff_id, school_id=school.id).exists()
+            self_enabled = school_already_supported or (remaining > 0)
+            self_reason = None
+            if not self_enabled:
+                self_reason = f"Direct support limit reached ({limit} schools). Assign this to a partner."
+            options.append({
+                "type": "self",
+                "label": "Assign to Myself",
+                "enabled": self_enabled,
+                "reason": self_reason,
+            })
+            
+        # Staff option (PL assigns to supervised CCEO)
+        if role == "CountryProgramLead" and is_supervised_school:
+            for c in supervised_cceos:
+                options.append({
+                    "type": "staff",
+                    "label": f"Assign to {c['name']}",
+                    "enabled": True,
+                    "staffId": c["staffId"],
+                })
+                
+        # Partner option
+        partner_enabled = True
+        partner_reason = None
+        if role == "CountryProgramLead" and not is_direct_owner and not is_supervised_school:
+            partner_enabled = False
+            partner_reason = "This school belongs to a CCEO you supervise. Assign to the responsible CCEO, or request a partner-assignment override."
+        
+        options.append({
+            "type": "partner",
+            "label": "Assign to Partner",
+            "enabled": partner_enabled,
+            "reason": partner_reason,
+        })
+
         return {
             "schoolId": school_id,
             "fy": fy,
             "currentlyAssignedStaffIds": list(same),
-            "capacity": get_capacity_for(principal, {"staffId": None, "fy": fy}),
+            "capacity": capacity_dict,
+            "options": options,
+            "assignments": [],
         }
-    return {"fy": fy, "options": []}
+    return {"fy": fy, "options": [], "assignments": []}
 
 
 def get_capacity(query: dict, principal) -> dict:

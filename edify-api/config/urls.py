@@ -66,6 +66,8 @@ urlpatterns = [
     *api("activities", "apps.activities.urls"),
     # Budget — the cost spine.
     *api("budget", "apps.budget.urls"),
+    # Direct costing preview
+    *api("costing", "apps.budget.costing_urls"),
     # Budgets — program + admin aggregation by period (monthly/quarterly/fy).
     *api("budgets", "apps.budget.budgets_urls"),
     # Partners — partner-org directory + self-service.
@@ -117,6 +119,8 @@ urlpatterns = [
     *api("planning", "apps.planning.urls"),
     # Fund requests — the Budget → Fund Request approval chain.
     *api("fund-requests", "apps.fund_requests.urls"),
+    # Budget lines direct access
+    *api("budget-lines", "apps.budget.budget_lines_urls"),
     # Core schools — the Core/Champion pipeline.
     *api("core", "apps.core_schools.urls"),
     # Monthly work-plan budget — CD→RVP routing.
@@ -130,6 +134,8 @@ urlpatterns = [
     *api("budget-intelligence", "apps.budget_intelligence.urls"),
     # Realtime — SSE live stream.
     *api("realtime", "apps.realtime.urls"),
+    # Frontend Pages
+    path("", include("apps.frontend.urls")),
 ]
 
 

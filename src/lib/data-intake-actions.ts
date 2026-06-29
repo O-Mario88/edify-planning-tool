@@ -28,7 +28,7 @@ export type BatchActionResult =
 
 const REVIEW_ROLES = new Set(["ImpactAssessment", "Admin", "CountryDirector", "ProgramAccountant"]);
 
-export function mapBackendStatusToFrontend(status: string): Status {
+function mapBackendStatusToFrontend(status: string): Status {
   switch (status?.toLowerCase()) {
     case "uploaded": return "Uploaded";
     case "validated": return "Validated";
