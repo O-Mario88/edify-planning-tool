@@ -1,17 +1,20 @@
-node_modules
-**/node_modules
-.next
-.git
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.egg-info/
 .env
-.env.*
+.env.local
+.git/
+.gitignore
 *.log
-npm-debug.log*
+db.sqlite3
+staticfiles/
+media/
+uploads/
+.pytest_cache/
+.coverage
+htmlcov/
 .DS_Store
-coverage
-.vscode
-# The web image is built from the repo root; edify-api is a sibling service with
-# its own Dockerfile and must NOT be copied into the web image.
-edify-api
-# Compose / deploy docs are not needed inside the web image.
-docker-compose.yml
-DEPLOY.md
+Dockerfile
+docker-compose*.yml

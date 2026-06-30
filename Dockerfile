@@ -1,64 +1,39 @@
-# ── edify-web (Next.js, standalone) ──────────────────────────────────────────
-FROM node:22-slim AS build
+# ── edify-api (Django + DRF) ─────────────────────────────────────────────────
+# Multi-stage: install deps, run a lean runtime image.
+
+FROM python:3.13-slim AS build
 WORKDIR /app
-# OpenSSL is required by Prisma's engines (generate + migrate).
-RUN apt-get update && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
-COPY package*.json ./
-RUN npm ci
+ENV PIP_NO_CACHE_DIR=1 PYTHONDONTWRITEBYTECODE=1
+# Build deps for psycopg (compiles against libpq) + Pillow.
+RUN apt-get update -y && apt-get install -y --no-install-recommends \
+    build-essential libpq-dev curl && rm -rf /var/lib/apt/lists/*
+COPY requirements/ ./requirements/
+RUN pip install --prefix=/install -r requirements/prod.txt
+
+FROM python:3.13-slim AS runtime
+WORKDIR /app
+ENV NODE_ENV=production \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    DJANGO_SETTINGS_MODULE=config.settings.prod \
+    PORT=4000
+# Runtime deps: libpq (psycopg), libexpat (ASGI), and headless LibreOffice for
+# the evidence DOCX→PDF rendition pipeline (optional; skipped if absent).
+RUN apt-get update -y && apt-get install -y --no-install-recommends \
+    libpq5 libexpat1 curl \
+    libreoffice --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
+# Site-packages from the build stage.
+COPY --from=build /install /usr/local
+# Application source.
 COPY . .
-# Generate the Prisma Client (into node_modules/@prisma/client + .prisma) so it
-# can be copied into the runtime image for the pre-deploy migrate/seed step.
-# Uses the stub DATABASE_URL from prisma.config.ts — no DB needed at build time.
-RUN npm run db:generate
-# Server env (EDIFY_API_URL / EDIFY_USE_BACKEND) is read at REQUEST time, not
-# baked in, so it stays runtime-configurable. Build only needs the source.
-ENV NEXT_TELEMETRY_DISABLED=1
+# Collect static (DRF spectacular + admin assets).
+RUN python manage.py collectstatic --noinput || true
 
-# ── Build provenance — so the deployed bundle self-identifies its commit ──────
-# Railway populates these ARGs from its own RAILWAY_GIT_* variables when a
-# Dockerfile ARG of the same name is declared. NEXT_PUBLIC_* is INLINED into the
-# JS bundle at build, so the browser-visible /version page reports the exact
-# commit the bundle was built from — the source of truth for "is prod current?".
-ARG RAILWAY_GIT_COMMIT_SHA=""
-ARG RAILWAY_GIT_BRANCH=""
-ENV NEXT_PUBLIC_GIT_COMMIT_SHA=$RAILWAY_GIT_COMMIT_SHA
-ENV NEXT_PUBLIC_GIT_BRANCH=$RAILWAY_GIT_BRANCH
-RUN set -eu; \
-    BUILD_TIME="$(date -u +%Y-%m-%dT%H:%M:%SZ)"; \
-    export NEXT_PUBLIC_BUILD_TIME="$BUILD_TIME"; \
-    echo "▶ Building edify-web  commit=${RAILWAY_GIT_COMMIT_SHA:-unknown}  branch=${RAILWAY_GIT_BRANCH:-unknown}  buildTime=${BUILD_TIME}"; \
-    npm run build
-
-FROM node:22-slim AS runtime
-WORKDIR /app
-ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
-ENV PORT=3000
-ENV HOSTNAME=0.0.0.0
-# OpenSSL — Prisma migrate/seed engines need it at runtime too.
-RUN apt-get update && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
-# The standalone server + its traced runtime deps, plus static assets + public.
-COPY --from=build /app/.next/standalone ./
-COPY --from=build /app/.next/static ./.next/static
-COPY --from=build /app/public ./public
-
-# ── Prisma for the pre-deploy step (`npm run db:migrate && npm run db:seed`) ──
-# Next's standalone output traces ONLY the server's runtime deps, so the Prisma
-# CLI, its engine binaries, the generated client, the schema, and the seed are
-# absent — which is why the pre-deploy command failed with "prisma: not found".
-# Copy the FULL node_modules from the build stage (it has: the prisma CLI + its
-# .bin symlink, the generated @prisma/client + engines, the @prisma/adapter-pg
-# driver adapter + pg and their transitive deps, and bcryptjs) plus the Prisma
-# schema/config and the one source file the seed imports. This overwrites the
-# standalone's partial node_modules with the complete set; `node server.js`
-# still runs (the full tree is a superset). The standalone package.json (copied
-# above) carries the npm scripts.
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/prisma ./prisma
-COPY --from=build /app/prisma.config.ts ./prisma.config.ts
-COPY --from=build /app/src/lib/uganda-districts.ts ./src/lib/uganda-districts.ts
-
-EXPOSE 3000
-HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=5 \
-  CMD node -e "fetch('http://localhost:'+(process.env.PORT||3000)+'/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
-CMD ["node", "server.js"]
+EXPOSE 4000
+# Apply migrations, optionally seed, then start the ASGI server (daphne for
+# realtime SSE + the scheduler). Health probe hits GET /api/health.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=5 \
+  CMD curl -fsS "http://localhost:${PORT:-4000}/api/health" || exit 1
+ENTRYPOINT ["./docker-entrypoint.sh"]
+CMD ["daphne", "-b", "0.0.0.0", "-p", "4000", "config.asgi:application"]

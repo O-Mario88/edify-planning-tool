@@ -1,36 +1,141 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# edify-api (Django + DRF)
 
-## Getting Started
+The Edify Planning & Monitoring backend, rebuilt in **Django 5 + Django REST
+Framework** (replacing the previous NestJS + Prisma backend). The School
+Directory is the source of truth; ~200 endpoints across 33 domain apps; JWT
+access + rotating refresh tokens; a 38-key RBAC permission matrix with
+data-access scope resolution; a tamper-evident audit hash-chain; realtime SSE;
+and 4 background jobs.
 
-First, run the development server:
+## Stack
+
+- **Python 3.13**, Django 5.2, DRF 3.16, `drf-spectacular` (OpenAPI at `/api/docs`)
+- **PostgreSQL** (psycopg 3) — the legacy ran Postgres via Prisma
+- **JWT** (`PyJWT`) access tokens (15m) + rotating revocable refresh (7d, SHA-256 hashed)
+- **bcrypt** password hashing (parity with the legacy bcryptjs cost 12)
+- **django-apscheduler** — in-process background jobs (parity with the NestJS `@Cron` worker)
+- **daphne** (ASGI) — required for the realtime SSE stream + scheduler
+- **cryptography** — AES-256-GCM field-level encryption
+- **LibreOffice** (optional, headless) — evidence DOCX→PDF rendition
+
+## Quick start
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cd edify-api
+uv venv --python 3.13 .venv && source .venv/bin/activate
+uv pip install -r requirements/dev.txt
+
+# Postgres must be running. Configure via DATABASE_URL or POSTGRES_* env vars:
+export DATABASE_URL="postgresql://edify:edify@localhost:5432/edify_pm"
+export JWT_SECRET="dev-secret-12345678"   # ≥16 chars in prod
+export NODE_ENV=development
+export PORT=4000
+
+python manage.py migrate
+python manage.py seed                    # REFERENCE DATA ONLY (permissions). Safe on every deploy.
+# Local development only — demo accounts + sample data (refuses production):
+python manage.py seed --demo             # demo users + geography + 700 schools/SSA/partners
+python manage.py runserver               # or: daphne -b 0.0.0.0 -p 4000 config.asgi:application
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+> **CORE RULE: the database is the only runtime source of truth.** Production
+> must never contain demo/mock data. `seed` alone seeds only the RBAC permission
+> matrix; `seed --demo` is local-only and refuses to run in production. Real
+> operational data arrives through backend upload/admin workflows.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Data source of truth — local vs production
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+**Local development:**
+```bash
+# Upload test data into the LOCAL database (never fabricated in code):
+python manage.py seed --demo                # demo accounts + sample schools/SSA (local only)
+python manage.py import_schools_local schools.csv    # CSV → School rows (tagged source=local_test_upload)
+python manage.py import_ssa_local ssa.csv            # CSV → SSA records; updates readiness
+python manage.py purge_local_test_data --yes         # remove local-test records (keeps reference data)
+python manage.py audit_mock_data                    # scan for mock/demo leakage
+```
 
-## Learn More
+**Production:**
+- Deploys with **reference data only** (permissions). No demo schools/users/SSA.
+- The dev-only commands (`seed --demo`, `import_*_local`, `purge_local_test_data`)
+  **refuse to run in production**.
+- Real data is uploaded through the backend API / admin / `ALLOW_PRODUCTION_IMPORTS`
+  workflows after deployment.
+- Production gates (`config/settings/prod.py`) fail-closed if `ENABLE_MOCK_DATA`,
+  `ENABLE_DEV_SEED`, `ENABLE_DEV_IMPORTS`, or `PARTNER_ROLE_BRIDGE` are on.
 
-To learn more about Next.js, take a look at the following resources:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The API is served at `http://localhost:4000/api` (global `/api` prefix, matching
+the legacy contract). OpenAPI docs at `/api/docs` (non-production).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Demo accounts (local development only — shared `DEMO_LOGIN_PASSWORD`, default `edify`)
 
-## Deploy on Vercel
+Created by `seed --demo` (refuses production). Production creates real users
+through the admin user-management workflow.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Email | Role |
+|---|---|
+| `admin@edify.org` | Admin |
+| `cd@edify.org` | CountryDirector |
+| `ia@edify.org` | ImpactAssessment |
+| `rvp@edify.org` | RegionalVicePresident |
+| `accountant@edify.org` | ProgramAccountant |
+| `hr@edify.org` | HumanResources |
+| `coordinator@edify.org` | ProjectCoordinator |
+| `partner@edify.org` | PartnerFieldOfficer |
+| `pl1..4@edify.org` | CountryProgramLead |
+| `cceo@edify.org`, `cceo1..19@edify.org` | CCEO |
+| `domario@edify.org` | super-admin (password from `SUPER_ADMIN_PASSWORD` env only) |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Domain apps (`apps/`)
+
+| App | Purpose |
+|---|---|
+| `core` | CUID/soft-delete bases, pagination envelope, request-context + exception middleware, RBAC matrix, ScopeService, FY/crypto/email/throttle |
+| `accounts` | User, RBAC (Permission/RolePermission), StaffProfile, JWT auth |
+| `geography` | Uganda admin hierarchy (Region→District→SubCounty→Parish→Village) |
+| `schools` | School Directory (source of truth) + bulk upload + duplicates |
+| `clusters` | School grouping, sub-county uniqueness, intelligence |
+| `ssa` | School Self-Assessment upload, QA provenance, readiness recompute |
+| `activities` | The 21-state field-work lifecycle |
+| `budget` | Cost spine + the automatic costing engine |
+| `partners` | Partner-org directory + self-service |
+| `assignment` | Direct-support capacity + assignment policy |
+| `evidence` | Secure multipart file pipeline (5-gate validation + DOCX→PDF) |
+| `planning` | Plan authoring + scheduling + lifecycle |
+| `fund_requests` | The Budget→Fund Request approval chain |
+| `monthly_work_plan` | CD→RVP monthly budget routing |
+| `core_schools` | Core/Champion pipeline (polymorphic slot actions) |
+| `projects` | Special projects |
+| `messaging` / `notifications` | In-app threads + per-user rail |
+| `hr` / `debriefs` / `targets` / `reports` / `flags` / `pl_review` | Operations |
+| `command_center` / `filters` / `search` / `my_plan` / `system_health` / `security` | Surfaces |
+| `admin_users` | Account provisioning + invite lifecycle |
+| `analytics` | Role-scoped summaries + SSA performance + correlation |
+| `leadership` / `budget_intelligence` | The two decision engines |
+| `audit` / `realtime` | Audit hash-chain + DomainEvent seam + SSE + jobs |
+
+## Key contracts (must match the legacy)
+
+- **`/api` global prefix**, no trailing slashes on routes (`/api/schools`, `/api/auth/login`)
+- **`Paginated<T>` envelope**: `{data, page, pageSize, total, totalPages}`
+- **Error envelope**: `{statusCode, correlationId, message}`
+- **Validation leniency**: unknown JSON keys dropped (never 400), matching the legacy `whitelist:true`
+- **Refresh-token rotation**: single-use (reuse → 401)
+- **Login lockout** after `AUTH_MAX_FAILED_LOGINS` failures; **rate-limited** 10/min/IP
+- **Production gates** (`config/settings/prod.py`): refuse to boot unless mock data,
+  dev endpoints, and shadow authorization are off, the JWT secret is strong, and
+  evidence storage is on a persistent absolute path.
+
+## Docker
+
+```bash
+docker build -t edify-api ./edify-api
+# Entry: migrate → optional seed (RUN_SEED=true) → daphne ASGI on :4000
+```
+
+## Management commands
+
+- `python manage.py seed [--mock] [--reset]` — permissions + demo data
+- `python manage.py spectacular --color --file schema.yml` — OpenAPI export
+- `python manage.py makemigrations` / `migrate` — schema
