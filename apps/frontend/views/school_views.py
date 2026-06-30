@@ -12,6 +12,39 @@ from apps.ssa.upload_service import upload_ssa_file
 from apps.schools.services import get_one as get_school_one
 from apps.analytics.services import school_impact
 
+def _get_school_intelligence_data(school):
+    latest_ssa = school.ssa_records.filter(deleted_at__isnull=True).order_by("-date_of_ssa").first()
+    weakest = "None"
+    last_ssa_date = "No SSA Recorded"
+    if latest_ssa:
+        last_ssa_date = latest_ssa.date_of_ssa.strftime("%d %b %Y")
+        lowest_score = latest_ssa.scores.filter(deleted_at__isnull=True).order_by("score").first()
+        if lowest_score:
+            weakest = f"{lowest_score.get_intervention_display()} ({lowest_score.score})"
+    
+    from apps.clusters.models import Cluster
+    cluster_name = "Unassigned"
+    if school.cluster_id:
+        cluster = Cluster.objects.filter(id=school.cluster_id, deleted_at__isnull=True).first()
+        if cluster:
+            cluster_name = cluster.name
+            
+    assigned_staff_name = school.account_owner_name_raw or school.account_owner_id or "Unassigned"
+    
+    return {
+        "school": school,
+        "cluster_name": cluster_name,
+        "weakest_intervention": weakest,
+        "last_ssa_date": last_ssa_date,
+        "assigned_staff_name": assigned_staff_name,
+    }
+
+@login_required(login_url="/login")
+def school_intelligence_partial(request, school_id):
+    school = get_object_or_404(School, id=school_id, deleted_at__isnull=True)
+    intel_data = _get_school_intelligence_data(school)
+    return render(request, "partials/directory_intelligence.html", {"intelligence": intel_data})
+
 @login_required(login_url="/login")
 def school_directory_view(request):
     q = request.GET.get("q", "").strip()
@@ -31,6 +64,21 @@ def school_directory_view(request):
     if readiness:
         schools_qs = schools_qs.filter(planning_readiness=readiness)
 
+    # Database KPI metrics
+    kpi_qs = School.objects.filter(deleted_at__isnull=True)
+    total_schools = kpi_qs.count()
+    client_schools = kpi_qs.filter(school_type="client").count()
+    core_schools = kpi_qs.filter(school_type="core").count()
+    unclustered_schools = kpi_qs.filter(cluster_status="unclustered").count()
+    no_ssa_schools = kpi_qs.filter(current_fy_ssa_status="not_done").count()
+    staff_setup_schools = kpi_qs.filter(Q(account_owner_id__isnull=True) | Q(account_owner_id="") | Q(account_owner_status="pending")).count()
+    planning_ready_schools = kpi_qs.filter(planning_readiness="ready").count()
+    duplicate_schools = kpi_qs.filter(duplicate_status="duplicate").count()
+
+    needs_setup = staff_setup_schools
+    needs_ssa = no_ssa_schools
+    ready_for_planning = planning_ready_schools
+
     schools_qs = schools_qs.select_related("district", "sub_county", "parish")
 
     paginator = Paginator(schools_qs, 15)
@@ -41,6 +89,12 @@ def school_directory_view(request):
     for school in page_obj:
         school.assigned_staff = school.account_owner_name_raw or school.account_owner_id or "Unassigned"
 
+    # Default Selected School
+    selected_school_data = None
+    if page_obj.object_list:
+        default_school = page_obj.object_list[0]
+        selected_school_data = _get_school_intelligence_data(default_school)
+
     context = {
         "page_obj": page_obj,
         "districts": districts,
@@ -50,6 +104,24 @@ def school_directory_view(request):
         "selected_district": district_id,
         "selected_type": school_type,
         "selected_readiness": readiness,
+        
+        # Stats
+        "total_schools": total_schools,
+        "client_schools": client_schools,
+        "core_schools": core_schools,
+        "unclustered_schools": unclustered_schools,
+        "no_ssa_schools": no_ssa_schools,
+        "staff_setup_schools": staff_setup_schools,
+        "planning_ready_schools": planning_ready_schools,
+        "duplicate_schools": duplicate_schools,
+        
+        # Banners
+        "needs_setup": needs_setup,
+        "needs_ssa": needs_ssa,
+        "ready_for_planning": ready_for_planning,
+        
+        # Default Selected School Intelligence
+        "intelligence": selected_school_data,
     }
 
     if request.headers.get("HX-Request") == "true":

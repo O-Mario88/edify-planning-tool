@@ -20,6 +20,7 @@ urlpatterns = [
     path("schools", school_views.school_directory_view, name="schools_directory"),
     path("schools/upload", school_views.school_upload_view, name="schools_upload"),
     path("schools/<str:school_id>", school_views.school_detail_view, name="school_detail"),
+    path("schools/partial-intelligence/<str:school_id>", school_views.school_intelligence_partial, name="school_intelligence_partial"),
     
     # Clusters
     path("clusters", cluster_views.cluster_list_view, name="cluster_list"),

@@ -149,62 +149,52 @@
 
     /* Sidebar styling overrides matching mockups */
     .sidebar-dark {
-      background-color: #2C404D !important;
+      background-color: #ffffff !important;
     }
     .sidebar-nav-header {
-      color: #7A929F !important;
+      color: #94a3b8 !important;
       font-size: 10px !important;
       font-weight: 800 !important;
       letter-spacing: 0.12em !important;
       text-transform: uppercase !important;
     }
     .sidebar-item {
-      color: #9FB1BC !important;
+      color: #64748b !important;
       transition: all 0.2s ease !important;
       position: relative;
     }
     .sidebar-item:hover {
-      color: #ffffff !important;
-      background-color: rgba(255, 255, 255, 0.03) !important;
+      color: #0f172a !important;
+      background-color: #f8fafc !important;
     }
     .sidebar-icon-container {
-      background-color: rgba(53, 79, 95, 0.4) !important;
-      color: #9FB1BC !important;
+      background-color: transparent !important;
+      color: #94a3b8 !important;
       transition: all 0.2s ease !important;
     }
     .sidebar-item:hover .sidebar-icon-container {
-      background-color: rgba(53, 79, 95, 0.7) !important;
-      color: #ffffff !important;
+      color: #475569 !important;
     }
     .sidebar-item-active {
-      background-color: rgba(255, 255, 255, 0.06) !important;
-      color: #ffffff !important;
+      background-color: #eff6ff !important;
+      color: #2563eb !important;
       border-radius: 12px !important;
       position: relative;
     }
-    .sidebar-item-active::after {
+    .sidebar-item-active::before {
       content: "";
       position: absolute;
-      inset: 0;
-      border-radius: 12px;
-      padding: 1.5px;
-      background: linear-gradient(135deg,
-        #f59e0b 0%,
-        #f59e0b 15%,
-        rgba(66, 93, 112, 0.6) 30%,
-        rgba(66, 93, 112, 0.4) 100%
-      );
-      -webkit-mask:
-        linear-gradient(#fff 0 0) content-box,
-        linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor;
-              mask-composite: exclude;
-      pointer-events: none;
-      z-index: 1;
+      left: 0;
+      top: 15%;
+      bottom: 15%;
+      width: 4px;
+      background-color: #2563eb;
+      border-top-right-radius: 4px;
+      border-bottom-right-radius: 4px;
     }
     .sidebar-item-active .sidebar-icon-container {
-      background-color: rgba(245, 158, 11, 0.15) !important;
-      color: #fbbf24 !important;
+      color: #2563eb !important;
+      background-color: transparent !important;
     }
   </style>
 

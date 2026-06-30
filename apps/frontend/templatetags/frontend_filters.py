@@ -30,3 +30,10 @@ def lookup(dictionary, key):
     if not dictionary:
         return None
     return dictionary.get(key)
+
+@register.filter
+def divide(value, arg):
+    try:
+        return float(value) / float(arg)
+    except (ValueError, TypeError, ZeroDivisionError):
+        return 0
