@@ -1,0 +1,57 @@
+<!-- Roster Select Tabs -->
+<div class="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
+  <!-- All Schools -->
+  <button 
+    hx-get="/schools?tab=all" 
+    hx-target="#schools-table-container"
+    hx-include="#filters-form"
+    hx-push-url="true"
+    class="h-9 px-4 flex items-center justify-center text-[12px] font-extrabold transition-all border-b-2 whitespace-nowrap {% if active_tab == 'all' or not active_tab %}border-blue-600 text-blue-600{% else %}border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-200{% endif %}"
+  >
+    All Schools <span class="ml-1.5 px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 text-[9.5px] font-black">{{ all_count }}</span>
+  </button>
+
+  <!-- Unclustered -->
+  <button 
+    hx-get="/schools?tab=unclustered" 
+    hx-target="#schools-table-container"
+    hx-include="#filters-form"
+    hx-push-url="true"
+    class="h-9 px-4 flex items-center justify-center text-[12px] font-extrabold transition-all border-b-2 whitespace-nowrap {% if active_tab == 'unclustered' %}border-blue-600 text-blue-600{% else %}border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-200{% endif %}"
+  >
+    Unclustered <span class="ml-1.5 px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[9.5px] font-bold">{{ unclustered_count }}</span>
+  </button>
+
+  <!-- Needs SSA -->
+  <button 
+    hx-get="/schools?tab=needs_ssa" 
+    hx-target="#schools-table-container"
+    hx-include="#filters-form"
+    hx-push-url="true"
+    class="h-9 px-4 flex items-center justify-center text-[12px] font-extrabold transition-all border-b-2 whitespace-nowrap {% if active_tab == 'needs_ssa' %}border-blue-600 text-blue-600{% else %}border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-200{% endif %}"
+  >
+    Needs SSA <span class="ml-1.5 px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[9.5px] font-bold">{{ needs_ssa_count }}</span>
+  </button>
+
+  <!-- Staff Setup Required -->
+  <button 
+    hx-get="/schools?tab=staff_setup" 
+    hx-target="#schools-table-container"
+    hx-include="#filters-form"
+    hx-push-url="true"
+    class="h-9 px-4 flex items-center justify-center text-[12px] font-extrabold transition-all border-b-2 whitespace-nowrap {% if active_tab == 'staff_setup' %}border-blue-600 text-blue-600{% else %}border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-200{% endif %}"
+  >
+    Staff Setup Required <span class="ml-1.5 px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[9.5px] font-bold">{{ staff_setup_count }}</span>
+  </button>
+
+  <!-- Potential Duplicates -->
+  <button 
+    hx-get="/schools?tab=duplicates" 
+    hx-target="#schools-table-container"
+    hx-include="#filters-form"
+    hx-push-url="true"
+    class="h-9 px-4 flex items-center justify-center text-[12px] font-extrabold transition-all border-b-2 whitespace-nowrap {% if active_tab == 'duplicates' %}border-blue-600 text-blue-600{% else %}border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-200{% endif %}"
+  >
+    Potential Duplicates <span class="ml-1.5 px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[9.5px] font-bold">{{ duplicates_count }}</span>
+  </button>
+</div>

@@ -1,0 +1,225 @@
+{% load frontend_filters %}
+<div class="overflow-x-auto">
+  <table class="w-full text-left border-collapse text-[12px] font-sans">
+    <thead>
+      <tr class="bg-slate-50 border-b border-[var(--color-edify-divider)] text-[10px] font-bold text-slate-400 uppercase tracking-wider font-sans">
+        <!-- Checkbox column header -->
+        <th class="px-4 py-3 w-8">
+          <input 
+            type="checkbox" 
+            @change="if ($event.target.checked) { selectedSchools = [{% for school in page_obj %}'{{ school.id }}',{% endfor %}] } else { selectedSchools = [] }"
+            :checked="selectedSchools.length === {% if page_obj %}{{ page_obj|length }}{% else %}0{% endif %} && selectedSchools.length > 0"
+            class="rounded border-slate-300 text-[var(--color-edify-primary)] focus:ring-[var(--color-edify-primary)]"
+          >
+        </th>
+        <th x-show="visibleColumns.id" class="px-4 py-3 whitespace-nowrap">School ID</th>
+        <th x-show="visibleColumns.name" class="px-4 py-3 whitespace-nowrap">School Name</th>
+        <th x-show="visibleColumns.district" class="px-4 py-3 whitespace-nowrap">District</th>
+        <th x-show="visibleColumns.sub_county" class="px-4 py-3 whitespace-nowrap">Sub-county</th>
+        <th x-show="visibleColumns.type" class="px-4 py-3 whitespace-nowrap">School Type</th>
+        <th x-show="visibleColumns.staff" class="px-4 py-3 whitespace-nowrap">Staff</th>
+        <th x-show="visibleColumns.match_status" class="px-4 py-3 whitespace-nowrap font-bold">Staff Match Status</th>
+        <th x-show="visibleColumns.cluster_status" class="px-4 py-3 whitespace-nowrap font-bold">Cluster Status</th>
+        <th x-show="visibleColumns.ssa_status" class="px-4 py-3 whitespace-nowrap font-bold">SSA Status</th>
+        <th x-show="visibleColumns.readiness" class="px-4 py-3 whitespace-nowrap font-bold">Planning Readiness</th>
+        <th x-show="visibleColumns.partner_type" class="px-4 py-3 whitespace-nowrap font-bold">Current Partner Type</th>
+        <th x-show="visibleColumns.enrollment" class="px-4 py-3 whitespace-nowrap text-right">Enrollment</th>
+        <th x-show="visibleColumns.enrollment_date" class="px-4 py-3 whitespace-nowrap">Last Enrollment Date</th>
+        <th x-show="visibleColumns.actions" class="px-4 py-3 whitespace-nowrap text-right">Actions</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-[var(--color-edify-divider)]" x-data="{ localSelectedId: '' }">
+      {% if page_obj %}
+        {% for school in page_obj %}
+          <tr 
+            class="hover:bg-slate-50/75 transition-colors cursor-pointer"
+            :class="localSelectedId === '{{ school.id }}' ? 'bg-blue-50/40 border-l-4 border-l-blue-600' : ''"
+            @click="localSelectedId = '{{ school.id }}'"
+            hx-get="/schools/partial-intelligence/{{ school.id }}"
+            hx-target="#directory-intelligence-container"
+            hx-swap="outerHTML"
+            hx-trigger="click"
+          >
+            <!-- Checkbox -->
+            <td class="px-4 py-3.5" @click.stop>
+              <input 
+                type="checkbox" 
+                value="{{ school.id }}" 
+                x-model="selectedSchools"
+                class="rounded border-slate-300 text-[var(--color-edify-primary)] focus:ring-[var(--color-edify-primary)]"
+              >
+            </td>
+            
+            <!-- School ID -->
+            <td x-show="visibleColumns.id" class="px-4 py-3.5 font-bold text-slate-500 font-mono whitespace-nowrap">
+              {{ school.school_id }}
+            </td>
+            
+            <!-- School Name -->
+            <td x-show="visibleColumns.name" class="px-4 py-3.5 font-extrabold text-slate-800 hover:text-[var(--color-edify-primary)] whitespace-nowrap">
+              {{ school.name }}
+            </td>
+            
+            <!-- District -->
+            <td x-show="visibleColumns.district" class="px-4 py-3.5 text-slate-500 font-semibold whitespace-nowrap">
+              {{ school.district.name }}
+            </td>
+
+            <!-- Sub-county -->
+            <td x-show="visibleColumns.sub_county" class="px-4 py-3.5 text-slate-500 font-semibold whitespace-nowrap">
+              {{ school.sub_county.name|default:"Not specified" }}
+            </td>
+            
+            <!-- School Type Badge -->
+            <td x-show="visibleColumns.type" class="px-4 py-3.5 whitespace-nowrap">
+              <span class="inline-flex items-center rounded px-2 py-0.5 text-[10px] font-bold {% if school.school_type == 'client' %}bg-emerald-50 text-emerald-700 border border-emerald-200{% else %}bg-purple-50 text-purple-700 border border-purple-200{% endif %}">
+                {{ school.get_school_type_display }}
+              </span>
+            </td>
+            
+            <!-- Staff count -->
+            <td x-show="visibleColumns.staff" class="px-4 py-3.5 whitespace-nowrap font-semibold text-slate-700">
+              <div class="flex items-center gap-1.5">
+                <svg class="h-3.5 w-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <span>{% if school.account_owner_id %}1{% else %}0{% endif %}</span>
+              </div>
+            </td>
+
+            <!-- Staff Match Status Badge -->
+            <td x-show="visibleColumns.match_status" class="px-4 py-3.5 whitespace-nowrap">
+              <span class="inline-flex items-center rounded px-2 py-0.5 text-[9.5px] font-extrabold uppercase tracking-wider {% if school.account_owner_id %}bg-emerald-50 text-emerald-700 border border-emerald-100{% else %}bg-rose-50 text-rose-700 border border-rose-100{% endif %}">
+                {% if school.account_owner_id %}Matched{% else %}Unmatched{% endif %}
+              </span>
+            </td>
+            
+            <!-- Cluster Status Badge -->
+            <td x-show="visibleColumns.cluster_status" class="px-4 py-3.5 whitespace-nowrap">
+              <span class="inline-flex items-center rounded px-2 py-0.5 text-[9.5px] font-extrabold uppercase tracking-wider {% if school.cluster_status == 'clustered' %}bg-emerald-50 text-emerald-700 border border-emerald-100{% else %}bg-rose-50 text-rose-700 border border-rose-100{% endif %}">
+                {{ school.get_cluster_status_display }}
+              </span>
+            </td>
+            
+            <!-- SSA Status Badge -->
+            <td x-show="visibleColumns.ssa_status" class="px-4 py-3.5 whitespace-nowrap">
+              <span class="inline-flex items-center rounded px-2 py-0.5 text-[9.5px] font-extrabold uppercase tracking-wider {% if school.current_fy_ssa_status == 'done' %}bg-emerald-50 text-emerald-700 border border-emerald-100{% else %}bg-rose-50 text-rose-700 border border-rose-100{% endif %}">
+                {% if school.current_fy_ssa_status == 'done' %}Complete{% else %}Not Done{% endif %}
+              </span>
+            </td>
+            
+            <!-- Planning Readiness Badge -->
+            <td x-show="visibleColumns.readiness" class="px-4 py-3.5 whitespace-nowrap">
+              <span class="inline-flex items-center rounded px-2 py-0.5 text-[9.5px] font-extrabold uppercase tracking-wider {% if school.planning_readiness == 'ready' %}bg-emerald-50 text-emerald-700 border border-emerald-100{% else %}bg-rose-50 text-rose-700 border border-rose-100{% endif %}">
+                {{ school.get_planning_readiness_display }}
+              </span>
+            </td>
+
+            <!-- Current Partner Type Badge -->
+            <td x-show="visibleColumns.partner_type" class="px-4 py-3.5 whitespace-nowrap">
+              <span class="inline-flex items-center rounded px-2 py-0.5 text-[9.5px] font-extrabold uppercase tracking-wider {% if school.cluster_id %}bg-blue-50 text-blue-700 border border-blue-100{% else %}bg-slate-100 text-slate-500{% endif %}">
+                {% if school.cluster_id %}Assigned{% else %}None{% endif %}
+              </span>
+            </td>
+
+            <!-- Enrollment number -->
+            <td x-show="visibleColumns.enrollment" class="px-4 py-3.5 whitespace-nowrap text-right font-semibold text-slate-700">
+              {{ school.enrollment|default:"0" }}
+            </td>
+
+            <!-- Last Enrollment Date -->
+            <td x-show="visibleColumns.enrollment_date" class="px-4 py-3.5 whitespace-nowrap text-slate-500 font-semibold">
+              {{ school.last_enrollment_date|date:"d M Y"|default:"—" }}
+            </td>
+            
+            <!-- Row actions column -->
+            <td x-show="visibleColumns.actions" class="px-4 py-3.5 text-right font-extrabold whitespace-nowrap" @click.stop>
+              <div class="flex items-center justify-end gap-2 text-[10.5px]">
+                <a href="/schools/{{ school.id }}" class="text-[var(--color-edify-primary)] hover:underline font-bold">View School</a>
+                <span class="text-slate-300">&bull;</span>
+                <a href="/schools/{{ school.id }}#ssa-timeline" class="text-[var(--color-edify-primary)] hover:underline font-bold">View SSA</a>
+                <span class="text-slate-300">&bull;</span>
+                {% if school.planning_readiness == 'ready' %}
+                  <a href="/planning/schedule?school_id={{ school.school_id }}" class="text-amber-600 hover:underline font-bold">Plan</a>
+                {% else %}
+                  <span class="text-slate-400 font-normal italic cursor-not-allowed" title="Complete SSA first">Plan</span>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+      {% else %}
+        <tr>
+          <td colspan="15" class="px-6 py-12 text-center text-slate-400 font-semibold bg-slate-50/20">
+            <div class="max-w-sm mx-auto space-y-3">
+              <svg class="h-10 w-10 text-slate-300 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p class="text-[13px] font-extrabold text-slate-500">No schools match these filters.</p>
+              <p class="text-[11px] text-slate-400">Clear filters or adjust your search parameters to find schools.</p>
+              <a href="/schools" class="inline-flex h-8 px-3 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[11px] font-bold items-center justify-center transition-all">Clear Filters</a>
+            </div>
+          </td>
+        </tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Pagination controls -->
+{% if page_obj.has_other_pages %}
+  <div class="px-6 py-4 border-t border-[var(--color-edify-divider)] flex items-center justify-between bg-slate-50/50">
+    <div class="text-[11.5px] text-slate-500 font-semibold">
+      Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} schools
+    </div>
+    
+    <div class="flex items-center gap-1.5">
+      <!-- Rows per page info selector mirroring mockup -->
+      <div class="flex items-center gap-1 mr-4 text-[11.5px] text-slate-500 font-semibold">
+        <span>Rows per page:</span>
+        <select class="h-7 px-1 rounded border border-slate-200 text-[11.5px] bg-white font-bold focus:outline-none">
+          <option>15</option>
+          <option>25</option>
+          <option>50</option>
+        </select>
+      </div>
+
+      {% if page_obj.has_previous %}
+        <button 
+          hx-get="/schools?q={{ q }}&fy={{ selected_fy }}&region={{ selected_region }}&district={{ selected_district }}&sub_county={{ selected_sub_county }}&school_type={{ selected_type }}&staff={{ selected_staff }}&staff_match={{ selected_staff_match }}&cluster_status={{ selected_cluster_status }}&ssa_status={{ selected_ssa_status }}&readiness={{ selected_readiness }}&partner_type={{ selected_partner_type }}&tab={{ active_tab }}&page={{ page_obj.previous_page_number }}"
+          hx-target="#schools-table-container"
+          class="h-8 px-3 rounded-lg border border-[var(--color-edify-border)] hover:bg-white text-[12px] font-bold text-slate-600 flex items-center justify-center transition-all"
+        >
+          Previous
+        </button>
+      {% endif %}
+      
+      <!-- List page numbers -->
+      <div class="flex items-center gap-1 text-[12px]">
+        {% for num in page_obj.paginator.page_range %}
+          {% if num == page_obj.number %}
+            <span class="h-8 w-8 rounded-lg bg-[var(--color-edify-primary)] text-white font-black flex items-center justify-center shadow-sm">{{ num }}</span>
+          {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+            <button 
+              hx-get="/schools?q={{ q }}&fy={{ selected_fy }}&region={{ selected_region }}&district={{ selected_district }}&sub_county={{ selected_sub_county }}&school_type={{ selected_type }}&staff={{ selected_staff }}&staff_match={{ selected_staff_match }}&cluster_status={{ selected_cluster_status }}&ssa_status={{ selected_ssa_status }}&readiness={{ selected_readiness }}&partner_type={{ selected_partner_type }}&tab={{ active_tab }}&page={{ num }}"
+              hx-target="#schools-table-container"
+              class="h-8 w-8 rounded-lg hover:bg-slate-100 text-slate-600 font-bold flex items-center justify-center transition-colors"
+            >
+              {{ num }}
+            </button>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+      {% if page_obj.has_next %}
+        <button 
+          hx-get="/schools?q={{ q }}&fy={{ selected_fy }}&region={{ selected_region }}&district={{ selected_district }}&sub_county={{ selected_sub_county }}&school_type={{ selected_type }}&staff={{ selected_staff }}&staff_match={{ selected_staff_match }}&cluster_status={{ selected_cluster_status }}&ssa_status={{ selected_ssa_status }}&readiness={{ selected_readiness }}&partner_type={{ selected_partner_type }}&tab={{ active_tab }}&page={{ page_obj.next_page_number }}"
+          hx-target="#schools-table-container"
+          class="h-8 px-3 rounded-lg border border-[var(--color-edify-border)] hover:bg-white text-[12px] font-bold text-slate-600 flex items-center justify-center transition-all"
+        >
+          Next
+        </button>
+      {% endif %}
+    </div>
+  </div>
+{% endif %}

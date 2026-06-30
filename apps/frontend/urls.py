@@ -21,6 +21,9 @@ urlpatterns = [
     path("schools/upload", school_views.school_upload_view, name="schools_upload"),
     path("schools/<str:school_id>", school_views.school_detail_view, name="school_detail"),
     path("schools/partial-intelligence/<str:school_id>", school_views.school_intelligence_partial, name="school_intelligence_partial"),
+    path("schools/bulk-assign-cluster", school_views.bulk_assign_cluster_view, name="bulk_assign_cluster"),
+    path("schools/bulk-match-staff", school_views.bulk_match_staff_view, name="bulk_match_staff"),
+    path("schools/add-school", school_views.add_school_view, name="add_school"),
     
     # Clusters
     path("clusters", cluster_views.cluster_list_view, name="cluster_list"),
