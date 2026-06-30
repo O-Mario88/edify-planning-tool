@@ -1,0 +1,104 @@
+{% load frontend_filters %}
+<div class="px-4 py-3 bg-slate-50/50 border-b border-slate-100 flex justify-between items-center font-sans">
+  <h4 class="text-[12.5px] font-extrabold text-slate-800">Schools in Cluster ({{ schools|length }})</h4>
+</div>
+<div class="overflow-x-auto">
+  <table class="w-full text-left text-[12px] border-collapse font-sans">
+    <thead>
+      <tr class="border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50/20">
+        <th class="px-4 py-3">School ID</th>
+        <th class="px-4 py-3">School Name</th>
+        <th class="px-4 py-3">School Type</th>
+        <th class="px-4 py-3">Staff</th>
+        <th class="px-4 py-3">SSA Avg</th>
+        <th class="px-4 py-3">Struggling Interventions</th>
+        <th class="px-4 py-3">Last Visit</th>
+        <th class="px-4 py-3">Last Training</th>
+        <th class="px-4 py-3">Planning Status</th>
+        <th class="px-4 py-3 text-right">Actions</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100 text-slate-700">
+      {% if schools %}
+        {% for s in schools %}
+          <tr class="hover:bg-slate-50/40 transition-colors">
+            <!-- School ID -->
+            <td class="px-4 py-3 font-bold text-[#2563eb] font-mono whitespace-nowrap">{{ s.schoolId }}</td>
+            
+            <!-- School Name -->
+            <td class="px-4 py-3 font-extrabold text-slate-800 whitespace-nowrap">
+              <a href="/schools/{{ s.id }}" class="hover:underline">{{ s.name }}</a>
+            </td>
+            
+            <!-- School Type -->
+            <td class="px-4 py-3 whitespace-nowrap">
+              <span class="px-2 py-0.5 rounded text-[9.5px] font-bold {% if s.schoolType == 'client' %}bg-emerald-50 text-emerald-700 border border-emerald-100{% else %}bg-purple-50 text-purple-700 border border-purple-100{% endif %}">
+                {{ s.schoolType|title }}
+              </span>
+            </td>
+            
+            <!-- Staff count -->
+            <td class="px-4 py-3 font-bold whitespace-nowrap">{{ s.assignedStaff }}</td>
+            
+            <!-- SSA Avg -->
+            <td class="px-4 py-3 whitespace-nowrap">
+              {% if s.currentSsaAverage %}
+                <span class="flex items-center gap-1 font-extrabold">
+                  {{ s.currentSsaAverage|floatformat:1 }} 
+                  <span class="h-1.5 w-1.5 rounded-full {% if s.currentSsaAverage < 5.0 %}bg-rose-500{% elif s.currentSsaAverage < 6.0 %}bg-amber-500{% else %}bg-emerald-500{% endif %}"></span>
+                </span>
+              {% else %}
+                <span class="text-slate-400 italic">No SSA</span>
+              {% endif %}
+            </td>
+            
+            <!-- Struggling Interventions Badges -->
+            <td class="px-4 py-3">
+              <div class="flex flex-wrap gap-1">
+                {% if s.topStrugglingInterventions %}
+                  {% for item in s.topStrugglingInterventions %}
+                    <span class="px-1.5 py-0.5 rounded text-[9.5px] font-bold {% if forloop.first %}bg-rose-50 text-rose-600 border border-rose-100{% else %}bg-amber-50 text-amber-600 border border-amber-100{% endif %}">
+                      {{ item }}
+                    </span>
+                  {% endfor %}
+                {% else %}
+                  <span class="text-slate-400 italic">None</span>
+                {% endif %}
+              </div>
+            </td>
+            
+            <!-- Last Visit -->
+            <td class="px-4 py-3 font-semibold text-slate-500 whitespace-nowrap">{{ s.lastVisitDate }}</td>
+            
+            <!-- Last Training -->
+            <td class="px-4 py-3 font-semibold text-slate-500 whitespace-nowrap">{{ s.lastTrainingDate }}</td>
+            
+            <!-- Planning Status -->
+            <td class="px-4 py-3 whitespace-nowrap">
+              <span class="px-2 py-0.5 rounded text-[9.5px] font-bold uppercase tracking-wider {% if s.planningStatus == 'ready' %}bg-emerald-50 text-emerald-700 border border-emerald-100{% elif s.planningStatus == 'limited' %}bg-amber-50 text-amber-700 border border-amber-100{% else %}bg-slate-100 text-slate-500{% endif %}">
+                {{ s.planningStatus|default:"locked" }}
+              </span>
+            </td>
+            
+            <!-- Actions -->
+            <td class="px-4 py-3 text-right whitespace-nowrap">
+              <div class="flex items-center gap-2 justify-end text-[10.5px]">
+                <a href="/schools/{{ s.id }}" class="text-[#2563eb] hover:underline font-bold">View School</a>
+                <span class="text-slate-300">|</span>
+                <a href="/schools/{{ s.id }}#ssa-timeline" class="text-[#2563eb] hover:underline font-bold">View SSA</a>
+                <span class="text-slate-300">|</span>
+                <a href="/planning/schedule?school_id={{ s.schoolId }}" class="text-[#2563eb] hover:underline font-bold" title="Schedule Visit">Schedule Visit</a>
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+      {% else %}
+        <tr>
+          <td colspan="10" class="px-6 py-8 text-center text-slate-400 font-bold italic">
+            This cluster has no schools yet. Assign schools from the School Directory.
+          </td>
+        </tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>

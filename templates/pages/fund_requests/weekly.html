@@ -1,156 +1,271 @@
 {% extends "layouts/shell.html" %}
 {% load frontend_filters %}
 
-{% block title %}Fund Request - Edify Command Center{% endblock %}
+{% block title %}Fund Requests - Edify Planning Tool{% endblock %}
 
 {% block topbar_left %}
-<div>
-  <h1 class="text-[18px] font-extrabold text-slate-800 tracking-tight leading-tight">Fund Request</h1>
-  <p class="text-[11px] text-slate-500 font-semibold tracking-wide">Request operational funds for your planned activities.</p>
-</div>
-{% endblock %}
-
-{% block topbar_right %}
-  <button class="premium-button premium-button-primary">
-    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-    New Request
-  </button>
+<!-- Clean topbar layout matching the mockup -->
 {% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-[1400px] mx-auto space-y-6">
-
-  <!-- KPI Grid -->
-  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-    <!-- Pending Approval -->
-    <div class="premium-card p-4 flex items-center justify-between">
-      <div>
-        <p class="text-[10.5px] text-slate-500 font-bold uppercase tracking-wider">Pending Approval</p>
-        <p class="text-[24px] font-extrabold text-slate-800 mt-1">{{ kpis.pending_approval|ugx }} UGX</p>
-      </div>
-      <div class="h-10 w-10 rounded-full bg-amber-50 flex items-center justify-center text-amber-500">
-        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-      </div>
+<div 
+  x-data="{
+    infoBannerOpen: true,
+    activeTab: '{{ active_tab }}',
+    selectedWeek: '{{ selected_week }}'
+  }"
+  class="p-6 max-w-[1600px] mx-auto space-y-6 font-sans text-slate-700"
+>
+  <!-- Page Header Row -->
+  <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+    <div>
+      <h1 class="text-[26px] font-extrabold text-slate-800 tracking-tight leading-tight">Fund Requests</h1>
+      <p class="text-[12px] text-slate-500 font-semibold tracking-wide mt-0.5">Generate and track weekly and monthly fund requests from scheduled activities in My Plan.</p>
     </div>
     
-    <!-- Approved for Advance -->
-    <div class="premium-card p-4 flex items-center justify-between">
-      <div>
-        <p class="text-[10.5px] text-slate-500 font-bold uppercase tracking-wider">Approved for Advance</p>
-        <p class="text-[24px] font-extrabold text-slate-800 mt-1">{{ kpis.approved|ugx }} UGX</p>
-      </div>
-      <div class="h-10 w-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-500">
-        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-      </div>
-    </div>
+    <!-- Action buttons -->
+    <div class="flex flex-wrap items-center gap-2">
+      <!-- Export button -->
+      <a 
+        href="#"
+        onclick="this.href='/fund-requests?export=csv&' + new URLSearchParams(new FormData(document.getElementById('filters-form'))).toString()"
+        class="flex items-center gap-1.5 h-9 px-4 bg-white border border-slate-200 text-slate-700 text-[12.5px] font-bold rounded-lg hover:bg-slate-50 focus:outline-none transition-all shadow-sm"
+      >
+        <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        Export
+      </a>
 
-    <!-- Available Balance -->
-    <div class="premium-card p-4 flex items-center justify-between">
-      <div>
-        <p class="text-[10.5px] text-slate-500 font-bold uppercase tracking-wider">Available Balance</p>
-        <p class="text-[24px] font-extrabold text-[var(--color-edify-primary)] mt-1">{{ kpis.available_balance|ugx }} UGX</p>
-      </div>
-      <div class="h-10 w-10 rounded-full bg-[var(--color-edify-soft)] flex items-center justify-center text-[var(--color-edify-primary)]">
-        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-      </div>
+      <!-- Generate Request Form -->
+      <form action="/fund-requests/generate-request" method="post" class="inline-block">
+        {% csrf_token %}
+        <input type="hidden" name="week_start" :value="selectedWeek">
+        <button 
+          type="submit"
+          class="flex items-center gap-1.5 h-9 px-4 !bg-[#002855] !text-white text-[12.5px] font-bold rounded-lg hover:bg-opacity-95 shadow-sm focus:outline-none transition-all"
+        >
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          Generate Request
+        </button>
+      </form>
+
+      <!-- Open My Plan -->
+      <a 
+        href="/my-plan" 
+        class="flex items-center gap-1.5 h-9 px-4 bg-white border border-slate-200 text-[#002855] text-[12.5px] font-bold rounded-lg hover:bg-slate-50 focus:outline-none transition-all shadow-sm"
+      >
+        Open My Plan
+        <svg class="h-3 w-3 text-slate-400 ml-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 11-1.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+      </a>
     </div>
   </div>
 
-  <!-- Main Content Card -->
-  <div class="premium-card">
-    
-    <!-- Tabs Header -->
-    <div class="border-b border-[var(--border-card)] px-2 pt-2">
-      <nav class="flex gap-2">
-        <a href="?tab=pending" class="px-4 py-3 text-[12.5px] font-bold border-b-2 transition-colors
-          {% if active_tab == 'pending' %}border-[var(--color-edify-primary)] text-[var(--color-edify-primary)]{% else %}border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300{% endif %}">
-          Pending Requests
-        </a>
-        <a href="?tab=approved" class="px-4 py-3 text-[12.5px] font-bold border-b-2 transition-colors
-          {% if active_tab == 'approved' %}border-[var(--color-edify-primary)] text-[var(--color-edify-primary)]{% else %}border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300{% endif %}">
-          Approved
-        </a>
-        <a href="?tab=disbursed" class="px-4 py-3 text-[12.5px] font-bold border-b-2 transition-colors
-          {% if active_tab == 'disbursed' %}border-[var(--color-edify-primary)] text-[var(--color-edify-primary)]{% else %}border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300{% endif %}">
-          Disbursed
-        </a>
-        <a href="?tab=rejected" class="px-4 py-3 text-[12.5px] font-bold border-b-2 transition-colors
-          {% if active_tab == 'rejected' %}border-rose-500 text-rose-600{% else %}border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300{% endif %}">
-          Rejected
-        </a>
-      </nav>
+  <!-- Messages notifications -->
+  {% if messages %}
+    <div class="space-y-2">
+      {% for message in messages %}
+        <div class="p-3.5 rounded-xl border text-[12px] font-bold flex items-center justify-between {% if message.tags == 'success' %}bg-emerald-50 text-emerald-800 border-emerald-100{% else %}bg-rose-50 text-rose-800 border-rose-100{% endif %}">
+          <span>{{ message }}</span>
+          <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600">&times;</button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <!-- Workflow Strip -->
+  <div class="space-y-2">
+    {% include "partials/fund_requests/workflow_strip.html" %}
+    <p class="text-[10.5px] text-slate-400 font-bold text-center flex items-center justify-center gap-1">
+      <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      All fund requests are automatically generated from scheduled activities in My Plan.
+    </p>
+  </div>
+
+  <!-- Filters Bar -->
+  <form 
+    id="filters-form"
+    hx-get="/fund-requests/weekly"
+    hx-trigger="change, keyup delay:200ms changed from:input[name='q']"
+    hx-target="#weekly-request-card-container"
+    hx-push-url="true"
+    class="bg-white p-3.5 rounded-xl border border-slate-100 shadow-sm flex flex-wrap items-center gap-3 text-[11.5px] font-bold text-slate-700"
+  >
+    <input type="hidden" name="tab" :value="activeTab">
+
+    <!-- Search -->
+    <div class="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100">
+      <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      <input type="text" name="q" placeholder="Search schools, clusters, activities..." class="bg-transparent focus:outline-none w-48 font-bold placeholder-slate-400">
     </div>
 
-    <!-- Filters Bar -->
-    <div class="p-4 border-b border-[var(--border-card)] bg-slate-50/50 flex flex-wrap gap-3 items-center">
-      <div class="relative w-64">
-        <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-        <input type="text" placeholder="Search requests..." class="w-full pl-9 pr-4 h-9 bg-white border border-[var(--border-card)] rounded-lg text-[12px] font-semibold focus:ring-2 focus:ring-[var(--color-edify-primary)] focus:outline-none">
-      </div>
-      <select class="h-9 rounded-lg border border-[var(--border-card)] bg-white text-[12px] font-semibold px-3 focus:outline-none"><option>All Dates</option></select>
+    <!-- Fiscal Year -->
+    <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
+      <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      <select name="fy" class="bg-transparent focus:outline-none cursor-pointer">
+        <option value="2026" {% if selected_fy == '2026' %}selected{% endif %}>FY 2026</option>
+        <option value="2025" {% if selected_fy == '2025' %}selected{% endif %}>FY 2025</option>
+      </select>
     </div>
 
-    <!-- Table -->
-    <div class="overflow-x-auto">
-      <table class="w-full text-left border-collapse text-[12.5px] font-sans">
-        <thead>
-          <tr class="border-b border-[var(--border-card)] text-[10.5px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50/30">
-            <th class="px-6 py-4 w-12 text-center"><input type="checkbox" class="rounded text-[var(--color-edify-primary)] focus:ring-[var(--color-edify-primary)] border-slate-300"></th>
-            <th class="px-6 py-4">Fund Request ID</th>
-            <th class="px-6 py-4">Date Requested</th>
-            <th class="px-6 py-4">Amount</th>
-            <th class="px-6 py-4">Status</th>
-            <th class="px-6 py-4 text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-[var(--color-edify-divider)]">
-          {% if requests %}
-            {% for r in requests %}
-              <tr class="hover:bg-slate-50/50 transition-colors group">
-                <td class="px-6 py-4 text-center"><input type="checkbox" class="rounded text-[var(--color-edify-primary)] focus:ring-[var(--color-edify-primary)] border-slate-300"></td>
-                <td class="px-6 py-4 font-bold text-[var(--color-edify-primary)]">#{{ r.id|slice:":8" }}</td>
-                <td class="px-6 py-4 font-semibold text-slate-600">{{ r.weekStartDate }}</td>
-                <td class="px-6 py-4 font-extrabold text-slate-800">{{ r.totalAmount|ugx }} UGX</td>
-                <td class="px-6 py-4">
-                  {% if r.status == 'disbursed' %}
-                    <span class="inline-flex items-center rounded-md px-2 py-1 text-[10.5px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">Disbursed</span>
-                  {% elif r.status == 'confirmed_for_advance' %}
-                    <span class="inline-flex items-center rounded-md px-2 py-1 text-[10.5px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200">Approved</span>
-                  {% elif r.status == 'rejected' %}
-                    <span class="inline-flex items-center rounded-md px-2 py-1 text-[10.5px] font-bold uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-200">Rejected</span>
-                  {% elif 'pending' in r.status %}
-                    <span class="inline-flex items-center rounded-md px-2 py-1 text-[10.5px] font-bold uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">Pending</span>
-                  {% else %}
-                    <span class="inline-flex items-center rounded-md px-2 py-1 text-[10.5px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200">{{ r.status|replace_underscore|title }}</span>
-                  {% endif %}
-                </td>
-                <td class="px-6 py-4 text-right font-extrabold">
-                  <a href="/fund-requests/weekly/{{ r.id }}" class="inline-flex items-center justify-center h-8 px-3 rounded-lg border border-[var(--border-card)] bg-white text-[11.5px] text-slate-600 hover:bg-slate-50 transition-colors">View</a>
-                </td>
-              </tr>
-            {% endfor %}
-          {% else %}
-            <tr>
-              <td colspan="6" class="px-6 py-16 text-center text-slate-400 font-semibold">
-                <div class="flex flex-col items-center justify-center">
-                  <svg class="h-12 w-12 text-slate-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                  <p class="text-[14px] text-slate-800 font-bold">No fund requests found in this tab.</p>
-                </div>
-              </td>
-            </tr>
-          {% endif %}
-        </tbody>
-      </table>
+    <!-- Quarter -->
+    <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
+      <select name="quarter" class="bg-transparent focus:outline-none cursor-pointer">
+        <option value="Q1" {% if selected_quarter == 'Q1' %}selected{% endif %}>Quarter: Q1</option>
+        <option value="Q2" {% if selected_quarter == 'Q2' %}selected{% endif %}>Quarter: Q2</option>
+        <option value="Q3" {% if selected_quarter == 'Q3' %}selected{% endif %}>Quarter: Q3</option>
+        <option value="Q4" {% if selected_quarter == 'Q4' %}selected{% endif %}>Quarter: Q4</option>
+      </select>
     </div>
-    
-    <!-- Pagination (placeholder) -->
-    <div class="p-4 border-t border-[var(--border-card)] flex flex-wrap items-center justify-between text-[12px] font-semibold text-slate-500 bg-slate-50/30 gap-4">
-      <span>Showing 1 to {{ requests|length }} of {{ requests|length }} requests</span>
-      <div class="flex gap-1">
-        <button class="h-8 px-3 rounded border border-[var(--border-card)] bg-white hover:bg-slate-50 disabled:opacity-50" disabled>Prev</button>
-        <button class="h-8 px-3 rounded border border-[var(--border-card)] bg-white hover:bg-slate-50 disabled:opacity-50" disabled>Next</button>
+
+    <!-- Month -->
+    <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
+      <select name="month" class="bg-transparent focus:outline-none cursor-pointer">
+        <option value="October" {% if selected_month == 'October' %}selected{% endif %}>Month: October</option>
+        <option value="November" {% if selected_month == 'November' %}selected{% endif %}>Month: November</option>
+        <option value="December" {% if selected_month == 'December' %}selected{% endif %}>Month: December</option>
+        <option value="January" {% if selected_month == 'January' %}selected{% endif %}>Month: January</option>
+        <option value="February" {% if selected_month == 'February' %}selected{% endif %}>Month: February</option>
+        <option value="March" {% if selected_month == 'March' %}selected{% endif %}>Month: March</option>
+        <option value="April" {% if selected_month == 'April' %}selected{% endif %}>Month: April</option>
+        <option value="May" {% if selected_month == 'May' %}selected{% endif %}>Month: May</option>
+        <option value="June" {% if selected_month == 'June' %}selected{% endif %}>Month: June</option>
+        <option value="July" {% if selected_month == 'July' %}selected{% endif %}>Month: July</option>
+        <option value="August" {% if selected_month == 'August' %}selected{% endif %}>Month: August</option>
+        <option value="September" {% if selected_month == 'September' %}selected{% endif %}>Month: September</option>
+      </select>
+    </div>
+
+    <!-- Week -->
+    <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
+      <select name="week" class="bg-transparent focus:outline-none cursor-pointer" x-model="selectedWeek">
+        {% for wk in dropdown_weeks %}
+          <option value="{{ wk.val }}">{{ wk.label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- District -->
+    <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
+      <select name="district" class="bg-transparent focus:outline-none cursor-pointer">
+        <option value="">District: All</option>
+        {% for d in districts %}
+          <option value="{{ d.id }}" {% if selected_district == d.id %}selected{% endif %}>{{ d.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Staff -->
+    <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
+      <select name="staff" class="bg-transparent focus:outline-none cursor-pointer">
+        <option value="">Staff: All</option>
+        {% for p in staff_profiles %}
+          <option value="{{ p.id }}" {% if selected_staff == p.id %}selected{% endif %}>{{ p.user.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Status -->
+    <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
+      <select name="status" class="bg-transparent focus:outline-none cursor-pointer">
+        <option value="">Status: All</option>
+        <option value="pending_responsible_confirmation" {% if selected_status == 'pending_responsible_confirmation' %}selected{% endif %}>Draft</option>
+        <option value="confirmed_for_advance" {% if selected_status == 'confirmed_for_advance' %}selected{% endif %}>Ready</option>
+        <option value="self_funded" {% if selected_status == 'self_funded' %}selected{% endif %}>Self-funded</option>
+        <option value="disbursed" {% if selected_status == 'disbursed' %}selected{% endif %}>Disbursed</option>
+      </select>
+    </div>
+
+    <!-- Clear Filters -->
+    <button 
+      type="button"
+      onclick="document.getElementById('filters-form').reset(); document.getElementById('filters-form').dispatchEvent(new Event('change'))"
+      class="ml-auto text-slate-400 hover:text-[#2563eb] text-[11.5px] font-extrabold flex items-center gap-1 transition-colors"
+    >
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      Clear Filters
+    </button>
+  </form>
+
+  <!-- KPIs -->
+  <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-4" id="fund-requests-kpis">
+    {% include "partials/fund_requests/kpis.html" %}
+  </div>
+
+  <!-- Tabs Switcher -->
+  <div class="border-b border-slate-100">
+    <nav class="flex gap-4">
+      <button 
+        @click="activeTab = 'weekly'; document.getElementById('filters-form').dispatchEvent(new Event('change'))"
+        class="pb-2 text-[14px] font-extrabold border-b-2 transition-all"
+        :class="activeTab === 'weekly' ? 'border-[#002855] text-[#002855]' : 'border-transparent text-slate-400 hover:text-slate-600'"
+      >
+        Weekly Fund Request
+      </button>
+      <button 
+        @click="activeTab = 'monthly'; document.getElementById('filters-form').dispatchEvent(new Event('change'))"
+        class="pb-2 text-[14px] font-extrabold border-b-2 transition-all"
+        :class="activeTab === 'monthly' ? 'border-[#002855] text-[#002855]' : 'border-transparent text-slate-400 hover:text-slate-600'"
+      >
+        Monthly Fund Request
+      </button>
+    </nav>
+  </div>
+
+  <!-- Information Banner -->
+  <div 
+    x-show="infoBannerOpen" 
+    class="bg-blue-50 text-blue-800 p-3.5 rounded-xl border border-blue-100 flex items-center justify-between text-[12.5px] font-bold font-sans"
+  >
+    <div class="flex items-center gap-2">
+      <div class="h-5 w-5 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 shrink-0">
+        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
       </div>
+      <span>Fund requests are automatically generated from school visits, cluster trainings, and cluster meetings scheduled in My Plan.</span>
     </div>
+    <div class="flex items-center gap-3">
+      <a href="#" class="text-blue-700 hover:underline flex items-center gap-0.5">
+        Learn more about the process
+        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+      </a>
+      <button @click="infoBannerOpen = false" class="text-blue-400 hover:text-blue-600 text-[18px]">&times;</button>
+    </div>
+  </div>
+
+  <!-- Main Canvas split -->
+  <div class="flex flex-col xl:flex-row gap-6">
+    <!-- Left panel -->
+    <div class="flex-1 space-y-6 min-w-0">
+      
+      <!-- Weekly Request Card -->
+      <div id="weekly-request-card-container">
+        {% include "partials/fund_requests/weekly_request_card.html" %}
+      </div>
+
+      <!-- Monthly Request Preview Card -->
+      <div id="fund-requests-monthly-preview">
+        {% include "partials/fund_requests/monthly_preview.html" %}
+      </div>
+
+    </div>
+
+    <!-- Right panel -->
+    <div class="w-full xl:w-[360px] space-y-6 shrink-0">
+      
+      <!-- Source Activities Card -->
+      <div id="fund-requests-source-activities">
+        {% include "partials/fund_requests/source_activities.html" %}
+      </div>
+
+      <!-- Insights Panel -->
+      <div id="fund-requests-insights">
+        {% include "partials/fund_requests/insights_panel.html" %}
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Breakdown Strip -->
+  <div id="fund-requests-breakdown">
+    {% include "partials/fund_requests/breakdown_by_period.html" %}
   </div>
 
 </div>

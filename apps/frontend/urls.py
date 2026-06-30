@@ -29,6 +29,10 @@ urlpatterns = [
     path("clusters", cluster_views.cluster_list_view, name="cluster_list"),
     path("clusters/<str:cluster_id>", cluster_views.cluster_detail_view, name="cluster_detail"),
     path("partials/clusters/<str:cluster_id>/schools", cluster_views.cluster_schools_partial, name="cluster_schools_partial"),
+    path("clusters/cost-preview", cluster_views.cluster_cost_preview_partial, name="cluster_cost_preview"),
+    path("clusters/schedule-activity", cluster_views.cluster_schedule_activity_view, name="cluster_schedule_activity"),
+    path("clusters/impact/<str:cluster_id>", cluster_views.cluster_impact_partial, name="cluster_impact_partial"),
+    path("clusters/create", cluster_views.create_cluster_view, name="create_cluster"),
     
     # Planning
     path("planning", planning_views.planning_dashboard_view, name="planning_dashboard"),
@@ -40,7 +44,9 @@ urlpatterns = [
     path("fund-requests/weekly", budget_views.weekly_fund_requests_view, name="weekly_fund_requests"),
     path("fund-requests/weekly/<str:request_id>", budget_views.weekly_fund_request_detail_view, name="weekly_fund_request_detail"),
     path("fund-requests/weekly/<str:request_id>/confirm", budget_views.weekly_fund_request_confirm_action, name="weekly_fund_request_confirm"),
+    path("fund-requests/weekly/<str:request_id>/self-funded", budget_views.weekly_fund_request_self_funded_action, name="weekly_fund_request_self_funded"),
     path("fund-requests/weekly/<str:request_id>/disburse", budget_views.weekly_fund_request_disburse_action, name="weekly_fund_request_disburse"),
+    path("fund-requests/generate-request", budget_views.generate_request_action, name="generate_request_action"),
     
     # My Plan
     path("my-plan", my_plan_views.my_plan_view, name="my_plan"),

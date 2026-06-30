@@ -16,35 +16,8 @@ from apps.core.fy import get_operational_fy
 
 @login_required(login_url="/login")
 def fund_requests_list_view(request):
-    """All fund requests list — finance overview."""
-    fy = get_operational_fy()
-    status_filter = request.GET.get("status", "")
-
-    requests_qs = WeeklyFundRequest.objects.all().order_by("-week_start_date")
-    if status_filter:
-        requests_qs = requests_qs.filter(status=status_filter)
-
-    requests_list = list(requests_qs[:50])
-    total_requested = sum(r.total_amount or 0 for r in requests_list)
-    total_disbursed = sum(r.disbursed_amount or 0 for r in requests_list if r.disbursed_amount)
-
-    STATUS_CHOICES = [
-        "pending_responsible_confirmation",
-        "pending_pl_approval",
-        "pending_cd_approval",
-        "pending_disbursement",
-        "disbursed",
-        "rejected",
-    ]
-
-    context = {
-        "requests": requests_list,
-        "total_requested": total_requested,
-        "total_disbursed": total_disbursed,
-        "status_filter": status_filter,
-        "status_choices": STATUS_CHOICES,
-    }
-    return render(request, "pages/fund_requests/index.html", context)
+    """All fund requests list — redirect to weekly."""
+    return redirect("/fund-requests/weekly")
 
 
 @login_required(login_url="/login")

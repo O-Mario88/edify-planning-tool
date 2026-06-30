@@ -18,7 +18,7 @@ from typing import Literal
 Quarter = Literal["Q1", "Q2", "Q3", "Q4"]
 CumulativePeriod = Literal["Q1", "Q2", "MidYear", "Q3", "Q4", "FY"]
 
-_QUARTER_START_MONTH = {"Q1": 9, "Q2": 0, "Q3": 3, "Q4": 6}
+_QUARTER_START_MONTH = {"Q1": 10, "Q2": 1, "Q3": 4, "Q4": 7}
 
 
 def get_operational_fy(at: date | datetime | None = None) -> str:

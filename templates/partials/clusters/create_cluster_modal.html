@@ -1,0 +1,56 @@
+<div 
+  x-show="createClusterOpen" 
+  class="fixed inset-0 z-50 flex items-center justify-center bg-slate-600/50 backdrop-blur-sm"
+  style="display: none;"
+>
+  <div @click.outside="createClusterOpen = false" class="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-md w-full p-6 space-y-4 font-sans">
+    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+      <h3 class="text-[15px] font-black text-slate-800">Create New Cluster</h3>
+      <button @click="createClusterOpen = false" class="text-slate-400 hover:text-slate-600 text-[18px]">&times;</button>
+    </div>
+    
+    <form action="/clusters/create" method="post" class="space-y-4">
+      {% csrf_token %}
+      
+      <div class="space-y-1">
+        <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Cluster Name</label>
+        <input type="text" name="name" placeholder="e.g. Kitgum East Cluster" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12.5px] bg-slate-50 focus:outline-none" required>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div class="space-y-1">
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">District</label>
+          <select name="district_id" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12.5px] bg-slate-50 focus:outline-none" required>
+            <option value="">-- Choose District --</option>
+            {% for d in districts %}
+              <option value="{{ d.id }}">{{ d.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="space-y-1">
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Sub-county</label>
+          <select name="sub_county_id" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12.5px] bg-slate-50 focus:outline-none" required>
+            <option value="">-- Choose Sub-county --</option>
+            {% for sc in sub_counties %}
+              <option value="{{ sc.id }}">{{ sc.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="space-y-1">
+        <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Cluster Type</label>
+        <select name="cluster_type" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12.5px] bg-slate-50 focus:outline-none">
+          <option value="mixed">Mixed</option>
+          <option value="primary">Primary Only</option>
+          <option value="secondary">Secondary Only</option>
+        </select>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+        <button type="button" @click="createClusterOpen = false" class="h-9 px-4 rounded-lg border border-slate-200 text-[12px] font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
+        <button type="submit" class="h-9 px-4 rounded-lg bg-[#002855] text-white text-[12px] font-bold shadow-sm">Save Cluster</button>
+      </div>
+    </form>
+  </div>
+</div>

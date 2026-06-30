@@ -1,33 +1,25 @@
 {% extends "layouts/shell.html" %}
 {% load frontend_filters %}
 
-{% block title %}Clusters Directory - Edify Command Center{% endblock %}
+{% block title %}Clusters Dashboard - Edify Planning Tool{% endblock %}
 
 {% block topbar_left %}
-<!-- Empty to match mockup's clean header layout -->
+<!-- Clean topbar layout matching the mockup -->
 {% endblock %}
 
 {% block shell_content %}
 <div 
   x-data="{
-    activeCluster: 'kitgum',
-    kitgumSchoolsOpen: true,
-    guluSchoolsOpen: false,
-    liraSchoolsOpen: false,
-    selectedCluster: 'kitgum',
+    createClusterOpen: false,
+    selectedClusterId: '{{ selected_cluster.id|default:"" }}',
+    selectedClusterName: '{{ selected_cluster.name|escapejs|default:"" }}',
+    recommendedFocus: '{% if selected_cluster.weakest_interventions %}{{ selected_cluster.weakest_interventions.0.label|escapejs }}{% else %}Leadership{% endif %}',
     activityType: 'training',
     participants: 50,
     purpose: 'Leadership support training for school leaders',
-    focus: 'leadership',
-    impactFilter: 'leadership_feb26',
-    
-    get mealsCost() { return this.participants * 12000; },
-    get venueCost() { return 50000; },
-    get facilitationCost() { return 200000; },
-    get totalCost() { return this.mealsCost + this.venueCost + this.facilitationCost; },
-    formatUGX(val) { return 'UGX ' + val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+    focus: 'leadership'
   }"
-  class="p-6 max-w-[1600px] mx-auto space-y-6"
+  class="p-6 max-w-[1600px] mx-auto space-y-6 font-sans"
 >
   <!-- Page Header Row -->
   <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -35,775 +27,206 @@
       <h1 class="text-[26px] font-extrabold text-slate-800 tracking-tight leading-tight">Clusters</h1>
       <p class="text-[12px] text-slate-500 font-semibold tracking-wide mt-0.5">Manage cluster performance, SSA weaknesses, meetings, trainings, and school-level improvement.</p>
     </div>
+    
+    <!-- Action buttons -->
     <div class="flex flex-wrap items-center gap-2">
-      <button class="flex items-center gap-1.5 h-9 px-4 !bg-[#002855] !text-white text-[12.5px] font-bold rounded-lg hover:bg-opacity-95 shadow-sm focus:outline-none transition-all">
+      <button 
+        @click="createClusterOpen = true"
+        class="flex items-center gap-1.5 h-9 px-4 !bg-[#002855] !text-white text-[12.5px] font-bold rounded-lg hover:bg-opacity-95 shadow-sm focus:outline-none transition-all"
+      >
         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
         Create Cluster
       </button>
-      <button class="flex items-center gap-1.5 h-9 px-3.5 bg-white border border-slate-200 text-[#002855] text-[12.5px] font-bold rounded-lg hover:bg-slate-50 focus:outline-none transition-all">
+      
+      <button 
+        @click="
+          activityType = 'training';
+          participants = 50;
+          purpose = 'Group support training for school leaders';
+          $dispatch('scroll-to-planner');
+        "
+        class="flex items-center gap-1.5 h-9 px-3.5 bg-white border border-slate-200 text-[#002855] text-[12.5px] font-bold rounded-lg hover:bg-slate-50 focus:outline-none transition-all shadow-sm"
+      >
         <svg class="h-4 w-4 text-[#2563eb]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
         Schedule Group Training
       </button>
-      <button class="flex items-center gap-1.5 h-9 px-3.5 bg-white border border-slate-200 text-[#002855] text-[12.5px] font-bold rounded-lg hover:bg-slate-50 focus:outline-none transition-all">
+      
+      <button 
+        @click="
+          activityType = 'meeting';
+          participants = 15;
+          purpose = 'Quarterly cluster meeting';
+          $dispatch('scroll-to-planner');
+        "
+        class="flex items-center gap-1.5 h-9 px-3.5 bg-white border border-slate-200 text-[#002855] text-[12.5px] font-bold rounded-lg hover:bg-slate-50 focus:outline-none transition-all shadow-sm"
+      >
         <svg class="h-4 w-4 text-[#2563eb]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
         Schedule Cluster Meeting
       </button>
-      <button class="flex items-center gap-1.5 h-9 px-3.5 bg-white border border-slate-200 text-slate-700 text-[12.5px] font-bold rounded-lg hover:bg-slate-50 focus:outline-none transition-all">
+      
+      <!-- Export button using current filters -->
+      <a 
+        href="#"
+        onclick="this.href='/clusters?export=csv&' + new URLSearchParams(new FormData(document.getElementById('filters-form'))).toString()"
+        class="flex items-center gap-1.5 h-9 px-3.5 bg-white border border-slate-200 text-slate-700 text-[12.5px] font-bold rounded-lg hover:bg-slate-50 focus:outline-none transition-all shadow-sm"
+      >
         <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-        Export
-        <svg class="h-3 w-3 text-slate-400 ml-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-      </button>
+        Export CSV
+      </a>
     </div>
   </div>
 
+  <!-- Messages notifications wrapper -->
+  {% if messages %}
+    <div class="space-y-2">
+      {% for message in messages %}
+        <div class="p-3.5 rounded-xl border text-[12px] font-bold flex items-center justify-between {% if message.tags == 'success' %}bg-emerald-50 text-emerald-800 border-emerald-100{% else %}bg-rose-50 text-rose-800 border-rose-100{% endif %}">
+          <span>{{ message }}</span>
+          <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600">&times;</button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
   <!-- Filters Row -->
-  <div class="bg-white p-3.5 rounded-xl border border-slate-100 shadow-sm flex flex-wrap items-center gap-3 text-[11.5px] font-bold text-slate-700">
+  <form 
+    id="filters-form"
+    hx-get="/clusters"
+    hx-trigger="change, keyup delay:200ms changed from:input[name='q']"
+    hx-target="#clusters-table-container"
+    hx-push-url="true"
+    class="bg-white p-3.5 rounded-xl border border-slate-100 shadow-sm flex flex-wrap items-center gap-3 text-[11.5px] font-bold text-slate-700"
+  >
+    <!-- Search -->
+    <div class="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100">
+      <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      <input type="text" name="q" value="{{ q }}" placeholder="Search clusters..." class="bg-transparent focus:outline-none w-32 font-bold placeholder-slate-400">
+    </div>
+
+    <!-- Fiscal Year -->
     <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
       <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-      <select class="bg-transparent focus:outline-none"><option>FY 2026</option></select>
+      <select name="fy" class="bg-transparent focus:outline-none cursor-pointer">
+        <option value="2026" {% if selected_fy == '2026' %}selected{% endif %}>FY 2026</option>
+        <option value="2025" {% if selected_fy == '2025' %}selected{% endif %}>FY 2025</option>
+      </select>
     </div>
+
+    <!-- Quarter -->
     <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
       <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-      <select class="bg-transparent focus:outline-none"><option>Quarter: Q1 (Jul-Sep)</option></select>
+      <select name="quarter" class="bg-transparent focus:outline-none cursor-pointer">
+        <option value="">Quarter: All</option>
+        <option value="Q1" {% if selected_quarter == 'Q1' %}selected{% endif %}>Q1 (Jul-Sep)</option>
+        <option value="Q2" {% if selected_quarter == 'Q2' %}selected{% endif %}>Q2 (Oct-Dec)</option>
+        <option value="Q3" {% if selected_quarter == 'Q3' %}selected{% endif %}>Q3 (Jan-Mar)</option>
+        <option value="Q4" {% if selected_quarter == 'Q4' %}selected{% endif %}>Q4 (Apr-Jun)</option>
+      </select>
     </div>
+
+    <!-- District -->
     <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
       <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-      <select class="bg-transparent focus:outline-none"><option>District: Kitgum</option></select>
+      <select name="district" class="bg-transparent focus:outline-none cursor-pointer">
+        <option value="">District: All</option>
+        {% for d in districts %}
+          <option value="{{ d.id }}" {% if selected_district == d.id %}selected{% endif %}>{{ d.name }}</option>
+        {% endfor %}
+      </select>
     </div>
+
+    <!-- Sub-county -->
     <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
-      <select class="bg-transparent focus:outline-none"><option>Sub-county: All</option></select>
+      <select name="sub_county" class="bg-transparent focus:outline-none cursor-pointer">
+        <option value="">Sub-county: All</option>
+        {% for sc in sub_counties %}
+          <option value="{{ sc.id }}" {% if selected_sub_county == sc.id %}selected{% endif %}>{{ sc.name }}</option>
+        {% endfor %}
+      </select>
     </div>
+
+    <!-- Staff -->
     <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
       <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-      <select class="bg-transparent focus:outline-none"><option>Staff: All</option></select>
+      <select name="staff" class="bg-transparent focus:outline-none cursor-pointer">
+        <option value="">Staff: All</option>
+        {% for p in staff_profiles %}
+          <option value="{{ p.id }}" {% if selected_staff == p.id %}selected{% endif %}>{{ p.user.name }}</option>
+        {% endfor %}
+      </select>
     </div>
+
+    <!-- SSA Status -->
     <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
-      <select class="bg-transparent focus:outline-none"><option>SSA Status: All</option></select>
+      <select name="ssa_status" class="bg-transparent focus:outline-none cursor-pointer">
+        <option value="">SSA Status: All</option>
+        <option value="done" {% if selected_ssa_status == 'done' %}selected{% endif %}>SSA Complete</option>
+        <option value="not_done" {% if selected_ssa_status == 'not_done' %}selected{% endif %}>SSA Incomplete</option>
+      </select>
     </div>
+
+    <!-- Cluster Risk -->
     <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
-      <select class="bg-transparent focus:outline-none"><option>Cluster Risk: All</option></select>
+      <select name="cluster_risk" class="bg-transparent focus:outline-none cursor-pointer">
+        <option value="">Cluster Risk: All</option>
+        <option value="critical" {% if selected_cluster_risk == 'critical' %}selected{% endif %}>Critical</option>
+        <option value="needs_attention" {% if selected_cluster_risk == 'needs_attention' %}selected{% endif %}>Needs Attention</option>
+        <option value="healthy" {% if selected_cluster_risk == 'healthy' %}selected{% endif %}>Healthy</option>
+      </select>
     </div>
+
+    <!-- Activity Status -->
     <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
-      <select class="bg-transparent focus:outline-none"><option>Activity Status: All</option></select>
+      <select name="activity_status" class="bg-transparent focus:outline-none cursor-pointer">
+        <option value="">Activity Status: All</option>
+        <option value="pending" {% if selected_activity_status == 'pending' %}selected{% endif %}>Pending Activities</option>
+        <option value="completed" {% if selected_activity_status == 'completed' %}selected{% endif %}>Completed Activities</option>
+      </select>
     </div>
-    <button class="ml-auto text-slate-400 hover:text-[#2563eb] text-[11.5px] font-extrabold flex items-center gap-1">
+
+    <button 
+      type="button"
+      onclick="document.getElementById('filters-form').reset(); document.querySelector('input[name=\'q\']').value=''; document.getElementById('filters-form').dispatchEvent(new Event('change'))"
+      class="ml-auto text-slate-400 hover:text-[#2563eb] text-[11.5px] font-extrabold flex items-center gap-1 transition-colors"
+    >
       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
       Clear Filters
     </button>
-  </div>
+  </form>
 
   <!-- 8 KPI Cards Grid -->
-  <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-4">
-    <!-- Card 1 -->
-    <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-between h-[105px] hover:shadow-md transition-shadow">
-      <div class="flex items-center justify-between">
-        <span class="text-[10px] uppercase font-bold text-slate-400">Total Clusters</span>
-        <div class="h-7 w-7 rounded-lg bg-blue-50 text-[#2563eb] flex items-center justify-center shrink-0">
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-        </div>
-      </div>
-      <div>
-        <p class="text-[20px] font-extrabold text-slate-800 leading-none">42</p>
-        <button class="text-[9.5px] font-bold text-[#2563eb] hover:underline mt-1.5 flex items-center gap-0.5">View all clusters <svg class="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></button>
-      </div>
-    </div>
-    <!-- Card 2 -->
-    <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-between h-[105px] hover:shadow-md transition-shadow">
-      <div class="flex items-center justify-between">
-        <span class="text-[10px] uppercase font-bold text-slate-400">Schools in Clusters</span>
-        <div class="h-7 w-7 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center shrink-0">
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-        </div>
-      </div>
-      <div>
-        <p class="text-[20px] font-extrabold text-slate-800 leading-none">1,000</p>
-        <p class="text-[9.5px] text-slate-400 font-bold mt-1.5">Across 42 clusters</p>
-      </div>
-    </div>
-    <!-- Card 3 -->
-    <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-between h-[105px] hover:shadow-md transition-shadow">
-      <div class="flex items-center justify-between">
-        <span class="text-[10px] uppercase font-bold text-slate-400">Without Current SSA</span>
-        <div class="h-7 w-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-        </div>
-      </div>
-      <div>
-        <p class="text-[20px] font-extrabold text-slate-800 leading-none">8</p>
-        <p class="text-[9.5px] text-rose-500 font-bold mt-1.5 flex items-center justify-between">19% of total <svg class="h-2.5 w-2.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></p>
-      </div>
-    </div>
-    <!-- Card 4 -->
-    <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-between h-[105px] hover:shadow-md transition-shadow">
-      <div class="flex items-center justify-between">
-        <span class="text-[10px] uppercase font-bold text-slate-400">Needing Group Training</span>
-        <div class="h-7 w-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.168.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
-        </div>
-      </div>
-      <div>
-        <p class="text-[20px] font-extrabold text-slate-800 leading-none">17</p>
-        <p class="text-[9.5px] text-amber-600 font-bold mt-1.5 flex items-center justify-between">40% of total <svg class="h-2.5 w-2.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></p>
-      </div>
-    </div>
-    <!-- Card 5 -->
-    <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-between h-[105px] hover:shadow-md transition-shadow">
-      <div class="flex items-center justify-between">
-        <span class="text-[10px] uppercase font-bold text-slate-400">Not Met This Quarter</span>
-        <div class="h-7 w-7 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center shrink-0">
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-        </div>
-      </div>
-      <div>
-        <p class="text-[20px] font-extrabold text-slate-800 leading-none">12</p>
-        <p class="text-[9.5px] text-orange-600 font-bold mt-1.5 flex items-center justify-between">29% of total <svg class="h-2.5 w-2.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></p>
-      </div>
-    </div>
-    <!-- Card 6 -->
-    <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-between h-[105px] hover:shadow-md transition-shadow">
-      <div class="flex items-center justify-between">
-        <span class="text-[10px] uppercase font-bold text-slate-400">Average Cluster SSA</span>
-        <div class="h-7 w-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z"/></svg>
-        </div>
-      </div>
-      <div>
-        <p class="text-[20px] font-extrabold text-slate-800 leading-none">5.8</p>
-        <p class="text-[9.5px] text-slate-400 font-bold mt-1.5 flex items-center justify-between">Out of 10.0 <svg class="h-2.5 w-2.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></p>
-      </div>
-    </div>
-    <!-- Card 7 -->
-    <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-between h-[105px] hover:shadow-md transition-shadow">
-      <div class="flex items-center justify-between">
-        <span class="text-[10px] uppercase font-bold text-slate-400">Weakest Intervention</span>
-        <div class="h-7 w-7 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
-        </div>
-      </div>
-      <div>
-        <p class="text-[14.5px] font-extrabold text-slate-800 truncate leading-none">Leadership</p>
-        <p class="text-[9.5px] text-slate-400 font-bold mt-1.5">Avg 4.3</p>
-      </div>
-    </div>
-    <!-- Card 8 -->
-    <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-between h-[105px] hover:shadow-md transition-shadow">
-      <div class="flex items-center justify-between">
-        <span class="text-[10px] uppercase font-bold text-slate-400">Pending Activities</span>
-        <div class="h-7 w-7 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center shrink-0">
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
-        </div>
-      </div>
-      <div>
-        <p class="text-[20px] font-extrabold text-slate-800 leading-none">24</p>
-        <p class="text-[9.5px] text-slate-400 font-bold mt-1.5 flex items-center justify-between">This quarter <svg class="h-2.5 w-2.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></p>
-      </div>
-    </div>
+  <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-4" id="clusters-kpi-row">
+    {% include "partials/clusters/kpis.html" %}
   </div>
 
   <!-- Risk Strip / Summaries Row -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-    <!-- Critical (Red) -->
-    <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex items-center justify-between hover:shadow-md transition-shadow relative overflow-hidden group">
-      <div class="absolute left-0 top-0 bottom-0 w-1 bg-rose-500"></div>
-      <div class="flex items-center gap-3">
-        <div class="h-10 w-10 rounded-full bg-rose-50 flex items-center justify-center shrink-0 text-rose-500">
-          <svg class="h-5.5 w-5.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-        </div>
-        <div>
-          <div class="flex items-center gap-1.5">
-            <span class="text-[10px] uppercase font-bold text-rose-600 tracking-wider">Critical</span>
-            <span class="text-[11px] font-bold text-slate-400">6 clusters</span>
-          </div>
-          <p class="text-[10.5px] text-slate-500 font-semibold mt-0.5">Require immediate attention</p>
-        </div>
-      </div>
-      <!-- Embedded Sparkline -->
-      <div class="w-24 h-8 shrink-0">
-        <svg class="w-full h-full" viewBox="0 0 100 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M5 25 L20 18 L35 22 L50 12 L65 15 L80 5 L95 10" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </div>
-      <svg class="absolute right-3 top-[42%] h-4 w-4 text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-    </div>
-
-    <!-- Needs Attention (Orange) -->
-    <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex items-center justify-between hover:shadow-md transition-shadow relative overflow-hidden group">
-      <div class="absolute left-0 top-0 bottom-0 w-1 bg-amber-500"></div>
-      <div class="flex items-center gap-3">
-        <div class="h-10 w-10 rounded-full bg-amber-50 flex items-center justify-center shrink-0 text-amber-500">
-          <svg class="h-5.5 w-5.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-        </div>
-        <div>
-          <div class="flex items-center gap-1.5">
-            <span class="text-[10px] uppercase font-bold text-amber-600 tracking-wider">Needs Attention</span>
-            <span class="text-[11px] font-bold text-slate-400">14 clusters</span>
-          </div>
-          <p class="text-[10.5px] text-slate-500 font-semibold mt-0.5">Monitor closely</p>
-        </div>
-      </div>
-      <!-- Embedded Sparkline -->
-      <div class="w-24 h-8 shrink-0">
-        <svg class="w-full h-full" viewBox="0 0 100 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M5 15 L20 18 L35 12 L50 14 L65 8 L80 11 L95 5" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </div>
-      <svg class="absolute right-3 top-[42%] h-4 w-4 text-amber-500 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-    </div>
-
-    <!-- Healthy (Green) -->
-    <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex items-center justify-between hover:shadow-md transition-shadow relative overflow-hidden group">
-      <div class="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500"></div>
-      <div class="flex items-center gap-3">
-        <div class="h-10 w-10 rounded-full bg-emerald-50 flex items-center justify-center shrink-0 text-emerald-500">
-          <svg class="h-5.5 w-5.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        </div>
-        <div>
-          <div class="flex items-center gap-1.5">
-            <span class="text-[10px] uppercase font-bold text-emerald-600 tracking-wider">Healthy</span>
-            <span class="text-[11px] font-bold text-slate-400">22 clusters</span>
-          </div>
-          <p class="text-[10.5px] text-slate-500 font-semibold mt-0.5">On track</p>
-        </div>
-      </div>
-      <div class="w-24 h-8 shrink-0 flex items-center justify-center">
-        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">All Good</span>
-      </div>
-    </div>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="clusters-risk-strip">
+    {% include "partials/clusters/risk_strip.html" %}
   </div>
 
   <!-- Main Canvas split: Left clusters table, Right planners -->
   <div class="flex flex-col xl:flex-row gap-6">
     <!-- Left panel (Cluster Accordion List) -->
-    <div class="flex-1 space-y-4 min-w-0">
-      
-      <!-- Cluster 1: Kitgum Central Cluster -->
-      <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden transition-all duration-300">
-        <div 
-          @click="activeCluster = (activeCluster === 'kitgum' ? '' : 'kitgum')"
-          class="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer hover:bg-slate-50/50 transition-colors"
-        >
-          <div class="space-y-1.5 flex-1 min-w-0">
-            <div class="flex items-center gap-2.5 flex-wrap">
-              <h3 class="text-[17px] font-extrabold text-slate-800 leading-tight">Kitgum Central Cluster</h3>
-              <span class="inline-flex items-center rounded px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wider bg-rose-50 text-rose-600 border border-rose-100">Critical</span>
-            </div>
-            <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12px] text-slate-500 font-semibold">
-              <span>Schools: <span class="font-bold text-slate-800">18</span></span>
-              <span>Assigned Staff: <span class="font-bold text-slate-800">3</span></span>
-              <span class="flex items-center gap-1">
-                Avg SSA: <span class="font-bold text-slate-800">4.6</span>
-                <span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span>
-              </span>
-              <span>Last Meeting: <span class="font-bold text-slate-800">15 Apr 2026</span></span>
-              <span>Last Training: <span class="font-bold text-slate-800">10 Feb 2026</span></span>
-            </div>
-            <div class="text-[11.5px] font-extrabold text-rose-600 flex items-center gap-1">
-              <svg class="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-              Next Action: Schedule training
-            </div>
-          </div>
-          <div class="shrink-0 flex items-center gap-3">
-            <svg class="h-5 w-5 text-slate-400 transition-transform duration-300" :class="activeCluster === 'kitgum' ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-            </svg>
-          </div>
-        </div>
-
-        <!-- Expanded details block -->
-        <div x-show="activeCluster === 'kitgum'" x-transition class="border-t border-slate-100 bg-slate-50/20 p-5 space-y-5">
-          <div class="flex flex-col lg:flex-row gap-5 items-start">
-            <!-- Weakest 4 Interventions -->
-            <div class="w-full lg:w-80 bg-white p-4 rounded-xl border border-slate-100 shadow-sm shrink-0">
-              <h4 class="text-[12.5px] font-extrabold text-slate-800 border-b border-slate-100 pb-2 mb-3">Weakest 4 Interventions</h4>
-              <div class="space-y-3">
-                <!-- Inter 1 -->
-                <div>
-                  <div class="flex justify-between text-[11.5px] font-bold text-slate-600 mb-1">
-                    <span>Leadership</span>
-                    <span class="text-rose-600 font-extrabold">3.8</span>
-                  </div>
-                  <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                    <div class="h-full bg-rose-500 rounded-full" style="width: 38%"></div>
-                  </div>
-                </div>
-                <!-- Inter 2 -->
-                <div>
-                  <div class="flex justify-between text-[11.5px] font-bold text-slate-600 mb-1">
-                    <span>Teaching & Learning</span>
-                    <span class="text-amber-600 font-extrabold">4.2</span>
-                  </div>
-                  <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                    <div class="h-full bg-amber-500 rounded-full" style="width: 42%"></div>
-                  </div>
-                </div>
-                <!-- Inter 3 -->
-                <div>
-                  <div class="flex justify-between text-[11.5px] font-bold text-slate-600 mb-1">
-                    <span>Financial Health</span>
-                    <span class="text-amber-600 font-extrabold">4.4</span>
-                  </div>
-                  <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                    <div class="h-full bg-amber-500 rounded-full" style="width: 44%"></div>
-                  </div>
-                </div>
-                <!-- Inter 4 -->
-                <div>
-                  <div class="flex justify-between text-[11.5px] font-bold text-slate-600 mb-1">
-                    <span>Community Engagement</span>
-                    <span class="text-slate-500 font-extrabold">4.6</span>
-                  </div>
-                  <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                    <div class="h-full bg-slate-400 rounded-full" style="width: 46%"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Action buttons -->
-            <div class="flex-1 flex flex-wrap gap-2.5">
-              <button class="px-4 py-2 bg-white border border-slate-200 text-slate-700 text-[12px] font-bold rounded-lg hover:bg-slate-50 shadow-sm focus:outline-none">View Details</button>
-              <button @click="kitgumSchoolsOpen = !kitgumSchoolsOpen" class="px-4 py-2 bg-white border border-slate-200 text-slate-700 text-[12px] font-bold rounded-lg hover:bg-slate-50 shadow-sm focus:outline-none flex items-center gap-1">
-                Expand Schools 
-                <svg class="h-3 w-3 transition-transform" :class="kitgumSchoolsOpen ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-              </button>
-              <button class="px-4 py-2 bg-white border border-slate-200 text-slate-700 text-[12px] font-bold rounded-lg hover:bg-slate-50 shadow-sm focus:outline-none flex items-center gap-1.5">
-                <span class="h-1.5 w-1.5 bg-blue-600 rounded-full"></span>
-                Schedule Group Training
-              </button>
-              <button class="px-4 py-2 bg-white border border-slate-200 text-slate-700 text-[12px] font-bold rounded-lg hover:bg-slate-50 shadow-sm focus:outline-none flex items-center gap-1.5">
-                <span class="h-1.5 w-1.5 bg-indigo-600 rounded-full"></span>
-                Schedule Cluster Meeting
-              </button>
-            </div>
-          </div>
-
-          <!-- Nested sub-table (Schools) -->
-          <div x-show="kitgumSchoolsOpen" x-transition class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
-            <div class="px-4 py-3 bg-slate-50/50 border-b border-slate-100 flex justify-between items-center">
-              <h4 class="text-[12.5px] font-extrabold text-slate-800">Schools in Kitgum Central Cluster (18)</h4>
-            </div>
-            <div class="overflow-x-auto">
-              <table class="w-full text-left text-[12px] border-collapse">
-                <thead>
-                  <tr class="border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50/20">
-                    <th class="px-4 py-3">School ID</th>
-                    <th class="px-4 py-3">School Name</th>
-                    <th class="px-4 py-3">School Type</th>
-                    <th class="px-4 py-3">Staff</th>
-                    <th class="px-4 py-3">SSA Avg</th>
-                    <th class="px-4 py-3">Struggling Interventions</th>
-                    <th class="px-4 py-3">Last Visit</th>
-                    <th class="px-4 py-3">Last Training</th>
-                    <th class="px-4 py-3">Planning Status</th>
-                    <th class="px-4 py-3"></th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 text-slate-700">
-                  <!-- Row 1 -->
-                  <tr class="hover:bg-slate-50/40 transition-colors">
-                    <td class="px-4 py-3 font-bold text-[#2563eb]">SCH-1001</td>
-                    <td class="px-4 py-3 font-extrabold text-slate-800">Akwang Primary School</td>
-                    <td class="px-4 py-3">
-                      <span class="px-2 py-0.5 rounded text-[9.5px] font-bold bg-teal-50 text-teal-700 border border-teal-100">Primary</span>
-                    </td>
-                    <td class="px-4 py-3 font-bold">5</td>
-                    <td class="px-4 py-3">
-                      <span class="flex items-center gap-1 font-extrabold">4.2 <span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span></span>
-                    </td>
-                    <td class="px-4 py-3">
-                      <div class="flex flex-wrap gap-1">
-                        <span class="px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-rose-50 text-rose-600 border border-rose-100">Leadership 3.8</span>
-                        <span class="px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-amber-50 text-amber-600 border border-amber-100">TL 4.1</span>
-                      </div>
-                    </td>
-                    <td class="px-4 py-3 font-semibold text-slate-500">12 May 2026</td>
-                    <td class="px-4 py-3 font-semibold text-slate-500">10 Feb 2026</td>
-                    <td class="px-4 py-3">
-                      <span class="px-2 py-0.5 rounded text-[9.5px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">Up to date</span>
-                    </td>
-                    <td class="px-4 py-3 text-right">
-                      <div class="flex items-center gap-2 justify-end">
-                        <a href="#" class="text-[#2563eb] hover:underline font-bold text-[11px]">View School</a>
-                        <span class="text-slate-300">|</span>
-                        <a href="#" class="text-[#2563eb] hover:underline font-bold text-[11px]">View SSA</a>
-                        <button class="h-6 w-6 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></button>
-                      </div>
-                    </td>
-                  </tr>
-                  <!-- Row 2 -->
-                  <tr class="hover:bg-slate-50/40 transition-colors">
-                    <td class="px-4 py-3 font-bold text-[#2563eb]">SCH-1002</td>
-                    <td class="px-4 py-3 font-extrabold text-slate-800">St. Peter Junior School</td>
-                    <td class="px-4 py-3">
-                      <span class="px-2 py-0.5 rounded text-[9.5px] font-bold bg-blue-50 text-blue-700 border border-blue-100">Junior</span>
-                    </td>
-                    <td class="px-4 py-3 font-bold">6</td>
-                    <td class="px-4 py-3">
-                      <span class="flex items-center gap-1 font-extrabold">4.6 <span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span></span>
-                    </td>
-                    <td class="px-4 py-3">
-                      <div class="flex flex-wrap gap-1">
-                        <span class="px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-rose-50 text-rose-600 border border-rose-100">Leadership 4.0</span>
-                        <span class="px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-amber-50 text-amber-600 border border-amber-100">FH 4.3</span>
-                      </div>
-                    </td>
-                    <td class="px-4 py-3 font-semibold text-slate-500">8 May 2026</td>
-                    <td class="px-4 py-3 font-semibold text-slate-500">10 Feb 2026</td>
-                    <td class="px-4 py-3">
-                      <span class="px-2 py-0.5 rounded text-[9.5px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">Up to date</span>
-                    </td>
-                    <td class="px-4 py-3 text-right">
-                      <div class="flex items-center gap-2 justify-end">
-                        <a href="#" class="text-[#2563eb] hover:underline font-bold text-[11px]">View School</a>
-                        <span class="text-slate-300">|</span>
-                        <a href="#" class="text-[#2563eb] hover:underline font-bold text-[11px]">View SSA</a>
-                        <button class="h-6 w-6 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></button>
-                      </div>
-                    </td>
-                  </tr>
-                  <!-- Row 3 -->
-                  <tr class="hover:bg-slate-50/40 transition-colors">
-                    <td class="px-4 py-3 font-bold text-[#2563eb]">SCH-1003</td>
-                    <td class="px-4 py-3 font-extrabold text-slate-800">Hope Nursery and Primary</td>
-                    <td class="px-4 py-3">
-                      <span class="px-2 py-0.5 rounded text-[9.5px] font-bold bg-teal-50 text-teal-700 border border-teal-100">Primary</span>
-                    </td>
-                    <td class="px-4 py-3 font-bold">4</td>
-                    <td class="px-4 py-3">
-                      <span class="flex items-center gap-1 font-extrabold">4.1 <span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span></span>
-                    </td>
-                    <td class="px-4 py-3">
-                      <div class="flex flex-wrap gap-1">
-                        <span class="px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-rose-50 text-rose-600 border border-rose-100">Leadership 3.5</span>
-                        <span class="px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-amber-50 text-amber-600 border border-amber-100">TL 4.2</span>
-                      </div>
-                    </td>
-                    <td class="px-4 py-3 font-semibold text-slate-500">15 Apr 2026</td>
-                    <td class="px-4 py-3 font-semibold text-slate-500">—</td>
-                    <td class="px-4 py-3">
-                      <span class="px-2 py-0.5 rounded text-[9.5px] font-bold bg-amber-50 text-amber-700 border border-amber-100">Behind</span>
-                    </td>
-                    <td class="px-4 py-3 text-right">
-                      <div class="flex items-center gap-2 justify-end">
-                        <a href="#" class="text-[#2563eb] hover:underline font-bold text-[11px]">View School</a>
-                        <span class="text-slate-300">|</span>
-                        <a href="#" class="text-[#2563eb] hover:underline font-bold text-[11px]">View SSA</a>
-                        <button class="h-6 w-6 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></button>
-                      </div>
-                    </td>
-                  </tr>
-                  <!-- Row 4 -->
-                  <tr class="hover:bg-slate-50/40 transition-colors">
-                    <td class="px-4 py-3 font-bold text-[#2563eb]">SCH-1004</td>
-                    <td class="px-4 py-3 font-extrabold text-slate-800">Lwala Primary School</td>
-                    <td class="px-4 py-3">
-                      <span class="px-2 py-0.5 rounded text-[9.5px] font-bold bg-teal-50 text-teal-700 border border-teal-100">Primary</span>
-                    </td>
-                    <td class="px-4 py-3 font-bold">3</td>
-                    <td class="px-4 py-3">
-                      <span class="flex items-center gap-1 font-extrabold">4.3 <span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span></span>
-                    </td>
-                    <td class="px-4 py-3">
-                      <div class="flex flex-wrap gap-1">
-                        <span class="px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-rose-50 text-rose-600 border border-rose-100">Leadership 3.9</span>
-                        <span class="px-1.5 py-0.5 rounded text-[9.5px] font-bold bg-amber-50 text-amber-600 border border-amber-100">FH 4.4</span>
-                      </div>
-                    </td>
-                    <td class="px-4 py-3 font-semibold text-slate-500">3 May 2026</td>
-                    <td class="px-4 py-3 font-semibold text-slate-500">10 Feb 2026</td>
-                    <td class="px-4 py-3">
-                      <span class="px-2 py-0.5 rounded text-[9.5px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">Up to date</span>
-                    </td>
-                    <td class="px-4 py-3 text-right">
-                      <div class="flex items-center gap-2 justify-end">
-                        <a href="#" class="text-[#2563eb] hover:underline font-bold text-[11px]">View School</a>
-                        <span class="text-slate-300">|</span>
-                        <a href="#" class="text-[#2563eb] hover:underline font-bold text-[11px]">View SSA</a>
-                        <button class="h-6 w-6 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg></button>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Cluster 2: Gulu East Cluster -->
-      <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden transition-all duration-300">
-        <div 
-          @click="activeCluster = (activeCluster === 'gulu' ? '' : 'gulu')"
-          class="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer hover:bg-slate-50/50 transition-colors"
-        >
-          <div class="space-y-1.5 flex-1 min-w-0">
-            <div class="flex items-center gap-2.5 flex-wrap">
-              <h3 class="text-[17px] font-extrabold text-slate-800 leading-tight">Gulu East Cluster</h3>
-              <span class="inline-flex items-center rounded px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wider bg-amber-50 text-amber-600 border border-amber-100">Needs Attention</span>
-            </div>
-            <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12px] text-slate-500 font-semibold">
-              <span>Schools: <span class="font-bold text-slate-800">22</span></span>
-              <span>Assigned Staff: <span class="font-bold text-slate-800">4</span></span>
-              <span class="flex items-center gap-1">
-                Avg SSA: <span class="font-bold text-slate-800">5.4</span>
-                <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
-              </span>
-              <span>Last Meeting: <span class="font-bold text-slate-800">20 Apr 2026</span></span>
-              <span>Last Training: <span class="font-bold text-slate-800">5 Mar 2026</span></span>
-            </div>
-            <div class="text-[11.5px] font-extrabold text-amber-600 flex items-center gap-1">
-              <svg class="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              Next Action: Monitor progress
-            </div>
-          </div>
-          <div class="shrink-0 flex items-center gap-3">
-            <svg class="h-5 w-5 text-slate-400 transition-transform duration-300" :class="activeCluster === 'gulu' ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-            </svg>
-          </div>
-        </div>
-        <div x-show="activeCluster === 'gulu'" x-transition class="border-t border-slate-100 bg-slate-50/20 p-5">
-          <p class="text-[12px] text-slate-400 font-semibold italic text-center py-4">Gulu East Cluster details are minimized. Click Action Planner inputs to modify priorities.</p>
-        </div>
-      </div>
-
-      <!-- Cluster 3: Lira Hope Cluster -->
-      <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden transition-all duration-300">
-        <div 
-          @click="activeCluster = (activeCluster === 'lira' ? '' : 'lira')"
-          class="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer hover:bg-slate-50/50 transition-colors"
-        >
-          <div class="space-y-1.5 flex-1 min-w-0">
-            <div class="flex items-center gap-2.5 flex-wrap">
-              <h3 class="text-[17px] font-extrabold text-slate-800 leading-tight">Lira Hope Cluster</h3>
-              <span class="inline-flex items-center rounded px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-100">Healthy</span>
-            </div>
-            <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12px] text-slate-500 font-semibold">
-              <span>Schools: <span class="font-bold text-slate-800">20</span></span>
-              <span>Assigned Staff: <span class="font-bold text-slate-800">3</span></span>
-              <span class="flex items-center gap-1">
-                Avg SSA: <span class="font-bold text-slate-800">6.3</span>
-                <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-              </span>
-              <span>Last Meeting: <span class="font-bold text-slate-800">28 Apr 2026</span></span>
-              <span>Last Training: <span class="font-bold text-slate-800">12 Mar 2026</span></span>
-            </div>
-            <div class="text-[11.5px] font-extrabold text-emerald-600 flex items-center gap-1">
-              <svg class="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              Next Action: Continue support
-            </div>
-          </div>
-          <div class="shrink-0 flex items-center gap-3">
-            <svg class="h-5 w-5 text-slate-400 transition-transform duration-300" :class="activeCluster === 'lira' ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-            </svg>
-          </div>
-        </div>
-        <div x-show="activeCluster === 'lira'" x-transition class="border-t border-slate-100 bg-slate-50/20 p-5">
-          <p class="text-[12px] text-slate-400 font-semibold italic text-center py-4">Lira Hope Cluster details are minimized. Click Action Planner inputs to modify priorities.</p>
-        </div>
-      </div>
-
-      <!-- Pagination Footer -->
-      <div class="flex items-center justify-between text-[12px] text-slate-500 font-semibold mt-4">
-        <span>Showing 1 to 3 of 3 clusters</span>
-        <div class="flex items-center gap-1">
-          <button class="h-8 w-8 rounded-lg border border-slate-200 bg-white flex items-center justify-center text-slate-400 hover:bg-slate-50"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg></button>
-          <button class="h-8 w-8 rounded-lg bg-[#002855] text-white flex items-center justify-center font-bold">1</button>
-          <button class="h-8 w-8 rounded-lg border border-slate-200 bg-white flex items-center justify-center text-slate-400 hover:bg-slate-50"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></button>
-        </div>
-      </div>
-
+    <div class="flex-1 space-y-4 min-w-0" id="clusters-table-container">
+      {% include "partials/clusters/list.html" %}
     </div>
 
     <!-- Right panel (Planner Actions & Impact metrics) -->
     <div class="w-full xl:w-[360px] space-y-6 shrink-0">
-      
-      <!-- Cluster Action Planner Card -->
-      <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-4">
-        <div class="flex items-center justify-between border-b border-slate-100 pb-2">
-          <h3 class="text-[14px] font-extrabold text-slate-800">Cluster Action Planner</h3>
-          <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
-        </div>
-
-        <!-- Selected info -->
-        <div class="flex justify-between items-start gap-4">
-          <div>
-            <span class="text-[10px] uppercase font-bold text-slate-400">Selected Cluster</span>
-            <p class="text-[13px] font-extrabold text-slate-800 mt-0.5">Kitgum Central Cluster</p>
-          </div>
-          <div class="text-right">
-            <span class="text-[10px] uppercase font-bold text-slate-400">Recommended Focus</span>
-            <div class="mt-0.5">
-              <span class="px-2 py-0.5 rounded text-[9.5px] font-bold bg-rose-50 text-rose-600 border border-rose-100 uppercase">Leadership</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Inputs form -->
-        <div class="space-y-3.5">
-          <!-- Activity type -->
-          <div>
-            <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Activity Type</label>
-            <div class="flex items-center gap-5">
-              <label class="flex items-center gap-2 cursor-pointer text-[12.5px] font-semibold text-slate-700">
-                <input type="radio" value="training" x-model="activityType" name="actType" class="h-4 w-4 text-[#2563eb] border-slate-300 focus:ring-[#2563eb]">
-                <span>Group Training</span>
-              </label>
-              <label class="flex items-center gap-2 cursor-pointer text-[12.5px] font-semibold text-slate-700">
-                <input type="radio" value="meeting" x-model="activityType" name="actType" class="h-4 w-4 text-[#2563eb] border-slate-300 focus:ring-[#2563eb]">
-                <span>Cluster Meeting</span>
-              </label>
-            </div>
-          </div>
-
-          <!-- Expected participants -->
-          <div>
-            <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Expected Participants</label>
-            <div class="relative">
-              <input 
-                type="number" 
-                x-model.number="participants" 
-                class="h-9 w-full bg-slate-50 border border-slate-200 rounded-lg px-3 text-[12.5px] font-bold focus:bg-white focus:outline-none"
-              >
-              <span class="absolute right-3 top-[26%] text-slate-400"><svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg></span>
-            </div>
-          </div>
-
-          <!-- Purpose -->
-          <div>
-            <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Purpose for Meeting</label>
-            <input 
-              type="text" 
-              x-model="purpose" 
-              class="h-9 w-full bg-slate-50 border border-slate-200 rounded-lg px-3 text-[12px] font-semibold focus:bg-white focus:outline-none text-slate-700"
-            >
-          </div>
-
-          <!-- Focus Area intervention -->
-          <div>
-            <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Primary Focus Intervention</label>
-            <select 
-              x-model="focus" 
-              class="h-9 w-full bg-slate-50 border border-slate-200 rounded-lg px-2 text-[12.5px] font-bold focus:bg-white focus:outline-none text-slate-700"
-            >
-              <option value="leadership">Leadership</option>
-              <option value="teaching">Teaching & Learning</option>
-              <option value="finance">Financial Health</option>
-              <option value="community">Community Engagement</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Costs Preview section -->
-        <div class="border-t border-slate-100 pt-3.5 space-y-2 text-[12px] text-slate-500">
-          <div class="flex items-center justify-between text-[11px] font-extrabold uppercase text-slate-400 tracking-wider">
-            <span>Cost Preview (<span x-text="activityType === 'training' ? 'Group Training' : 'Cluster Meeting'"></span>)</span>
-          </div>
-          <div class="flex justify-between items-center font-semibold">
-            <span>Participant meals</span>
-            <div class="flex items-center gap-1">
-              <span class="text-[10px] text-slate-400 font-bold" x-text="participants + ' x UGX 12,000'"></span>
-              <span class="font-bold text-slate-700" x-text="formatUGX(mealsCost)"></span>
-            </div>
-          </div>
-          <div class="flex justify-between items-center font-semibold">
-            <span>Venue</span>
-            <span class="font-bold text-slate-700" x-text="formatUGX(venueCost)"></span>
-          </div>
-          <div class="flex justify-between items-center font-semibold">
-            <span>Facilitation</span>
-            <span class="font-bold text-slate-700" x-text="formatUGX(facilitationCost)"></span>
-          </div>
-          <div class="border-t border-slate-100 my-1"></div>
-          <div class="flex justify-between items-center text-[13px]">
-            <span class="font-extrabold text-slate-600">Total Estimated Cost</span>
-            <span class="font-black text-[#002855]" x-text="formatUGX(totalCost)"></span>
-          </div>
-        </div>
-
-        <button class="w-full flex items-center justify-center gap-1.5 h-10 bg-[#002855] text-white text-[13px] font-extrabold rounded-lg hover:bg-opacity-95 shadow-md focus:outline-none transition-all mt-2">
-          <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-          Schedule Activity
-        </button>
+      <!-- Action Planner -->
+      <div id="cluster-action-planner-container">
+        {% include "partials/clusters/action_planner.html" %}
       </div>
 
-      <!-- Cluster Impact Card -->
-      <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-4">
-        <div class="flex items-center justify-between border-b border-slate-100 pb-2">
-          <div class="flex items-center gap-1">
-            <h3 class="text-[14px] font-extrabold text-slate-800">Cluster Impact</h3>
-            <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-          </div>
-          <select x-model="impactFilter" class="bg-slate-50 border border-slate-200 rounded-lg text-[10px] font-bold px-1.5 py-0.5 focus:outline-none text-slate-600">
-            <option value="leadership_feb26">After Leadership Training (Feb 2026)</option>
-            <option value="tl_mar26">After T&L Meeting (Mar 2026)</option>
-          </select>
-        </div>
-
-        <!-- Metrics Comparison list -->
-        <div class="space-y-4">
-          <!-- Item 1: Leadership -->
-          <div class="space-y-2">
-            <span class="text-[11.5px] font-extrabold text-slate-800 block">Leadership</span>
-            <div class="grid grid-cols-5 gap-1.5 text-center">
-              <div class="bg-slate-50 p-1.5 rounded-lg border border-slate-100/50">
-                <span class="text-[9px] uppercase font-bold text-slate-400 block">Before Avg</span>
-                <span class="text-[12px] font-bold text-slate-700 block mt-0.5">4.1</span>
-              </div>
-              <div class="bg-slate-50 p-1.5 rounded-lg border border-slate-100/50">
-                <span class="text-[9px] uppercase font-bold text-slate-400 block">After Avg</span>
-                <span class="text-[12px] font-bold text-slate-700 block mt-0.5">4.8</span>
-              </div>
-              <div class="bg-emerald-50/50 p-1.5 rounded-lg border border-emerald-100 flex flex-col justify-center items-center">
-                <span class="text-[9px] uppercase font-bold text-emerald-600 block leading-none">Delta</span>
-                <span class="text-[12.5px] font-extrabold text-emerald-700 block mt-0.5 leading-none">+0.7</span>
-              </div>
-              <div class="bg-slate-50 p-1.5 rounded-lg border border-slate-100/50">
-                <span class="text-[8.5px] font-bold text-slate-400 block leading-none">Schools Improved</span>
-                <span class="text-[12px] font-extrabold text-emerald-600 block mt-0.5 leading-none">14</span>
-              </div>
-              <div class="bg-slate-50 p-1.5 rounded-lg border border-slate-100/50">
-                <span class="text-[8.5px] font-bold text-slate-400 block leading-none">Schools Declined</span>
-                <span class="text-[12px] font-extrabold text-rose-500 block mt-0.5 leading-none">3</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Item 2: Teaching & Learning -->
-          <div class="space-y-2">
-            <span class="text-[11.5px] font-extrabold text-slate-800 block">Teaching & Learning</span>
-            <div class="grid grid-cols-5 gap-1.5 text-center">
-              <div class="bg-slate-50 p-1.5 rounded-lg border border-slate-100/50">
-                <span class="text-[9px] uppercase font-bold text-slate-400 block">Before Avg</span>
-                <span class="text-[12px] font-bold text-slate-700 block mt-0.5">4.7</span>
-              </div>
-              <div class="bg-slate-50 p-1.5 rounded-lg border border-slate-100/50">
-                <span class="text-[9px] uppercase font-bold text-slate-400 block">After Avg</span>
-                <span class="text-[12px] font-bold text-slate-700 block mt-0.5">5.1</span>
-              </div>
-              <div class="bg-emerald-50/50 p-1.5 rounded-lg border border-emerald-100 flex flex-col justify-center items-center">
-                <span class="text-[9px] uppercase font-bold text-emerald-600 block leading-none">Delta</span>
-                <span class="text-[12.5px] font-extrabold text-emerald-700 block mt-0.5 leading-none">+0.4</span>
-              </div>
-              <div class="bg-slate-50 p-1.5 rounded-lg border border-slate-100/50">
-                <span class="text-[8.5px] font-bold text-slate-400 block leading-none">Schools Improved</span>
-                <span class="text-[12px] font-extrabold text-emerald-600 block mt-0.5 leading-none">9</span>
-              </div>
-              <div class="bg-slate-50 p-1.5 rounded-lg border border-slate-100/50">
-                <span class="text-[8.5px] font-bold text-slate-400 block leading-none">Schools Declined</span>
-                <span class="text-[12px] font-extrabold text-rose-500 block mt-0.5 leading-none">4</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="border-t border-slate-100 pt-3">
-          <a href="#" class="text-[11.5px] font-bold text-[#2563eb] hover:underline flex items-center gap-0.5">View full intervention impact report <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></a>
-        </div>
+      <!-- Impact panel -->
+      <div id="cluster-impact-container">
+        {% include "partials/clusters/impact_panel.html" %}
       </div>
-
     </div>
   </div>
 </div>
+
+<!-- Include Create Cluster Modal -->
+{% include "partials/clusters/create_cluster_modal.html" %}
+
 {% endblock %}

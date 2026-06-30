@@ -1,0 +1,113 @@
+{% load frontend_filters %}
+<!-- KPI Cards Grid -->
+<!-- Card 1: Weekly Requests -->
+<div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-between h-[105px] hover:shadow-md transition-shadow">
+  <div class="flex items-center justify-between">
+    <span class="text-[10px] uppercase font-bold text-slate-400">Weekly Requests</span>
+    <div class="h-7 w-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+    </div>
+  </div>
+  <div>
+    <p class="text-[20px] font-extrabold text-slate-800 leading-none">{{ kpis.weekly_requests }}</p>
+    <p class="text-[9.5px] text-slate-400 font-bold mt-1.5">This Week</p>
+  </div>
+</div>
+
+<!-- Card 2: Monthly Requests -->
+<div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-between h-[105px] hover:shadow-md transition-shadow">
+  <div class="flex items-center justify-between">
+    <span class="text-[10px] uppercase font-bold text-slate-400">Monthly Requests</span>
+    <div class="h-7 w-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2"/></svg>
+    </div>
+  </div>
+  <div>
+    <p class="text-[20px] font-extrabold text-slate-800 leading-none">{{ kpis.monthly_requests }}</p>
+    <p class="text-[9.5px] text-slate-400 font-bold mt-1.5">This Month</p>
+  </div>
+</div>
+
+<!-- Card 3: Draft Requests -->
+<div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-between h-[105px] hover:shadow-md transition-shadow">
+  <div class="flex items-center justify-between">
+    <span class="text-[10px] uppercase font-bold text-slate-400">Draft Requests</span>
+    <div class="h-7 w-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+    </div>
+  </div>
+  <div>
+    <p class="text-[20px] font-extrabold text-slate-800 leading-none">{{ kpis.draft }}</p>
+    <p class="text-[9.5px] text-slate-400 font-bold mt-1.5">Total</p>
+  </div>
+</div>
+
+<!-- Card 4: Pending Approval -->
+<div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-between h-[105px] hover:shadow-md transition-shadow">
+  <div class="flex items-center justify-between">
+    <span class="text-[10px] uppercase font-bold text-slate-400">Pending Approval</span>
+    <div class="h-7 w-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    </div>
+  </div>
+  <div>
+    <p class="text-[20px] font-extrabold text-slate-800 leading-none">{{ kpis.pending_approval }}</p>
+    <p class="text-[9.5px] text-slate-400 font-bold mt-1.5">Total</p>
+  </div>
+</div>
+
+<!-- Card 5: Ready for Disbursement -->
+<div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-between h-[105px] hover:shadow-md transition-shadow">
+  <div class="flex items-center justify-between">
+    <span class="text-[10px] uppercase font-bold text-slate-400">Ready for Disbursement</span>
+    <div class="h-7 w-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    </div>
+  </div>
+  <div>
+    <p class="text-[20px] font-extrabold text-slate-800 leading-none">{{ kpis.ready_disbursement }}</p>
+    <p class="text-[9.5px] text-slate-400 font-bold mt-1.5">Total</p>
+  </div>
+</div>
+
+<!-- Card 6: Total Planned Value -->
+<div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-between h-[105px] hover:shadow-md transition-shadow">
+  <div class="flex items-center justify-between">
+    <span class="text-[10px] uppercase font-bold text-slate-400">Total Planned Value</span>
+    <div class="h-7 w-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    </div>
+  </div>
+  <div>
+    <p class="text-[16px] font-extrabold text-slate-800 leading-none">{{ kpis.planned_value|ugx }}</p>
+    <p class="text-[9.5px] text-slate-400 font-bold mt-1.5">This Month</p>
+  </div>
+</div>
+
+<!-- Card 7: Total Requested This Month -->
+<div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-between h-[105px] hover:shadow-md transition-shadow">
+  <div class="flex items-center justify-between">
+    <span class="text-[10px] uppercase font-bold text-slate-400">Total Requested This Month</span>
+    <div class="h-7 w-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+    </div>
+  </div>
+  <div>
+    <p class="text-[16px] font-extrabold text-slate-800 leading-none">{{ kpis.requested_this_month|ugx }}</p>
+    <p class="text-[9.5px] text-slate-400 font-bold mt-1.5">This Month</p>
+  </div>
+</div>
+
+<!-- Card 8: Accountability Pending -->
+<div class="bg-white p-4 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-between h-[105px] hover:shadow-md transition-shadow">
+  <div class="flex items-center justify-between">
+    <span class="text-[10px] uppercase font-bold text-slate-400">Accountability Pending</span>
+    <div class="h-7 w-7 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center shrink-0">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+    </div>
+  </div>
+  <div>
+    <p class="text-[20px] font-extrabold text-slate-800 leading-none">{{ kpis.accountability_pending }}</p>
+    <p class="text-[9.5px] text-slate-400 font-bold mt-1.5">Requests</p>
+  </div>
+</div>

@@ -1,0 +1,144 @@
+{% load frontend_filters %}
+<div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-5 font-sans" id="weekly-request-card-container">
+  {% if active_wfr %}
+    <!-- Card Header -->
+    <div class="flex items-center justify-between">
+      <div>
+        <h3 class="text-[15px] font-black text-slate-800">Weekly Fund Request for {{ selected_week_label }}</h3>
+        <p class="text-[11px] text-slate-400 font-semibold mt-0.5">Owner: <span class="font-bold text-slate-600">{{ active_wfr.responsibleUserName }}</span></p>
+      </div>
+      
+      <!-- Status Badge -->
+      <div>
+        {% if active_wfr.status == 'pending_responsible_confirmation' %}
+          <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wider bg-amber-50 text-amber-600 border border-amber-100">Draft</span>
+        {% elif active_wfr.status == 'confirmed_for_advance' %}
+          <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wider bg-blue-50 text-blue-600 border border-blue-100">Ready</span>
+        {% elif active_wfr.status == 'self_funded' %}
+          <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wider bg-purple-50 text-purple-600 border border-purple-100">Self-funded</span>
+        {% elif active_wfr.status == 'disbursed' %}
+          <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-100">Disbursed</span>
+        {% else %}
+          <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wider bg-slate-100 text-slate-500 border border-slate-200">{{ active_wfr.status|replace_underscore|title }}</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="overflow-x-auto border border-slate-100 rounded-xl">
+      <table class="w-full text-left text-[12px] border-collapse">
+        <thead>
+          <tr class="border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50/20">
+            <th class="px-4 py-3">Activity Source</th>
+            <th class="px-4 py-3">Cost Item</th>
+            <th class="px-4 py-3">Quantity</th>
+            <th class="px-4 py-3">Unit Cost (UGX)</th>
+            <th class="px-4 py-3">Total (UGX)</th>
+            <th class="px-4 py-3">Source From My Plan</th>
+            <th class="px-4 py-3">Status</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 text-slate-700">
+          {% if weekly_lines %}
+            {% for line in weekly_lines %}
+              <tr class="hover:bg-slate-50/40 transition-colors">
+                <td class="px-4 py-3 font-semibold text-slate-800">{{ line.source }}</td>
+                <td class="px-4 py-3">{{ line.cost_item }}</td>
+                <td class="px-4 py-3 font-bold">{{ line.quantity }}</td>
+                <td class="px-4 py-3 font-semibold">{{ line.unit_cost|ugx }}</td>
+                <td class="px-4 py-3 font-extrabold">{{ line.total_cost|ugx }}</td>
+                <td class="px-4 py-3">
+                  <a href="/my-plan/{{ line.activity_id }}" class="inline-flex items-center gap-1 rounded border border-slate-200 px-2 py-0.5 text-[10px] font-bold bg-slate-50 text-slate-600 hover:bg-slate-100">
+                    From My Plan
+                  </a>
+                </td>
+                <td class="px-4 py-3">
+                  <span class="inline-flex items-center rounded px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wider
+                    {% if line.status == 'Ready' %}bg-emerald-50 text-emerald-700 border border-emerald-100
+                    {% elif line.status == 'Awaiting Confirmation' %}bg-amber-50 text-amber-600 border border-amber-100
+                    {% elif line.status == 'Self-funded' %}bg-purple-50 text-purple-700 border border-purple-100
+                    {% else %}bg-blue-50 text-blue-700 border border-blue-100{% endif %}">
+                    {{ line.status }}
+                  </span>
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="7" class="px-4 py-8 text-center text-slate-400 font-semibold">
+                No cost lines calculated for this weekly request.
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Total Row -->
+    <div class="flex items-center justify-between border-t border-slate-100 pt-4">
+      <div class="text-right ml-auto">
+        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Weekly Total:</span>
+        <span class="text-[18px] font-black text-[#002855] block mt-0.5">{{ weekly_total|ugx }}</span>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100">
+      {% if active_wfr.status == 'pending_responsible_confirmation' or active_wfr.status == 'not_requested' %}
+        <form hx-post="/fund-requests/weekly/{{ active_wfr.id }}/confirm" hx-target="#weekly-request-card-container" hx-swap="outerHTML" class="inline-block">
+          {% csrf_token %}
+          <button type="submit" class="flex items-center gap-1.5 h-9 px-4 !bg-[#002855] !text-white text-[12.5px] font-bold rounded-lg hover:bg-opacity-95 shadow-sm focus:outline-none transition-all">
+            <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Confirm Advance Request
+          </button>
+        </form>
+
+        <form hx-post="/fund-requests/weekly/{{ active_wfr.id }}/self-funded" hx-target="#weekly-request-card-container" hx-swap="outerHTML" class="inline-block">
+          {% csrf_token %}
+          <button type="submit" class="flex items-center gap-1.5 h-9 px-3.5 bg-white border border-slate-200 text-[#002855] text-[12.5px] font-bold rounded-lg hover:bg-slate-50 focus:outline-none transition-all shadow-sm">
+            <svg class="h-4.5 w-4.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+            Mark as Self-Funded
+          </button>
+        </form>
+      {% else %}
+        <div class="text-[11.5px] font-bold text-slate-400 flex items-center gap-1">
+          &check; Action completed. Status of this weekly request is locked to 
+          <span class="font-extrabold text-slate-600 uppercase">{{ active_wfr.status }}</span>.
+        </div>
+      {% endif %}
+
+      <button 
+        hx-get="/fund-requests/weekly?week={{ selected_week }}&tab=weekly"
+        hx-target="#weekly-request-card-container"
+        hx-swap="outerHTML"
+        class="flex items-center gap-1.5 h-9 px-3.5 bg-white border border-slate-200 text-slate-600 text-[12.5px] font-bold rounded-lg hover:bg-slate-50 focus:outline-none transition-all shadow-sm ml-auto"
+      >
+        View Source Activities
+      </button>
+    </div>
+
+  {% else %}
+    <!-- Empty State -->
+    <div class="text-center py-12 text-slate-400 font-semibold max-w-md mx-auto space-y-4">
+      <svg class="h-12 w-12 text-slate-300 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+      <div>
+        <p class="text-[14px] text-slate-800 font-bold">No fund requests generated yet.</p>
+        <p class="text-[11px] text-slate-400 mt-1">Schedule activities in My Plan to generate weekly fund requests, or click the Generate Request button above.</p>
+      </div>
+      <div class="flex items-center justify-center gap-2 pt-2">
+        <form action="/fund-requests/generate-request" method="post" class="inline-block">
+          {% csrf_token %}
+          <input type="hidden" name="week_start" value="{{ selected_week }}">
+          <button type="submit" class="h-9 px-4 rounded-lg bg-[#002855] text-white text-[12px] font-bold hover:bg-opacity-95 shadow-sm">
+            Generate Request
+          </button>
+        </form>
+        <a href="/my-plan" class="h-9 px-4 rounded-lg border border-slate-200 text-[12px] font-bold text-slate-600 hover:bg-slate-50 inline-flex items-center justify-center">
+          Open My Plan
+        </a>
+      </div>
+    </div>
+  {% endif %}
+</div>
