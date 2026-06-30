@@ -37,6 +37,12 @@ urlpatterns = [
     # Planning
     path("planning", planning_views.planning_dashboard_view, name="planning_dashboard"),
     path("planning/schedule", planning_views.schedule_activity_form_view, name="planning_schedule"),
+    path("planning/schedule-modal", planning_views.schedule_modal_view, name="planning_schedule_modal"),
+    path("planning/schedule-action", planning_views.schedule_action_view, name="planning_schedule_action"),
+    path("planning/assign-partner-modal", planning_views.assign_partner_modal_view, name="planning_assign_partner_modal"),
+    path("planning/assign-partner-action", planning_views.assign_partner_action_view, name="planning_assign_partner_action"),
+    path("planning/intelligence", planning_views.planning_intelligence_view, name="planning_intelligence"),
+    path("planning/bulk-action", planning_views.bulk_action_view, name="planning_bulk_action"),
     path("partials/costing/preview", planning_views.cost_preview_partial, name="cost_preview"),
     
     # Budgets & Fund Requests
@@ -103,6 +109,7 @@ urlpatterns = [
     path("disbursements", finance_views.disbursements_view, name="disbursements"),
     path("budgets/overview", finance_views.budget_overview_view, name="budget_overview"),
     path("cost-settings", finance_views.cost_settings_view, name="cost_settings"),
+    path("finance/fund-allocation", finance_views.fund_allocation_view, name="fund_allocation"),
     
     # ── GROUP 3: Partners ─────────────────────────────────────────────────────
     path("partners", partner_views.partners_list_view, name="partners_list"),

@@ -4,7 +4,7 @@ from __future__ import annotations
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
-from apps.core.models import CuidField, SoftDeleteModel
+from apps.core.models import CuidField, SoftDeleteModel, TimeStampedModel
 
 
 class Partner(SoftDeleteModel):
@@ -41,4 +41,22 @@ class Partner(SoftDeleteModel):
         return self.name
 
 
-__all__ = ["Partner"]
+class PartnerAssignment(TimeStampedModel):
+    """Tracks assignment of a school to a partner organization for interventions."""
+    id = CuidField()
+    school = models.ForeignKey("schools.School", on_delete=models.CASCADE, related_name="partner_assignments")
+    partner = models.ForeignKey(Partner, on_delete=models.CASCADE, related_name="school_assignments")
+    assigning_staff_id = models.CharField(max_length=30, null=True, blank=True)
+    purpose = models.TextField(null=True, blank=True)
+    focus_intervention = models.CharField(max_length=64, null=True, blank=True)
+    expected_activity_type = models.CharField(max_length=64, null=True, blank=True)
+    scheduled_date = models.DateField(null=True, blank=True)
+    status = models.CharField(max_length=32, default="assigned")
+    notes = models.TextField(null=True, blank=True)
+
+    class Meta:
+        db_table = "partner_assignment"
+        ordering = ["-created_at"]
+
+
+__all__ = ["Partner", "PartnerAssignment"]

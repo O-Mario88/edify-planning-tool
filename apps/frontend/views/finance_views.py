@@ -96,3 +96,119 @@ def cost_settings_view(request):
         "fy": fy,
     }
     return render(request, "pages/cost_settings/index.html", context)
+
+@login_required(login_url="/login")
+def fund_allocation_view(request):
+    import csv
+    from django.http import HttpResponse
+    from apps.geography.models import Region, District
+    from apps.budget.allocation_service import MonthlyFundAllocationService
+    
+    # 1. Parse filter inputs & parameters
+    month_name = request.GET.get("month", "April").strip()
+    fy = request.GET.get("fy", "2026").strip()
+    region_id = request.GET.get("region", "").strip()
+    district_id = request.GET.get("district", "").strip()
+    search_q = request.GET.get("q", "").strip()
+    
+    try:
+        page = int(request.GET.get("page", 1))
+    except ValueError:
+        page = 1
+        
+    try:
+        per_page = int(request.GET.get("per_page", 10))
+    except ValueError:
+        per_page = 10
+        
+    MONTH_MAP = {"january": 1, "february": 2, "march": 3, "april": 4, "may": 5, "june": 6, "july": 7, "august": 8, "september": 9, "october": 10, "november": 11, "december": 12}
+    month_num = MONTH_MAP.get(month_name.lower(), 4)
+    
+    # 2. Get Allocation Data & Calculations
+    data = MonthlyFundAllocationService.get_monthly_allocation(
+        month_num=month_num,
+        fy=fy,
+        region_id=region_id or None,
+        district_id=district_id or None,
+        search_q=search_q or None,
+        page=page,
+        per_page=per_page
+    )
+    
+    # Check if CSV export is requested
+    if request.GET.get("export") == "csv":
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = f'attachment; filename="consolidated_fund_allocation_{month_name}_{fy}.csv"'
+        writer = csv.writer(response)
+        writer.writerow([
+            "Staff", "Staff Visits Count", "Staff Visits Cost", "Staff Visits Total", 
+            "Partner Visits Count", "Partner Visits Cost", "Partner Visits Total", 
+            "SSA Count", "SSA Cost", "SSA Total", 
+            "Cluster Training Count", "Cluster Training Cost", "Cluster Training Total", 
+            "Partner In-School Training Count", "Partner In-School Training Cost", "Partner In-School Training Total", 
+            "Total Monthly Allocation"
+        ])
+        for r in data["rows_all"]:
+            writer.writerow([
+                r["name"],
+                r["staff_visits"]["count"], r["staff_visits"]["unit_cost"], r["staff_visits"]["total"],
+                r["partner_visits"]["count"], r["partner_visits"]["unit_cost"], r["partner_visits"]["total"],
+                r["ssa"]["count"], r["ssa"]["unit_cost"], r["ssa"]["total"],
+                r["cluster_training"]["count"], r["cluster_training"]["unit_cost"], r["cluster_training"]["total"],
+                r["partner_in_school_training"]["count"], r["partner_in_school_training"]["unit_cost"], r["partner_in_school_training"]["total"],
+                r["total_allocation"]
+            ])
+        return response
+        
+    insights = MonthlyFundAllocationService.calculate_insights(
+        rows_all=data["rows_all"],
+        grand_totals=data["grand_totals"],
+        total_staff_count=data["total_staff_count"]
+    )
+    
+    # Pagination info
+    total_pages = (data["total_staff_count"] + per_page - 1) // per_page
+    pages_list = list(range(1, total_pages + 1))
+    showing_start = (page - 1) * per_page + 1 if data["total_staff_count"] > 0 else 0
+    showing_end = min(page * per_page, data["total_staff_count"])
+    
+    # 3. Filter Options Lists
+    regions = Region.objects.all().order_by("name")
+    districts = District.objects.all().order_by("name")
+    
+    # 4. Render context
+    context = {
+        "rows": data["rows"],
+        "grand_totals": data["grand_totals"],
+        "total_staff_count": data["total_staff_count"],
+        "total_activities_count": data["total_activities_count"],
+        "insights": insights,
+        
+        # Pagination
+        "page": page,
+        "per_page": per_page,
+        "total_pages": total_pages,
+        "pages_list": pages_list,
+        "showing_start": showing_start,
+        "showing_end": showing_end,
+        
+        # Filters dropdown options
+        "regions": regions,
+        "districts": districts,
+        
+        # Selected states
+        "selected_month": month_name,
+        "selected_fy": fy,
+        "selected_region": region_id,
+        "selected_district": district_id,
+        "search_q": search_q,
+        
+        # Dark sidebar indicator
+        "use_dark_sidebar": True,
+        "timestamp": timezone.now().strftime("%B %d, %Y %I:%M %p"),
+    }
+    
+    if request.headers.get("HX-Request") == "true":
+        return render(request, "partials/finance/allocation_table.html", context)
+        
+    return render(request, "pages/finance/fund_allocation.html", context)

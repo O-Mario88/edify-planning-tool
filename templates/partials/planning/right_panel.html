@@ -1,0 +1,80 @@
+<!-- Right intelligence panel content -->
+<div class="space-y-5 font-sans" id="planning-intelligence-panel">
+  {% if school %}
+    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+      <h3 class="text-[14px] font-black text-slate-800 uppercase tracking-wider">Selected School</h3>
+      <span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[9px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200/50">
+        {{ school.school_type|title }}
+      </span>
+    </div>
+
+    <!-- School Details -->
+    <div class="space-y-3.5 text-[12px] font-bold text-slate-600">
+      <h2 class="text-[15px] font-black text-slate-900 leading-tight">{{ school.name }}</h2>
+      
+      <div class="flex items-center justify-between">
+        <span class="text-slate-400 text-[10.5px]">District</span>
+        <span class="text-slate-800">{{ school.district.name }}</span>
+      </div>
+
+      <div class="flex items-center justify-between">
+        <span class="text-slate-400 text-[10.5px]">Cluster</span>
+        <span class="text-slate-800">{{ cluster_name }}</span>
+      </div>
+
+      <div class="flex items-center justify-between">
+        <span class="text-slate-400 text-[10.5px]">Assigned Staff</span>
+        <span class="text-slate-800">{{ assigned_staff }}</span>
+      </div>
+
+      <div class="flex items-center justify-between">
+        <span class="text-slate-400 text-[10.5px]">Weakest Intervention</span>
+        <span class="text-slate-800">{{ weakest_intervention }}</span>
+      </div>
+
+      <div class="flex items-center justify-between">
+        <span class="text-slate-400 text-[10.5px]">Last SSA Date</span>
+        <span class="text-slate-800">{{ last_ssa_date }}</span>
+      </div>
+
+      <div class="flex items-center justify-between">
+        <span class="text-slate-400 text-[10.5px]">Planning Readiness</span>
+        {% if school.planning_readiness == 'ready' %}
+          <span class="text-emerald-600">Ready</span>
+        {% else %}
+          <span class="text-rose-500">Blocked</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Recommended Next Step Card -->
+    <div class="bg-slate-50 rounded-xl p-4 border border-slate-100 space-y-3">
+      <h4 class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Recommended Next Step</h4>
+      <div class="flex items-start gap-2.5">
+        <div class="h-5 w-5 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 mt-0.5">
+          <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <div>
+          <p class="text-[12px] font-extrabold text-slate-800 leading-snug">{{ recommended_step }}</p>
+          <p class="text-[10.5px] text-slate-400 leading-normal mt-1">{{ recommended_desc }}</p>
+        </div>
+      </div>
+      
+      {% if school.planning_readiness == 'ready' %}
+        <button 
+          hx-get="/planning/schedule-modal?school_id={{ school.school_id }}"
+          hx-target="#modal-container"
+          class="w-full h-8.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[11px] font-extrabold transition-colors shadow-sm"
+        >
+          Schedule Now
+        </button>
+      {% endif %}
+    </div>
+
+  {% else %}
+    <div class="py-12 text-center text-slate-400 space-y-2">
+      <svg class="h-8 w-8 mx-auto text-slate-350" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+      <p class="text-[11.5px] font-bold">Select a school to view planning intelligence.</p>
+    </div>
+  {% endif %}
+</div>

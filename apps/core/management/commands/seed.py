@@ -173,10 +173,11 @@ class Command(BaseCommand):
             u.set_password(demo_pw); u.save()
             sp, _ = StaffProfile.objects.update_or_create(user=u, defaults={"onboarding_state": "active"})
             pls.append(sp)
+        CCEO_NAMES = ["Paul N.", "Moses K.", "Joel T.", "Alfred O.", "Deo M.", "Grace A.", "Esther N.", "Brian S.", "Ruth N.", "Daniel O.", "Grace K.", "James O.", "Simon P.", "Florence A.", "Alex M.", "Robert O.", "Mary A.", "David K.", "John B.", "Sarah N."]
         cceos = []
         for i in range(20):
             email = "cceo@edify.org" if i == 0 else f"cceo{i}@edify.org"
-            name = "Paul Chinyama" if i == 0 else f"CCEO {i + 1}"
+            name = CCEO_NAMES[i] if i < len(CCEO_NAMES) else f"CCEO {i + 1}"
             u, _ = User.objects.update_or_create(
                 email=email,
                 defaults={"name": name, "roles": [EdifyRole.CCEO.value],
@@ -344,11 +345,11 @@ class Command(BaseCommand):
         self.stdout.write(f"  sample partners: {Partner.objects.count()} (local only)")
 
         rate_card = {
-            "staff_visit_transport_primary": 15000, "lunch": 10000, "breakfast": 8000,
+            "staff_visit_transport_primary": 50000, "lunch": 12000, "breakfast": 8000,
             "dinner": 12000, "accommodation": 40000, "staff_visit_transport_secondary": 25000,
             "training_session_fee": 50000, "venue": 30000, "meals_per_participant": 5000,
             "mobilisation_per_participant": 2000, "cluster_meeting_cost": 10000,
-            "partner_visit_lump_sum": 35000, "partner_training_lump_sum": 120000,
+            "partner_visit_lump_sum": 40000, "partner_training_lump_sum": 16000,
         }
         for key, cost in rate_card.items():
             CostSetting.objects.update_or_create(key=key, defaults={"label": key.replace("_", " ").title(), "unit_cost": cost})
@@ -357,3 +358,83 @@ class Command(BaseCommand):
         for code, name in [("SP-EDTECH", "EdTech Pilot"), ("SP-CCSEL", "CCSEL"), ("SP-DIP", "DIP"), ("SP-ECC", "ECC"), ("SP-UCU", "UCU")]:
             Project.objects.get_or_create(code=code, defaults={"name": name, "category": "pilot"})
         self.stdout.write(f"  sample projects: {Project.objects.count()} (local only)")
+
+        # Seed activities for April 2026 (for Consolidated Fund Allocation dashboard)
+        from apps.activities.models import Activity, ActivityScheduleCostLine
+        from apps.budget.costing_service import apply_to_activity
+        from apps.clusters.models import Cluster
+        from datetime import datetime, timezone
+        
+        schools = list(School.objects.all())
+        clusters = []
+        for i in range(15):
+            cl_name = f"Cluster {chr(65+i)}"
+            dist = rnd.choice(districts)
+            cluster, _ = Cluster.objects.get_or_create(
+                name=cl_name,
+                defaults={"district": dist, "region": dist.region, "status": "clustered"}
+            )
+            clusters.append(cluster)
+
+        Activity.objects.all().delete()
+        ActivityScheduleCostLine.objects.all().delete()
+
+        # Seed 13 activities per CCEO
+        for cceo_idx, cceo in enumerate(cceos):
+            for act_idx in range(13):
+                date_day = rnd.randint(1, 28)
+                scheduled_date = datetime(2026, 4, date_day, 10, 0, tzinfo=timezone.utc)
+                
+                if act_idx < 4:
+                    # Staff visit
+                    act_type = "school_visit"
+                    del_type = "staff"
+                    school = schools[(cceo_idx * 10 + act_idx) % len(schools)]
+                    cluster = None
+                elif act_idx < 7:
+                    # Partner visit
+                    act_type = "school_visit"
+                    del_type = "partner"
+                    school = schools[(cceo_idx * 10 + act_idx) % len(schools)]
+                    cluster = None
+                elif act_idx < 9:
+                    # SSA Activity
+                    act_type = "ssa_activity"
+                    del_type = "staff"
+                    school = schools[(cceo_idx * 10 + act_idx) % len(schools)]
+                    cluster = None
+                elif act_idx < 11:
+                    # Cluster training
+                    act_type = "cluster_meeting"  # maps to 10k cluster meeting cost setting
+                    del_type = "staff"
+                    school = None
+                    cluster = clusters[cceo_idx % len(clusters)]
+                else:
+                    # Partner In-school training
+                    act_type = "partner_activity"
+                    del_type = "partner"
+                    school = schools[(cceo_idx * 10 + act_idx) % len(schools)]
+                    cluster = None
+                    
+                act = Activity.objects.create(
+                    activity_type=act_type,
+                    delivery_type=del_type,
+                    school=school,
+                    cluster=cluster,
+                    scheduled_date=scheduled_date,
+                    responsible_staff_id=cceo.user.user_id,
+                    status="completed"
+                )
+                
+                apply_to_activity(act, {
+                    "activityType": act_type,
+                    "deliveryType": del_type,
+                    "districtType": "primary",
+                    "teachersAttended": 1,
+                    "leadersAttended": 0,
+                    "otherParticipants": 0,
+                    "nights": 0,
+                    "fy": "2026"
+                }, responsible_user_id=cceo.user.user_id)
+
+        self.stdout.write(f"  sample activities: {Activity.objects.count()} (local only)")

@@ -34,7 +34,7 @@
       x-transition:leave="transition ease-in-out duration-300 transform"
       x-transition:leave-start="translate-x-0"
       x-transition:leave-end="-translate-x-full"
-      class="relative flex-1 flex flex-col max-w-xs w-full bg-white border-r border-slate-200"
+      class="relative flex-1 flex flex-col max-w-xs w-full {% if use_dark_sidebar %}bg-[#08282c] border-r border-[#062023] text-slate-100{% else %}bg-white border-r border-slate-200{% endif %}"
     >
       <div class="absolute top-0 right-0 -mr-12 pt-2">
         <button 
@@ -53,18 +53,18 @@
       <div class="flex-1 h-0 pt-5 pb-4 overflow-y-auto">
         <div class="flex-shrink-0 flex items-center gap-2.5 px-6">
           <!-- Blue logo icon -->
-          <div class="h-8 w-8 rounded-lg bg-blue-50 text-[var(--color-edify-primary)] flex items-center justify-center shrink-0 border border-blue-100">
+          <div class="h-8 w-8 rounded-lg {% if use_dark_sidebar %}bg-[#104a50] text-[#ffcc00] border border-[#145d65]{% else %}bg-blue-50 text-[var(--color-edify-primary)] border border-blue-100{% endif %} flex items-center justify-center shrink-0">
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
               <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
           </div>
           <div class="flex flex-col">
-            <span class="text-[20px] font-black text-[#002855] tracking-tight leading-none font-sans">Edify</span>
-            <span class="text-[8px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">Planning and Monitoring Tool</span>
+            <span class="text-[20px] font-black {% if use_dark_sidebar %}text-white{% else %}text-[#002855]{% endif %} tracking-tight leading-none font-sans">{% if use_dark_sidebar %}SIPA{% else %}Edify{% endif %}</span>
+            <span class="text-[8px] {% if use_dark_sidebar %}text-[#a5c3c7]{% else %}text-slate-500{% endif %} font-bold uppercase tracking-wider mt-0.5">{% if use_dark_sidebar %}Plan. Invest. Impact.{% else %}Planning and Monitoring Tool{% endif %}</span>
           </div>
         </div>
         <nav class="mt-8 px-2 space-y-1">
-          {% include "layouts/navigation_items.html" %}
+          {% if use_dark_sidebar %}{% include "partials/finance/finance_sidebar_items.html" %}{% else %}{% include "layouts/navigation_items.html" %}{% endif %}
         </nav>
       </div>
     </div>
@@ -72,25 +72,25 @@
 
   <!-- Desktop Static Sidebar -->
   <aside class="hidden md:flex md:flex-shrink-0 transition-all duration-300" :class="collapsed ? 'w-20' : 'w-64'">
-    <div class="flex flex-col h-full w-full bg-white border-r border-slate-200 shadow-sm">
+    <div class="flex flex-col h-full w-full {% if use_dark_sidebar %}bg-[#08282c] border-r border-[#062023] text-slate-200{% else %}bg-white border-r border-slate-200 shadow-sm{% endif %}">
       <!-- Brand Logo Section -->
-      <div class="py-6 px-5 border-b border-slate-100">
+      <div class="py-6 px-5 border-b {% if use_dark_sidebar %}border-[#062023]{% else %}border-slate-100{% endif %}">
         <div class="flex items-center gap-2.5 overflow-hidden">
           <!-- Non-collapsed Logo -->
           <div class="flex items-center gap-2.5 transition-opacity duration-300" :class="collapsed ? 'opacity-0 w-0 h-0 pointer-events-none' : 'opacity-100 flex'">
-            <div class="h-8 w-8 rounded-lg bg-blue-50 text-[var(--color-edify-primary)] flex items-center justify-center shrink-0 border border-blue-100">
+            <div class="h-8 w-8 rounded-lg {% if use_dark_sidebar %}bg-[#104a50] text-[#ffcc00] border border-[#145d65]{% else %}bg-blue-50 text-[var(--color-edify-primary)] border border-blue-100{% endif %} flex items-center justify-center shrink-0">
               <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
             </div>
             <div class="flex flex-col">
-              <span class="text-[20px] font-extrabold text-[#002855] tracking-tight leading-none font-sans">Edify</span>
-              <span class="text-[8px] text-slate-500 font-bold uppercase tracking-wider mt-0.5 whitespace-nowrap leading-tight">Planning and<br>Monitoring Tool</span>
+              <span class="text-[20px] font-extrabold {% if use_dark_sidebar %}text-white{% else %}text-[#002855]{% endif %} tracking-tight leading-none font-sans">{% if use_dark_sidebar %}SIPA{% else %}Edify{% endif %}</span>
+              <span class="text-[8px] {% if use_dark_sidebar %}text-[#a5c3c7]{% else %}text-slate-500{% endif %} font-bold uppercase tracking-wider mt-0.5 whitespace-nowrap leading-tight">{% if use_dark_sidebar %}Plan. Invest. Impact.{% else %}Planning and<br>Monitoring Tool{% endif %}</span>
             </div>
           </div>
           <!-- Collapsed Logo -->
           <div class="transition-opacity duration-300" :class="collapsed ? 'opacity-100 flex' : 'opacity-0 w-0 h-0 pointer-events-none'">
-            <div class="h-8 w-8 rounded-lg bg-blue-50 text-[var(--color-edify-primary)] flex items-center justify-center border border-blue-100">
+            <div class="h-8 w-8 rounded-lg {% if use_dark_sidebar %}bg-[#104a50] text-[#ffcc00] border border-[#145d65]{% else %}bg-blue-50 text-[var(--color-edify-primary)] border border-blue-100{% endif %} flex items-center justify-center">
               <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
@@ -102,19 +102,19 @@
       <!-- Nav Navigation Items -->
       <div class="flex-1 flex flex-col min-h-0 overflow-y-auto">
         <nav class="flex-1 px-3 py-4 space-y-1">
-          {% include "layouts/navigation_items.html" %}
+          {% if use_dark_sidebar %}{% include "partials/finance/finance_sidebar_items.html" %}{% else %}{% include "layouts/navigation_items.html" %}{% endif %}
         </nav>
       </div>
       
       <!-- User Profile Box -->
-      <div class="border-t border-slate-100 p-4 bg-slate-50/50">
+      <div class="border-t {% if use_dark_sidebar %}border-[#062023] bg-[#051c1f]{% else %}border-slate-100 bg-slate-50/50{% endif %} p-4">
         <div class="flex items-center gap-3 overflow-hidden">
           <div class="h-9 w-9 rounded-full bg-slate-700 overflow-hidden shrink-0 border border-slate-200">
             <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=256&h=256&fit=crop" alt="Avatar" class="h-full w-full object-cover">
           </div>
           <div class="min-w-0 flex-1 transition-opacity duration-300" :class="collapsed ? 'opacity-0 w-0' : 'opacity-100'">
-            <p class="text-[12px] font-extrabold text-slate-800 truncate leading-snug">District Admin</p>
-            <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider leading-none mt-0.5">Kitgum District</p>
+            <p class="text-[12px] font-extrabold {% if use_dark_sidebar %}text-white{% else %}text-slate-800{% endif %} truncate leading-snug">{% if request.user.is_authenticated %}{{ request.user.name }}{% else %}Country Program Lead{% endif %}</p>
+            <p class="text-[10px] {% if use_dark_sidebar %}text-[#a5c3c7]{% else %}text-slate-400{% endif %} uppercase font-bold tracking-wider leading-none mt-0.5">{% if request.user.is_authenticated %}{{ request.user.active_role }}{% else %}Lead{% endif %}</p>
           </div>
           <div class="shrink-0 transition-opacity duration-300" :class="collapsed ? 'opacity-0 w-0' : 'opacity-100'">
             <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
@@ -123,10 +123,10 @@
       </div>
 
       <!-- Collapse Sidebar Toggle Button -->
-      <div class="border-t border-slate-100 px-3 py-2 bg-slate-50/80">
+      <div class="border-t {% if use_dark_sidebar %}border-[#062023] bg-[#051c1f]{% else %}border-slate-100 bg-slate-50/80{% endif %} px-3 py-2">
         <button 
           @click="collapsed = !collapsed"
-          class="w-full flex items-center gap-3 px-3 py-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800 rounded-lg text-[12.5px] font-bold transition-all focus:outline-none"
+          class="w-full flex items-center gap-3 px-3 py-2 {% if use_dark_sidebar %}text-[#a5c3c7] hover:text-white hover:bg-[#104a50]{% else %}text-slate-500 hover:bg-slate-100 hover:text-slate-800{% endif %} rounded-lg text-[12.5px] font-bold transition-all focus:outline-none"
         >
           <svg 
             class="h-5 w-5 shrink-0 transition-transform duration-300" 

@@ -1,0 +1,143 @@
+<div 
+  x-init="$dispatch('open-modal')"
+  class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+>
+  <div 
+    class="bg-white rounded-2xl border border-slate-100 shadow-xl max-w-lg w-full overflow-hidden flex flex-col max-h-[90vh] font-sans"
+    @click.away="$dispatch('close-modal')"
+  >
+    <!-- Modal Header -->
+    <div class="px-6 py-4.5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+      <div>
+        <h3 class="text-[15px] font-black text-slate-800 tracking-tight leading-none">Schedule School Visit</h3>
+        <p class="text-[11px] text-slate-500 font-semibold mt-1">Configure activity details for {{ school.name }}</p>
+      </div>
+      <button 
+        @click="$dispatch('close-modal')"
+        class="h-7 w-7 rounded-full hover:bg-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors"
+      >
+        <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <!-- Modal Form Body -->
+    <form 
+      hx-post="/planning/schedule-action"
+      hx-target="#form-errors"
+      class="flex-1 overflow-y-auto p-6 space-y-4 text-[12px] font-bold text-slate-600"
+    >
+      <input type="hidden" name="school_id" value="{{ school.school_id }}">
+      <input type="hidden" name="activity_type" value="school_visit">
+
+      <!-- Form Error Messages container -->
+      <div id="form-errors"></div>
+
+      <!-- Date -->
+      <div>
+        <label for="scheduled_date" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Scheduled Date</label>
+        <input 
+          type="date" 
+          name="scheduled_date" 
+          id="scheduled_date"
+          required
+          class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+        >
+      </div>
+
+      <!-- Focus Intervention -->
+      <div>
+        <label for="focus_intervention" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Primary Focus Intervention</label>
+        <select 
+          name="focus_intervention" 
+          id="focus_intervention"
+          required
+          class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+        >
+          <option value="">Select Focus Intervention...</option>
+          {% for code, label in interventions %}
+            <option value="{{ code }}">{{ label }}</option>
+          {% endfor %}
+        </select>
+        {% if recommendations %}
+          <div class="mt-2 p-2 bg-amber-50 border border-amber-200/50 rounded-lg text-[10.5px] text-amber-800 font-bold space-y-1">
+            <p class="font-extrabold text-[11px]">Recommended focus areas based on latest SSA:</p>
+            {% for r in recommendations %}
+              <p>&bull; {{ r.label }} (Score: {{ r.score }})</p>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Delivery Type selection -->
+      <div x-data="{ delivery: 'staff' }">
+        <label for="delivery_type" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Delivery Type</label>
+        <select 
+          name="delivery_type" 
+          id="delivery_type"
+          x-model="delivery"
+          class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+        >
+          <option value="staff">Internal Field Staff (CCEO)</option>
+          <option value="partner">Certified Partner Agency</option>
+        </select>
+
+        <div x-show="delivery === 'partner'" class="mt-3" style="display: none;">
+          <label for="assigned_partner_id" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Assigned Partner Agency</label>
+          <select 
+            name="assigned_partner_id" 
+            id="assigned_partner_id"
+            class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+          >
+            <option value="">Select Partner...</option>
+            {% for p in partners %}
+              <option value="{{ p.id }}">{{ p.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <!-- Purpose Description -->
+      <div>
+        <label for="activity_purpose_text" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Purpose Description</label>
+        <textarea 
+          name="activity_purpose_text" 
+          id="activity_purpose_text"
+          required
+          rows="2"
+          placeholder="What needs to be achieved in this activity?"
+          class="w-full p-2.5 rounded-lg border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 placeholder-slate-400"
+        ></textarea>
+      </div>
+
+      <!-- Expected Outcome -->
+      <div>
+        <label for="expected_outcome" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Expected Outcome / Goal</label>
+        <textarea 
+          name="expected_outcome" 
+          id="expected_outcome"
+          required
+          rows="2"
+          placeholder="Target delta or specific checklist outcome..."
+          class="w-full p-2.5 rounded-lg border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 placeholder-slate-400"
+        ></textarea>
+      </div>
+
+      <!-- Actions -->
+      <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-2.5">
+        <button 
+          type="button" 
+          @click="$dispatch('close-modal')"
+          class="h-9.5 px-4 rounded-lg border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 transition-colors"
+        >
+          Cancel
+        </button>
+        <button 
+          type="submit"
+          class="h-9.5 px-4.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-extrabold transition-colors shadow-sm"
+        >
+          Schedule Activity
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
