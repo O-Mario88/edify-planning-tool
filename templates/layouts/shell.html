@@ -3,7 +3,7 @@
 {% block content %}
 <div 
   x-data="{ sidebarOpen: false, userMenuOpen: false, collapsed: false }" 
-  class="h-full flex overflow-hidden bg-[var(--bg-page)]"
+  class="edify-shell h-full flex overflow-hidden"
 >
   <!-- Off-canvas mobile menu -->
   <div 
@@ -71,8 +71,8 @@
   </div>
 
   <!-- Desktop Static Sidebar -->
-  <aside class="hidden md:flex md:flex-shrink-0 transition-all duration-300" :class="collapsed ? 'w-20' : 'w-64'">
-    <div class="flex flex-col h-full w-full {% if use_dark_sidebar %}bg-[#08282c] border-r border-[#062023] text-slate-200{% else %}bg-white border-r border-slate-200 shadow-sm{% endif %}">
+  <aside class="edify-sidebar hidden md:flex md:flex-shrink-0 transition-all duration-300" :class="collapsed ? 'w-20' : 'w-64'">
+    <div class="flex flex-col h-full w-full {% if use_dark_sidebar %}bg-[#08282c] border-r border-[#062023] text-slate-200{% else %}bg-transparent{% endif %}">
       <!-- Brand Logo Section -->
       <div class="py-6 px-5 border-b {% if use_dark_sidebar %}border-[#062023]{% else %}border-slate-100{% endif %}">
         <div class="flex items-center gap-2.5 overflow-hidden">
@@ -147,7 +147,7 @@
   <!-- Main container -->
   <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
     <!-- Topbar -->
-    <header class="bg-white border-b border-[var(--border-card)] h-16 flex items-center justify-between px-4 sm:px-6 shrink-0 relative z-10 shadow-sm">
+    <header class="edify-topbar shrink-0 relative z-10">
       <div class="flex items-center gap-4 flex-1">
         <button 
           type="button" 

@@ -1,0 +1,33 @@
+/* Edify Design System - Page-specific styling hooks */
+
+/* Planning page adjustments */
+.planning-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 1280px) {
+  .planning-grid {
+    grid-template-columns: 3fr 1fr;
+  }
+}
+
+/* Tab Active visual states */
+.edify-tab-btn {
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid transparent;
+  color: var(--edify-text-muted);
+  font-weight: 700;
+  font-size: 12.5px;
+  transition: all 0.2s ease;
+}
+
+.edify-tab-btn.active {
+  border-bottom-color: var(--edify-primary);
+  color: var(--edify-primary);
+}
+
+.edify-tab-btn:hover:not(.active) {
+  color: var(--edify-text);
+}

@@ -1,0 +1,41 @@
+/* Edify Design System Tokens - Tailwind v4 Compatible CSS Custom Properties */
+:root {
+  /* Core Colors */
+  --edify-primary: #002855;         /* Steel-Blue (Deep Edify Blue) */
+  --edify-primary-hover: #001f42;
+  --edify-primary-light: #eaeff3;
+  
+  --edify-success: #10b981;         /* Emerald */
+  --edify-success-light: #ecfdf5;
+  --edify-success-border: #a7f3d0;
+  
+  --edify-warning: #f59e0b;         /* Amber */
+  --edify-warning-light: #fffbeb;
+  --edify-warning-border: #fde68a;
+  
+  --edify-danger: #ef4444;          /* Red */
+  --edify-danger-light: #fef2f2;
+  --edify-danger-border: #fca5a5;
+  
+  --edify-info: #06b6d4;            /* Cyan */
+  --edify-info-light: #ecfeff;
+  --edify-info-border: #a5f3fc;
+
+  /* Neutral surfaces & text */
+  --edify-surface: #ffffff;
+  --edify-surface-muted: #f8fafc;
+  --edify-border: #e2e8f0;
+  --edify-text: #0f172a;            /* Deep navy */
+  --edify-text-muted: #64748b;
+  --edify-bg: #eaf1f3;              /* Cloudy background gray-blue */
+
+  /* Border Radiuses */
+  --edify-radius-sm: 14px;
+  --edify-radius-md: 18px;
+  --edify-radius-lg: 22px;
+
+  /* Shadows (Subtle, modern, not heavy) */
+  --edify-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  --edify-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+  --edify-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+}
