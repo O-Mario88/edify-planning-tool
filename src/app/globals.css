@@ -799,6 +799,51 @@ html.dark {
   color: var(--text-primary);
 }
 
+/* ── Matrix KPI Strip ─────────────────────────────────────────────── */
+
+.matrix-kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  background: var(--surface-1);
+  border: 1px solid var(--border-card);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 
+    inset 0 1px 0 var(--color-card-highlight),
+    0 1px 2px var(--shadow-card-contact),
+    0 2px 6px -2px var(--shadow-card-mid);
+}
+
+.matrix-kpi-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 16px;
+  border-left: 2px solid var(--border-subtle);
+}
+.matrix-kpi-item:first-child {
+  border-left: none;
+  padding-left: 0;
+}
+
+.matrix-kpi-label {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+.matrix-kpi-value {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+
 /* Outline — visible border, transparent fill. */
 .premium-button-outline {
   background: transparent;

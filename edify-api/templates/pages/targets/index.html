@@ -1,83 +1,107 @@
 {% extends "layouts/shell.html" %}
 
-{% block title %}My Targets — Edify{% endblock %}
+{% block title %}My Targets — Edify Command Center{% endblock %}
+
+{% block topbar_left %}
+<div>
+  <h1 class="text-[18px] font-extrabold text-slate-800 tracking-tight leading-tight">My Targets</h1>
+  <p class="text-[11px] text-slate-500 font-semibold tracking-wide">FY{{ fy }} personal KPIs — live from your activity data</p>
+</div>
+{% endblock %}
 
 {% block shell_content %}
 <div class="p-6 max-w-5xl mx-auto space-y-6">
-  <!-- Header -->
-  <div>
-    <h1 class="text-[26px] font-extrabold text-slate-800 tracking-tight">My Targets</h1>
-    <p class="text-[12.5px] text-[var(--text-secondary)] mt-1 font-semibold">FY{{ fy }} personal KPIs — live from your activity data</p>
-  </div>
 
   <!-- Week Summary Banner -->
-  <div class="bg-gradient-to-r from-indigo-600 to-violet-600 rounded-2xl p-5 text-white">
-    <div class="flex items-center justify-between">
+  <div class="bg-[var(--color-edify-primary)] rounded-2xl p-6 text-white shadow-sm relative overflow-hidden">
+    <div class="absolute -right-10 -top-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
+    <div class="absolute -left-10 -bottom-10 w-32 h-32 bg-[var(--color-edify-dark)]/20 rounded-full blur-xl"></div>
+    
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between relative z-10 gap-4">
       <div>
-        <p class="text-[11px] font-bold uppercase tracking-wider text-indigo-200">This Week Progress</p>
-        <p class="text-[28px] font-extrabold mt-1">{{ week_completed }} / {{ week_total }}</p>
-        <p class="text-[12px] text-indigo-200 mt-0.5">activities completed this week ({{ week_start|date:"j M" }} – {{ week_end|date:"j M" }})</p>
+        <p class="text-[10.5px] font-extrabold uppercase tracking-widest text-white/80 mb-1">This Week's Progress</p>
+        <div class="flex items-baseline gap-2">
+          <p class="text-[36px] font-extrabold leading-none">{{ week_completed }}<span class="text-[20px] text-white/60 font-bold ml-1">/ {{ week_total }}</span></p>
+        </div>
+        <p class="text-[12px] text-white/90 mt-1.5 font-medium">activities completed ({{ week_start|date:"M j" }} – {{ week_end|date:"M j" }})</p>
       </div>
-      <div class="h-16 w-16 rounded-full border-4 border-indigo-400/50 flex items-center justify-center">
-        {% if week_total > 0 %}
-        <span class="text-[16px] font-extrabold">{{ week_completed|floatformat:0 }}/{{ week_total }}</span>
-        {% else %}
-        <span class="text-[20px]">🎯</span>
-        {% endif %}
+      
+      <div class="shrink-0">
+        <div class="h-20 w-20 rounded-full border-[5px] border-white/20 flex items-center justify-center bg-white/5 relative">
+          {% if week_total > 0 %}
+            <svg class="absolute inset-0 h-full w-full -rotate-90" viewBox="0 0 36 36">
+              <path class="text-white/20" stroke-width="3.8" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+              <path class="text-white" stroke-width="3.8" stroke-dasharray="{% widthratio week_completed week_total 100 %}, 100" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            </svg>
+            <span class="text-[13px] font-extrabold text-white">{% widthratio week_completed week_total 100 %}%</span>
+          {% else %}
+            <span class="text-[24px]">🎯</span>
+          {% endif %}
+        </div>
       </div>
     </div>
   </div>
 
   <!-- KPI Cards Grid -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
     {% for kpi in kpis %}
-    <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm">
-      <div class="flex items-start justify-between mb-4">
+    <div class="premium-card p-6 flex flex-col h-full group hover:border-[var(--color-edify-primary)]/40 transition-colors">
+      <div class="flex items-start justify-between mb-6">
         <div>
-          <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ kpi.label }}</p>
-          <p class="text-[32px] font-extrabold mt-1 
-            {% if kpi.lower_is_better %}
-              {% if kpi.value == 0 %}text-emerald-600{% elif kpi.value <= 2 %}text-amber-500{% else %}text-rose-600{% endif %}
-            {% else %}
-              {% if kpi.value >= kpi.target %}text-emerald-600{% else %}text-indigo-600{% endif %}
-            {% endif %}
-          ">{{ kpi.value }}</p>
-          <p class="text-[11.5px] text-slate-400 font-semibold">{{ kpi.unit }}</p>
+          <p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-1.5">{{ kpi.label }}</p>
+          <div class="flex items-baseline gap-1.5">
+            <p class="text-[32px] font-extrabold leading-none tracking-tight
+              {% if kpi.lower_is_better %}
+                {% if kpi.value == 0 %}text-emerald-600{% elif kpi.value <= 2 %}text-amber-500{% else %}text-rose-600{% endif %}
+              {% else %}
+                {% if kpi.value >= kpi.target %}text-emerald-600{% else %}text-slate-800 group-hover:text-[var(--color-edify-primary)] transition-colors{% endif %}
+              {% endif %}
+            ">{{ kpi.value }}</p>
+            <p class="text-[12px] text-slate-400 font-bold uppercase">{{ kpi.unit }}</p>
+          </div>
         </div>
-        <div class="text-right">
-          <p class="text-[10px] text-slate-400 font-bold uppercase">Target</p>
-          <p class="text-[18px] font-extrabold text-slate-300 mt-0.5">{{ kpi.target }}</p>
+        <div class="text-right shrink-0">
+          <p class="text-[9.5px] text-slate-400 font-extrabold uppercase tracking-wider mb-1">Target</p>
+          <p class="text-[16px] font-extrabold text-slate-300">{{ kpi.target }}</p>
         </div>
       </div>
+      
       <!-- Progress Bar -->
-      {% if not kpi.lower_is_better and kpi.target > 0 %}
-      <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
-        {% with pct=kpi.value|floatformat:0 %}
-        <div class="h-full rounded-full transition-all duration-500
-          {% if kpi.value >= kpi.target %}bg-emerald-500{% else %}bg-indigo-500{% endif %}"
-          style="width: {% widthratio kpi.value kpi.target 100 %}%">
-        </div>
-        {% endwith %}
+      <div class="mt-auto">
+        {% if not kpi.lower_is_better and kpi.target > 0 %}
+          <div class="flex items-center justify-between text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">
+            <span>Progress</span>
+            <span>{% widthratio kpi.value kpi.target 100 %}%</span>
+          </div>
+          <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+            {% with pct=kpi.value|floatformat:0 %}
+            <div class="h-full rounded-full transition-all duration-500
+              {% if kpi.value >= kpi.target %}bg-emerald-500{% else %}bg-[var(--color-edify-primary)]{% endif %}"
+              style="width: {% widthratio kpi.value kpi.target 100 %}%">
+            </div>
+            {% endwith %}
+          </div>
+        {% else %}
+          <div class="h-2 w-full"></div> <!-- spacer -->
+        {% endif %}
       </div>
-      <p class="text-[10.5px] text-slate-400 mt-1.5 font-semibold text-right">{% widthratio kpi.value kpi.target 100 %}% complete</p>
-      {% endif %}
     </div>
     {% endfor %}
   </div>
 
   <!-- Quick Links -->
-  <div class="grid grid-cols-3 gap-4">
-    <a href="/visits" class="bg-white rounded-2xl border border-[var(--border-card)] p-4 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all text-center">
-      <p class="text-[22px] mb-1">🏫</p>
-      <p class="text-[12px] font-bold text-slate-700">Visits Log</p>
+  <div class="grid grid-cols-3 gap-6 pt-4">
+    <a href="/visits" class="premium-card p-5 hover:-translate-y-1 hover:border-[var(--color-edify-primary)]/40 transition-all text-center flex flex-col items-center justify-center space-y-3 group">
+      <div class="h-12 w-12 rounded-full bg-slate-50 border border-[var(--border-card)] flex items-center justify-center text-[22px] shadow-sm group-hover:scale-110 transition-transform">🏫</div>
+      <p class="text-[12.5px] font-extrabold text-slate-700 group-hover:text-[var(--color-edify-primary)] transition-colors">Visits Log</p>
     </a>
-    <a href="/trainings" class="bg-white rounded-2xl border border-[var(--border-card)] p-4 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all text-center">
-      <p class="text-[22px] mb-1">📚</p>
-      <p class="text-[12px] font-bold text-slate-700">Trainings Log</p>
+    <a href="/trainings" class="premium-card p-5 hover:-translate-y-1 hover:border-[var(--color-edify-primary)]/40 transition-all text-center flex flex-col items-center justify-center space-y-3 group">
+      <div class="h-12 w-12 rounded-full bg-slate-50 border border-[var(--border-card)] flex items-center justify-center text-[22px] shadow-sm group-hover:scale-110 transition-transform">📚</div>
+      <p class="text-[12.5px] font-extrabold text-slate-700 group-hover:text-[var(--color-edify-primary)] transition-colors">Trainings Log</p>
     </a>
-    <a href="/evidence" class="bg-white rounded-2xl border border-[var(--border-card)] p-4 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all text-center">
-      <p class="text-[22px] mb-1">📎</p>
-      <p class="text-[12px] font-bold text-slate-700">Evidence</p>
+    <a href="/evidence" class="premium-card p-5 hover:-translate-y-1 hover:border-[var(--color-edify-primary)]/40 transition-all text-center flex flex-col items-center justify-center space-y-3 group">
+      <div class="h-12 w-12 rounded-full bg-slate-50 border border-[var(--border-card)] flex items-center justify-center text-[22px] shadow-sm group-hover:scale-110 transition-transform">📎</div>
+      <p class="text-[12.5px] font-extrabold text-slate-700 group-hover:text-[var(--color-edify-primary)] transition-colors">Evidence</p>
     </a>
   </div>
 </div>

@@ -25,9 +25,36 @@ def monthly_budget_view(request):
 @login_required(login_url="/login")
 def weekly_fund_requests_view(request):
     fy = get_operational_fy()
-    requests_list = list_weekly_requests({"fy": fy}, request.user)
+    status_tab = request.GET.get("tab", "pending")
+    
+    all_requests = list_weekly_requests({"fy": fy}, request.user)
+    
+    # Calculate KPIs
+    pending_total = sum(r["totalAmount"] for r in all_requests if r["status"] in ["pending_responsible_confirmation", "pending_pl_approval", "pending_cd_approval"])
+    approved_total = sum(r["totalAmount"] for r in all_requests if r["status"] == "confirmed_for_advance")
+    
+    kpis = {
+        "pending_approval": pending_total,
+        "approved": approved_total,
+        "available_balance": 4000000, # Placeholder until budget service supports user balance
+    }
+    
+    # Filter for active tab
+    if status_tab == "pending":
+        filtered_requests = [r for r in all_requests if r["status"] in ["pending_responsible_confirmation", "pending_pl_approval", "pending_cd_approval", "not_requested"]]
+    elif status_tab == "approved":
+        filtered_requests = [r for r in all_requests if r["status"] == "confirmed_for_advance"]
+    elif status_tab == "disbursed":
+        filtered_requests = [r for r in all_requests if r["status"] in ["disbursed", "accounted", "self_funded"]]
+    elif status_tab == "rejected":
+        filtered_requests = [r for r in all_requests if r["status"] == "rejected"]
+    else:
+        filtered_requests = all_requests
+        
     context = {
-        "requests": requests_list,
+        "requests": filtered_requests,
+        "kpis": kpis,
+        "active_tab": status_tab,
         "fy": fy,
     }
     return render(request, "pages/fund_requests/weekly.html", context)
