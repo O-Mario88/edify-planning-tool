@@ -1,0 +1,100 @@
+{% extends "components/drawers/base_drawer.html" %}
+
+{% block drawer_title %}Assign School to Partner{% endblock %}
+{% block drawer_subtitle %}Handoff scheduling and monitoring to partner for {{ school.name }}{% endblock %}
+
+{% block drawer_body %}
+<form 
+  hx-post="/planning/assign-partner-action"
+  hx-target="#assign-errors"
+  class="space-y-4 text-[12px] font-bold text-slate-600"
+  @submit="$dispatch('close-drawer')"
+>
+  <input type="hidden" name="school_id" value="{{ school.school_id }}">
+
+  <!-- Error message container -->
+  <div id="assign-errors"></div>
+
+  <!-- Partner Dropdown -->
+  <div>
+    <label for="partner_id" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Partner Organization</label>
+    <select 
+      name="partner_id" 
+      id="partner_id"
+      required
+      class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+    >
+      <option value="">Select Partner...</option>
+      {% for p in partners %}
+        <option value="{{ p.id }}">{{ p.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <!-- Focus Intervention -->
+  <div>
+    <label for="focus_intervention" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Focus Intervention</label>
+    <select 
+      name="focus_intervention" 
+      id="focus_intervention"
+      required
+      class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+    >
+      <option value="">Select Focus Intervention...</option>
+      {% for code, label in interventions %}
+        <option value="{{ code }}">{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <!-- Assignment Purpose -->
+  <div>
+    <label for="purpose" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Assignment Purpose / Scope</label>
+    <textarea 
+      name="purpose" 
+      id="purpose"
+      required
+      rows="2"
+      placeholder="E.g. In-school training on Teaching & Learning intervention..."
+      class="w-full p-2.5 rounded-lg border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 placeholder-slate-400"
+    ></textarea>
+  </div>
+
+  <!-- Notes -->
+  <div>
+    <label for="notes" class="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Additional Notes / Instructions</label>
+    <textarea 
+      name="notes" 
+      id="notes"
+      rows="2"
+      placeholder="Specific field instructions or scheduling notes..."
+      class="w-full p-2.5 rounded-lg border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 placeholder-slate-400"
+    ></textarea>
+  </div>
+
+  <!-- Drawer Footer (Sticky Actions) -->
+  <div class="drawer-footer">
+    <button 
+      type="button" 
+      @click="
+        if (isDirty) {
+          if (confirm('You have unsaved changes. Discard changes?')) {
+            $dispatch('close-drawer');
+          }
+        } else {
+          $dispatch('close-drawer');
+        }
+      "
+      class="edify-action-button secondary h-9 transition-colors"
+    >
+      Cancel
+    </button>
+    <button 
+      type="submit"
+      class="edify-action-button primary h-9 transition-colors shadow-sm"
+    >
+      Confirm Handoff
+    </button>
+  </div>
+</form>
+{% endblock %}

@@ -69,7 +69,7 @@ class FrontendViewsTestCase(TestCase):
         self.client.force_login(self.cceo_user)
         response = self.client.get("/dashboard")
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "pages/dashboards/cceo.html")
+        self.assertTemplateUsed(response, "pages/dashboards/main.html")
 
     def test_schools_directory_view_renders(self):
         self.client.force_login(self.cceo_user)

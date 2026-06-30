@@ -145,8 +145,9 @@ def schedule_modal_view(request):
         "recommendations": recommendations,
         "interventions": SsaIntervention.choices,
         "partners": partners,
+        "drawer_size": "lg",
     }
-    return render(request, "partials/planning/schedule_modal.html", context)
+    return render(request, "partials/planning/schedule_drawer.html", context)
 
 
 @login_required(login_url="/login")
@@ -195,9 +196,9 @@ def schedule_action_view(request):
 
     try:
         schedule_school_visit(payload, request.user)
-        # Trigger page refresh and close modal via client headers
+        # Trigger page refresh and close drawer via client headers
         response = HttpResponse('<script>window.location.reload();</script>')
-        response["HX-Trigger"] = "close-modal"
+        response["HX-Trigger"] = "close-drawer"
         return response
     except Exception as e:
         return HttpResponse(f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error: {str(e)}</div>', status=400)
@@ -214,8 +215,9 @@ def assign_partner_modal_view(request):
         "school": school,
         "partners": partners,
         "interventions": SsaIntervention.choices,
+        "drawer_size": "md",
     }
-    return render(request, "partials/planning/assign_partner_modal.html", context)
+    return render(request, "partials/planning/assign_partner_drawer.html", context)
 
 
 @login_required(login_url="/login")
@@ -248,9 +250,9 @@ def assign_partner_action_view(request):
         school.planning_readiness = "limited"
         school.save(update_fields=["current_fy_ssa_status", "planning_readiness", "updated_at"])
 
-        # Return refresh trigger and close modal
+        # Return refresh trigger and close drawer
         response = HttpResponse('<script>window.location.reload();</script>')
-        response["HX-Trigger"] = "close-modal"
+        response["HX-Trigger"] = "close-drawer"
         return response
     except Exception as e:
         return HttpResponse(f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error: {str(e)}</div>', status=400)

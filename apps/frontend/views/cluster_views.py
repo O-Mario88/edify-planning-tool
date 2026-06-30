@@ -466,3 +466,15 @@ def cluster_detail_view(request, cluster_id):
         "schools": schools,
     }
     return render(request, "pages/clusters/detail.html", context)
+
+
+@login_required(login_url="/login")
+def create_cluster_drawer_view(request):
+    districts = District.objects.all().order_by("name")
+    sub_counties = SubCounty.objects.all().order_by("name")
+    context = {
+        "districts": districts,
+        "sub_counties": sub_counties,
+        "drawer_size": "md",
+    }
+    return render(request, "partials/clusters/create_cluster_drawer.html", context)

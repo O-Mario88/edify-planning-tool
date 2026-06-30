@@ -1,0 +1,92 @@
+{% extends "components/drawers/base_drawer.html" %}
+
+{% block drawer_title %}Create New Cluster{% endblock %}
+{% block drawer_subtitle %}Set up a new school cluster and assign location details.{% endblock %}
+
+{% block drawer_body %}
+<form 
+  action="/clusters/create" 
+  method="post" 
+  class="space-y-4 text-[12px] font-bold text-slate-600"
+  @submit="$dispatch('close-drawer')"
+>
+  {% csrf_token %}
+  
+  <div class="space-y-1">
+    <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Cluster Name</label>
+    <input 
+      type="text" 
+      name="name" 
+      placeholder="e.g. Kitgum East Cluster" 
+      class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12.5px] bg-slate-50 focus:outline-none" 
+      required
+    >
+  </div>
+
+  <div class="grid grid-cols-2 gap-3">
+    <div class="space-y-1">
+      <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">District</label>
+      <select 
+        name="district_id" 
+        class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12.5px] bg-slate-50 focus:outline-none cursor-pointer" 
+        required
+      >
+        <option value="">-- Choose District --</option>
+        {% for d in districts %}
+          <option value="{{ d.id }}">{{ d.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="space-y-1">
+      <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Sub-county</label>
+      <select 
+        name="sub_county_id" 
+        class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12.5px] bg-slate-50 focus:outline-none cursor-pointer" 
+        required
+      >
+        <option value="">-- Choose Sub-county --</option>
+        {% for sc in sub_counties %}
+          <option value="{{ sc.id }}">{{ sc.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <div class="space-y-1">
+    <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Cluster Type</label>
+    <select 
+      name="cluster_type" 
+      class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12.5px] bg-slate-50 focus:outline-none cursor-pointer"
+    >
+      <option value="mixed">Mixed</option>
+      <option value="primary">Primary Only</option>
+      <option value="secondary">Secondary Only</option>
+    </select>
+  </div>
+
+  <!-- Drawer Footer (Sticky Actions) -->
+  <div class="drawer-footer">
+    <button 
+      type="button" 
+      @click="
+        if (isDirty) {
+          if (confirm('You have unsaved changes. Discard changes?')) {
+            $dispatch('close-drawer');
+          }
+        } else {
+          $dispatch('close-drawer');
+        }
+      " 
+      class="edify-action-button secondary h-9 transition-colors"
+    >
+      Cancel
+    </button>
+    <button 
+      type="submit" 
+      class="edify-action-button primary h-9 transition-colors shadow-sm"
+    >
+      Save Cluster
+    </button>
+  </div>
+</form>
+{% endblock %}

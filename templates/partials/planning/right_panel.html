@@ -63,7 +63,7 @@
       {% if school.planning_readiness == 'ready' %}
         <button 
           hx-get="/planning/schedule-modal?school_id={{ school.school_id }}"
-          hx-target="#modal-container"
+          hx-target="#drawer-container"
           class="w-full h-8.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[11px] font-extrabold transition-colors shadow-sm"
         >
           Schedule Now

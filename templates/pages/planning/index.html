@@ -322,14 +322,14 @@
                 <div class="flex flex-col gap-1 shrink-0">
                   <button 
                     hx-get="/planning/schedule-modal?cluster_id={{ c.id }}&action=training"
-                    hx-target="#modal-container"
+                    hx-target="#drawer-container"
                     class="h-7 px-2.5 rounded bg-blue-600 text-white text-[10px] font-extrabold hover:bg-blue-700"
                   >
                     Group Training
                   </button>
                   <button 
                     hx-get="/planning/schedule-modal?cluster_id={{ c.id }}&action=meeting"
-                    hx-target="#modal-container"
+                    hx-target="#drawer-container"
                     class="h-7 px-2.5 rounded border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 text-[10px] font-bold"
                   >
                     Cluster Meeting
@@ -456,8 +456,7 @@
 
   </div>
 
-  <!-- Modal Container for HTMX loaded modals -->
-  <div id="modal-container" x-data="{ open: false }" x-show="open" @open-modal.window="open = true" @close-modal.window="open = false" style="display: none;"></div>
+  <!-- Legacy modal-container removed; global drawer-container in shell is used instead -->
 
 </div>
 

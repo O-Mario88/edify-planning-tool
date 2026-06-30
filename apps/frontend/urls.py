@@ -33,6 +33,7 @@ urlpatterns = [
     path("clusters/schedule-activity", cluster_views.cluster_schedule_activity_view, name="cluster_schedule_activity"),
     path("clusters/impact/<str:cluster_id>", cluster_views.cluster_impact_partial, name="cluster_impact_partial"),
     path("clusters/create", cluster_views.create_cluster_view, name="create_cluster"),
+    path("clusters/create-drawer", cluster_views.create_cluster_drawer_view, name="create_cluster_drawer"),
     
     # Planning
     path("planning", planning_views.planning_dashboard_view, name="planning_dashboard"),

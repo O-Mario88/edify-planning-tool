@@ -31,3 +31,234 @@
 .edify-tab-btn:hover:not(.active) {
   color: var(--edify-text);
 }
+
+/* Main Dashboard layout and panels */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 292px;
+  gap: 18px;
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 13px;
+  margin-bottom: 14px;
+}
+
+.signal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.signal {
+  padding: 17px 18px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-height: 82px;
+  position: relative;
+  overflow: hidden;
+}
+
+.signal.red { background: linear-gradient(90deg, #fff4f4, #fff); border-color: #ffd6d8; }
+.signal.orange { background: linear-gradient(90deg, #fff8ed, #fff); border-color: #ffe2bb; }
+.signal.green { background: linear-gradient(90deg, #effcf5, #fff); border-color: #ccefdc; }
+
+.signal-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.panel-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.panel {
+  padding: 17px;
+  min-width: 0;
+}
+
+.progress-row {
+  display: grid;
+  grid-template-columns: 120px 1fr 44px 56px;
+  gap: 10px;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.intervention {
+  display: grid;
+  grid-template-columns: 145px 1fr 28px;
+  gap: 10px;
+  align-items: center;
+  font-size: 12px;
+  margin-bottom: 11px;
+  font-weight: 800;
+}
+
+.right-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.today-item {
+  display: flex;
+  gap: 12px;
+  border: 1px solid var(--edify-border);
+  border-radius: 13px;
+  padding: 13px;
+  margin-bottom: 10px;
+  background: #fff;
+}
+
+.today-item.highlight {
+  background: #fff8ee;
+  border-color: #ffd9ad;
+}
+
+.round-mini {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  font-size: 18px;
+}
+
+.spark {
+  margin-left: auto;
+  width: 94px;
+  height: 32px;
+}
+
+.two-col {
+  display: grid;
+  grid-template-columns: 0.85fr 1.15fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.three-col {
+  display: grid;
+  grid-template-columns: 0.9fr 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.mini-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.mini {
+  border: 1px solid var(--edify-border);
+  border-radius: 13px;
+  padding: 13px;
+  background: #fff;
+}
+
+.summary-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  padding: 16px;
+}
+
+.summary-card {
+  border: 1px solid var(--edify-border);
+  border-radius: 13px;
+  padding: 14px;
+  background: white;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.bars {
+  height: 142px;
+  display: flex;
+  align-items: flex-end;
+  gap: 24px;
+  border-left: 1px solid var(--edify-border);
+  border-bottom: 1px solid var(--edify-border);
+  padding-left: 22px;
+  margin-left: 4px;
+}
+
+.bar-wrap {
+  flex: 1;
+  text-align: center;
+  color: var(--edify-text-muted);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.bar {
+  width: 30px;
+  margin: 0 auto 8px;
+  border-radius: 8px 8px 0 0;
+  background: linear-gradient(180deg, #2f76ff, #073bdb);
+  position: relative;
+}
+
+.bar.light {
+  background: linear-gradient(180deg, #cbdcff, #8fb2ff);
+}
+
+.bar em {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-style: normal;
+  color: var(--edify-primary);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+@media (max-width: 1200px) {
+  .kpi-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .right-rail {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .panel-grid,
+  .three-col,
+  .two-col {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 800px) {
+  .kpi-grid,
+  .signal-grid,
+  .summary-strip,
+  .mini-metrics,
+  .right-rail {
+    grid-template-columns: 1fr;
+  }
+}
+
