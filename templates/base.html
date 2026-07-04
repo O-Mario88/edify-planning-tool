@@ -2,236 +2,202 @@
 <!DOCTYPE html>
 <html lang="en" class="h-full">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}Edify School Improvement Planning{% endblock %}</title>
-  
-  <!-- Typography (Canonical Source Sans/Inter Scale) -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
-  <!-- Compiled Tailwind Styling -->
-  <link rel="stylesheet" href="{% static 'css/main.css' %}">
-  
-  <!-- Edify Design System Styles -->
-  <link rel="stylesheet" href="{% static 'css/edify-tokens.css' %}">
-  <link rel="stylesheet" href="{% static 'css/edify-components.css' %}">
-  <link rel="stylesheet" href="{% static 'css/edify-pages.css' %}">
-  <link rel="stylesheet" href="{% static 'css/drawers.css' %}">
-  
-  <style>
-    :root {
-      /* Brand and Theme Colors */
-      --color-edify-primary: #002855; /* Dark Blue */
-      --color-edify-dark: #001f42;
-      --color-edify-soft: #eaeff3;
-      --color-edify-border: rgba(21, 41, 46, 0.08);
-      --color-edify-divider: rgba(21, 41, 46, 0.05);
-      --bg-page: #eaf1f3; /* Soft cloudy gray-blue page backdrop */
-      --foreground: #15292e; /* Deep blue-charcoal body text */
-      --text-secondary: #5f7078; /* Cool slate secondary text */
-      --border-card: rgba(21, 41, 46, 0.08);
-      --border-strong: rgba(21, 41, 46, 0.15);
-    }
-    
-    body {
-      font-family: 'Outfit', sans-serif !important;
-      background-color: var(--bg-page);
-      color: var(--foreground);
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Edify School Improvement Planning{% endblock %}</title>
 
-    /* Custom scrollbars */
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    ::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: rgba(21, 41, 46, 0.12);
-      border-radius: 9999px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: rgba(21, 41, 46, 0.24);
-    }
+<!-- Typography: Outfit is the sole typeface. (Source Sans 3 was loaded but
+never used — dropped to remove the wasted network request.) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    /* Premium card overrides */
-    .bg-white.rounded-xl,
-    .bg-white.rounded-2xl {
-      background: #ffffff !important;
-      border: 1px solid var(--border-card) !important;
-      box-shadow: 0 4px 20px -2px rgba(21, 41, 46, 0.04), 0 2px 8px -1px rgba(21, 41, 46, 0.02) !important;
-      border-radius: 16px !important;
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .bg-white.rounded-xl:hover,
-    .bg-white.rounded-2xl:hover {
-      box-shadow: 0 12px 30px -4px rgba(21, 41, 46, 0.08), 0 4px 12px -2px rgba(21, 41, 46, 0.04) !important;
-      transform: translateY(-1.5px);
-    }
+<!-- Compiled Tailwind Styling -->
+<link rel="stylesheet" href="{% static 'css/main.css' %}">
 
-    /* Buttons override */
-    button.bg-indigo-600,
-    a.bg-indigo-600,
-    button.bg-blue-600,
-    a.bg-blue-600,
-    button.bg-indigo-700,
-    a.bg-indigo-700 {
-      background-color: var(--color-edify-primary) !important;
-      color: #ffffff !important;
-      font-weight: 700 !important;
-      border-radius: 10px !important;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    }
-    button.bg-indigo-600:hover,
-    a.bg-indigo-600:hover,
-    button.bg-blue-600:hover,
-    a.bg-blue-600:hover,
-    button.bg-indigo-700:hover,
-    a.bg-indigo-700:hover {
-      background-color: var(--color-edify-dark) !important;
-      transform: translateY(-0.5px);
-    }
+<!-- Edify Design System — the SINGLE source of truth for tokens.
+All design tokens (color, type, spacing, radius, shadow, motion) live
+here. base.html <style> below only consumes tokens via var(--edify-*). -->
+<link rel="stylesheet" href="{% static 'css/design-system.css' %}">
+<link rel="stylesheet" href="{% static 'css/components.css' %}">
+<link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}">
+<link rel="stylesheet" href="{% static 'css/pages.css' %}">
+<link rel="stylesheet" href="{% static 'css/drawers.css' %}">
+<link rel="stylesheet" href="{% static 'css/app.css' %}">
 
-    button.border-slate-200,
-    a.border-slate-200,
-    button.border-slate-300,
-    a.border-slate-300 {
-      background-color: #ffffff !important;
-      border: 1px solid var(--border-strong) !important;
-      color: var(--color-edify-primary) !important;
-      border-radius: 10px !important;
-    }
-    button.border-slate-200:hover,
-    a.border-slate-200:hover,
-    button.border-slate-300:hover,
-    a.border-slate-300:hover {
-      background-color: var(--color-edify-soft) !important;
-    }
+<style>
+/* base.html consumes tokens defined in design-system.css. No :root here. */
+body {
+font-family: var(--edify-font-sans);
+background-color: var(--edify-bg);
+color: var(--edify-text);
+font-size: var(--edify-text-body-size);
+line-height: var(--edify-text-body-leading);
+-webkit-font-smoothing: antialiased;
+}
 
-    /* Tables overrides */
-    table th {
-      color: var(--text-secondary) !important;
-      font-weight: 700 !important;
-      text-transform: uppercase !important;
-      letter-spacing: 0.05em !important;
-    }
-    table tbody tr:hover {
-      background-color: rgba(21, 41, 46, 0.015) !important;
-    }
+/* Custom scrollbars */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(15, 23, 42, 0.12); border-radius: var(--edify-radius-pill); }
+::-webkit-scrollbar-thumb:hover { background: rgba(15, 23, 42, 0.24); }
 
-    /* Form Fields override */
-    input[type="text"],
-    input[type="number"],
-    input[type="email"],
-    input[type="password"],
-    select,
-    textarea {
-      border: 1px solid var(--border-card) !important;
-      background-color: #ffffff !important;
-      border-radius: 10px !important;
-      color: var(--foreground) !important;
-      font-size: 13px !important;
-      padding: 6px 12px !important;
-      outline: none !important;
-      transition: all 0.2s ease !important;
-    }
-    input[type="text"]:focus,
-    input[type="number"]:focus,
-    input[type="email"]:focus,
-    input[type="password"]:focus,
-    select:focus,
-    textarea:focus {
-      border-color: #2563eb !important;
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
-    }
+/* Premium card elevation (uses shadow tokens, no !important on the parts
+that templates should be able to override). */
+.bg-white.rounded-xl,
+.bg-white.rounded-2xl {
+background: var(--edify-surface);
+border: 1px solid var(--edify-border);
+box-shadow: var(--edify-shadow-md);
+border-radius: var(--edify-radius-lg);
+transition: box-shadow var(--edify-transition), transform var(--edify-transition);
+}
+.bg-white.rounded-xl:hover,
+.bg-white.rounded-2xl:hover {
+box-shadow: var(--edify-shadow-lg);
+transform: translateY(-1px);
+}
 
-    /* Smooth transitions */
-    button, a, select, input, textarea {
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    }
+/* Primary buttons map to the accent blue (interactive CTAs). */
+button.bg-indigo-600, a.bg-indigo-600,
+button.bg-blue-600,a.bg-blue-600,
+button.bg-indigo-700, a.bg-indigo-700 {
+background-color: var(--edify-accent);
+color: #ffffff;
+font-weight: var(--edify-text-title-weight);
+border-radius: var(--edify-radius-md);
+transition: background-color var(--edify-transition-fast), transform var(--edify-transition-fast);
+}
+button.bg-indigo-600:hover, a.bg-indigo-600:hover,
+button.bg-blue-600:hover,a.bg-blue-600:hover,
+button.bg-indigo-700:hover, a.bg-indigo-700:hover {
+background-color: var(--edify-accent-hover);
+transform: translateY(-1px);
+}
 
-    /* Sidebar styling overrides matching mockups */
-    .sidebar-dark {
-      background-color: #ffffff !important;
-    }
-    .sidebar-nav-header {
-      color: #94a3b8 !important;
-      font-size: 10px !important;
-      font-weight: 800 !important;
-      letter-spacing: 0.12em !important;
-      text-transform: uppercase !important;
-    }
-    .sidebar-item {
-      color: #64748b !important;
-      transition: all 0.2s ease !important;
-      position: relative;
-    }
-    .sidebar-item:hover {
-      color: #0f172a !important;
-      background-color: #f8fafc !important;
-    }
-    .sidebar-icon-container {
-      background-color: transparent !important;
-      color: #94a3b8 !important;
-      transition: all 0.2s ease !important;
-    }
-    .sidebar-item:hover .sidebar-icon-container {
-      color: #475569 !important;
-    }
-    .sidebar-item-active {
-      background-color: #eff6ff !important;
-      color: #2563eb !important;
-      border-radius: 12px !important;
-      position: relative;
-    }
-    .sidebar-item-active::before {
-      content: "";
-      position: absolute;
-      left: 0;
-      top: 15%;
-      bottom: 15%;
-      width: 4px;
-      background-color: #2563eb;
-      border-top-right-radius: 4px;
-      border-bottom-right-radius: 4px;
-    }
-    .sidebar-item-active .sidebar-icon-container {
-      color: #2563eb !important;
-      background-color: transparent !important;
-    }
-  </style>
+/* Secondary/outline buttons. */
+button.border-slate-200, a.border-slate-200,
+button.border-slate-300, a.border-slate-300 {
+background-color: var(--edify-surface);
+border: 1px solid var(--edify-border-strong);
+color: var(--edify-accent);
+border-radius: var(--edify-radius-md);
+}
+button.border-slate-200:hover, a.border-slate-200:hover,
+button.border-slate-300:hover, a.border-slate-300:hover {
+background-color: var(--edify-accent-light);
+}
 
-  <!-- HTMX (for fast server-driven partial updates) -->
-  <script src="https://unpkg.com/htmx.org@1.9.12" integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2" crossorigin="anonymous"></script>
+/* Table headers — use the label type token (12px medium uppercase). */
+table th {
+color: var(--edify-text-muted);
+font-weight: var(--edify-text-label-weight);
+text-transform: uppercase;
+letter-spacing: var(--edify-text-micro-tracking);
+font-size: var(--edify-text-micro-size);
+}
+table tbody tr:hover { background-color: rgba(15, 23, 42, 0.02); }
 
-  <!-- Alpine.js (for client-side UI states - dropdown toggles, tabs, sidebars) -->
-  <script defer src="https://unpkg.com/alpinejs@3.14.0/dist/cdn.min.js"></script>
+/* Form fields — body type, radius-sm, subtle focus ring using accent. */
+input[type="text"], input[type="number"], input[type="email"],
+input[type="password"], select, textarea {
+border: 1px solid var(--edify-border);
+background-color: var(--edify-surface);
+border-radius: var(--edify-radius-md);
+color: var(--edify-text);
+font-size: var(--edify-text-body-size);
+font-family: var(--edify-font-sans);
+padding: 8px 12px;
+outline: none;
+transition: border-color var(--edify-transition-fast), box-shadow var(--edify-transition-fast);
+}
+input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus,
+input[type="password"]:focus, select:focus, textarea:focus {
+border-color: var(--edify-accent);
+box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+/* Smooth transitions on interactive elements (snappy, not slow). */
+button, a, select, input, textarea {
+transition-duration: var(--edify-transition-fast);
+transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Legacy sidebar (different from the .app-sidebar used in shell.html).
+Kept because some templates still render this older sidebar markup. */
+.edify-sidebar {
+background-color: var(--edify-primary);
+border-right: 1px solid var(--edify-primary-hover);
+}
+.sidebar-nav-header {
+color: var(--edify-text-subtle);
+font-size: var(--edify-text-micro-size);
+font-weight: var(--edify-text-micro-weight);
+letter-spacing: var(--edify-text-micro-tracking);
+text-transform: uppercase;
+}
+.sidebar-item {
+color: var(--edify-text-subtle);
+transition: color var(--edify-transition-fast), background-color var(--edify-transition-fast);
+}
+.sidebar-item:hover {
+color: #ffffff;
+background-color: rgba(255, 255, 255, 0.06);
+}
+.sidebar-icon-container {
+background-color: rgba(255, 255, 255, 0.04);
+color: var(--edify-text-subtle);
+transition: color var(--edify-transition-fast), background-color var(--edify-transition-fast);
+}
+.sidebar-item:hover .sidebar-icon-container {
+color: #ffffff;
+background-color: rgba(255, 255, 255, 0.08);
+}
+.sidebar-item-active {
+background-color: rgba(255, 255, 255, 0.08);
+color: #ffffff;
+border-radius: var(--edify-radius-md);
+border: 1px solid rgba(255, 255, 255, 0.15);
+border-left: 4px solid var(--edify-warning);
+}
+.sidebar-item-active::before { display: none; }
+.sidebar-item-active .sidebar-icon-container {
+color: var(--edify-warning);
+background-color: rgba(245, 158, 12, 0.1);
+}
+</style>
+
+<!-- HTMX (for fast server-driven partial updates) -->
+<script src="https://unpkg.com/htmx.org@1.9.12" integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2" crossorigin="anonymous"></script>
+
+<!-- Alpine.js Components -->
+<script src="{% static 'js/alpine-components.js' %}"></script>
+
+<!-- Alpine.js (for client-side UI states - dropdown toggles, tabs, sidebars) -->
+<script defer src="https://unpkg.com/alpinejs@3.14.0/dist/cdn.min.js"></script>
 </head>
 <body 
-  class="h-full bg-[var(--bg-page)] text-[var(--foreground)] font-sans antialiased"
-  hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+class="h-full bg-[var(--bg-page)] text-[var(--foreground)] font-sans antialiased"
+hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
 >
-  {% block content %}{% endblock %}
+{% block content %}{% endblock %}
 
-  <!-- Global Flash/Alert Messages -->
-  <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2 pointer-events-none">
-    {% if messages %}
-      {% for msg in messages %}
-        <div 
-          x-data="{ show: true }" 
-          x-show="show" 
-          x-init="setTimeout(() => show = false, 4000)"
-          x-transition
-          class="pointer-events-auto flex items-center justify-between gap-3 px-4 py-3 rounded-xl border shadow-lg max-w-sm text-[12.5px] font-semibold {% if msg.tags == 'success' %}bg-emerald-50 text-emerald-700 border-emerald-200{% elif msg.tags == 'error' %}bg-rose-50 text-rose-700 border-rose-200{% else %}bg-slate-50 text-slate-700 border-slate-200{% endif %}"
-        >
-          <span>{{ msg }}</span>
-          <button @click="show = false" class="text-current opacity-70 hover:opacity-100">&times;</button>
-        </div>
-      {% endfor %}
-    {% endif %}
-  </div>
+<!-- Global Flash/Alert Messages -->
+<div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2 pointer-events-none">
+{% if messages %}
+{% for msg in messages %}
+<div 
+x-data="{ show: true }" 
+x-show="show" 
+x-init="setTimeout(() => show = false, 4000)"
+x-transition
+class="pointer-events-auto flex items-center justify-between gap-3 px-4 py-3 rounded-xl border shadow-lg max-w-sm text-[12px] font-semibold {% if msg.tags == 'success' %}bg-emerald-50 text-emerald-700 border-emerald-200{% elif msg.tags == 'error' %}bg-rose-50 text-rose-700 border-rose-200{% else %}bg-slate-50 text-slate-700 border-slate-200{% endif %}"
+>
+<span>{{ msg }}</span>
+<button @click="show = false" class="text-current opacity-70 hover:opacity-100">&times;</button>
+</div>
+{% endfor %}
+{% endif %}
+</div>
 </body>
 </html>

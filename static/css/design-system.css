@@ -1,13 +1,11 @@
 /* ════════════════════════════════════════════════════════════════════════════
    EDIFY DESIGN SYSTEM — THE SINGLE SOURCE OF TRUTH
    ════════════════════════════════════════════════════════════════════════════
-   This file defines every design token. Every other CSS file and every
-   template must reference these via var(--edify-...) or the matching Tailwind
-   utility. Do NOT redefine these in base.html <style>, in design-system.css,
-   or as raw hex values in components.
+   This is the ONLY place design tokens are defined. base.html must NOT
+   redefine these in a <style> block; templates must NOT hardcode raw hex.
 
-   Token naming convention:
-     --edify-{category}-{role}[-{variant}]
+   Loaded first (after Tailwind's main.css), so unlayered rules here beat
+   Tailwind @layer utilities when needed.
    ════════════════════════════════════════════════════════════════════════════ */
 
 :root {
@@ -23,8 +21,7 @@
   --edify-accent-light: #eff6ff;
   --edify-accent-border: #bfdbfe;
 
-  /* ── SEMANTIC COLORS ──────────────────────────────────────────────────────
-     Each has a 3-tone ramp: base (text/icon), light (background), border. */
+  /* ── SEMANTIC COLORS (3-tone ramp each: base / light-bg / border) ──────── */
   --edify-success: #10b981;
   --edify-success-light: #ecfdf5;
   --edify-success-border: #a7f3d0;
@@ -49,8 +46,7 @@
   --edify-teal-light: #f0fdfa;
   --edify-teal-border: #99f6e4;
 
-  /* ── NEUTRAL SURFACES & TEXT ──────────────────────────────────────────────
-     Slightly-warm neutrals (never pure #000 / #fff) for a premium feel. */
+  /* ── NEUTRAL SURFACES & TEXT (slightly-warm, never pure #000/#fff) ─────── */
   --edify-surface: #ffffff;
   --edify-surface-muted: #f8fafc;
   --edify-border: #e2e8f0;
@@ -60,7 +56,7 @@
   --edify-text-subtle: #94a3b8;
   --edify-bg: #eaf1f3;
 
-  /* Legacy aliases (for the base.html :root block — do not duplicate there) */
+  /* Legacy aliases consumed by base.html <style> and some components. */
   --color-edify-primary: var(--edify-primary);
   --color-edify-dark: var(--edify-primary-hover);
   --color-edify-soft: var(--edify-primary-light);
@@ -83,19 +79,19 @@
   --edify-font-sans: 'Outfit', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --edify-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
 
-  --edify-text-display-size: 24px;   /* page title   */
-  --edify-text-heading-size: 18px;   /* section title */
-  --edify-text-title-size:   15px;   /* card title    */
-  --edify-text-body-size:    14px;   /* default       */
-  --edify-text-label-size:   12px;   /* caption       */
-  --edify-text-micro-size:   11px;   /* overline      */
+  --edify-text-display-size: 24px;
+  --edify-text-heading-size: 18px;
+  --edify-text-title-size:   15px;
+  --edify-text-body-size:    14px;
+  --edify-text-label-size:   12px;
+  --edify-text-micro-size:   11px;
 
   --edify-text-display-weight: 600;
   --edify-text-heading-weight: 600;
   --edify-text-title-weight:   600;
   --edify-text-body-weight:    400;
   --edify-text-label-weight:   500;
-  --edify-text-micro-weight:   600;   /* micro is UPPERCASE semibold */
+  --edify-text-micro-weight:   600;
 
   --edify-text-display-leading: 1.3;
   --edify-text-heading-leading: 1.35;
@@ -109,9 +105,9 @@
   --edify-text-title-tracking: 0;
   --edify-text-body-tracking: 0;
   --edify-text-label-tracking: 0;
-  --edify-text-micro-tracking: 0.06em;  /* uppercase needs air */
+  --edify-text-micro-tracking: 0.06em;
 
-  /* Convenience composed classes (use as font: var(--edify-font-body)) */
+  /* Convenience composed shorthands (use as: font: var(--edify-font-body)) */
   --edify-font-display: 600 var(--edify-text-display-size)/var(--edify-text-display-leading) var(--edify-font-sans);
   --edify-font-heading: 600 var(--edify-text-heading-size)/var(--edify-text-heading-leading) var(--edify-font-sans);
   --edify-font-title:   600 var(--edify-text-title-size)/var(--edify-text-title-leading) var(--edify-font-sans);
@@ -119,8 +115,7 @@
   --edify-font-label:   500 var(--edify-text-label-size)/var(--edify-text-label-leading) var(--edify-font-sans);
   --edify-font-micro:   600 var(--edify-text-micro-size)/var(--edify-text-micro-leading) var(--edify-font-sans);
 
-  /* ── SPACING ──────────────────────────────────────────────────────────────
-     4px base unit. Every gap/padding is a multiple of 4. */
+  /* ── SPACING (4px base unit; every gap is a multiple of 4) ─────────────── */
   --edify-space-0: 0;
   --edify-space-1: 4px;
   --edify-space-2: 8px;
@@ -132,7 +127,6 @@
   --edify-space-10: 40px;
   --edify-space-12: 48px;
   --edify-space-16: 64px;
-  /* Aliases for legacy names */
   --edify-space-xs: var(--edify-space-1);
   --edify-space-sm: var(--edify-space-2);
   --edify-space-md: var(--edify-space-4);
@@ -140,29 +134,43 @@
   --edify-space-xl: var(--edify-space-8);
   --edify-space-2xl: var(--edify-space-12);
 
-  /* ── BORDER RADIUS ─────────────────────────────────────────────────────────
-     Three radii by component class:
+  /* ── BORDER RADIUS (3 radii by component class) ──────────────────────────
        sm (6px)  → inputs, buttons, small pills
-       md (10px) → cards, list items (the default)
+       md (10px) → cards, list items (default)
        lg (16px) → modals, large panels, command palette
-       pill      → avatars, status dots only */
+       pill      → avatars, status dots only                        */
+  --edify-radius-xs: 6px;
   --edify-radius-sm: 6px;
   --edify-radius-md: 10px;
   --edify-radius-lg: 16px;
   --edify-radius-pill: 9999px;
-  /* Legacy aliases (some files still reference these names) */
-  --edify-radius-xs: var(--edify-radius-sm);
+  --edify-radius-circle: 50%;
 
-  /* ── SHADOWS / ELEVATION ───────────────────────────────────────────────────
-     Three levels. Warm (not blue-gray). */
+  /* ── SHADOWS / ELEVATION (warm, multi-stop, 3 levels) ──────────────────── */
   --edify-shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.04), 0 1px 3px -1px rgba(15, 23, 42, 0.02);
   --edify-shadow-md: 0 4px 12px -2px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.03);
   --edify-shadow-lg: 0 16px 48px -8px rgba(15, 23, 42, 0.10), 0 4px 12px -2px rgba(15, 23, 42, 0.05);
   --edify-shadow-drawer: -10px 0 30px -5px rgba(15, 23, 42, 0.12);
 
-  /* ── MOTION ────────────────────────────────────────────────────────────────
-     Fast for hovers/toggles; normal for overlays. Never bounce. */
+  /* ── MOTION (fast for hovers; normal for overlays; never bounce) ───────── */
   --edify-transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --edify-transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);
   --edify-transition-all: 200ms cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   Tailwind arbitrary-class fallbacks for the brand color.
+   These make `bg-[#2e505f]`, `hover:bg-[#213a45]`, etc. resolve even where
+   Tailwind's JIT didn't generate them. Keep them in unlayered CSS so they
+   win over @layer utilities.
+   ════════════════════════════════════════════════════════════════════════════ */
+[class*="bg-[#2e505f]"]      { background-color: #2e505f !important; }
+[class*="text-[#2e505f]"]    { color: #2e505f !important; }
+[class*="border-[#2e505f]"]  { border-color: #2e505f !important; }
+[class*="accent-[#2e505f]"]  { accent-color: #2e505f !important; }
+[class*="hover:bg-[#213a45]"]:hover  { background-color: #213a45 !important; }
+[class*="hover:text-[#213a45]"]:hover { color: #213a45 !important; }
+[class*="hover:border-[#213a45]"]:hover { border-color: #213a45 !important; }
+[class*="bg-[#2e505f]/10"]   { background-color: rgba(46, 80, 95, 0.1) !important; }
+[class*="border-[#2e505f]/20"] { border-color: rgba(46, 80, 95, 0.2) !important; }
+[class*="border-[#2e505f]/30"] { border-color: rgba(46, 80, 95, 0.3) !important; }
