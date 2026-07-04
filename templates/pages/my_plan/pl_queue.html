@@ -5,89 +5,89 @@
 
 {% block shell_content %}
 <div class="p-6 max-w-7xl mx-auto space-y-6">
-  <!-- Header -->
-  <div>
-    <h1 class="text-[26px] font-extrabold text-slate-800 tracking-tight">PL Review Queue</h1>
-    <p class="text-[12.5px] text-[var(--text-secondary)] mt-0.5 font-semibold">Review CCEO field completions, verify task criteria, and route to IA verification.</p>
-  </div>
+<!-- Header -->
+<div>
+<h1 class="text-[24px] font-extrabold text-slate-800 tracking-tight">PL Review Queue</h1>
+<p class="text-[12px] text-[var(--text-secondary)] mt-0.5 font-semibold">Review CCEO field completions, verify task criteria, and route to IA verification.</p>
+</div>
 
-  <!-- Queue Items list -->
-  <div class="grid gap-6">
-    {% if queue %}
-      {% for act in queue %}
-        <div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm flex flex-col md:flex-row md:items-start justify-between gap-6">
-          <div class="space-y-3 min-w-0 flex-1">
-            <div>
-              <div class="flex items-center gap-2">
-                <h3 class="text-[15px] font-extrabold text-slate-800">{{ act.activityType|title|replace_underscore }}</h3>
-                <span class="inline-flex items-center rounded px-2 py-0.5 text-[9.5px] font-extrabold bg-slate-100 text-slate-600">
-                  Salesforce ID: {{ act.salesforceActivityId }}
-                </span>
-              </div>
-              <p class="text-[12.5px] text-slate-500 font-semibold mt-0.5">
-                School: <a href="/schools/{{ act.schoolId }}" class="font-bold hover:underline text-[var(--color-edify-primary)]">{{ act.schoolName }}</a> &bull; District: {{ act.school.district.name }}
-              </p>
-            </div>
+<!-- Queue Items list -->
+<div class="grid gap-6">
+{% if queue %}
+{% for act in queue %}
+<div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm flex flex-col md:flex-row md:items-start justify-between gap-6">
+<div class="space-y-3 min-w-0 flex-1">
+<div>
+<div class="flex items-center gap-2">
+<h3 class="text-[15px] font-extrabold text-slate-800">{{ act.activityType|title|replace_underscore }}</h3>
+<span class="inline-flex items-center rounded px-2 py-0.5 text-[11px] font-extrabold bg-slate-100 text-slate-600">
+Salesforce ID: {{ act.salesforceActivityId }}
+</span>
+</div>
+<p class="text-[12px] text-slate-500 font-semibold mt-0.5">
+School: <a href="/schools/{{ act.schoolId }}" class="font-bold hover:underline text-[var(--color-edify-primary)]">{{ act.schoolName }}</a> &bull; District: {{ act.school.district.name }}
+</p>
+</div>
 
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 border-t border-slate-100/50 pt-2 text-[12px] text-slate-500 font-semibold">
-              <div>
-                <p class="text-[10px] uppercase font-bold text-slate-400">Planned Date</p>
-                <p class="text-slate-700 font-bold mt-0.5">{{ act.scheduledDate }}</p>
-              </div>
-              <div>
-                <p class="text-[10px] uppercase font-bold text-slate-400">Focus Intervention</p>
-                <p class="text-slate-700 font-bold mt-0.5 capitalize">{{ act.focusIntervention|replace_underscore }}</p>
-              </div>
-              {% if act.teachersAttended or act.leadersAttended %}
-                <div>
-                  <p class="text-[10px] uppercase font-bold text-slate-400">Attendance</p>
-                  <p class="text-slate-700 font-bold mt-0.5">T: {{ act.teachersAttended }} &bull; L: {{ act.leadersAttended }}</p>
-                </div>
-              {% endif %}
-            </div>
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-4 border-t border-slate-100/50 pt-2 text-[12px] text-slate-500 font-semibold">
+<div>
+<p class="text-[11px] uppercase font-bold text-slate-400">Planned Date</p>
+<p class="text-slate-700 font-bold mt-0.5">{{ act.scheduledDate }}</p>
+</div>
+<div>
+<p class="text-[11px] uppercase font-bold text-slate-400">Focus Intervention</p>
+<p class="text-slate-700 font-bold mt-0.5 capitalize">{{ act.focusIntervention|replace_underscore }}</p>
+</div>
+{% if act.teachersAttended or act.leadersAttended %}
+<div>
+<p class="text-[11px] uppercase font-bold text-slate-400">Attendance</p>
+<p class="text-slate-700 font-bold mt-0.5">T: {{ act.teachersAttended }} &bull; L: {{ act.leadersAttended }}</p>
+</div>
+{% endif %}
+</div>
 
-            <div class="pt-2">
-              <p class="text-[10px] uppercase font-bold text-slate-400">CCEO Purpose Note</p>
-              <p class="text-[12px] text-slate-600 italic mt-0.5 leading-normal">"{{ act.activityPurposeText }}"</p>
-            </div>
-          </div>
+<div class="pt-2">
+<p class="text-[11px] uppercase font-bold text-slate-400">CCEO Purpose Note</p>
+<p class="text-[12px] text-slate-600 italic mt-0.5 leading-normal">"{{ act.activityPurposeText }}"</p>
+</div>
+</div>
 
-          <!-- Review Action Forms -->
-          <div class="flex flex-col sm:flex-row md:flex-col gap-3 min-w-[200px]">
-            <form method="POST" action="/pl/review-queue/{{ act.id }}/confirm">
-              {% csrf_token %}
-              <button 
-                type="submit" 
-                class="w-full h-9 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[12px] font-extrabold flex items-center justify-center transition-colors"
-              >
-                Approve Completion
-              </button>
-            </form>
+<!-- Review Action Forms -->
+<div class="flex flex-col sm:flex-row md:flex-col gap-3 min-w-[200px]">
+<form method="POST" action="/pl/review-queue/{{ act.id }}/confirm">
+{% csrf_token %}
+<button 
+type="submit" 
+class="w-full h-9 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[12px] font-extrabold flex items-center justify-center transition-colors"
+>
+Approve Completion
+</button>
+</form>
 
-            <form method="POST" action="/pl/review-queue/{{ act.id }}/return" class="space-y-2">
-              {% csrf_token %}
-              <input 
-                type="text" 
-                name="reason" 
-                placeholder="Return reason..."
-                required
-                class="w-full h-8 px-2 rounded-lg border border-slate-200 text-[11.5px] bg-slate-50 focus:outline-none"
-              >
-              <button 
-                type="submit" 
-                class="w-full h-8 rounded-lg border border-rose-200 text-rose-700 hover:bg-rose-50 text-[11.5px] font-bold flex items-center justify-center transition-colors"
-              >
-                Return for Corrections
-              </button>
-            </form>
-          </div>
-        </div>
-      {% endfor %}
-    {% else %}
-      <div class="bg-white rounded-2xl border border-[var(--border-card)] p-12 text-center text-slate-400 font-semibold">
-        No completions awaiting PL review.
-      </div>
-    {% endif %}
-  </div>
+<form method="POST" action="/pl/review-queue/{{ act.id }}/return" class="space-y-2">
+{% csrf_token %}
+<input 
+type="text" 
+name="reason" 
+placeholder="Return reason..."
+required
+class="w-full h-8 px-2 rounded-lg border border-slate-200 text-[12px] bg-slate-50 focus:outline-none"
+>
+<button 
+type="submit" 
+class="w-full h-8 rounded-lg border border-rose-200 text-rose-700 hover:bg-rose-50 text-[12px] font-bold flex items-center justify-center transition-colors"
+>
+Return for Corrections
+</button>
+</form>
+</div>
+</div>
+{% endfor %}
+{% else %}
+<div class="bg-white rounded-2xl border border-[var(--border-card)] p-12 text-center text-slate-400 font-semibold">
+No completions awaiting PL review.
+</div>
+{% endif %}
+</div>
 </div>
 {% endblock %}

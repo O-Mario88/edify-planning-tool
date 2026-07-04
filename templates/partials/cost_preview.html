@@ -1,39 +1,39 @@
 {% load frontend_filters %}
 {% if not success %}
-  <div class="bg-rose-50 border border-rose-200 rounded-xl p-3 text-[11px] font-semibold text-rose-700 space-y-1">
-    <div class="font-extrabold text-[12px] uppercase">Cost Catalogue Error</div>
-    <p>{{ error_msg }}</p>
-  </div>
+<div class="bg-rose-50 border border-rose-200 rounded-xl p-3 text-[11px] font-semibold text-rose-700 space-y-1">
+<div class="font-extrabold text-[12px] uppercase">Cost Catalogue Error</div>
+<p>{{ error_msg }}</p>
+</div>
 {% else %}
-  <div class="space-y-2 text-[12px] text-slate-500 font-sans">
-    <div class="flex items-center justify-between text-[11px] font-extrabold uppercase text-slate-400 tracking-wider">
-      <span>Cost Preview ({% if activity_type == 'training' %}Group Training{% else %}Cluster Meeting{% endif %})</span>
-      <span class="text-[9px] font-mono text-slate-400">Ver: {{ preview.catalogue_version }}</span>
-    </div>
+<div class="space-y-2 text-[12px] text-slate-500 font-sans">
+<div class="flex items-center justify-between text-[11px] font-extrabold uppercase text-slate-400 tracking-wider">
+<span>Cost Preview ({% if activity_type == 'training' %}Group Training{% else %}Cluster Meeting{% endif %})</span>
+<span class="text-[11px] font-mono text-slate-400">Ver: {{ preview.catalogue_version }}</span>
+</div>
 
-    <!-- cost lines -->
-    {% if preview.lines %}
-      {% for line in preview.lines %}
-        <div class="flex justify-between items-center font-semibold">
-          <span>{{ line.label }}</span>
-          <div class="flex items-center gap-1.5">
-            <span class="text-[10px] text-slate-400 font-bold">{{ line.formula }}</span>
-            <span class="font-bold text-slate-700">{{ line.amount|ugx }}</span>
-          </div>
-        </div>
-      {% endfor %}
-    {% endif %}
+<!-- cost lines -->
+{% if preview.lines %}
+{% for line in preview.lines %}
+<div class="flex justify-between items-center font-semibold">
+<span>{{ line.label }}</span>
+<div class="flex items-center gap-1.5">
+<span class="text-[11px] text-slate-400 font-bold">{{ line.formula }}</span>
+<span class="font-bold text-slate-700">{{ line.amount|ugx }}</span>
+</div>
+</div>
+{% endfor %}
+{% endif %}
 
-    <div class="border-t border-slate-100 my-1"></div>
-    <div class="flex justify-between items-center text-[13px]">
-      <span class="font-extrabold text-slate-600">Total Estimated Cost</span>
-      <span class="font-black text-[#002855]">{{ preview.amount|ugx }}</span>
-    </div>
+<div class="border-t border-slate-100 my-1"></div>
+<div class="flex justify-between items-center text-[14px]">
+<span class="font-extrabold text-slate-600">Total Estimated Cost</span>
+<span class="font-black text-[#2e505f]">{{ preview.amount|ugx }}</span>
+</div>
 
-    {% if not preview.can_schedule %}
-      <div class="mt-2 p-2 bg-amber-50 text-amber-800 rounded-lg border border-amber-200 text-[10.5px] font-bold text-center">
-        &#9888; Active Cost Catalogue is required to schedule.
-      </div>
-    {% endif %}
-  </div>
+{% if not preview.can_schedule %}
+<div class="mt-2 p-2 bg-amber-50 text-amber-800 rounded-lg border border-amber-200 text-[11px] font-bold text-center">
+&#9888; Active Cost Catalogue is required to schedule.
+</div>
+{% endif %}
+</div>
 {% endif %}

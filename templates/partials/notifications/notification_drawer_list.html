@@ -1,0 +1,62 @@
+<!-- OOB Swap to update global header notification badge count -->
+<div id="notification-badge-container" hx-swap-oob="true">
+{% if unread_count > 0 %}
+<span id="notification-badge-count" class="absolute top-1 right-1 h-4 w-4 bg-[#2563eb] text-white text-[11px] font-extrabold rounded-full flex items-center justify-center border border-white">
+{{ unread_count }}
+</span>
+{% endif %}
+</div>
+
+<!-- Notification Feed List -->
+<div class="divide-y divide-slate-100 font-sans">
+{% for n in notifications %}
+<div 
+{% if n.target_route %}
+onclick="window.location.href='{% if n.status == 'unread' %}/notifications/{{ n.id }}/read?redirect={{ n.target_route }}{% else %}{{ n.target_route }}{% endif %}';"
+class="cursor-pointer py-2.5 flex items-start gap-3 {% if n.status == 'unread' %}bg-blue-50/20 px-2 -mx-2 rounded-lg{% endif %} hover:bg-slate-50 transition-colors"
+{% else %}
+class="py-2.5 flex items-start gap-3 {% if n.status == 'unread' %}bg-blue-50/20 px-2 -mx-2 rounded-lg{% endif %} hover:bg-slate-50 transition-colors"
+{% endif %}
+>
+<!-- Icon indicator based on priority -->
+<div class="h-7 w-7 rounded-lg shrink-0 grid place-items-center {% if n.priority == 'urgent' %}bg-rose-50 text-rose-600{% elif n.priority == 'high' %}bg-amber-50 text-amber-600{% else %}bg-slate-100 text-slate-500{% endif %}">
+{% if n.priority == 'urgent' %}
+<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+</svg>
+{% else %}
+<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+</svg>
+{% endif %}
+</div>
+
+<!-- Text details -->
+<div class="flex-1 min-w-0">
+<div class="flex items-start justify-between gap-2">
+<p class="text-[12px] font-bold text-slate-800 leading-snug">{{ n.title }}</p>
+<span class="text-[11px] text-slate-400 font-semibold whitespace-nowrap shrink-0">{{ n.created_at|date:"j M H:i" }}</span>
+</div>
+{% if n.body %}
+<p class="text-[11px] text-slate-500 mt-0.5 leading-normal font-medium">{{ n.body }}</p>
+{% endif %}
+
+<!-- Action actions (mark read, view detail) -->
+<div class="flex items-center gap-3 mt-1.5">
+{% if n.status == 'unread' %}
+<button 
+type="button"
+hx-post="/notifications/{{ n.id }}/read"
+hx-target="#notification-drawer-container"
+hx-swap="innerHTML"
+onclick="event.stopPropagation();"
+class="text-[11px] font-bold text-slate-400 hover:text-slate-600 transition-colors"
+>
+Mark as read
+</button>
+{% endif %}
+</div>
+</div>
+</div>
+{% endfor %}
+</div>

@@ -1,91 +1,91 @@
 <div 
-  x-data="{ 
-    active: false, 
-    size: '{{ drawer_size|default:'md' }}', 
-    type: '{{ drawer_type|default:'right' }}', 
-    isDirty: false 
-  }"
-  x-init="
-    $nextTick(() => { 
-      active = true; 
-      document.body.style.overflow = 'hidden'; 
-    })
-  "
-  @close-drawer.window="
-    active = false; 
-    document.body.style.overflow = ''; 
-    setTimeout(() => { $el.remove() }, 250);
-  "
-  @keydown.escape.window="
-    if (isDirty) {
-      if (confirm('You have unsaved changes. Discard changes?')) {
-        $dispatch('close-drawer');
-      }
-    } else {
-      $dispatch('close-drawer');
-    }
-  "
-  class="relative z-50 font-sans"
+x-data="{ 
+active: false, 
+size: '{{ drawer_size|default:'md' }}', 
+type: '{{ drawer_type|default:'center' }}', 
+isDirty: false 
+}"
+x-init="
+$nextTick(() => { 
+active = true; 
+document.body.style.overflow = 'hidden'; 
+})
+"
+@close-drawer.window="
+active = false; 
+document.body.style.overflow = ''; 
+setTimeout(() => { $el.remove() }, 250);
+"
+@keydown.escape.window="
+if (isDirty) {
+if (confirm('You have unsaved changes. Discard changes?')) {
+$dispatch('close-drawer');
+}
+} else {
+$dispatch('close-drawer');
+}
+"
+class="relative z-50 font-sans"
 >
-  <!-- Backdrop -->
-  <div 
-    class="drawer-backdrop" 
-    :class="active ? 'active' : ''"
-    @click="
-      if (isDirty) {
-        if (confirm('You have unsaved changes. Discard changes?')) {
-          $dispatch('close-drawer');
-        }
-      } else {
-        $dispatch('close-drawer');
-      }
-    "
-  ></div>
+<!-- Backdrop -->
+<div 
+class="drawer-backdrop" 
+:class="active ? 'active' : ''"
+@click="
+if (isDirty) {
+if (confirm('You have unsaved changes. Discard changes?')) {
+$dispatch('close-drawer');
+}
+} else {
+$dispatch('close-drawer');
+}
+"
+></div>
 
-  <!-- Drawer Surface -->
-  <div 
-    class="drawer-surface" 
-    :class="[active ? 'active' : '', 'size-' + size, 'type-' + type]"
-    role="dialog"
-    aria-modal="true"
-    @input="isDirty = true"
-    @change="isDirty = true"
-  >
-    <!-- Header -->
-    <header class="drawer-header">
-      <div>
-        <div class="flex items-center gap-2">
-          {% if drawer_icon %}
-            <span class="text-slate-500 font-extrabold text-[16px]">{{ drawer_icon }}</span>
-          {% endif %}
-          <h3 class="text-[14.5px] font-black text-slate-800 tracking-tight leading-none">{% block drawer_title %}{{ drawer_title|default:"Action Drawer" }}{% endblock %}</h3>
-          {% block drawer_badge %}{% endblock %}
-        </div>
-        <p class="text-[11px] text-slate-500 font-semibold mt-1">{% block drawer_subtitle %}{{ drawer_subtitle|default:"Configure action details" }}{% endblock %}</p>
-      </div>
+<!-- Drawer Surface -->
+<div 
+class="drawer-surface" 
+:class="[active ? 'active' : '', 'size-' + size, 'type-' + type]"
+role="dialog"
+aria-modal="true"
+@input="isDirty = true"
+@change="isDirty = true"
+>
+<!-- Header -->
+<header class="drawer-header">
+<div>
+<div class="flex items-center gap-2">
+{% if drawer_icon %}
+<span class="text-slate-500 font-extrabold text-[18px]">{{ drawer_icon }}</span>
+{% endif %}
+<h3 class="text-[14px] font-black text-slate-800 tracking-tight leading-none">{% block drawer_title %}{{ drawer_title|default:"Action Drawer" }}{% endblock %}</h3>
+{% block drawer_badge %}{% endblock %}
+</div>
+<p class="text-[11px] text-slate-500 font-semibold mt-1">{% block drawer_subtitle %}{{ drawer_subtitle|default:"Configure action details" }}{% endblock %}</p>
+</div>
 
-      <button 
-        type="button"
-        @click="
-          if (isDirty) {
-            if (confirm('You have unsaved changes. Discard changes?')) {
-              $dispatch('close-drawer');
-            }
-          } else {
-            $dispatch('close-drawer');
-          }
-        "
-        class="drawer-close-btn"
-        aria-label="Close drawer"
-      >
-        <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-      </button>
-    </header>
+<button 
+type="button"
+@click="
+if (isDirty) {
+if (confirm('You have unsaved changes. Discard changes?')) {
+$dispatch('close-drawer');
+}
+} else {
+$dispatch('close-drawer');
+}
+"
+class="drawer-close-btn"
+aria-label="Close drawer"
+>
+<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+</button>
+</header>
 
-    <!-- Body -->
-    <div class="drawer-body">
-      {% block drawer_body %}{% endblock %}
-    </div>
+<!-- Body -->
+<div class="drawer-body">
+{% block drawer_body %}{% endblock %}
+</div>
 
-  </div>
+</div>
 </div>

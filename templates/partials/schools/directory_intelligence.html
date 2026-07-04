@@ -1,159 +1,203 @@
 <div id="directory-intelligence-container" class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm space-y-4">
-  <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
-    <div>
-      <h3 class="text-[14px] font-extrabold text-slate-800 tracking-tight font-sans">Directory Intelligence</h3>
-      <p class="text-[10px] text-slate-400 font-semibold mt-0.5 uppercase tracking-wider font-sans">Selected School</p>
-    </div>
-  </div>
+<div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+<div>
+<h3 class="text-[14px] font-extrabold text-slate-800 tracking-tight font-sans">Directory Intelligence</h3>
+<p class="text-[11px] text-slate-400 font-semibold mt-0.5 uppercase tracking-wider font-sans">Selected School</p>
+</div>
+</div>
 
-  {% if intelligence %}
-    <div class="space-y-4 text-[12.5px] font-sans">
-      <div>
-        <h4 class="font-extrabold text-slate-800 text-[14px] leading-snug">{{ intelligence.school.name }}</h4>
-        <span class="inline-flex items-center rounded px-2 py-0.5 text-[10px] font-bold mt-1.5 {% if intelligence.school.school_type == 'client' %}bg-emerald-50 text-emerald-700 border border-emerald-200{% else %}bg-purple-50 text-purple-700 border border-purple-200{% endif %}">
-          {{ intelligence.school.get_school_type_display }}
-        </span>
-      </div>
+{% if intelligence %}
+<div class="space-y-4 text-[12px] font-sans">
+<div>
+<h4 class="font-extrabold text-slate-800 text-[14px] leading-snug">{{ intelligence.school.name }}</h4>
+<div class="flex flex-wrap items-center gap-2 mt-1.5">
+<span class="inline-flex items-center rounded px-2 py-0.5 text-[11px] font-bold {% if intelligence.school.school_type == 'client' %}bg-emerald-50 text-emerald-700 border border-emerald-200{% else %}bg-purple-50 text-purple-700 border border-purple-200{% endif %}">
+{{ intelligence.school.get_school_type_display }}
+</span>
+{% if can_toggle_core %}
+<div x-data="{ editing: false }" class="inline-block">
+<button 
+@click="editing = !editing" 
+class="text-[11px] font-bold text-blue-600 hover:underline flex items-center gap-0.5 focus:outline-none"
+>
+<svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+<span>Edit</span>
+</button>
+<div 
+x-show="editing" 
+class="absolute left-4 right-4 mt-2 p-3 bg-white border border-slate-200 rounded-xl shadow-xl z-50 space-y-2 text-slate-700 font-sans"
+style="display: none;"
+@click.outside="editing = false"
+>
+<p class="text-[11px] font-black uppercase text-slate-400">Change School Type</p>
+<form 
+hx-post="/schools/{{ intelligence.school.id }}/change-type"
+class="flex items-center gap-2"
+>
+{% csrf_token %}
+<select 
+name="school_type" 
+class="h-8 px-2 bg-white border border-slate-200 rounded text-[12px] font-bold focus:outline-none flex-1"
+>
+<option value="client" {% if intelligence.school.school_type == 'client' %}selected{% endif %}>Client School</option>
+<option value="core" {% if intelligence.school.school_type == 'core' %}selected{% endif %}>Core School</option>
+<option value="potential_core" {% if intelligence.school.school_type == 'potential_core' %}selected{% endif %}>Potential Core</option>
+<option value="champion" {% if intelligence.school.school_type == 'champion' %}selected{% endif %}>Champion</option>
+<option value="potential_champion" {% if intelligence.school.school_type == 'potential_champion' %}selected{% endif %}>Potential Champion</option>
+<option value="other" {% if intelligence.school.school_type == 'other' %}selected{% endif %}>Other</option>
+</select>
+<button 
+type="submit"
+class="h-8 px-3 rounded bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold transition-all shadow-sm"
+>
+Save
+</button>
+</form>
+</div>
+</div>
+{% endif %}
+</div>
+</div>
 
-      <!-- Specs list -->
-      <div class="space-y-3 pt-2">
-        <div class="flex items-start gap-3">
-          <div class="h-8 w-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 text-slate-400">
-            <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-          </div>
-          <div>
-            <p class="text-[9.5px] uppercase font-bold text-slate-400">District</p>
-            <p class="font-bold text-slate-700 mt-0.5">{{ intelligence.school.district.name }}</p>
-          </div>
-        </div>
+<!-- Specs list -->
+<div class="space-y-3 pt-2">
+<div class="flex items-start gap-3">
+<div class="h-8 w-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 text-slate-400">
+<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+<path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+</svg>
+</div>
+<div>
+<p class="text-[11px] uppercase font-bold text-slate-400">District</p>
+<p class="font-bold text-slate-700 mt-0.5">{{ intelligence.school.district.name }}</p>
+</div>
+</div>
 
-        <div class="flex items-start gap-3">
-          <div class="h-8 w-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 text-slate-400">
-            <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
-          </div>
-          <div>
-            <p class="text-[9.5px] uppercase font-bold text-slate-400">Sub-county</p>
-            <p class="font-bold text-slate-700 mt-0.5">{{ intelligence.school.sub_county.name|default:"Not specified" }}</p>
-          </div>
-        </div>
+<div class="flex items-start gap-3">
+<div class="h-8 w-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 text-slate-400">
+<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+</svg>
+</div>
+<div>
+<p class="text-[11px] uppercase font-bold text-slate-400">Sub-county</p>
+<p class="font-bold text-slate-700 mt-0.5">{{ intelligence.school.sub_county.name|default:"Not specified" }}</p>
+</div>
+</div>
 
-        <div class="flex items-start gap-3">
-          <div class="h-8 w-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 text-slate-400">
-            <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-          </div>
-          <div>
-            <p class="text-[9.5px] uppercase font-bold text-slate-400">Assigned Staff</p>
-            <p class="font-bold text-slate-700 mt-0.5">{{ intelligence.assigned_staff_name }}</p>
-          </div>
-        </div>
+<div class="flex items-start gap-3">
+<div class="h-8 w-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 text-slate-400">
+<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+</svg>
+</div>
+<div>
+<p class="text-[11px] uppercase font-bold text-slate-400">Cluster</p>
+<p class="font-bold text-slate-700 mt-0.5">{{ intelligence.cluster_name }}</p>
+</div>
+</div>
 
-        <div class="flex items-start gap-3">
-          <div class="h-8 w-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 text-slate-400">
-            <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-            </svg>
-          </div>
-          <div>
-            <p class="text-[9.5px] uppercase font-bold text-slate-400">Cluster</p>
-            <p class="font-bold text-slate-700 mt-0.5">{{ intelligence.cluster_name }}</p>
-          </div>
-        </div>
+<div class="flex items-start gap-3">
+<div class="h-8 w-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 text-slate-400">
+<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2" />
+</svg>
+</div>
+<div>
+<p class="text-[11px] uppercase font-bold text-slate-400">Project Assignment</p>
+<p class="font-bold text-slate-700 mt-0.5">{{ intelligence.project_text }}</p>
+</div>
+</div>
 
-        <div class="flex items-start gap-3">
-          <div class="h-8 w-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 text-slate-400">
-            <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-          </div>
-          <div>
-            <p class="text-[9.5px] uppercase font-bold text-slate-400">Weakest Intervention</p>
-            <p class="font-bold text-rose-600 mt-0.5">{{ intelligence.weakest_intervention }}</p>
-          </div>
-        </div>
+<div class="flex items-start gap-3">
+<div class="h-8 w-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 text-slate-400">
+<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16" />
+</svg>
+</div>
+<div>
+<p class="text-[11px] uppercase font-bold text-slate-400">Enrolment</p>
+<p class="font-bold text-slate-700 mt-0.5">{{ intelligence.school.enrollment|default:"0" }}</p>
+</div>
+</div>
 
-        <div class="flex items-start gap-3">
-          <div class="h-8 w-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 text-slate-400">
-            <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-          </div>
-          <div>
-            <p class="text-[9.5px] uppercase font-bold text-slate-400">Last SSA</p>
-            <p class="font-bold text-slate-700 mt-0.5">{{ intelligence.last_ssa_date }}</p>
-          </div>
-        </div>
+<div class="flex items-start gap-3">
+<div class="h-8 w-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 text-slate-400">
+<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.94.725l.548 2.2a1 1 0 01-.321.988l-1.305.98a10.582 10.582 0 004.872 4.872l.98-1.305a1 1 0 01.988-.321l2.2.548a1 1 0 01.725.94V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+</svg>
+</div>
+<div>
+<p class="text-[11px] uppercase font-bold text-slate-400">Phone</p>
+<p class="font-bold text-slate-700 mt-0.5">{{ intelligence.school.school_phone|default:"—" }}</p>
+</div>
+</div>
 
-        <div class="flex items-start gap-3">
-          <div class="h-8 w-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 text-slate-400">
-            <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <div>
-            <p class="text-[9.5px] uppercase font-bold text-slate-400">Planning Readiness</p>
-            <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider mt-0.5 {% if intelligence.school.planning_readiness == 'ready' %}bg-emerald-50 text-emerald-700 border border-emerald-200{% elif intelligence.school.planning_readiness == 'limited' %}bg-amber-50 text-amber-700 border border-amber-200{% else %}bg-slate-100 text-slate-500{% endif %}">
-              {{ intelligence.school.get_planning_readiness_display }}
-            </span>
-          </div>
-        </div>
-      </div>
+<div class="flex items-start gap-3">
+<div class="h-8 w-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 text-slate-400">
+<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+</svg>
+</div>
+<div>
+<p class="text-[11px] uppercase font-bold text-slate-400">School Contact</p>
+<p class="font-bold text-slate-700 mt-0.5">{{ intelligence.school_contact }}</p>
+</div>
+</div>
+</div>
 
-      <!-- Recommended Next Step card -->
-      <div class="border-t border-slate-100 pt-4 space-y-3">
-        <h4 class="text-[11.5px] font-extrabold text-slate-500 uppercase tracking-wider">Recommended Next Step</h4>
-        
-        <div class="rounded-xl p-3 border {% if intelligence.school.planning_readiness == 'ready' %}bg-emerald-50/50 border-emerald-100 text-emerald-800{% else %}bg-amber-50/50 border-amber-100 text-amber-800{% endif %} flex gap-2.5">
-          <div class="shrink-0 mt-0.5">
-            {% if intelligence.school.planning_readiness == 'ready' %}
-              <svg class="h-5 w-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            {% else %}
-              <svg class="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-            {% endif %}
-          </div>
-          <div class="text-[11.5px] font-semibold leading-normal">
-            {% if intelligence.school.planning_readiness == 'ready' %}
-              Proceed to planning. School is ready for planning. Open the plan to start allocations.
-            {% else %}
-              School setup is incomplete. Ensure assigned staff, cluster details are matched, and current SSA record is uploaded before planning.
-            {% endif %}
-          </div>
-        </div>
+<!-- Recommended Next Step card -->
+<div class="border-t border-slate-100 pt-4 space-y-3">
+<h4 class="text-[12px] font-extrabold text-slate-500 uppercase tracking-wider">Recommended Next Step</h4>
 
-        {% if intelligence.school.planning_readiness == 'ready' %}
-          <a href="/planning/schedule?school_id={{ intelligence.school.school_id }}" class="w-full h-9 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[12px] font-bold flex items-center justify-center transition-colors">
-            Open Plan
-          </a>
-        {% elif intelligence.school.cluster_status == 'unclustered' %}
-          <a href="/clusters" class="w-full h-9 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-[12px] font-bold flex items-center justify-center transition-colors">
-            Assign to Cluster
-          </a>
-        {% elif intelligence.school.current_fy_ssa_status == 'not_done' %}
-          <a href="/schools/upload" class="w-full h-9 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[12px] font-bold flex items-center justify-center transition-colors">
-            Upload SSA
-          </a>
-        {% elif not intelligence.school.account_owner_id %}
-          <a href="/staff" class="w-full h-9 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[12px] font-bold flex items-center justify-center transition-colors">
-            Match Staff Profile
-          </a>
-        {% else %}
-          <a href="/schools/{{ intelligence.school.id }}" class="w-full h-9 rounded-lg bg-slate-600 hover:bg-slate-700 text-white text-[12px] font-bold flex items-center justify-center transition-colors">
-            View School Profile
-          </a>
-        {% endif %}
-      </div>
-    </div>
-  {% else %}
-    <p class="text-center text-slate-400 text-[12px] font-semibold py-8">Select a school to view readiness intelligence.</p>
-  {% endif %}
+<div class="rounded-xl p-3 border bg-blue-50/50 border-blue-100 text-blue-800 flex gap-2.5">
+<div class="shrink-0 mt-0.5">
+<svg class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+</svg>
+</div>
+<div class="text-[12px] font-semibold leading-normal">
+{{ intelligence.next_step_text }}
+</div>
+</div>
+
+{% if intelligence.next_step_action == 'add_to_cluster' %}
+<button 
+hx-get="/schools/{{ intelligence.school.id }}/add-to-cluster" 
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+class="w-full h-9 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-bold flex items-center justify-center transition-colors"
+>
+{{ intelligence.next_step_button }}
+</button>
+{% elif intelligence.next_step_action == 'assign_to_project' %}
+<button 
+hx-get="/schools/{{ intelligence.school.id }}/assign-to-project" 
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+class="w-full h-9 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-[12px] font-bold flex items-center justify-center transition-colors"
+>
+{{ intelligence.next_step_button }}
+</button>
+{% elif intelligence.next_step_action == 'view_core_planning' %}
+<a 
+href="/core-schools"
+class="w-full h-9 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-[12px] font-bold flex items-center justify-center transition-colors shadow-sm"
+>
+{{ intelligence.next_step_button }}
+</a>
+{% else %}
+<button 
+disabled
+class="w-full h-9 rounded-lg bg-slate-100 border border-slate-200 text-slate-400 text-[12px] font-bold flex items-center justify-center cursor-not-allowed opacity-60"
+>
+{{ intelligence.next_step_button }}
+</button>
+{% endif %}
+</div>
+</div>
+{% else %}
+<p class="text-center text-slate-400 text-[12px] font-semibold py-8">Select a school to view readiness intelligence.</p>
+{% endif %}
 </div>

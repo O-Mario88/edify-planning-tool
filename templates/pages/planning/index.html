@@ -5,465 +5,243 @@
 
 {% block shell_content %}
 <div 
-  x-data="{
-    selectedSchools: [],
-    bulkActionOpen: false,
-    selectedSchoolId: null
-  }"
-  @select-school.window="selectedSchoolId = $event.detail.id; hx_get_intelligence(selectedSchoolId);"
-  class="p-6 max-w-[1600px] mx-auto space-y-6 font-sans text-slate-700"
-  id="planning-main-container"
+x-data="{
+selectedSchools: [],
+bulkActionOpen: false,
+selectedSchoolId: null
+}"
+@select-school.window="selectedSchoolId = $event.detail.id;"
+class="p-6 max-w-[1600px] mx-auto space-y-6 font-sans text-slate-700"
+id="planning-main-container"
 >
-  
-  <!-- Breadcrumb -->
-  <nav class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-    <a href="#" class="hover:text-slate-600">Planning</a>
-    <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-    <span class="text-slate-600 font-extrabold">School visit &amp; training plan</span>
-  </nav>
 
-  <!-- Header -->
-  <div class="edify-page-header flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-100 pb-2">
-    <div>
-      <h1 class="text-[25px] font-black text-slate-800 tracking-tight leading-none">Planning</h1>
-      <p class="text-[12px] text-slate-500 font-semibold mt-1">Plan school visits, cluster activities, and partner assignments based on SSA readiness and school needs.</p>
-    </div>
+<!-- Breadcrumb -->
+<nav class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+<a href="#" class="hover:text-slate-600">Planning</a>
+<svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+<span class="text-slate-600 font-extrabold">School visit &amp; training plan</span>
+</nav>
 
-    <!-- Header Actions -->
-    <div class="flex items-center gap-2">
-      <!-- Export button -->
-      <a 
-        href="#"
-        onclick="this.href='/planning?export=csv&' + new URLSearchParams(new FormData(document.getElementById('filters-form'))).toString()"
-        class="edify-action-button secondary h-9 transition-all shadow-sm"
-      >
-        <svg class="h-4 w-4 text-slate-455 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-        Export
-      </a>
+<!-- Header -->
+<div class="edify-page-header flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-100 pb-2">
+<div>
+<h1 class="text-[24px] font-black text-slate-800 tracking-tight leading-none">Planning</h1>
+<p class="text-[12px] text-slate-500 font-semibold mt-1">Plan school visits, cluster activities, and partner assignments based on SSA readiness and school needs.</p>
+</div>
 
-      <!-- Bulk Action trigger -->
-      <button 
-        @click="bulkActionOpen = !bulkActionOpen"
-        :disabled="selectedSchools.length === 0"
-        :class="selectedSchools.length === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-50'"
-        class="edify-action-button secondary h-9 transition-all shadow-sm"
-      >
-        <svg class="h-4 w-4 text-slate-455 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-        Bulk Assign
-      </button>
+<!-- Header Actions -->
+<div class="flex items-center gap-2">
+<!-- Export button -->
+<a 
+href="#"
+onclick="this.href='/planning?export=csv&' + new URLSearchParams(new FormData(document.getElementById('filters-form'))).toString()"
+class="edify-action-button secondary h-9 transition-all shadow-sm"
+>
+<svg class="h-4 w-4 text-slate-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+Export
+</a>
 
-      <!-- Open My Plan -->
-      <a 
-        href="/my-plan/" 
-        class="edify-action-button primary h-9 transition-all shadow-sm"
-      >
-        <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-        Open My Plan
-      </a>
-    </div>
-  </div>
+<!-- Bulk Action trigger -->
+<button 
+@click="bulkActionOpen = !bulkActionOpen"
+:disabled="selectedSchools.length === 0"
+:class="selectedSchools.length === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-50'"
+class="edify-action-button secondary h-9 transition-all shadow-sm"
+>
+<svg class="h-4 w-4 text-slate-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+Bulk Assign
+</button>
 
-  <!-- Filters Row -->
-  <form 
-    id="filters-form"
-    hx-get="/planning"
-    hx-trigger="change delay:100ms, keyup delay:200ms changed from:input[name='q']"
-    hx-target="#schools-table-container"
-    hx-push-url="true"
-    class="flex flex-wrap items-center gap-2.5 text-[11px] font-bold"
-  >
-    <input type="hidden" name="tab" value="{{ active_tab }}">
+<!-- Open My Plan -->
+<a 
+href="/my-plan"
+class="edify-action-button primary h-9 transition-all shadow-sm"
+>
+<svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+Open My Plan
+</a>
+</div>
+</div>
 
-    <!-- FY -->
-    <div class="flex items-center gap-1 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-sm">
-      <span class="text-slate-400">FY</span>
-      <select name="fy" class="bg-transparent focus:outline-none cursor-pointer">
-        {% for f in fy_options %}
-          <option value="{{ f }}" {% if selected_fy == f %}selected{% endif %}>{{ f }}</option>
-        {% endfor %}
-      </select>
-    </div>
+<!-- Filters Row -->
+<form 
+id="filters-form"
+hx-get="/planning"
+hx-trigger="change delay:100ms, keyup delay:200ms changed from:input[name='q']"
+hx-target="#schools-table-container"
+hx-push-url="true"
+class="flex flex-wrap items-center gap-2.5 text-[11px] font-bold"
+>
+<input type="hidden" name="tab" value="{{ active_tab }}">
 
-    <!-- Quarter -->
-    <div class="flex items-center gap-1 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-sm">
-      <span class="text-slate-400">Quarter</span>
-      <select name="quarter" class="bg-transparent focus:outline-none cursor-pointer">
-        {% for q in quarter_options %}
-          <option value="{{ q }}" {% if selected_quarter == q %}selected{% endif %}>{{ q }}</option>
-        {% endfor %}
-      </select>
-    </div>
+<!-- Quarter -->
+<div class="flex items-center gap-1 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-sm">
+<span class="text-slate-400">Quarter</span>
+<select name="quarter" class="bg-transparent focus:outline-none cursor-pointer">
+{% for q in quarter_options %}
+<option value="{{ q }}" {% if selected_quarter == q %}selected{% endif %}>{{ q }}</option>
+{% endfor %}
+</select>
+</div>
 
-    <!-- District -->
-    <div class="flex items-center gap-1 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-sm">
-      <span class="text-slate-400">District</span>
-      <select name="district" class="bg-transparent focus:outline-none cursor-pointer">
-        <option value="All">All Districts</option>
-        {% for d in districts %}
-          <option value="{{ d.id }}" {% if selected_district == d.id %}selected{% endif %}>{{ d.name }}</option>
-        {% endfor %}
-      </select>
-    </div>
+<!-- District -->
+<div class="flex items-center gap-1 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-sm">
+<span class="text-slate-400">District</span>
+<select name="district" class="bg-transparent focus:outline-none cursor-pointer">
+<option value="All">All Districts</option>
+{% for d in districts %}
+<option value="{{ d.id }}" {% if selected_district == d.id %}selected{% endif %}>{{ d.name }}</option>
+{% endfor %}
+</select>
+</div>
 
-    <!-- Sub-county -->
-    <div class="flex items-center gap-1 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-sm">
-      <span class="text-slate-400">Sub-county</span>
-      <select name="sub_county" class="bg-transparent focus:outline-none cursor-pointer">
-        <option value="All">All Sub-counties</option>
-        {% for s in sub_counties %}
-          <option value="{{ s.id }}" {% if selected_sub_county == s.id %}selected{% endif %}>{{ s.name }}</option>
-        {% endfor %}
-      </select>
-    </div>
+<!-- Staff -->
+<div class="flex items-center gap-1 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-sm">
+<span class="text-slate-400">Staff</span>
+<select name="staff" class="bg-transparent focus:outline-none cursor-pointer">
+<option value="All">All Staff</option>
+{% for s in staff_members %}
+<option value="{{ s.user.user_id }}" {% if selected_staff == s.user.user_id %}selected{% endif %}>{{ s.user.name }}</option>
+{% endfor %}
+</select>
+</div>
 
-    <!-- Staff -->
-    <div class="flex items-center gap-1 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-sm">
-      <span class="text-slate-400">Staff</span>
-      <select name="staff" class="bg-transparent focus:outline-none cursor-pointer">
-        <option value="All">All Staff</option>
-        {% for s in staff_members %}
-          <option value="{{ s.user.user_id }}" {% if selected_staff == s.user.user_id %}selected{% endif %}>{{ s.user.name }}</option>
-        {% endfor %}
-      </select>
-    </div>
+<!-- Planning Readiness -->
+<div class="flex items-center gap-1 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-sm">
+<span class="text-slate-400">Readiness</span>
+<select name="planning_readiness" class="bg-transparent focus:outline-none cursor-pointer">
+<option value="All">All Readiness</option>
+{% for val, label in readiness_choices %}
+<option value="{{ val }}" {% if selected_readiness == val %}selected{% endif %}>{{ label }}</option>
+{% endfor %}
+</select>
+</div>
 
-    <!-- School Type -->
-    <div class="flex items-center gap-1 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-sm">
-      <span class="text-slate-400">Type</span>
-      <select name="school_type" class="bg-transparent focus:outline-none cursor-pointer">
-        <option value="All">All Types</option>
-        {% for val, label in school_types %}
-          <option value="{{ val }}" {% if selected_school_type == val %}selected{% endif %}>{{ label }}</option>
-        {% endfor %}
-      </select>
-    </div>
+<!-- Clear Filters -->
+<button 
+type="button"
+onclick="document.getElementById('filters-form').reset(); document.querySelectorAll('select').forEach(s => s.value = 'All'); document.getElementsByName('q')[0].value = ''; document.getElementById('filters-form').dispatchEvent(new Event('change'));"
+class="text-blue-600 hover:text-blue-700 text-[11px] font-extrabold tracking-wider uppercase ml-1 flex items-center gap-1"
+>
+<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+Clear Filters
+</button>
+</form>
 
-    <!-- Planning Readiness -->
-    <div class="flex items-center gap-1 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-sm">
-      <span class="text-slate-400">Readiness</span>
-      <select name="planning_readiness" class="bg-transparent focus:outline-none cursor-pointer">
-        <option value="All">All Readiness</option>
-        {% for val, label in readiness_choices %}
-          <option value="{{ val }}" {% if selected_readiness == val %}selected{% endif %}>{{ label }}</option>
-        {% endfor %}
-      </select>
-    </div>
+<!-- KPI cards Row -->
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
 
-    <!-- SSA Status -->
-    <div class="flex items-center gap-1 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-sm">
-      <span class="text-slate-400">SSA</span>
-      <select name="ssa_status" class="bg-transparent focus:outline-none cursor-pointer">
-        <option value="All">All SSA Statuses</option>
-        {% for val, label in ssa_statuses %}
-          <option value="{{ val }}" {% if selected_ssa_status == val %}selected{% endif %}>{{ label }}</option>
-        {% endfor %}
-      </select>
-    </div>
 
-    <!-- Cluster Status -->
-    <div class="flex items-center gap-1 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-sm">
-      <span class="text-slate-400">Cluster</span>
-      <select name="cluster_status" class="bg-transparent focus:outline-none cursor-pointer">
-        <option value="All">All Cluster Statuses</option>
-        {% for val, label in cluster_statuses %}
-          <option value="{{ val }}" {% if selected_cluster_status == val %}selected{% endif %}>{{ label }}</option>
-        {% endfor %}
-      </select>
-    </div>
 
-    <!-- Current Partner Type -->
-    <div class="flex items-center gap-1 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-sm">
-      <span class="text-slate-400">Partner</span>
-      <select name="partner" class="bg-transparent focus:outline-none cursor-pointer">
-        <option value="All">All Partners</option>
-        {% for p in partners %}
-          <option value="{{ p.id }}" {% if selected_partner == p.id %}selected{% endif %}>{{ p.name }}</option>
-        {% endfor %}
-      </select>
-    </div>
+<!-- Planning Copilot Banner -->
+{% include "partials/planning/right_panel.html" %}
 
-    <!-- Clear Filters -->
-    <button 
-      type="button"
-      onclick="document.getElementById('filters-form').reset(); document.querySelectorAll('select').forEach(s => s.value = 'All'); document.getElementsByName('q')[0].value = ''; document.getElementById('filters-form').dispatchEvent(new Event('change'));"
-      class="text-blue-600 hover:text-blue-700 text-[11px] font-extrabold tracking-wider uppercase ml-1 flex items-center gap-1"
-    >
-      <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-      Clear Filters
-    </button>
-  </form>
+<!-- Main Content Column -->
+<div class="space-y-6">
 
-  <!-- KPI cards Row -->
-  <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-4">
-    {% include "partials/planning/kpis.html" %}
-  </div>
+<nav class="edify-tab-container">
+<button 
+onclick="document.getElementsByName('tab')[0].value = 'client'; document.getElementById('filters-form').dispatchEvent(new Event('change'));"
+class="edify-tab-btn {% if active_tab == 'client' %}active{% endif %}"
+>
+Client Schools
+</button>
 
-  <!-- Highlight Readiness Cards Row -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-    <!-- Card A: Needs SSA -->
-    <div 
-      onclick="document.getElementsByName('ssa_status')[0].value = 'not_done'; document.getElementById('filters-form').dispatchEvent(new Event('change'));"
-      class="bg-rose-50/30 border border-rose-200/50 rounded-2xl p-5 flex items-center justify-between cursor-pointer hover:shadow-md transition-shadow relative overflow-hidden group"
-    >
-      <div class="space-y-1.5 z-10">
-        <div class="flex items-center gap-2 text-rose-700 font-extrabold text-[12.5px]">
-          <svg class="h-5 w-5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-          Needs SSA
-        </div>
-        <p class="text-[17px] font-black text-slate-800"><span class="text-rose-600 font-black">{{ kpis.without_ssa }}</span> Schools</p>
-        <p class="text-[10.5px] text-slate-400 font-bold">Schools blocked until SSA is complete.</p>
-      </div>
-      <svg class="h-6 w-6 text-rose-400 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-    </div>
+<button 
+onclick="document.getElementsByName('tab')[0].value = 'core'; document.getElementById('filters-form').dispatchEvent(new Event('change'));"
+class="edify-tab-btn {% if active_tab == 'core' %}active{% endif %}"
+>
+Core Schools
+</button>
 
-    <!-- Card B: Ready for Scheduling -->
-    <div 
-      onclick="document.getElementsByName('planning_readiness')[0].value = 'ready'; document.getElementById('filters-form').dispatchEvent(new Event('change'));"
-      class="bg-emerald-50/30 border border-emerald-200/50 rounded-2xl p-5 flex items-center justify-between cursor-pointer hover:shadow-md transition-shadow relative overflow-hidden group"
-    >
-      <div class="space-y-1.5 z-10">
-        <div class="flex items-center gap-2 text-emerald-700 font-extrabold text-[12.5px]">
-          <svg class="h-5 w-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          Ready for Scheduling
-        </div>
-        <p class="text-[17px] font-black text-slate-800"><span class="text-emerald-600 font-black">{{ kpis.total_ready }}</span> Schools</p>
-        <p class="text-[10.5px] text-slate-400 font-bold">Schools can be planned now.</p>
-      </div>
-      <svg class="h-6 w-6 text-emerald-400 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-    </div>
+<button 
+onclick="document.getElementsByName('tab')[0].value = 'clusters'; document.getElementById('filters-form').dispatchEvent(new Event('change'));"
+class="edify-tab-btn {% if active_tab == 'clusters' %}active{% endif %}"
+>
+Clusters
+</button>
 
-    <!-- Card C: Ready for Partner Assignment -->
-    <div 
-      onclick="document.getElementsByName('planning_readiness')[0].value = 'ready'; document.getElementsByName('ssa_status')[0].value = 'done'; document.getElementById('filters-form').dispatchEvent(new Event('change'));"
-      class="bg-blue-50/30 border border-blue-200/50 rounded-2xl p-5 flex items-center justify-between cursor-pointer hover:shadow-md transition-shadow relative overflow-hidden group"
-    >
-      <div class="space-y-1.5 z-10">
-        <div class="flex items-center gap-2 text-blue-700 font-extrabold text-[12.5px]">
-          <svg class="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-          Ready for Partner Assignment
-        </div>
-        <p class="text-[17px] font-black text-slate-800"><span class="text-blue-600 font-black">{{ kpis.partner_pending }}</span> Schools</p>
-        <p class="text-[10.5px] text-slate-400 font-bold">Schools can be handed off to partners.</p>
-      </div>
-      <svg class="h-6 w-6 text-blue-400 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-    </div>
-  </div>
+<button 
+onclick="document.getElementsByName('tab')[0].value = 'partner'; document.getElementById('filters-form').dispatchEvent(new Event('change'));"
+class="edify-tab-btn {% if active_tab == 'partner' %}active{% endif %}"
+>
+Assigned to Partner
+</button>
 
-  <!-- Layout Grid: Main Content + Right panel -->
-  <div class="grid grid-cols-1 xl:grid-cols-4 gap-6 items-start">
-    
-    <!-- Left column: Tabs + Table + Bottom summaries -->
-    <div class="xl:col-span-3 space-y-6">
-      
-      <!-- Tabs Row -->
-      <div class="border-b border-slate-200">
-        <nav class="flex space-x-6 text-[12.5px] font-bold">
-          <button 
-            onclick="document.getElementsByName('tab')[0].value = 'client'; document.getElementById('filters-form').dispatchEvent(new Event('change'));"
-            class="pb-3 border-b-2 {% if active_tab == 'client' %}border-blue-600 text-blue-600{% else %}border-transparent text-slate-400 hover:text-slate-600{% endif %}"
-          >
-            Client Schools
-          </button>
-          
-          <button 
-            onclick="document.getElementsByName('tab')[0].value = 'clusters'; document.getElementById('filters-form').dispatchEvent(new Event('change'));"
-            class="pb-3 border-b-2 {% if active_tab == 'clusters' %}border-blue-600 text-blue-600{% else %}border-transparent text-slate-400 hover:text-slate-600{% endif %}"
-          >
-            Clusters
-          </button>
+<button 
+onclick="document.getElementsByName('tab')[0].value = 'scheduled'; document.getElementById('filters-form').dispatchEvent(new Event('change'));"
+class="edify-tab-btn {% if active_tab == 'scheduled' %}active{% endif %}"
+>
+Scheduled / In My Plan
+</button>
+</nav>
 
-          <button 
-            onclick="document.getElementsByName('tab')[0].value = 'core'; document.getElementById('filters-form').dispatchEvent(new Event('change'));"
-            class="pb-3 border-b-2 {% if active_tab == 'core' %}border-b-2 border-blue-600 text-blue-600{% else %}border-transparent text-slate-400 hover:text-slate-600{% endif %}"
-          >
-            Core Schools
-          </button>
+<!-- School Table Container -->
+{% include "partials/planning/school_table.html" %}
 
-          <button 
-            onclick="document.getElementsByName('tab')[0].value = 'partner'; document.getElementById('filters-form').dispatchEvent(new Event('change'));"
-            class="pb-3 border-b-2 {% if active_tab == 'partner' %}border-blue-600 text-blue-600{% else %}border-transparent text-slate-400 hover:text-slate-600{% endif %}"
-          >
-            Assigned to Partner
-          </button>
 
-          <button 
-            onclick="document.getElementsByName('tab')[0].value = 'scheduled'; document.getElementById('filters-form').dispatchEvent(new Event('change'));"
-            class="pb-3 border-b-2 {% if active_tab == 'scheduled' %}border-blue-600 text-blue-600{% else %}border-transparent text-slate-400 hover:text-slate-600{% endif %}"
-          >
-            Scheduled
-          </button>
-        </nav>
-      </div>
-
-      <!-- School Table Container -->
-      {% include "partials/planning/school_table.html" %}
-
-      <!-- Lower summaries side-by-side -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        
-        <!-- Cluster Planning Section -->
-        <div class="bg-white rounded-xl border border-slate-100 p-5 shadow-sm space-y-4">
-          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h3 class="text-[13.5px] font-black text-slate-800 uppercase tracking-wider">Cluster Planning</h3>
-            <a href="#" class="text-blue-600 text-[11px] font-extrabold hover:underline">View All Clusters</a>
-          </div>
-          <div class="divide-y divide-slate-100">
-            {% for c in cluster_planning %}
-              <div class="py-3 flex items-start justify-between gap-3 text-[11px] font-semibold text-slate-600">
-                <div class="space-y-1">
-                  <p class="text-[12.5px] font-extrabold text-slate-900">{{ c.name }}</p>
-                  <div class="flex flex-wrap gap-1 mt-1">
-                    {% for w in c.weakest_interventions %}
-                      <span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[9px] font-extrabold bg-blue-50 text-blue-700 border border-blue-200/50">{{ w }}</span>
-                    {% endfor %}
-                  </div>
-                  <p class="text-[10px] text-slate-400 font-bold mt-1">Average SSA: {{ c.avg_ssa }}% &bull; {{ c.school_count }} Schools</p>
-                </div>
-                <div class="flex flex-col gap-1 shrink-0">
-                  <button 
-                    hx-get="/planning/schedule-modal?cluster_id={{ c.id }}&action=training"
-                    hx-target="#drawer-container"
-                    class="h-7 px-2.5 rounded bg-blue-600 text-white text-[10px] font-extrabold hover:bg-blue-700"
-                  >
-                    Group Training
-                  </button>
-                  <button 
-                    hx-get="/planning/schedule-modal?cluster_id={{ c.id }}&action=meeting"
-                    hx-target="#drawer-container"
-                    class="h-7 px-2.5 rounded border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 text-[10px] font-bold"
-                  >
-                    Cluster Meeting
-                  </button>
-                </div>
-              </div>
-            {% endfor %}
-          </div>
-        </div>
-
-        <!-- Core Schools Planning Summary -->
-        <div class="bg-white rounded-xl border border-slate-100 p-5 shadow-sm space-y-4">
-          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h3 class="text-[13.5px] font-black text-slate-800 uppercase tracking-wider">Core Schools Summary</h3>
-            <a href="#" class="text-blue-600 text-[11px] font-extrabold hover:underline">View Details</a>
-          </div>
-          <div class="grid grid-cols-5 gap-2 text-center">
-            
-            <div class="space-y-1">
-              <span class="text-[9px] uppercase font-bold text-slate-400 block">No SSA</span>
-              <p class="text-[20px] font-black text-slate-800 leading-none">{{ core_summary.no_ssa }}</p>
-              <span class="text-[9px] text-rose-500 font-bold">Schools</span>
-            </div>
-
-            <div class="space-y-1 border-l border-slate-100">
-              <span class="text-[9px] uppercase font-bold text-slate-400 block">1st Visit</span>
-              <p class="text-[20px] font-black text-slate-800 leading-none">{{ core_summary.first_visit_pending }}</p>
-              <span class="text-[9px] text-slate-400 font-bold">Pending</span>
-            </div>
-
-            <div class="space-y-1 border-l border-slate-100">
-              <span class="text-[9px] uppercase font-bold text-slate-400 block">1st Train</span>
-              <p class="text-[20px] font-black text-slate-800 leading-none">{{ core_summary.first_training_pending }}</p>
-              <span class="text-[9px] text-slate-400 font-bold">Pending</span>
-            </div>
-
-            <div class="space-y-1 border-l border-slate-100">
-              <span class="text-[9px] uppercase font-bold text-slate-400 block">2nd Visit</span>
-              <p class="text-[20px] font-black text-slate-800 leading-none">{{ core_summary.second_visit_pending }}</p>
-              <span class="text-[9px] text-slate-400 font-bold">Pending</span>
-            </div>
-
-            <div class="space-y-1 border-l border-slate-100">
-              <span class="text-[9px] uppercase font-bold text-slate-400 block">2nd Train</span>
-              <p class="text-[20px] font-black text-slate-800 leading-none">{{ core_summary.second_training_pending }}</p>
-              <span class="text-[9px] text-slate-400 font-bold">Pending</span>
-            </div>
-
-          </div>
-        </div>
-
-      </div>
-
-    </div>
-
-    <!-- Right column: Planning Intelligence & Bulk Actions panels -->
-    <div class="space-y-6">
-      
-      <!-- Planning Intelligence Panel -->
-      <div class="bg-white rounded-xl border border-slate-100 p-5 shadow-sm">
-        {% include "partials/planning/right_panel.html" %}
-      </div>
-
-      <!-- Bulk Actions Panel -->
-      <div class="bg-white rounded-xl border border-slate-100 p-5 shadow-sm space-y-4">
-        <h3 class="text-[13.5px] font-black text-slate-800 uppercase tracking-wider">Bulk Actions</h3>
-        <p class="text-[10.5px] text-slate-400 font-bold">Select multiple schools in the table to execute bulk actions.</p>
-        
-        <form 
-          hx-post="/planning/bulk-action" 
-          hx-target="body"
-          class="space-y-2.5 text-[11px] font-bold"
-        >
-          <!-- Dynamic hidden inputs for selected schools list -->
-          <template x-for="sid in selectedSchools">
-            <input type="hidden" name="school_ids" :value="sid">
-          </template>
-
-          <button 
-            type="submit"
-            name="action"
-            value="partner"
-            :disabled="selectedSchools.length === 0"
-            class="w-full h-8.5 border border-slate-200 text-slate-700 bg-white rounded-lg text-left px-3 hover:bg-slate-50 flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <span>Assign to Partner</span>
-            <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-          </button>
-
-          <button 
-            type="submit"
-            name="action"
-            value="schedule"
-            :disabled="selectedSchools.length === 0"
-            class="w-full h-8.5 border border-slate-200 text-slate-700 bg-white rounded-lg text-left px-3 hover:bg-slate-50 flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <span>Schedule Visits</span>
-            <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-          </button>
-
-          <button 
-            type="submit"
-            name="action"
-            value="export"
-            :disabled="selectedSchools.length === 0"
-            class="w-full h-8.5 border border-slate-200 text-slate-700 bg-white rounded-lg text-left px-3 hover:bg-slate-50 flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <span>Export Selected</span>
-            <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-          </button>
-
-          <button 
-            type="button"
-            :disabled="selectedSchools.length === 0"
-            class="w-full h-8.5 border border-slate-200 text-slate-700 bg-white rounded-lg text-left px-3 hover:bg-slate-50 flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <span>Open Cluster Plan</span>
-            <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.168.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
-          </button>
-        </form>
-      </div>
-
-    </div>
-
-  </div>
-
-  <!-- Legacy modal-container removed; global drawer-container in shell is used instead -->
 
 </div>
 
-<!-- Helper script to trigger HTMX call for right-side intelligence panel -->
-<script>
-  function hx_get_intelligence(schoolId) {
-    htmx.ajax('GET', '/planning/intelligence?school_id=' + schoolId, { target: '#planning-intelligence-panel' });
-  }
-</script>
+<!-- Floating Bulk Actions Bar -->
+<div 
+x-show="selectedSchools.length > 0"
+x-transition:enter="transition ease-out duration-300 transform"
+x-transition:enter-start="translate-y-24 opacity-0"
+x-transition:enter-end="translate-y-0 opacity-100"
+x-transition:leave="transition ease-in duration-200 transform"
+x-transition:leave-start="translate-y-0 opacity-100"
+x-transition:leave-end="translate-y-24 opacity-0"
+class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 backdrop-blur-md text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-6 border border-slate-800/80"
+style="display: none;"
+>
+<div class="flex items-center gap-2 select-none">
+<span class="h-6 w-6 bg-blue-600 rounded-full flex items-center justify-center text-[11px] font-black text-white" x-text="selectedSchools.length"></span>
+<span class="text-[12px] font-extrabold text-slate-300">schools selected</span>
+</div>
+
+<div class="h-5 w-px bg-slate-700"></div>
+
+<form 
+hx-post="/planning/bulk-action" 
+hx-target="body"
+class="flex items-center gap-2"
+>
+{% csrf_token %}
+<template x-for="sid in selectedSchools">
+<input type="hidden" name="school_ids" :value="sid">
+</template>
+
+<button 
+type="submit"
+name="action"
+value="partner"
+class="h-8 px-4 bg-slate-800 hover:bg-slate-800 text-slate-200 rounded-xl text-[11px] font-bold flex items-center gap-1.5 transition-all"
+>
+<svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+Assign Partner
+</button>
+
+<button 
+type="submit"
+name="action"
+value="schedule"
+class="h-8 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[11px] font-bold flex items-center gap-1.5 transition-all shadow-md shadow-blue-500/10"
+>
+<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+Schedule Visits
+</button>
+
+<button 
+type="submit"
+name="action"
+value="export"
+class="h-8 px-4 bg-slate-800 hover:bg-slate-800 text-slate-300 rounded-xl text-[11px] font-bold flex items-center gap-1.5 transition-all"
+>
+<svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+Export Selected
+</button>
+</form>
+</div>
+
 {% endblock %}

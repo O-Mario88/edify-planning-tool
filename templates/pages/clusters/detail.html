@@ -5,180 +5,180 @@
 
 {% block shell_content %}
 <div class="p-6 max-w-7xl mx-auto space-y-6">
-  <!-- Back Nav & Header -->
-  <div>
-    <a href="/clusters" class="text-[11px] font-extrabold text-[var(--color-edify-primary)] hover:underline uppercase tracking-wider">&larr; Back to Cluster Directory</a>
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-2">
-      <div>
-        <h1 class="text-[26px] font-extrabold text-slate-800 tracking-tight">{{ cluster.name }}</h1>
-        <p class="text-[12.5px] text-[var(--text-secondary)] mt-0.5 font-semibold">
-          District: {{ cluster.district.name|default:cluster.district }} &bull; Sub-county: {{ cluster.subCounty.name|default:cluster.subCounty }}
-        </p>
-      </div>
-      
-      <!-- Actions buttons -->
-      {% if request.user.active_role in 'CCEO,CountryProgramLead,CountryDirector' %}
-        <div class="flex items-center gap-2">
-          <a href="/planning?action=training&cluster={{ cluster.id }}" class="h-10 px-4 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[12.5px] font-extrabold flex items-center justify-center transition-colors">
-            Schedule Group Training
-          </a>
-          <a href="/planning?action=meeting&cluster={{ cluster.id }}" class="h-10 px-4 rounded-lg border border-[var(--color-edify-border)] hover:bg-slate-50 text-[12.5px] font-bold text-slate-600 flex items-center justify-center transition-colors">
-            Schedule Cluster Meeting
-          </a>
-        </div>
-      {% endif %}
-    </div>
-  </div>
+<!-- Back Nav & Header -->
+<div>
+<a href="/clusters" class="text-[11px] font-extrabold text-[var(--color-edify-primary)] hover:underline uppercase tracking-wider">&larr; Back to Cluster Directory</a>
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-2">
+<div>
+<h1 class="text-[24px] font-extrabold text-slate-800 tracking-tight">{{ cluster.name }}</h1>
+<p class="text-[12px] text-[var(--text-secondary)] mt-0.5 font-semibold">
+District: {{ cluster.district.name|default:cluster.district }} &bull; Sub-county: {{ cluster.subCounty.name|default:cluster.subCounty }}
+</p>
+</div>
 
-  <div class="grid lg:grid-cols-3 gap-6">
-    <!-- Left Column: Cluster Information & Schools -->
-    <div class="lg:col-span-2 space-y-6">
-      <!-- Cluster Info Card -->
-      <div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm space-y-6">
-        <h3 class="text-[15px] font-extrabold text-slate-800 border-b border-slate-100 pb-3">Cluster Logistics &amp; Contacts</h3>
-        <div class="grid grid-cols-2 gap-y-4 gap-x-6 text-[12.5px]">
-          <div>
-            <p class="text-[10px] uppercase font-bold text-slate-400">Cluster Type</p>
-            <p class="font-semibold text-slate-800 mt-0.5">{{ cluster.clusterType|default:"Mixed" }}</p>
-          </div>
-          <div>
-            <p class="text-[10px] uppercase font-bold text-slate-400">Status</p>
-            <p class="font-semibold text-slate-800 mt-0.5 capitalize">{{ cluster.status }}</p>
-          </div>
-          <div>
-            <p class="text-[10px] uppercase font-bold text-slate-400">Cluster Leader</p>
-            <p class="font-semibold text-slate-800 mt-0.5">{{ cluster.clusterLeaderName|default:"None assigned" }}</p>
-          </div>
-          <div>
-            <p class="text-[10px] uppercase font-bold text-slate-400">Leader Phone</p>
-            <p class="font-semibold text-slate-800 mt-0.5">{{ cluster.clusterLeaderPhone|default:"None assigned" }}</p>
-          </div>
-        </div>
-      </div>
+<!-- Actions buttons -->
+{% if request.user.active_role in 'CCEO,Program Lead,CountryDirector' %}
+<div class="flex items-center gap-2">
+<a href="/planning?action=training&cluster={{ cluster.id }}" class="edify-action-button primary h-9 transition-all shadow-sm">
+Schedule Group Training
+</a>
+<a href="/planning?action=meeting&cluster={{ cluster.id }}" class="edify-action-button secondary h-9 transition-all shadow-sm">
+Schedule Cluster Meeting
+</a>
+</div>
+{% endif %}
+</div>
+</div>
 
-      <!-- Schools in Cluster Table -->
-      <div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm overflow-hidden">
-        <div class="px-6 py-4 border-b border-[var(--color-edify-divider)] flex items-center justify-between">
-          <h3 class="text-[15px] font-extrabold text-slate-800 tracking-tight">Assigned Roster</h3>
-          <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-600">{{ schools|length }} Schools</span>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-[12px] font-sans border-collapse">
-            <thead>
-              <tr class="bg-slate-50 border-b border-[var(--color-edify-divider)] text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                <th class="px-4 py-2.5">School ID</th>
-                <th class="px-4 py-2.5">School Name</th>
-                <th class="px-4 py-2.5">SSA Average</th>
-                <th class="px-4 py-2.5">Last Visit</th>
-                <th class="px-4 py-2.5">Last Training</th>
-                <th class="px-4 py-2.5">Readiness</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-[var(--color-edify-divider)]">
-              {% if schools %}
-                {% for s in schools %}
-                  <tr class="hover:bg-slate-50/50 transition-colors">
-                    <td class="px-4 py-3 font-bold text-[var(--color-edify-primary)]">{{ s.schoolId }}</td>
-                    <td class="px-4 py-3">
-                      <a href="/schools/{{ s.id }}" class="font-extrabold text-slate-800 hover:underline">{{ s.name }}</a>
-                    </td>
-                    <td class="px-4 py-3 font-extrabold text-slate-800">{{ s.current_ssa_average|floatformat:1|default:"-" }}</td>
-                    <td class="px-4 py-3 text-slate-500 font-semibold">{{ s.last_visit_date }}</td>
-                    <td class="px-4 py-3 text-slate-500 font-semibold">{{ s.last_training_date }}</td>
-                    <td class="px-4 py-3">
-                      <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider {% if s.planning_status == 'ready' %}bg-emerald-50 text-emerald-700{% elif s.planning_status == 'limited' %}bg-amber-50 text-amber-700{% else %}bg-slate-100 text-slate-500{% endif %}">
-                        {{ s.planning_status }}
-                      </span>
-                    </td>
-                  </tr>
-                {% endfor %}
-              {% else %}
-                <tr>
-                  <td colspan="6" class="px-4 py-8 text-center text-slate-400 font-semibold">No schools in this cluster.</td>
-                </tr>
-              {% endif %}
-            </tbody>
-          </table>
-        </div>
-      </div>
+<div class="grid lg:grid-cols-3 gap-6">
+<!-- Left Column: Cluster Information & Schools -->
+<div class="lg:col-span-2 space-y-6">
+<!-- Cluster Info Card -->
+<div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm space-y-6">
+<h3 class="text-[15px] font-extrabold text-slate-800 border-b border-slate-100 pb-3">Cluster Logistics &amp; Contacts</h3>
+<div class="grid grid-cols-2 gap-y-4 gap-x-6 text-[12px]">
+<div>
+<p class="text-[11px] uppercase font-bold text-slate-400">Cluster Type</p>
+<p class="font-semibold text-slate-800 mt-0.5">{{ cluster.clusterType|default:"Mixed" }}</p>
+</div>
+<div>
+<p class="text-[11px] uppercase font-bold text-slate-400">Status</p>
+<p class="font-semibold text-slate-800 mt-0.5 capitalize">{{ cluster.status }}</p>
+</div>
+<div>
+<p class="text-[11px] uppercase font-bold text-slate-400">Cluster Leader</p>
+<p class="font-semibold text-slate-800 mt-0.5">{{ cluster.clusterLeaderName|default:"None assigned" }}</p>
+</div>
+<div>
+<p class="text-[11px] uppercase font-bold text-slate-400">Leader Phone</p>
+<p class="font-semibold text-slate-800 mt-0.5">{{ cluster.clusterLeaderPhone|default:"None assigned" }}</p>
+</div>
+</div>
+</div>
 
-      <!-- Activity and Impact History -->
-      <div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm overflow-hidden">
-        <div class="px-6 py-4 border-b border-[var(--color-edify-divider)]">
-          <h3 class="text-[15px] font-extrabold text-slate-800 tracking-tight">Cluster Activity &amp; Improvement Impact</h3>
-        </div>
-        <div class="divide-y divide-[var(--color-edify-divider)] text-[12.5px]">
-          {% if activity_impact %}
-            {% for act in activity_impact %}
-              <div class="p-4 flex justify-between items-center hover:bg-slate-50/50 transition-colors">
-                <div>
-                  <h4 class="font-extrabold text-slate-800">{{ act.activityType|title|replace_underscore }}</h4>
-                  <p class="text-[11px] text-slate-400 font-semibold mt-0.5">Focus: {{ act.focusIntervention|title|replace_underscore }} &bull; Completed: {{ act.plannedDate }}</p>
-                </div>
-                <div class="text-right flex items-center gap-4">
-                  <div class="text-[12px] font-semibold">
-                    <span class="text-slate-400">Delta:</span>
-                    <span class="font-extrabold {% if act.impact.delta > 0 %}text-emerald-600{% elif act.impact.delta < 0 %}text-rose-600{% else %}text-slate-500{% endif %}">
-                      {% if act.impact.delta > 0 %}+{% endif %}{{ act.impact.delta|default:"-" }}
-                    </span>
-                  </div>
-                  <span class="inline-flex items-center rounded px-2 py-0.5 text-[9.5px] font-extrabold {% if act.impact.status == 'Improved' %}bg-emerald-50 text-emerald-700{% elif act.impact.status == 'Declined' %}bg-rose-50 text-rose-700{% else %}bg-slate-100 text-slate-600{% endif %}">
-                    {{ act.impact.status }}
-                  </span>
-                </div>
-              </div>
-            {% endfor %}
-          {% else %}
-            <div class="p-8 text-center text-slate-400 font-semibold">No activity impact logs recorded.</div>
-          {% endif %}
-        </div>
-      </div>
-    </div>
+<!-- Schools in Cluster Table -->
+<div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm overflow-hidden">
+<div class="px-6 py-4 border-b border-[var(--color-edify-divider)] flex items-center justify-between">
+<h3 class="text-[15px] font-extrabold text-slate-800 tracking-tight">Assigned Roster</h3>
+<span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-600">{{ schools|length }} Schools</span>
+</div>
+<div class="overflow-x-auto">
+<table class="edify-data-table w-full text-left text-[12px] font-sans border-collapse">
+<thead>
+<tr class="bg-slate-50 border-b border-[var(--color-edify-divider)] text-[11px] font-bold text-slate-400 uppercase tracking-wider text-left">
+<th class="px-4 py-2.5">School ID</th>
+<th class="px-4 py-2.5">School Name</th>
+<th class="px-4 py-2.5">SSA Average</th>
+<th class="px-4 py-2.5">Last Visit</th>
+<th class="px-4 py-2.5">Last Training</th>
+<th class="px-4 py-2.5">Readiness</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[var(--color-edify-divider)]">
+{% if schools %}
+{% for s in schools %}
+<tr class="hover:bg-slate-50/50 transition-colors">
+<td class="px-4 py-3 font-bold text-[var(--color-edify-primary)]">{{ s.schoolId }}</td>
+<td class="px-4 py-3">
+<a href="/schools/{{ s.id }}" class="font-extrabold text-slate-800 hover:underline">{{ s.name }}</a>
+</td>
+<td class="px-4 py-3 font-extrabold text-slate-800">{{ s.current_ssa_average|floatformat:1|default:"-" }}</td>
+<td class="px-4 py-3 text-slate-500 font-semibold">{{ s.last_visit_date }}</td>
+<td class="px-4 py-3 text-slate-500 font-semibold">{{ s.last_training_date }}</td>
+<td class="px-4 py-3">
+<span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider {% if s.planning_status == 'ready' %}bg-emerald-50 text-emerald-700{% elif s.planning_status == 'limited' %}bg-amber-50 text-amber-700{% else %}bg-slate-100 text-slate-500{% endif %}">
+{{ s.planning_status }}
+</span>
+</td>
+</tr>
+{% endfor %}
+{% else %}
+<tr>
+<td colspan="6" class="px-4 py-8 text-center text-slate-400 font-semibold">No schools in this cluster.</td>
+</tr>
+{% endif %}
+</tbody>
+</table>
+</div>
+</div>
 
-    <!-- Right Column: Weakest interventions and scorecard -->
-    <div class="space-y-6">
-      <!-- Weakest 4 Interventions -->
-      <div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm space-y-4">
-        <h3 class="text-[15px] font-extrabold text-slate-800 border-b border-slate-100 pb-3">Struggling Interventions</h3>
-        <div class="space-y-3">
-          {% if weakest_interventions %}
-            {% for item in weakest_interventions|slice:":4" %}
-              <div class="flex items-center justify-between text-[12px] font-semibold text-slate-700">
-                <div class="flex items-center gap-2">
-                  <span class="h-2 w-2 rounded-full {% if item.score < 5.5 %}bg-rose-500{% else %}bg-amber-500{% endif %}"></span>
-                  <span class="truncate">{{ item.label }}</span>
-                </div>
-                <span class="font-extrabold text-slate-800">{{ item.score|floatformat:1 }}</span>
-              </div>
-            {% endfor %}
-          {% else %}
-            <p class="text-[11.5px] text-slate-400 font-semibold">No intervention averages found.</p>
-          {% endif %}
-        </div>
-      </div>
+<!-- Activity and Impact History -->
+<div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm overflow-hidden">
+<div class="px-6 py-4 border-b border-[var(--color-edify-divider)]">
+<h3 class="text-[15px] font-extrabold text-slate-800 tracking-tight">Cluster Activity &amp; Improvement Impact</h3>
+</div>
+<div class="divide-y divide-[var(--color-edify-divider)] text-[12px]">
+{% if activity_impact %}
+{% for act in activity_impact %}
+<div class="p-4 flex justify-between items-center hover:bg-slate-50/50 transition-colors">
+<div>
+<h4 class="font-extrabold text-slate-800">{{ act.activityType|title|replace_underscore }}</h4>
+<p class="text-[11px] text-slate-400 font-semibold mt-0.5">Focus: {{ act.focusIntervention|title|replace_underscore }} &bull; Completed: {{ act.plannedDate }}</p>
+</div>
+<div class="text-right flex items-center gap-4">
+<div class="text-[12px] font-semibold">
+<span class="text-slate-400">Delta:</span>
+<span class="font-extrabold {% if act.impact.delta > 0 %}text-emerald-600{% elif act.impact.delta < 0 %}text-rose-600{% else %}text-slate-500{% endif %}">
+{% if act.impact.delta > 0 %}+{% endif %}{{ act.impact.delta|default:"-" }}
+</span>
+</div>
+<span class="inline-flex items-center rounded px-2 py-0.5 text-[11px] font-extrabold {% if act.impact.status == 'Improved' %}bg-emerald-50 text-emerald-700{% elif act.impact.status == 'Declined' %}bg-rose-50 text-rose-700{% else %}bg-slate-100 text-slate-600{% endif %}">
+{{ act.impact.status }}
+</span>
+</div>
+</div>
+{% endfor %}
+{% else %}
+<div class="p-8 text-center text-slate-400 font-semibold">No activity impact logs recorded.</div>
+{% endif %}
+</div>
+</div>
+</div>
 
-      <!-- Full Intervention Scorecard -->
-      <div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm space-y-4">
-        <h3 class="text-[15px] font-extrabold text-slate-800 border-b border-slate-100 pb-3">Full Cluster Scorecard</h3>
-        <div class="space-y-3.5">
-          {% if intervention_summary %}
-            {% for item in intervention_summary %}
-              <div>
-                <div class="flex items-center justify-between text-[11.5px] font-semibold text-slate-700">
-                  <span class="truncate">{{ item.label }}</span>
-                  <span class="font-extrabold">{{ item.score|floatformat:1 }}</span>
-                </div>
-                <div class="h-1.5 w-full bg-slate-100 rounded-full mt-1 overflow-hidden">
-                  <div class="h-full bg-[var(--color-edify-primary)] rounded-full" style="width: {{ item.score|multiply:10 }}%"></div>
-                </div>
-              </div>
-            {% endfor %}
-          {% else %}
-            <p class="text-[11.5px] text-slate-400 font-semibold">No scores recorded.</p>
-          {% endif %}
-        </div>
-      </div>
-    </div>
-  </div>
+<!-- Right Column: Weakest interventions and scorecard -->
+<div class="space-y-6">
+<!-- Weakest 4 Interventions -->
+<div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm space-y-4">
+<h3 class="text-[15px] font-extrabold text-slate-800 border-b border-slate-100 pb-3">Struggling Interventions</h3>
+<div class="space-y-3">
+{% if weakest_interventions %}
+{% for item in weakest_interventions|slice:":4" %}
+<div class="flex items-center justify-between text-[12px] font-semibold text-slate-700">
+<div class="flex items-center gap-2">
+<span class="h-2 w-2 rounded-full {% if item.score < 5.5 %}bg-rose-500{% else %}bg-amber-500{% endif %}"></span>
+<span class="truncate">{{ item.label }}</span>
+</div>
+<span class="font-extrabold text-slate-800">{{ item.score|floatformat:1 }}</span>
+</div>
+{% endfor %}
+{% else %}
+<p class="text-[12px] text-slate-400 font-semibold">No intervention averages found.</p>
+{% endif %}
+</div>
+</div>
+
+<!-- Full Intervention Scorecard -->
+<div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm space-y-4">
+<h3 class="text-[15px] font-extrabold text-slate-800 border-b border-slate-100 pb-3">Full Cluster Scorecard</h3>
+<div class="space-y-3.5">
+{% if intervention_summary %}
+{% for item in intervention_summary %}
+<div>
+<div class="flex items-center justify-between text-[12px] font-semibold text-slate-700">
+<span class="truncate">{{ item.label }}</span>
+<span class="font-extrabold">{{ item.score|floatformat:1 }}</span>
+</div>
+<div class="h-1.5 w-full bg-slate-100 rounded-full mt-1 overflow-hidden">
+<div class="h-full bg-[var(--color-edify-primary)] rounded-full" style="width: {{ item.score|multiply:10 }}%"></div>
+</div>
+</div>
+{% endfor %}
+{% else %}
+<p class="text-[12px] text-slate-400 font-semibold">No scores recorded.</p>
+{% endif %}
+</div>
+</div>
+</div>
+</div>
 </div>
 {% endblock %}

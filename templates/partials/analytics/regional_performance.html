@@ -1,0 +1,55 @@
+<div class="bg-white rounded-xl border border-slate-100 p-4 shadow-sm space-y-4">
+<div class="flex items-center justify-between border-b border-slate-50 pb-2">
+<div>
+<h3 class="text-[14px] font-black text-slate-800 tracking-tight flex items-center gap-1.5">
+<span>Regional Performance</span>
+<span class="text-[11px] text-slate-400 cursor-help" title="Average scores and activity totals across regional zones">ℹ️</span>
+</h3>
+<p class="text-[11px] text-slate-400 font-semibold mt-0.5">Regional activity and SSA coverage</p>
+</div>
+
+<select class="bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-extrabold text-slate-500 py-1 px-2.5 outline-none cursor-pointer">
+<option>This Quarter</option>
+</select>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+<!-- Left side: Uganda simplified regional SVG map -->
+<div class="flex items-center justify-center">
+<svg class="h-36 w-36 overflow-visible" viewBox="0 0 100 100">
+<!-- Northern Region (Light Blue) -->
+<path d="M 10 30 Q 30 10 50 20 Q 70 10 90 25 Q 85 45 65 50 Q 40 50 10 30 Z" fill="#93c5fd" stroke="#ffffff" stroke-width="2" class="hover:opacity-85 transition-opacity cursor-pointer">
+<title>Northern Region</title>
+</path>
+<!-- Western Region (Purple-blue) -->
+<path d="M 10 30 Q 40 50 35 65 Q 25 80 15 90 Q 5 60 10 30 Z" fill="#c084fc" stroke="#ffffff" stroke-width="2" class="hover:opacity-85 transition-opacity cursor-pointer">
+<title>Western Region</title>
+</path>
+<!-- Eastern Region (Teal-green) -->
+<path d="M 90 25 Q 85 45 65 50 Q 75 70 85 85 Q 95 55 90 25 Z" fill="#2dd4bf" stroke="#ffffff" stroke-width="2" class="hover:opacity-85 transition-opacity cursor-pointer">
+<title>Eastern Region</title>
+</path>
+<!-- Central Region (Blue-gray) -->
+<path d="M 35 65 Q 65 50 75 70 Q 55 90 35 90 Q 25 80 35 65 Z" fill="#818cf8" stroke="#ffffff" stroke-width="2" class="hover:opacity-85 transition-opacity cursor-pointer">
+<title>Central Region</title>
+</path>
+</svg>
+</div>
+
+<!-- Right side: Region statistics details list -->
+<div class="space-y-3">
+{% for reg in regional_performance %}
+<div class="flex items-center justify-between text-[11px] font-bold text-slate-600 border-b border-slate-50 pb-1">
+<div class="flex items-center gap-1.5">
+<span class="h-2 w-2 rounded-full {% if reg.name == 'Northern' %}bg-blue-300{% elif reg.name == 'Western' %}bg-purple-400{% elif reg.name == 'Eastern' %}bg-teal-400{% else %}bg-indigo-400{% endif %}"></span>
+<span>{{ reg.name }}</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-slate-400 font-semibold">({{ reg.completed }} acts)</span>
+<span class="font-extrabold text-slate-800">{{ reg.ssa_avg }} Avg</span>
+</div>
+</div>
+{% endfor %}
+</div>
+</div>
+</div>

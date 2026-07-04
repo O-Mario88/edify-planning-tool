@@ -5,121 +5,121 @@
 
 {% block shell_content %}
 <div class="p-6 max-w-4xl mx-auto space-y-6">
-  <!-- Page Header -->
-  <div>
-    <a href="/schools" class="text-[11px] font-extrabold text-[var(--color-edify-primary)] hover:underline uppercase tracking-wider">&larr; Back to School Directory</a>
-    <h1 class="text-[26px] font-extrabold text-slate-800 tracking-tight mt-2">Data Intake Portal</h1>
-    <p class="text-[12.5px] text-[var(--text-secondary)] mt-1 font-semibold">Upload onboarding school roster spreadsheet files or school self-assessment (SSA) reports.</p>
-  </div>
+<!-- Page Header -->
+<div>
+<a href="/schools" class="text-[11px] font-extrabold text-[var(--color-edify-primary)] hover:underline uppercase tracking-wider">&larr; Back to School Directory</a>
+<h1 class="text-[24px] font-extrabold text-slate-800 tracking-tight mt-2">Data Intake Portal</h1>
+<p class="text-[12px] text-[var(--text-secondary)] mt-1 font-semibold">Upload onboarding school roster spreadsheet files or school self-assessment (SSA) reports.</p>
+</div>
 
-  <div class="grid md:grid-cols-2 gap-6">
-    <!-- School Upload Panel -->
-    <div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm space-y-6">
-      <div>
-        <h3 class="text-[15px] font-extrabold text-slate-800">School Directory Upload</h3>
-        <p class="text-[11.5px] text-slate-500 mt-1 font-semibold">Upload a CSV or Excel sheet containing new schools, district definitions, and account owners.</p>
-      </div>
+<div class="grid md:grid-cols-2 gap-6">
+<!-- School Upload Panel -->
+<div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm space-y-6">
+<div>
+<h3 class="text-[15px] font-extrabold text-slate-800">School Directory Upload</h3>
+<p class="text-[12px] text-slate-500 mt-1 font-semibold">Upload a CSV or Excel sheet containing new schools, district definitions, and account owners.</p>
+</div>
 
-      <form 
-        hx-post="/schools/upload" 
-        hx-encoding="multipart/form-data" 
-        hx-target="#upload-results" 
-        hx-indicator="#schools-indicator"
-        class="space-y-4"
-      >
-        {% csrf_token %}
-        <div>
-          <label for="schools_file" class="block text-[10.5px] font-bold uppercase tracking-wider text-slate-400">Roster File (CSV / XLSX)</label>
-          <input 
-            type="file" 
-            name="schools_file" 
-            id="schools_file"
-            accept=".csv, .xlsx"
-            required
-            class="w-full text-[12px] text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-[11.5px] file:font-extrabold file:bg-[var(--color-edify-soft)] file:text-[var(--color-edify-primary)] hover:file:bg-[var(--color-edify-soft)]/80 mt-2"
-          >
-        </div>
+<form 
+hx-post="/schools/upload" 
+hx-encoding="multipart/form-data" 
+hx-target="#upload-results" 
+hx-indicator="#schools-indicator"
+class="space-y-4"
+>
+{% csrf_token %}
+<div>
+<label for="schools_file" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Roster File (CSV / XLSX)</label>
+<input 
+type="file" 
+name="schools_file" 
+id="schools_file"
+accept=".csv, .xlsx"
+required
+class="w-full text-[12px] text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-[12px] file:font-extrabold file:bg-[var(--color-edify-soft)] file:text-[var(--color-edify-primary)] hover:file:bg-[var(--color-edify-soft)]/80 mt-2"
+>
+</div>
 
-        <div class="flex items-center">
-          <input 
-            id="update_existing" 
-            name="update_existing" 
-            type="checkbox" 
-            class="h-4 w-4 text-[var(--color-edify-primary)] focus:ring-[var(--color-edify-primary)] border-slate-300 rounded"
-          >
-          <label for="update_existing" class="ml-2 block text-[11.5px] text-slate-500 font-semibold select-none">
-            Update existing school records
-          </label>
-        </div>
+<div class="flex items-center">
+<input 
+id="update_existing" 
+name="update_existing" 
+type="checkbox" 
+class="h-4 w-4 text-[var(--color-edify-primary)] focus:ring-[var(--color-edify-primary)] border-slate-300 rounded"
+>
+<label for="update_existing" class="ml-2 block text-[12px] text-slate-500 font-semibold select-none">
+Update existing school records
+</label>
+</div>
 
-        <div class="flex items-center gap-3">
-          <button 
-            type="submit" 
-            class="h-10 px-4 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[12.5px] font-extrabold transition-all"
-          >
-            Upload Schools
-          </button>
-          
-          <!-- Loading Indicator spinner -->
-          <div id="schools-indicator" class="htmx-indicator flex items-center gap-2 text-slate-500 text-[12px]">
-            <svg class="animate-spin h-4 w-4 text-[var(--color-edify-primary)]" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <span>Processing batch...</span>
-          </div>
-        </div>
-      </form>
-    </div>
+<div class="flex items-center gap-3">
+<button 
+type="submit" 
+class="h-10 px-4 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[12px] font-extrabold transition-all"
+>
+Upload Schools
+</button>
 
-    <!-- SSA Upload Panel -->
-    <div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm space-y-6">
-      <div>
-        <h3 class="text-[15px] font-extrabold text-slate-800">School Self-Assessment (SSA)</h3>
-        <p class="text-[11.5px] text-slate-500 mt-1 font-semibold">Upload verified SSA scores for the current fiscal year. School planning is locked until current SSA is recorded.</p>
-      </div>
+<!-- Loading Indicator spinner -->
+<div id="schools-indicator" class="htmx-indicator flex items-center gap-2 text-slate-500 text-[12px]">
+<svg class="animate-spin h-4 w-4 text-[var(--color-edify-primary)]" fill="none" viewBox="0 0 24 24">
+<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"></circle>
+<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+</svg>
+<span>Processing batch...</span>
+</div>
+</div>
+</form>
+</div>
 
-      <form 
-        hx-post="/schools/upload" 
-        hx-encoding="multipart/form-data" 
-        hx-target="#upload-results" 
-        hx-indicator="#ssa-indicator"
-        class="space-y-4"
-      >
-        {% csrf_token %}
-        <div>
-          <label for="ssa_file" class="block text-[10.5px] font-bold uppercase tracking-wider text-slate-400">Assessment File (CSV / XLSX)</label>
-          <input 
-            type="file" 
-            name="ssa_file" 
-            id="ssa_file"
-            accept=".csv, .xlsx"
-            required
-            class="w-full text-[12px] text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-[11.5px] file:font-extrabold file:bg-[var(--color-edify-soft)] file:text-[var(--color-edify-primary)] hover:file:bg-[var(--color-edify-soft)]/80 mt-2"
-          >
-        </div>
+<!-- SSA Upload Panel -->
+<div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm space-y-6">
+<div>
+<h3 class="text-[15px] font-extrabold text-slate-800">School Self-Assessment (SSA)</h3>
+<p class="text-[12px] text-slate-500 mt-1 font-semibold">Upload verified SSA scores for the current fiscal year. School planning is locked until current SSA is recorded.</p>
+</div>
 
-        <div class="flex items-center gap-3">
-          <button 
-            type="submit" 
-            class="h-10 px-4 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[12.5px] font-extrabold transition-all"
-          >
-            Upload SSA
-          </button>
-          
-          <div id="ssa-indicator" class="htmx-indicator flex items-center gap-2 text-slate-500 text-[12px]">
-            <svg class="animate-spin h-4 w-4 text-[var(--color-edify-primary)]" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <span>Processing batch...</span>
-          </div>
-        </div>
-      </form>
-    </div>
-  </div>
+<form 
+hx-post="/schools/upload" 
+hx-encoding="multipart/form-data" 
+hx-target="#upload-results" 
+hx-indicator="#ssa-indicator"
+class="space-y-4"
+>
+{% csrf_token %}
+<div>
+<label for="ssa_file" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Assessment File (CSV / XLSX)</label>
+<input 
+type="file" 
+name="ssa_file" 
+id="ssa_file"
+accept=".csv, .xlsx"
+required
+class="w-full text-[12px] text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-[12px] file:font-extrabold file:bg-[var(--color-edify-soft)] file:text-[var(--color-edify-primary)] hover:file:bg-[var(--color-edify-soft)]/80 mt-2"
+>
+</div>
 
-  <!-- Upload Results Output (HTMX Target) -->
-  <div id="upload-results" class="space-y-4"></div>
+<div class="flex items-center gap-3">
+<button 
+type="submit" 
+class="h-10 px-4 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[12px] font-extrabold transition-all"
+>
+Upload SSA
+</button>
+
+<div id="ssa-indicator" class="htmx-indicator flex items-center gap-2 text-slate-500 text-[12px]">
+<svg class="animate-spin h-4 w-4 text-[var(--color-edify-primary)]" fill="none" viewBox="0 0 24 24">
+<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"></circle>
+<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+</svg>
+<span>Processing batch...</span>
+</div>
+</div>
+</form>
+</div>
+</div>
+
+<!-- Upload Results Output (HTMX Target) -->
+<div id="upload-results" class="space-y-4"></div>
 </div>
 {% endblock %}

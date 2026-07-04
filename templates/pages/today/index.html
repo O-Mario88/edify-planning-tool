@@ -4,116 +4,116 @@
 
 {% block shell_content %}
 <div class="p-6 max-w-5xl mx-auto space-y-6">
-  <!-- Header -->
-  <div>
-    <h1 class="text-[26px] font-extrabold text-slate-800 tracking-tight">Today</h1>
-    <p class="text-[12.5px] text-[var(--text-secondary)] mt-1 font-semibold">{{ today|date:"l, j F Y" }} · Work waiting on you right now</p>
-  </div>
+<!-- Header -->
+<div>
+<h1 class="text-[24px] font-extrabold text-slate-800 tracking-tight">Today</h1>
+<p class="text-[12px] text-[var(--text-secondary)] mt-1 font-semibold">{{ today|date:"l, j F Y" }} · Work waiting on you right now</p>
+</div>
 
-  <!-- Overdue Alert -->
-  {% if overdue %}
-  <div class="bg-rose-50 border border-rose-200 rounded-2xl p-4">
-    <div class="flex items-center gap-3 mb-3">
-      <div class="h-8 w-8 rounded-lg bg-rose-100 grid place-items-center">
-        <svg class="h-4 w-4 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-      </div>
-      <div>
-        <p class="text-[13px] font-extrabold text-rose-800">{{ overdue|length }} Overdue Activit{{ overdue|length|pluralize:"y,ies" }}</p>
-        <p class="text-[11px] text-rose-500">These were due in the past and need urgent action</p>
-      </div>
-    </div>
-    <ul class="space-y-2">
-      {% for act in overdue %}
-      <li class="flex items-center justify-between bg-white rounded-xl px-4 py-3 border border-rose-100">
-        <div>
-          <p class="text-[12.5px] font-bold text-slate-800">{{ act.activity_type|title }}{% if act.school %} @ {{ act.school.name }}{% endif %}</p>
-          <p class="text-[11px] text-slate-400">Due {{ act.planned_date }}</p>
-        </div>
-        <a href="/my-plan/{{ act.id }}" class="text-[11px] font-bold text-rose-600 hover:underline">Take Action →</a>
-      </li>
-      {% endfor %}
-    </ul>
-  </div>
-  {% endif %}
+<!-- Overdue Alert -->
+{% if overdue %}
+<div class="bg-rose-50 border border-rose-200 rounded-2xl p-4">
+<div class="flex items-center gap-3 mb-3">
+<div class="h-8 w-8 rounded-lg bg-rose-100 grid place-items-center">
+<svg class="h-4 w-4 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+</div>
+<div>
+<p class="text-[14px] font-extrabold text-rose-800">{{ overdue|length }} Overdue Activit{{ overdue|length|pluralize:"y,ies" }}</p>
+<p class="text-[11px] text-rose-500">These were due in the past and need urgent action</p>
+</div>
+</div>
+<ul class="space-y-2">
+{% for act in overdue %}
+<li class="flex items-center justify-between bg-white rounded-xl px-4 py-3 border border-rose-100">
+<div>
+<p class="text-[12px] font-bold text-slate-800">{{ act.activity_type|title }}{% if act.school %} @ {{ act.school.name }}{% endif %}</p>
+<p class="text-[11px] text-slate-400">Due {{ act.planned_date }}</p>
+</div>
+<a href="/my-plan/{{ act.id }}" class="text-[11px] font-bold text-rose-600 hover:underline">Take Action →</a>
+</li>
+{% endfor %}
+</ul>
+</div>
+{% endif %}
 
-  <!-- Today's Activities -->
-  <div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm">
-    <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-      <h2 class="text-[14px] font-extrabold text-slate-700">Today's Activities</h2>
-      <span class="text-[11.5px] font-bold text-slate-400">{{ today|date:"j F" }}</span>
-    </div>
-    {% if today_activities %}
-    <ul class="divide-y divide-slate-100">
-      {% for act in today_activities %}
-      <li class="px-5 py-3.5 flex items-center justify-between group">
-        <div class="flex items-center gap-3">
-          <div class="h-9 w-9 rounded-xl grid place-items-center
-            {% if act.activity_type == 'school_visit' %}bg-indigo-50{% elif act.activity_type == 'group_training' %}bg-violet-50{% else %}bg-slate-50{% endif %}">
-            <svg class="h-4 w-4 {% if act.activity_type == 'school_visit' %}text-indigo-600{% elif act.activity_type == 'group_training' %}text-violet-600{% else %}text-slate-400{% endif %}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              {% if act.activity_type == 'school_visit' %}
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
-              {% else %}
-                <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"/>
-              {% endif %}
-            </svg>
-          </div>
-          <div>
-            <p class="text-[13px] font-bold text-slate-800">{{ act.activity_type|title }}{% if act.school %} @ {{ act.school.name }}{% endif %}</p>
-            <p class="text-[11px] text-slate-400">{{ act.cluster.name|default:"No cluster" }}</p>
-          </div>
-        </div>
-        <div class="flex items-center gap-3">
-          <span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full
-            {% if act.status == 'completed' %}bg-emerald-50 text-emerald-700{% elif act.status == 'scheduled' %}bg-blue-50 text-blue-700{% else %}bg-amber-50 text-amber-700{% endif %}">
-            {{ act.status|title }}
-          </span>
-          <a href="/my-plan/{{ act.id }}" class="opacity-0 group-hover:opacity-100 text-[11px] font-bold text-[var(--color-edify-primary)] transition-opacity">View →</a>
-        </div>
-      </li>
-      {% endfor %}
-    </ul>
-    {% else %}
-    <div class="p-8 text-center">
-      <p class="text-[22px] mb-2">✅</p>
-      <p class="text-[13px] font-semibold text-slate-500">No activities scheduled for today</p>
-      <a href="/planning" class="mt-3 inline-flex items-center text-[11.5px] font-bold text-[var(--color-edify-primary)] hover:underline">Schedule an activity →</a>
-    </div>
-    {% endif %}
-  </div>
+<!-- Today's Activities -->
+<div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm">
+<div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+<h2 class="text-[14px] font-extrabold text-slate-700">Today's Activities</h2>
+<span class="text-[12px] font-bold text-slate-400">{{ today|date:"j F" }}</span>
+</div>
+{% if today_activities %}
+<ul class="divide-y divide-slate-100">
+{% for act in today_activities %}
+<li class="px-5 py-3.5 flex items-center justify-between group">
+<div class="flex items-center gap-3">
+<div class="h-9 w-9 rounded-xl grid place-items-center
+{% if act.activity_type == 'school_visit' %}bg-indigo-50{% elif act.activity_type == 'group_training' %}bg-violet-50{% else %}bg-slate-50{% endif %}">
+<svg class="h-4 w-4 {% if act.activity_type == 'school_visit' %}text-indigo-600{% elif act.activity_type == 'group_training' %}text-violet-600{% else %}text-slate-400{% endif %}" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+{% if act.activity_type == 'school_visit' %}
+<path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
+{% else %}
+<path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"/>
+{% endif %}
+</svg>
+</div>
+<div>
+<p class="text-[14px] font-bold text-slate-800">{{ act.activity_type|title }}{% if act.school %} @ {{ act.school.name }}{% endif %}</p>
+<p class="text-[11px] text-slate-400">{{ act.cluster.name|default:"No cluster" }}</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<span class="text-[11px] font-bold px-2 py-0.5 rounded-full
+{% if act.status == 'completed' %}bg-emerald-50 text-emerald-700{% elif act.status == 'scheduled' %}bg-blue-50 text-blue-700{% else %}bg-amber-50 text-amber-700{% endif %}">
+{{ act.status|title }}
+</span>
+<a href="/my-plan/{{ act.id }}" class="opacity-0 group-hover:opacity-100 text-[11px] font-bold text-[var(--color-edify-primary)] transition-opacity">View →</a>
+</div>
+</li>
+{% endfor %}
+</ul>
+{% else %}
+<div class="p-8 text-center">
+<p class="text-[20px] mb-2">✅</p>
+<p class="text-[14px] font-semibold text-slate-500">No activities scheduled for today</p>
+<a href="/planning" class="mt-3 inline-flex items-center text-[12px] font-bold text-[var(--color-edify-primary)] hover:underline">Schedule an activity →</a>
+</div>
+{% endif %}
+</div>
 
-  <!-- This Week Upcoming -->
-  {% if upcoming_week %}
-  <div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm">
-    <div class="px-5 py-4 border-b border-slate-100">
-      <h2 class="text-[14px] font-extrabold text-slate-700">Coming This Week</h2>
-    </div>
-    <ul class="divide-y divide-slate-100">
-      {% for act in upcoming_week %}
-      <li class="px-5 py-3 flex items-center justify-between">
-        <div>
-          <p class="text-[12.5px] font-bold text-slate-800">{{ act.activity_type|title }}{% if act.school %} @ {{ act.school.name }}{% endif %}</p>
-          <p class="text-[11px] text-slate-400">{{ act.planned_date|date:"D, j M" }}</p>
-        </div>
-        <a href="/my-plan/{{ act.id }}" class="text-[11px] text-slate-400 hover:text-indigo-600 transition-colors">→</a>
-      </li>
-      {% endfor %}
-    </ul>
-  </div>
-  {% endif %}
+<!-- This Week Upcoming -->
+{% if upcoming_week %}
+<div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm">
+<div class="px-5 py-4 border-b border-slate-100">
+<h2 class="text-[14px] font-extrabold text-slate-700">Coming This Week</h2>
+</div>
+<ul class="divide-y divide-slate-100">
+{% for act in upcoming_week %}
+<li class="px-5 py-3 flex items-center justify-between">
+<div>
+<p class="text-[12px] font-bold text-slate-800">{{ act.activity_type|title }}{% if act.school %} @ {{ act.school.name }}{% endif %}</p>
+<p class="text-[11px] text-slate-400">{{ act.planned_date|date:"D, j M" }}</p>
+</div>
+<a href="/my-plan/{{ act.id }}" class="text-[11px] text-slate-400 hover:text-indigo-600 transition-colors">→</a>
+</li>
+{% endfor %}
+</ul>
+</div>
+{% endif %}
 
-  <!-- Evidence Gap -->
-  {% if evidence_gap %}
-  <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4">
-    <h3 class="text-[13px] font-extrabold text-amber-800 mb-3">📎 Evidence Missing ({{ evidence_gap|length }})</h3>
-    <ul class="space-y-2">
-      {% for act in evidence_gap %}
-      <li class="flex items-center justify-between bg-white rounded-xl px-4 py-2.5 border border-amber-100">
-        <p class="text-[12px] font-semibold text-slate-700">{{ act.activity_type|title }}{% if act.school %} @ {{ act.school.name }}{% endif %}</p>
-        <a href="/my-plan/{{ act.id }}" class="text-[11px] font-bold text-amber-700 hover:underline">Upload Evidence →</a>
-      </li>
-      {% endfor %}
-    </ul>
-  </div>
-  {% endif %}
+<!-- Evidence Gap -->
+{% if evidence_gap %}
+<div class="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+<h3 class="text-[14px] font-extrabold text-amber-800 mb-3">📎 Evidence Missing ({{ evidence_gap|length }})</h3>
+<ul class="space-y-2">
+{% for act in evidence_gap %}
+<li class="flex items-center justify-between bg-white rounded-xl px-4 py-2.5 border border-amber-100">
+<p class="text-[12px] font-semibold text-slate-700">{{ act.activity_type|title }}{% if act.school %} @ {{ act.school.name }}{% endif %}</p>
+<a href="/my-plan/{{ act.id }}" class="text-[11px] font-bold text-amber-700 hover:underline">Upload Evidence →</a>
+</li>
+{% endfor %}
+</ul>
+</div>
+{% endif %}
 </div>
 {% endblock %}

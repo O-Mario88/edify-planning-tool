@@ -1,0 +1,84 @@
+{% extends "components/drawers/base_drawer.html" %}
+
+{% block drawer_title %}Schedule Report{% endblock %}
+{% block drawer_subtitle %}Configure automatic email notifications and reports export{% endblock %}
+
+{% block drawer_body %}
+<form 
+x-data="{ frequency: 'weekly', email: 'director@edify.org' }"
+@submit.prevent="alert('Report delivery schedule updated! A sample preview has been sent to ' + email); $dispatch('close-drawer');"
+class="space-y-4 text-[12px] font-sans"
+>
+<div class="space-y-1">
+<label class="block font-bold text-slate-700">Recipient Email Address</label>
+<input 
+type="email" 
+x-model="email"
+required
+class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-slate-700 focus:bg-white focus:outline-none"
+>
+</div>
+
+<div class="space-y-1">
+<label class="block font-bold text-slate-700">Report Frequency</label>
+<select x-model="frequency" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-slate-700 cursor-pointer">
+<option value="daily">Daily summary (End of day)</option>
+<option value="weekly">Weekly digest (Every Friday at 4:00 PM)</option>
+<option value="monthly">Monthly deep-dive (1st of every month)</option>
+</select>
+</div>
+
+<div class="space-y-1">
+<label class="block font-bold text-slate-700">Output Format</label>
+<div class="flex items-center gap-4 mt-1">
+<label class="inline-flex items-center gap-1.5 font-semibold text-slate-700 cursor-pointer">
+<input type="radio" name="format" value="pdf" checked class="accent-[#2e505f]">
+<span>Audited PDF Document</span>
+</label>
+<label class="inline-flex items-center gap-1.5 font-semibold text-slate-700 cursor-pointer">
+<input type="radio" name="format" value="csv" class="accent-[#2e505f]">
+<span>Raw Excel/CSV Sheet</span>
+</label>
+</div>
+</div>
+
+<div class="space-y-2 mt-4">
+<label class="block font-bold text-slate-700">Include Analytics Categories</label>
+<div class="grid grid-cols-2 gap-2">
+<label class="inline-flex items-center gap-1.5 font-semibold text-slate-700 cursor-pointer">
+<input type="checkbox" checked class="accent-[#2e505f]">
+<span>Target Achievement</span>
+</label>
+<label class="inline-flex items-center gap-1.5 font-semibold text-slate-700 cursor-pointer">
+<input type="checkbox" checked class="accent-[#2e505f]">
+<span>Trained Counts</span>
+</label>
+<label class="inline-flex items-center gap-1.5 font-semibold text-slate-700 cursor-pointer">
+<input type="checkbox" checked class="accent-[#2e505f]">
+<span>SSA Performance</span>
+</label>
+<label class="inline-flex items-center gap-1.5 font-semibold text-slate-700 cursor-pointer">
+<input type="checkbox" class="accent-[#2e505f]">
+<span>Staff Performance</span>
+</label>
+</div>
+</div>
+
+<!-- Action buttons -->
+<div class="drawer-footer">
+<button 
+type="button" 
+@click="$dispatch('close-drawer')"
+class="px-5 h-9 rounded-xl btn-premium-secondary font-bold text-[12px]"
+>
+Cancel
+</button>
+<button 
+type="submit"
+class="px-6 h-9 rounded-xl btn-premium-primary font-bold text-[12px] shadow-sm flex items-center justify-center"
+>
+Schedule Report
+</button>
+</div>
+</form>
+{% endblock %}

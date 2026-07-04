@@ -1,0 +1,45 @@
+<!-- My Plan Workspace container (reloaded by HTMX filters) -->
+<div class="space-y-6">
+
+<!-- 1. Filters Row -->
+{% include "partials/my_plan/filters.html" %}
+
+<!-- 2. KPI Cards Strip -->
+{% include "partials/my_plan/kpi_cards.html" %}
+
+<!-- 3. Grid Columns Area -->
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+
+<!-- Left Column (School Visits, trainings, meetings, and period tabs) -->
+<div class="lg:col-span-3 space-y-6">
+
+<!-- Period Segmented Tabs row -->
+{% include "partials/my_plan/period_tabs.html" %}
+
+<!-- Activity Tables Grouped by Category exactly like mockup -->
+<div class="space-y-8">
+
+<!-- 1. School Visits Planned for This Week -->
+{% include "partials/my_plan/school_visits.html" %}
+
+<!-- 2. Cluster Trainings Planned for This Week -->
+{% include "partials/my_plan/cluster_trainings.html" %}
+
+<!-- 3. Cluster Meetings Planned for This Week -->
+{% include "partials/my_plan/cluster_meetings.html" %}
+
+</div>
+
+<!-- Bottom Period breakdown -->
+{% include "partials/my_plan/period_breakdown.html" %}
+
+</div>
+
+<!-- Right Insights Column -->
+<div class="lg:col-span-1">
+{% include "partials/my_plan/planning_insights.html" %}
+</div>
+
+</div>
+
+</div>

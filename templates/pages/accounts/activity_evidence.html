@@ -1,0 +1,68 @@
+{% extends "layouts/shell.html" %}
+{% load frontend_filters %}
+
+{% block title %}Activity Evidence Review — Accountant View — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="p-6 max-w-4xl mx-auto space-y-6 font-sans">
+
+<!-- Back link -->
+<div>
+<a href="/disbursements" class="inline-flex items-center text-[12px] font-bold text-slate-500 hover:text-slate-700 transition-colors">
+<span class="mr-1">&larr;</span> Back to Disbursements
+</a>
+</div>
+
+<div class="bg-white rounded-2xl border border-slate-150 p-6 space-y-4 shadow-sm">
+<div class="flex items-center justify-between">
+<h1 class="text-[20px] font-black text-slate-800 uppercase tracking-tight">Accountant Evidence Packet View</h1>
+<span class="px-2.5 py-1 rounded text-[11px] font-extrabold bg-blue-50 text-blue-700 border border-blue-150 uppercase">{{ act.status|replace_underscore }}</span>
+</div>
+
+<!-- Meta fields grid -->
+<div class="grid grid-cols-2 gap-4 text-[12px] font-bold bg-slate-50 p-4 rounded-xl">
+<div>
+<span class="text-slate-400 block text-[11px] uppercase">Activity Type</span>
+<span class="text-slate-700">{{ act.activity_type|replace_underscore }}</span>
+</div>
+<div>
+<span class="text-slate-400 block text-[11px] uppercase">Planned Date</span>
+<span class="text-slate-700">{{ act.planned_date }}</span>
+</div>
+<div class="col-span-2 border-t border-slate-200/60 pt-2.5">
+<span class="text-slate-400 block text-[11px] uppercase">Salesforce Activity ID</span>
+<span class="text-slate-800 font-extrabold font-mono text-[14px]">{{ act.salesforce_activity_id|default:"Not Linked" }}</span>
+</div>
+</div>
+</div>
+
+<!-- Evidence List -->
+<div class="bg-white rounded-2xl border border-slate-150 shadow-sm overflow-hidden">
+<div class="px-5 py-4 border-b border-slate-100">
+<h3 class="text-[14px] font-extrabold text-slate-700">Attached Verification Files</h3>
+</div>
+
+{% if evidence_list %}
+<div class="divide-y divide-slate-100">
+{% for ev in evidence_list %}
+<div class="p-4 flex items-center justify-between gap-4">
+<div>
+<p class="text-[14px] font-bold text-slate-800">{{ ev.original_name }}</p>
+<p class="text-[11px] text-slate-400 font-semibold">{{ ev.kind|replace_underscore }} &bull; {{ ev.file_size|filesizeformat }}</p>
+</div>
+<a href="#" class="btn btn-ghost h-8 px-2.5 text-[11px] font-extrabold shadow-sm">
+Download File
+</a>
+</div>
+{% endfor %}
+</div>
+{% else %}
+<div class="py-12 text-center text-slate-400">
+<p class="text-[32px] mb-1">📎</p>
+<p class="font-bold">No evidence files have been attached yet.</p>
+</div>
+{% endif %}
+</div>
+
+</div>
+{% endblock %}

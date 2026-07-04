@@ -1,0 +1,110 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Duplicate Activity Review Queue - Edify Command Center{% endblock %}
+
+{% block shell_content %}
+<div class="p-6 max-w-7xl mx-auto space-y-6">
+
+<!-- Premium Header Pane -->
+<div class="relative overflow-hidden rounded-3xl bg-slate-900 text-white p-8 shadow-xl border border-slate-800">
+<div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-amber-500/10 blur-3xl pointer-events-none"></div>
+
+<div class="relative z-10 space-y-2">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[11px] font-black uppercase tracking-widest">
+Anomaly Detection
+</div>
+<h1 class="text-[32px] font-black tracking-tight text-white leading-none">Duplicate Activity Review Queue</h1>
+<p class="text-[14px] text-slate-400 font-medium max-w-2xl">
+Duplicate review hub. Identify and resolve activities flagged with duplicate indicator warnings (same school/date/staff/type, duplicate Salesforce ID, or duplicate evidence uploads).
+</p>
+</div>
+</div>
+
+<!-- Duplicates List -->
+<div class="grid gap-6">
+{% if duplicates %}
+{% for dup in duplicates %}
+<div class="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm hover:shadow-md transition-all duration-300 space-y-5">
+<!-- Flag details -->
+<div class="flex items-center justify-between border-b border-slate-100 pb-3">
+<div class="flex items-center gap-2.5">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-black uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-200">
+<span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+Potential Duplicate
+</span>
+<span class="text-[12px] font-extrabold text-slate-500 bg-slate-50 px-2 py-0.5 border border-slate-200/50 rounded-lg">{{ dup.reason }}</span>
+</div>
+<span class="text-[11px] text-slate-400 font-bold uppercase">Flagged {{ dup.created_at|date:"M d, Y" }}</span>
+</div>
+
+<!-- Side-by-Side Comparison -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Source Activity -->
+<div class="bg-[#f8fafc]/50 p-5 rounded-2xl border border-slate-150 space-y-4">
+<h4 class="text-[12px] font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-100 pb-2">
+<span class="w-1.5 h-1.5 rounded-full bg-[#2563eb]"></span>
+Submitted Activity Detail
+</h4>
+<div class="space-y-2.5 text-[12px] font-bold text-slate-700">
+<p class="flex justify-between"><span class="text-slate-500">Activity ID:</span> <span class="text-slate-800">#{{ dup.activity.id|slice:":8" }}</span></p>
+<p class="flex justify-between"><span class="text-slate-500">Type:</span> <span class="text-slate-800">{{ dup.activity.get_activity_type_display }}</span></p>
+<p class="flex justify-between"><span class="text-slate-500">School:</span> <span class="text-slate-800">{{ dup.activity.school.name|default:"Cluster-wide" }}</span></p>
+<p class="flex justify-between"><span class="text-slate-500">Date:</span> <span class="text-slate-800">{{ dup.activity.planned_date|date:"Y-m-d" }}</span></p>
+<p class="flex justify-between"><span class="text-slate-500">Owner:</span> <span class="text-slate-800">{{ dup.activity.responsible_staff_id }}</span></p>
+<p class="flex justify-between"><span class="text-slate-500">Salesforce ID:</span> <span class="font-mono text-slate-800 bg-slate-50 px-2 py-0.5 border border-slate-200 rounded-lg">{{ dup.activity.salesforce_activity_id|default:"Unlinked" }}</span></p>
+</div>
+</div>
+
+<!-- Duplicate Of Activity -->
+<div class="bg-[#f8fafc]/50 p-5 rounded-2xl border border-slate-150 space-y-4">
+<h4 class="text-[12px] font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-100 pb-2">
+<span class="w-1.5 h-1.5 rounded-full bg-[#2563eb]"></span>
+Matching Activity Detail
+</h4>
+<div class="space-y-2.5 text-[12px] font-bold text-slate-700">
+<p class="flex justify-between"><span class="text-slate-500">Activity ID:</span> <span class="text-slate-800">#{{ dup.duplicate_of.id|slice:":8" }}</span></p>
+<p class="flex justify-between"><span class="text-slate-500">Type:</span> <span class="text-slate-800">{{ dup.duplicate_of.get_activity_type_display }}</span></p>
+<p class="flex justify-between"><span class="text-slate-500">School:</span> <span class="text-slate-800">{{ dup.duplicate_of.school.name|default:"Cluster-wide" }}</span></p>
+<p class="flex justify-between"><span class="text-slate-500">Date:</span> <span class="text-slate-800">{{ dup.duplicate_of.planned_date|date:"Y-m-d" }}</span></p>
+<p class="flex justify-between"><span class="text-slate-500">Owner:</span> <span class="text-slate-800">{{ dup.duplicate_of.responsible_staff_id }}</span></p>
+<p class="flex justify-between"><span class="text-slate-500">Salesforce ID:</span> <span class="font-mono text-slate-800 bg-slate-50 px-2 py-0.5 border border-slate-200 rounded-lg">{{ dup.duplicate_of.salesforce_activity_id|default:"Unlinked" }}</span></p>
+</div>
+</div>
+</div>
+
+<!-- Action buttons -->
+<div class="flex items-center justify-between border-t border-slate-100 pt-4">
+<!-- View side-by-side comparison -->
+<a href="/ia/compare/?activity_id={{ dup.activity.id }}" class="h-9 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 text-[12px] font-black flex items-center justify-center transition-all shadow-sm">
+Compare Evidence side-by-side
+</a>
+
+<!-- Action submit forms -->
+<form method="POST" action="/ia/duplicates/{{ dup.id }}/action" class="flex gap-2">
+{% csrf_token %}
+<button type="submit" name="action" value="ignore" class="h-9 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-[12px] font-black transition-all shadow-sm">
+Ignore Flag
+</button>
+<button type="submit" name="action" value="return" class="h-9 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-[12px] font-black transition-all shadow-sm">
+Return to Plan
+</button>
+<button type="submit" name="action" value="flag" class="h-9 px-4 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-[12px] font-black transition-all shadow-sm">
+Flag Investigation
+</button>
+</form>
+</div>
+</div>
+{% endfor %}
+{% else %}
+<div class="bg-white rounded-3xl border border-slate-100 p-16 text-center text-slate-400 font-semibold shadow-sm">
+<div class="flex flex-col items-center justify-center gap-3">
+<div class="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 shadow-inner">
+<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" /></svg>
+</div>
+<p class="text-slate-500">No duplicate overlap warnings in review queue database.</p>
+</div>
+</div>
+{% endif %}
+</div>
+</div>
+{% endblock %}

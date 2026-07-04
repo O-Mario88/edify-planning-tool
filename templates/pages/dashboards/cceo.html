@@ -1,146 +1,391 @@
 {% extends "layouts/shell.html" %}
-{% load frontend_filters %}
+{% load static %}
 
-{% block title %}CCEO Dashboard - Edify Command Center{% endblock %}
+{% block title %}Today's Tasks Console — SIPA{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6">
-  <!-- Header KPI row -->
-  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-    <!-- Overdue Widget -->
-    <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm relative overflow-hidden flex flex-col justify-between min-h-[110px]">
-      <div>
-        <p class="text-[10px] uppercase font-bold tracking-wider text-slate-400">Overdue Activities</p>
-        <h3 class="text-[26px] font-extrabold text-slate-800 tracking-tight mt-1">{{ overdue_activities|length }}</h3>
-      </div>
-      <div class="mt-2 text-[11px] text-slate-500 font-semibold">Scheduled visits past planned date.</div>
-    </div>
+<div class="p-6 max-w-[1600px] mx-auto space-y-6 text-slate-700 font-sans">
 
-    <!-- Missing SSA Widget -->
-    <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm relative overflow-hidden flex flex-col justify-between min-h-[110px]">
-      <div>
-        <p class="text-[10px] uppercase font-bold tracking-wider text-slate-400">Schools missing SSA</p>
-        <h3 class="text-[26px] font-extrabold text-slate-800 tracking-tight mt-1">{{ schools_no_ssa|length }}</h3>
-      </div>
-      <div class="mt-2 text-[11px] text-slate-500 font-semibold">Locked until SSA is completed.</div>
-    </div>
+<!-- ================= TOP HEADER BAR ================= -->
+<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+<div>
+<h1 class="text-[24px] font-black text-slate-800 tracking-tight leading-none">Good morning, {{ user_name }} 👋</h1>
+<p class="text-[12px] text-slate-500 font-bold mt-2 font-semibold">Here's your plan for today. Stay focused, drive impact.</p>
+</div>
 
-    <!-- Evidence Pending Widget -->
-    <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm relative overflow-hidden flex flex-col justify-between min-h-[110px]">
-      <div>
-        <p class="text-[10px] uppercase font-bold tracking-wider text-slate-400">Evidence Pending</p>
-        <h3 class="text-[26px] font-extrabold text-slate-800 tracking-tight mt-1">{{ evidence_pending|length }}</h3>
-      </div>
-      <div class="mt-2 text-[11px] text-slate-500 font-semibold">Completed visits needing uploads.</div>
-    </div>
+<!-- Controls -->
+<div class="flex flex-wrap items-center gap-3">
+<!-- Date Dropdown -->
+<div class="flex items-center gap-1.5 bg-white border border-slate-200 px-3.5 py-1.5 rounded-xl shadow-sm cursor-pointer text-[12px] font-extrabold text-slate-700 hover:bg-slate-50">
+📅 Mon, May 12, 2025 - Week 3
+<svg class="h-3.5 w-3.5 text-slate-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 11-1.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+</div>
 
-    <!-- Pending Confirmation Widget -->
-    <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm relative overflow-hidden flex flex-col justify-between min-h-[110px]">
-      <div>
-        <p class="text-[10px] uppercase font-bold tracking-wider text-slate-400">Advance confirmation</p>
-        <h3 class="text-[26px] font-extrabold text-slate-800 tracking-tight mt-1">{{ pending_advances|length }}</h3>
-      </div>
-      <div class="mt-2 text-[11px] text-slate-500 font-semibold">Awaiting CCEO signature.</div>
-    </div>
-  </div>
+<!-- Notifications -->
+<div class="h-9 w-9 bg-white border border-slate-200 rounded-xl flex items-center justify-center relative cursor-pointer hover:bg-slate-50 shadow-sm">
+<svg class="h-5 w-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+<span class="absolute -top-1 -right-1 bg-rose-500 text-white rounded-full text-[11px] font-black h-5 w-5 flex items-center justify-center">3</span>
+</div>
 
-  <div class="grid lg:grid-cols-3 gap-6">
-    <!-- Main content: Weekly / Today activities -->
-    <div class="lg:col-span-2 space-y-6">
-      <div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm overflow-hidden">
-        <div class="px-6 py-4 border-b border-[var(--color-edify-divider)] flex items-center justify-between">
-          <h2 class="text-[15px] font-extrabold text-slate-800 tracking-tight">Scheduled This Week</h2>
-          <a href="/my-plan" class="text-[11px] font-extrabold text-[var(--color-edify-primary)] hover:underline uppercase tracking-wider">My Plan &rarr;</a>
-        </div>
-        <div class="divide-y divide-[var(--color-edify-divider)]">
-          {% if week_activities %}
-            {% for act in week_activities %}
-              <div class="p-4 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
-                <div class="flex items-center gap-3">
-                  <div class="h-8 w-8 rounded-lg bg-[var(--color-edify-soft)]/50 text-[var(--color-edify-primary)] grid place-items-center">
-                    <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h4 class="text-[13px] font-bold text-slate-800">{{ act.school.name|default:act.cluster.name }}</h4>
-                    <p class="text-[11px] text-slate-500 font-semibold mt-0.5">{{ act.activity_type|title|replace_underscore }} &bull; {{ act.planned_date }}</p>
-                  </div>
-                </div>
-                <div class="flex items-center gap-2">
-                  <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider {% if act.status == 'completed' %}bg-emerald-50 text-emerald-700 border-emerald-200{% else %}bg-amber-50 text-amber-700 border-amber-200{% endif %}">
-                    {{ act.status|title }}
-                  </span>
-                </div>
-              </div>
-            {% endfor %}
-          {% else %}
-            <div class="p-6 text-center text-slate-400 text-[12.5px] font-semibold">
-              No activities scheduled for this week.
-            </div>
-          {% endif %}
-        </div>
-      </div>
+<!-- Avatar profile -->
+<div class="flex items-center gap-2">
+<div class="h-9 w-9 rounded-full bg-slate-100 font-extrabold text-[12px] text-slate-700 flex items-center justify-center border border-slate-200">{{ avatar_initials }}</div>
+<div class="text-left hidden sm:block">
+<span class="text-[12px] font-black text-slate-800 block leading-tight">{{ user_name }}</span>
+<span class="text-[11px] font-bold text-slate-400 block mt-0.5">CCEO / Field Officer</span>
+</div>
+</div>
+</div>
+</div>
 
-      <!-- Overdue Section -->
-      {% if overdue_activities %}
-        <div class="bg-white rounded-2xl border border-rose-200 shadow-sm overflow-hidden">
-          <div class="px-6 py-4 border-b border-rose-100 bg-rose-50/10 flex items-center justify-between">
-            <h2 class="text-[15px] font-extrabold text-rose-800 tracking-tight">Overdue Scheduled Activities</h2>
-          </div>
-          <div class="divide-y divide-rose-100">
-            {% for act in overdue_activities %}
-              <div class="p-4 flex items-center justify-between hover:bg-rose-50/5 transition-colors">
-                <div>
-                  <h4 class="text-[13px] font-bold text-slate-800">{{ act.school.name|default:act.cluster.name }}</h4>
-                  <p class="text-[11px] text-rose-600 font-semibold mt-0.5">Planned for {{ act.planned_date }} (Overdue)</p>
-                </div>
-                <a href="/my-plan" class="h-8 px-3 rounded-lg border border-[var(--color-edify-border)] hover:bg-slate-50 text-[11.5px] font-bold text-slate-600 flex items-center justify-center">
-                  Reschedule
-                </a>
-              </div>
-            {% endfor %}
-          </div>
-        </div>
-      {% endif %}
-    </div>
 
-    <!-- Right Column: Today Alerts & Action Panel -->
-    <div class="space-y-6">
-      <div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm space-y-4">
-        <h2 class="text-[15px] font-extrabold text-slate-800 tracking-tight">Quick Actions</h2>
-        <div class="grid gap-2">
-          <a href="/planning" class="w-full h-10 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[12.5px] font-extrabold flex items-center justify-center transition-all">
-            Open Planning Dashboard
-          </a>
-          <a href="/schools" class="w-full h-10 rounded-lg border border-[var(--color-edify-border)] hover:bg-slate-50 text-slate-600 text-[12.5px] font-bold flex items-center justify-center transition-all">
-            Browse School Directory
-          </a>
-        </div>
-      </div>
+<!-- ================= KPI STRIP ================= -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+<!-- Completed -->
+<div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-start gap-4">
+<div class="h-10 w-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 shrink-0 text-[18px]">✓</div>
+<div class="space-y-1">
+<p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Completed</p>
+<h3 class="text-[20px] font-black text-slate-800 leading-none">{{ kpis.completed }}</h3>
+<span class="text-[11px] text-emerald-600 font-extrabold block">29% vs last week ▲</span>
+</div>
+</div>
+<!-- In Progress -->
+<div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-start gap-4">
+<div class="h-10 w-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 shrink-0 text-[18px]">⏳</div>
+<div class="space-y-1">
+<p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">In Progress</p>
+<h3 class="text-[20px] font-black text-slate-800 leading-none">{{ kpis.in_progress }}</h3>
+<span class="text-[11px] text-emerald-600 font-extrabold block">41% vs last week ▲</span>
+</div>
+</div>
+<!-- Planned -->
+<div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-start gap-4">
+<div class="h-10 w-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600 shrink-0 text-[18px]">📋</div>
+<div class="space-y-1">
+<p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Planned</p>
+<h3 class="text-[20px] font-black text-slate-800 leading-none">{{ kpis.planned }}</h3>
+<span class="text-[11px] text-slate-400 font-bold block">No change &mdash;</span>
+</div>
+</div>
+<!-- Overdue -->
+<div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-start gap-4">
+<div class="h-10 w-10 bg-rose-50 rounded-xl flex items-center justify-center text-rose-600 shrink-0 text-[18px]">🚨</div>
+<div class="space-y-1">
+<p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Overdue</p>
+<h3 class="text-[20px] font-black text-slate-800 leading-none text-rose-600">{{ kpis.overdue }}</h3>
+<span class="text-[11px] text-rose-600 font-bold block">▲ 1 vs last week</span>
+</div>
+</div>
+</div>
 
-      <!-- Attention Items -->
-      {% if today_context.groups %}
-        {% for grp in today_context.groups %}
-          <div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm space-y-4">
-            <h2 class="text-[15px] font-extrabold text-slate-800 tracking-tight">{{ grp.label }}</h2>
-            <div class="space-y-3">
-              {% for item in grp.items %}
-                <div class="p-3 rounded-xl border border-slate-100 bg-slate-50/50 flex flex-col justify-between gap-3">
-                  <div>
-                    <h4 class="text-[12.5px] font-bold text-slate-800">{{ item.title }}</h4>
-                    <p class="text-[11px] text-slate-500 font-semibold mt-0.5 leading-relaxed">{{ item.reason }}</p>
-                  </div>
-                  <a href="{{ item.action.href }}" class="text-[11px] font-extrabold text-[var(--color-edify-primary)] hover:underline uppercase tracking-wider">
-                    {{ item.action.label }} &rarr;
-                  </a>
-                </div>
-              {% endfor %}
-            </div>
-          </div>
-        {% endfor %}
-      {% endif %}
-    </div>
-  </div>
+
+<!-- ================= MAIN DASHBOARD CONTENT ================= -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+<!-- TODAY'S AGENDA PANEL (Col Span 8) -->
+<div class="lg:col-span-8 bg-white p-5 rounded-3xl border border-slate-150 shadow-sm space-y-5">
+<div class="flex items-center justify-between pb-3 border-b border-slate-100">
+<div class="flex items-center gap-2">
+<h2 class="text-[15px] font-black text-slate-800 tracking-tight">Today's Agenda</h2>
+<span class="bg-blue-600 text-white font-extrabold rounded-full px-2 py-0.5 text-[11px] flex items-center justify-center">24 tasks</span>
+</div>
+
+<div class="flex items-center gap-2">
+<select class="h-7 px-2 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-bold text-slate-700">
+<option>Sort by: Priority</option>
+</select>
+<!-- List view toggles -->
+<div class="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+<button class="h-6 w-6 bg-white rounded flex items-center justify-center shadow-xs text-[11px]">☰</button>
+<button class="h-6 w-6 text-slate-400 hover:text-slate-600 rounded flex items-center justify-center text-[11px]">📅</button>
+<button class="h-6 w-6 text-slate-400 hover:text-slate-600 rounded flex items-center justify-center text-[11px]">🗺️</button>
+</div>
+</div>
+</div>
+
+<!-- Agenda schedule stack -->
+<div class="space-y-6">
+
+<!-- MORNING Section -->
+<div class="space-y-3">
+<div class="flex items-center gap-2 text-[11px] font-black text-emerald-600 uppercase tracking-widest">
+<span>☀️ Morning</span>
+<span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+<span class="text-slate-400 normal-case font-bold">3 tasks</span>
+</div>
+
+<div class="space-y-2">
+{% for task in agenda_morning %}
+<div class="p-3.5 border border-slate-100 rounded-2xl bg-white hover:bg-slate-50/50 flex items-start justify-between gap-4 transition-all group">
+<div class="flex items-start gap-3">
+<div class="h-9 w-9 rounded-xl bg-slate-50 text-[18px] flex items-center justify-center border border-slate-150 shrink-0 group-hover:scale-105 transition-transform" x-text="'{{ task.icon }}'"></div>
+<div class="space-y-1">
+<h4 class="text-[14px] font-black text-slate-800 leading-tight">{{ task.title }}</h4>
+<p class="text-[11px] text-slate-400 font-bold">{{ task.location|safe }}</p>
+</div>
+</div>
+
+<div class="flex items-center gap-3">
+{% if task.sf %}
+<span class="text-[11px] text-emerald-600 font-extrabold flex items-center gap-0.5">SF ✓</span>
+{% endif %}
+{% if task.count %}
+<span class="text-[11px] text-slate-400 font-bold flex items-center gap-1">👥 {{ task.count }}</span>
+{% endif %}
+<span class="{{ task.status_class }} inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-black border uppercase tracking-wider">{{ task.status }}</span>
+<button class="text-slate-300 hover:text-slate-500 text-[14px] font-black leading-none px-1">&bull;&bull;&bull;</button>
+</div>
+</div>
+{% endfor %}
+</div>
+</div>
+
+<!-- AFTERNOON Section -->
+<div class="space-y-3">
+<div class="flex items-center gap-2 text-[11px] font-black text-amber-600 uppercase tracking-widest">
+<span>⛅ Afternoon</span>
+<span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
+<span class="text-slate-400 normal-case font-bold">4 tasks</span>
+</div>
+
+<div class="space-y-2">
+{% for task in agenda_afternoon %}
+<div class="p-3.5 border border-slate-100 rounded-2xl bg-white hover:bg-slate-50/50 flex items-start justify-between gap-4 transition-all group">
+<div class="flex items-start gap-3">
+<div class="h-9 w-9 rounded-xl bg-slate-50 text-[18px] flex items-center justify-center border border-slate-150 shrink-0 group-hover:scale-105 transition-transform" x-text="'{{ task.icon }}'"></div>
+<div class="space-y-1">
+<h4 class="text-[14px] font-black text-slate-800 leading-tight">{{ task.title }}</h4>
+<p class="text-[11px] text-slate-400 font-bold">{{ task.location|safe }}</p>
+</div>
+</div>
+
+<div class="flex items-center gap-3">
+{% if task.count %}
+<span class="text-[11px] text-slate-400 font-bold flex items-center gap-1">👥 {{ task.count }}</span>
+{% endif %}
+<span class="{{ task.status_class }} inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-black border uppercase tracking-wider">{{ task.status }}</span>
+<button class="text-slate-300 hover:text-slate-500 text-[14px] font-black leading-none px-1">&bull;&bull;&bull;</button>
+</div>
+</div>
+{% endfor %}
+</div>
+</div>
+
+<!-- EVENING Section -->
+<div class="space-y-3">
+<div class="flex items-center gap-2 text-[11px] font-black text-indigo-700 uppercase tracking-widest">
+<span>🌙 Evening</span>
+<span class="h-1.5 w-1.5 rounded-full bg-indigo-500"></span>
+<span class="text-slate-400 normal-case font-bold">1 task</span>
+</div>
+
+<div class="space-y-2">
+{% for task in agenda_evening %}
+<div class="p-3.5 border border-slate-100 rounded-2xl bg-white hover:bg-slate-50/50 flex items-start justify-between gap-4 transition-all group">
+<div class="flex items-start gap-3">
+<div class="h-9 w-9 rounded-xl bg-slate-50 text-[18px] flex items-center justify-center border border-slate-150 shrink-0 group-hover:scale-105 transition-transform" x-text="'{{ task.icon }}'"></div>
+<div class="space-y-1">
+<h4 class="text-[14px] font-black text-slate-800 leading-tight">{{ task.title }}</h4>
+<p class="text-[11px] text-slate-400 font-bold">{{ task.location|safe }}</p>
+</div>
+</div>
+
+<div class="flex items-center gap-3">
+<span class="{{ task.status_class }} inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-black border uppercase tracking-wider">{{ task.status }}</span>
+<button class="text-slate-300 hover:text-slate-500 text-[14px] font-black leading-none px-1">&bull;&bull;&bull;</button>
+</div>
+</div>
+{% endfor %}
+</div>
+</div>
+
+</div>
+
+<!-- agenda footer links -->
+<div class="flex justify-between items-center pt-4 border-t border-slate-100 text-[11px] font-black">
+<a href="/planning" class="text-blue-600 hover:underline">View full calendar &rsaquo;</a>
+<button class="text-blue-600 hover:underline">+ Add Personal Task</button>
+</div>
+</div>
+
+
+<!-- RIGHT SIDEBAR PANEL (Col Span 4) -->
+<div class="lg:col-span-4 space-y-6">
+
+<!-- At a Glance radial progress donut -->
+<div class="bg-white p-5 rounded-3xl border border-slate-150 shadow-sm space-y-4">
+<div class="flex items-center justify-between pb-2 border-b border-slate-100">
+<h3 class="text-[14px] font-black text-slate-800 tracking-tight">At a Glance</h3>
+<a href="/analytics" class="text-[11px] font-black text-blue-600 hover:underline">View full analytics</a>
+</div>
+
+<div class="flex items-center justify-center gap-6">
+<div class="relative h-28 w-28 flex items-center justify-center shrink-0">
+<svg class="h-full w-full -rotate-90" viewBox="0 0 36 36">
+<path class="text-slate-100" stroke-width="2" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+<!-- Completed (29%) -->
+<path class="text-emerald-500" stroke-dasharray="29, 100" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+<!-- In Progress (41%) -->
+<path class="text-blue-500" stroke-dasharray="41, 100" stroke-dashoffset="-29" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+<!-- Planned (21%) -->
+<path class="text-amber-500" stroke-dasharray="21, 100" stroke-dashoffset="-70" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+<!-- Overdue (8%) -->
+<path class="text-rose-500" stroke-dasharray="8, 100" stroke-dashoffset="-91" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+</svg>
+<div class="absolute flex flex-col justify-center items-center text-center">
+<span class="text-[20px] font-black text-slate-800 leading-none">24</span>
+<span class="text-[11px] font-bold text-slate-400 uppercase tracking-wide mt-0.5">Total Tasks</span>
+</div>
+</div>
+
+<div class="text-[11px] space-y-1.5 font-bold text-slate-500 flex-1">
+<div class="flex items-center justify-between"><span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-emerald-500 shrink-0"></span> Completed</span> <span class="text-slate-800 font-black">7 (29%)</span></div>
+<div class="flex items-center justify-between"><span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-blue-500 shrink-0"></span> In Progress</span> <span class="text-slate-800 font-black">10 (41%)</span></div>
+<div class="flex items-center justify-between"><span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-amber-500 shrink-0"></span> Planned</span> <span class="text-slate-800 font-black">5 (21%)</span></div>
+<div class="flex items-center justify-between"><span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-rose-500 shrink-0"></span> Overdue</span> <span class="text-slate-800 font-black">2 (8%)</span></div>
+</div>
+</div>
+</div>
+
+<!-- Upcoming This Week list -->
+<div class="bg-white p-5 rounded-3xl border border-slate-150 shadow-sm space-y-4">
+<div class="flex items-center justify-between pb-2 border-b border-slate-100">
+<h3 class="text-[14px] font-black text-slate-800 tracking-tight">Upcoming This Week</h3>
+<a href="/planning" class="text-[11px] font-black text-blue-600 hover:underline">View all</a>
+</div>
+
+<div class="space-y-3.5">
+{% for event in upcoming_week %}
+<div class="flex gap-3 text-[12px] font-bold">
+<div class="h-8 w-8 rounded-xl flex items-center justify-center shrink-0 border border-slate-100 text-[15px] {{ event.type_class }}" x-text="'{{ event.icon }}'"></div>
+<div class="space-y-0.5">
+<span class="text-[11px] text-slate-400 font-extrabold uppercase tracking-wide block leading-none">{{ event.day }}</span>
+<strong class="text-slate-800 font-black block leading-snug">{{ event.title }}</strong>
+<span class="text-slate-500 block leading-tight font-medium">{{ event.desc }}</span>
+</div>
+</div>
+{% endfor %}
+</div>
+</div>
+
+<!-- Pending Approvals -->
+<div class="bg-white p-5 rounded-3xl border border-slate-150 shadow-sm space-y-4">
+<div class="flex items-center justify-between pb-2 border-b border-slate-100">
+<h3 class="text-[14px] font-black text-slate-800 tracking-tight">Pending Approvals</h3>
+<a href="/fund-requests/weekly" class="text-[11px] font-black text-blue-600 hover:underline">View all</a>
+</div>
+
+<div class="space-y-3">
+{% for approval in pending_approvals %}
+<div class="p-3 border border-slate-100 rounded-2xl flex items-center justify-between gap-3 bg-white hover:bg-slate-50/50 transition-all">
+<div class="flex items-start gap-2.5">
+<div class="h-8 w-8 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center text-[15px] shrink-0">📄</div>
+<div>
+<h4 class="text-[12px] font-extrabold text-slate-800 leading-tight">{{ approval.title }}</h4>
+<p class="text-[11px] text-slate-400 font-bold mt-0.5">{{ approval.desc|safe }}</p>
+</div>
+</div>
+<span class="bg-amber-50 text-amber-700 border border-amber-200 inline-flex items-center rounded-lg px-2 py-0.5 text-[11px] font-black uppercase tracking-wider">{{ approval.status }}</span>
+</div>
+{% endfor %}
+</div>
+</div>
+
+</div>
+
+</div>
+
+
+<!-- ================= BOTTOM ROW GRID ================= -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+
+<!-- Priority Focus (Col Span 6) -->
+<div class="md:col-span-6 bg-white p-5 rounded-3xl border border-slate-150 shadow-sm space-y-4">
+<div class="pb-2 border-b border-slate-100">
+<h3 class="text-[14px] font-black text-slate-800 tracking-tight uppercase tracking-wider text-slate-400 text-[11px]">Priority Focus</h3>
+</div>
+
+<div class="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+<div class="h-10 w-10 bg-blue-50 text-blue-600 border border-blue-150 rounded-xl flex items-center justify-center shrink-0 text-[18px]">🎯</div>
+<div class="flex-1 space-y-2">
+<div>
+<h4 class="text-[14px] font-black text-slate-800 leading-none">Improve learning outcomes in Kitgum</h4>
+<p class="text-[11px] text-slate-500 font-bold mt-1.5">2 more school visits to complete target</p>
+</div>
+<div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+<div class="bg-blue-600 h-full rounded-full" style="width: 75%"></div>
+</div>
+<div class="flex justify-between items-center text-[11px] font-bold text-slate-400">
+<span>75% target achievement</span>
+<span>Target: 12 visits</span>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Team Check-In (Col Span 3) -->
+<div class="md:col-span-3 bg-white p-5 rounded-3xl border border-slate-150 shadow-sm flex flex-col justify-between">
+<div>
+<div class="pb-2 border-b border-slate-100 flex items-center justify-between">
+<h3 class="text-[14px] font-black text-slate-800 tracking-tight">Team Check-In</h3>
+<a href="/staff" class="text-[11px] font-black text-blue-600 hover:underline">View team</a>
+</div>
+
+<!-- Online avatars with status dot -->
+<div class="flex flex-wrap gap-2 mt-4">
+<div class="relative group">
+<div class="h-8 w-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[11px] font-black">JM</div>
+<span class="absolute bottom-0 right-0 h-2.5 w-2.5 bg-emerald-500 rounded-full border-2 border-white"></span>
+</div>
+<div class="relative group">
+<div class="h-8 w-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[11px] font-black">AN</div>
+<span class="absolute bottom-0 right-0 h-2.5 w-2.5 bg-emerald-500 rounded-full border-2 border-white"></span>
+</div>
+<div class="relative group">
+<div class="h-8 w-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[11px] font-black">PK</div>
+<span class="absolute bottom-0 right-0 h-2.5 w-2.5 bg-emerald-500 rounded-full border-2 border-white"></span>
+</div>
+<div class="relative group">
+<div class="h-8 w-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-[11px] font-black">SK</div>
+<span class="absolute bottom-0 right-0 h-2.5 w-2.5 bg-emerald-500 rounded-full border-2 border-white"></span>
+</div>
+</div>
+</div>
+
+<div class="flex items-center gap-4 text-[11px] font-bold text-slate-500 pt-3 border-t border-slate-50 mt-4">
+<span>🟢 8 Active Today</span>
+<span>🔴 2 Offline</span>
+</div>
+</div>
+
+<!-- Quick Actions grid (Col Span 3) -->
+<div class="md:col-span-3 bg-white p-5 rounded-3xl border border-slate-150 shadow-sm space-y-3 flex flex-col justify-between">
+<div class="pb-2 border-b border-slate-100">
+<h3 class="text-[14px] font-black text-slate-800 tracking-tight">Quick Actions</h3>
+</div>
+
+<div class="grid grid-cols-4 gap-2 text-center text-[11px] font-extrabold text-slate-700 mt-2">
+<a href="/completed-activities" class="flex flex-col items-center gap-1.5 p-2 bg-slate-50 hover:bg-slate-100 rounded-xl transition-all border border-slate-100">
+<span class="text-[18px]">📝</span>
+Log Visit
+</a>
+<a href="/fund-requests/weekly" class="flex flex-col items-center gap-1.5 p-2 bg-slate-50 hover:bg-slate-100 rounded-xl transition-all border border-slate-100">
+<span class="text-[18px]">💰</span>
+Request Funds
+</a>
+<a href="/planning" class="flex flex-col items-center gap-1.5 p-2 bg-slate-50 hover:bg-slate-100 rounded-xl transition-all border border-slate-100">
+<span class="text-[18px]">🗺️</span>
+Smart Route
+</a>
+<a href="/staff" class="flex flex-col items-center gap-1.5 p-2 bg-slate-50 hover:bg-slate-100 rounded-xl transition-all border border-slate-100">
+<span class="text-[18px]">💬</span>
+Team Chat
+</a>
+</div>
+</div>
+
+</div>
+
 </div>
 {% endblock %}

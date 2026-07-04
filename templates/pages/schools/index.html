@@ -5,539 +5,439 @@
 
 {% block shell_content %}
 <div 
-  class="p-6 max-w-[1600px] mx-auto space-y-6"
-  x-data="{ 
-    selectedSchools: [], 
-    assignClusterOpen: false, 
-    matchStaffOpen: false, 
-    addSchoolOpen: false, 
-    columnSettingsOpen: false, 
-    visibleColumns: { 
-      id: true, 
-      name: true, 
-      district: true, 
-      sub_county: true, 
-      type: true, 
-      staff: true, 
-      match_status: true, 
-      cluster_status: true, 
-      ssa_status: true, 
-      readiness: true, 
-      partner_type: true, 
-      enrollment: true, 
-      enrollment_date: true, 
-      actions: true 
-    } 
-  }"
+class="p-6 max-w-[1600px] mx-auto space-y-6"
+x-data="{ 
+selectedSchools: [], 
+assignClusterOpen: false, 
+bulkAssignProjectOpen: false, 
+matchStaffOpen: false, 
+addSchoolOpen: false, 
+columnSettingsOpen: false, 
+visibleColumns: { 
+id: true, 
+name: true, 
+district: true, 
+sub_county: true, 
+type: true, 
+staff: true, 
+match_status: true, 
+cluster_status: true, 
+ssa_status: true, 
+readiness: true, 
+partner_type: true, 
+enrollment: true, 
+enrollment_date: true, 
+actions: true 
+} 
+}"
 >
-  <!-- Page Header -->
-  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-    <div>
-      <h1 class="text-[28px] font-black text-slate-800 tracking-tight leading-none font-sans">School Directory</h1>
-      <p class="text-[12.5px] text-[var(--text-secondary)] mt-2 font-semibold font-sans">Manage uploaded schools, ownership, clustering, SSA readiness, and planning status.</p>
-    </div>
-    
-    <!-- Action buttons -->
-    <div class="flex flex-wrap items-center gap-2 font-sans">
-      <a href="/schools/upload" class="h-9 px-3.5 rounded-lg border border-[var(--color-edify-border)] hover:bg-slate-50 text-[12px] font-bold text-slate-600 flex items-center gap-2 transition-all">
-        <svg class="h-4.5 w-4.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-        </svg>
-        <span>Upload Schools</span>
-      </a>
-      <a href="/schools/upload" class="h-9 px-3.5 rounded-lg border border-[var(--color-edify-border)] hover:bg-slate-50 text-[12px] font-bold text-slate-600 flex items-center gap-2 transition-all">
-        <svg class="h-4.5 w-4.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-        </svg>
-        <span>Upload SSA</span>
-      </a>
-      <button @click="addSchoolOpen = true" class="h-9 px-4 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[12px] font-bold flex items-center gap-1.5 transition-all shadow-sm">
-        <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-        </svg>
-        <span>Add School</span>
-      </button>
-      <div class="relative" x-data="{ open: false }">
-        <button @click="open = !open" class="h-9 px-3.5 rounded-lg border border-[var(--color-edify-border)] hover:bg-slate-50 text-[12px] font-bold text-slate-600 flex items-center gap-1.5 transition-all">
-          <svg class="h-4.5 w-4.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4a4 4 0 11-8 0 4 4 0 018 0zM4 3h16a1 1 0 011 1v3M4 3a1 1 0 00-1 1v3" />
-          </svg>
-          <span>Export</span>
-          <svg class="h-3 w-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-        </button>
-        <div x-show="open" @click.outside="open = false" class="absolute right-0 mt-1.5 w-44 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-50 text-[12px] font-semibold" style="display: none;">
-          <a href="/schools?export=xlsx" class="block px-4 py-2 text-slate-700 hover:bg-slate-50">Export to Excel (.xlsx)</a>
-          <a href="/schools?export=csv" class="block px-4 py-2 text-slate-700 hover:bg-slate-50">Export to CSV (.csv)</a>
-        </div>
-      </div>
-    </div>
-  </div>
+<!-- Page Header -->
+<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+<div>
+<h1 class="text-[28px] font-black text-slate-800 tracking-tight leading-none font-sans">School Directory</h1>
+<p class="text-[12px] text-[var(--text-secondary)] mt-2 font-semibold font-sans">Manage uploaded schools, ownership, clustering, SSA readiness, and planning status.</p>
+</div>
 
-  <!-- Filters Bar -->
-  <div class="bg-white rounded-2xl border border-[var(--border-card)] p-4 shadow-sm font-sans">
-    <form 
-      id="filters-form"
-      hx-get="/schools" 
-      hx-target="#schools-table-container" 
-      hx-trigger="change"
-      hx-include="#topbar-search-input"
-      class="space-y-3"
-    >
-      <!-- Hidden input to preserve tab filter state -->
-      <input type="hidden" name="tab" id="filters-tab-input" value="{{ active_tab|default:'all' }}">
+<!-- Action buttons -->
+<div class="flex flex-wrap items-center gap-2 font-sans">
+<a href="/schools/upload" class="h-9 px-3.5 rounded-lg border border-[var(--color-edify-border)] hover:bg-slate-50 text-[12px] font-bold text-slate-600 flex items-center gap-2 transition-all">
+<svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+</svg>
+<span>Upload Schools</span>
+</a>
+<a href="/schools/upload" class="h-9 px-3.5 rounded-lg border border-[var(--color-edify-border)] hover:bg-slate-50 text-[12px] font-bold text-slate-600 flex items-center gap-2 transition-all">
+<svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+</svg>
+<span>Upload SSA</span>
+</a>
+<button @click="addSchoolOpen = true" class="h-9 px-4 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[12px] font-bold flex items-center gap-1.5 transition-all shadow-sm">
+<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+</svg>
+<span>Add School</span>
+</button>
+<div class="relative" x-data="{ open: false }">
+<button @click="open = !open" class="h-9 px-3.5 rounded-lg border border-[var(--color-edify-border)] hover:bg-slate-50 text-[12px] font-bold text-slate-600 flex items-center gap-1.5 transition-all">
+<svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4a4 4 0 11-8 0 4 4 0 018 0zM4 3h16a1 1 0 011 1v3M4 3a1 1 0 00-1 1v3" />
+</svg>
+<span>Export</span>
+<svg class="h-3 w-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+</button>
+<div x-show="open" @click.outside="open = false" class="absolute right-0 mt-1.5 w-44 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-50 text-[12px] font-semibold" style="display: none;">
+<a href="/schools?export=xlsx" class="block px-4 py-2 text-slate-700 hover:bg-slate-50">Export to Excel (.xlsx)</a>
+<a href="/schools?export=csv" class="block px-4 py-2 text-slate-700 hover:bg-slate-50">Export to CSV (.csv)</a>
+</div>
+</div>
+</div>
+</div>
 
-      <!-- Row 1 Filters -->
-      <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
-        <!-- FY Selector -->
-        <div>
-          <select name="fy" class="w-full h-9 text-[12px] bg-slate-50 font-bold text-slate-700 border border-slate-200 rounded-lg focus:outline-none">
-            <option value="2026" {% if selected_fy == '2026' %}selected{% endif %}>FY 2026</option>
-            <option value="2025" {% if selected_fy == '2025' %}selected{% endif %}>FY 2025</option>
-          </select>
-        </div>
-        <!-- Region -->
-        <div>
-          <select name="region" class="w-full h-9 text-[12px] bg-slate-50 font-bold text-slate-700 border border-slate-200 rounded-lg focus:outline-none">
-            <option value="">Region: All</option>
-            {% for r in regions %}
-              <option value="{{ r.id }}" {% if selected_region == r.id %}selected{% endif %}>{{ r.name }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <!-- District -->
-        <div>
-          <select name="district" class="w-full h-9 text-[12px] bg-slate-50 font-bold text-slate-700 border border-slate-200 rounded-lg focus:outline-none">
-            <option value="">District: All</option>
-            {% for d in districts %}
-              <option value="{{ d.id }}" {% if selected_district == d.id|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <!-- Sub-county -->
-        <div>
-          <select name="sub_county" class="w-full h-9 text-[12px] bg-slate-50 font-bold text-slate-700 border border-slate-200 rounded-lg focus:outline-none">
-            <option value="">Sub-county: All</option>
-            {% for sc in sub_counties %}
-              <option value="{{ sc.id }}" {% if selected_sub_county == sc.id %}selected{% endif %}>{{ sc.name }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <!-- School Type -->
-        <div>
-          <select name="school_type" class="w-full h-9 text-[12px] bg-slate-50 font-bold text-slate-700 border border-slate-200 rounded-lg focus:outline-none">
-            <option value="">School Type: All</option>
-            {% for val, label in school_types %}
-              <option value="{{ val }}" {% if selected_type == val %}selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <!-- Staff -->
-        <div>
-          <select name="staff" class="w-full h-9 text-[12px] bg-slate-50 font-bold text-slate-700 border border-slate-200 rounded-lg focus:outline-none">
-            <option value="">Staff: All</option>
-            {% for sp in staff_profiles %}
-              <option value="{{ sp.id }}" {% if selected_staff == sp.id %}selected{% endif %}>{{ sp.user.name }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <!-- Staff Match Status -->
-        <div>
-          <select name="staff_match" class="w-full h-9 text-[12px] bg-slate-50 font-bold text-slate-700 border border-slate-200 rounded-lg focus:outline-none">
-            <option value="">Staff Match Status: All</option>
-            <option value="matched" {% if selected_staff_match == 'matched' %}selected{% endif %}>Matched</option>
-            <option value="unmatched" {% if selected_staff_match == 'unmatched' %}selected{% endif %}>Unmatched</option>
-          </select>
-        </div>
-        <!-- Cluster Status -->
-        <div>
-          <select name="cluster_status" class="w-full h-9 text-[12px] bg-slate-50 font-bold text-slate-700 border border-slate-200 rounded-lg focus:outline-none">
-            <option value="">Cluster Status: All</option>
-            <option value="clustered" {% if selected_cluster_status == 'clustered' %}selected{% endif %}>Clustered</option>
-            <option value="unclustered" {% if selected_cluster_status == 'unclustered' %}selected{% endif %}>Unclustered</option>
-          </select>
-        </div>
-      </div>
+<!-- Filters Bar -->
+<div class="bg-white rounded-2xl border border-[var(--border-card)] p-4 shadow-sm font-sans">
+<form 
+id="filters-form"
+hx-get="/schools" 
+hx-target="#schools-table-container" 
+hx-trigger="change"
+hx-include="#topbar-search-input"
+class="space-y-3"
+@change="if ($event.target.id !== 'filters-page-input') { const p = document.getElementById('filters-page-input'); if (p) p.value = '1' }"
+>
+<!-- Hidden input to preserve tab filter state -->
+<input type="hidden" name="tab" id="filters-tab-input" value="{{ active_tab|default:'all' }}">
+<input type="hidden" name="page" id="filters-page-input" value="{{ page_obj.number|default:1 }}">
 
-      <!-- Row 2 Filters -->
-      <div class="flex flex-wrap items-center gap-3 pt-1">
-        <!-- SSA Status -->
-        <div class="w-full sm:w-44">
-          <select name="ssa_status" class="w-full h-9 text-[12px] bg-slate-50 font-bold text-slate-700 border border-slate-200 rounded-lg focus:outline-none">
-            <option value="">SSA Status: All</option>
-            <option value="done" {% if selected_ssa_status == 'done' %}selected{% endif %}>Complete</option>
-            <option value="not_done" {% if selected_ssa_status == 'not_done' %}selected{% endif %}>Not Done</option>
-          </select>
-        </div>
-        <!-- Planning Readiness -->
-        <div class="w-full sm:w-44">
-          <select name="readiness" class="w-full h-9 text-[12px] bg-slate-50 font-bold text-slate-700 border border-slate-200 rounded-lg focus:outline-none">
-            <option value="">Planning Readiness: All</option>
-            {% for val, label in readiness_choices %}
-              <option value="{{ val }}" {% if selected_readiness == val %}selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <!-- Current Partner Type -->
-        <div class="w-full sm:w-48">
-          <select name="partner_type" class="w-full h-9 text-[12px] bg-slate-50 font-bold text-slate-700 border border-slate-200 rounded-lg focus:outline-none">
-            <option value="">Current Partner Type: All</option>
-            <option value="assigned" {% if selected_partner_type == 'assigned' %}selected{% endif %}>Assigned</option>
-            <option value="none" {% if selected_partner_type == 'none' %}selected{% endif %}>None</option>
-          </select>
-        </div>
-        <!-- Clear Filters -->
-        <a href="/schools" class="text-[12px] font-extrabold text-[var(--color-edify-primary)] hover:underline flex items-center gap-1.5 ml-2">
-          <svg class="h-4 w-4 shrink-0 text-[var(--color-edify-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-          <span>Clear Filters</span>
-        </a>
-      </div>
-    </form>
-  </div>
+<!-- Row 1 Filters -->
+<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+<!-- FY Selector -->
+<div>
+<select name="fy" class="w-full h-9 text-[12px] bg-slate-50 font-bold text-slate-700 border border-slate-200 rounded-lg focus:outline-none">
+<option value="2026" {% if selected_fy == '2026' %}selected{% endif %}>FY 2026</option>
+<option value="2025" {% if selected_fy == '2025' %}selected{% endif %}>FY 2025</option>
+</select>
+</div>
+<!-- Region -->
+<div>
+<select name="region" class="w-full h-9 text-[12px] bg-slate-50 font-bold text-slate-700 border border-slate-200 rounded-lg focus:outline-none">
+<option value="">Region: All</option>
+{% for r in regions %}
+<option value="{{ r.id }}" {% if selected_region == r.id %}selected{% endif %}>{{ r.name }}</option>
+{% endfor %}
+</select>
+</div>
+<!-- District -->
+<div>
+<select name="district" class="w-full h-9 text-[12px] bg-slate-50 font-bold text-slate-700 border border-slate-200 rounded-lg focus:outline-none">
+<option value="">District: All</option>
+{% for d in districts %}
+<option value="{{ d.id }}" {% if selected_district == d.id|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>
+{% endfor %}
+</select>
+</div>
+<!-- Sub-county -->
+<div>
+<select name="sub_county" class="w-full h-9 text-[12px] bg-slate-50 font-bold text-slate-700 border border-slate-200 rounded-lg focus:outline-none">
+<option value="">Sub-county: All</option>
+{% for sc in sub_counties %}
+<option value="{{ sc.id }}" {% if selected_sub_county == sc.id %}selected{% endif %}>{{ sc.name }}</option>
+{% endfor %}
+</select>
+</div>
+<!-- School Type -->
+<div>
+<select name="school_type" class="w-full h-9 text-[12px] bg-slate-50 font-bold text-slate-700 border border-slate-200 rounded-lg focus:outline-none">
+<option value="">School Type: All</option>
+{% for val, label in school_types %}
+<option value="{{ val }}" {% if selected_type == val %}selected{% endif %}>{{ label }}</option>
+{% endfor %}
+</select>
+</div>
+<!-- Cluster Status -->
+<div>
+<select name="cluster_status" class="w-full h-9 text-[12px] bg-slate-50 font-bold text-slate-700 border border-slate-200 rounded-lg focus:outline-none">
+<option value="">Cluster Status: All</option>
+<option value="clustered" {% if selected_cluster_status == 'clustered' %}selected{% endif %}>Clustered</option>
+<option value="unclustered" {% if selected_cluster_status == 'unclustered' %}selected{% endif %}>Unclustered</option>
+</select>
+</div>
+<!-- Project Status -->
+<div>
+<select name="project_status" class="w-full h-9 text-[12px] bg-slate-50 font-bold text-slate-700 border border-slate-200 rounded-lg focus:outline-none">
+<option value="">Project Status: All</option>
+<option value="assigned" {% if selected_project_status == 'assigned' %}selected{% endif %}>Assigned</option>
+<option value="unassigned" {% if selected_project_status == 'unassigned' %}selected{% endif %}>Not Assigned</option>
+</select>
+</div>
+</div>
 
-  <!-- KPI Row Container -->
-  <div id="kpi-cards-row" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 font-sans">
-    {% include "partials/schools/kpi_cards.html" %}
-  </div>
+<div class="flex items-center justify-between pt-1">
+<!-- Clear Filters -->
+<a href="/schools" class="text-[12px] font-extrabold text-[var(--color-edify-primary)] hover:underline flex items-center gap-1.5">
+<svg class="h-4 w-4 shrink-0 text-[var(--color-edify-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+</svg>
+<span>Clear Filters</span>
+</a>
+</div>
+</form>
+</div>
 
-  <!-- Status Banners Container -->
-  <div id="priority-strip" class="grid grid-cols-1 md:grid-cols-3 gap-6 font-sans">
-    {% include "partials/schools/priority_strip.html" %}
-  </div>
+<!-- KPI Row Container -->
+<div id="kpi-cards-row" class="w-full">
+{% include "partials/schools/kpi_cards.html" %}
+</div>
 
-  <!-- Split Roster Workspace -->
-  <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
-    
-    <!-- Left Column: Table & Selection list (3/4 width) -->
-    <div class="lg:col-span-3 space-y-6">
-      
-      <!-- List Headers, Tabs, and Table Container -->
-      <div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm overflow-hidden">
-        <!-- Horizontal Tabs Header -->
-        <div class="px-6 py-4 border-b border-[var(--color-edify-divider)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 font-sans">
-          <!-- Roster Select Tabs Container -->
-          <div id="school-tabs-header">
-            {% include "partials/schools/tabs.html" %}
-          </div>
-          
-          <!-- Column Settings Dropdown wrapper -->
-          <div class="relative">
-            <button 
-              @click="columnSettingsOpen = !columnSettingsOpen" 
-              class="h-8 px-3 rounded-lg border border-[var(--color-edify-border)] hover:bg-slate-50 text-[11.5px] font-bold text-slate-600 flex items-center gap-1.5 transition-colors shrink-0"
-            >
-              <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-              </svg>
-              <span>Column Settings</span>
-            </button>
-            
-            <!-- Column Toggle Options Overlay -->
-            <div 
-              x-show="columnSettingsOpen" 
-              @click.outside="columnSettingsOpen = false" 
-              class="absolute right-0 mt-1.5 w-52 bg-white border border-slate-200 rounded-xl shadow-lg p-3 z-50 text-[12px] font-semibold space-y-2.5"
-              style="display: none;"
-            >
-              <h4 class="text-[11px] font-black text-slate-400 uppercase tracking-wider pb-1 border-b border-slate-100">Toggle columns</h4>
-              <div class="space-y-1.5 max-h-60 overflow-y-auto">
-                <label class="flex items-center gap-2 text-slate-700 cursor-pointer">
-                  <input type="checkbox" x-model="visibleColumns.id" class="rounded border-slate-300 text-blue-600">
-                  <span>School ID</span>
-                </label>
-                <label class="flex items-center gap-2 text-slate-700 cursor-pointer">
-                  <input type="checkbox" x-model="visibleColumns.name" class="rounded border-slate-300 text-blue-600">
-                  <span>School Name</span>
-                </label>
-                <label class="flex items-center gap-2 text-slate-700 cursor-pointer">
-                  <input type="checkbox" x-model="visibleColumns.district" class="rounded border-slate-300 text-blue-600">
-                  <span>District</span>
-                </label>
-                <label class="flex items-center gap-2 text-slate-700 cursor-pointer">
-                  <input type="checkbox" x-model="visibleColumns.sub_county" class="rounded border-slate-300 text-blue-600">
-                  <span>Sub-county</span>
-                </label>
-                <label class="flex items-center gap-2 text-slate-700 cursor-pointer">
-                  <input type="checkbox" x-model="visibleColumns.type" class="rounded border-slate-300 text-blue-600">
-                  <span>School Type</span>
-                </label>
-                <label class="flex items-center gap-2 text-slate-700 cursor-pointer">
-                  <input type="checkbox" x-model="visibleColumns.staff" class="rounded border-slate-300 text-blue-600">
-                  <span>Staff</span>
-                </label>
-                <label class="flex items-center gap-2 text-slate-700 cursor-pointer">
-                  <input type="checkbox" x-model="visibleColumns.match_status" class="rounded border-slate-300 text-blue-600">
-                  <span>Match Status</span>
-                </label>
-                <label class="flex items-center gap-2 text-slate-700 cursor-pointer">
-                  <input type="checkbox" x-model="visibleColumns.cluster_status" class="rounded border-slate-300 text-blue-600">
-                  <span>Cluster Status</span>
-                </label>
-                <label class="flex items-center gap-2 text-slate-700 cursor-pointer">
-                  <input type="checkbox" x-model="visibleColumns.ssa_status" class="rounded border-slate-300 text-blue-600">
-                  <span>SSA Status</span>
-                </label>
-                <label class="flex items-center gap-2 text-slate-700 cursor-pointer">
-                  <input type="checkbox" x-model="visibleColumns.readiness" class="rounded border-slate-300 text-blue-600">
-                  <span>Planning Readiness</span>
-                </label>
-                <label class="flex items-center gap-2 text-slate-700 cursor-pointer">
-                  <input type="checkbox" x-model="visibleColumns.partner_type" class="rounded border-slate-300 text-blue-600">
-                  <span>Partner Type</span>
-                </label>
-                <label class="flex items-center gap-2 text-slate-700 cursor-pointer">
-                  <input type="checkbox" x-model="visibleColumns.enrollment" class="rounded border-slate-300 text-blue-600">
-                  <span>Enrollment</span>
-                </label>
-                <label class="flex items-center gap-2 text-slate-700 cursor-pointer">
-                  <input type="checkbox" x-model="visibleColumns.enrollment_date" class="rounded border-slate-300 text-blue-600">
-                  <span>Enrollment Date</span>
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
+<!-- Split Roster Workspace -->
+<!-- Roster Workspace -->
+<div class="space-y-6">
+<!-- List Headers, Tabs, and Table Container -->
+<div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm overflow-hidden">
+<!-- Horizontal Tabs Header -->
+<div class="px-6 py-4 border-b border-[var(--color-edify-divider)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 font-sans">
+<!-- Roster Select Tabs Container -->
+<div id="school-tabs-header">
+{% include "partials/schools/tabs.html" %}
+</div>
 
-        <!-- Schools table -->
-        <div id="schools-table-container">
-          {% include "partials/schools/table.html" %}
-        </div>
-      </div>
-    </div>
+<!-- Column Settings Dropdown wrapper -->
+<div class="relative">
+<button 
+@click="columnSettingsOpen = !columnSettingsOpen" 
+class="h-8 px-3 rounded-lg border border-[var(--color-edify-border)] hover:bg-slate-50 text-[12px] font-bold text-slate-600 flex items-center gap-1.5 transition-colors shrink-0"
+>
+<svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+</svg>
+<span>Column Settings</span>
+</button>
 
-    <!-- Right Column: Directory Intelligence & Bulk Actions (1/4 width) -->
-    <div class="space-y-6">
-      
-      <!-- Directory Intelligence (HTMX target) -->
-      <div id="directory-intelligence-container">
-        {% include "partials/schools/directory_intelligence.html" %}
-      </div>
+<!-- Column Toggle Options Overlay -->
+<div 
+x-show="columnSettingsOpen" 
+@click.outside="columnSettingsOpen = false" 
+class="absolute right-0 mt-1.5 w-52 bg-white border border-slate-200 rounded-xl shadow-lg p-3 z-50 text-[12px] font-semibold space-y-2.5"
+style="display: none;"
+>
+<h4 class="text-[11px] font-black text-slate-400 uppercase tracking-wider pb-1 border-b border-slate-100">Toggle columns</h4>
+<div class="space-y-1.5 max-h-60 overflow-y-auto">
+<label class="flex items-center gap-2 text-slate-700 cursor-pointer">
+<input type="checkbox" x-model="visibleColumns.id" class="rounded border-slate-300 text-blue-600">
+<span>School ID</span>
+</label>
+<label class="flex items-center gap-2 text-slate-700 cursor-pointer">
+<input type="checkbox" x-model="visibleColumns.name" class="rounded border-slate-300 text-blue-600">
+<span>School Name</span>
+</label>
+<label class="flex items-center gap-2 text-slate-700 cursor-pointer">
+<input type="checkbox" x-model="visibleColumns.district" class="rounded border-slate-300 text-blue-600">
+<span>District</span>
+</label>
+<label class="flex items-center gap-2 text-slate-700 cursor-pointer">
+<input type="checkbox" x-model="visibleColumns.sub_county" class="rounded border-slate-300 text-blue-600">
+<span>Sub-county</span>
+</label>
+<label class="flex items-center gap-2 text-slate-700 cursor-pointer">
+<input type="checkbox" x-model="visibleColumns.type" class="rounded border-slate-300 text-blue-600">
+<span>School Type</span>
+</label>
+<label class="flex items-center gap-2 text-slate-700 cursor-pointer">
+<input type="checkbox" x-model="visibleColumns.staff" class="rounded border-slate-300 text-blue-600">
+<span>Staff</span>
+</label>
+<label class="flex items-center gap-2 text-slate-700 cursor-pointer">
+<input type="checkbox" x-model="visibleColumns.match_status" class="rounded border-slate-300 text-blue-600">
+<span>Match Status</span>
+</label>
+<label class="flex items-center gap-2 text-slate-700 cursor-pointer">
+<input type="checkbox" x-model="visibleColumns.cluster_status" class="rounded border-slate-300 text-blue-600">
+<span>Cluster Status</span>
+</label>
+<label class="flex items-center gap-2 text-slate-700 cursor-pointer">
+<input type="checkbox" x-model="visibleColumns.ssa_status" class="rounded border-slate-300 text-blue-600">
+<span>SSA Status</span>
+</label>
+<label class="flex items-center gap-2 text-slate-700 cursor-pointer">
+<input type="checkbox" x-model="visibleColumns.readiness" class="rounded border-slate-300 text-blue-600">
+<span>Planning Readiness</span>
+</label>
+<label class="flex items-center gap-2 text-slate-700 cursor-pointer">
+<input type="checkbox" x-model="visibleColumns.partner_type" class="rounded border-slate-300 text-blue-600">
+<span>Partner Type</span>
+</label>
+<label class="flex items-center gap-2 text-slate-700 cursor-pointer">
+<input type="checkbox" x-model="visibleColumns.enrollment" class="rounded border-slate-300 text-blue-600">
+<span>Enrollment</span>
+</label>
+<label class="flex items-center gap-2 text-slate-700 cursor-pointer">
+<input type="checkbox" x-model="visibleColumns.enrollment_date" class="rounded border-slate-300 text-blue-600">
+<span>Enrollment Date</span>
+</label>
+</div>
+</div>
+</div>
+</div>
 
-      <!-- Bulk Actions Panel -->
-      <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm space-y-4 font-sans">
-        <div class="border-b border-slate-100 pb-3">
-          <h3 class="text-[14px] font-extrabold text-slate-800 tracking-tight">Bulk Actions</h3>
-          <p class="text-[10px] text-slate-400 font-semibold mt-0.5 uppercase tracking-wider">Operational shortcuts</p>
-        </div>
-        
-        <div class="space-y-2">
-          <!-- Assign to Cluster button -->
-          <button 
-            @click="assignClusterOpen = true"
-            :disabled="selectedSchools.length === 0"
-            :class="selectedSchools.length === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-50'"
-            class="w-full h-11 px-4 border border-[var(--color-edify-border)] rounded-xl flex items-center gap-3 transition-colors text-left text-[12.5px] font-semibold text-slate-700"
-          >
-            <div class="h-7 w-7 rounded-lg bg-slate-50 border border-slate-100 text-slate-400 flex items-center justify-center shrink-0">
-              <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-            </div>
-            <div>
-              <p class="font-extrabold text-slate-800">Assign to Cluster</p>
-              <p class="text-[10px] text-slate-400 font-semibold">Assign selected schools to a cluster</p>
-            </div>
-          </button>
+<!-- Schools table -->
+<div 
+id="schools-table-container"
+hx-get="/schools"
+hx-trigger="schools-updated from:body"
+hx-include="#filters-form"
+>
+{% include "partials/schools/table.html" %}
+</div>
+</div>
+</div>
 
-          <!-- Match Staff button -->
-          <button 
-            @click="matchStaffOpen = true"
-            :disabled="selectedSchools.length === 0"
-            :class="selectedSchools.length === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-50'"
-            class="w-full h-11 px-4 border border-[var(--color-edify-border)] rounded-xl flex items-center gap-3 transition-colors text-left text-[12.5px] font-semibold text-slate-700"
-          >
-            <div class="h-7 w-7 rounded-lg bg-slate-50 border border-slate-100 text-slate-400 flex items-center justify-center shrink-0">
-              <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-              </svg>
-            </div>
-            <div>
-              <p class="font-extrabold text-slate-800">Match Staff</p>
-              <p class="text-[10px] text-slate-400 font-semibold">Match staff to selected schools</p>
-            </div>
-          </button>
+<!-- Modals section -->
 
-          <!-- Export Selected button -->
-          <form action="/schools" method="get" class="m-0">
-            <input type="hidden" name="export" value="xlsx">
-            <input type="hidden" name="school_ids" :value="selectedSchools.join(',')">
-            <button 
-              type="submit"
-              :disabled="selectedSchools.length === 0"
-              :class="selectedSchools.length === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-50'"
-              class="w-full h-11 px-4 border border-[var(--color-edify-border)] rounded-xl flex items-center gap-3 transition-colors text-left text-[12.5px] font-semibold text-slate-700"
-            >
-              <div class="h-7 w-7 rounded-lg bg-slate-50 border border-slate-100 text-slate-400 flex items-center justify-center shrink-0">
-                <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-              </div>
-              <div>
-                <p class="font-extrabold text-slate-800">Export Selected</p>
-                <p class="text-[10px] text-slate-400 font-semibold">Export visible or selected schools</p>
-              </div>
-            </button>
-          </form>
+<!-- Modal 1: Assign to Cluster Modal -->
+<div 
+x-show="assignClusterOpen" 
+class="fixed inset-0 z-50 flex items-center justify-center bg-slate-600/50 backdrop-blur-sm"
+style="display: none;"
+>
+<div @click.outside="assignClusterOpen = false" class="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-md w-full p-6 space-y-4 font-sans">
+<div class="flex items-center justify-between border-b border-slate-100 pb-3">
+<h3 class="text-[15px] font-black text-slate-800">Assign Cluster to Schools</h3>
+<button @click="assignClusterOpen = false" class="text-slate-400 hover:text-slate-600 text-[18px]">&times;</button>
+</div>
 
-          <!-- Open Planning button -->
-          <form action="/planning" method="get" class="m-0">
-            <input type="hidden" name="bulk_school_ids" :value="selectedSchools.join(',')">
-            <button 
-              type="submit"
-              :disabled="selectedSchools.length === 0"
-              :class="selectedSchools.length === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-50'"
-              class="w-full h-11 px-4 border border-[var(--color-edify-border)] rounded-xl flex items-center gap-3 transition-colors text-left text-[12.5px] font-semibold text-slate-700"
-            >
-              <div class="h-7 w-7 rounded-lg bg-slate-50 border border-slate-100 text-slate-400 flex items-center justify-center shrink-0">
-                <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div>
-                <p class="font-extrabold text-slate-800">Open Planning</p>
-                <p class="text-[10px] text-slate-400 font-semibold">Open planning for selected schools</p>
-              </div>
-            </button>
-          </form>
-        </div>
-        
-        <p class="text-[10.5px] text-slate-400 font-semibold text-center italic mt-2">Select schools in the directory table to enable bulk actions</p>
-      </div>
+<form action="/schools/bulk-assign-cluster" method="post" class="space-y-4">
+{% csrf_token %}
+<input type="hidden" name="school_ids" :value="selectedSchools.join(',')">
 
-    </div>
-  </div>
+<div class="space-y-1">
+<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Select Cluster</label>
+<select name="cluster_id" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none" required>
+<option value="">-- Choose Cluster --</option>
+{% for c in clusters %}
+<option value="{{ c.id }}">{{ c.name }}</option>
+{% endfor %}
+</select>
+</div>
 
-  <!-- Modals section -->
+<p class="text-[11px] text-slate-400 font-semibold">This action will assign <span x-text="selectedSchools.length" class="text-slate-800 font-black"></span> selected school(s) to the selected cluster and update their status to Clustered.</p>
 
-  <!-- Modal 1: Assign to Cluster Modal -->
-  <div 
-    x-show="assignClusterOpen" 
-    class="fixed inset-0 z-50 flex items-center justify-center bg-slate-600/50 backdrop-blur-sm"
-    style="display: none;"
-  >
-    <div @click.outside="assignClusterOpen = false" class="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-md w-full p-6 space-y-4 font-sans">
-      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-        <h3 class="text-[15px] font-black text-slate-800">Assign Cluster to Schools</h3>
-        <button @click="assignClusterOpen = false" class="text-slate-400 hover:text-slate-600 text-[18px]">&times;</button>
-      </div>
-      
-      <form action="/schools/bulk-assign-cluster" method="post" class="space-y-4">
-        {% csrf_token %}
-        <input type="hidden" name="school_ids" :value="selectedSchools.join(',')">
-        
-        <div class="space-y-1">
-          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Select Cluster</label>
-          <select name="cluster_id" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12.5px] font-semibold bg-slate-50 focus:outline-none" required>
-            <option value="">-- Choose Cluster --</option>
-            {% for c in clusters %}
-              <option value="{{ c.id }}">{{ c.name }}</option>
-            {% endfor %}
-          </select>
-        </div>
+<div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+<button type="button" @click="assignClusterOpen = false" class="h-9 px-4 rounded-lg border border-slate-200 text-[12px] font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
+<button type="submit" class="h-9 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-bold shadow-sm">Assign Cluster</button>
+</div>
+</form>
+</div>
+</div>
 
-        <p class="text-[11px] text-slate-400 font-semibold">This action will assign <span x-text="selectedSchools.length" class="text-slate-800 font-black"></span> selected school(s) to the selected cluster and update their status to Clustered.</p>
+<!-- Modal 1.5: Assign Project to Schools Modal -->
+<div 
+x-show="bulkAssignProjectOpen" 
+class="fixed inset-0 z-50 flex items-center justify-center bg-slate-600/50 backdrop-blur-sm"
+style="display: none;"
+>
+<div @click.outside="bulkAssignProjectOpen = false" class="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-md w-full p-6 space-y-4 font-sans">
+<div class="flex items-center justify-between border-b border-slate-100 pb-3">
+<h3 class="text-[15px] font-black text-slate-800">Assign Project to Schools</h3>
+<button @click="bulkAssignProjectOpen = false" class="text-slate-400 hover:text-slate-600 text-[18px]">&times;</button>
+</div>
 
-        <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-          <button type="button" @click="assignClusterOpen = false" class="h-9 px-4 rounded-lg border border-slate-200 text-[12px] font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
-          <button type="submit" class="h-9 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-bold shadow-sm">Assign Cluster</button>
-        </div>
-      </form>
-    </div>
-  </div>
+<form action="/schools/bulk-assign-project" method="post" class="space-y-4">
+{% csrf_token %}
+<input type="hidden" name="school_ids" :value="selectedSchools.join(',')">
 
-  <!-- Modal 2: Match Staff Modal -->
-  <div 
-    x-show="matchStaffOpen" 
-    class="fixed inset-0 z-50 flex items-center justify-center bg-slate-600/50 backdrop-blur-sm"
-    style="display: none;"
-  >
-    <div @click.outside="matchStaffOpen = false" class="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-md w-full p-6 space-y-4 font-sans">
-      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-        <h3 class="text-[15px] font-black text-slate-800">Match Staff to Schools</h3>
-        <button @click="matchStaffOpen = false" class="text-slate-400 hover:text-slate-600 text-[18px]">&times;</button>
-      </div>
-      
-      <form action="/schools/bulk-match-staff" method="post" class="space-y-4">
-        {% csrf_token %}
-        <input type="hidden" name="school_ids" :value="selectedSchools.join(',')">
-        
-        <div class="space-y-1">
-          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Select Staff (CCEO)</label>
-          <select name="staff_id" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12.5px] font-semibold bg-slate-50 focus:outline-none" required>
-            <option value="">-- Choose CCEO --</option>
-            {% for sp in staff_profiles %}
-              <option value="{{ sp.id }}">{{ sp.user.name }}</option>
-            {% endfor %}
-          </select>
-        </div>
+<div class="space-y-1">
+<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Select Project</label>
+<select name="project_id" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none" required>
+<option value="">-- Choose Project --</option>
+{% for p in projects %}
+<option value="{{ p.id }}">{{ p.name }}</option>
+{% endfor %}
+</select>
+</div>
 
-        <p class="text-[11px] text-slate-400 font-semibold">This will match <span x-text="selectedSchools.length" class="text-slate-800 font-black"></span> selected school(s) to the designated staff profile and update their ownership state.</p>
+<p class="text-[11px] text-slate-400 font-semibold">This action will assign <span x-text="selectedSchools.length" class="text-slate-800 font-black"></span> selected school(s) to the selected project. Duplicate assignments will be skipped automatically.</p>
 
-        <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-          <button type="button" @click="matchStaffOpen = false" class="h-9 px-4 rounded-lg border border-slate-200 text-[12px] font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
-          <button type="submit" class="h-9 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-bold shadow-sm">Match Staff</button>
-        </div>
-      </form>
-    </div>
-  </div>
+<div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+<button type="button" @click="bulkAssignProjectOpen = false" class="h-9 px-4 rounded-lg border border-slate-200 text-[12px] font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
+<button type="submit" class="h-9 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-bold shadow-sm">Assign Project</button>
+</div>
+</form>
+</div>
+</div>
 
-  <!-- Modal 3: Add School Modal -->
-  <div 
-    x-show="addSchoolOpen" 
-    class="fixed inset-0 z-50 flex items-center justify-center bg-slate-600/50 backdrop-blur-sm"
-    style="display: none;"
-  >
-    <div @click.outside="addSchoolOpen = false" class="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-md w-full p-6 space-y-4 font-sans">
-      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-        <h3 class="text-[15px] font-black text-slate-800">Add New School</h3>
-        <button @click="addSchoolOpen = false" class="text-slate-400 hover:text-slate-600 text-[18px]">&times;</button>
-      </div>
-      
-      <form action="/schools/add-school" method="post" class="space-y-4">
-        {% csrf_token %}
-        
-        <div class="space-y-1">
-          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">School ID</label>
-          <input type="text" name="school_id" placeholder="e.g. SCH-1011" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12.5px] bg-slate-50 focus:outline-none" required>
-        </div>
+<!-- Modal 2: Match Staff Modal -->
+<div 
+x-show="matchStaffOpen" 
+class="fixed inset-0 z-50 flex items-center justify-center bg-slate-600/50 backdrop-blur-sm"
+style="display: none;"
+>
+<div @click.outside="matchStaffOpen = false" class="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-md w-full p-6 space-y-4 font-sans">
+<div class="flex items-center justify-between border-b border-slate-100 pb-3">
+<h3 class="text-[15px] font-black text-slate-800">Match Staff to Schools</h3>
+<button @click="matchStaffOpen = false" class="text-slate-400 hover:text-slate-600 text-[18px]">&times;</button>
+</div>
 
-        <div class="space-y-1">
-          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">School Name</label>
-          <input type="text" name="name" placeholder="e.g. Hope Academy" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12.5px] bg-slate-50 focus:outline-none" required>
-        </div>
+<form action="/schools/bulk-match-staff" method="post" class="space-y-4">
+{% csrf_token %}
+<input type="hidden" name="school_ids" :value="selectedSchools.join(',')">
 
-        <div class="grid grid-cols-2 gap-3">
-          <div class="space-y-1">
-            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">School Type</label>
-            <select name="school_type" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12.5px] bg-slate-50 focus:outline-none">
-              <option value="client">Client</option>
-              <option value="core">Core</option>
-            </select>
-          </div>
-          <div class="space-y-1">
-            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">District</label>
-            <select name="district_id" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12.5px] bg-slate-50 focus:outline-none" required>
-              <option value="">-- Choose District --</option>
-              {% for d in districts %}
-                <option value="{{ d.id }}">{{ d.name }}</option>
-              {% endfor %}
-            </select>
-          </div>
-        </div>
+<div class="space-y-1">
+<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Select Staff (CCEO)</label>
+<select name="staff_id" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none" required>
+<option value="">-- Choose CCEO --</option>
+{% for sp in staff_profiles %}
+<option value="{{ sp.id }}">{{ sp.user.name }}</option>
+{% endfor %}
+</select>
+</div>
 
-        <div class="space-y-1">
-          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Enrollment</label>
-          <input type="number" name="enrollment" placeholder="e.g. 250" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12.5px] bg-slate-50 focus:outline-none">
-        </div>
+<p class="text-[11px] text-slate-400 font-semibold">This will match <span x-text="selectedSchools.length" class="text-slate-800 font-black"></span> selected school(s) to the designated staff profile and update their ownership state.</p>
 
-        <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-          <button type="button" @click="addSchoolOpen = false" class="h-9 px-4 rounded-lg border border-slate-200 text-[12px] font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
-          <button type="submit" class="h-9 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-bold shadow-sm">Save School</button>
-        </div>
-      </form>
-    </div>
-  </div>
+<div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+<button type="button" @click="matchStaffOpen = false" class="h-9 px-4 rounded-lg border border-slate-200 text-[12px] font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
+<button type="submit" class="h-9 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-bold shadow-sm">Match Staff</button>
+</div>
+</form>
+</div>
+</div>
+
+<!-- Modal 3: Add School Modal -->
+<div 
+x-show="addSchoolOpen" 
+class="fixed inset-0 z-50 flex items-center justify-center bg-slate-600/50 backdrop-blur-sm"
+style="display: none;"
+>
+<div @click.outside="addSchoolOpen = false" class="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-md w-full p-6 space-y-4 font-sans">
+<div class="flex items-center justify-between border-b border-slate-100 pb-3">
+<h3 class="text-[15px] font-black text-slate-800">Add New School</h3>
+<button @click="addSchoolOpen = false" class="text-slate-400 hover:text-slate-600 text-[18px]">&times;</button>
+</div>
+
+<form action="/schools/add-school" method="post" class="space-y-4">
+{% csrf_token %}
+
+<div class="space-y-1">
+<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">School ID</label>
+<input type="text" name="school_id" placeholder="e.g. SCH-1011" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] bg-slate-50 focus:outline-none" required>
+</div>
+
+<div class="space-y-1">
+<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">School Name</label>
+<input type="text" name="name" placeholder="e.g. Hope Academy" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] bg-slate-50 focus:outline-none" required>
+</div>
+
+<div class="grid grid-cols-2 gap-3">
+<div class="space-y-1">
+<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">School Type</label>
+<select name="school_type" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] bg-slate-50 focus:outline-none">
+<option value="client">Client</option>
+<option value="core">Core</option>
+</select>
+</div>
+<div class="space-y-1">
+<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">District</label>
+<select name="district_id" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] bg-slate-50 focus:outline-none" required>
+<option value="">-- Choose District --</option>
+{% for d in districts %}
+<option value="{{ d.id }}">{{ d.name }}</option>
+{% endfor %}
+</select>
+</div>
+</div>
+
+<div class="space-y-1">
+<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Enrollment</label>
+<input type="number" name="enrollment" placeholder="e.g. 250" class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] bg-slate-50 focus:outline-none">
+</div>
+
+<div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+<button type="button" @click="addSchoolOpen = false" class="h-9 px-4 rounded-lg border border-slate-200 text-[12px] font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
+<button type="submit" class="h-9 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-bold shadow-sm">Save School</button>
+</div>
+</form>
+</div>
+</div>
+<!-- Drawer Container for HTMX drawer rendering -->
+<div id="drawer-container"></div>
 </div>
 {% endblock %}

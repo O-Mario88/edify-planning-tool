@@ -1,272 +1,737 @@
 {% extends "layouts/shell.html" %}
 {% load frontend_filters %}
 
-{% block title %}Fund Requests - Edify Planning Tool{% endblock %}
-
-{% block topbar_left %}
-<!-- Clean topbar layout matching the mockup -->
-{% endblock %}
+{% block title %}Fund Approvals Console — SIPA{% endblock %}
 
 {% block shell_content %}
+{% if is_pl %}
+<div class="p-6 max-w-[1600px] mx-auto space-y-6 text-slate-700 font-sans"
+x-data="{
+queue: {{ pl_queue_items_json|safe }},
+selectedId: ' Sarah M.',
+selectedItem: null,
+activeTab: 'breakdown',
+init() {
+this.selectedItem = this.queue.find(item => item.id === this.selectedId) || this.queue[0];
+},
+selectRequest(id) {
+this.selectedId = id;
+this.selectedItem = this.queue.find(item => item.id === id);
+},
+formatCurrency(val) {
+return 'UGX ' + Number(val).toLocaleString();
+}
+}">
+
+<!-- ================= TOP HEADER BAR ================= -->
+<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-100 pb-4">
+<div>
+<div class="flex items-center gap-2">
+<h1 class="text-[24px] font-black text-slate-800 tracking-tight leading-none">Fund Approvals</h1>
+<span class="text-slate-300 cursor-pointer" title="Approve fund requests from CCEOs">ⓘ</span>
+</div>
+<p class="text-[12px] text-slate-500 font-bold mt-1.5 font-semibold">All fund requests are derived from CCEO plans. You approve only funds for your own team.</p>
+</div>
+
+<!-- Actions toolbar -->
+<div class="flex flex-wrap items-center gap-2">
+<button class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-extrabold text-slate-700 flex items-center gap-1.5 shadow-sm hover:bg-slate-50">
+📥 Export
+</button>
+
+<button class="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[12px] font-black flex items-center gap-1.5 transition-all shadow-sm">
+✓ Approve All Valid
+</button>
+
+<button class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-extrabold text-slate-700 flex items-center gap-1.5 shadow-sm hover:bg-slate-50">
+<svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+Filters
+</button>
+</div>
+</div>
+
+
+<!-- Filters Row -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-3 bg-white p-3.5 rounded-2xl border border-slate-100 shadow-sm text-[12px] font-bold text-slate-600">
+<div class="space-y-1">
+<label class="text-[11px] text-slate-400 font-extrabold uppercase">Financial Year</label>
+<select class="h-8 w-full bg-slate-50 border border-slate-200 rounded-lg px-2 text-[12px] font-bold cursor-pointer focus:outline-none">
+<option>2024/2025</option>
+</select>
+</div>
+<div class="space-y-1">
+<label class="text-[11px] text-slate-400 font-extrabold uppercase">Month</label>
+<select class="h-8 w-full bg-slate-50 border border-slate-200 rounded-lg px-2 text-[12px] font-bold cursor-pointer focus:outline-none">
+<option>May 2025</option>
+</select>
+</div>
+<div class="space-y-1">
+<label class="text-[11px] text-slate-400 font-extrabold uppercase">Region</label>
+<select class="h-8 w-full bg-slate-50 border border-slate-200 rounded-lg px-2 text-[12px] font-bold cursor-pointer focus:outline-none">
+<option>Northern Region</option>
+</select>
+</div>
+<div class="space-y-1">
+<label class="text-[11px] text-slate-400 font-extrabold uppercase">District</label>
+<select class="h-8 w-full bg-slate-50 border border-slate-200 rounded-lg px-2 text-[12px] font-bold cursor-pointer focus:outline-none">
+<option>All Districts</option>
+</select>
+</div>
+</div>
+
+
+<!-- ================= KPI STRIP ================= -->
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+<!-- 1 -->
+<div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
+<p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Total Requested This Month</p>
+<h3 class="text-[20px] font-black text-slate-800 leading-none">UGX 214.6M</h3>
+<span class="text-[11px] text-emerald-600 font-extrabold block pt-1">▲ 18.6% vs Apr</span>
+</div>
+<!-- 2 -->
+<div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
+<p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Awaiting Approval</p>
+<h3 class="text-[20px] font-black text-slate-800 leading-none">UGX 128.4M</h3>
+<span class="text-[11px] text-amber-600 font-bold block pt-1">12 requests pending</span>
+</div>
+<!-- 3 -->
+<div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
+<p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Approved Today</p>
+<h3 class="text-[20px] font-black text-slate-800 leading-none">UGX 36.2M</h3>
+<span class="text-[11px] text-emerald-600 font-bold block pt-1">5 requests approved</span>
+</div>
+<!-- 4 -->
+<div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
+<p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Returned for Review</p>
+<h3 class="text-[20px] font-black text-slate-800 leading-none">UGX 12.8M</h3>
+<span class="text-[11px] text-rose-600 font-bold block pt-1">4 requests returned</span>
+</div>
+<!-- 5 -->
+<div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
+<p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Planned Activities Funding</p>
+<h3 class="text-[20px] font-black text-slate-800 leading-none">UGX 214.6M</h3>
+<span class="text-[11px] text-indigo-700 font-extrabold block pt-1">100% of requests</span>
+</div>
+<!-- 6 -->
+<div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
+<p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Average Cost per School</p>
+<h3 class="text-[20px] font-black text-slate-800 leading-none">UGX 468,950</h3>
+<span class="text-[11px] text-emerald-600 font-extrabold block pt-1">▲ 7.3% vs Apr</span>
+</div>
+</div>
+
+
+<!-- ================= MAIN CONTENT SPLIT ================= -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+<!-- CCEO Fund Approval Queue (Col Span 3) -->
+<div class="lg:col-span-3 bg-white p-5 rounded-3xl border border-slate-150 shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between pb-3 border-b border-slate-100">
+<div class="flex items-center gap-1.5">
+<h2 class="text-[14px] font-black text-slate-800 tracking-tight">CCEO Fund Approval Queue</h2>
+<span class="bg-blue-600 text-white font-extrabold rounded-full px-1.5 py-0.5 text-[11px] flex items-center justify-center">6</span>
+</div>
+
+<select class="h-6 px-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-bold text-slate-500">
+<option>Sort by: Amount</option>
+</select>
+</div>
+
+<div class="space-y-2 mt-4">
+<template x-for="item in queue" :key="item.id">
 <div 
-  x-data="{
-    infoBannerOpen: true,
-    activeTab: '{{ active_tab }}',
-    selectedWeek: '{{ selected_week }}'
-  }"
-  class="p-6 max-w-[1600px] mx-auto space-y-6 font-sans text-slate-700"
+@click="selectRequest(item.id)"
+:class="selectedId === item.id ? 'border-slate-800 bg-slate-50' : 'border-slate-100 bg-white hover:bg-slate-50/50'"
+class="p-3.5 border rounded-2xl cursor-pointer flex flex-col justify-between transition-all group"
 >
-  <!-- Page Header Row -->
-  <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-    <div>
-      <h1 class="text-[26px] font-extrabold text-slate-800 tracking-tight leading-tight">Fund Requests</h1>
-      <p class="text-[12px] text-slate-500 font-semibold tracking-wide mt-0.5">Generate and track weekly and monthly fund requests from scheduled activities in My Plan.</p>
-    </div>
-    
-    <!-- Action buttons -->
-    <div class="flex flex-wrap items-center gap-2">
-      <!-- Export button -->
-      <a 
-        href="#"
-        onclick="this.href='/fund-requests?export=csv&' + new URLSearchParams(new FormData(document.getElementById('filters-form'))).toString()"
-        class="flex items-center gap-1.5 h-9 px-4 bg-white border border-slate-200 text-slate-700 text-[12.5px] font-bold rounded-lg hover:bg-slate-50 focus:outline-none transition-all shadow-sm"
-      >
-        <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-        Export
-      </a>
+<div class="flex items-start gap-3">
+<div class="h-8 w-8 rounded-full bg-slate-100 font-extrabold text-slate-700 flex items-center justify-center text-[12px] group-hover:scale-105 transition-transform" x-text="item.user_name.slice(0,2)"></div>
 
-      <!-- Generate Request Form -->
-      <form action="/fund-requests/generate-request" method="post" class="inline-block">
-        {% csrf_token %}
-        <input type="hidden" name="week_start" :value="selectedWeek">
-        <button 
-          type="submit"
-          class="flex items-center gap-1.5 h-9 px-4 !bg-[#002855] !text-white text-[12.5px] font-bold rounded-lg hover:bg-opacity-95 shadow-sm focus:outline-none transition-all"
-        >
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-          Generate Request
-        </button>
-      </form>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<h4 class="text-[12px] font-extrabold text-slate-800 truncate" x-text="item.user_name"></h4>
+<span :class="item.status_class" class="inline-flex items-center rounded-full px-1.5 py-0.5 text-[11px] font-bold border" x-text="item.status"></span>
+</div>
+<p class="text-[11px] text-slate-500 font-bold mt-0.5 truncate">
+<span x-text="item.district"></span> &bull; <span x-text="item.region"></span>
+</p>
+</div>
+</div>
 
-      <!-- Open My Plan -->
-      <a 
-        href="/my-plan" 
-        class="flex items-center gap-1.5 h-9 px-4 bg-white border border-slate-200 text-[#002855] text-[12.5px] font-bold rounded-lg hover:bg-slate-50 focus:outline-none transition-all shadow-sm"
-      >
-        Open My Plan
-        <svg class="h-3 w-3 text-slate-400 ml-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 11-1.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-      </a>
-    </div>
-  </div>
+<!-- activities breakdown metrics mini badges -->
+<div class="flex flex-wrap gap-1.5 mt-3 text-[11px] font-bold text-slate-500">
+<span class="px-1.5 py-0.5 bg-slate-100 rounded border border-slate-200"><span x-text="item.visits"></span> Visits</span>
+<span class="px-1.5 py-0.5 bg-slate-100 rounded border border-slate-200"><span x-text="item.partner"></span> Partner</span>
+<span class="px-1.5 py-0.5 bg-slate-100 rounded border border-slate-200"><span x-text="item.clusters"></span> Clusters</span>
+<span class="px-1.5 py-0.5 bg-slate-100 rounded border border-slate-200"><span x-text="item.trainings"></span> Trainings</span>
+</div>
 
-  <!-- Messages notifications -->
-  {% if messages %}
-    <div class="space-y-2">
-      {% for message in messages %}
-        <div class="p-3.5 rounded-xl border text-[12px] font-bold flex items-center justify-between {% if message.tags == 'success' %}bg-emerald-50 text-emerald-800 border-emerald-100{% else %}bg-rose-50 text-rose-800 border-rose-100{% endif %}">
-          <span>{{ message }}</span>
-          <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600">&times;</button>
-        </div>
-      {% endfor %}
-    </div>
-  {% endif %}
+<div class="flex items-center justify-between mt-3 pt-2.5 border-t border-slate-50">
+<span class="text-[11px] text-slate-400 font-bold">Total Requested</span>
+<span class="text-[14px] font-black text-slate-800" x-text="formatCurrency(item.requested)"></span>
+</div>
+</div>
+</template>
+</div>
+</div>
 
-  <!-- Workflow Strip -->
-  <div class="space-y-2">
-    {% include "partials/fund_requests/workflow_strip.html" %}
-    <p class="text-[10.5px] text-slate-400 font-bold text-center flex items-center justify-center gap-1">
-      <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-      All fund requests are automatically generated from scheduled activities in My Plan.
-    </p>
-  </div>
+<div class="flex items-center justify-between border-t border-slate-100 pt-4 mt-4 text-[11px] font-bold text-slate-400">
+<span>Showing 1-6 of 6</span>
+<div class="flex items-center gap-1.5">
+<button class="h-6 w-6 rounded border border-slate-200 flex items-center justify-center hover:bg-slate-50">&lt;</button>
+<button class="h-6 w-6 rounded border border-slate-200 flex items-center justify-center hover:bg-slate-50">&gt;</button>
+</div>
+</div>
+</div>
 
-  <!-- Filters Bar -->
-  <form 
-    id="filters-form"
-    hx-get="/fund-requests/weekly"
-    hx-trigger="change, keyup delay:200ms changed from:input[name='q']"
-    hx-target="#weekly-request-card-container"
-    hx-push-url="true"
-    class="bg-white p-3.5 rounded-xl border border-slate-100 shadow-sm flex flex-wrap items-center gap-3 text-[11.5px] font-bold text-slate-700"
-  >
-    <input type="hidden" name="tab" :value="activeTab">
+<!-- DETAIL WORKSPACE PANEL (Col Span 6) -->
+<div class="lg:col-span-6 bg-white p-5 rounded-3xl border border-slate-150 shadow-sm flex flex-col justify-between" x-show="selectedItem">
+<div>
+<div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-3">
+<div class="flex items-center gap-3">
+<div class="h-10 w-10 rounded-full bg-slate-100 font-extrabold text-slate-700 flex items-center justify-center text-[14px]" x-text="selectedItem ? selectedItem.user_name.slice(0,2) : ''"></div>
+<div>
+<h3 class="text-[18px] font-black text-slate-800 leading-none" x-text="selectedItem ? selectedItem.user_name + ' — May Fund Plan' : ''"></h3>
+<p class="text-[11px] text-slate-500 font-bold mt-1.5">
+<span x-text="selectedItem ? selectedItem.district : ''"></span> &bull; <span x-text="selectedItem ? selectedItem.region : ''"></span>
+</p>
+</div>
+</div>
 
-    <!-- Search -->
-    <div class="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100">
-      <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-      <input type="text" name="q" placeholder="Search schools, clusters, activities..." class="bg-transparent focus:outline-none w-48 font-bold placeholder-slate-400">
-    </div>
+<div class="flex items-center gap-3">
+<div class="text-right">
+<span class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">Plan Period</span>
+<span class="text-[11px] font-black text-slate-800 block">May 1 – May 31, 2025</span>
+</div>
+<span :class="selectedItem ? selectedItem.status_class : ''" class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold border uppercase tracking-wider" x-text="selectedItem ? selectedItem.status : ''"></span>
+</div>
+</div>
 
-    <!-- Fiscal Year -->
-    <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
-      <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-      <select name="fy" class="bg-transparent focus:outline-none cursor-pointer">
-        <option value="2026" {% if selected_fy == '2026' %}selected{% endif %}>FY 2026</option>
-        <option value="2025" {% if selected_fy == '2025' %}selected{% endif %}>FY 2025</option>
-      </select>
-    </div>
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6 mt-4">
+<!-- Table columns (Col Span 8) -->
+<div class="md:col-span-8">
+<h4 class="text-[11px] font-black text-slate-500 uppercase tracking-wide mb-3">Funding Breakdown from Planned Activities</h4>
+<div class="overflow-x-auto">
+<table class="w-full text-left text-[11px] border-collapse">
+<thead>
+<tr class="border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider text-[11px]">
+<th class="pb-2 font-bold">Activity Category</th>
+<th class="pb-2 text-center font-bold">Planned Qty</th>
+<th class="pb-2 text-right font-bold">Unit Cost (UGX)</th>
+<th class="pb-2 text-right font-bold">Total (UGX)</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-50 font-semibold text-slate-700">
+<template x-for="line in selectedItem.lines" :key="line.category">
+<tr class="hover:bg-slate-50/50">
+<td class="py-2 font-extrabold text-slate-800" x-text="line.category"></td>
+<td class="py-2 text-center font-bold text-slate-500" x-text="line.quantity || '—'"></td>
+<td class="py-2 text-right font-bold text-slate-600" x-text="line.unit_cost ? Number(line.unit_cost).toLocaleString() : '—'"></td>
+<td class="py-2 text-right font-black text-slate-800" x-text="Number(line.total).toLocaleString()"></td>
+</tr>
+</template>
 
-    <!-- Quarter -->
-    <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
-      <select name="quarter" class="bg-transparent focus:outline-none cursor-pointer">
-        <option value="Q1" {% if selected_quarter == 'Q1' %}selected{% endif %}>Quarter: Q1</option>
-        <option value="Q2" {% if selected_quarter == 'Q2' %}selected{% endif %}>Quarter: Q2</option>
-        <option value="Q3" {% if selected_quarter == 'Q3' %}selected{% endif %}>Quarter: Q3</option>
-        <option value="Q4" {% if selected_quarter == 'Q4' %}selected{% endif %}>Quarter: Q4</option>
-      </select>
-    </div>
+<!-- Adjustments row -->
+<tr>
+<td class="py-2 text-slate-500 font-bold">Adjustments (Rounding)</td>
+<td class="py-2 text-center">—</td>
+<td class="py-2 text-right">—</td>
+<td class="py-2 text-right text-rose-600 font-bold">-20,000</td>
+</tr>
 
-    <!-- Month -->
-    <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
-      <select name="month" class="bg-transparent focus:outline-none cursor-pointer">
-        <option value="October" {% if selected_month == 'October' %}selected{% endif %}>Month: October</option>
-        <option value="November" {% if selected_month == 'November' %}selected{% endif %}>Month: November</option>
-        <option value="December" {% if selected_month == 'December' %}selected{% endif %}>Month: December</option>
-        <option value="January" {% if selected_month == 'January' %}selected{% endif %}>Month: January</option>
-        <option value="February" {% if selected_month == 'February' %}selected{% endif %}>Month: February</option>
-        <option value="March" {% if selected_month == 'March' %}selected{% endif %}>Month: March</option>
-        <option value="April" {% if selected_month == 'April' %}selected{% endif %}>Month: April</option>
-        <option value="May" {% if selected_month == 'May' %}selected{% endif %}>Month: May</option>
-        <option value="June" {% if selected_month == 'June' %}selected{% endif %}>Month: June</option>
-        <option value="July" {% if selected_month == 'July' %}selected{% endif %}>Month: July</option>
-        <option value="August" {% if selected_month == 'August' %}selected{% endif %}>Month: August</option>
-        <option value="September" {% if selected_month == 'September' %}selected{% endif %}>Month: September</option>
-      </select>
-    </div>
+<!-- Bold aggregate summary row -->
+<tr class="border-t border-slate-200 text-slate-800 font-black">
+<td class="py-3 font-extrabold uppercase tracking-wider" colspan="3">Total Requested</td>
+<td class="py-3 text-right font-black" x-text="formatCurrency(selectedItem.requested)"></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 
-    <!-- Week -->
-    <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
-      <select name="week" class="bg-transparent focus:outline-none cursor-pointer" x-model="selectedWeek">
-        {% for wk in dropdown_weeks %}
-          <option value="{{ wk.val }}">{{ wk.label }}</option>
-        {% endfor %}
-      </select>
-    </div>
+<!-- Plan Snapshot Side card (Col Span 4) -->
+<div class="md:col-span-4 bg-slate-50 p-4 rounded-2xl border border-slate-100 flex flex-col justify-between">
+<div>
+<span class="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider block">Plan Snapshot</span>
 
-    <!-- District -->
-    <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
-      <select name="district" class="bg-transparent focus:outline-none cursor-pointer">
-        <option value="">District: All</option>
-        {% for d in districts %}
-          <option value="{{ d.id }}" {% if selected_district == d.id %}selected{% endif %}>{{ d.name }}</option>
-        {% endfor %}
-      </select>
-    </div>
+<div class="space-y-3 mt-4 text-[11px] font-bold text-slate-500">
+<div class="flex justify-between items-start gap-1">
+<span>🏫 Planned schools by staff</span>
+<span class="text-slate-800 font-black shrink-0">24</span>
+</div>
+<div class="flex justify-between items-start gap-1">
+<span>🚗 Planned school visits by partners</span>
+<span class="text-slate-800 font-black shrink-0">4</span>
+</div>
+<div class="flex justify-between items-start gap-1">
+<span>👥 Cluster meetings planned</span>
+<span class="text-slate-800 font-black shrink-0">4</span>
+</div>
+<div class="flex justify-between items-start gap-1">
+<span>📚 Trainings planned (Cluster/In-school)</span>
+<span class="text-slate-800 font-black shrink-0">12</span>
+</div>
+<div class="flex justify-between items-start gap-1 border-t border-slate-200 pt-2">
+<span>🗺️ Total schools covered (Unique)</span>
+<span class="text-slate-800 font-black shrink-0">5</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
 
-    <!-- Staff -->
-    <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
-      <select name="staff" class="bg-transparent focus:outline-none cursor-pointer">
-        <option value="">Staff: All</option>
-        {% for p in staff_profiles %}
-          <option value="{{ p.id }}" {% if selected_staff == p.id %}selected{% endif %}>{{ p.user.name }}</option>
-        {% endfor %}
-      </select>
-    </div>
+<!-- Action buttons -->
+<div class="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4 mt-6">
+<button class="h-9 px-4 border border-slate-200 rounded-xl text-[12px] font-bold text-slate-700 hover:bg-slate-50">
+View Full Plan
+</button>
 
-    <!-- Status -->
-    <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
-      <select name="status" class="bg-transparent focus:outline-none cursor-pointer">
-        <option value="">Status: All</option>
-        <option value="pending_responsible_confirmation" {% if selected_status == 'pending_responsible_confirmation' %}selected{% endif %}>Draft</option>
-        <option value="confirmed_for_advance" {% if selected_status == 'confirmed_for_advance' %}selected{% endif %}>Ready</option>
-        <option value="self_funded" {% if selected_status == 'self_funded' %}selected{% endif %}>Self-funded</option>
-        <option value="disbursed" {% if selected_status == 'disbursed' %}selected{% endif %}>Disbursed</option>
-      </select>
-    </div>
+<button class="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[12px] font-black shadow-sm transition-all">
+Approve
+</button>
 
-    <!-- Clear Filters -->
-    <button 
-      type="button"
-      onclick="document.getElementById('filters-form').reset(); document.getElementById('filters-form').dispatchEvent(new Event('change'))"
-      class="ml-auto text-slate-400 hover:text-[#2563eb] text-[11.5px] font-extrabold flex items-center gap-1 transition-colors"
-    >
-      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-      Clear Filters
-    </button>
-  </form>
+<button class="h-9 px-4 border border-rose-200 rounded-xl text-[12px] font-bold text-rose-600 hover:bg-rose-50">
+Return
+</button>
+</div>
+</div>
 
-  <!-- KPIs -->
-  <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-4" id="fund-requests-kpis">
-    {% include "partials/fund_requests/kpis.html" %}
-  </div>
+<!-- RIGHT PANEL SIDEBAR (Col Span 3) -->
+<div class="lg:col-span-3 space-y-6">
 
-  <!-- Tabs Switcher -->
-  <div class="border-b border-slate-100">
-    <nav class="flex gap-4">
-      <button 
-        @click="activeTab = 'weekly'; document.getElementById('filters-form').dispatchEvent(new Event('change'))"
-        class="pb-2 text-[14px] font-extrabold border-b-2 transition-all"
-        :class="activeTab === 'weekly' ? 'border-[#002855] text-[#002855]' : 'border-transparent text-slate-400 hover:text-slate-600'"
-      >
-        Weekly Fund Request
-      </button>
-      <button 
-        @click="activeTab = 'monthly'; document.getElementById('filters-form').dispatchEvent(new Event('change'))"
-        class="pb-2 text-[14px] font-extrabold border-b-2 transition-all"
-        :class="activeTab === 'monthly' ? 'border-[#002855] text-[#002855]' : 'border-transparent text-slate-400 hover:text-slate-600'"
-      >
-        Monthly Fund Request
-      </button>
-    </nav>
-  </div>
+<!-- This Month stats card -->
+<div class="bg-white p-5 rounded-3xl border border-slate-150 shadow-sm space-y-3">
+<h3 class="text-[14px] font-black text-slate-800 tracking-tight pb-2 border-b border-slate-100">This Month</h3>
+<div class="space-y-2 text-[12px] font-bold text-slate-500">
+<div class="flex items-center justify-between"><span>Waiting for Approval</span> <span class="text-slate-800 font-black">UGX 128.4M</span></div>
+<div class="flex items-center justify-between text-rose-600"><span>Returned</span> <span class="font-black">UGX 12.8M</span></div>
+<div class="flex items-center justify-between text-emerald-600"><span>Approved Today</span> <span class="font-black">UGX 36.2M</span></div>
+</div>
+<a href="#" class="text-[11px] font-black text-blue-600 hover:underline block pt-2 border-t border-slate-50 text-center uppercase tracking-wider">
+View all activity
+</a>
+</div>
 
-  <!-- Information Banner -->
-  <div 
-    x-show="infoBannerOpen" 
-    class="bg-blue-50 text-blue-800 p-3.5 rounded-xl border border-blue-100 flex items-center justify-between text-[12.5px] font-bold font-sans"
-  >
-    <div class="flex items-center gap-2">
-      <div class="h-5 w-5 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 shrink-0">
-        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-      </div>
-      <span>Fund requests are automatically generated from school visits, cluster trainings, and cluster meetings scheduled in My Plan.</span>
-    </div>
-    <div class="flex items-center gap-3">
-      <a href="#" class="text-blue-700 hover:underline flex items-center gap-0.5">
-        Learn more about the process
-        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-      </a>
-      <button @click="infoBannerOpen = false" class="text-blue-400 hover:text-blue-600 text-[18px]">&times;</button>
-    </div>
-  </div>
+<!-- Monthly Plan & Budget Approval progress bar -->
+<div class="bg-white p-5 rounded-3xl border border-slate-150 shadow-sm space-y-3">
+<h3 class="text-[14px] font-black text-slate-800 tracking-tight">Monthly Plan &amp; Budget Approval</h3>
+<div class="space-y-1.5">
+<div class="flex items-center justify-between text-[11px] font-bold text-slate-500">
+<span>Total Allocation</span>
+<span class="text-slate-800 font-black">UGX 300.0M</span>
+</div>
+<div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+<div class="bg-emerald-500 h-full rounded-full" style="width: 56%"></div>
+</div>
+<div class="flex justify-between items-center text-[11px] font-bold text-slate-500">
+<span>Approved (to date): UGX 167.8M (55.9%)</span>
+<span class="text-emerald-600 font-extrabold">On Track</span>
+</div>
+</div>
+</div>
 
-  <!-- Main Canvas split -->
-  <div class="flex flex-col xl:flex-row gap-6">
-    <!-- Left panel -->
-    <div class="flex-1 space-y-6 min-w-0">
-      
-      <!-- Weekly Request Card -->
-      <div id="weekly-request-card-container">
-        {% include "partials/fund_requests/weekly_request_card.html" %}
-      </div>
+<!-- Radial progress donut showing Approval Rate -->
+<div class="bg-white p-5 rounded-3xl border border-slate-150 shadow-sm flex flex-col justify-between space-y-4">
+<h3 class="text-[14px] font-black text-slate-800 tracking-tight">Approval Rate This Month</h3>
+<div class="flex items-center justify-center gap-4">
+<!-- circular svg representation -->
+<div class="relative h-24 w-24 flex items-center justify-center shrink-0">
+<svg class="h-full w-full -rotate-90" viewBox="0 0 36 36">
+<path class="text-slate-100" stroke-width="2" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+<!-- Approved: 72% -->
+<path class="text-emerald-500" stroke-dasharray="72, 100" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+<!-- Returned: 12% -->
+<path class="text-rose-500" stroke-dasharray="12, 100" stroke-dashoffset="-72" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+<!-- Pending: 16% -->
+<path class="text-amber-500" stroke-dasharray="16, 100" stroke-dashoffset="-84" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+</svg>
+<div class="absolute flex flex-col justify-center items-center text-center">
+<span class="text-[18px] font-black text-slate-800 leading-none">72%</span>
+<span class="text-[11px] font-bold text-slate-400 uppercase tracking-wide mt-0.5">Approval Rate</span>
+</div>
+</div>
+<div class="text-[11px] space-y-1 font-bold text-slate-500">
+<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-emerald-500"></span> Approved (72%)</div>
+<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-rose-500"></span> Returned (12%)</div>
+<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-amber-500"></span> Pending (16%)</div>
+</div>
+</div>
+</div>
 
-      <!-- Monthly Request Preview Card -->
-      <div id="fund-requests-monthly-preview">
-        {% include "partials/fund_requests/monthly_preview.html" %}
-      </div>
-
-    </div>
-
-    <!-- Right panel -->
-    <div class="w-full xl:w-[360px] space-y-6 shrink-0">
-      
-      <!-- Source Activities Card -->
-      <div id="fund-requests-source-activities">
-        {% include "partials/fund_requests/source_activities.html" %}
-      </div>
-
-      <!-- Insights Panel -->
-      <div id="fund-requests-insights">
-        {% include "partials/fund_requests/insights_panel.html" %}
-      </div>
-
-    </div>
-  </div>
-
-  <!-- Breakdown Strip -->
-  <div id="fund-requests-breakdown">
-    {% include "partials/fund_requests/breakdown_by_period.html" %}
-  </div>
+<!-- Approval Rules -->
+<div class="bg-white p-5 rounded-3xl border border-slate-150 shadow-sm space-y-4">
+<h3 class="text-[14px] font-black text-slate-800 tracking-tight pb-2 border-b border-slate-100">Approval Rules</h3>
+<ul class="text-[12px] font-bold text-slate-500 space-y-2.5">
+<li class="flex items-start gap-2">
+<span class="text-emerald-600 shrink-0 font-bold">✓</span>
+<span>Funds must come from approved plans.</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="text-emerald-600 shrink-0 font-bold">✓</span>
+<span>Partner visits must map to planned schools.</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="text-emerald-600 shrink-0 font-bold">✓</span>
+<span>Cluster training budget scales by participants.</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="text-emerald-600 shrink-0 font-bold">✓</span>
+<span>Returned requests need correction before re-submission.</span>
+</li>
+</ul>
+</div>
 
 </div>
+
+</div>
+
+
+<!-- ================= BOTTOM ROW GRID ================= -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+<!-- Approval Insights / Budget Mix (This Month) (Col Span 8) -->
+<div class="lg:col-span-8 bg-white p-5 rounded-3xl border border-slate-150 shadow-sm space-y-4">
+<div class="pb-2 border-b border-slate-100">
+<h3 class="text-[14px] font-black text-slate-800 tracking-tight">Approval Insights / Budget Mix (This Month)</h3>
+</div>
+
+<div class="space-y-4">
+<!-- Horizontal stacked bar chart visual -->
+<div class="w-full h-8 rounded-xl overflow-hidden flex font-bold text-white text-[11px] text-center shadow-sm">
+<div class="bg-emerald-500 h-full flex items-center justify-center" style="width: 26%">26%</div>
+<div class="bg-teal-500 h-full flex items-center justify-center" style="width: 16%">16%</div>
+<div class="bg-indigo-500 h-full flex items-center justify-center" style="width: 12%">12%</div>
+<div class="bg-amber-500 h-full flex items-center justify-center" style="width: 23%">23%</div>
+<div class="bg-sky-500 h-full flex items-center justify-center" style="width: 8%">8%</div>
+<div class="bg-slate-400 h-full flex items-center justify-center" style="width: 15%">15%</div>
+</div>
+
+<!-- Legend with amounts -->
+<div class="grid grid-cols-2 sm:grid-cols-6 gap-3 text-[11px] font-bold text-slate-500">
+<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-emerald-500"></span> Staff Visits: UGX 55.2M</div>
+<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-teal-500"></span> Partner Visits: UGX 34.1M</div>
+<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-indigo-500"></span> Cluster Meetings: UGX 25.3M</div>
+<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-amber-500"></span> Trainings: UGX 49.3M</div>
+<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-sky-500"></span> SSA Support: UGX 17.6M</div>
+<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-slate-400"></span> Other: UGX 32.1M</div>
+</div>
+</div>
+</div>
+
+<!-- Recent Approval Activity (Col Span 4) -->
+<div class="lg:col-span-4 bg-white p-5 rounded-3xl border border-slate-150 shadow-sm flex flex-col justify-between">
+<div>
+<div class="pb-3 border-b border-slate-100 flex items-center justify-between">
+<h3 class="text-[14px] font-black text-slate-800 tracking-tight">Recent Approval Activity</h3>
+<a href="#" class="text-[11px] font-black text-blue-600 hover:underline">View all activity &rarr;</a>
+</div>
+
+<div class="space-y-3.5 mt-4 text-[12px] font-bold">
+<!-- Item 1 -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="h-6 w-6 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-[11px] font-black">✓</span>
+<div>
+<span class="text-slate-800 block leading-tight">Moses T. — May Fund Plan approved</span>
+<span class="text-[11px] text-slate-400 font-bold block mt-0.5">Today, 10:24 AM</span>
+</div>
+</div>
+<span class="text-slate-800">UGX 24.1M</span>
+</div>
+
+<!-- Item 2 -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="h-6 w-6 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center text-[11px] font-black">↺</span>
+<div>
+<span class="text-slate-800 block leading-tight">Joel O. — May Fund Plan returned for review</span>
+<span class="text-[11px] text-slate-400 font-bold block mt-0.5">Today, 9:15 AM</span>
+</div>
+</div>
+<span class="text-rose-600">UGX 19.8M</span>
+</div>
+
+<!-- Item 3 -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="h-6 w-6 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-[11px] font-black">✓</span>
+<div>
+<span class="text-slate-800 block leading-tight">Ruth W. — Apr Fund Plan approved</span>
+<span class="text-[11px] text-slate-400 font-bold block mt-0.5">Yesterday, 4:32 PM</span>
+</div>
+</div>
+<span class="text-slate-800">UGX 18.6M</span>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+
+</div>
+{% else %}
+<div 
+x-data="{
+infoBannerOpen: true,
+activeTab: '{{ active_tab }}',
+selectedWeek: '{{ selected_week }}'
+}"
+class="p-6 max-w-[1600px] mx-auto space-y-6 font-sans text-slate-700"
+>
+<!-- Page Header Row -->
+<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+<div>
+<h1 class="text-[24px] font-extrabold text-slate-800 tracking-tight leading-tight">Fund Requests</h1>
+<p class="text-[12px] text-slate-500 font-semibold tracking-wide mt-0.5">Generate and track weekly and monthly fund requests from scheduled activities in My Plan.</p>
+</div>
+
+<!-- Action buttons -->
+<div class="flex flex-wrap items-center gap-2">
+<!-- Export button -->
+<a 
+href="#"
+onclick="this.href='/fund-requests?export=csv&' + new URLSearchParams(new FormData(document.getElementById('filters-form'))).toString()"
+class="btn btn-ghost h-9 shadow-sm"
+>
+<svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+Export
+</a>
+
+<!-- Generate Request Form -->
+<form action="/fund-requests/generate-request" method="post" class="inline-block">
+{% csrf_token %}
+<input type="hidden" name="week_start" :value="selectedWeek">
+<button 
+type="submit"
+class="btn btn-primary h-9 shadow-sm"
+>
+<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+Generate Request
+</button>
+</form>
+
+<!-- Open My Plan -->
+<a 
+href="/my-plan" 
+class="flex items-center gap-1.5 h-9 px-4 bg-white border border-slate-200 text-[#2e505f] text-[12px] font-bold rounded-lg hover:bg-slate-50 focus:outline-none transition-all shadow-sm"
+>
+Open My Plan
+<svg class="h-3 w-3 text-slate-400 ml-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 11-1.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+</a>
+</div>
+</div>
+
+<!-- Messages notifications -->
+{% if messages %}
+<div class="space-y-2">
+{% for message in messages %}
+<div class="p-3.5 rounded-xl border text-[12px] font-bold flex items-center justify-between {% if message.tags == 'success' %}bg-emerald-50 text-emerald-800 border-emerald-100{% else %}bg-rose-50 text-rose-800 border-rose-100{% endif %}">
+<span>{{ message }}</span>
+<button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600">&times;</button>
+</div>
+{% endfor %}
+</div>
+{% endif %}
+
+<!-- Workflow Strip -->
+<div class="space-y-2">
+{% include "partials/fund_requests/workflow_strip.html" %}
+<p class="text-[11px] text-slate-400 font-bold text-center flex items-center justify-center gap-1">
+<svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+All fund requests are automatically generated from scheduled activities in My Plan.
+</p>
+</div>
+
+<!-- Filters Bar -->
+<form 
+id="filters-form"
+hx-get="/fund-requests/weekly"
+hx-trigger="change, keyup delay:200ms changed from:input[name='q']"
+hx-target="#weekly-request-card-container"
+hx-push-url="true"
+class="bg-white p-3.5 rounded-xl border border-slate-100 shadow-sm flex flex-wrap items-center gap-3 text-[12px] font-bold text-slate-700"
+>
+<input type="hidden" name="tab" :value="activeTab">
+
+<!-- Search -->
+<div class="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100">
+<svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+<input type="text" name="q" placeholder="Search schools, clusters, activities..." class="bg-transparent focus:outline-none w-48 font-bold placeholder-slate-400">
+</div>
+
+<!-- Fiscal Year -->
+<div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
+<svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+<select name="fy" class="bg-transparent focus:outline-none cursor-pointer">
+<option value="2026" {% if selected_fy == '2026' %}selected{% endif %}>FY 2026</option>
+<option value="2025" {% if selected_fy == '2025' %}selected{% endif %}>FY 2025</option>
+</select>
+</div>
+
+<!-- Quarter -->
+<div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
+<select name="quarter" class="bg-transparent focus:outline-none cursor-pointer">
+<option value="Q1" {% if selected_quarter == 'Q1' %}selected{% endif %}>Quarter: Q1</option>
+<option value="Q2" {% if selected_quarter == 'Q2' %}selected{% endif %}>Quarter: Q2</option>
+<option value="Q3" {% if selected_quarter == 'Q3' %}selected{% endif %}>Quarter: Q3</option>
+<option value="Q4" {% if selected_quarter == 'Q4' %}selected{% endif %}>Quarter: Q4</option>
+</select>
+</div>
+
+<!-- Month -->
+<div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
+<select name="month" class="bg-transparent focus:outline-none cursor-pointer">
+<option value="October" {% if selected_month == 'October' %}selected{% endif %}>Month: October</option>
+<option value="November" {% if selected_month == 'November' %}selected{% endif %}>Month: November</option>
+<option value="December" {% if selected_month == 'December' %}selected{% endif %}>Month: December</option>
+<option value="January" {% if selected_month == 'January' %}selected{% endif %}>Month: January</option>
+<option value="February" {% if selected_month == 'February' %}selected{% endif %}>Month: February</option>
+<option value="March" {% if selected_month == 'March' %}selected{% endif %}>Month: March</option>
+<option value="April" {% if selected_month == 'April' %}selected{% endif %}>Month: April</option>
+<option value="May" {% if selected_month == 'May' %}selected{% endif %}>Month: May</option>
+<option value="June" {% if selected_month == 'June' %}selected{% endif %}>Month: June</option>
+<option value="July" {% if selected_month == 'July' %}selected{% endif %}>Month: July</option>
+<option value="August" {% if selected_month == 'August' %}selected{% endif %}>Month: August</option>
+<option value="September" {% if selected_month == 'September' %}selected{% endif %}>Month: September</option>
+</select>
+</div>
+
+<!-- Week -->
+<div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
+<select name="week" class="bg-transparent focus:outline-none cursor-pointer" x-model="selectedWeek">
+{% for wk in dropdown_weeks %}
+<option value="{{ wk.val }}">{{ wk.label }}</option>
+{% endfor %}
+</select>
+</div>
+
+<!-- District -->
+<div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
+<select name="district" class="bg-transparent focus:outline-none cursor-pointer">
+<option value="">District: All</option>
+{% for d in districts %}
+<option value="{{ d.id }}" {% if selected_district == d.id %}selected{% endif %}>{{ d.name }}</option>
+{% endfor %}
+</select>
+</div>
+
+<!-- Staff -->
+<div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
+<select name="staff" class="bg-transparent focus:outline-none cursor-pointer">
+<option value="">Staff: All</option>
+{% for p in staff_profiles %}
+<option value="{{ p.id }}" {% if selected_staff == p.id %}selected{% endif %}>{{ p.user.name }}</option>
+{% endfor %}
+</select>
+</div>
+
+<!-- Status -->
+<div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
+<select name="status" class="bg-transparent focus:outline-none cursor-pointer">
+<option value="">Status: All</option>
+<option value="pending_responsible_confirmation" {% if selected_status == 'pending_responsible_confirmation' %}selected{% endif %}>Draft</option>
+<option value="confirmed_for_advance" {% if selected_status == 'confirmed_for_advance' %}selected{% endif %}>Ready</option>
+<option value="self_funded" {% if selected_status == 'self_funded' %}selected{% endif %}>Self-funded</option>
+<option value="disbursed" {% if selected_status == 'disbursed' %}selected{% endif %}>Disbursed</option>
+</select>
+</div>
+
+<!-- Clear Filters -->
+<button 
+type="button"
+onclick="document.getElementById('filters-form').reset(); document.getElementById('filters-form').dispatchEvent(new Event('change'))"
+class="ml-auto text-slate-400 hover:text-[#2563eb] text-[12px] font-extrabold flex items-center gap-1 transition-colors"
+>
+<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+Clear Filters
+</button>
+</form>
+
+<!-- KPIs -->
+<div id="fund-requests-kpis">
+{% include "partials/fund_requests/kpis.html" %}
+</div>
+
+<!-- Tabs Switcher -->
+<div class="border-b border-slate-100">
+<nav class="flex gap-4">
+<button 
+@click="activeTab = 'weekly'; document.getElementById('filters-form').dispatchEvent(new Event('change'))"
+class="pb-2 text-[14px] font-extrabold border-b-2 transition-all"
+:class="activeTab === 'weekly' ? 'border-[#2e505f] text-[#2e505f]' : 'border-transparent text-slate-400 hover:text-slate-600'"
+>
+Weekly Fund Request
+</button>
+<button 
+@click="activeTab = 'monthly'; document.getElementById('filters-form').dispatchEvent(new Event('change'))"
+class="pb-2 text-[14px] font-extrabold border-b-2 transition-all"
+:class="activeTab === 'monthly' ? 'border-[#2e505f] text-[#2e505f]' : 'border-transparent text-slate-400 hover:text-slate-600'"
+>
+Monthly Fund Request
+</button>
+</nav>
+</div>
+
+<!-- Information Banner -->
+<div 
+x-show="infoBannerOpen" 
+class="bg-blue-50 text-blue-800 p-3.5 rounded-xl border border-blue-100 flex items-center justify-between text-[12px] font-bold font-sans"
+>
+<div class="flex items-center gap-2">
+<div class="h-5 w-5 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 shrink-0">
+<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+</div>
+<span>Fund requests are automatically generated from school visits, cluster trainings, and cluster meetings scheduled in My Plan.</span>
+</div>
+<div class="flex items-center gap-3">
+<a href="#" class="text-blue-700 hover:underline flex items-center gap-0.5">
+Learn more about the process
+<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+</a>
+<button @click="infoBannerOpen = false" class="text-blue-400 hover:text-blue-600 text-[18px]">&times;</button>
+</div>
+</div>
+
+<!-- Main Canvas split -->
+<div class="flex flex-col xl:flex-row gap-6">
+<!-- Left panel -->
+<div class="flex-1 space-y-6 min-w-0">
+
+<!-- Weekly Request Card -->
+<div id="weekly-request-card-container">
+{% include "partials/fund_requests/weekly_request_card.html" %}
+</div>
+
+<!-- Monthly Request Preview Card -->
+<div id="fund-requests-monthly-preview">
+{% include "partials/fund_requests/monthly_preview.html" %}
+</div>
+
+</div>
+
+<!-- Right panel -->
+<div class="w-full xl:w-96 space-y-6 shrink-0">
+
+<!-- Source Activities Card -->
+<div id="fund-requests-source-activities">
+{% include "partials/fund_requests/source_activities.html" %}
+</div>
+
+<!-- Insights Panel -->
+<div id="fund-requests-insights">
+{% include "partials/fund_requests/insights_panel.html" %}
+</div>
+
+</div>
+</div>
+
+<!-- Breakdown Strip -->
+<div id="fund-requests-breakdown">
+{% include "partials/fund_requests/breakdown_by_period.html" %}
+</div>
+
+</div>
+{% endif %}
 {% endblock %}

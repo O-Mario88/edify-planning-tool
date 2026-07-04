@@ -4,18 +4,18 @@
 
 {% block shell_content %}
 <div class="p-6 max-w-7xl mx-auto space-y-6">
-  
-  <div class="flex items-center justify-between">
-    <div>
-      <h1 class="text-[26px] font-extrabold text-slate-800 tracking-tight">Quality Checks</h1>
-      <p class="text-[12.5px] text-[var(--text-secondary)] mt-1 font-semibold">Edify Operations · Quality Checks</p>
-    </div>
-  </div>
-  
-  <div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm">
-    {% if flags %}<ul class="divide-y divide-slate-100">{% for f in flags %}<li class="px-5 py-3.5 flex items-center justify-between"><div><p class="text-[13px] font-bold text-slate-800">{{ f.scope_name|default:"Flag" }}</p><p class="text-[11px] text-slate-400">{{ f.raised_by_name|default:"System" }} · {{ f.created_at }}</p></div><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">{{ f.status }}</span></li>{% endfor %}</ul>
-    {% else %}<div class="p-12 text-center"><p class="text-[36px] mb-3">🔍</p><p class="text-[14px] font-bold text-slate-600">No quality flags raised</p></div>{% endif %}
-  </div>
+
+<div class="flex items-center justify-between">
+<div>
+<h1 class="text-[24px] font-extrabold text-slate-800 tracking-tight">Quality Checks</h1>
+<p class="text-[12px] text-[var(--text-secondary)] mt-1 font-semibold">Edify Operations · Quality Checks</p>
+</div>
+</div>
+
+<div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm">
+{% if flags %}<ul class="divide-y divide-slate-100">{% for f in flags %}<li class="px-5 py-3.5 flex items-center justify-between"><div><p class="text-[14px] font-bold text-slate-800">{{ f.scope_name|default:"Flag" }}</p><p class="text-[11px] text-slate-400">{{ f.raised_by_name|default:"System" }} · {{ f.created_at }}</p></div><span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">{{ f.status }}</span></li>{% endfor %}</ul>
+{% else %}<div class="p-12 text-center"><p class="text-[36px] mb-3">🔍</p><p class="text-[14px] font-bold text-slate-600">No quality flags raised</p></div>{% endif %}
+</div>
 
 </div>
 {% endblock %}

@@ -1,18 +1,6 @@
-{% include "partials/clusters/list.html" %}
+{% include "partials/clusters/cluster_list.html" %}
 
 <!-- Out-of-band updates -->
 <div id="clusters-kpi-row" hx-swap-oob="true">
-  {% include "partials/clusters/kpis.html" %}
-</div>
-
-<div id="clusters-risk-strip" hx-swap-oob="true">
-  {% include "partials/clusters/risk_strip.html" %}
-</div>
-
-<div id="cluster-action-planner-container" hx-swap-oob="true">
-  {% include "partials/clusters/action_planner.html" %}
-</div>
-
-<div id="cluster-impact-container" hx-swap-oob="true">
-  {% include "partials/clusters/impact_panel.html" %}
+{% include "partials/clusters/kpi_strip.html" %}
 </div>

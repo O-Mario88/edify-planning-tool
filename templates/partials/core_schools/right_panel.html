@@ -1,0 +1,86 @@
+<div class="space-y-6 font-sans text-slate-700 select-none">
+
+<!-- Card A: Core Planning Rules -->
+<div class="bg-white rounded-xl border border-slate-100 p-5 shadow-sm space-y-4 hover:shadow-md transition-shadow">
+<div class="flex flex-col items-center text-center pb-3 border-b border-slate-100 space-y-3">
+<!-- Large Brand Shield Icon -->
+<div class="h-16 w-16 rounded-full bg-[#2e505f]/5 border border-[#2e505f]/15 flex items-center justify-center text-[#2e505f] shadow-inner">
+<svg class="h-8 w-8 text-[#2e505f]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+</svg>
+</div>
+<h3 class="text-[12px] font-black text-slate-800 uppercase tracking-wider">Core Planning Rules</h3>
+</div>
+
+<ul class="space-y-3 text-[11px] font-bold text-slate-500 leading-relaxed">
+<li class="flex items-start gap-2.5">
+<span class="text-emerald-500 font-black shrink-0 text-[12px]">✓</span>
+<span>Every core school requires 4 Visits + 4 Trainings per FY.</span>
+</li>
+<li class="flex items-start gap-2.5">
+<span class="text-emerald-500 font-black shrink-0 text-[12px]">✓</span>
+<span>Core assessment scores guide the support and intervention plan.</span>
+</li>
+<li class="flex items-start gap-2.5">
+<span class="text-emerald-500 font-black shrink-0 text-[12px]">✓</span>
+<span>All scheduled visits and trainings automatically move to My Plan.</span>
+</li>
+</ul>
+
+<div class="pt-2.5 border-t border-slate-100">
+<a href="#" class="text-[11px] font-black text-[#2e505f] hover:text-[#2e505f]/80 uppercase tracking-wider hover:underline block text-center transition-colors">
+View Full Guidelines
+</a>
+</div>
+</div>
+
+<!-- Card B: Attention Needed -->
+<div class="bg-white rounded-xl border border-slate-100 p-5 shadow-sm space-y-4 hover:shadow-md transition-shadow">
+<div class="flex items-center justify-between border-b border-slate-100 pb-3">
+<div class="flex items-center gap-2">
+<div class="h-7 w-7 rounded-lg bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-500">
+<svg class="h-5 w-5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+</svg>
+</div>
+<h3 class="text-[12px] font-black text-slate-800 uppercase tracking-wider">Attention Needed</h3>
+</div>
+<span class="px-2 py-0.5 rounded-lg bg-rose-50 border border-rose-150 text-rose-700 text-[11px] font-black shadow-2xs">{{ reco_data.attention_count }}</span>
+</div>
+
+<div class="divide-y divide-slate-100 max-h-[290px] overflow-y-auto pr-0.5 scrollbar-thin">
+{% for school in reco_data.attention_needed %}
+<div class="py-3 space-y-1 hover:bg-slate-50/30 transition-colors rounded-lg px-1">
+<p class="text-[12px] font-extrabold text-slate-800 leading-tight">{{ school.name }}</p>
+<p class="text-[11px] text-rose-600 font-bold flex items-center gap-1.5">
+<span class="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse shrink-0"></span>
+<span>
+{% if school.visits_missing > 0 %}{{ school.visits_missing }} visits{% endif %}
+{% if school.visits_missing > 0 and school.trainings_missing > 0 %}and{% endif %}
+{% if school.trainings_missing > 0 %}{{ school.trainings_missing }} trainings{% endif %} missing
+</span>
+</p>
+</div>
+{% empty %}
+<div class="py-6 text-center text-[11px] text-slate-400 font-semibold">
+All schools have full support planned.
+</div>
+{% endfor %}
+</div>
+</div>
+
+<!-- Card E: System Note -->
+<div class="rounded-xl bg-slate-50 border border-slate-150/40 p-4 space-y-2 flex flex-col justify-center shadow-2xs">
+<div class="flex items-center gap-2">
+<svg class="h-4 w-4 text-slate-500 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M9 11l3-3m0 0l3 3m-3-3v12" />
+</svg>
+<h4 class="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">System Note</h4>
+</div>
+<p class="text-[11px] text-slate-400 font-semibold leading-relaxed">
+All core activities are synced to My Plan in real time.<br>
+Last sync: 2 mins ago.
+</p>
+</div>
+
+</div>

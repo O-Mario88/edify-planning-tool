@@ -1,0 +1,297 @@
+{% extends "components/drawers/base_drawer.html" %}
+
+{% block drawer_title %}Assign School to Project{% endblock %}
+{% block drawer_subtitle %}Attach this school to a special project for targeted support and impact tracking.{% endblock %}
+
+{% block drawer_body %}
+<div class="space-y-6 font-sans">
+{% if validation_error %}
+<!-- Validation Error Message -->
+<div class="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-[12px] font-bold">
+{{ validation_error }}
+</div>
+{% endif %}
+
+<!-- School Summary Card -->
+<div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+<h3 class="text-[11px] font-black text-slate-400 uppercase tracking-wider">School Details</h3>
+<div class="grid grid-cols-2 gap-x-4 gap-y-2 text-[12px]">
+<div>
+<span class="text-slate-400 font-semibold">School ID:</span>
+<span class="font-bold text-slate-700 block">{{ school.school_id }}</span>
+</div>
+<div>
+<span class="text-slate-400 font-semibold">School Name:</span>
+<span class="font-bold text-slate-700 block">{{ school.name }}</span>
+</div>
+<div>
+<span class="text-slate-400 font-semibold">District:</span>
+<span class="font-bold text-slate-700 block">{{ school.district.name }}</span>
+</div>
+<div>
+<span class="text-slate-400 font-semibold">Sub-county:</span>
+<span class="font-bold text-slate-700 block">{{ school.sub_county.name|default:"—" }}</span>
+</div>
+<div>
+<span class="text-slate-400 font-semibold">School Type:</span>
+<span class="font-bold text-slate-700 block uppercase">{{ school.get_school_type_display }}</span>
+</div>
+<div>
+<span class="text-slate-400 font-semibold">Enrolment:</span>
+<span class="font-bold text-slate-700 block">{{ school.enrollment|default:"0" }}</span>
+</div>
+<div class="col-span-2 border-t border-slate-200/60 pt-2 mt-1">
+<span class="text-slate-400 font-semibold">School Contact:</span>
+<span class="font-bold text-slate-700 block">{{ school_contact }}</span>
+</div>
+</div>
+</div>
+
+{% if not projects %}
+<!-- Empty State -->
+<div class="text-center py-12 space-y-4 bg-slate-50/50 border border-dashed border-slate-200 rounded-xl">
+<svg class="h-10 w-10 text-slate-300 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v-6" />
+</svg>
+<div class="space-y-1.5">
+<p class="text-[14px] font-extrabold text-slate-700">No active projects available.</p>
+<p class="text-[11px] text-slate-400">Create a project before assigning schools.</p>
+</div>
+<a 
+href="/projects" 
+class="inline-flex h-9 px-4 rounded-xl btn-premium-primary text-white text-[12px] font-bold items-center justify-center transition-all shadow-sm"
+>
+Create Project
+</a>
+</div>
+{% else %}
+<!-- Form Segment -->
+<form 
+hx-post="/schools/{{ school.id }}/assign-to-project" 
+hx-target="#drawer-container"
+class="space-y-4"
+>
+{% csrf_token %}
+
+<!-- Project Dropdown -->
+<div class="space-y-1">
+<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Select Project</label>
+<select 
+name="project_id" 
+class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-100"
+required
+>
+<option value="">-- Choose Project --</option>
+{% for p in projects %}
+<option value="{{ p.id }}">{{ p.name }} ({{ p.code|default:"No Code" }})</option>
+{% endfor %}
+</select>
+</div>
+
+<div class="grid grid-cols-2 gap-3">
+<!-- Project Type -->
+<div class="space-y-1">
+<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Project Type</label>
+<input 
+type="text" 
+name="project_type" 
+placeholder="e.g. Technology Support"
+class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-100"
+>
+</div>
+<!-- Participation Type -->
+<div class="space-y-1">
+<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Participation Type</label>
+<input 
+type="text" 
+name="participation_type" 
+placeholder="e.g. Core Partner"
+class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-100"
+>
+</div>
+</div>
+
+<div class="grid grid-cols-2 gap-3">
+<!-- Start Date -->
+<div class="space-y-1">
+<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Start Date</label>
+<div 
+x-data="{
+open: false,
+selectedDate: '',
+currentYear: new Date().getFullYear(),
+currentMonth: new Date().getMonth(),
+months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+days: [],
+init() {
+if (this.selectedDate) {
+let d = new Date(this.selectedDate);
+if (!isNaN(d.getTime())) {
+this.currentYear = d.getFullYear();
+this.currentMonth = d.getMonth();
+}
+}
+this.getDays();
+},
+getDays() {
+let firstDay = new Date(this.currentYear, this.currentMonth, 1).getDay();
+let lastDate = new Date(this.currentYear, this.currentMonth + 1, 0).getDate();
+this.days = [];
+for (let i = 0; i < firstDay; i++) {
+this.days.push(null);
+}
+for (let d = 1; d <= lastDate; d++) {
+this.days.push(d);
+}
+},
+prevMonth() {
+if (this.currentMonth === 0) {
+this.currentMonth = 11;
+this.currentYear--;
+} else {
+this.currentMonth--;
+}
+this.getDays();
+},
+nextMonth() {
+if (this.currentMonth === 11) {
+this.currentMonth = 0;
+this.currentYear++;
+} else {
+this.currentMonth++;
+}
+this.getDays();
+},
+selectDay(day) {
+if (day === null) return;
+let monthStr = String(this.currentMonth + 1).padStart(2, '0');
+let dayStr = String(day).padStart(2, '0');
+this.selectedDate = `${this.currentYear}-${monthStr}-${dayStr}`;
+this.open = false;
+},
+formatDate(dateStr) {
+if (!dateStr) return 'Select Date';
+let parts = dateStr.split('-');
+if (parts.length !== 3) return dateStr;
+let d = new Date(parts[0], parts[1] - 1, parts[2]);
+return d.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+},
+isSelected(day) {
+if (!day || !this.selectedDate) return false;
+let parts = this.selectedDate.split('-');
+return parseInt(parts[0]) === this.currentYear && 
+(parseInt(parts[1]) - 1) === this.currentMonth && 
+parseInt(parts[2]) === day;
+}
+}"
+class="relative font-sans"
+>
+<!-- Dropdown Trigger button -->
+<button 
+type="button"
+@click="open = !open"
+class="w-full h-10 px-3 flex items-center justify-between rounded-lg border border-slate-200 text-[12px] font-semibold bg-slate-50 hover:bg-slate-100/50 focus:outline-none transition-colors text-slate-700"
+>
+<div class="flex items-center gap-2">
+<svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+</svg>
+<span x-text="formatDate(selectedDate)"></span>
+</div>
+<svg class="h-3.5 w-3.5 text-slate-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+</svg>
+</button>
+
+<input type="hidden" name="start_date" :value="selectedDate" required>
+
+<!-- Calendar Popover Card -->
+<div 
+x-show="open"
+@click.outside="open = false"
+class="absolute left-0 mt-1.5 w-[280px] bg-white border border-slate-200 rounded-2xl shadow-xl p-4 z-50 space-y-3 font-sans select-none"
+style="display: none;"
+x-transition:enter="transition ease-out duration-100"
+x-transition:enter-start="opacity-0 transform scale-95"
+x-transition:enter-end="opacity-100 transform scale-100"
+x-transition:leave="transition ease-in duration-75"
+x-transition:leave-start="opacity-100 transform scale-100"
+x-transition:leave-end="opacity-0 transform scale-95"
+>
+<!-- Header -->
+<div class="flex items-center justify-between px-1">
+<button type="button" @click="prevMonth()" class="h-6 w-6 flex items-center justify-center rounded-lg hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors">
+<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
+</button>
+<span class="font-extrabold text-[12px] text-[#0f172a]" x-text="months[currentMonth] + ' ' + currentYear"></span>
+<button type="button" @click="nextMonth()" class="h-6 w-6 flex items-center justify-center rounded-lg hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors">
+<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+</button>
+</div>
+
+<!-- Weekdays Header -->
+<div class="grid grid-cols-7 gap-y-1 text-center text-[11px] font-bold text-slate-400">
+<div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+</div>
+
+<!-- Days Grid -->
+<div class="grid grid-cols-7 gap-y-1 text-center text-[12px] font-bold">
+<template x-for="(day, index) in days" :key="index">
+<div>
+<button 
+type="button"
+x-show="day !== null"
+@click="selectDay(day)"
+class="h-7 w-7 flex items-center justify-center rounded-lg transition-all focus:outline-none"
+:class="isSelected(day) ? 'bg-[#0f172a] text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'"
+x-text="day"
+></button>
+</div>
+</template>
+</div>
+</div>
+</div>
+</div>
+<!-- Expected Support Area -->
+<div class="space-y-1">
+<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Expected Support Area</label>
+<input 
+type="text" 
+name="support_area" 
+placeholder="e.g. Teacher training"
+class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-100"
+>
+</div>
+</div>
+
+<!-- Notes -->
+<div class="space-y-1">
+<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Notes / Objectives</label>
+<textarea 
+name="notes" 
+rows="3" 
+placeholder="Targeted impact objectives..."
+class="w-full p-3 rounded-lg border border-slate-200 text-[12px] bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-100 resize-none"
+></textarea>
+</div>
+
+<!-- Footer Actions -->
+<div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
+<button 
+type="button" 
+@click="open = false; setTimeout(() => document.getElementById('drawer-container').innerHTML = '', 300)"
+class="px-5 h-9 rounded-xl btn-premium-secondary font-bold text-[12px]"
+>
+Cancel
+</button>
+<button 
+type="submit" 
+class="px-6 h-9 rounded-xl btn-premium-primary font-bold text-[12px] shadow-sm flex items-center justify-center gap-1.5"
+>
+<span>Assign Project</span>
+</button>
+</div>
+</form>
+{% endif %}
+</div>
+{% endblock %}

@@ -3,230 +3,95 @@
 
 {% block title %}Clusters Dashboard - Edify Planning Tool{% endblock %}
 
-{% block topbar_left %}
-<!-- Clean topbar layout matching the mockup -->
-{% endblock %}
-
 {% block shell_content %}
 <div 
-  x-data="{
-    createClusterOpen: false,
-    selectedClusterId: '{{ selected_cluster.id|default:"" }}',
-    selectedClusterName: '{{ selected_cluster.name|escapejs|default:"" }}',
-    recommendedFocus: '{% if selected_cluster.weakest_interventions %}{{ selected_cluster.weakest_interventions.0.label|escapejs }}{% else %}Leadership{% endif %}',
-    activityType: 'training',
-    participants: 50,
-    purpose: 'Leadership support training for school leaders',
-    focus: 'leadership'
-  }"
-  class="p-6 max-w-[1600px] mx-auto space-y-6 font-sans"
->
-  <!-- Page Header Row -->
-  <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-    <div>
-      <h1 class="text-[26px] font-extrabold text-slate-800 tracking-tight leading-tight">Clusters</h1>
-      <p class="text-[12px] text-slate-500 font-semibold tracking-wide mt-0.5">Manage cluster performance, SSA weaknesses, meetings, trainings, and school-level improvement.</p>
-    </div>
-    
-    <!-- Action buttons -->
-    <div class="flex flex-wrap items-center gap-2">
-      <button 
-        hx-get="/clusters/create-drawer"
-        hx-target="#drawer-container"
-        hx-swap="innerHTML"
-        class="flex items-center gap-1.5 h-9 px-4 !bg-[#002855] !text-white text-[12.5px] font-bold rounded-lg hover:bg-opacity-95 shadow-sm focus:outline-none transition-all"
-      >
-        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-        Create Cluster
-      </button>
-      
-      <button 
-        @click="
-          activityType = 'training';
-          participants = 50;
-          purpose = 'Group support training for school leaders';
-          $dispatch('scroll-to-planner');
-        "
-        class="flex items-center gap-1.5 h-9 px-3.5 bg-white border border-slate-200 text-[#002855] text-[12.5px] font-bold rounded-lg hover:bg-slate-50 focus:outline-none transition-all shadow-sm"
-      >
-        <svg class="h-4 w-4 text-[#2563eb]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-        Schedule Group Training
-      </button>
-      
-      <button 
-        @click="
-          activityType = 'meeting';
-          participants = 15;
-          purpose = 'Quarterly cluster meeting';
-          $dispatch('scroll-to-planner');
-        "
-        class="flex items-center gap-1.5 h-9 px-3.5 bg-white border border-slate-200 text-[#002855] text-[12.5px] font-bold rounded-lg hover:bg-slate-50 focus:outline-none transition-all shadow-sm"
-      >
-        <svg class="h-4 w-4 text-[#2563eb]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-        Schedule Cluster Meeting
-      </button>
-      
-      <!-- Export button using current filters -->
-      <a 
-        href="#"
-        onclick="this.href='/clusters?export=csv&' + new URLSearchParams(new FormData(document.getElementById('filters-form'))).toString()"
-        class="flex items-center gap-1.5 h-9 px-3.5 bg-white border border-slate-200 text-slate-700 text-[12.5px] font-bold rounded-lg hover:bg-slate-50 focus:outline-none transition-all shadow-sm"
-      >
-        <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-        Export CSV
-      </a>
-    </div>
-  </div>
+x-data="{}"
+class="p-6 max-w-[1600px] mx-auto space-y-6 font-sans"
+ >
+<!-- Breadcrumb -->
+<nav class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+<a href="#" class="hover:text-slate-600">Clusters</a>
+<svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+<span class="text-slate-600 font-extrabold">Cluster planning &amp; operations</span>
+</nav>
 
-  <!-- Messages notifications wrapper -->
-  {% if messages %}
-    <div class="space-y-2">
-      {% for message in messages %}
-        <div class="p-3.5 rounded-xl border text-[12px] font-bold flex items-center justify-between {% if message.tags == 'success' %}bg-emerald-50 text-emerald-800 border-emerald-100{% else %}bg-rose-50 text-rose-800 border-rose-100{% endif %}">
-          <span>{{ message }}</span>
-          <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600">&times;</button>
-        </div>
-      {% endfor %}
-    </div>
-  {% endif %}
-
-  <!-- Filters Row -->
-  <form 
-    id="filters-form"
-    hx-get="/clusters"
-    hx-trigger="change, keyup delay:200ms changed from:input[name='q']"
-    hx-target="#clusters-table-container"
-    hx-push-url="true"
-    class="bg-white p-3.5 rounded-xl border border-slate-100 shadow-sm flex flex-wrap items-center gap-3 text-[11.5px] font-bold text-slate-700"
-  >
-    <!-- Search -->
-    <div class="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100">
-      <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-      <input type="text" name="q" value="{{ q }}" placeholder="Search clusters..." class="bg-transparent focus:outline-none w-32 font-bold placeholder-slate-400">
-    </div>
-
-    <!-- Fiscal Year -->
-    <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
-      <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-      <select name="fy" class="bg-transparent focus:outline-none cursor-pointer">
-        <option value="2026" {% if selected_fy == '2026' %}selected{% endif %}>FY 2026</option>
-        <option value="2025" {% if selected_fy == '2025' %}selected{% endif %}>FY 2025</option>
-      </select>
-    </div>
-
-    <!-- Quarter -->
-    <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
-      <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-      <select name="quarter" class="bg-transparent focus:outline-none cursor-pointer">
-        <option value="">Quarter: All</option>
-        <option value="Q1" {% if selected_quarter == 'Q1' %}selected{% endif %}>Q1 (Jul-Sep)</option>
-        <option value="Q2" {% if selected_quarter == 'Q2' %}selected{% endif %}>Q2 (Oct-Dec)</option>
-        <option value="Q3" {% if selected_quarter == 'Q3' %}selected{% endif %}>Q3 (Jan-Mar)</option>
-        <option value="Q4" {% if selected_quarter == 'Q4' %}selected{% endif %}>Q4 (Apr-Jun)</option>
-      </select>
-    </div>
-
-    <!-- District -->
-    <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
-      <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-      <select name="district" class="bg-transparent focus:outline-none cursor-pointer">
-        <option value="">District: All</option>
-        {% for d in districts %}
-          <option value="{{ d.id }}" {% if selected_district == d.id %}selected{% endif %}>{{ d.name }}</option>
-        {% endfor %}
-      </select>
-    </div>
-
-    <!-- Sub-county -->
-    <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
-      <select name="sub_county" class="bg-transparent focus:outline-none cursor-pointer">
-        <option value="">Sub-county: All</option>
-        {% for sc in sub_counties %}
-          <option value="{{ sc.id }}" {% if selected_sub_county == sc.id %}selected{% endif %}>{{ sc.name }}</option>
-        {% endfor %}
-      </select>
-    </div>
-
-    <!-- Staff -->
-    <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
-      <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-      <select name="staff" class="bg-transparent focus:outline-none cursor-pointer">
-        <option value="">Staff: All</option>
-        {% for p in staff_profiles %}
-          <option value="{{ p.id }}" {% if selected_staff == p.id %}selected{% endif %}>{{ p.user.name }}</option>
-        {% endfor %}
-      </select>
-    </div>
-
-    <!-- SSA Status -->
-    <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
-      <select name="ssa_status" class="bg-transparent focus:outline-none cursor-pointer">
-        <option value="">SSA Status: All</option>
-        <option value="done" {% if selected_ssa_status == 'done' %}selected{% endif %}>SSA Complete</option>
-        <option value="not_done" {% if selected_ssa_status == 'not_done' %}selected{% endif %}>SSA Incomplete</option>
-      </select>
-    </div>
-
-    <!-- Cluster Risk -->
-    <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
-      <select name="cluster_risk" class="bg-transparent focus:outline-none cursor-pointer">
-        <option value="">Cluster Risk: All</option>
-        <option value="critical" {% if selected_cluster_risk == 'critical' %}selected{% endif %}>Critical</option>
-        <option value="needs_attention" {% if selected_cluster_risk == 'needs_attention' %}selected{% endif %}>Needs Attention</option>
-        <option value="healthy" {% if selected_cluster_risk == 'healthy' %}selected{% endif %}>Healthy</option>
-      </select>
-    </div>
-
-    <!-- Activity Status -->
-    <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100">
-      <select name="activity_status" class="bg-transparent focus:outline-none cursor-pointer">
-        <option value="">Activity Status: All</option>
-        <option value="pending" {% if selected_activity_status == 'pending' %}selected{% endif %}>Pending Activities</option>
-        <option value="completed" {% if selected_activity_status == 'completed' %}selected{% endif %}>Completed Activities</option>
-      </select>
-    </div>
-
-    <button 
-      type="button"
-      onclick="document.getElementById('filters-form').reset(); document.querySelector('input[name=\'q\']').value=''; document.getElementById('filters-form').dispatchEvent(new Event('change'))"
-      class="ml-auto text-slate-400 hover:text-[#2563eb] text-[11.5px] font-extrabold flex items-center gap-1 transition-colors"
-    >
-      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-      Clear Filters
-    </button>
-  </form>
-
-  <!-- 8 KPI Cards Grid -->
-  <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-4" id="clusters-kpi-row">
-    {% include "partials/clusters/kpis.html" %}
-  </div>
-
-  <!-- Risk Strip / Summaries Row -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="clusters-risk-strip">
-    {% include "partials/clusters/risk_strip.html" %}
-  </div>
-
-  <!-- Main Canvas split: Left clusters table, Right planners -->
-  <div class="flex flex-col xl:flex-row gap-6">
-    <!-- Left panel (Cluster Accordion List) -->
-    <div class="flex-1 space-y-4 min-w-0" id="clusters-table-container">
-      {% include "partials/clusters/list.html" %}
-    </div>
-
-    <!-- Right panel (Planner Actions & Impact metrics) -->
-    <div class="w-full xl:w-[360px] space-y-6 shrink-0">
-      <!-- Action Planner -->
-      <div id="cluster-action-planner-container">
-        {% include "partials/clusters/action_planner.html" %}
-      </div>
-
-      <!-- Impact panel -->
-      <div id="cluster-impact-container">
-        {% include "partials/clusters/impact_panel.html" %}
-      </div>
-    </div>
-  </div>
+<!-- Page Header Row -->
+<div class="edify-page-header flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-100 pb-2">
+<div>
+<h1 class="text-[24px] font-black text-slate-800 tracking-tight leading-none">Clusters</h1>
+<p class="text-[12px] text-slate-500 font-semibold mt-1">Manage cluster performance, SSA weaknesses, meetings, trainings, and school-level improvement.</p>
 </div>
 
-<!-- Drawer container triggers dynamic drawers -->
+<!-- Action buttons -->
+<div class="flex items-center gap-2">
+<button 
+hx-get="/clusters/create-drawer"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+class="edify-action-button primary h-9 transition-all shadow-sm"
+>
+<svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+Create Cluster
+</button>
+
+<button 
+hx-get="/clusters/planner-drawer?activity_type=training"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+class="edify-action-button secondary h-9 transition-all shadow-sm"
+>
+<svg class="h-4 w-4 text-slate-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+Schedule Group Training
+</button>
+
+<button 
+hx-get="/clusters/planner-drawer?activity_type=meeting"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+class="edify-action-button secondary h-9 transition-all shadow-sm"
+>
+<svg class="h-4 w-4 text-slate-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+Schedule Cluster Meeting
+</button>
+
+<!-- Export button using current filters -->
+<a 
+href="#"
+onclick="this.href='/clusters?export=csv&' + new URLSearchParams(new FormData(document.getElementById('filters-form'))).toString()"
+class="edify-action-button secondary h-9 transition-all shadow-sm"
+>
+<svg class="h-4 w-4 text-slate-400 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+Export
+</a>
+</div>
+</div>
+
+<!-- Messages notifications wrapper -->
+{% if messages %}
+<div class="space-y-2">
+{% for message in messages %}
+<div class="p-3.5 rounded-xl border text-[12px] font-bold flex items-center justify-between {% if message.tags == 'success' %}bg-emerald-50 text-emerald-800 border-emerald-100{% else %}bg-rose-50 text-rose-800 border-rose-100{% endif %}">
+<span>{{ message }}</span>
+<button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600">&times;</button>
+</div>
+{% endfor %}
+</div>
+{% endif %}
+
+<!-- Filters Row -->
+{% include "partials/clusters/filters.html" %}
+
+<!-- 8 KPI Cards Grid -->
+<div id="clusters-kpi-row" class="w-full">
+{% include "partials/clusters/kpi_strip.html" %}
+</div>
+
+
+
+<!-- Main Canvas: Cluster list (Full row) -->
+<div class="w-full space-y-4 min-w-0" id="clusters-table-container">
+{% include "partials/clusters/cluster_list.html" %}
+</div>
+</div>
+
 {% endblock %}

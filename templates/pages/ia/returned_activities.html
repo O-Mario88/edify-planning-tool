@@ -1,0 +1,103 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Returned Activities Ledger - Edify Command Center{% endblock %}
+
+{% block shell_content %}
+<div class="p-6 max-w-7xl mx-auto space-y-6">
+
+<!-- Header Card -->
+<div class="relative overflow-hidden rounded-3xl bg-slate-900 text-white p-8 shadow-xl border border-slate-800">
+<div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-rose-500/10 blur-3xl pointer-events-none"></div>
+
+<div class="relative z-10 space-y-2">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[11px] font-black uppercase tracking-widest">
+Quality Loopback
+</div>
+<h1 class="text-[32px] font-black tracking-tight text-white leading-none">Returned Activities Ledger</h1>
+<p class="text-[14px] text-slate-400 font-medium max-w-xl">
+Compliance loop logs. Review activities returned by Internal Audit for programmatic, administrative, or evidence corrections.
+</p>
+</div>
+</div>
+
+<!-- Table Card -->
+<div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-[12px] font-semibold text-slate-700">
+<thead class="bg-slate-50 border-b border-slate-100 text-[11px] uppercase font-bold text-slate-400">
+<tr>
+<th class="px-6 py-4 text-left">Activity ID</th>
+<th class="px-6 py-4 text-left">School / Cluster</th>
+<th class="px-6 py-4 text-left">CCEO / Staff</th>
+<th class="px-6 py-4 text-left">Return Reason(s)</th>
+<th class="px-6 py-4 text-left">Date Returned</th>
+<th class="px-6 py-4 text-center">Resubmitted?</th>
+<th class="px-6 py-4 text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100">
+{% if returned %}
+{% for item in returned %}
+<tr class="hover:bg-slate-50/50 transition-colors">
+<!-- ID -->
+<td class="px-6 py-4">
+<div class="font-extrabold text-slate-900 text-[12px]">#{{ item.id|slice:":8" }}</div>
+<div class="text-[11px] text-slate-400 font-bold uppercase mt-0.5">{{ item.activity_type_label }}</div>
+</td>
+<!-- School -->
+<td class="px-6 py-4">
+<div class="font-extrabold text-slate-800 text-[12px]">{{ item.school_name }}</div>
+</td>
+<!-- Owner -->
+<td class="px-6 py-4">
+<div class="font-extrabold text-slate-800">{{ item.responsible_staff_name }}</div>
+</td>
+<!-- Return Reason -->
+<td class="px-6 py-4 max-w-xs">
+<div class="text-[12px] font-black text-rose-700 bg-rose-50 px-3 py-1.5 border border-rose-150 rounded-xl leading-relaxed">
+{{ item.reasons }}
+</div>
+</td>
+<!-- Date Returned -->
+<td class="px-6 py-4 text-slate-500 font-medium">
+{{ item.date_returned|date:"M d, Y H:i" }}
+</td>
+<!-- Resubmitted? -->
+<td class="px-6 py-4 text-center">
+{% if item.resubmitted %}
+<span class="inline-flex items-center gap-1 text-emerald-600 font-black text-[11px] bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+Resubmitted
+</span>
+{% else %}
+<span class="px-2.5 py-0.5 rounded-lg text-[11px] font-black uppercase bg-slate-100 text-slate-400 border border-slate-200/50">Awaiting CCEO</span>
+{% endif %}
+</td>
+<!-- Actions -->
+<td class="px-6 py-4 text-right">
+<div class="flex items-center justify-end gap-2">
+<a href="/ia/verification/{{ item.id }}/" class="h-8 px-3 rounded-xl bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-800 text-[12px] font-extrabold flex items-center justify-center transition-colors border border-slate-200/60 shadow-sm">
+Inspect
+</a>
+</div>
+</td>
+</tr>
+{% endfor %}
+{% else %}
+<tr>
+<td colspan="7" class="px-6 py-16 text-center text-[14px] font-extrabold text-slate-400 bg-slate-50/20">
+<div class="flex flex-col items-center justify-center gap-3">
+<div class="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-300 shadow-inner">
+<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" /></svg>
+</div>
+<p class="text-slate-400">No activities currently returned for correction.</p>
+</div>
+</td>
+</tr>
+{% endif %}
+</tbody>
+</table>
+</div>
+</div>
+</div>
+{% endblock %}

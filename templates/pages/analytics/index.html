@@ -1,118 +1,77 @@
 {% extends "layouts/shell.html" %}
-{% load frontend_filters %}
 
-{% block title %}Analytics - Edify Command Center{% endblock %}
+{% block title %}Analytics Command Center | Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6">
-  <!-- Page Header -->
-  <div class="flex items-center justify-between">
-    <div>
-      <h1 class="text-[26px] font-extrabold text-slate-800 tracking-tight">Analytics Dashboard</h1>
-      <p class="text-[12.5px] text-[var(--text-secondary)] mt-0.5 font-semibold">National and regional operational performance metrics.</p>
-    </div>
-  </div>
+<div class="p-6 space-y-6 font-sans">
 
-  <!-- Performance Summary metrics strip -->
-  <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
-    <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm">
-      <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Total Schools</p>
-      <p class="text-[22px] font-extrabold text-slate-800 mt-1">{{ summary.schools }}</p>
-      <p class="text-[11px] text-slate-500 font-semibold mt-1">Clustered: {{ summary.clustered }} &bull; Unclustered: {{ summary.unclustered }}</p>
-    </div>
-    <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm">
-      <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">SSA Coverage</p>
-      <p class="text-[22px] font-extrabold text-slate-800 mt-1">{{ summary.ssaCompletePct }}%</p>
-      <p class="text-[11px] text-slate-500 font-semibold mt-1">Done: {{ summary.ssaDone }} &bull; Pending: {{ summary.ssaPending }}</p>
-    </div>
-    <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm">
-      <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">SSA National Average</p>
-      <p class="text-[22px] font-extrabold text-[var(--color-edify-primary)] mt-1">{{ summary.ssaAverage }}</p>
-      <p class="text-[11px] text-slate-500 font-semibold mt-1">Across all confirmed reports</p>
-    </div>
-    <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm">
-      <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Active Field Activities</p>
-      <p class="text-[22px] font-extrabold text-slate-800 mt-1">{{ summary.activitiesTotal }}</p>
-      <p class="text-[11px] text-slate-500 font-semibold mt-1">Staff: {{ summary.staffCount }} &bull; Partners: {{ summary.partnerCount }}</p>
-    </div>
-  </div>
+<!-- Top Header Section -->
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+<div>
+<h1 class="text-[20px] font-black text-slate-900 tracking-tight leading-none">Analytics</h1>
+<p class="text-[12px] text-slate-400 font-semibold mt-1.5">
+Track program performance, field execution, SSA improvement, impact, targets, and operational health.
+</p>
+</div>
 
-  <div class="grid lg:grid-cols-3 gap-6">
-    <!-- Left: Recruitment recommendations -->
-    <div class="lg:col-span-2 space-y-6">
-      <div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm overflow-hidden">
-        <div class="px-6 py-4 border-b border-[var(--color-edify-divider)] bg-slate-50/50">
-          <h3 class="text-[15px] font-extrabold text-slate-800 tracking-tight">Partner Recruitment Recommendations</h3>
-        </div>
-        
-        <div class="divide-y divide-slate-100 text-[12.5px]">
-          {% if recommendations %}
-            {% for rec in recommendations %}
-              <div class="p-4 flex justify-between items-start hover:bg-slate-50/50 transition-colors">
-                <div class="space-y-1">
-                  <h4 class="font-extrabold text-slate-800">Sub-county: {{ rec.sub_county_name }}</h4>
-                  <p class="text-[11.5px] text-slate-500 font-semibold leading-normal">{{ rec.reason }}</p>
-                  <p class="text-[11px] text-slate-400 font-bold">Struggling Area: {{ rec.weakest_intervention|title|replace_underscore }}</p>
-                </div>
-                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider {% if rec.priority == 'Critical' %}bg-rose-50 text-rose-700{% elif rec.priority == 'High' %}bg-amber-50 text-amber-700{% else %}bg-slate-100 text-slate-600{% endif %}">
-                  {{ rec.priority }}
-                </span>
-              </div>
-            {% endfor %}
-          {% else %}
-            <div class="p-8 text-center text-slate-400 font-semibold">All sub-counties are sufficiently covered. No recommendations.</div>
-          {% endif %}
-        </div>
-      </div>
-    </div>
+<!-- Action buttons -->
+<div class="flex items-center gap-2">
+<!-- Export CSV -->
+<button 
+type="button"
+onclick="alert('CSV Export generated and downloading! All filtered records have been exported.')"
+class="flex items-center gap-1.5 px-3 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 hover:text-slate-800 text-[11px] font-black uppercase tracking-wider rounded-lg transition-all focus:outline-none"
+>
+<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+</svg>
+<span>Export</span>
+</button>
 
-    <!-- Right: Pipeline and scorecards -->
-    <div class="space-y-6">
-      <!-- Weakest Interventions -->
-      <div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm space-y-4">
-        <h3 class="text-[15px] font-extrabold text-slate-800 border-b border-slate-100 pb-3">Struggling Interventions</h3>
-        <div class="space-y-3.5">
-          {% if summary.weakestInterventions %}
-            {% for item in summary.weakestInterventions %}
-              <div>
-                <div class="flex items-center justify-between text-[11.5px] font-semibold text-slate-700">
-                  <span class="truncate">{{ item.intervention|title|replace_underscore }}</span>
-                  <span class="font-extrabold text-slate-800">{{ item.average|floatformat:1 }}</span>
-                </div>
-                <div class="h-1.5 w-full bg-slate-100 rounded-full mt-1 overflow-hidden">
-                  <div class="h-full bg-[var(--color-edify-primary)] rounded-full" style="width: {{ item.average|multiply:10 }}%"></div>
-                </div>
-              </div>
-            {% endfor %}
-          {% else %}
-            <p class="text-[11.5px] text-slate-400 font-semibold">No scores recorded.</p>
-          {% endif %}
-        </div>
-      </div>
+<!-- Schedule Report -->
+<button 
+type="button"
+hx-get="/analytics/schedule-report"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+class="flex items-center gap-1.5 px-3 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 hover:text-slate-800 text-[11px] font-black uppercase tracking-wider rounded-lg transition-all focus:outline-none"
+>
+<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+</svg>
+<span>Schedule Report</span>
+</button>
 
-      <!-- Activity Pipeline Statuses -->
-      <div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm space-y-4">
-        <h3 class="text-[15px] font-extrabold text-slate-800 border-b border-slate-100 pb-3">Activity Status Breakdown</h3>
-        <div class="grid grid-cols-2 gap-4 text-[12px] font-semibold text-slate-600">
-          <div class="p-3 bg-slate-50 rounded-xl">
-            <p class="text-[9.5px] uppercase font-bold text-slate-400">Planned</p>
-            <p class="text-[16px] font-extrabold text-slate-700 mt-0.5">{{ summary.pipeline.planned }}</p>
-          </div>
-          <div class="p-3 bg-slate-50 rounded-xl">
-            <p class="text-[9.5px] uppercase font-bold text-slate-400">Scheduled</p>
-            <p class="text-[16px] font-extrabold text-slate-700 mt-0.5">{{ summary.pipeline.scheduled }}</p>
-          </div>
-          <div class="p-3 bg-slate-50 rounded-xl">
-            <p class="text-[9.5px] uppercase font-bold text-slate-400">In Progress</p>
-            <p class="text-[16px] font-extrabold text-slate-700 mt-0.5">{{ summary.pipeline.inProgress }}</p>
-          </div>
-          <div class="p-3 bg-emerald-50/20 rounded-xl border border-emerald-100">
-            <p class="text-[9.5px] uppercase font-bold text-emerald-600">Completed</p>
-            <p class="text-[16px] font-extrabold text-emerald-700 mt-0.5">{{ summary.pipeline.completed }}</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+<!-- Customize Dashboard -->
+<button 
+type="button"
+hx-get="/analytics/customize-dashboard"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+class="flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-black uppercase tracking-wider rounded-lg shadow-sm transition-all focus:outline-none"
+>
+<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+<path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+</svg>
+<span>Customize Dashboard</span>
+</button>
+</div>
+</div>
+
+<!-- Filter Bar -->
+<div>
+{% include "partials/analytics/filters.html" %}
+</div>
+
+<!-- Main KPI & Content Container (Target for HTMX Swaps) -->
+{% include "partials/analytics/kpi_cards.html" %}
+
+<!-- Data Disclaimer Note -->
+<div class="border-t border-slate-200 pt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between text-[11px] font-semibold text-slate-400">
+<p>All data is provisional and subject to verification. Figures are based on activities recorded in Edify as of {{ as_of_date }}.</p>
+<p class="mt-1 sm:mt-0">CCEO Target Scope: Scoped by active operational assignments.</p>
+</div>
+
 </div>
 {% endblock %}

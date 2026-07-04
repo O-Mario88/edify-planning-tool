@@ -1,0 +1,47 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Monthly Fund Request - Edify Command Center{% endblock %}
+
+{% block shell_content %}
+<div class="p-6 max-w-7xl mx-auto space-y-6">
+
+<!-- Premium Header Pane -->
+<div class="relative overflow-hidden rounded-3xl bg-slate-900 text-white p-8 shadow-xl border border-slate-800">
+<div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-blue-500/10 blur-3xl pointer-events-none"></div>
+<div class="relative z-10 space-y-2">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-500 text-[11px] font-black uppercase tracking-widest">
+Country Budget snapshots
+</div>
+<h1 class="text-[32px] font-black tracking-tight text-white leading-none">Monthly Country Fund Request</h1>
+<p class="text-[14px] text-slate-400 font-medium max-w-xl">
+Monthly consolidation of scheduled activities, partner allocations, core school visits, and variance adjustments.
+</p>
+</div>
+</div>
+
+<!-- Main grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm space-y-4 md:col-span-2">
+<h3 class="text-[15px] font-black text-slate-800 border-b border-slate-50 pb-2">Request Breakdown</h3>
+<div class="space-y-4 text-[12px] font-bold text-slate-700">
+<p class="flex justify-between"><span>Core Activity Budget:</span> <span class="text-slate-800 font-black">142,400,000 UGX</span></p>
+<p class="flex justify-between"><span>Partner Budget:</span> <span class="text-slate-800 font-black">28,000,000 UGX</span></p>
+<p class="flex justify-between"><span>Core Schools Support Capacity:</span> <span class="text-slate-800 font-black">12,500,000 UGX</span></p>
+<p class="flex justify-between"><span>Cluster Mobilisation:</span> <span class="text-slate-800 font-black">15,100,000 UGX</span></p>
+<p class="flex justify-between"><span>Reimbursements & Claims:</span> <span class="text-slate-800 font-black">12,000,000 UGX</span></p>
+<p class="flex justify-between border-t border-slate-100 pt-3 text-[14px]"><span>Aggregate Request Amount:</span> <span class="text-[#2563eb] font-black">210,000,000 UGX</span></p>
+</div>
+</div>
+
+<div class="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm space-y-4">
+<h3 class="text-[15px] font-black text-slate-800">Review & Submit</h3>
+<p class="text-[12px] text-slate-500 leading-relaxed font-semibold">
+Once submitted, the CD and RVP must authorize this snapshot request before funds are released to country accounts.
+</p>
+<button class="w-full h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-black transition-all shadow-md">
+Submit Monthly Request
+</button>
+</div>
+</div>
+</div>
+{% endblock %}

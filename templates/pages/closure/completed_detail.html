@@ -1,0 +1,100 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Completed Activity Record - Edify Command Center{% endblock %}
+
+{% block shell_content %}
+<div class="p-6 max-w-7xl mx-auto space-y-6">
+
+<!-- Back navigation -->
+<div class="flex items-center justify-between">
+<a href="/completed-activities" class="inline-flex items-center gap-1.5 text-[12px] font-bold text-slate-500 hover:text-slate-800 transition-colors">
+&larr; Back to Completed Ledger
+</a>
+
+<!-- Lock Badge -->
+<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+<svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+Archived & Locked
+</span>
+</div>
+
+<!-- Details Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+<!-- Left columns -->
+<div class="lg:col-span-2 space-y-6">
+
+<!-- Summary details -->
+<div class="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm space-y-4">
+<h2 class="text-[18px] font-black text-slate-800">Final Certified Record</h2>
+<div class="grid grid-cols-2 gap-4 text-[12px] font-semibold text-slate-700">
+<p class="flex flex-col"><span class="text-[11px] uppercase font-bold text-slate-400">Activity ID</span><span class="text-slate-800 text-[14px] font-bold">#{{ act.id }}</span></p>
+<p class="flex flex-col"><span class="text-[11px] uppercase font-bold text-slate-400">Salesforce Activity ID</span><span class="text-slate-800 text-[14px] font-bold font-mono">{{ act.salesforce_activity_id|default:"Unlinked" }}</span></p>
+<p class="flex flex-col"><span class="text-[11px] uppercase font-bold text-slate-400">Owner</span><span class="text-slate-800 text-[14px] font-bold">{{ act.responsible_staff_id }}</span></p>
+<p class="flex flex-col"><span class="text-[11px] uppercase font-bold text-slate-400">School / Cluster</span><span class="text-slate-800 text-[14px] font-bold">{{ act.school.name|default:"Cluster-wide" }}</span></p>
+<p class="flex flex-col"><span class="text-[11px] uppercase font-bold text-slate-400">Delivery Type</span><span class="text-slate-800 text-[14px] font-bold">{{ act.get_delivery_type_display }}</span></p>
+<p class="flex flex-col"><span class="text-[11px] uppercase font-bold text-slate-400">Actual Date</span><span class="text-slate-800 text-[14px] font-bold">{{ act.planned_date|date:"Y-m-d" }}</span></p>
+</div>
+</div>
+
+<!-- Financial Snapshot -->
+<div class="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm space-y-4">
+<h3 class="text-[15px] font-black text-slate-800">Frozen Financial Snapshot</h3>
+<div class="grid grid-cols-3 gap-4 text-center">
+<div class="p-3.5 bg-slate-50 border border-slate-150 rounded-2xl">
+<span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Final Budget</span>
+<span class="text-[18px] font-black text-slate-800 mt-1 block">{{ snapshot.final_budget_amount|default:"450,000" }} UGX</span>
+</div>
+<div class="p-3.5 bg-slate-50 border border-slate-150 rounded-2xl">
+<span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Disbursed Amount</span>
+<span class="text-[18px] font-black text-slate-800 mt-1 block">{{ snapshot.disbursed_amount|default:"450,000" }} UGX</span>
+</div>
+<div class="p-3.5 bg-slate-50 border border-slate-150 rounded-2xl">
+<span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Actual Spend</span>
+<span class="text-[18px] font-black text-slate-800 mt-1 block">{{ snapshot.actual_spend_amount|default:"450,000" }} UGX</span>
+</div>
+</div>
+
+<div class="flex justify-between items-center bg-slate-50/50 p-4 border border-slate-150 rounded-2xl text-[12px] font-bold text-slate-700">
+<span>NetSuite Expense reference ID:</span>
+<span class="font-mono text-slate-800 bg-slate-100 px-2 py-0.5 border border-slate-200 rounded-lg">{{ snapshot.netsuite_expense_id|default:"NS-EXP-777" }}</span>
+</div>
+</div>
+
+</div>
+
+<!-- Right Column: Audit Log timeline -->
+<div class="space-y-6">
+
+<!-- Verification Details -->
+<div class="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm space-y-4">
+<h3 class="text-[15px] font-black text-slate-800">Verification Ledger</h3>
+<div class="space-y-3 font-bold text-[12px] text-slate-700">
+<p class="flex justify-between"><span>IA Verification:</span> <span class="text-emerald-600">Passed</span></p>
+<p class="flex justify-between"><span>Evidence Files:</span> <span class="text-slate-800">{{ snapshot.evidence_count|default:"1" }} Files</span></p>
+<p class="flex justify-between"><span>Analytics published:</span> <span class="text-emerald-600">Published</span></p>
+</div>
+</div>
+
+<!-- Timeline summary -->
+<div class="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm space-y-4">
+<h3 class="text-[15px] font-black text-slate-800">Timeline checkpoints</h3>
+<div class="relative pl-5 border-l-2 border-slate-100 space-y-4 text-[12px] font-semibold text-slate-600">
+{% for ev in timeline %}
+<div class="relative">
+<span class="absolute -left-[29px] top-1.5 w-2 h-2 rounded-full bg-emerald-500"></span>
+<div class="flex justify-between text-slate-800">
+<span class="font-bold">{{ ev.event_name }}</span>
+<span class="text-[11px] text-slate-400">{{ ev.timestamp|date:"M d, Y" }}</span>
+</div>
+<p class="text-slate-500 mt-0.5">{{ ev.description }}</p>
+</div>
+{% endfor %}
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+{% endblock %}

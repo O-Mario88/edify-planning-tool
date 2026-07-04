@@ -1,0 +1,64 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Duplicate Review — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="p-6 max-w-7xl mx-auto space-y-6 font-sans">
+
+<!-- Header -->
+<div class="flex items-center justify-between border-b border-slate-200 pb-4">
+<div>
+<h1 class="text-[20px] font-black text-slate-800 tracking-tight">Duplicate Review Queue</h1>
+<p class="text-[12px] text-slate-400 font-semibold mt-0.5">Resolve schools with potential name or location duplicate risks.</p>
+</div>
+<a href="/admin-panel/data-quality-center" class="text-[12px] text-slate-500 hover:underline">&larr; Back to Quality Center</a>
+</div>
+
+<!-- Table -->
+<div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-[12px] border-collapse text-left">
+<thead>
+<tr class="bg-slate-50 border-b border-slate-100">
+<th class="px-5 py-3.5 text-[11px] font-black uppercase text-slate-400 tracking-wider">School Name</th>
+<th class="px-4 py-3.5 text-[11px] font-black uppercase text-slate-400 tracking-wider">District</th>
+<th class="px-4 py-3.5 text-[11px] font-black uppercase text-slate-400 tracking-wider">School ID</th>
+<th class="px-4 py-3.5 text-[11px] font-black uppercase text-slate-400 tracking-wider">Suggested Fix</th>
+<th class="px-5 py-3.5 text-right text-[11px] font-black uppercase text-slate-400 tracking-wider">Resolve</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 font-medium">
+{% for issue in issues %}
+<tr class="hover:bg-slate-50/20">
+<td class="px-5 py-4">
+<span class="font-extrabold text-slate-900 block">{{ issue.school.name }}</span>
+<span class="text-[11px] text-slate-400 font-bold block mt-0.5">Status: {{ issue.school.duplicate_status }}</span>
+</td>
+<td class="px-4 py-4 text-slate-500 font-semibold">{{ issue.school.district.name }}</td>
+<td class="px-4 py-4 font-mono font-bold text-slate-700">{{ issue.school.school_id }}</td>
+<td class="px-4 py-4 text-slate-500 font-semibold">{{ issue.suggested_fix }}</td>
+<td class="px-5 py-4 text-right">
+<form method="post" action="" class="inline m-0">
+{% csrf_token %}
+<input type="hidden" name="issue_id" value="{{ issue.id }}">
+<input type="hidden" name="action" value="resolve_unique">
+<button type="submit" class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold text-[11px] rounded transition-all">
+Mark as Unique
+</button>
+</form>
+</td>
+</tr>
+{% empty %}
+<tr>
+<td colspan="5" class="px-5 py-8 text-center text-slate-400 font-semibold">
+No active duplicate risks found in directory.
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+
+</div>
+{% endblock %}

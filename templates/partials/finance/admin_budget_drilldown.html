@@ -1,0 +1,100 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% load frontend_filters %}
+
+{% block drawer_title %}Admin Budget Breakdown{% endblock %}
+{% block drawer_subtitle %}CD Monthly Admin Plan allocation for {{ selected_month }} {{ selected_fy }}{% endblock %}
+
+{% block drawer_badge %}
+<span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-black uppercase {{ admin_data.status_class }}">
+{{ admin_data.status_label }}
+</span>
+{% endblock %}
+
+{% block drawer_body %}
+<div class="space-y-5 text-[12px] font-semibold text-slate-700 font-sans">
+
+<!-- Plan Summary Info -->
+<div class="grid grid-cols-3 gap-4 bg-slate-50 p-4 border border-slate-100 rounded-xl text-[12px]">
+<div>
+<p class="text-[11px] uppercase font-bold text-slate-400">Total Planned</p>
+<p class="font-extrabold text-slate-800 mt-0.5">{{ admin_data.planned_total|ugx }}</p>
+</div>
+<div>
+<p class="text-[11px] uppercase font-bold text-slate-400">Total Allocated</p>
+<p class="font-extrabold text-emerald-700 mt-0.5">{{ admin_data.allocated_total|ugx }}</p>
+</div>
+<div>
+<p class="text-[11px] uppercase font-bold text-slate-400">Monthly Period</p>
+<p class="font-extrabold text-[#2e505f] mt-0.5">{{ selected_month }} {{ selected_fy }}</p>
+</div>
+</div>
+
+<!-- Admin lines table -->
+<div class="space-y-2">
+<p class="text-[11px] uppercase font-bold text-slate-400">Plan Line Items</p>
+
+{% if admin_data.lines %}
+<div class="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+<table class="w-full text-left text-[12px] border-collapse bg-white">
+<thead>
+<tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+<th class="px-4 py-2.5">Item Description</th>
+<th class="px-3 py-2.5">Category</th>
+<th class="px-3 py-2.5 text-center">Qty</th>
+<th class="px-3 py-2.5 text-right">Unit (UGX)</th>
+<th class="px-4 py-2.5 text-right font-extrabold text-slate-800">Total (UGX)</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100">
+{% for line in admin_data.lines %}
+<tr class="hover:bg-slate-50/50">
+<td class="px-4 py-3 font-extrabold text-slate-800">
+{{ line.description }}
+{% if line.justification and line.justification != "None" %}
+<p class="text-[11px] font-semibold text-slate-400 mt-1 leading-normal">Justification: {{ line.justification }}</p>
+{% endif %}
+</td>
+<td class="px-3 py-3 font-semibold text-slate-500">{{ line.cost_category }}</td>
+<td class="px-3 py-3 text-center font-bold text-slate-700">{{ line.quantity|stringformat:".2f" }}</td>
+<td class="px-3 py-3 text-right text-slate-500">{{ line.unit_cost|ugx }}</td>
+<td class="px-4 py-3 text-right font-black text-[#2e505f]">{{ line.total_cost|ugx }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% else %}
+<div class="p-8 text-center border border-dashed border-slate-200 rounded-xl bg-slate-50/50 text-slate-400 text-[12px] font-bold">
+No administrative budget lines exist for this month.
+</div>
+{% endif %}
+</div>
+
+<!-- Sticky Actions Footer -->
+<div class="drawer-footer flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100">
+<button 
+type="button"
+@click="$dispatch('close-drawer')"
+class="btn btn-ghost h-10 text-[12px] shadow-sm font-extrabold"
+>
+Close
+</button>
+
+<a 
+href="/finance/fund-allocation?export=csv&export_mode=admin_only&month={{ selected_month }}&fy={{ selected_fy }}"
+class="btn btn-ghost h-10 text-[12px] text-blue-600 border-blue-200 hover:bg-blue-50 shadow-sm font-extrabold flex items-center gap-1"
+>
+<span>📥</span> Export Breakdown
+</a>
+
+<a 
+href="/work-plan" 
+target="_blank"
+class="btn btn-primary h-10 text-[12px] shadow-sm font-extrabold"
+>
+View CD Monthly Plan
+</a>
+</div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,228 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Activity Finance Detail - Edify Command Center{% endblock %}
+
+{% block shell_content %}
+<div class="p-6 max-w-7xl mx-auto space-y-6" x-data="{ currentModal: null }">
+
+<!-- Back navigation -->
+<div class="flex items-center justify-between">
+<a href="/accounts/" class="inline-flex items-center gap-1.5 text-[12px] font-bold text-slate-500 hover:text-slate-800 transition-colors">
+&larr; Back to Finance Command Center
+</a>
+
+<!-- Status Badge -->
+<div class="flex items-center gap-2">
+{% if blocked_reasons %}
+<span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-200">
+<span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+Blocked
+</span>
+{% endif %}
+<span class="px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-slate-900 text-white">
+{{ act.get_status_display }}
+</span>
+</div>
+</div>
+
+<!-- Main Grid Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+<!-- Left Column: Activity Summary & Cost Breakdown -->
+<div class="lg:col-span-2 space-y-6">
+
+<!-- Summary Card -->
+<div class="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm space-y-4">
+<h2 class="text-[18px] font-black text-slate-800">Activity Summary</h2>
+<div class="grid grid-cols-2 gap-4 text-[12px] font-semibold text-slate-700">
+<p class="flex flex-col"><span class="text-[11px] uppercase font-bold text-slate-400">Activity ID</span><span class="text-slate-800 text-[14px] font-bold">#{{ act.id }}</span></p>
+<p class="flex flex-col"><span class="text-[11px] uppercase font-bold text-slate-400">Salesforce Activity ID</span><span class="text-slate-800 text-[14px] font-bold font-mono">{{ act.salesforce_activity_id|default:"Unlinked" }}</span></p>
+<p class="flex flex-col"><span class="text-[11px] uppercase font-bold text-slate-400">Delivery Type</span><span class="text-slate-800 text-[14px] font-bold">{{ act.get_delivery_type_display }}</span></p>
+<p class="flex flex-col"><span class="text-[11px] uppercase font-bold text-slate-400">Payment Status</span><span class="text-slate-800 text-[14px] font-bold">{{ act.payment_status|upper }}</span></p>
+</div>
+</div>
+
+<!-- Cost Lines Breakdown -->
+<div class="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm space-y-4">
+<h3 class="text-[15px] font-black text-slate-800">Budget Breakdown (Activity Budget Lines)</h3>
+<div class="overflow-hidden border border-slate-100 rounded-2xl">
+<table class="w-full text-[12px] font-semibold text-slate-700">
+<thead class="bg-slate-50 border-b border-slate-100 text-[11px] uppercase font-bold text-slate-400">
+<tr>
+<th class="px-4 py-3 text-left">Label / Type</th>
+<th class="px-4 py-3 text-center">Unit Cost</th>
+<th class="px-4 py-3 text-center">Quantity</th>
+<th class="px-4 py-3 text-right">Total Amount</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-50">
+{% for line in costs %}
+<tr>
+<td class="px-4 py-3">
+<div class="text-slate-900 font-extrabold">{{ line.label }}</div>
+<div class="text-[11px] text-slate-400 font-bold uppercase mt-0.5">{{ line.line_item_type }}</div>
+</td>
+<td class="px-4 py-3 text-center">{{ line.unit_cost }}</td>
+<td class="px-4 py-3 text-center">{{ line.quantity }}</td>
+<td class="px-4 py-3 text-right text-slate-900 font-black">{{ line.amount }} UGX</td>
+</tr>
+{% empty %}
+<tr>
+<td colspan="4" class="px-4 py-6 text-center text-slate-400">No cost lines registered.</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+
+<!-- Disbursements & Payments -->
+<div class="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm space-y-4">
+<h3 class="text-[15px] font-black text-slate-800">Disbursement & Payment History</h3>
+
+<!-- Advances list -->
+<div class="space-y-3">
+<h4 class="text-[11px] uppercase font-black text-slate-400 tracking-wider">Advances Disbursed</h4>
+{% for disb in disbursements %}
+<div class="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-150 rounded-xl">
+<div>
+<span class="font-extrabold text-[12px] text-slate-800 block">{{ disb.amount_disbursed }} UGX</span>
+<span class="text-[11px] text-slate-500 block mt-0.5">Method: {{ disb.payment_method }} &bull; Ref: {{ disb.payment_reference }}</span>
+</div>
+<span class="text-[11px] text-slate-400 font-bold uppercase">{{ disb.disbursed_at|date:"M d, Y" }}</span>
+</div>
+{% empty %}
+<p class="text-[12px] text-slate-400 font-semibold py-2">No advance disbursements recorded.</p>
+{% endfor %}
+</div>
+</div>
+
+</div>
+
+<!-- Right Column: Compliance Blockers & Actions -->
+<div class="space-y-6">
+
+<!-- Blocker Panel -->
+{% if blocked_reasons %}
+<div class="bg-rose-50 rounded-3xl border border-rose-150 p-6 space-y-4">
+<h3 class="text-[14px] font-black text-rose-800 flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+Compliance Blockers
+</h3>
+<ul class="space-y-2 text-[12px] font-bold text-rose-700">
+{% for reason in blocked_reasons %}
+<li class="flex items-start gap-1.5">
+<span>&bull;</span>
+<span>{{ reason }}</span>
+</li>
+{% endfor %}
+</ul>
+</div>
+{% else %}
+<div class="bg-emerald-50 rounded-3xl border border-emerald-150 p-6 space-y-3">
+<h3 class="text-[14px] font-black text-emerald-800 flex items-center gap-1.5">
+<svg class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+No Compliance Blockers
+</h3>
+<p class="text-[12px] text-emerald-700 leading-relaxed font-semibold">
+This activity is fully verified by IA, has evidence files and Salesforce entries, and is ready for final finance clearance.
+</p>
+</div>
+{% endif %}
+
+<!-- Accountability & Receipts -->
+<div class="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm space-y-4">
+<h3 class="text-[15px] font-black text-slate-800">Accountability & Receipts</h3>
+{% for rec in accountability %}
+<div class="p-4 bg-slate-50 border border-slate-150 rounded-2xl space-y-3">
+<div class="flex items-center justify-between">
+<span class="text-[11px] font-black uppercase text-slate-400">Actual spend</span>
+<span class="font-extrabold text-[14px] text-slate-800">{{ rec.actual_spend }} UGX</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-[11px] font-black uppercase text-slate-400">Variance</span>
+<span class="font-extrabold text-[14px] {% if rec.variance > 0 %}text-rose-600{% else %}text-emerald-600{% endif %}">{{ rec.variance }} UGX</span>
+</div>
+{% if rec.variance_reason %}
+<div class="pt-2 border-t border-slate-200/50">
+<span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Staff Explanation</span>
+<p class="text-[12px] text-slate-700 font-medium leading-relaxed mt-0.5">{{ rec.variance_reason }}</p>
+</div>
+{% endif %}
+</div>
+{% empty %}
+<p class="text-[12px] text-slate-400 font-semibold py-2">No accountability records submitted.</p>
+{% endfor %}
+</div>
+
+<!-- Action Panel Form -->
+<div class="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm space-y-4">
+<h3 class="text-[15px] font-black text-slate-800">Finance Operations</h3>
+
+<form method="POST" action="/accounts/activities/{{ act.id }}/netsuite-id/" class="space-y-4">
+{% csrf_token %}
+<div>
+<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1">Enter NetSuite Expense ID</label>
+<input 
+type="text" 
+name="netsuite_expense_id" 
+required 
+placeholder="e.g. EXP-2026-99"
+class="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[12px] font-bold text-slate-700 px-3.5 focus:bg-white focus:border-blue-500 focus:outline-none transition-all shadow-inner"
+>
+</div>
+<div class="grid grid-cols-2 gap-2">
+<div>
+<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1">Expense Date</label>
+<input 
+type="date" 
+name="expense_date" 
+required 
+value="2026-07-03"
+class="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[12px] font-bold text-slate-700 px-2 focus:bg-white focus:border-blue-500 focus:outline-none transition-all"
+>
+</div>
+<div>
+<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1">Amount</label>
+<input 
+type="number" 
+name="amount_entered" 
+required 
+value="450000"
+class="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[12px] font-bold text-slate-700 px-2 focus:bg-white focus:border-blue-500 focus:outline-none transition-all"
+>
+</div>
+</div>
+<button type="submit" class="w-full h-10 rounded-xl text-white font-extrabold text-[12px] bg-slate-900 hover:bg-slate-800 flex items-center justify-center transition-all shadow-md">
+Save & Reconcile ID
+</button>
+</form>
+</div>
+
+</div>
+
+</div>
+
+<!-- Audit Logs Feed -->
+<div class="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm space-y-4">
+<h3 class="text-[15px] font-black text-slate-800">Finance Audit Ledger</h3>
+<div class="divide-y divide-slate-100">
+{% for log in audit_logs %}
+<div class="py-3 flex items-start justify-between gap-4 text-[12px]">
+<div>
+<span class="font-extrabold text-slate-900 block">{{ log.get_event_type_display|default:log.event_type }}</span>
+<span class="text-[12px] text-slate-500 block mt-0.5">{{ log.new_value }}</span>
+</div>
+<div class="text-right">
+<span class="text-slate-500 block font-bold uppercase text-[11px]">{{ log.timestamp|date:"M d, Y H:i" }}</span>
+<span class="text-slate-800 block text-[11px] font-extrabold">{{ log.actor_id }} &bull; {{ log.actor_role }}</span>
+</div>
+</div>
+{% empty %}
+<p class="text-[12px] text-slate-500 font-semibold py-4 text-center">No audit logs registered.</p>
+{% endfor %}
+</div>
+</div>
+
+</div>
+{% endblock %}

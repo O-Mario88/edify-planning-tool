@@ -1,0 +1,94 @@
+<!-- Row Dropdown Menu Partial for My Plan Tables -->
+<td class="px-4 py-3 text-right relative" x-data="{ open: false }">
+<button 
+@click="open = !open" 
+@click.outside="open = false" 
+class="text-slate-400 hover:text-slate-700 h-8 w-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
+>
+<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
+</svg>
+</button>
+
+<div 
+x-show="open" 
+x-transition:enter="transition ease-out duration-100"
+x-transition:enter-start="transform opacity-0 scale-95"
+x-transition:enter-end="transform opacity-100 scale-100"
+x-transition:leave="transition ease-in duration-75"
+x-transition:leave-start="transform opacity-100 scale-100"
+x-transition:leave-end="transform opacity-0 scale-95"
+class="absolute right-4 mt-1 w-52 rounded-xl bg-white border border-slate-200 shadow-lg z-30 py-1.5 text-left font-semibold text-[12px] text-slate-700"
+style="display: none;"
+>
+<!-- View Details -->
+<button 
+hx-get="/my-plan/{{ row.id }}"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+@click="open = false"
+class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50"
+>
+<span>🔎</span> View Details
+</button>
+
+<!-- Reschedule -->
+{% if row.status != 'completed' %}
+<button 
+hx-get="/my-plan/{{ row.id }}/reschedule-drawer"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+@click="open = false"
+class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 text-amber-600 hover:text-amber-700"
+>
+<span>📅</span> Reschedule Activity
+</button>
+{% endif %}
+
+<!-- Complete -->
+{% if row.status != 'completed' %}
+<button 
+hx-get="/my-plan/{{ row.id }}/complete-drawer"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+@click="open = false"
+class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 text-emerald-600 hover:text-emerald-700"
+>
+<span>✅</span> Complete Activity
+</button>
+{% endif %}
+
+<!-- Upload Evidence -->
+<button 
+hx-get="/my-plan/{{ row.id }}/complete-drawer"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+@click="open = false"
+class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50"
+>
+<span>📎</span> Upload Evidence
+</button>
+
+<!-- Enter Activity SF ID -->
+<button 
+hx-get="/my-plan/{{ row.id }}/complete-drawer"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+@click="open = false"
+class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50"
+>
+<span>🏷️</span> Enter Activity SF ID
+</button>
+
+<!-- View Budget Lines -->
+<button 
+hx-get="/my-plan/{{ row.id }}"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+@click="open = false"
+class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50"
+>
+<span>💰</span> View Budget Lines
+</button>
+</div>
+</td>

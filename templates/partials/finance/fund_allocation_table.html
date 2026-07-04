@@ -1,0 +1,299 @@
+{% load frontend_filters %}
+<!-- Allocation Table & Out-of-band updates -->
+<div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden font-sans" id="allocation-table-container">
+
+<!-- CD Monthly Admin Plan Blocker/Warnings -->
+{% if not admin_budget_data.exists %}
+<div class="p-4 bg-rose-50 border-b border-rose-150 flex items-center justify-between text-[12px] font-bold text-rose-800">
+<div class="flex items-center gap-2">
+<span class="text-[14px]">⚠️</span>
+<span>No CD Monthly Admin Plan found for this month.</span>
+</div>
+<a href="/work-plan" class="btn btn-ghost border-rose-300 hover:bg-rose-100 text-[11px] h-8 shadow-sm">
+Open CD Monthly Admin Plan
+</a>
+</div>
+{% elif not admin_budget_data.approved %}
+<div class="p-4 bg-amber-50 border-b border-amber-150 flex items-center justify-between text-[12px] font-bold text-amber-800">
+<div class="flex items-center gap-2">
+<span class="text-[14px]">🕒</span>
+<span>Admin Budget exists but is not approved yet. It is marked as draft.</span>
+</div>
+<a href="/work-plan" class="btn btn-ghost border-amber-300 hover:bg-amber-100 text-[11px] h-8 shadow-sm">
+Open CD Monthly Admin Plan
+</a>
+</div>
+{% endif %}
+
+<!-- Table Section -->
+<div class="overflow-x-auto">
+<table class="w-full text-left text-[12px] border-collapse min-w-[1400px]">
+<thead>
+<!-- Grouped Headers Row -->
+<tr class="text-[11px] font-black uppercase tracking-wider text-slate-500 border-b border-slate-150">
+<th class="px-4 py-3 bg-slate-50 border-r border-slate-150" rowspan="2">Staff</th>
+<th class="px-4 py-2 text-center bg-[#FFEFE7] border-r border-slate-150 text-[#ea580c]" colspan="3">Staff Visits</th>
+<th class="px-4 py-2 text-center bg-[#E0F2FE] border-r border-slate-150 text-[#0284c7]" colspan="3">Partner Visits</th>
+<th class="px-4 py-2 text-center bg-[#FEF3C7] border-r border-slate-150 text-[#d97706]" colspan="3">SSA</th>
+<th class="px-4 py-2 text-center bg-[#DCFCE7] border-r border-slate-150 text-[#16a34a]" colspan="3">Cluster Training</th>
+<th class="px-4 py-2 text-center bg-[#CCFBF1] border-r border-slate-150 text-[#0d9488]" colspan="3">Partner In-School Training</th>
+<th class="px-4 py-2 text-center bg-rose-50 border-r border-slate-150 text-rose-700 font-extrabold" colspan="3">Admin Budget</th>
+<th class="px-4 py-3 text-center bg-slate-50 font-extrabold text-slate-800" rowspan="2">Total Monthly Allocation</th>
+</tr>
+<!-- Sub-headers Row -->
+<tr class="text-[11px] font-bold text-slate-400 uppercase tracking-wide border-b border-slate-150">
+<!-- Staff Visits -->
+<th class="px-3 py-2.5 text-center bg-[#FFEFE7]/40"># Visits</th>
+<th class="px-3 py-2.5 text-center bg-[#FFEFE7]/40">Cost per Visit</th>
+<th class="px-3 py-2.5 text-center bg-[#FFEFE7]/40 border-r border-slate-150 font-extrabold text-[#ea580c]">Total</th>
+<!-- Partner Visits -->
+<th class="px-3 py-2.5 text-center bg-[#E0F2FE]/40"># Visits</th>
+<th class="px-3 py-2.5 text-center bg-[#E0F2FE]/40">Cost per Visit</th>
+<th class="px-3 py-2.5 text-center bg-[#E0F2FE]/40 border-r border-slate-150 font-extrabold text-[#0284c7]">Total</th>
+<!-- SSA -->
+<th class="px-3 py-2.5 text-center bg-[#FEF3C7]/40"># Visits</th>
+<th class="px-3 py-2.5 text-center bg-[#FEF3C7]/40">Cost per Visit</th>
+<th class="px-3 py-2.5 text-center bg-[#FEF3C7]/40 border-r border-slate-150 font-extrabold text-[#d97706]">Total</th>
+<!-- Cluster Training -->
+<th class="px-3 py-2.5 text-center bg-[#DCFCE7]/40"># Schools</th>
+<th class="px-3 py-2.5 text-center bg-[#DCFCE7]/40">Cost per School</th>
+<th class="px-3 py-2.5 text-center bg-[#DCFCE7]/40 border-r border-slate-150 font-extrabold text-[#16a34a]">Total</th>
+<!-- Partner In-School -->
+<th class="px-3 py-2.5 text-center bg-[#CCFBF1]/40"># Schools</th>
+<th class="px-3 py-2.5 text-center bg-[#CCFBF1]/40">Cost per School</th>
+<th class="px-3 py-2.5 text-center bg-[#CCFBF1]/40 border-r border-slate-150 font-extrabold text-[#0d9488]">Total</th>
+<!-- Admin Budget subcolumns -->
+<th class="px-3 py-2.5 text-center bg-rose-50/40">Planned</th>
+<th class="px-3 py-2.5 text-center bg-rose-50/40">Allocated</th>
+<th class="px-3 py-2.5 text-center bg-rose-50/40 border-r border-slate-150 font-extrabold text-rose-700">Total</th>
+</tr>
+</thead>
+
+<tbody class="divide-y divide-slate-100 text-slate-700 font-medium">
+{% if rows %}
+{% for r in rows %}
+<tr class="hover:bg-slate-50/40 transition-colors {% if r.user_id == 'cd_admin_budget' %}bg-rose-50/30 text-rose-950 font-extrabold border-y border-rose-150{% endif %}">
+<!-- Staff Name -->
+<td class="px-4 py-3 font-bold text-slate-800 border-r border-slate-150 {% if r.user_id == 'cd_admin_budget' %}text-rose-900{% endif %}">
+{{ r.name }}
+</td>
+
+<!-- Staff Visits -->
+<td class="px-3 py-3 text-center bg-[#FFEFE7]/10">{{ r.staff_visits.count|default:"-" }}</td>
+<td class="px-3 py-3 text-center bg-[#FFEFE7]/10 text-slate-400">
+{% if r.staff_visits.count > 0 %}{{ r.staff_visits.unit_cost|ugx }}{% else %}-{% endif %}
+</td>
+<td 
+class="px-3 py-3 text-center bg-[#FFEFE7]/20 border-r border-slate-150 font-extrabold text-slate-800 cursor-pointer hover:underline"
+hx-get="/finance/fund-allocation/drilldown?staff_id={{ r.user_id }}&category=staff_visits&month={{ selected_month }}&fy={{ selected_fy }}"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+>
+{% if r.staff_visits.total > 0 %}{{ r.staff_visits.total|ugx }}{% else %}-{% endif %}
+</td>
+
+<!-- Partner Visits -->
+<td class="px-3 py-3 text-center bg-[#E0F2FE]/10">{{ r.partner_visits.count|default:"-" }}</td>
+<td class="px-3 py-3 text-center bg-[#E0F2FE]/10 text-slate-400">
+{% if r.partner_visits.count > 0 %}{{ r.partner_visits.unit_cost|ugx }}{% else %}-{% endif %}
+</td>
+<td 
+class="px-3 py-3 text-center bg-[#E0F2FE]/20 border-r border-slate-150 font-extrabold text-slate-800 cursor-pointer hover:underline"
+hx-get="/finance/fund-allocation/drilldown?staff_id={{ r.user_id }}&category=partner_visits&month={{ selected_month }}&fy={{ selected_fy }}"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+>
+{% if r.partner_visits.total > 0 %}{{ r.partner_visits.total|ugx }}{% else %}-{% endif %}
+</td>
+
+<!-- SSA -->
+<td class="px-3 py-3 text-center bg-[#FEF3C7]/10">{{ r.ssa.count|default:"-" }}</td>
+<td class="px-3 py-3 text-center bg-[#FEF3C7]/10 text-slate-400">
+{% if r.ssa.count > 0 %}{{ r.ssa.unit_cost|ugx }}{% else %}-{% endif %}
+</td>
+<td 
+class="px-3 py-3 text-center bg-[#FEF3C7]/20 border-r border-slate-150 font-extrabold text-slate-800 cursor-pointer hover:underline"
+hx-get="/finance/fund-allocation/drilldown?staff_id={{ r.user_id }}&category=ssa&month={{ selected_month }}&fy={{ selected_fy }}"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+>
+{% if r.ssa.total > 0 %}{{ r.ssa.total|ugx }}{% else %}-{% endif %}
+</td>
+
+<!-- Cluster Training -->
+<td class="px-3 py-3 text-center bg-[#DCFCE7]/10">{{ r.cluster_training.count|default:"-" }}</td>
+<td class="px-3 py-3 text-center bg-[#DCFCE7]/10 text-slate-400">
+{% if r.cluster_training.count > 0 %}{{ r.cluster_training.unit_cost|ugx }}{% else %}-{% endif %}
+</td>
+<td 
+class="px-3 py-3 text-center bg-[#DCFCE7]/20 border-r border-slate-150 font-extrabold text-slate-800 cursor-pointer hover:underline"
+hx-get="/finance/fund-allocation/drilldown?staff_id={{ r.user_id }}&category=cluster_training&month={{ selected_month }}&fy={{ selected_fy }}"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+>
+{% if r.cluster_training.total > 0 %}{{ r.cluster_training.total|ugx }}{% else %}-{% endif %}
+</td>
+
+<!-- Partner In-School Training -->
+<td class="px-3 py-3 text-center bg-[#CCFBF1]/10">{{ r.partner_in_school_training.count|default:"-" }}</td>
+<td class="px-3 py-3 text-center bg-[#CCFBF1]/10 text-slate-400">
+{% if r.partner_in_school_training.count > 0 %}{{ r.partner_in_school_training.unit_cost|ugx }}{% else %}-{% endif %}
+</td>
+<td 
+class="px-3 py-3 text-center bg-[#CCFBF1]/20 border-r border-slate-150 font-extrabold text-slate-800 cursor-pointer hover:underline"
+hx-get="/finance/fund-allocation/drilldown?staff_id={{ r.user_id }}&category=partner_in_school_training&month={{ selected_month }}&fy={{ selected_fy }}"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+>
+{% if r.partner_in_school_training.total > 0 %}{{ r.partner_in_school_training.total|ugx }}{% else %}-{% endif %}
+</td>
+
+<!-- Admin Budget subcolumns -->
+<td class="px-3 py-3 text-center bg-rose-50/10">
+{% if r.admin_budget.planned > 0 %}{{ r.admin_budget.planned|ugx }}{% else %}-{% endif %}
+</td>
+<td class="px-3 py-3 text-center bg-rose-50/10 text-slate-400">
+{% if r.admin_budget.allocated > 0 %}{{ r.admin_budget.allocated|ugx }}{% else %}-{% endif %}
+</td>
+<td 
+class="px-3 py-3 text-center bg-rose-50/20 border-r border-slate-150 font-extrabold text-rose-700 cursor-pointer hover:underline"
+hx-get="/finance/fund-allocation/admin-budget-drilldown?month={{ selected_month }}&fy={{ selected_fy }}"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+>
+{% if r.admin_budget.total > 0 %}{{ r.admin_budget.total|ugx }}{% else %}-{% endif %}
+</td>
+
+<!-- Total Allocation Column -->
+<td class="px-4 py-3 text-center font-black text-[#2e505f] bg-slate-50/50">
+{{ r.total_allocation|ugx }}
+</td>
+</tr>
+{% endfor %}
+{% else %}
+<tr>
+<td colspan="20" class="px-4 py-12 text-center text-slate-400 font-semibold bg-slate-50/10">
+No planned allocation for this month.
+<div class="mt-2 text-[11px] text-slate-400 font-normal">Scheduled activities in My Plan or Monthly Admin Budgets will generate monthly allocation.</div>
+</td>
+</tr>
+{% endif %}
+
+<!-- Totals Summary Row -->
+{% if rows %}
+<tr class="border-t border-slate-200 bg-slate-50/50 font-black text-slate-800 text-[12px]">
+<td class="px-4 py-3 border-r border-slate-150 font-black">TOTAL</td>
+<!-- Staff Visits -->
+<td class="px-3 py-3 text-center bg-[#FFEFE7]/20">{{ grand_totals.staff_visits.count }}</td>
+<td class="px-3 py-3 text-center bg-[#FFEFE7]/20 text-slate-500">
+{% if grand_totals.staff_visits.count > 0 %}{{ grand_totals.staff_visits.unit_cost|ugx }}{% else %}UGX 0{% endif %}
+</td>
+<td class="px-3 py-3 text-center bg-[#FFEFE7]/30 border-r border-slate-150 text-[#ea580c] font-black">{{ grand_totals.staff_visits.total|ugx }}</td>
+
+<!-- Partner Visits -->
+<td class="px-3 py-3 text-center bg-[#E0F2FE]/20">{{ grand_totals.partner_visits.count }}</td>
+<td class="px-3 py-3 text-center bg-[#E0F2FE]/20 text-slate-500">
+{% if grand_totals.partner_visits.count > 0 %}{{ grand_totals.partner_visits.unit_cost|ugx }}{% else %}UGX 0{% endif %}
+</td>
+<td class="px-3 py-3 text-center bg-[#E0F2FE]/30 border-r border-slate-150 text-[#0284c7] font-black">{{ grand_totals.partner_visits.total|ugx }}</td>
+
+<!-- SSA -->
+<td class="px-3 py-3 text-center bg-[#FEF3C7]/20">{{ grand_totals.ssa.count }}</td>
+<td class="px-3 py-3 text-center bg-[#FEF3C7]/20 text-slate-500">
+{% if grand_totals.ssa.count > 0 %}{{ grand_totals.ssa.unit_cost|ugx }}{% else %}UGX 0{% endif %}
+</td>
+<td class="px-3 py-3 text-center bg-[#FEF3C7]/30 border-r border-slate-150 text-[#d97706] font-black">{{ grand_totals.ssa.total|ugx }}</td>
+
+<!-- Cluster Training -->
+<td class="px-3 py-3 text-center bg-[#DCFCE7]/20">{{ grand_totals.cluster_training.count }}</td>
+<td class="px-3 py-3 text-center bg-[#DCFCE7]/20 text-slate-500">
+{% if grand_totals.cluster_training.count > 0 %}{{ grand_totals.cluster_training.unit_cost|ugx }}{% else %}UGX 0{% endif %}
+</td>
+<td class="px-3 py-3 text-center bg-[#DCFCE7]/30 border-r border-slate-150 text-[#16a34a] font-black">{{ grand_totals.cluster_training.total|ugx }}</td>
+
+<!-- Partner In-School Training -->
+<td class="px-3 py-3 text-center bg-[#CCFBF1]/20">{{ grand_totals.partner_in_school_training.count }}</td>
+<td class="px-3 py-3 text-center bg-[#CCFBF1]/20 text-slate-500">
+{% if grand_totals.partner_in_school_training.count > 0 %}{{ grand_totals.partner_in_school_training.unit_cost|ugx }}{% else %}UGX 0{% endif %}
+</td>
+<td class="px-3 py-3 text-center bg-[#CCFBF1]/30 border-r border-slate-150 text-[#0d9488] font-black">{{ grand_totals.partner_in_school_training.total|ugx }}</td>
+
+<!-- Admin Budget totals -->
+<td class="px-3 py-3 text-center bg-rose-50/20">{{ grand_totals.admin_budget.planned|ugx }}</td>
+<td class="px-3 py-3 text-center bg-rose-50/20 text-slate-500">{{ grand_totals.admin_budget.allocated|ugx }}</td>
+<td class="px-3 py-3 text-center bg-rose-50/30 border-r border-slate-150 text-rose-700 font-black">{{ grand_totals.admin_budget.total|ugx }}</td>
+
+<!-- Total Allocation -->
+<td class="px-4 py-3 text-center font-black text-emerald-700 bg-slate-100/60">{{ grand_totals.total_allocation|ugx }}</td>
+</tr>
+{% endif %}
+</tbody>
+</table>
+</div>
+
+<!-- Pagination strip -->
+<div class="px-4 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-[12px] font-bold text-slate-500">
+<span>Showing {{ showing_start }}–{{ showing_end }} of {{ total_staff_count }} staff</span>
+
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1">
+{% if page > 1 %}
+<button 
+hx-get="/finance/fund-allocation?page={{ page|add:-1 }}&per_page={{ per_page }}&month={{ selected_month }}&fy={{ selected_fy }}&region={{ selected_region }}&district={{ selected_district }}&q={{ search_q }}"
+hx-target="#allocation-table-container"
+hx-swap="outerHTML"
+class="h-7 w-7 rounded border border-slate-200 bg-white hover:bg-slate-50 flex items-center justify-center"
+>
+&lt;
+</button>
+{% endif %}
+
+{% for p in pages_list %}
+<button 
+hx-get="/finance/fund-allocation?page={{ p }}&per_page={{ per_page }}&month={{ selected_month }}&fy={{ selected_fy }}&region={{ selected_region }}&district={{ selected_district }}&q={{ search_q }}"
+hx-target="#allocation-table-container"
+hx-swap="outerHTML"
+class="h-7 w-7 rounded border flex items-center justify-center {% if page == p %}border-blue-500 bg-blue-50 text-blue-600{% else %}border-slate-200 bg-white hover:bg-slate-50{% endif %}"
+>
+{{ p }}
+</button>
+{% endfor %}
+
+{% if page < total_pages %}
+<button 
+hx-get="/finance/fund-allocation?page={{ page|add:1 }}&per_page={{ per_page }}&month={{ selected_month }}&fy={{ selected_fy }}&region={{ selected_region }}&district={{ selected_district }}&q={{ search_q }}"
+hx-target="#allocation-table-container"
+hx-swap="outerHTML"
+class="h-7 w-7 rounded border border-slate-200 bg-white hover:bg-slate-50 flex items-center justify-center"
+>
+&gt;
+</button>
+{% endif %}
+</div>
+
+<div class="flex items-center gap-1.5">
+<select 
+name="per_page"
+hx-get="/finance/fund-allocation?page=1&month={{ selected_month }}&fy={{ selected_fy }}&region={{ selected_region }}&district={{ selected_district }}&q={{ search_q }}"
+hx-target="#allocation-table-container"
+hx-swap="outerHTML"
+class="h-7 px-2 bg-white border border-slate-200 rounded font-bold cursor-pointer focus:outline-none"
+>
+<option value="10" {% if per_page == 10 %}selected{% endif %}>10 / page</option>
+<option value="20" {% if per_page == 20 %}selected{% endif %}>20 / page</option>
+<option value="50" {% if per_page == 50 %}selected{% endif %}>50 / page</option>
+</select>
+</div>
+</div>
+</div>
+
+</div>
+
+<!-- Out-of-band updates -->
+<div id="fund-allocation-kpis" hx-swap-oob="true">
+{% include "partials/finance/fund_allocation_kpis.html" %}
+</div>
+
+<div id="fund-allocation-insights" hx-swap-oob="true">
+{% include "partials/finance/accountant_insights.html" %}
+</div>

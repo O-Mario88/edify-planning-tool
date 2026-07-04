@@ -1,0 +1,304 @@
+<div 
+x-data="{ 
+open: true,
+delivery: 'staff'
+}" 
+x-show="open" 
+class="fixed inset-0 z-50 flex items-center justify-end"
+id="schedule-visit-drawer-root"
+>
+<!-- Backdrop Blur -->
+<div 
+class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" 
+@click="open = false; setTimeout(() => document.getElementById('drawer-container').innerHTML = '', 300)"
+></div>
+
+<!-- Drawer Body -->
+<div 
+class="relative w-full max-w-lg bg-white h-full shadow-2xl p-6 overflow-y-auto space-y-6 flex flex-col justify-between z-10 transition-transform transform translate-x-0"
+x-show="open"
+x-transition:enter="transition ease-out duration-300"
+x-transition:enter-start="translate-x-full"
+x-transition:enter-end="translate-x-0"
+x-transition:leave="transition ease-in duration-300"
+x-transition:leave-start="translate-x-0"
+x-transition:leave-end="translate-x-full"
+>
+<div class="space-y-5 flex-1">
+<!-- Drawer Header -->
+<div class="flex items-start justify-between border-b border-slate-100 pb-4">
+<div>
+<h2 class="text-[18px] font-black text-slate-800 tracking-tight font-sans">Schedule Core Visit</h2>
+<p class="text-[11px] text-slate-400 font-semibold mt-1 font-sans">Configure annual support visit details for this school.</p>
+</div>
+<button 
+@click="open = false; setTimeout(() => document.getElementById('drawer-container').innerHTML = '', 300)"
+class="text-slate-400 hover:text-slate-600 text-[20px] leading-none"
+>
+&times;
+</button>
+</div>
+
+<!-- Form Error Container -->
+<div id="visit-form-errors"></div>
+
+<!-- Action Form -->
+<form 
+hx-post="/core-schools/schedule-visit/action"
+hx-target="#visit-form-errors"
+class="space-y-4 text-[12px] font-bold text-slate-700 font-sans"
+>
+{% csrf_token %}
+<input type="hidden" name="school_id" value="{{ school.school_id }}">
+
+<!-- Core School Name (Read Only) -->
+<div>
+<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Core School</label>
+<input type="text" class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none" value="{{ school.name }}" readonly>
+</div>
+
+<div class="grid grid-cols-2 gap-4">
+<!-- Visit Number -->
+<div>
+<label for="visit_number" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Visit Slot</label>
+<select name="visit_number" id="visit_number" required class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+<option value="1" {% if next_visit_seq == 1 %}selected{% endif %}>V1 Visit</option>
+<option value="2" {% if next_visit_seq == 2 %}selected{% endif %}>V2 Visit</option>
+<option value="3" {% if next_visit_seq == 3 %}selected{% endif %}>V3 Visit</option>
+<option value="4" {% if next_visit_seq == 4 %}selected{% endif %}>V4 Visit</option>
+</select>
+</div>
+
+<!-- Planned Date -->
+<div>
+<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Planned Date</label>
+<div 
+x-data="{
+open: false,
+selectedDate: '',
+currentYear: new Date().getFullYear(),
+currentMonth: new Date().getMonth(),
+months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+days: [],
+init() {
+if (this.selectedDate) {
+let d = new Date(this.selectedDate);
+if (!isNaN(d.getTime())) {
+this.currentYear = d.getFullYear();
+this.currentMonth = d.getMonth();
+}
+}
+this.getDays();
+},
+getDays() {
+let firstDay = new Date(this.currentYear, this.currentMonth, 1).getDay();
+let lastDate = new Date(this.currentYear, this.currentMonth + 1, 0).getDate();
+this.days = [];
+for (let i = 0; i < firstDay; i++) {
+this.days.push(null);
+}
+for (let d = 1; d <= lastDate; d++) {
+this.days.push(d);
+}
+},
+prevMonth() {
+if (this.currentMonth === 0) {
+this.currentMonth = 11;
+this.currentYear--;
+} else {
+this.currentMonth--;
+}
+this.getDays();
+},
+nextMonth() {
+if (this.currentMonth === 11) {
+this.currentMonth = 0;
+this.currentYear++;
+} else {
+this.currentMonth++;
+}
+this.getDays();
+},
+selectDay(day) {
+if (day === null) return;
+let monthStr = String(this.currentMonth + 1).padStart(2, '0');
+let dayStr = String(day).padStart(2, '0');
+this.selectedDate = `${this.currentYear}-${monthStr}-${dayStr}`;
+this.open = false;
+},
+formatDate(dateStr) {
+if (!dateStr) return 'Select Date';
+let parts = dateStr.split('-');
+if (parts.length !== 3) return dateStr;
+let d = new Date(parts[0], parts[1] - 1, parts[2]);
+return d.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+},
+isSelected(day) {
+if (!day || !this.selectedDate) return false;
+let parts = this.selectedDate.split('-');
+return parseInt(parts[0]) === this.currentYear && 
+(parseInt(parts[1]) - 1) === this.currentMonth && 
+parseInt(parts[2]) === day;
+}
+}"
+class="relative font-sans"
+>
+<!-- Dropdown Trigger button -->
+<button 
+type="button"
+@click="open = !open"
+class="w-full h-10 px-3 flex items-center justify-between rounded-lg border border-slate-200 text-[12px] font-semibold bg-slate-50 hover:bg-slate-100/50 focus:outline-none transition-colors text-slate-700"
+>
+<div class="flex items-center gap-2">
+<svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+</svg>
+<span x-text="formatDate(selectedDate)"></span>
+</div>
+<svg class="h-3.5 w-3.5 text-slate-400 transition-transform duration-200" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+</svg>
+</button>
+
+<input type="hidden" name="scheduled_date" :value="selectedDate" required>
+
+<!-- Calendar Popover Card -->
+<div 
+x-show="open"
+@click.outside="open = false"
+class="absolute right-0 mt-1.5 w-[280px] bg-white border border-slate-200 rounded-2xl shadow-xl p-4 z-50 space-y-3 font-sans select-none"
+style="display: none;"
+x-transition:enter="transition ease-out duration-100"
+x-transition:enter-start="opacity-0 transform scale-95"
+x-transition:enter-end="opacity-100 transform scale-100"
+x-transition:leave="transition ease-in duration-75"
+x-transition:leave-start="opacity-100 transform scale-100"
+x-transition:leave-end="opacity-0 transform scale-95"
+>
+<!-- Header -->
+<div class="flex items-center justify-between px-1">
+<button type="button" @click="prevMonth()" class="h-6 w-6 flex items-center justify-center rounded-lg hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors">
+<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
+</button>
+<span class="font-extrabold text-[12px] text-[#0f172a]" x-text="months[currentMonth] + ' ' + currentYear"></span>
+<button type="button" @click="nextMonth()" class="h-6 w-6 flex items-center justify-center rounded-lg hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors">
+<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+</button>
+</div>
+
+<!-- Weekdays Header -->
+<div class="grid grid-cols-7 gap-y-1 text-center text-[11px] font-bold text-slate-400">
+<div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+</div>
+
+<!-- Days Grid -->
+<div class="grid grid-cols-7 gap-y-1 text-center text-[12px] font-bold">
+<template x-for="(day, index) in days" :key="index">
+<div>
+<button 
+type="button"
+x-show="day !== null"
+@click="selectDay(day)"
+class="h-7 w-7 flex items-center justify-center rounded-lg transition-all focus:outline-none"
+:class="isSelected(day) ? 'bg-[#0f172a] text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'"
+x-text="day"
+></button>
+</div>
+</template>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Primary Focus Intervention -->
+<div>
+<label for="focus_intervention" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Primary Focus Intervention</label>
+<select name="focus_intervention" id="focus_intervention" required class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+<option value="">Select Intervention...</option>
+{% for code, label in interventions %}
+<option value="{{ code }}" {% if recommendations and recommendations.0.code == code %}selected{% endif %}>{{ label }}</option>
+{% endfor %}
+</select>
+{% if recommendations %}
+<div class="mt-2 p-2 bg-amber-50 border border-amber-200/50 rounded-lg text-[11px] text-amber-800 font-bold space-y-1">
+<p class="font-extrabold text-[11px]">Recommended focus areas based on latest SSA:</p>
+{% for r in recommendations %}
+<p>&bull; {{ r.label }} (Score: {{ r.score }}/10)</p>
+{% endfor %}
+</div>
+{% endif %}
+</div>
+
+<!-- Responsible Staff -->
+<div>
+<label for="responsible_staff_id" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Responsible Staff Owner</label>
+<select name="responsible_staff_id" id="responsible_staff_id" required class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+<option value="">Select Staff Member...</option>
+{% for s in staff_members %}
+<option value="{{ s.user_id }}" {% if school.account_owner_id == s.user_id %}selected{% endif %}>{{ s.user.name }}</option>
+{% endfor %}
+</select>
+</div>
+
+<!-- Delivery Option -->
+<div>
+<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Delivery Type</label>
+<select x-model="delivery" name="delivery_type" class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+<option value="staff">Internal Field Staff (CCEO)</option>
+<option value="partner">Partner Agency Assignment</option>
+</select>
+</div>
+
+<!-- Partner Selection (Conditional) -->
+<div x-show="delivery === 'partner'" class="space-y-1" style="display: none;">
+<label for="assigned_partner_id" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Assigned Partner Agency</label>
+<select name="assigned_partner_id" id="assigned_partner_id" class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+<option value="">Select Partner...</option>
+{% for p in partners %}
+<option value="{{ p.id }}">{{ p.name }}</option>
+{% endfor %}
+</select>
+</div>
+
+<!-- Activity Goal -->
+<div>
+<label for="activity_goal" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Activity Goal</label>
+<textarea name="activity_goal" id="activity_goal" rows="2" required class="w-full p-3 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none font-medium text-slate-700" placeholder="Describe the goal of this school visit..."></textarea>
+</div>
+
+<!-- Expected Outcome -->
+<div>
+<label for="expected_outcome" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Expected Outcome</label>
+<textarea name="expected_outcome" id="expected_outcome" rows="2" class="w-full p-3 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none font-medium text-slate-700" placeholder="Describe the expected results..."></textarea>
+</div>
+
+<!-- Cost Preview (Automated Catalogue rates) -->
+<div class="p-4 rounded-xl bg-slate-50 border border-slate-150 space-y-2">
+<div class="flex items-center justify-between text-[12px] text-slate-500 font-extrabold">
+<span>Estimated Cost (SIPA Catalogue rate)</span>
+<span class="text-slate-800 font-black">Auto-costed</span>
+</div>
+<p class="text-[11px] text-slate-400 leading-normal">Operational transport and lunch allowances will be itemized automatically upon scheduling.</p>
+</div>
+
+<!-- Actions -->
+<div class="flex items-center gap-3 pt-3 border-t border-slate-100">
+<button 
+type="submit" 
+class="flex-1 h-9 rounded-xl btn-premium-primary text-white font-bold text-[12px] transition-all shadow-sm flex items-center justify-center"
+>
+Confirm &amp; Schedule Visit
+</button>
+<button 
+type="button" 
+@click="open = false; setTimeout(() => document.getElementById('drawer-container').innerHTML = '', 300)"
+class="px-5 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[12px] transition-colors"
+>
+Cancel
+</button>
+</div>
+</form>
+</div>
+</div>
+</div>

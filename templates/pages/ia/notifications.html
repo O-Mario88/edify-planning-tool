@@ -1,0 +1,58 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}IA Quality Notifications - Edify Command Center{% endblock %}
+
+{% block shell_content %}
+<div class="p-6 max-w-4xl mx-auto space-y-6">
+
+<!-- Premium Header Pane -->
+<div class="relative overflow-hidden rounded-3xl bg-slate-900 text-white p-8 shadow-xl border border-slate-800">
+<div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-blue-500/10 blur-3xl pointer-events-none"></div>
+
+<div class="relative z-10 space-y-2">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[11px] font-black uppercase tracking-widest">
+Monitoring Log
+</div>
+<h1 class="text-[32px] font-black tracking-tight text-white leading-none">Quality Notifications Feed</h1>
+<p class="text-[14px] text-slate-400 font-medium max-w-xl">
+Real-time compliance triggers. Review incoming completions, resubmissions, returned reasons, and duplicate warning flags.
+</p>
+</div>
+</div>
+
+<!-- Notification Feed list -->
+<div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden p-6 space-y-4">
+{% if alerts %}
+<div class="divide-y divide-slate-100">
+{% for alert in alerts %}
+<div class="py-4 first:pt-0 last:pb-0 flex items-start gap-4 hover:bg-slate-50/20 transition-colors p-2 rounded-xl">
+<!-- Icon marker -->
+<div class="mt-0.5 shrink-0 w-9 h-9 rounded-xl flex items-center justify-center bg-blue-50 text-[#2563eb] border border-blue-100 shadow-sm">
+<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+</div>
+
+<div class="flex-1 space-y-1 min-w-0">
+<div class="flex items-center justify-between gap-4">
+<span class="font-extrabold text-slate-800 text-[14px] truncate">{{ alert.title }}</span>
+<span class="text-[11px] text-slate-400 font-bold uppercase tracking-wider shrink-0">{{ alert.created_at|date:"M d, H:i" }}</span>
+</div>
+<p class="text-[12px] text-slate-500 leading-relaxed font-semibold">
+{{ alert.message }}
+</p>
+</div>
+</div>
+{% endfor %}
+</div>
+{% else %}
+<div class="text-center text-slate-500 font-semibold py-16">
+<div class="flex flex-col items-center justify-center gap-3">
+<div class="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 shadow-inner">
+<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+</div>
+<p class="text-slate-500">No notifications generated in this audit scope.</p>
+</div>
+</div>
+{% endif %}
+</div>
+</div>
+{% endblock %}

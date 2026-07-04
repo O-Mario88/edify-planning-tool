@@ -1,18 +1,254 @@
 {% extends "layouts/shell.html" %}
+{% load static %}
 
-{% block title %}{{ member.name }} — Edify{% endblock %}
+{% block title %}Manage User: {{ member.name }} — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6">
-  
-  <div class="flex items-center justify-between">
-    <div>
-      <h1 class="text-[26px] font-extrabold text-slate-800 tracking-tight">{{ member.name }}</h1>
-      <p class="text-[12.5px] text-[var(--text-secondary)] mt-1 font-semibold">Edify Operations · {{ member.name }}</p>
-    </div>
-  </div>
-  
-  <div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm"><h2 class="text-[20px] font-extrabold text-slate-800">{{ member.name }}</h2><p class="text-[12.5px] text-slate-400">{{ member.email }}</p><p class="text-[12px] text-slate-500 mt-2">Status: {{ member.status }} · Roles: {{ member.roles|join:", " }}</p></div>
+<div class="p-6 max-w-4xl mx-auto space-y-6 font-sans text-slate-700 bg-[#f8fafc] min-h-screen">
+
+<!-- Breadcrumbs & Header -->
+<div class="flex items-center justify-between border-b border-slate-200 pb-4">
+<div>
+<div class="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+<a href="{% url 'frontend:admin_users' %}" class="hover:text-slate-600 transition-colors">User Management</a>
+<span>&bull;</span>
+<span class="text-slate-500">Edit Profile</span>
+</div>
+<h1 class="text-[24px] font-extrabold text-slate-900 tracking-tight mt-1">{{ member.name }}</h1>
+<p class="text-[12px] text-slate-500 mt-1 font-semibold">Configure roles, credentials, and account lifecycle status.</p>
+</div>
+
+<div class="flex gap-2">
+<!-- Status Badge -->
+{% if member.is_active %}
+<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-black uppercase bg-emerald-50 text-emerald-700 border border-emerald-100 shadow-sm">
+<span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+Active
+</span>
+{% else %}
+<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-black uppercase bg-slate-100 text-slate-500 border border-slate-200 shadow-sm">
+<span class="h-2 w-2 rounded-full bg-slate-400"></span>
+Inactive ({{ member.status|capfirst }})
+</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Messages / Django Alerts -->
+{% if messages %}
+<div class="space-y-2">
+{% for msg in messages %}
+<div class="p-3.5 rounded-xl border font-semibold text-[12px] flex items-center justify-between shadow-sm
+{% if msg.tags == 'success' %}bg-emerald-50 text-emerald-700 border-emerald-200
+{% elif msg.tags == 'warning' %}bg-amber-50 text-amber-700 border-amber-200
+{% else %}bg-rose-50 text-rose-700 border-rose-200{% endif %}"
+>
+<span>{{ msg }}</span>
+</div>
+{% endfor %}
+</div>
+{% endif %}
+
+<!-- Auto-created User Warning Banner -->
+{% if "pending." in member.email and "@edify.org" in member.email %}
+<div class="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3 shadow-sm">
+<div class="text-[20px] text-amber-500 leading-none mt-0.5">⚠️</div>
+<div class="space-y-1">
+<h4 class="text-[12px] font-black text-amber-800 uppercase tracking-wider">Action Required: Placeholder Email Profile</h4>
+<p class="text-[12px] text-amber-700 font-semibold leading-relaxed">
+This user profile was automatically created during a school upload. The email address is currently a placeholder.
+You must edit it to their valid operational email address before sending the invitation.
+</p>
+</div>
+</div>
+{% endif %}
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+<!-- Left 2 Columns: Edit Details & Roles -->
+<div class="md:col-span-2 space-y-6">
+
+<!-- General Settings Form -->
+<div class="bg-white rounded-xl border border-slate-100 shadow-sm p-6 space-y-4">
+<h3 class="text-[14px] font-black text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-2">Profile Details</h3>
+
+<form method="POST" action="{% url 'frontend:admin_user_detail' member.id %}" class="space-y-4 font-semibold text-[12px]">
+{% csrf_token %}
+<input type="hidden" name="action" value="edit">
+
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<div>
+<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1.5">Full Name</label>
+<input 
+type="text" 
+name="name" 
+value="{{ member.name }}" 
+required
+class="w-full h-9 px-3 rounded-lg border border-slate-200 focus:outline-none focus:border-blue-500 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-blue-500/10 transition-all"
+>
+</div>
+
+<div>
+<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1.5">Email Address</label>
+<input 
+type="email" 
+name="email" 
+value="{{ member.email }}" 
+required
+class="w-full h-9 px-3 rounded-lg border border-slate-200 focus:outline-none focus:border-blue-500 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-blue-500/10 transition-all"
+>
+</div>
+</div>
+
+<div>
+<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1.5">Phone Number</label>
+<input 
+type="text" 
+name="phone" 
+value="{{ member.phone|default:'' }}" 
+placeholder="+256..."
+class="w-full h-9 px-3 rounded-lg border border-slate-200 focus:outline-none focus:border-blue-500 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-blue-500/10 transition-all"
+>
+</div>
+
+<!-- Role Assignment -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+<div>
+<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1.5">Primary Active Role</label>
+<select 
+name="role" 
+class="w-full h-9 px-2.5 rounded-lg border border-slate-200 focus:outline-none focus:border-blue-500 bg-slate-50/50 focus:bg-white transition-all cursor-pointer"
+>
+{% for r in available_roles %}
+<option value="{{ r }}" {% if member.active_role == r %}selected{% endif %}>{{ r }}</option>
+{% endfor %}
+</select>
+</div>
+
+<div>
+<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1.5">Additional/Secondary Roles</label>
+<div class="bg-slate-50/50 border border-slate-100 rounded-lg p-3 space-y-2 max-h-48 overflow-y-auto">
+{% for r in available_roles %}
+<label class="flex items-center gap-2 cursor-pointer select-none">
+<input 
+type="checkbox" 
+name="additional_roles" 
+value="{{ r }}"
+{% if r in member.roles and r != member.active_role %}checked{% endif %}
+class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
+>
+<span>{{ r }}</span>
+</label>
+{% endfor %}
+</div>
+</div>
+</div>
+
+<div class="pt-4 border-t border-slate-100 flex justify-end">
+<button 
+type="submit" 
+class="h-9 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[11px] font-black uppercase tracking-wider shadow-sm transition-all focus:outline-none"
+>
+Save Profile Updates
+</button>
+</div>
+</form>
+</div>
+
+</div>
+
+<!-- Right Column: Quick Status & Account Actions -->
+<div class="md:col-span-1 space-y-6">
+
+<!-- Lifecycle Status Card -->
+<div class="bg-white rounded-xl border border-slate-100 p-5 shadow-sm space-y-4">
+<h3 class="text-[12px] font-black text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-2">Account Lifecycle</h3>
+
+<div class="space-y-3 font-semibold text-[12px] text-slate-600">
+<div class="flex justify-between">
+<span class="text-slate-400">Current Status:</span>
+<span class="text-slate-800 font-extrabold uppercase">{{ member.status }}</span>
+</div>
+<div class="flex justify-between">
+<span class="text-slate-400">Primary Role:</span>
+<span class="text-slate-800 font-extrabold">{{ member.active_role }}</span>
+</div>
+<div class="flex justify-between">
+<span class="text-slate-400">Member ID:</span>
+<span class="text-slate-800 font-bold truncate max-w-[120px]">{{ member.id }}</span>
+</div>
+</div>
+
+<div class="pt-4 border-t border-slate-100 space-y-2">
+
+<!-- Send Invite Action (for invited users) -->
+{% if member.status == 'pending_invited' or "pending." in member.email %}
+<form method="POST" action="{% url 'frontend:admin_user_detail' member.id %}">
+{% csrf_token %}
+<input type="hidden" name="action" value="invite">
+<button 
+type="submit"
+class="w-full h-9 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-black uppercase tracking-wider rounded-lg shadow-sm transition-all focus:outline-none"
+>
+Send Invitation Link
+</button>
+</form>
+{% endif %}
+
+<!-- Activate / Deactivate Toggle -->
+{% if member.is_active %}
+<form method="POST" action="{% url 'frontend:admin_user_detail' member.id %}">
+{% csrf_token %}
+<input type="hidden" name="action" value="deactivate">
+<button 
+type="submit"
+class="w-full h-9 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-[11px] font-black uppercase tracking-wider rounded-lg shadow-sm transition-all focus:outline-none"
+>
+Deactivate User Account
+</button>
+</form>
+{% else %}
+<form method="POST" action="{% url 'frontend:admin_user_detail' member.id %}">
+{% csrf_token %}
+<input type="hidden" name="action" value="activate">
+<button 
+type="submit"
+class="w-full h-9 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-black uppercase tracking-wider rounded-lg shadow-sm transition-all focus:outline-none"
+>
+Activate User Account
+</button>
+</form>
+{% endif %}
+
+</div>
+</div>
+
+<!-- Critical Danger Zone -->
+<div class="bg-red-50/40 border border-red-100 rounded-xl p-5 shadow-sm space-y-4">
+<h3 class="text-[12px] font-black text-rose-800 uppercase tracking-wider border-b border-red-200/50 pb-2">Danger Zone</h3>
+<p class="text-[11px] text-rose-700 font-semibold leading-relaxed">
+Soft-deleting this user removes their access privileges and marks their profile as deleted. This will retain history logs.
+</p>
+
+<form 
+method="POST" 
+action="{% url 'frontend:admin_user_detail' member.id %}" 
+onsubmit="return confirm('Are you sure you want to delete this user profile? This marks their account as deleted.');"
+>
+{% csrf_token %}
+<input type="hidden" name="action" value="delete">
+<button 
+type="submit"
+class="w-full h-9 bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-black uppercase tracking-wider rounded-lg shadow-sm transition-all focus:outline-none"
+>
+Delete User Profile
+</button>
+</form>
+</div>
+
+</div>
+
+</div>
 
 </div>
 {% endblock %}

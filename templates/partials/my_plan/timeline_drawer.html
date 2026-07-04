@@ -1,0 +1,60 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% load frontend_filters %}
+
+{% block drawer_title %}Activity Execution Timeline{% endblock %}
+{% block drawer_subtitle %}Audit log & execution state changes for {{ act.activity_type|title|replace_underscore }}{% endblock %}
+
+{% block drawer_body %}
+<div class="space-y-6 text-[12px] font-bold text-slate-700 max-h-[70vh] overflow-y-auto pr-2">
+
+{% if logs %}
+<div class="relative border-l-2 border-slate-100 ml-4 pl-6 space-y-5">
+{% for log in logs %}
+<div class="relative">
+<!-- Icon marker -->
+<span class="absolute -left-[31px] top-0.5 flex items-center justify-center w-4 h-4 rounded-full bg-white border-2 border-slate-200"></span>
+
+<div class="space-y-1">
+<div class="flex items-center justify-between gap-4">
+<span class="text-[12px] font-extrabold text-slate-800 capitalize">{{ log.action|replace_underscore }}</span>
+<span class="text-[11px] text-slate-400 font-semibold">{{ log.created_at|date:"M d, Y H:i" }}</span>
+</div>
+
+<div class="text-[11px] text-slate-500 font-semibold leading-relaxed">
+{{ log.reason|default:"No notes or details recorded." }}
+</div>
+
+{% if log.payload %}
+<div class="bg-slate-50 p-2 rounded-lg border border-slate-100 text-[11px] font-mono text-slate-500 overflow-x-auto mt-1 max-w-full">
+{{ log.payload }}
+</div>
+{% endif %}
+
+<div class="text-[11px] text-slate-400 font-extrabold flex items-center gap-1 uppercase tracking-wider mt-1">
+<span>Actor:</span>
+<span class="text-slate-600">{{ log.actor_role|default:"System" }}</span>
+</div>
+</div>
+</div>
+{% endfor %}
+</div>
+{% else %}
+<div class="py-12 flex flex-col items-center justify-center text-slate-400">
+<p class="text-[32px] mb-1">⏳</p>
+<p class="font-bold">No timeline events have been logged for this activity yet.</p>
+</div>
+{% endif %}
+
+</div>
+
+<!-- Drawer Footer (Sticky Actions) -->
+<div class="drawer-footer">
+<button 
+type="button" 
+@click="$dispatch('close-drawer')"
+class="edify-action-button secondary h-9 transition-colors w-full"
+>
+Close Timeline
+</button>
+</div>
+{% endblock %}

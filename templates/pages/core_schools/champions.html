@@ -1,0 +1,78 @@
+{% extends "layouts/shell.html" %}
+{% load static %}
+
+{% block title %}Graduated Champion Schools — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="p-6 max-w-[1400px] mx-auto space-y-6 font-sans text-slate-700 bg-[#f8fafc] min-h-screen animate-fade-in">
+
+<!-- Breadcrumb & Header -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4">
+<div>
+<div class="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+<a href="{% url 'core_schools' %}" class="hover:text-slate-600 transition-colors">Core Schools</a>
+<span>&bull;</span>
+<span class="text-slate-500">Graduates Directory</span>
+</div>
+<h1 class="text-[28px] font-extrabold text-slate-900 tracking-tight mt-1">Graduated Champion Schools</h1>
+<p class="text-[14px] text-slate-500 font-medium mt-1">Directory of schools that completed their core service package and achieved long-term independent high-performance ratings.</p>
+</div>
+
+<div>
+<a 
+href="{% url 'champion_candidates' %}"
+class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg px-4 py-2 text-[12px] font-semibold shadow-sm flex items-center gap-1.5 transition-all"
+>
+<span>&larr; Back to Candidates Queue</span>
+</a>
+</div>
+</div>
+
+<!-- Champions Grid / List -->
+<div class="bg-white rounded-xl border border-slate-100 shadow-sm p-6 space-y-4">
+<div class="flex items-center justify-between">
+<h3 class="text-[14px] font-extrabold text-slate-800 tracking-tight">Active Graduated Champions ({{ champions|length }})</h3>
+</div>
+
+<div class="overflow-x-auto">
+<table class="w-full text-left text-[12px] border-collapse font-sans">
+<thead>
+<tr class="text-slate-400 font-black uppercase text-[11px] border-b border-slate-100 tracking-wider">
+<th class="py-2.5">School Name</th>
+<th class="py-2.5">Region</th>
+<th class="py-2.5">District</th>
+<th class="py-2.5 text-center">Core Start Fiscal Year</th>
+<th class="py-2.5 text-center">Latest SSA Average</th>
+<th class="py-2.5 text-center">Independent Status</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 text-slate-700 font-semibold">
+{% for c in champions %}
+<tr class="hover:bg-slate-50/40 transition-colors">
+<td class="py-3.5 text-slate-900 font-extrabold text-[12px]">{{ c.name }}</td>
+<td class="py-3.5 text-slate-500 font-bold">{{ c.region }}</td>
+<td class="py-3.5 text-slate-500 font-bold">{{ c.district }}</td>
+<td class="py-3.5 text-center text-slate-700 font-black">{{ c.onboard_fy }}</td>
+<td class="py-3.5 text-center text-blue-600 font-black">{{ c.latest_avg }}</td>
+<td class="py-3.5 text-center">
+<span class="inline-flex items-center rounded-lg px-2.5 py-0.5 text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
+Graduate Champion
+</span>
+</td>
+</tr>
+{% empty %}
+<tr>
+<td colspan="6" class="py-12 text-center text-slate-400 font-medium">
+<div class="flex flex-col items-center justify-center space-y-2">
+<svg class="h-10 w-10 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+<span>No schools have graduated to official Champion status yet.</span>
+</div>
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+</div>
+{% endblock %}

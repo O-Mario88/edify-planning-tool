@@ -1,0 +1,64 @@
+<!-- School Visits Card -->
+<div class="card overflow-hidden">
+
+<!-- Card Header -->
+<div class="px-5 py-4 border-b border-slate-200 bg-slate-50/50 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="text-[18px]">🏫</span>
+<h2 class="text-[15px] font-extrabold text-slate-800 tracking-tight">
+School Visits Planned for {% if period == 'week' %}This Week{% elif period == 'month' %}This Month{% elif period == 'quarter' %}This Quarter{% else %}This FY{% endif %}
+</h2>
+<span class="px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-[#2e505f]/10 text-[#2e505f] border border-[#2e505f]/20">
+{{ school_visits|length }}
+</span>
+</div>
+
+<a href="/planning" class="btn btn-ghost h-8 text-[11px] shadow-sm">
+Open Planning
+</a>
+</div>
+
+<!-- Table Section -->
+<div class="overflow-x-auto">
+{% if school_visits %}
+<table class="edify-data-table">
+<thead>
+<tr>
+<th>School Name</th>
+<th>District</th>
+<th>Planned Date</th>
+<th>Purpose</th>
+<th>Assigned Partner</th>
+<th>Status</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+{% for row in school_visits %}
+<tr>
+<td class="font-extrabold text-slate-800 text-[14px]">{{ row.school_name }}</td>
+<td class="font-semibold text-slate-500">{{ row.district }}</td>
+<td class="font-bold text-slate-700">{{ row.planned_date|date:"M j, D"|default:"Unscheduled" }}</td>
+<td class="text-slate-600 font-semibold">{{ row.purpose }}</td>
+<td class="font-bold text-slate-700">{{ row.assigned_partner }}</td>
+<td>
+<span class="edify-status-badge {{ row.status_class }} px-2 py-0.5 rounded text-[11px]">
+{{ row.status_label }}
+</span>
+</td>
+<!-- Include more action menu -->
+{% include "partials/my_plan/activity_row.html" %}
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% else %}
+<div class="edify-empty-state py-12 flex flex-col items-center justify-center">
+<p class="text-[32px] mb-2">🏫</p>
+<p class="text-[14px] font-bold text-slate-500">No school visits planned for this period.</p>
+<a href="/planning" class="btn btn-primary h-9 mt-3 shadow-sm text-[12px]">Open Planning</a>
+</div>
+{% endif %}
+</div>
+
+</div>

@@ -1,0 +1,187 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% load frontend_filters %}
+
+{% block drawer_title %}Add Schools to {{ cluster.name }}{% endblock %}
+{% block drawer_subtitle %}Bulk assign unclustered schools located in this cluster's covered sub-counties.{% endblock %}
+
+{% block drawer_body %}
+<div class="space-y-6 font-sans text-slate-700" 
+x-data="{ 
+search: '', 
+selectedCount: 0, 
+totalEnrollment: 0, 
+ssaSum: 0.0, 
+ssaCount: 0,
+updateMetrics() {
+let count = 0;
+let enrollment = 0;
+let ssa_s = 0.0;
+let ssa_c = 0;
+
+document.querySelectorAll('.school-checkbox:checked').forEach(el => {
+count++;
+enrollment += parseInt(el.getAttribute('data-enrollment') || '0');
+let ssa = parseFloat(el.getAttribute('data-ssa') || '0');
+if (ssa > 0) {
+ssa_s += ssa;
+ssa_c++;
+}
+});
+
+this.selectedCount = count;
+this.totalEnrollment = enrollment;
+this.ssaSum = ssa_s;
+this.ssaCount = ssa_c;
+},
+toggleAll(checked) {
+document.querySelectorAll('.school-checkbox').forEach(el => {
+// Only toggle visible rows under search
+let parentRow = el.closest('.school-row');
+if (parentRow && parentRow.style.display !== 'none') {
+el.checked = checked;
+}
+});
+this.updateMetrics();
+}
+}"
+>
+{% if schools %}
+<!-- Roster Search Bar -->
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+</svg>
+</div>
+<input 
+type="text" 
+placeholder="Search schools by name or ID..." 
+x-model="search"
+class="w-full h-10 pl-9 pr-4 rounded-xl border border-slate-200 text-[12px] font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 placeholder-slate-400"
+>
+</div>
+
+<!-- Bulk Select Actions -->
+<div class="flex items-center justify-between border-b border-slate-100 pb-2">
+<label class="flex items-center gap-2 text-[12px] font-bold text-slate-500 cursor-pointer">
+<input 
+type="checkbox" 
+@change="toggleAll($event.target.checked)"
+class="rounded border-slate-300 text-[#2e505f] focus:ring-[#2e505f]"
+>
+<span>Select All Visible Schools</span>
+</label>
+<span class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wide">Candidate List</span>
+</div>
+
+<!-- Grouped Checklist -->
+<form 
+hx-post="/clusters/{{ cluster.id }}/bulk-assign-drawer" 
+hx-target="#drawer-container"
+class="space-y-6"
+>
+{% csrf_token %}
+<div class="space-y-5 max-h-[480px] overflow-y-auto pr-1">
+{% regroup schools by sub_county as sub_county_list %}
+{% for item in sub_county_list %}
+<div class="space-y-2">
+<h4 class="text-[11px] font-black text-slate-400 uppercase tracking-wider bg-slate-50 px-2 py-1 rounded">
+{{ item.grouper.name }} Sub-county
+</h4>
+<div class="space-y-1.5">
+{% for s in item.list %}
+<div 
+class="school-row flex items-center justify-between p-3 rounded-xl border border-slate-100 hover:border-slate-200 bg-white hover:bg-slate-50/20 transition-all shadow-sm"
+x-data="{ name: '{{ s.name|escapejs }}', schoolId: '{{ s.school_id|escapejs }}' }"
+x-show="search === '' || name.toLowerCase().includes(search.toLowerCase()) || schoolId.toLowerCase().includes(search.toLowerCase())"
+>
+<div class="flex items-center gap-3">
+<input 
+type="checkbox" 
+name="school_ids" 
+value="{{ s.id }}" 
+data-enrollment="{{ s.enrollment|default:0 }}"
+data-ssa="{{ s.current_ssa_average|default:0 }}"
+@change="updateMetrics()"
+class="school-checkbox rounded border-slate-300 text-[#2e505f] focus:ring-[#2e505f] h-4 w-4 cursor-pointer"
+>
+<div class="text-[12px] font-semibold text-slate-800">
+<p class="font-extrabold text-slate-900 leading-snug">{{ s.name }}</p>
+<p class="text-[11px] text-slate-400 font-mono mt-0.5">{{ s.school_id }}</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-[11px] px-2 py-0.5 rounded font-black border {% if s.school_type == 'client' %}bg-emerald-50 text-emerald-700 border-emerald-100{% else %}bg-purple-50 text-purple-700 border-purple-100{% endif %}">
+{{ s.get_school_type_display }}
+</span>
+{% if s.current_ssa_average %}
+<span class="text-[11px] font-black px-1.5 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-100 flex items-center gap-1">
+SSA: {{ s.current_ssa_average|floatformat:1 }}
+</span>
+{% else %}
+<span class="text-[11px] font-semibold px-1.5 py-0.5 rounded bg-slate-150 text-slate-500 italic">No SSA</span>
+{% endif %}
+</div>
+</div>
+{% endfor %}
+</div>
+</div>
+{% endfor %}
+</div>
+
+<!-- Planning Footprint Summary Panel -->
+<div 
+class="bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 space-y-2 text-[12px] font-bold text-slate-600 shadow-sm"
+x-show="selectedCount > 0"
+style="display: none;"
+>
+<p class="text-[11px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-200/60 pb-1 mb-1.5">Selected Footprint Impact</p>
+<div class="grid grid-cols-3 gap-2 text-center">
+<div>
+<span class="text-slate-400 text-[11px] block uppercase">Schools</span>
+<span class="text-[14px] font-black text-[#2e505f]" x-text="selectedCount">0</span>
+</div>
+<div>
+<span class="text-slate-400 text-[11px] block uppercase">Enrollment</span>
+<span class="text-[14px] font-black text-[#2e505f]" x-text="totalEnrollment">0</span>
+</div>
+<div>
+<span class="text-slate-400 text-[11px] block uppercase">Avg SSA</span>
+<span class="text-[14px] font-black text-[#2e505f]" x-text="ssaCount > 0 ? (ssaSum / ssaCount).toFixed(1) : '—'">—</span>
+</div>
+</div>
+</div>
+
+<!-- Footer Buttons -->
+<div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
+<button 
+type="button" 
+@click="$dispatch('close-drawer')"
+class="px-5 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[12px] transition-colors"
+>
+Cancel
+</button>
+<button 
+type="submit" 
+class="px-6 h-9 rounded-xl btn-premium-primary text-white font-bold text-[12px] transition-all shadow-sm flex items-center justify-center gap-1.5"
+:disabled="selectedCount === 0"
+:class="selectedCount === 0 ? 'opacity-50 cursor-not-allowed' : ''"
+>
+<span>Assign Checked Schools</span>
+</button>
+</div>
+</form>
+{% else %}
+<!-- Empty State -->
+<div class="py-16 text-center text-slate-400 font-semibold bg-slate-50/40 rounded-2xl border border-dashed border-slate-200">
+<div class="max-w-xs mx-auto space-y-3">
+<svg class="h-10 w-10 text-slate-300 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+</svg>
+<p class="text-[14px] font-extrabold text-slate-500 leading-snug">All Schools Clustered</p>
+<p class="text-[11px] text-slate-400 leading-normal">All candidate schools inside the sub-counties covered by this cluster have already been assigned.</p>
+</div>
+</div>
+{% endif %}
+</div>
+{% endblock %}

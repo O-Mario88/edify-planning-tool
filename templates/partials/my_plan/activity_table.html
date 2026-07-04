@@ -1,0 +1,256 @@
+{% load frontend_filters %}
+<div class="overflow-x-auto border border-slate-200/60 rounded-xl bg-white shadow-sm">
+<table class="w-full text-left text-[12px] border-collapse font-sans">
+<thead>
+<tr class="bg-slate-50/50 text-[11px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-150">
+<th class="px-4 py-3 w-[30%]">Activity Details</th>
+<th class="px-4 py-3 text-center">Planned Date</th>
+<th class="px-4 py-3 text-center">Finances & Status Badges</th>
+<th class="px-4 py-3 text-right">Next Action</th>
+<th class="px-4 py-3"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 text-slate-700">
+{% for act in activity_list %}
+<tr class="hover:bg-slate-50/40 transition-colors">
+
+<!-- Column 1: Details & Context -->
+<td class="px-4 py-3.5 space-y-1">
+<div class="flex items-center gap-1.5 flex-wrap">
+<span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-black uppercase tracking-wide bg-indigo-50 text-indigo-700 border border-indigo-150/45">
+{{ act.activity_type_label }}
+</span>
+{% if act.is_core %}
+<span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-extrabold bg-[#2e505f]/10 text-[#2e505f] border border-[#2e505f]/20">
+⭐ Core School ({% if act.visit_number %}{{ act.visit_number }}{% elif act.training_number %}{{ act.training_number }}{% endif %})
+</span>
+<span class="text-[11px] text-[#2e505f] font-bold">({{ act.core_progress }})</span>
+{% endif %}
+{% if act.partner_name %}
+<span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-150/30">
+🤝 Partner ({{ act.partner_name }})
+</span>
+{% endif %}
+</div>
+
+<!-- Target Entity Name and ID -->
+<p class="font-extrabold text-slate-800 text-[14px] leading-tight">
+{% if act.school_name and act.school_name != 'Unknown School' %}
+🏫 {{ act.school_name }} <span class="text-[11px] text-slate-400 font-semibold">(ID: {{ act.school_id }})</span>
+{% elif act.cluster_name %}
+👥 {{ act.cluster_name }}
+{% else %}
+⚙️ {{ act.purpose }}
+{% endif %}
+</p>
+
+<!-- Location & Metadata Context -->
+<div class="text-[11px] text-slate-400 font-bold flex items-center gap-1.5 flex-wrap">
+{% if act.school_name and act.school_name != 'Unknown School' %}
+<span>District: {{ act.school_district }}</span>
+{% if act.school_sub_county %}&bull; <span>Sub-county: {{ act.school_sub_county }}</span>{% endif %}
+{% if act.school_cluster_name %}&bull; <span>Cluster: {{ act.school_cluster_name }}</span>{% endif %}
+&bull; <span class="text-indigo-700">SSA Status: {{ act.school_ssa_status }}</span>
+{% elif act.cluster_name %}
+<span>District: {{ act.cluster_district }}</span>
+&bull; <span>Schools: {{ act.cluster_school_count }}</span>
+&bull; <span>Expected Participants: {{ act.expected_participants }}</span>
+{% endif %}
+</div>
+
+<!-- Purpose Text -->
+<p class="text-[12px] text-slate-500 font-semibold italic mt-1 leading-relaxed max-w-lg">
+"{{ act.purpose }}"
+</p>
+
+<!-- Focus Intervention & Owner -->
+<p class="text-[11px] text-slate-400 font-bold uppercase tracking-wider pt-0.5">
+Focus: <span class="text-slate-600">{{ act.focus_intervention }}</span> &bull; 
+Owner: <span class="text-slate-600">{{ act.owner }}</span> &bull; 
+Role: <span class="text-slate-600">{{ act.execution_role }}</span>
+</p>
+
+<!-- Return Message if returned -->
+{% if act.return_reason %}
+<div class="bg-rose-50 border border-rose-100 p-2 rounded-lg text-[11px] text-rose-800 font-bold mt-1.5 space-y-0.5">
+<p>⚠️ Returned by: <span class="font-extrabold text-rose-900">{{ act.returned_by }}</span></p>
+<p class="font-normal text-rose-700 italic">"{{ act.return_reason }}"</p>
+</div>
+{% endif %}
+</td>
+
+<!-- Column 2: Planned Date -->
+<td class="px-4 py-3.5 text-center">
+<span class="font-bold text-slate-700 text-[12px] bg-slate-50 border border-slate-200/70 px-2 py-1 rounded-md">
+📅 {{ act.planned_date|date:"M j, D"|default:"Unscheduled" }}
+</span>
+</td>
+
+<!-- Column 3: Finance & Status Badges -->
+<td class="px-4 py-3.5 text-center">
+<div class="flex flex-col gap-1.5 items-center justify-center">
+<span class="text-[12px] font-black text-slate-800">{{ act.budget_total|ugx }}</span>
+
+<div class="flex items-center justify-center gap-1 flex-wrap max-w-[200px]">
+{% for label, variant in act.badges %}
+<span class="inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-extrabold uppercase border
+{% if variant == 'green' %}bg-emerald-50 text-emerald-700 border-emerald-150
+{% elif variant == 'amber' %}bg-amber-50 text-amber-600 border-amber-150
+{% elif variant == 'red' %}bg-rose-50 text-rose-700 border-rose-150
+{% elif variant == 'purple' %}bg-indigo-50 text-indigo-700 border-indigo-150
+{% else %}bg-slate-50 text-slate-500 border-slate-200{% endif %}">
+{{ label }}
+</span>
+{% endfor %}
+</div>
+</div>
+</td>
+
+<!-- Column 4: Next Action -->
+<td class="px-4 py-3.5 text-right">
+{% if act.next_action.action == 'view_status' %}
+<button 
+hx-get="{{ act.next_action.url }}"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+class="inline-flex items-center justify-center h-8 px-3 rounded-lg border border-slate-200 text-slate-600 text-[12px] font-extrabold hover:bg-slate-50 shadow-sm transition-all"
+>
+{{ act.next_action.text }}
+</button>
+{% else %}
+<button 
+hx-get="{{ act.next_action.url }}"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+class="inline-flex items-center justify-center h-8 px-3 rounded-lg !bg-[#2e505f] !text-white text-[12px] font-extrabold hover:bg-opacity-95 shadow-sm transition-all"
+>
+{{ act.next_action.text }}
+</button>
+{% endif %}
+<p class="text-[11px] text-slate-400 font-bold mt-1 uppercase tracking-wider">{{ act.next_action.description }}</p>
+</td>
+
+<!-- Column 5: 3-Dot Dropdown -->
+<td class="px-4 py-3.5 text-center relative" x-data="{ open: false }">
+<button 
+@click="open = !open" 
+@click.outside="open = false" 
+class="text-slate-400 hover:text-slate-700 h-8 w-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
+>
+<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
+</svg>
+</button>
+
+<div 
+x-show="open" 
+x-transition:enter="transition ease-out duration-100"
+x-transition:enter-start="transform opacity-0 scale-95"
+x-transition:enter-end="transform opacity-100 scale-100"
+x-transition:leave="transition ease-in duration-75"
+x-transition:leave-start="transform opacity-100 scale-100"
+x-transition:leave-end="transform opacity-0 scale-95"
+class="absolute right-4 mt-1 w-52 rounded-xl bg-white border border-slate-200 shadow-lg z-30 py-1.5 text-left font-semibold text-[12px] text-slate-700"
+style="display: none;"
+>
+<!-- View Details -->
+<button 
+hx-get="/activities/{{ act.id }}"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+@click="open = false"
+class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50"
+>
+<span>🔎</span> View Details
+</button>
+
+<!-- Reschedule -->
+{% if act.status != 'completed' %}
+<button 
+hx-get="/my-plan/{{ act.id }}/reschedule-drawer"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+@click="open = false"
+class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 text-amber-600 hover:text-amber-700"
+>
+<span>📅</span> Reschedule Activity
+</button>
+{% endif %}
+
+<!-- Start Activity -->
+{% if act.status == 'scheduled' %}
+<button 
+hx-get="/activities/{{ act.id }}/start"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+@click="open = false"
+class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 text-indigo-600 hover:text-indigo-700"
+>
+<span>🚀</span> Start Activity
+</button>
+{% endif %}
+
+<!-- Complete -->
+{% if act.status != 'completed' %}
+<button 
+hx-get="/activities/{{ act.id }}/complete"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+@click="open = false"
+class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 text-emerald-600 hover:text-emerald-700"
+>
+<span>✅</span> Complete Activity
+</button>
+{% endif %}
+
+<!-- Upload Evidence -->
+<button 
+hx-get="/activities/{{ act.id }}/evidence"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+@click="open = false"
+class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50"
+>
+<span>📎</span> Upload Evidence
+</button>
+
+<!-- Enter Activity SF ID -->
+<button 
+hx-get="/activities/{{ act.id }}/salesforce-id"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+@click="open = false"
+class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50"
+>
+<span>🏷️</span> Enter Activity SF ID
+</button>
+
+<!-- Submit for Review -->
+<button 
+hx-get="/activities/{{ act.id }}/submit"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+@click="open = false"
+class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 text-blue-600 hover:text-blue-700"
+>
+<span>📤</span> Submit for Review
+</button>
+
+<!-- View Timeline -->
+<button 
+hx-get="/activities/{{ act.id }}/timeline"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+@click="open = false"
+class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 text-slate-600"
+>
+<span>⏱️</span> View Timeline
+</button>
+</div>
+</td>
+
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>

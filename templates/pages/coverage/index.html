@@ -4,20 +4,20 @@
 
 {% block shell_content %}
 <div class="p-6 max-w-7xl mx-auto space-y-6">
-  
-  <div class="flex items-center justify-between">
-    <div>
-      <h1 class="text-[26px] font-extrabold text-slate-800 tracking-tight">Coverage</h1>
-      <p class="text-[12.5px] text-[var(--text-secondary)] mt-1 font-semibold">Edify Operations · Coverage</p>
-    </div>
-  </div>
-  
-  <div class="grid grid-cols-3 gap-4">
-    <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm text-center"><p class="text-[28px] font-extrabold text-indigo-600">{{ total_schools }}</p><p class="text-[11px] font-bold text-slate-400 uppercase mt-1">Total Schools</p></div>
-    <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm text-center"><p class="text-[28px] font-extrabold text-emerald-600">{{ visited }}</p><p class="text-[11px] font-bold text-slate-400 uppercase mt-1">Visited</p></div>
-    <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm text-center"><p class="text-[28px] font-extrabold text-rose-500">{{ unvisited }}</p><p class="text-[11px] font-bold text-slate-400 uppercase mt-1">Not Yet Visited</p></div>
-  </div>
-  <div class="bg-gradient-to-r from-indigo-600 to-violet-600 rounded-2xl p-5 text-white"><p class="text-[11px] font-bold uppercase tracking-wider text-indigo-200">Coverage Rate</p><p class="text-[36px] font-extrabold mt-1">{{ coverage_pct }}%</p></div>
+
+<div class="flex items-center justify-between">
+<div>
+<h1 class="text-[24px] font-extrabold text-slate-800 tracking-tight">Coverage</h1>
+<p class="text-[12px] text-[var(--text-secondary)] mt-1 font-semibold">Edify Operations · Coverage</p>
+</div>
+</div>
+
+<div class="grid grid-cols-3 gap-4">
+<div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm text-center"><p class="text-[28px] font-extrabold text-indigo-600">{{ total_schools }}</p><p class="text-[11px] font-bold text-slate-400 uppercase mt-1">Total Schools</p></div>
+<div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm text-center"><p class="text-[28px] font-extrabold text-emerald-600">{{ visited }}</p><p class="text-[11px] font-bold text-slate-400 uppercase mt-1">Visited</p></div>
+<div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm text-center"><p class="text-[28px] font-extrabold text-rose-500">{{ unvisited }}</p><p class="text-[11px] font-bold text-slate-400 uppercase mt-1">Not Yet Visited</p></div>
+</div>
+<div class="bg-gradient-to-r from-indigo-600 to-violet-600 rounded-2xl p-5 text-white"><p class="text-[11px] font-bold uppercase tracking-wider text-indigo-200">Coverage Rate</p><p class="text-[36px] font-extrabold mt-1">{{ coverage_pct }}%</p></div>
 
 </div>
 {% endblock %}

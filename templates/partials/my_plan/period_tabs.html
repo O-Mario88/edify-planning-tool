@@ -1,0 +1,65 @@
+<!-- Period Segmented Tabs for My Plan -->
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-3">
+
+<!-- Left Side: Segmented Tabs Control -->
+<div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl">
+<button 
+hx-get="/my-plan?period=week"
+hx-target="#my-plan-workspace"
+hx-swap="innerHTML"
+hx-push-url="true"
+hx-include="#filters-form"
+class="px-4.5 py-1.5 text-[12px] font-bold rounded-lg transition-all {% if period == 'week' %}btn-premium-primary text-white shadow-sm{% else %}text-slate-500 hover:text-slate-800 hover:bg-slate-200/50{% endif %}"
+>
+Week
+</button>
+
+<button 
+hx-get="/my-plan?period=month"
+hx-target="#my-plan-workspace"
+hx-swap="innerHTML"
+hx-push-url="true"
+hx-include="#filters-form"
+class="px-4.5 py-1.5 text-[12px] font-bold rounded-lg transition-all {% if period == 'month' %}btn-premium-primary text-white shadow-sm{% else %}text-slate-500 hover:text-slate-800 hover:bg-slate-200/50{% endif %}"
+>
+Month
+</button>
+
+<button 
+hx-get="/my-plan?period=quarter"
+hx-target="#my-plan-workspace"
+hx-swap="innerHTML"
+hx-push-url="true"
+hx-include="#filters-form"
+class="px-4.5 py-1.5 text-[12px] font-bold rounded-lg transition-all {% if period == 'quarter' %}btn-premium-primary text-white shadow-sm{% else %}text-slate-500 hover:text-slate-800 hover:bg-slate-200/50{% endif %}"
+>
+Quarter
+</button>
+
+<button 
+hx-get="/my-plan?period=fy"
+hx-target="#my-plan-workspace"
+hx-swap="innerHTML"
+hx-push-url="true"
+hx-include="#filters-form"
+class="px-4.5 py-1.5 text-[12px] font-bold rounded-lg transition-all {% if period == 'fy' %}btn-premium-primary text-white shadow-sm{% else %}text-slate-500 hover:text-slate-800 hover:bg-slate-200/50{% endif %}"
+>
+FY
+</button>
+</div>
+
+<!-- Middle Section: Selected Period Range display label -->
+<div class="text-[12px] font-bold text-slate-700 flex items-center gap-1.5">
+<span class="text-slate-400">Showing plans for</span>
+<span class="text-[#0f172a] font-extrabold">{{ period_label }}</span>
+</div>
+
+<!-- Right Side: View Calendar button -->
+<div>
+<a href="/calendar" class="btn btn-ghost h-9 text-[12px] shadow-sm">
+<span>📅</span>
+<span>View Calendar</span>
+</a>
+</div>
+
+</div>

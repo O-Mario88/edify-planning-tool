@@ -1,0 +1,96 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% load frontend_filters %}
+
+{% block drawer_title %}Submit for Review{% endblock %}
+{% block drawer_subtitle %}Final confirmation before routing activity for approval{% endblock %}
+
+{% block drawer_body %}
+<form 
+hx-post="/activities/{{ act.id }}/submit/action"
+hx-target="#submit-errors"
+class="space-y-5 text-[12px] font-bold text-slate-600"
+>
+<div id="submit-errors"></div>
+
+<div class="space-y-4">
+<h4 class="text-[14px] font-extrabold text-slate-800 flex items-center gap-1.5">
+<span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-50 text-blue-600 text-[11px]">1</span>
+Execution Readiness Checklist
+</h4>
+<p class="text-[11px] text-slate-500 font-semibold leading-normal">
+Please verify that all programmatic and verification requirements are fully complete before submitting.
+</p>
+
+<!-- Checklist rows -->
+<div class="space-y-2 border border-slate-100 rounded-xl p-3 bg-slate-50/50">
+<!-- Evidence -->
+<div class="flex items-center justify-between py-1">
+<span class="text-slate-700 font-bold">Verification Evidence Uploaded</span>
+{% if has_evidence %}
+<span class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-green-50 text-green-700 border border-green-150">Completed</span>
+{% else %}
+<span class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-rose-50 text-rose-700 border border-rose-150">Missing</span>
+{% endif %}
+</div>
+
+<!-- SF ID -->
+<div class="flex items-center justify-between py-1 border-t border-slate-100/60">
+<span class="text-slate-700 font-bold">Salesforce Activity ID Linked</span>
+{% if has_sf_id %}
+<span class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-green-50 text-green-700 border border-green-150">Completed</span>
+{% else %}
+<span class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-rose-50 text-rose-700 border border-rose-150">Missing</span>
+{% endif %}
+</div>
+
+<!-- SSA Score (If required) -->
+{% if ssa_required %}
+<div class="flex items-center justify-between py-1 border-t border-slate-100/60">
+<span class="text-slate-700 font-bold">SSA Baseline Assessment</span>
+{% if has_ssa %}
+<span class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-green-50 text-green-700 border border-green-150">Completed</span>
+{% else %}
+<span class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-amber-50 text-amber-700 border border-amber-150">Expected / Pending</span>
+{% endif %}
+</div>
+{% endif %}
+
+<!-- Participants (If training/meeting) -->
+{% if act.activity_type == 'training' or act.activity_type == 'cluster_training' or act.activity_type == 'cluster_meeting' or act.activity_type == 'core_training' %}
+<div class="flex items-center justify-between py-1 border-t border-slate-100/60">
+<span class="text-slate-700 font-bold">Participant Headcount Entered</span>
+{% if has_participants %}
+<span class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-green-50 text-green-700 border border-green-150">Completed</span>
+{% else %}
+<span class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-rose-50 text-rose-700 border border-rose-150">Missing</span>
+{% endif %}
+</div>
+{% endif %}
+</div>
+
+{% if not all_ready %}
+<div class="p-3 bg-amber-50 rounded-xl border border-amber-150 text-[11px] text-amber-800 font-semibold leading-relaxed">
+<strong>Warning:</strong> You are missing one or more required items. If these are not complete, Program Lead review or IA verification may return this activity for correction.
+</div>
+{% endif %}
+</div>
+
+<!-- Drawer Footer (Sticky Actions) -->
+<div class="drawer-footer">
+<button 
+type="button" 
+@click="$dispatch('close-drawer')"
+class="edify-action-button secondary h-9 transition-colors"
+>
+Cancel
+</button>
+<button 
+type="submit"
+class="edify-action-button primary h-9 transition-colors shadow-sm"
+{% if not all_ready %}disabled class="edify-action-button primary h-9 transition-colors shadow-sm opacity-50 cursor-not-allowed"{% endif %}
+>
+Submit for Review
+</button>
+</div>
+</form>
+{% endblock %}

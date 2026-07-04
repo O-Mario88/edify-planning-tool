@@ -1,22 +1,276 @@
 {% extends "layouts/shell.html" %}
+{% load static %}
 
 {% block title %}User Management — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6">
-  
-  <div class="flex items-center justify-between">
-    <div>
-      <h1 class="text-[26px] font-extrabold text-slate-800 tracking-tight">User Management</h1>
-      <p class="text-[12.5px] text-[var(--text-secondary)] mt-1 font-semibold">Edify Operations · User Management</p>
-    </div>
-  </div>
-  
-  <div class="bg-white rounded-2xl border border-[var(--border-card)] p-4 shadow-sm"><form method="get" action="/admin/users" class="flex gap-3"><input type="text" name="q" value="{{ search }}" placeholder="Search users..." class="flex-1 h-9 px-3 rounded-lg border border-[var(--color-edify-border)] text-[12px] bg-slate-50 focus:outline-none"><button type="submit" class="h-9 px-4 bg-[var(--color-edify-primary)] text-white rounded-lg text-[12px] font-bold">Search</button></form></div>
-  <div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm overflow-hidden">
-    <table class="w-full text-[12.5px]"><thead><tr class="bg-slate-50/60 border-b border-slate-100"><th class="text-left px-5 py-3 text-[10px] font-bold uppercase text-slate-400">User</th><th class="text-left px-4 py-3 text-[10px] font-bold uppercase text-slate-400">Email</th><th class="text-left px-4 py-3 text-[10px] font-bold uppercase text-slate-400">Status</th><th class="px-4 py-3"></th></tr></thead>
-    <tbody class="divide-y divide-slate-100">{% for u in users %}<tr class="hover:bg-slate-50/60 group"><td class="px-5 py-3.5 font-bold text-slate-800">{{ u.name }}</td><td class="px-4 py-3.5 text-slate-500">{{ u.email }}</td><td class="px-4 py-3.5"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10.5px] font-bold bg-emerald-50 text-emerald-700">{{ u.status }}</span></td><td class="px-4 py-3.5 text-right"><a href="/admin/users/{{ u.id }}" class="opacity-0 group-hover:opacity-100 text-[11px] font-bold text-[var(--color-edify-primary)] transition-opacity">Edit →</a></td></tr>{% endfor %}</tbody></table>
-  </div>
+<div 
+class="p-6 max-w-7xl mx-auto space-y-6 font-sans"
+x-data="{ showAddModal: false }"
+>
+
+<!-- Header -->
+<div class="flex items-center justify-between border-b border-slate-200 pb-4">
+<div>
+<h1 class="text-[20px] font-black text-slate-800 tracking-tight">User Management</h1>
+<p class="text-[12px] text-slate-400 font-semibold mt-0.5">Create, invite, and configure active roles and permissions for system users</p>
+</div>
+
+<button 
+@click="showAddModal = true"
+class="flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-black uppercase tracking-wider rounded-lg shadow-sm transition-all focus:outline-none"
+>
+<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+</svg>
+<span>Add User</span>
+</button>
+</div>
+
+<!-- Messages / Django Alerts -->
+{% if messages %}
+<div class="space-y-2">
+{% for msg in messages %}
+<div class="p-3.5 rounded-xl border font-semibold text-[12px] flex items-center justify-between shadow-sm
+{% if msg.tags == 'success' %}bg-emerald-50 text-emerald-700 border-emerald-200
+{% elif msg.tags == 'warning' %}bg-amber-50 text-amber-700 border-amber-200
+{% else %}bg-rose-50 text-rose-700 border-rose-200{% endif %}"
+>
+<span>{{ msg }}</span>
+</div>
+{% endfor %}
+</div>
+{% endif %}
+
+<!-- Search Filter Panel -->
+<div class="bg-white rounded-xl border border-slate-100 p-4 shadow-sm">
+<form method="get" action="{% url 'frontend:admin_users' %}" class="flex gap-3">
+<div class="relative flex-1">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+</svg>
+</div>
+<input 
+type="text" 
+name="q" 
+value="{{ search }}" 
+placeholder="Search users by name, email, or role..." 
+class="w-full pl-9 pr-3 py-1.5 rounded-lg border border-slate-200 text-[12px] focus:outline-none bg-slate-50/50 focus:bg-white transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10"
+>
+</div>
+<button 
+type="submit" 
+class="h-9 px-4 bg-slate-800 text-white rounded-lg text-[11px] font-black uppercase tracking-wider hover:bg-slate-900 transition-all focus:outline-none"
+>
+Search
+</button>
+</form>
+</div>
+
+<!-- User Listings Table -->
+<div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden animate-fade-in">
+<div class="overflow-x-auto">
+<table class="w-full text-[12px] border-collapse">
+<thead>
+<tr class="bg-slate-50 border-b border-slate-100 text-left">
+<th class="px-5 py-3 text-[11px] font-black uppercase text-slate-400 tracking-wider">User Details</th>
+<th class="px-4 py-3 text-[11px] font-black uppercase text-slate-400 tracking-wider">Email Address</th>
+<th class="px-4 py-3 text-[11px] font-black uppercase text-slate-400 tracking-wider">Primary Role</th>
+<th class="px-4 py-3 text-[11px] font-black uppercase text-slate-400 tracking-wider">Status</th>
+<th class="px-5 py-3 text-right text-[11px] font-black uppercase text-slate-400 tracking-wider">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 font-medium">
+{% for u in users %}
+<tr class="hover:bg-slate-50/50 transition-colors">
+<td class="px-5 py-3.5">
+<div class="flex items-center gap-3">
+<div class="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center font-extrabold text-[12px] text-slate-600">
+{{ u.name|slice:":2"|upper }}
+</div>
+<div>
+<span class="font-extrabold text-slate-800 block">{{ u.name }}</span>
+{% if "pending." in u.email %}
+<span class="inline-flex items-center text-[11px] font-black text-amber-600 bg-amber-50 border border-amber-100 rounded px-1.5 mt-0.5 select-none" title="This is a placeholder email profile from school upload.">
+Needs Real Email
+</span>
+{% else %}
+<span class="text-[11px] text-slate-400 font-semibold block mt-0.5">ID: {{ u.id }}</span>
+{% endif %}
+</div>
+</div>
+</td>
+<td class="px-4 py-3.5 text-slate-500 font-semibold">{{ u.email }}</td>
+<td class="px-4 py-3.5">
+<span class="px-2 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider bg-slate-100 text-slate-700">
+{{ u.active_role|default:"CCEO" }}
+</span>
+</td>
+<td class="px-4 py-3.5">
+{% if u.is_active %}
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-100">
+<span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+<span>Active</span>
+</span>
+{% else %}
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-slate-50 text-slate-500 border border-slate-200">
+<span class="h-1.5 w-1.5 rounded-full bg-slate-400"></span>
+<span>{{ u.status|capfirst }}</span>
+</span>
+{% endif %}
+</td>
+<td class="px-5 py-3.5 text-right space-x-1.5">
+<a 
+href="{% url 'frontend:admin_user_detail' u.id %}" 
+class="inline-flex items-center px-2.5 py-1 border border-slate-200 hover:border-blue-500 hover:text-blue-600 rounded-lg text-[11px] font-black uppercase transition-all bg-white"
+>
+Configure
+</a>
+</td>
+</tr>
+{% empty %}
+<tr>
+<td colspan="5" class="px-5 py-8 text-center text-slate-400 font-semibold">
+No user accounts found matching your query.
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+
+<!-- Create User Dialog Modal -->
+<div 
+x-show="showAddModal" 
+@keydown.escape.window="showAddModal = false"
+class="fixed inset-0 z-50 overflow-y-auto select-none"
+style="display: none;"
+>
+<!-- Backdrop -->
+<div 
+class="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px] transition-opacity"
+@click="showAddModal = false"
+></div>
+
+<!-- Modal Content -->
+<div class="flex items-center justify-center min-h-screen p-4">
+<div 
+class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl relative border border-slate-100 space-y-5"
+@click.away="showAddModal = false"
+x-transition
+>
+<div class="flex items-center justify-between border-b border-slate-150 pb-3">
+<h3 class="text-[18px] font-black text-slate-900 tracking-tight">Provision New System User</h3>
+<button 
+@click="showAddModal = false"
+class="text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-slate-100 transition-colors"
+>
+<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+</button>
+</div>
+
+<form method="POST" action="{% url 'frontend:admin_users' %}" class="space-y-4 font-semibold text-[12px] text-slate-600">
+{% csrf_token %}
+<input type="hidden" name="action" value="create">
+
+<div>
+<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1">Full Name</label>
+<input 
+type="text" 
+name="name" 
+required 
+placeholder="e.g. John Doe"
+class="w-full h-9 px-3 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none focus:bg-white focus:border-blue-500 transition-all"
+>
+</div>
+
+<div>
+<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1">Email Address</label>
+<input 
+type="email" 
+name="email" 
+required 
+placeholder="johndoe@edify.org"
+class="w-full h-9 px-3 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none focus:bg-white focus:border-blue-500 transition-all"
+>
+</div>
+
+<div>
+<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1">Phone Number</label>
+<input 
+type="text" 
+name="phone" 
+placeholder="+256..."
+class="w-full h-9 px-3 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none focus:bg-white focus:border-blue-500 transition-all"
+>
+</div>
+
+<div class="grid grid-cols-2 gap-4">
+<div>
+<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1">Primary Role</label>
+<select 
+name="role" 
+required 
+class="w-full h-9 px-2 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none focus:bg-white cursor-pointer transition-all"
+>
+{% for r in available_roles %}
+<option value="{{ r }}">{{ r }}</option>
+{% endfor %}
+</select>
+</div>
+
+<div>
+<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1">Primary District Assignment</label>
+<select 
+name="primary_district" 
+class="w-full h-9 px-2 rounded-lg border border-slate-200 bg-slate-50 focus:outline-none focus:bg-white cursor-pointer transition-all"
+>
+<option value="">None (HQ / Regional)</option>
+{% for d in districts %}
+<option value="{{ d.id }}">{{ d.name }}</option>
+{% endfor %}
+</select>
+</div>
+</div>
+
+<div>
+<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1.5">Additional/Secondary Roles</label>
+<div class="bg-slate-50 border border-slate-100 rounded-lg p-3.5 space-y-2 max-h-36 overflow-y-auto">
+{% for r in available_roles %}
+<label class="flex items-center gap-2 cursor-pointer select-none">
+<input 
+type="checkbox" 
+name="additional_roles" 
+value="{{ r }}" 
+class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
+>
+<span>{{ r }}</span>
+</label>
+{% endfor %}
+</div>
+</div>
+
+<div class="pt-3 border-t border-slate-150 flex justify-end gap-3.5">
+<button 
+type="button" 
+@click="showAddModal = false"
+class="h-9 px-4 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 rounded-lg text-[11px] font-black uppercase tracking-wider shadow-sm transition-all focus:outline-none"
+>
+Cancel
+</button>
+<button 
+type="submit"
+class="h-9 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[11px] font-black uppercase tracking-wider shadow-sm transition-all focus:outline-none"
+>
+Provision & Send Invite
+</button>
+</div>
+</form>
+</div>
+</div>
+</div>
 
 </div>
 {% endblock %}

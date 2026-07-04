@@ -1,107 +1,114 @@
 {% load frontend_filters %}
 
 {% if error %}
-  <div class="bg-rose-50 border border-rose-200 rounded-2xl p-5 text-[13px] font-semibold text-rose-700 space-y-2">
-    <div class="font-extrabold text-[15px]">Upload Failed</div>
-    <p>{{ error }}</p>
-  </div>
+<div class="bg-rose-50 border border-rose-200 rounded-2xl p-5 text-[14px] font-semibold text-rose-700 space-y-2">
+<div class="font-extrabold text-[15px]">Upload Failed</div>
+<p>{{ error }}</p>
+</div>
 {% else %}
-  <div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm space-y-6">
-    <div class="flex items-center justify-between border-b border-slate-100 pb-4">
-      <div>
-        <h3 class="text-[16px] font-extrabold text-slate-800 tracking-tight">Upload Execution Report</h3>
-        <p class="text-[11.5px] text-slate-400 font-semibold mt-0.5">Batch ID: <span class="font-mono text-slate-600 font-bold">{{ result.upload_batch_id }}</span></p>
-      </div>
-      <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider {% if result.success %}bg-emerald-50 text-emerald-700 border-emerald-200{% else %}bg-amber-50 text-amber-700 border-amber-200{% endif %}">
-        {% if result.success %}Success{% else %}Errors flagged{% endif %}
-      </span>
-    </div>
+<div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm space-y-6">
+<div class="flex items-center justify-between border-b border-slate-100 pb-4">
+<div>
+<h3 class="text-[18px] font-extrabold text-slate-800 tracking-tight">Upload Execution Report</h3>
+<p class="text-[12px] text-slate-400 font-semibold mt-0.5">Batch ID: <span class="font-mono text-slate-600 font-bold">{{ result.upload_batch_id }}</span></p>
+</div>
+<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider {% if result.success %}bg-emerald-50 text-emerald-700 border-emerald-200{% else %}bg-amber-50 text-amber-700 border-amber-200{% endif %}">
+{% if result.success %}Success{% else %}Errors flagged{% endif %}
+</span>
+</div>
 
-    <!-- Summary Metrics -->
-    <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
-      <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
-        <p class="text-[10px] uppercase font-bold tracking-wider text-slate-400">Total Rows</p>
-        <p class="text-[18px] font-extrabold text-slate-700 mt-0.5">{{ result.total_rows }}</p>
-      </div>
-      <div class="p-3 bg-emerald-50/20 rounded-xl border border-emerald-100">
-        <p class="text-[10px] uppercase font-bold tracking-wider text-emerald-600">Created</p>
-        <p class="text-[18px] font-extrabold text-emerald-700 mt-0.5">{{ result.created_rows }}</p>
-      </div>
-      <div class="p-3 bg-indigo-50/20 rounded-xl border border-indigo-100">
-        <p class="text-[10px] uppercase font-bold tracking-wider text-indigo-600">Updated</p>
-        <p class="text-[18px] font-extrabold text-indigo-700 mt-0.5">{{ result.updated_rows }}</p>
-      </div>
-      <div class="p-3 bg-rose-50/20 rounded-xl border border-rose-100">
-        <p class="text-[10px] uppercase font-bold tracking-wider text-rose-600">Failed</p>
-        <p class="text-[18px] font-extrabold text-rose-700 mt-0.5">{{ result.failed_rows }}</p>
-      </div>
-      <div class="p-3 bg-amber-50/20 rounded-xl border border-amber-100">
-        <p class="text-[10px] uppercase font-bold tracking-wider text-amber-600">Duplicate</p>
-        <p class="text-[18px] font-extrabold text-amber-700 mt-0.5">{{ result.duplicate_rows }}</p>
-      </div>
-    </div>
+<!-- Summary Metrics -->
+<div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
+<div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+<p class="text-[11px] uppercase font-bold tracking-wider text-slate-400">Total Rows</p>
+<p class="text-[18px] font-extrabold text-slate-700 mt-0.5">{{ result.total_rows }}</p>
+</div>
+<div class="p-3 bg-emerald-50/20 rounded-xl border border-emerald-100">
+<p class="text-[11px] uppercase font-bold tracking-wider text-emerald-600">Created</p>
+<p class="text-[18px] font-extrabold text-emerald-700 mt-0.5">{{ result.created_rows }}</p>
+</div>
+<div class="p-3 bg-indigo-50/20 rounded-xl border border-indigo-100">
+<p class="text-[11px] uppercase font-bold tracking-wider text-indigo-600">Updated</p>
+<p class="text-[18px] font-extrabold text-indigo-700 mt-0.5">{{ result.updated_rows }}</p>
+</div>
+<div class="p-3 bg-rose-50/20 rounded-xl border border-rose-100">
+<p class="text-[11px] uppercase font-bold tracking-wider text-rose-600">Failed</p>
+<p class="text-[18px] font-extrabold text-rose-700 mt-0.5">{{ result.failed_rows }}</p>
+</div>
+<div class="p-3 bg-amber-50/20 rounded-xl border border-amber-100">
+<p class="text-[11px] uppercase font-bold tracking-wider text-amber-600">Duplicate</p>
+<p class="text-[18px] font-extrabold text-amber-700 mt-0.5">{{ result.duplicate_rows }}</p>
+</div>
+</div>
 
-    <!-- Message Summary -->
-    <div class="p-4 rounded-xl border {% if result.success %}bg-emerald-50/50 border-emerald-200 text-emerald-800{% else %}bg-amber-50/50 border-amber-200 text-amber-800{% endif %} text-[12.5px] font-semibold leading-relaxed">
-      {{ result.message }}
-    </div>
+<!-- Message Summary -->
+<div class="p-4 rounded-xl border {% if result.success %}bg-emerald-50/50 border-emerald-200 text-emerald-800{% else %}bg-amber-50/50 border-amber-200 text-amber-800{% endif %} text-[12px] font-semibold leading-relaxed">
+{{ result.message }}
+</div>
 
-    <!-- Unmatched Staff candidates (only for School Upload) -->
-    {% if result.type == 'schools' and result.unmatched_staff %}
-      <div class="space-y-3">
-        <h4 class="text-[13.5px] font-extrabold text-slate-800">Unmatched Staff Setup Candidates</h4>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-[12px] border border-slate-100 rounded-lg overflow-hidden">
-            <thead class="bg-slate-50 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-              <tr>
-                <th class="px-4 py-2.5">Staff Name</th>
-                <th class="px-4 py-2.5">Associated Schools</th>
-                <th class="px-4 py-2.5">Status</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100">
-              {% for staff in result.unmatched_staff %}
-                <tr class="hover:bg-slate-50/50">
-                  <td class="px-4 py-3 font-bold text-slate-800">{{ staff.staff_name }}</td>
-                  <td class="px-4 py-3 font-semibold text-slate-500">{{ staff.school_count }}</td>
-                  <td class="px-4 py-3">
-                    <span class="inline-flex items-center rounded px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wider {% if staff.status == 'unmatched' %}bg-rose-50 text-rose-700{% else %}bg-slate-100 text-slate-600{% endif %}">
-                      {{ staff.status }}
-                    </span>
-                  </td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    {% endif %}
+<!-- Actions -->
+<div class="flex items-center gap-3 pt-2">
+<a href="/schools/upload/{{ result.upload_batch_id }}/preview" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-extrabold rounded-lg shadow-sm transition-all" hx-boost="false">
+Open Staging Preview & Validate &rarr;
+</a>
+</div>
 
-    <!-- Failed Rows Table -->
-    {% if result.errors %}
-      <div class="space-y-3">
-        <h4 class="text-[13.5px] font-extrabold text-rose-800">Failed Intake Rows Detail</h4>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-[12px] border border-slate-100 rounded-lg overflow-hidden">
-            <thead class="bg-rose-50 text-[10px] font-bold text-rose-700 uppercase tracking-wider">
-              <tr>
-                <th class="px-4 py-2.5">Row</th>
-                <th class="px-4 py-2.5">School ID</th>
-                <th class="px-4 py-2.5">Validation Failure Message</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100">
-              {% for err in result.errors %}
-                <tr class="hover:bg-rose-50/5">
-                  <td class="px-4 py-3 font-bold text-slate-600">#{{ err.row }}</td>
-                  <td class="px-4 py-3 font-mono font-bold text-slate-700">{{ err.school_id|default:"-" }}</td>
-                  <td class="px-4 py-3 text-rose-700 font-semibold leading-normal">{{ err.error }}</td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    {% endif %}
-  </div>
+<!-- Unmatched Staff candidates (only for School Upload) -->
+{% if result.type == 'schools' and result.unmatched_staff %}
+<div class="space-y-3">
+<h4 class="text-[14px] font-extrabold text-slate-800">Unmatched Staff Setup Candidates</h4>
+<div class="overflow-x-auto">
+<table class="w-full text-left text-[12px] border border-slate-100 rounded-lg overflow-hidden">
+<thead class="bg-slate-50 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+<tr>
+<th class="px-4 py-2.5">Staff Name</th>
+<th class="px-4 py-2.5">Associated Schools</th>
+<th class="px-4 py-2.5">Status</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100">
+{% for staff in result.unmatched_staff %}
+<tr class="hover:bg-slate-50/50">
+<td class="px-4 py-3 font-bold text-slate-800">{{ staff.staff_name }}</td>
+<td class="px-4 py-3 font-semibold text-slate-500">{{ staff.school_count }}</td>
+<td class="px-4 py-3">
+<span class="inline-flex items-center rounded px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider {% if staff.status == 'unmatched' %}bg-rose-50 text-rose-700{% else %}bg-slate-100 text-slate-600{% endif %}">
+{{ staff.status }}
+</span>
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+{% endif %}
+
+<!-- Failed Rows Table -->
+{% if result.errors %}
+<div class="space-y-3">
+<h4 class="text-[14px] font-extrabold text-rose-800">Failed Intake Rows Detail</h4>
+<div class="overflow-x-auto">
+<table class="w-full text-left text-[12px] border border-slate-100 rounded-lg overflow-hidden">
+<thead class="bg-rose-50 text-[11px] font-bold text-rose-700 uppercase tracking-wider">
+<tr>
+<th class="px-4 py-2.5">Row</th>
+<th class="px-4 py-2.5">School ID</th>
+<th class="px-4 py-2.5">Validation Failure Message</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100">
+{% for err in result.errors %}
+<tr class="hover:bg-rose-50/5">
+<td class="px-4 py-3 font-bold text-slate-600">#{{ err.row }}</td>
+<td class="px-4 py-3 font-mono font-bold text-slate-700">{{ err.school_id|default:"-" }}</td>
+<td class="px-4 py-3 text-rose-700 font-semibold leading-normal">{{ err.error }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+{% endif %}
+</div>
 {% endif %}

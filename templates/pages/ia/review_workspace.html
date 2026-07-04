@@ -1,0 +1,472 @@
+{% extends "layouts/shell.html" %}
+{% load frontend_filters %}
+
+{% block title %}IA Review Workspace - Edify{% endblock %}
+
+{% block shell_content %}
+<div class="h-full flex flex-col overflow-hidden" x-data="{ 
+activeTab: 'evidence', 
+returnOpen: false, 
+checklist: {
+evidence_exists: {% if checks.evidence_exists %}true{% else %}false{% endif %},
+attendance_valid: {% if checks.attendance_valid %}true{% else %}false{% endif %},
+ssa_uploaded: {% if checks.ssa_uploaded %}true{% else %}false{% endif %},
+correct_school: {% if checks.correct_school %}true{% else %}false{% endif %},
+correct_cluster: {% if checks.correct_cluster %}true{% else %}false{% endif %},
+correct_intervention: {% if checks.correct_intervention %}true{% else %}false{% endif %},
+sf_id_entered: {% if checks.sf_id_entered %}true{% else %}false{% endif %},
+duplicate_check_passed: {% if checks.duplicate_check_passed %}true{% else %}false{% endif %},
+analytics_ready: {% if checks.analytics_ready %}true{% else %}false{% endif %}
+},
+zoomActive: false,
+zoomSrc: ''
+}">
+<!-- Top Navigation bar of workspace -->
+<div class="bg-white border-b border-slate-200 px-6 py-3 shrink-0 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<a href="/ia/verification/" class="h-8 w-8 rounded-lg hover:bg-slate-50 text-slate-500 flex items-center justify-center transition-colors">
+<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
+</a>
+<div>
+<div class="flex items-center gap-2">
+<span class="text-[11px] font-black uppercase bg-[#2563eb]/10 text-[#2563eb] px-1.5 py-0.5 rounded">FY25</span>
+<h2 class="text-[18px] font-extrabold text-slate-800 tracking-tight">Review Workspace</h2>
+</div>
+<p class="text-[12px] text-slate-400 font-semibold mt-0.5">Activity ID: #{{ act.id }}</p>
+</div>
+</div>
+
+<!-- Right links -->
+<div class="flex items-center gap-2">
+<a href="/activities/{{ act.id }}/timeline/" class="h-8 px-3 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 text-[12px] font-bold flex items-center gap-1.5 transition-colors">
+<svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+Audit Timeline
+</a>
+<a href="/ia/compare/?activity_id={{ act.id }}" class="h-8 px-3 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 text-[12px] font-bold flex items-center gap-1.5 transition-colors">
+<svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" /></svg>
+Compare Side-by-Side
+</a>
+</div>
+</div>
+
+<!-- Main Three-Panel Split Grid -->
+<div class="flex-1 flex overflow-hidden bg-slate-50">
+
+<!-- LEFT PANEL: Summary -->
+<div class="w-80 shrink-0 bg-white border-r border-slate-200 overflow-y-auto p-5 space-y-6">
+<div>
+<h4 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">Activity Summary</h4>
+<div class="space-y-4">
+<!-- Type -->
+<div>
+<span class="text-[11px] text-slate-400 font-bold uppercase block">Activity Type</span>
+<span class="text-[14px] font-extrabold text-slate-800 mt-0.5 block">{{ act.get_activity_type_display }}</span>
+</div>
+<!-- School -->
+<div>
+<span class="text-[11px] text-slate-400 font-bold uppercase block">School</span>
+<span class="text-[14px] font-extrabold text-slate-800 mt-0.5 block">{{ act.school.name|default:"Cluster-wide" }}</span>
+</div>
+<!-- Cluster -->
+<div>
+<span class="text-[11px] text-slate-400 font-bold uppercase block">Cluster</span>
+<span class="text-[14px] font-extrabold text-slate-800 mt-0.5 block">{{ act.cluster.name|default:"No Cluster" }}</span>
+</div>
+<!-- District -->
+<div>
+<span class="text-[11px] text-slate-400 font-bold uppercase block">District</span>
+<span class="text-[14px] font-extrabold text-slate-800 mt-0.5 block">{{ act.school.district.name|default:"N/A" }}</span>
+</div>
+<!-- Owner / Staff -->
+<div>
+<span class="text-[11px] text-slate-400 font-bold uppercase block">CCEO / Owner</span>
+<span class="text-[14px] font-extrabold text-slate-800 mt-0.5 block">{{ act.responsible_staff_id|default:"Unassigned" }}</span>
+</div>
+<!-- Partner -->
+<div>
+<span class="text-[11px] text-slate-400 font-bold uppercase block">Assigned Partner</span>
+<span class="text-[14px] font-extrabold text-slate-800 mt-0.5 block">{{ act.assigned_partner_id|default:"N/A" }}</span>
+</div>
+<!-- Focus Intervention -->
+<div>
+<span class="text-[11px] text-slate-400 font-bold uppercase block">Focus Intervention</span>
+<span class="text-[14px] font-extrabold text-slate-800 mt-0.5 block capitalize">{{ act.get_focus_intervention_display|default:"None Specified" }}</span>
+</div>
+<!-- Dates -->
+<div class="grid grid-cols-2 gap-2 border-t border-slate-100 pt-3">
+<div>
+<span class="text-[11px] text-slate-400 font-bold uppercase block">Planned Date</span>
+<span class="text-[12px] font-extrabold text-slate-700 mt-0.5 block">{{ act.planned_date|date:"M d, Y"|default:"N/A" }}</span>
+</div>
+<div>
+<span class="text-[11px] text-slate-400 font-bold uppercase block">Actual Date</span>
+<span class="text-[12px] font-extrabold text-slate-700 mt-0.5 block">{{ act.scheduled_date|date:"M d, Y"|default:"N/A" }}</span>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Purpose Section -->
+<div class="border-t border-slate-100 pt-5">
+<h4 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Purpose Description</h4>
+<p class="text-[12px] text-slate-600 font-medium leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">
+{{ act.activity_purpose_text|default:"No purpose statement recorded." }}
+</p>
+</div>
+</div>
+
+<!-- CENTRE PANEL: Evidence Viewer -->
+<div class="flex-1 flex flex-col overflow-hidden">
+<!-- Tabs header -->
+<div class="bg-white border-b border-slate-200 px-6 shrink-0 flex items-center gap-4">
+<button @click="activeTab = 'evidence'" :class="activeTab === 'evidence' ? 'border-[#2563eb] text-[#2563eb]' : 'border-transparent text-slate-500 hover:text-slate-700'" class="h-12 border-b-2 px-3 text-[12px] font-bold transition-all focus:outline-none">
+Evidence Attachments ({{ evidence_list|length }})
+</button>
+<button @click="activeTab = 'ssa'" :class="activeTab === 'ssa' ? 'border-[#2563eb] text-[#2563eb]' : 'border-transparent text-slate-500 hover:text-slate-700'" class="h-12 border-b-2 px-3 text-[12px] font-bold transition-all focus:outline-none">
+School Assessment (SSA)
+</button>
+<button @click="activeTab = 'attendance'" :class="activeTab === 'attendance' ? 'border-[#2563eb] text-[#2563eb]' : 'border-transparent text-slate-500 hover:text-slate-700'" class="h-12 border-b-2 px-3 text-[12px] font-bold transition-all focus:outline-none">
+Attendance Sheet
+</button>
+</div>
+
+<!-- Tab Contents container -->
+<div class="flex-1 overflow-y-auto p-6">
+
+<!-- Tab: Evidence Records -->
+<div x-show="activeTab === 'evidence'" class="space-y-6">
+{% if evidence_list %}
+<div class="grid grid-cols-2 gap-4">
+{% for ev in evidence_list %}
+<div class="bg-white p-3 rounded-2xl border border-slate-150 shadow-sm space-y-3">
+<div class="flex items-center justify-between border-b border-slate-100 pb-2">
+<span class="text-[11px] font-black text-slate-800 truncate max-w-[200px]" title="{{ ev.original_name }}">{{ ev.original_name }}</span>
+<span class="px-1.5 py-0.5 rounded text-[11px] font-black uppercase bg-blue-50 text-blue-600 border border-blue-100">{{ ev.kind }}</span>
+</div>
+<!-- Image thumbnail preview or file icon -->
+{% if ev.mime_type and 'image' in ev.mime_type %}
+<div class="aspect-video relative bg-slate-50 rounded-xl overflow-hidden group cursor-zoom-in" @click="zoomActive = true; zoomSrc = '/uploads/{{ ev.uri }}'">
+<img src="/uploads/{{ ev.uri }}" class="w-full h-full object-cover transition-transform group-hover:scale-105" alt="Evidence Preview">
+<div class="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white text-[11px] font-bold">
+Click to Expand Image
+</div>
+</div>
+{% else %}
+<div class="aspect-video bg-slate-50 border border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center gap-2">
+<svg class="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+<a href="/uploads/{{ ev.uri }}" target="_blank" class="text-[11px] font-bold text-[#2563eb] hover:underline">Download Document (PDF/Doc)</a>
+</div>
+{% endif %}
+<div class="text-[11px] text-slate-500 font-semibold leading-relaxed">
+{{ ev.notes|default:"No description notes entered." }}
+</div>
+</div>
+{% endfor %}
+</div>
+{% else %}
+<div class="bg-white p-12 text-center text-slate-400 font-semibold rounded-2xl border border-slate-200">
+No evidence uploads available for this activity.
+</div>
+{% endif %}
+</div>
+
+<!-- Tab: SSA Record Details -->
+<div x-show="activeTab === 'ssa'" class="space-y-4">
+<div class="bg-white p-5 rounded-2xl border border-slate-150 shadow-sm space-y-4">
+<div class="flex items-center justify-between border-b border-slate-100 pb-3">
+<h3 class="text-[14px] font-extrabold text-slate-800">School Self-Assessment Baseline</h3>
+{% if checks.ssa_uploaded %}
+<span class="px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase bg-green-50 text-green-700 border border-green-200">Verified</span>
+{% else %}
+<span class="px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase bg-rose-50 text-rose-700 border border-rose-200">Missing Baseline</span>
+{% endif %}
+</div>
+
+<p class="text-[12px] text-slate-500 font-semibold leading-normal">
+{{ checks.ssa_desc }}
+</p>
+
+<!-- Intervention breakdown if SSA available -->
+{% if checks.ssa_uploaded %}
+<div class="grid grid-cols-2 gap-3 mt-4 text-[12px] font-bold">
+<div class="flex items-center justify-between p-2 bg-slate-50 rounded border border-slate-100">
+<span class="text-slate-500">Teaching &amp; Learning</span>
+<span class="text-slate-800">8.2 / 10</span>
+</div>
+<div class="flex items-center justify-between p-2 bg-slate-50 rounded border border-slate-100">
+<span class="text-slate-500">Christian Ethos</span>
+<span class="text-slate-800">9.0 / 10</span>
+</div>
+<div class="flex items-center justify-between p-2 bg-slate-50 rounded border border-slate-100">
+<span class="text-slate-500">Leadership &amp; Governance</span>
+<span class="text-slate-800">7.5 / 10</span>
+</div>
+<div class="flex items-center justify-between p-2 bg-slate-50 rounded border border-slate-100">
+<span class="text-slate-500">Safe Environment</span>
+<span class="text-slate-800">8.0 / 10</span>
+</div>
+</div>
+{% endif %}
+</div>
+</div>
+
+<!-- Tab: Attendance Sheet -->
+<div x-show="activeTab === 'attendance'" class="space-y-4">
+<div class="bg-white p-5 rounded-2xl border border-slate-150 shadow-sm space-y-4">
+<div class="flex items-center justify-between border-b border-slate-100 pb-3">
+<h3 class="text-[14px] font-extrabold text-slate-800">Participant Attendance Verification</h3>
+{% if checks.attendance_valid %}
+<span class="px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase bg-green-50 text-green-700 border border-green-200">Valid</span>
+{% else %}
+<span class="px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase bg-rose-50 text-rose-700 border border-rose-200">Invalid / Missing</span>
+{% endif %}
+</div>
+
+<p class="text-[12px] text-slate-500 font-semibold leading-normal">
+{{ checks.attendance_desc }}
+</p>
+
+<div class="grid grid-cols-3 gap-4 mt-2">
+<div class="bg-slate-50 border border-slate-100 p-3 rounded-xl text-center">
+<span class="text-[11px] uppercase font-bold text-slate-400">Teachers</span>
+<span class="text-[20px] font-black text-slate-800 mt-1 block">{{ act.teachers_attended|default:0 }}</span>
+</div>
+<div class="bg-slate-50 border border-slate-100 p-3 rounded-xl text-center">
+<span class="text-[11px] uppercase font-bold text-slate-400">School Leaders</span>
+<span class="text-[20px] font-black text-slate-800 mt-1 block">{{ act.leaders_attended|default:0 }}</span>
+</div>
+<div class="bg-slate-50 border border-slate-100 p-3 rounded-xl text-center">
+<span class="text-[11px] uppercase font-bold text-slate-400">Others</span>
+<span class="text-[20px] font-black text-slate-800 mt-1 block">{{ act.other_participants|default:0 }}</span>
+</div>
+</div>
+
+<!-- School-level Attended vs Absent list -->
+{% if cluster_schools %}
+<div class="border-t border-slate-100 pt-4 space-y-3">
+<h4 class="text-[11px] font-bold uppercase tracking-wider text-slate-400">School Attendance Registry</h4>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+{% for school in cluster_schools %}
+<div class="p-3 rounded-xl border border-slate-100 bg-slate-50/50 flex items-center justify-between">
+<div>
+<span class="font-bold text-slate-800 block text-[12px] leading-tight">{{ school.name }}</span>
+<span class="text-[11px] text-slate-400 font-semibold block mt-0.5">{{ school.school_id }}</span>
+</div>
+{% if school.id in act.attended_school_ids %}
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-black uppercase bg-emerald-50 text-emerald-700 border border-emerald-150">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+Attended
+</span>
+{% else %}
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-black uppercase bg-slate-100 text-slate-400 border border-slate-200/50">
+<span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+Absent
+</span>
+{% endif %}
+</div>
+{% endfor %}
+</div>
+</div>
+{% endif %}
+</div>
+</div>
+
+</div>
+</div>
+
+<!-- RIGHT PANEL: Checklist & Gated Decisions -->
+<div class="w-80 shrink-0 bg-white border-l border-slate-200 overflow-y-auto p-5 relative flex flex-col justify-between">
+<div class="space-y-6">
+<div>
+<h4 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">Verification Checklist</h4>
+
+<form id="verify-form" method="POST" action="/ia/verification/{{ act.id }}/verify" class="space-y-3.5">
+{% csrf_token %}
+
+<!-- Checkbox item: Evidence -->
+<label class="flex items-start gap-2.5 p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
+<input type="checkbox" name="evidence_exists" x-model="checklist.evidence_exists" class="mt-0.5 rounded text-[#2563eb] focus:ring-[#2563eb]">
+<div>
+<span class="text-[12px] font-bold text-slate-700 block">Evidence records exist</span>
+<span class="text-[11px] text-slate-400 block mt-0.5">Physical files/photos uploaded</span>
+</div>
+</label>
+
+<!-- Checkbox item: Attendance -->
+<label class="flex items-start gap-2.5 p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
+<input type="checkbox" name="attendance_valid" x-model="checklist.attendance_valid" class="mt-0.5 rounded text-[#2563eb] focus:ring-[#2563eb]">
+<div>
+<span class="text-[12px] font-bold text-slate-700 block">Attendance valid</span>
+<span class="text-[11px] text-slate-400 block mt-0.5">Headcount matches evidence sheet</span>
+</div>
+</label>
+
+<!-- Checkbox item: SSA -->
+<label class="flex items-start gap-2.5 p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
+<input type="checkbox" name="ssa_uploaded" x-model="checklist.ssa_uploaded" class="mt-0.5 rounded text-[#2563eb] focus:ring-[#2563eb]">
+<div>
+<span class="text-[12px] font-bold text-slate-700 block">SSA Baseline uploaded</span>
+<span class="text-[11px] text-slate-400 block mt-0.5">Required for Core Schools</span>
+</div>
+</label>
+
+<!-- Checkbox item: Correct School -->
+<label class="flex items-start gap-2.5 p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
+<input type="checkbox" name="correct_school" x-model="checklist.correct_school" class="mt-0.5 rounded text-[#2563eb] focus:ring-[#2563eb]">
+<div>
+<span class="text-[12px] font-bold text-slate-700 block">Correct School associated</span>
+<span class="text-[11px] text-slate-400 block mt-0.5">School lookup matches execution</span>
+</div>
+</label>
+
+<!-- Checkbox item: Correct Cluster -->
+<label class="flex items-start gap-2.5 p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
+<input type="checkbox" name="correct_cluster" x-model="checklist.correct_cluster" class="mt-0.5 rounded text-[#2563eb] focus:ring-[#2563eb]">
+<div>
+<span class="text-[12px] font-bold text-slate-700 block">Correct Cluster linked</span>
+<span class="text-[11px] text-slate-400 block mt-0.5">Operational cluster is correct</span>
+</div>
+</label>
+
+<!-- Checkbox item: Correct Intervention -->
+<label class="flex items-start gap-2.5 p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
+<input type="checkbox" name="correct_intervention" x-model="checklist.correct_intervention" class="mt-0.5 rounded text-[#2563eb] focus:ring-[#2563eb]">
+<div>
+<span class="text-[12px] font-bold text-slate-700 block">Correct focus intervention</span>
+<span class="text-[11px] text-slate-400 block mt-0.5">Intervention type is valid</span>
+</div>
+</label>
+
+<!-- Checkbox item: SF ID -->
+<label class="flex items-start gap-2.5 p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
+<input type="checkbox" name="sf_id_entered" x-model="checklist.sf_id_entered" class="mt-0.5 rounded text-[#2563eb] focus:ring-[#2563eb]">
+<div>
+<span class="text-[12px] font-bold text-slate-700 block">Salesforce Activity ID linked</span>
+<span class="text-[11px] text-slate-400 block mt-0.5">SV- or TS- format matching</span>
+</div>
+</label>
+
+<!-- Checkbox item: Duplicates -->
+<label class="flex items-start gap-2.5 p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
+<input type="checkbox" name="duplicate_check_passed" x-model="checklist.duplicate_check_passed" class="mt-0.5 rounded text-[#2563eb] focus:ring-[#2563eb]">
+<div>
+<span class="text-[12px] font-bold text-slate-700 block">Duplicate checks passed</span>
+<span class="text-[11px] text-slate-400 block mt-0.5">No overlap flags found</span>
+</div>
+</label>
+
+<!-- Checkbox item: Analytics Ready -->
+<label class="flex items-start gap-2.5 p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
+<input type="checkbox" name="analytics_ready" x-model="checklist.analytics_ready" class="mt-0.5 rounded text-[#2563eb] focus:ring-[#2563eb]">
+<div>
+<span class="text-[12px] font-bold text-slate-700 block">Quality is Analytics ready</span>
+<span class="text-[11px] text-slate-400 block mt-0.5">Certified for official analytics</span>
+</div>
+</label>
+</form>
+</div>
+</div>
+
+<!-- Action buttons at the bottom of the right panel -->
+<div class="space-y-2 border-t border-slate-100 pt-4 bg-white shrink-0">
+<button 
+form="verify-form"
+type="submit"
+class="w-full h-10 rounded-lg text-white font-extrabold text-[12px] flex items-center justify-center transition-all bg-[#2563eb] hover:bg-[#1d4ed8] shadow-sm"
+>
+Verify &amp; Approve Activity
+</button>
+<button 
+@click="returnOpen = true"
+type="button" 
+class="w-full h-10 rounded-lg border border-slate-200 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 text-slate-600 font-extrabold text-[12px] flex items-center justify-center transition-all"
+>
+Return for Correction
+</button>
+</div>
+
+<!-- RETURN DRAWER PANEL (Slide-over overlay inside parent) -->
+<div 
+x-show="returnOpen"
+x-transition:enter="transition ease-out duration-300 transform"
+x-transition:enter-start="translate-x-full"
+x-transition:enter-end="translate-x-0"
+x-transition:leave="transition ease-in duration-200 transform"
+x-transition:leave-start="translate-x-0"
+x-transition:leave-end="translate-x-full"
+class="absolute inset-0 bg-white z-25 p-5 flex flex-col justify-between shadow-lg"
+style="display: none;"
+>
+<div class="space-y-5">
+<div class="flex items-center justify-between border-b border-slate-100 pb-2">
+<h3 class="text-[14px] font-extrabold text-slate-800">Return Activity</h3>
+<button @click="returnOpen = false" class="text-slate-400 hover:text-slate-600">
+<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+</button>
+</div>
+
+<form id="return-form" method="POST" action="/ia/verification/{{ act.id }}/return" class="space-y-4">
+{% csrf_token %}
+<div>
+<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1.5">Select Reason(s)</label>
+<!-- Multi-select Reasons grid -->
+<div class="max-h-56 overflow-y-auto space-y-1.5 border border-slate-150 rounded-xl p-2.5 bg-slate-50/50">
+{% for reason in suggested_reasons %}
+<label class="flex items-center gap-2 p-1.5 hover:bg-white rounded cursor-pointer transition-colors text-[12px] font-semibold text-slate-700">
+<input type="checkbox" name="reasons" value="{{ reason }}" class="rounded text-rose-600 focus:ring-rose-500">
+<span>{{ reason }}</span>
+</label>
+{% endfor %}
+</div>
+</div>
+
+<div>
+<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1">Audit Comments</label>
+<textarea 
+name="comment" 
+placeholder="Details of corrections required e.g. Attendance sheet uploaded has only 14 teachers but activity recorded 25 participants."
+class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[12px] focus:bg-white focus:outline-none h-24 resize-none font-semibold text-slate-700"
+></textarea>
+</div>
+</form>
+</div>
+
+<div class="space-y-2 border-t border-slate-100 pt-4 bg-white">
+<button 
+form="return-form"
+type="submit"
+class="w-full h-10 rounded-lg text-white font-extrabold text-[12px] flex items-center justify-center bg-rose-600 hover:bg-rose-700 shadow-sm transition-all"
+>
+Confirm &amp; Return
+</button>
+<button 
+@click="returnOpen = false"
+type="button" 
+class="w-full h-10 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 font-extrabold text-[12px] flex items-center justify-center transition-all"
+>
+Cancel
+</button>
+</div>
+</div>
+
+</div>
+
+</div>
+
+<!-- Zoom Backdrop modal -->
+<div 
+x-show="zoomActive" 
+class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-6" 
+style="display: none;"
+@click="zoomActive = false"
+>
+<div class="max-w-4xl w-full bg-white rounded-2xl overflow-hidden p-2 relative" @click.stop>
+<button class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-900/60 text-white flex items-center justify-center hover:bg-slate-900 transition-colors" @click="zoomActive = false">
+<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+</button>
+<img :src="zoomSrc" class="w-full h-auto object-contain max-h-[80vh] rounded-xl" alt="Evidence zoom">
+</div>
+</div>
+
+</div>
+{% endblock %}

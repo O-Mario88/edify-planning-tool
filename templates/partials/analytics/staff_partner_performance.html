@@ -1,0 +1,59 @@
+<div class="bg-white rounded-xl border border-slate-100 p-4 shadow-sm space-y-4">
+<div class="flex items-center justify-between border-b border-slate-50 pb-2">
+<div>
+<h3 class="text-[14px] font-black text-slate-800 tracking-tight flex items-center gap-1.5">
+<span>Staff & Partner Performance</span>
+<span class="text-[11px] text-slate-400 cursor-help" title="Top performance leaderboards by activity completion counts">ℹ️</span>
+</h3>
+<p class="text-[11px] text-slate-400 font-semibold mt-0.5">Top completed activities leaderboard</p>
+</div>
+
+<select class="bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-extrabold text-slate-500 py-1 px-2.5 outline-none cursor-pointer">
+<option>This Quarter</option>
+</select>
+</div>
+
+<!-- Bar comparison -->
+<div class="space-y-2 border-b border-slate-50 pb-3">
+<div class="space-y-1">
+<div class="flex justify-between text-[11px] font-bold text-slate-600">
+<span>Staff Activities (CCEOs)</span>
+<span class="font-extrabold text-slate-800">76%</span>
+</div>
+<div class="h-2 w-full bg-slate-50 border border-slate-100 rounded-full overflow-hidden">
+<div class="h-full bg-blue-600 rounded-full" style="width: 76%"></div>
+</div>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between text-[11px] font-bold text-slate-600">
+<span>Partner Activities</span>
+<span class="font-extrabold text-slate-800">62%</span>
+</div>
+<div class="h-2 w-full bg-slate-50 border border-slate-100 rounded-full overflow-hidden">
+<div class="h-full bg-indigo-500 rounded-full" style="width: 62%"></div>
+</div>
+</div>
+</div>
+
+<!-- Top Performers leaderboard -->
+<div class="space-y-2">
+<h4 class="text-[11px] font-black uppercase text-slate-400 tracking-wider">Top Performers</h4>
+<div class="space-y-2.5">
+{% for st in staff_partner_performance.leaderboard %}
+<div class="flex items-center justify-between text-[11px] font-bold text-slate-600">
+<div class="flex items-center gap-2">
+<span class="h-5 w-5 bg-blue-50 text-blue-600 font-extrabold text-[11px] rounded-full flex items-center justify-center border border-blue-100">{{ forloop.counter }}</span>
+<div>
+<p class="font-bold text-slate-800 text-[12px] leading-tight">{{ st.name }}</p>
+<p class="text-[11px] text-slate-400 font-semibold leading-none">{{ st.role }}</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-black text-slate-800">{{ st.activities }} acts</p>
+<p class="text-[11px] text-emerald-600 font-bold leading-none">{{ st.pct }}% ach.</p>
+</div>
+</div>
+{% endfor %}
+</div>
+</div>
+</div>

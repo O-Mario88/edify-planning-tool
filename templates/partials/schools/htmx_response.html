@@ -2,19 +2,15 @@
 
 <!-- Out-of-band swaps for dashboard synchronization -->
 <div id="kpi-cards-row" hx-swap-oob="true">
-  {% include "partials/schools/kpi_cards.html" %}
-</div>
-
-<div id="priority-strip" hx-swap-oob="true">
-  {% include "partials/schools/priority_strip.html" %}
+{% include "partials/schools/kpi_cards.html" %}
 </div>
 
 <div id="school-tabs-header" hx-swap-oob="true">
-  {% include "partials/schools/tabs.html" %}
+{% include "partials/schools/tabs.html" %}
 </div>
 
 {% if intelligence %}
-  <div id="directory-intelligence-container" hx-swap-oob="true">
-    {% include "partials/schools/directory_intelligence.html" %}
-  </div>
+<div id="directory-intelligence-container" hx-swap-oob="true">
+{% include "partials/schools/directory_intelligence.html" %}
+</div>
 {% endif %}

@@ -1,0 +1,140 @@
+<div 
+x-data="{
+chart: null,
+initChart() {
+if (this.chart) this.chart.destroy();
+
+const ctx = document.getElementById('performanceChart').getContext('2d');
+this.chart = new Chart(ctx, {
+data: {
+labels: {{ performance_overview.labels|safe }},
+datasets: [
+{
+type: 'bar',
+label: 'Planned Activities',
+data: {{ performance_overview.planned }},
+backgroundColor: '#cbd5e1',
+barThickness: 12,
+borderRadius: 4,
+},
+{
+type: 'bar',
+label: 'Achieved Activities',
+data: {{ performance_overview.achieved }},
+backgroundColor: '#2563eb',
+barThickness: 12,
+borderRadius: 4,
+},
+{
+type: 'line',
+label: 'Achievement %',
+data: {{ performance_overview.pct }},
+borderColor: '#10b981',
+backgroundColor: '#10b981',
+borderWidth: 2.5,
+pointRadius: 3,
+fill: false,
+yAxisID: 'y1',
+tension: 0.3
+}
+]
+},
+options: {
+responsive: true,
+maintainAspectRatio: false,
+plugins: {
+legend: {
+position: 'top',
+labels: {
+boxWidth: 12,
+font: {
+family: 'Outfit',
+size: 10,
+weight: 'bold'
+},
+color: '#64748b'
+}
+},
+tooltip: {
+mode: 'index',
+intersect: false
+}
+},
+scales: {
+x: {
+grid: {
+display: false
+},
+labels: {{ performance_overview.labels|safe }},
+ticks: {
+font: {
+family: 'Outfit',
+size: 10,
+weight: 'bold'
+},
+color: '#64748b'
+}
+},
+y: {
+beginAtZero: true,
+ticks: {
+font: {
+family: 'Outfit',
+size: 10
+},
+color: '#94a3b8'
+},
+grid: {
+color: '#f1f5f9'
+}
+},
+y1: {
+type: 'linear',
+display: true,
+position: 'right',
+beginAtZero: true,
+max: 100,
+ticks: {
+callback: function(value) {
+return value + '%';
+},
+font: {
+family: 'Outfit',
+size: 10
+},
+color: '#94a3b8'
+},
+grid: {
+drawOnChartArea: false,
+},
+}
+}
+}
+});
+}
+}"
+x-init="initChart()"
+class="bg-white rounded-xl border border-slate-100 p-4 shadow-sm space-y-4"
+>
+<!-- Chart scripts dependency -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="flex items-center justify-between border-b border-slate-50 pb-2">
+<div>
+<h3 class="text-[14px] font-black text-slate-800 tracking-tight flex items-center gap-1.5">
+<span>Performance Overview</span>
+<span class="text-[11px] text-slate-400 cursor-help" title="Planned vs Achieved activities across the fiscal year">ℹ️</span>
+</h3>
+<p class="text-[11px] text-slate-400 font-semibold mt-0.5">Targets vs Achieved Activities across the fiscal year</p>
+</div>
+
+<select class="bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-extrabold text-slate-500 py-1 px-2.5 outline-none cursor-pointer">
+<option>This FY</option>
+</select>
+</div>
+
+<!-- Canvas container -->
+<div class="h-[210px] relative w-full">
+<canvas id="performanceChart"></canvas>
+</div>
+</div>

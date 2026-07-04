@@ -1,45 +1,53 @@
 {% extends "layouts/shell.html" %}
+{% load frontend_filters %}
 
 {% block title %}Cost Catalogue — Edify{% endblock %}
 
 {% block shell_content %}
 <div class="p-6 max-w-7xl mx-auto space-y-6">
-  
-  <div class="flex items-center justify-between">
-    <div>
-      <h1 class="text-[26px] font-extrabold text-slate-800 tracking-tight">Cost Catalogue</h1>
-      <p class="text-[12.5px] text-[var(--text-secondary)] mt-1 font-semibold">FY{{ fy }} approved cost items for activity budgeting</p>
-    </div>
-  </div>
-  {% if active_catalogue %}
-  <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-center gap-3">
-    <span class="text-[22px]">✅</span>
-    <div>
-      <p class="text-[13px] font-extrabold text-emerald-800">Active Catalogue: {{ active_catalogue }}</p>
-      <p class="text-[11px] text-emerald-600">Version {{ active_catalogue.version }} · {{ cost_items|length }} cost items</p>
-    </div>
-  </div>
-  {% endif %}
 
-  <div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm overflow-hidden">
-    {% if cost_items %}
-    <table class="w-full text-[12.5px]">
-      <thead><tr class="bg-slate-50/60 border-b border-slate-100">
-        <th class="text-left px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Item</th>
-        <th class="text-right px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Rate (UGX)</th>
-        <th class="text-left px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Unit</th>
-      </tr></thead>
-      <tbody class="divide-y divide-slate-100">
-        {% for c in cost_items %}
-        <tr class="hover:bg-slate-50/60">
-          <td class="px-5 py-3.5 font-bold text-slate-800">{{ c.item_key|title }}</td>
-          <td class="px-4 py-3.5 text-right font-bold text-indigo-600">{{ c.rate|floatformat:0 }}</td>
-          <td class="px-4 py-3.5 text-slate-500">{{ c.unit|default:"per unit" }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    {% else %}<div class="p-12 text-center"><p class="text-[36px] mb-3">⚙</p><p class="text-[14px] font-bold text-slate-600">No cost items configured for this FY</p></div>{% endif %}
-  </div>
+<div class="flex items-center justify-between">
+<div>
+<h1 class="text-[24px] font-extrabold text-slate-800 tracking-tight">Cost Catalogue</h1>
+<p class="text-[12px] text-[var(--text-secondary)] mt-1 font-semibold">FY{{ fy }} approved cost items for activity budgeting</p>
+</div>
+</div>
+{% if active_catalogue %}
+<div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-center gap-3">
+<span class="text-[20px]">✅</span>
+<div>
+<p class="text-[14px] font-extrabold text-emerald-800">Active Catalogue: {{ active_catalogue }}</p>
+<p class="text-[11px] text-emerald-600">Version {{ active_catalogue.version }} · {{ cost_items|length }} cost items</p>
+</div>
+</div>
+{% endif %}
+
+<div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm overflow-hidden">
+{% if cost_items %}
+<table class="edify-data-table">
+<thead>
+<tr>
+<th>Item</th>
+<th class="text-right">Rate (UGX)</th>
+<th>Unit</th>
+</tr>
+</thead>
+<tbody>
+{% for c in cost_items %}
+<tr class="hover:bg-slate-50/60">
+<td class="font-bold text-slate-800">{{ c.item_key|title|replace_underscore }}</td>
+<td class="text-right font-extrabold text-indigo-600">{{ c.rate|floatformat:0 }}</td>
+<td class="text-slate-500">{{ c.unit|default:"per unit" }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% else %}
+<div class="edify-empty-state py-12">
+<p class="text-[36px] mb-3">⚙</p>
+<p class="text-[14px] font-bold text-slate-600">No cost items configured for this FY</p>
+</div>
+{% endif %}
+</div>
 </div>
 {% endblock %}

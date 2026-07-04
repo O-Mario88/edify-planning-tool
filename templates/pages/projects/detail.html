@@ -2,92 +2,80 @@
 
 {% block title %}{{ project.name }} — Edify Command Center{% endblock %}
 
-{% block topbar_left %}
-<div>
-  <div class="flex items-center gap-2 mb-0.5">
-    <span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200">
-      Project
-    </span>
-    <h1 class="text-[18px] font-extrabold text-slate-800 tracking-tight leading-tight">{{ project.name }}</h1>
-  </div>
-  <p class="text-[11px] text-slate-500 font-semibold tracking-wide">Monitoring and execution tracker for specialized initiative.</p>
-</div>
-{% endblock %}
-
-{% block topbar_right %}
-  <a href="/projects" class="h-9 px-4 rounded-lg border border-[var(--border-card)] bg-white hover:bg-slate-50 text-[12px] font-bold text-slate-600 flex items-center justify-center transition-colors shadow-sm">
-    &larr; All Projects
-  </a>
-{% endblock %}
-
 {% block shell_content %}
 <div class="p-6 max-w-7xl mx-auto space-y-6">
-  
-  <!-- Matrix KPI Strip -->
-  <div class="matrix-kpi-strip">
-    <div class="matrix-kpi-item">
-      <div class="matrix-kpi-label">Assigned Schools</div>
-      <div class="matrix-kpi-value text-[var(--color-edify-primary)]">{{ school_assignments|length }}</div>
-    </div>
-    <div class="matrix-kpi-item">
-      <div class="matrix-kpi-label">Status</div>
-      <div class="matrix-kpi-value text-emerald-600 !text-[20px] uppercase">Active</div>
-    </div>
-    <div class="matrix-kpi-item">
-      <div class="matrix-kpi-label">Progress</div>
-      <div class="matrix-kpi-value text-indigo-600">--%</div>
-    </div>
-  </div>
-  
-  <div class="grid lg:grid-cols-3 gap-6 items-start">
-    <div class="lg:col-span-2 space-y-6">
-      <div class="premium-card overflow-hidden">
-        <div class="px-5 py-4 border-b border-[var(--border-card)] bg-slate-50/50 flex items-center justify-between">
-          <h2 class="text-[15px] font-extrabold text-slate-800 tracking-tight">Participating Schools</h2>
-          <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-200">{{ school_assignments|length }} Schools</span>
-        </div>
-        
-        <div class="divide-y divide-[var(--border-card)]">
-          {% if school_assignments %}
-            {% for sa in school_assignments %}
-              <div class="p-4 flex items-center justify-between hover:bg-slate-50/80 transition-colors group">
-                <div>
-                  <h4 class="text-[13.5px] font-extrabold text-slate-800 group-hover:text-[var(--color-edify-primary)] transition-colors">{{ sa.school.name }}</h4>
-                  <p class="text-[11.5px] text-slate-500 font-semibold mt-0.5">ID: {{ sa.school_id }} &bull; Added to project</p>
-                </div>
-                <a href="/schools/{{ sa.school_id }}" class="shrink-0 h-8 px-4 rounded-lg bg-[var(--color-edify-primary)]/10 hover:bg-[var(--color-edify-primary)] text-[var(--color-edify-dark)] hover:text-white text-[11.5px] font-extrabold flex items-center justify-center transition-colors">
-                  View Profile
-                </a>
-              </div>
-            {% endfor %}
-          {% else %}
-            <div class="p-12 text-center flex flex-col items-center justify-center space-y-3">
-              <div class="h-12 w-12 rounded-full bg-slate-50 flex items-center justify-center border border-[var(--border-card)]">
-                <svg class="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-              </div>
-              <p class="text-[13px] font-bold text-slate-500">No schools assigned to this project yet.</p>
-            </div>
-          {% endif %}
-        </div>
-      </div>
-    </div>
-    
-    <div class="space-y-6">
-      <div class="premium-card p-6">
-        <h3 class="text-[15px] font-extrabold text-slate-800 tracking-tight mb-4">Project Details</h3>
-        <div class="space-y-4">
-          <div>
-            <p class="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider mb-1">Project Name</p>
-            <p class="text-[13px] font-semibold text-slate-800">{{ project.name }}</p>
-          </div>
-          <div>
-            <p class="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider mb-1">Description</p>
-            <p class="text-[13px] font-medium text-slate-600 leading-relaxed">Special initiative to track progress and interventions across a selected cohort of schools.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+
+<!-- Page Header -->
+<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-100 pb-4">
+<div>
+<div class="flex items-center gap-2 mb-0.5">
+<span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200">
+Project
+</span>
+<h1 class="text-[24px] font-extrabold text-slate-800 tracking-tight leading-tight">{{ project.name }}</h1>
+</div>
+<p class="text-[12px] text-slate-500 mt-1 font-semibold">Monitoring and execution tracker for specialized initiative.</p>
+</div>
+
+<div>
+<a href="/projects" class="btn btn-ghost h-9 shadow-sm">
+&larr; All Projects
+</a>
+</div>
+</div>
+
+<!-- Unified KPI Strip -->
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
+
+<div class="grid lg:grid-cols-3 gap-6 items-start">
+<div class="lg:col-span-2 space-y-6">
+<div class="card overflow-hidden">
+<div class="px-5 py-4 border-b border-[var(--border-card)] bg-slate-50/50 flex items-center justify-between">
+<h2 class="text-[15px] font-extrabold text-slate-800 tracking-tight">Participating Schools</h2>
+<span class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-200">{{ school_assignments|length }} Schools</span>
+</div>
+
+<div class="divide-y divide-[var(--border-card)]">
+{% if school_assignments %}
+{% for sa in school_assignments %}
+<div class="p-4 flex items-center justify-between hover:bg-slate-50/80 transition-colors group">
+<div>
+<h4 class="text-[14px] font-extrabold text-slate-800 group-hover:text-[var(--color-edify-primary)] transition-colors">{{ sa.school.name }}</h4>
+<p class="text-[12px] text-slate-500 font-semibold mt-0.5">ID: {{ sa.school_id }} &bull; Added to project</p>
+</div>
+<a href="/schools/{{ sa.school_id }}" class="btn btn-smooth h-8 shadow-sm">
+View Profile
+</a>
+</div>
+{% endfor %}
+{% else %}
+<div class="p-12 text-center flex flex-col items-center justify-center space-y-3">
+<div class="h-12 w-12 rounded-full bg-slate-50 flex items-center justify-center border border-[var(--border-card)]">
+<svg class="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+</div>
+<p class="text-[14px] font-bold text-slate-500">No schools assigned to this project yet.</p>
+</div>
+{% endif %}
+</div>
+</div>
+</div>
+
+<div class="space-y-6">
+<div class="card p-6">
+<h3 class="text-[15px] font-extrabold text-slate-800 tracking-tight mb-4">Project Details</h3>
+<div class="space-y-4">
+<div>
+<p class="text-[11px] text-slate-400 font-extrabold uppercase tracking-wider mb-1">Project Name</p>
+<p class="text-[14px] font-semibold text-slate-800">{{ project.name }}</p>
+</div>
+<div>
+<p class="text-[11px] text-slate-400 font-extrabold uppercase tracking-wider mb-1">Description</p>
+<p class="text-[14px] font-medium text-slate-600 leading-relaxed">Special initiative to track progress and interventions across a selected cohort of schools.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
 
 </div>
 {% endblock %}

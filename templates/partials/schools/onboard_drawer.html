@@ -1,0 +1,128 @@
+{% extends "components/drawers/base_drawer.html" %}
+
+{% block drawer_title %}Onboard New School{% endblock %}
+{% block drawer_subtitle %}Manually create a new school in the directory and assign it to the active cluster.{% endblock %}
+
+{% block drawer_body %}
+<div class="space-y-6 font-sans">
+<form 
+hx-post="/schools/create-drawer" 
+hx-target="#drawer-container"
+class="space-y-4 font-sans text-[12px] font-bold text-slate-600"
+>
+{% csrf_token %}
+
+<!-- Pre-populated cluster reference -->
+{% if pre_cluster_id %}
+<input type="hidden" name="cluster_id" value="{{ pre_cluster_id }}">
+{% endif %}
+
+<!-- School ID -->
+<div>
+<label for="school_id" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">School ID / SF Code <span class="text-rose-500">*</span></label>
+<input 
+type="text" 
+name="school_id"
+id="school_id"
+required
+placeholder="e.g. SCH-9999"
+class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-blue-100"
+>
+</div>
+
+<!-- School Name -->
+<div>
+<label for="name" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">School Name <span class="text-rose-500">*</span></label>
+<input 
+type="text" 
+name="name" 
+id="name"
+required
+placeholder="e.g. Kampala Hope Academy"
+class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-blue-100"
+>
+</div>
+
+<!-- District Selection -->
+<div>
+<label for="district_id" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">District <span class="text-rose-500">*</span></label>
+<select 
+name="district_id" 
+id="district_id"
+required
+class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] mt-1 bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 cursor-pointer"
+>
+<option value="" disabled selected>Select a District</option>
+{% for d in districts %}
+<option value="{{ d.id }}">{{ d.name }} ({{ d.region.name }})</option>
+{% endfor %}
+</select>
+</div>
+
+<!-- School Type -->
+<div>
+<label for="school_type" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">School Classification</label>
+<select 
+name="school_type" 
+id="school_type"
+class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] mt-1 bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 cursor-pointer"
+>
+<option value="client" selected>Client School</option>
+<option value="core">Core School</option>
+<option value="project">Project School</option>
+</select>
+</div>
+
+<!-- Enrollment -->
+<div>
+<label for="enrollment" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Enrollment headcount</label>
+<input 
+type="number" 
+name="enrollment" 
+id="enrollment"
+min="0"
+placeholder="e.g. 250"
+class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-blue-100"
+>
+</div>
+
+<!-- Cluster assignment info notice -->
+{% if pre_cluster_id %}
+<div class="p-3 bg-emerald-50 rounded-xl border border-emerald-100/60 text-[11px] font-semibold text-emerald-800 leading-relaxed">
+<strong>Automatic Assignment</strong>: This school will be automatically added to the cluster checklist upon successful creation.
+</div>
+{% else %}
+<div>
+<label for="cluster_id" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Cluster Assignment</label>
+<select 
+name="cluster_id" 
+id="cluster_id"
+class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] mt-1 bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 cursor-pointer"
+>
+<option value="">Unassigned (Select later)</option>
+{% for c in clusters %}
+<option value="{{ c.id }}">{{ c.name }}</option>
+{% endfor %}
+</select>
+</div>
+{% endif %}
+
+<!-- Action Buttons -->
+<div class="drawer-footer pt-4 border-t border-slate-100">
+<button 
+type="button" 
+@click="$dispatch('close-drawer')"
+class="edify-action-button secondary h-9 transition-colors"
+>
+Cancel
+</button>
+<button 
+type="submit"
+class="edify-action-button primary h-9 transition-colors shadow-sm"
+>
+Create School
+</button>
+</div>
+</form>
+</div>
+{% endblock %}

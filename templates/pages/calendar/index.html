@@ -4,24 +4,24 @@
 
 {% block shell_content %}
 <div class="p-6 max-w-7xl mx-auto space-y-6">
-  
-  <div class="flex items-center justify-between">
-    <div>
-      <h1 class="text-[26px] font-extrabold text-slate-800 tracking-tight">Calendar</h1>
-      <p class="text-[12.5px] text-[var(--text-secondary)] mt-1 font-semibold">Edify Operations · Calendar</p>
-    </div>
-  </div>
-  
-  <div class="flex items-center justify-between mb-4">
-    <a href="/calendar?month={{ prev_month }}&year={{ prev_year }}" class="h-9 px-3 rounded-lg bg-slate-100 text-slate-600 text-[12px] font-bold hover:bg-slate-200 transition-all">← Prev</a>
-    <h2 class="text-[18px] font-extrabold text-slate-800">{{ month_name }} {{ year }}</h2>
-    <a href="/calendar?month={{ next_month }}&year={{ next_year }}" class="h-9 px-3 rounded-lg bg-slate-100 text-slate-600 text-[12px] font-bold hover:bg-slate-200 transition-all">Next →</a>
-  </div>
-  <div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm p-4">
-    <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-slate-400 uppercase mb-2"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
-    {% for week in calendar_weeks %}<div class="grid grid-cols-7 gap-1">{% for day in week %}<div class="h-12 rounded-lg {% if day == 0 %}bg-slate-50{% else %}bg-slate-100/50 hover:bg-indigo-50{% endif %} flex items-center justify-center text-[12px] font-bold text-slate-600">{% if day %}{{ day }}{% endif %}</div>{% endfor %}</div>{% endfor %}
-  </div>
-  {% if activities %}<div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm mt-4"><div class="px-5 py-4 border-b border-slate-100"><h3 class="text-[14px] font-extrabold text-slate-700">Activities This Month ({{ activities|length }})</h3></div><ul class="divide-y divide-slate-100">{% for a in activities %}<li class="px-5 py-3 flex items-center justify-between"><div><p class="text-[12.5px] font-bold text-slate-800">{{ a.activity_type|title }}{% if a.school %} @ {{ a.school.name }}{% endif %}</p><p class="text-[11px] text-slate-400">{{ a.planned_date }}</p></div><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full {% if a.status == 'completed' %}bg-emerald-50 text-emerald-700{% else %}bg-blue-50 text-blue-700{% endif %}">{{ a.status|title }}</span></li>{% endfor %}</ul></div>{% endif %}
+
+<div class="flex items-center justify-between">
+<div>
+<h1 class="text-[24px] font-extrabold text-slate-800 tracking-tight">Calendar</h1>
+<p class="text-[12px] text-[var(--text-secondary)] mt-1 font-semibold">Edify Operations · Calendar</p>
+</div>
+</div>
+
+<div class="flex items-center justify-between mb-4">
+<a href="/calendar?month={{ prev_month }}&year={{ prev_year }}" class="h-9 px-3 rounded-lg bg-slate-100 text-slate-600 text-[12px] font-bold hover:bg-slate-200 transition-all">← Prev</a>
+<h2 class="text-[18px] font-extrabold text-slate-800">{{ month_name }} {{ year }}</h2>
+<a href="/calendar?month={{ next_month }}&year={{ next_year }}" class="h-9 px-3 rounded-lg bg-slate-100 text-slate-600 text-[12px] font-bold hover:bg-slate-200 transition-all">Next →</a>
+</div>
+<div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm p-4">
+<div class="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-slate-400 uppercase mb-2"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
+{% for week in calendar_weeks %}<div class="grid grid-cols-7 gap-1">{% for day in week %}<div class="h-12 rounded-lg {% if day == 0 %}bg-slate-50{% else %}bg-slate-100/50 hover:bg-indigo-50{% endif %} flex items-center justify-center text-[12px] font-bold text-slate-600">{% if day %}{{ day }}{% endif %}</div>{% endfor %}</div>{% endfor %}
+</div>
+{% if activities %}<div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm mt-4"><div class="px-5 py-4 border-b border-slate-100"><h3 class="text-[14px] font-extrabold text-slate-700">Activities This Month ({{ activities|length }})</h3></div><ul class="divide-y divide-slate-100">{% for a in activities %}<li class="px-5 py-3 flex items-center justify-between"><div><p class="text-[12px] font-bold text-slate-800">{{ a.activity_type|title }}{% if a.school %} @ {{ a.school.name }}{% endif %}</p><p class="text-[11px] text-slate-400">{{ a.planned_date }}</p></div><span class="text-[11px] font-bold px-2 py-0.5 rounded-full {% if a.status == 'completed' %}bg-emerald-50 text-emerald-700{% else %}bg-blue-50 text-blue-700{% endif %}">{{ a.status|title }}</span></li>{% endfor %}</ul></div>{% endif %}
 
 </div>
 {% endblock %}

@@ -1,0 +1,261 @@
+{% load frontend_filters %}
+<!-- Activity Detail Floating Drawer with Backdrop Blur -->
+<div 
+x-data="{ activeTab: 'details' }"
+class="fixed inset-0 z-50 flex justify-end"
+aria-labelledby="slide-over-title" 
+role="dialog" 
+aria-modal="true"
+>
+<!-- Backdrop Blur overlay -->
+<div 
+class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" 
+onclick="document.getElementById('drawer-container').innerHTML = ''; document.body.style.overflow = '';"
+></div>
+
+<!-- Slide-in Container -->
+<div class="relative w-full max-w-xl bg-white shadow-2xl flex flex-col h-full z-10 transition-all duration-300 transform">
+
+<!-- Drawer Header -->
+<div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+<div>
+<span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-150 mb-1">
+Activity Parameters
+</span>
+<h2 class="text-[18px] font-black text-slate-800 tracking-tight leading-tight">
+{{ act.activity_type|title|replace_underscore }}
+</h2>
+</div>
+<button 
+type="button" 
+class="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-slate-200 text-slate-400 hover:text-slate-600 transition-colors"
+onclick="document.getElementById('drawer-container').innerHTML = ''; document.body.style.overflow = '';"
+>
+<span class="sr-only">Close panel</span>
+<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+</button>
+</div>
+
+<!-- Drawer Content Scrollable Area -->
+<div class="flex-1 overflow-y-auto p-5 space-y-6">
+
+<!-- Basic Meta Parameters -->
+<div class="grid grid-cols-2 gap-4 text-[12px]">
+<div>
+<p class="text-[11px] uppercase font-bold text-slate-400">Target Entity</p>
+<p class="font-extrabold text-[#2e505f] mt-0.5">
+{% if act.school %}
+🏫 {{ act.school.name }} (ID: {{ act.school.school_id }})
+{% elif act.cluster %}
+👥 {{ act.cluster.name }}
+{% endif %}
+</p>
+</div>
+<div>
+<p class="text-[11px] uppercase font-bold text-slate-400">Planned Date</p>
+<p class="font-bold text-slate-700 mt-0.5">📅 {{ act.planned_date|default:"Unscheduled" }}</p>
+</div>
+<div>
+<p class="text-[11px] uppercase font-bold text-slate-400">Responsible User / Partner</p>
+<p class="font-bold text-slate-700 mt-0.5">
+👤 {{ act.responsible_staff_name|default:"CCEO User" }}
+{% if act.delivery_type == 'partner' %}
+<span class="text-blue-600 font-extrabold">(Partner Monitored)</span>
+{% endif %}
+</p>
+</div>
+<div>
+<p class="text-[11px] uppercase font-bold text-slate-400">Intervention Focus</p>
+<p class="font-semibold text-slate-800 mt-0.5 capitalize">{{ act.focus_intervention|default:"General"|replace_underscore }}</p>
+</div>
+</div>
+
+<!-- Segmented Details Tabs -->
+<div class="border-b border-slate-100 flex gap-2">
+<button 
+@click="activeTab = 'details'"
+class="pb-2 text-[12px] font-bold border-b-2 transition-all"
+:class="activeTab === 'details' ? 'border-[#2e505f] text-[#2e505f]' : 'border-transparent text-slate-400'"
+>
+Overview & Description
+</button>
+<button 
+@click="activeTab = 'finance'"
+class="pb-2 text-[12px] font-bold border-b-2 transition-all"
+:class="activeTab === 'finance' ? 'border-[#2e505f] text-[#2e505f]' : 'border-transparent text-slate-400'"
+>
+Finance & Budget
+</button>
+<button 
+@click="activeTab = 'evidence'"
+class="pb-2 text-[12px] font-bold border-b-2 transition-all"
+:class="activeTab === 'evidence' ? 'border-[#2e505f] text-[#2e505f]' : 'border-transparent text-slate-400'"
+>
+Evidence & SF ID ({{ evidence_list|length }})
+</button>
+</div>
+
+<!-- Tab Details: Overview & Description -->
+<div x-show="activeTab === 'details'" class="space-y-4" x-transition>
+<div>
+<h4 class="text-[11px] uppercase font-bold text-slate-400">Activity Purpose & Context</h4>
+<p class="text-[12px] font-semibold text-slate-700 leading-relaxed mt-1 bg-slate-50 p-3 rounded-lg border border-slate-100">
+{{ act.activity_purpose_text|default:"No purpose description text entered." }}
+</p>
+</div>
+<div>
+<h4 class="text-[11px] uppercase font-bold text-slate-400">Expected Outcome</h4>
+<p class="text-[12px] font-semibold text-slate-700 leading-relaxed mt-1 bg-slate-50 p-3 rounded-lg border border-slate-100">
+{{ act.expected_outcome|default:"No expected outcome text entered." }}
+</p>
+</div>
+
+<!-- Workflow Lifecycle Status tracker -->
+<div class="bg-slate-50 p-4 border border-slate-100 rounded-xl space-y-2.5">
+<h4 class="text-[11px] uppercase font-bold text-slate-400">System Workflow Auditing</h4>
+<div class="grid grid-cols-2 gap-3 text-[12px] font-semibold">
+<div class="flex items-center gap-1.5">
+<span>Status:</span>
+<span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-bold uppercase {{ status_class }}">
+{{ status_label }}
+</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span>IA Status:</span>
+<span class="text-slate-700 font-bold capitalize">{{ act.ia_verification_status }}</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span>Rescheduled:</span>
+<span class="text-slate-700 font-bold">{{ act.reschedule_count }} times</span>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Tab Finance: Budget Lines & Fund requests -->
+<div x-show="activeTab === 'finance'" class="space-y-4" x-transition>
+<div class="bg-slate-50 p-4 border border-slate-100 rounded-xl">
+<p class="text-[11px] uppercase font-bold text-slate-400 mb-1">Total Allocated Budget</p>
+<p class="text-[24px] font-black text-[#2e505f] leading-none">{{ act.est_cost_cents|ugx }}</p>
+<p class="text-[11px] text-slate-400 font-bold mt-1.5">Created automatically upon planning schedule</p>
+</div>
+
+<div>
+<h4 class="text-[11px] uppercase font-bold text-slate-400 mb-2">Budget Line Verification</h4>
+<div class="border border-slate-150 rounded-xl overflow-hidden">
+<table class="w-full text-left text-[12px] font-semibold">
+<thead>
+<tr class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-150">
+<th class="px-4 py-2.5">Item</th>
+<th class="px-4 py-2.5 text-center">Qty / Rate</th>
+<th class="px-4 py-2.5 text-center">Status</th>
+<th class="px-4 py-2.5 text-right">Value (UGX)</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-150">
+{% if act.schedule_cost_lines.all %}
+{% for line in act.schedule_cost_lines.all %}
+<tr>
+<td class="px-4 py-2.5 font-bold text-slate-800">
+{{ line.label }}
+{% if line.description %}
+<span class="block text-[11px] text-slate-400 font-semibold mt-0.5">{{ line.description }}</span>
+{% endif %}
+</td>
+<td class="px-4 py-2.5 text-center text-slate-500 font-bold">
+{{ line.quantity }} &times; {{ line.unit_cost|ugx }}
+</td>
+<td class="px-4 py-2.5 text-center">
+<span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-bold uppercase bg-blue-50/50 text-blue-700 border border-blue-150/40">
+{{ line.finance_status }}
+</span>
+</td>
+<td class="px-4 py-2.5 text-right font-extrabold text-slate-800">
+{{ line.amount|ugx }}
+</td>
+</tr>
+{% endfor %}
+{% else %}
+<tr>
+<td colspan="4" class="px-4 py-8 text-center text-slate-400 font-bold bg-slate-50/10">
+No budget lines created.
+</td>
+</tr>
+{% endif %}
+</tbody>
+</table>
+</div>
+</div>
+</div>
+
+<!-- Tab Evidence & Salesforce IDs -->
+<div x-show="activeTab === 'evidence'" class="space-y-4" x-transition>
+<div>
+<h4 class="text-[11px] uppercase font-bold text-slate-400">Activity SF ID</h4>
+{% if act.salesforce_activity_id %}
+<p class="text-[14px] font-bold text-slate-800 mt-1.5 flex items-center gap-1.5">
+<span class="text-emerald-500">✓</span> {{ act.salesforce_activity_id }}
+</p>
+{% else %}
+<p class="text-[12px] text-slate-400 font-semibold mt-1">No Activity SF ID uploaded yet.</p>
+{% endif %}
+</div>
+
+<div>
+<h4 class="text-[11px] uppercase font-bold text-slate-400 mb-2">Uploaded Evidence Records</h4>
+{% if evidence_list %}
+<div class="border border-slate-150 rounded-xl divide-y divide-slate-150 overflow-hidden">
+{% for ev in evidence_list %}
+<div class="px-4 py-3 flex items-center justify-between text-[12px]">
+<div>
+<p class="font-extrabold text-slate-800">{{ ev.original_name }}</p>
+<p class="text-[11px] text-slate-400 font-bold capitalize mt-0.5">{{ ev.file_type }} &bull; Uploaded {{ ev.created_at|date:"M j, Y" }}</p>
+</div>
+<span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-extrabold uppercase border bg-emerald-50 text-emerald-700 border-emerald-200">
+{{ ev.status }}
+</span>
+</div>
+{% endfor %}
+</div>
+{% else %}
+<div class="p-8 text-center border border-dashed border-slate-200 rounded-xl bg-slate-50/50 text-slate-400 text-[12px] font-bold">
+No evidence files uploaded yet.
+</div>
+{% endif %}
+</div>
+</div>
+
+</div>
+
+<!-- Drawer Footer Actions -->
+<div class="px-5 py-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-end gap-2.5">
+<button 
+type="button"
+class="btn btn-ghost h-10 text-[12px] shadow-sm font-extrabold"
+onclick="document.getElementById('drawer-container').innerHTML = ''; document.body.style.overflow = '';"
+>
+Close
+</button>
+
+{% if act.status != 'completed' %}
+<button 
+hx-get="/my-plan/{{ act.id }}/reschedule-drawer"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+class="btn btn-ghost h-10 text-[12px] text-amber-600 border-amber-200 hover:bg-amber-50 shadow-sm font-extrabold"
+>
+Reschedule
+</button>
+<button 
+hx-get="/my-plan/{{ act.id }}/complete-drawer"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+class="btn btn-primary h-10 text-[12px] shadow-sm font-extrabold"
+>
+Complete Activity
+</button>
+{% endif %}
+</div>
+
+</div>
+</div>

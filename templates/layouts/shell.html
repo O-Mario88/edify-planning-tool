@@ -1,272 +1,202 @@
 {% extends "base.html" %}
+{% load static %}
+{% load frontend_filters %}
 
 {% block content %}
 <div 
-  x-data="{ sidebarOpen: false, userMenuOpen: false, collapsed: false }" 
-  class="edify-shell h-full flex overflow-hidden"
+x-data="{ sidebarOpen: false, userMenuOpen: false, collapsed: false }" 
+class="edify-shell h-full flex overflow-hidden"
 >
-  <!-- Off-canvas mobile menu -->
-  <div 
-    x-show="sidebarOpen" 
-    class="md:hidden fixed inset-0 flex z-40" 
-    style="display: none;"
-    role="dialog" 
-    aria-modal="true"
-  >
-    <div 
-      x-show="sidebarOpen" 
-      x-transition:enter="transition-opacity ease-linear duration-300"
-      x-transition:enter-start="opacity-0"
-      x-transition:enter-end="opacity-100"
-      x-transition:leave="transition-opacity ease-linear duration-300"
-      x-transition:leave-start="opacity-100"
-      x-transition:leave-end="opacity-0"
-      class="fixed inset-0 bg-slate-600/75" 
-      @click="sidebarOpen = false"
-      aria-hidden="true"
-    ></div>
+<!-- Off-canvas mobile menu -->
+<div 
+x-show="sidebarOpen" 
+class="md:hidden fixed inset-0 flex z-40" 
+style="display: none;"
+role="dialog" 
+aria-modal="true"
+>
+<div 
+x-show="sidebarOpen" 
+x-transition:enter="transition-opacity ease-linear duration-300"
+x-transition:enter-start="opacity-0"
+x-transition:enter-end="opacity-100"
+x-transition:leave="transition-opacity ease-linear duration-300"
+x-transition:leave-start="opacity-100"
+x-transition:leave-end="opacity-0"
+class="fixed inset-0 bg-slate-600/75 backdrop-blur-sm" 
+@click="sidebarOpen = false"
+aria-hidden="true"
+></div>
 
-    <div 
-      x-show="sidebarOpen"
-      x-transition:enter="transition ease-in-out duration-300 transform"
-      x-transition:enter-start="-translate-x-full"
-      x-transition:enter-end="translate-x-0"
-      x-transition:leave="transition ease-in-out duration-300 transform"
-      x-transition:leave-start="translate-x-0"
-      x-transition:leave-end="-translate-x-full"
-      class="relative flex-1 flex flex-col max-w-xs w-full {% if use_dark_sidebar %}bg-[#08282c] border-r border-[#062023] text-slate-100{% else %}bg-white border-r border-slate-200{% endif %}"
-    >
-      <div class="absolute top-0 right-0 -mr-12 pt-2">
-        <button 
-          type="button" 
-          class="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white" 
-          @click="sidebarOpen = false"
-        >
-          <span class="sr-only">Close sidebar</span>
-          <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
+<div 
+x-show="sidebarOpen"
+x-transition:enter="transition ease-in-out duration-300 transform"
+x-transition:enter-start="-translate-x-full"
+x-transition:enter-end="translate-x-0"
+x-transition:leave="transition ease-in-out duration-300 transform"
+x-transition:leave-start="translate-x-0"
+x-transition:leave-end="-translate-x-full"
+class="app-sidebar relative flex-1 flex flex-col max-w-xs w-full text-slate-100"
+style="height: 100%;"
+>
+<div class="absolute top-0 right-0 -mr-12 pt-2">
+<button 
+type="button" 
+class="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white" 
+@click="sidebarOpen = false"
+>
+<span class="sr-only">Close sidebar</span>
+<svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+</svg>
+</button>
+</div>
 
-      <!-- Mobile Sidebar Nav Content -->
-      <div class="flex-1 h-0 pt-5 pb-4 overflow-y-auto">
-        <div class="flex-shrink-0 flex items-center gap-2.5 px-6">
-          <!-- Blue logo icon -->
-          <div class="h-8 w-8 rounded-lg {% if use_dark_sidebar %}bg-[#104a50] text-[#ffcc00] border border-[#145d65]{% else %}bg-blue-50 text-[var(--color-edify-primary)] border border-blue-100{% endif %} flex items-center justify-center shrink-0">
-            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
-          </div>
-          <div class="flex flex-col">
-            <span class="text-[20px] font-black {% if use_dark_sidebar %}text-white{% else %}text-[#002855]{% endif %} tracking-tight leading-none font-sans">{% if use_dark_sidebar %}SIPA{% else %}Edify{% endif %}</span>
-            <span class="text-[8px] {% if use_dark_sidebar %}text-[#a5c3c7]{% else %}text-slate-500{% endif %} font-bold uppercase tracking-wider mt-0.5">{% if use_dark_sidebar %}Plan. Invest. Impact.{% else %}Planning and Monitoring Tool{% endif %}</span>
-          </div>
-        </div>
-        <nav class="mt-8 px-2 space-y-1">
-          {% if use_dark_sidebar %}{% include "partials/finance/finance_sidebar_items.html" %}{% else %}{% include "layouts/navigation_items.html" %}{% endif %}
-        </nav>
-      </div>
-    </div>
-  </div>
+<!-- Mobile Sidebar Nav Content -->
+{% include "components/sidebar.html" %}
+</div>
+</div>
 
-  <!-- Desktop Static Sidebar -->
-  <aside class="edify-sidebar hidden md:flex md:flex-shrink-0 transition-all duration-300" :class="collapsed ? 'w-20' : 'w-64'">
-    <div class="flex flex-col h-full w-full {% if use_dark_sidebar %}bg-[#08282c] border-r border-[#062023] text-slate-200{% else %}bg-transparent{% endif %}">
-      <!-- Brand Logo Section -->
-      <div class="py-6 px-5 border-b {% if use_dark_sidebar %}border-[#062023]{% else %}border-slate-100{% endif %}">
-        <div class="flex items-center gap-2.5 overflow-hidden">
-          <!-- Non-collapsed Logo -->
-          <div class="flex items-center gap-2.5 transition-opacity duration-300" :class="collapsed ? 'opacity-0 w-0 h-0 pointer-events-none' : 'opacity-100 flex'">
-            <div class="h-8 w-8 rounded-lg {% if use_dark_sidebar %}bg-[#104a50] text-[#ffcc00] border border-[#145d65]{% else %}bg-blue-50 text-[var(--color-edify-primary)] border border-blue-100{% endif %} flex items-center justify-center shrink-0">
-              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-            </div>
-            <div class="flex flex-col">
-              <span class="text-[20px] font-extrabold {% if use_dark_sidebar %}text-white{% else %}text-[#002855]{% endif %} tracking-tight leading-none font-sans">{% if use_dark_sidebar %}SIPA{% else %}Edify{% endif %}</span>
-              <span class="text-[8px] {% if use_dark_sidebar %}text-[#a5c3c7]{% else %}text-slate-500{% endif %} font-bold uppercase tracking-wider mt-0.5 whitespace-nowrap leading-tight">{% if use_dark_sidebar %}Plan. Invest. Impact.{% else %}Planning and<br>Monitoring Tool{% endif %}</span>
-            </div>
-          </div>
-          <!-- Collapsed Logo -->
-          <div class="transition-opacity duration-300" :class="collapsed ? 'opacity-100 flex' : 'opacity-0 w-0 h-0 pointer-events-none'">
-            <div class="h-8 w-8 rounded-lg {% if use_dark_sidebar %}bg-[#104a50] text-[#ffcc00] border border-[#145d65]{% else %}bg-blue-50 text-[var(--color-edify-primary)] border border-blue-100{% endif %} flex items-center justify-center">
-              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Nav Navigation Items -->
-      <div class="flex-1 flex flex-col min-h-0 overflow-y-auto">
-        <nav class="flex-1 px-3 py-4 space-y-1">
-          {% if use_dark_sidebar %}{% include "partials/finance/finance_sidebar_items.html" %}{% else %}{% include "layouts/navigation_items.html" %}{% endif %}
-        </nav>
-      </div>
-      
-      <!-- User Profile Box -->
-      <div class="border-t {% if use_dark_sidebar %}border-[#062023] bg-[#051c1f]{% else %}border-slate-100 bg-slate-50/50{% endif %} p-4">
-        <div class="flex items-center gap-3 overflow-hidden">
-          <div class="h-9 w-9 rounded-full bg-slate-700 overflow-hidden shrink-0 border border-slate-200">
-            <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=256&h=256&fit=crop" alt="Avatar" class="h-full w-full object-cover">
-          </div>
-          <div class="min-w-0 flex-1 transition-opacity duration-300" :class="collapsed ? 'opacity-0 w-0' : 'opacity-100'">
-            <p class="text-[12px] font-extrabold {% if use_dark_sidebar %}text-white{% else %}text-slate-800{% endif %} truncate leading-snug">{% if request.user.is_authenticated %}{{ request.user.name }}{% else %}Country Program Lead{% endif %}</p>
-            <p class="text-[10px] {% if use_dark_sidebar %}text-[#a5c3c7]{% else %}text-slate-400{% endif %} uppercase font-bold tracking-wider leading-none mt-0.5">{% if request.user.is_authenticated %}{{ request.user.active_role }}{% else %}Lead{% endif %}</p>
-          </div>
-          <div class="shrink-0 transition-opacity duration-300" :class="collapsed ? 'opacity-0 w-0' : 'opacity-100'">
-            <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-          </div>
-        </div>
-      </div>
+<!-- Desktop Static Sidebar -->
+<aside 
+class="app-sidebar hidden md:flex"
+:class="collapsed ? 'app-sidebar--collapsed' : ''"
+>
+{% include "components/sidebar.html" %}
+</aside>
 
-      <!-- Collapse Sidebar Toggle Button -->
-      <div class="border-t {% if use_dark_sidebar %}border-[#062023] bg-[#051c1f]{% else %}border-slate-100 bg-slate-50/80{% endif %} px-3 py-2">
-        <button 
-          @click="collapsed = !collapsed"
-          class="w-full flex items-center gap-3 px-3 py-2 {% if use_dark_sidebar %}text-[#a5c3c7] hover:text-white hover:bg-[#104a50]{% else %}text-slate-500 hover:bg-slate-100 hover:text-slate-800{% endif %} rounded-lg text-[12.5px] font-bold transition-all focus:outline-none"
-        >
-          <svg 
-            class="h-5 w-5 shrink-0 transition-transform duration-300" 
-            :class="collapsed ? 'rotate-180' : ''" 
-            fill="none" 
-            viewBox="0 0 24 24" 
-            stroke="currentColor" 
-            stroke-width="2"
-          >
-            <path stroke-linecap="round" stroke-linejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
-          </svg>
-          <span x-show="!collapsed">Collapse</span>
-        </button>
-      </div>
-    </div>
-  </aside>
+<!-- Main container -->
+<div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+<!-- Topbar -->
+<header class="edify-topbar shrink-0 relative z-10">
+<div class="flex items-center gap-4 flex-1">
+<button 
+type="button" 
+class="md:hidden h-9 w-9 flex items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 focus:outline-none" 
+@click="sidebarOpen = true"
+>
+<span class="sr-only">Open sidebar</span>
+<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
+<path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+</svg>
+</button>
 
-  <!-- Main container -->
-  <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
-    <!-- Topbar -->
-    <header class="edify-topbar shrink-0 relative z-10">
-      <div class="flex items-center gap-4 flex-1">
-        <button 
-          type="button" 
-          class="md:hidden h-9 w-9 flex items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 focus:outline-none" 
-          @click="sidebarOpen = true"
-        >
-          <span class="sr-only">Open sidebar</span>
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
-        
-        <!-- Search bar input from mockup -->
-        <div class="max-w-md w-full relative hidden sm:block">
-          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </div>
-          <input 
-            type="text" 
-            placeholder="Search schools, staff, districts..." 
-            {% if request.path == '/schools' or request.path == '/schools/' %}
-              id="topbar-search-input"
-              name="q"
-              value="{{ q|default:'' }}"
-              hx-get="/schools"
-              hx-target="#schools-table-container"
-              hx-trigger="keyup delay:300ms, search"
-              hx-include="#filters-form"
-            {% endif %}
-            class="h-9 w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-4 text-[12px] font-semibold focus:bg-white focus:outline-none transition-all placeholder-slate-400"
-          >
-        </div>
-      </div>
+<!-- Search bar input from mockup -->
+<div class="max-w-md w-full relative hidden sm:block">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+</svg>
+</div>
+<input 
+type="text" 
+placeholder="Search schools, staff, districts..." 
+{% if request.path == '/schools' or request.path == '/schools/' %}
+id="topbar-search-input"
+name="q"
+value="{{ q|default:'' }}"
+hx-get="/schools"
+hx-target="#schools-table-container"
+hx-trigger="keyup delay:300ms, search"
+hx-include="#filters-form"
+oninput="const p = document.getElementById('filters-page-input'); if (p) p.value = '1'"
+{% endif %}
+class="h-9 w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-4 text-[12px] font-semibold focus:bg-white focus:outline-none transition-all placeholder-slate-400"
+>
+</div>
+</div>
 
-      <!-- Header Right Utilities -->
-      <div class="flex items-center gap-4 shrink-0">
-        <!-- Notification bell (12) -->
-        <a 
-          href="/notifications" 
-          class="h-9 w-9 rounded-lg hover:bg-slate-50 text-slate-500 flex items-center justify-center relative transition-all"
-        >
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-          </svg>
-          <span class="absolute top-1 right-1 h-4 w-4 bg-[#2563eb] text-white text-[8px] font-extrabold rounded-full flex items-center justify-center border border-white">12</span>
-        </a>
+<!-- Header Right Utilities -->
+<div class="flex items-center gap-4 shrink-0">
+<button 
+hx-get="/notifications/drawer"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+class="h-9 w-9 rounded-lg hover:bg-slate-50 text-slate-500 flex items-center justify-center relative transition-all focus:outline-none"
+title="Notifications"
+>
+<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+</svg>
+<div id="notification-badge-container">
+{% if unread_notifications_count > 0 %}
+<span id="notification-badge-count" class="absolute top-1 right-1 h-4 w-4 bg-[#2563eb] text-white text-[11px] font-extrabold rounded-full flex items-center justify-center border border-white">
+{{ unread_notifications_count }}
+</span>
+{% endif %}
+</div>
+</button>
 
-        <!-- Help icon -->
-        <a 
-          href="/help" 
-          class="h-9 w-9 rounded-lg hover:bg-slate-50 text-slate-500 flex items-center justify-center transition-all"
-          title="Help Center"
-        >
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </a>
+<!-- Help icon -->
+<a 
+href="/help" 
+class="h-9 w-9 rounded-lg hover:bg-slate-50 text-slate-500 flex items-center justify-center transition-all"
+title="Help Center"
+>
+<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+</svg>
+</a>
 
-        <!-- Initials User Avatar Dropdown -->
-        <div class="relative" x-data="{ open: false }">
-          <button 
-            @click="open = !open" 
-            class="h-9 w-9 rounded-full bg-[#2563eb] text-white text-[12px] font-extrabold flex items-center justify-center hover:bg-opacity-95 shadow-sm focus:outline-none transition-all"
-          >
-            <span>DA</span>
-          </button>
-          
-          <div 
-            x-show="open" 
-            @click.outside="open = false" 
-            class="absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-xl shadow-lg py-1.5 text-[12px] z-50 overflow-hidden"
-            style="display: none;"
-          >
-            <div class="px-4 py-2 border-b border-slate-100">
-              <p class="font-extrabold text-slate-800">{{ request.user.name|default:"District Admin" }}</p>
-              <p class="text-[10px] text-slate-500 font-semibold truncate">{{ request.user.email|default:"admin@district.edify.org" }}</p>
-            </div>
-            
-            {% if request.user.role_enums|length > 1 %}
-              <div class="px-3 py-1 bg-slate-50 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Switch Active Role</div>
-              {% for r in request.user.role_enums %}
-                <form action="/auth/switch-role" method="post" class="m-0">
-                  {% csrf_token %}
-                  <input type="hidden" name="role" value="{{ r.value }}">
-                  <button 
-                    type="submit" 
-                    class="w-full text-left px-4 py-1.5 hover:bg-slate-50 font-semibold {% if request.user.active_role == r.value %}text-[#2563eb] font-extrabold{% else %}text-slate-600{% endif %}"
-                  >
-                    {{ r.value }}
-                  </button>
-                </form>
-              {% endfor %}
-              <div class="border-t border-slate-100 my-1.5"></div>
-            {% endif %}
-            
-            <a href="/profile" class="block px-4 py-1.5 text-slate-700 hover:bg-slate-50 font-semibold">My Profile</a>
-            <form action="/logout" method="post" class="m-0 border-t border-slate-100 mt-1">
-              {% csrf_token %}
-              <button 
-                type="submit" 
-                class="w-full text-left px-4 py-2 text-rose-600 hover:bg-rose-50 font-bold"
-              >
-                Sign out
-              </button>
-            </form>
-          </div>
-        </div>
-      </div>
-    </header>
+<!-- Initials User Avatar Dropdown -->
+<div class="relative" x-data="{ open: false }">
+<button 
+@click="open = !open" 
+class="h-9 w-9 rounded-full bg-[#2563eb] text-white text-[12px] font-extrabold flex items-center justify-center hover:bg-opacity-95 shadow-sm focus:outline-none transition-all"
+>
+<span>{{ request.user.name|avatar_initials }}</span>
+</button>
 
-    <!-- Main Content Area -->
-    <main class="flex-1 overflow-y-auto focus:outline-none relative bg-[var(--bg-page)]">
-      {% block shell_content %}{% endblock %}
-    </main>
-  </div>
-  
-  <!-- Global Drawer Interaction System Container -->
-  <div id="drawer-container"></div>
+<div 
+x-show="open" 
+@click.outside="open = false" 
+class="absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-xl shadow-lg py-1.5 text-[12px] z-50 overflow-hidden"
+style="display: none;"
+>
+<div class="px-4 py-2 border-b border-slate-100">
+<p class="font-extrabold text-slate-800">{{ request.user.name|default:"District Admin" }}</p>
+<p class="text-[11px] text-slate-500 font-semibold truncate">{{ request.user.email|default:"admin@district.edify.org" }}</p>
+</div>
+
+{% if request.user.role_enums|length > 1 %}
+<div class="px-3 py-1 bg-slate-50 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Switch Active Role</div>
+{% for r in request.user.role_enums %}
+<form action="/auth/switch-role" method="post" class="m-0">
+{% csrf_token %}
+<input type="hidden" name="role" value="{{ r.value }}">
+<button 
+type="submit" 
+class="w-full text-left px-4 py-1.5 hover:bg-slate-50 font-semibold {% if request.user.active_role == r.value %}text-[#2563eb] font-extrabold{% else %}text-slate-600{% endif %}"
+>
+{{ r.value }}
+</button>
+</form>
+{% endfor %}
+<div class="border-t border-slate-100 my-1.5"></div>
+{% endif %}
+
+<a href="/profile" class="block px-4 py-1.5 text-slate-700 hover:bg-slate-50 font-semibold">My Profile</a>
+<form action="/logout" method="post" class="m-0 border-t border-slate-100 mt-1">
+{% csrf_token %}
+<button 
+type="submit" 
+class="w-full text-left px-4 py-2 text-rose-600 hover:bg-rose-50 font-bold"
+>
+Sign out
+</button>
+</form>
+</div>
+</div>
+</div>
+</header>
+
+<!-- Main Content Area -->
+<main class="flex-1 overflow-y-auto focus:outline-none relative bg-[var(--bg-page)]">
+{% block shell_content %}{% endblock %}
+</main>
+</div>
+
+<!-- Global Drawer Interaction System Container -->
+<div id="drawer-container"></div>
 </div>
 {% endblock %}

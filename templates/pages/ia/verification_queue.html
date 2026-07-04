@@ -1,0 +1,222 @@
+{% extends "layouts/shell.html" %}
+{% load frontend_filters %}
+
+{% block title %}Quality Certification Queue - Edify Command Center{% endblock %}
+
+{% block shell_content %}
+<div class="p-6 max-w-7xl mx-auto space-y-6" x-data="{ activePill: 'all' }">
+
+<!-- Premium Header Pane -->
+<div class="relative overflow-hidden rounded-3xl bg-slate-900 text-white p-8 shadow-xl border border-slate-800">
+<!-- Neon blur backing accents -->
+<div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-blue-500/20 blur-3xl pointer-events-none"></div>
+<div class="absolute -left-20 -bottom-20 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none"></div>
+
+<div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+<div class="space-y-2">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[11px] font-black uppercase tracking-widest">
+<span class="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span>
+Audit Operations
+</div>
+<h1 class="text-[32px] font-black tracking-tight text-white leading-none">Quality Certification Queue</h1>
+<p class="text-[14px] text-slate-400 font-medium max-w-xl">
+Authoritative validation layer. Review implementation evidence, detect anomalies, cross-reference Salesforce logs, and certify school improvement activities.
+</p>
+</div>
+
+<!-- Metrics SLA summary badge -->
+<div class="shrink-0 flex flex-col gap-1.5 bg-slate-800/80 backdrop-blur-md border border-slate-700/50 p-4 rounded-2xl">
+<span class="text-[11px] text-slate-400 font-bold uppercase tracking-wider block">SLA COMPLIANCE</span>
+<div class="flex items-baseline gap-1">
+<span class="text-[24px] font-black text-emerald-400">98.4%</span>
+<span class="text-[11px] text-slate-400 font-bold">within 24h</span>
+</div>
+<!-- Simple linear progress bar -->
+<div class="w-36 h-1.5 bg-slate-700 rounded-full overflow-hidden mt-1">
+<div class="h-full bg-emerald-400 rounded-full" style="width: 98.4%"></div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- KPI Strip -->
+<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+<!-- Waiting -->
+<div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group">
+<span class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Awaiting Verification</span>
+<div class="flex items-baseline justify-between mt-3">
+<span class="text-[28px] font-black text-slate-800 leading-none">{{ kpis.waiting }}</span>
+<span class="p-1 rounded-lg bg-blue-50 text-blue-600 transition-colors group-hover:bg-blue-100">
+<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+</span>
+</div>
+</div>
+<!-- Verified Today -->
+<div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group">
+<span class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Verified Today</span>
+<div class="flex items-baseline justify-between mt-3">
+<span class="text-[28px] font-black text-emerald-600 leading-none">+{{ kpis.verified_today }}</span>
+<span class="p-1 rounded-lg bg-emerald-50 text-emerald-600 transition-colors group-hover:bg-emerald-100">
+<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+</span>
+</div>
+</div>
+<!-- Returned Today -->
+<div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group">
+<span class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Returned Today</span>
+<div class="flex items-baseline justify-between mt-3">
+<span class="text-[28px] font-black text-rose-600 leading-none">+{{ kpis.returned_today }}</span>
+<span class="p-1 rounded-lg bg-rose-50 text-rose-600 transition-colors group-hover:bg-rose-100">
+<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+</span>
+</div>
+</div>
+<!-- Avg SLA -->
+<div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group">
+<span class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Avg Process SLA</span>
+<div class="flex items-baseline justify-between mt-3">
+<span class="text-[28px] font-black text-slate-800 leading-none">{{ kpis.avg_time }}</span>
+<span class="p-1 rounded-lg bg-slate-50 text-slate-600 transition-colors group-hover:bg-slate-100">
+<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+</span>
+</div>
+</div>
+<!-- SSA Pending -->
+<div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group">
+<span class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">SSA Pending</span>
+<div class="flex items-baseline justify-between mt-3">
+<span class="text-[28px] font-black text-amber-600 leading-none">{{ kpis.ssa_pending }}</span>
+<span class="p-1 rounded-lg bg-amber-50 text-amber-600 transition-colors group-hover:bg-amber-100">
+<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+</span>
+</div>
+</div>
+<!-- Duplicate Risks -->
+<div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group">
+<span class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Duplicate Risks</span>
+<div class="flex items-baseline justify-between mt-3">
+<span class="text-[28px] font-black text-rose-600 leading-none">{{ kpis.duplicate_risks }}</span>
+<span class="p-1 rounded-lg bg-rose-50 text-rose-600 transition-colors group-hover:bg-rose-100">
+<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
+</span>
+</div>
+</div>
+<!-- High Priority -->
+<div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group">
+<span class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">High Priority</span>
+<div class="flex items-baseline justify-between mt-3">
+<span class="text-[28px] font-black text-[#2563eb] leading-none">{{ kpis.high_priority }}</span>
+<span class="p-1 rounded-lg bg-blue-50 text-[#2563eb] transition-colors group-hover:bg-blue-100">
+<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.907c.969 0 1.371 1.24.588 1.81l-3.97 2.883a1 1 0 00-.364 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.971-2.883a1 1 0 00-1.18 0l-3.97 2.883c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h4.907a1 1 0 00.95-.69l1.519-4.674z" /></svg>
+</span>
+</div>
+</div>
+</div>
+
+<!-- Filters Panel -->
+<div class="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm space-y-4">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-50 pb-4">
+<div class="flex items-center gap-2">
+<svg class="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
+<h3 class="text-[14px] font-black text-slate-800">Advanced Filters</h3>
+</div>
+
+<!-- Quick Filter Pills -->
+<div class="flex items-center gap-1.5 flex-wrap">
+<button 
+@click="activePill = 'all'; $refs.typeSelect.value = ''; $refs.typeSelect.dispatchEvent(new Event('change'))"
+:class="activePill === 'all' ? 'bg-[#2563eb] text-white' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'"
+class="px-3.5 py-1.5 rounded-full text-[11px] font-extrabold transition-all"
+>
+All Activities
+</button>
+<button 
+@click="activePill = 'visit'; $refs.typeSelect.value = 'school_visit'; $refs.typeSelect.dispatchEvent(new Event('change'))"
+:class="activePill === 'visit' ? 'bg-[#2563eb] text-white' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'"
+class="px-3.5 py-1.5 rounded-full text-[11px] font-extrabold transition-all"
+>
+School Visits
+</button>
+<button 
+@click="activePill = 'training'; $refs.typeSelect.value = 'training'; $refs.typeSelect.dispatchEvent(new Event('change'))"
+:class="activePill === 'training' ? 'bg-[#2563eb] text-white' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'"
+class="px-3.5 py-1.5 rounded-full text-[11px] font-extrabold transition-all"
+>
+Trainings
+</button>
+<button 
+@click="activePill = 'core'; $refs.scopeSelect.value = 'true'; $refs.scopeSelect.dispatchEvent(new Event('change'))"
+:class="activePill === 'core' ? 'bg-[#2563eb] text-white' : 'bg-slate-50 text-slate-600 hover:bg-slate-100'"
+class="px-3.5 py-1.5 rounded-full text-[11px] font-extrabold transition-all"
+>
+Core Scope
+</button>
+</div>
+</div>
+
+<form id="filters-form" hx-get="/ia/verification/" hx-target="#queue-table-container" hx-trigger="change, keyup delay:200ms" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-4">
+<!-- FY -->
+<div>
+<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1">Fiscal Year</label>
+<select name="fy" class="h-10 w-full bg-slate-50 border border-slate-200/80 rounded-xl text-[12px] font-bold text-slate-700 px-3 focus:bg-white focus:border-blue-500 focus:outline-none transition-all">
+<option value="">All FYs</option>
+<option value="FY24">FY24</option>
+<option value="FY25" selected>FY25</option>
+<option value="FY26">FY26</option>
+</select>
+</div>
+
+<!-- Quarter -->
+<div>
+<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1">Quarter</label>
+<select name="quarter" class="h-10 w-full bg-slate-50 border border-slate-200/80 rounded-xl text-[12px] font-bold text-slate-700 px-3 focus:bg-white focus:border-blue-500 focus:outline-none transition-all">
+<option value="">All Quarters</option>
+<option value="Q1">Q1</option>
+<option value="Q2">Q2</option>
+<option value="Q3">Q3</option>
+<option value="Q4">Q4</option>
+</select>
+</div>
+
+<!-- Activity Type -->
+<div>
+<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1">Activity Type</label>
+<select x-ref="typeSelect" name="activity_type" class="h-10 w-full bg-slate-50 border border-slate-200/80 rounded-xl text-[12px] font-bold text-slate-700 px-3 focus:bg-white focus:border-blue-500 focus:outline-none transition-all">
+<option value="">All Types</option>
+<option value="school_visit">School Visit</option>
+<option value="training">Training</option>
+<option value="cluster_meeting">Cluster Meeting</option>
+<option value="core_visit">Core Visit</option>
+<option value="core_training">Core Training</option>
+</select>
+</div>
+
+<!-- School Scope (Core Schools) -->
+<div>
+<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1">School Scope</label>
+<select x-ref="scopeSelect" name="core_school" class="h-10 w-full bg-slate-50 border border-slate-200/80 rounded-xl text-[12px] font-bold text-slate-700 px-3 focus:bg-white focus:border-blue-500 focus:outline-none transition-all">
+<option value="">All Schools</option>
+<option value="true">Core Schools Only</option>
+</select>
+</div>
+
+<!-- District -->
+<div>
+<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1">District Name</label>
+<input type="text" name="district" placeholder="Kampala, Masaka..." class="h-10 w-full bg-slate-50 border border-slate-200/80 rounded-xl text-[12px] font-bold text-slate-700 px-3.5 focus:bg-white focus:border-blue-500 focus:outline-none transition-all">
+</div>
+
+<!-- Staff Search -->
+<div>
+<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1">Responsible Staff</label>
+<input type="text" name="staff" placeholder="Search CCEO..." class="h-10 w-full bg-slate-50 border border-slate-200/80 rounded-xl text-[12px] font-bold text-slate-700 px-3.5 focus:bg-white focus:border-blue-500 focus:outline-none transition-all">
+</div>
+</form>
+</div>
+
+<!-- Queue Table Panel -->
+<div id="queue-table-container" class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden transition-all duration-300">
+{% include "pages/ia/partials/queue_table.html" %}
+</div>
+</div>
+{% endblock %}

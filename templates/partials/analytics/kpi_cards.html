@@ -1,0 +1,49 @@
+{% load frontend_filters %}
+
+<div id="analytics-kpi-and-content-container" class="space-y-6 font-sans">
+
+<!-- KPI Strip -->
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
+
+<!-- Main grid section (Layout Alignment Fixed using compiled lg:col-span-9 and lg:col-span-3) -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+<!-- Left 9 columns: Core dashboard content (lg:col-span-9) -->
+<div class="lg:col-span-9 space-y-6">
+
+<!-- Row 1: Charts (Performance Overview & SSA by Intervention) -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+{% include "partials/analytics/performance_overview.html" %}
+{% include "partials/analytics/ssa_performance.html" %}
+</div>
+
+<!-- Row 2: Regional performance, targets by district, cluster table -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+{% include "partials/analytics/target_by_district.html" %}
+{% include "partials/analytics/regional_performance.html" %}
+{% include "partials/analytics/cluster_performance.html" %}
+</div>
+
+<!-- Row 3: Impact Summary & Activity tracking -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+{% include "partials/analytics/impact_summary.html" %}
+{% include "partials/analytics/activity_tracking.html" %}
+</div>
+
+<!-- Row 4: Staff/Partner performance, Core/Champion metrics, Donor Reporting Snapshot -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+{% include "partials/analytics/staff_partner_performance.html" %}
+{% include "partials/analytics/core_champion_performance.html" %}
+{% include "partials/analytics/donor_reporting_snapshot.html" %}
+</div>
+
+</div>
+
+<!-- Right 3 columns: Recommended Insights Rail (lg:col-span-3) -->
+<div class="lg:col-span-3">
+{% include "partials/analytics/recommended_insights.html" %}
+</div>
+
+</div>
+
+</div>

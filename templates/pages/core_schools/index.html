@@ -1,22 +1,99 @@
-{% extends "layouts/shell.html" %}
+{% extends base_template %}
+{% load static %}
 
-{% block title %}Core Schools — Edify{% endblock %}
+{% block title %}Core School Dashboard — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6">
-  
-  <div class="flex items-center justify-between">
-    <div>
-      <h1 class="text-[26px] font-extrabold text-slate-800 tracking-tight">Core Schools</h1>
-      <p class="text-[12.5px] text-[var(--text-secondary)] mt-1 font-semibold">Edify Operations · Core Schools</p>
-    </div>
-  </div>
-  
-  <div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm overflow-hidden">
-    {% if plans %}<table class="w-full text-[12.5px]"><thead><tr class="bg-slate-50/60 border-b border-slate-100"><th class="text-left px-5 py-3 text-[10px] font-bold uppercase text-slate-400">School</th><th class="text-left px-4 py-3 text-[10px] font-bold uppercase text-slate-400">Status</th><th class="px-4 py-3"></th></tr></thead>
-    <tbody class="divide-y divide-slate-100">{% for p in plans %}<tr class="hover:bg-slate-50/60 group"><td class="px-5 py-3.5 font-bold text-slate-800">{{ p.school_id }}</td><td class="px-4 py-3.5"><span class="text-[10.5px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">{{ p.status }}</span></td><td class="px-4 py-3.5 text-right"><a href="/core-schools/{{ p.id }}" class="opacity-0 group-hover:opacity-100 text-[11px] font-bold text-[var(--color-edify-primary)] transition-opacity">View →</a></td></tr>{% endfor %}</tbody></table>
-    {% else %}<div class="p-12 text-center"><p class="text-[36px] mb-3">⭐</p><p class="text-[14px] font-bold text-slate-600">No core school plans</p></div>{% endif %}
-  </div>
+<div class="p-6 max-w-[1680px] mx-auto space-y-6 font-sans text-slate-700 bg-[#f8fafc] min-h-screen animate-fade-in" id="core-schools-main-container">
+
+<!-- TOP HEADER SECTION -->
+<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-4">
+<div>
+<h1 class="text-[28px] font-extrabold text-slate-900 tracking-tight leading-none font-sans">Core School Dashboard</h1>
+<p class="text-[14px] text-slate-500 font-medium mt-1.5">Plan and track the complete core service package: 4 Visits + 4 Trainings for every core school.</p>
+</div>
+</div>
+
+<!-- Filters inclusion -->
+{% include "partials/core_schools/filters.html" %}
+
+<!-- KPI Strip inclusion -->
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
+
+<!-- Multi-tab main panel layout (Matrix, Queue, Impact, Performance Insights) using Alpine.js -->
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-6" x-data="{ activeTab: 'matrix' }">
+
+<!-- Left 3 columns: Tab panels -->
+<div class="lg:col-span-3 space-y-6">
+
+<!-- Tab Headers -->
+<div class="flex items-center gap-2 border-b border-slate-100 pb-px">
+<button 
+@click="activeTab = 'matrix'"
+:class="activeTab === 'matrix' ? 'border-[#2e505f] text-[#2e505f]' : 'border-transparent text-slate-500 hover:text-slate-700'"
+class="h-10 px-4 border-b-2 text-[12px] font-black uppercase transition-all focus:outline-none"
+>
+Core Service Package Matrix
+</button>
+<button 
+@click="activeTab = 'queue'"
+:class="activeTab === 'queue' ? 'border-[#2e505f] text-[#2e505f]' : 'border-transparent text-slate-500 hover:text-slate-700'"
+class="h-10 px-4 border-b-2 text-[12px] font-black uppercase transition-all focus:outline-none"
+>
+Core Planning Queue
+</button>
+<button 
+@click="activeTab = 'impact'"
+:class="activeTab === 'impact' ? 'border-[#2e505f] text-[#2e505f]' : 'border-transparent text-slate-500 hover:text-slate-700'"
+class="h-10 px-4 border-b-2 text-[12px] font-black uppercase transition-all focus:outline-none"
+>
+Intervention Impact Tracker
+</button>
+<button 
+@click="activeTab = 'performance'"
+:class="activeTab === 'performance' ? 'border-[#2e505f] text-[#2e505f]' : 'border-transparent text-slate-500 hover:text-slate-700'"
+class="h-10 px-4 border-b-2 text-[12px] font-black uppercase transition-all focus:outline-none"
+>
+Staff vs Partner Performance
+</button>
+</div>
+
+<!-- Tab Content Cards -->
+<div class="bg-white rounded-xl border border-slate-100 shadow-sm p-6">
+
+<!-- Tab: Matrix -->
+<div x-show="activeTab === 'matrix'" id="core-schools-table-container">
+{% include "partials/core_schools/matrix_table.html" %}
+</div>
+
+<!-- Tab: Queue -->
+<div x-show="activeTab === 'queue'" style="display: none;">
+{% include "partials/core_schools/planning_queue.html" %}
+</div>
+
+<!-- Tab: Impact -->
+<div x-show="activeTab === 'impact'" style="display: none;">
+{% include "partials/core_schools/intervention_impact.html" %}
+</div>
+
+<!-- Tab: Performance -->
+<div x-show="activeTab === 'performance'" style="display: none;">
+{% include "partials/core_schools/performance_insights.html" %}
+</div>
 
 </div>
+
+</div>
+
+<!-- Right 1 column: Strategies, rules, and alert details -->
+<div class="lg:col-span-1">
+{% include "partials/core_schools/right_panel.html" %}
+</div>
+
+</div>
+
+</div>
+
+<!-- Drawer / Modal Container mount point -->
+<div id="drawer-container"></div>
 {% endblock %}

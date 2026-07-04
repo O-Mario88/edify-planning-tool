@@ -1,0 +1,225 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% load frontend_filters %}
+
+{% block drawer_title %}
+{% if action == 'disburse_advance' %}Disburse Weekly Advance
+{% elif action == 'clear_partner_payment' %}Clear Partner Payment
+{% elif action == 'process_reimbursement' %}Process Reimbursement
+{% elif action == 'confirm_accountability' %}Confirm Accountability Clearance
+{% elif action == 'return_correction' %}Return Item for Correction
+{% endif %}
+{% endblock %}
+
+{% block drawer_subtitle %}
+{% if action == 'disburse_advance' %}Record advance disbursement for {{ item.responsibleUserName }} (Week: {{ item.weekStartDate }})
+{% elif action == 'clear_partner_payment' %}Clear payment for partner intervention (Activity: {{ item.activityType|title }})
+{% elif action == 'process_reimbursement' %}Disburse reimbursement for self-funded activity (Staff: {{ item.responsible_user_id }})
+{% elif action == 'confirm_accountability' %}Approve submitted accountability for {{ item.responsibleUserName }}
+{% elif action == 'return_correction' %}Send item back to CCEO / Partner with correction notes
+{% endif %}
+{% endblock %}
+
+{% block drawer_body %}
+<form 
+hx-post="/finance/actions/{{ action }}"
+hx-target="#finance-errors"
+class="space-y-4 text-[12px] font-bold text-slate-600"
+>
+<div id="finance-errors"></div>
+
+{% if action == 'disburse_advance' %}
+<input type="hidden" name="request_id" value="{{ item.id }}">
+
+<!-- Amount -->
+<div>
+<label for="amount" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Disbursed Amount (UGX)</label>
+<input 
+type="number" 
+name="amount" 
+id="amount"
+required
+value="{{ item.totalAmount }}"
+class="w-full h-10 px-3 rounded-lg border border-slate-200 mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+>
+</div>
+
+<!-- Method -->
+<div>
+<label for="method" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Disbursement Method</label>
+<select 
+name="method" 
+id="method"
+required
+class="w-full h-10 px-3 rounded-lg border border-slate-200 mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+>
+<option value="mobile_money">Mobile Money</option>
+<option value="bank_transfer">Bank Transfer</option>
+<option value="cash">Cash / Petty Cash</option>
+</select>
+</div>
+
+<!-- Reference -->
+<div>
+<label for="reference" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Payment Reference ID / Tx ID</label>
+<input 
+type="text" 
+name="reference" 
+id="reference"
+required
+placeholder="e.g. TXN-123456789"
+class="w-full h-10 px-3 rounded-lg border border-slate-200 mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+>
+</div>
+
+{% elif action == 'clear_partner_payment' %}
+<input type="hidden" name="activity_id" value="{{ item.id }}">
+
+<!-- NetSuite Expense ID -->
+<div>
+<label for="netsuite_id" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">NetSuite Expense ID / Bill ID</label>
+<input 
+type="text" 
+name="netsuite_id" 
+id="netsuite_id"
+required
+placeholder="e.g. EXP-100458"
+class="w-full h-10 px-3 rounded-lg border border-slate-200 mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+>
+</div>
+
+<!-- Paid Amount -->
+<div>
+<label for="amount" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Amount Paid (UGX)</label>
+<input 
+type="number" 
+name="amount" 
+id="amount"
+required
+value="{{ item.estCostCents }}"
+class="w-full h-10 px-3 rounded-lg border border-slate-200 mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+>
+</div>
+
+<!-- Reference -->
+<div>
+<label for="reference" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Payment Reference / Bank Ref</label>
+<input 
+type="text" 
+name="reference" 
+id="reference"
+required
+placeholder="e.g. bank transfer code"
+class="w-full h-10 px-3 rounded-lg border border-slate-200 mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+>
+</div>
+
+{% elif action == 'process_reimbursement' %}
+<input type="hidden" name="advance_id" value="{{ item.id }}">
+
+<!-- NetSuite Expense ID -->
+<div>
+<label for="netsuite_id" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">NetSuite Expense ID</label>
+<input 
+type="text" 
+name="netsuite_id" 
+id="netsuite_id"
+required
+placeholder="e.g. EXP-200394"
+class="w-full h-10 px-3 rounded-lg border border-slate-200 mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+>
+</div>
+
+<!-- Amount -->
+<div>
+<label for="amount" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Reimbursement Amount (UGX)</label>
+<input 
+type="number" 
+name="amount" 
+id="amount"
+required
+value="{{ item.amount }}"
+class="w-full h-10 px-3 rounded-lg border border-slate-200 mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+>
+</div>
+
+<!-- Reference -->
+<div>
+<label for="reference" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Transaction Reference</label>
+<input 
+type="text" 
+name="reference" 
+id="reference"
+required
+placeholder="e.g. Mobile money tx id"
+class="w-full h-10 px-3 rounded-lg border border-slate-200 mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+>
+</div>
+
+{% elif action == 'confirm_accountability' %}
+<input type="hidden" name="request_id" value="{{ item.id }}">
+
+<div class="p-3 bg-blue-50 rounded-xl border border-blue-100 text-[12px] leading-relaxed text-blue-800 space-y-1">
+<p class="font-extrabold text-blue-900">Submitted Accountability Summary:</p>
+<p>&bull; Disbursed Amount: {{ item.totalAmount|ugx }} UGX</p>
+<p>&bull; Accounted Spent: {{ item.accountedAmount|ugx }} UGX</p>
+<p>&bull; Returned Balance: {{ item.returnedAmount|ugx }} UGX</p>
+<p>&bull; NetSuite ID: {{ item.accountabilityNetsuiteId|default:"None" }}</p>
+</div>
+
+<!-- NetSuite Expense ID (override if needed) -->
+<div>
+<label for="netsuite_id" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">NetSuite Expense / Journal Entry ID</label>
+<input 
+type="text" 
+name="netsuite_id" 
+id="netsuite_id"
+required
+value="{{ item.accountabilityNetsuiteId|default:'' }}"
+placeholder="e.g. JE-887766"
+class="w-full h-10 px-3 rounded-lg border border-slate-200 mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+>
+</div>
+
+{% elif action == 'return_correction' %}
+<input type="hidden" name="request_id" value="{{ item.id }}">
+
+<!-- Reason -->
+<div>
+<label for="reason" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Reason for Return</label>
+<textarea 
+name="reason" 
+id="reason"
+required
+rows="4"
+placeholder="Explain what needs correction (e.g. missing receipts, incorrect amount)..."
+class="w-full p-2.5 rounded-lg border border-slate-200 mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white placeholder-slate-400"
+></textarea>
+</div>
+{% endif %}
+
+<!-- Drawer Footer (Sticky Actions) -->
+<div class="drawer-footer">
+<button 
+type="button" 
+@click="
+if (isDirty) {
+if (confirm('You have unsaved changes. Discard changes?')) {
+$dispatch('close-drawer');
+}
+} else {
+$dispatch('close-drawer');
+}
+"
+class="edify-action-button secondary h-9 transition-colors"
+>
+Cancel
+</button>
+<button 
+type="submit"
+class="edify-action-button primary h-9 transition-colors shadow-sm"
+>
+Confirm Action
+</button>
+</div>
+</form>
+{% endblock %}

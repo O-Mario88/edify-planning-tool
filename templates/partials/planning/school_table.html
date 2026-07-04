@@ -1,232 +1,437 @@
 <!-- Client Schools Planning Table -->
 <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden font-sans" id="schools-table-container">
-  
-  <div class="overflow-x-auto">
-    <table class="edify-data-table min-w-[1000px]">
-      <thead>
-        <tr>
-          <th class="w-10">
-            <input 
-              type="checkbox" 
-              @change="if ($el.checked) { selectedSchools = [{% for r in schools %}'{{ r.schoolId }}',{% endfor %}] } else { selectedSchools = [] }"
-              class="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-            >
-          </th>
-          <th>School ID</th>
-          <th>School Name</th>
-          <th>District</th>
-          <th>Cluster</th>
-          <th>School Type</th>
-          <th>SSA Status</th>
-          <th>Weakest Intervention</th>
-          <th>Planning Readiness</th>
-          <th>Recommended Action</th>
-          <th>Current Partner Type</th>
-          <th class="text-right">Actions</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-slate-100 text-slate-700 font-semibold">
-        {% if schools %}
-          {% for r in schools %}
-            <tr 
-              class="hover:bg-slate-50/50 transition-colors cursor-pointer"
-              :class="selectedSchools.includes('{{ r.schoolId }}') ? 'bg-blue-50/30' : ''"
-              @click="if ($event.target.type !== 'checkbox' && !$event.target.closest('button') && !$event.target.closest('a')) { $dispatch('select-school', { id: '{{ r.schoolId }}' }) }"
-            >
-              <!-- Checkbox selection -->
-              <td class="px-4 py-3.5">
-                <input 
-                  type="checkbox" 
-                  value="{{ r.schoolId }}" 
-                  x-model="selectedSchools"
-                  class="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                  @click.stop
-                >
-              </td>
 
-              <!-- School ID -->
-              <td class="px-4 py-3.5 text-slate-400 font-bold">{{ r.schoolId }}</td>
+<div class="overflow-x-auto">
+<table class="edify-data-table min-w-[1000px]">
+{% if active_tab == 'clusters' %}
+<thead>
+<tr class="border-b border-slate-100 bg-slate-50/50 text-[11px] font-black uppercase text-slate-400 tracking-wider">
+<th class="w-10 px-4 py-3.5">
+<input 
+type="checkbox" 
+disabled 
+class="rounded border-slate-300 bg-slate-100/50 cursor-not-allowed opacity-60"
+>
+</th>
+<th class="px-4 py-3.5 text-left">Cluster ID / Name</th>
+<th class="px-4 py-3.5 text-left">District</th>
+<th class="px-4 py-3.5 text-center">Schools</th>
+<th class="px-4 py-3.5 text-center">Avg. SSA Score</th>
+<th class="px-4 py-3.5 text-left">Weakest Interventions</th>
+<th class="px-4 py-3.5 text-left">Readiness</th>
+<th class="px-4 py-3.5 text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 text-slate-700 font-semibold">
+{% if clusters %}
+{% for c in clusters %}
+<tr class="hover:bg-slate-50/50 transition-colors">
+<td class="px-4 py-3.5">
+<input type="checkbox" disabled class="rounded border-slate-300 bg-slate-100/50 cursor-not-allowed opacity-60">
+</td>
+<td class="px-4 py-3.5 font-extrabold text-slate-900">{{ c.name }}</td>
+<td class="px-4 py-3.5 text-slate-500">{{ c.district }}</td>
+<td class="px-4 py-3.5 text-center text-slate-600 font-bold">{{ c.school_count }}</td>
+<td class="px-4 py-3.5 text-center">
+<span class="inline-flex items-center rounded-lg px-2.5 py-0.5 text-[11px] font-extrabold border bg-emerald-50 text-emerald-700 border-emerald-150/60">
+{{ c.avg_ssa }}%
+</span>
+</td>
+<td class="px-4 py-3.5">
+<div class="flex flex-wrap gap-1">
+{% for w in c.weakest_interventions %}
+<span class="inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-extrabold bg-blue-50 text-blue-700 border border-blue-150/60">{{ w }}</span>
+{% endfor %}
+</div>
+</td>
+<td class="px-4 py-3.5">
+<span class="edify-status-badge success">Ready</span>
+</td>
+<td class="px-4 py-3.5 text-right" @click.stop>
+<div class="flex items-center justify-end gap-1.5">
+<button 
+hx-get="/planning/schedule-modal?cluster_id={{ c.id }}&action=training"
+hx-target="#drawer-container"
+class="h-7 px-3 rounded bg-blue-600 text-white text-[11px] font-black uppercase tracking-wider hover:bg-blue-700 shadow-sm transition-all"
+>
+Group Training
+</button>
+<button 
+hx-get="/planning/schedule-modal?cluster_id={{ c.id }}&action=meeting"
+hx-target="#drawer-container"
+class="h-7 px-3 rounded border border-slate-200 bg-white text-slate-600 text-[11px] font-black uppercase tracking-wider hover:bg-slate-55 shadow-sm transition-all"
+>
+Cluster Meeting
+</button>
+</div>
+</td>
+</tr>
+{% endfor %}
+{% else %}
+<tr>
+<td colspan="8" class="px-4 py-12 text-center text-slate-400 font-semibold bg-slate-50/10">
+No clusters ready to be scheduled.
+</td>
+</tr>
+{% endif %}
+</tbody>
+{% elif active_tab == 'partner' %}
+<thead>
+<tr class="border-b border-slate-100 bg-slate-50/50 text-[11px] font-black uppercase text-slate-400 tracking-wider">
+<th class="w-10 px-4 py-3.5">
+<input type="checkbox" disabled class="rounded border-slate-300 bg-slate-100/50 cursor-not-allowed opacity-60">
+</th>
+<th class="px-4 py-3.5 text-left">School Name</th>
+<th class="px-4 py-3.5 text-left">District</th>
+<th class="px-4 py-3.5 text-left">Assigned Partner</th>
+<th class="px-4 py-3.5 text-left">Primary Focus</th>
+<th class="px-4 py-3.5 text-left">Partner Status</th>
+<th class="px-4 py-3.5 text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 text-slate-700 font-semibold">
+{% if schools %}
+{% for r in schools %}
+<tr class="hover:bg-slate-50/50 transition-colors">
+<td class="px-4 py-3.5">
+<input type="checkbox" disabled class="rounded border-slate-300 bg-slate-100/50 cursor-not-allowed opacity-60">
+</td>
+<td class="px-4 py-3.5 font-extrabold text-slate-900">{{ r.name }}</td>
+<td class="px-4 py-3.5 text-slate-500">{{ r.district }}</td>
+<td class="px-4 py-3.5 text-slate-900 font-extrabold">{{ r.currentPartnerType }}</td>
+<td class="px-4 py-3.5 text-blue-600 font-bold">{{ r.weakestIntervention }}</td>
+<td class="px-4 py-3.5">
+{% if r.planningReadiness == 'Partner Pending Schedule' %}
+<span class="edify-status-badge warning">Partner Pending Schedule</span>
+{% elif r.planningReadiness == 'In My Plan' %}
+<span class="edify-status-badge success">In Partner My Plan</span>
+{% elif r.planningReadiness == 'Assigned to Partner' %}
+<span class="edify-status-badge info">Assigned to Partner</span>
+{% else %}
+<span class="edify-status-badge info">{{ r.planningReadiness }}</span>
+{% endif %}
+</td>
+<td class="px-4 py-3.5 text-right" @click.stop>
+<div class="flex items-center justify-end gap-1.5">
+{% if r.planningReadiness == 'In My Plan' %}
+<a href="/my-plan" class="edify-action-button secondary h-7 transition-colors shadow-sm">
+Open My Plan
+</a>
+{% else %}
+<span class="text-slate-400 text-[11px] font-bold">Monitor Partner Scheduling</span>
+{% endif %}
+</div>
+</td>
+</tr>
+{% endfor %}
+{% else %}
+<tr>
+<td colspan="7" class="px-4 py-12 text-center text-slate-400 font-semibold bg-slate-50/10">
+No partner assignments pending.
+</td>
+</tr>
+{% endif %}
+</tbody>
+{% else %}
+<thead>
+<tr>
+<th class="w-10">
+<input 
+type="checkbox" 
+@change="if ($el.checked) { selectedSchools = [{% for r in schools %}'{{ r.schoolId }}',{% endfor %}] } else { selectedSchools = [] }"
+class="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+>
+</th>
+<th>School ID</th>
+<th>School Name</th>
+<th>District</th>
+<th>Cluster</th>
+<th>School Type</th>
+<th>SSA Status</th>
+<th>Owner</th>
+<th>Cost Readiness</th>
+<th>Planning Readiness</th>
+<th>Intervention & Action</th>
+<th class="text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 text-slate-700 font-semibold">
+{% if schools %}
+{% for r in schools %}
+<tr 
+class="hover:bg-slate-50/50 transition-colors cursor-pointer"
+:class="selectedSchoolId === '{{ r.schoolId }}' ? 'bg-blue-50/40 border-l-2 border-l-blue-600' : (selectedSchools.includes('{{ r.schoolId }}') ? 'bg-blue-50/15' : '')"
+@click="if ($event.target.type !== 'checkbox' && !$event.target.closest('button') && !$event.target.closest('a')) { $dispatch('select-school', { id: '{{ r.schoolId }}' }) }"
+>
+<!-- Checkbox selection -->
+<td class="px-4 py-3.5">
+<input 
+type="checkbox" 
+value="{{ r.schoolId }}" 
+x-model="selectedSchools"
+class="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+@click.stop
+>
+</td>
 
-              <!-- School Name -->
-              <td class="px-4 py-3.5 font-extrabold text-slate-900">{{ r.name }}</td>
+<!-- School ID -->
+<td class="px-4 py-3.5 text-slate-400 font-bold">{{ r.schoolId }}</td>
 
-              <!-- District -->
-              <td class="px-4 py-3.5 text-slate-500">{{ r.district }}</td>
+<!-- School Name -->
+<td class="px-4 py-3.5 font-extrabold text-slate-900">{{ r.name }}</td>
 
-              <!-- Cluster -->
-              <td class="px-4 py-3.5 text-slate-500">{{ r.clusterName }}</td>
+<!-- District -->
+<td class="px-4 py-3.5 text-slate-500">{{ r.district }}</td>
 
-              <!-- School Type -->
-              <td class="px-4 py-3.5">
-                {% if r.schoolType == 'Client' %}
-                  <span class="edify-status-badge success">Client</span>
-                {% else %}
-                  <span class="edify-status-badge info">{{ r.schoolType }}</span>
-                {% endif %}
-              </td>
+<!-- Cluster -->
+<td class="px-4 py-3.5 text-slate-500">{{ r.clusterName }}</td>
 
-              <!-- SSA Status -->
-              <td class="px-4 py-3.5">
-                {% if r.ssaStatus == 'Complete' %}
-                  <span class="inline-flex items-center text-emerald-600 gap-1 text-[11px] font-bold">
-                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4"/></svg>
-                    Complete
-                  </span>
-                {% else %}
-                  <span class="inline-flex items-center text-rose-500 gap-1 text-[11px] font-bold">
-                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-                    Blocked
-                  </span>
-                {% endif %}
-              </td>
+<!-- School Type -->
+<td class="px-4 py-3.5">
+{% if r.schoolType == 'Client' %}
+<span class="edify-status-badge success">Client</span>
+{% else %}
+<span class="edify-status-badge info">{{ r.schoolType }}</span>
+{% endif %}
+</td>
 
-              <!-- Weakest Intervention -->
-              <td class="px-4 py-3.5 text-slate-500">{{ r.weakestIntervention }}</td>
+<!-- SSA Status -->
+<td class="px-4 py-3.5">
+{% if r.ssaStatus == 'Verified' or r.ssaStatus == 'Already Uploaded' %}
+<span class="inline-flex items-center text-emerald-600 gap-1.5 text-[12px] font-black">
+<span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+Verified
+</span>
+{% elif r.ssaStatus == 'No SSA' %}
+<span class="inline-flex items-center text-rose-500 gap-1.5 text-[12px] font-black">
+<span class="w-2 h-2 rounded-full bg-rose-500"></span>
+No SSA
+</span>
+{% elif r.ssaStatus == 'Pending IA Verification' %}
+<span class="inline-flex items-center text-indigo-500 gap-1.5 text-[12px] font-black">
+<span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+Pending Verification
+</span>
+{% elif r.ssaStatus == 'Returned for Correction' %}
+<span class="inline-flex items-center text-red-500 gap-1.5 text-[12px] font-black">
+<span class="w-2 h-2 rounded-full bg-red-500"></span>
+Returned
+</span>
+{% elif r.ssaStatus == 'Expired / Needs Refresh' %}
+<span class="inline-flex items-center text-orange-500 gap-1.5 text-[12px] font-black">
+<span class="w-2 h-2 rounded-full bg-orange-500"></span>
+Expired
+</span>
+{% else %}
+<span class="inline-flex items-center text-amber-600 gap-1.5 text-[12px] font-black">
+<span class="w-2 h-2 rounded-full bg-amber-500"></span>
+{{ r.ssaStatus }}
+</span>
+{% endif %}
+</td>
 
-              <!-- Planning Readiness -->
-              <td class="px-4 py-3.5">
-                {% if r.planningReadiness == 'Ready' %}
-                  <span class="edify-status-badge success">Ready</span>
-                {% else %}
-                  <span class="edify-status-badge danger">Blocked</span>
-                {% endif %}
-              </td>
+<!-- Owner -->
+<td class="px-4 py-3.5 text-slate-500 font-bold">
+{{ r.ownerName }}
+</td>
 
-              <!-- Recommended Action -->
-              <td class="px-4 py-3.5 text-slate-600 font-bold">{{ r.recommendedAction }}</td>
+<!-- Cost Readiness -->
+<td class="px-4 py-3.5">
+{% if r.cost_ready %}
+<span class="inline-flex items-center text-emerald-700 gap-1 text-[11px] font-black bg-emerald-50/50 px-2 py-0.5 rounded-lg border border-emerald-150/40">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+Ready
+</span>
+{% else %}
+<span class="inline-flex items-center text-rose-700 gap-1 text-[11px] font-black bg-rose-50/50 px-2 py-0.5 rounded-lg border border-rose-150/40">
+<span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+Blocked
+</span>
+{% endif %}
+</td>
 
-              <!-- Current Partner Type -->
-              <td class="px-4 py-3.5">
-                {% if r.currentPartnerType != 'None' %}
-                  <span class="text-blue-600 font-extrabold">Assigned</span>
-                {% else %}
-                  <span class="text-slate-400 font-bold">None</span>
-                {% endif %}
-              </td>
+<!-- Planning Readiness -->
+<td class="px-4 py-3.5">
+{% if r.planningReadiness == 'Cluster Required' %}
+<span class="edify-status-badge danger">Cluster Required</span>
+{% elif r.planningReadiness == 'Data Cleanup Required' %}
+<span class="edify-status-badge danger">Data Cleanup Required</span>
+{% elif r.planningReadiness == 'Cost Catalogue Required' %}
+<span class="edify-status-badge danger">Cost Catalogue Required</span>
+{% elif r.planningReadiness == 'SSA Required' %}
+<span class="edify-status-badge warning">SSA Required</span>
+{% elif r.planningReadiness == 'Ready for Support' %}
+<span class="edify-status-badge success">Ready for Support</span>
+{% elif r.planningReadiness == 'In My Plan' %}
+<span class="edify-status-badge success">In My Plan</span>
+{% elif r.planningReadiness == 'Assigned to Partner' %}
+<span class="edify-status-badge info">Assigned to Partner</span>
+{% elif r.planningReadiness == 'Partner Pending Schedule' %}
+<span class="edify-status-badge info">Partner Pending Schedule</span>
+{% else %}
+<span class="edify-status-badge info">{{ r.planningReadiness }}</span>
+{% endif %}
+</td>
 
-              <!-- Actions -->
-              <td class="px-4 py-3.5 text-right font-bold" @click.stop>
-                <div class="flex items-center justify-end gap-2">
-                  {% if r.planningReadiness == 'Ready' %}
-                    <!-- Schedule visit -->
-                    <button 
-                      hx-get="/planning/schedule-modal?school_id={{ r.schoolId }}"
-                      hx-target="#drawer-container"
-                      class="edify-action-button primary h-7 transition-colors shadow-sm"
-                    >
-                      Schedule
-                    </button>
-                    <!-- Assign to partner -->
-                    <button 
-                      hx-get="/planning/assign-partner-modal?school_id={{ r.schoolId }}"
-                      hx-target="#drawer-container"
-                      class="edify-action-button secondary h-7 transition-colors"
-                    >
-                      Assign to Partner
-                    </button>
-                  {% else %}
-                    <!-- Disabled Blocked Action button -->
-                    <button 
-                      disabled
-                      class="edify-action-button secondary h-7 opacity-50 cursor-not-allowed"
-                    >
-                      {{ r.blockedReason }}
-                    </button>
-                  {% endif %}
+<!-- Intervention & Recommended Action -->
+<td class="px-4 py-3.5">
+<div class="flex flex-col gap-0.5 text-left">
+<span class="text-[12px] text-slate-800 font-bold leading-tight">{{ r.recommendedAction }}</span>
+<span class="text-[11px] text-slate-500 font-bold">Focus: <span class="text-blue-600">{{ r.weakestIntervention }}</span></span>
+</div>
+</td>
 
-                  <!-- Quick View Links -->
-                  <a href="/schools/{{ r.schoolId }}" class="text-[10px] text-blue-600 hover:underline">View School</a>
-                  <a href="/ssa/history?school_id={{ r.schoolId }}" class="text-[10px] text-blue-600 hover:underline">View SSA</a>
-                  
-                  <!-- More Menu -->
-                  <div class="relative" x-data="{ menuOpen: false }">
-                    <button 
-                      @click="menuOpen = !menuOpen" 
-                      class="h-7 w-7 rounded hover:bg-slate-100 flex items-center justify-center text-slate-400 focus:outline-none"
-                    >
-                      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg>
-                    </button>
-                    <div 
-                      x-show="menuOpen" 
-                      @click.away="menuOpen = false"
-                      style="display: none;"
-                      class="absolute right-0 mt-1 w-36 bg-white border border-slate-100 rounded-lg shadow-lg z-20 py-1 text-left text-[11px] font-bold text-slate-600"
-                    >
-                      <a href="#" class="block px-3 py-1.5 hover:bg-slate-50">Upload SSA</a>
-                      <a href="#" class="block px-3 py-1.5 hover:bg-slate-50">View History</a>
-                      <a href="#" class="block px-3 py-1.5 hover:bg-slate-50 text-rose-600">Delete</a>
-                    </div>
-                  </div>
-                </div>
-              </td>
-            </tr>
-          {% endfor %}
-        {% else %}
-          <tr>
-            <td colspan="12" class="px-4 py-12 text-center text-slate-400 font-semibold bg-slate-50/10">
-              No planning records match your filters.
-              <div class="mt-1 text-[11px] text-slate-400 font-normal">Clear filters or adjust your search.</div>
-            </td>
-          </tr>
-        {% endif %}
-      </tbody>
-    </table>
-  </div>
+<!-- Actions -->
+<td class="px-4 py-3 text-right font-bold" @click.stop>
+<div class="flex items-center justify-end gap-2.5">
+{% if r.planningReadiness == 'Cluster Required' %}
+<button 
+hx-get="/schools/{{ r.id }}/add-to-cluster"
+hx-target="#drawer-container"
+class="edify-action-button primary h-7 transition-colors shadow-sm"
+>
+Add to Cluster
+</button>
+{% elif r.planningReadiness == 'Data Cleanup Required' %}
+<span class="inline-flex items-center text-slate-400 gap-1 text-[11px] font-bold select-none pr-1">
+<svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+Fix Data
+</span>
+{% elif r.planningReadiness == 'Cost Catalogue Required' %}
+<span class="inline-flex items-center text-slate-400 gap-1 text-[11px] font-bold select-none pr-1">
+<svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+Cost Blocked
+</span>
+{% elif r.planningReadiness == 'In My Plan' %}
+<a
+href="/my-plan"
+class="edify-action-button secondary h-7 transition-colors shadow-sm"
+>
+Open My Plan
+</a>
+{% else %}
+<!-- Schedule visit -->
+<button 
+{% if r.isScheduled %}
+hx-get="/my-plan/{{ r.scheduledActivityId }}/reschedule-drawer"
+{% else %}
+hx-get="/planning/schedule-modal?school_id={{ r.schoolId }}"
+{% endif %}
+hx-target="#drawer-container"
+class="edify-action-button primary h-7 transition-colors shadow-sm"
+>
+{% if r.isScheduled %}Reschedule{% else %}Schedule{% endif %}
+</button>
+<!-- Assign to partner -->
+<button 
+hx-get="/planning/assign-partner-modal?school_id={{ r.schoolId }}"
+hx-target="#drawer-container"
+class="edify-action-button secondary h-7 transition-colors"
+>
+Assign
+</button>
+{% endif %}
 
-  <!-- Pagination Strip -->
-  <div class="px-4 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-[11.5px] font-bold text-slate-500">
-    <span>Showing {{ showing_start }}–{{ showing_end }} of {{ total_count }} schools</span>
-    
-    <div class="flex items-center gap-4">
-      <div class="flex items-center gap-1">
-        {% if page > 1 %}
-          <button 
-            hx-get="/planning?page={{ page|add:-1 }}&per_page={{ per_page }}&fy={{ selected_fy }}&quarter={{ selected_quarter }}&district={{ selected_district }}&sub_county={{ selected_sub_county }}&staff={{ selected_staff }}&school_type={{ selected_school_type }}&planning_readiness={{ selected_readiness }}&ssa_status={{ selected_ssa_status }}&cluster_status={{ selected_cluster_status }}&partner={{ selected_partner }}&q={{ search_q }}&tab={{ active_tab }}"
-            hx-target="#schools-table-container"
-            hx-swap="outerHTML"
-            class="h-7 w-7 rounded border border-slate-200 bg-white hover:bg-slate-50 flex items-center justify-center"
-          >
-            &lt;
-          </button>
-        {% endif %}
-        
-        {% for p in pages_list %}
-          <button 
-            hx-get="/planning?page={{ p }}&per_page={{ per_page }}&fy={{ selected_fy }}&quarter={{ selected_quarter }}&district={{ selected_district }}&sub_county={{ selected_sub_county }}&staff={{ selected_staff }}&school_type={{ selected_school_type }}&planning_readiness={{ selected_readiness }}&ssa_status={{ selected_ssa_status }}&cluster_status={{ selected_cluster_status }}&partner={{ selected_partner }}&q={{ search_q }}&tab={{ active_tab }}"
-            hx-target="#schools-table-container"
-            hx-swap="outerHTML"
-            class="h-7 w-7 rounded border flex items-center justify-center {% if page == p %}border-blue-500 bg-blue-50 text-blue-600{% else %}border-slate-200 bg-white hover:bg-slate-50{% endif %}"
-          >
-            {{ p }}
-          </button>
-        {% endfor %}
-        
-        {% if page < total_pages %}
-          <button 
-            hx-get="/planning?page={{ page|add:1 }}&per_page={{ per_page }}&fy={{ selected_fy }}&quarter={{ selected_quarter }}&district={{ selected_district }}&sub_county={{ selected_sub_county }}&staff={{ selected_staff }}&school_type={{ selected_school_type }}&planning_readiness={{ selected_readiness }}&ssa_status={{ selected_ssa_status }}&cluster_status={{ selected_cluster_status }}&partner={{ selected_partner }}&q={{ search_q }}&tab={{ active_tab }}"
-            hx-target="#schools-table-container"
-            hx-swap="outerHTML"
-            class="h-7 w-7 rounded border border-slate-200 bg-white hover:bg-slate-50 flex items-center justify-center"
-          >
-            &gt;
-          </button>
-        {% endif %}
-      </div>
+<!-- Actions Dropdown -->
+<div class="relative" x-data="{ menuOpen: false }">
+<button 
+@click="menuOpen = !menuOpen" 
+class="h-7 w-7 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-400 focus:outline-none transition-colors"
+title="More actions"
+>
+<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg>
+</button>
+<div 
+x-show="menuOpen" 
+@click.away="menuOpen = false"
+style="display: none;"
+class="absolute right-0 mt-1 w-36 bg-white border border-slate-100 rounded-lg shadow-lg z-25 py-1 text-left text-[11px] font-bold text-slate-700"
+>
+<a href="/schools/{{ r.schoolId }}" class="block px-3 py-1.5 hover:bg-slate-50 flex items-center gap-1.5 text-slate-700">
+<svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+School Profile
+</a>
+<a href="/ssa/history?school_id={{ r.schoolId }}" class="block px-3 py-1.5 hover:bg-slate-50 flex items-center gap-1.5 text-slate-700">
+<svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+SSA History
+</a>
+</div>
+</div>
+</div>
+</td>
+</tr>
+{% endfor %}
+{% else %}
+<tr>
+<td colspan="11" class="px-4 py-12 text-center text-slate-400 font-semibold bg-slate-50/10">
+No planning records match your filters.
+<div class="mt-1 text-[11px] text-slate-400 font-normal">Clear filters or adjust your search.</div>
+</td>
+</tr>
+{% endif %}
+</tbody>
+{% endif %}
+</table>
+</div>
 
-      <div class="flex items-center gap-1.5">
-        <select 
-          name="per_page"
-          hx-get="/planning?page=1&fy={{ selected_fy }}&quarter={{ selected_quarter }}&district={{ selected_district }}&sub_county={{ selected_sub_county }}&staff={{ selected_staff }}&school_type={{ selected_school_type }}&planning_readiness={{ selected_readiness }}&ssa_status={{ selected_ssa_status }}&cluster_status={{ selected_cluster_status }}&partner={{ selected_partner }}&q={{ search_q }}&tab={{ active_tab }}"
-          hx-target="#schools-table-container"
-          hx-swap="outerHTML"
-          class="h-7 px-2 bg-white border border-slate-200 rounded font-bold cursor-pointer focus:outline-none"
-        >
-          <option value="10" {% if per_page == 10 %}selected{% endif %}>10 / page</option>
-          <option value="20" {% if per_page == 20 %}selected{% endif %}>20 / page</option>
-          <option value="50" {% if per_page == 50 %}selected{% endif %}>50 / page</option>
-        </select>
-      </div>
-    </div>
-  </div>
+<!-- Pagination Strip -->
+<div class="px-4 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-[12px] font-bold text-slate-500">
+<span>Showing {{ showing_start }}–{{ showing_end }} of {{ total_count }} {% if active_tab == 'clusters' %}clusters{% else %}schools{% endif %}</span>
+
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1">
+{% if page > 1 %}
+<button 
+hx-get="/planning?page={{ page|add:-1 }}&per_page={{ per_page }}&fy={{ selected_fy }}&quarter={{ selected_quarter }}&district={{ selected_district }}&sub_county={{ selected_sub_county }}&staff={{ selected_staff }}&school_type={{ selected_school_type }}&planning_readiness={{ selected_readiness }}&ssa_status={{ selected_ssa_status }}&cluster_status={{ selected_cluster_status }}&partner={{ selected_partner }}&q={{ search_q }}&tab={{ active_tab }}"
+hx-target="#schools-table-container"
+hx-swap="outerHTML"
+class="h-7 w-7 rounded border border-slate-200 bg-white hover:bg-slate-50 flex items-center justify-center"
+>
+&lt;
+</button>
+{% endif %}
+
+{% for p in pages_list %}
+{% if p == "..." %}
+<span class="w-7 text-center text-slate-400 font-bold">...</span>
+{% else %}
+<button 
+hx-get="/planning?page={{ p }}&per_page={{ per_page }}&fy={{ selected_fy }}&quarter={{ selected_quarter }}&district={{ selected_district }}&sub_county={{ selected_sub_county }}&staff={{ selected_staff }}&school_type={{ selected_school_type }}&planning_readiness={{ selected_readiness }}&ssa_status={{ selected_ssa_status }}&cluster_status={{ selected_cluster_status }}&partner={{ selected_partner }}&q={{ search_q }}&tab={{ active_tab }}"
+hx-target="#schools-table-container"
+hx-swap="outerHTML"
+class="h-7 w-7 rounded border flex items-center justify-center {% if page == p %}border-blue-500 bg-blue-50 text-blue-600 font-bold{% else %}border-slate-200 bg-white hover:bg-slate-50{% endif %}"
+>
+{{ p }}
+</button>
+{% endif %}
+{% endfor %}
+
+{% if page < total_pages %}
+<button 
+hx-get="/planning?page={{ page|add:1 }}&per_page={{ per_page }}&fy={{ selected_fy }}&quarter={{ selected_quarter }}&district={{ selected_district }}&sub_county={{ selected_sub_county }}&staff={{ selected_staff }}&school_type={{ selected_school_type }}&planning_readiness={{ selected_readiness }}&ssa_status={{ selected_ssa_status }}&cluster_status={{ selected_cluster_status }}&partner={{ selected_partner }}&q={{ search_q }}&tab={{ active_tab }}"
+hx-target="#schools-table-container"
+hx-swap="outerHTML"
+class="h-7 w-7 rounded border border-slate-200 bg-white hover:bg-slate-50 flex items-center justify-center"
+>
+&gt;
+</button>
+{% endif %}
+</div>
+
+<div class="flex items-center gap-1.5">
+<select 
+name="per_page"
+hx-get="/planning?page=1&fy={{ selected_fy }}&quarter={{ selected_quarter }}&district={{ selected_district }}&sub_county={{ selected_sub_county }}&staff={{ selected_staff }}&school_type={{ selected_school_type }}&planning_readiness={{ selected_readiness }}&ssa_status={{ selected_ssa_status }}&cluster_status={{ selected_cluster_status }}&partner={{ selected_partner }}&q={{ search_q }}&tab={{ active_tab }}"
+hx-target="#schools-table-container"
+hx-swap="outerHTML"
+class="h-7 px-2 bg-white border border-slate-200 rounded font-bold cursor-pointer focus:outline-none"
+>
+<option value="10" {% if per_page == 10 %}selected{% endif %}>10 / page</option>
+<option value="20" {% if per_page == 20 %}selected{% endif %}>20 / page</option>
+<option value="50" {% if per_page == 50 %}selected{% endif %}>50 / page</option>
+</select>
+</div>
+</div>
+</div>
 
 </div>
