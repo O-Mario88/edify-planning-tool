@@ -27,13 +27,17 @@ RUN apt-get update -y && apt-get install -y --no-install-recommends \
 COPY --from=build /install /usr/local
 # Application source.
 COPY . .
-# Collect static (DRF spectacular + admin assets).
-RUN python manage.py collectstatic --noinput || true
+# Collect static (DRF spectacular + admin assets). Fail the build if static
+# collection errors — a silent failure here means broken CSS/JS in production.
+RUN python manage.py collectstatic --noinput
 
+# Railway injects $PORT at runtime. Default to 4000 for local/docker-compose.
+ENV PORT=4000
 EXPOSE 4000
 # Apply migrations, optionally seed, then start the ASGI server (daphne for
 # realtime SSE + the scheduler). Health probe hits GET /api/health.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=5 \
   CMD curl -fsS "http://localhost:${PORT:-4000}/api/health" || exit 1
 ENTRYPOINT ["./docker-entrypoint.sh"]
-CMD ["daphne", "-b", "0.0.0.0", "-p", "4000", "config.asgi:application"]
+# Use a shell form so $PORT expands at runtime (Railway injects its own PORT).
+CMD daphne -b 0.0.0.0 -p ${PORT:-4000} config.asgi:application

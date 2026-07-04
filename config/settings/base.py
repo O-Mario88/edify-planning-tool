@@ -17,6 +17,10 @@ from urllib.parse import urlparse
 # edify-api/ is the project root (manage.py sits next to this package).
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
+import environ
+# Load .env file if it exists
+environ.Env.read_env(env_file=str(BASE_DIR / ".env"))
+
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 def _truthy(value: str | None, fallback: bool = False) -> bool:
@@ -114,6 +118,7 @@ MIDDLEWARE = [
     # threading it through every service. Mirrors NestJS requestContextMiddleware.
     "apps.core.middleware.RequestContextMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",  # before CommonMiddleware
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -138,6 +143,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "apps.core.context_processors.sidebar_counts",
             ],
         },
     },
@@ -159,22 +165,25 @@ _db_url = os.environ.get(
     f"{os.environ.get('POSTGRES_DB', 'edify_pm')}",
 )
 import sys
-_db = urlparse(_db_url)
 _is_testing = "test" in sys.argv or "pytest" in sys.modules
+
+# Parse database URL including query parameters (like sslmode=require) using django-environ
+_db_config = environ.Env.db_url_config(_db_url)
+
+# Clean up options that psycopg/libpq does not support
+if "OPTIONS" in _db_config:
+    # 'schema' is a Prisma query param; Django uses search_path in psycopg options
+    _schema = _db_config["OPTIONS"].pop("schema", None)
+    if _schema:
+        _db_config["OPTIONS"]["options"] = f"-c search_path={_schema}"
+
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": _db.path.lstrip("/") or "edify_pm",
-        "USER": _db.username or "edify",
-        "PASSWORD": _db.password or "",
-        "HOST": _db.hostname or "localhost",
-        "PORT": str(_db.port or 5432),
-        # Prisma used no special args; mirror that with sensible Postgres
-        # connection options. Persist the conn so the ASGI stream is cheap.
-        "CONN_HEALTH_CHECKS": True,
-        "CONN_MAX_AGE": 0 if _is_testing else 60,
-    }
+    "default": _db_config
 }
+
+# Apply default config parameters
+DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
+DATABASES["default"]["CONN_MAX_AGE"] = 0 if _is_testing else 60
 
 # ── Caching (Redis-backed with dynamic fallback to LocMemCache) ──────────────
 _redis_url = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0")

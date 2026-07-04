@@ -55,6 +55,21 @@ if _issues:
 # ── Hardened security posture ────────────────────────────────────────────────
 if "*" in ALLOWED_HOSTS:
     ALLOWED_HOSTS = []
+
+# Dynamically resolve Railway public domain if it exists
+railway_domain = os.environ.get("RAILWAY_PUBLIC_DOMAIN")
+if railway_domain:
+    if "://" in railway_domain:
+        railway_domain = railway_domain.split("://")[1]
+    railway_domain = railway_domain.split("/")[0].split(":")[0]
+    if railway_domain not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(railway_domain)
+
+# Allow local loopback addresses for container health probes
+for host in ["localhost", "127.0.0.1", "0.0.0.0"]:
+    if host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(host)
+
 if not ALLOWED_HOSTS:
     _issues.append("ALLOWED_HOSTS must be set to explicit hosts in production.")
     sys.stderr.write("Production environment is not safe:\n" + "\n".join(_issues) + "\n")
@@ -78,3 +93,12 @@ ENABLE_DEV_SEED = False
 ENABLE_DEV_IMPORTS = False
 ALLOW_LOCAL_TEST_UPLOADS = False
 PARTNER_ROLE_BRIDGE = False
+
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
