@@ -7,7 +7,7 @@ from apps.core.exceptions import NotFoundError
 from apps.core.fy import get_operational_fy
 
 from .models import (
-    DecisionNote, DecisionStatus, DecisionType, LeadershipDecisionInsight,
+    DecisionNote, LeadershipDecisionInsight,
 )
 
 
@@ -28,7 +28,7 @@ def boards(principal, query: dict) -> dict:
     for dtype, items in by_type.items():
         boards_data.append({
             "decisionType": dtype,
-            "canReview": principal.active_role in ("CountryDirector", "CountryProgramLead"),
+            "canReview": principal.active_role in ("CountryDirector", "Program Lead"),
             "insights": items
         })
         

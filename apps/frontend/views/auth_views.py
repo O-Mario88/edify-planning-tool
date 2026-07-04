@@ -3,7 +3,6 @@ from django.contrib.auth import authenticate, login as django_login, logout as d
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.contrib import messages
-from apps.accounts.models import User, EdifyRole
 
 def login_view(request):
     if request.user.is_authenticated:
@@ -51,9 +50,31 @@ def switch_role_view(request):
     role = request.POST.get("role")
     user = request.user
     if role in user.roles:
+        old_role = user.active_role
         user.active_role = role
         user.save()
+        from apps.audit.services import log as audit_log
+        audit_log(
+            action="role_switch",
+            subject_kind="User",
+            subject_id=str(user.id),
+            actor_id=str(user.id),
+            actor_role=role,
+            success=True,
+            payload={"old_role": old_role, "new_role": role}
+        )
         messages.success(request, f"Switched active role to {role}.")
     else:
+        from apps.audit.services import log as audit_log
+        audit_log(
+            action="role_switch",
+            subject_kind="User",
+            subject_id=str(user.id),
+            actor_id=str(user.id),
+            actor_role=user.active_role,
+            success=False,
+            reason=f"User attempted to switch to invalid/unassigned role: {role}",
+            payload={"requested_role": role}
+        )
         messages.error(request, "Access restricted: Invalid role request.")
     return redirect("/dashboard")

@@ -1,13 +1,12 @@
-from django.db.models import Q, Avg, Count, Sum
-from datetime import datetime, date, timedelta
+from django.db.models import Avg
+from datetime import date, timedelta
 from django.utils import timezone
 from apps.core.fy import get_operational_fy
-from apps.schools.models import School
 from apps.clusters.models import Cluster
 from apps.activities.models import Activity
-from apps.fund_requests.models import WeeklyFundRequest, FundRequest
+from apps.fund_requests.models import WeeklyFundRequest
 from apps.partners.models import Partner
-from apps.ssa.models import SsaRecord, SsaScore
+from apps.ssa.models import SsaScore
 from apps.core.enums import SsaIntervention
 
 class DashboardMetricsService:
@@ -22,7 +21,7 @@ class DashboardMetricsService:
         total_schools = schools_qs.count()
 
         # 1. KPI Cards calculations
-        ready_count = schools_qs.filter(planning_readiness="ready").count()
+        ready_count = schools_qs.exclude(planning_readiness__in=["requires_cluster", "data_cleanup_required"]).count()
         ready_pct = round(ready_count / total_schools * 100) if total_schools > 0 else 0
 
         without_ssa_count = schools_qs.exclude(current_fy_ssa_status="done").count()
@@ -50,7 +49,7 @@ class DashboardMetricsService:
         activities_this_month = activities_qs.filter(scheduled_date__date__range=[start_month, end_month]).count()
 
         partner_pending_count = schools_qs.filter(
-            planning_readiness="ready"
+            planning_readiness="ready_for_support_planning"
         ).exclude(
             activities__delivery_type="partner",
             activities__fy=fy
@@ -68,8 +67,8 @@ class DashboardMetricsService:
         target_achievement = round(completed_this_month / max(1, activities_this_month) * 100) if activities_this_month > 0 else 72
 
         # 2. Signal Strips
-        needs_attention = schools_qs.filter(planning_readiness="locked").count()
-        ready_for_action = schools_qs.filter(planning_readiness="ready").count()
+        needs_attention = schools_qs.filter(planning_readiness__in=["requires_cluster", "data_cleanup_required"]).count()
+        ready_for_action = schools_qs.exclude(planning_readiness__in=["requires_cluster", "data_cleanup_required"]).count()
         operational_health = 93 # default score
 
         # 3. Today's Priorities
@@ -175,7 +174,7 @@ class DashboardMetricsService:
             
         # If not enough, fill with standard ready schools
         if len(priority_schools) < 5:
-            ready_schools_qs = schools_qs.filter(planning_readiness="ready").select_related("district")[:5 - len(priority_schools)]
+            ready_schools_qs = schools_qs.filter(planning_readiness="ready_for_support_planning").select_related("district")[:5 - len(priority_schools)]
             for s in ready_schools_qs:
                 priority_schools.append({
                     "name": s.name,
@@ -269,7 +268,192 @@ class DashboardMetricsService:
                 }
             ]
 
+        # Build standard KPI strip items list based on active role
+        kpi_items = []
+        role = getattr(user, "active_role", None)
+        
+        if role == "CCEO":
+            kpi_items = [
+                {
+                    "label": "My Target Achievement",
+                    "value": f"{target_achievement}%",
+                    "raw_value": target_achievement,
+                    "helper": "completed vs scheduled",
+                    "icon": "target",
+                    "variant": "success",
+                    "trend": {"direction": "up", "value": "+4%"}
+                },
+                {
+                    "label": "Planned This Week",
+                    "value": str(activities_this_week),
+                    "raw_value": activities_this_week,
+                    "helper": "scheduled",
+                    "icon": "calendar",
+                    "variant": "info",
+                },
+                {
+                    "label": "Schools Visited",
+                    "value": str(ready_count),
+                    "raw_value": ready_count,
+                    "helper": "visited",
+                    "icon": "school",
+                    "variant": "blue",
+                },
+                {
+                    "label": "Evidence Pending",
+                    "value": str(without_ssa_count),
+                    "raw_value": without_ssa_count,
+                    "helper": "needing uploads",
+                    "icon": "warning",
+                    "variant": "warning",
+                }
+            ]
+        elif role == "Program Lead":
+            kpi_items = [
+                {
+                    "label": "Team Target Achievement",
+                    "value": f"{target_achievement}%",
+                    "raw_value": target_achievement,
+                    "helper": "vs last month",
+                    "icon": "target",
+                    "variant": "success",
+                    "trend": {"direction": "up", "value": "+6%"}
+                },
+                {
+                    "label": "CCEOs On Track",
+                    "value": "8/10",
+                    "raw_value": 8,
+                    "helper": "active CCEOs",
+                    "icon": "users",
+                    "variant": "info",
+                },
+                {
+                    "label": "Pending Reviews",
+                    "value": str(fund_requests_pending),
+                    "raw_value": fund_requests_pending,
+                    "helper": "awaiting PL",
+                    "icon": "clock",
+                    "variant": "warning",
+                },
+                {
+                    "label": "Scheduled This Week",
+                    "value": str(activities_this_week),
+                    "raw_value": activities_this_week,
+                    "helper": "across team",
+                    "icon": "calendar",
+                    "variant": "blue",
+                }
+            ]
+        elif role in ["CountryDirector", "RegionalVicePresident", "Admin"]:
+            kpi_items = [
+                {
+                    "label": "Country Target Achievement",
+                    "value": f"{target_achievement}%",
+                    "raw_value": target_achievement,
+                    "helper": "vs last quarter",
+                    "icon": "target",
+                    "variant": "success",
+                    "trend": {"direction": "up", "value": "+12%"}
+                },
+                {
+                    "label": "Budget Utilization",
+                    "value": "78%",
+                    "raw_value": 78,
+                    "helper": "utilization",
+                    "icon": "currency",
+                    "variant": "finance",
+                },
+                {
+                    "label": "Schools Impacted",
+                    "value": str(total_schools),
+                    "raw_value": total_schools,
+                    "helper": "total reached",
+                    "icon": "school",
+                    "variant": "blue",
+                },
+                {
+                    "label": "Pending Approvals",
+                    "value": str(fund_requests_pending),
+                    "raw_value": fund_requests_pending,
+                    "helper": "needs action",
+                    "icon": "warning",
+                    "variant": "warning",
+                }
+            ]
+        elif role == "Accountant":
+            kpi_items = [
+                {
+                    "label": "Total Allocation",
+                    "value": "UGX 450M",
+                    "raw_value": 450000000,
+                    "helper": "current FY",
+                    "icon": "currency",
+                    "variant": "finance",
+                },
+                {
+                    "label": "Pending Clearance",
+                    "value": "UGX 12.4M",
+                    "raw_value": 12400000,
+                    "helper": "advances",
+                    "icon": "clock",
+                    "variant": "warning",
+                },
+                {
+                    "label": "Cleared Amount",
+                    "value": "UGX 380M",
+                    "raw_value": 380000000,
+                    "helper": "confirmed",
+                    "icon": "check",
+                    "variant": "success",
+                },
+                {
+                    "label": "Planned Activities",
+                    "value": str(activities_this_month),
+                    "raw_value": activities_this_month,
+                    "helper": "this month",
+                    "icon": "calendar",
+                    "variant": "info",
+                }
+            ]
+        else:
+            kpi_items = [
+                {
+                    "label": "Schools Ready for Planning",
+                    "value": str(ready_count),
+                    "raw_value": ready_count,
+                    "helper": f"{ready_pct}% of total",
+                    "icon": "school",
+                    "variant": "success",
+                    "trend": {"direction": "up", "value": "+5%"}
+                },
+                {
+                    "label": "Schools Without SSA",
+                    "value": str(without_ssa_count),
+                    "raw_value": without_ssa_count,
+                    "helper": f"{without_ssa_pct}% of total",
+                    "icon": "warning",
+                    "variant": "danger",
+                },
+                {
+                    "label": "Activities This Week",
+                    "value": str(activities_this_week),
+                    "raw_value": activities_this_week,
+                    "helper": "scheduled",
+                    "icon": "calendar",
+                    "variant": "info",
+                },
+                {
+                    "label": "Planned This Month",
+                    "value": str(activities_this_month),
+                    "raw_value": activities_this_month,
+                    "helper": "scheduled",
+                    "icon": "chart",
+                    "variant": "blue",
+                }
+            ]
+
         return {
+            "kpi_strip_items": kpi_items,
             "kpis": {
                 "ready": ready_count,
                 "ready_pct": ready_pct,

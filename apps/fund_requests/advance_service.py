@@ -16,7 +16,7 @@ from __future__ import annotations
 from django.db import transaction
 from django.utils import timezone
 
-from apps.activities.models import Activity, ActivityScheduleCostLine
+from apps.activities.models import Activity
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 
 from .models import AdvanceRequest, AdvanceRequestStatus
@@ -35,41 +35,45 @@ def sync_for_activity(activity: Activity, responsible_user_id: str | None) -> No
     lines = list(activity.schedule_cost_lines.all())
     line_ids = {line.id for line in lines}
 
-    # Drop requests for budget lines that no longer exist — UNLESS the advance is
-    # already disbursed/accounted/reimbursed (those are past cancellation and the
-    # financial record must persist for audit/reconciliation).
-    AdvanceRequest.objects.filter(activity=activity).exclude(
-        budget_line_id__in=line_ids
-    ).exclude(
-        status__in=[AdvanceRequestStatus.DISBURSED, AdvanceRequestStatus.ACCOUNTED, AdvanceRequestStatus.REIMBURSED]
-    ).delete()
+    # The bulk-delete + per-line create/update must be atomic: a failure midway
+    # would leave the advance-request set inconsistent with the activity's
+    # budget lines (some deleted, some not yet recreated).
+    with transaction.atomic():
+        # Drop requests for budget lines that no longer exist — UNLESS the advance is
+        # already disbursed/accounted/reimbursed (those are past cancellation and the
+        # financial record must persist for audit/reconciliation).
+        AdvanceRequest.objects.filter(activity=activity).exclude(
+            budget_line_id__in=line_ids
+        ).exclude(
+            status__in=[AdvanceRequestStatus.DISBURSED, AdvanceRequestStatus.ACCOUNTED, AdvanceRequestStatus.REIMBURSED]
+        ).delete()
 
-    for line in lines:
-        adv = AdvanceRequest.objects.filter(budget_line=line).first()
-        if adv is None:
-            AdvanceRequest.objects.create(
-                activity=activity,
-                budget_line=line,
-                responsible_user_id=responsible,
-                fy=activity.fy,
-                quarter=activity.quarter,
-                month=activity.planned_month,
-                week=activity.planned_week,
-                planned_date=activity.scheduled_date,
-                amount=line.amount,
-                status=AdvanceRequestStatus.PENDING_RESPONSIBLE_CONFIRMATION,
-            )
-        else:
-            # Refresh mutable fields (amount may change on reschedule).
-            adv.amount = line.amount
-            adv.responsible_user_id = responsible or adv.responsible_user_id
-            adv.fy, adv.quarter = activity.fy, activity.quarter
-            adv.month, adv.week = activity.planned_month, activity.planned_week
-            adv.planned_date = activity.scheduled_date
-            adv.save(update_fields=[
-                "amount", "responsible_user_id", "fy", "quarter", "month", "week",
-                "planned_date", "updated_at",
-            ])
+        for line in lines:
+            adv = AdvanceRequest.objects.filter(budget_line=line).first()
+            if adv is None:
+                AdvanceRequest.objects.create(
+                    activity=activity,
+                    budget_line=line,
+                    responsible_user_id=responsible,
+                    fy=activity.fy,
+                    quarter=activity.quarter,
+                    month=activity.planned_month,
+                    week=activity.planned_week,
+                    planned_date=activity.scheduled_date,
+                    amount=line.amount,
+                    status=AdvanceRequestStatus.PENDING_RESPONSIBLE_CONFIRMATION,
+                )
+            else:
+                # Refresh mutable fields (amount may change on reschedule).
+                adv.amount = line.amount
+                adv.responsible_user_id = responsible or adv.responsible_user_id
+                adv.fy, adv.quarter = activity.fy, activity.quarter
+                adv.month, adv.week = activity.planned_month, activity.planned_week
+                adv.planned_date = activity.scheduled_date
+                adv.save(update_fields=[
+                    "amount", "responsible_user_id", "fy", "quarter", "month", "week",
+                    "planned_date", "updated_at",
+                ])
 
 
 # ── Responsible-user confirmation ────────────────────────────────────────────

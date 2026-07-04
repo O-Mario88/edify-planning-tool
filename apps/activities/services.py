@@ -16,13 +16,12 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
-from apps.core.enums import ActivityType
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.fy import get_operational_fy, get_quarter_for_date
 from apps.core.scoping import resolve_user_scope
 from apps.schools.models import School
 
-from .models import Activity, ActivityCompletionVerification, ActivityScheduleCostLine
+from .models import Activity, ActivityCompletionVerification
 from .salesforce import is_valid_salesforce_id
 
 
@@ -155,6 +154,7 @@ def _serialize(a: Activity) -> dict:
         "focusIntervention": a.focus_intervention,
         "secondaryFocusInterventions": a.secondary_focus_interventions,
         "expectedOutcome": a.expected_outcome,
+        "attendedSchoolIds": a.attended_school_ids,
     }
 
 
@@ -202,6 +202,12 @@ def create(data: dict, principal) -> dict:
     focus = data.get("focusIntervention")
     p_text = data.get("activityPurposeText")
 
+    is_ssa_activity = bool(activity_type in [
+        "baseline_ssa_visit", "school_visit_ssa_collection",
+        "cluster_training_ssa_collection", "cluster_meeting_ssa_review",
+        "partner_ssa_collection", "core_assessment_visit"
+    ] or data.get("ssaCollectionExpected") or data.get("ssa_collection_expected"))
+
     # Structured purpose validations
     import sys
     is_testing = 'test' in sys.argv or 'pytest' in sys.modules
@@ -228,16 +234,11 @@ def create(data: dict, principal) -> dict:
         school = School.objects.filter(school_id=school_id_str).first()
         if not school:
             raise NotFoundError(f"School {school_id_str} not in directory")
-        # SSA planning gate: locked until a complete current-FY SSA.
-        if school.current_fy_ssa_status != "done":
-            raise BadRequest(
-                f'Cannot schedule activity — "{school.name}" has no complete current-FY SSA. '
-                "Planning is locked until the SSA is recorded."
-            )
 
         # Validate that purposeIntervention/focusIntervention is justified by school's SSA scores
         purpose = focus or data.get("purposeIntervention")
-        if purpose:
+
+        if purpose and not is_ssa_activity:
             from apps.ssa.models import SsaRecord
             latest_ssa = SsaRecord.objects.filter(school=school, deleted_at__isnull=True).order_by("-date_of_ssa").first()
             if latest_ssa:
@@ -259,9 +260,9 @@ def create(data: dict, principal) -> dict:
     if not school and not cluster_id:
         raise BadRequest("Activity must reference a school or cluster")
     _assert_target_in_scope(school=school, cluster_id=cluster_id, principal=principal)
-    if activity_type in CLUSTER_ONLY_TYPES and not cluster_id:
+    if activity_type in CLUSTER_ONLY_TYPES and not cluster_id and activity_type != "core_training":
         raise BadRequest("Trainings and cluster meetings must be scheduled through a cluster, not on an individual school.")
-    if school and not cluster_id and activity_type not in SCHOOL_VISIT_TYPES:
+    if school and not cluster_id and activity_type not in SCHOOL_VISIT_TYPES and activity_type != "core_training":
         raise BadRequest("Only school visits may be scheduled directly from a school. Trainings must go through clusters.")
 
     is_partner = data.get("deliveryType") == "partner" or bool(data.get("assignedPartnerId"))
@@ -316,6 +317,7 @@ def create(data: dict, principal) -> dict:
         scheduled_date=scheduled_date,
         status=status,
         salesforce_activity_type=sf_kind(activity_type),
+        ssa_collection_expected=is_ssa_activity,
     )
     _apply_schedule_cost_snapshot(activity, data, principal=principal)
     return _serialize(activity)
@@ -350,10 +352,13 @@ def complete(activity_id: str, data: dict, principal) -> dict:
     # Evidence presence (lazily import to avoid a circular dep with evidence app).
     try:
         from apps.evidence.models import EvidenceRecord  # type: ignore
-
+    except ImportError:
+        # Evidence app genuinely absent (e.g. minimal install). Treat as no
+        # evidence available rather than pretending it exists — the gate below
+        # then blocks completion honestly.
+        evidence_count = 0
+    else:
         evidence_count = EvidenceRecord.objects.filter(activity_id=a.id, quarantined=False).count()
-    except Exception:  # noqa: BLE001
-        evidence_count = 1  # evidence app not yet present during build
     if evidence_count == 0:
         raise BadRequest("Upload evidence before submitting completion.")
 
@@ -382,11 +387,12 @@ def complete(activity_id: str, data: dict, principal) -> dict:
         a.teachers_attended = data.get("teachersAttended")
         a.leaders_attended = data.get("leadersAttended")
         a.other_participants = data.get("otherParticipants")
+        a.attended_school_ids = data.get("attendedSchoolIds") or []
         a.status = next_status
         a.evidence_status = "accepted" if a.evidence_status == "none" else a.evidence_status
         a.save(update_fields=[
             "salesforce_activity_id", "salesforce_activity_type", "teachers_attended",
-            "leaders_attended", "other_participants", "status", "evidence_status", "updated_at",
+            "leaders_attended", "other_participants", "attended_school_ids", "status", "evidence_status", "updated_at",
         ])
         ActivityCompletionVerification.objects.update_or_create(
             activity=a,
@@ -402,19 +408,69 @@ def ia_confirm(activity_id: str, data: dict | None = None, principal=None) -> di
         raise BadRequest("Activity is not awaiting IA verification")
     if a.delivery_type == "partner" and a.evidence_status != "accepted":
         raise Forbidden("Cannot confirm — partner evidence not accepted.")
+        
+    # For Core activities, perform strict validation:
+    if a.activity_type in ("core_visit", "core_training"):
+        try:
+            from apps.evidence.models import EvidenceRecord
+        except ImportError:
+            evidence_count = 0
+        else:
+            evidence_count = EvidenceRecord.objects.filter(activity_id=a.id, quarantined=False).count()
+        if evidence_count == 0:
+            raise BadRequest("IA Verification failed: No evidence files uploaded.")
+            
+        if not a.salesforce_activity_id:
+            raise BadRequest("IA Verification failed: Activity Salesforce ID is missing.")
+            
+        if not a.focus_intervention:
+            raise BadRequest("IA Verification failed: Focus intervention not recorded.")
+            
+        if a.school and a.school.school_type == "core":
+            from apps.ssa.models import SsaRecord
+            latest_ssa = SsaRecord.objects.filter(school=a.school, deleted_at__isnull=True).order_by("-date_of_ssa").first()
+            if not latest_ssa:
+                raise BadRequest("IA Verification failed: No Core Assessment / SSA baseline exists for this school.")
+
     a.status = "ia_verified"
     a.ia_verification_status = "confirmed"
     a.ia_confirmed_at = timezone.now()
     a.ia_confirmed_by = principal.user_id
-    if a.verification:
-        a.verification.status = "confirmed"
-        a.verification.ia_actor_id = principal.user_id
-        a.verification.ia_action_at = timezone.now()
-        a.verification.save(update_fields=["status", "ia_actor_id", "ia_action_at"])
-    # Payment path: partner activities enter the payment queue.
-    if a.delivery_type == "partner":
-        a.payment_status = "ia_confirmed"
-    a.save(update_fields=["status", "ia_verification_status", "ia_confirmed_at", "ia_confirmed_by", "payment_status", "updated_at"])
+    # Activity + verification are saved atomically so the two rows cannot
+    # diverge if the second write fails.
+    with transaction.atomic():
+        if hasattr(a, "verification") and a.verification:
+            a.verification.status = "confirmed"
+            a.verification.ia_actor_id = principal.user_id
+            a.verification.ia_action_at = timezone.now()
+            a.verification.save(update_fields=["status", "ia_actor_id", "ia_action_at"])
+        # Payment path: partner activities enter the payment queue.
+        if a.delivery_type == "partner":
+            a.payment_status = "ia_confirmed"
+        a.save(update_fields=["status", "ia_verification_status", "ia_confirmed_at", "ia_confirmed_by", "payment_status", "updated_at"])
+    return _serialize(a)
+
+
+def ia_return(activity_id: str, data: dict, principal) -> dict:
+    """IA returns the activity completion to CCEO/partner for correction."""
+    a = _get_in_scope(activity_id, principal)
+    if a.status != "awaiting_ia_verification":
+        raise BadRequest("Activity is not awaiting IA verification")
+
+    reason = data.get("reason", "").strip()
+    if not reason:
+        raise BadRequest("Return reason is required.")
+
+    a.status = "returned"
+    a.ia_verification_status = "returned"
+    a.pl_review_note = reason
+    # Activity + verification saved atomically so they cannot diverge.
+    with transaction.atomic():
+        a.save(update_fields=["status", "ia_verification_status", "pl_review_note", "updated_at"])
+        if hasattr(a, "verification") and a.verification:
+            a.verification.status = "returned"
+            a.verification.save(update_fields=["status"])
+
     return _serialize(a)
 
 
@@ -439,7 +495,10 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
         a.planned_week = data["plannedWeek"]
     a.reschedule_count += 1
     a.last_reason = data.get("reason")
-    a.status = "planned" if a.status in ("cancelled", "deferred") else "rescheduled"
+    if a.status == "assigned_to_partner" or a.delivery_type == "partner":
+        a.status = "partner_scheduled"
+    else:
+        a.status = "planned" if a.status in ("cancelled", "deferred") else "rescheduled"
     a.save(update_fields=[
         "scheduled_date", "fy", "quarter", "planned_month", "planned_week",
         "reschedule_count", "last_reason", "status", "updated_at",
@@ -464,26 +523,108 @@ def reassign(activity_id: str, data: dict, principal) -> dict:
 
 
 def partner_schedule(activity_id: str, data: dict, principal) -> dict:
-    a = _get_in_scope(activity_id, principal)
-    new_date = _parse_date(data["scheduledDate"])
-    a.scheduled_date = new_date
-    a.fy = get_operational_fy(new_date)
-    a.quarter = get_quarter_for_date(new_date)
-    # Keep the period fields the fund-request/advance period filter groups on.
-    if data.get("plannedMonth") is not None:
-        a.planned_month = data["plannedMonth"]
-    elif new_date:
-        a.planned_month = new_date.month
-    if data.get("plannedWeek") is not None:
-        a.planned_week = data["plannedWeek"]
-    a.status = "partner_scheduled"
-    a.save(update_fields=["scheduled_date", "fy", "quarter", "planned_month", "planned_week", "status", "updated_at"])
-    # Re-price through the central CostingService so the budget line follows the
-    # partner's new schedule (previously partner self-schedule moved the date but
-    # never re-priced — a stale-budget-line gap).
-    _apply_schedule_cost_snapshot(a, data, principal=principal)
-    a.save(update_fields=["est_cost_cents", "cost_missing", "updated_at"])
-    return _serialize(a)
+    from apps.partners.models import PartnerAssignment
+    from apps.core_schools.models import CoreActivitySlot, cslot_id
+    
+    pa = PartnerAssignment.objects.filter(id=activity_id).first()
+    if pa:
+        # Create a new Activity for this partner assignment. The multi-step
+        # write (Activity + PartnerAssignment + optional CoreActivitySlot +
+        # cost snapshot) is wrapped in a transaction so a failure midway
+        # cannot leave a partially-created Activity with an inconsistent
+        # PartnerAssignment or un-synced slot.
+        from apps.activities.models import Activity
+        scheduled_date = _parse_date(data["scheduledDate"])
+        fy = get_operational_fy(scheduled_date)
+        quarter = get_quarter_for_date(scheduled_date)
+
+        with transaction.atomic():
+            a = Activity.objects.create(
+                activity_type=pa.expected_activity_type or "core_visit",
+                school=pa.school,
+                cluster=pa.cluster,
+                fy=fy,
+                quarter=quarter,
+                responsible_staff_id=principal.id,
+                assigned_partner_id=pa.partner_id,
+                delivery_type="partner",
+                focus_intervention=pa.focus_intervention,
+                purpose_intervention=pa.focus_intervention,
+                activity_purpose_text=pa.notes or "Scheduled partner core support",
+                scheduled_date=scheduled_date,
+                status="partner_scheduled",
+            )
+
+            pa.status = "partner_scheduled"
+            pa.scheduled_date = scheduled_date
+            pa.save(update_fields=["status", "scheduled_date", "updated_at"])
+
+            if pa.school and pa.school.school_type == "core":
+                kind_prefix = "v" if pa.support_type == "Visit" else "t"
+                try:
+                    seq_num = int(pa.visit_number) if pa.visit_number else (int(pa.training_number) if pa.training_number else 1)
+                except ValueError:
+                    seq_num = 1
+                slot_id = cslot_id(pa.school.school_id, kind_prefix, seq_num)
+                slot = CoreActivitySlot.objects.filter(id=slot_id).first()
+                if slot:
+                    slot.status = "Scheduled"
+                    slot.activity_id = a.id
+                    slot.scheduled_for = scheduled_date
+                    slot.scheduled_month = str(scheduled_date.month) if scheduled_date else None
+                    slot.scheduled_week = min(5, (scheduled_date.day - 1) // 7 + 1) if scheduled_date else None
+                    slot.save()
+
+            _apply_schedule_cost_snapshot(a, data, principal=principal)
+            a.save(update_fields=["est_cost_cents", "cost_missing", "updated_at"])
+        return _serialize(a)
+
+    with transaction.atomic():
+        a = _get_in_scope(activity_id, principal)
+        new_date = _parse_date(data["scheduledDate"])
+        a.scheduled_date = new_date
+        a.fy = get_operational_fy(new_date)
+        a.quarter = get_quarter_for_date(new_date)
+        if data.get("plannedMonth") is not None:
+            a.planned_month = data["plannedMonth"]
+        elif new_date:
+            a.planned_month = new_date.month
+        if data.get("plannedWeek") is not None:
+            a.planned_week = data["plannedWeek"]
+        a.status = "partner_scheduled"
+        a.save(update_fields=["scheduled_date", "fy", "quarter", "planned_month", "planned_week", "status", "updated_at"])
+
+        # Update related PartnerAssignment if exists
+        from django.db.models import Q
+        pa_filter = Q()
+        if a.school_id:
+            pa_filter = Q(school_id=a.school_id)
+        elif a.cluster_id:
+            pa_filter = Q(cluster_id=a.cluster_id)
+        
+        if pa_filter:
+            pa_rec = PartnerAssignment.objects.filter(
+                pa_filter,
+                partner_id=a.assigned_partner_id,
+                status__in=["assigned", "assigned_to_partner_pending_scheduling"]
+            ).first()
+            if pa_rec:
+                pa_rec.status = "partner_scheduled"
+                pa_rec.scheduled_date = new_date.date() if new_date else None
+                pa_rec.save(update_fields=["status", "scheduled_date", "updated_at"])
+
+        # Update related CoreActivitySlot if exists
+        slot = CoreActivitySlot.objects.filter(activity_id=a.id).first()
+        if slot:
+            slot.status = "Scheduled"
+            slot.scheduled_for = new_date
+            slot.scheduled_month = str(new_date.month) if new_date else None
+            slot.scheduled_week = min(5, (new_date.day - 1) // 7 + 1) if new_date else None
+            slot.save()
+
+        _apply_schedule_cost_snapshot(a, data, principal=principal)
+        a.save(update_fields=["est_cost_cents", "cost_missing", "updated_at"])
+        return _serialize(a)
 
 
 def cancel(activity_id: str, data: dict, principal) -> dict:
@@ -624,7 +765,9 @@ def calculate_activity_impact(activity: Activity) -> dict:
             deleted_at__isnull=True
         ).order_by("date_of_ssa").first()
 
-        if not pre_ssa or not post_ssa:
+        if not pre_ssa:
+            return {"status": "Not Enough Data", "reason": "Impact cannot be measured yet because baseline SSA is missing."}
+        if not post_ssa:
             return {"status": "Not Enough Data", "reason": "Pre or Post SSA is missing."}
 
         pre_score = pre_ssa.scores.filter(intervention=focus).first()
@@ -714,6 +857,7 @@ __all__ = [
     "start_completion",
     "complete",
     "ia_confirm",
+    "ia_return",
     "reschedule",
     "reassign",
     "partner_schedule",

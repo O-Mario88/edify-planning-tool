@@ -2,19 +2,18 @@
 GROUP 3 — Partner Views
 Partner directory, partner detail, partner portal pages
 """
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.db.models import Q, Count
+from django.shortcuts import render, get_object_or_404
+from apps.core.permissions import require_page_permission
+from django.db.models import Q
 from datetime import date
 
 from apps.partners.models import Partner
 from apps.activities.models import Activity
 from apps.evidence.models import EvidenceRecord
 from apps.schools.models import School
-from apps.core.fy import get_operational_fy
 
 
-@login_required(login_url="/login")
+@require_page_permission("partners")
 def partners_list_view(request):
     """Partner organisations directory."""
     search = request.GET.get("q", "").strip()
@@ -31,7 +30,7 @@ def partners_list_view(request):
     return render(request, "pages/partners/index.html", context)
 
 
-@login_required(login_url="/login")
+@require_page_permission("partner_detail")
 def partner_detail_view(request, partner_id):
     """Partner detail — schools, activities, performance."""
     partner = get_object_or_404(Partner, id=partner_id, deleted_at__isnull=True)
@@ -45,15 +44,23 @@ def partner_detail_view(request, partner_id):
             deleted_at__isnull=True,
         ).select_related("school").order_by("-planned_date")[:30]
 
+    from apps.partners.models import PartnerAssignment
+    from apps.schools.models import School
+    from apps.ssa.services import get_ssa_progress_by_fy
+    assigned_school_ids = PartnerAssignment.objects.filter(partner=partner).values_list("school_id", flat=True)
+    partner_schools = School.objects.filter(id__in=assigned_school_ids, deleted_at__isnull=True)
+    partner_progress = get_ssa_progress_by_fy(partner_schools)
+
     context = {
         "partner": partner,
         "activities": activities,
         "completed": sum(1 for a in activities if a.status == "completed"),
+        "partner_progress": partner_progress,
     }
     return render(request, "pages/partners/detail.html", context)
 
 
-@login_required(login_url="/login")
+@require_page_permission("partner_today")
 def partner_today_view(request):
     """Partner dashboard — today's work."""
     user = request.user
@@ -79,7 +86,7 @@ def partner_today_view(request):
     return render(request, "pages/partner/today.html", context)
 
 
-@login_required(login_url="/login")
+@require_page_permission("partner_schools")
 def partner_schools_view(request):
     """Partner's assigned schools."""
     user = request.user
@@ -93,7 +100,7 @@ def partner_schools_view(request):
     return render(request, "pages/partner/schools.html", context)
 
 
-@login_required(login_url="/login")
+@require_page_permission("partner_activities")
 def partner_activities_view(request):
     """Partner activities log."""
     user = request.user
@@ -113,7 +120,7 @@ def partner_activities_view(request):
     return render(request, "pages/partner/activities.html", context)
 
 
-@login_required(login_url="/login")
+@require_page_permission("partner_evidence")
 def partner_evidence_view(request):
     """Partner evidence upload list."""
     user = request.user
@@ -134,3 +141,11 @@ def partner_evidence_view(request):
 
     context = {"evidence": evidence, "pending": pending}
     return render(request, "pages/partner/evidence.html", context)
+
+
+@require_page_permission("partner_my_plan")
+def partner_my_plan_view(request):
+    """Partner cockpit - scheduled activities for the partner organization."""
+    from apps.my_plan.services import get_frontend_context
+    context = get_frontend_context(request.user, request.GET)
+    return render(request, "pages/partner/my_plan.html", context)

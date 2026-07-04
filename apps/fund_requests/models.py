@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from django.db import models
 
-from apps.core.enums import VerificationStatus
 from apps.core.models import CuidField, TimeStampedModel
 
 
@@ -237,7 +236,21 @@ class WeeklyFundRequestLine(TimeStampedModel):
         ]
 
 
+from .finance_models import (
+    Disbursement,
+    PartnerPayment,
+    ReimbursementClaim,
+    AccountabilityRecord,
+    Receipt,
+    NetSuiteExpenseRecord,
+    FinanceReturn,
+    VarianceReview,
+    FinanceAuditLog
+)
+
 __all__ = [
     "FundRequestPeriod", "FundRequestStatus", "FundRequest", "FundRequestItem",
     "AdvanceRequestStatus", "AdvanceRequest", "WeeklyFundRequest", "WeeklyFundRequestLine",
+    "Disbursement", "PartnerPayment", "ReimbursementClaim", "AccountabilityRecord",
+    "Receipt", "NetSuiteExpenseRecord", "FinanceReturn", "VarianceReview", "FinanceAuditLog"
 ]

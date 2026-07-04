@@ -8,7 +8,7 @@ from __future__ import annotations
 from django.db.models import Avg, Count, Q, Sum
 
 from apps.core.fy import get_operational_fy
-from apps.core.scoping import resolve_user_scope, school_queryset, aggregate_school_filter
+from apps.core.scoping import resolve_user_scope
 from apps.schools.models import School
 
 
@@ -112,7 +112,7 @@ def leadership_summary(principal, query: dict) -> dict:
     evidence_uploaded = acts.filter(status="evidence_uploaded").count()
     awaiting_ia = acts.filter(status="awaiting_ia_verification").count()
     ia_verified = acts.filter(status="ia_verified").count()
-    completed = acts.filter(status__in=["completed", "ia_verified", "accountant_confirmed"]).count()
+    completed = acts.filter(status__in=["ia_verified", "closed", "accountant_confirmed"]).count()
     
     pipeline = {
         "planned": planned,
@@ -127,7 +127,7 @@ def leadership_summary(principal, query: dict) -> dict:
     staff_count = acts.exclude(responsible_staff_id__isnull=True).values("responsible_staff_id").distinct().count()
     partner_count = acts.exclude(assigned_partner_id__isnull=True).values("assigned_partner_id").distinct().count()
     
-    disbursed_cents = acts.filter(status__in=["completed", "ia_verified", "accountant_confirmed"]).aggregate(s=Sum("est_cost_cents"))["s"] or 0
+    disbursed_cents = acts.filter(status__in=["ia_verified", "closed", "accountant_confirmed"]).aggregate(s=Sum("est_cost_cents"))["s"] or 0
     disbursed_total_ugx = disbursed_cents // 100
     
     return {
@@ -266,7 +266,7 @@ def ssa_performance_grouped(principal, query: dict) -> dict:
             "fy": fy,
             "groupBy": group_by,
             "schoolType": school_type,
-            "canGroupByCceo": principal.active_role in ("Admin", "CountryDirector", "CountryProgramLead", "IA"),
+            "canGroupByCceo": principal.active_role in ("Admin", "CountryDirector", "Program Lead", "ImpactAssessment"),
             "interventions": [{"code": i.value, "label": i.label} for i in SsaIntervention],
             "rows": []
         }
@@ -353,14 +353,14 @@ def ssa_performance_grouped(principal, query: dict) -> dict:
         "fy": fy,
         "groupBy": group_by,
         "schoolType": school_type,
-        "canGroupByCceo": principal.active_role in ("Admin", "CountryDirector", "CountryProgramLead", "IA"),
+        "canGroupByCceo": principal.active_role in ("Admin", "CountryDirector", "Program Lead", "ImpactAssessment"),
         "interventions": [{"code": i.value, "label": i.label} for i in SsaIntervention],
         "rows": rows_data
     }
 
 
 def intervention_improvement(principal, query: dict) -> dict:
-    from django.db.models import Avg, Count, Q
+    from django.db.models import Avg, Count
     from apps.core.enums import SsaIntervention
     from apps.ssa.models import SsaRecord, SsaScore
 
@@ -402,7 +402,7 @@ def intervention_improvement(principal, query: dict) -> dict:
             "prevFy": prev_fy,
             "groupBy": group_by,
             "schoolType": school_type,
-            "canGroupByCceo": principal.active_role in ("Admin", "CountryDirector", "CountryProgramLead", "IA"),
+            "canGroupByCceo": principal.active_role in ("Admin", "CountryDirector", "Program Lead", "ImpactAssessment"),
             "interventions": [{"code": i.value, "label": i.label} for i in SsaIntervention],
             "rows": []
         }
@@ -552,7 +552,7 @@ def intervention_improvement(principal, query: dict) -> dict:
         "prevFy": prev_fy,
         "groupBy": group_by,
         "schoolType": school_type,
-        "canGroupByCceo": principal.active_role in ("Admin", "CountryDirector", "CountryProgramLead", "IA"),
+        "canGroupByCceo": principal.active_role in ("Admin", "CountryDirector", "Program Lead", "ImpactAssessment"),
         "interventions": [{"code": i.value, "label": i.label} for i in SsaIntervention],
         "rows": rows
     }
@@ -560,7 +560,6 @@ def intervention_improvement(principal, query: dict) -> dict:
 
 def support_ssa_correlation(principal, query: dict) -> dict:
     """Layer-3 correlation: does support timing improve SSA?"""
-    from apps.activities.models import Activity
     from apps.ssa.models import SsaRecord
 
     schools, scope = _scoped_schools(principal)
@@ -635,7 +634,7 @@ def activity_pipeline(principal, query: dict) -> dict:
 
 
 def contribution_summary(principal, query: dict) -> dict:
-    from django.db.models import Sum, Q, Count
+    from django.db.models import Sum, Q
     from apps.activities.models import Activity
     from apps.schools.models import School
     from apps.ssa.models import SsaRecord
@@ -652,7 +651,7 @@ def contribution_summary(principal, query: dict) -> dict:
     else:
         schools_in_lens = schools
 
-    completed_qs = Activity.objects.filter(deleted_at__isnull=True, fy=fy, status__in=["completed", "ia_verified", "accountant_confirmed"])
+    completed_qs = Activity.objects.filter(deleted_at__isnull=True, fy=fy, status__in=["ia_verified", "closed", "accountant_confirmed"])
     if lens == "team" and scope.supervised_staff_ids:
         completed_qs = completed_qs.filter(responsible_staff_id__in=scope.supervised_staff_ids)
     elif lens == "combined" and scope.supervised_staff_ids:
@@ -797,7 +796,7 @@ def contribution_summary(principal, query: dict) -> dict:
 
 
 def recruitment_recommendation(principal, query: dict) -> dict:
-    from django.db.models import Avg, Count, Sum, Q
+    from django.db.models import Count, Q
     from apps.ssa.models import SsaRecord
     from apps.activities.models import Activity
 
@@ -834,7 +833,7 @@ def recruitment_recommendation(principal, query: dict) -> dict:
     prev_ssa_done = SsaRecord.objects.filter(school__in=schools, fy=prev_fy, deleted_at__isnull=True).values("school_id").distinct().count()
     previous_ssa_pct = round(prev_ssa_done / total * 100, 1) if total else 0.0
     
-    completed_acts = Activity.objects.filter(deleted_at__isnull=True, fy=fy, status__in=["completed", "ia_verified", "accountant_confirmed"])
+    completed_acts = Activity.objects.filter(deleted_at__isnull=True, fy=fy, status__in=["ia_verified", "closed", "accountant_confirmed"])
     if not scope.country_scope:
         if scope.staff_ids:
             completed_acts = completed_acts.filter(responsible_staff_id__in=scope.staff_ids)

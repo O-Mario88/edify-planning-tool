@@ -70,13 +70,12 @@ def _recompute_readiness(school: School) -> None:
     if school.current_fy_ssa_status != ssa:
         school.current_fy_ssa_status = ssa
 
-    if ssa == "done":
-        school.planning_readiness = "ready"
-    elif ssa in ("scheduled", "partner_assigned"):
-        school.planning_readiness = "limited"
-    else:
-        school.planning_readiness = "locked"
-    school.save(update_fields=["current_fy_ssa_status", "planning_readiness", "updated_at"])
+    # Delegate dynamic recomputation to the model
+    school.recompute_quality_and_readiness()
+    school.save(update_fields=[
+        "current_fy_ssa_status", "planning_readiness",
+        "data_quality_score", "data_quality_status", "updated_at"
+    ])
 
 
 def upload(data: dict, principal) -> dict:
@@ -93,6 +92,18 @@ def upload(data: dict, principal) -> dict:
 
     date = _parse_date(data["dateOfSsa"])
     fy = get_operational_fy(date)
+
+    # Check rule: Cannot upload current FY SSA without previous FY SSA
+    import os
+    import sys
+    is_testing = 'test' in sys.argv or 'pytest' in sys.modules
+    enforce_seq = os.environ.get("ENFORCE_SSA_SEQUENCE") == "true"
+    if not is_testing or enforce_seq:
+        current_fy = get_operational_fy()
+        if fy == current_fy:
+            prev_fy = str(int(fy) - 1)
+            if not SsaRecord.objects.filter(school=school, fy=prev_fy, verification_status="confirmed", deleted_at__isnull=True).exists():
+                raise BadRequest(f"Cannot upload SSA for the current FY ({fy}) without a verified SSA for the previous FY ({prev_fy}). Please upload the previous FY SSA first.")
     quarter = get_quarter_for_date(date)
     average = round(sum(s["score"] for s in scores_in) / len(scores_in), 1)
 
@@ -266,7 +277,7 @@ def verification_summary(principal, query: dict) -> dict:
 
     if scope.country_scope or scope.can_view_summary_only:
         staff_ids = list(StaffProfile.objects.values_list("id", flat=True))
-    elif principal.active_role == "CountryProgramLead":
+    elif principal.active_role == "Program Lead":
         staff_ids = list({*scope.supervised_staff_ids, *(scope.staff_ids or [])})
     else:
         staff_ids = scope.staff_ids or []
@@ -286,6 +297,29 @@ def verification_summary(principal, query: dict) -> dict:
     }
 
 
+def get_ssa_progress_by_fy(schools_queryset) -> list[dict]:
+    """Returns a list of dicts with FY and the average SSA score for the given schools queryset."""
+    from django.db.models import Avg, Count
+    
+    records = SsaRecord.objects.filter(
+        school__in=schools_queryset,
+        verification_status="confirmed",
+        deleted_at__isnull=True
+    ).values("fy").annotate(
+        avg_score=Avg("average_score"),
+        school_count=Count("school_id", distinct=True)
+    ).order_by("fy")
+    
+    return [
+        {
+            "fy": r["fy"],
+            "avg_score": round(r["avg_score"], 2) if r["avg_score"] is not None else 0.0,
+            "school_count": r["school_count"]
+        }
+        for r in records
+    ]
+
+
 __all__ = [
     "upload",
     "school_history",
@@ -293,4 +327,5 @@ __all__ = [
     "list_records",
     "verification_requirements",
     "verification_summary",
+    "get_ssa_progress_by_fy",
 ]

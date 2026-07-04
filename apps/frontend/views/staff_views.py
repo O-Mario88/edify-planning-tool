@@ -3,23 +3,22 @@ GROUP 1 — Core Operations Views
 Staff Directory, Staff Profile, Today, Visits, Trainings, Evidence, Targets, My-Team, Notifications, Profile
 """
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.db.models import Q, Avg, Count
+from apps.core.permissions import require_page_permission
+from django.db.models import Q, Count
 from django.utils import timezone
 from datetime import date, timedelta
 
 from apps.accounts.models import User, StaffProfile
-from apps.activities.models import Activity, ActivityType
+from apps.activities.models import Activity
 from apps.evidence.models import EvidenceRecord
 from apps.notifications.models import Notification
 from apps.ssa.models import SsaRecord
-from apps.schools.models import School
 from apps.core.fy import get_operational_fy
 
 
 # ─── STAFF DIRECTORY ──────────────────────────────────────────────────────────
 
-@login_required(login_url="/login")
+@require_page_permission("staff_directory")
 def staff_directory_view(request):
     """Staff directory — all users in the system with role, district, and school count."""
     fy = get_operational_fy()
@@ -116,7 +115,7 @@ def staff_directory_view(request):
 
 # ─── STAFF PROFILE DETAIL ─────────────────────────────────────────────────────
 
-@login_required(login_url="/login")
+@require_page_permission("staff")
 def staff_profile_view(request, user_id):
     """Full staff 360° profile — activities, visits, evidence, SSA coverage."""
     member = get_object_or_404(User, id=user_id, deleted_at__isnull=True)
@@ -143,6 +142,11 @@ def staff_profile_view(request, user_id):
 
     profile = getattr(member, "staff_profile", None)
 
+    from apps.schools.models import School
+    from apps.ssa.services import get_ssa_progress_by_fy
+    assigned_schools = School.objects.filter(account_owner_id=member.id, deleted_at__isnull=True)
+    staff_progress = get_ssa_progress_by_fy(assigned_schools)
+
     context = {
         "member": member,
         "profile": profile,
@@ -152,13 +156,14 @@ def staff_profile_view(request, user_id):
         "upcoming": upcoming[:5],
         "schools_covered": list(schools_covered)[:10],
         "initials": member.name[:2].upper() if member.name else "??",
+        "staff_progress": staff_progress,
     }
     return render(request, "pages/staff/detail.html", context)
 
 
 # ─── TODAY VIEW ───────────────────────────────────────────────────────────────
 
-@login_required(login_url="/login")
+@require_page_permission("dashboard")
 def today_view(request):
     """Today's command center — overdue, today, upcoming, and pending actions."""
     user = request.user
@@ -218,7 +223,7 @@ def today_view(request):
 
 # ─── VISITS LOG ───────────────────────────────────────────────────────────────
 
-@login_required(login_url="/login")
+@require_page_permission("planning")
 def visits_log_view(request):
     """All school visits for the current user — filterable by status."""
     user = request.user
@@ -257,7 +262,7 @@ def visits_log_view(request):
 
 # ─── TRAININGS LOG ────────────────────────────────────────────────────────────
 
-@login_required(login_url="/login")
+@require_page_permission("planning")
 def trainings_log_view(request):
     """All group training sessions for the current user."""
     user = request.user
@@ -294,7 +299,7 @@ def trainings_log_view(request):
 
 # ─── EVIDENCE GALLERY ─────────────────────────────────────────────────────────
 
-@login_required(login_url="/login")
+@require_page_permission("planning")
 def evidence_gallery_view(request):
     """Evidence gallery — all submitted photos/reports for user's activities."""
     user = request.user
@@ -335,7 +340,7 @@ def evidence_gallery_view(request):
 
 # ─── MY TARGETS ───────────────────────────────────────────────────────────────
 
-@login_required(login_url="/login")
+@require_page_permission("planning")
 def my_targets_view(request):
     """Personal targets & KPIs for the signed-in CCEO."""
     user = request.user
@@ -443,7 +448,7 @@ def my_targets_view(request):
 
 # ─── MY TEAM (PL VIEW) ────────────────────────────────────────────────────────
 
-@login_required(login_url="/login")
+@require_page_permission("my_team")
 def my_team_view(request):
     """Program Lead team overview — all CCEOs under the PL with their activity stats."""
     user = request.user
@@ -486,50 +491,105 @@ def my_team_view(request):
             "risk": "high" if overdue > 3 else "medium" if overdue > 0 else "low",
         })
 
+    total_cceos = len(team_data)
+    with_overdue = sum(1 for m in team_data if m["overdue"] > 0)
+    all_caught_up = total_cceos - with_overdue
+
+    kpi_strip_items = [
+        {
+            "label": "Total CCEOs",
+            "value": str(total_cceos),
+            "raw_value": total_cceos,
+            "helper": "On your team",
+            "icon": "users",
+            "variant": "primary",
+        },
+        {
+            "label": "With Overdue",
+            "value": str(with_overdue),
+            "raw_value": with_overdue,
+            "helper": "CCEOs",
+            "icon": "warning",
+            "variant": "danger" if with_overdue > 0 else "success",
+        },
+        {
+            "label": "All Caught Up",
+            "value": str(all_caught_up),
+            "raw_value": all_caught_up,
+            "helper": "CCEOs",
+            "icon": "check",
+            "variant": "success",
+        }
+    ]
+
     context = {
         "team": team_data,
-        "total": len(team_data),
+        "total": total_cceos,
+        "kpi_strip_items": kpi_strip_items,
     }
     return render(request, "pages/my_team/index.html", context)
 
 
 # ─── NOTIFICATIONS ────────────────────────────────────────────────────────────
 
-@login_required(login_url="/login")
-def notifications_view(request):
-    """Notification inbox — all notifications for the signed-in user."""
+@require_page_permission("dashboard")
+def notification_drawer_view(request):
+    """Notification drawer view — loaded via HTMX when clicking notification bell."""
     user = request.user
-    status_filter = request.GET.get("status", "")
-
     notifs_qs = Notification.objects.filter(recipient_id=user.id).order_by("-created_at")
-    if status_filter:
-        notifs_qs = notifs_qs.filter(status=status_filter)
-
-    notifs = list(notifs_qs[:50])
+    notifs = list(notifs_qs[:20]) # Limit to 20 recent
     unread_count = Notification.objects.filter(recipient_id=user.id, status="unread").count()
-
+    
     context = {
         "notifications": notifs,
         "unread_count": unread_count,
-        "status_filter": status_filter,
+        "drawer_type": "right_top",
+        "drawer_size": "sm",
     }
-    return render(request, "pages/notifications/index.html", context)
+    return render(request, "partials/notifications/notification_drawer.html", context)
 
 
-@login_required(login_url="/login")
-def mark_notification_read(request, notif_id):
-    """Mark a single notification as read."""
+@require_page_permission("dashboard")
+def mark_all_notifications_read(request):
+    """Mark all unread notifications for the user as read."""
     if request.method == "POST":
-        Notification.objects.filter(id=notif_id, recipient_id=request.user.id).update(
+        Notification.objects.filter(recipient_id=request.user.id, status="unread").update(
             status="read",
             read_at=timezone.now(),
         )
-    return redirect("/notifications")
+    if request.headers.get("HX-Request") == "true":
+        user = request.user
+        notifs = list(Notification.objects.filter(recipient_id=user.id).order_by("-created_at")[:20])
+        return render(request, "partials/notifications/notification_drawer_list.html", {
+            "notifications": notifs,
+            "unread_count": 0,
+        })
+    return redirect("/")
+
+
+@require_page_permission("dashboard")
+def mark_notification_read(request, notif_id):
+    """Mark a single notification as read."""
+    Notification.objects.filter(id=notif_id, recipient_id=request.user.id).update(
+        status="read",
+        read_at=timezone.now(),
+    )
+    if request.method == "POST" and request.headers.get("HX-Request") == "true":
+        user = request.user
+        notifs = list(Notification.objects.filter(recipient_id=user.id).order_by("-created_at")[:20])
+        unread_count = Notification.objects.filter(recipient_id=user.id, status="unread").count()
+        return render(request, "partials/notifications/notification_drawer_list.html", {
+            "notifications": notifs,
+            "unread_count": unread_count,
+        })
+        
+    redirect_to = request.GET.get("redirect") or request.POST.get("redirect") or "/"
+    return redirect(redirect_to)
 
 
 # ─── USER PROFILE ─────────────────────────────────────────────────────────────
 
-@login_required(login_url="/login")
+@require_page_permission("dashboard")
 def profile_view(request):
     """User profile — role info, stats, recent activity."""
     user = request.user

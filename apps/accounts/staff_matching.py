@@ -19,7 +19,7 @@ from apps.core.enums import AccountOwnerStatus
 # The field-staff roles that may own a school. A name resolves only against
 # users holding one of these roles (so an IA/Accountant/HR/CD user with the same
 # name is never silently linked to a school).
-OWNER_ROLES = ("CCEO", "CountryProgramLead")
+OWNER_ROLES = ("CCEO", "Program Lead")
 
 
 def normalize_name(name: str | None) -> str:

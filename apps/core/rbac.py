@@ -21,11 +21,11 @@ from enum import Enum
 
 class EdifyRole(str, Enum):
     CCEO = "CCEO"
-    COUNTRY_PROGRAM_LEAD = "CountryProgramLead"
+    COUNTRY_PROGRAM_LEAD = "Program Lead"
     COUNTRY_DIRECTOR = "CountryDirector"
     REGIONAL_VICE_PRESIDENT = "RegionalVicePresident"
     IMPACT_ASSESSMENT = "ImpactAssessment"
-    PROGRAM_ACCOUNTANT = "ProgramAccountant"
+    PROGRAM_ACCOUNTANT = "Accountant"
     HUMAN_RESOURCES = "HumanResources"
     PROJECT_COORDINATOR = "ProjectCoordinator"
     PARTNER_ADMIN = "PartnerAdmin"
@@ -116,7 +116,7 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
     ],
     EdifyRole.REGIONAL_VICE_PRESIDENT: [
         # No SCHOOL_DIRECTORY_VIEW — summary analytics + recruitment only.
-        P.SCHOOL_VIEW, P.CLUSTER_VIEW, P.SSA_VIEW, P.PLANNING_VIEW,
+        P.SCHOOL_VIEW, P.SSA_VIEW,
         P.BUDGET_VIEW_SUMMARY, P.ANALYTICS_VIEW, P.RECRUITMENT_INTELLIGENCE_VIEW,
         # Region/country summary + approval-level decision review.
         P.LEADERSHIP_ENGINE_VIEW, P.LEADERSHIP_DECISION_REVIEW,
@@ -148,16 +148,17 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.BUDGET_INTELLIGENCE_VIEW,  # own planned/funded activities view
     ],
     EdifyRole.IMPACT_ASSESSMENT: [
-        P.SCHOOL_VIEW, P.SCHOOL_DIRECTORY_VIEW, P.SCHOOL_UPLOAD, P.SCHOOL_EDIT,
-        P.SCHOOL_RESOLVE_DUPLICATE, P.CLUSTER_VIEW, P.CLUSTER_ASSIGN, P.CLUSTER_OVERRIDE,
-        P.PLANNING_RECALC, P.SSA_VIEW, P.SSA_UPLOAD, P.PLANNING_VIEW, P.EVIDENCE_REVIEW,
+        P.SCHOOL_VIEW, P.SCHOOL_DIRECTORY_VIEW, P.SCHOOL_UPLOAD,
+        P.SCHOOL_RESOLVE_DUPLICATE, P.CLUSTER_VIEW,
+        P.PLANNING_RECALC, P.SSA_VIEW, P.SSA_UPLOAD, P.EVIDENCE_REVIEW,
         P.IA_VERIFY, P.ANALYTICS_VIEW, P.EXPORT, P.RECRUITMENT_INTELLIGENCE_VIEW,
+        P.PARTNER_VIEW,
         # Data-confidence + SSA-impact readiness lens (no decision review authority).
         P.LEADERSHIP_ENGINE_VIEW,
     ],
     EdifyRole.PROGRAM_ACCOUNTANT: [
         # No SCHOOL_DIRECTORY_VIEW — finance/accountability only.
-        P.SCHOOL_VIEW, P.PLANNING_VIEW, P.PAYMENT_ACT, P.BUDGET_VIEW_DETAIL,
+        P.SCHOOL_VIEW, P.PAYMENT_ACT, P.BUDGET_VIEW_DETAIL,
         P.ANALYTICS_VIEW, P.EXPORT,
         # Finance-implication view only — no staff/partner decision authority.
         P.LEADERSHIP_ENGINE_VIEW,

@@ -1,11 +1,10 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
+from apps.core.permissions import require_page_permission, RolePermissionService, get_scoped_object_or_404
 from django.contrib import messages
 from django.db.models import Q
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseForbidden
 from django.utils import timezone
 
-from apps.planning.services import setup as planning_setup
 from apps.planning.services import (
     schedule_school_visit,
     schedule_cluster_activity
@@ -16,12 +15,12 @@ from apps.clusters.models import Cluster
 from apps.partners.models import Partner, PartnerAssignment
 from apps.core.enums import SsaIntervention, PlanningReadiness, SsaStatus, SchoolType, ClusterStatus
 from apps.core.fy import get_operational_fy
-from apps.core.exceptions import BadRequest
 from apps.geography.models import District, SubCounty
-from apps.accounts.models import StaffProfile, User
+from apps.accounts.models import StaffProfile
 from apps.planning.planning_service import PlanningDashboardService
 
-@login_required(login_url="/login")
+
+@require_page_permission("planning")
 def planning_dashboard_view(request):
     fy = get_operational_fy()
     
@@ -60,7 +59,8 @@ def planning_dashboard_view(request):
 
     # Pagination pages list
     total_pages = data["total_pages"]
-    pages_list = list(range(1, total_pages + 1))
+    from apps.core.pagination import make_pagination_window
+    pages_list = make_pagination_window(int(filters["page"]), total_pages)
     
     showing_start = (int(filters["page"]) - 1) * int(filters["per_page"]) + 1 if data["total_count"] > 0 else 0
     showing_end = min(int(filters["page"]) * int(filters["per_page"]), data["total_count"])
@@ -68,7 +68,9 @@ def planning_dashboard_view(request):
     # 4. Construct context
     context = {
         "schools": data["schools"],
+        "clusters": data.get("clusters", []),
         "kpis": data["kpis"],
+        "kpi_strip_items": data.get("kpi_strip_items", []),
         "cluster_planning": data["cluster_planning"],
         "core_summary": data["core_summary"],
         "total_count": data["total_count"],
@@ -110,6 +112,10 @@ def planning_dashboard_view(request):
         # Base Template choice for HTMX vs direct visits
         "base_template": "layouts/blank.html" if request.headers.get("HX-Request") == "true" and not request.headers.get("HX-Target") else "layouts/shell.html",
         "use_dark_sidebar": False,
+
+        # Guards
+        "can_schedule": RolePermissionService.can_schedule_activity(request.user),
+        "can_assign_partner": RolePermissionService.can_assign_to_partner(request.user),
     }
 
     # If the target is only the school table
@@ -119,10 +125,26 @@ def planning_dashboard_view(request):
     return render(request, "pages/planning/index.html", context)
 
 
-@login_required(login_url="/login")
+@require_page_permission("planning")
 def schedule_modal_view(request):
+    if not RolePermissionService.can_schedule_activity(request.user):
+        return HttpResponseForbidden("Access Denied: You do not have permission to schedule activities.")
+
+    cluster_id = request.GET.get("cluster_id")
+    if cluster_id:
+        cluster = get_scoped_object_or_404(Cluster, request.user, id=cluster_id)
+        action = request.GET.get("action", "training")
+        partners = Partner.objects.filter(deleted_at__isnull=True, active_status=True).order_by("name")
+        context = {
+            "cluster": cluster,
+            "action": action,
+            "partners": partners,
+            "drawer_size": "lg",
+        }
+        return render(request, "partials/planning/schedule_cluster_drawer.html", context)
+
     school_id = request.GET.get("school_id")
-    school = get_object_or_404(School, Q(id=school_id) | Q(school_id=school_id))
+    school = get_scoped_object_or_404(School, request.user, Q(id=school_id) | Q(school_id=school_id))
 
     # Resolve focus recommendations
     recommendations = []
@@ -150,32 +172,43 @@ def schedule_modal_view(request):
     return render(request, "partials/planning/schedule_drawer.html", context)
 
 
-@login_required(login_url="/login")
+@require_page_permission("planning")
 def schedule_action_view(request):
+    if not RolePermissionService.can_schedule_activity(request.user):
+        return HttpResponseForbidden("Access Denied: You do not have permission to schedule activities.")
+
     if request.method != "POST":
         return HttpResponse("Method not allowed", status=405)
 
     activity_type = request.POST.get("activity_type", "school_visit")
     school_id = request.POST.get("school_id")
+    cluster_id = request.POST.get("cluster_id")
     scheduled_date = request.POST.get("scheduled_date")
     focus_intervention = request.POST.get("focus_intervention")
+    purpose_type = request.POST.get("purpose_type", "focus_intervention")
     purpose_text = request.POST.get("activity_purpose_text", "").strip()
     expected_outcome = request.POST.get("expected_outcome", "").strip()
+    expected_participants = request.POST.get("expected_participants", "").strip()
     delivery_type = request.POST.get("delivery_type", "staff")
-    partner_id = request.POST.get("assigned_partner_id")
+    partner_id = request.POST.get("assigned_partner_id", "").strip()
 
     from datetime import date
-    fy = get_operational_fy()
 
+    # Build payload
+    is_ssa_expected = request.POST.get("ssa_collection_expected") == "yes" or activity_type in [
+        "baseline_ssa_visit", "school_visit_ssa_collection",
+        "cluster_training_ssa_collection", "cluster_meeting_ssa_review",
+        "partner_ssa_collection", "core_assessment_visit"
+    ]
     payload = {
         "activityType": activity_type,
         "scheduledDate": scheduled_date,
         "activityPurposeText": purpose_text,
         "expectedOutcome": expected_outcome,
         "deliveryType": delivery_type,
-        "fy": fy,
+        "ssaCollectionExpected": is_ssa_expected,
     }
-
+    
     if scheduled_date:
         try:
             dt = date.fromisoformat(scheduled_date)
@@ -185,70 +218,146 @@ def schedule_action_view(request):
             pass
 
     if school_id:
-        sch = School.objects.filter(Q(id=school_id) | Q(school_id=school_id)).first()
-        if sch:
-            payload["schoolId"] = sch.school_id
+        payload["schoolId"] = school_id
+    if cluster_id:
+        payload["clusterId"] = cluster_id
     if focus_intervention:
         payload["focusIntervention"] = focus_intervention
         payload["purposeIntervention"] = focus_intervention
+    if purpose_type:
+        payload["purposeType"] = purpose_type
+    if expected_participants:
+        payload["expectedParticipants"] = int(expected_participants)
     if partner_id:
         payload["assignedPartnerId"] = partner_id
 
     try:
-        schedule_school_visit(payload, request.user)
-        # Trigger page refresh and close drawer via client headers
-        response = HttpResponse('<script>window.location.reload();</script>')
+        if activity_type in ["school_visit", "baseline_ssa_visit", "school_visit_ssa_collection"]:
+            schedule_school_visit(payload, request.user)
+            messages.success(request, f"School visit scheduled successfully.")
+        else:
+            schedule_cluster_activity(payload, request.user)
+            messages.success(request, f"Cluster activity scheduled successfully.")
+            
+        # Redirect to My Plan and close drawer via client headers
+        response = HttpResponse('<script>window.location.href = "/my-plan/";</script>')
         response["HX-Trigger"] = "close-drawer"
         return response
     except Exception as e:
         return HttpResponse(f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error: {str(e)}</div>', status=400)
 
 
-@login_required(login_url="/login")
+@require_page_permission("planning")
 def assign_partner_modal_view(request):
+    if not RolePermissionService.can_assign_to_partner(request.user):
+        return HttpResponseForbidden("Access Denied: You do not have permission to assign to partner.")
+
     school_id = request.GET.get("school_id")
-    school = get_object_or_404(School, Q(id=school_id) | Q(school_id=school_id))
+    cluster_id = request.GET.get("cluster_id")
+    
+    school = None
+    cluster = None
+    if school_id:
+        school = get_scoped_object_or_404(School, request.user, Q(id=school_id) | Q(school_id=school_id))
+    if cluster_id:
+        cluster = get_scoped_object_or_404(Cluster, request.user, id=cluster_id)
 
     partners = Partner.objects.filter(deleted_at__isnull=True, active_status=True).order_by("name")
     
     context = {
         "school": school,
+        "cluster": cluster,
         "partners": partners,
         "interventions": SsaIntervention.choices,
         "drawer_size": "md",
+        "drawer_type": "center",
     }
     return render(request, "partials/planning/assign_partner_drawer.html", context)
 
 
-@login_required(login_url="/login")
+@require_page_permission("planning")
 def assign_partner_action_view(request):
+    if not RolePermissionService.can_assign_to_partner(request.user):
+        return HttpResponseForbidden("Access Denied: You do not have permission to assign to partner.")
+
     if request.method != "POST":
         return HttpResponse("Method not allowed", status=405)
 
     school_id = request.POST.get("school_id")
+    cluster_id = request.POST.get("cluster_id")
     partner_id = request.POST.get("partner_id")
-    purpose = request.POST.get("purpose", "").strip()
-    focus_intervention = request.POST.get("focus_intervention")
-    notes = request.POST.get("notes", "").strip()
-
-    school = get_object_or_404(School, Q(id=school_id) | Q(school_id=school_id))
-    partner = get_object_or_404(Partner, id=partner_id)
-
+    activity_type = request.POST.get("activity_type", "school_visit")
+    
     try:
-        # Create PartnerAssignment record
-        PartnerAssignment.objects.create(
-            school=school,
-            partner=partner,
-            assigning_staff_id=request.user.user_id,
-            purpose=purpose,
-            focus_intervention=focus_intervention,
-            notes=notes
-        )
+        partner = get_object_or_404(Partner, id=partner_id)
+        
+        from apps.activities.models import Activity
+        from apps.core.fy import get_operational_fy, get_quarter_for_date
+        
+        fy = get_operational_fy()
+        quarter = get_quarter_for_date(timezone.now().date())
+        
+        if school_id:
+            school = get_scoped_object_or_404(School, request.user, Q(id=school_id) | Q(school_id=school_id))
+            PartnerAssignment.objects.create(
+                school=school,
+                partner=partner,
+                assigning_staff_id=request.user.user_id or request.user.id,
+                purpose=f"Assigned for {activity_type}",
+                status="pending_scheduling"
+            )
+            # Create Activity
+            Activity.objects.create(
+                activity_type=activity_type if activity_type in ["school_visit", "follow_up_visit", "coaching_visit"] else "school_visit",
+                school=school,
+                fy=fy,
+                quarter=quarter,
+                delivery_type="partner",
+                assigned_partner_id=partner.id,
+                monitored_by_staff_id=request.user.user_id or request.user.id,
+                status="assigned_to_partner",
+                activity_purpose_text=f"Assigned for {activity_type}"
+            )
+            # Update status
+            school.current_fy_ssa_status = "partner_assigned"
+            school.planning_readiness = "limited"
+            school.save(update_fields=["current_fy_ssa_status", "planning_readiness", "updated_at"])
 
-        # Update school status
-        school.current_fy_ssa_status = "partner_assigned"
-        school.planning_readiness = "limited"
-        school.save(update_fields=["current_fy_ssa_status", "planning_readiness", "updated_at"])
+        if cluster_id:
+            cluster = get_scoped_object_or_404(Cluster, request.user, id=cluster_id)
+            # Create PartnerAssignment for cluster
+            PartnerAssignment.objects.create(
+                cluster=cluster,
+                partner=partner,
+                assigning_staff_id=request.user.user_id or request.user.id,
+                purpose=f"Cluster assignment: {cluster.name}",
+                status="pending_scheduling"
+            )
+            # Create Activity for cluster
+            act_type = "cluster_meeting" if activity_type == "meeting" else "cluster_training"
+            Activity.objects.create(
+                activity_type=act_type,
+                cluster=cluster,
+                fy=fy,
+                quarter=quarter,
+                delivery_type="partner",
+                assigned_partner_id=partner.id,
+                monitored_by_staff_id=request.user.user_id or request.user.id,
+                status="assigned_to_partner",
+                activity_purpose_text=f"Cluster assignment: {cluster.name}"
+            )
+            # Assign all schools in the cluster
+            for school in School.objects.filter(cluster_assignments__cluster=cluster, deleted_at__isnull=True):
+                PartnerAssignment.objects.create(
+                    school=school,
+                    partner=partner,
+                    assigning_staff_id=request.user.user_id or request.user.id,
+                    purpose=f"Cluster assignment: {cluster.name}",
+                    status="pending_scheduling"
+                )
+                school.current_fy_ssa_status = "partner_assigned"
+                school.planning_readiness = "limited"
+                school.save(update_fields=["current_fy_ssa_status", "planning_readiness", "updated_at"])
 
         # Return refresh trigger and close drawer
         response = HttpResponse('<script>window.location.reload();</script>')
@@ -258,7 +367,7 @@ def assign_partner_action_view(request):
         return HttpResponse(f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error: {str(e)}</div>', status=400)
 
 
-@login_required(login_url="/login")
+@require_page_permission("planning")
 def planning_intelligence_view(request):
     school_id = request.GET.get("school_id")
     if not school_id:
@@ -319,7 +428,7 @@ def planning_intelligence_view(request):
     return render(request, "partials/planning/right_panel.html", context)
 
 
-@login_required(login_url="/login")
+@require_page_permission("planning")
 def bulk_action_view(request):
     if request.method != "POST":
         return HttpResponse("Method not allowed", status=405)
@@ -345,6 +454,9 @@ def bulk_action_view(request):
 
     elif action == "partner":
         # Bulk Assign Partner
+        if not RolePermissionService.can_assign_to_partner(request.user):
+            return HttpResponseForbidden("Access Denied: You do not have permission to assign to partner.")
+
         partner_id = request.POST.get("partner_id")
         partner = get_object_or_404(Partner, id=partner_id)
         
@@ -364,7 +476,7 @@ def bulk_action_view(request):
     return HttpResponse("Action processed", status=200)
 
 
-@login_required(login_url="/login")
+@require_page_permission("planning")
 def schedule_activity_form_view(request):
     action = request.GET.get("action", "visit") # visit, training, meeting
     school_id = request.GET.get("school", "")
@@ -394,6 +506,9 @@ def schedule_activity_form_view(request):
                 })
 
     if request.method == "POST":
+        if not RolePermissionService.can_schedule_activity(request.user):
+            return HttpResponseForbidden("Access Denied: You do not have permission to schedule activities.")
+
         activity_type = request.POST.get("activity_type", "")
         school_id_str = request.POST.get("school_id", "").strip()
         cluster_id_str = request.POST.get("cluster_id", "").strip()
@@ -464,7 +579,7 @@ def schedule_activity_form_view(request):
     return render(request, "pages/planning/schedule.html", context)
 
 
-@login_required(login_url="/login")
+@require_page_permission("planning")
 def cost_preview_partial(request):
     activity_type = request.POST.get("activity_type", "").strip()
     scheduled_date = request.POST.get("scheduled_date", "").strip()
@@ -507,5 +622,3 @@ def cost_preview_partial(request):
         }
 
     return render(request, "partials/cost_preview.html", context)
-
-

@@ -11,10 +11,10 @@ from django.db import transaction
 from django.db.models import Q, Sum
 
 from apps.core.exceptions import BadRequest
-from apps.core.fy import get_fy_date_range, get_month_date_range, get_operational_fy
+from apps.core.fy import get_operational_fy
 from apps.core.scoping import resolve_user_scope
 
-from .costing import cost_for_activity, resolve_activity_cost
+from .costing import cost_for_activity
 from .models import CostSetting, CostSettingHistory
 
 
@@ -377,7 +377,6 @@ def weekly(principal, query: dict) -> dict:
 
 
 def board(principal, query: dict) -> dict:
-    from django.db.models import Sum, Q, Count
     from apps.activities.models import Activity
     from apps.core.fy import get_operational_fy
 
@@ -512,7 +511,7 @@ def board(principal, query: dict) -> dict:
 
     role_str = scope.active_role or "CCEO"
     scope_str = "country" if scope.country_scope else ("team" if scope.can_view_team else "own")
-    view_mode_str = "country_summary" if role_str == "RVP" else ("team" if role_str == "CountryProgramLead" else ("own" if role_str == "CCEO" else "country"))
+    view_mode_str = "country_summary" if role_str == "RegionalVicePresident" else ("team" if role_str == "Program Lead" else ("own" if role_str == "CCEO" else "country"))
 
     workflow = [
         { "step": 1, "label": "Plan & cost from catalogue", "detail": "Staff schedule activities; costs auto-calculated." },
@@ -578,19 +577,69 @@ def _admin_lines_total(fy: str, *, month_key: str | None = None) -> int:
     return int(qs.aggregate(total=Sum("total_cost"))["total"] or 0)
 
 
+def get_budget_rollup(fy: str, *, quarter: str | None = None, month: int | None = None) -> dict:
+    from django.db.models import Sum, Q
+    from apps.activities.models import ActivityScheduleCostLine
+
+    qs = ActivityScheduleCostLine.objects.filter(
+        activity__deleted_at__isnull=True, activity__fy=fy
+    )
+    if quarter:
+        qs = qs.filter(activity__quarter=quarter)
+    if month is not None:
+        qs = qs.filter(activity__planned_month=month)
+
+    agg = qs.aggregate(
+        planned=Sum("amount"),
+        requested=Sum("amount", filter=Q(advance_requests__status__in=["pending_responsible_confirmation", "confirmed_for_advance", "submitted_to_accountant", "disbursed", "accountability_pending", "accounted"])),
+        approved=Sum("amount", filter=Q(advance_requests__status__in=["confirmed_for_advance", "submitted_to_accountant", "disbursed", "accountability_pending", "accounted"])),
+        disbursed=Sum("amount", filter=Q(advance_requests__status__in=["disbursed", "accountability_pending", "accounted"])),
+        accounted=Sum("amount", filter=Q(advance_requests__status="accounted")),
+    )
+
+    planned = int(agg["planned"] or 0)
+    requested = int(agg["requested"] or 0)
+    approved = int(agg["approved"] or 0)
+    disbursed = int(agg["disbursed"] or 0)
+    accounted = int(agg["accounted"] or 0)
+    cleared = accounted
+    pending = planned - cleared
+    variance = planned - cleared
+
+    return {
+        "planned": planned,
+        "requested": requested,
+        "approved": approved,
+        "disbursed": disbursed,
+        "accounted": accounted,
+        "cleared": cleared,
+        "pending": pending,
+        "variance": variance,
+        "activity_count": qs.values("activity_id").distinct().count()
+    }
+
+
 def monthly_budget(query: dict) -> dict:
     """Monthly budget = program activity budget lines for the month + CD admin
     items for that month. The auto-generated program portion + the CD-added
     administrative portion."""
     fy = query.get("fy") or get_operational_fy()
     month = int(query.get("month") or 1)
-    program_total, activity_count = _program_lines_total(fy, month=month)
     month_key = _month_key(fy, month)
     admin_total = _admin_lines_total(fy, month_key=month_key)
+    rollup = get_budget_rollup(fy, month=month)
     return {
         "fy": fy, "month": month, "monthKey": month_key,
-        "programTotal": program_total, "adminTotal": admin_total,
-        "total": program_total + admin_total, "activityCount": activity_count,
+        "programTotal": rollup["planned"], "adminTotal": admin_total,
+        "total": rollup["planned"] + admin_total, "activityCount": rollup["activity_count"],
+        "plannedBudget": rollup["planned"],
+        "requestedBudget": rollup["requested"],
+        "approvedBudget": rollup["approved"],
+        "disbursedAmount": rollup["disbursed"],
+        "accountedAmount": rollup["accounted"],
+        "clearedAmount": rollup["cleared"],
+        "pendingAmount": rollup["pending"],
+        "variance": rollup["variance"],
     }
 
 
@@ -598,16 +647,24 @@ def quarterly_budget(query: dict) -> dict:
     """Quarterly budget = program lines + admin items for the quarter."""
     fy = query.get("fy") or get_operational_fy()
     quarter = query.get("quarter") or "Q1"
-    program_total, activity_count = _program_lines_total(fy, quarter=quarter)
     # Admin items are monthly; approximate the quarter as the union of its months.
     quarter_months = _quarter_months(quarter)
     admin_total = sum(
         _admin_lines_total(fy, month_key=_month_key(fy, m)) for m in quarter_months
     )
+    rollup = get_budget_rollup(fy, quarter=quarter)
     return {
         "fy": fy, "quarter": quarter,
-        "programTotal": program_total, "adminTotal": admin_total,
-        "total": program_total + admin_total, "activityCount": activity_count,
+        "programTotal": rollup["planned"], "adminTotal": admin_total,
+        "total": rollup["planned"] + admin_total, "activityCount": rollup["activity_count"],
+        "plannedBudget": rollup["planned"],
+        "requestedBudget": rollup["requested"],
+        "approvedBudget": rollup["approved"],
+        "disbursedAmount": rollup["disbursed"],
+        "accountedAmount": rollup["accounted"],
+        "clearedAmount": rollup["cleared"],
+        "pendingAmount": rollup["pending"],
+        "variance": rollup["variance"],
     }
 
 
@@ -617,13 +674,13 @@ def fy_budget(query: dict) -> dict:
     from apps.activities.models import ActivityScheduleCostLine
 
     fy = query.get("fy") or get_operational_fy()
-    program_total, activity_count = _program_lines_total(fy)
     admin_total = _admin_lines_total(fy)
+    rollup = get_budget_rollup(fy)
 
     by_quarter = {}
     for q in ("Q1", "Q2", "Q3", "Q4"):
-        q_total, _ = _program_lines_total(fy, quarter=q)
-        by_quarter[q] = q_total
+        q_rollup = get_budget_rollup(fy, quarter=q)
+        by_quarter[q] = q_rollup["planned"]
 
     by_activity_type = {}
     type_qs = ActivityScheduleCostLine.objects.filter(
@@ -634,12 +691,20 @@ def fy_budget(query: dict) -> dict:
 
     return {
         "fy": fy,
-        "programTotal": program_total,
+        "programTotal": rollup["planned"],
         "adminTotal": admin_total,
-        "total": program_total + admin_total,
-        "activityCount": activity_count,
+        "total": rollup["planned"] + admin_total,
+        "activityCount": rollup["activity_count"],
         "byQuarter": by_quarter,
         "byActivityType": by_activity_type,
+        "plannedBudget": rollup["planned"],
+        "requestedBudget": rollup["requested"],
+        "approvedBudget": rollup["approved"],
+        "disbursedAmount": rollup["disbursed"],
+        "accountedAmount": rollup["accounted"],
+        "clearedAmount": rollup["cleared"],
+        "pendingAmount": rollup["pending"],
+        "variance": rollup["variance"],
     }
 
 

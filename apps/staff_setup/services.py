@@ -55,25 +55,45 @@ def create_user(candidate_id: str, data: dict, principal) -> dict:
     role = (data.get("role") or "CCEO").strip()
     if not email:
         raise BadRequest("An email is required to create the staff profile.")
-    if role not in ("CCEO", "CountryProgramLead"):
+    if role not in ("CCEO", "Program Lead"):
         raise BadRequest("Role must be CCEO or PL.")
 
     with transaction.atomic():
-        if User.objects.filter(email=email).exists():
-            raise BadRequest(f"A user with email {email} already exists — use 'match existing user' instead.")
-        user = User.objects.create_user(
-            email=email,
-            name=c.full_name,
-            roles=[role],
-            active_role=role,
-            password=None,  # invited — sets an unusable password
-            is_active=True,
-        )
-        user.status = "pending_invited"
-        if data.get("phone"):
-            user.phone = data["phone"]
-        user.save()
-        sp = StaffProfile.objects.create(user=user, title=role)
+        if c.matched_user_id:
+            user = User.objects.filter(id=c.matched_user_id).first()
+            if not user:
+                raise NotFoundError("Matched user not found.")
+            if User.objects.filter(email=email).exclude(id=user.id).exists():
+                raise BadRequest(f"A user with email {email} already exists.")
+            user.email = email
+            user.roles = [role]
+            user.active_role = role
+            user.is_active = True
+            user.status = "pending_invited"
+            if data.get("phone"):
+                user.phone = data["phone"]
+            user.save()
+            
+            sp, _ = StaffProfile.objects.get_or_create(user=user, defaults={"title": role})
+            if sp.title != role:
+                sp.title = role
+                sp.save(update_fields=["title"])
+        else:
+            if User.objects.filter(email=email).exists():
+                raise BadRequest(f"A user with email {email} already exists — use 'match existing user' instead.")
+            user = User.objects.create_user(
+                email=email,
+                name=c.full_name,
+                roles=[role],
+                active_role=role,
+                password=None,
+                is_active=True,
+            )
+            user.status = "pending_invited"
+            if data.get("phone"):
+                user.phone = data["phone"]
+            user.save()
+            sp = StaffProfile.objects.create(user=user, title=role)
 
         _link_schools(c, sp.id)
         c.matched_user_id = user.id

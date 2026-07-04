@@ -1,12 +1,10 @@
 """Assignment — valid assignment options + direct-support capacity."""
 from __future__ import annotations
 
-from django.db.models import Count, Q
 
 from apps.accounts.models import StaffSchoolAssignment, StaffSupportCapacity
-from apps.core.exceptions import BadRequest, Forbidden
+from apps.core.exceptions import BadRequest
 from apps.core.fy import get_operational_fy
-from apps.core.rbac import EdifyRole
 from apps.schools.models import School
 
 
@@ -64,7 +62,7 @@ def get_options(query: dict, principal) -> dict:
         role = principal.active_role
         
         # Self option
-        if role == "CCEO" or (role == "CountryProgramLead" and is_direct_owner):
+        if role == "CCEO" or (role == "Program Lead" and is_direct_owner):
             school_already_supported = StaffSchoolAssignment.objects.filter(staff_id=staff_id, school_id=school.id).exists()
             self_enabled = school_already_supported or (remaining > 0)
             self_reason = None
@@ -78,7 +76,7 @@ def get_options(query: dict, principal) -> dict:
             })
             
         # Staff option (PL assigns to supervised CCEO)
-        if role == "CountryProgramLead" and is_supervised_school:
+        if role == "Program Lead" and is_supervised_school:
             for c in supervised_cceos:
                 options.append({
                     "type": "staff",
@@ -90,7 +88,7 @@ def get_options(query: dict, principal) -> dict:
         # Partner option
         partner_enabled = True
         partner_reason = None
-        if role == "CountryProgramLead" and not is_direct_owner and not is_supervised_school:
+        if role == "Program Lead" and not is_direct_owner and not is_supervised_school:
             partner_enabled = False
             partner_reason = "This school belongs to a CCEO you supervise. Assign to the responsible CCEO, or request a partner-assignment override."
         
@@ -150,24 +148,3 @@ def set_capacity(data: dict, principal) -> dict:
         },
     )
     return {"staffId": staff_id, "fy": fy, "maxDirectSchoolsSupported": cap.max_direct_schools_supported}
-
-
-def assert_assignment_allowed(*, principal, internal_school_id=None, fy, responsible_staff_id=None,
-                               assigned_partner_id=None, delivery_type="staff") -> None:
-    """API-enforced assignment policy + staff support capacity. Raises Forbidden
-    when the staff is over capacity for the FY."""
-    if delivery_type == "partner":
-        return  # Partners are NOT capped.
-    if not responsible_staff_id or not internal_school_id:
-        return
-    # Already supports this school? Then not a NEW assignment.
-    if StaffSchoolAssignment.objects.filter(staff_id=responsible_staff_id, school_id=internal_school_id).exists():
-        return
-    cap = StaffSupportCapacity.objects.filter(staff_id=responsible_staff_id, fy=fy, is_active=True).first()
-    if cap:
-        used = StaffSchoolAssignment.objects.filter(staff_id=responsible_staff_id).count()
-        if used >= cap.max_direct_schools_supported:
-            raise Forbidden(
-                f"Staff is at direct-support capacity ({cap.max_direct_schools_supported} schools for FY{fy}). "
-                "Assign a partner instead, or raise the capacity."
-            )

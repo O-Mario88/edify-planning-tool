@@ -1,25 +1,23 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
+from apps.core.permissions import require_page_permission
 from django.contrib import messages
-from django.utils import timezone
-from django.db.models import Q, Sum, Count
+from django.db.models import Q, Sum
 from datetime import datetime, date, timedelta
 import calendar
 
 from apps.budget.services import board as get_budget_board
 from apps.fund_requests.weekly_service import (
-    list_weekly_requests,
     get_weekly_request,
     request_advance,
     self_funded,
     generate_weekly_fund_request,
     disburse as disburse_weekly
 )
-from apps.fund_requests.models import WeeklyFundRequest, WeeklyFundRequestLine, AdvanceRequest
+from apps.fund_requests.models import WeeklyFundRequest
 from apps.activities.models import Activity, ActivityScheduleCostLine
-from apps.geography.models import District, SubCounty
+from apps.geography.models import District
 from apps.accounts.models import StaffProfile
-from apps.budget.models import CostCatalogue, MonthlyFundRequest
+from apps.budget.models import MonthlyFundRequest
 from apps.core.fy import get_operational_fy, get_quarter_date_range, get_fy_date_range
 from apps.core.scoping import resolve_user_scope
 
@@ -48,17 +46,72 @@ def get_weeks_of_month(year, month):
             })
     return weeks
 
-@login_required(login_url="/login")
+@require_page_permission("monthly_budget")
 def monthly_budget_view(request):
     fy = get_operational_fy()
     board_data = get_budget_board(request.user, {"fy": fy})
+
+    # Format UGX compact helper
+    def format_ugx_compact(val):
+        if not val:
+            return "UGX 0"
+        if val >= 1_000_000_000:
+            return f"UGX {val / 1_000_000_000:.1f}B"
+        if val >= 1_000_000:
+            return f"UGX {val / 1_000_000:.1f}M"
+        if val >= 1_000:
+            return f"UGX {val / 1_000:.0f}K"
+        return f"UGX {val}"
+
+    summary = board_data.get("summary", {})
+    total_fy = summary.get("fiscalYear", 0)
+    this_week_total = summary.get("thisWeek", 0)
+    this_month_total = summary.get("thisMonth", 0)
+    this_quarter_total = summary.get("thisQuarter", 0)
+
+    kpi_strip_items = [
+        {
+            "label": "This Week's Budget",
+            "value": format_ugx_compact(this_week_total),
+            "raw_value": int(this_week_total),
+            "helper": "Planned",
+            "icon": "calendar",
+            "variant": "info",
+        },
+        {
+            "label": "This Month's Budget",
+            "value": format_ugx_compact(this_month_total),
+            "raw_value": int(this_month_total),
+            "helper": "Planned",
+            "icon": "chart",
+            "variant": "blue",
+        },
+        {
+            "label": "This Quarter's Budget",
+            "value": format_ugx_compact(this_quarter_total),
+            "raw_value": int(this_quarter_total),
+            "helper": "Planned",
+            "icon": "finance",
+            "variant": "warning",
+        },
+        {
+            "label": "Annual FY Total",
+            "value": format_ugx_compact(total_fy),
+            "raw_value": int(total_fy),
+            "helper": f"FY {fy} Total",
+            "icon": "currency",
+            "variant": "finance",
+        }
+    ]
+
     context = {
         "board": board_data,
         "fy": fy,
+        "kpi_strip_items": kpi_strip_items,
     }
     return render(request, "pages/budgets/monthly.html", context)
 
-@login_required(login_url="/login")
+@require_page_permission("fund_requests")
 def weekly_fund_requests_view(request):
     user = request.user
     scope = resolve_user_scope(user)
@@ -156,6 +209,86 @@ def weekly_fund_requests_view(request):
         "requested_this_month": requested_this_month,
         "accountability_pending": accountability_pending_count,
     }
+
+    # Format UGX compact helper
+    def format_ugx_compact(val):
+        if not val:
+            return "UGX 0"
+        if val >= 1_000_000_000:
+            return f"UGX {val / 1_000_000_000:.1f}B"
+        if val >= 1_000_000:
+            return f"UGX {val / 1_000_000:.1f}M"
+        if val >= 1_000:
+            return f"UGX {val / 1_000:.0f}K"
+        return f"UGX {val}"
+
+    # Construct unified KPI strip items
+    kpi_strip_items = [
+        {
+            "label": "Weekly Requests",
+            "value": str(weekly_requests_count),
+            "raw_value": weekly_requests_count,
+            "helper": "This Week",
+            "icon": "calendar",
+            "variant": "info",
+        },
+        {
+            "label": "Monthly Requests",
+            "value": str(monthly_requests_count),
+            "raw_value": monthly_requests_count,
+            "helper": "This Month",
+            "icon": "report",
+            "variant": "blue",
+        },
+        {
+            "label": "Draft Requests",
+            "value": str(draft_count),
+            "raw_value": draft_count,
+            "helper": "Total Draft",
+            "icon": "file",
+            "variant": "neutral",
+        },
+        {
+            "label": "Pending Approval",
+            "value": str(pending_approval_count),
+            "raw_value": pending_approval_count,
+            "helper": "Total Pending",
+            "icon": "clock",
+            "variant": "warning",
+        },
+        {
+            "label": "Ready for Disbursement",
+            "value": str(ready_disbursement_count),
+            "raw_value": ready_disbursement_count,
+            "helper": "Total Ready",
+            "icon": "check",
+            "variant": "success",
+        },
+        {
+            "label": "Total Planned Value",
+            "value": format_ugx_compact(planned_value),
+            "raw_value": int(planned_value),
+            "helper": "This Month",
+            "icon": "currency",
+            "variant": "finance",
+        },
+        {
+            "label": "Total Requested",
+            "value": format_ugx_compact(requested_this_month),
+            "raw_value": int(requested_this_month),
+            "helper": "This Month",
+            "icon": "finance",
+            "variant": "finance",
+        },
+        {
+            "label": "Accountability Pending",
+            "value": str(accountability_pending_count),
+            "raw_value": accountability_pending_count,
+            "helper": "Requests",
+            "icon": "warning",
+            "variant": "danger",
+        }
+    ]
 
     # 4. Weekly Fund Request details
     active_wfr = wfr_qs.filter(week_start_date=selected_week_start).first()
@@ -360,8 +493,128 @@ def weekly_fund_requests_view(request):
             "label": f"{wk['start'].strftime('%b %d')} - {wk['end'].strftime('%b %d')}"
         })
 
+    # CCEO Fund Queue mock database for PL layout
+    import json
+    pl_queue_items = [
+        {
+            "id": " Sarah M.",
+            "user_name": "Sarah M.",
+            "district": "Northern District",
+            "region": "Northern Region",
+            "requested": 42600000,
+            "status": "Awaiting Approval",
+            "status_class": "bg-amber-50 text-amber-700 border-amber-200",
+            "visits": 24,
+            "partner": 6,
+            "clusters": 4,
+            "trainings": 6,
+            "lines": [
+                {"category": "Staff School Visits", "quantity": 24, "unit_cost": 140000, "total": 3360000},
+                {"category": "Partner School Visits", "quantity": 8, "unit_cost": 160000, "total": 1280050},
+                {"category": "Cluster Meetings", "quantity": 4, "unit_cost": 500000, "total": 2000000},
+                {"category": "Cluster Trainings", "quantity": 6, "unit_cost": 1200000, "total": 7200000},
+                {"category": "In-School Trainings", "quantity": 6, "unit_cost": 1000000, "total": 6000000},
+                {"category": "SSA Support Visits", "quantity": 5, "unit_cost": 150000, "total": 750000},
+                {"category": "Participant Meals", "quantity": 12, "unit_cost": 20000, "total": 240000},
+                {"category": "Transport / Field Travel", "quantity": 0, "unit_cost": 0, "total": 21790000}
+            ]
+        },
+        {
+            "id": " Peter K.",
+            "user_name": "Peter K. (My Own Plan)",
+            "district": "Central District",
+            "region": "Northern Region",
+            "requested": 38400000,
+            "status": "Awaiting Approval",
+            "status_class": "bg-amber-50 text-amber-700 border-amber-200",
+            "visits": 18,
+            "partner": 6,
+            "clusters": 3,
+            "trainings": 5,
+            "lines": [
+                {"category": "Staff School Visits", "quantity": 18, "unit_cost": 140000, "total": 2520000},
+                {"category": "Partner School Visits", "quantity": 6, "unit_cost": 160000, "total": 960000},
+                {"category": "Cluster Meetings", "quantity": 3, "unit_cost": 500000, "total": 1500000},
+                {"category": "Cluster Trainings", "quantity": 5, "unit_cost": 1200000, "total": 6000000},
+                {"category": "Transport / Field Travel", "quantity": 0, "unit_cost": 0, "total": 27420000}
+            ]
+        },
+        {
+            "id": " Ruth W.",
+            "user_name": "Ruth W.",
+            "district": "Eastern District",
+            "region": "Northern Region",
+            "requested": 26700000,
+            "status": "Needs Review",
+            "status_class": "bg-indigo-50 text-indigo-700 border-indigo-200",
+            "visits": 15,
+            "partner": 6,
+            "clusters": 3,
+            "trainings": 4,
+            "lines": [
+                {"category": "Staff School Visits", "quantity": 15, "unit_cost": 140000, "total": 2100000},
+                {"category": "Cluster Meetings", "quantity": 3, "unit_cost": 500000, "total": 1500000},
+                {"category": "Transport / Field Travel", "quantity": 0, "unit_cost": 0, "total": 23100000}
+            ]
+        },
+        {
+            "id": " Moses T.",
+            "user_name": "Moses T.",
+            "district": "Northern District",
+            "region": "Northern Region",
+            "requested": 24100000,
+            "status": "Ready",
+            "status_class": "bg-emerald-50 text-emerald-700 border-emerald-200",
+            "visits": 12,
+            "partner": 6,
+            "clusters": 3,
+            "trainings": 3,
+            "lines": [
+                {"category": "Staff School Visits", "quantity": 12, "unit_cost": 140000, "total": 1680000},
+                {"category": "Transport / Field Travel", "quantity": 0, "unit_cost": 0, "total": 22420000}
+            ]
+        },
+        {
+            "id": " Joel O.",
+            "user_name": "Joel O.",
+            "district": "Western District",
+            "region": "Northern Region",
+            "requested": 19800000,
+            "status": "Returned",
+            "status_class": "bg-rose-50 text-rose-700 border-rose-200",
+            "visits": 10,
+            "partner": 3,
+            "clusters": 2,
+            "trainings": 3,
+            "lines": [
+                {"category": "Staff School Visits", "quantity": 10, "unit_cost": 140000, "total": 1400000},
+                {"category": "Transport / Field Travel", "quantity": 0, "unit_cost": 0, "total": 18400000}
+            ]
+        },
+        {
+            "id": " Grace A.",
+            "user_name": "Grace A.",
+            "district": "Central District",
+            "region": "Northern Region",
+            "requested": 16900000,
+            "status": "Awaiting Approval",
+            "status_class": "bg-amber-50 text-amber-700 border-amber-200",
+            "visits": 9,
+            "partner": 2,
+            "clusters": 2,
+            "trainings": 3,
+            "lines": [
+                {"category": "Staff School Visits", "quantity": 9, "unit_cost": 140000, "total": 1260000},
+                {"category": "Transport / Field Travel", "quantity": 0, "unit_cost": 0, "total": 15640000}
+            ]
+        }
+    ]
+
+    pl_queue_items_json = json.dumps(pl_queue_items)
+
     context = {
         "kpis": kpis,
+        "kpi_strip_items": kpi_strip_items,
         "active_wfr": active_wfr,
         "wfr_status": wfr_status,
         "weekly_lines": weekly_lines,
@@ -387,6 +640,11 @@ def weekly_fund_requests_view(request):
         "selected_staff": staff_id,
         "selected_status": status_filter,
         "active_tab": active_tab,
+        
+        # PL Specific Data
+        "is_pl": (request.user.active_role == "Program Lead"),
+        "pl_queue_items": pl_queue_items,
+        "pl_queue_items_json": pl_queue_items_json,
     }
 
     if request.headers.get("HX-Request") == "true":
@@ -394,7 +652,7 @@ def weekly_fund_requests_view(request):
 
     return render(request, "pages/fund_requests/weekly.html", context)
 
-@login_required(login_url="/login")
+@require_page_permission("fund_requests")
 def weekly_fund_request_detail_view(request, request_id):
     req = get_weekly_request(request_id, request.user)
     context = {
@@ -402,7 +660,7 @@ def weekly_fund_request_detail_view(request, request_id):
     }
     return render(request, "pages/fund_requests/detail.html", context)
 
-@login_required(login_url="/login")
+@require_page_permission("fund_requests")
 def weekly_fund_request_confirm_action(request, request_id):
     if request.method == "POST":
         try:
@@ -414,7 +672,7 @@ def weekly_fund_request_confirm_action(request, request_id):
     active_wfr = get_object_or_404(WeeklyFundRequest, id=request_id)
     return redirect(f"/fund-requests/weekly?week={active_wfr.week_start_date.isoformat()}")
 
-@login_required(login_url="/login")
+@require_page_permission("fund_requests")
 def weekly_fund_request_self_funded_action(request, request_id):
     if request.method == "POST":
         try:
@@ -426,7 +684,7 @@ def weekly_fund_request_self_funded_action(request, request_id):
     active_wfr = get_object_or_404(WeeklyFundRequest, id=request_id)
     return redirect(f"/fund-requests/weekly?week={active_wfr.week_start_date.isoformat()}")
 
-@login_required(login_url="/login")
+@require_page_permission("fund_requests")
 def generate_request_action(request):
     if request.method == "POST":
         week_start_str = request.POST.get("week_start", "").strip()
@@ -445,9 +703,9 @@ def generate_request_action(request):
                 
     return redirect(f"/fund-requests/weekly?week={week_start_str}")
 
-@login_required(login_url="/login")
+@require_page_permission("weekly_fund_request_disburse")
 def weekly_fund_request_disburse_action(request, request_id):
-    if request.user.active_role != "ProgramAccountant":
+    if request.user.active_role != "Accountant":
         messages.error(request, "Only the Program Accountant can disburse fund requests.")
         return redirect(f"/fund-requests/weekly/{request_id}")
 
