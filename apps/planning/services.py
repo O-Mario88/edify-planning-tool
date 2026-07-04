@@ -1,20 +1,18 @@
 """Planning service — plan authoring + scheduling + lifecycle."""
 from __future__ import annotations
 
-from datetime import datetime
 from django.utils import timezone
 
 from apps.core.exceptions import BadRequest, NotFoundError
 from apps.core.fy import get_operational_fy
 
-from .models import AnnualPlan, MonthlyPlan, MonthlyPlanActivity
+from .models import MonthlyPlan, MonthlyPlanActivity
 
 
 def setup(query: dict, principal) -> list[dict]:
     """Planning setup surface (region/district/fy context)."""
     from django.db.models import Q
     from apps.core.enums import SsaIntervention
-    from apps.schools.models import School
     from apps.activities.models import Activity
     from apps.analytics.services import _scoped_schools
 
@@ -126,10 +124,9 @@ def core_planning(query: dict, principal) -> list[dict]:
 
 
 def plan_builder(query: dict, principal) -> dict:
-    from django.db.models import Q
     from apps.schools.models import School
     from apps.clusters.models import Cluster
-    from apps.ssa.models import SsaRecord, SsaScore
+    from apps.ssa.models import SsaRecord
     from apps.core.enums import SsaIntervention
     from apps.analytics.services import _scoped_schools
 
@@ -381,8 +378,8 @@ def return_plan(plan_id: str, data: dict, principal) -> dict:
 def schedule_school_visit(data: dict, principal) -> dict:
     """Schedule a school visit activity (delegates to activities.create)."""
     from apps.activities.services import create as create_activity
-
-    return create_activity({**data, "activityType": "school_visit"}, principal)
+    act_type = data.get("activityType", "school_visit")
+    return create_activity({**data, "activityType": act_type}, principal)
 
 
 def assign_school_visit_to_partner(data: dict, principal) -> dict:

@@ -20,7 +20,6 @@ from typing import Any
 from django.utils import timezone
 
 from apps.core.cuid import cuid
-from apps.core.rbac import EdifyRole
 
 from .bus import bus
 

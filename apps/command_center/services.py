@@ -7,7 +7,7 @@ from django.utils import timezone
 
 from apps.activities.models import Activity
 from apps.core.fy import get_operational_fy
-from apps.core.scoping import resolve_user_scope, school_queryset
+from apps.core.scoping import resolve_user_scope
 from apps.schools.models import School
 
 from .models import CommandCenterAlert, CommandCenterAlertDismissal

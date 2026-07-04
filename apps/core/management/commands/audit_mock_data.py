@@ -16,7 +16,6 @@ Output: file path / location + risk level + action required.
 """
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 from django.conf import settings

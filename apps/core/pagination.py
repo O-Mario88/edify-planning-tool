@@ -95,3 +95,40 @@ class EdifyPagination(BasePagination):
         if isinstance(self._list, ReturnList):
             return list(self._list)
         return self._list
+
+
+def make_pagination_window(current_page: int, total_pages: int, window_size: int = 2) -> list[int | str]:
+    """
+    Constructs a sliding-window pagination list of pages.
+    e.g., [1, 2, 3, '...', 40] or [1, '...', 9, 10, 11, '...', 40]
+    """
+    if total_pages <= 7:
+        return list(range(1, total_pages + 1))
+        
+    pages = []
+    pages.append(1)
+    
+    if current_page - window_size > 2:
+        pages.append("...")
+        for p in range(current_page - window_size, current_page):
+            pages.append(p)
+    else:
+        for p in range(2, current_page):
+            pages.append(p)
+            
+    if current_page != 1:
+        pages.append(current_page)
+        
+    if current_page + window_size < total_pages - 1:
+        for p in range(current_page + 1, current_page + window_size + 1):
+            pages.append(p)
+        pages.append("...")
+    else:
+        for p in range(current_page + 1, total_pages):
+            pages.append(p)
+            
+    if total_pages not in pages:
+        pages.append(total_pages)
+        
+    return pages
+

@@ -9,11 +9,8 @@ debounces a router.refresh() (FE concern).
 from __future__ import annotations
 
 import json
-import time
 
 from django.http import StreamingHttpResponse
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.request import Request
 
 from .bus import bus
 
@@ -24,8 +21,6 @@ def _sse(data: dict) -> bytes:
 
 def stream(request):
     """The SSE stream. Authenticates via the JWT in the Authorization header."""
-    from rest_framework.request import Request
-    from rest_framework.test import APIRequestFactory
     from apps.accounts.jwt import JwtAuthentication
 
     # Authenticate manually (StreamingHttpResponse bypasses DRF dispatch).

@@ -1,7 +1,6 @@
 """Partners service — directory + self-service + eligibility."""
 from __future__ import annotations
 
-from datetime import datetime
 
 from apps.core.exceptions import BadRequest, NotFoundError
 from apps.core.scoping import resolve_partner_ids
@@ -88,7 +87,19 @@ def eligible(query: dict) -> list[dict]:
 
 
 def onboard(data: dict, principal) -> dict:
-    """CD onboards a new partner."""
+    """Onboards a new partner. Restricted to Admin, CD, or IA."""
+    from apps.core.rbac import EdifyRole
+    from apps.core.exceptions import Forbidden
+    
+    allowed = {EdifyRole.ADMIN.value, EdifyRole.COUNTRY_DIRECTOR.value, EdifyRole.IMPACT_ASSESSMENT.value}
+    user_roles = getattr(principal, "roles", []) or []
+    active_role = getattr(principal, "active_role", None)
+    if active_role and active_role not in user_roles:
+        user_roles = list(user_roles) + [active_role]
+        
+    if not any(r in allowed for r in user_roles):
+        raise Forbidden("Only Admin, Country Director, or Impact Assessment users can onboard partners.")
+
     if not data.get("name"):
         raise BadRequest("name is required.")
     from django.utils import timezone

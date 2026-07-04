@@ -1,10 +1,8 @@
 """Targets service — CD/IA annual commitments + cumulative progress."""
 from __future__ import annotations
 
-from apps.accounts.models import StaffTargetProfile
 from apps.core.exceptions import BadRequest
-from apps.core.fy import get_cumulative_target_percentage, get_operational_fy
-from apps.core.rbac import EdifyRole
+from apps.core.fy import get_operational_fy
 
 from .models import TargetSetting
 
@@ -52,15 +50,15 @@ def time_period(query: dict, principal=None) -> dict:
     partner_target = 0
     total_target = staff_target + partner_target
 
-    staff_achieved_q1 = Activity.objects.filter(deleted_at__isnull=True, fy=fy, responsible_staff_id=sp.id, delivery_type="staff", status__in=["completed", "ia_verified", "accountant_confirmed"], quarter="Q1").count()
-    staff_achieved_q2 = Activity.objects.filter(deleted_at__isnull=True, fy=fy, responsible_staff_id=sp.id, delivery_type="staff", status__in=["completed", "ia_verified", "accountant_confirmed"], quarter="Q2").count()
-    staff_achieved_q3 = Activity.objects.filter(deleted_at__isnull=True, fy=fy, responsible_staff_id=sp.id, delivery_type="staff", status__in=["completed", "ia_verified", "accountant_confirmed"], quarter="Q3").count()
-    staff_achieved_q4 = Activity.objects.filter(deleted_at__isnull=True, fy=fy, responsible_staff_id=sp.id, delivery_type="staff", status__in=["completed", "ia_verified", "accountant_confirmed"], quarter="Q4").count()
+    staff_achieved_q1 = Activity.objects.filter(deleted_at__isnull=True, fy=fy, responsible_staff_id=sp.id, delivery_type="staff", status__in=["ia_verified", "closed", "accountant_confirmed"], quarter="Q1").count()
+    staff_achieved_q2 = Activity.objects.filter(deleted_at__isnull=True, fy=fy, responsible_staff_id=sp.id, delivery_type="staff", status__in=["ia_verified", "closed", "accountant_confirmed"], quarter="Q2").count()
+    staff_achieved_q3 = Activity.objects.filter(deleted_at__isnull=True, fy=fy, responsible_staff_id=sp.id, delivery_type="staff", status__in=["ia_verified", "closed", "accountant_confirmed"], quarter="Q3").count()
+    staff_achieved_q4 = Activity.objects.filter(deleted_at__isnull=True, fy=fy, responsible_staff_id=sp.id, delivery_type="staff", status__in=["ia_verified", "closed", "accountant_confirmed"], quarter="Q4").count()
 
-    partner_achieved_q1 = Activity.objects.filter(deleted_at__isnull=True, fy=fy, assigned_partner_id=sp.id, delivery_type="partner", status__in=["completed", "ia_verified", "accountant_confirmed"], quarter="Q1").count()
-    partner_achieved_q2 = Activity.objects.filter(deleted_at__isnull=True, fy=fy, assigned_partner_id=sp.id, delivery_type="partner", status__in=["completed", "ia_verified", "accountant_confirmed"], quarter="Q2").count()
-    partner_achieved_q3 = Activity.objects.filter(deleted_at__isnull=True, fy=fy, assigned_partner_id=sp.id, delivery_type="partner", status__in=["completed", "ia_verified", "accountant_confirmed"], quarter="Q3").count()
-    partner_achieved_q4 = Activity.objects.filter(deleted_at__isnull=True, fy=fy, assigned_partner_id=sp.id, delivery_type="partner", status__in=["completed", "ia_verified", "accountant_confirmed"], quarter="Q4").count()
+    partner_achieved_q1 = Activity.objects.filter(deleted_at__isnull=True, fy=fy, assigned_partner_id=sp.id, delivery_type="partner", status__in=["ia_verified", "closed", "accountant_confirmed"], quarter="Q1").count()
+    partner_achieved_q2 = Activity.objects.filter(deleted_at__isnull=True, fy=fy, assigned_partner_id=sp.id, delivery_type="partner", status__in=["ia_verified", "closed", "accountant_confirmed"], quarter="Q2").count()
+    partner_achieved_q3 = Activity.objects.filter(deleted_at__isnull=True, fy=fy, assigned_partner_id=sp.id, delivery_type="partner", status__in=["ia_verified", "closed", "accountant_confirmed"], quarter="Q3").count()
+    partner_achieved_q4 = Activity.objects.filter(deleted_at__isnull=True, fy=fy, assigned_partner_id=sp.id, delivery_type="partner", status__in=["ia_verified", "closed", "accountant_confirmed"], quarter="Q4").count()
 
     rows = []
     periods_data = [

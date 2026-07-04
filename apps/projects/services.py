@@ -1,11 +1,10 @@
 """Special-projects service — project directory + school/partner assignment + impact."""
 from __future__ import annotations
 
-from django.utils import timezone
 
 from apps.core.exceptions import BadRequest, NotFoundError
 
-from .models import Project, ProjectImpactSnapshot, ProjectPartnerAssignment, ProjectSchoolAssignment
+from .models import Project, ProjectPartnerAssignment, ProjectSchoolAssignment
 
 
 def list_projects() -> list[dict]:

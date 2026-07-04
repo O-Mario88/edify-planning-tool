@@ -1,17 +1,14 @@
 from __future__ import annotations
 
 from rest_framework.test import APITestCase
-from django.utils import timezone
-from datetime import datetime
 
 from apps.accounts.jwt import issue_access_token
 from apps.accounts.models import StaffProfile, User
-from apps.activities.models import ActivityScheduleCostLine, Activity
+from apps.activities.models import ActivityScheduleCostLine
 from apps.budget.models import CostSetting
 from apps.core.rbac import EdifyRole
 from apps.geography.models import District, Region, SubCounty
 from apps.schools.models import School
-from apps.fund_requests.models import WeeklyFundRequest, WeeklyFundRequestLine
 
 
 class WeeklyFundRequestsTest(APITestCase):

@@ -1,7 +1,8 @@
-from django.db.models import Q, Sum, Count
-from apps.accounts.models import StaffProfile, User
-from apps.activities.models import Activity, ActivityScheduleCostLine
+from django.db.models import Q
+from apps.accounts.models import StaffProfile
+from apps.activities.models import ActivityScheduleCostLine
 from apps.geography.models import District
+from apps.budget.admin_budget_service import AdminBudgetAllocationService
 
 VISIT_TYPES = {
     "school_visit", "follow_up_visit", "coaching_visit", "in_school_support", "core_visit"
@@ -40,7 +41,6 @@ class MonthlyFundAllocationService:
         ).select_related("activity")
         
         # Build category mappings and totals
-        # Category classification
         activity_categories = {}
         activity_amounts = {}
         activity_staff = {}
@@ -81,10 +81,10 @@ class MonthlyFundAllocationService:
                 "ssa": {"count": 0, "unit_cost": 0, "total": 0},
                 "cluster_training": {"count": 0, "unit_cost": 0, "total": 0},
                 "partner_in_school_training": {"count": 0, "unit_cost": 0, "total": 0},
+                "admin_budget": {"planned": 0, "allocated": 0, "total": 0},
                 "total_allocation": 0
             }
             
-        # We also calculate totals for ALL filtered staff for KPI cards and table totals
         all_staff_data = {}
         for s in staff_qs:
             all_staff_data[s.user.user_id] = {
@@ -95,8 +95,12 @@ class MonthlyFundAllocationService:
                 "ssa": {"count": 0, "unit_cost": 0, "total": 0},
                 "cluster_training": {"count": 0, "unit_cost": 0, "total": 0},
                 "partner_in_school_training": {"count": 0, "unit_cost": 0, "total": 0},
+                "admin_budget": {"planned": 0, "allocated": 0, "total": 0},
                 "total_allocation": 0
             }
+            
+        # 3. Retrieve Admin Budget
+        admin_data = AdminBudgetAllocationService.get_admin_budget_allocation(month_num, fy)
             
         grand_totals = {
             "staff_visits": {"count": 0, "total": 0, "unit_cost": 0},
@@ -104,11 +108,15 @@ class MonthlyFundAllocationService:
             "ssa": {"count": 0, "total": 0, "unit_cost": 0},
             "cluster_training": {"count": 0, "total": 0, "unit_cost": 0},
             "partner_in_school_training": {"count": 0, "total": 0, "unit_cost": 0},
+            "admin_budget": {
+                "planned": admin_data["planned_total"],
+                "allocated": admin_data["allocated_total"],
+                "total": admin_data["total"]
+            },
             "total_allocation": 0
         }
         
         # Group activity counts and values by staff
-        # staff_id -> category -> list of activity_ids
         staff_activities = {}
         staff_category_totals = {}
         
@@ -173,6 +181,9 @@ class MonthlyFundAllocationService:
                     grand_totals[cat]["total"] += tot
                     grand_totals["total_allocation"] += tot
 
+        # Add admin budget to total allocation grand totals
+        grand_totals["total_allocation"] += admin_data["total"]
+
         # Calculate average/unit cost in grand totals row
         for cat in ["staff_visits", "partner_visits", "ssa", "cluster_training", "partner_in_school_training"]:
             cnt = grand_totals[cat]["count"]
@@ -181,6 +192,27 @@ class MonthlyFundAllocationService:
             
         rows = list(staff_data.values())
         rows_all = list(all_staff_data.values())
+
+        # Create Country Director / Country Program Lead / CD Admin Budget row
+        admin_row = {
+            "user_id": "cd_admin_budget",
+            "name": "CD Admin Budget",
+            "staff_visits": {"count": 0, "unit_cost": 0, "total": 0},
+            "partner_visits": {"count": 0, "unit_cost": 0, "total": 0},
+            "ssa": {"count": 0, "unit_cost": 0, "total": 0},
+            "cluster_training": {"count": 0, "unit_cost": 0, "total": 0},
+            "partner_in_school_training": {"count": 0, "unit_cost": 0, "total": 0},
+            "admin_budget": {
+                "planned": admin_data["planned_total"],
+                "allocated": admin_data["allocated_total"],
+                "total": admin_data["total"]
+            },
+            "total_allocation": admin_data["total"]
+        }
+        
+        # Add the Admin Budget row to rows and rows_all so it displays in table
+        rows.append(admin_row)
+        rows_all.append(admin_row)
         
         return {
             "rows": rows,
@@ -188,6 +220,7 @@ class MonthlyFundAllocationService:
             "grand_totals": grand_totals,
             "total_staff_count": total_staff_count,
             "total_activities_count": len(activity_categories),
+            "admin_budget_data": admin_data,
         }
 
     @staticmethod
@@ -199,16 +232,33 @@ class MonthlyFundAllocationService:
                 "partner_cost_share": 0.0,
                 "top_cost_category": {"name": "None", "total": 0, "pct": 0},
                 "average_allocation": 0,
+                "admin_share_pct": 0,
+                "admin_total": 0,
             }
             
-        # Highest Cost Staff
-        highest_staff = max(rows_all, key=lambda r: r["total_allocation"])
-        highest_staff_pct = (highest_staff["total_allocation"] / grand_totals["total_allocation"] * 100)
-        
-        # Largest Cluster Training CCEO/staff
-        largest_cluster_staff = max(rows_all, key=lambda r: r["cluster_training"]["total"])
-        largest_cluster_pct = (largest_cluster_staff["cluster_training"]["total"] / grand_totals["cluster_training"]["total"] * 100) if grand_totals["cluster_training"]["total"] > 0 else 0
-        
+        # Highest Cost Staff (exclude CD Admin Budget row from staff max)
+        staff_only_rows = [r for r in rows_all if r["user_id"] != "cd_admin_budget"]
+        if staff_only_rows:
+            highest_staff = max(staff_only_rows, key=lambda r: r["total_allocation"])
+            highest_staff_name = highest_staff["name"]
+            highest_staff_total = highest_staff["total_allocation"]
+            highest_staff_pct = (highest_staff["total_allocation"] / grand_totals["total_allocation"] * 100)
+        else:
+            highest_staff_name = "None"
+            highest_staff_total = 0
+            highest_staff_pct = 0
+            
+        # Largest Cluster Training staff
+        if staff_only_rows:
+            largest_cluster_staff = max(staff_only_rows, key=lambda r: r["cluster_training"]["total"])
+            largest_cluster_name = largest_cluster_staff["name"]
+            largest_cluster_total = largest_cluster_staff["cluster_training"]["total"]
+            largest_cluster_pct = (largest_cluster_staff["cluster_training"]["total"] / grand_totals["cluster_training"]["total"] * 100) if grand_totals["cluster_training"]["total"] > 0 else 0
+        else:
+            largest_cluster_name = "None"
+            largest_cluster_total = 0
+            largest_cluster_pct = 0
+            
         # Partner Cost Share
         partner_total = grand_totals["partner_visits"]["total"] + grand_totals["partner_in_school_training"]["total"]
         partner_share = (partner_total / grand_totals["total_allocation"] * 100)
@@ -220,6 +270,7 @@ class MonthlyFundAllocationService:
             "SSA": grand_totals["ssa"]["total"],
             "Cluster Training": grand_totals["cluster_training"]["total"],
             "Partner In-School Training": grand_totals["partner_in_school_training"]["total"],
+            "Admin Budget": grand_totals["admin_budget"]["total"],
         }
         top_cat = max(cats, key=cats.get)
         top_cat_pct = (cats[top_cat] / grand_totals["total_allocation"] * 100)
@@ -227,15 +278,19 @@ class MonthlyFundAllocationService:
         # Average allocation
         avg_allocation = grand_totals["total_allocation"] // total_staff_count
         
+        # Admin Budget Share
+        admin_total = grand_totals["admin_budget"]["total"]
+        admin_share_pct = (admin_total / grand_totals["total_allocation"] * 100)
+        
         return {
             "highest_cost_staff": {
-                "name": highest_staff["name"],
-                "total": highest_staff["total_allocation"],
+                "name": highest_staff_name,
+                "total": highest_staff_total,
                 "pct": round(highest_staff_pct, 1)
             },
             "largest_cluster_budget": {
-                "name": largest_cluster_staff["name"],
-                "total": largest_cluster_staff["cluster_training"]["total"],
+                "name": largest_cluster_name,
+                "total": largest_cluster_total,
                 "pct": round(largest_cluster_pct, 1)
             },
             "partner_cost_share": round(partner_share, 1),
@@ -244,5 +299,7 @@ class MonthlyFundAllocationService:
                 "total": cats[top_cat],
                 "pct": round(top_cat_pct, 1)
             },
-            "average_allocation": avg_allocation
+            "average_allocation": avg_allocation,
+            "admin_share_pct": round(admin_share_pct, 1),
+            "admin_total": admin_total,
         }

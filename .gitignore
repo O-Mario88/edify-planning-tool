@@ -28,3 +28,6 @@ htmlcov/
 
 # OS
 .DS_Store
+
+# Local ZCode agent config (skills, etc.)
+.agents/

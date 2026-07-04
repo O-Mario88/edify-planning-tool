@@ -142,3 +142,46 @@ def _get_user(user_id: str) -> User:
     if not user:
         raise NotFoundError("User not found.")
     return user
+
+
+def update_user(user_id: str, data: dict, principal) -> dict:
+    """Updates a user's details, email, roles, and status."""
+    user = _get_user(user_id)
+    
+    email = (data.get("email") or "").lower().strip()
+    if email and email != user.email:
+        if User.objects.filter(email=email, deleted_at__isnull=True).exclude(id=user.id).exists():
+            raise ConflictError("A user with this email already exists.")
+        user.email = email
+        
+    name = data.get("name")
+    if name:
+        user.name = name.strip()
+        
+    phone = data.get("phone")
+    if phone is not None:
+        user.phone = phone.strip()
+        
+    role = data.get("role")
+    if role:
+        additional = data.get("additionalRoles") or []
+        user.roles = list(dict.fromkeys([role, *additional]))
+        user.active_role = role
+        
+        # Sync with StaffProfile title if profile exists
+        from apps.accounts.models import StaffProfile
+        sp = StaffProfile.objects.filter(user=user).first()
+        if sp:
+            sp.title = role
+            sp.save(update_fields=["title"])
+
+    user.save()
+    return {"ok": True, "id": user.id}
+
+
+def delete_user(user_id: str, principal) -> dict:
+    """Soft-deletes a user from the system."""
+    user = _get_user(user_id)
+    user.soft_delete()
+    return {"ok": True}
+

@@ -42,9 +42,10 @@ class Partner(SoftDeleteModel):
 
 
 class PartnerAssignment(TimeStampedModel):
-    """Tracks assignment of a school to a partner organization for interventions."""
+    """Tracks assignment of a school or cluster to a partner organization for interventions."""
     id = CuidField()
-    school = models.ForeignKey("schools.School", on_delete=models.CASCADE, related_name="partner_assignments")
+    school = models.ForeignKey("schools.School", on_delete=models.CASCADE, null=True, blank=True, related_name="partner_assignments")
+    cluster = models.ForeignKey("clusters.Cluster", on_delete=models.CASCADE, null=True, blank=True, related_name="partner_assignments")
     partner = models.ForeignKey(Partner, on_delete=models.CASCADE, related_name="school_assignments")
     assigning_staff_id = models.CharField(max_length=30, null=True, blank=True)
     purpose = models.TextField(null=True, blank=True)
@@ -53,6 +54,11 @@ class PartnerAssignment(TimeStampedModel):
     scheduled_date = models.DateField(null=True, blank=True)
     status = models.CharField(max_length=32, default="assigned")
     notes = models.TextField(null=True, blank=True)
+
+    # Core Schools tracking fields
+    visit_number = models.CharField(max_length=16, null=True, blank=True)
+    training_number = models.CharField(max_length=16, null=True, blank=True)
+    support_type = models.CharField(max_length=32, null=True, blank=True)
 
     class Meta:
         db_table = "partner_assignment"

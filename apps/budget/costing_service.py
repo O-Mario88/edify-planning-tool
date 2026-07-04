@@ -249,6 +249,14 @@ def apply_to_activity(activity: Activity, input: dict, responsible_user_id: str 
         activity.fy = fiscal_year
 
     ActivityScheduleCostLine.objects.filter(activity=activity).delete()
+    
+    # Tag Core activity budget lines
+    tag = None
+    if activity.activity_type == "core_visit":
+        tag = "Core Partner Activity" if activity.delivery_type == "partner" else "Core Visit"
+    elif activity.activity_type == "core_training":
+        tag = "Core Partner Activity" if activity.delivery_type == "partner" else "Core Training"
+        
     ActivityScheduleCostLine.objects.bulk_create([
         ActivityScheduleCostLine(
             activity=activity,
@@ -262,7 +270,7 @@ def apply_to_activity(activity: Activity, input: dict, responsible_user_id: str 
             catalogue_version=catalogue_version,
             line_item_type=_line_item_type(line.key),
             currency="UGX",
-            description=line.label,
+            description=f"[{tag}] {line.label}" if tag else line.label,
             total_cost=int(line.amount),
             planned_date=planned_date,
             week_start_date=week_start,
@@ -271,7 +279,7 @@ def apply_to_activity(activity: Activity, input: dict, responsible_user_id: str 
             quarter=quarter,
             fiscal_year=fiscal_year,
             responsible_user=responsible_user_id or activity.responsible_staff_id,
-            responsible_role=None, # can be derived/set if needed, but defaults to null or a placeholder
+            responsible_role=None,
             school=activity.school,
             cluster=activity.cluster,
             partner_id=activity.assigned_partner_id,

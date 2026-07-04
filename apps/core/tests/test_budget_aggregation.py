@@ -5,12 +5,11 @@ items correctly (the spec's reconciliation rule). Isolated test DB only.
 """
 from __future__ import annotations
 
-from decimal import Decimal
 
 from django.test import TestCase
 
 from apps.accounts.models import StaffProfile, User
-from apps.activities.models import Activity, ActivityScheduleCostLine
+from apps.activities.models import Activity
 from apps.budget.models import CostSetting
 from apps.budget.costing_service import apply_to_activity
 from apps.budget.services import fy_budget, monthly_budget, quarterly_budget

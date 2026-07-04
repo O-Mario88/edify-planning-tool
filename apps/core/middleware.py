@@ -68,6 +68,31 @@ class AllExceptionsMiddleware:
 
         correlation_id = get_correlation_id()
 
+        from django.core.exceptions import PermissionDenied as DjangoPermissionDenied
+        from django.http import Http404 as DjangoHttp404
+
+        if isinstance(exception, DjangoPermissionDenied):
+            logger.debug(
+                "[%s] %s %s -> 403 : %s",
+                correlation_id, request.method, request.path,
+                str(exception),
+            )
+            return JsonResponse(
+                {"statusCode": 403, "correlationId": correlation_id, "message": str(exception)},
+                status=403,
+            )
+
+        if isinstance(exception, DjangoHttp404):
+            logger.debug(
+                "[%s] %s %s -> 404 : %s",
+                correlation_id, request.method, request.path,
+                str(exception),
+            )
+            return JsonResponse(
+                {"statusCode": 404, "correlationId": correlation_id, "message": str(exception)},
+                status=404,
+            )
+
         # DRF APIException is the "business" error family — preserve its status
         # and detail (mirrors NestJS HttpException handling).
         if isinstance(exception, APIException):

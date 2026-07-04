@@ -51,6 +51,11 @@ class Activity(SoftDeleteModel):
     delivery_type = models.CharField(max_length=16, choices=DeliveryType.choices, default=DeliveryType.STAFF)
     cluster_slot = models.CharField(max_length=16, choices=ClusterMeetingSlot.choices, null=True, blank=True)
 
+    # Core Schools tracking fields
+    visit_number = models.CharField(max_length=16, null=True, blank=True)
+    training_number = models.CharField(max_length=16, null=True, blank=True)
+    support_type = models.CharField(max_length=32, null=True, blank=True)
+
     purpose_intervention = models.CharField(max_length=64, choices=SsaIntervention.choices, null=True, blank=True)
     activity_purpose_text = models.TextField(null=True, blank=True)
     purpose_type = models.CharField(max_length=64, null=True, blank=True)
@@ -64,6 +69,10 @@ class Activity(SoftDeleteModel):
     # Salesforce-ready (manual ID confirmation, not integrated).
     salesforce_activity_id = models.CharField(max_length=128, null=True, blank=True)
     salesforce_activity_type = models.CharField(max_length=16, null=True, blank=True)  # visit | training
+
+    # SSA collection integration
+    ssa_collection_expected = models.BooleanField(default=False)
+    ssa_not_collected_reason = models.CharField(max_length=255, null=True, blank=True)
 
     ia_verification_status = models.CharField(
         max_length=16, choices=VerificationStatus.choices, default=VerificationStatus.PENDING
@@ -90,6 +99,7 @@ class Activity(SoftDeleteModel):
     leaders_attended = models.IntegerField(null=True, blank=True)
     other_participants = models.IntegerField(null=True, blank=True)
     next_meeting_date = models.DateTimeField(null=True, blank=True)
+    attended_school_ids = ArrayField(base_field=models.CharField(max_length=30), default=list, blank=True)
 
     class Meta:
         db_table = "activity"
@@ -105,6 +115,25 @@ class Activity(SoftDeleteModel):
             models.Index(fields=["ia_verification_status", "payment_status"]),
             models.Index(fields=["evidence_status"]),
         ]
+        constraints = [
+            models.CheckConstraint(
+                check=~models.Q(status="closed") | (models.Q(salesforce_activity_id__isnull=False) & ~models.Q(salesforce_activity_id="")),
+                name="closed_activity_must_have_sf_id"
+            )
+        ]
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        try:
+            from apps.core_schools.models import CoreActivitySlot
+            slot = CoreActivitySlot.objects.filter(activity_id=self.id).first()
+            if slot:
+                slot.status = self.status
+                if self.scheduled_date:
+                    slot.scheduled_for = self.scheduled_date.date()
+                slot.save(update_fields=["status", "scheduled_for", "updated_at"])
+        except Exception:
+            pass
 
 
 class ActivityScheduleCostLine(TimeStampedModel):
@@ -145,6 +174,60 @@ class ActivityScheduleCostLine(TimeStampedModel):
     partner = models.ForeignKey("partners.Partner", on_delete=models.SET_NULL, null=True, blank=True)
     project = models.ForeignKey("projects.Project", on_delete=models.SET_NULL, null=True, blank=True)
 
+    @property
+    def finance_status(self) -> str:
+        """Resolve the dynamic financial status of the budget line from the 17-state lifecycle."""
+        # 1. Check linked AdvanceRequest status first
+        adv = self.advance_requests.first()
+        if adv:
+            status = adv.status
+            if status == "accounted":
+                if adv.accountability_netsuite_id:
+                    return "Cleared"
+                return "Closed"
+            elif status == "disbursed":
+                if self.activity.status == "ia_verified":
+                    return "Accountability Pending"
+                return "Disbursed"
+            elif status == "confirmed_for_advance":
+                return "Ready for Disbursement"
+            elif status == "self_funded_pending_reimbursement":
+                return "Execution Pending"
+            elif status == "returned":
+                return "Returned"
+            elif status == "cancelled":
+                return "Rejected"
+
+        # 2. Check WeeklyFundRequest status
+        wfr_line = self.weekly_request_lines.first()
+        if wfr_line:
+            wfr = wfr_line.weekly_fund_request
+            status = wfr.status
+            if status == "pending_responsible_confirmation":
+                return "Included in Weekly Request"
+            elif status == "pending_pl_approval":
+                return "Submitted for Approval"
+            elif status == "approved_by_pl":
+                return "PL Approved"
+            elif status == "approved_by_cd":
+                return "CD Approved"
+            elif status == "approved_by_rvp":
+                return "RVP Approved"
+            elif status == "confirmed_for_advance":
+                return "Ready for Disbursement"
+            elif status == "disbursed":
+                return "Disbursed"
+            elif status == "returned_by_accountant":
+                return "Returned"
+
+        # 3. Check Activity execution status
+        if self.activity.status == "completed":
+            return "Evidence Submitted"
+        elif self.activity.status == "ia_verified":
+            return "IA Verified"
+
+        return "Draft Costed"
+
     class Meta:
         db_table = "activity_schedule_cost_line"
         indexes = [models.Index(fields=["activity"])]
@@ -166,5 +249,42 @@ class ActivityCompletionVerification(TimeStampedModel):
     class Meta:
         db_table = "activity_completion_verification"
 
+from .ia_models import (
+    IAVerification,
+    VerificationChecklist,
+    VerificationComment,
+    VerificationDecision,
+    ReturnedReason,
+    DuplicateActivity,
+    VerificationHistory,
+)
+from .closure_models import (
+    ActivityClosure,
+    ClosureChecklist,
+    ClosureBlocker,
+    CompletedActivitySnapshot,
+    ActivityReopenRequest,
+    AnalyticsPublishRecord,
+    ActivityTimelineEvent,
+)
 
-__all__ = ["Activity", "ActivityScheduleCostLine", "ActivityCompletionVerification"]
+__all__ = [
+    "Activity",
+    "ActivityScheduleCostLine",
+    "ActivityCompletionVerification",
+    "IAVerification",
+    "VerificationChecklist",
+    "VerificationComment",
+    "VerificationDecision",
+    "ReturnedReason",
+    "DuplicateActivity",
+    "VerificationHistory",
+    "ActivityClosure",
+    "ClosureChecklist",
+    "ClosureBlocker",
+    "CompletedActivitySnapshot",
+    "ActivityReopenRequest",
+    "AnalyticsPublishRecord",
+    "ActivityTimelineEvent",
+]
+

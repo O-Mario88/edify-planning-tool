@@ -164,6 +164,14 @@ def set_type(principal, school_id: str, school_type: str) -> dict:
     school = get_one(school_id, principal)
     school.school_type = school_type
     school.save(update_fields=["school_type", "updated_at"])
+    
+    if school_type == "core":
+        try:
+            from apps.core_schools.core_planning_services import CoreSchoolsService
+            CoreSchoolsService.get_core_schools(principal, {})
+        except Exception:
+            pass
+            
     return {"ok": True, "schoolId": school.school_id, "schoolType": school_type}
 
 

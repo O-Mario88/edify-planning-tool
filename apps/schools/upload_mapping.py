@@ -124,6 +124,8 @@ SSA_HEADER_MAP: dict[str, str] = {
     # Identity
     "school id": "school_id",
     "schoolid": "school_id",
+    "school name": "school_name",
+    "schoolname": "school_name",
     # Date
     "assessment date": "date_of_ssa",
     "ssa date": "date_of_ssa",
@@ -135,6 +137,10 @@ SSA_HEADER_MAP: dict[str, str] = {
     "enrollment": "new_enrollment",
     "new enrolment": "new_enrollment",
     "new enrollment": "new_enrollment",
+    # Optional geography
+    "district": "district",
+    "subcounty": "sub_county",
+    "sub county": "sub_county",
     # 8 interventions
     "teaching and learning": SsaIntervention.TEACHING_AND_LEARNING.value,
     "financial health": SsaIntervention.FINANCIAL_HEALTH.value,

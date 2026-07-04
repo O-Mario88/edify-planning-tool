@@ -31,7 +31,6 @@ def edify_exception_handler(exc: Exception, context: dict):
     else:
         message = str(detail)
 
-    from rest_framework.response import Response
 
     response.data = {
         "statusCode": response.status_code,

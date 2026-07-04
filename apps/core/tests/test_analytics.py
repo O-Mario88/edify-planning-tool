@@ -7,7 +7,6 @@ recommendations fire on real risk conditions (not hardcoded).
 from __future__ import annotations
 
 from datetime import timedelta
-from unittest.mock import patch
 
 from django.test import TestCase
 from django.utils import timezone

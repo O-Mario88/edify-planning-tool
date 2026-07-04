@@ -270,7 +270,6 @@ class Command(BaseCommand):
         """Re-run owner alias substitution on a _defaults dict."""
         if not alias_map:
             return defaults
-        from apps.core.enums import AccountOwnerStatus
 
         owner_raw = defaults.get("account_owner_name_raw") or ""
         if owner_raw in alias_map:

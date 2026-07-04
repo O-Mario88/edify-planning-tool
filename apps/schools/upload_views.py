@@ -123,7 +123,6 @@ class UploadBatchActionView(APIView):
     required_permissions = UPLOAD
 
     def post(self, request: Request, batch_id: str, action: str) -> Response:
-        from apps.schools.models import UploadBatch
         batch = _scoped_batches(request.user).filter(id=batch_id).first()
         if not batch:
             raise NotFoundError("Upload batch not found.")

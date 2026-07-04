@@ -28,9 +28,8 @@ from rest_framework.test import APITestCase
 
 from apps.accounts.jwt import issue_access_token
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment, User
-from apps.activities.models import Activity, ActivityScheduleCostLine
+from apps.activities.models import ActivityScheduleCostLine
 from apps.budget.models import CostSetting
-from apps.clusters.models import Cluster
 from apps.core.rbac import EdifyRole
 from apps.evidence.models import EvidenceRecord
 from apps.geography.models import District, Region, SubCounty

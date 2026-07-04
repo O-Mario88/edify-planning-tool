@@ -12,11 +12,11 @@ import os
 import uuid
 
 from django.conf import settings
-from django.http import FileResponse, HttpResponse
+from django.http import FileResponse
 from django.utils import timezone
 
 from apps.activities.models import Activity
-from apps.core.enums import EvidenceKind, EvidenceStatus
+from apps.core.enums import EvidenceKind
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.scoping import resolve_user_scope
 

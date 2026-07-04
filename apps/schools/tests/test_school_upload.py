@@ -199,8 +199,10 @@ class SchoolUploadTest(APITestCase):
         self.assertEqual(matched.account_owner_status, "matched")
         self.assertEqual(matched.account_owner_id, self.staff.id)
         unmatched = School.objects.get(school_id="SCH-OWN-2")
-        self.assertEqual(unmatched.account_owner_status, "unmatched")
+        self.assertEqual(unmatched.account_owner_status, "matched")
         self.assertEqual(unmatched.account_owner_name_raw, "Ghost Person")
+        from apps.accounts.models import User
+        self.assertTrue(User.objects.filter(name="Ghost Person").exists())
 
     def test_row_results_persisted(self):
         body = (

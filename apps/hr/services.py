@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from django.utils import timezone
 
-from apps.accounts.models import Leave, StaffProfile, User
+from apps.accounts.models import Leave, StaffProfile
 from apps.core.rbac import EdifyRole
 from apps.core.scoping import resolve_user_scope
 

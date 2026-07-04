@@ -32,6 +32,12 @@ class ProjectSchoolAssignment(TimeStampedModel):
     id = CuidField()
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="school_assignments")
     school = models.ForeignKey("schools.School", on_delete=models.CASCADE, related_name="project_assignments")
+    assigned_by = models.CharField(max_length=30, null=True, blank=True)
+    project_type = models.CharField(max_length=128, null=True, blank=True)
+    participation_type = models.CharField(max_length=128, null=True, blank=True)
+    start_date = models.DateField(null=True, blank=True)
+    support_area = models.CharField(max_length=255, null=True, blank=True)
+    notes = models.TextField(null=True, blank=True)
 
     class Meta:
         db_table = "project_school_assignment"

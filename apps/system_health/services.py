@@ -44,6 +44,7 @@ def report() -> dict:
     }
     data["mockDataLeakage"] = _mock_leakage()
     data["workflowIssues"] = _workflow_issues()
+    data["permissionAudit"] = _permission_guards_audit()
     return data
 
 
@@ -159,9 +160,52 @@ def _workflow_issues() -> dict:
         status__in=_DONE, deleted_at__isnull=True, salesforce_activity_id=""
     ).count()
 
+    # ── Activity Closure & Analytics Workflow Breaks ──────────────────────────
+    from apps.core.enums import ActivityStatus
+    unclustered_schools = _School.objects.filter(cluster_status="unclustered", deleted_at__isnull=True).count()
+    stuck_in_planning = active.filter(status=ActivityStatus.PLANNED).count()
+    partner_scheduled_missing = active.filter(status=ActivityStatus.ASSIGNED_TO_PARTNER).count()
+    
+    # IA skipped: Closed activity where checklist shows IA not verified
+    ia_skipped = active.filter(status=ActivityStatus.CLOSED).exclude(closure_checklist__ia_verified=True).count()
+    
+    # Accounts cleared before IA verified
+    accounts_clearance_before_ia = active.filter(closure_checklist__accounts_cleared=True).exclude(
+        status__in=[ActivityStatus.IA_VERIFIED, ActivityStatus.CLOSED]
+    ).count()
+    
+    # Closed activity missing NetSuite ID
+    netsuite_id_missing = active.filter(status=ActivityStatus.CLOSED).exclude(
+        completed_snapshot__netsuite_expense_id__isnull=False
+    ).count()
+    
+    # Closed activity missing analytics publish confirmation
+    closed_missing_analytics = active.filter(status=ActivityStatus.CLOSED).exclude(
+        analytics_publish_record__status="published"
+    ).count()
+
     blockers = []
+    if unclustered_schools:
+        blockers.append(f"{unclustered_schools} school(s) without cluster.")
     if missing_cost_lines:
-        blockers.append(f"{missing_cost_lines} scheduled activities have no persisted cost lines.")
+        blockers.append(f"{missing_cost_lines} scheduled activity(ies) without budget line.")
+    if stuck_in_planning:
+        blockers.append(f"{stuck_in_planning} activity(ies) stuck in Planning.")
+    if partner_scheduled_missing:
+        blockers.append(f"{partner_scheduled_missing} partner scheduled work missing from My Plan.")
+    if done_no_evidence:
+        blockers.append(f"{done_no_evidence} completed activity(ies) with evidence missing.")
+    if done_no_code:
+        blockers.append(f"{done_no_code} completed activity(ies) with Salesforce Activity ID missing.")
+    if ia_skipped:
+        blockers.append(f"{ia_skipped} closed activity(ies) where IA verification was skipped.")
+    if accounts_clearance_before_ia:
+        blockers.append(f"{accounts_clearance_before_ia} activity(ies) with accounts clearance processed before IA verification.")
+    if netsuite_id_missing:
+        blockers.append(f"{netsuite_id_missing} closed activity(ies) with NetSuite ID missing.")
+    if closed_missing_analytics:
+        blockers.append(f"{closed_missing_analytics} closed activity(ies) missing from analytics database.")
+
     if missing_rates:
         blockers.append(f"{missing_rates} scheduled activities are missing cost rates.")
     if missing_evidence_files:
@@ -188,30 +232,74 @@ def _workflow_issues() -> dict:
         blockers.append(f"{pending_candidates} staff candidate(s) pending Admin profile setup.")
     if cceos_without_supervisor:
         blockers.append(f"{cceos_without_supervisor} CCEO(s) have no PL supervisor — PL team scope is incomplete.")
-    if done_no_evidence:
-        blockers.append(f"{done_no_evidence} completed activity(ies) lack accepted evidence — may inflate achievement.")
-    if done_no_code:
-        blockers.append(f"{done_no_code} completed activity(ies) lack an Activity Code — may inflate achievement.")
 
     return {
+        "unclusteredSchools": unclustered_schools,
         "scheduledActivitiesMissingCostLines": missing_cost_lines,
-        "scheduledActivitiesMissingRates": missing_rates,
-        "evidenceFilesMissingOnDisk": missing_evidence_files,
-        "activityTotalLineSumMismatch": line_sum_mismatch,
-        "clusterMeetingWithVenue": cluster_meeting_with_venue,
-        "clusterMeetingWithFacilitation": cluster_meeting_with_facilitation,
-        "clusterMeetingWithGroupMealRate": cluster_meeting_with_group_meal,
-        "trainingWithoutParticipants": training_no_participants,
-        "missingActiveCatalogue": missing_active_catalogue,
-        "earlyDisbursement": early_disbursement,
-        "unmatchedStaffSchools": unmatched_staff_schools,
-        "ambiguousStaffSchools": ambiguous_staff_schools,
-        "pendingStaffCandidates": pending_candidates,
-        "cceosWithoutSupervisor": cceos_without_supervisor,
+        "stuckInPlanning": stuck_in_planning,
+        "partnerScheduledMissing": partner_scheduled_missing,
         "completedActivitiesWithoutEvidence": done_no_evidence,
         "completedActivitiesWithoutActivityCode": done_no_code,
+        "iaSkipped": ia_skipped,
+        "accountsClearanceBeforeIa": accounts_clearance_before_ia,
+        "netsuiteIdMissing": netsuite_id_missing,
+        "closedMissingAnalytics": closed_missing_analytics,
         "clean": len(blockers) == 0,
         "blockers": blockers,
+    }
+
+
+def _permission_guards_audit() -> dict:
+    """Scan all URLs in the application's URL configuration to detect any routes
+    missing the central require_page_permission decorator or custom role controls."""
+    from django.urls import get_resolver
+    
+    resolver = get_resolver()
+    unguarded_routes = []
+    
+    def _traverse(patterns, prefix=""):
+        for pattern in patterns:
+            pattern_str = prefix + str(pattern.pattern)
+            
+            if hasattr(pattern, "url_patterns"):
+                _traverse(pattern.url_patterns, pattern_str)
+            elif hasattr(pattern, "callback"):
+                callback = pattern.callback
+                
+                is_drf_view = False
+                view_class = getattr(callback, "cls", None)
+                if view_class:
+                    is_drf_view = True
+                    
+                # Skip public/built-in paths
+                if pattern_str.startswith("admin/"):
+                    continue
+                if any(x in pattern_str for x in ["login", "logout", "password_reset", "password_change"]):
+                    continue
+                if pattern_str.startswith("static/") or pattern_str.startswith("media/"):
+                    continue
+                if is_drf_view and getattr(view_class, "permission_classes", None):
+                    continue
+                
+                has_guard = getattr(callback, "has_permission_guard", False)
+                
+                is_exempt = False
+                callback_name = getattr(callback, "__name__", "")
+                if callback_name in ["switch_role_view", "select2_list_view", "debug_toolbar_view", "ping_view", "health_check"]:
+                    is_exempt = True
+                    
+                if not has_guard and not is_exempt:
+                    unguarded_routes.append({
+                        "route": "/" + pattern_str.rstrip("$?^"),
+                        "view_name": f"{callback.__module__}.{callback_name}",
+                    })
+                    
+    _traverse(resolver.url_patterns)
+    
+    return {
+        "unguardedCount": len(unguarded_routes),
+        "clean": len(unguarded_routes) == 0,
+        "unguardedRoutes": unguarded_routes,
     }
 
 

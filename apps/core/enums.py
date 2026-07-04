@@ -60,6 +60,19 @@ class SsaStatus(models.TextChoices):
 
 
 class PlanningReadiness(models.TextChoices):
+    REQUIRES_CLUSTER = "requires_cluster", "Requires Cluster"
+    READY_FOR_BASELINE_SSA = "ready_for_baseline_ssa", "SSA Required"
+    READY_FOR_SUPPORT_PLANNING = "ready_for_support_planning", "Ready for Support Planning"
+    READY_FOR_PARTNER_ASSIGNMENT = "ready_for_partner_assignment", "Ready for Partner Assignment"
+    SCHEDULED = "scheduled", "Scheduled"
+    IN_MY_PLAN = "in_my_plan", "In My Plan"
+    AWAITING_EVIDENCE = "awaiting_evidence", "Awaiting Evidence"
+    AWAITING_IA = "awaiting_ia", "Awaiting IA"
+    FINANCE_PENDING = "finance_pending", "Finance Pending"
+    CLOSED = "closed", "Closed"
+    DATA_CLEANUP_REQUIRED = "data_cleanup_required", "Data Cleanup Required"
+    COST_CATALOGUE_REQUIRED = "cost_catalogue_required", "Cost Catalogue Required"
+    # Legacy choices for migration safety
     LOCKED = "locked", "Locked"
     LIMITED = "limited", "Limited"
     READY = "ready", "Ready"
@@ -99,6 +112,12 @@ class ActivityType(models.TextChoices):
     PARTNER_ACTIVITY = "partner_activity", "Partner Activity"
     CORE_VISIT = "core_visit", "Core Visit"
     CORE_TRAINING = "core_training", "Core Training"
+    BASELINE_SSA_VISIT = "baseline_ssa_visit", "SSA Visit"
+    SCHOOL_VISIT_SSA_COLLECTION = "school_visit_ssa_collection", "School Visit + SSA Collection"
+    CLUSTER_TRAINING_SSA_COLLECTION = "cluster_training_ssa_collection", "Cluster Training + SSA Collection"
+    CLUSTER_MEETING_SSA_REVIEW = "cluster_meeting_ssa_review", "Cluster Meeting + SSA Review"
+    PARTNER_SSA_COLLECTION = "partner_ssa_collection", "Partner SSA Collection"
+    CORE_ASSESSMENT_VISIT = "core_assessment_visit", "Core Assessment Visit"
 
 
 class ClusterMeetingSlot(models.TextChoices):
@@ -132,6 +151,8 @@ class ActivityStatus(models.TextChoices):
     ACCOUNTANT_CONFIRMED = "accountant_confirmed", "Accountant Confirmed"
     COMPLETED = "completed", "Completed"
     RETURNED = "returned", "Returned"
+    RETURNED_BY_IA = "returned_by_ia", "Returned by IA"
+    CLOSED = "closed", "Closed"
     REJECTED = "rejected", "Rejected"
     RESCHEDULED = "rescheduled", "Rescheduled"
     CANCELLED = "cancelled", "Cancelled"

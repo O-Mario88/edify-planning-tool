@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 import datetime
-from django.contrib.auth import get_user_model
 from django.test import TestCase
 
 from apps.accounts.models import StaffProfile, User, StaffSchoolAssignment
 from apps.activities.models import Activity
 from apps.activities.services import create, calculate_activity_impact
 from apps.clusters.models import Cluster
-from apps.clusters.services import cluster_schools, cluster_weakest_interventions
+from apps.clusters.services import cluster_weakest_interventions
 from apps.core.enums import SsaIntervention
 from apps.core.exceptions import BadRequest
 from apps.core.rbac import EdifyRole

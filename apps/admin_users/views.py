@@ -42,3 +42,15 @@ SuspendView = _action_view(services.suspend)
 DisableView = _action_view(services.disable)
 ReactivateView = _action_view(services.reactivate)
 ForcePasswordResetView = _action_view(services.force_password_reset)
+
+
+class AdminUserDetailAPIView(APIView):
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = MANAGE
+
+    def put(self, request: Request, user_id: str) -> Response:
+        return Response(services.update_user(user_id, request.data, request.user))
+
+    def delete(self, request: Request, user_id: str) -> Response:
+        return Response(services.delete_user(user_id, request.user))
+

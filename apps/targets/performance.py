@@ -19,8 +19,7 @@ loops over activities. Scope-aware: a CCEO sees only their own activities
 """
 from __future__ import annotations
 
-from datetime import datetime, timedelta
-from typing import Iterable
+from datetime import datetime
 
 from django.db.models import Count, Q, Sum
 from django.utils import timezone
@@ -28,16 +27,14 @@ from django.utils import timezone
 from apps.core.fy import (
     get_fy_date_range,
     get_mid_year_range,
-    get_operational_fy,
     get_quarter_date_range,
 )
-from apps.core.rbac import EdifyRole
 
 
 # ── Achievement predicates (the single source of truth) ─────────────────────
 
 # Statuses that mean the activity's work is genuinely done.
-ACHIEVED_STATUSES = ("completed", "ia_verified", "accountant_confirmed")
+ACHIEVED_STATUSES = ("ia_verified", "closed", "accountant_confirmed")
 
 # Activity-type sets.
 VISIT_TYPES = ("school_visit", "follow_up_visit", "coaching_visit", "in_school_support", "core_visit")
@@ -249,7 +246,7 @@ def drilldown(staff_id: str, metric: str, fy: str, start: datetime | None = None
 
 
 def _drilldown_ssa(staff_id: str, fy: str, start: datetime, end: datetime) -> list[dict]:
-    from apps.ssa.models import SsaRecord, SsaScore
+    from apps.ssa.models import SsaRecord
     from apps.accounts.models import StaffSchoolAssignment
 
     school_ids = list(StaffSchoolAssignment.objects.filter(staff_id=staff_id).values_list("school_id", flat=True))

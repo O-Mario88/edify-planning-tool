@@ -15,7 +15,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.core.exceptions import BadRequest
-from apps.core.fy import get_fy_date_range, get_operational_fy
+from apps.core.fy import get_operational_fy
 from apps.core.permissions import RequirePermissions
 from apps.core.rbac import EdifyRole
 from apps.core.scoping import resolve_user_scope
@@ -95,7 +95,7 @@ class CountryTargetsView(APIView):
     required_permissions = VIEW
 
     def get(self, request: Request) -> Response:
-        from apps.accounts.models import StaffProfile, StaffSupervisorAssignment
+        from apps.accounts.models import StaffProfile
 
         fy = request.query_params.get("fy") or get_operational_fy()
         start, end = _period_range(_q(request), fy)

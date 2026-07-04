@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from django.utils import timezone
 
-from apps.core.exceptions import BadRequest, NotFoundError
+from apps.core.exceptions import NotFoundError
 
 from .models import AdminBudgetLine, MonthlyWorkPlanBudget, MonthlyWorkPlanBudgetStatus
 

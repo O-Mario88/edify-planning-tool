@@ -254,6 +254,18 @@ def cluster_schools(cluster_id: str, principal) -> list[dict]:
         .prefetch_related("ssa_records__scores", "activities")
         .order_by("name")
     )
+    
+    # Query completed cluster activities to compute attendance rate
+    from apps.activities.models import Activity
+    cluster_activities = list(Activity.objects.filter(
+        cluster=cluster,
+        status="completed",
+        activity_type__in=["cluster_meeting", "training", "cluster_training", "core_training"],
+        deleted_at__isnull=True
+    ))
+    total_meetings = sum(1 for a in cluster_activities if a.activity_type == "cluster_meeting")
+    total_trainings = sum(1 for a in cluster_activities if a.activity_type in ["training", "cluster_training", "core_training"])
+
     out = []
     for s in schools:
         latest_ssa = s.ssa_records.filter(deleted_at__isnull=True).order_by("-date_of_ssa").first()
@@ -289,6 +301,10 @@ def cluster_schools(cluster_id: str, principal) -> list[dict]:
         if s.account_owner_id:
             assigned_staff = s.account_owner_name_raw or s.account_owner_id
 
+        # Calculate school-specific attendance counts
+        attended_meetings = sum(1 for a in cluster_activities if a.activity_type == "cluster_meeting" and s.id in (a.attended_school_ids or []))
+        attended_trainings = sum(1 for a in cluster_activities if a.activity_type in ["training", "cluster_training", "core_training"] and s.id in (a.attended_school_ids or []))
+
         out.append({
             "id": s.id,
             "schoolId": s.school_id,
@@ -306,6 +322,10 @@ def cluster_schools(cluster_id: str, principal) -> list[dict]:
             "planningStatus": s.planning_readiness,
             "ssaStatus": s.current_fy_ssa_status,
             "recommendedAction": rec_action,
+            "meetings_attended": attended_meetings,
+            "total_meetings": total_meetings,
+            "trainings_attended": attended_trainings,
+            "total_trainings": total_trainings,
         })
     return out
 
@@ -500,9 +520,6 @@ def sub_counties_without_clusters(principal) -> list[dict]:
 def cluster_planning(principal) -> list[dict]:
     """Per-cluster planning intelligence (cadence, SSA, coverage)."""
     from apps.activities.models import Activity
-    from apps.core.enums import ActivityStatus
-    from django.utils import timezone
-    from apps.core.enums import ActivityType
 
     # Resolve user scope to filter clusters
     scope_q, scope = _scope_filter(principal)
@@ -518,13 +535,19 @@ def cluster_planning(principal) -> list[dict]:
         schools = School.objects.filter(cluster_assignments__cluster=c, deleted_at__isnull=True)
         total_schools = schools.count()
         ssa_done = schools.filter(current_fy_ssa_status="done").count()
+        ssa_missing = total_schools - ssa_done
+        ssa_coverage_pct = round((ssa_done / total_schools) * 100, 1) if total_schools > 0 else 0.0
+        
+        ready_for_planning = schools.filter(planning_readiness="ready_for_support_planning").count()
+        needing_baseline = schools.filter(planning_readiness="ready_for_baseline_ssa").count()
+        needing_cleanup = schools.exclude(data_quality_status="Clean").count()
 
         # Activities for this cluster
         acts = Activity.objects.filter(cluster=c, deleted_at__isnull=True)
         
         meetings_completed = acts.filter(
             activity_type__in=["cluster_meeting"],
-            status__in=["completed", "ia_verified", "accountant_confirmed"]
+            status__in=["ia_verified", "closed", "accountant_confirmed"]
         ).count()
         
         meetings_scheduled = acts.filter(
@@ -534,13 +557,13 @@ def cluster_planning(principal) -> list[dict]:
 
         trainings_completed = acts.filter(
             activity_type__in=["cluster_training", "school_improvement_training"],
-            status__in=["completed", "ia_verified", "accountant_confirmed"]
+            status__in=["ia_verified", "closed", "accountant_confirmed"]
         ).count()
 
         # Last completed meeting date
         last_meet = acts.filter(
             activity_type__in=["cluster_meeting"],
-            status__in=["completed", "ia_verified", "accountant_confirmed"]
+            status__in=["ia_verified", "closed", "accountant_confirmed"]
         ).order_by("-scheduled_date").first()
         last_meeting_date = last_meet.scheduled_date.isoformat() if last_meet and last_meet.scheduled_date else None
 
@@ -558,7 +581,7 @@ def cluster_planning(principal) -> list[dict]:
             Activity.objects.filter(
                 school__in=schools,
                 activity_type="school_visit",
-                status__in=["completed", "ia_verified", "accountant_confirmed"],
+                status__in=["ia_verified", "closed", "accountant_confirmed"],
                 deleted_at__isnull=True
             ).values_list("school_id", flat=True)
         )
@@ -568,7 +591,7 @@ def cluster_planning(principal) -> list[dict]:
             Activity.objects.filter(
                 school__in=schools,
                 activity_type__in=["school_training", "core_training", "project_activity"],
-                status__in=["completed", "ia_verified", "accountant_confirmed"],
+                status__in=["ia_verified", "closed", "accountant_confirmed"],
                 deleted_at__isnull=True
             ).values_list("school_id", flat=True)
         )
@@ -617,6 +640,11 @@ def cluster_planning(principal) -> list[dict]:
                 "subCounty": (c.sub_county.name if c.sub_county else "") or c.sub_county_name or "",
                 "schoolsCount": total_schools,
                 "schoolsWithSsa": ssa_done,
+                "schoolsWithoutSsa": ssa_missing,
+                "ssaCoveragePct": ssa_coverage_pct,
+                "readySchoolsCount": ready_for_planning,
+                "needingBaselineCount": needing_baseline,
+                "needingCleanupCount": needing_cleanup,
                 "meetingsThisFy": meetings_completed,
                 "meetingsScheduledThisFy": meetings_scheduled,
                 "trainingsThisFy": trainings_completed,
@@ -636,6 +664,370 @@ def cluster_planning(principal) -> list[dict]:
     return out
 
 
+class ClusterDashboardService:
+    @staticmethod
+    def get_dashboard_data(request, user) -> dict:
+        from apps.activities.models import Activity
+        scope = resolve_user_scope(user)
+        
+        # 1. Base scoped query
+        base_qs = Cluster.objects.filter(deleted_at__isnull=True, status="active")
+        if not scope.country_scope and scope.district_ids:
+            base_qs = base_qs.filter(district_id__in=scope.district_ids)
+            
+        # 2. Filters from request
+        q = request.GET.get("q", "").strip()
+        fy = request.GET.get("fy", "2026").strip()
+        quarter = request.GET.get("quarter", "").strip()
+        district_id = request.GET.get("district", "").strip()
+        sub_county_id = request.GET.get("sub_county", "").strip()
+        staff_id = request.GET.get("staff", "").strip()
+        ssa_status = request.GET.get("ssa_status", "").strip()
+        cluster_risk = request.GET.get("cluster_risk", "").strip()
+        activity_status = request.GET.get("activity_status", "").strip()
+        
+        # Apply filters to queryset
+        filtered_qs = base_qs
+        if q:
+            filtered_qs = filtered_qs.filter(Q(name__icontains=q) | Q(district__name__icontains=q))
+        if district_id:
+            filtered_qs = filtered_qs.filter(district_id=district_id)
+        if sub_county_id:
+            filtered_qs = filtered_qs.filter(sub_county_id=sub_county_id)
+        if staff_id:
+            filtered_qs = filtered_qs.filter(Q(responsible_staff_id=staff_id) | Q(assignments__school__account_owner_id=staff_id)).distinct()
+
+        # Get all planning info
+        planning_list = cluster_planning(user)
+        planning_map = {p["id"]: p for p in planning_list}
+        
+        # Build Card viewmodels for filtered list
+        cards = []
+        for c in filtered_qs.select_related("district", "sub_county"):
+            schools = School.objects.filter(cluster_assignments__cluster=c, deleted_at__isnull=True)
+            schools_count = schools.count()
+            
+            assigned_staff_ids = schools.exclude(account_owner_id__isnull=True).exclude(account_owner_id="").values_list("account_owner_id", flat=True).distinct()
+            staff_count = len(assigned_staff_ids)
+            
+            latest_ssas = []
+            for s in schools:
+                latest = s.ssa_records.filter(deleted_at__isnull=True).order_by("-date_of_ssa").first()
+                if latest and latest.average_score is not None:
+                    latest_ssas.append(latest.average_score)
+            avg_ssa = round(sum(latest_ssas) / len(latest_ssas), 1) if latest_ssas else None
+            
+            acts = Activity.objects.filter(cluster=c, deleted_at__isnull=True)
+            
+            last_meeting = acts.filter(activity_type="cluster_meeting", status="completed").order_by("-planned_date").first()
+            last_meeting_date = last_meeting.planned_date.strftime("%d %b %Y") if last_meeting and last_meeting.planned_date else "Never"
+            
+            last_training = acts.filter(activity_type__in=["training", "school_improvement_training", "cluster_training"], status="completed").order_by("-planned_date").first()
+            last_training_date = last_training.planned_date.strftime("%d %b %Y") if last_training and last_training.planned_date else "Never"
+            
+            meeting_count_fy = acts.filter(activity_type="cluster_meeting", status="completed", fy=fy).count()
+            
+            weakest = cluster_weakest_interventions(c.id, user)
+            planning_info = planning_map.get(c.id, {})
+            
+            from apps.frontend.views.cluster_views import get_cluster_risk
+            risk = get_cluster_risk(c, planning_info, avg_ssa)
+            
+            if risk == "critical":
+                next_action = "Schedule training"
+            elif risk == "needs_attention":
+                next_action = "Monitor progress"
+            else:
+                next_action = "Continue support"
+                
+            cards.append({
+                "id": c.id,
+                "name": c.name,
+                "district": c.district.name if c.district else "Unknown",
+                "sub_county": c.sub_county.name if c.sub_county else c.sub_county_name or "Unknown",
+                "schools_count": schools_count,
+                "staff_count": staff_count,
+                "avg_ssa": avg_ssa,
+                "last_meeting_date": last_meeting_date,
+                "last_training_date": last_training_date,
+                "weakest_interventions": weakest,
+                "all_intervention_scores": cluster_intervention_summary(c.id, user),
+                "risk": risk,
+                "next_action": next_action,
+                "planning": planning_info,
+                "meeting_count_fy": meeting_count_fy,
+                "cluster_leader_name": c.cluster_leader_name or "Not Assigned",
+                "cluster_leader_phone": c.cluster_leader_phone or "Not Entered",
+            })
+            
+        # Apply calculated filters in Python
+        if ssa_status:
+            if ssa_status == "done":
+                cards = [c for c in cards if c["planning"].get("schoolsWithSsa", 0) == c["schools_count"]]
+            elif ssa_status == "not_done":
+                cards = [c for c in cards if c["planning"].get("schoolsWithSsa", 0) < c["schools_count"]]
+                
+        if cluster_risk:
+            cards = [c for c in cards if c["risk"] == cluster_risk]
+            
+        if activity_status:
+            if activity_status == "pending":
+                cards = [c for c in cards if c["planning"].get("meetingsScheduledThisFy", 0) > 0]
+            elif activity_status == "completed":
+                cards = [c for c in cards if c["planning"].get("meetingsThisFy", 0) > 0]
+
+        # Calculate KPIs
+        total_clusters = len(cards)
+        schools_in_clusters = sum(c["schools_count"] for c in cards)
+        without_ssa = sum(1 for c in cards if c["planning"].get("schoolsWithSsa", 0) < c["schools_count"])
+        needing_training = sum(1 for c in cards if c["risk"] == "critical" or (c["avg_ssa"] is not None and c["avg_ssa"] < 5.5))
+        not_met_this_quarter = sum(1 for c in cards if not c["planning"].get("metThisQuarter", True))
+        
+        ssas = [c["avg_ssa"] for c in cards if c["avg_ssa"] is not None]
+        avg_cluster_ssa = round(sum(ssas) / len(ssas), 1) if ssas else 0.0
+        
+        from apps.core.enums import SsaIntervention
+        interv_totals = {key.value: [] for key in SsaIntervention}
+        for c in cards:
+            for item in c["weakest_interventions"]:
+                if item["avg"] is not None:
+                    interv_totals[item["intervention"]].append(item["avg"])
+        
+        weakest_name = "None"
+        weakest_avg = 0.0
+        lowest_val = 99.0
+        for key in SsaIntervention:
+            vals = interv_totals[key.value]
+            if vals:
+                avg = sum(vals) / len(vals)
+                if avg < lowest_val:
+                    lowest_val = avg
+                    weakest_name = key.label
+                    weakest_avg = round(avg, 1)
+                    
+        pending_activities = sum(c["planning"].get("meetingsScheduledThisFy", 0) for c in cards)
+
+        kpis = {
+            "total_clusters": total_clusters,
+            "schools_in_clusters": schools_in_clusters,
+            "without_ssa": without_ssa,
+            "needing_training": needing_training,
+            "not_met_this_quarter": not_met_this_quarter,
+            "avg_ssa": avg_cluster_ssa,
+            "weakest_intervention": weakest_name,
+            "weakest_avg": weakest_avg,
+            "pending_activities": pending_activities,
+        }
+
+        kpi_strip_items = [
+            {
+                "label": "Total Clusters",
+                "value": str(total_clusters),
+                "raw_value": total_clusters,
+                "helper": "Active",
+                "icon": "school",
+                "variant": "primary",
+            },
+            {
+                "label": "Schools in Clusters",
+                "value": f"{schools_in_clusters:,}",
+                "raw_value": schools_in_clusters,
+                "helper": f"Across {total_clusters} clusters",
+                "icon": "school",
+                "variant": "success",
+            },
+            {
+                "label": "Without Current SSA",
+                "value": str(without_ssa),
+                "raw_value": without_ssa,
+                "helper": f"{round(without_ssa * 100 / total_clusters) if total_clusters > 0 else 0}% of total",
+                "icon": "warning",
+                "variant": "danger",
+            },
+            {
+                "label": "Needing Group Training",
+                "value": str(needing_training),
+                "raw_value": needing_training,
+                "helper": f"{round(needing_training * 100 / total_clusters) if total_clusters > 0 else 0}% of total",
+                "icon": "target",
+                "variant": "warning",
+            },
+            {
+                "label": "Not Met This Quarter",
+                "value": str(not_met_this_quarter),
+                "raw_value": not_met_this_quarter,
+                "helper": f"{round(not_met_this_quarter * 100 / total_clusters) if total_clusters > 0 else 0}% of total",
+                "icon": "calendar",
+                "variant": "warning",
+            },
+            {
+                "label": "Average Cluster SSA",
+                "value": f"{avg_cluster_ssa:.1f}",
+                "raw_value": avg_cluster_ssa,
+                "helper": "Out of 10.0",
+                "icon": "chart",
+                "variant": "blue",
+            },
+            {
+                "label": "Weakest Intervention",
+                "value": weakest_name,
+                "raw_value": 0,
+                "helper": f"Avg {weakest_avg:.1f}",
+                "icon": "warning",
+                "variant": "danger",
+            },
+            {
+                "label": "Pending Activities",
+                "value": str(pending_activities),
+                "raw_value": pending_activities,
+                "helper": "This quarter",
+                "icon": "check",
+                "variant": "info",
+            }
+        ]
+
+        critical_count = sum(1 for c in cards if c["risk"] == "critical")
+        attention_count = sum(1 for c in cards if c["risk"] == "needs_attention")
+        healthy_count = sum(1 for c in cards if c["risk"] == "healthy")
+
+        risk_counts = {
+            "critical": critical_count,
+            "needs_attention": attention_count,
+            "healthy": healthy_count,
+        }
+
+        return {
+            "cards": cards,
+            "kpis": kpis,
+            "kpi_strip_items": kpi_strip_items,
+            "risk_counts": risk_counts,
+        }
+
+
+class ClusterPlanningService:
+    @staticmethod
+    def get_cluster_schools(cluster_id: str, user) -> list[dict]:
+        return cluster_schools(cluster_id, user)
+
+
+class ClusterActionPlannerService:
+    @staticmethod
+    def schedule_activity(data: dict, user) -> dict:
+        from apps.activities.services import create as create_activity
+        
+        # Ensure we have active cost catalogue
+        from apps.budget.costing_service import active_catalogue
+        catalogue = active_catalogue(data.get("fy", "2026"))
+        if not catalogue:
+            raise BadRequest("Active Cost Catalogue required before cluster activity can be scheduled.")
+            
+        act_dict = create_activity(data, user)
+        
+        # If assigned partner, make sure PartnerAssignment is created
+        partner_id = data.get("assignedPartnerId")
+        if partner_id:
+            from apps.partners.models import PartnerAssignment
+            PartnerAssignment.objects.create(
+                cluster_id=data.get("clusterId"),
+                partner_id=partner_id,
+                assigning_staff_id=user.staff_profile.staff_id if hasattr(user, "staff_profile") and user.staff_profile else user.id,
+                purpose=data.get("activityPurposeText"),
+                focus_intervention=data.get("focusIntervention"),
+                expected_activity_type=data.get("activityType"),
+                status="partner_pending_schedule",
+            )
+            
+        return act_dict
+
+
+class ClusterImpactService:
+    @staticmethod
+    def get_impact_data(cluster_id: str, focus_intervention: str, user) -> dict | None:
+        from apps.frontend.views.cluster_views import get_cluster_impact_data
+        return get_cluster_impact_data(cluster_id, focus_intervention, user)
+
+
+class ClusterRecommendationService:
+    @staticmethod
+    def get_recommendation(cluster_id: str, user) -> dict | None:
+        planning_list = cluster_planning(user)
+        planning = next((p for p in planning_list if p["id"] == cluster_id), None)
+        if not planning:
+            return None
+        return {
+            "headline": planning.get("recommendationHeadline", "Continue standard support"),
+            "reason": planning.get("recommendationReason", "Cluster has solid SSA scores and frequent meetings."),
+            "activity_label": planning.get("recommendationActivityLabel", "Schedule Visit"),
+            "focus_intervention": planning.get("recommendationFocusIntervention", "leadership"),
+        }
+
+
+class ClusterCostPreviewService:
+    @staticmethod
+    def preview_cost(activity_type: str, participants: int, cluster_id: str, fy: str = "2026") -> dict:
+        from apps.frontend.views.cluster_views import _get_cost_preview_data
+        return _get_cost_preview_data(activity_type, participants, cluster_id)
+
+
+class ClusterMyPlanSyncService:
+    """Ensures a cluster activity is attributable to a user's My Plan.
+
+    An Activity row appears on a user's My Plan when its `responsible_staff_id`
+    (or, for partner delivery, `assigned_partner_id`) falls within the user's
+    resolved scope (see `apps.core.scoping.resolve_user_scope`). Cluster
+    activities created via `ClusterActionPlannerService.schedule_activity` are
+    already attributed at creation time, so in the normal flow no sync is
+    needed. This service exists for flows that build or adopt an Activity
+    outside that path and need to (re)attribute it to a specific owner so it
+    surfaces on their My Plan.
+
+    The operation is idempotent: calling it on an already-attributed activity
+    is a no-op. It never creates a duplicate Activity — only updates ownership
+    fields on the supplied instance.
+    """
+
+    @staticmethod
+    def sync_to_my_plan(activity, user) -> bool:
+        """Attribute `activity` to `user`'s My Plan.
+
+        Returns True if any change was applied, False if the activity was
+        already attributable to the user. The activity is saved only when a
+        change is made.
+
+        For staff delivery, sets `responsible_staff_id` to the user's staff
+        profile id (falling back to the user id). For partner delivery, the
+        activity is attributed via `assigned_partner_id` and is left untouched
+        unless the user has no partner linkage, in which case we still set the
+        responsible staff so the activity is traceable.
+        """
+        if activity is None or user is None:
+            return False
+
+        owner_id = None
+        if getattr(user, "staff_profile_id", None):
+            owner_id = user.staff_profile_id
+        elif getattr(user, "staff_profile", None) and user.staff_profile:
+            owner_id = user.staff_profile.staff_id or user.id
+        else:
+            owner_id = user.id
+
+        changed = False
+        # Partner-delivered activities are scoped by assigned_partner_id; only
+        # touch staff ownership if it is genuinely missing.
+        if getattr(activity, "delivery_type", None) == "partner":
+            if not activity.assigned_partner_id and not activity.responsible_staff_id:
+                activity.responsible_staff_id = owner_id
+                changed = True
+        else:
+            if activity.responsible_staff_id != owner_id:
+                activity.responsible_staff_id = owner_id
+                changed = True
+
+        if changed:
+            activity.save(update_fields=["responsible_staff_id"])
+        return changed
+
+
 __all__ = [
     "list_clusters",
     "recommendations",
@@ -652,4 +1044,11 @@ __all__ = [
     "cluster_intelligence",
     "sub_counties_without_clusters",
     "cluster_planning",
+    "ClusterDashboardService",
+    "ClusterPlanningService",
+    "ClusterActionPlannerService",
+    "ClusterImpactService",
+    "ClusterRecommendationService",
+    "ClusterCostPreviewService",
+    "ClusterMyPlanSyncService",
 ]

@@ -9,7 +9,6 @@ cleanly with legacy ones.
 """
 from __future__ import annotations
 
-import math
 import os
 import threading
 import time

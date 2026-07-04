@@ -8,7 +8,6 @@ count. Training needs participants + TS code. SSA needs all 8 scores + confirmed
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from unittest.mock import patch
 
 from django.test import TestCase
 from django.utils import timezone
@@ -23,11 +22,9 @@ from apps.schools.models import School
 from apps.ssa.models import SsaRecord, SsaScore
 from apps.core.enums import SsaIntervention
 from apps.targets.performance import (
-    ACHIEVED_STATUSES,
     staff_metrics,
     staff_metrics_with_targets,
     target_status,
-    resolve_target,
     drilldown,
 )
 

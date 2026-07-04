@@ -1,7 +1,6 @@
 """Core-schools service — candidates → verify → onboard → slots → champion."""
 from __future__ import annotations
 
-from datetime import datetime
 
 from django.db import transaction
 from django.utils import timezone
@@ -10,7 +9,6 @@ from apps.core.enums import SsaIntervention
 from apps.core.exceptions import BadRequest, NotFoundError
 from apps.core.fy import get_operational_fy
 from apps.schools.models import School
-from apps.ssa.models import SsaRecord
 
 from .models import (
     CoreActivitySlot, CoreCandidateVerification, CorePlan, CoreSchoolOnboarding,

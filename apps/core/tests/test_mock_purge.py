@@ -15,12 +15,11 @@ from __future__ import annotations
 import os
 import tempfile
 from io import StringIO
-from unittest import mock
 
 from django.core.management import call_command
 from django.test import TestCase, override_settings
 
-from apps.accounts.models import Permission, RolePermission, User
+from apps.accounts.models import Permission, RolePermission
 from apps.core.models import DataSource
 from apps.geography.models import District, Region, SubCounty
 from apps.schools.models import School

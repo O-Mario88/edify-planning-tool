@@ -4,7 +4,6 @@ from __future__ import annotations
 from django.db.models import Q
 
 from apps.core.scoping import resolve_user_scope, school_queryset
-from apps.schools.models import School
 
 
 def search(principal, q: str, context: str | None = None) -> dict:

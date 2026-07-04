@@ -11,7 +11,6 @@ This is the SINGLE source of truth for activity cost on the backend.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
 
 
 RateCard = dict  # CostSetting.key -> unitCost
@@ -40,9 +39,11 @@ DEFAULT_CLUSTER_MEETING_PARTICIPANTS = 10
 
 VISIT_TYPES = {
     "school_visit", "follow_up_visit", "coaching_visit", "in_school_support", "core_visit",
+    "baseline_ssa_visit", "school_visit_ssa_collection", "partner_ssa_collection", "core_assessment_visit",
 }
 TRAINING_TYPES = {
     "training", "school_improvement_training", "cluster_training", "core_training",
+    "cluster_training_ssa_collection", "cluster_meeting_ssa_review",
 }
 
 
@@ -82,18 +83,47 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
     is_secondary = a.get("districtType") == "secondary"
 
     if is_partner:
+        # Determine the key, basis, and label
         if "partner_visit_rate" in rates:
-            add("Partner visit rate", "partner_visit_rate")
+            key = "partner_visit_rate"
+            basis = "per visit"
+            label = "Partner visit rate"
+        elif "partner_school_visit_rate" in rates:
+            key = "partner_school_visit_rate"
+            basis = "per school"
+            label = "Partner School Visit"
+        elif activity_type in TRAINING_TYPES and "partner_training_lump_sum" in rates:
+            key = "partner_training_lump_sum"
+            basis = "per training"
+            label = "Partner training rate"
+        elif activity_type == "cluster_meeting" and "partner_cluster_activity_rate" in rates:
+            key = "partner_cluster_activity_rate"
+            basis = "per cluster activity"
+            label = "Partner cluster activity rate"
+        elif a.get("projectId") and "project_partner_lump_sum" in rates:
+            key = "project_partner_lump_sum"
+            basis = "project-specific"
+            label = "Project partner rate"
         else:
-            project_key = "project_partner_lump_sum" if a.get("projectId") else None
-            training_key = "partner_training_lump_sum" if activity_type in TRAINING_TYPES else None
-            fallback = "partner_visit_lump_sum"
-            key = fallback
-            if project_key and rates.get(project_key) is not None:
-                key = project_key
-            elif training_key and rates.get(training_key) is not None:
-                key = training_key
-            add("Partner lump sum", key)
+            key = "partner_visit_lump_sum"
+            basis = "per activity"
+            label = "Partner visit lump sum"
+        
+        label_with_basis = f"{label} [Rate basis: {basis}]"
+        add(label_with_basis, key)
+
+    elif activity_type == "baseline_ssa_visit" and "ssa_visit_rate" in rates:
+        # Baseline SSA Visit uses separate SSA Visit rate if configured
+        add("Baseline SSA Visit", "ssa_visit_rate")
+
+    elif activity_type == "core_visit" and "core_school_visit" in rates:
+        # Core School Visit fetches from Cost Catalogue if defined
+        add("Core School Visit", "core_school_visit")
+
+    elif activity_type == "core_training" and "core_school_training" in rates:
+        # Core School Training fetches from Cost Catalogue if defined
+        add("Core School Training", "core_school_training")
+
     elif activity_type in VISIT_TYPES:
         if is_secondary:
             if "school_visit_cost_per_school_secondary" in rates or "school_visit_cost_per_school" in rates:

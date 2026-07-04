@@ -12,7 +12,7 @@ requires ≥2 SSA records for the SAME school — never compares different schoo
 """
 from __future__ import annotations
 
-from django.db.models import Avg, Count, Q, Sum
+from django.db.models import Avg, Count
 
 from apps.core.enums import SsaIntervention
 from apps.core.fy import get_operational_fy

@@ -23,7 +23,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
 from apps.core.enums import SchoolType
-from apps.core.models import DataEnvironment, DataSource
+from apps.core.models import DataSource
 from apps.geography.models import District, Region, SubCounty
 from apps.schools.models import School
 

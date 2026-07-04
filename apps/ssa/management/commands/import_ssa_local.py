@@ -26,7 +26,7 @@ from django.utils import timezone
 
 from apps.core.enums import SsaIntervention
 from apps.core.fy import get_operational_fy, get_quarter_for_date
-from apps.core.models import DataEnvironment, DataSource
+from apps.core.models import DataSource
 from apps.schools.models import School
 from apps.ssa.models import SsaRecord, SsaScore
 from apps.ssa.services import _recompute_readiness
