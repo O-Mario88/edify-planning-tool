@@ -15,13 +15,13 @@ from apps.geography.models import District, Region, SubCounty
 from apps.core.exceptions import BadRequest
 
 INTERVENTION_SCORES = [
-    {"intervention": "teaching_and_learning", "score": 7},
+    {"intervention": "teaching_environment", "score": 7},
     {"intervention": "financial_health", "score": 6},
     {"intervention": "christlike_behaviour", "score": 8},
     {"intervention": "exposure_to_word_of_god", "score": 7},
-    {"intervention": "government_requirements", "score": 5},
+    {"intervention": "government_requirement", "score": 5},
     {"intervention": "leadership", "score": 6},
-    {"intervention": "education_technology", "score": 4},
+    {"intervention": "enrolment", "score": 4},
     {"intervention": "learning_environment", "score": 7},
 ]
 
@@ -77,7 +77,7 @@ class CoreSchoolWorkflowTest(TestCase):
             school=self.school,
             partner=self.partner,
             assigning_staff_id=self.cceo_staff.id,
-            focus_intervention="teaching_and_learning",
+            focus_intervention="teaching_environment",
             expected_activity_type="core_visit",
             support_type="Visit",
             visit_number="1",
@@ -129,7 +129,7 @@ class CoreSchoolWorkflowTest(TestCase):
         # CCEO completes activity
         activity.status = "awaiting_ia_verification"
         activity.salesforce_activity_id = "SV-12345678"
-        activity.focus_intervention = "teaching_and_learning"
+        activity.focus_intervention = "teaching_environment"
         activity.evidence_status = "accepted"
         activity.save()
 

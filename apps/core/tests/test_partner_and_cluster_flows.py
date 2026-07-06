@@ -38,13 +38,13 @@ from apps.schools.models import School
 
 
 INTERVENTION_SCORES = [
-    {"intervention": "teaching_and_learning", "score": 7},
+    {"intervention": "teaching_environment", "score": 7},
     {"intervention": "financial_health", "score": 6},
     {"intervention": "christlike_behaviour", "score": 8},
     {"intervention": "exposure_to_word_of_god", "score": 7},
-    {"intervention": "government_requirements", "score": 5},
+    {"intervention": "government_requirement", "score": 5},
     {"intervention": "leadership", "score": 6},
-    {"intervention": "education_technology", "score": 4},
+    {"intervention": "enrolment", "score": 4},
     {"intervention": "learning_environment", "score": 7},
 ]
 
@@ -97,7 +97,7 @@ class PartnerAndClusterFlowTest(APITestCase):
                 "scheduledDate": "2026-07-12T09:00:00+03:00",
                 "plannedMonth": 7,
                 "plannedWeek": 2,
-                "purposeIntervention": "education_technology",
+                "purposeIntervention": "enrolment",
                 "assignedPartnerId": partner.id,
             },
             201,

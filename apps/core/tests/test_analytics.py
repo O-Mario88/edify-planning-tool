@@ -128,18 +128,27 @@ class AnalyticsTest(TestCase):
 
     def test_intervention_analytics_ranks_weakest_and_strongest(self):
         s1 = self._school("INT-2")
-        # Create SSA with varied scores per intervention.
+        # Create SSA with varied scores per intervention — assign explicitly so
+        # the test doesn't depend on enum iteration order.
         rec = SsaRecord.objects.create(
             school=s1, fy=self.fy, quarter="Q3", date_of_ssa=timezone.now(),
             average_score=5.0, verification_status="confirmed",
         )
-        scores = [8.0, 3.0, 7.0, 6.0, 4.0, 5.0, 9.0, 5.0]
-        for interv, score in zip(SsaIntervention, scores):
-            SsaScore.objects.create(ssa_record=rec, intervention=interv.value, score=score)
+        explicit_scores = {
+            "christlike_behaviour": 8.0,
+            "exposure_to_word_of_god": 5.0,
+            "financial_health": 3.0,        # weakest
+            "leadership": 7.0,
+            "learning_environment": 6.0,
+            "government_requirement": 5.0,
+            "teaching_environment": 4.0,
+            "enrolment": 9.0,               # strongest
+        }
+        for interv, score in explicit_scores.items():
+            SsaScore.objects.create(ssa_record=rec, intervention=interv, score=score)
         result = intervention_analytics(self.principal, {"fy": self.fy})
-        # financial_health (3.0) is weakest; education_technology (9.0) is strongest.
         self.assertEqual(result["weakest"], "financial_health")
-        self.assertEqual(result["strongest"], "education_technology")
+        self.assertEqual(result["strongest"], "enrolment")
 
     # ── District rollup ──────────────────────────────────────────────────────
     def test_district_rollup_matches_ssa_records(self):

@@ -6,6 +6,7 @@ from django.db.models import Avg, Q, Sum
 from django.utils import timezone
 
 from apps.core.fy import get_operational_fy
+from apps.core.enums import SsaIntervention
 from apps.core.scoping import resolve_user_scope
 from apps.schools.models import School
 from apps.activities.models import Activity
@@ -378,27 +379,21 @@ class AnalyticsDashboardService:
         }
         
         # 6. SSA Performance by Intervention Horizontal Bars
+        # Driven by the canonical SsaIntervention enum so this never drifts.
         ssa_interventions = [
-            ("leadership", "Leadership", 5.1),
-            ("teaching_learning", "Teaching & Learning", 4.8),
-            ("community_engagement", "Community Engagement", 4.5),
-            ("school_management", "School Management", 4.3),
-            ("financial_health", "Financial Health", 4.2),
-            ("infrastructure_wash", "Infrastructure & WASH", 4.0),
-            ("safety_wellbeing", "Safety & Wellbeing", 3.9),
-            ("data_use_planning", "Data Use & Planning", 3.8),
+            (code, label, None) for code, label in SsaIntervention.choices
         ]
         ssa_scores_list = []
-        for code, label, mock_default in ssa_interventions:
+        for code, label, _default in ssa_interventions:
             avg_score = SsaScore.objects.filter(
                 ssa_record__school__in=schools_qs, ssa_record__fy=fy, intervention=code
             ).aggregate(a=Avg("score"))["a"]
-            val = float(avg_score) if avg_score is not None else mock_default
+            val = float(avg_score) if avg_score is not None else 0.0
             ssa_scores_list.append({
                 "code": code,
                 "label": label,
                 "value": round(val, 2),
-                "pct": round(val / 6.0 * 100),
+                "pct": round(val / 6.0 * 100) if avg_score is not None else 0,
             })
             
         # 7. Target Achievement by District

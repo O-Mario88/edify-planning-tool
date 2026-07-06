@@ -10,6 +10,7 @@ from apps.schools.models import School
 from apps.geography.models import District, SubCounty
 from apps.accounts.models import StaffProfile
 from apps.core.scoping import resolve_user_scope
+from apps.core.enums import SsaIntervention
 
 from apps.clusters.services import (
     cluster_schools,
@@ -350,7 +351,7 @@ def create_cluster_view(request):
         cluster_leader_name = request.POST.get("cluster_leader_name", "").strip()
         cluster_leader_phone = request.POST.get("cluster_leader_phone", "").strip()
         
-        if name and district_id and sub_county_ids:
+        if name and district_id:
             district = get_object_or_404(District, id=district_id)
             if not region_id:
                 region_id = district.region_id
@@ -547,6 +548,7 @@ def intervention_impact_drawer_view(request, cluster_id):
         "cluster_id": cluster_id,
         "focus_intervention": focus_intervention,
         "impact_data": impact_data,
+        "interventions": SsaIntervention.choices,
         "drawer_size": "lg",
     }
     return render(request, "partials/clusters/intervention_impact_drawer.html", context)
@@ -565,7 +567,13 @@ def cluster_bulk_assign_drawer_view(request, cluster_id):
         
         assigned_schools = []
         for sid in school_ids:
-            school = School.objects.filter(id=sid, sub_county_id__in=covered_sub_counties, deleted_at__isnull=True).first()
+            # Allow assignment if school is in a covered sub-county OR (for
+            # district-level clusters with no covered sub-counties) in the
+            # cluster's district.
+            if covered_sub_counties:
+                school = School.objects.filter(id=sid, sub_county_id__in=covered_sub_counties, deleted_at__isnull=True).first()
+            else:
+                school = School.objects.filter(id=sid, district_id=cluster.district_id, deleted_at__isnull=True).first()
             if school:
                 school.cluster_id = cluster.id
                 school.cluster_status = "clustered"
@@ -594,12 +602,21 @@ def cluster_bulk_assign_drawer_view(request, cluster_id):
         response["HX-Trigger"] = f"cluster-schools-updated-{cluster.id}, schools-updated"
         return response
         
-    # GET method
-    unassigned_schools = School.objects.filter(
-        sub_county_id__in=covered_sub_counties,
-        cluster_status="unclustered",
-        deleted_at__isnull=True
-    ).select_related("sub_county").order_by("sub_county__name", "name")
+    # GET method — if cluster has covered sub-counties, filter by them.
+    # If no covered sub-counties (district-level cluster), show all unclustered
+    # schools in the cluster's district.
+    if covered_sub_counties:
+        unassigned_schools = School.objects.filter(
+            sub_county_id__in=covered_sub_counties,
+            cluster_status="unclustered",
+            deleted_at__isnull=True
+        ).select_related("sub_county").order_by("sub_county__name", "name")
+    else:
+        unassigned_schools = School.objects.filter(
+            district_id=cluster.district_id,
+            cluster_status="unclustered",
+            deleted_at__isnull=True
+        ).select_related("sub_county").order_by("name")
     
     context = {
         "cluster": cluster,

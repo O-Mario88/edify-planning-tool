@@ -87,14 +87,14 @@ class SsaCollectorType(models.TextChoices):
 
 
 class SsaIntervention(models.TextChoices):
-    TEACHING_AND_LEARNING = "teaching_and_learning", "Teaching & Learning"
-    FINANCIAL_HEALTH = "financial_health", "Financial Health"
     CHRISTLIKE_BEHAVIOUR = "christlike_behaviour", "Christlike Behaviour"
     EXPOSURE_TO_WORD_OF_GOD = "exposure_to_word_of_god", "Exposure to Word of God"
-    GOVERNMENT_REQUIREMENTS = "government_requirements", "Government Requirements"
+    FINANCIAL_HEALTH = "financial_health", "Financial Health"
     LEADERSHIP = "leadership", "Leadership"
-    EDUCATION_TECHNOLOGY = "education_technology", "Education Technology"
     LEARNING_ENVIRONMENT = "learning_environment", "Learning Environment"
+    GOVERNMENT_REQUIREMENT = "government_requirement", "Government Requirement"
+    TEACHING_ENVIRONMENT = "teaching_environment", "Teaching Environment"
+    ENROLMENT = "enrolment", "Enrolment"
 
 
 # ── Activities ────────────────────────────────────────────────────────────────

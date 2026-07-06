@@ -108,6 +108,17 @@ def upload_ssa_file(file, principal) -> dict:
                 break
             scores[interv] = score_val
 
+        # Read optional learner enrollment count (student headcount, NOT a score).
+        # Stored under a special key in the scores dict so it flows through the
+        # batch row to the import step without a model migration.
+        if "new_enrollment" in field_index:
+            enr_raw = _value(field_index, "new_enrollment", cells).strip()
+            if enr_raw:
+                try:
+                    scores["_enrollment_count"] = int(float(enr_raw))
+                except ValueError:
+                    pass  # non-numeric enrollment count — ignore silently
+
         if bad_score:
             validation_errors.append(bad_score)
             status = "blocked"
@@ -119,31 +130,54 @@ def upload_ssa_file(file, principal) -> dict:
                 from apps.core.fy import get_operational_fy
                 try:
                     date_parsed = _parse_date(date_raw)
-                    row_fy = get_operational_fy(date_parsed)
                     current_fy = get_operational_fy()
-                    if row_fy == current_fy:
-                        import os
-                        import sys
-                        is_testing = 'test' in sys.argv or 'pytest' in sys.modules
-                        enforce_seq = os.environ.get("ENFORCE_SSA_SEQUENCE") == "true"
-                        if not is_testing or enforce_seq:
-                            prev_fy = str(int(row_fy) - 1)
-                            from apps.ssa.models import SsaRecord
-                            exists_db = SsaRecord.objects.filter(school=school, fy=prev_fy, verification_status="confirmed", deleted_at__isnull=True).exists()
-                            exists_batch = False
-                            for sr in staged_rows:
-                                if sr["school_id"] == school_id:
-                                    try:
-                                        sr_date = _parse_date(sr["date_raw"])
-                                        if get_operational_fy(sr_date) == prev_fy:
-                                            exists_batch = True
-                                            break
-                                    except Exception:
-                                        pass
-                            if not exists_db and not exists_batch:
-                                validation_errors.append(f"Cannot upload SSA for the current FY ({row_fy}) without a verified SSA for the previous FY ({prev_fy}). Please upload the previous FY SSA first.")
-                                status = "blocked"
-                                counts["failed"] += 1
+                    prev_fy = str(int(current_fy) - 1)
+
+                    # Determine the target FY for this row:
+                    # 1. If "SSA Year" column is present, use it (last/current/explicit year).
+                    # 2. Otherwise derive from the assessment date.
+                    ssa_year_raw = _value(field_index, "ssa_year", cells).strip().lower() if "ssa_year" in field_index else ""
+                    if ssa_year_raw in ("last", "previous", "prev"):
+                        row_fy = prev_fy
+                    elif ssa_year_raw in ("current", "this"):
+                        row_fy = current_fy
+                    elif ssa_year_raw.isdigit():
+                        row_fy = ssa_year_raw
+                    else:
+                        row_fy = get_operational_fy(date_parsed)
+
+                    # ── Enforcement rules ────────────────────────────────────
+                    # Rule 1: Last FY can only be uploaded ONCE per school. If a
+                    #         previous-FY record already exists, block re-upload.
+                    # Rule 2: Current FY requires a previous-FY record to exist
+                    #         (but not necessarily verified — first upload is the
+                    #         baseline). Once a current-FY record exists, block
+                    #         re-upload (one SSA per FY per school).
+                    from apps.ssa.models import SsaRecord as _SR
+                    existing_this_fy = _SR.objects.filter(school=school, fy=row_fy, deleted_at__isnull=True).exists()
+                    if existing_this_fy:
+                        validation_errors.append(
+                            f"SSA for FY {row_fy} already exists for this school. "
+                            f"Each school can have only one SSA per FY."
+                        )
+                        status = "blocked"
+                        counts["failed"] += 1
+                    elif row_fy == current_fy:
+                        # Current FY upload: require that a last-FY baseline exists
+                        # (either in DB or in this same batch).
+                        has_prev_db = _SR.objects.filter(school=school, fy=prev_fy, deleted_at__isnull=True).exists()
+                        has_prev_batch = any(
+                            sr["school_id"] == school_id and sr.get("fy") == prev_fy
+                            for sr in staged_rows
+                        )
+                        if not has_prev_db and not has_prev_batch:
+                            validation_errors.append(
+                                f"Cannot upload current FY ({current_fy}) SSA — "
+                                f"upload the last FY ({prev_fy}) baseline first "
+                                f"(set SSA Year to '{prev_fy}' or 'last')."
+                            )
+                            status = "blocked"
+                            counts["failed"] += 1
                 except Exception as exc:
                     validation_errors.append(f"Date error: {exc}")
                     status = "blocked"
@@ -152,7 +186,7 @@ def upload_ssa_file(file, principal) -> dict:
                 if status != "blocked":
                     status = "ready"
                     counts["created"] += 1
-                    staged_rows.append({"school_id": school_id, "date_raw": date_raw})
+                    staged_rows.append({"school_id": school_id, "date_raw": date_raw, "fy": row_fy})
             else:
                 status = "unmatched"
                 counts["unmatched"] += 1
@@ -251,12 +285,16 @@ def import_ssa_batch(batch, user) -> dict:
             tz = timezone.get_current_timezone()
             aware = timezone.make_aware(datetime.combine(ssa_date, timezone.datetime.min.time()), tz)
             
-            scores_list = [{"intervention": k, "score": v} for k, v in r.scores.items()]
+            # Separate enrollment count (headcount) from intervention scores.
+            enrollment_count = r.scores.pop("_enrollment_count", None) if r.scores else None
+            scores_list = [{"intervention": k, "score": v} for k, v in r.scores.items() if not k.startswith("_")]
             defaults = {
                 "schoolId": r.school_id,
                 "dateOfSsa": aware.isoformat(),
                 "scores": scores_list,
             }
+            if enrollment_count is not None:
+                defaults["newEnrollment"] = enrollment_count
             try:
                 with transaction.atomic():
                     services.upload(defaults, user)

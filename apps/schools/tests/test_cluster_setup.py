@@ -150,12 +150,12 @@ class ClusterSetupTest(APITestCase):
 
         # Let's add scores
         # We will make financial_health weak on school 1 (score 2.0) and school 2 (score 4.0) -> avg 3.0
-        # teaching_and_learning will be strong (score 8.0) and school 2 (score 9.0) -> avg 8.5
+        # teaching_environment will be strong (score 8.0) and school 2 (score 9.0) -> avg 8.5
         SsaScore.objects.create(ssa_record=r1, intervention=SsaIntervention.FINANCIAL_HEALTH.value, score=2.0)
-        SsaScore.objects.create(ssa_record=r1, intervention=SsaIntervention.TEACHING_AND_LEARNING.value, score=8.0)
+        SsaScore.objects.create(ssa_record=r1, intervention=SsaIntervention.TEACHING_ENVIRONMENT.value, score=8.0)
 
         SsaScore.objects.create(ssa_record=r2, intervention=SsaIntervention.FINANCIAL_HEALTH.value, score=4.0)
-        SsaScore.objects.create(ssa_record=r2, intervention=SsaIntervention.TEACHING_AND_LEARNING.value, score=9.0)
+        SsaScore.objects.create(ssa_record=r2, intervention=SsaIntervention.TEACHING_ENVIRONMENT.value, score=9.0)
 
         # Call plan_builder service
         self.client.force_authenticate(user=self.user)

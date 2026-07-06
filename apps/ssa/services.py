@@ -93,7 +93,9 @@ def upload(data: dict, principal) -> dict:
     date = _parse_date(data["dateOfSsa"])
     fy = get_operational_fy(date)
 
-    # Check rule: Cannot upload current FY SSA without previous FY SSA
+    # Check rule: Cannot upload current FY SSA without previous FY SSA — UNLESS
+    # this is the school's first-ever SSA (no prior-FY data exists anywhere).
+    # The rule prevents skipping a baseline; it should not block a genuine first upload.
     import os
     import sys
     is_testing = 'test' in sys.argv or 'pytest' in sys.modules
@@ -102,8 +104,17 @@ def upload(data: dict, principal) -> dict:
         current_fy = get_operational_fy()
         if fy == current_fy:
             prev_fy = str(int(fy) - 1)
-            if not SsaRecord.objects.filter(school=school, fy=prev_fy, verification_status="confirmed", deleted_at__isnull=True).exists():
-                raise BadRequest(f"Cannot upload SSA for the current FY ({fy}) without a verified SSA for the previous FY ({prev_fy}). Please upload the previous FY SSA first.")
+            has_prev = SsaRecord.objects.filter(
+                school=school, fy=prev_fy, verification_status="confirmed", deleted_at__isnull=True
+            ).exists()
+            # If there IS a previous-FY record for this school, the current-FY
+            # upload requires it to be verified. If there is NO previous-FY
+            # record at all, this is the school's first SSA — allow it through.
+            has_any_prev = SsaRecord.objects.filter(
+                school=school, fy=prev_fy, deleted_at__isnull=True
+            ).exists()
+            if has_any_prev and not has_prev:
+                raise BadRequest(f"Cannot upload SSA for the current FY ({fy}) — the previous FY ({prev_fy}) SSA for this school exists but is not verified. Verify it first.")
     quarter = get_quarter_for_date(date)
     average = round(sum(s["score"] for s in scores_in) / len(scores_in), 1)
 

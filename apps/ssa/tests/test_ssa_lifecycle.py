@@ -75,7 +75,7 @@ class SsaLifecycleTest(APITestCase):
             district_raw="Kampala",
             date_of_ssa="2026-07-01",
             scores={
-                "teaching_and_learning": 7.0,
+                "teaching_environment": 7.0,
                 "financial_health": 8.0,
                 "christian_ethos": 6.5,
                 "leadership_and_governance": 7.5,

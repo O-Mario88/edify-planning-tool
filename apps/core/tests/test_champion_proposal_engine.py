@@ -43,8 +43,8 @@ class ChampionProposalEngineTest(TestCase):
             average_score=6.0
         )
         interventions = [
-            "teaching_and_learning", "financial_health", "christlike_behaviour", "exposure_to_word_of_god",
-            "government_requirements", "leadership", "education_technology", "learning_environment"
+            "teaching_environment", "financial_health", "christlike_behaviour", "exposure_to_word_of_god",
+            "government_requirement", "leadership", "enrolment", "learning_environment"
         ]
         for idx, item in enumerate(interventions):
             SsaScore.objects.create(ssa_record=baseline, intervention=item, score=6.0)

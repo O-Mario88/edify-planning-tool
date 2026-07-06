@@ -5,9 +5,9 @@ Usage:
   python manage.py import_ssa_local path/to/ssa.csv
 
 CSV columns:
-  schoolId, dateOfSsa, teaching_and_learning, financial_health,
-  christlike_behaviour, exposure_to_word_of_god, government_requirements,
-  leadership, education_technology, learning_environment,
+  schoolId, dateOfSsa, christlike_behaviour, exposure_to_word_of_god,
+  financial_health, leadership, learning_environment, government_requirement,
+  teaching_environment, enrolment,
   newEnrollment (optional), collectorType (optional, default staff)
 
 Creates SsaRecord + 8 SsaScore rows, derives FY/quarter from the date, and

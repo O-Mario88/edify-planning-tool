@@ -19,11 +19,11 @@ from apps.ssa.models import SsaRecord
 
 
 SSA_HEADERS = (
-    "School ID,Assessment Date,Teaching & Learning,Financial Health,Christlike Behaviour,"
-    "Exposure to the Word of God,Government Requirements & Compliance,Leadership,"
-    "Education Technology,Learning Environment"
+    "School ID,Assessment Date,SSA Year,Teaching Environment,Financial Health,Christlike Behaviour,"
+    "Exposure to the Word of God,Government Requirement,Leadership,"
+    "Enrolment Score,Learning Environment"
 )
-SCORES = "7,6,8,7,5,6,4,7"
+SCORES = "last,7,6,8,7,5,6,4,7"
 
 
 class SsaUploadTest(APITestCase):
@@ -99,7 +99,7 @@ class SsaUploadTest(APITestCase):
         self.assertEqual(res.json()["failed_rows"], 1)
 
     def test_missing_intervention_header_blocks_upload(self):
-        body = "School ID,Assessment Date,Teaching & Learning\nSSA-SCH-1,2026-07-01,7\n"
+        body = "School ID,Assessment Date,SSA Year,Teaching Environment\nSSA-SCH-1,2026-07-01,last,7\n"
         res = self._post(self._csv(body))
         self.assertEqual(res.status_code, 400, res.content)
         self.assertEqual(SsaRecord.objects.count(), 0)

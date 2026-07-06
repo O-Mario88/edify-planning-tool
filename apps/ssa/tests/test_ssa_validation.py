@@ -36,30 +36,28 @@ class SsaSequentialValidationTest(APITestCase):
         if "ENFORCE_SSA_SEQUENCE" in os.environ:
             del os.environ["ENFORCE_SSA_SEQUENCE"]
 
-    def test_current_fy_ssa_blocks_without_previous_fy_ssa(self):
-        """Uploading target current FY assessment must fail if previous year is missing."""
-        current_fy = get_operational_fy()
-        # For current FY (Oct 2025 - Sep 2026 is FY 2026, let's use 2026-06-15)
-        # Note: timezone-aware date is passed as isoformat
+    def test_current_fy_ssa_allowed_as_first_upload(self):
+        """Uploading the first-ever SSA for a school should succeed even for
+        current FY — the rule only blocks if a previous-FY record exists but
+        is unverified. First upload is the baseline."""
         data = {
             "schoolId": "SCH-VAL-99",
             "dateOfSsa": "2026-06-15T00:00:00Z",
             "scores": [
-                {"intervention": "teaching_and_learning", "score": 8.0},
+                {"intervention": "teaching_environment", "score": 8.0},
                 {"intervention": "financial_health", "score": 7.0},
                 {"intervention": "christlike_behaviour", "score": 9.0},
                 {"intervention": "exposure_to_word_of_god", "score": 8.0},
-                {"intervention": "government_requirements", "score": 6.0},
+                {"intervention": "government_requirement", "score": 6.0},
                 {"intervention": "leadership", "score": 7.0},
-                {"intervention": "education_technology", "score": 5.0},
+                {"intervention": "enrolment", "score": 5.0},
                 {"intervention": "learning_environment", "score": 8.0},
             ]
         }
 
-        # Assert BadRequest is raised
-        with self.assertRaises(BadRequest) as ctx:
-            ssa_services.upload(data, self.user)
-        self.assertIn("previous FY", str(ctx.exception))
+        # Should succeed — no previous FY record exists, so this is the baseline
+        result = ssa_services.upload(data, self.user)
+        self.assertEqual(result["fy"], "2026")
 
     def test_current_fy_ssa_succeeds_when_previous_fy_exists(self):
         """Uploading current FY assessment succeeds when the previous year's SSA exists and is confirmed."""
@@ -74,9 +72,9 @@ class SsaSequentialValidationTest(APITestCase):
             uploaded_by=self.user.user_id,
         )
         for intervention in [
-            "teaching_and_learning", "financial_health", "christlike_behaviour",
-            "exposure_to_word_of_god", "government_requirements", "leadership",
-            "education_technology", "learning_environment"
+            "teaching_environment", "financial_health", "christlike_behaviour",
+            "exposure_to_word_of_god", "government_requirement", "leadership",
+            "enrolment", "learning_environment"
         ]:
             SsaScore.objects.create(ssa_record=prev_record, intervention=intervention, score=7.0)
 
@@ -85,13 +83,13 @@ class SsaSequentialValidationTest(APITestCase):
             "schoolId": "SCH-VAL-99",
             "dateOfSsa": "2026-06-15T00:00:00Z",
             "scores": [
-                {"intervention": "teaching_and_learning", "score": 8.0},
+                {"intervention": "teaching_environment", "score": 8.0},
                 {"intervention": "financial_health", "score": 7.0},
                 {"intervention": "christlike_behaviour", "score": 9.0},
                 {"intervention": "exposure_to_word_of_god", "score": 8.0},
-                {"intervention": "government_requirements", "score": 6.0},
+                {"intervention": "government_requirement", "score": 6.0},
                 {"intervention": "leadership", "score": 7.0},
-                {"intervention": "education_technology", "score": 5.0},
+                {"intervention": "enrolment", "score": 5.0},
                 {"intervention": "learning_environment", "score": 8.0},
             ]
         }

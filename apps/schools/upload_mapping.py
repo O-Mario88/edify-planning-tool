@@ -132,28 +132,41 @@ SSA_HEADER_MAP: dict[str, str] = {
     "date of ssa": "date_of_ssa",
     "assessment ssa date": "date_of_ssa",
     "date": "date_of_ssa",
-    # Optional enrolment
-    "enrolment": "new_enrollment",
-    "enrollment": "new_enrollment",
+    # SSA Year — lets the uploader specify last FY or current FY explicitly.
+    # Values accepted: "last", "current", or a 4-digit year like "2025"/"2026".
+    "ssa year": "ssa_year",
+    "fy": "ssa_year",
+    "year": "ssa_year",
+    # Optional enrolment COUNT (students, NOT a score)
     "new enrolment": "new_enrollment",
     "new enrollment": "new_enrollment",
+    "enrolment count": "new_enrollment",
+    "enrollment count": "new_enrollment",
     # Optional geography
     "district": "district",
     "subcounty": "sub_county",
     "sub county": "sub_county",
-    # 8 interventions
-    "teaching and learning": SsaIntervention.TEACHING_AND_LEARNING.value,
-    "financial health": SsaIntervention.FINANCIAL_HEALTH.value,
+    # 8 interventions (canonical: CB, WOG, FH, Lship, LE, GR, TE, Enrolment).
+    # Note: enrolment SCORE uses "enrolment score" to avoid colliding with the
+    # student enrolment-count column above.
     "christlike behaviour": SsaIntervention.CHRISTLIKE_BEHAVIOUR.value,
     "christlike behavior": SsaIntervention.CHRISTLIKE_BEHAVIOUR.value,
     "exposure to the word of god": SsaIntervention.EXPOSURE_TO_WORD_OF_GOD.value,
     "exposure to word of god": SsaIntervention.EXPOSURE_TO_WORD_OF_GOD.value,
-    "government requirements and compliance": SsaIntervention.GOVERNMENT_REQUIREMENTS.value,
-    "government requirements compliance": SsaIntervention.GOVERNMENT_REQUIREMENTS.value,
-    "government requirements": SsaIntervention.GOVERNMENT_REQUIREMENTS.value,
+    "financial health": SsaIntervention.FINANCIAL_HEALTH.value,
     "leadership": SsaIntervention.LEADERSHIP.value,
-    "education technology": SsaIntervention.EDUCATION_TECHNOLOGY.value,
     "learning environment": SsaIntervention.LEARNING_ENVIRONMENT.value,
+    "government requirement": SsaIntervention.GOVERNMENT_REQUIREMENT.value,
+    "government requirements": SsaIntervention.GOVERNMENT_REQUIREMENT.value,
+    "government requirements and compliance": SsaIntervention.GOVERNMENT_REQUIREMENT.value,
+    "government requirements compliance": SsaIntervention.GOVERNMENT_REQUIREMENT.value,
+    "teaching environment": SsaIntervention.TEACHING_ENVIRONMENT.value,
+    "teaching and learning": SsaIntervention.TEACHING_ENVIRONMENT.value,
+    "teaching & learning": SsaIntervention.TEACHING_ENVIRONMENT.value,
+    "enrolment score": SsaIntervention.ENROLMENT.value,
+    "enrollment score": SsaIntervention.ENROLMENT.value,
+    "enrolment (0-10)": SsaIntervention.ENROLMENT.value,
+    "enrollment (0-10)": SsaIntervention.ENROLMENT.value,
 }
 
 ALL_INTERVENTIONS = [i.value for i in SsaIntervention]
@@ -162,14 +175,15 @@ SSA_REQUIRED_FIELDS = ("school_id", "date_of_ssa")
 SSA_EXPECTED_HEADERS = [
     "School ID",
     "Assessment Date",
-    "Teaching & Learning",
-    "Financial Health",
+    "SSA Year",
     "Christlike Behaviour",
     "Exposure to the Word of God",
-    "Government Requirements & Compliance",
+    "Financial Health",
     "Leadership",
-    "Education Technology",
     "Learning Environment",
+    "Government Requirement",
+    "Teaching Environment",
+    "Enrolment Score",
 ]
 
 

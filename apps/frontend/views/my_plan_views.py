@@ -18,6 +18,7 @@ from apps.evidence.services import (
     record_upload,
     list_for_activity
 )
+from apps.core.enums import SsaIntervention
 from apps.pl_review.services import (
     queue as pl_queue,
     confirm as pl_confirm,
@@ -137,6 +138,7 @@ def complete_drawer_view(request, activity_id):
         "act": act,
         "evidence_list": evidence_list,
         "cluster_schools": cluster_schools,
+        "interventions": SsaIntervention.choices,
         "drawer_size": "md",
         "needs_netsuite_id": needs_netsuite_id,
     }
@@ -303,14 +305,7 @@ def complete_activity_action(request, activity_id):
             ssa_collected = request.POST.get("ssa_collected")
             if ssa_collected == "yes":
                 interventions_map = {
-                    "teaching_and_learning": "score_teaching_and_learning",
-                    "financial_health": "score_financial_health",
-                    "christian_ethos": "score_christian_ethos",
-                    "leadership_and_governance": "score_leadership_and_governance",
-                    "safe_school_environment": "score_safe_school_environment",
-                    "community_engagement": "score_community_engagement",
-                    "wash_and_infrastructure": "score_wash_and_infrastructure",
-                    "special_needs_and_inclusion": "score_special_needs_and_inclusion",
+                    code: f"score_{code}" for code, _label in SsaIntervention.choices
                 }
                 
                 scores_list = []
@@ -864,6 +859,7 @@ def ssa_evidence_upload_drawer_view(request, activity_id):
         
     context = {
         "act": a,
+        "interventions": SsaIntervention.choices,
         "drawer_size": "sm",
     }
     return render(request, "partials/my_plan/ssa_upload_drawer.html", context)
@@ -879,12 +875,9 @@ def ssa_evidence_upload_action(request, activity_id):
         ssa_file = request.FILES.get("ssa_file")
         notes = request.POST.get("notes", "").strip()
         
-        # Parse scores if provided
-        score_fields = [
-            "score_teaching_and_learning", "score_financial_health", "score_christian_ethos",
-            "score_leadership_and_governance", "score_safe_school_environment",
-            "score_community_engagement", "score_wash_and_infrastructure", "score_special_needs_and_inclusion"
-        ]
+        # Parse scores if provided — derived from the canonical enum so the
+        # field names always match the SsaScore.intervention choices.
+        score_fields = [f"score_{code}" for code, _label in SsaIntervention.choices]
         scores_list = []
         has_scores = False
         
