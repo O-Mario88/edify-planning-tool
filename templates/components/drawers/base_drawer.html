@@ -30,7 +30,7 @@ class="relative z-50 font-sans"
 <!-- Backdrop -->
 <div 
 class="drawer-backdrop" 
-:class="active ? 'active' : ''"
+:class="[active ? 'active' : '', 'type-' + type]"
 @click="
 if (isDirty) {
 if (confirm('You have unsaved changes. Discard changes?')) {

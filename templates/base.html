@@ -24,16 +24,22 @@ here. base.html <style> below only consumes tokens via var(--edify-*). -->
 <link rel="stylesheet" href="{% static 'css/pages.css' %}?v=20260705c">
 <link rel="stylesheet" href="{% static 'css/drawers.css' %}?v=20260705c">
 <link rel="stylesheet" href="{% static 'css/app.css' %}">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
 
 <style>
 /* base.html consumes tokens defined in design-system.css. No :root here. */
 body {
-font-family: var(--edify-font-sans);
-background-color: var(--edify-bg);
-color: var(--edify-text);
-font-size: var(--edify-text-body-size);
-line-height: var(--edify-text-body-leading);
--webkit-font-smoothing: antialiased;
+  font-family: var(--edify-font-sans);
+  background-color: #f8fafc;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(14, 165, 233, 0.05) 0px, transparent 50%),
+    radial-gradient(at 50% 0%, rgba(139, 92, 246, 0.04) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(16, 185, 129, 0.03) 0px, transparent 50%);
+  background-attachment: fixed;
+  color: var(--edify-text);
+  font-size: var(--edify-text-body-size);
+  line-height: var(--edify-text-body-leading);
+  -webkit-font-smoothing: antialiased;
 }
 
 /* Custom scrollbars */
@@ -45,17 +51,33 @@ line-height: var(--edify-text-body-leading);
 /* Premium card elevation: shadow-only, NO border. A-tier cards float rather
 than look boxed-in — the 1px border was the "cheap" tell. */
 .bg-white.rounded-xl,
-.bg-white.rounded-2xl {
-background: var(--edify-surface);
-border: 1px solid transparent;
-box-shadow: var(--edify-shadow-sm);
-border-radius: var(--edify-radius-lg);
-transition: box-shadow var(--edify-transition), transform var(--edify-transition);
+.bg-white.rounded-2xl,
+.card {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(226, 232, 240, 0.6) !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.01) !important;
+  border-radius: 16px !important;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 .bg-white.rounded-xl:hover,
-.bg-white.rounded-2xl:hover {
-box-shadow: var(--edify-shadow-lg);
-transform: translateY(-1px);
+.bg-white.rounded-2xl:hover,
+.card:hover {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02) !important;
+  transform: translateY(-2px) !important;
+  border-color: rgba(203, 213, 225, 0.8) !important;
+}
+
+/* Glassmorphism Sticky Header */
+.edify-topbar {
+  background-color: rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8) !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 30 !important;
 }
 
 /* Primary buttons map to the accent blue (interactive CTAs). */
@@ -175,6 +197,10 @@ background-color: rgba(245, 158, 12, 0.1);
 
 <!-- Alpine.js (for client-side UI states - dropdown toggles, tabs, sidebars) -->
 <script defer src="https://unpkg.com/alpinejs@3.14.0/dist/cdn.min.js"></script>
+
+<!-- ApexCharts & Flowbite JS -->
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
 </head>
 <body 
 class="h-full bg-[var(--bg-page)] text-[var(--foreground)] font-sans antialiased"

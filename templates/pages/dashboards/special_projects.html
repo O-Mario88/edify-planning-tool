@@ -83,56 +83,15 @@ milestones: [
 </div>
 
 
-<!-- ================= KPI STRIP ================= -->
 <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3.5">
-<!-- KPI 1 -->
-<div class="bg-white p-3.5 rounded-xl  shadow-sm space-y-1">
-<span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Total Special Projects</span>
-<h3 class="text-[18px] font-semibold text-slate-800 leading-none">12</h3>
-<span class="text-[11px] text-emerald-600 font-semibold block">▲ 9% vs Apr</span>
-</div>
-<!-- KPI 2 -->
-<div class="bg-white p-3.5 rounded-xl  shadow-sm space-y-1">
-<span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Active Projects</span>
-<h3 class="text-[18px] font-semibold text-slate-800 leading-none">9</h3>
-<span class="text-[11px] text-emerald-600 font-semibold block">▲ 12% vs Apr</span>
-</div>
-<!-- KPI 3 -->
-<div class="bg-white p-3.5 rounded-xl  shadow-sm space-y-1">
-<span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Schools in Projects</span>
-<h3 class="text-[18px] font-semibold text-slate-800 leading-none">426</h3>
-<span class="text-[11px] text-emerald-600 font-semibold block">▲ 18% vs Apr</span>
-</div>
-<!-- KPI 4 -->
-<div class="bg-white p-3.5 rounded-xl  shadow-sm space-y-1">
-<span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Partners Assigned</span>
-<h3 class="text-[18px] font-semibold text-slate-800 leading-none">16</h3>
-<span class="text-[11px] text-emerald-600 font-semibold block">▲ 6% vs Apr</span>
-</div>
-<!-- KPI 5 -->
-<div class="bg-white p-3.5 rounded-xl  shadow-sm space-y-1">
-<span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Teachers Impacted</span>
-<h3 class="text-[18px] font-semibold text-slate-800 leading-none">3,842</h3>
-<span class="text-[11px] text-emerald-600 font-semibold block">▲ 22% vs Apr</span>
-</div>
-<!-- KPI 6 -->
-<div class="bg-white p-3.5 rounded-xl  shadow-sm space-y-1">
-<span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Total Allocation</span>
-<h3 class="text-[18px] font-semibold text-slate-800 leading-none">UGX 2.48B</h3>
-<span class="text-[11px] text-emerald-600 font-semibold block">▲ 15% vs Apr</span>
-</div>
-<!-- KPI 7 -->
-<div class="bg-white p-3.5 rounded-xl  shadow-sm space-y-1">
-<span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Closing This Month</span>
-<h3 class="text-[18px] font-semibold text-slate-800 leading-none">2</h3>
-<span class="text-[11px] text-rose-600 font-bold block">▼ 20% vs Apr</span>
-</div>
-<!-- KPI 8 -->
-<div class="bg-white p-3.5 rounded-xl  shadow-sm space-y-1">
-<span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Impact / Health Score</span>
-<h3 class="text-[18px] font-semibold text-slate-800 leading-none text-emerald-600">4.6 <span class="text-[11px] text-slate-400 font-bold">/ 5</span></h3>
-<span class="text-[11px] text-emerald-600 font-semibold block">▲ 8% vs Apr</span>
-</div>
+  {% include "components/kpi_card.html" with label="Total Special Projects" value="12" delta="▲ 9% vs Apr" delta_tone="success" %}
+  {% include "components/kpi_card.html" with label="Active Projects" value="9" delta="▲ 12% vs Apr" delta_tone="success" %}
+  {% include "components/kpi_card.html" with label="Schools in Projects" value="426" delta="▲ 18% vs Apr" delta_tone="success" %}
+  {% include "components/kpi_card.html" with label="Partners Assigned" value="16" delta="▲ 6% vs Apr" delta_tone="success" %}
+  {% include "components/kpi_card.html" with label="Teachers Impacted" value="3,842" delta="▲ 22% vs Apr" delta_tone="success" %}
+  {% include "components/kpi_card.html" with label="Total Allocation" value="UGX 2.48B" delta="▲ 15% vs Apr" delta_tone="success" %}
+  {% include "components/kpi_card.html" with label="Closing This Month" value="2" delta="▼ 20% vs Apr" delta_tone="danger" tone="danger" %}
+  {% include "components/kpi_card.html" with label="Impact / Health Score" value="4.6" delta="▲ 8% vs Apr" delta_tone="success" tone="success" hint="/ 5" %}
 </div>
 
 
@@ -163,7 +122,7 @@ Export Summary
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
 <!-- 1. Project Portfolio (Col Span 8) -->
-<div class="lg:col-span-8 bg-white p-5 rounded-xl  shadow-sm space-y-4">
+<div class="lg:col-span-8 card p-5 space-y-4">
 <div class="flex items-center justify-between pb-2 border-b border-slate-100">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">1. Project Portfolio</h3>
 <a href="#" class="text-[11px] font-semibold text-blue-600 hover:underline">View all projects &rsaquo;</a>
@@ -208,7 +167,7 @@ Export Summary
 </div>
 
 <!-- 2. Priority Projects / Needs Attention (Col Span 4) -->
-<div class="lg:col-span-4 bg-white p-5 rounded-xl  shadow-sm flex flex-col justify-between">
+<div class="lg:col-span-4 card p-5 flex flex-col justify-between">
 <div>
 <div class="pb-3 border-b border-slate-100 flex items-center justify-between">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">2. Priority Projects / Needs Attention</h3>
@@ -239,7 +198,7 @@ Export Summary
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
 <!-- 3. Project Impact Overview -->
-<div class="bg-white p-5 rounded-xl  shadow-sm space-y-4">
+<div class="card p-5 space-y-4">
 <div class="pb-2 border-b border-slate-100 flex items-center justify-between">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">3. Project Impact Overview</h3>
 <a href="#" class="text-[11px] font-semibold text-blue-600 hover:underline">View detailed impact</a>
@@ -270,7 +229,7 @@ Export Summary
 </div>
 
 <!-- 4. Schools in Projects -->
-<div class="bg-white p-5 rounded-xl  shadow-sm space-y-4">
+<div class="card p-5 space-y-4">
 <div class="pb-2 border-b border-slate-100 flex items-center justify-between">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">4. Schools in Projects</h3>
 <a href="#" class="text-[11px] font-semibold text-blue-600 hover:underline">View all</a>
@@ -309,7 +268,7 @@ Export Summary
 </div>
 
 <!-- 5. Partner Assignment & Delivery -->
-<div class="bg-white p-5 rounded-xl  shadow-sm space-y-4">
+<div class="card p-5 space-y-4">
 <div class="pb-2 border-b border-slate-100 flex items-center justify-between">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">5. Partner Assignment &amp; Delivery</h3>
 <a href="#" class="text-[11px] font-semibold text-blue-600 hover:underline">View all</a>
@@ -346,7 +305,7 @@ Export Summary
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
 <!-- 6. Teacher Impact Tracker (Col Span 6) -->
-<div class="lg:col-span-6 bg-white p-5 rounded-xl  shadow-sm space-y-4">
+<div class="lg:col-span-6 card p-5 space-y-4">
 <div class="pb-2 border-b border-slate-100 flex items-center justify-between">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">6. Teacher Impact Tracker</h3>
 <a href="#" class="text-[11px] font-semibold text-blue-600 hover:underline">View all</a>
@@ -391,7 +350,7 @@ Export Summary
 </div>
 
 <!-- 7. Upcoming Milestones / Project Calendar (Col Span 6) -->
-<div class="lg:col-span-6 bg-white p-5 rounded-xl  shadow-sm flex flex-col justify-between">
+<div class="lg:col-span-6 card p-5 flex flex-col justify-between">
 <div>
 <div class="pb-3 border-b border-slate-100 flex items-center justify-between">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">7. Upcoming Milestones / Project Calendar</h3>

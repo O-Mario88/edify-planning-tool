@@ -20,18 +20,26 @@ def _sse(data: dict) -> bytes:
 
 
 def stream(request):
-    """The SSE stream. Authenticates via the JWT in the Authorization header."""
-    from apps.accounts.jwt import JwtAuthentication
+    """The SSE stream. Authenticates via session OR the JWT in the Authorization header."""
+    user_id = None
+    if hasattr(request, "user") and request.user and request.user.is_authenticated:
+        user_id = request.user.id
+    else:
+        from apps.accounts.jwt import JwtAuthentication
+        # Authenticate manually (StreamingHttpResponse bypasses DRF dispatch).
+        auth = JwtAuthentication()
+        try:
+            user_auth = auth.authenticate(request)
+            if user_auth is not None:
+                principal = user_auth[0]
+                user_id = principal.user_id
+        except Exception:
+            pass
 
-    # Authenticate manually (StreamingHttpResponse bypasses DRF dispatch).
-    auth = JwtAuthentication()
-    user_auth = auth.authenticate(request)
-    if user_auth is None:
+    if not user_id:
         response = StreamingHttpResponse(["data: unauthorized\n\n"], content_type="text/event-stream")
         response.status_code = 401
         return response
-    principal = user_auth[0]
-    user_id = principal.user_id
 
     # SSE streams are long-lived and run on a loop without doing DB operations.
     # We must close the Django database connection here so it is not held open

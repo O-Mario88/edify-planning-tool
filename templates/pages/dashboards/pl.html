@@ -15,23 +15,11 @@
 </div>
 
 <!-- Matrix KPI Strip -->
-<div class="matrix-kpi-strip">
-<div class="matrix-kpi-item">
-<div class="matrix-kpi-label">Pending Reviews</div>
-<div class="matrix-kpi-value text-[var(--color-edify-primary)]">{{ pending_reviews|length }}</div>
-</div>
-<div class="matrix-kpi-item">
-<div class="matrix-kpi-label">Fund Approvals</div>
-<div class="matrix-kpi-value text-amber-600">{{ pending_funds|length }}</div>
-</div>
-<div class="matrix-kpi-item">
-<div class="matrix-kpi-label">Overdue Staff</div>
-<div class="matrix-kpi-value text-rose-600">{{ cceos_overdue|length }}</div>
-</div>
-<div class="matrix-kpi-item">
-<div class="matrix-kpi-label">Struggling Clusters</div>
-<div class="matrix-kpi-value text-indigo-600">{{ weak_clusters|length }}</div>
-</div>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+  {% include "components/kpi_card.html" with label="Pending Reviews" value=pending_reviews|length tone="info" %}
+  {% include "components/kpi_card.html" with label="Fund Approvals" value=pending_funds|length tone="warning" %}
+  {% include "components/kpi_card.html" with label="Overdue Staff" value=cceos_overdue|length tone="danger" %}
+  {% include "components/kpi_card.html" with label="Struggling Clusters" value=weak_clusters|length tone="purple" %}
 </div>
 
 <!-- Alerts / Attention Banner -->

@@ -197,6 +197,12 @@
   opacity: 1;
 }
 
+.drawer-backdrop.type-right_top {
+  background-color: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
 /* Custom premium button designs to match reference image */
 .btn-premium-primary {
   background-color: #2e505f !important;

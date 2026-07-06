@@ -587,6 +587,13 @@ def mark_notification_read(request, notif_id):
     return redirect(redirect_to)
 
 
+@require_page_permission("dashboard")
+def notification_badge_view(request):
+    """Return only the notification badge count HTML."""
+    unread_count = Notification.objects.filter(recipient_id=request.user.id, status="unread").count()
+    return render(request, "partials/notifications/notification_badge.html", {"unread_notifications_count": unread_count})
+
+
 # ─── USER PROFILE ─────────────────────────────────────────────────────────────
 
 @require_page_permission("dashboard")

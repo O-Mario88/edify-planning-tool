@@ -3,70 +3,81 @@ x-data="{
 chart: null,
 initChart() {
 if (this.chart) this.chart.destroy();
-const ctx = document.getElementById('performanceChart').getContext('2d');
-this.chart = new Chart(ctx, {
-data: {
-labels: {{ performance_overview.labels|safe }},
-datasets: [
-{
-type: 'bar', label: 'Planned',
-data: {{ performance_overview.planned }},
-backgroundColor: '#e2e8f0',
-barThickness: 10, borderRadius: 3,
-},
-{
-type: 'bar', label: 'Achieved',
-data: {{ performance_overview.achieved }},
-backgroundColor: '#3b82f6',
-barThickness: 10, borderRadius: 3,
-},
-{
-type: 'line', label: 'Achievement %',
-data: {{ performance_overview.pct }},
-borderColor: '#10b981', backgroundColor: '#10b981',
-borderWidth: 2, pointRadius: 2.5, pointHoverRadius: 4,
-fill: false, yAxisID: 'y1', tension: 0.35
-}
-]
-},
-options: {
-responsive: true, maintainAspectRatio: false,
-plugins: {
-legend: {
-position: 'top', align: 'end',
-labels: { boxWidth: 8, boxHeight: 8, usePointStyle: true, pointStyle: 'circle',
-  font: { family: 'Outfit', size: 11, weight: '500' }, color: '#64748b' }
-},
-tooltip: { mode: 'index', intersect: false,
-  titleFont: { family: 'Outfit', size: 11, weight: '600' },
-  bodyFont: { family: 'Outfit', size: 11 },
-  backgroundColor: '#0f172a', padding: 10, cornerRadius: 6 }
-},
-scales: {
-x: {
-grid: { display: false },
-labels: {{ performance_overview.labels|safe }},
-ticks: { font: { family: 'Outfit', size: 10, weight: '500' }, color: '#94a3b8' }
-},
-y: {
-beginAtZero: true,
-ticks: { font: { family: 'Outfit', size: 10 }, color: '#94a3b8', maxTicksLimit: 5 },
-grid: { color: '#f1f5f9' }
-},
-y1: {
-type: 'linear', display: true, position: 'right', beginAtZero: true, max: 100,
-ticks: { callback: function(v) { return v + '%'; }, font: { family: 'Outfit', size: 10 }, color: '#94a3b8', maxTicksLimit: 5 },
-grid: { drawOnChartArea: false }
-}
-}
-}
-});
+const options = {
+  series: [
+    { name: 'Planned', type: 'column', data: {{ performance_overview.planned|safe }} },
+    { name: 'Achieved', type: 'column', data: {{ performance_overview.achieved|safe }} },
+    { name: 'Achievement %', type: 'line', data: {{ performance_overview.pct|safe }} }
+  ],
+  chart: {
+    height: 200,
+    type: 'line',
+    toolbar: { show: false },
+    fontFamily: 'Outfit, sans-serif'
+  },
+  stroke: {
+    width: [0, 0, 2],
+    curve: 'smooth'
+  },
+  colors: ['#e2e8f0', '#3b82f6', '#10b981'],
+  plotOptions: {
+    bar: {
+      columnWidth: '45%',
+      borderRadius: 3
+    }
+  },
+  labels: {{ performance_overview.labels|safe }},
+  xaxis: {
+    type: 'category',
+    axisBorder: { show: false },
+    axisTicks: { show: false },
+    labels: {
+      style: {
+        colors: '#94a3b8',
+        fontSize: '10px',
+        fontWeight: '500'
+      }
+    }
+  },
+  yaxis: [
+    {
+      title: { text: 'Activities', style: { color: '#64748b', fontSize: '10px', fontWeight: '500', fontFamily: 'Outfit' } },
+      labels: {
+        style: { colors: '#94a3b8', fontSize: '10px' }
+      }
+    },
+    {
+      opposite: true,
+      title: { text: 'Achievement %', style: { color: '#64748b', fontSize: '10px', fontWeight: '500', fontFamily: 'Outfit' } },
+      max: 100,
+      labels: {
+        formatter: function (val) { return val + '%'; },
+        style: { colors: '#94a3b8', fontSize: '10px' }
+      }
+    }
+  ],
+  grid: {
+    borderColor: '#f1f5f9'
+  },
+  legend: {
+    position: 'top',
+    horizontalAlign: 'right',
+    fontSize: '11px',
+    fontWeight: '500',
+    labels: { colors: '#64748b' },
+    markers: { radius: 12 }
+  },
+  tooltip: {
+    theme: 'dark'
+  }
+};
+this.chart = new ApexCharts(document.querySelector('#performanceChart'), options);
+this.chart.render();
 }
 }"
 x-init="initChart()"
 class="bg-white rounded-xl p-5 shadow-sm space-y-3"
 >
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <div class="flex items-start justify-between">
   <div>
@@ -78,7 +89,5 @@ class="bg-white rounded-xl p-5 shadow-sm space-y-3"
   </select>
 </div>
 
-<div class="h-[200px] relative w-full">
-<canvas id="performanceChart"></canvas>
-</div>
+<div class="h-[200px] w-full" id="performanceChart"></div>
 </div>

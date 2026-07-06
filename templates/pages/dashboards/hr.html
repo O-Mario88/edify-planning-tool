@@ -23,32 +23,15 @@ Monitor field staff workload health, daily debrief submissions, leave requests, 
 
 <!-- KPI Cards Row -->
 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-<!-- Overdue Activities -->
-<div class="bg-white p-5 rounded-xl  shadow-sm space-y-2">
-<span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Overdue Field Activities</span>
-<span class="text-[24px] font-semibold text-rose-600 block">{{ overdue_count }}</span>
-<span class="text-[12px] text-rose-500 font-bold block">Action required by supervisors</span>
-</div>
-
-<!-- Debriefs Logged Today -->
-<div class="bg-white p-5 rounded-xl  shadow-sm space-y-2">
-<span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Daily Debriefs Today</span>
-<span class="text-[24px] font-semibold text-slate-800 block">{{ debrief_count }}</span>
-<span class="text-[12px] text-slate-400 font-medium block">Submitted by CCEOs today</span>
-</div>
-
-<!-- Pending Leave Requests -->
-<div class="bg-white p-5 rounded-xl  shadow-sm space-y-2">
-<span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Pending Leave Requests</span>
-<span class="text-[24px] font-semibold text-amber-600 block">{{ pending_leaves }}</span>
-<span class="text-[12px] text-amber-600 font-bold block">Awaiting approval</span>
-</div>
+  {% include "components/kpi_card.html" with label="Overdue Field Activities" value=overdue_count tone="danger" hint="Action required by supervisors" %}
+  {% include "components/kpi_card.html" with label="Daily Debriefs Today" value=debrief_count hint="Submitted by CCEOs today" %}
+  {% include "components/kpi_card.html" with label="Pending Leave Requests" value=pending_leaves tone="warning" hint="Awaiting approval" %}
 </div>
 
 <div class="grid lg:grid-cols-3 gap-6 items-start">
 <!-- Left: Workload Alert List -->
 <div class="lg:col-span-2 space-y-6">
-<div class="bg-white rounded-xl  shadow-sm overflow-hidden">
+<div class="card overflow-hidden">
 <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
 <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">Staff Workload / Burnout Gaps</h2>
 <span class="inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-bold text-rose-700 border border-rose-200">CCEOs with > 3 Overdue</span>
@@ -77,7 +60,7 @@ All field staff have clean timelines. No workload alerts.
 
 <!-- Right: Quick actions -->
 <div class="space-y-6">
-<div class="bg-white rounded-xl  p-6 shadow-sm space-y-4">
+<div class="card p-6 space-y-4">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight border-b border-slate-100 pb-2">HR Controls</h3>
 <div class="space-y-2">
 <a href="/debriefs" class="w-full h-10 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-[12px] font-semibold flex items-center justify-center transition-colors shadow-sm gap-2">
