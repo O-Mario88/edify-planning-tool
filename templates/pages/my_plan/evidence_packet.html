@@ -14,14 +14,14 @@
 </div>
 
 <!-- Header -->
-<div class="bg-white rounded-2xl border border-slate-150 p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 shadow-sm">
+<div class="bg-white rounded-2xl  p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 shadow-sm">
 <div class="space-y-1">
 <div class="flex items-center gap-2">
-<span class="px-2 py-0.5 rounded text-[11px] font-extrabold uppercase bg-indigo-50 text-indigo-700 border border-indigo-150">{{ act.activity_type|replace_underscore }}</span>
+<span class="px-2 py-0.5 rounded text-[11px] font-semibold uppercase bg-indigo-50 text-indigo-700 border border-indigo-150">{{ act.activity_type|replace_underscore }}</span>
 <span class="text-slate-400 font-bold text-[12px]">&bull;</span>
 <span class="text-[12px] text-slate-500 font-semibold">{{ act.planned_date }}</span>
 </div>
-<h1 class="text-[20px] font-extrabold text-slate-800 tracking-tight leading-tight">Evidence Proof Packet</h1>
+<h1 class="text-[20px] font-semibold text-slate-800 tracking-tight leading-tight">Evidence Proof Packet</h1>
 {% if act.school %}
 <p class="text-[14px] text-slate-500 font-semibold">School: <strong class="text-slate-700">{{ act.school.name }}</strong> (ID: {{ act.school.school_id }})</p>
 {% endif %}
@@ -32,7 +32,7 @@
 hx-get="/activities/{{ act.id }}/timeline"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
-class="btn btn-ghost h-9 text-[12px] font-extrabold shadow-sm"
+class="btn btn-ghost h-9 text-[12px] font-semibold shadow-sm"
 >
 View Timeline
 </button>
@@ -41,7 +41,7 @@ View Timeline
 hx-get="/activities/{{ act.id }}/submit"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
-class="btn btn-primary h-9 text-[12px] font-extrabold shadow-sm"
+class="btn btn-primary h-9 text-[12px] font-semibold shadow-sm"
 >
 Submit for Review
 </button>
@@ -56,14 +56,14 @@ Submit for Review
 <div class="lg:col-span-2 space-y-6">
 
 <!-- Files List -->
-<div class="bg-white rounded-2xl border border-slate-150 shadow-sm overflow-hidden">
+<div class="bg-white rounded-2xl  shadow-sm overflow-hidden">
 <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-<h3 class="text-[14px] font-extrabold text-slate-700">Uploaded Evidence Files</h3>
+<h3 class="text-[14px] font-semibold text-slate-700">Uploaded Evidence Files</h3>
 <button 
 hx-get="/activities/{{ act.id }}/evidence"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
-class="text-[12px] font-extrabold text-blue-600 hover:text-blue-700"
+class="text-[12px] font-semibold text-blue-600 hover:text-blue-700"
 >
 + Upload File
 </button>
@@ -87,7 +87,7 @@ class="text-[12px] font-extrabold text-blue-600 hover:text-blue-700"
 {% endif %}
 </div>
 
-<a href="#" class="btn btn-ghost h-8 px-2.5 text-[11px] font-extrabold shadow-sm">
+<a href="#" class="btn btn-ghost h-8 px-2.5 text-[11px] font-semibold shadow-sm">
 Download
 </a>
 </div>
@@ -101,7 +101,7 @@ Download
 hx-get="/activities/{{ act.id }}/evidence"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
-class="btn btn-primary h-8 mt-3 text-[11px] font-extrabold"
+class="btn btn-primary h-8 mt-3 text-[11px] font-semibold"
 >
 Upload Evidence
 </button>
@@ -115,8 +115,8 @@ Upload Evidence
 <div class="space-y-6">
 
 <!-- Checklist -->
-<div class="bg-white rounded-2xl border border-slate-150 p-5 shadow-sm space-y-4">
-<h3 class="text-[14px] font-extrabold text-slate-800 uppercase tracking-wider">Completeness Checklist</h3>
+<div class="bg-white rounded-2xl  p-5 shadow-sm space-y-4">
+<h3 class="text-[14px] font-semibold text-slate-800 uppercase tracking-wider">Completeness Checklist</h3>
 
 <div class="space-y-2.5">
 <div class="flex items-center justify-between text-[12px] font-bold">

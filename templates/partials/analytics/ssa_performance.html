@@ -1,14 +1,14 @@
-<div class="bg-white rounded-xl border border-slate-100 p-4 shadow-sm space-y-4">
+<div class="bg-white rounded-xl  p-4 shadow-sm space-y-4">
 <div class="flex items-center justify-between border-b border-slate-50 pb-2">
 <div>
-<h3 class="text-[14px] font-black text-slate-800 tracking-tight flex items-center gap-1.5">
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight flex items-center gap-1.5">
 <span>SSA Performance by Intervention</span>
 <span class="text-[11px] text-slate-400 cursor-help" title="Average SSA score out of 6.0 across all 8 interventions">ℹ️</span>
 </h3>
 <p class="text-[11px] text-slate-400 font-semibold mt-0.5">Average SSA score (out of 6.0)</p>
 </div>
 
-<select class="bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-extrabold text-slate-500 py-1 px-2.5 outline-none cursor-pointer">
+<select class="bg-slate-50  rounded-lg text-[11px] font-semibold text-slate-500 py-1 px-2.5 outline-none cursor-pointer">
 <option>This Quarter</option>
 </select>
 </div>
@@ -18,9 +18,9 @@
 <div class="space-y-1">
 <div class="flex items-center justify-between text-[11px] font-bold text-slate-600">
 <span>{{ item.label }}</span>
-<span class="font-black text-slate-800">{{ item.value }}/6.0</span>
+<span class="font-semibold text-slate-800">{{ item.value }}/6.0</span>
 </div>
-<div class="h-2 w-full bg-slate-50 border border-slate-100 rounded-full overflow-hidden">
+<div class="h-2 w-full bg-slate-50  rounded-full overflow-hidden">
 <div 
 class="h-full rounded-full {% if item.code == 'leadership' %}bg-emerald-500{% elif item.code == 'teaching_learning' %}bg-indigo-500{% elif item.code == 'community_engagement' %}bg-blue-500{% elif item.code == 'school_management' %}bg-orange-500{% elif item.code == 'financial_health' %}bg-yellow-500{% elif item.code == 'infrastructure_wash' %}bg-teal-500{% elif item.code == 'safety_wellbeing' %}bg-rose-500{% else %}bg-slate-400{% endif %}" 
 style="width: {{ item.pct }}%"

@@ -5,7 +5,7 @@
 {% block drawer_subtitle %}CD Monthly Admin Plan allocation for {{ selected_month }} {{ selected_fy }}{% endblock %}
 
 {% block drawer_badge %}
-<span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-black uppercase {{ admin_data.status_class }}">
+<span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-semibold uppercase {{ admin_data.status_class }}">
 {{ admin_data.status_label }}
 </span>
 {% endblock %}
@@ -17,15 +17,15 @@
 <div class="grid grid-cols-3 gap-4 bg-slate-50 p-4 border border-slate-100 rounded-xl text-[12px]">
 <div>
 <p class="text-[11px] uppercase font-bold text-slate-400">Total Planned</p>
-<p class="font-extrabold text-slate-800 mt-0.5">{{ admin_data.planned_total|ugx }}</p>
+<p class="font-semibold text-slate-800 mt-0.5">{{ admin_data.planned_total|ugx }}</p>
 </div>
 <div>
 <p class="text-[11px] uppercase font-bold text-slate-400">Total Allocated</p>
-<p class="font-extrabold text-emerald-700 mt-0.5">{{ admin_data.allocated_total|ugx }}</p>
+<p class="font-semibold text-emerald-700 mt-0.5">{{ admin_data.allocated_total|ugx }}</p>
 </div>
 <div>
 <p class="text-[11px] uppercase font-bold text-slate-400">Monthly Period</p>
-<p class="font-extrabold text-[#2e505f] mt-0.5">{{ selected_month }} {{ selected_fy }}</p>
+<p class="font-semibold text-[#2e505f] mt-0.5">{{ selected_month }} {{ selected_fy }}</p>
 </div>
 </div>
 
@@ -42,13 +42,13 @@
 <th class="px-3 py-2.5">Category</th>
 <th class="px-3 py-2.5 text-center">Qty</th>
 <th class="px-3 py-2.5 text-right">Unit (UGX)</th>
-<th class="px-4 py-2.5 text-right font-extrabold text-slate-800">Total (UGX)</th>
+<th class="px-4 py-2.5 text-right font-semibold text-slate-800">Total (UGX)</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100">
 {% for line in admin_data.lines %}
 <tr class="hover:bg-slate-50/50">
-<td class="px-4 py-3 font-extrabold text-slate-800">
+<td class="px-4 py-3 font-semibold text-slate-800">
 {{ line.description }}
 {% if line.justification and line.justification != "None" %}
 <p class="text-[11px] font-semibold text-slate-400 mt-1 leading-normal">Justification: {{ line.justification }}</p>
@@ -57,7 +57,7 @@
 <td class="px-3 py-3 font-semibold text-slate-500">{{ line.cost_category }}</td>
 <td class="px-3 py-3 text-center font-bold text-slate-700">{{ line.quantity|stringformat:".2f" }}</td>
 <td class="px-3 py-3 text-right text-slate-500">{{ line.unit_cost|ugx }}</td>
-<td class="px-4 py-3 text-right font-black text-[#2e505f]">{{ line.total_cost|ugx }}</td>
+<td class="px-4 py-3 text-right font-semibold text-[#2e505f]">{{ line.total_cost|ugx }}</td>
 </tr>
 {% endfor %}
 </tbody>
@@ -75,14 +75,14 @@ No administrative budget lines exist for this month.
 <button 
 type="button"
 @click="$dispatch('close-drawer')"
-class="btn btn-ghost h-10 text-[12px] shadow-sm font-extrabold"
+class="btn btn-ghost h-10 text-[12px] shadow-sm font-semibold"
 >
 Close
 </button>
 
 <a 
 href="/finance/fund-allocation?export=csv&export_mode=admin_only&month={{ selected_month }}&fy={{ selected_fy }}"
-class="btn btn-ghost h-10 text-[12px] text-blue-600 border-blue-200 hover:bg-blue-50 shadow-sm font-extrabold flex items-center gap-1"
+class="btn btn-ghost h-10 text-[12px] text-blue-600 border-blue-200 hover:bg-blue-50 shadow-sm font-semibold flex items-center gap-1"
 >
 <span>📥</span> Export Breakdown
 </a>
@@ -90,7 +90,7 @@ class="btn btn-ghost h-10 text-[12px] text-blue-600 border-blue-200 hover:bg-blu
 <a 
 href="/work-plan" 
 target="_blank"
-class="btn btn-primary h-10 text-[12px] shadow-sm font-extrabold"
+class="btn btn-primary h-10 text-[12px] shadow-sm font-semibold"
 >
 View CD Monthly Plan
 </a>

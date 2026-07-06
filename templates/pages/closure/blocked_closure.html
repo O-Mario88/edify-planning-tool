@@ -6,13 +6,13 @@
 <div class="p-6 max-w-7xl mx-auto space-y-6">
 
 <!-- Premium Header Pane -->
-<div class="relative overflow-hidden rounded-3xl bg-slate-900 text-white p-8 shadow-xl border border-slate-800">
+<div class="relative overflow-hidden rounded-xl bg-slate-900 text-white p-8 shadow-md border border-slate-800">
 <div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-rose-500/10 blur-3xl pointer-events-none"></div>
 <div class="relative z-10 space-y-2">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-500 text-[11px] font-black uppercase tracking-widest">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-500 text-[11px] font-semibold uppercase tracking-widest">
 Blocker Dashboard
 </div>
-<h1 class="text-[32px] font-black tracking-tight text-white leading-none">Blocked Closures Directory</h1>
+<h1 class="text-[32px] font-semibold tracking-tight text-white leading-none">Blocked Closures Directory</h1>
 <p class="text-[14px] text-slate-400 font-medium max-w-xl">
 Review activities that are stuck and cannot close because of missing quality or accountability checks.
 </p>
@@ -20,7 +20,7 @@ Review activities that are stuck and cannot close because of missing quality or 
 </div>
 
 <!-- Table Card -->
-<div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+<div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
 <div class="overflow-x-auto">
 <table class="w-full text-[12px] font-semibold text-slate-700">
 <thead class="bg-slate-50 border-b border-slate-100 text-[11px] uppercase font-bold text-slate-400">
@@ -40,22 +40,22 @@ Review activities that are stuck and cannot close because of missing quality or 
 <tr class="hover:bg-slate-50/50 transition-colors">
 <!-- ID -->
 <td class="px-6 py-4">
-<div class="font-extrabold text-slate-900 text-[12px]">#{{ item.activity.id|slice:":8" }}</div>
+<div class="font-semibold text-slate-900 text-[12px]">#{{ item.activity.id|slice:":8" }}</div>
 <div class="text-[11px] text-slate-400 font-bold uppercase mt-0.5">{{ item.activity.get_activity_type_display }}</div>
 </td>
 <!-- Reason -->
 <td class="px-6 py-4">
-<span class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-150">
+<span class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-semibold uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-150">
 {{ item.blocking_reason }}
 </span>
 </td>
 <!-- Role -->
-<td class="px-6 py-4 font-extrabold text-slate-800">
+<td class="px-6 py-4 font-semibold text-slate-800">
 {{ item.responsible_role }}
 </td>
 <!-- Owner -->
 <td class="px-6 py-4">
-<div class="font-extrabold text-slate-800">{{ item.activity.responsible_staff_id|default:"Unassigned" }}</div>
+<div class="font-semibold text-slate-800">{{ item.activity.responsible_staff_id|default:"Unassigned" }}</div>
 </td>
 <!-- Days Blocked -->
 <td class="px-6 py-4 text-center text-slate-500 font-medium">
@@ -75,7 +75,7 @@ Reconcile outstanding disbursements.
 </td>
 <!-- Actions -->
 <td class="px-6 py-4 text-right">
-<a href="/activities/{{ item.activity.id }}/closure/" class="h-8 px-3 rounded-xl bg-slate-50 text-slate-700 hover:bg-slate-100 hover:text-slate-800 text-[11px] font-extrabold flex items-center justify-center border border-slate-200/60 shadow-sm transition-colors">
+<a href="/activities/{{ item.activity.id }}/closure/" class="h-8 px-3 rounded-xl bg-slate-50 text-slate-700 hover:bg-slate-100 hover:text-slate-800 text-[11px] font-semibold flex items-center justify-center border border-slate-200/60 shadow-sm transition-colors">
 Resolve Blocker
 </a>
 </td>
@@ -83,7 +83,7 @@ Resolve Blocker
 {% endfor %}
 {% else %}
 <tr>
-<td colspan="7" class="px-6 py-16 text-center text-[14px] font-extrabold text-slate-400 bg-slate-50/20">
+<td colspan="7" class="px-6 py-16 text-center text-[14px] font-semibold text-slate-400 bg-slate-50/20">
 <div class="flex flex-col items-center justify-center gap-3">
 <div class="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 shadow-inner">
 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" /></svg>

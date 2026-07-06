@@ -6,13 +6,13 @@
 <div class="p-6 max-w-7xl mx-auto space-y-6">
 
 <!-- Premium Header Pane -->
-<div class="relative overflow-hidden rounded-3xl bg-slate-900 text-white p-8 shadow-xl border border-slate-800">
+<div class="relative overflow-hidden rounded-xl bg-slate-900 text-white p-8 shadow-md border border-slate-800">
 <div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-blue-500/10 blur-3xl pointer-events-none"></div>
 <div class="relative z-10 space-y-2">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-500 text-[11px] font-black uppercase tracking-widest">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-500 text-[11px] font-semibold uppercase tracking-widest">
 Compliance Log
 </div>
-<h1 class="text-[32px] font-black tracking-tight text-white leading-none">Finance Audit Log Ledger</h1>
+<h1 class="text-[32px] font-semibold tracking-tight text-white leading-none">Finance Audit Log Ledger</h1>
 <p class="text-[14px] text-slate-400 font-medium max-w-xl">
 Complete historic audit logs for all cash flows, payment methods, disbursements, reimbursements, and NetSuite reconciliations.
 </p>
@@ -20,7 +20,7 @@ Complete historic audit logs for all cash flows, payment methods, disbursements,
 </div>
 
 <!-- Table Card -->
-<div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+<div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
 <div class="overflow-x-auto">
 <table class="w-full text-[12px] font-semibold text-slate-700">
 <thead class="bg-slate-50 border-b border-slate-100 text-[11px] uppercase font-bold text-slate-400">
@@ -38,21 +38,21 @@ Complete historic audit logs for all cash flows, payment methods, disbursements,
 <tr class="hover:bg-slate-50/50 transition-colors">
 <!-- Event -->
 <td class="px-6 py-4">
-<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-black uppercase tracking-wide bg-blue-50 text-blue-700 border border-blue-150">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold uppercase tracking-wide bg-blue-50 text-blue-700 border ">
 {{ log.event_type|upper }}
 </span>
 </td>
 <!-- Activity -->
 <td class="px-6 py-4">
 {% if log.activity %}
-<a href="/accounts/activities/{{ log.activity.id }}/" class="text-blue-600 hover:underline font-extrabold">#{{ log.activity.id|slice:":8" }}</a>
+<a href="/accounts/activities/{{ log.activity.id }}/" class="text-blue-600 hover:underline font-semibold">#{{ log.activity.id|slice:":8" }}</a>
 {% else %}
 <span class="text-slate-400">Unlinked</span>
 {% endif %}
 </td>
 <!-- Actor -->
 <td class="px-6 py-4">
-<div class="font-extrabold text-slate-800">{{ log.actor_id }}</div>
+<div class="font-semibold text-slate-800">{{ log.actor_id }}</div>
 <div class="text-[11px] text-slate-400 font-bold uppercase mt-0.5">{{ log.actor_role }}</div>
 </td>
 <!-- Changes -->
@@ -67,7 +67,7 @@ Complete historic audit logs for all cash flows, payment methods, disbursements,
 {% endfor %}
 {% else %}
 <tr>
-<td colspan="5" class="px-6 py-16 text-center text-[14px] font-extrabold text-slate-400 bg-slate-50/20">
+<td colspan="5" class="px-6 py-16 text-center text-[14px] font-semibold text-slate-400 bg-slate-50/20">
 <div class="flex flex-col items-center justify-center gap-3">
 <div class="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 shadow-inner">
 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" /></svg>

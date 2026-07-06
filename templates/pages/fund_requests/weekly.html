@@ -27,7 +27,7 @@ return 'UGX ' + Number(val).toLocaleString();
 <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-100 pb-4">
 <div>
 <div class="flex items-center gap-2">
-<h1 class="text-[24px] font-black text-slate-800 tracking-tight leading-none">Fund Approvals</h1>
+<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight leading-none">Fund Approvals</h1>
 <span class="text-slate-300 cursor-pointer" title="Approve fund requests from CCEOs">ⓘ</span>
 </div>
 <p class="text-[12px] text-slate-500 font-bold mt-1.5 font-semibold">All fund requests are derived from CCEO plans. You approve only funds for your own team.</p>
@@ -35,15 +35,15 @@ return 'UGX ' + Number(val).toLocaleString();
 
 <!-- Actions toolbar -->
 <div class="flex flex-wrap items-center gap-2">
-<button class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-extrabold text-slate-700 flex items-center gap-1.5 shadow-sm hover:bg-slate-50">
+<button class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-semibold text-slate-700 flex items-center gap-1.5 shadow-sm hover:bg-slate-50">
 📥 Export
 </button>
 
-<button class="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[12px] font-black flex items-center gap-1.5 transition-all shadow-sm">
+<button class="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[12px] font-semibold flex items-center gap-1.5 transition-all shadow-sm">
 ✓ Approve All Valid
 </button>
 
-<button class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-extrabold text-slate-700 flex items-center gap-1.5 shadow-sm hover:bg-slate-50">
+<button class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-semibold text-slate-700 flex items-center gap-1.5 shadow-sm hover:bg-slate-50">
 <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
 Filters
 </button>
@@ -54,25 +54,25 @@ Filters
 <!-- Filters Row -->
 <div class="grid grid-cols-1 md:grid-cols-4 gap-3 bg-white p-3.5 rounded-2xl border border-slate-100 shadow-sm text-[12px] font-bold text-slate-600">
 <div class="space-y-1">
-<label class="text-[11px] text-slate-400 font-extrabold uppercase">Financial Year</label>
+<label class="text-[11px] text-slate-400 font-semibold uppercase">Financial Year</label>
 <select class="h-8 w-full bg-slate-50 border border-slate-200 rounded-lg px-2 text-[12px] font-bold cursor-pointer focus:outline-none">
 <option>2024/2025</option>
 </select>
 </div>
 <div class="space-y-1">
-<label class="text-[11px] text-slate-400 font-extrabold uppercase">Month</label>
+<label class="text-[11px] text-slate-400 font-semibold uppercase">Month</label>
 <select class="h-8 w-full bg-slate-50 border border-slate-200 rounded-lg px-2 text-[12px] font-bold cursor-pointer focus:outline-none">
 <option>May 2025</option>
 </select>
 </div>
 <div class="space-y-1">
-<label class="text-[11px] text-slate-400 font-extrabold uppercase">Region</label>
+<label class="text-[11px] text-slate-400 font-semibold uppercase">Region</label>
 <select class="h-8 w-full bg-slate-50 border border-slate-200 rounded-lg px-2 text-[12px] font-bold cursor-pointer focus:outline-none">
 <option>Northern Region</option>
 </select>
 </div>
 <div class="space-y-1">
-<label class="text-[11px] text-slate-400 font-extrabold uppercase">District</label>
+<label class="text-[11px] text-slate-400 font-semibold uppercase">District</label>
 <select class="h-8 w-full bg-slate-50 border border-slate-200 rounded-lg px-2 text-[12px] font-bold cursor-pointer focus:outline-none">
 <option>All Districts</option>
 </select>
@@ -84,39 +84,39 @@ Filters
 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
 <!-- 1 -->
 <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
-<p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Total Requested This Month</p>
-<h3 class="text-[20px] font-black text-slate-800 leading-none">UGX 214.6M</h3>
-<span class="text-[11px] text-emerald-600 font-extrabold block pt-1">▲ 18.6% vs Apr</span>
+<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total Requested This Month</p>
+<h3 class="text-[20px] font-semibold text-slate-800 leading-none">UGX 214.6M</h3>
+<span class="text-[11px] text-emerald-600 font-semibold block pt-1">▲ 18.6% vs Apr</span>
 </div>
 <!-- 2 -->
 <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
-<p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Awaiting Approval</p>
-<h3 class="text-[20px] font-black text-slate-800 leading-none">UGX 128.4M</h3>
+<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Awaiting Approval</p>
+<h3 class="text-[20px] font-semibold text-slate-800 leading-none">UGX 128.4M</h3>
 <span class="text-[11px] text-amber-600 font-bold block pt-1">12 requests pending</span>
 </div>
 <!-- 3 -->
 <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
-<p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Approved Today</p>
-<h3 class="text-[20px] font-black text-slate-800 leading-none">UGX 36.2M</h3>
+<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Approved Today</p>
+<h3 class="text-[20px] font-semibold text-slate-800 leading-none">UGX 36.2M</h3>
 <span class="text-[11px] text-emerald-600 font-bold block pt-1">5 requests approved</span>
 </div>
 <!-- 4 -->
 <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
-<p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Returned for Review</p>
-<h3 class="text-[20px] font-black text-slate-800 leading-none">UGX 12.8M</h3>
+<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Returned for Review</p>
+<h3 class="text-[20px] font-semibold text-slate-800 leading-none">UGX 12.8M</h3>
 <span class="text-[11px] text-rose-600 font-bold block pt-1">4 requests returned</span>
 </div>
 <!-- 5 -->
 <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
-<p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Planned Activities Funding</p>
-<h3 class="text-[20px] font-black text-slate-800 leading-none">UGX 214.6M</h3>
-<span class="text-[11px] text-indigo-700 font-extrabold block pt-1">100% of requests</span>
+<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Planned Activities Funding</p>
+<h3 class="text-[20px] font-semibold text-slate-800 leading-none">UGX 214.6M</h3>
+<span class="text-[11px] text-indigo-700 font-semibold block pt-1">100% of requests</span>
 </div>
 <!-- 6 -->
 <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
-<p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Average Cost per School</p>
-<h3 class="text-[20px] font-black text-slate-800 leading-none">UGX 468,950</h3>
-<span class="text-[11px] text-emerald-600 font-extrabold block pt-1">▲ 7.3% vs Apr</span>
+<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Average Cost per School</p>
+<h3 class="text-[20px] font-semibold text-slate-800 leading-none">UGX 468,950</h3>
+<span class="text-[11px] text-emerald-600 font-semibold block pt-1">▲ 7.3% vs Apr</span>
 </div>
 </div>
 
@@ -125,12 +125,12 @@ Filters
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
 <!-- CCEO Fund Approval Queue (Col Span 3) -->
-<div class="lg:col-span-3 bg-white p-5 rounded-3xl border border-slate-150 shadow-sm flex flex-col justify-between">
+<div class="lg:col-span-3 bg-white p-5 rounded-xl  shadow-sm flex flex-col justify-between">
 <div>
 <div class="flex items-center justify-between pb-3 border-b border-slate-100">
 <div class="flex items-center gap-1.5">
-<h2 class="text-[14px] font-black text-slate-800 tracking-tight">CCEO Fund Approval Queue</h2>
-<span class="bg-blue-600 text-white font-extrabold rounded-full px-1.5 py-0.5 text-[11px] flex items-center justify-center">6</span>
+<h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">CCEO Fund Approval Queue</h2>
+<span class="bg-blue-600 text-white font-semibold rounded-full px-1.5 py-0.5 text-[11px] flex items-center justify-center">6</span>
 </div>
 
 <select class="h-6 px-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-bold text-slate-500">
@@ -146,11 +146,11 @@ Filters
 class="p-3.5 border rounded-2xl cursor-pointer flex flex-col justify-between transition-all group"
 >
 <div class="flex items-start gap-3">
-<div class="h-8 w-8 rounded-full bg-slate-100 font-extrabold text-slate-700 flex items-center justify-center text-[12px] group-hover:scale-105 transition-transform" x-text="item.user_name.slice(0,2)"></div>
+<div class="h-8 w-8 rounded-full bg-slate-100 font-semibold text-slate-700 flex items-center justify-center text-[12px] group-hover:scale-105 transition-transform" x-text="item.user_name.slice(0,2)"></div>
 
 <div class="flex-1 min-w-0">
 <div class="flex items-center justify-between">
-<h4 class="text-[12px] font-extrabold text-slate-800 truncate" x-text="item.user_name"></h4>
+<h4 class="text-[12px] font-semibold text-slate-800 truncate" x-text="item.user_name"></h4>
 <span :class="item.status_class" class="inline-flex items-center rounded-full px-1.5 py-0.5 text-[11px] font-bold border" x-text="item.status"></span>
 </div>
 <p class="text-[11px] text-slate-500 font-bold mt-0.5 truncate">
@@ -169,7 +169,7 @@ class="p-3.5 border rounded-2xl cursor-pointer flex flex-col justify-between tra
 
 <div class="flex items-center justify-between mt-3 pt-2.5 border-t border-slate-50">
 <span class="text-[11px] text-slate-400 font-bold">Total Requested</span>
-<span class="text-[14px] font-black text-slate-800" x-text="formatCurrency(item.requested)"></span>
+<span class="text-[14px] font-semibold text-slate-800" x-text="formatCurrency(item.requested)"></span>
 </div>
 </div>
 </template>
@@ -186,13 +186,13 @@ class="p-3.5 border rounded-2xl cursor-pointer flex flex-col justify-between tra
 </div>
 
 <!-- DETAIL WORKSPACE PANEL (Col Span 6) -->
-<div class="lg:col-span-6 bg-white p-5 rounded-3xl border border-slate-150 shadow-sm flex flex-col justify-between" x-show="selectedItem">
+<div class="lg:col-span-6 bg-white p-5 rounded-xl  shadow-sm flex flex-col justify-between" x-show="selectedItem">
 <div>
 <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-3">
 <div class="flex items-center gap-3">
-<div class="h-10 w-10 rounded-full bg-slate-100 font-extrabold text-slate-700 flex items-center justify-center text-[14px]" x-text="selectedItem ? selectedItem.user_name.slice(0,2) : ''"></div>
+<div class="h-10 w-10 rounded-full bg-slate-100 font-semibold text-slate-700 flex items-center justify-center text-[14px]" x-text="selectedItem ? selectedItem.user_name.slice(0,2) : ''"></div>
 <div>
-<h3 class="text-[18px] font-black text-slate-800 leading-none" x-text="selectedItem ? selectedItem.user_name + ' — May Fund Plan' : ''"></h3>
+<h3 class="text-[18px] font-semibold text-slate-800 leading-none" x-text="selectedItem ? selectedItem.user_name + ' — May Fund Plan' : ''"></h3>
 <p class="text-[11px] text-slate-500 font-bold mt-1.5">
 <span x-text="selectedItem ? selectedItem.district : ''"></span> &bull; <span x-text="selectedItem ? selectedItem.region : ''"></span>
 </p>
@@ -201,8 +201,8 @@ class="p-3.5 border rounded-2xl cursor-pointer flex flex-col justify-between tra
 
 <div class="flex items-center gap-3">
 <div class="text-right">
-<span class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">Plan Period</span>
-<span class="text-[11px] font-black text-slate-800 block">May 1 – May 31, 2025</span>
+<span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Plan Period</span>
+<span class="text-[11px] font-semibold text-slate-800 block">May 1 – May 31, 2025</span>
 </div>
 <span :class="selectedItem ? selectedItem.status_class : ''" class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold border uppercase tracking-wider" x-text="selectedItem ? selectedItem.status : ''"></span>
 </div>
@@ -211,7 +211,7 @@ class="p-3.5 border rounded-2xl cursor-pointer flex flex-col justify-between tra
 <div class="grid grid-cols-1 md:grid-cols-12 gap-6 mt-4">
 <!-- Table columns (Col Span 8) -->
 <div class="md:col-span-8">
-<h4 class="text-[11px] font-black text-slate-500 uppercase tracking-wide mb-3">Funding Breakdown from Planned Activities</h4>
+<h4 class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-3">Funding Breakdown from Planned Activities</h4>
 <div class="overflow-x-auto">
 <table class="w-full text-left text-[11px] border-collapse">
 <thead>
@@ -225,10 +225,10 @@ class="p-3.5 border rounded-2xl cursor-pointer flex flex-col justify-between tra
 <tbody class="divide-y divide-slate-50 font-semibold text-slate-700">
 <template x-for="line in selectedItem.lines" :key="line.category">
 <tr class="hover:bg-slate-50/50">
-<td class="py-2 font-extrabold text-slate-800" x-text="line.category"></td>
+<td class="py-2 font-semibold text-slate-800" x-text="line.category"></td>
 <td class="py-2 text-center font-bold text-slate-500" x-text="line.quantity || '—'"></td>
 <td class="py-2 text-right font-bold text-slate-600" x-text="line.unit_cost ? Number(line.unit_cost).toLocaleString() : '—'"></td>
-<td class="py-2 text-right font-black text-slate-800" x-text="Number(line.total).toLocaleString()"></td>
+<td class="py-2 text-right font-semibold text-slate-800" x-text="Number(line.total).toLocaleString()"></td>
 </tr>
 </template>
 
@@ -241,9 +241,9 @@ class="p-3.5 border rounded-2xl cursor-pointer flex flex-col justify-between tra
 </tr>
 
 <!-- Bold aggregate summary row -->
-<tr class="border-t border-slate-200 text-slate-800 font-black">
-<td class="py-3 font-extrabold uppercase tracking-wider" colspan="3">Total Requested</td>
-<td class="py-3 text-right font-black" x-text="formatCurrency(selectedItem.requested)"></td>
+<tr class="border-t border-slate-200 text-slate-800 font-semibold">
+<td class="py-3 font-semibold uppercase tracking-wider" colspan="3">Total Requested</td>
+<td class="py-3 text-right font-semibold" x-text="formatCurrency(selectedItem.requested)"></td>
 </tr>
 </tbody>
 </table>
@@ -253,28 +253,28 @@ class="p-3.5 border rounded-2xl cursor-pointer flex flex-col justify-between tra
 <!-- Plan Snapshot Side card (Col Span 4) -->
 <div class="md:col-span-4 bg-slate-50 p-4 rounded-2xl border border-slate-100 flex flex-col justify-between">
 <div>
-<span class="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider block">Plan Snapshot</span>
+<span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block">Plan Snapshot</span>
 
 <div class="space-y-3 mt-4 text-[11px] font-bold text-slate-500">
 <div class="flex justify-between items-start gap-1">
 <span>🏫 Planned schools by staff</span>
-<span class="text-slate-800 font-black shrink-0">24</span>
+<span class="text-slate-800 font-semibold shrink-0">24</span>
 </div>
 <div class="flex justify-between items-start gap-1">
 <span>🚗 Planned school visits by partners</span>
-<span class="text-slate-800 font-black shrink-0">4</span>
+<span class="text-slate-800 font-semibold shrink-0">4</span>
 </div>
 <div class="flex justify-between items-start gap-1">
 <span>👥 Cluster meetings planned</span>
-<span class="text-slate-800 font-black shrink-0">4</span>
+<span class="text-slate-800 font-semibold shrink-0">4</span>
 </div>
 <div class="flex justify-between items-start gap-1">
 <span>📚 Trainings planned (Cluster/In-school)</span>
-<span class="text-slate-800 font-black shrink-0">12</span>
+<span class="text-slate-800 font-semibold shrink-0">12</span>
 </div>
 <div class="flex justify-between items-start gap-1 border-t border-slate-200 pt-2">
 <span>🗺️ Total schools covered (Unique)</span>
-<span class="text-slate-800 font-black shrink-0">5</span>
+<span class="text-slate-800 font-semibold shrink-0">5</span>
 </div>
 </div>
 </div>
@@ -288,7 +288,7 @@ class="p-3.5 border rounded-2xl cursor-pointer flex flex-col justify-between tra
 View Full Plan
 </button>
 
-<button class="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[12px] font-black shadow-sm transition-all">
+<button class="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[12px] font-semibold shadow-sm transition-all">
 Approve
 </button>
 
@@ -302,39 +302,39 @@ Return
 <div class="lg:col-span-3 space-y-6">
 
 <!-- This Month stats card -->
-<div class="bg-white p-5 rounded-3xl border border-slate-150 shadow-sm space-y-3">
-<h3 class="text-[14px] font-black text-slate-800 tracking-tight pb-2 border-b border-slate-100">This Month</h3>
+<div class="bg-white p-5 rounded-xl  shadow-sm space-y-3">
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight pb-2 border-b border-slate-100">This Month</h3>
 <div class="space-y-2 text-[12px] font-bold text-slate-500">
-<div class="flex items-center justify-between"><span>Waiting for Approval</span> <span class="text-slate-800 font-black">UGX 128.4M</span></div>
-<div class="flex items-center justify-between text-rose-600"><span>Returned</span> <span class="font-black">UGX 12.8M</span></div>
-<div class="flex items-center justify-between text-emerald-600"><span>Approved Today</span> <span class="font-black">UGX 36.2M</span></div>
+<div class="flex items-center justify-between"><span>Waiting for Approval</span> <span class="text-slate-800 font-semibold">UGX 128.4M</span></div>
+<div class="flex items-center justify-between text-rose-600"><span>Returned</span> <span class="font-semibold">UGX 12.8M</span></div>
+<div class="flex items-center justify-between text-emerald-600"><span>Approved Today</span> <span class="font-semibold">UGX 36.2M</span></div>
 </div>
-<a href="#" class="text-[11px] font-black text-blue-600 hover:underline block pt-2 border-t border-slate-50 text-center uppercase tracking-wider">
+<a href="#" class="text-[11px] font-semibold text-blue-600 hover:underline block pt-2 border-t border-slate-50 text-center uppercase tracking-wider">
 View all activity
 </a>
 </div>
 
 <!-- Monthly Plan & Budget Approval progress bar -->
-<div class="bg-white p-5 rounded-3xl border border-slate-150 shadow-sm space-y-3">
-<h3 class="text-[14px] font-black text-slate-800 tracking-tight">Monthly Plan &amp; Budget Approval</h3>
+<div class="bg-white p-5 rounded-xl  shadow-sm space-y-3">
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Monthly Plan &amp; Budget Approval</h3>
 <div class="space-y-1.5">
 <div class="flex items-center justify-between text-[11px] font-bold text-slate-500">
 <span>Total Allocation</span>
-<span class="text-slate-800 font-black">UGX 300.0M</span>
+<span class="text-slate-800 font-semibold">UGX 300.0M</span>
 </div>
 <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
 <div class="bg-emerald-500 h-full rounded-full" style="width: 56%"></div>
 </div>
 <div class="flex justify-between items-center text-[11px] font-bold text-slate-500">
 <span>Approved (to date): UGX 167.8M (55.9%)</span>
-<span class="text-emerald-600 font-extrabold">On Track</span>
+<span class="text-emerald-600 font-semibold">On Track</span>
 </div>
 </div>
 </div>
 
 <!-- Radial progress donut showing Approval Rate -->
-<div class="bg-white p-5 rounded-3xl border border-slate-150 shadow-sm flex flex-col justify-between space-y-4">
-<h3 class="text-[14px] font-black text-slate-800 tracking-tight">Approval Rate This Month</h3>
+<div class="bg-white p-5 rounded-xl  shadow-sm flex flex-col justify-between space-y-4">
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Approval Rate This Month</h3>
 <div class="flex items-center justify-center gap-4">
 <!-- circular svg representation -->
 <div class="relative h-24 w-24 flex items-center justify-center shrink-0">
@@ -348,7 +348,7 @@ View all activity
 <path class="text-amber-500" stroke-dasharray="16, 100" stroke-dashoffset="-84" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
 </svg>
 <div class="absolute flex flex-col justify-center items-center text-center">
-<span class="text-[18px] font-black text-slate-800 leading-none">72%</span>
+<span class="text-[18px] font-semibold text-slate-800 leading-none">72%</span>
 <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wide mt-0.5">Approval Rate</span>
 </div>
 </div>
@@ -361,8 +361,8 @@ View all activity
 </div>
 
 <!-- Approval Rules -->
-<div class="bg-white p-5 rounded-3xl border border-slate-150 shadow-sm space-y-4">
-<h3 class="text-[14px] font-black text-slate-800 tracking-tight pb-2 border-b border-slate-100">Approval Rules</h3>
+<div class="bg-white p-5 rounded-xl  shadow-sm space-y-4">
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight pb-2 border-b border-slate-100">Approval Rules</h3>
 <ul class="text-[12px] font-bold text-slate-500 space-y-2.5">
 <li class="flex items-start gap-2">
 <span class="text-emerald-600 shrink-0 font-bold">✓</span>
@@ -392,9 +392,9 @@ View all activity
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
 <!-- Approval Insights / Budget Mix (This Month) (Col Span 8) -->
-<div class="lg:col-span-8 bg-white p-5 rounded-3xl border border-slate-150 shadow-sm space-y-4">
+<div class="lg:col-span-8 bg-white p-5 rounded-xl  shadow-sm space-y-4">
 <div class="pb-2 border-b border-slate-100">
-<h3 class="text-[14px] font-black text-slate-800 tracking-tight">Approval Insights / Budget Mix (This Month)</h3>
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Approval Insights / Budget Mix (This Month)</h3>
 </div>
 
 <div class="space-y-4">
@@ -421,18 +421,18 @@ View all activity
 </div>
 
 <!-- Recent Approval Activity (Col Span 4) -->
-<div class="lg:col-span-4 bg-white p-5 rounded-3xl border border-slate-150 shadow-sm flex flex-col justify-between">
+<div class="lg:col-span-4 bg-white p-5 rounded-xl  shadow-sm flex flex-col justify-between">
 <div>
 <div class="pb-3 border-b border-slate-100 flex items-center justify-between">
-<h3 class="text-[14px] font-black text-slate-800 tracking-tight">Recent Approval Activity</h3>
-<a href="#" class="text-[11px] font-black text-blue-600 hover:underline">View all activity &rarr;</a>
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Recent Approval Activity</h3>
+<a href="#" class="text-[11px] font-semibold text-blue-600 hover:underline">View all activity &rarr;</a>
 </div>
 
 <div class="space-y-3.5 mt-4 text-[12px] font-bold">
 <!-- Item 1 -->
 <div class="flex items-center justify-between">
 <div class="flex items-center gap-2">
-<span class="h-6 w-6 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-[11px] font-black">✓</span>
+<span class="h-6 w-6 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-[11px] font-semibold">✓</span>
 <div>
 <span class="text-slate-800 block leading-tight">Moses T. — May Fund Plan approved</span>
 <span class="text-[11px] text-slate-400 font-bold block mt-0.5">Today, 10:24 AM</span>
@@ -444,7 +444,7 @@ View all activity
 <!-- Item 2 -->
 <div class="flex items-center justify-between">
 <div class="flex items-center gap-2">
-<span class="h-6 w-6 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center text-[11px] font-black">↺</span>
+<span class="h-6 w-6 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center text-[11px] font-semibold">↺</span>
 <div>
 <span class="text-slate-800 block leading-tight">Joel O. — May Fund Plan returned for review</span>
 <span class="text-[11px] text-slate-400 font-bold block mt-0.5">Today, 9:15 AM</span>
@@ -456,7 +456,7 @@ View all activity
 <!-- Item 3 -->
 <div class="flex items-center justify-between">
 <div class="flex items-center gap-2">
-<span class="h-6 w-6 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-[11px] font-black">✓</span>
+<span class="h-6 w-6 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-[11px] font-semibold">✓</span>
 <div>
 <span class="text-slate-800 block leading-tight">Ruth W. — Apr Fund Plan approved</span>
 <span class="text-[11px] text-slate-400 font-bold block mt-0.5">Yesterday, 4:32 PM</span>
@@ -483,7 +483,7 @@ class="p-6 max-w-[1600px] mx-auto space-y-6 font-sans text-slate-700"
 <!-- Page Header Row -->
 <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
 <div>
-<h1 class="text-[24px] font-extrabold text-slate-800 tracking-tight leading-tight">Fund Requests</h1>
+<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight leading-tight">Fund Requests</h1>
 <p class="text-[12px] text-slate-500 font-semibold tracking-wide mt-0.5">Generate and track weekly and monthly fund requests from scheduled activities in My Plan.</p>
 </div>
 
@@ -642,7 +642,7 @@ class="bg-white p-3.5 rounded-xl border border-slate-100 shadow-sm flex flex-wra
 <button 
 type="button"
 onclick="document.getElementById('filters-form').reset(); document.getElementById('filters-form').dispatchEvent(new Event('change'))"
-class="ml-auto text-slate-400 hover:text-[#2563eb] text-[12px] font-extrabold flex items-center gap-1 transition-colors"
+class="ml-auto text-slate-400 hover:text-[#2563eb] text-[12px] font-semibold flex items-center gap-1 transition-colors"
 >
 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
 Clear Filters
@@ -659,14 +659,14 @@ Clear Filters
 <nav class="flex gap-4">
 <button 
 @click="activeTab = 'weekly'; document.getElementById('filters-form').dispatchEvent(new Event('change'))"
-class="pb-2 text-[14px] font-extrabold border-b-2 transition-all"
+class="pb-2 text-[14px] font-semibold border-b-2 transition-all"
 :class="activeTab === 'weekly' ? 'border-[#2e505f] text-[#2e505f]' : 'border-transparent text-slate-400 hover:text-slate-600'"
 >
 Weekly Fund Request
 </button>
 <button 
 @click="activeTab = 'monthly'; document.getElementById('filters-form').dispatchEvent(new Event('change'))"
-class="pb-2 text-[14px] font-extrabold border-b-2 transition-all"
+class="pb-2 text-[14px] font-semibold border-b-2 transition-all"
 :class="activeTab === 'monthly' ? 'border-[#2e505f] text-[#2e505f]' : 'border-transparent text-slate-400 hover:text-slate-600'"
 >
 Monthly Fund Request

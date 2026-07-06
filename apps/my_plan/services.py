@@ -83,12 +83,17 @@ def get(principal, query: dict) -> dict:
     period = query.get("period", "month")
     fy = query.get("fy") or get_operational_fy()
     scope = resolve_user_scope(principal)
-    
+
     qs = Activity.objects.filter(deleted_at__isnull=True, fy=fy)
     if scope.partner_ids:
         qs = qs.filter(assigned_partner_id__in=scope.partner_ids)
     else:
-        staff_ids = scope.staff_ids or [principal.id]
+        # Match the identifier space that activities.services.create writes.
+        # create() prefers the StaffProfile CUID (== scope.staff_ids) and falls
+        # back to the User CUID. Cover BOTH when scope.staff_ids is empty so a
+        # user without a StaffProfile still sees their scheduled activities.
+        staff_ids = scope.staff_ids or [principal.staff_profile_id or principal.id, principal.id]
+        staff_ids = [s for s in staff_ids if s]
         qs = qs.filter(
             Q(responsible_staff_id__in=staff_ids) |
             Q(monitored_by_staff_id__in=staff_ids, delivery_type="partner")
@@ -321,8 +326,11 @@ def get_frontend_context(principal, query: dict) -> dict:
         if scope.supervised_staff_ids:
             staff_ids.extend(scope.supervised_staff_ids)
         if not staff_ids:
-            staff_ids = [principal.id]
-            
+            # Match the identifier space that activities.services.create writes
+            # (StaffProfile CUID preferred, User CUID fallback). Cover BOTH so
+            # users without a StaffProfile still see their scheduled activities.
+            staff_ids = [principal.staff_profile_id or principal.id, principal.id]
+        staff_ids = [s for s in staff_ids if s]
         qs = qs.filter(
             Q(responsible_staff_id__in=staff_ids) |
             Q(monitored_by_staff_id__in=staff_ids, delivery_type="partner")

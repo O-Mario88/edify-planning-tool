@@ -8,7 +8,7 @@
 <!-- Header -->
 <div class="flex items-center justify-between border-b border-slate-200 pb-4">
 <div>
-<h1 class="text-[20px] font-black text-slate-800 tracking-tight">Upload Preview & Validate</h1>
+<h1 class="text-[20px] font-semibold text-slate-800 tracking-tight">Upload Preview & Validate</h1>
 <p class="text-[12px] text-slate-400 font-semibold mt-0.5">Review and authorize records before committing them to the active School Directory.</p>
 </div>
 
@@ -16,7 +16,7 @@
 <form method="post" action="" class="m-0">
 {% csrf_token %}
 <input type="hidden" name="action" value="cancel">
-<button type="submit" class="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 text-[12px] font-extrabold rounded-lg transition-all">
+<button type="submit" class="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 text-[12px] font-semibold rounded-lg transition-all">
 Cancel Import
 </button>
 </form>
@@ -24,7 +24,7 @@ Cancel Import
 <form method="post" action="" class="m-0">
 {% csrf_token %}
 <input type="hidden" name="action" value="confirm">
-<button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-extrabold rounded-lg shadow-sm transition-all">
+<button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-semibold rounded-lg shadow-sm transition-all">
 Confirm & Import
 </button>
 </form>
@@ -35,23 +35,23 @@ Confirm & Import
 <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
 <a href="?tab=ready" class="p-4 rounded-xl border transition-all {% if tab == 'ready' %}bg-emerald-50/50 border-emerald-200{% else %}bg-white border-slate-100 hover:bg-slate-50/30{% endif %} flex flex-col justify-between">
 <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Ready to Import</span>
-<span class="text-[20px] font-black text-emerald-600 mt-2">{{ stats.ready }}</span>
+<span class="text-[20px] font-semibold text-emerald-600 mt-2">{{ stats.ready }}</span>
 </a>
 <a href="?tab=update" class="p-4 rounded-xl border transition-all {% if tab == 'update' %}bg-indigo-50/50 border-indigo-200{% else %}bg-white border-slate-100 hover:bg-slate-50/30{% endif %} flex flex-col justify-between">
 <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Will Update</span>
-<span class="text-[20px] font-black text-indigo-600 mt-2">{{ stats.update }}</span>
+<span class="text-[20px] font-semibold text-indigo-600 mt-2">{{ stats.update }}</span>
 </a>
 <a href="?tab=review" class="p-4 rounded-xl border transition-all {% if tab == 'review' %}bg-blue-50/50 border-blue-200{% else %}bg-white border-slate-100 hover:bg-slate-50/30{% endif %} flex flex-col justify-between">
 <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Needs Review</span>
-<span class="text-[20px] font-black text-blue-600 mt-2">{{ stats.review }}</span>
+<span class="text-[20px] font-semibold text-blue-600 mt-2">{{ stats.review }}</span>
 </a>
 <a href="?tab=duplicate" class="p-4 rounded-xl border transition-all {% if tab == 'duplicate' %}bg-amber-50/50 border-amber-200{% else %}bg-white border-slate-100 hover:bg-slate-50/30{% endif %} flex flex-col justify-between">
 <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Duplicate Risk</span>
-<span class="text-[20px] font-black text-amber-600 mt-2">{{ stats.duplicate }}</span>
+<span class="text-[20px] font-semibold text-amber-600 mt-2">{{ stats.duplicate }}</span>
 </a>
 <a href="?tab=blocked" class="p-4 rounded-xl border transition-all {% if tab == 'blocked' %}bg-rose-50/50 border-rose-200{% else %}bg-white border-slate-100 hover:bg-slate-50/30{% endif %} flex flex-col justify-between">
 <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Blocked Rows</span>
-<span class="text-[20px] font-black text-rose-600 mt-2">{{ stats.blocked }}</span>
+<span class="text-[20px] font-semibold text-rose-600 mt-2">{{ stats.blocked }}</span>
 </a>
 </div>
 
@@ -61,12 +61,12 @@ Confirm & Import
 <table class="w-full text-[12px] border-collapse text-left">
 <thead>
 <tr class="bg-slate-50 border-b border-slate-100">
-<th class="px-5 py-3.5 text-[11px] font-black uppercase text-slate-400 tracking-wider">Row</th>
-<th class="px-4 py-3.5 text-[11px] font-black uppercase text-slate-400 tracking-wider">School ID</th>
-<th class="px-4 py-3.5 text-[11px] font-black uppercase text-slate-400 tracking-wider">School Name</th>
-<th class="px-4 py-3.5 text-[11px] font-black uppercase text-slate-400 tracking-wider">District / Sub-county</th>
-<th class="px-4 py-3.5 text-[11px] font-black uppercase text-slate-400 tracking-wider">Proprietor / Phone</th>
-<th class="px-5 py-3.5 text-[11px] font-black uppercase text-slate-400 tracking-wider">Validation Gaps</th>
+<th class="px-5 py-3.5 text-[11px] font-semibold uppercase text-slate-400 tracking-wider">Row</th>
+<th class="px-4 py-3.5 text-[11px] font-semibold uppercase text-slate-400 tracking-wider">School ID</th>
+<th class="px-4 py-3.5 text-[11px] font-semibold uppercase text-slate-400 tracking-wider">School Name</th>
+<th class="px-4 py-3.5 text-[11px] font-semibold uppercase text-slate-400 tracking-wider">District / Sub-county</th>
+<th class="px-4 py-3.5 text-[11px] font-semibold uppercase text-slate-400 tracking-wider">Proprietor / Phone</th>
+<th class="px-5 py-3.5 text-[11px] font-semibold uppercase text-slate-400 tracking-wider">Validation Gaps</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100 font-medium">
@@ -74,7 +74,7 @@ Confirm & Import
 <tr class="hover:bg-slate-50/20">
 <td class="px-5 py-4 text-slate-400 font-bold">#{{ r.row_number }}</td>
 <td class="px-4 py-4 font-mono font-bold text-slate-700">{{ r.school_id|default:"-" }}</td>
-<td class="px-4 py-4 font-extrabold text-slate-900">{{ r.name|default:"-" }}</td>
+<td class="px-4 py-4 font-semibold text-slate-900">{{ r.name|default:"-" }}</td>
 <td class="px-4 py-4 text-slate-500 font-semibold">
 {{ r.district_name|default:"-" }} / {{ r.sub_county_name|default:"-" }}
 </td>
@@ -85,7 +85,7 @@ Confirm & Import
 {% if r.validation_errors %}
 <div class="flex flex-wrap gap-1.5">
 {% for err in r.validation_errors %}
-<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-extrabold bg-rose-50 text-rose-700">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-rose-50 text-rose-700">
 {{ err }}
 </span>
 {% endfor %}

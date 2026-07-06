@@ -96,25 +96,26 @@ required
 </select>
 </div>
 
-<!-- Sub-counties Selection Checklist -->
+<!-- Sub-counties Selection Checklist (Optional) -->
 <div class="space-y-1.5">
 <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">
-Sub-counties <span class="text-rose-500">*</span> (<span x-text="selectedSubCounties.length">0</span> selected)
+Sub-counties covered <span class="text-slate-400 font-normal">(Optional)</span> (<span x-text="selectedSubCounties.length">0</span> selected)
 </label>
+<p class="text-[10px] text-slate-400 font-normal -mt-0.5">Optional — select if this cluster covers specific sub-counties. Leave empty for a district-level cluster.</p>
 <div class="border border-slate-200 rounded-lg max-h-48 overflow-y-auto divide-y divide-slate-100 bg-white">
 <template x-for="sc in subCounties.filter(sc => sc.district_id === selectedDistrictId)" :key="sc.id">
-<label class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 cursor-pointer text-[12px] font-semibold text-slate-700">
-<input 
-type="checkbox" 
-name="sub_county_ids" 
-:value="sc.id" 
+<label class="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 cursor-pointer text-[12px] font-medium text-slate-700">
+<input
+type="checkbox"
+name="sub_county_ids"
+:value="sc.id"
 x-model="selectedSubCounties"
-class="h-4 w-4 text-[#2563eb] rounded border-slate-300 focus:ring-[#2563eb]"
+class="h-4 w-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
 >
 <span x-text="sc.name"></span>
 </label>
 </template>
-<div x-show="!selectedDistrictId" class="p-6 text-center text-slate-400 font-semibold italic text-[12px]">
+<div x-show="!selectedDistrictId" class="p-6 text-center text-slate-400 font-medium italic text-[12px]">
 Please pick a district first to view sub-counties.
 </div>
 </div>
@@ -140,7 +141,7 @@ required
 <svg class="text-slate-500 shrink-0" style="height: 18px; width: 18px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
 </svg>
-<h4 class="text-[14px] font-black text-slate-800">Cluster leader</h4>
+<h4 class="text-[14px] font-semibold text-slate-800">Cluster leader</h4>
 </div>
 <p class="text-[11px] text-slate-400 font-semibold leading-relaxed">No school leaders on file for the selected area yet — enter the leader's details below.</p>
 

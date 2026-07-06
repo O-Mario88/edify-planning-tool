@@ -7,12 +7,12 @@
 <div class="p-6 max-w-5xl mx-auto space-y-6">
 <!-- Back Nav & Header -->
 <div>
-<a href="/fund-requests/weekly" class="text-[11px] font-extrabold text-[var(--color-edify-primary)] hover:underline uppercase tracking-wider">&larr; Back to Weekly Requests</a>
+<a href="/fund-requests/weekly" class="text-[11px] font-semibold text-[var(--color-edify-primary)] hover:underline uppercase tracking-wider">&larr; Back to Weekly Requests</a>
 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-2">
 <div>
-<h1 class="text-[24px] font-extrabold text-slate-800 tracking-tight">Request Details</h1>
+<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight">Request Details</h1>
 <p class="text-[12px] text-[var(--text-secondary)] mt-0.5 font-semibold">
-Week: {{ req.weekStartDate }} to {{ req.weekEndDate }} &bull; Owner: <span class="font-extrabold text-slate-700">{{ req.responsibleUser }}</span>
+Week: {{ req.weekStartDate }} to {{ req.weekEndDate }} &bull; Owner: <span class="font-semibold text-slate-700">{{ req.responsibleUser }}</span>
 </p>
 </div>
 <span class="inline-flex items-center rounded-full px-3 py-0.5 text-[11px] font-bold uppercase tracking-wider {% if req.status == 'disbursed' %}bg-emerald-50 text-emerald-700 border border-emerald-200{% elif req.status == 'confirmed_for_advance' %}bg-indigo-50 text-indigo-700 border border-indigo-200{% else %}bg-slate-100 text-slate-600{% endif %}">
@@ -26,7 +26,7 @@ Week: {{ req.weekStartDate }} to {{ req.weekEndDate }} &bull; Owner: <span class
 <div class="md:col-span-2 space-y-6">
 <div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm overflow-hidden">
 <div class="px-6 py-4 border-b border-[var(--color-edify-divider)] bg-slate-50/50">
-<h3 class="text-[14px] font-extrabold text-slate-800 uppercase tracking-wider">Itemized Line Items</h3>
+<h3 class="text-[14px] font-semibold text-slate-800 uppercase tracking-wider">Itemized Line Items</h3>
 </div>
 <div class="overflow-x-auto">
 <table class="w-full text-left text-[12px] font-sans border-collapse">
@@ -47,7 +47,7 @@ Week: {{ req.weekStartDate }} to {{ req.weekEndDate }} &bull; Owner: <span class
 <td class="px-4 py-3 text-slate-500 font-semibold leading-normal">{{ line.description }}</td>
 <td class="px-4 py-3 font-bold text-slate-600">{{ line.quantity }}</td>
 <td class="px-4 py-3 text-slate-500">{{ line.unit_cost|ugx }}</td>
-<td class="px-4 py-3 text-right font-extrabold text-slate-800">{{ line.total_cost|ugx }}</td>
+<td class="px-4 py-3 text-right font-semibold text-slate-800">{{ line.total_cost|ugx }}</td>
 </tr>
 {% endfor %}
 {% else %}
@@ -66,7 +66,7 @@ Week: {{ req.weekStartDate }} to {{ req.weekEndDate }} &bull; Owner: <span class
 <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm space-y-4">
 <div>
 <p class="text-[11px] uppercase font-bold text-slate-400 tracking-wider">Total Request Amount</p>
-<p class="text-[24px] font-extrabold text-[var(--color-edify-primary)] mt-0.5">{{ req.totalAmount|ugx }}</p>
+<p class="text-[24px] font-semibold text-[var(--color-edify-primary)] mt-0.5">{{ req.totalAmount|ugx }}</p>
 </div>
 
 <!-- Confirm action (CCEO / Owner) -->
@@ -75,7 +75,7 @@ Week: {{ req.weekStartDate }} to {{ req.weekEndDate }} &bull; Owner: <span class
 {% csrf_token %}
 <button 
 type="submit" 
-class="w-full h-10 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[12px] font-extrabold transition-colors flex items-center justify-center"
+class="w-full h-10 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[12px] font-semibold transition-colors flex items-center justify-center"
 >
 Confirm &amp; Request Advance
 </button>
@@ -90,7 +90,7 @@ Confirming routes this request to the accountant queue for disbursement.
 <form method="POST" action="/fund-requests/weekly/{{ req.id }}/disburse" class="pt-3 border-t border-slate-100 space-y-3">
 {% csrf_token %}
 <div class="space-y-2">
-<h4 class="text-[12px] font-extrabold text-slate-800">Process Disbursement</h4>
+<h4 class="text-[12px] font-semibold text-slate-800">Process Disbursement</h4>
 
 <div>
 <label for="amount" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Disbursed Amount (UGX)</label>
@@ -133,7 +133,7 @@ class="w-full h-9 px-2 rounded-lg border border-slate-200 text-[12px] mt-1 bg-sl
 
 <button 
 type="submit" 
-class="w-full h-10 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-extrabold transition-colors flex items-center justify-center"
+class="w-full h-10 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-semibold transition-colors flex items-center justify-center"
 >
 Disburse Funds
 </button>

@@ -266,10 +266,17 @@ def create(data: dict, principal) -> dict:
         raise BadRequest("Only school visits may be scheduled directly from a school. Trainings must go through clusters.")
 
     is_partner = data.get("deliveryType") == "partner" or bool(data.get("assignedPartnerId"))
-    responsible_staff_id = (
-        data.get("responsibleStaffId") if is_partner
-        else (data.get("responsibleStaffId") or principal.staff_profile_id)
-    )
+    # The "owner" identifier the rest of the app uses for staff attribution.
+    # Prefer the StaffProfile CUID (what scoping.resolve_user_scope returns as
+    # staff_id); fall back to the User CUID so that users without a StaffProfile
+    # (admins, some CCEOs created outside the seed) still get a non-null owner.
+    # My Plan's filter must use the SAME identifier — see my_plan/services.py.
+    principal_owner_id = principal.staff_profile_id or principal.user_id
+    responsible_staff_id = data.get("responsibleStaffId") or (None if is_partner else principal_owner_id)
+    # For partner-delivered activities, also record the scheduling staff member
+    # as the monitor so the activity surfaces on THEIR My Plan (the partner
+    # branch of My Plan filters by monitored_by_staff_id).
+    monitored_by_staff_id = principal_owner_id if is_partner else None
 
     scheduled_date = _parse_date(data["scheduledDate"]) if data.get("scheduledDate") else None
     fy = get_operational_fy(scheduled_date) if scheduled_date else data.get("fy", get_operational_fy())
@@ -305,6 +312,7 @@ def create(data: dict, principal) -> dict:
         planned_month=data.get("plannedMonth"),
         planned_week=data.get("plannedWeek"),
         responsible_staff_id=responsible_staff_id,
+        monitored_by_staff_id=monitored_by_staff_id,
         assigned_partner_id=data.get("assignedPartnerId"),
         delivery_type="partner" if is_partner else "staff",
         cluster_slot=data.get("clusterSlot"),

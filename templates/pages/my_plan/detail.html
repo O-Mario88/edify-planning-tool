@@ -8,10 +8,10 @@
 
 <!-- Header / Breadcrumb navigation -->
 <div>
-<a href="/my-plan" class="text-[11px] font-extrabold text-[#2e505f] hover:underline uppercase tracking-wider">&larr; Back to My Plan</a>
+<a href="/my-plan" class="text-[11px] font-semibold text-[#2e505f] hover:underline uppercase tracking-wider">&larr; Back to My Plan</a>
 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-2">
 <div>
-<h1 class="text-[24px] font-extrabold text-slate-800 tracking-tight capitalize">{{ act.activity_type|title|replace_underscore }}</h1>
+<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight capitalize">{{ act.activity_type|title|replace_underscore }}</h1>
 <p class="text-[12px] text-slate-500 mt-0.5 font-semibold">
 {% if act.school %}
 School: <a href="/schools/{{ act.school.school_id }}" class="font-bold hover:underline text-[#2e505f]">{{ act.school.name }}</a>
@@ -33,7 +33,7 @@ Cluster: <a href="/clusters/{{ act.cluster.id }}" class="font-bold hover:underli
 
 <!-- Details Card -->
 <div class="card p-6 space-y-6">
-<h3 class="text-[15px] font-extrabold text-slate-800 border-b border-slate-100 pb-3">Activity Parameters</h3>
+<h3 class="text-[15px] font-semibold text-slate-800 border-b border-slate-100 pb-3">Activity Parameters</h3>
 
 <div class="grid grid-cols-2 gap-y-4 gap-x-6 text-[12px]">
 <div>
@@ -62,14 +62,14 @@ Cluster: <a href="/clusters/{{ act.cluster.id }}" class="font-bold hover:underli
 </div>
 <div>
 <p class="text-[11px] uppercase font-bold text-slate-400">Allocated Budget</p>
-<p class="font-extrabold text-[#2e505f] mt-0.5">{{ act.est_cost_cents|ugx }}</p>
+<p class="font-semibold text-[#2e505f] mt-0.5">{{ act.est_cost_cents|ugx }}</p>
 </div>
 </div>
 </div>
 
 <!-- Evidence List -->
 <div class="card p-6 space-y-4">
-<h3 class="text-[15px] font-extrabold text-slate-800 border-b border-slate-100 pb-3">Uploaded Verification Evidence</h3>
+<h3 class="text-[15px] font-semibold text-slate-800 border-b border-slate-100 pb-3">Uploaded Verification Evidence</h3>
 {% if evidence_list %}
 <div class="divide-y divide-slate-100">
 {% for ev in evidence_list %}
@@ -78,7 +78,7 @@ Cluster: <a href="/clusters/{{ act.cluster.id }}" class="font-bold hover:underli
 <p class="font-bold text-slate-800">{{ ev.original_name }}</p>
 <p class="text-[11px] text-slate-400 font-semibold capitalize">{{ ev.file_type }} &bull; Uploaded {{ ev.created_at|date:"M j, Y" }}</p>
 </div>
-<span class="inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-extrabold uppercase border bg-emerald-50 text-emerald-700 border-emerald-200">
+<span class="inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold uppercase border bg-emerald-50 text-emerald-700 border-emerald-200">
 {{ ev.status }}
 </span>
 </div>
@@ -95,7 +95,7 @@ Cluster: <a href="/clusters/{{ act.cluster.id }}" class="font-bold hover:underli
 <div class="space-y-6">
 {% if act.status != 'completed' %}
 <div class="card p-5 space-y-4">
-<h3 class="text-[14px] font-extrabold text-slate-800 border-b border-slate-100 pb-3">Execution Actions</h3>
+<h3 class="text-[14px] font-semibold text-slate-800 border-b border-slate-100 pb-3">Execution Actions</h3>
 
 <div class="space-y-2.5">
 <button 

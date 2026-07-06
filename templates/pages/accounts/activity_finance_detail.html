@@ -14,12 +14,12 @@
 <!-- Status Badge -->
 <div class="flex items-center gap-2">
 {% if blocked_reasons %}
-<span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-200">
+<span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-200">
 <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
 Blocked
 </span>
 {% endif %}
-<span class="px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-slate-900 text-white">
+<span class="px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider bg-slate-900 text-white">
 {{ act.get_status_display }}
 </span>
 </div>
@@ -32,8 +32,8 @@ Blocked
 <div class="lg:col-span-2 space-y-6">
 
 <!-- Summary Card -->
-<div class="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm space-y-4">
-<h2 class="text-[18px] font-black text-slate-800">Activity Summary</h2>
+<div class="bg-white rounded-xl border border-slate-100 p-6 shadow-sm space-y-4">
+<h2 class="text-[18px] font-semibold text-slate-800">Activity Summary</h2>
 <div class="grid grid-cols-2 gap-4 text-[12px] font-semibold text-slate-700">
 <p class="flex flex-col"><span class="text-[11px] uppercase font-bold text-slate-400">Activity ID</span><span class="text-slate-800 text-[14px] font-bold">#{{ act.id }}</span></p>
 <p class="flex flex-col"><span class="text-[11px] uppercase font-bold text-slate-400">Salesforce Activity ID</span><span class="text-slate-800 text-[14px] font-bold font-mono">{{ act.salesforce_activity_id|default:"Unlinked" }}</span></p>
@@ -43,8 +43,8 @@ Blocked
 </div>
 
 <!-- Cost Lines Breakdown -->
-<div class="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm space-y-4">
-<h3 class="text-[15px] font-black text-slate-800">Budget Breakdown (Activity Budget Lines)</h3>
+<div class="bg-white rounded-xl border border-slate-100 p-6 shadow-sm space-y-4">
+<h3 class="text-[15px] font-semibold text-slate-800">Budget Breakdown (Activity Budget Lines)</h3>
 <div class="overflow-hidden border border-slate-100 rounded-2xl">
 <table class="w-full text-[12px] font-semibold text-slate-700">
 <thead class="bg-slate-50 border-b border-slate-100 text-[11px] uppercase font-bold text-slate-400">
@@ -59,12 +59,12 @@ Blocked
 {% for line in costs %}
 <tr>
 <td class="px-4 py-3">
-<div class="text-slate-900 font-extrabold">{{ line.label }}</div>
+<div class="text-slate-900 font-semibold">{{ line.label }}</div>
 <div class="text-[11px] text-slate-400 font-bold uppercase mt-0.5">{{ line.line_item_type }}</div>
 </td>
 <td class="px-4 py-3 text-center">{{ line.unit_cost }}</td>
 <td class="px-4 py-3 text-center">{{ line.quantity }}</td>
-<td class="px-4 py-3 text-right text-slate-900 font-black">{{ line.amount }} UGX</td>
+<td class="px-4 py-3 text-right text-slate-900 font-semibold">{{ line.amount }} UGX</td>
 </tr>
 {% empty %}
 <tr>
@@ -77,16 +77,16 @@ Blocked
 </div>
 
 <!-- Disbursements & Payments -->
-<div class="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm space-y-4">
-<h3 class="text-[15px] font-black text-slate-800">Disbursement & Payment History</h3>
+<div class="bg-white rounded-xl border border-slate-100 p-6 shadow-sm space-y-4">
+<h3 class="text-[15px] font-semibold text-slate-800">Disbursement & Payment History</h3>
 
 <!-- Advances list -->
 <div class="space-y-3">
-<h4 class="text-[11px] uppercase font-black text-slate-400 tracking-wider">Advances Disbursed</h4>
+<h4 class="text-[11px] uppercase font-semibold text-slate-400 tracking-wider">Advances Disbursed</h4>
 {% for disb in disbursements %}
-<div class="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-150 rounded-xl">
+<div class="flex items-center justify-between p-3.5 bg-slate-50  rounded-xl">
 <div>
-<span class="font-extrabold text-[12px] text-slate-800 block">{{ disb.amount_disbursed }} UGX</span>
+<span class="font-semibold text-[12px] text-slate-800 block">{{ disb.amount_disbursed }} UGX</span>
 <span class="text-[11px] text-slate-500 block mt-0.5">Method: {{ disb.payment_method }} &bull; Ref: {{ disb.payment_reference }}</span>
 </div>
 <span class="text-[11px] text-slate-400 font-bold uppercase">{{ disb.disbursed_at|date:"M d, Y" }}</span>
@@ -104,8 +104,8 @@ Blocked
 
 <!-- Blocker Panel -->
 {% if blocked_reasons %}
-<div class="bg-rose-50 rounded-3xl border border-rose-150 p-6 space-y-4">
-<h3 class="text-[14px] font-black text-rose-800 flex items-center gap-1.5">
+<div class="bg-rose-50 rounded-xl border border-rose-150 p-6 space-y-4">
+<h3 class="text-[14px] font-semibold text-rose-800 flex items-center gap-1.5">
 <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
 Compliance Blockers
 </h3>
@@ -119,8 +119,8 @@ Compliance Blockers
 </ul>
 </div>
 {% else %}
-<div class="bg-emerald-50 rounded-3xl border border-emerald-150 p-6 space-y-3">
-<h3 class="text-[14px] font-black text-emerald-800 flex items-center gap-1.5">
+<div class="bg-emerald-50 rounded-xl border border-emerald-150 p-6 space-y-3">
+<h3 class="text-[14px] font-semibold text-emerald-800 flex items-center gap-1.5">
 <svg class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
 No Compliance Blockers
 </h3>
@@ -131,17 +131,17 @@ This activity is fully verified by IA, has evidence files and Salesforce entries
 {% endif %}
 
 <!-- Accountability & Receipts -->
-<div class="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm space-y-4">
-<h3 class="text-[15px] font-black text-slate-800">Accountability & Receipts</h3>
+<div class="bg-white rounded-xl border border-slate-100 p-6 shadow-sm space-y-4">
+<h3 class="text-[15px] font-semibold text-slate-800">Accountability & Receipts</h3>
 {% for rec in accountability %}
-<div class="p-4 bg-slate-50 border border-slate-150 rounded-2xl space-y-3">
+<div class="p-4 bg-slate-50  rounded-2xl space-y-3">
 <div class="flex items-center justify-between">
-<span class="text-[11px] font-black uppercase text-slate-400">Actual spend</span>
-<span class="font-extrabold text-[14px] text-slate-800">{{ rec.actual_spend }} UGX</span>
+<span class="text-[11px] font-semibold uppercase text-slate-400">Actual spend</span>
+<span class="font-semibold text-[14px] text-slate-800">{{ rec.actual_spend }} UGX</span>
 </div>
 <div class="flex items-center justify-between">
-<span class="text-[11px] font-black uppercase text-slate-400">Variance</span>
-<span class="font-extrabold text-[14px] {% if rec.variance > 0 %}text-rose-600{% else %}text-emerald-600{% endif %}">{{ rec.variance }} UGX</span>
+<span class="text-[11px] font-semibold uppercase text-slate-400">Variance</span>
+<span class="font-semibold text-[14px] {% if rec.variance > 0 %}text-rose-600{% else %}text-emerald-600{% endif %}">{{ rec.variance }} UGX</span>
 </div>
 {% if rec.variance_reason %}
 <div class="pt-2 border-t border-slate-200/50">
@@ -156,8 +156,8 @@ This activity is fully verified by IA, has evidence files and Salesforce entries
 </div>
 
 <!-- Action Panel Form -->
-<div class="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm space-y-4">
-<h3 class="text-[15px] font-black text-slate-800">Finance Operations</h3>
+<div class="bg-white rounded-xl border border-slate-100 p-6 shadow-sm space-y-4">
+<h3 class="text-[15px] font-semibold text-slate-800">Finance Operations</h3>
 
 <form method="POST" action="/accounts/activities/{{ act.id }}/netsuite-id/" class="space-y-4">
 {% csrf_token %}
@@ -193,7 +193,7 @@ class="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[12px] fo
 >
 </div>
 </div>
-<button type="submit" class="w-full h-10 rounded-xl text-white font-extrabold text-[12px] bg-slate-900 hover:bg-slate-800 flex items-center justify-center transition-all shadow-md">
+<button type="submit" class="w-full h-10 rounded-xl text-white font-semibold text-[12px] bg-slate-900 hover:bg-slate-800 flex items-center justify-center transition-all shadow-md">
 Save & Reconcile ID
 </button>
 </form>
@@ -204,18 +204,18 @@ Save & Reconcile ID
 </div>
 
 <!-- Audit Logs Feed -->
-<div class="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm space-y-4">
-<h3 class="text-[15px] font-black text-slate-800">Finance Audit Ledger</h3>
+<div class="bg-white rounded-xl border border-slate-100 p-6 shadow-sm space-y-4">
+<h3 class="text-[15px] font-semibold text-slate-800">Finance Audit Ledger</h3>
 <div class="divide-y divide-slate-100">
 {% for log in audit_logs %}
 <div class="py-3 flex items-start justify-between gap-4 text-[12px]">
 <div>
-<span class="font-extrabold text-slate-900 block">{{ log.get_event_type_display|default:log.event_type }}</span>
+<span class="font-semibold text-slate-900 block">{{ log.get_event_type_display|default:log.event_type }}</span>
 <span class="text-[12px] text-slate-500 block mt-0.5">{{ log.new_value }}</span>
 </div>
 <div class="text-right">
 <span class="text-slate-500 block font-bold uppercase text-[11px]">{{ log.timestamp|date:"M d, Y H:i" }}</span>
-<span class="text-slate-800 block text-[11px] font-extrabold">{{ log.actor_id }} &bull; {{ log.actor_role }}</span>
+<span class="text-slate-800 block text-[11px] font-semibold">{{ log.actor_id }} &bull; {{ log.actor_role }}</span>
 </div>
 </div>
 {% empty %}

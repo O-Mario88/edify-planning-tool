@@ -22,6 +22,7 @@ urlpatterns = [
     # Schools
     path("schools", school_views.school_directory_view, name="schools_directory"),
     path("schools/upload", school_views.school_upload_view, name="schools_upload"),
+    path("schools/upload/template", school_views.school_template_download_view, name="school_template_download"),
     path("schools/upload/<str:batch_id>/preview", school_views.school_upload_preview_view, name="school_upload_preview"),
     path("schools/uploads/<str:batch_id>/result", school_views.school_import_result_view, name="school_import_result"),
     path("schools/bulk-assign-cluster", school_views.bulk_assign_cluster_view, name="bulk_assign_cluster"),
@@ -262,6 +263,7 @@ urlpatterns = [
     path("admin-panel/data-quality-center", extended_views.admin_data_quality_center_view, name="admin_data_quality_center"),
     path("data-quality/duplicates", extended_views.duplicate_review_view, name="duplicate_review"),
     path("ssa/upload/", ssa_views.ssa_upload_center_view, name="ssa_upload_center"),
+    path("ssa/upload/template", ssa_views.ssa_template_download_view, name="ssa_template_download"),
     path("ssa/upload/<str:batch_id>/preview/", ssa_views.ssa_upload_preview_view, name="ssa_upload_preview"),
     path("ssa/upload/<str:batch_id>/result/", ssa_views.ssa_upload_result_view, name="ssa_upload_result"),
     path("ssa/verification/", ssa_views.ssa_verification_queue_view, name="ssa_verification_queue"),

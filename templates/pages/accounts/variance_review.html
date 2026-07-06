@@ -6,13 +6,13 @@
 <div class="p-6 max-w-7xl mx-auto space-y-6">
 
 <!-- Premium Header Pane -->
-<div class="relative overflow-hidden rounded-3xl bg-slate-900 text-white p-8 shadow-xl border border-slate-800">
+<div class="relative overflow-hidden rounded-xl bg-slate-900 text-white p-8 shadow-md border border-slate-800">
 <div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-blue-500/10 blur-3xl pointer-events-none"></div>
 <div class="relative z-10 space-y-2">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[11px] font-black uppercase tracking-widest">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[11px] font-semibold uppercase tracking-widest">
 Budget Deviation
 </div>
-<h1 class="text-[32px] font-black tracking-tight text-white leading-none">Variance Review Queue</h1>
+<h1 class="text-[32px] font-semibold tracking-tight text-white leading-none">Variance Review Queue</h1>
 <p class="text-[14px] text-slate-400 font-medium max-w-xl">
 Review activities where the actual spend differs from the approved/disbursed amount. Verify reasons and approve variance adjustments.
 </p>
@@ -20,7 +20,7 @@ Review activities where the actual spend differs from the approved/disbursed amo
 </div>
 
 <!-- Table Card -->
-<div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+<div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
 <div class="overflow-x-auto">
 <table class="w-full text-[12px] font-semibold text-slate-700">
 <thead class="bg-slate-50 border-b border-slate-100 text-[11px] uppercase font-bold text-slate-400">
@@ -41,12 +41,12 @@ Review activities where the actual spend differs from the approved/disbursed amo
 <tr class="hover:bg-slate-50/50 transition-colors">
 <!-- ID -->
 <td class="px-6 py-4">
-<div class="font-extrabold text-slate-900 text-[12px]">#{{ item.activity.id|slice:":8" }}</div>
+<div class="font-semibold text-slate-900 text-[12px]">#{{ item.activity.id|slice:":8" }}</div>
 <div class="text-[11px] text-slate-400 font-bold uppercase mt-0.5">{{ item.activity.get_activity_type_display }}</div>
 </td>
 <!-- School -->
 <td class="px-6 py-4">
-<div class="font-extrabold text-slate-800 text-[12px]">{{ item.activity.school.name|default:"Cluster-wide" }}</div>
+<div class="font-semibold text-slate-800 text-[12px]">{{ item.activity.school.name|default:"Cluster-wide" }}</div>
 </td>
 <!-- Budgeted -->
 <td class="px-6 py-4 text-center text-slate-700">
@@ -57,15 +57,15 @@ Review activities where the actual spend differs from the approved/disbursed amo
 {{ item.disbursed_amount }}
 </td>
 <!-- Spend -->
-<td class="px-6 py-4 text-center text-slate-800 font-black">
+<td class="px-6 py-4 text-center text-slate-800 font-semibold">
 {{ item.actual_spend }}
 </td>
 <!-- Variance -->
 <td class="px-6 py-4 text-center">
 {% if item.variance > 0 %}
-<span class="text-rose-600 font-black">+{{ item.variance }} UGX</span>
+<span class="text-rose-600 font-semibold">+{{ item.variance }} UGX</span>
 {% else %}
-<span class="text-[#2563eb] font-black">{{ item.variance }} UGX</span>
+<span class="text-[#2563eb] font-semibold">{{ item.variance }} UGX</span>
 {% endif %}
 </td>
 <!-- Reason -->
@@ -75,7 +75,7 @@ Review activities where the actual spend differs from the approved/disbursed amo
 <!-- Actions -->
 <td class="px-6 py-4 text-right">
 <div class="flex items-center justify-end gap-1.5">
-<a href="/accounts/activities/{{ item.activity.id }}/" class="h-8 px-3.5 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 text-[11px] font-extrabold flex items-center justify-center transition-colors">
+<a href="/accounts/activities/{{ item.activity.id }}/" class="h-8 px-3.5 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 text-[11px] font-semibold flex items-center justify-center transition-colors">
 Reconcile
 </a>
 </div>
@@ -84,7 +84,7 @@ Reconcile
 {% endfor %}
 {% else %}
 <tr>
-<td colspan="8" class="px-6 py-16 text-center text-[14px] font-extrabold text-slate-400 bg-slate-50/20">
+<td colspan="8" class="px-6 py-16 text-center text-[14px] font-semibold text-slate-400 bg-slate-50/20">
 <div class="flex flex-col items-center justify-center gap-3">
 <div class="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 shadow-inner">
 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" /></svg>

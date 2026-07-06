@@ -6,15 +6,15 @@
 <div class="p-6 max-w-7xl mx-auto space-y-6">
 
 <!-- Premium Header Pane -->
-<div class="relative overflow-hidden rounded-3xl bg-slate-900 text-white p-8 shadow-xl border border-slate-800">
+<div class="relative overflow-hidden rounded-xl bg-slate-900 text-white p-8 shadow-md border border-slate-800">
 <div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-blue-500/10 blur-3xl pointer-events-none"></div>
 <div class="absolute -left-20 -bottom-20 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none"></div>
 
 <div class="relative z-10 space-y-2">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-500 text-[11px] font-black uppercase tracking-widest">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-500 text-[11px] font-semibold uppercase tracking-widest">
 System Monitor
 </div>
-<h1 class="text-[32px] font-black tracking-tight text-white leading-none">System Health &amp; Integrity</h1>
+<h1 class="text-[32px] font-semibold tracking-tight text-white leading-none">System Health &amp; Integrity</h1>
 <p class="text-[14px] text-slate-400 font-medium max-w-xl">
 Autonomous scan of workflow break exception states, RBAC routes gating checks, and database data leakage audits.
 </p>
@@ -28,8 +28,8 @@ Autonomous scan of workflow break exception states, RBAC routes gating checks, a
 <div class="space-y-6">
 
 <!-- Security Leakage audit -->
-<div class="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm space-y-4">
-<h3 class="text-[18px] font-black text-slate-800">Data Leakage Scan</h3>
+<div class="bg-white rounded-xl border border-slate-100 p-6 shadow-sm space-y-4">
+<h3 class="text-[18px] font-semibold text-slate-800">Data Leakage Scan</h3>
 
 {% if health.mockDataLeakage.clean %}
 <div class="p-4 bg-emerald-50 text-emerald-800 rounded-xl text-[12px] font-semibold border border-emerald-150">
@@ -37,7 +37,7 @@ Autonomous scan of workflow break exception states, RBAC routes gating checks, a
 </div>
 {% else %}
 <div class="p-4 bg-rose-50 text-rose-700 rounded-xl text-[12px] font-semibold border border-rose-150 space-y-2">
-<span class="font-extrabold block">Data Violations Flagged:</span>
+<span class="font-semibold block">Data Violations Flagged:</span>
 <ul class="list-disc pl-4 space-y-1 font-medium">
 {% for v in health.mockDataLeakage.violations %}
 <li>{{ v }}</li>
@@ -48,8 +48,8 @@ Autonomous scan of workflow break exception states, RBAC routes gating checks, a
 </div>
 
 <!-- RBAC audit -->
-<div class="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm space-y-4">
-<h3 class="text-[18px] font-black text-slate-800">RBAC Gating Scan</h3>
+<div class="bg-white rounded-xl border border-slate-100 p-6 shadow-sm space-y-4">
+<h3 class="text-[18px] font-semibold text-slate-800">RBAC Gating Scan</h3>
 
 {% if health.permissionAudit.clean %}
 <div class="p-4 bg-emerald-50 text-emerald-800 rounded-xl text-[12px] font-semibold border border-emerald-150">
@@ -57,11 +57,11 @@ Autonomous scan of workflow break exception states, RBAC routes gating checks, a
 </div>
 {% else %}
 <div class="p-4 bg-rose-50 text-rose-700 rounded-xl text-[12px] font-semibold border border-rose-150 space-y-2">
-<span class="font-extrabold block text-rose-800">Unguarded Views ({{ health.permissionAudit.unguardedCount }}):</span>
+<span class="font-semibold block text-rose-800">Unguarded Views ({{ health.permissionAudit.unguardedCount }}):</span>
 <div class="max-h-60 overflow-y-auto space-y-2 text-[11px] font-mono">
 {% for route in health.permissionAudit.unguardedRoutes %}
 <div class="p-2 bg-white border border-rose-200 rounded-lg">
-<div class="font-black text-rose-800">{{ route.route }}</div>
+<div class="font-semibold text-rose-800">{{ route.route }}</div>
 <div class="text-slate-500 mt-0.5">{{ route.view_name }}</div>
 </div>
 {% endfor %}
@@ -76,10 +76,10 @@ Autonomous scan of workflow break exception states, RBAC routes gating checks, a
 <div class="lg:col-span-2 space-y-6">
 
 <!-- Core workflow breaks checklist -->
-<div class="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm space-y-5">
+<div class="bg-white rounded-xl border border-slate-100 p-6 shadow-sm space-y-5">
 <div class="flex items-center justify-between border-b border-slate-50 pb-3">
-<h3 class="text-[18px] font-black text-slate-800">Operational Exception Ledger</h3>
-<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-black uppercase tracking-wider bg-slate-900 text-white">
+<h3 class="text-[18px] font-semibold text-slate-800">Operational Exception Ledger</h3>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold uppercase tracking-wider bg-slate-900 text-white">
 FY26 Checks
 </span>
 </div>
@@ -89,14 +89,14 @@ FY26 Checks
 <!-- Check 1: School without cluster -->
 <div class="flex items-center justify-between pt-3">
 <div>
-<span class="font-extrabold text-[14px] text-slate-900 block">1. Schools without cluster assignments</span>
+<span class="font-semibold text-[14px] text-slate-900 block">1. Schools without cluster assignments</span>
 <span class="text-[12px] text-slate-500 block">Schools that are standalone and not part of an operational region cluster.</span>
 </div>
 <div class="text-right">
 {% if health.unclusteredSchools > 0 %}
-<span class="text-rose-600 text-[12px] font-black uppercase">{{ health.unclusteredSchools }} Schools</span>
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.unclusteredSchools }} Schools</span>
 {% else %}
-<span class="text-emerald-600 text-[12px] font-black uppercase">&check; Clean</span>
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
 {% endif %}
 </div>
 </div>
@@ -104,14 +104,14 @@ FY26 Checks
 <!-- Check 2: Scheduled without budget lines -->
 <div class="flex items-center justify-between pt-3">
 <div>
-<span class="font-extrabold text-[14px] text-slate-900 block">2. Scheduled activities missing budget lines</span>
+<span class="font-semibold text-[14px] text-slate-900 block">2. Scheduled activities missing budget lines</span>
 <span class="text-[12px] text-slate-500 block">Activity budget items must carry cost設定 references.</span>
 </div>
 <div class="text-right">
 {% if health.scheduledActivitiesMissingCostLines > 0 %}
-<span class="text-rose-600 text-[12px] font-black uppercase">{{ health.scheduledActivitiesMissingCostLines }} Items</span>
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.scheduledActivitiesMissingCostLines }} Items</span>
 {% else %}
-<span class="text-emerald-600 text-[12px] font-black uppercase">&check; Clean</span>
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
 {% endif %}
 </div>
 </div>
@@ -119,14 +119,14 @@ FY26 Checks
 <!-- Check 3: Stuck in planning -->
 <div class="flex items-center justify-between pt-3">
 <div>
-<span class="font-extrabold text-[14px] text-slate-900 block">3. Activities stuck in Planning phase</span>
+<span class="font-semibold text-[14px] text-slate-900 block">3. Activities stuck in Planning phase</span>
 <span class="text-[12px] text-slate-500 block">Activities marked as Planned that have not transitioned to execution.</span>
 </div>
 <div class="text-right">
 {% if health.stuckInPlanning > 0 %}
-<span class="text-rose-600 text-[12px] font-black uppercase">{{ health.stuckInPlanning }} Items</span>
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.stuckInPlanning }} Items</span>
 {% else %}
-<span class="text-emerald-600 text-[12px] font-black uppercase">&check; Clean</span>
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
 {% endif %}
 </div>
 </div>
@@ -134,14 +134,14 @@ FY26 Checks
 <!-- Check 4: Partner schedule lag -->
 <div class="flex items-center justify-between pt-3">
 <div>
-<span class="font-extrabold text-[14px] text-slate-900 block">4. Partner work missing from My Plan</span>
+<span class="font-semibold text-[14px] text-slate-900 block">4. Partner work missing from My Plan</span>
 <span class="text-[12px] text-slate-500 block">Work assigned to partner that has not yet been scheduled by them.</span>
 </div>
 <div class="text-right">
 {% if health.partnerScheduledMissing > 0 %}
-<span class="text-rose-600 text-[12px] font-black uppercase">{{ health.partnerScheduledMissing }} Items</span>
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.partnerScheduledMissing }} Items</span>
 {% else %}
-<span class="text-emerald-600 text-[12px] font-black uppercase">&check; Clean</span>
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
 {% endif %}
 </div>
 </div>
@@ -149,14 +149,14 @@ FY26 Checks
 <!-- Check 5: Evidence missing -->
 <div class="flex items-center justify-between pt-3">
 <div>
-<span class="font-extrabold text-[14px] text-slate-900 block">5. Completed activities with missing evidence</span>
+<span class="font-semibold text-[14px] text-slate-900 block">5. Completed activities with missing evidence</span>
 <span class="text-[12px] text-slate-500 block">Executed work lacking required visit confirmation attachments.</span>
 </div>
 <div class="text-right">
 {% if health.completedActivitiesWithoutEvidence > 0 %}
-<span class="text-rose-600 text-[12px] font-black uppercase">{{ health.completedActivitiesWithoutEvidence }} Items</span>
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.completedActivitiesWithoutEvidence }} Items</span>
 {% else %}
-<span class="text-emerald-600 text-[12px] font-black uppercase">&check; Clean</span>
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
 {% endif %}
 </div>
 </div>
@@ -164,14 +164,14 @@ FY26 Checks
 <!-- Check 6: SF ID missing -->
 <div class="flex items-center justify-between pt-3">
 <div>
-<span class="font-extrabold text-[14px] text-slate-900 block">6. Completed activities missing Salesforce ID</span>
+<span class="font-semibold text-[14px] text-slate-900 block">6. Completed activities missing Salesforce ID</span>
 <span class="text-[12px] text-slate-500 block">Completed activities that have not been linked to Salesforce database logs.</span>
 </div>
 <div class="text-right">
 {% if health.completedActivitiesWithoutActivityCode > 0 %}
-<span class="text-rose-600 text-[12px] font-black uppercase">{{ health.completedActivitiesWithoutActivityCode }} Items</span>
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.completedActivitiesWithoutActivityCode }} Items</span>
 {% else %}
-<span class="text-emerald-600 text-[12px] font-black uppercase">&check; Clean</span>
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
 {% endif %}
 </div>
 </div>
@@ -179,14 +179,14 @@ FY26 Checks
 <!-- Check 7: IA Verification bypassed -->
 <div class="flex items-center justify-between pt-3">
 <div>
-<span class="font-extrabold text-[14px] text-slate-900 block">7. Skipped IA verification</span>
+<span class="font-semibold text-[14px] text-slate-900 block">7. Skipped IA verification</span>
 <span class="text-[12px] text-slate-500 block">Closed activities that bypassed the IA quality check step.</span>
 </div>
 <div class="text-right">
 {% if health.iaSkipped > 0 %}
-<span class="text-rose-600 text-[12px] font-black uppercase font-extrabold">{{ health.iaSkipped }} Alerts</span>
+<span class="text-rose-600 text-[12px] font-semibold uppercase font-semibold">{{ health.iaSkipped }} Alerts</span>
 {% else %}
-<span class="text-emerald-600 text-[12px] font-black uppercase">&check; Clean</span>
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
 {% endif %}
 </div>
 </div>
@@ -194,14 +194,14 @@ FY26 Checks
 <!-- Check 8: Clearance sequence breach -->
 <div class="flex items-center justify-between pt-3">
 <div>
-<span class="font-extrabold text-[14px] text-slate-900 block">8. Accounts clearance processed before IA verification</span>
+<span class="font-semibold text-[14px] text-slate-900 block">8. Accounts clearance processed before IA verification</span>
 <span class="text-[12px] text-slate-500 block">Activities where finance release or reimbursement claim was cleared before IA review.</span>
 </div>
 <div class="text-right">
 {% if health.accountsClearanceBeforeIa > 0 %}
-<span class="text-rose-600 text-[12px] font-black uppercase font-extrabold">{{ health.accountsClearanceBeforeIa }} Items</span>
+<span class="text-rose-600 text-[12px] font-semibold uppercase font-semibold">{{ health.accountsClearanceBeforeIa }} Items</span>
 {% else %}
-<span class="text-emerald-600 text-[12px] font-black uppercase">&check; Clean</span>
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
 {% endif %}
 </div>
 </div>
@@ -209,14 +209,14 @@ FY26 Checks
 <!-- Check 9: NetSuite ID missing -->
 <div class="flex items-center justify-between pt-3">
 <div>
-<span class="font-extrabold text-[14px] text-slate-900 block">9. Closed activities with NetSuite ID missing</span>
+<span class="font-semibold text-[14px] text-slate-900 block">9. Closed activities with NetSuite ID missing</span>
 <span class="text-[12px] text-slate-500 block">Closed activities missing a reconciled finance expense reference.</span>
 </div>
 <div class="text-right">
 {% if health.netsuiteIdMissing > 0 %}
-<span class="text-rose-600 text-[12px] font-black uppercase">{{ health.netsuiteIdMissing }} Items</span>
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.netsuiteIdMissing }} Items</span>
 {% else %}
-<span class="text-emerald-600 text-[12px] font-black uppercase">&check; Clean</span>
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
 {% endif %}
 </div>
 </div>
@@ -224,14 +224,14 @@ FY26 Checks
 <!-- Check 10: Closed missing analytics -->
 <div class="flex items-center justify-between pt-3">
 <div>
-<span class="font-extrabold text-[14px] text-slate-900 block">10. Closed activities missing from analytics</span>
+<span class="font-semibold text-[14px] text-slate-900 block">10. Closed activities missing from analytics</span>
 <span class="text-[12px] text-slate-500 block">Closed activities that have not been published to report targets database.</span>
 </div>
 <div class="text-right">
 {% if health.closedMissingAnalytics > 0 %}
-<span class="text-rose-600 text-[12px] font-black uppercase">{{ health.closedMissingAnalytics }} Items</span>
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.closedMissingAnalytics }} Items</span>
 {% else %}
-<span class="text-emerald-600 text-[12px] font-black uppercase">&check; Clean</span>
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
 {% endif %}
 </div>
 </div>

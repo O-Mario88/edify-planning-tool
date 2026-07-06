@@ -1,7 +1,7 @@
 <!-- OOB Swap to update global header notification badge count -->
 <div id="notification-badge-container" hx-swap-oob="true">
 {% if unread_count > 0 %}
-<span id="notification-badge-count" class="absolute top-1 right-1 h-4 w-4 bg-[#2563eb] text-white text-[11px] font-extrabold rounded-full flex items-center justify-center border border-white">
+<span id="notification-badge-count" class="absolute top-1 right-1 h-4 w-4 bg-[#2563eb] text-white text-[11px] font-semibold rounded-full flex items-center justify-center border border-white">
 {{ unread_count }}
 </span>
 {% endif %}

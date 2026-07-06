@@ -7,9 +7,9 @@
 <!-- Hero Card -->
 <div class="bg-gradient-to-br from-indigo-600 to-violet-700 rounded-2xl p-6 text-white shadow-lg">
 <div class="flex items-start gap-5">
-<div class="h-16 w-16 rounded-2xl bg-white/20 text-white font-extrabold text-[20px] grid place-items-center shrink-0 backdrop-blur border border-white/30">{{ initials }}</div>
+<div class="h-16 w-16 rounded-2xl bg-white/20 text-white font-semibold text-[20px] grid place-items-center shrink-0 backdrop-blur border border-white/30">{{ initials }}</div>
 <div class="flex-1">
-<h1 class="text-[24px] font-extrabold tracking-tight">{{ member.name }}</h1>
+<h1 class="text-[24px] font-semibold tracking-tight">{{ member.name }}</h1>
 <p class="text-indigo-200 text-[12px] font-semibold mt-0.5">{{ member.email }}</p>
 <div class="flex flex-wrap gap-2 mt-3">
 {% for role in member.roles %}
@@ -19,7 +19,7 @@
 </div>
 <div class="text-right">
 <p class="text-[11px] font-bold uppercase tracking-wider text-indigo-300">Active Role</p>
-<p class="text-[14px] font-extrabold mt-0.5">{{ member.active_role }}</p>
+<p class="text-[14px] font-semibold mt-0.5">{{ member.active_role }}</p>
 <p class="text-[11px] text-indigo-300 mt-1">FY{{ fy }}</p>
 </div>
 </div>
@@ -28,15 +28,15 @@
 <!-- Stats Strip -->
 <div class="grid grid-cols-3 gap-4">
 <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm text-center">
-<p class="text-[28px] font-extrabold text-indigo-600">{{ total_activities }}</p>
+<p class="text-[28px] font-semibold text-indigo-600">{{ total_activities }}</p>
 <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-1">Total Activities</p>
 </div>
 <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm text-center">
-<p class="text-[28px] font-extrabold text-emerald-600">{{ completed }}</p>
+<p class="text-[28px] font-semibold text-emerald-600">{{ completed }}</p>
 <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-1">Completed</p>
 </div>
 <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm text-center">
-<p class="text-[28px] font-extrabold text-violet-600">{{ completion_rate }}%</p>
+<p class="text-[28px] font-semibold text-violet-600">{{ completion_rate }}%</p>
 <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-1">Completion Rate</p>
 </div>
 </div>
@@ -44,7 +44,7 @@
 <!-- Account Details -->
 <div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm">
 <div class="px-5 py-4 border-b border-slate-100">
-<h2 class="text-[14px] font-extrabold text-slate-700">Account Details</h2>
+<h2 class="text-[14px] font-semibold text-slate-700">Account Details</h2>
 </div>
 <div class="px-5 py-4 space-y-4">
 <div class="flex items-center justify-between py-2 border-b border-slate-50">
@@ -77,7 +77,7 @@
 {% if recent %}
 <div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm">
 <div class="px-5 py-4 border-b border-slate-100">
-<h2 class="text-[14px] font-extrabold text-slate-700">Recent Activity</h2>
+<h2 class="text-[14px] font-semibold text-slate-700">Recent Activity</h2>
 </div>
 <ul class="divide-y divide-slate-100">
 {% for act in recent %}
@@ -96,7 +96,7 @@
 <!-- Switch Role -->
 {% if request.user.roles|length > 1 %}
 <div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm p-5">
-<h2 class="text-[14px] font-extrabold text-slate-700 mb-3">Switch Active Role</h2>
+<h2 class="text-[14px] font-semibold text-slate-700 mb-3">Switch Active Role</h2>
 <div class="flex flex-wrap gap-2">
 {% for role in request.user.role_enums %}
 <form action="/auth/switch-role" method="post" class="m-0">

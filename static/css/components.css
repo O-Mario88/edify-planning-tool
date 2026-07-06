@@ -16,7 +16,7 @@
 }
 
 .edify-topbar {
-  height: 64px;
+  height: 56px;
   background-color: var(--edify-surface);
   border-bottom: 1px solid var(--edify-border);
   display: flex;
@@ -30,22 +30,22 @@
   margin-bottom: 1.5rem;
 }
 .edify-page-header h1 {
-  font-size: 20px;
-  font-weight: 800;
+  font-size: var(--edify-text-heading-size);
+  font-weight: 600;
   color: var(--edify-text);
-  letter-spacing: -0.025em;
-  font-family: 'Outfit', sans-serif;
+  letter-spacing: -0.01em;
+  font-family: var(--edify-font-sans);
 }
 .edify-page-header p {
-  font-size: 11.5px;
+  font-size: var(--edify-text-label-size);
   color: var(--edify-text-muted);
-  font-weight: 500;
+  font-weight: 400;
 }
 
 /* Base Card container style */
 .card {
   background-color: var(--edify-surface) !important;
-  border: 1px solid var(--edify-border) !important;
+  border: 1px solid transparent !important;
   border-radius: var(--edify-radius-md) !important;
   box-shadow: var(--edify-shadow-sm) !important;
   transition: var(--edify-transition-all) !important;
@@ -55,7 +55,6 @@
 .card:hover {
   box-shadow: var(--edify-shadow-md) !important;
   transform: translateY(-1.5px) !important;
-  border-color: rgba(46, 80, 95, 0.12) !important;
 }
 
 /* KPI Card semantic component styling */

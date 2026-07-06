@@ -7,42 +7,42 @@
 
 <div class="flex items-center justify-between">
 <div>
-<h1 class="text-[24px] font-extrabold text-slate-800 tracking-tight">Budget Overview</h1>
+<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight">Budget Overview</h1>
 <p class="text-[12px] text-[var(--text-secondary)] mt-1 font-semibold">FY{{ fy }} budget performance across all requests</p>
 </div>
 </div>
 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
 <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm">
 <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Planned Budget</p>
-<p class="text-[24px] font-black text-[#2e505f] mt-1">{{ fy_data.plannedBudget|ugx }}</p>
+<p class="text-[24px] font-semibold text-[#2e505f] mt-1">{{ fy_data.plannedBudget|ugx }}</p>
 </div>
 <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm">
 <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Requested Budget</p>
-<p class="text-[24px] font-black text-indigo-600 mt-1">{{ fy_data.requestedBudget|ugx }}</p>
+<p class="text-[24px] font-semibold text-indigo-600 mt-1">{{ fy_data.requestedBudget|ugx }}</p>
 </div>
 <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm">
 <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Approved Budget</p>
-<p class="text-[24px] font-black text-emerald-600 mt-1">{{ fy_data.approvedBudget|ugx }}</p>
+<p class="text-[24px] font-semibold text-emerald-600 mt-1">{{ fy_data.approvedBudget|ugx }}</p>
 </div>
 <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm">
 <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Disbursed Amount</p>
-<p class="text-[24px] font-black text-violet-600 mt-1">{{ fy_data.disbursedAmount|ugx }}</p>
+<p class="text-[24px] font-semibold text-violet-600 mt-1">{{ fy_data.disbursedAmount|ugx }}</p>
 </div>
 <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm">
 <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Cleared Amount</p>
-<p class="text-[24px] font-black text-teal-600 mt-1">{{ fy_data.clearedAmount|ugx }}</p>
+<p class="text-[24px] font-semibold text-teal-600 mt-1">{{ fy_data.clearedAmount|ugx }}</p>
 </div>
 <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm">
 <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Pending Amount</p>
-<p class="text-[24px] font-black text-amber-600 mt-1">{{ fy_data.pendingAmount|ugx }}</p>
+<p class="text-[24px] font-semibold text-amber-600 mt-1">{{ fy_data.pendingAmount|ugx }}</p>
 </div>
 <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm">
 <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Variance</p>
-<p class="text-[24px] font-black text-rose-600 mt-1">{{ fy_data.variance|ugx }}</p>
+<p class="text-[24px] font-semibold text-rose-600 mt-1">{{ fy_data.variance|ugx }}</p>
 </div>
 <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm">
 <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Scheduled Activities</p>
-<p class="text-[24px] font-black text-slate-700 mt-1">{{ fy_data.activity_count }}</p>
+<p class="text-[24px] font-semibold text-slate-700 mt-1">{{ fy_data.activity_count }}</p>
 </div>
 </div>
 
@@ -55,7 +55,7 @@
 {% endif %}
 
 <div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm">
-<div class="px-5 py-4 border-b border-slate-100"><h2 class="text-[14px] font-extrabold text-slate-700">Monthly Breakdown</h2></div>
+<div class="px-5 py-4 border-b border-slate-100"><h2 class="text-[14px] font-semibold text-slate-700">Monthly Breakdown</h2></div>
 {% if monthly_data %}
 <table class="w-full text-[12px] font-semibold text-slate-600">
 <thead>

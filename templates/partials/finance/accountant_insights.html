@@ -6,9 +6,9 @@
 <div class="card p-4 flex items-start gap-3 hover:border-slate-300 transition-all">
 <div class="h-9 w-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-[18px] shrink-0">🏆</div>
 <div class="space-y-0.5">
-<p class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">Highest Cost Staff</p>
+<p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Highest Cost Staff</p>
 {% if insights.highest_cost_staff %}
-<p class="text-[14px] font-black text-slate-800 tracking-tight leading-tight">{{ insights.highest_cost_staff.name }}</p>
+<p class="text-[14px] font-semibold text-slate-800 tracking-tight leading-tight">{{ insights.highest_cost_staff.name }}</p>
 <p class="text-[12px] font-bold text-slate-700 mt-0.5">{{ insights.highest_cost_staff.total|ugx }}</p>
 <p class="text-[11px] text-slate-400 font-bold">{{ insights.highest_cost_staff.pct }}% of total allocation</p>
 {% else %}
@@ -21,9 +21,9 @@
 <div class="card p-4 flex items-start gap-3 hover:border-slate-300 transition-all">
 <div class="h-9 w-9 rounded-xl bg-[#DCFCE7] text-[#16a34a] flex items-center justify-center text-[18px] shrink-0">🏢</div>
 <div class="space-y-0.5">
-<p class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">Largest Cluster Budget</p>
+<p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Largest Cluster Budget</p>
 {% if insights.largest_cluster_budget %}
-<p class="text-[14px] font-black text-slate-800 tracking-tight leading-tight">{{ insights.largest_cluster_budget.name }}</p>
+<p class="text-[14px] font-semibold text-slate-800 tracking-tight leading-tight">{{ insights.largest_cluster_budget.name }}</p>
 <p class="text-[12px] font-bold text-slate-700 mt-0.5">{{ insights.largest_cluster_budget.total|ugx }}</p>
 <p class="text-[11px] text-slate-400 font-bold">{{ insights.largest_cluster_budget.pct }}% of cluster training</p>
 {% else %}
@@ -36,9 +36,9 @@
 <div class="card p-4 flex items-start gap-3 hover:border-slate-300 transition-all">
 <div class="h-9 w-9 rounded-xl bg-[#E0F2FE] text-[#0284c7] flex items-center justify-center text-[18px] shrink-0">👥</div>
 <div class="space-y-0.5">
-<p class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">Partner Cost Share</p>
-<p class="text-[14px] font-black text-slate-800 tracking-tight leading-tight">{{ insights.partner_cost_share }}%</p>
-<p class="text-[12px] text-slate-700 font-extrabold mt-0.5">
+<p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Partner Cost Share</p>
+<p class="text-[14px] font-semibold text-slate-800 tracking-tight leading-tight">{{ insights.partner_cost_share }}%</p>
+<p class="text-[12px] text-slate-700 font-semibold mt-0.5">
 {{ grand_totals.partner_visits.total|add:grand_totals.partner_in_school_training.total|ugx }}
 </p>
 <p class="text-[11px] text-slate-400 font-bold">Partner Visits + In-School</p>
@@ -49,8 +49,8 @@
 <div class="card p-4 flex items-start gap-3 hover:border-slate-300 transition-all">
 <div class="h-9 w-9 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center text-[18px] shrink-0">📈</div>
 <div class="space-y-0.5">
-<p class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">Top Cost Category</p>
-<p class="text-[14px] font-black text-slate-800 tracking-tight leading-tight truncate max-w-[150px]">{{ insights.top_cost_category.name }}</p>
+<p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Top Cost Category</p>
+<p class="text-[14px] font-semibold text-slate-800 tracking-tight leading-tight truncate max-w-[150px]">{{ insights.top_cost_category.name }}</p>
 <p class="text-[12px] font-bold text-slate-700 mt-0.5">{{ insights.top_cost_category.total|ugx }}</p>
 <p class="text-[11px] text-slate-400 font-bold">{{ insights.top_cost_category.pct }}% of total allocation</p>
 </div>
@@ -60,8 +60,8 @@
 <div class="card p-4 flex items-start gap-3 hover:border-slate-300 transition-all">
 <div class="h-9 w-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-[18px] shrink-0">🏛</div>
 <div class="space-y-0.5">
-<p class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">Admin Budget Share</p>
-<p class="text-[14px] font-black text-slate-800 tracking-tight leading-tight">{{ insights.admin_share_pct }}%</p>
+<p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Admin Budget Share</p>
+<p class="text-[14px] font-semibold text-slate-800 tracking-tight leading-tight">{{ insights.admin_share_pct }}%</p>
 <p class="text-[12px] font-bold text-slate-700 mt-0.5">{{ insights.admin_total|ugx }}</p>
 <p class="text-[11px] text-slate-400 font-bold">From CD Monthly Plan</p>
 </div>
@@ -71,8 +71,8 @@
 <div class="card p-4 flex items-start gap-3 hover:border-slate-300 transition-all">
 <div class="h-9 w-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-[18px] shrink-0">📋</div>
 <div class="space-y-0.5">
-<p class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">Average per Staff</p>
-<p class="text-[14px] font-black text-[#2e505f] tracking-tight leading-tight">{{ insights.average_allocation|ugx }}</p>
+<p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Average per Staff</p>
+<p class="text-[14px] font-semibold text-[#2e505f] tracking-tight leading-tight">{{ insights.average_allocation|ugx }}</p>
 <p class="text-[11px] text-slate-400 font-bold mt-1">Across all {{ total_staff_count }} staff members</p>
 </div>
 </div>

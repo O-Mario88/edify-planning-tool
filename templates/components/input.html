@@ -1,0 +1,47 @@
+{% comment %}
+  Edify Form Field — wraps label + input + hint + error with consistent styling.
+
+  Replaces the dozens of slightly-different input blocks across drawers/forms.
+
+  Usage:
+    {% include "components/input.html" with label="Email" name="email" type="email" placeholder="you@org.org" required="true" %}
+    {% include "components/input.html" with label="Amount (UGX)" name="amount" type="number" hint="Total disbursed this week" %}
+    {% include "components/input.html" with label="Reason" name="reason" error="Reason is required" %}
+
+  Required: label, name
+  Optional:
+    type        — text | email | number | password | date | tel (default: text)
+    placeholder — placeholder text
+    value       — pre-filled value
+    hint        — helper text under the field (muted)
+    error       — error message (renders field in error state with rose ring)
+    required    — "true" → adds required + asterisk
+    autofocus   — "true"
+    inputmode   — numeric | decimal | tel | email (mobile keyboards)
+    extra_attrs — raw HTML attrs (e.g. hx-post="/validate" hx-target="#x")
+{% endcomment %}
+<div class="space-y-1">
+  <label for="id_{{ name }}" class="block text-[12px] font-semibold text-slate-700">
+    {{ label }}
+    {% if required == 'true' %}<span class="text-rose-500">*</span>{% endif %}
+  </label>
+  <input
+    id="id_{{ name }}"
+    name="{{ name }}"
+    type="{{ type|default:'text' }}"
+    {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
+    {% if value %}value="{{ value }}"{% endif %}
+    {% if required == 'true' %}required{% endif %}
+    {% if autofocus == 'true' %}autofocus{% endif %}
+    {% if inputmode %}inputmode="{{ inputmode }}"{% endif %}
+    class="w-full h-9 px-3 rounded-[6px] border bg-white text-[14px] text-slate-800 placeholder-slate-400 outline-none transition-colors
+           {% if error %}border-rose-300 focus:border-rose-400 focus:ring-2 focus:ring-rose-100
+           {% else %}border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100{% endif %}
+           {{ extra_attrs|default:'' }}"
+  />
+  {% if error %}
+    <p class="text-[11px] font-semibold text-rose-600">{{ error }}</p>
+  {% elif hint %}
+    <p class="text-[11px] font-medium text-slate-400">{{ hint }}</p>
+  {% endif %}
+</div>

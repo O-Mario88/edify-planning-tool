@@ -8,7 +8,7 @@
 <!-- Header -->
 <div class="flex items-center justify-between border-b border-slate-200 pb-4">
 <div>
-<h1 class="text-[20px] font-black text-slate-800 tracking-tight">Workflow & Automation Settings</h1>
+<h1 class="text-[20px] font-semibold text-slate-800 tracking-tight">Workflow & Automation Settings</h1>
 <p class="text-[12px] text-slate-400 font-semibold mt-0.5">Control live validation checks, planning bounds, and automatic budget creation</p>
 </div>
 </div>
@@ -18,7 +18,7 @@
 {% for rule in rules %}
 <div class="p-5 flex items-center justify-between hover:bg-slate-50/40 transition-colors">
 <div class="space-y-1 pr-6">
-<h3 class="text-[14px] font-extrabold text-slate-800">{{ rule.label }}</h3>
+<h3 class="text-[14px] font-semibold text-slate-800">{{ rule.label }}</h3>
 <p class="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Rule Key: {{ rule.key }}</p>
 </div>
 
@@ -47,7 +47,7 @@ onchange="this.form.submit()"
 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
 </svg>
 <div>
-<p class="text-[12px] font-black text-amber-800">Administrator Notice</p>
+<p class="text-[12px] font-semibold text-amber-800">Administrator Notice</p>
 <p class="text-[11px] text-amber-600 font-semibold mt-0.5 leading-relaxed">
 Disabling core rules (e.g. Clustered before Planning) may result in data mismatches or incomplete budget lines. Change settings only during maintenance windows.
 </p>

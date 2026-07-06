@@ -2,44 +2,44 @@
 <div class="bg-white rounded-xl border border-slate-100 p-5 shadow-sm space-y-4 font-sans" id="planning-intelligence-panel">
 <div class="flex items-center gap-2 border-b border-slate-100 pb-3">
 <div class="h-2 w-2 rounded-full bg-blue-500 animate-pulse"></div>
-<h3 class="text-[12px] font-black text-slate-800 uppercase tracking-wider">Planning Copilot</h3>
+<h3 class="text-[12px] font-semibold text-slate-800 uppercase tracking-wider">Planning Copilot</h3>
 </div>
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 <!-- Left 2 Cols: Bottlenecks -->
 <div class="lg:col-span-2 space-y-3">
 <div class="flex items-center justify-between">
-<h4 class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">Critical Bottlenecks</h4>
+<h4 class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Critical Bottlenecks</h4>
 <p class="text-[11px] text-slate-500 font-semibold">Review current roadblocks in this cycle.</p>
 </div>
 
 {% if kpis %}
 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-[12px] font-bold">
 <!-- Block 1: Missing SSA -->
-<div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-150/60">
+<div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 /60">
 <div class="flex items-center gap-2">
 <span class="h-2 w-2 rounded-full bg-rose-500"></span>
 <span class="text-slate-700">Missing Current SSA</span>
 </div>
-<span class="text-rose-600 font-extrabold">{{ kpis.without_ssa }} schools</span>
+<span class="text-rose-600 font-semibold">{{ kpis.without_ssa }} schools</span>
 </div>
 
 <!-- Block 2: Unclustered Schools -->
-<div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-150/60">
+<div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 /60">
 <div class="flex items-center gap-2">
 <span class="h-2 w-2 rounded-full bg-amber-500"></span>
 <span class="text-slate-700">Not Grouped in Cluster</span>
 </div>
-<span class="text-amber-600 font-extrabold">{{ kpis.unclustered }} schools</span>
+<span class="text-amber-600 font-semibold">{{ kpis.unclustered }} schools</span>
 </div>
 
 <!-- Block 3: Core Pending -->
-<div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-150/60">
+<div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 /60">
 <div class="flex items-center gap-2">
 <span class="h-2 w-2 rounded-full bg-blue-500"></span>
 <span class="text-slate-700">Core Pending Visit</span>
 </div>
-<span class="text-blue-600 font-extrabold">{{ kpis.core_pending }} schools</span>
+<span class="text-blue-600 font-semibold">{{ kpis.core_pending }} schools</span>
 </div>
 </div>
 {% endif %}
@@ -49,7 +49,7 @@
 <div class="rounded-xl bg-blue-50/50 border border-blue-100 p-4 space-y-2 flex flex-col justify-center">
 <div class="flex items-center gap-2">
 <span class="text-[14px]">💡</span>
-<h4 class="text-[11px] font-extrabold uppercase tracking-wider text-blue-700">Workflow Copilot Tip</h4>
+<h4 class="text-[11px] font-semibold uppercase tracking-wider text-blue-700">Workflow Copilot Tip</h4>
 </div>
 <p class="text-[11px] text-slate-600 font-semibold leading-relaxed">
 Under the new workflow rules, a school does <strong>not</strong> need a verified SSA before scheduling. If SSA is missing, planning is allowed, but the activity is tagged as <strong>SSA Required</strong>. We recommend scheduling a SSA Visit first so intervention impact can be measured.

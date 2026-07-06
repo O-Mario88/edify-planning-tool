@@ -16,7 +16,7 @@
 
 <div class="space-y-1">
 <div class="flex items-center justify-between gap-4">
-<span class="text-[12px] font-extrabold text-slate-800 capitalize">{{ log.action|replace_underscore }}</span>
+<span class="text-[12px] font-semibold text-slate-800 capitalize">{{ log.action|replace_underscore }}</span>
 <span class="text-[11px] text-slate-400 font-semibold">{{ log.created_at|date:"M d, Y H:i" }}</span>
 </div>
 
@@ -30,7 +30,7 @@
 </div>
 {% endif %}
 
-<div class="text-[11px] text-slate-400 font-extrabold flex items-center gap-1 uppercase tracking-wider mt-1">
+<div class="text-[11px] text-slate-400 font-semibold flex items-center gap-1 uppercase tracking-wider mt-1">
 <span>Actor:</span>
 <span class="text-slate-600">{{ log.actor_role|default:"System" }}</span>
 </div>

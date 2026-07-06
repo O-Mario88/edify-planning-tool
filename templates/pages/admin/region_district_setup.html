@@ -8,7 +8,7 @@
 <!-- Header -->
 <div class="flex items-center justify-between border-b border-slate-200 pb-4">
 <div>
-<h1 class="text-[20px] font-black text-slate-800 tracking-tight">Geographical Location Setup</h1>
+<h1 class="text-[20px] font-semibold text-slate-800 tracking-tight">Geographical Location Setup</h1>
 <p class="text-[12px] text-slate-400 font-semibold mt-0.5">Manage administrative levels, regions, districts, and parishes</p>
 </div>
 </div>
@@ -18,14 +18,14 @@
 <!-- Left 2 cols: Regional Listing & Districts Table -->
 <div class="lg:col-span-2 space-y-6">
 <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden p-5 space-y-4">
-<h3 class="text-[14px] font-black text-slate-800 tracking-tight">Active Districts by Region</h3>
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Active Districts by Region</h3>
 
 <div class="space-y-4">
 {% for region in regions %}
 <div class="border border-slate-100 rounded-xl p-4 space-y-3">
 <div class="flex items-center justify-between bg-slate-50 px-3 py-2 rounded-lg">
-<span class="text-[12px] font-black text-slate-800 uppercase tracking-wider">{{ region.name }} Region</span>
-<span class="bg-blue-100 text-blue-800 text-[11px] font-extrabold px-2 py-0.5 rounded-full">
+<span class="text-[12px] font-semibold text-slate-800 uppercase tracking-wider">{{ region.name }} Region</span>
+<span class="bg-blue-100 text-blue-800 text-[11px] font-semibold px-2 py-0.5 rounded-full">
 {{ region.districts.count }} District(s)
 </span>
 </div>
@@ -49,13 +49,13 @@
 <!-- Right 1 col: Add District Form -->
 <div class="space-y-6">
 <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-4">
-<h3 class="text-[14px] font-black text-slate-800 uppercase tracking-wider border-b border-slate-50 pb-2">Add New District</h3>
+<h3 class="text-[14px] font-semibold text-slate-800 uppercase tracking-wider border-b border-slate-50 pb-2">Add New District</h3>
 
 <form method="post" action="/admin/region-district-setup" class="space-y-4">
 {% csrf_token %}
 
 <div class="space-y-1">
-<label class="text-[11px] font-black uppercase text-slate-400 tracking-wider">District Name</label>
+<label class="text-[11px] font-semibold uppercase text-slate-400 tracking-wider">District Name</label>
 <input 
 type="text" 
 name="district_name" 
@@ -66,7 +66,7 @@ class="w-full rounded-lg border border-slate-200 px-3 py-2 text-[12px] focus:out
 </div>
 
 <div class="space-y-1">
-<label class="text-[11px] font-black uppercase text-slate-400 tracking-wider">Region Assignment</label>
+<label class="text-[11px] font-semibold uppercase text-slate-400 tracking-wider">Region Assignment</label>
 <select 
 name="region_id" 
 required
@@ -81,7 +81,7 @@ class="w-full rounded-lg border border-slate-200 px-3 py-2 text-[12px] bg-white 
 
 <button 
 type="submit" 
-class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-[11px] font-black uppercase tracking-wider text-center transition-all focus:outline-none"
+class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-[11px] font-semibold uppercase tracking-wider text-center transition-all focus:outline-none"
 >
 Create District
 </button>

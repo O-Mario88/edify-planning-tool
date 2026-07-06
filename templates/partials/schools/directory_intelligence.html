@@ -1,7 +1,7 @@
 <div id="directory-intelligence-container" class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm space-y-4">
 <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
 <div>
-<h3 class="text-[14px] font-extrabold text-slate-800 tracking-tight font-sans">Directory Intelligence</h3>
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight font-sans">Directory Intelligence</h3>
 <p class="text-[11px] text-slate-400 font-semibold mt-0.5 uppercase tracking-wider font-sans">Selected School</p>
 </div>
 </div>
@@ -9,7 +9,7 @@
 {% if intelligence %}
 <div class="space-y-4 text-[12px] font-sans">
 <div>
-<h4 class="font-extrabold text-slate-800 text-[14px] leading-snug">{{ intelligence.school.name }}</h4>
+<h4 class="font-semibold text-slate-800 text-[14px] leading-snug">{{ intelligence.school.name }}</h4>
 <div class="flex flex-wrap items-center gap-2 mt-1.5">
 <span class="inline-flex items-center rounded px-2 py-0.5 text-[11px] font-bold {% if intelligence.school.school_type == 'client' %}bg-emerald-50 text-emerald-700 border border-emerald-200{% else %}bg-purple-50 text-purple-700 border border-purple-200{% endif %}">
 {{ intelligence.school.get_school_type_display }}
@@ -29,7 +29,7 @@ class="absolute left-4 right-4 mt-2 p-3 bg-white border border-slate-200 rounded
 style="display: none;"
 @click.outside="editing = false"
 >
-<p class="text-[11px] font-black uppercase text-slate-400">Change School Type</p>
+<p class="text-[11px] font-semibold uppercase text-slate-400">Change School Type</p>
 <form 
 hx-post="/schools/{{ intelligence.school.id }}/change-type"
 class="flex items-center gap-2"
@@ -149,7 +149,7 @@ Save
 
 <!-- Recommended Next Step card -->
 <div class="border-t border-slate-100 pt-4 space-y-3">
-<h4 class="text-[12px] font-extrabold text-slate-500 uppercase tracking-wider">Recommended Next Step</h4>
+<h4 class="text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Recommended Next Step</h4>
 
 <div class="rounded-xl p-3 border bg-blue-50/50 border-blue-100 text-blue-800 flex gap-2.5">
 <div class="shrink-0 mt-0.5">

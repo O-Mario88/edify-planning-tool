@@ -1,11 +1,51 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.http import HttpResponse
 from apps.core.permissions import require_page_permission
 from apps.schools.models import SSAImportBatch
 from apps.ssa.models import SsaRecord
 from apps.ssa.upload_service import upload_ssa_file, import_ssa_batch
-from apps.core.enums import VerificationStatus
+from apps.core.enums import VerificationStatus, SsaIntervention
 from django.utils import timezone
+import csv
+
+
+@require_page_permission("ssa")
+def ssa_template_download_view(request):
+    """Download a CSV template with the correct SSA column headers + sample rows.
+
+    Includes two sample rows: one for last FY (baseline) and one for current FY.
+    The SSA Year column controls which FY each row targets:
+      "last" or a year like "2025" → previous FY (baseline, upload once)
+      "current" or a year like "2026" → current FY (requires baseline first)
+    """
+    from apps.core.fy import get_operational_fy
+    current_fy = get_operational_fy()
+    prev_fy = str(int(current_fy) - 1)
+
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = 'attachment; filename="ssa_upload_template.csv"'
+
+    writer = csv.writer(response)
+    # Header row
+    headers = ["School ID", "Assessment Date", "SSA Year", "New Enrolment"]
+    for _code, label in SsaIntervention.choices:
+        headers.append(f"{label} (0-10)")
+    writer.writerow(headers)
+
+    # Sample row 1: last FY baseline
+    sample_prev = ["SCH-0001", f"{prev_fy}-06-15", prev_fy, "320"]
+    for _code, _label in SsaIntervention.choices:
+        sample_prev.append("6.0")
+    writer.writerow(sample_prev)
+
+    # Sample row 2: current FY
+    sample_curr = ["SCH-0001", f"{current_fy}-07-01", current_fy, "340"]
+    for _code, _label in SsaIntervention.choices:
+        sample_curr.append("7.5")
+    writer.writerow(sample_curr)
+
+    return response
 
 @require_page_permission("ssa")
 def ssa_upload_center_view(request):
@@ -26,7 +66,9 @@ def ssa_upload_center_view(request):
         except Exception as e:
             messages.error(request, f"Upload error: {e}")
             
-    return render(request, "pages/ssa/upload_center.html")
+    return render(request, "pages/ssa/upload_center.html", {
+        "intervention_choices": SsaIntervention.choices,
+    })
 
 @require_page_permission("ssa")
 def ssa_upload_preview_view(request, batch_id):

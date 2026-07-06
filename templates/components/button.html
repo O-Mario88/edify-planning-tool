@@ -1,0 +1,37 @@
+{% comment %}
+  Edify Button — the single source for all buttons.
+
+  Usage:
+    {% include "components/button.html" with variant="primary" label="Save" %}
+    {% include "components/button.html" with variant="ghost" size="sm" label="Cancel" href="/back" %}
+    {% include "components/button.html" with variant="danger" label="Delete" type="submit" name="action" value="delete" %}
+
+  Required: label
+  Optional:
+    variant — primary | ghost | success | danger | warning | smooth  (default: primary)
+    size    — sm | md | lg  (default: md; maps to h-8 / h-9 / h-10)
+    href    — render an <a> instead of <button>
+    type    — button | submit (default: button; ignored if href set)
+    icon    — inline SVG path data (renders a 16px icon before label)
+    full    — "true" → w-full (block button)
+    disabled — "true" → disabled state
+    hx_*    — pass any HTMX attributes via extra_attrs (e.g. hx_post, hx_target)
+    extra_attrs — raw HTML attrs string appended to the element
+{% endcomment %}
+{% load frontend_filters %}
+{% with size_class=size|default:'md' %}
+{% with height_class=size_class|default:'h-9' %}
+{% if href %}
+  <a href="{{ href }}"
+     class="btn btn-{{ variant|default:'primary' }} {% if full == 'true' %}w-full{% endif %} inline-flex items-center gap-1.5 {% if size_class == 'sm' %}h-8{% elif size_class == 'lg' %}h-10{% else %}h-9{% endif %} {{ extra_attrs|default:'' }}"
+     {% if disabled == 'true' %}aria-disabled="true" style="opacity:.5;pointer-events:none"{% endif %}>
+{% else %}
+  <button type="{{ type|default:'button' }}"
+          class="btn btn-{{ variant|default:'primary' }} {% if full == 'true' %}w-full{% endif %} inline-flex items-center gap-1.5 {% if size_class == 'sm' %}h-8{% elif size_class == 'lg' %}h-10{% else %}h-9{% endif %} {{ extra_attrs|default:'' }}"
+          {% if name %}name="{{ name }}"{% endif %} {% if value %}value="{{ value }}"{% endif %}
+          {% if disabled == 'true' %}disabled{% endif %}>
+{% endif %}
+  {% if icon %}<svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="{{ icon }}"/></svg>{% endif %}
+  <span>{{ label }}</span>
+{% if href %}</a>{% else %}</button>{% endif %}
+{% endwith %}{% endwith %}

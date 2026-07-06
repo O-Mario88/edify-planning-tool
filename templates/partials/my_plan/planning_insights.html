@@ -2,7 +2,7 @@
 <aside class="right-rail space-y-5">
 
 <div class="flex items-center justify-between border-b border-slate-200 pb-2">
-<h2 class="text-[18px] font-black text-[#2e505f] tracking-tight">Planning Insights</h2>
+<h2 class="text-[18px] font-semibold text-[#2e505f] tracking-tight">Planning Insights</h2>
 <span class="text-slate-400">⚡</span>
 </div>
 
@@ -10,24 +10,24 @@
 <div class="space-y-3">
 <div class="flex items-center justify-between text-[11px] font-bold text-slate-400 uppercase tracking-wider">
 <span>Upcoming Today</span>
-<span class="px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-[11px] font-black">{{ upcoming_today|length }}</span>
+<span class="px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-[11px] font-semibold">{{ upcoming_today|length }}</span>
 </div>
 
 {% if upcoming_today %}
 {% for a in upcoming_today %}
 <div class="card p-4 flex flex-col justify-between hover:border-[#2e505f]/30 transition-all">
 <div class="flex items-center justify-between mb-2">
-<span class="text-[11px] font-extrabold uppercase tracking-wider text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">🕒 {{ a.time }}</span>
+<span class="text-[11px] font-semibold uppercase tracking-wider text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">🕒 {{ a.time }}</span>
 <span class="text-[12px] text-slate-400 font-bold">{{ a.district }}</span>
 </div>
-<h3 class="text-[14px] font-black text-slate-800 leading-tight">{{ a.title }}</h3>
+<h3 class="text-[14px] font-semibold text-slate-800 leading-tight">{{ a.title }}</h3>
 <p class="text-[12px] text-slate-500 font-medium mt-1 mb-3.5 line-clamp-2">{{ a.purpose }}</p>
 
 <button 
 hx-get="/my-plan/{{ a.id }}"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
-class="btn btn-ghost w-full py-1 text-[11px] shadow-sm font-extrabold"
+class="btn btn-ghost w-full py-1 text-[11px] shadow-sm font-semibold"
 >
 View Details
 </button>
@@ -44,7 +44,7 @@ No activities scheduled for today.
 <div class="space-y-3">
 <div class="flex items-center justify-between text-[11px] font-bold text-slate-400 uppercase tracking-wider">
 <span>Attention Needed</span>
-<span class="px-2 py-0.5 rounded bg-rose-50 text-rose-700 text-[11px] font-black">{{ attention_needed|length }}</span>
+<span class="px-2 py-0.5 rounded bg-rose-50 text-rose-700 text-[11px] font-semibold">{{ attention_needed|length }}</span>
 </div>
 
 {% if attention_needed %}
@@ -53,10 +53,10 @@ No activities scheduled for today.
 <div class="absolute left-0 top-0 bottom-0 w-1 {% if alert.type == 'Activity SF ID Missing' %}bg-red-500{% else %}bg-amber-400{% endif %}"></div>
 
 <div class="pl-2">
-<span class="inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wider {{ alert.badge_class }}">
+<span class="inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider {{ alert.badge_class }}">
 {{ alert.type }}
 </span>
-<h3 class="text-[14px] font-black text-slate-800 leading-tight mt-2.5">{{ alert.title }}</h3>
+<h3 class="text-[14px] font-semibold text-slate-800 leading-tight mt-2.5">{{ alert.title }}</h3>
 <p class="text-[11px] text-slate-500 font-medium mt-1 leading-relaxed">{{ alert.issue }}</p>
 <p class="text-[11px] text-slate-400 font-semibold mt-1.5">{{ alert.detail }}</p>
 
@@ -65,7 +65,7 @@ No activities scheduled for today.
 hx-get="/my-plan/{{ alert.id }}"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
-class="text-[11px] font-black text-blue-600 hover:text-blue-800 inline-flex items-center gap-0.5"
+class="text-[11px] font-semibold text-blue-600 hover:text-blue-800 inline-flex items-center gap-0.5"
 >
 View Details &rarr;
 </button>
@@ -85,13 +85,13 @@ No urgent attention needed. You’re on track.
 <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Next Recommended Action</p>
 
 <div class="card p-4 border-l-4 border-emerald-500 bg-emerald-50/40">
-<h3 class="text-[14px] font-black text-emerald-800 leading-none">{{ next_recommended_action.title }}</h3>
+<h3 class="text-[14px] font-semibold text-emerald-800 leading-none">{{ next_recommended_action.title }}</h3>
 <p class="text-[12px] text-slate-600 font-medium mt-2 leading-relaxed">{{ next_recommended_action.message }}</p>
 
 <div class="mt-3.5">
 <a 
 href="{{ next_recommended_action.action_url }}"
-class="btn btn-smooth success w-full text-[12px] font-black shadow-sm"
+class="btn btn-smooth success w-full text-[12px] font-semibold shadow-sm"
 >
 {{ next_recommended_action.action_text }} &rarr;
 </a>

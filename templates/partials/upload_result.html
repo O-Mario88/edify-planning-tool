@@ -2,14 +2,14 @@
 
 {% if error %}
 <div class="bg-rose-50 border border-rose-200 rounded-2xl p-5 text-[14px] font-semibold text-rose-700 space-y-2">
-<div class="font-extrabold text-[15px]">Upload Failed</div>
+<div class="font-semibold text-[15px]">Upload Failed</div>
 <p>{{ error }}</p>
 </div>
 {% else %}
 <div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm space-y-6">
 <div class="flex items-center justify-between border-b border-slate-100 pb-4">
 <div>
-<h3 class="text-[18px] font-extrabold text-slate-800 tracking-tight">Upload Execution Report</h3>
+<h3 class="text-[18px] font-semibold text-slate-800 tracking-tight">Upload Execution Report</h3>
 <p class="text-[12px] text-slate-400 font-semibold mt-0.5">Batch ID: <span class="font-mono text-slate-600 font-bold">{{ result.upload_batch_id }}</span></p>
 </div>
 <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider {% if result.success %}bg-emerald-50 text-emerald-700 border-emerald-200{% else %}bg-amber-50 text-amber-700 border-amber-200{% endif %}">
@@ -21,23 +21,23 @@
 <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
 <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
 <p class="text-[11px] uppercase font-bold tracking-wider text-slate-400">Total Rows</p>
-<p class="text-[18px] font-extrabold text-slate-700 mt-0.5">{{ result.total_rows }}</p>
+<p class="text-[18px] font-semibold text-slate-700 mt-0.5">{{ result.total_rows }}</p>
 </div>
 <div class="p-3 bg-emerald-50/20 rounded-xl border border-emerald-100">
 <p class="text-[11px] uppercase font-bold tracking-wider text-emerald-600">Created</p>
-<p class="text-[18px] font-extrabold text-emerald-700 mt-0.5">{{ result.created_rows }}</p>
+<p class="text-[18px] font-semibold text-emerald-700 mt-0.5">{{ result.created_rows }}</p>
 </div>
 <div class="p-3 bg-indigo-50/20 rounded-xl border border-indigo-100">
 <p class="text-[11px] uppercase font-bold tracking-wider text-indigo-600">Updated</p>
-<p class="text-[18px] font-extrabold text-indigo-700 mt-0.5">{{ result.updated_rows }}</p>
+<p class="text-[18px] font-semibold text-indigo-700 mt-0.5">{{ result.updated_rows }}</p>
 </div>
 <div class="p-3 bg-rose-50/20 rounded-xl border border-rose-100">
 <p class="text-[11px] uppercase font-bold tracking-wider text-rose-600">Failed</p>
-<p class="text-[18px] font-extrabold text-rose-700 mt-0.5">{{ result.failed_rows }}</p>
+<p class="text-[18px] font-semibold text-rose-700 mt-0.5">{{ result.failed_rows }}</p>
 </div>
 <div class="p-3 bg-amber-50/20 rounded-xl border border-amber-100">
 <p class="text-[11px] uppercase font-bold tracking-wider text-amber-600">Duplicate</p>
-<p class="text-[18px] font-extrabold text-amber-700 mt-0.5">{{ result.duplicate_rows }}</p>
+<p class="text-[18px] font-semibold text-amber-700 mt-0.5">{{ result.duplicate_rows }}</p>
 </div>
 </div>
 
@@ -48,7 +48,7 @@
 
 <!-- Actions -->
 <div class="flex items-center gap-3 pt-2">
-<a href="/schools/upload/{{ result.upload_batch_id }}/preview" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-extrabold rounded-lg shadow-sm transition-all" hx-boost="false">
+<a href="/schools/upload/{{ result.upload_batch_id }}/preview" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-semibold rounded-lg shadow-sm transition-all" hx-boost="false">
 Open Staging Preview & Validate &rarr;
 </a>
 </div>
@@ -56,7 +56,7 @@ Open Staging Preview & Validate &rarr;
 <!-- Unmatched Staff candidates (only for School Upload) -->
 {% if result.type == 'schools' and result.unmatched_staff %}
 <div class="space-y-3">
-<h4 class="text-[14px] font-extrabold text-slate-800">Unmatched Staff Setup Candidates</h4>
+<h4 class="text-[14px] font-semibold text-slate-800">Unmatched Staff Setup Candidates</h4>
 <div class="overflow-x-auto">
 <table class="w-full text-left text-[12px] border border-slate-100 rounded-lg overflow-hidden">
 <thead class="bg-slate-50 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
@@ -87,7 +87,7 @@ Open Staging Preview & Validate &rarr;
 <!-- Failed Rows Table -->
 {% if result.errors %}
 <div class="space-y-3">
-<h4 class="text-[14px] font-extrabold text-rose-800">Failed Intake Rows Detail</h4>
+<h4 class="text-[14px] font-semibold text-rose-800">Failed Intake Rows Detail</h4>
 <div class="overflow-x-auto">
 <table class="w-full text-left text-[12px] border border-slate-100 rounded-lg overflow-hidden">
 <thead class="bg-rose-50 text-[11px] font-bold text-rose-700 uppercase tracking-wider">

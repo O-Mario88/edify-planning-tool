@@ -19,13 +19,13 @@ id="planning-main-container"
 <nav class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
 <a href="#" class="hover:text-slate-600">Planning</a>
 <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-<span class="text-slate-600 font-extrabold">School visit &amp; training plan</span>
+<span class="text-slate-600 font-semibold">School visit &amp; training plan</span>
 </nav>
 
 <!-- Header -->
 <div class="edify-page-header flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-100 pb-2">
 <div>
-<h1 class="text-[24px] font-black text-slate-800 tracking-tight leading-none">Planning</h1>
+<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight leading-none">Planning</h1>
 <p class="text-[12px] text-slate-500 font-semibold mt-1">Plan school visits, cluster activities, and partner assignments based on SSA readiness and school needs.</p>
 </div>
 
@@ -121,7 +121,7 @@ class="flex flex-wrap items-center gap-2.5 text-[11px] font-bold"
 <button 
 type="button"
 onclick="document.getElementById('filters-form').reset(); document.querySelectorAll('select').forEach(s => s.value = 'All'); document.getElementsByName('q')[0].value = ''; document.getElementById('filters-form').dispatchEvent(new Event('change'));"
-class="text-blue-600 hover:text-blue-700 text-[11px] font-extrabold tracking-wider uppercase ml-1 flex items-center gap-1"
+class="text-blue-600 hover:text-blue-700 text-[11px] font-semibold tracking-wider uppercase ml-1 flex items-center gap-1"
 >
 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
 Clear Filters
@@ -192,12 +192,12 @@ x-transition:enter-end="translate-y-0 opacity-100"
 x-transition:leave="transition ease-in duration-200 transform"
 x-transition:leave-start="translate-y-0 opacity-100"
 x-transition:leave-end="translate-y-24 opacity-0"
-class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 backdrop-blur-md text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-6 border border-slate-800/80"
+class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 backdrop-blur-md text-white px-6 py-3 rounded-2xl shadow-lg flex items-center gap-6 border border-slate-800/80"
 style="display: none;"
 >
 <div class="flex items-center gap-2 select-none">
-<span class="h-6 w-6 bg-blue-600 rounded-full flex items-center justify-center text-[11px] font-black text-white" x-text="selectedSchools.length"></span>
-<span class="text-[12px] font-extrabold text-slate-300">schools selected</span>
+<span class="h-6 w-6 bg-blue-600 rounded-full flex items-center justify-center text-[11px] font-semibold text-white" x-text="selectedSchools.length"></span>
+<span class="text-[12px] font-semibold text-slate-300">schools selected</span>
 </div>
 
 <div class="h-5 w-px bg-slate-700"></div>

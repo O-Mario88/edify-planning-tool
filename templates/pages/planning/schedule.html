@@ -7,8 +7,8 @@
 <div class="p-6 max-w-4xl mx-auto space-y-6">
 <!-- Header -->
 <div>
-<a href="/planning" class="text-[11px] font-extrabold text-[var(--color-edify-primary)] hover:underline uppercase tracking-wider">&larr; Back to Planning Dashboard</a>
-<h1 class="text-[24px] font-extrabold text-slate-800 tracking-tight mt-2">
+<a href="/planning" class="text-[11px] font-semibold text-[var(--color-edify-primary)] hover:underline uppercase tracking-wider">&larr; Back to Planning Dashboard</a>
+<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight mt-2">
 {% if action == 'visit' %}Schedule School Visit
 {% elif action == 'training' %}Schedule Group Training
 {% else %}Schedule Cluster Meeting{% endif %}
@@ -92,7 +92,7 @@ class="w-full h-10 px-3 rounded-lg border border-[var(--color-edify-border)] tex
 </select>
 {% if recommendations %}
 <div class="mt-2 p-2.5 bg-amber-50/50 border border-amber-200/50 rounded-lg text-[11px] text-amber-800 font-semibold space-y-1">
-<p class="font-extrabold">Recommended focus areas based on latest SSA:</p>
+<p class="font-semibold">Recommended focus areas based on latest SSA:</p>
 {% for r in recommendations %}
 <p>&bull; {{ r.label }} (Score: {{ r.score|floatformat:1 }})</p>
 {% endfor %}
@@ -192,7 +192,7 @@ class="w-full p-3 rounded-lg border border-[var(--color-edify-border)] text-[12p
 type="submit" 
 hx-post="/planning/schedule?action={{ action }}"
 hx-target="body"
-class="h-10 px-4 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[12px] font-extrabold transition-colors"
+class="h-10 px-4 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[12px] font-semibold transition-colors"
 >
 Confirm &amp; Schedule Activity
 </button>
@@ -202,7 +202,7 @@ Confirm &amp; Schedule Activity
 
 <!-- Live Costing Preview Column -->
 <div id="cost-preview-output" class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm space-y-4">
-<h3 class="text-[14px] font-extrabold text-slate-800">Live Costing Breakdown</h3>
+<h3 class="text-[14px] font-semibold text-slate-800">Live Costing Breakdown</h3>
 <p class="text-[12px] text-slate-400 font-semibold leading-relaxed">Fill out target, date, and participants to see itemized UGX rates fetch live from CD catalogue.</p>
 </div>
 </div>

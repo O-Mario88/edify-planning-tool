@@ -7,7 +7,7 @@
 <div class="p-6 max-w-7xl mx-auto space-y-6">
 <!-- Header -->
 <div>
-<h1 class="text-[24px] font-extrabold text-slate-800 tracking-tight">IA Verification Queue</h1>
+<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight">IA Verification Queue</h1>
 <p class="text-[12px] text-[var(--text-secondary)] mt-0.5 font-semibold">Verify activity completions, confirm Salesforce records integrity, and close the workflow loop.</p>
 </div>
 
@@ -19,8 +19,8 @@
 <div class="space-y-3 min-w-0 flex-1">
 <div>
 <div class="flex items-center gap-2">
-<h3 class="text-[15px] font-extrabold text-slate-800">{{ act.activityType|title|replace_underscore }}</h3>
-<span class="inline-flex items-center rounded px-2 py-0.5 text-[11px] font-extrabold bg-slate-100 text-slate-600">
+<h3 class="text-[15px] font-semibold text-slate-800">{{ act.activityType|title|replace_underscore }}</h3>
+<span class="inline-flex items-center rounded px-2 py-0.5 text-[11px] font-semibold bg-slate-100 text-slate-600">
 Salesforce ID: {{ act.salesforceActivityId }}
 </span>
 </div>
@@ -53,7 +53,7 @@ School: <a href="/schools/{{ act.schoolId }}" class="font-bold hover:underline t
 {% csrf_token %}
 <button 
 type="submit" 
-class="w-full h-10 px-4 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[12px] font-extrabold flex items-center justify-center transition-colors"
+class="w-full h-10 px-4 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[12px] font-semibold flex items-center justify-center transition-colors"
 >
 Verify &amp; Confirm
 </button>
@@ -63,7 +63,7 @@ Verify &amp; Confirm
 <button 
 @click="open = !open" 
 type="button" 
-class="w-full h-10 px-4 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 text-[12px] font-extrabold flex items-center justify-center transition-colors"
+class="w-full h-10 px-4 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 text-[12px] font-semibold flex items-center justify-center transition-colors"
 >
 Return for Correction
 </button>

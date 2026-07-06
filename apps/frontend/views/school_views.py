@@ -346,16 +346,11 @@ def add_to_cluster_drawer_view(request, school_id):
         return claim.cluster if claim else None
 
     # 1. Enforce Minimum Data Needed for Clustering
-    if not school.school_id or not school.name or not school.district_id or not school.sub_county_id:
+    # Minimum data gate: school_id, name, and district are required.
+    # Sub-county is NOT required — staff can cluster at district level.
+    if not school.school_id or not school.name or not school.district_id:
         districts = District.objects.all().order_by("name")
         sub_counties = get_scoped_sub_counties(school)
-        recommended_clusters = Cluster.objects.filter(
-            district_id=school.district_id,
-            sub_county_id=school.sub_county_id,
-            deleted_at__isnull=True
-        ).order_by("name")
-        for rc in recommended_clusters:
-            rc.schools_count = rc.assignments.count()
         all_clusters = Cluster.objects.filter(deleted_at__isnull=True).order_by("name")
         for ac in all_clusters:
             ac.schools_count = ac.assignments.count()
@@ -363,13 +358,13 @@ def add_to_cluster_drawer_view(request, school_id):
         return render(request, "partials/schools/add_to_cluster_drawer.html", {
             "school": school,
             "school_contact": school.primary_contact_name or "—",
-            "recommended_clusters": recommended_clusters,
+            "recommended_clusters": [],
             "all_clusters": all_clusters,
             "districts": districts,
             "sub_counties": sub_counties,
             "staff_list": staff_list,
-            "existing_covering_cluster": get_existing_covering_cluster(school),
-            "validation_error": "This school does not have the minimum required data for clustering (School ID, School Name, District, and Sub-county location are required). Please click 'Fix Data' to resolve this first.",
+            "existing_covering_cluster": None,
+            "validation_error": "This school needs a School ID, Name, and District before it can be clustered. Sub-county is optional.",
             "drawer_type": "center",
             "drawer_size": "md",
         })
@@ -430,16 +425,18 @@ def add_to_cluster_drawer_view(request, school_id):
             new_sub_county_ids = request.POST.getlist("new_sub_county_ids")
             
             # Enforce that the school's own sub-county is always included in the cluster coverage
-            school_sub_county_id_str = str(school.sub_county_id)
-            if school_sub_county_id_str not in new_sub_county_ids:
-                new_sub_county_ids.append(school_sub_county_id_str)
-                
-            if not cluster_name or not district_id or not new_sub_county_ids:
+            # Only include the school's own sub-county if it has one.
+            if school.sub_county_id:
+                school_sub_county_id_str = str(school.sub_county_id)
+                if school_sub_county_id_str not in new_sub_county_ids:
+                    new_sub_county_ids.append(school_sub_county_id_str)
+
+            # Sub-county is optional — only name + district are required.
+            if not cluster_name or not district_id:
                 districts = District.objects.all().order_by("name")
                 sub_counties = get_scoped_sub_counties(school)
                 recommended_clusters = Cluster.objects.filter(
                     district_id=school.district_id,
-                    sub_county_id=school.sub_county_id,
                     deleted_at__isnull=True
                 ).order_by("name")
                 for rc in recommended_clusters:
@@ -512,13 +509,21 @@ def add_to_cluster_drawer_view(request, school_id):
     sub_counties = get_scoped_sub_counties(school)
     
     # Update recommended clusters query to search both primary sub-county and covers
-    recommended_clusters = Cluster.objects.filter(
-        district_id=school.district_id,
-        deleted_at__isnull=True
-    ).filter(
-        Q(sub_county_id=school.sub_county_id) | Q(covered_sub_counties__sub_county_id=school.sub_county_id)
-    ).distinct().order_by("name")
-    
+    # Recommend clusters in the same district. If the school has a sub-county,
+    # prefer clusters that cover it. If not, show all district-level clusters.
+    if school.sub_county_id:
+        recommended_clusters = Cluster.objects.filter(
+            district_id=school.district_id,
+            deleted_at__isnull=True
+        ).filter(
+            Q(sub_county_id=school.sub_county_id) | Q(covered_sub_counties__sub_county_id=school.sub_county_id)
+        ).distinct().order_by("name")
+    else:
+        recommended_clusters = Cluster.objects.filter(
+            district_id=school.district_id,
+            deleted_at__isnull=True
+        ).order_by("name")
+
     for rc in recommended_clusters:
         rc.schools_count = rc.assignments.count()
         
@@ -625,6 +630,31 @@ def assign_to_project_drawer_view(request, school_id):
         "school_contact": school_contact,
         "projects": projects
     })
+
+@require_page_permission("school_upload")
+def school_template_download_view(request):
+    """Download a CSV template with the correct school-upload column headers."""
+    from django.http import HttpResponse
+    import csv
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = 'attachment; filename="school_upload_template.csv"'
+    writer = csv.writer(response)
+    # Headers — required + optional, matching SCHOOL_HEADER_MAP
+    writer.writerow([
+        "School ID", "School Name", "District", "Sub County",
+        "Current Partner Type", "Staff Name",
+        "Enrolment", "Last Date of Enrolment",
+        "Phone", "Primary Contact", "School Shipping Address",
+    ])
+    # Sample row
+    writer.writerow([
+        "SCH-0001", "St. Mary's Primary School", "Kampala", "Central Division",
+        "Client", "James Okello",
+        "320", "2025-10-15",
+        "+256700123456", "John Smith", "Plot 12, Main Street, Kampala",
+    ])
+    return response
+
 
 @require_page_permission("school_upload")
 def school_upload_view(request):

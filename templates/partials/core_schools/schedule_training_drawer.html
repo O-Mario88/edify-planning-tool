@@ -28,7 +28,7 @@ x-transition:leave-end="translate-x-full"
 <!-- Drawer Header -->
 <div class="flex items-start justify-between border-b border-slate-100 pb-4">
 <div>
-<h2 class="text-[18px] font-black text-slate-800 tracking-tight font-sans">Schedule Core Training</h2>
+<h2 class="text-[18px] font-semibold text-slate-800 tracking-tight font-sans">Schedule Core Training</h2>
 <p class="text-[11px] text-slate-400 font-semibold mt-1 font-sans">Configure annual support training details for this school.</p>
 </div>
 <button 
@@ -180,7 +180,7 @@ x-transition:leave-end="opacity-0 transform scale-95"
 <button type="button" @click="prevMonth()" class="h-6 w-6 flex items-center justify-center rounded-lg hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors">
 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
 </button>
-<span class="font-extrabold text-[12px] text-[#0f172a]" x-text="months[currentMonth] + ' ' + currentYear"></span>
+<span class="font-semibold text-[12px] text-[#0f172a]" x-text="months[currentMonth] + ' ' + currentYear"></span>
 <button type="button" @click="nextMonth()" class="h-6 w-6 flex items-center justify-center rounded-lg hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors">
 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
 </button>
@@ -222,7 +222,7 @@ x-text="day"
 </select>
 {% if recommendations %}
 <div class="mt-2 p-2 bg-amber-50 border border-amber-200/50 rounded-lg text-[11px] text-amber-800 font-bold space-y-1">
-<p class="font-extrabold text-[11px]">Recommended focus areas based on latest SSA:</p>
+<p class="font-semibold text-[11px]">Recommended focus areas based on latest SSA:</p>
 {% for r in recommendations %}
 <p>&bull; {{ r.label }} (Score: {{ r.score }}/10)</p>
 {% endfor %}
@@ -271,10 +271,10 @@ x-text="day"
 </div>
 
 <!-- Cost Preview (Automated Catalogue rates) -->
-<div class="p-4 rounded-xl bg-slate-50 border border-slate-150 space-y-2">
-<div class="flex items-center justify-between text-[12px] text-slate-500 font-extrabold">
+<div class="p-4 rounded-xl bg-slate-50  space-y-2">
+<div class="flex items-center justify-between text-[12px] text-slate-500 font-semibold">
 <span>Estimated Cost (SIPA Catalogue rate)</span>
-<span class="text-slate-800 font-black">Auto-costed</span>
+<span class="text-slate-800 font-semibold">Auto-costed</span>
 </div>
 <p class="text-[11px] text-slate-400 leading-normal">Facilitation fees and participant lunches will be calculated automatically based on catalogue guidelines.</p>
 </div>

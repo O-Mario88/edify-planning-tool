@@ -9,7 +9,7 @@
 <!-- Header -->
 <div class="flex items-center justify-between border-b border-slate-200 pb-4">
 <div>
-<h1 class="text-[20px] font-black text-slate-800 tracking-tight">Page & Feature Access Matrix</h1>
+<h1 class="text-[20px] font-semibold text-slate-800 tracking-tight">Page & Feature Access Matrix</h1>
 <p class="text-[12px] text-slate-400 font-semibold mt-0.5">Overview of route clearance rules and active dashboards across role groups</p>
 </div>
 </div>
@@ -20,9 +20,9 @@
 <table class="w-full text-[12px] border-collapse">
 <thead>
 <tr class="bg-slate-50 border-b border-slate-100 text-left">
-<th class="px-5 py-3.5 text-[11px] font-black uppercase text-slate-400 tracking-wider">Page / Route Path</th>
+<th class="px-5 py-3.5 text-[11px] font-semibold uppercase text-slate-400 tracking-wider">Page / Route Path</th>
 {% for role in roles %}
-<th class="px-3 py-3.5 text-center text-[11px] font-black uppercase text-slate-500 tracking-wider">
+<th class="px-3 py-3.5 text-center text-[11px] font-semibold uppercase text-slate-500 tracking-wider">
 {{ role }}
 </th>
 {% endfor %}
@@ -32,7 +32,7 @@
 {% for page in pages %}
 <tr class="hover:bg-slate-50/50 transition-colors">
 <td class="px-5 py-3.5 border-r border-slate-50">
-<span class="font-extrabold text-slate-800 block">{{ page.name }}</span>
+<span class="font-semibold text-slate-800 block">{{ page.name }}</span>
 <span class="text-[11px] text-slate-400 font-bold block mt-0.5">{{ page.path }}</span>
 </td>
 {% for role in roles %}

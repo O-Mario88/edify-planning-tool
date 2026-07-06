@@ -8,7 +8,7 @@
 <!-- Header -->
 <div class="flex items-center justify-between border-b border-slate-200 pb-4">
 <div>
-<h1 class="text-[20px] font-black text-slate-800 tracking-tight">Staff Setup Queue</h1>
+<h1 class="text-[20px] font-semibold text-slate-800 tracking-tight">Staff Setup Queue</h1>
 <p class="text-[12px] text-slate-400 font-semibold mt-0.5">Resolve raw staff name mappings from onboarding data to match registered CCEOs</p>
 </div>
 </div>
@@ -19,25 +19,25 @@
 <table class="w-full text-[12px] border-collapse">
 <thead>
 <tr class="bg-slate-50 border-b border-slate-100 text-left">
-<th class="px-5 py-3.5 text-[11px] font-black uppercase text-slate-400 tracking-wider">School Record Name</th>
-<th class="px-4 py-3.5 text-[11px] font-black uppercase text-slate-400 tracking-wider">District / Region</th>
-<th class="px-4 py-3.5 text-[11px] font-black uppercase text-slate-400 tracking-wider">Status</th>
-<th class="px-4 py-3.5 text-[11px] font-black uppercase text-slate-400 tracking-wider">Link to Registered Staff</th>
-<th class="px-5 py-3.5 text-right text-[11px] font-black uppercase text-slate-400 tracking-wider">Resolve</th>
+<th class="px-5 py-3.5 text-[11px] font-semibold uppercase text-slate-400 tracking-wider">School Record Name</th>
+<th class="px-4 py-3.5 text-[11px] font-semibold uppercase text-slate-400 tracking-wider">District / Region</th>
+<th class="px-4 py-3.5 text-[11px] font-semibold uppercase text-slate-400 tracking-wider">Status</th>
+<th class="px-4 py-3.5 text-[11px] font-semibold uppercase text-slate-400 tracking-wider">Link to Registered Staff</th>
+<th class="px-5 py-3.5 text-right text-[11px] font-semibold uppercase text-slate-400 tracking-wider">Resolve</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100 font-medium">
 {% for school in unmatched_schools %}
 <tr class="hover:bg-slate-50/50 transition-colors">
 <td class="px-5 py-4">
-<span class="font-extrabold text-slate-800 block">{{ school.name }}</span>
+<span class="font-semibold text-slate-800 block">{{ school.name }}</span>
 <span class="text-[11px] text-slate-400 font-bold block mt-0.5">Uploaded Owner: {{ school.account_owner_name_raw|default:"None Specified" }}</span>
 </td>
 <td class="px-4 py-4 text-slate-500 font-semibold">
 {{ school.district.name }} district / {{ school.region.name }} region
 </td>
 <td class="px-4 py-4">
-<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider bg-amber-50 text-amber-700">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider bg-amber-50 text-amber-700">
 Pending Link
 </span>
 </td>
@@ -61,7 +61,7 @@ class="rounded border border-slate-200 px-2 py-1 text-[11px] font-semibold bg-sl
 <button 
 type="submit" 
 form="match-form-{{ school.id }}"
-class="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-[11px] font-black uppercase tracking-wider transition-all focus:outline-none"
+class="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-[11px] font-semibold uppercase tracking-wider transition-all focus:outline-none"
 >
 Match
 </button>
@@ -71,7 +71,7 @@ Match
 <input type="hidden" name="action" value="ignore">
 <button 
 type="submit" 
-class="px-2.5 py-1 border border-slate-200 hover:bg-slate-50 text-slate-500 hover:text-slate-800 rounded text-[11px] font-black uppercase tracking-wider transition-all focus:outline-none"
+class="px-2.5 py-1 border border-slate-200 hover:bg-slate-50 text-slate-500 hover:text-slate-800 rounded text-[11px] font-semibold uppercase tracking-wider transition-all focus:outline-none"
 >
 Ignore
 </button>

@@ -6,23 +6,23 @@
 <div class="p-6 max-w-7xl mx-auto space-y-6" x-data="{ activeTab: 'ready' }">
 
 <!-- Premium Header Pane -->
-<div class="relative overflow-hidden rounded-3xl bg-slate-900 text-white p-8 shadow-xl border border-slate-800">
+<div class="relative overflow-hidden rounded-xl bg-slate-900 text-white p-8 shadow-md border border-slate-800">
 <div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-blue-500/10 blur-3xl pointer-events-none"></div>
 <div class="absolute -left-20 -bottom-20 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none"></div>
 
 <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
 <div class="space-y-2">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-500 text-[11px] font-black uppercase tracking-widest">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-500 text-[11px] font-semibold uppercase tracking-widest">
 Audit & Closure
 </div>
-<h1 class="text-[32px] font-black tracking-tight text-white leading-none">Closure Readiness Workspace</h1>
+<h1 class="text-[32px] font-semibold tracking-tight text-white leading-none">Closure Readiness Workspace</h1>
 <p class="text-[14px] text-slate-400 font-medium max-w-xl">
 Controlled activity closure pipeline. Monitor readiness checks, clear pending analytics publishing, resolve blockers, and lock historic audit files.
 </p>
 </div>
 
 <div class="shrink-0 flex items-center gap-3">
-<a href="/completed-activities" class="h-10 px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-black flex items-center justify-center shadow-md transition-all">
+<a href="/completed-activities" class="h-10 px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-semibold flex items-center justify-center shadow-md transition-all">
 View Completed Archive
 </a>
 <a href="/activities/closure/blocked/" class="h-10 px-4 rounded-xl border border-slate-700 hover:bg-slate-800 text-slate-300 text-[12px] font-bold flex items-center justify-center transition-all">
@@ -37,42 +37,42 @@ Blocked Closures
 <button 
 @click="activeTab = 'ready'"
 :class="activeTab === 'ready' ? 'border-[#2563eb] text-[#2563eb]' : 'border-transparent text-slate-500 hover:text-slate-700'"
-class="h-10 px-4 border-b-2 text-[12px] font-black uppercase transition-all"
+class="h-10 px-4 border-b-2 text-[12px] font-semibold uppercase transition-all"
 >
 Ready to Close ({{ ready|length }})
 </button>
 <button 
 @click="activeTab = 'finance'"
 :class="activeTab === 'finance' ? 'border-[#2563eb] text-[#2563eb]' : 'border-transparent text-slate-500 hover:text-slate-700'"
-class="h-10 px-4 border-b-2 text-[12px] font-black uppercase transition-all"
+class="h-10 px-4 border-b-2 text-[12px] font-semibold uppercase transition-all"
 >
 Finance Pending ({{ finance_pending|length }})
 </button>
 <button 
 @click="activeTab = 'accountability'"
 :class="activeTab === 'accountability' ? 'border-[#2563eb] text-[#2563eb]' : 'border-transparent text-slate-500 hover:text-slate-700'"
-class="h-10 px-4 border-b-2 text-[12px] font-black uppercase transition-all"
+class="h-10 px-4 border-b-2 text-[12px] font-semibold uppercase transition-all"
 >
 Accountability Pending ({{ accountability_pending|length }})
 </button>
 <button 
 @click="activeTab = 'analytics'"
 :class="activeTab === 'analytics' ? 'border-[#2563eb] text-[#2563eb]' : 'border-transparent text-slate-500 hover:text-slate-700'"
-class="h-10 px-4 border-b-2 text-[12px] font-black uppercase transition-all"
+class="h-10 px-4 border-b-2 text-[12px] font-semibold uppercase transition-all"
 >
 Analytics Pending ({{ analytics_pending|length }})
 </button>
 <button 
 @click="activeTab = 'blocked'"
 :class="activeTab === 'blocked' ? 'border-[#2563eb] text-[#2563eb]' : 'border-transparent text-slate-500 hover:text-slate-700'"
-class="h-10 px-4 border-b-2 text-[12px] font-black uppercase transition-all"
+class="h-10 px-4 border-b-2 text-[12px] font-semibold uppercase transition-all"
 >
 Blocked ({{ blocked|length }})
 </button>
 </div>
 
 <!-- Queue Cards List -->
-<div class="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm">
+<div class="bg-white rounded-xl border border-slate-100 p-6 shadow-sm">
 
 <!-- Tab Panel: Ready -->
 <div x-show="activeTab === 'ready'" class="space-y-4">
@@ -80,14 +80,14 @@ Blocked ({{ blocked|length }})
 {% for act in ready %}
 <div class="py-3.5 flex items-center justify-between hover:bg-slate-50/20 p-2 rounded-xl transition-colors">
 <div>
-<span class="font-extrabold text-[12px] text-slate-900 block">#{{ act.id|slice:":8" }} &bull; {{ act.get_activity_type_display }}</span>
+<span class="font-semibold text-[12px] text-slate-900 block">#{{ act.id|slice:":8" }} &bull; {{ act.get_activity_type_display }}</span>
 <span class="text-[11px] text-slate-500 block mt-0.5">{{ act.school.name|default:"Cluster-wide" }} &bull; Owner: {{ act.responsible_staff_id }}</span>
 </div>
 <div class="flex items-center gap-2">
-<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
 Ready
 </span>
-<a href="/activities/{{ act.id }}/closure/" class="h-8 px-4 rounded-xl bg-blue-700 hover:bg-blue-700 text-white text-[11px] font-black flex items-center justify-center transition-all shadow-sm">
+<a href="/activities/{{ act.id }}/closure/" class="h-8 px-4 rounded-xl bg-blue-700 hover:bg-blue-700 text-white text-[11px] font-semibold flex items-center justify-center transition-all shadow-sm">
 Open Workspace
 </a>
 </div>
@@ -104,12 +104,12 @@ Open Workspace
 {% for act in finance_pending %}
 <div class="py-3.5 flex items-center justify-between hover:bg-slate-50/20 p-2 rounded-xl transition-colors">
 <div>
-<span class="font-extrabold text-[12px] text-slate-900 block">#{{ act.id|slice:":8" }} &bull; {{ act.get_activity_type_display }}</span>
+<span class="font-semibold text-[12px] text-slate-900 block">#{{ act.id|slice:":8" }} &bull; {{ act.get_activity_type_display }}</span>
 <span class="text-[11px] text-slate-500 block mt-0.5">{{ act.school.name|default:"Cluster-wide" }}</span>
 </div>
 <div class="flex items-center gap-2">
-<span class="text-[11px] font-extrabold uppercase text-rose-600 bg-rose-50 px-2 py-0.5 border border-rose-150 rounded">Awaiting Accountant Payout</span>
-<a href="/activities/{{ act.id }}/closure/" class="h-8 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-[11px] font-black flex items-center justify-center transition-all">
+<span class="text-[11px] font-semibold uppercase text-rose-600 bg-rose-50 px-2 py-0.5 border border-rose-150 rounded">Awaiting Accountant Payout</span>
+<a href="/activities/{{ act.id }}/closure/" class="h-8 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-[11px] font-semibold flex items-center justify-center transition-all">
 Workspace
 </a>
 </div>
@@ -126,12 +126,12 @@ Workspace
 {% for act in accountability_pending %}
 <div class="py-3.5 flex items-center justify-between hover:bg-slate-50/20 p-2 rounded-xl transition-colors">
 <div>
-<span class="font-extrabold text-[12px] text-slate-900 block">#{{ act.id|slice:":8" }} &bull; {{ act.get_activity_type_display }}</span>
+<span class="font-semibold text-[12px] text-slate-900 block">#{{ act.id|slice:":8" }} &bull; {{ act.get_activity_type_display }}</span>
 <span class="text-[11px] text-slate-500 block mt-0.5">{{ act.school.name|default:"Cluster-wide" }}</span>
 </div>
 <div class="flex items-center gap-2">
-<span class="text-[11px] font-extrabold uppercase text-amber-600 bg-amber-50 px-2 py-0.5 border border-amber-150 rounded">NetSuite ID Required</span>
-<a href="/activities/{{ act.id }}/closure/" class="h-8 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-[11px] font-black flex items-center justify-center transition-all">
+<span class="text-[11px] font-semibold uppercase text-amber-600 bg-amber-50 px-2 py-0.5 border border-amber-150 rounded">NetSuite ID Required</span>
+<a href="/activities/{{ act.id }}/closure/" class="h-8 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-[11px] font-semibold flex items-center justify-center transition-all">
 Workspace
 </a>
 </div>
@@ -148,12 +148,12 @@ Workspace
 {% for act in analytics_pending %}
 <div class="py-3.5 flex items-center justify-between hover:bg-slate-50/20 p-2 rounded-xl transition-colors">
 <div>
-<span class="font-extrabold text-[12px] text-slate-900 block">#{{ act.id|slice:":8" }} &bull; {{ act.get_activity_type_display }}</span>
+<span class="font-semibold text-[12px] text-slate-900 block">#{{ act.id|slice:":8" }} &bull; {{ act.get_activity_type_display }}</span>
 <span class="text-[11px] text-slate-500 block mt-0.5">{{ act.school.name|default:"Cluster-wide" }}</span>
 </div>
 <div class="flex items-center gap-2">
-<span class="text-[11px] font-extrabold uppercase text-blue-600 bg-blue-50 px-2 py-0.5 border border-blue-150 rounded">Awaiting Publish</span>
-<a href="/activities/{{ act.id }}/closure/" class="h-8 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-[11px] font-black flex items-center justify-center transition-all">
+<span class="text-[11px] font-semibold uppercase text-blue-600 bg-blue-50 px-2 py-0.5 border  rounded">Awaiting Publish</span>
+<a href="/activities/{{ act.id }}/closure/" class="h-8 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-[11px] font-semibold flex items-center justify-center transition-all">
 Workspace
 </a>
 </div>
@@ -170,12 +170,12 @@ Workspace
 {% for act in blocked %}
 <div class="py-3.5 flex items-center justify-between hover:bg-slate-50/20 p-2 rounded-xl transition-colors">
 <div>
-<span class="font-extrabold text-[12px] text-slate-900 block">#{{ act.id|slice:":8" }} &bull; {{ act.get_activity_type_display }}</span>
+<span class="font-semibold text-[12px] text-slate-900 block">#{{ act.id|slice:":8" }} &bull; {{ act.get_activity_type_display }}</span>
 <span class="text-[11px] text-slate-500 block mt-0.5">{{ act.school.name|default:"Cluster-wide" }}</span>
 </div>
 <div class="flex items-center gap-2">
-<span class="text-[11px] font-extrabold uppercase text-rose-600 bg-rose-50 px-2 py-0.5 border border-rose-150 rounded">Blocker Present</span>
-<a href="/activities/{{ act.id }}/closure/" class="h-8 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-[11px] font-black flex items-center justify-center transition-all">
+<span class="text-[11px] font-semibold uppercase text-rose-600 bg-rose-50 px-2 py-0.5 border border-rose-150 rounded">Blocker Present</span>
+<a href="/activities/{{ act.id }}/closure/" class="h-8 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-[11px] font-semibold flex items-center justify-center transition-all">
 Workspace
 </a>
 </div>

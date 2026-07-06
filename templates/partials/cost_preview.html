@@ -1,12 +1,12 @@
 {% load frontend_filters %}
 {% if not success %}
 <div class="bg-rose-50 border border-rose-200 rounded-xl p-3 text-[11px] font-semibold text-rose-700 space-y-1">
-<div class="font-extrabold text-[12px] uppercase">Cost Catalogue Error</div>
+<div class="font-semibold text-[12px] uppercase">Cost Catalogue Error</div>
 <p>{{ error_msg }}</p>
 </div>
 {% else %}
 <div class="space-y-2 text-[12px] text-slate-500 font-sans">
-<div class="flex items-center justify-between text-[11px] font-extrabold uppercase text-slate-400 tracking-wider">
+<div class="flex items-center justify-between text-[11px] font-semibold uppercase text-slate-400 tracking-wider">
 <span>Cost Preview ({% if activity_type == 'training' %}Group Training{% else %}Cluster Meeting{% endif %})</span>
 <span class="text-[11px] font-mono text-slate-400">Ver: {{ preview.catalogue_version }}</span>
 </div>
@@ -26,8 +26,8 @@
 
 <div class="border-t border-slate-100 my-1"></div>
 <div class="flex justify-between items-center text-[14px]">
-<span class="font-extrabold text-slate-600">Total Estimated Cost</span>
-<span class="font-black text-[#2e505f]">{{ preview.amount|ugx }}</span>
+<span class="font-semibold text-slate-600">Total Estimated Cost</span>
+<span class="font-semibold text-[#2e505f]">{{ preview.amount|ugx }}</span>
 </div>
 
 {% if not preview.can_schedule %}

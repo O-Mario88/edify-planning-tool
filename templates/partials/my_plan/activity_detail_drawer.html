@@ -19,10 +19,10 @@ onclick="document.getElementById('drawer-container').innerHTML = ''; document.bo
 <!-- Drawer Header -->
 <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
 <div>
-<span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-150 mb-1">
+<span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-150 mb-1">
 Activity Parameters
 </span>
-<h2 class="text-[18px] font-black text-slate-800 tracking-tight leading-tight">
+<h2 class="text-[18px] font-semibold text-slate-800 tracking-tight leading-tight">
 {{ act.activity_type|title|replace_underscore }}
 </h2>
 </div>
@@ -43,7 +43,7 @@ onclick="document.getElementById('drawer-container').innerHTML = ''; document.bo
 <div class="grid grid-cols-2 gap-4 text-[12px]">
 <div>
 <p class="text-[11px] uppercase font-bold text-slate-400">Target Entity</p>
-<p class="font-extrabold text-[#2e505f] mt-0.5">
+<p class="font-semibold text-[#2e505f] mt-0.5">
 {% if act.school %}
 🏫 {{ act.school.name }} (ID: {{ act.school.school_id }})
 {% elif act.cluster %}
@@ -60,7 +60,7 @@ onclick="document.getElementById('drawer-container').innerHTML = ''; document.bo
 <p class="font-bold text-slate-700 mt-0.5">
 👤 {{ act.responsible_staff_name|default:"CCEO User" }}
 {% if act.delivery_type == 'partner' %}
-<span class="text-blue-600 font-extrabold">(Partner Monitored)</span>
+<span class="text-blue-600 font-semibold">(Partner Monitored)</span>
 {% endif %}
 </p>
 </div>
@@ -136,23 +136,23 @@ Evidence & SF ID ({{ evidence_list|length }})
 <div x-show="activeTab === 'finance'" class="space-y-4" x-transition>
 <div class="bg-slate-50 p-4 border border-slate-100 rounded-xl">
 <p class="text-[11px] uppercase font-bold text-slate-400 mb-1">Total Allocated Budget</p>
-<p class="text-[24px] font-black text-[#2e505f] leading-none">{{ act.est_cost_cents|ugx }}</p>
+<p class="text-[24px] font-semibold text-[#2e505f] leading-none">{{ act.est_cost_cents|ugx }}</p>
 <p class="text-[11px] text-slate-400 font-bold mt-1.5">Created automatically upon planning schedule</p>
 </div>
 
 <div>
 <h4 class="text-[11px] uppercase font-bold text-slate-400 mb-2">Budget Line Verification</h4>
-<div class="border border-slate-150 rounded-xl overflow-hidden">
+<div class=" rounded-xl overflow-hidden">
 <table class="w-full text-left text-[12px] font-semibold">
 <thead>
-<tr class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-150">
+<tr class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-400 border-b ">
 <th class="px-4 py-2.5">Item</th>
 <th class="px-4 py-2.5 text-center">Qty / Rate</th>
 <th class="px-4 py-2.5 text-center">Status</th>
 <th class="px-4 py-2.5 text-right">Value (UGX)</th>
 </tr>
 </thead>
-<tbody class="divide-y divide-slate-150">
+<tbody class="divide-y divide-slate-100">
 {% if act.schedule_cost_lines.all %}
 {% for line in act.schedule_cost_lines.all %}
 <tr>
@@ -166,11 +166,11 @@ Evidence & SF ID ({{ evidence_list|length }})
 {{ line.quantity }} &times; {{ line.unit_cost|ugx }}
 </td>
 <td class="px-4 py-2.5 text-center">
-<span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-bold uppercase bg-blue-50/50 text-blue-700 border border-blue-150/40">
+<span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-bold uppercase bg-blue-50/50 text-blue-700 border /40">
 {{ line.finance_status }}
 </span>
 </td>
-<td class="px-4 py-2.5 text-right font-extrabold text-slate-800">
+<td class="px-4 py-2.5 text-right font-semibold text-slate-800">
 {{ line.amount|ugx }}
 </td>
 </tr>
@@ -204,14 +204,14 @@ No budget lines created.
 <div>
 <h4 class="text-[11px] uppercase font-bold text-slate-400 mb-2">Uploaded Evidence Records</h4>
 {% if evidence_list %}
-<div class="border border-slate-150 rounded-xl divide-y divide-slate-150 overflow-hidden">
+<div class=" rounded-xl divide-y divide-slate-100 overflow-hidden">
 {% for ev in evidence_list %}
 <div class="px-4 py-3 flex items-center justify-between text-[12px]">
 <div>
-<p class="font-extrabold text-slate-800">{{ ev.original_name }}</p>
+<p class="font-semibold text-slate-800">{{ ev.original_name }}</p>
 <p class="text-[11px] text-slate-400 font-bold capitalize mt-0.5">{{ ev.file_type }} &bull; Uploaded {{ ev.created_at|date:"M j, Y" }}</p>
 </div>
-<span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-extrabold uppercase border bg-emerald-50 text-emerald-700 border-emerald-200">
+<span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-semibold uppercase border bg-emerald-50 text-emerald-700 border-emerald-200">
 {{ ev.status }}
 </span>
 </div>
@@ -231,7 +231,7 @@ No evidence files uploaded yet.
 <div class="px-5 py-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-end gap-2.5">
 <button 
 type="button"
-class="btn btn-ghost h-10 text-[12px] shadow-sm font-extrabold"
+class="btn btn-ghost h-10 text-[12px] shadow-sm font-semibold"
 onclick="document.getElementById('drawer-container').innerHTML = ''; document.body.style.overflow = '';"
 >
 Close
@@ -242,7 +242,7 @@ Close
 hx-get="/my-plan/{{ act.id }}/reschedule-drawer"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
-class="btn btn-ghost h-10 text-[12px] text-amber-600 border-amber-200 hover:bg-amber-50 shadow-sm font-extrabold"
+class="btn btn-ghost h-10 text-[12px] text-amber-600 border-amber-200 hover:bg-amber-50 shadow-sm font-semibold"
 >
 Reschedule
 </button>
@@ -250,7 +250,7 @@ Reschedule
 hx-get="/my-plan/{{ act.id }}/complete-drawer"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
-class="btn btn-primary h-10 text-[12px] shadow-sm font-extrabold"
+class="btn btn-primary h-10 text-[12px] shadow-sm font-semibold"
 >
 Complete Activity
 </button>

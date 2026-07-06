@@ -10,7 +10,7 @@
 <!-- Header -->
 <div class="flex items-center justify-between border-b border-slate-200 pb-4">
 <div>
-<h1 class="text-[20px] font-black text-slate-800 tracking-tight">Unmatched SSA Queue</h1>
+<h1 class="text-[20px] font-semibold text-slate-800 tracking-tight">Unmatched SSA Queue</h1>
 <p class="text-[12px] text-slate-400 font-semibold mt-0.5">Manually link SSA records that were uploaded with unknown School IDs.</p>
 </div>
 <a href="/admin-panel/data-quality-center" class="text-[12px] text-slate-500 hover:underline">&larr; Back to Quality Center</a>
@@ -22,28 +22,28 @@
 <table class="w-full text-[12px] border-collapse text-left">
 <thead>
 <tr class="bg-slate-50 border-b border-slate-100">
-<th class="px-4 py-3 text-[11px] font-black uppercase text-slate-500 tracking-wider">SSA School ID</th>
-<th class="px-4 py-3 text-[11px] font-black uppercase text-slate-500 tracking-wider">School Name from SSA</th>
-<th class="px-4 py-3 text-[11px] font-black uppercase text-slate-500 tracking-wider">District</th>
-<th class="px-4 py-3 text-[11px] font-black uppercase text-slate-500 tracking-wider">Assessment Date</th>
-<th class="px-4 py-3 text-[11px] font-black uppercase text-slate-500 tracking-wider">Reason</th>
-<th class="px-4 py-3 text-[11px] font-black uppercase text-slate-500 tracking-wider">Suggested Match</th>
-<th class="px-4 py-3 text-[11px] font-black uppercase text-slate-500 tracking-wider">Status</th>
-<th class="px-4 py-3 text-right text-[11px] font-black uppercase text-slate-500 tracking-wider">Actions</th>
+<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-500 tracking-wider">SSA School ID</th>
+<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-500 tracking-wider">School Name from SSA</th>
+<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-500 tracking-wider">District</th>
+<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-500 tracking-wider">Assessment Date</th>
+<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-500 tracking-wider">Reason</th>
+<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-500 tracking-wider">Suggested Match</th>
+<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-500 tracking-wider">Status</th>
+<th class="px-4 py-3 text-right text-[11px] font-semibold uppercase text-slate-500 tracking-wider">Actions</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100 font-medium">
 {% for r in records %}
 <tr class="hover:bg-slate-50/20">
 <td class="px-4 py-4 font-mono font-bold text-slate-900">ID: {{ r.school_id }}</td>
-<td class="px-4 py-4 text-slate-800 font-extrabold">{{ r.school_name_raw|default:"—" }}</td>
+<td class="px-4 py-4 text-slate-800 font-semibold">{{ r.school_name_raw|default:"—" }}</td>
 <td class="px-4 py-4 text-slate-500">{{ r.district_raw|default:"—" }}</td>
 <td class="px-4 py-4 text-slate-500">{{ r.date_of_ssa }}</td>
 <td class="px-4 py-4 text-rose-600 text-[11px] leading-relaxed">{{ r.reason }}</td>
 <td class="px-4 py-4">
 {% with match=suggested_matches|lookup:r.id %}
 {% if match %}
-<span class="text-blue-600 font-extrabold">{{ match.name }}</span>
+<span class="text-blue-600 font-semibold">{{ match.name }}</span>
 <span class="text-[11px] text-slate-400 block font-semibold">ID: {{ match.school_id }}</span>
 {% else %}
 <span class="text-slate-400">None found</span>
@@ -73,7 +73,7 @@
 {% endfor %}
 </select>
 
-<button type="submit" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-[11px] rounded-lg transition-all shadow-sm">
+<button type="submit" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[11px] rounded-lg transition-all shadow-sm">
 Link
 </button>
 </form>

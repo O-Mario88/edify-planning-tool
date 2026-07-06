@@ -14,7 +14,7 @@
 <span>&bull;</span>
 <span class="text-slate-500">Graduates Directory</span>
 </div>
-<h1 class="text-[28px] font-extrabold text-slate-900 tracking-tight mt-1">Graduated Champion Schools</h1>
+<h1 class="text-[28px] font-semibold text-slate-900 tracking-tight mt-1">Graduated Champion Schools</h1>
 <p class="text-[14px] text-slate-500 font-medium mt-1">Directory of schools that completed their core service package and achieved long-term independent high-performance ratings.</p>
 </div>
 
@@ -31,13 +31,13 @@ class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded
 <!-- Champions Grid / List -->
 <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-6 space-y-4">
 <div class="flex items-center justify-between">
-<h3 class="text-[14px] font-extrabold text-slate-800 tracking-tight">Active Graduated Champions ({{ champions|length }})</h3>
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Active Graduated Champions ({{ champions|length }})</h3>
 </div>
 
 <div class="overflow-x-auto">
 <table class="w-full text-left text-[12px] border-collapse font-sans">
 <thead>
-<tr class="text-slate-400 font-black uppercase text-[11px] border-b border-slate-100 tracking-wider">
+<tr class="text-slate-400 font-semibold uppercase text-[11px] border-b border-slate-100 tracking-wider">
 <th class="py-2.5">School Name</th>
 <th class="py-2.5">Region</th>
 <th class="py-2.5">District</th>
@@ -49,11 +49,11 @@ class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded
 <tbody class="divide-y divide-slate-100 text-slate-700 font-semibold">
 {% for c in champions %}
 <tr class="hover:bg-slate-50/40 transition-colors">
-<td class="py-3.5 text-slate-900 font-extrabold text-[12px]">{{ c.name }}</td>
+<td class="py-3.5 text-slate-900 font-semibold text-[12px]">{{ c.name }}</td>
 <td class="py-3.5 text-slate-500 font-bold">{{ c.region }}</td>
 <td class="py-3.5 text-slate-500 font-bold">{{ c.district }}</td>
-<td class="py-3.5 text-center text-slate-700 font-black">{{ c.onboard_fy }}</td>
-<td class="py-3.5 text-center text-blue-600 font-black">{{ c.latest_avg }}</td>
+<td class="py-3.5 text-center text-slate-700 font-semibold">{{ c.onboard_fy }}</td>
+<td class="py-3.5 text-center text-blue-600 font-semibold">{{ c.latest_avg }}</td>
 <td class="py-3.5 text-center">
 <span class="inline-flex items-center rounded-lg px-2.5 py-0.5 text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
 Graduate Champion

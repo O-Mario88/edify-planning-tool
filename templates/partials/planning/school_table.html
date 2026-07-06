@@ -5,7 +5,7 @@
 <table class="edify-data-table min-w-[1000px]">
 {% if active_tab == 'clusters' %}
 <thead>
-<tr class="border-b border-slate-100 bg-slate-50/50 text-[11px] font-black uppercase text-slate-400 tracking-wider">
+<tr class="border-b border-slate-100 bg-slate-50/50 text-[11px] font-semibold uppercase text-slate-400 tracking-wider">
 <th class="w-10 px-4 py-3.5">
 <input 
 type="checkbox" 
@@ -29,18 +29,18 @@ class="rounded border-slate-300 bg-slate-100/50 cursor-not-allowed opacity-60"
 <td class="px-4 py-3.5">
 <input type="checkbox" disabled class="rounded border-slate-300 bg-slate-100/50 cursor-not-allowed opacity-60">
 </td>
-<td class="px-4 py-3.5 font-extrabold text-slate-900">{{ c.name }}</td>
+<td class="px-4 py-3.5 font-semibold text-slate-900">{{ c.name }}</td>
 <td class="px-4 py-3.5 text-slate-500">{{ c.district }}</td>
 <td class="px-4 py-3.5 text-center text-slate-600 font-bold">{{ c.school_count }}</td>
 <td class="px-4 py-3.5 text-center">
-<span class="inline-flex items-center rounded-lg px-2.5 py-0.5 text-[11px] font-extrabold border bg-emerald-50 text-emerald-700 border-emerald-150/60">
+<span class="inline-flex items-center rounded-lg px-2.5 py-0.5 text-[11px] font-semibold border bg-emerald-50 text-emerald-700 border-emerald-150/60">
 {{ c.avg_ssa }}%
 </span>
 </td>
 <td class="px-4 py-3.5">
 <div class="flex flex-wrap gap-1">
 {% for w in c.weakest_interventions %}
-<span class="inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-extrabold bg-blue-50 text-blue-700 border border-blue-150/60">{{ w }}</span>
+<span class="inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-semibold bg-blue-50 text-blue-700 border /60">{{ w }}</span>
 {% endfor %}
 </div>
 </td>
@@ -52,14 +52,14 @@ class="rounded border-slate-300 bg-slate-100/50 cursor-not-allowed opacity-60"
 <button 
 hx-get="/planning/schedule-modal?cluster_id={{ c.id }}&action=training"
 hx-target="#drawer-container"
-class="h-7 px-3 rounded bg-blue-600 text-white text-[11px] font-black uppercase tracking-wider hover:bg-blue-700 shadow-sm transition-all"
+class="h-7 px-3 rounded bg-blue-600 text-white text-[11px] font-semibold uppercase tracking-wider hover:bg-blue-700 shadow-sm transition-all"
 >
 Group Training
 </button>
 <button 
 hx-get="/planning/schedule-modal?cluster_id={{ c.id }}&action=meeting"
 hx-target="#drawer-container"
-class="h-7 px-3 rounded border border-slate-200 bg-white text-slate-600 text-[11px] font-black uppercase tracking-wider hover:bg-slate-55 shadow-sm transition-all"
+class="h-7 px-3 rounded border border-slate-200 bg-white text-slate-600 text-[11px] font-semibold uppercase tracking-wider hover:bg-slate-55 shadow-sm transition-all"
 >
 Cluster Meeting
 </button>
@@ -77,7 +77,7 @@ No clusters ready to be scheduled.
 </tbody>
 {% elif active_tab == 'partner' %}
 <thead>
-<tr class="border-b border-slate-100 bg-slate-50/50 text-[11px] font-black uppercase text-slate-400 tracking-wider">
+<tr class="border-b border-slate-100 bg-slate-50/50 text-[11px] font-semibold uppercase text-slate-400 tracking-wider">
 <th class="w-10 px-4 py-3.5">
 <input type="checkbox" disabled class="rounded border-slate-300 bg-slate-100/50 cursor-not-allowed opacity-60">
 </th>
@@ -96,9 +96,9 @@ No clusters ready to be scheduled.
 <td class="px-4 py-3.5">
 <input type="checkbox" disabled class="rounded border-slate-300 bg-slate-100/50 cursor-not-allowed opacity-60">
 </td>
-<td class="px-4 py-3.5 font-extrabold text-slate-900">{{ r.name }}</td>
+<td class="px-4 py-3.5 font-semibold text-slate-900">{{ r.name }}</td>
 <td class="px-4 py-3.5 text-slate-500">{{ r.district }}</td>
-<td class="px-4 py-3.5 text-slate-900 font-extrabold">{{ r.currentPartnerType }}</td>
+<td class="px-4 py-3.5 text-slate-900 font-semibold">{{ r.currentPartnerType }}</td>
 <td class="px-4 py-3.5 text-blue-600 font-bold">{{ r.weakestIntervention }}</td>
 <td class="px-4 py-3.5">
 {% if r.planningReadiness == 'Partner Pending Schedule' %}
@@ -178,7 +178,7 @@ class="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
 <td class="px-4 py-3.5 text-slate-400 font-bold">{{ r.schoolId }}</td>
 
 <!-- School Name -->
-<td class="px-4 py-3.5 font-extrabold text-slate-900">{{ r.name }}</td>
+<td class="px-4 py-3.5 font-semibold text-slate-900">{{ r.name }}</td>
 
 <!-- District -->
 <td class="px-4 py-3.5 text-slate-500">{{ r.district }}</td>
@@ -198,32 +198,32 @@ class="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
 <!-- SSA Status -->
 <td class="px-4 py-3.5">
 {% if r.ssaStatus == 'Verified' or r.ssaStatus == 'Already Uploaded' %}
-<span class="inline-flex items-center text-emerald-600 gap-1.5 text-[12px] font-black">
+<span class="inline-flex items-center text-emerald-600 gap-1.5 text-[12px] font-semibold">
 <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
 Verified
 </span>
 {% elif r.ssaStatus == 'No SSA' %}
-<span class="inline-flex items-center text-rose-500 gap-1.5 text-[12px] font-black">
+<span class="inline-flex items-center text-rose-500 gap-1.5 text-[12px] font-semibold">
 <span class="w-2 h-2 rounded-full bg-rose-500"></span>
 No SSA
 </span>
 {% elif r.ssaStatus == 'Pending IA Verification' %}
-<span class="inline-flex items-center text-indigo-500 gap-1.5 text-[12px] font-black">
+<span class="inline-flex items-center text-indigo-500 gap-1.5 text-[12px] font-semibold">
 <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
 Pending Verification
 </span>
 {% elif r.ssaStatus == 'Returned for Correction' %}
-<span class="inline-flex items-center text-red-500 gap-1.5 text-[12px] font-black">
+<span class="inline-flex items-center text-red-500 gap-1.5 text-[12px] font-semibold">
 <span class="w-2 h-2 rounded-full bg-red-500"></span>
 Returned
 </span>
 {% elif r.ssaStatus == 'Expired / Needs Refresh' %}
-<span class="inline-flex items-center text-orange-500 gap-1.5 text-[12px] font-black">
+<span class="inline-flex items-center text-orange-500 gap-1.5 text-[12px] font-semibold">
 <span class="w-2 h-2 rounded-full bg-orange-500"></span>
 Expired
 </span>
 {% else %}
-<span class="inline-flex items-center text-amber-600 gap-1.5 text-[12px] font-black">
+<span class="inline-flex items-center text-amber-600 gap-1.5 text-[12px] font-semibold">
 <span class="w-2 h-2 rounded-full bg-amber-500"></span>
 {{ r.ssaStatus }}
 </span>
@@ -238,12 +238,12 @@ Expired
 <!-- Cost Readiness -->
 <td class="px-4 py-3.5">
 {% if r.cost_ready %}
-<span class="inline-flex items-center text-emerald-700 gap-1 text-[11px] font-black bg-emerald-50/50 px-2 py-0.5 rounded-lg border border-emerald-150/40">
+<span class="inline-flex items-center text-emerald-700 gap-1 text-[11px] font-semibold bg-emerald-50/50 px-2 py-0.5 rounded-lg border border-emerald-150/40">
 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
 Ready
 </span>
 {% else %}
-<span class="inline-flex items-center text-rose-700 gap-1 text-[11px] font-black bg-rose-50/50 px-2 py-0.5 rounded-lg border border-rose-150/40">
+<span class="inline-flex items-center text-rose-700 gap-1 text-[11px] font-semibold bg-rose-50/50 px-2 py-0.5 rounded-lg border border-rose-150/40">
 <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
 Blocked
 </span>

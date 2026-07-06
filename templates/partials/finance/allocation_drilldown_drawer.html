@@ -19,13 +19,13 @@
 <th class="px-3 py-2.5">Entity / Location</th>
 <th class="px-3 py-2.5 text-center">Planned Date</th>
 <th class="px-3 py-2.5 text-center">Status</th>
-<th class="px-4 py-2.5 text-right font-extrabold text-slate-800">Cost (UGX)</th>
+<th class="px-4 py-2.5 text-right font-semibold text-slate-800">Cost (UGX)</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100">
 {% for line in lines %}
 <tr class="hover:bg-slate-50/50">
-<td class="px-4 py-3 font-extrabold text-slate-800 capitalize">
+<td class="px-4 py-3 font-semibold text-slate-800 capitalize">
 {{ line.activity.activity_type|replace_underscore }}
 {% if line.activity.salesforce_activity_id %}
 <p class="text-[11px] font-bold text-slate-400 mt-1">SF ID: {{ line.activity.salesforce_activity_id }}</p>
@@ -44,11 +44,11 @@
 {{ line.activity.planned_date|date:"M j, Y"|default:"Unscheduled" }}
 </td>
 <td class="px-3 py-3 text-center">
-<span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-black uppercase bg-blue-50 text-blue-700 border border-blue-200">
+<span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-semibold uppercase bg-blue-50 text-blue-700 border border-blue-200">
 {{ line.activity.status|replace_underscore }}
 </span>
 </td>
-<td class="px-4 py-3 text-right font-black text-[#2e505f]">{{ line.amount|ugx }}</td>
+<td class="px-4 py-3 text-right font-semibold text-[#2e505f]">{{ line.amount|ugx }}</td>
 </tr>
 {% endfor %}
 </tbody>
@@ -66,7 +66,7 @@ No scheduled activity records exist in this category for the selected month.
 <button 
 type="button"
 @click="$dispatch('close-drawer')"
-class="btn btn-ghost h-10 text-[12px] shadow-sm font-extrabold"
+class="btn btn-ghost h-10 text-[12px] shadow-sm font-semibold"
 >
 Close
 </button>

@@ -9,20 +9,20 @@
 <!-- Header -->
 <div class="flex items-center justify-between border-b border-slate-200 pb-4">
 <div>
-<h1 class="text-[20px] font-black text-slate-800 tracking-tight">Roles & Permissions Matrix</h1>
+<h1 class="text-[20px] font-semibold text-slate-800 tracking-tight">Roles & Permissions Matrix</h1>
 <p class="text-[12px] text-slate-400 font-semibold mt-0.5">Define operational boundaries, read/write locks, and pipeline approvals per role group</p>
 </div>
 
 <div class="flex gap-2">
 <button 
 onclick="alert('Default permissions restored successfully!')"
-class="px-3 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 hover:text-slate-800 text-[11px] font-black uppercase tracking-wider rounded-lg transition-all focus:outline-none"
+class="px-3 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 hover:text-slate-800 text-[11px] font-semibold uppercase tracking-wider rounded-lg transition-all focus:outline-none"
 >
 Restore Defaults
 </button>
 <button 
 onclick="alert('Role permissions saved successfully!')"
-class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-black uppercase tracking-wider rounded-lg shadow-sm transition-all focus:outline-none"
+class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold uppercase tracking-wider rounded-lg shadow-sm transition-all focus:outline-none"
 >
 Save System Changes
 </button>
@@ -35,9 +35,9 @@ Save System Changes
 <table class="w-full text-[12px] border-collapse">
 <thead>
 <tr class="bg-slate-50 border-b border-slate-100 text-left">
-<th class="px-5 py-3.5 text-[11px] font-black uppercase text-slate-400 tracking-wider w-[240px]">Permission Group</th>
+<th class="px-5 py-3.5 text-[11px] font-semibold uppercase text-slate-400 tracking-wider w-[240px]">Permission Group</th>
 {% for role in roles %}
-<th class="px-3 py-3.5 text-center text-[11px] font-black uppercase text-slate-500 tracking-wider">
+<th class="px-3 py-3.5 text-center text-[11px] font-semibold uppercase text-slate-500 tracking-wider">
 {{ role|upper }}
 </th>
 {% endfor %}
@@ -46,7 +46,7 @@ Save System Changes
 <tbody class="divide-y divide-slate-100 font-medium">
 {% for group, role_map in matrix.items %}
 <tr class="hover:bg-slate-50/50 transition-colors">
-<td class="px-5 py-3.5 font-extrabold text-slate-800 border-r border-slate-50">
+<td class="px-5 py-3.5 font-semibold text-slate-800 border-r border-slate-50">
 {{ group }}
 </td>
 {% for role in roles %}

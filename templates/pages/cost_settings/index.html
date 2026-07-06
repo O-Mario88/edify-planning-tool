@@ -8,7 +8,7 @@
 
 <div class="flex items-center justify-between">
 <div>
-<h1 class="text-[24px] font-extrabold text-slate-800 tracking-tight">Cost Catalogue</h1>
+<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight">Cost Catalogue</h1>
 <p class="text-[12px] text-[var(--text-secondary)] mt-1 font-semibold">FY{{ fy }} approved cost items for activity budgeting</p>
 </div>
 </div>
@@ -16,7 +16,7 @@
 <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-center gap-3">
 <span class="text-[20px]">✅</span>
 <div>
-<p class="text-[14px] font-extrabold text-emerald-800">Active Catalogue: {{ active_catalogue }}</p>
+<p class="text-[14px] font-semibold text-emerald-800">Active Catalogue: {{ active_catalogue }}</p>
 <p class="text-[11px] text-emerald-600">Version {{ active_catalogue.version }} · {{ cost_items|length }} cost items</p>
 </div>
 </div>
@@ -36,7 +36,7 @@
 {% for c in cost_items %}
 <tr class="hover:bg-slate-50/60">
 <td class="font-bold text-slate-800">{{ c.item_key|title|replace_underscore }}</td>
-<td class="text-right font-extrabold text-indigo-600">{{ c.rate|floatformat:0 }}</td>
+<td class="text-right font-semibold text-indigo-600">{{ c.rate|floatformat:0 }}</td>
 <td class="text-slate-500">{{ c.unit|default:"per unit" }}</td>
 </tr>
 {% endfor %}

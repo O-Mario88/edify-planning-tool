@@ -6,13 +6,13 @@
 <div class="p-6 max-w-7xl mx-auto space-y-6" x-data="{ payOpen: false, selectedAct: null, partnerName: '', payAmount: 0 }">
 
 <!-- Premium Header Pane -->
-<div class="relative overflow-hidden rounded-3xl bg-slate-900 text-white p-8 shadow-xl border border-slate-800">
+<div class="relative overflow-hidden rounded-xl bg-slate-900 text-white p-8 shadow-md border border-slate-800">
 <div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none"></div>
 <div class="relative z-10 space-y-2">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[11px] font-black uppercase tracking-widest">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[11px] font-semibold uppercase tracking-widest">
 Partner Operations
 </div>
-<h1 class="text-[32px] font-black tracking-tight text-white leading-none">Partner Payment Queue</h1>
+<h1 class="text-[32px] font-semibold tracking-tight text-white leading-none">Partner Payment Queue</h1>
 <p class="text-[14px] text-slate-400 font-medium max-w-xl">
 Manage and release payments for verified partner activities. Partner items appear here only after full IA Verification.
 </p>
@@ -20,7 +20,7 @@ Manage and release payments for verified partner activities. Partner items appea
 </div>
 
 <!-- Table Card -->
-<div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden relative">
+<div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden relative">
 <div class="overflow-x-auto">
 <table class="w-full text-[12px] font-semibold text-slate-700">
 <thead class="bg-slate-50 border-b border-slate-100 text-[11px] uppercase font-bold text-slate-400">
@@ -41,20 +41,20 @@ Manage and release payments for verified partner activities. Partner items appea
 <tr class="hover:bg-slate-50/50 transition-colors">
 <!-- Partner -->
 <td class="px-6 py-4">
-<div class="font-black text-slate-900 text-[12px]">{{ act.assigned_partner_id }}</div>
+<div class="font-semibold text-slate-900 text-[12px]">{{ act.assigned_partner_id }}</div>
 </td>
 <!-- ID -->
 <td class="px-6 py-4">
-<div class="font-extrabold text-slate-900">#{{ act.id|slice:":8" }}</div>
+<div class="font-semibold text-slate-900">#{{ act.id|slice:":8" }}</div>
 <div class="text-[11px] text-slate-400 font-bold uppercase mt-0.5">{{ act.get_activity_type_display }}</div>
 </td>
 <!-- School -->
 <td class="px-6 py-4">
-<div class="font-extrabold text-slate-800 text-[12px]">{{ act.school.name|default:"Cluster-wide" }}</div>
+<div class="font-semibold text-slate-800 text-[12px]">{{ act.school.name|default:"Cluster-wide" }}</div>
 </td>
 <!-- Staff -->
 <td class="px-6 py-4">
-<div class="font-extrabold text-slate-800">{{ act.responsible_staff_id|default:"N/A" }}</div>
+<div class="font-semibold text-slate-800">{{ act.responsible_staff_id|default:"N/A" }}</div>
 </td>
 <!-- Date -->
 <td class="px-6 py-4 text-slate-500 font-medium">
@@ -62,13 +62,13 @@ Manage and release payments for verified partner activities. Partner items appea
 </td>
 <!-- IA Status -->
 <td class="px-6 py-4 text-center">
-<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
 Verified
 </span>
 </td>
 <!-- Payment Amount -->
-<td class="px-6 py-4 text-center text-emerald-600 font-black">
+<td class="px-6 py-4 text-center text-emerald-600 font-semibold">
 UGX 600,000
 </td>
 <!-- Actions -->
@@ -77,7 +77,7 @@ UGX 600,000
 <button 
 @click="payOpen = true; selectedAct = '{{ act.id }}'; partnerName = '{{ act.assigned_partner_id }}'; payAmount = 600000"
 type="button" 
-class="h-8 px-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-extrabold flex items-center justify-center transition-colors shadow-sm"
+class="h-8 px-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-semibold flex items-center justify-center transition-colors shadow-sm"
 >
 Pay Partner
 </button>
@@ -90,7 +90,7 @@ Pay Partner
 {% endfor %}
 {% else %}
 <tr>
-<td colspan="8" class="px-6 py-16 text-center text-[14px] font-extrabold text-slate-400 bg-slate-50/20">
+<td colspan="8" class="px-6 py-16 text-center text-[14px] font-semibold text-slate-400 bg-slate-50/20">
 <div class="flex flex-col items-center justify-center gap-3">
 <div class="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 shadow-inner">
 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" /></svg>
@@ -113,12 +113,12 @@ x-transition:enter-end="translate-x-0"
 x-transition:leave="transition ease-in duration-200 transform"
 x-transition:leave-start="translate-x-0"
 x-transition:leave-end="translate-x-full"
-class="absolute inset-y-0 right-0 w-96 bg-white z-25 p-6 flex flex-col justify-between shadow-xl border-l border-slate-200"
+class="absolute inset-y-0 right-0 w-96 bg-white z-25 p-6 flex flex-col justify-between shadow-md border-l border-slate-200"
 style="display: none;"
 >
 <div class="space-y-6">
 <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-<h3 class="text-[15px] font-black text-slate-800">Process Partner Payment</h3>
+<h3 class="text-[15px] font-semibold text-slate-800">Process Partner Payment</h3>
 <button @click="payOpen = false" class="text-slate-400 hover:text-slate-600">
 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
 </button>
@@ -184,14 +184,14 @@ class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-[12px] foc
 <button 
 form="pay-form"
 type="submit"
-class="w-full h-10 rounded-xl text-white font-extrabold text-[12px] flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-all"
+class="w-full h-10 rounded-xl text-white font-semibold text-[12px] flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-all"
 >
 Confirm Payment
 </button>
 <button 
 @click="payOpen = false"
 type="button" 
-class="w-full h-10 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 font-extrabold text-[12px] flex items-center justify-center transition-all"
+class="w-full h-10 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold text-[12px] flex items-center justify-center transition-all"
 >
 Cancel
 </button>

@@ -8,7 +8,7 @@
 <!-- Header -->
 <div class="flex items-center justify-between border-b border-slate-200 pb-4">
 <div>
-<h1 class="text-[20px] font-black text-slate-800 tracking-tight">Upload Preview</h1>
+<h1 class="text-[20px] font-semibold text-slate-800 tracking-tight">Upload Preview</h1>
 <p class="text-[12px] text-slate-400 font-semibold mt-0.5">Review the parsed SSA assessment rows before confirming import into the directory.</p>
 </div>
 <div class="flex items-center gap-3">
@@ -17,7 +17,7 @@ Cancel Upload
 </a>
 <form method="post" action="">
 {% csrf_token %}
-<button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-[12px] rounded-lg shadow transition-colors">
+<button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[12px] rounded-lg shadow transition-colors">
 Confirm Import ({{ ready_count }} ready)
 </button>
 </form>
@@ -25,24 +25,24 @@ Confirm Import ({{ ready_count }} ready)
 </div>
 
 <!-- Tabs Navigation -->
-<div class="flex border-b border-slate-150 gap-4">
+<div class="flex border-b  gap-4">
 <button 
 @click="tab = 'ready'"
-class="pb-2.5 text-[12px] font-extrabold border-b-2 transition-all focus:outline-none"
+class="pb-2.5 text-[12px] font-semibold border-b-2 transition-all focus:outline-none"
 :class="tab === 'ready' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-600'"
 >
 Ready to Import ({{ ready_count }})
 </button>
 <button 
 @click="tab = 'unmatched'"
-class="pb-2.5 text-[12px] font-extrabold border-b-2 transition-all focus:outline-none"
+class="pb-2.5 text-[12px] font-semibold border-b-2 transition-all focus:outline-none"
 :class="tab === 'unmatched' ? 'border-amber-500 text-amber-500' : 'border-transparent text-slate-500 hover:text-slate-600'"
 >
 Unmatched School IDs ({{ unmatched_count }})
 </button>
 <button 
 @click="tab = 'blocked'"
-class="pb-2.5 text-[12px] font-extrabold border-b-2 transition-all focus:outline-none"
+class="pb-2.5 text-[12px] font-semibold border-b-2 transition-all focus:outline-none"
 :class="tab === 'blocked' ? 'border-rose-600 text-rose-600' : 'border-transparent text-slate-500 hover:text-slate-600'"
 >
 Blocked Rows ({{ blocked_count }})
@@ -58,10 +58,10 @@ Blocked Rows ({{ blocked_count }})
 <table class="w-full text-[12px] text-left border-collapse">
 <thead>
 <tr class="bg-slate-50 border-b border-slate-100">
-<th class="px-4 py-3 text-[11px] font-black uppercase text-slate-400">Row</th>
-<th class="px-4 py-3 text-[11px] font-black uppercase text-slate-400">School ID</th>
-<th class="px-4 py-3 text-[11px] font-black uppercase text-slate-400">Date of SSA</th>
-<th class="px-4 py-3 text-[11px] font-black uppercase text-slate-400">Average Score</th>
+<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-400">Row</th>
+<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-400">School ID</th>
+<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-400">Date of SSA</th>
+<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-400">Average Score</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100 font-semibold text-slate-700">
@@ -90,10 +90,10 @@ Blocked Rows ({{ blocked_count }})
 <table class="w-full text-[12px] text-left border-collapse">
 <thead>
 <tr class="bg-slate-50 border-b border-slate-100">
-<th class="px-4 py-3 text-[11px] font-black uppercase text-slate-400">Row</th>
-<th class="px-4 py-3 text-[11px] font-black uppercase text-slate-400">Unknown School ID</th>
-<th class="px-4 py-3 text-[11px] font-black uppercase text-slate-400">Date of SSA</th>
-<th class="px-4 py-3 text-[11px] font-black uppercase text-slate-400">Message / Warning</th>
+<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-400">Row</th>
+<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-400">Unknown School ID</th>
+<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-400">Date of SSA</th>
+<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-400">Message / Warning</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100 font-semibold text-slate-700">
@@ -118,10 +118,10 @@ Blocked Rows ({{ blocked_count }})
 <table class="w-full text-[12px] text-left border-collapse">
 <thead>
 <tr class="bg-slate-50 border-b border-slate-100">
-<th class="px-4 py-3 text-[11px] font-black uppercase text-slate-400">Row</th>
-<th class="px-4 py-3 text-[11px] font-black uppercase text-slate-400">School ID</th>
-<th class="px-4 py-3 text-[11px] font-black uppercase text-slate-400">Date of SSA</th>
-<th class="px-4 py-3 text-[11px] font-black uppercase text-slate-400">Errors</th>
+<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-400">Row</th>
+<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-400">School ID</th>
+<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-400">Date of SSA</th>
+<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-400">Errors</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100 font-semibold text-slate-700">

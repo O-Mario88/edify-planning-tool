@@ -56,7 +56,7 @@ participants: {{ expected_participants|default:25 }}
 class="space-y-4 font-sans text-[12px] font-bold text-slate-600"
 >
 {% if error_msg %}
-<div class="p-3.5 rounded-xl border border-rose-100 bg-rose-50 text-rose-800 text-[12px] font-extrabold flex items-start gap-2">
+<div class="p-3.5 rounded-xl border border-rose-100 bg-rose-50 text-rose-800 text-[12px] font-semibold flex items-start gap-2">
 <svg class="h-4 w-4 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
 </svg>
@@ -80,7 +80,7 @@ hx-swap="innerHTML"
 <div>
 <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Selected Cluster</label>
 {% if fixed_cluster %}
-<span class="text-[14px] font-extrabold text-slate-800 leading-tight block">{{ selected_cluster.name }}</span>
+<span class="text-[14px] font-semibold text-slate-800 leading-tight block">{{ selected_cluster.name }}</span>
 <input type="hidden" name="cluster_id" value="{{ selected_cluster.id }}">
 <input type="hidden" name="fixed_cluster" value="true">
 {% else %}
@@ -104,12 +104,12 @@ hx-include="#action-planner-form"
 <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Recommended Focus</label>
 <div class="flex flex-wrap gap-1 justify-end max-w-[260px] ml-auto">
 {% for item in weakest_interventions %}
-<span class="inline-block px-2 py-0.5 rounded text-[11px] font-black bg-rose-50 text-rose-600 border border-rose-100 uppercase">
+<span class="inline-block px-2 py-0.5 rounded text-[11px] font-semibold bg-rose-50 text-rose-600 border border-rose-100 uppercase">
 {{ item.label }} ({{ item.avg|floatformat:1 }})
 </span>
 {% empty %}
 {% if recommendation %}
-<span class="inline-block px-2.5 py-0.5 rounded text-[11px] font-black bg-rose-50 text-rose-600 border border-rose-100 uppercase">
+<span class="inline-block px-2.5 py-0.5 rounded text-[11px] font-semibold bg-rose-50 text-rose-600 border border-rose-100 uppercase">
 {{ recommendation.focus_intervention|replace_underscore }}
 </span>
 {% else %}
@@ -316,7 +316,7 @@ x-transition:leave-end="opacity-0 transform scale-95"
 <button type="button" @click="prevMonth()" class="h-6 w-6 flex items-center justify-center rounded-lg hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors">
 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
 </button>
-<span class="font-extrabold text-[12px] text-[#0f172a]" x-text="months[currentMonth] + ' ' + currentYear"></span>
+<span class="font-semibold text-[12px] text-[#0f172a]" x-text="months[currentMonth] + ' ' + currentYear"></span>
 <button type="button" @click="nextMonth()" class="h-6 w-6 flex items-center justify-center rounded-lg hover:bg-slate-50 text-slate-500 hover:text-slate-700 transition-colors">
 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
 </button>
@@ -415,14 +415,14 @@ Active Cost Catalogue required before cluster activity can be scheduled.
 <span class="text-slate-500 font-medium">{{ line.label }}</span>
 <div class="flex items-center gap-6">
 <span class="text-slate-400 text-[11px] font-medium">{{ line.formula }}</span>
-<span class="font-extrabold text-slate-800 min-w-[90px] text-right">UGX {{ line.amount|currency }}</span>
+<span class="font-semibold text-slate-800 min-w-[90px] text-right">UGX {{ line.amount|currency }}</span>
 </div>
 </div>
 {% endfor %}
 
 <div class="border-t border-slate-100 pt-2.5 mt-2 flex justify-between items-center">
 <span class="font-bold text-slate-700">Total Estimated Cost</span>
-<span class="font-black text-[#2e505f] text-[14px] min-w-[90px] text-right">UGX {{ cost_preview.amount|currency }}</span>
+<span class="font-semibold text-[#2e505f] text-[14px] min-w-[90px] text-right">UGX {{ cost_preview.amount|currency }}</span>
 </div>
 </div>
 </div>

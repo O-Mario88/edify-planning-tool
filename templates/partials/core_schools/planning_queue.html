@@ -2,22 +2,22 @@
 {% if planning_queue %}
 <table class="edify-data-table w-full">
 <thead>
-<tr class="bg-slate-50/50 text-[11px] font-black uppercase text-slate-400 tracking-wider text-left">
-<th class="px-4 py-3 font-black">School</th>
-<th class="px-4 py-3 font-black">Region</th>
-<th class="px-4 py-3 font-black">Assigned Staff</th>
-<th class="px-4 py-3 font-black">Assigned Partner</th>
-<th class="px-4 py-3 font-black">Weakest Intervention</th>
-<th class="px-4 py-3 font-black">Next Recommended Support</th>
-<th class="px-4 py-3 font-black text-center">Progress</th>
-<th class="px-4 py-3 text-right font-black">Actions</th>
+<tr class="bg-slate-50/50 text-[11px] font-semibold uppercase text-slate-400 tracking-wider text-left">
+<th class="px-4 py-3 font-semibold">School</th>
+<th class="px-4 py-3 font-semibold">Region</th>
+<th class="px-4 py-3 font-semibold">Assigned Staff</th>
+<th class="px-4 py-3 font-semibold">Assigned Partner</th>
+<th class="px-4 py-3 font-semibold">Weakest Intervention</th>
+<th class="px-4 py-3 font-semibold">Next Recommended Support</th>
+<th class="px-4 py-3 font-semibold text-center">Progress</th>
+<th class="px-4 py-3 text-right font-semibold">Actions</th>
 </tr>
 </thead>
 <tbody class="text-slate-700">
 {% for q in planning_queue %}
 <tr class="hover:bg-slate-50/40 transition-colors">
 <!-- School Name -->
-<td class="px-4 py-2.5 font-extrabold text-slate-800">{{ q.name }}</td>
+<td class="px-4 py-2.5 font-semibold text-slate-800">{{ q.name }}</td>
 
 <!-- Region -->
 <td class="px-4 py-2.5 font-semibold text-slate-500">{{ q.region }}</td>
@@ -25,7 +25,7 @@
 <!-- Assigned Staff -->
 <td class="px-4 py-2.5 font-semibold text-slate-600">
 <div class="flex items-center gap-1.5">
-<span class="h-5 w-5 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-[11px] font-black uppercase">
+<span class="h-5 w-5 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-[11px] font-semibold uppercase">
 {{ q.assigned_staff|slice:":2" }}
 </span>
 <span class="truncate max-w-[100px]">{{ q.assigned_staff }}</span>
@@ -36,7 +36,7 @@
 <td class="px-4 py-2.5 font-semibold text-slate-600">
 <div class="flex items-center gap-1.5">
 {% if q.assigned_partner != "Unassigned" %}
-<span class="h-5 w-5 rounded bg-indigo-50 border border-indigo-200 text-indigo-700 flex items-center justify-center text-[11px] font-black uppercase">
+<span class="h-5 w-5 rounded bg-indigo-50 border border-indigo-200 text-indigo-700 flex items-center justify-center text-[11px] font-semibold uppercase">
 P
 </span>
 <span class="truncate max-w-[120px]">{{ q.assigned_partner }}</span>
@@ -48,13 +48,13 @@ P
 
 <!-- Weakest Intervention -->
 <td class="px-4 py-2.5 font-semibold text-slate-600">
-<span class="inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-extrabold bg-rose-50 text-rose-700 border border-rose-150/60">
+<span class="inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-150/60">
 {{ q.weakest_interventions }}
 </span>
 </td>
 
 <!-- Next Recommended Support -->
-<td class="px-4 py-2.5 font-extrabold text-[#2e505f]">
+<td class="px-4 py-2.5 font-semibold text-[#2e505f]">
 {{ q.next_recommended }}
 </td>
 
@@ -64,7 +64,7 @@ P
 <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden border border-slate-200/50">
 <div class="bg-[#2e505f] h-full rounded-full" style="width: {{ q.progress_pct }}%;"></div>
 </div>
-<div class="flex items-center justify-between w-full text-[11px] font-black text-slate-500 uppercase tracking-wider mt-0.5">
+<div class="flex items-center justify-between w-full text-[11px] font-semibold text-slate-500 uppercase tracking-wider mt-0.5">
 <span class="text-slate-600">{{ q.visits_progress }} V</span>
 <span class="text-slate-600">{{ q.trainings_progress }} T</span>
 </div>
@@ -78,7 +78,7 @@ P
 <button 
 disabled
 title="Add this school to a cluster before core planning can begin."
-class="px-3 h-7 text-[11px] font-black rounded-lg bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed uppercase tracking-wider flex items-center justify-center shrink-0"
+class="px-3 h-7 text-[11px] font-semibold rounded-lg bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed uppercase tracking-wider flex items-center justify-center shrink-0"
 >
 Blocked: Cluster Required
 </button>
@@ -86,7 +86,7 @@ Blocked: Cluster Required
 <button 
 hx-get="/core-schools/assessment?school_id={{ q.school_id }}"
 hx-target="#drawer-container"
-class="px-3 h-7 text-[11px] font-black rounded-lg bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 uppercase tracking-wider flex items-center justify-center shrink-0"
+class="px-3 h-7 text-[11px] font-semibold rounded-lg bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 uppercase tracking-wider flex items-center justify-center shrink-0"
 >
 Upload Assessment
 </button>
@@ -94,7 +94,7 @@ Upload Assessment
 <button 
 hx-get="/core-schools/assessment?school_id={{ q.school_id }}"
 hx-target="#drawer-container"
-class="px-3 h-7 text-[11px] font-black rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 uppercase tracking-wider flex items-center justify-center shrink-0"
+class="px-3 h-7 text-[11px] font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 uppercase tracking-wider flex items-center justify-center shrink-0"
 >
 Review SSA
 </button>
@@ -106,7 +106,7 @@ hx-get="/core-schools/schedule-visit?school_id={{ q.school_id }}"
 hx-get="/core-schools/schedule-training?school_id={{ q.school_id }}"
 {% endif %}
 hx-target="#drawer-container"
-class="px-3 h-7 text-[11px] font-black rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-sm flex items-center justify-center shrink-0 uppercase tracking-wider transition-all"
+class="px-3 h-7 text-[11px] font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-sm flex items-center justify-center shrink-0 uppercase tracking-wider transition-all"
 >
 Plan Now
 </button>
@@ -114,7 +114,7 @@ Plan Now
 
 <!-- More vertical dot action menu -->
 <button 
-class="h-7 w-7 rounded-lg text-slate-400 hover:bg-slate-150/60 hover:text-slate-600 flex items-center justify-center transition-colors"
+class="h-7 w-7 rounded-lg text-slate-400 hover:bg-slate-100/60 hover:text-slate-600 flex items-center justify-center transition-colors"
 title="More actions"
 >
 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/></svg>
@@ -160,11 +160,11 @@ Next
 <div>
 <p class="text-[11px] text-slate-500 font-semibold">
 Showing
-<span class="font-extrabold text-slate-700">{{ page_obj.start_index }}</span>
+<span class="font-semibold text-slate-700">{{ page_obj.start_index }}</span>
 to
-<span class="font-extrabold text-slate-700">{{ page_obj.end_index }}</span>
+<span class="font-semibold text-slate-700">{{ page_obj.end_index }}</span>
 of
-<span class="font-extrabold text-slate-700">{{ page_obj.paginator.count }}</span>
+<span class="font-semibold text-slate-700">{{ page_obj.paginator.count }}</span>
 schools
 </p>
 </div>
@@ -232,7 +232,7 @@ class="relative inline-flex items-center rounded-r-md px-2 py-1.5 text-slate-400
 {% else %}
 <div class="p-8 text-center select-none font-sans">
 <span class="text-[32px] block mb-2">⭐</span>
-<p class="text-[14px] font-extrabold text-slate-700">All core schools are fully planned.</p>
+<p class="text-[14px] font-semibold text-slate-700">All core schools are fully planned.</p>
 </div>
 {% endif %}
 </div>

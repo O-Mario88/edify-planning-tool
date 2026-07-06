@@ -15,7 +15,7 @@ class="space-y-5 text-[12px] font-bold text-slate-600"
 
 <!-- Step 1: Upload Evidence -->
 <div class="space-y-2.5">
-<h4 class="text-[14px] font-extrabold text-slate-800 flex items-center gap-1.5">
+<h4 class="text-[14px] font-semibold text-slate-800 flex items-center gap-1.5">
 <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-50 text-blue-600 text-[11px]">1</span>
 Upload Verification Evidence
 </h4>
@@ -27,14 +27,14 @@ Upload a photo of the meeting, participant list, stamp, or report. This is requi
 <input 
 type="file" 
 name="evidence_file"
-class="text-[11px] text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-[11px] file:font-extrabold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+class="text-[11px] text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-[11px] file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
 >
 </div>
 
 <!-- Listed uploaded evidence files if any exist -->
 {% if evidence_list %}
 <div class="space-y-1.5 pt-2">
-<p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Previously Uploaded Evidence</p>
+<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Previously Uploaded Evidence</p>
 <div class="space-y-1">
 {% for ev in evidence_list %}
 <div class="flex items-center justify-between text-[11px] bg-slate-50 border border-slate-100 rounded-lg p-2">
@@ -50,7 +50,7 @@ class="text-[11px] text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-l
 {% if act.ssaCollectionExpected %}
 <hr class="border-slate-100">
 <div class="space-y-3" x-data="{ ssaCollected: true }">
-<h4 class="text-[14px] font-extrabold text-slate-800 flex items-center gap-1.5">
+<h4 class="text-[14px] font-semibold text-slate-800 flex items-center gap-1.5">
 <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#3b82f6] text-white text-[11px] font-bold">1.5</span>
 SSA Assessment Collection
 </h4>
@@ -69,41 +69,15 @@ An SSA baseline collection was expected for this activity. Please enter the scor
 </label>
 </div>
 
-<!-- SSA Scores Grid -->
-<div x-show="ssaCollected" class="bg-slate-50 p-4 rounded-xl border border-slate-200/60 grid grid-cols-2 gap-3 mt-2">
-<p class="col-span-2 text-[11px] font-extrabold uppercase text-slate-400 tracking-wider">Intervention Scores (0 - 10)</p>
+<!-- SSA Scores Grid (data-driven from SsaIntervention enum) -->
+<div x-show="ssaCollected" class="bg-slate-50 p-4 rounded-xl grid grid-cols-2 gap-3 mt-2">
+<p class="col-span-2 text-[11px] font-semibold uppercase text-slate-400 tracking-wider">Intervention Scores (0 - 10)</p>
+{% for code, label in interventions %}
 <div>
-<label class="block text-[11px] font-bold text-slate-600">Teaching & Learning</label>
-<input type="number" step="0.1" min="0" max="10" name="score_teaching_and_learning" class="w-full h-8 px-2 rounded border border-slate-200 text-[12px] bg-white mt-1">
+<label class="block text-[11px] font-semibold text-slate-600">{{ label }}</label>
+<input type="number" step="0.1" min="0" max="10" name="score_{{ code }}" class="w-full h-8 px-2 rounded-md border border-slate-200 text-[12px] bg-white mt-1">
 </div>
-<div>
-<label class="block text-[11px] font-bold text-slate-600">Financial Health</label>
-<input type="number" step="0.1" min="0" max="10" name="score_financial_health" class="w-full h-8 px-2 rounded border border-slate-200 text-[12px] bg-white mt-1">
-</div>
-<div>
-<label class="block text-[11px] font-bold text-slate-600">Christian Ethos</label>
-<input type="number" step="0.1" min="0" max="10" name="score_christian_ethos" class="w-full h-8 px-2 rounded border border-slate-200 text-[12px] bg-white mt-1">
-</div>
-<div>
-<label class="block text-[11px] font-bold text-slate-600">Leadership & Governance</label>
-<input type="number" step="0.1" min="0" max="10" name="score_leadership_and_governance" class="w-full h-8 px-2 rounded border border-slate-200 text-[12px] bg-white mt-1">
-</div>
-<div>
-<label class="block text-[11px] font-bold text-slate-600">Safe School Environment</label>
-<input type="number" step="0.1" min="0" max="10" name="score_safe_school_environment" class="w-full h-8 px-2 rounded border border-slate-200 text-[12px] bg-white mt-1">
-</div>
-<div>
-<label class="block text-[11px] font-bold text-slate-600">Community Engagement</label>
-<input type="number" step="0.1" min="0" max="10" name="score_community_engagement" class="w-full h-8 px-2 rounded border border-slate-200 text-[12px] bg-white mt-1">
-</div>
-<div>
-<label class="block text-[11px] font-bold text-slate-600">WASH and Infrastructure</label>
-<input type="number" step="0.1" min="0" max="10" name="score_wash_and_infrastructure" class="w-full h-8 px-2 rounded border border-slate-200 text-[12px] bg-white mt-1">
-</div>
-<div>
-<label class="block text-[11px] font-bold text-slate-600">Special Needs/Inclusion</label>
-<input type="number" step="0.1" min="0" max="10" name="score_special_needs_and_inclusion" class="w-full h-8 px-2 rounded border border-slate-200 text-[12px] bg-white mt-1">
-</div>
+{% endfor %}
 </div>
 
 <!-- SSA Bypass Reason -->
@@ -126,7 +100,7 @@ An SSA baseline collection was expected for this activity. Please enter the scor
 
 <!-- Step 2: Finalize Completion -->
 <div class="space-y-4">
-<h4 class="text-[14px] font-extrabold text-slate-800 flex items-center gap-1.5">
+<h4 class="text-[14px] font-semibold text-slate-800 flex items-center gap-1.5">
 <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-50 text-blue-600 text-[11px]">2</span>
 Finalize details
 </h4>
@@ -198,7 +172,7 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] mt-1 bg-s
 type="button"
 hx-get="/schools/create-drawer?cluster_id={{ act.clusterId }}"
 hx-target="#drawer-container"
-class="text-[11px] font-extrabold text-blue-600 hover:text-blue-800 hover:underline"
+class="text-[11px] font-semibold text-blue-600 hover:text-blue-800 hover:underline"
 >
 + Onboard New School
 </button>

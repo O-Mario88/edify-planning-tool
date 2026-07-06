@@ -5,10 +5,10 @@
 <div class="px-5 py-4 border-b border-slate-200 bg-slate-50/50 flex items-center justify-between">
 <div class="flex items-center gap-2">
 <span class="text-[18px]">🏫</span>
-<h2 class="text-[15px] font-extrabold text-slate-800 tracking-tight">
+<h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">
 School Visits Planned for {% if period == 'week' %}This Week{% elif period == 'month' %}This Month{% elif period == 'quarter' %}This Quarter{% else %}This FY{% endif %}
 </h2>
-<span class="px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-[#2e505f]/10 text-[#2e505f] border border-[#2e505f]/20">
+<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#2e505f]/10 text-[#2e505f] border border-[#2e505f]/20">
 {{ school_visits|length }}
 </span>
 </div>
@@ -36,7 +36,7 @@ Open Planning
 <tbody>
 {% for row in school_visits %}
 <tr>
-<td class="font-extrabold text-slate-800 text-[14px]">{{ row.school_name }}</td>
+<td class="font-semibold text-slate-800 text-[14px]">{{ row.school_name }}</td>
 <td class="font-semibold text-slate-500">{{ row.district }}</td>
 <td class="font-bold text-slate-700">{{ row.planned_date|date:"M j, D"|default:"Unscheduled" }}</td>
 <td class="text-slate-600 font-semibold">{{ row.purpose }}</td>

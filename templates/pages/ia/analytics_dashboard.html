@@ -29,7 +29,7 @@ border-radius: 4px;
 <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z" />
 </svg>
 </div>
-<h1 class="text-[24px] font-black text-slate-800 tracking-tight leading-none">Impact Assessment Dashboard</h1>
+<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight leading-none">Impact Assessment Dashboard</h1>
 </div>
 <p class="text-[12px] text-slate-500 font-bold mt-1.5">Data upload, verification, quality control, and compliance monitoring.</p>
 </div>
@@ -38,19 +38,19 @@ border-radius: 4px;
 <div class="flex flex-wrap items-center gap-2">
 <!-- Date selector -->
 <div class="relative">
-<button class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-extrabold text-slate-600 flex items-center gap-1.5 shadow-sm hover:bg-slate-50">
+<button class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-semibold text-slate-600 flex items-center gap-1.5 shadow-sm hover:bg-slate-50">
 <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
 May 19 – May 25, 2025
 </button>
 </div>
 
 <!-- District filter -->
-<select class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-extrabold text-slate-600 shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
+<select class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-semibold text-slate-600 shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
 <option>All Districts</option>
 </select>
 
 <!-- Cluster filter -->
-<select class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-extrabold text-slate-600 shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
+<select class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-semibold text-slate-600 shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
 <option>All Clusters</option>
 </select>
 
@@ -80,8 +80,8 @@ class="h-9 w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 text-[12
 </div>
 <div>
 <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Records Uploaded Today</p>
-<h3 class="text-[20px] font-black text-slate-800 mt-0.5">1,248</h3>
-<span class="text-[11px] text-emerald-600 font-extrabold flex items-center gap-0.5 mt-0.5">
+<h3 class="text-[20px] font-semibold text-slate-800 mt-0.5">1,248</h3>
+<span class="text-[11px] text-emerald-600 font-semibold flex items-center gap-0.5 mt-0.5">
 ▲ 18% <span class="text-slate-400 font-semibold">vs yesterday</span>
 </span>
 </div>
@@ -94,8 +94,8 @@ class="h-9 w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 text-[12
 </div>
 <div>
 <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Pending Verification</p>
-<h3 class="text-[20px] font-black text-slate-800 mt-0.5">{{ kpis.waiting }}</h3>
-<span class="text-[11px] text-emerald-600 font-extrabold flex items-center gap-0.5 mt-0.5">
+<h3 class="text-[20px] font-semibold text-slate-800 mt-0.5">{{ kpis.waiting }}</h3>
+<span class="text-[11px] text-emerald-600 font-semibold flex items-center gap-0.5 mt-0.5">
 ▲ 12% <span class="text-slate-400 font-semibold">vs last week</span>
 </span>
 </div>
@@ -108,8 +108,8 @@ class="h-9 w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 text-[12
 </div>
 <div>
 <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Verified This Week</p>
-<h3 class="text-[20px] font-black text-slate-800 mt-0.5">2,917</h3>
-<span class="text-[11px] text-emerald-600 font-extrabold flex items-center gap-0.5 mt-0.5">
+<h3 class="text-[20px] font-semibold text-slate-800 mt-0.5">2,917</h3>
+<span class="text-[11px] text-emerald-600 font-semibold flex items-center gap-0.5 mt-0.5">
 ▲ 23% <span class="text-slate-400 font-semibold">vs last week</span>
 </span>
 </div>
@@ -122,8 +122,8 @@ class="h-9 w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 text-[12
 </div>
 <div>
 <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Returned for Correction</p>
-<h3 class="text-[20px] font-black text-slate-800 mt-0.5">312</h3>
-<span class="text-[11px] text-rose-600 font-extrabold flex items-center gap-0.5 mt-0.5">
+<h3 class="text-[20px] font-semibold text-slate-800 mt-0.5">312</h3>
+<span class="text-[11px] text-rose-600 font-semibold flex items-center gap-0.5 mt-0.5">
 ▲ 5% <span class="text-slate-400 font-semibold">vs last week</span>
 </span>
 </div>
@@ -137,8 +137,8 @@ class="h-9 w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 text-[12
 <div class="flex-1 min-w-0">
 <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Data Quality Score</p>
 <div class="flex items-baseline justify-between mt-0.5">
-<h3 class="text-[20px] font-black text-slate-800">86%</h3>
-<span class="text-[11px] text-emerald-600 font-black">▲ 4 pts vs last week</span>
+<h3 class="text-[20px] font-semibold text-slate-800">86%</h3>
+<span class="text-[11px] text-emerald-600 font-semibold">▲ 4 pts vs last week</span>
 </div>
 <!-- progress bar -->
 <div class="w-full bg-slate-100 h-1.5 rounded-full mt-1.5 overflow-hidden">
@@ -150,11 +150,11 @@ class="h-9 w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 text-[12
 <!-- Salesforce Queue Pending -->
 <div class="w-[160px] bg-slate-50 p-3 rounded-2xl border border-slate-100/50 flex flex-col justify-between">
 <div class="flex items-center justify-between">
-<span class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Salesforce Queue</span>
+<span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Salesforce Queue</span>
 <span class="h-2 w-2 rounded-full bg-blue-500"></span>
 </div>
 <div class="mt-2">
-<h4 class="text-[18px] font-black text-slate-800 leading-none">1,156</h4>
+<h4 class="text-[18px] font-semibold text-slate-800 leading-none">1,156</h4>
 <span class="text-[11px] font-bold text-slate-400 block mt-1">Pending sync</span>
 </div>
 </div>
@@ -162,11 +162,11 @@ class="h-9 w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 text-[12
 <!-- SSA Submissions Pending -->
 <div class="w-[160px] bg-slate-50 p-3 rounded-2xl border border-slate-100/50 flex flex-col justify-between">
 <div class="flex items-center justify-between">
-<span class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">SSA Submissions</span>
+<span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">SSA Submissions</span>
 <span class="h-2 w-2 rounded-full bg-amber-500"></span>
 </div>
 <div class="mt-2">
-<h4 class="text-[18px] font-black text-slate-800 leading-none">678</h4>
+<h4 class="text-[18px] font-semibold text-slate-800 leading-none">678</h4>
 <span class="text-[11px] font-bold text-slate-400 block mt-1">Pending review</span>
 </div>
 </div>
@@ -174,11 +174,11 @@ class="h-9 w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 text-[12
 <!-- Evidence Files Pending -->
 <div class="w-[160px] bg-slate-50 p-3 rounded-2xl border border-slate-100/50 flex flex-col justify-between">
 <div class="flex items-center justify-between">
-<span class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Evidence Files</span>
+<span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Evidence Files</span>
 <span class="h-2 w-2 rounded-full bg-violet-500"></span>
 </div>
 <div class="mt-2">
-<h4 class="text-[18px] font-black text-slate-800 leading-none">934</h4>
+<h4 class="text-[18px] font-semibold text-slate-800 leading-none">934</h4>
 <span class="text-[11px] font-bold text-slate-400 block mt-1">Pending review</span>
 </div>
 </div>
@@ -191,33 +191,33 @@ class="h-9 w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 text-[12
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
 <!-- DATA UPLOAD / INTAKE CONTROL PANEL (Col Span 3) -->
-<div class="lg:col-span-3 bg-white p-5 rounded-3xl border border-slate-150 shadow-sm flex flex-col justify-between space-y-4">
+<div class="lg:col-span-3 bg-white p-5 rounded-xl  shadow-sm flex flex-col justify-between space-y-4">
 <div>
 <div class="flex items-center gap-1.5 pb-2 border-b border-slate-100">
-<h2 class="text-[14px] font-black text-slate-800 tracking-tight">Data Upload / Intake Control Panel</h2>
+<h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Data Upload / Intake Control Panel</h2>
 <span class="text-slate-300 cursor-pointer" title="Manage bulk uploads and data streams">ⓘ</span>
 </div>
 
 <div class="grid grid-cols-1 gap-2 mt-4">
-<button class="h-9 w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-[11px] font-extrabold text-slate-700 flex items-center justify-start px-3 gap-2 transition-all">
+<button class="h-9 w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-[11px] font-semibold text-slate-700 flex items-center justify-start px-3 gap-2 transition-all">
 📤 Upload SSA Data
 </button>
-<button class="h-9 w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-[11px] font-extrabold text-slate-700 flex items-center justify-start px-3 gap-2 transition-all">
+<button class="h-9 w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-[11px] font-semibold text-slate-700 flex items-center justify-start px-3 gap-2 transition-all">
 📤 Upload Visit Data
 </button>
-<button class="h-9 w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-[11px] font-extrabold text-slate-700 flex items-center justify-start px-3 gap-2 transition-all">
+<button class="h-9 w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-[11px] font-semibold text-slate-700 flex items-center justify-start px-3 gap-2 transition-all">
 📤 Upload Training Attendance
 </button>
-<button class="h-9 w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-[11px] font-extrabold text-slate-700 flex items-center justify-start px-3 gap-2 transition-all">
+<button class="h-9 w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-[11px] font-semibold text-slate-700 flex items-center justify-start px-3 gap-2 transition-all">
 📤 Upload MSC Stories
 </button>
-<button class="h-9 w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-[11px] font-extrabold text-slate-700 flex items-center justify-start px-3 gap-2 transition-all">
+<button class="h-9 w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-[11px] font-semibold text-slate-700 flex items-center justify-start px-3 gap-2 transition-all">
 📤 Upload Exam Results
 </button>
-<button class="h-9 w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-[11px] font-extrabold text-slate-700 flex items-center justify-start px-3 gap-2 transition-all">
+<button class="h-9 w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-[11px] font-semibold text-slate-700 flex items-center justify-start px-3 gap-2 transition-all">
 📤 Upload Enrollment Updates
 </button>
-<button class="h-9 w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[12px] font-black flex items-center justify-center gap-1.5 transition-all shadow-sm">
+<button class="h-9 w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[12px] font-semibold flex items-center justify-center gap-1.5 transition-all shadow-sm">
 ⚡ Import Bulk File
 </button>
 </div>
@@ -227,37 +227,37 @@ class="h-9 w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 text-[12
 <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100 space-y-2 mt-4">
 <div class="flex items-center justify-between text-[11px]">
 <span class="text-slate-500 font-bold">Last upload:</span>
-<span class="text-slate-700 font-black">19 May 2025, 09:40 AM</span>
+<span class="text-slate-700 font-semibold">19 May 2025, 09:40 AM</span>
 </div>
 <div class="flex items-center justify-between text-[11px]">
 <span class="text-slate-500 font-bold">Failed uploads:</span>
-<span class="text-rose-600 font-black cursor-pointer hover:underline">5 &bull; View all</span>
+<span class="text-rose-600 font-semibold cursor-pointer hover:underline">5 &bull; View all</span>
 </div>
 <div class="flex items-center justify-between text-[11px]">
 <span class="text-slate-500 font-bold flex items-center gap-1">
 <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
 Processing now:
 </span>
-<span class="text-slate-700 font-black">12 files</span>
+<span class="text-slate-700 font-semibold">12 files</span>
 </div>
 </div>
 </div>
 
 <!-- VERIFICATION WORK QUEUE (Col Span 6) -->
-<div class="lg:col-span-6 bg-white p-5 rounded-3xl border border-slate-150 shadow-sm flex flex-col justify-between">
+<div class="lg:col-span-6 bg-white p-5 rounded-xl  shadow-sm flex flex-col justify-between">
 <div>
 <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-<h2 class="text-[14px] font-black text-slate-800 tracking-tight">Verification Work Queue</h2>
-<a href="/ia/verification/" class="text-[11px] font-black text-blue-600 hover:underline">View all &rarr;</a>
+<h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Verification Work Queue</h2>
+<a href="/ia/verification/" class="text-[11px] font-semibold text-blue-600 hover:underline">View all &rarr;</a>
 </div>
 
 <!-- Interactive Tabs -->
 <div class="flex flex-wrap gap-1 mt-3 border-b border-slate-100 pb-2">
-<button class="px-3 py-1.5 bg-slate-900 text-white text-[11px] font-extrabold rounded-lg">All Pending</button>
-<button class="px-3 py-1.5 hover:bg-slate-50 text-slate-500 text-[11px] font-extrabold rounded-lg">Salesforce Verification <span class="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full text-[11px] font-black">1,156</span></button>
-<button class="px-3 py-1.5 hover:bg-slate-50 text-slate-500 text-[11px] font-extrabold rounded-lg">SSA Review <span class="bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full text-[11px] font-black">678</span></button>
-<button class="px-3 py-1.5 hover:bg-slate-50 text-slate-500 text-[11px] font-extrabold rounded-lg">Evidence Review <span class="bg-violet-100 text-violet-700 px-1.5 py-0.5 rounded-full text-[11px] font-black">934</span></button>
-<button class="px-3 py-1.5 hover:bg-slate-50 text-slate-500 text-[11px] font-extrabold rounded-lg">Returned <span class="bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded-full text-[11px] font-black">312</span></button>
+<button class="px-3 py-1.5 bg-slate-900 text-white text-[11px] font-semibold rounded-lg">All Pending</button>
+<button class="px-3 py-1.5 hover:bg-slate-50 text-slate-500 text-[11px] font-semibold rounded-lg">Salesforce Verification <span class="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full text-[11px] font-semibold">1,156</span></button>
+<button class="px-3 py-1.5 hover:bg-slate-50 text-slate-500 text-[11px] font-semibold rounded-lg">SSA Review <span class="bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full text-[11px] font-semibold">678</span></button>
+<button class="px-3 py-1.5 hover:bg-slate-50 text-slate-500 text-[11px] font-semibold rounded-lg">Evidence Review <span class="bg-violet-100 text-violet-700 px-1.5 py-0.5 rounded-full text-[11px] font-semibold">934</span></button>
+<button class="px-3 py-1.5 hover:bg-slate-50 text-slate-500 text-[11px] font-semibold rounded-lg">Returned <span class="bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded-full text-[11px] font-semibold">312</span></button>
 </div>
 
 <!-- Table -->
@@ -278,8 +278,8 @@ Processing now:
 <tbody class="divide-y divide-slate-50">
 {% for item in queue_items %}
 <tr class="hover:bg-slate-50/50 transition-colors">
-<td class="py-3 font-extrabold text-blue-600">{{ item.record_id }}</td>
-<td class="py-3 font-extrabold text-slate-800">{{ item.school }}</td>
+<td class="py-3 font-semibold text-blue-600">{{ item.record_id }}</td>
+<td class="py-3 font-semibold text-slate-800">{{ item.school }}</td>
 <td class="py-3 font-semibold text-slate-500">{{ item.district }}</td>
 <td class="py-3">
 <span class="inline-flex items-center rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] font-bold text-slate-700 border border-slate-200">
@@ -295,8 +295,8 @@ Processing now:
 </td>
 <td class="py-3 text-right">
 <div class="flex items-center justify-end gap-1.5">
-<button class="h-6 px-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[11px] font-extrabold">Verify</button>
-<button class="h-6 px-2 bg-white border border-rose-200 hover:bg-rose-50 text-rose-600 rounded text-[11px] font-extrabold">Return</button>
+<button class="h-6 px-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[11px] font-semibold">Verify</button>
+<button class="h-6 px-2 bg-white border border-rose-200 hover:bg-rose-50 text-rose-600 rounded text-[11px] font-semibold">Return</button>
 <span class="text-slate-300 font-bold cursor-pointer px-1 hover:text-slate-600">&#8942;</span>
 </div>
 </td>
@@ -315,28 +315,28 @@ Processing now:
 <div class="flex items-center justify-between border-t border-slate-100 pt-4 mt-4">
 <span class="text-[11px] text-slate-400 font-bold">Showing 1 to 5 of 3,842 records</span>
 <div class="flex items-center gap-1">
-<button class="h-7 w-7 rounded-lg border border-slate-200 hover:bg-slate-50 text-[11px] font-extrabold flex items-center justify-center text-slate-400">&lt;</button>
-<button class="h-7 w-7 rounded-lg bg-slate-900 text-white text-[11px] font-extrabold flex items-center justify-center">1</button>
-<button class="h-7 w-7 rounded-lg border border-slate-200 hover:bg-slate-50 text-[11px] font-extrabold flex items-center justify-center text-slate-600">2</button>
-<button class="h-7 w-7 rounded-lg border border-slate-200 hover:bg-slate-50 text-[11px] font-extrabold flex items-center justify-center text-slate-600">3</button>
-<button class="h-7 w-7 rounded-lg border border-slate-200 hover:bg-slate-50 text-[11px] font-extrabold flex items-center justify-center text-slate-600">4</button>
-<button class="h-7 w-7 rounded-lg border border-slate-200 hover:bg-slate-50 text-[11px] font-extrabold flex items-center justify-center text-slate-600">5</button>
+<button class="h-7 w-7 rounded-lg border border-slate-200 hover:bg-slate-50 text-[11px] font-semibold flex items-center justify-center text-slate-400">&lt;</button>
+<button class="h-7 w-7 rounded-lg bg-slate-900 text-white text-[11px] font-semibold flex items-center justify-center">1</button>
+<button class="h-7 w-7 rounded-lg border border-slate-200 hover:bg-slate-50 text-[11px] font-semibold flex items-center justify-center text-slate-600">2</button>
+<button class="h-7 w-7 rounded-lg border border-slate-200 hover:bg-slate-50 text-[11px] font-semibold flex items-center justify-center text-slate-600">3</button>
+<button class="h-7 w-7 rounded-lg border border-slate-200 hover:bg-slate-50 text-[11px] font-semibold flex items-center justify-center text-slate-600">4</button>
+<button class="h-7 w-7 rounded-lg border border-slate-200 hover:bg-slate-50 text-[11px] font-semibold flex items-center justify-center text-slate-600">5</button>
 <span class="text-slate-400 font-bold px-1">..</span>
-<button class="h-7 w-7 rounded-lg border border-slate-200 hover:bg-slate-50 text-[11px] font-extrabold flex items-center justify-center text-slate-600">769</button>
-<button class="h-7 w-7 rounded-lg border border-slate-200 hover:bg-slate-50 text-[11px] font-extrabold flex items-center justify-center text-slate-600">&gt;</button>
+<button class="h-7 w-7 rounded-lg border border-slate-200 hover:bg-slate-50 text-[11px] font-semibold flex items-center justify-center text-slate-600">769</button>
+<button class="h-7 w-7 rounded-lg border border-slate-200 hover:bg-slate-50 text-[11px] font-semibold flex items-center justify-center text-slate-600">&gt;</button>
 </div>
 </div>
 </div>
 
 <!-- ALERTS / EXCEPTIONS (Col Span 3) -->
-<div class="lg:col-span-3 bg-white p-5 rounded-3xl border border-slate-150 shadow-sm flex flex-col justify-between">
+<div class="lg:col-span-3 bg-white p-5 rounded-xl  shadow-sm flex flex-col justify-between">
 <div>
 <div class="flex items-center justify-between pb-3 border-b border-slate-100">
 <div class="flex items-center gap-1.5">
-<h2 class="text-[14px] font-black text-slate-800 tracking-tight">Alerts / Exceptions</h2>
-<span class="bg-rose-500 text-white font-extrabold rounded-full h-5 px-1.5 text-[11px] flex items-center justify-center">8</span>
+<h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Alerts / Exceptions</h2>
+<span class="bg-rose-500 text-white font-semibold rounded-full h-5 px-1.5 text-[11px] flex items-center justify-center">8</span>
 </div>
-<a href="/data-quality/duplicates" class="text-[11px] font-black text-blue-600 hover:underline">View all &rarr;</a>
+<a href="/data-quality/duplicates" class="text-[11px] font-semibold text-blue-600 hover:underline">View all &rarr;</a>
 </div>
 
 <div class="space-y-2 mt-4">
@@ -344,14 +344,14 @@ Processing now:
 <div class="p-3 bg-slate-50 hover:bg-slate-100/80 rounded-2xl border border-slate-100 flex items-start gap-3 transition-colors cursor-pointer group">
 <!-- custom alert colored shapes -->
 {% if exception.severity == 'error' %}
-<div class="h-5 w-5 bg-rose-100 text-rose-600 font-black rounded-lg flex items-center justify-center text-[11px] shrink-0 mt-0.5">⚠️</div>
+<div class="h-5 w-5 bg-rose-100 text-rose-600 font-semibold rounded-lg flex items-center justify-center text-[11px] shrink-0 mt-0.5">⚠️</div>
 {% elif exception.severity == 'warning' %}
-<div class="h-5 w-5 bg-amber-100 text-amber-600 font-black rounded-lg flex items-center justify-center text-[11px] shrink-0 mt-0.5">⚡</div>
+<div class="h-5 w-5 bg-amber-100 text-amber-600 font-semibold rounded-lg flex items-center justify-center text-[11px] shrink-0 mt-0.5">⚡</div>
 {% else %}
-<div class="h-5 w-5 bg-blue-100 text-blue-600 font-black rounded-lg flex items-center justify-center text-[11px] shrink-0 mt-0.5">ℹ️</div>
+<div class="h-5 w-5 bg-blue-100 text-blue-600 font-semibold rounded-lg flex items-center justify-center text-[11px] shrink-0 mt-0.5">ℹ️</div>
 {% endif %}
 <div class="flex-1 min-w-0">
-<p class="text-[12px] font-black text-slate-800 leading-tight">
+<p class="text-[12px] font-semibold text-slate-800 leading-tight">
 <span class="{% if exception.severity == 'error' %}text-rose-600{% elif exception.severity == 'warning' %}text-amber-600{% else %}text-blue-600{% endif %}">{{ exception.count }}</span>
 {{ exception.text }}
 </p>
@@ -362,7 +362,7 @@ Processing now:
 </div>
 </div>
 
-<a href="/data-quality/duplicates" class="text-[11px] font-extrabold text-blue-600 hover:underline text-center block mt-4 border-t border-slate-50 pt-3 uppercase tracking-wider">
+<a href="/data-quality/duplicates" class="text-[11px] font-semibold text-blue-600 hover:underline text-center block mt-4 border-t border-slate-50 pt-3 uppercase tracking-wider">
 Go to Data Quality
 </a>
 </div>
@@ -374,9 +374,9 @@ Go to Data Quality
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
 <!-- DATA QUALITY & COMPLIANCE PANEL (Col Span 3) -->
-<div class="lg:col-span-3 bg-white p-5 rounded-3xl border border-slate-150 shadow-sm space-y-4">
+<div class="lg:col-span-3 bg-white p-5 rounded-xl  shadow-sm space-y-4">
 <div class="pb-2 border-b border-slate-100">
-<h2 class="text-[14px] font-black text-slate-800 tracking-tight">Data Quality & Compliance Panel</h2>
+<h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Data Quality & Compliance Panel</h2>
 </div>
 
 <div class="grid grid-cols-1 gap-3">
@@ -384,9 +384,9 @@ Go to Data Quality
 <div class="flex items-center justify-between p-3 rounded-2xl bg-slate-50/50 border border-slate-100">
 <div>
 <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{{ metric.label }}</p>
-<h4 class="text-[18px] font-black text-slate-800 mt-0.5">{{ metric.value }}</h4>
+<h4 class="text-[18px] font-semibold text-slate-800 mt-0.5">{{ metric.value }}</h4>
 </div>
-<span class="text-[11px] font-extrabold {{ metric.trend_class }}">{{ metric.trend }}</span>
+<span class="text-[11px] font-semibold {{ metric.trend_class }}">{{ metric.trend }}</span>
 </div>
 {% endfor %}
 </div>
@@ -399,10 +399,10 @@ Go to Data Quality
 </div>
 
 <!-- SSA MONITORING ANALYTICS (Col Span 4) -->
-<div class="lg:col-span-4 bg-white p-5 rounded-3xl border border-slate-150 shadow-sm space-y-6">
+<div class="lg:col-span-4 bg-white p-5 rounded-xl  shadow-sm space-y-6">
 <div class="flex items-center justify-between pb-2 border-b border-slate-100">
-<h2 class="text-[14px] font-black text-slate-800 tracking-tight">SSA Monitoring Analytics</h2>
-<a href="/analytics" class="text-[11px] font-black text-blue-600 hover:underline">View full analytics &rarr;</a>
+<h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">SSA Monitoring Analytics</h2>
+<a href="/analytics" class="text-[11px] font-semibold text-blue-600 hover:underline">View full analytics &rarr;</a>
 </div>
 
 <!-- Donut & Bar chart container -->
@@ -418,7 +418,7 @@ Go to Data Quality
 <path class="text-violet-500" stroke-dasharray="23, 100" stroke-dashoffset="-77" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
 </svg>
 <div class="absolute flex flex-col justify-center items-center">
-<span class="text-[15px] font-black text-slate-800 leading-none">2,489</span>
+<span class="text-[15px] font-semibold text-slate-800 leading-none">2,489</span>
 <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wide mt-0.5">Total SSAs</span>
 </div>
 </div>
@@ -431,7 +431,7 @@ Go to Data Quality
 
 <!-- Lowest Performing Interventions -->
 <div class="space-y-3">
-<h4 class="text-[11px] font-black text-slate-400 uppercase tracking-wider pb-1 border-b border-slate-50">Lowest Interventions</h4>
+<h4 class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider pb-1 border-b border-slate-50">Lowest Interventions</h4>
 {% for item in lowest_performing %}
 <div class="space-y-1">
 <div class="flex items-center justify-between text-[11px] font-bold text-slate-700">
@@ -452,18 +452,18 @@ Go to Data Quality
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-slate-100">
 <!-- Leaderboard list -->
 <div>
-<h4 class="text-[11px] font-black text-slate-400 uppercase tracking-wider mb-2">Completion Leaderboard</h4>
+<h4 class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Completion Leaderboard</h4>
 <div class="space-y-2">
 {% for item in leaderboard_dc %}
 <div class="flex items-center justify-between text-[11px]">
 <span class="text-slate-500 font-bold flex items-center gap-1">
-<span class="text-slate-300 font-black text-[11px]">{{ forloop.counter }}</span> {{ item.name }}
+<span class="text-slate-300 font-semibold text-[11px]">{{ forloop.counter }}</span> {{ item.name }}
 </span>
 <div class="flex items-center gap-2">
 <div class="w-16 bg-slate-100 h-1.5 rounded-full overflow-hidden hidden sm:block">
 <div class="bg-teal-500 h-full rounded-full" style="width: {{ item.rate }}%"></div>
 </div>
-<span class="text-slate-800 font-extrabold">{{ item.rate }}%</span>
+<span class="text-slate-800 font-semibold">{{ item.rate }}%</span>
 </div>
 </div>
 {% empty %}
@@ -481,7 +481,7 @@ Go to Data Quality
 <path class="text-teal-500" stroke-dasharray="72, 100" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
 </svg>
 <div class="absolute flex flex-col justify-center items-center">
-<span class="text-[18px] font-black text-slate-800 leading-none">72%</span>
+<span class="text-[18px] font-semibold text-slate-800 leading-none">72%</span>
 <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wide mt-0.5">Reviewed</span>
 </div>
 </div>
@@ -495,14 +495,14 @@ Go to Data Quality
 </div>
 
 <!-- EVIDENCE REVIEW PANEL (Col Span 3) -->
-<div class="lg:col-span-3 bg-white p-5 rounded-3xl border border-slate-150 shadow-sm flex flex-col justify-between">
+<div class="lg:col-span-3 bg-white p-5 rounded-xl  shadow-sm flex flex-col justify-between">
 <div>
 <div class="flex items-center justify-between pb-3 border-b border-slate-100">
 <div class="flex items-center gap-1.5">
-<h2 class="text-[14px] font-black text-slate-800 tracking-tight">Evidence Review Panel</h2>
+<h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Evidence Review Panel</h2>
 <span class="text-slate-300 cursor-pointer" title="Verification logs by document type">ⓘ</span>
 </div>
-<a href="/evidence" class="text-[11px] font-black text-blue-600 hover:underline">View all &rarr;</a>
+<a href="/evidence" class="text-[11px] font-semibold text-blue-600 hover:underline">View all &rarr;</a>
 </div>
 
 <div class="overflow-x-auto mt-4">
@@ -521,18 +521,18 @@ Go to Data Quality
 <tr class="hover:bg-slate-50/50 transition-colors">
 <td class="py-2.5 font-bold text-slate-800">{{ metric.category }}</td>
 <td class="py-2.5 text-right text-slate-600 font-semibold">{{ metric.submitted }}</td>
-<td class="py-2.5 text-right text-emerald-600 font-extrabold">{{ metric.verified }}</td>
-<td class="py-2.5 text-right text-amber-600 font-extrabold">{{ metric.returned }}</td>
-<td class="py-2.5 text-right text-rose-600 font-extrabold">{{ metric.rejected }}</td>
+<td class="py-2.5 text-right text-emerald-600 font-semibold">{{ metric.verified }}</td>
+<td class="py-2.5 text-right text-amber-600 font-semibold">{{ metric.returned }}</td>
+<td class="py-2.5 text-right text-rose-600 font-semibold">{{ metric.rejected }}</td>
 </tr>
 {% endfor %}
 <!-- Bold aggregate summary row -->
-<tr class="border-t border-slate-200 font-black text-slate-800">
-<td class="py-3 uppercase tracking-wider font-extrabold">Total</td>
+<tr class="border-t border-slate-200 font-semibold text-slate-800">
+<td class="py-3 uppercase tracking-wider font-semibold">Total</td>
 <td class="py-3 text-right">6,427</td>
-<td class="py-3 text-right text-emerald-600 font-black">4,683</td>
-<td class="py-3 text-right text-amber-700 font-black">1,233</td>
-<td class="py-3 text-right text-rose-700 font-black">423</td>
+<td class="py-3 text-right text-emerald-600 font-semibold">4,683</td>
+<td class="py-3 text-right text-amber-700 font-semibold">1,233</td>
+<td class="py-3 text-right text-rose-700 font-semibold">423</td>
 </tr>
 </tbody>
 </table>
@@ -541,20 +541,20 @@ Go to Data Quality
 </div>
 
 <!-- RECENT ACTIVITY FEED (Col Span 2) -->
-<div class="lg:col-span-2 bg-white p-5 rounded-3xl border border-slate-150 shadow-sm flex flex-col justify-between">
+<div class="lg:col-span-2 bg-white p-5 rounded-xl  shadow-sm flex flex-col justify-between">
 <div>
 <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-<h2 class="text-[14px] font-black text-slate-800 tracking-tight">Recent Activity Feed</h2>
-<a href="#" class="text-[11px] font-black text-blue-600 hover:underline">View all &rarr;</a>
+<h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Recent Activity Feed</h2>
+<a href="#" class="text-[11px] font-semibold text-blue-600 hover:underline">View all &rarr;</a>
 </div>
 
-<div class="relative border-l border-slate-150 ml-2 pl-4 space-y-5 mt-4">
+<div class="relative border-l  ml-2 pl-4 space-y-5 mt-4">
 {% for act in recent_activities %}
 <div class="relative">
 <!-- circular dot on timeline -->
 <span class="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-slate-900 shadow-sm"></span>
 <div class="space-y-0.5">
-<h4 class="text-[12px] font-black text-slate-800 leading-tight">{{ act.title }}</h4>
+<h4 class="text-[12px] font-semibold text-slate-800 leading-tight">{{ act.title }}</h4>
 <p class="text-[11px] text-slate-500 font-semibold">{{ act.detail }}</p>
 <span class="text-[11px] text-slate-400 font-bold block mt-0.5">{{ act.time }}</span>
 </div>
@@ -565,7 +565,7 @@ Go to Data Quality
 </div>
 </div>
 
-<a href="#" class="text-[11px] font-extrabold text-blue-600 hover:underline text-center block mt-4 border-t border-slate-50 pt-3 uppercase tracking-wider">
+<a href="#" class="text-[11px] font-semibold text-blue-600 hover:underline text-center block mt-4 border-t border-slate-50 pt-3 uppercase tracking-wider">
 View all activity
 </a>
 </div>
@@ -577,9 +577,9 @@ View all activity
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
 <!-- FIELD MONITORING / STAFF COMPLIANCE (Col Span 9) -->
-<div class="lg:col-span-9 bg-white p-5 rounded-3xl border border-slate-150 shadow-sm space-y-4">
+<div class="lg:col-span-9 bg-white p-5 rounded-xl  shadow-sm space-y-4">
 <div class="flex items-center gap-1.5 pb-2 border-b border-slate-100">
-<h2 class="text-[14px] font-black text-slate-800 tracking-tight">Field Monitoring / Staff Compliance</h2>
+<h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Field Monitoring / Staff Compliance</h2>
 <span class="text-slate-300 cursor-pointer" title="Compliance stats and verifier queues">ⓘ</span>
 </div>
 
@@ -587,12 +587,12 @@ View all activity
 
 <!-- Col 1: Staff with Highest Pending Queue -->
 <div class="lg:col-span-3 space-y-3">
-<h4 class="text-[11px] font-black text-slate-400 uppercase tracking-wider pb-1 border-b border-slate-50">Highest Pending Queue</h4>
+<h4 class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider pb-1 border-b border-slate-50">Highest Pending Queue</h4>
 <div class="space-y-2">
 {% for item in field_monitoring.highest_pending %}
 <div class="flex items-center justify-between text-[12px] font-bold">
 <span class="text-slate-700">{{ item.name }}</span>
-<span class="text-rose-600 font-black">{{ item.count }}</span>
+<span class="text-rose-600 font-semibold">{{ item.count }}</span>
 </div>
 {% endfor %}
 </div>
@@ -600,12 +600,12 @@ View all activity
 
 <!-- Col 2: Partner Submissions Pending -->
 <div class="lg:col-span-3 space-y-3">
-<h4 class="text-[11px] font-black text-slate-400 uppercase tracking-wider pb-1 border-b border-slate-50">Partner Pending Submissions</h4>
+<h4 class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider pb-1 border-b border-slate-50">Partner Pending Submissions</h4>
 <div class="space-y-2">
 {% for item in field_monitoring.partner_submissions %}
 <div class="flex items-center justify-between text-[12px] font-bold">
 <span class="text-slate-700">{{ item.name }}</span>
-<span class="text-amber-600 font-black">{{ item.count }}</span>
+<span class="text-amber-600 font-semibold">{{ item.count }}</span>
 </div>
 {% endfor %}
 </div>
@@ -613,12 +613,12 @@ View all activity
 
 <!-- Col 3: Top Verifiers -->
 <div class="lg:col-span-3 space-y-3">
-<h4 class="text-[11px] font-black text-slate-400 uppercase tracking-wider pb-1 border-b border-slate-50">Top Verifiers (This Week)</h4>
+<h4 class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider pb-1 border-b border-slate-50">Top Verifiers (This Week)</h4>
 <div class="space-y-2">
 {% for item in field_monitoring.top_verifiers %}
 <div class="flex items-center justify-between text-[12px] font-bold">
 <span class="text-slate-700">{{ item.name }}</span>
-<span class="text-emerald-600 font-black">{{ item.count }}</span>
+<span class="text-emerald-600 font-semibold">{{ item.count }}</span>
 </div>
 {% endfor %}
 </div>
@@ -628,11 +628,11 @@ View all activity
 <div class="lg:col-span-3 flex flex-col justify-between space-y-4">
 <!-- List -->
 <div class="space-y-2">
-<h4 class="text-[11px] font-black text-slate-400 uppercase tracking-wider pb-1 border-b border-slate-50">Slowest Turnaround</h4>
+<h4 class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider pb-1 border-b border-slate-50">Slowest Turnaround</h4>
 {% for item in field_monitoring.slowest_turnaround %}
 <div class="flex items-center justify-between text-[11px] font-bold">
 <span class="text-slate-700 truncate pr-1">{{ item.name }}</span>
-<span class="text-rose-500 font-black">{{ item.time }}</span>
+<span class="text-rose-500 font-semibold">{{ item.time }}</span>
 </div>
 {% endfor %}
 </div>
@@ -641,21 +641,21 @@ View all activity
 <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
 <!-- SLA Gauge -->
 <div class="flex flex-col items-center justify-center p-2 rounded-2xl bg-slate-50 border border-slate-100 text-center">
-<span class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Verification SLA</span>
+<span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Verification SLA</span>
 <div class="relative h-12 w-12 flex items-center justify-center mt-1">
 <svg class="h-full w-full -rotate-90" viewBox="0 0 36 36">
 <path class="text-slate-100" stroke-width="2" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
 <path class="text-emerald-500" stroke-dasharray="84, 100" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
 </svg>
-<span class="absolute text-[11px] font-black text-slate-800 leading-none">84%</span>
+<span class="absolute text-[11px] font-semibold text-slate-800 leading-none">84%</span>
 </div>
 <span class="text-[11px] text-slate-400 font-bold mt-1">Within SLA</span>
 </div>
 
 <!-- Correction follow-up -->
 <div class="flex flex-col items-center justify-center p-2 rounded-2xl bg-slate-50 border border-slate-100 text-center">
-<span class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Awaiting Follow-up</span>
-<h4 class="text-[18px] font-black text-slate-800 leading-none mt-1">162</h4>
+<span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Awaiting Follow-up</span>
+<h4 class="text-[18px] font-semibold text-slate-800 leading-none mt-1">162</h4>
 <span class="text-[11px] text-slate-400 font-bold mt-1">Schools</span>
 </div>
 </div>
@@ -665,46 +665,46 @@ View all activity
 </div>
 
 <!-- QUICK ACTIONS / WORKFLOWS (Col Span 3) -->
-<div class="lg:col-span-3 bg-white p-5 rounded-3xl border border-slate-150 shadow-sm space-y-4">
+<div class="lg:col-span-3 bg-white p-5 rounded-xl  shadow-sm space-y-4">
 <div class="pb-2 border-b border-slate-100">
-<h2 class="text-[14px] font-black text-slate-800 tracking-tight">Quick Actions / Workflows</h2>
+<h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Quick Actions / Workflows</h2>
 </div>
 
 <div class="grid grid-cols-2 gap-2">
 <!-- Start Verification -->
 <button class="h-20 bg-emerald-50 hover:bg-emerald-100/70 border border-emerald-100 rounded-2xl p-3 flex flex-col justify-between items-center text-center transition-all group">
-<div class="h-7 w-7 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs shadow-sm font-black group-hover:scale-105 transition-transform">✓</div>
-<span class="text-[11px] font-black text-slate-700 block mt-1">Start Verification</span>
+<div class="h-7 w-7 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs shadow-sm font-semibold group-hover:scale-105 transition-transform">✓</div>
+<span class="text-[11px] font-semibold text-slate-700 block mt-1">Start Verification</span>
 </button>
 
 <!-- Review Returned -->
 <button class="h-20 bg-amber-50 hover:bg-amber-100/70 border border-amber-100 rounded-2xl p-3 flex flex-col justify-between items-center text-center transition-all group">
-<div class="h-7 w-7 rounded-full bg-amber-500 text-white flex items-center justify-center text-xs shadow-sm font-black group-hover:scale-105 transition-transform">↺</div>
-<span class="text-[11px] font-black text-slate-700 block mt-1">Review Returned</span>
+<div class="h-7 w-7 rounded-full bg-amber-500 text-white flex items-center justify-center text-xs shadow-sm font-semibold group-hover:scale-105 transition-transform">↺</div>
+<span class="text-[11px] font-semibold text-slate-700 block mt-1">Review Returned</span>
 </button>
 
 <!-- Open Salesforce Queue -->
 <button class="h-20 bg-blue-50 hover:bg-blue-100/70 border border-blue-100 rounded-2xl p-3 flex flex-col justify-between items-center text-center transition-all group">
-<div class="h-7 w-7 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs shadow-sm font-black group-hover:scale-105 transition-transform">☁</div>
-<span class="text-[11px] font-black text-slate-700 block mt-1">Salesforce Queue</span>
+<div class="h-7 w-7 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs shadow-sm font-semibold group-hover:scale-105 transition-transform">☁</div>
+<span class="text-[11px] font-semibold text-slate-700 block mt-1">Salesforce Queue</span>
 </button>
 
 <!-- View School 360 -->
 <button class="h-20 bg-teal-50 hover:bg-teal-100/70 border border-teal-100 rounded-2xl p-3 flex flex-col justify-between items-center text-center transition-all group">
-<div class="h-7 w-7 rounded-full bg-teal-500 text-white flex items-center justify-center text-xs shadow-sm font-black group-hover:scale-105 transition-transform">🏫</div>
-<span class="text-[11px] font-black text-slate-700 block mt-1">View School 360</span>
+<div class="h-7 w-7 rounded-full bg-teal-500 text-white flex items-center justify-center text-xs shadow-sm font-semibold group-hover:scale-105 transition-transform">🏫</div>
+<span class="text-[11px] font-semibold text-slate-700 block mt-1">View School 360</span>
 </button>
 
 <!-- Export Verification Report -->
 <button class="h-20 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl p-3 flex flex-col justify-between items-center text-center transition-all group">
-<div class="h-7 w-7 rounded-full bg-slate-500 text-white flex items-center justify-center text-xs shadow-sm font-black group-hover:scale-105 transition-transform">📋</div>
-<span class="text-[11px] font-black text-slate-700 block mt-1">Export Report</span>
+<div class="h-7 w-7 rounded-full bg-slate-500 text-white flex items-center justify-center text-xs shadow-sm font-semibold group-hover:scale-105 transition-transform">📋</div>
+<span class="text-[11px] font-semibold text-slate-700 block mt-1">Export Report</span>
 </button>
 
 <!-- Escalate Data Issue -->
 <button class="h-20 bg-rose-50 hover:bg-rose-100/70 border border-rose-100 rounded-2xl p-3 flex flex-col justify-between items-center text-center transition-all group">
-<div class="h-7 w-7 rounded-full bg-rose-500 text-white flex items-center justify-center text-xs shadow-sm font-black group-hover:scale-105 transition-transform">🚨</div>
-<span class="text-[11px] font-black text-slate-700 block mt-1">Escalate Issue</span>
+<div class="h-7 w-7 rounded-full bg-rose-500 text-white flex items-center justify-center text-xs shadow-sm font-semibold group-hover:scale-105 transition-transform">🚨</div>
+<span class="text-[11px] font-semibold text-slate-700 block mt-1">Escalate Issue</span>
 </button>
 </div>
 </div>

@@ -8,13 +8,13 @@
 <!-- Header -->
 <div class="flex items-center justify-between border-b border-slate-200 pb-4">
 <div>
-<h1 class="text-[20px] font-black text-slate-800 tracking-tight">Data Quality Center</h1>
+<h1 class="text-[20px] font-semibold text-slate-800 tracking-tight">Data Quality Center</h1>
 <p class="text-[12px] text-slate-400 font-semibold mt-0.5">Detect database gaps, missing locations, unclustered client schools, and duplicate entries</p>
 </div>
 
 <button 
 onclick="alert('Data Quality Scan initiated! Scanning database logs...')"
-class="flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-black uppercase tracking-wider rounded-lg shadow-sm transition-all focus:outline-none"
+class="flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold uppercase tracking-wider rounded-lg shadow-sm transition-all focus:outline-none"
 >
 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M9 11l3 3L22 4" />
@@ -28,70 +28,70 @@ class="flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-wh
 
 <!-- Stat 1: Clean -->
 <div class="bg-white rounded-xl border border-slate-100 p-4 shadow-sm flex flex-col justify-between">
-<div class="flex items-center justify-between text-[11px] font-black uppercase text-slate-400">
+<div class="flex items-center justify-between text-[11px] font-semibold uppercase text-slate-400">
 <span>Clean Schools</span>
 <div class="h-6 w-6 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 font-bold">
 ✓
 </div>
 </div>
 <div class="mt-4">
-<span class="text-[20px] font-black text-emerald-600">{{ clean_count }}</span>
+<span class="text-[20px] font-semibold text-emerald-600">{{ clean_count }}</span>
 <p class="text-[11px] text-slate-400 font-bold mt-1 leading-snug">Fully complete and verified school data</p>
 </div>
 </div>
 
 <!-- Stat 2: Needs Review -->
 <div class="bg-white rounded-xl border border-slate-100 p-4 shadow-sm flex flex-col justify-between">
-<div class="flex items-center justify-between text-[11px] font-black uppercase text-slate-400">
+<div class="flex items-center justify-between text-[11px] font-semibold uppercase text-slate-400">
 <span>Needs Review</span>
 <div class="h-6 w-6 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 font-bold">
 ✎
 </div>
 </div>
 <div class="mt-4">
-<span class="text-[20px] font-black text-blue-600">{{ needs_review_count }}</span>
+<span class="text-[20px] font-semibold text-blue-600">{{ needs_review_count }}</span>
 <p class="text-[11px] text-slate-400 font-bold mt-1 leading-snug">Minor operational gaps detected</p>
 </div>
 </div>
 
 <!-- Stat 3: Needs Cleanup -->
 <div class="bg-white rounded-xl border border-slate-100 p-4 shadow-sm flex flex-col justify-between">
-<div class="flex items-center justify-between text-[11px] font-black uppercase text-slate-400">
+<div class="flex items-center justify-between text-[11px] font-semibold uppercase text-slate-400">
 <span>Needs Cleanup</span>
 <div class="h-6 w-6 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 font-bold">
 ⚠
 </div>
 </div>
 <div class="mt-4">
-<span class="text-[20px] font-black text-amber-600">{{ needs_cleanup_count }}</span>
+<span class="text-[20px] font-semibold text-amber-600">{{ needs_cleanup_count }}</span>
 <p class="text-[11px] text-slate-400 font-bold mt-1 leading-snug">Moderate data quality gaps present</p>
 </div>
 </div>
 
 <!-- Stat 4: Duplicate Risk -->
 <div class="bg-white rounded-xl border border-slate-100 p-4 shadow-sm flex flex-col justify-between">
-<div class="flex items-center justify-between text-[11px] font-black uppercase text-slate-400">
+<div class="flex items-center justify-between text-[11px] font-semibold uppercase text-slate-400">
 <span>Duplicate Risk</span>
 <div class="h-6 w-6 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 font-bold">
 ❐
 </div>
 </div>
 <div class="mt-4">
-<span class="text-[20px] font-black text-rose-600">{{ duplicate_risk_count }}</span>
+<span class="text-[20px] font-semibold text-rose-600">{{ duplicate_risk_count }}</span>
 <p class="text-[11px] text-slate-400 font-bold mt-1 leading-snug">Potential duplicate entries detected</p>
 </div>
 </div>
 
 <!-- Stat 5: Missing Critical Data -->
 <div class="bg-white rounded-xl border border-slate-100 p-4 shadow-sm flex flex-col justify-between">
-<div class="flex items-center justify-between text-[11px] font-black uppercase text-slate-400">
+<div class="flex items-center justify-between text-[11px] font-semibold uppercase text-slate-400">
 <span>Missing Critical Data</span>
 <div class="h-6 w-6 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center shrink-0 font-bold">
 ✘
 </div>
 </div>
 <div class="mt-4">
-<span class="text-[20px] font-black text-rose-700">{{ missing_critical_count }}</span>
+<span class="text-[20px] font-semibold text-rose-700">{{ missing_critical_count }}</span>
 <p class="text-[11px] text-slate-400 font-bold mt-1 leading-snug">Missing critical setup info (owner/cluster)</p>
 </div>
 </div>
@@ -100,40 +100,40 @@ class="flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-wh
 
 <!-- Resolution Guides Callout -->
 <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-4">
-<h3 class="text-[14px] font-black text-slate-800">Quality Actions Needed</h3>
+<h3 class="text-[14px] font-semibold text-slate-800">Quality Actions Needed</h3>
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 <div class="bg-white rounded-lg border border-slate-100 p-4 space-y-2 flex flex-col justify-between">
 <div>
-<h4 class="text-[12px] font-extrabold text-slate-800">Link Raw Staff Names</h4>
+<h4 class="text-[12px] font-semibold text-slate-800">Link Raw Staff Names</h4>
 <p class="text-[11px] text-slate-400 leading-normal font-semibold mt-1">Match schools imported via CSV with active staff profiles in the staff setup queue.</p>
 </div>
-<a href="/admin-panel/staff-setup-queue" class="inline-block text-[11px] font-black uppercase text-blue-600 hover:text-blue-800 tracking-wider mt-3">Open setup queue &rarr;</a>
+<a href="/admin-panel/staff-setup-queue" class="inline-block text-[11px] font-semibold uppercase text-blue-600 hover:text-blue-800 tracking-wider mt-3">Open setup queue &rarr;</a>
 </div>
 <div class="bg-white rounded-lg border border-slate-100 p-4 space-y-2 flex flex-col justify-between">
 <div>
-<h4 class="text-[12px] font-extrabold text-slate-800">Cluster Client Schools</h4>
+<h4 class="text-[12px] font-semibold text-slate-800">Cluster Client Schools</h4>
 <p class="text-[11px] text-slate-400 leading-normal font-semibold mt-1">Every client school must belong to a cluster group before scheduling training or meetings.</p>
 </div>
-<a href="/schools?filter=unclustered" class="inline-block text-[11px] font-black uppercase text-blue-600 hover:text-blue-800 tracking-wider mt-3">Open school directory &rarr;</a>
+<a href="/schools?filter=unclustered" class="inline-block text-[11px] font-semibold uppercase text-blue-600 hover:text-blue-800 tracking-wider mt-3">Open school directory &rarr;</a>
 </div>
 <div class="bg-white rounded-lg border border-slate-100 p-4 space-y-2 flex flex-col justify-between">
 <div>
-<h4 class="text-[12px] font-extrabold text-slate-800">Resolve Duplicate Risks</h4>
+<h4 class="text-[12px] font-semibold text-slate-800">Resolve Duplicate Risks</h4>
 <p class="text-[11px] text-slate-400 leading-normal font-semibold mt-1">Review name and location duplicate risk flags to ensure directory accuracy.</p>
 </div>
-<a href="/data-quality/duplicates" class="inline-block text-[11px] font-black uppercase text-blue-600 hover:text-blue-800 tracking-wider mt-3">Open duplicate review &rarr;</a>
+<a href="/data-quality/duplicates" class="inline-block text-[11px] font-semibold uppercase text-blue-600 hover:text-blue-800 tracking-wider mt-3">Open duplicate review &rarr;</a>
 </div>
 <div class="bg-white rounded-lg border border-slate-100 p-4 space-y-2 flex flex-col justify-between">
 <div>
-<h4 class="text-[12px] font-extrabold text-slate-800 flex items-center justify-between">
+<h4 class="text-[12px] font-semibold text-slate-800 flex items-center justify-between">
 <span>Link Unmatched SSAs</span>
 {% if unmatched_ssa_count > 0 %}
-<span class="bg-rose-50 text-rose-700 px-1.5 py-0.5 rounded text-[11px] font-black">{{ unmatched_ssa_count }}</span>
+<span class="bg-rose-50 text-rose-700 px-1.5 py-0.5 rounded text-[11px] font-semibold">{{ unmatched_ssa_count }}</span>
 {% endif %}
 </h4>
 <p class="text-[11px] text-slate-400 leading-normal font-semibold mt-1">Resolve SSA uploads mapped to nonexistent School IDs by linking them manually.</p>
 </div>
-<a href="/ssa/unmatched" class="inline-block text-[11px] font-black uppercase text-blue-600 hover:text-blue-800 tracking-wider mt-3">Open unmatched queue &rarr;</a>
+<a href="/ssa/unmatched" class="inline-block text-[11px] font-semibold uppercase text-blue-600 hover:text-blue-800 tracking-wider mt-3">Open unmatched queue &rarr;</a>
 </div>
 </div>
 </div>

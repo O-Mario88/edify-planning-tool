@@ -18,11 +18,11 @@ type="text"
 name="unit_cost" 
 value="{{ c.unit_cost }}" 
 required
-class="block w-full h-8 pl-9 pr-2 rounded-lg border border-indigo-200 text-[12px] font-extrabold text-indigo-700 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+class="block w-full h-8 pl-9 pr-2 rounded-lg border border-indigo-200 text-[12px] font-semibold text-indigo-700 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
 >
 </div>
 
-<button type="submit" class="h-8 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-extrabold flex items-center justify-center transition-colors">
+<button type="submit" class="h-8 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-semibold flex items-center justify-center transition-colors">
 Save
 </button>
 <button 
@@ -46,7 +46,7 @@ Cancel
 {{ c.key|title|replace_underscore }}
 <span class="block text-[11px] text-slate-400 font-mono mt-0.5">Key: {{ c.key }} · Ver: {{ c.version }}</span>
 </td>
-<td class="px-4 py-3 font-extrabold text-indigo-600 align-middle">
+<td class="px-4 py-3 font-semibold text-indigo-600 align-middle">
 UGX {{ c.unit_cost|currency }}
 </td>
 <td class="px-4 py-3 text-slate-500 align-middle">

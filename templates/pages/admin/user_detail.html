@@ -14,19 +14,19 @@
 <span>&bull;</span>
 <span class="text-slate-500">Edit Profile</span>
 </div>
-<h1 class="text-[24px] font-extrabold text-slate-900 tracking-tight mt-1">{{ member.name }}</h1>
+<h1 class="text-[24px] font-semibold text-slate-900 tracking-tight mt-1">{{ member.name }}</h1>
 <p class="text-[12px] text-slate-500 mt-1 font-semibold">Configure roles, credentials, and account lifecycle status.</p>
 </div>
 
 <div class="flex gap-2">
 <!-- Status Badge -->
 {% if member.is_active %}
-<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-black uppercase bg-emerald-50 text-emerald-700 border border-emerald-100 shadow-sm">
+<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold uppercase bg-emerald-50 text-emerald-700 border border-emerald-100 shadow-sm">
 <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
 Active
 </span>
 {% else %}
-<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-black uppercase bg-slate-100 text-slate-500 border border-slate-200 shadow-sm">
+<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold uppercase bg-slate-100 text-slate-500 border border-slate-200 shadow-sm">
 <span class="h-2 w-2 rounded-full bg-slate-400"></span>
 Inactive ({{ member.status|capfirst }})
 </span>
@@ -54,7 +54,7 @@ Inactive ({{ member.status|capfirst }})
 <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3 shadow-sm">
 <div class="text-[20px] text-amber-500 leading-none mt-0.5">⚠️</div>
 <div class="space-y-1">
-<h4 class="text-[12px] font-black text-amber-800 uppercase tracking-wider">Action Required: Placeholder Email Profile</h4>
+<h4 class="text-[12px] font-semibold text-amber-800 uppercase tracking-wider">Action Required: Placeholder Email Profile</h4>
 <p class="text-[12px] text-amber-700 font-semibold leading-relaxed">
 This user profile was automatically created during a school upload. The email address is currently a placeholder.
 You must edit it to their valid operational email address before sending the invitation.
@@ -70,7 +70,7 @@ You must edit it to their valid operational email address before sending the inv
 
 <!-- General Settings Form -->
 <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-6 space-y-4">
-<h3 class="text-[14px] font-black text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-2">Profile Details</h3>
+<h3 class="text-[14px] font-semibold text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-2">Profile Details</h3>
 
 <form method="POST" action="{% url 'frontend:admin_user_detail' member.id %}" class="space-y-4 font-semibold text-[12px]">
 {% csrf_token %}
@@ -147,7 +147,7 @@ class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
 <div class="pt-4 border-t border-slate-100 flex justify-end">
 <button 
 type="submit" 
-class="h-9 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[11px] font-black uppercase tracking-wider shadow-sm transition-all focus:outline-none"
+class="h-9 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wider shadow-sm transition-all focus:outline-none"
 >
 Save Profile Updates
 </button>
@@ -162,16 +162,16 @@ Save Profile Updates
 
 <!-- Lifecycle Status Card -->
 <div class="bg-white rounded-xl border border-slate-100 p-5 shadow-sm space-y-4">
-<h3 class="text-[12px] font-black text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-2">Account Lifecycle</h3>
+<h3 class="text-[12px] font-semibold text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-2">Account Lifecycle</h3>
 
 <div class="space-y-3 font-semibold text-[12px] text-slate-600">
 <div class="flex justify-between">
 <span class="text-slate-400">Current Status:</span>
-<span class="text-slate-800 font-extrabold uppercase">{{ member.status }}</span>
+<span class="text-slate-800 font-semibold uppercase">{{ member.status }}</span>
 </div>
 <div class="flex justify-between">
 <span class="text-slate-400">Primary Role:</span>
-<span class="text-slate-800 font-extrabold">{{ member.active_role }}</span>
+<span class="text-slate-800 font-semibold">{{ member.active_role }}</span>
 </div>
 <div class="flex justify-between">
 <span class="text-slate-400">Member ID:</span>
@@ -188,7 +188,7 @@ Save Profile Updates
 <input type="hidden" name="action" value="invite">
 <button 
 type="submit"
-class="w-full h-9 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-black uppercase tracking-wider rounded-lg shadow-sm transition-all focus:outline-none"
+class="w-full h-9 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold uppercase tracking-wider rounded-lg shadow-sm transition-all focus:outline-none"
 >
 Send Invitation Link
 </button>
@@ -202,7 +202,7 @@ Send Invitation Link
 <input type="hidden" name="action" value="deactivate">
 <button 
 type="submit"
-class="w-full h-9 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-[11px] font-black uppercase tracking-wider rounded-lg shadow-sm transition-all focus:outline-none"
+class="w-full h-9 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-[11px] font-semibold uppercase tracking-wider rounded-lg shadow-sm transition-all focus:outline-none"
 >
 Deactivate User Account
 </button>
@@ -213,7 +213,7 @@ Deactivate User Account
 <input type="hidden" name="action" value="activate">
 <button 
 type="submit"
-class="w-full h-9 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-black uppercase tracking-wider rounded-lg shadow-sm transition-all focus:outline-none"
+class="w-full h-9 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold uppercase tracking-wider rounded-lg shadow-sm transition-all focus:outline-none"
 >
 Activate User Account
 </button>
@@ -225,7 +225,7 @@ Activate User Account
 
 <!-- Critical Danger Zone -->
 <div class="bg-red-50/40 border border-red-100 rounded-xl p-5 shadow-sm space-y-4">
-<h3 class="text-[12px] font-black text-rose-800 uppercase tracking-wider border-b border-red-200/50 pb-2">Danger Zone</h3>
+<h3 class="text-[12px] font-semibold text-rose-800 uppercase tracking-wider border-b border-red-200/50 pb-2">Danger Zone</h3>
 <p class="text-[11px] text-rose-700 font-semibold leading-relaxed">
 Soft-deleting this user removes their access privileges and marks their profile as deleted. This will retain history logs.
 </p>
@@ -239,7 +239,7 @@ onsubmit="return confirm('Are you sure you want to delete this user profile? Thi
 <input type="hidden" name="action" value="delete">
 <button 
 type="submit"
-class="w-full h-9 bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-black uppercase tracking-wider rounded-lg shadow-sm transition-all focus:outline-none"
+class="w-full h-9 bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-semibold uppercase tracking-wider rounded-lg shadow-sm transition-all focus:outline-none"
 >
 Delete User Profile
 </button>

@@ -1,769 +1,325 @@
 {% extends "layouts/shell.html" %}
 {% load frontend_filters %}
 
-{% block title %}Country Director Dashboard — SIPA{% endblock %}
+{% block title %}Country Director Dashboard — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-[1600px] mx-auto space-y-6 text-slate-700 font-sans" id="main-dashboard-container">
+<div class="p-6 max-w-[1500px] mx-auto space-y-5 text-slate-700" id="main-dashboard-container">
 
-<!-- ================= TOP HEADER BAR ================= -->
-<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-100 pb-4">
-<div>
-<div class="flex items-center gap-2">
-<h1 class="text-[24px] font-black text-slate-800 tracking-tight leading-none">Country Director Dashboard</h1>
-<span class="text-slate-400 cursor-pointer" title="Manage country targets and governance">ⓘ</span>
-</div>
-<p class="text-[12px] text-slate-500 font-bold mt-1.5">National program performance, approvals, targets, compliance, and operational risk.</p>
-</div>
-
-<!-- Filters & Toolbar -->
-<div class="flex flex-wrap items-center gap-2">
-<!-- Financial Year selector -->
-<select class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-extrabold text-slate-600 shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
-<option>FY {{ fy }}</option>
-</select>
-
-<!-- Month selector -->
-<select class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-extrabold text-slate-600 shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
-<option>May 2025</option>
-</select>
-
-<!-- Country selector -->
-<select class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-extrabold text-slate-600 shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
-<option>Uganda</option>
-</select>
-
-<!-- Search bar -->
-<div class="relative w-48 sm:w-64">
-<span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-<svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-</span>
-<input 
-type="text" 
-placeholder="Search schools, staff, regions..." 
-class="h-9 w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 text-[12px] font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-sm placeholder-slate-400"
->
+<!-- ================= HEADER ================= -->
+<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 border-b border-slate-100 pb-3">
+  <div>
+    <h1 class="text-[18px] font-semibold text-slate-800 tracking-tight">Country Director Dashboard</h1>
+    <p class="text-[12px] text-slate-500 font-normal mt-0.5">National program performance, approvals, targets, and operational risk.</p>
+  </div>
+  <div class="flex flex-wrap items-center gap-2">
+    <select class="h-8 px-3 bg-white rounded-md text-[12px] font-medium text-slate-600 shadow-sm outline-none">
+      <option>FY {{ fy }}</option>
+    </select>
+    <select class="h-8 px-3 bg-white rounded-md text-[12px] font-medium text-slate-600 shadow-sm outline-none">
+      <option>Uganda</option>
+    </select>
+  </div>
 </div>
 
-<!-- Export button -->
-<button class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-extrabold text-slate-600 flex items-center gap-1.5 shadow-sm hover:bg-slate-50">
-📥 Export
-</button>
-</div>
-</div>
-
-
-<!-- ================= TOP KPI ROW ================= -->
-<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
-<!-- Country Target Progress -->
-<div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
-<p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Target Progress</p>
-<h3 class="text-[20px] font-black text-slate-800 leading-none">72%</h3>
-<span class="text-[11px] text-emerald-600 font-extrabold flex items-center gap-0.5 pt-1">
-▲ 5 pp <span class="text-slate-400 font-semibold">vs Apr 2025</span>
-</span>
+<!-- ================= KPI STRIP (8 cards, all real) ================= -->
+<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
+  {% include "components/kpi_card.html" with label="National Achievement" value=national_achievement|add:"%" tone="info" hint="Completed / (Planned + Completed)" %}
+  {% include "components/kpi_card.html" with label="Active Schools" value=total_schools hint="In the directory" %}
+  {% include "components/kpi_card.html" with label="Avg National SSA" value=avg_national_ssa tone="info" hint="Confirmed records, FY"|add:fy %}
+  {% include "components/kpi_card.html" with label="SF Backlog" value=sf_backlog tone="warning" hint="Completed, missing SF ID" %}
+  {% include "components/kpi_card.html" with label="Pending Fund Requests" value=pending_funds|length hint="Awaiting CD approval" %}
+  {% include "components/kpi_card.html" with label="Disbursed (FY)" value=budget_summary.total_disbursed|ugx tone="success" hint="Of UGX "|add:budget_summary.planned_total|ugx|add:" planned" %}
+  {% include "components/kpi_card.html" with label="Budget Util." value=budget_summary.utilization_pct|add:"%" tone="info" hint="Disbursed vs planned" %}
+  {% include "components/kpi_card.html" with label="High-Risk Regions" value=high_risk_count tone="danger" hint="Below 60% achievement" %}
 </div>
 
-<!-- Active Schools Served -->
-<div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
-<p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Active Schools</p>
-<h3 class="text-[20px] font-black text-slate-800 leading-none">28,450</h3>
-<span class="text-[11px] text-emerald-600 font-extrabold flex items-center gap-0.5 pt-1">
-▲ 1,134 <span class="text-slate-400 font-semibold">vs Apr 2025</span>
-</span>
-</div>
-
-<!-- Core Schools On Track -->
-<div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
-<p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">On Track Schools</p>
-<h3 class="text-[20px] font-black text-slate-800 leading-none">68%</h3>
-<span class="text-[11px] text-emerald-600 font-extrabold flex items-center gap-0.5 pt-1">
-▲ 6 pp <span class="text-slate-400 font-semibold">vs Apr 2025</span>
-</span>
-</div>
-
-<!-- Staff Productivity -->
-<div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
-<p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Staff Productivity</p>
-<h3 class="text-[20px] font-black text-slate-800 leading-none">84%</h3>
-<span class="text-[11px] text-emerald-600 font-extrabold flex items-center gap-0.5 pt-1">
-▲ 4 pp <span class="text-slate-400 font-semibold">vs Apr 2025</span>
-</span>
-</div>
-
-<!-- Salesforce Compliance -->
-<div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
-<p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">SF Compliance</p>
-<h3 class="text-[20px] font-black text-slate-800 leading-none">87%</h3>
-<span class="text-[11px] text-emerald-600 font-extrabold flex items-center gap-0.5 pt-1">
-▲ 3 pp <span class="text-slate-400 font-semibold">vs Apr 2025</span>
-</span>
-</div>
-
-<!-- Pending Fund Requests -->
-<div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
-<p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Pending Fund Requests</p>
-<h3 class="text-[20px] font-black text-slate-800 leading-none">154</h3>
-<span class="text-[11px] text-amber-600 font-extrabold block pt-1">UGX 5.29B pending</span>
-</div>
-
-<!-- Budget Utilization -->
-<div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
-<p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Budget Util.</p>
-<h3 class="text-[20px] font-black text-slate-800 leading-none">64%</h3>
-<span class="text-[11px] text-indigo-700 font-extrabold block pt-1">UGX 77.6B / 121.1B</span>
-</div>
-
-<!-- High-Risk Teams -->
-<div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
-<p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">High-Risk Teams</p>
-<h3 class="text-[20px] font-black text-slate-800 leading-none">16</h3>
-<span class="text-[11px] text-rose-600 font-extrabold flex items-center gap-0.5 pt-1">
-▲ 2 <span class="text-slate-400 font-semibold">vs Apr 2025</span>
-</span>
-</div>
-</div>
-
-
-<!-- ================= LEADERSHIP ATTENTION BANNERS ================= -->
+<!-- ================= LEADERSHIP ATTENTION (real alerts only) ================= -->
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-<!-- Alert 1: Region behind target -->
-<div class="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-start gap-3">
-<div class="h-6 w-6 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center text-xs shrink-0 font-bold">⚠️</div>
-<div class="flex-1 min-w-0">
-<h4 class="text-[12px] font-black text-slate-800 leading-none">1 Region Behind Target</h4>
-<p class="text-[11px] text-slate-500 font-semibold mt-1">West Nile is at 58% vs national 72% target progress.</p>
-<a href="/planning" class="text-[11px] font-black text-blue-600 hover:underline block mt-1.5">View Regional Performance &rarr;</a>
+  {% for region in regions_list %}
+    {% if region.rate < 60 %}
+    <div class="p-4 bg-rose-50 rounded-xl flex items-start gap-3">
+      <div class="h-8 w-8 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+      </div>
+      <div class="flex-1 min-w-0">
+        <h4 class="text-[13px] font-semibold text-slate-800">{{ region.name }} Behind Target</h4>
+        <p class="text-[12px] text-slate-500 font-normal mt-0.5">{{ region.name }} is at {{ region.rate }}% vs national target.</p>
+        <a href="/coverage" class="text-[12px] font-medium text-blue-600 hover:underline block mt-1.5">View Regional Performance &rarr;</a>
+      </div>
+    </div>
+    {% endif %}
+  {% endfor %}
+  {% if sf_backlog > 0 %}
+  <div class="p-4 bg-amber-50 rounded-xl flex items-start gap-3">
+    <div class="h-8 w-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+    </div>
+    <div class="flex-1 min-w-0">
+      <h4 class="text-[13px] font-semibold text-slate-800">Salesforce Backlog</h4>
+      <p class="text-[12px] text-slate-500 font-normal mt-0.5">{{ sf_backlog }} completed activities missing Salesforce IDs.</p>
+      <a href="/completed-activities" class="text-[12px] font-medium text-blue-600 hover:underline block mt-1.5">Inspect Backlog &rarr;</a>
+    </div>
+  </div>
+  {% endif %}
+  {% if pending_funds %}
+  <div class="p-4 bg-blue-50 rounded-xl flex items-start gap-3">
+    <div class="h-8 w-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    </div>
+    <div class="flex-1 min-w-0">
+      <h4 class="text-[13px] font-semibold text-slate-800">{{ pending_funds|length }} Fund Requests Pending</h4>
+      <p class="text-[12px] text-slate-500 font-normal mt-0.5">Awaiting your Country Director approval.</p>
+      <a href="/fund-requests/weekly" class="text-[12px] font-medium text-blue-600 hover:underline block mt-1.5">Review Approvals &rarr;</a>
+    </div>
+  </div>
+  {% endif %}
 </div>
-</div>
-
-<!-- Alert 2: SF Backlog -->
-<div class="p-4 bg-amber-50 border border-amber-100 rounded-2xl flex items-start gap-3">
-<div class="h-6 w-6 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center text-xs shrink-0 font-bold">⚡</div>
-<div class="flex-1 min-w-0">
-<h4 class="text-[12px] font-black text-slate-800 leading-none">High Salesforce Backlog</h4>
-<p class="text-[11px] text-slate-500 font-semibold mt-1">7,842 Salesforce IDs pending action across 18 teams.</p>
-<a href="#" class="text-[11px] font-black text-blue-600 hover:underline block mt-1.5">Inspect Backlog &rarr;</a>
-</div>
-</div>
-
-<!-- Alert 3: Fund Requests Pending -->
-<div class="p-4 bg-blue-50 border border-blue-100 rounded-2xl flex items-start gap-3">
-<div class="h-6 w-6 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-xs shrink-0 font-bold">✓</div>
-<div class="flex-1 min-w-0">
-<h4 class="text-[12px] font-black text-slate-800 leading-none">154 Fund Requests Pending</h4>
-<p class="text-[11px] text-slate-500 font-semibold mt-1">UGX 5.29B awaiting Country Director approval.</p>
-<a href="/fund-requests/weekly" class="text-[11px] font-black text-blue-600 hover:underline block mt-1.5">Review Approvals &rarr;</a>
-</div>
-</div>
-</div>
-
 
 <!-- ================= MIDDLE ROW ================= -->
-<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
 
-<!-- Country Performance Overview (Chart - Col Span 8) -->
-<div class="lg:col-span-8 bg-white p-5 rounded-3xl border border-slate-150 shadow-sm space-y-4">
-<div class="flex items-center justify-between pb-2 border-b border-slate-100">
-<h3 class="text-[14px] font-black text-slate-800 tracking-tight">Country Performance Overview</h3>
+  <!-- Country Performance Overview (Chart) -->
+  <div class="lg:col-span-8 bg-white p-5 rounded-xl shadow-sm space-y-3"
+    x-data="{
+      chart: null,
+      initChart() {
+        if (this.chart) this.chart.destroy();
+        const ctx = document.getElementById('cdPerformanceChart').getContext('2d');
+        this.chart = new Chart(ctx, {
+          data: {
+            labels: {{ chart_labels|safe }},
+            datasets: [
+              { type: 'bar', label: 'Planned', data: {{ chart_planned|safe }}, backgroundColor: '#e2e8f0', barThickness: 10, borderRadius: 3 },
+              { type: 'bar', label: 'Completed', data: {{ chart_completed|safe }}, backgroundColor: '#3b82f6', barThickness: 10, borderRadius: 3 },
+              { type: 'line', label: 'Verified', data: {{ chart_verified|safe }}, borderColor: '#10b981', backgroundColor: '#10b981', borderWidth: 2, pointRadius: 2.5, fill: false, tension: 0.35 }
+            ]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'top', align: 'end', labels: { boxWidth: 8, boxHeight: 8, usePointStyle: true, pointStyle: 'circle', font: { family: 'Outfit', size: 11, weight: '500' }, color: '#64748b' } },
+              tooltip: { mode: 'index', intersect: false, backgroundColor: '#0f172a', padding: 10, cornerRadius: 6, titleFont: { family: 'Outfit', size: 11, weight: '600' }, bodyFont: { family: 'Outfit', size: 11 } }
+            },
+            scales: {
+              x: { grid: { display: false }, ticks: { font: { family: 'Outfit', size: 10, weight: '500' }, color: '#94a3b8' } },
+              y: { beginAtZero: true, ticks: { font: { family: 'Outfit', size: 10 }, color: '#94a3b8', maxTicksLimit: 5 }, grid: { color: '#f1f5f9' } }
+            }
+          }
+        });
+      }
+    }"
+    x-init="initChart()"
+  >
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <div class="flex items-start justify-between">
+      <div>
+        <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Country Performance Overview</h3>
+        <p class="text-[11px] text-slate-400 font-normal mt-0.5">Planned vs Completed vs Verified activities across FY{{ fy }}</p>
+      </div>
+    </div>
+    <div class="h-[220px] relative w-full"><canvas id="cdPerformanceChart"></canvas></div>
+  </div>
 
-<div class="flex items-center gap-3">
-<div class="flex items-center gap-3 text-[11px] font-bold text-slate-500">
-<span class="flex items-center gap-1.5"><span class="h-2 w-3 bg-slate-200 rounded"></span> Planned</span>
-<span class="flex items-center gap-1.5"><span class="h-2 w-3 bg-teal-500 rounded"></span> Completed</span>
-<span class="flex items-center gap-1.5"><span class="h-2 w-3 bg-blue-500 rounded"></span> Verified</span>
-<span class="flex items-center gap-1.5"><span class="h-1.5 w-4 bg-amber-500 rounded"></span> Target Achieved %</span>
+  <!-- Regional Performance -->
+  <div class="lg:col-span-4 bg-white p-5 rounded-xl shadow-sm space-y-3">
+    <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+      <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Regional Performance</h3>
+      <a href="/coverage" class="text-[11px] font-medium text-blue-600 hover:underline">View all</a>
+    </div>
+    {% if regions_list %}
+    <div class="space-y-3">
+      {% for r in regions_list %}
+      <div class="space-y-1.5">
+        <div class="flex items-center justify-between text-[12px]">
+          <span class="font-medium text-slate-700">{{ r.name }}</span>
+          <span class="font-semibold text-slate-800 tabular-nums">{{ r.rate }}%</span>
+        </div>
+        <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+          <div class="{{ r.color }} h-full rounded-full" style="width: {{ r.rate }}%"></div>
+        </div>
+        <p class="text-[11px] text-slate-400">{{ r.school_count }} schools · SSA avg {{ r.avg_ssa }}</p>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    {% include "components/empty_state.html" with title="No regional data" message="Regional performance appears once activities are scheduled." compact="true" %}
+    {% endif %}
+  </div>
 </div>
-
-<select class="h-7 px-2 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-bold text-slate-600 focus:outline-none">
-<option>Last 11 Months</option>
-</select>
-</div>
-</div>
-
-<!-- Combination Chart SVG simulator -->
-<div class="h-60 w-full relative pt-6 px-4">
-<!-- SVG grid lines -->
-<div class="absolute inset-0 flex flex-col justify-between pointer-events-none py-6 text-[11px] text-slate-300 font-bold border-l border-b border-slate-200">
-<div class="w-full border-t border-slate-100 flex justify-between pr-2"><span>80K</span> <span>100%</span></div>
-<div class="w-full border-t border-slate-100 flex justify-between pr-2"><span>60K</span> <span>75%</span></div>
-<div class="w-full border-t border-slate-100 flex justify-between pr-2"><span>40K</span> <span>50%</span></div>
-<div class="w-full border-t border-slate-100 flex justify-between pr-2"><span>20K</span> <span>25%</span></div>
-<div class="w-full flex justify-between pr-2"><span>0</span> <span>0%</span></div>
-</div>
-
-<div class="h-full w-full flex items-end justify-between px-6 z-10 relative">
-<!-- 11 columns of bars (Planned vs Completed vs Verified) -->
-<!-- Jul 24 -->
-<div class="flex flex-col items-center gap-1 flex-1">
-<div class="flex items-end gap-0.5 h-36">
-<div class="w-1.5 bg-slate-200 rounded-t-sm" style="height: 70%;"></div>
-<div class="w-1.5 bg-teal-500 rounded-t-sm" style="height: 55%;"></div>
-<div class="w-1.5 bg-blue-500 rounded-t-sm" style="height: 48%;"></div>
-</div>
-<span class="text-[11px] font-bold text-slate-400">Jul 24</span>
-</div>
-
-<!-- Aug 24 -->
-<div class="flex flex-col items-center gap-1 flex-1">
-<div class="flex items-end gap-0.5 h-36">
-<div class="w-1.5 bg-slate-200 rounded-t-sm" style="height: 75%;"></div>
-<div class="w-1.5 bg-teal-500 rounded-t-sm" style="height: 60%;"></div>
-<div class="w-1.5 bg-blue-500 rounded-t-sm" style="height: 55%;"></div>
-</div>
-<span class="text-[11px] font-bold text-slate-400">Aug 24</span>
-</div>
-
-<!-- Sep 24 -->
-<div class="flex flex-col items-center gap-1 flex-1">
-<div class="flex items-end gap-0.5 h-36">
-<div class="w-1.5 bg-slate-200 rounded-t-sm" style="height: 80%;"></div>
-<div class="w-1.5 bg-teal-500 rounded-t-sm" style="height: 65%;"></div>
-<div class="w-1.5 bg-blue-500 rounded-t-sm" style="height: 58%;"></div>
-</div>
-<span class="text-[11px] font-bold text-slate-400">Sep 24</span>
-</div>
-
-<!-- Oct 24 -->
-<div class="flex flex-col items-center gap-1 flex-1">
-<div class="flex items-end gap-0.5 h-36">
-<div class="w-1.5 bg-slate-200 rounded-t-sm" style="height: 85%;"></div>
-<div class="w-1.5 bg-teal-500 rounded-t-sm" style="height: 72%;"></div>
-<div class="w-1.5 bg-blue-500 rounded-t-sm" style="height: 68%;"></div>
-</div>
-<span class="text-[11px] font-bold text-slate-400">Oct 24</span>
-</div>
-
-<!-- Nov 24 -->
-<div class="flex flex-col items-center gap-1 flex-1">
-<div class="flex items-end gap-0.5 h-36">
-<div class="w-1.5 bg-slate-200 rounded-t-sm" style="height: 65%;"></div>
-<div class="w-1.5 bg-teal-500 rounded-t-sm" style="height: 50%;"></div>
-<div class="w-1.5 bg-blue-500 rounded-t-sm" style="height: 42%;"></div>
-</div>
-<span class="text-[11px] font-bold text-slate-400">Nov 24</span>
-</div>
-
-<!-- Dec 24 -->
-<div class="flex flex-col items-center gap-1 flex-1">
-<div class="flex items-end gap-0.5 h-36">
-<div class="w-1.5 bg-slate-200 rounded-t-sm" style="height: 45%;"></div>
-<div class="w-1.5 bg-teal-500 rounded-t-sm" style="height: 30%;"></div>
-<div class="w-1.5 bg-blue-500 rounded-t-sm" style="height: 25%;"></div>
-</div>
-<span class="text-[11px] font-bold text-slate-400">Dec 24</span>
-</div>
-
-<!-- Jan 25 -->
-<div class="flex flex-col items-center gap-1 flex-1">
-<div class="flex items-end gap-0.5 h-36">
-<div class="w-1.5 bg-slate-200 rounded-t-sm" style="height: 72%;"></div>
-<div class="w-1.5 bg-teal-500 rounded-t-sm" style="height: 58%;"></div>
-<div class="w-1.5 bg-blue-500 rounded-t-sm" style="height: 52%;"></div>
-</div>
-<span class="text-[11px] font-bold text-slate-400">Jan 25</span>
-</div>
-
-<!-- Feb 25 -->
-<div class="flex flex-col items-center gap-1 flex-1">
-<div class="flex items-end gap-0.5 h-36">
-<div class="w-1.5 bg-slate-200 rounded-t-sm" style="height: 75%;"></div>
-<div class="w-1.5 bg-teal-500 rounded-t-sm" style="height: 60%;"></div>
-<div class="w-1.5 bg-blue-500 rounded-t-sm" style="height: 55%;"></div>
-</div>
-<span class="text-[11px] font-bold text-slate-400">Feb 25</span>
-</div>
-
-<!-- Mar 25 -->
-<div class="flex flex-col items-center gap-1 flex-1">
-<div class="flex items-end gap-0.5 h-36">
-<div class="w-1.5 bg-slate-200 rounded-t-sm" style="height: 78%;"></div>
-<div class="w-1.5 bg-teal-500 rounded-t-sm" style="height: 65%;"></div>
-<div class="w-1.5 bg-blue-500 rounded-t-sm" style="height: 61%;"></div>
-</div>
-<span class="text-[11px] font-bold text-slate-400">Mar 25</span>
-</div>
-
-<!-- Apr 25 -->
-<div class="flex flex-col items-center gap-1 flex-1">
-<div class="flex items-end gap-0.5 h-36">
-<div class="w-1.5 bg-slate-200 rounded-t-sm" style="height: 82%;"></div>
-<div class="w-1.5 bg-teal-500 rounded-t-sm" style="height: 70%;"></div>
-<div class="w-1.5 bg-blue-500 rounded-t-sm" style="height: 66%;"></div>
-</div>
-<span class="text-[11px] font-bold text-slate-400">Apr 25</span>
-</div>
-
-<!-- May 25 -->
-<div class="flex flex-col items-center gap-1 flex-1">
-<div class="flex items-end gap-0.5 h-36">
-<div class="w-1.5 bg-slate-200 rounded-t-sm" style="height: 88%;"></div>
-<div class="w-1.5 bg-teal-500 rounded-t-sm" style="height: 79%;"></div>
-<div class="w-1.5 bg-blue-500 rounded-t-sm" style="height: 72%;"></div>
-</div>
-<span class="text-[11px] font-bold text-slate-400">May 25</span>
-</div>
-</div>
-
-<!-- Overlay Line Chart path for Target Achievement % -->
-<svg class="absolute inset-0 h-full w-full pointer-events-none px-12 pb-6 pt-6 overflow-visible" viewBox="0 0 600 144" preserveAspectRatio="none">
-<path d="M 15,35 L 70,25 L 125,20 L 180,30 L 235,55 L 290,95 L 345,60 L 400,50 L 455,42 L 510,35 L 565,22" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
-</svg>
-</div>
-</div>
-
-<!-- Regional Performance (Col Span 4) -->
-<div class="lg:col-span-4 bg-white p-5 rounded-3xl border border-slate-150 shadow-sm flex flex-col justify-between">
-<div>
-<div class="flex items-center justify-between pb-3 border-b border-slate-100">
-<h3 class="text-[14px] font-black text-slate-800 tracking-tight">Regional Performance</h3>
-<span class="text-[11px] font-bold text-slate-400 uppercase">Target Achievement %</span>
-</div>
-
-<div class="space-y-3.5 mt-4">
-{% for r in regions_list %}
-<div class="flex items-center gap-2">
-<span class="w-4 text-[11px] font-extrabold text-slate-300 text-center">{{ r.rank }}</span>
-<div class="flex-1 space-y-1">
-<div class="flex items-center justify-between text-[11px] font-bold">
-<span class="text-slate-700">{{ r.name }}</span>
-<span class="text-slate-800 font-extrabold">{{ r.rate }}%</span>
-</div>
-<div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden relative">
-<div class="{{ r.color }} h-full rounded-full" style="width: {{ r.rate }}%"></div>
-<!-- simulated national average line overlay at 72% -->
-<div class="absolute top-0 bottom-0 left-[72%] w-0.5 bg-amber-500 z-10"></div>
-</div>
-</div>
-</div>
-{% endfor %}
-</div>
-</div>
-
-<div class="pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold mt-4 text-slate-500">
-<span>National Average</span>
-<span class="text-amber-600 font-extrabold">72%</span>
-</div>
-</div>
-
-</div>
-
 
 <!-- ================= THIRD ROW ================= -->
-<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
 
-<!-- Country Program Leads Performance Table (Col Span 7) -->
-<div class="lg:col-span-7 bg-white p-5 rounded-3xl border border-slate-150 shadow-sm flex flex-col justify-between">
-<div>
-<div class="pb-3 border-b border-slate-100 flex items-center justify-between">
-<h3 class="text-[14px] font-black text-slate-800 tracking-tight">Country Program Leads Performance</h3>
-<a href="#" class="text-[11px] font-black text-blue-600 hover:underline">View all performance &rarr;</a>
-</div>
+  <!-- PL Performance Table -->
+  <div class="lg:col-span-8 bg-white p-5 rounded-xl shadow-sm space-y-3">
+    <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+      <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Program Leads Performance</h3>
+      <a href="/staff" class="text-[11px] font-medium text-blue-600 hover:underline">View team</a>
+    </div>
+    {% if leads_performance %}
+    <div class="overflow-x-auto">
+      <table class="w-full text-[12px]">
+        <thead>
+          <tr class="text-left text-[10px] text-slate-400 uppercase tracking-wide">
+            <th class="pb-2 font-medium">Lead</th>
+            <th class="pb-2 font-medium">Region</th>
+            <th class="pb-2 font-medium text-right">Staff</th>
+            <th class="pb-2 font-medium text-right">Planned</th>
+            <th class="pb-2 font-medium text-right">Verified</th>
+            <th class="pb-2 font-medium text-right">SF Pending</th>
+            <th class="pb-2 font-medium text-right">Backlog</th>
+            <th class="pb-2 font-medium text-right">Target</th>
+            <th class="pb-2 font-medium">Status</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-50">
+          {% for l in leads_performance %}
+          <tr class="hover:bg-slate-50/50 transition-colors">
+            <td class="py-2.5 font-medium text-slate-800">{{ l.name }}</td>
+            <td class="py-2.5 text-slate-500">{{ l.region }}</td>
+            <td class="py-2.5 text-right text-slate-600 tabular-nums">{{ l.staff }}</td>
+            <td class="py-2.5 text-right text-slate-600 tabular-nums">{{ l.planned }}</td>
+            <td class="py-2.5 text-right text-slate-600 tabular-nums">{{ l.verified }}</td>
+            <td class="py-2.5 text-right text-slate-600 tabular-nums">{{ l.sf_pending }}</td>
+            <td class="py-2.5 text-right text-slate-600 tabular-nums">{{ l.backlog }}</td>
+            <td class="py-2.5 text-right font-semibold text-slate-800 tabular-nums">{{ l.target_pct }}%</td>
+            <td class="py-2.5"><span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium {{ l.status_class }}">{{ l.status }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    {% include "components/empty_state.html" with title="No Program Leads" message="Program Leads will appear here once assigned." compact="true" %}
+    {% endif %}
+  </div>
 
-<div class="overflow-x-auto mt-4">
-<table class="w-full text-left text-[11px] border-collapse">
-<thead>
-<tr class="border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider text-[11px]">
-<th class="py-2.5 font-bold">Lead Name</th>
-<th class="py-2.5 font-bold">Region</th>
-<th class="py-2.5 text-center font-bold">Team Target %</th>
-<th class="py-2.5 text-center font-bold">Staff</th>
-<th class="py-2.5 text-center font-bold">Activities Planned</th>
-<th class="py-2.5 text-center font-bold">Verified</th>
-<th class="py-2.5 text-center font-bold">SF Pending</th>
-<th class="py-2.5 text-center font-bold">Backlog</th>
-<th class="py-2.5 text-right font-bold">Risk Status</th>
-</tr>
-</thead>
-<tbody class="divide-y divide-slate-50 text-slate-700 font-semibold">
-{% for lead in leads_performance %}
-<tr class="hover:bg-slate-50/50 transition-colors">
-<td class="py-3 font-extrabold text-blue-600 whitespace-nowrap">{{ lead.name }}</td>
-<td class="py-3 font-bold text-slate-500">{{ lead.region }}</td>
-<td class="py-3 text-center">
-<div class="flex items-center justify-center gap-1.5">
-<div class="w-12 bg-slate-100 h-1.5 rounded-full overflow-hidden hidden sm:block">
-<div class="bg-teal-500 h-full rounded-full" style="width: {{ lead.target }}%"></div>
+  <!-- Fund Approval & Finance Snapshot -->
+  <div class="lg:col-span-4 bg-white p-5 rounded-xl shadow-sm space-y-3">
+    <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+      <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Finance Snapshot</h3>
+      <a href="/finance/fund-allocation" class="text-[11px] font-medium text-blue-600 hover:underline">Details</a>
+    </div>
+    {% if finance_snapshot_pending %}
+    <div class="space-y-2.5">
+      {% for f in finance_snapshot_pending %}
+      <div class="flex items-center justify-between p-2.5 rounded-lg bg-slate-50/60">
+        <div>
+          <p class="text-[12px] font-medium text-slate-700">{{ f.region }}</p>
+          <p class="text-[11px] text-slate-400">{{ f.activities }} activities costed</p>
+        </div>
+        <span class="text-[12px] font-semibold text-slate-800 tabular-nums">{{ f.requested|ugx }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    {% include "components/empty_state.html" with title="No costed activities" message="Finance snapshot appears once activities are scheduled." compact="true" %}
+    {% endif %}
+  </div>
 </div>
-<span class="font-extrabold text-slate-800">{{ lead.target }}%</span>
-</div>
-</td>
-<td class="py-3 text-center font-bold text-slate-500">{{ lead.staff }}</td>
-<td class="py-3 text-center font-bold text-slate-700">{{ lead.planned }}</td>
-<td class="py-3 text-center font-extrabold text-emerald-600">{{ lead.verified }}</td>
-<td class="py-3 text-center font-bold text-amber-600">{{ lead.sf_pending }}</td>
-<td class="py-3 text-center font-bold text-slate-500">{{ lead.backlog }}</td>
-<td class="py-3 text-right">
-<span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-bold border {{ lead.status_class }}">
-{{ lead.status }}
-</span>
-</td>
-</tr>
-{% endfor %}
-</tbody>
-</table>
-</div>
-</div>
-</div>
-
-<!-- Fund Approval & Finance Snapshot (Col Span 5) -->
-<div class="lg:col-span-5 bg-white p-5 rounded-3xl border border-slate-150 shadow-sm flex flex-col justify-between">
-<div>
-<div class="pb-3 border-b border-slate-100 flex items-center justify-between">
-<h3 class="text-[14px] font-black text-slate-800 tracking-tight">Fund Approval & Finance Snapshot</h3>
-<a href="/fund-requests/weekly" class="text-[11px] font-black text-blue-600 hover:underline">View all requests &rarr;</a>
-</div>
-
-<div class="grid grid-cols-1 md:grid-cols-12 gap-6 mt-4">
-<!-- Pending requests table matrix (Col Span 8) -->
-<div class="md:col-span-8">
-<h4 class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wide mb-2.5">Pending Fund Requests (Need Approval)</h4>
-<div class="overflow-x-auto">
-<table class="w-full text-left text-[11px] border-collapse">
-<thead>
-<tr class="border-b border-slate-100 text-slate-400 font-bold">
-<th class="pb-2 font-bold">Region / Team</th>
-<th class="pb-2 text-right font-bold">Amount</th>
-<th class="pb-2 text-center font-bold">Activities</th>
-<th class="pb-2 text-right font-bold">Action</th>
-</tr>
-</thead>
-<tbody class="divide-y divide-slate-50">
-{% for fr in finance_snapshot_pending %}
-<tr class="hover:bg-slate-50/50 transition-colors">
-<td class="py-2.5 font-bold text-slate-800">{{ fr.region }}</td>
-<td class="py-2.5 text-right font-extrabold text-slate-800">UGX {{ fr.requested }}</td>
-<td class="py-2.5 text-center font-semibold text-slate-500">{{ fr.activities }}</td>
-<td class="py-2.5 text-right">
-<a href="/fund-requests/weekly" class="h-6 px-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 rounded text-[11px] font-black flex items-center justify-center">Review</a>
-</td>
-</tr>
-{% endfor %}
-</tbody>
-</table>
-</div>
-</div>
-
-<!-- Funded not completed card summary (Col Span 4) -->
-<div class="md:col-span-4 bg-slate-50 p-4 rounded-2xl border border-slate-100 flex flex-col justify-between">
-<div>
-<span class="text-[11px] font-extrabold text-slate-500 uppercase tracking-wide block">Funded Not Completed</span>
-<h3 class="text-[18px] font-black text-slate-800 mt-1 leading-none">UGX 8.42B</h3>
-<span class="text-[11px] text-slate-400 font-bold block mt-1">Across 1,246 activities</span>
-</div>
-
-<div class="space-y-1.5 pt-4 border-t border-slate-200 mt-4 text-[11px] font-bold text-slate-500">
-<div class="flex items-center justify-between text-rose-600"><span>● Overdue Activities</span> <span>782</span></div>
-<div class="flex items-center justify-between text-amber-600"><span>● Partially Completed</span> <span>312</span></div>
-<div class="flex items-center justify-between"><span>● Not Started</span> <span>152</span></div>
-</div>
-</div>
-</div>
-</div>
-</div>
-
-</div>
-
 
 <!-- ================= FOURTH ROW ================= -->
-<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
 
-<!-- Operational Risk & Backlog (Col Span 5) -->
-<div class="lg:col-span-5 bg-white p-5 rounded-3xl border border-slate-150 shadow-sm flex flex-col justify-between">
-<div>
-<div class="pb-3 border-b border-slate-100 flex items-center justify-between">
-<h3 class="text-[14px] font-black text-slate-800 tracking-tight">Operational Risk & Backlog</h3>
-<a href="#" class="text-[11px] font-black text-blue-600 hover:underline">View risk register &rarr;</a>
-</div>
+  <!-- SSA Intervention Heatmap -->
+  <div class="lg:col-span-7 bg-white p-5 rounded-xl shadow-sm space-y-3">
+    <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+      <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">SSA Intervention Heatmap</h3>
+      <a href="/ssa" class="text-[11px] font-medium text-blue-600 hover:underline">View SSA</a>
+    </div>
+    {% if ssa_heat_rows %}
+    <div class="overflow-x-auto">
+      <table class="w-full text-[11px]">
+        <thead>
+          <tr class="text-left text-[10px] text-slate-400 uppercase tracking-wide">
+            <th class="pb-2 pr-2 font-medium">Region</th>
+            {% for code, label in intervention_choices %}
+            <th class="pb-2 px-1 font-medium text-center" title="{{ label }}">{{ code|slice:":3" }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-50">
+          {% for row in ssa_heat_rows %}
+          <tr>
+            <td class="py-2 pr-2 font-medium text-slate-700 whitespace-nowrap">{{ row.name }}</td>
+            {% for code, label in intervention_choices %}
+              {% with score=row.scores|lookup:code %}
+              <td class="py-2 px-1 text-center">
+                {% if score is not None %}
+                  <span class="inline-flex items-center justify-center w-8 h-6 rounded text-[10px] font-semibold tabular-nums
+                    {% if score >= 7 %}bg-emerald-50 text-emerald-700
+                    {% elif score >= 5 %}bg-amber-50 text-amber-700
+                    {% else %}bg-rose-50 text-rose-700{% endif %}">{{ score }}</span>
+                {% else %}
+                  <span class="text-slate-300">—</span>
+                {% endif %}
+              </td>
+              {% endwith %}
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    {% include "components/empty_state.html" with title="No SSA data" message="Intervention scores appear once SSA records are collected." compact="true" %}
+    {% endif %}
+  </div>
 
-<div class="grid grid-cols-2 md:grid-cols-3 gap-3 mt-4">
-<!-- Card 1 -->
-<div class="p-3 bg-slate-50 hover:bg-slate-100 rounded-2xl border border-slate-100 transition-colors">
-<h4 class="text-[18px] font-black text-slate-800 leading-none">7,842</h4>
-<span class="text-[11px] text-slate-400 font-bold block mt-1">Overdue Salesforce IDs</span>
-<span class="text-[11px] text-rose-600 font-extrabold block mt-2">▲ 1,122 vs Apr</span>
+  <!-- Priority Schools -->
+  <div class="lg:col-span-5 bg-white p-5 rounded-xl shadow-sm space-y-3">
+    <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+      <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Priority Schools</h3>
+      <a href="/schools" class="text-[11px] font-medium text-blue-600 hover:underline">View all</a>
+    </div>
+    {% if priority_schools %}
+    <div class="space-y-2">
+      {% for s in priority_schools %}
+      <div class="flex items-center justify-between p-2.5 rounded-lg bg-slate-50/60 hover:bg-slate-50 transition-colors">
+        <div class="min-w-0">
+          <p class="text-[12px] font-medium text-slate-700 truncate">{{ s.name }}</p>
+          <p class="text-[11px] text-slate-400">{{ s.issue }} · {{ s.region }}</p>
+        </div>
+        <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium {{ s.risk_class }}">{{ s.risk }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    {% include "components/empty_state.html" with title="No priority schools" message="Schools needing attention will appear here." compact="true" %}
+    {% endif %}
+  </div>
 </div>
-
-<!-- Card 2 -->
-<div class="p-3 bg-slate-50 hover:bg-slate-100 rounded-2xl border border-slate-100 transition-colors">
-<h4 class="text-[18px] font-black text-slate-800 leading-none">1,126</h4>
-<span class="text-[11px] text-slate-400 font-bold block mt-1">Returned Verifications</span>
-<span class="text-[11px] text-amber-600 font-extrabold block mt-2">▲ 216 vs Apr</span>
-</div>
-
-<!-- Card 3 -->
-<div class="p-3 bg-slate-50 hover:bg-slate-100 rounded-2xl border border-slate-100 transition-colors">
-<h4 class="text-[18px] font-black text-slate-800 leading-none">1,458</h4>
-<span class="text-[11px] text-slate-400 font-bold block mt-1">Schools No Recent Visit</span>
-<span class="text-[11px] text-amber-600 font-extrabold block mt-2">▲ 342 vs Apr</span>
-</div>
-
-<!-- Card 4 -->
-<div class="p-3 bg-slate-50 hover:bg-slate-100 rounded-2xl border border-slate-100 transition-colors">
-<h4 class="text-[18px] font-black text-slate-800 leading-none">1,237</h4>
-<span class="text-[11px] text-slate-400 font-bold block mt-1">Schools No Training</span>
-<span class="text-[11px] text-amber-600 font-extrabold block mt-2">▲ 298 vs Apr</span>
-</div>
-
-<!-- Card 5 -->
-<div class="p-3 bg-slate-50 hover:bg-slate-100 rounded-2xl border border-slate-100 transition-colors">
-<h4 class="text-[18px] font-black text-slate-800 leading-none">842</h4>
-<span class="text-[11px] text-slate-400 font-bold block mt-1">Core Schools Behind</span>
-<span class="text-[11px] text-rose-600 font-extrabold block mt-2">▲ 124 vs Apr</span>
-</div>
-
-<!-- Card 6 -->
-<div class="p-3 bg-slate-50 hover:bg-slate-100 rounded-2xl border border-slate-100 transition-colors">
-<h4 class="text-[18px] font-black text-slate-800 leading-none">214</h4>
-<span class="text-[11px] text-slate-400 font-bold block mt-1">Leave / Conflict Alerts</span>
-<span class="text-[11px] text-blue-600 font-extrabold block mt-2">▲ 20 vs Apr</span>
-</div>
-</div>
-</div>
-</div>
-
-<!-- Cluster SSA Performance heatmap (Col Span 4) -->
-<div class="lg:col-span-4 bg-white p-5 rounded-3xl border border-slate-150 shadow-sm flex flex-col justify-between">
-<div>
-<div class="pb-3 border-b border-slate-100 flex items-center justify-between">
-<h3 class="text-[14px] font-black text-slate-800 tracking-tight">School &amp; SSA Intelligence</h3>
-<a href="/analytics" class="text-[11px] font-black text-blue-600 hover:underline">View full performance &rarr;</a>
-</div>
-
-<h4 class="text-[11px] font-extrabold text-slate-500 uppercase mt-4 mb-2">Cluster SSA Performance (8 Interventions)</h4>
-
-<div class="overflow-x-auto">
-<table class="w-full text-center text-[11px] border-collapse font-bold">
-<thead>
-<tr class="border-b border-slate-100 text-slate-400 uppercase text-[11px]">
-<th class="pb-1 text-left font-bold">Region</th>
-<th class="pb-1 font-bold">Reading</th>
-<th class="pb-1 font-bold">Math</th>
-<th class="pb-1 font-bold">WASH</th>
-<th class="pb-1 font-bold">Health</th>
-<th class="pb-1 font-bold">Safety</th>
-<th class="pb-1 font-bold">Mindset</th>
-<th class="pb-1 font-bold">Gov.</th>
-<th class="pb-1 font-bold">Gender</th>
-<th class="pb-1 font-bold bg-slate-50">Overall</th>
-</tr>
-</thead>
-<tbody class="divide-y divide-slate-50">
-{% for row in ssa_heat_rows %}
-<tr class="hover:bg-slate-50/50">
-<td class="py-2 text-left font-extrabold text-slate-800">{{ row.name }}</td>
-<!-- reading -->
-<td class="py-2 {% if row.r >= 80 %}bg-emerald-50 text-emerald-700{% elif row.r >= 60 %}bg-amber-50 text-amber-700{% else %}bg-rose-50 text-rose-700{% endif %}">{{ row.r }}%</td>
-<!-- math -->
-<td class="py-2 {% if row.m >= 80 %}bg-emerald-50 text-emerald-700{% elif row.m >= 60 %}bg-amber-50 text-amber-700{% else %}bg-rose-50 text-rose-700{% endif %}">{{ row.m }}%</td>
-<!-- wash -->
-<td class="py-2 {% if row.w >= 80 %}bg-emerald-50 text-emerald-700{% elif row.w >= 60 %}bg-amber-50 text-amber-700{% else %}bg-rose-50 text-rose-700{% endif %}">{{ row.w }}%</td>
-<!-- health -->
-<td class="py-2 {% if row.s >= 80 %}bg-emerald-50 text-emerald-700{% elif row.s >= 60 %}bg-amber-50 text-amber-700{% else %}bg-rose-50 text-rose-700{% endif %}">{{ row.s }}%</td>
-<!-- safety -->
-<td class="py-2 {% if row.mi >= 80 %}bg-emerald-50 text-emerald-700{% elif row.mi >= 60 %}bg-amber-50 text-amber-700{% else %}bg-rose-50 text-rose-700{% endif %}">{{ row.mi }}%</td>
-<!-- mindset -->
-<td class="py-2 {% if row.g >= 80 %}bg-emerald-50 text-emerald-700{% elif row.g >= 60 %}bg-amber-50 text-amber-700{% else %}bg-rose-50 text-rose-700{% endif %}">{{ row.g }}%</td>
-<!-- gov -->
-<td class="py-2 {% if row.ge >= 80 %}bg-emerald-50 text-emerald-700{% elif row.ge >= 60 %}bg-amber-50 text-amber-700{% else %}bg-rose-50 text-rose-700{% endif %}">{{ row.ge }}%</td>
-<!-- gender -->
-<td class="py-2 {% if row.o >= 80 %}bg-emerald-50 text-emerald-700{% elif row.o >= 60 %}bg-amber-50 text-amber-700{% else %}bg-rose-50 text-rose-700{% endif %}">{{ row.o }}%</td>
-<!-- overall -->
-<td class="py-2 bg-slate-50 font-black text-slate-800">{{ row.o }}%</td>
-</tr>
-{% endfor %}
-</tbody>
-</table>
-</div>
-</div>
-</div>
-
-<!-- Priority Schools (Col Span 3) -->
-<div class="lg:col-span-3 bg-white p-5 rounded-3xl border border-slate-150 shadow-sm flex flex-col justify-between">
-<div>
-<div class="pb-3 border-b border-slate-100 flex items-center justify-between">
-<h3 class="text-[14px] font-black text-slate-800 tracking-tight">Priority Schools (Urgent Attention)</h3>
-<a href="/schools" class="text-[11px] font-black text-blue-600 hover:underline">View all &rarr;</a>
-</div>
-
-<div class="overflow-x-auto mt-4">
-<table class="w-full text-left text-[11px] border-collapse">
-<thead>
-<tr class="border-b border-slate-100 text-slate-400 font-bold">
-<th class="pb-2 font-bold">School</th>
-<th class="pb-2 font-bold">Region</th>
-<th class="pb-2 font-bold">Key Issues</th>
-<th class="pb-2 text-right font-bold">Risk</th>
-</tr>
-</thead>
-<tbody class="divide-y divide-slate-50 text-slate-700 font-semibold">
-{% for sch in priority_schools %}
-<tr class="hover:bg-slate-50/50">
-<td class="py-2.5 font-bold text-slate-800">{{ sch.name }}</td>
-<td class="py-2.5 text-slate-500 font-bold">{{ sch.region }}</td>
-<td class="py-2.5 text-slate-500 font-bold truncate max-w-[80px]" title="{{ sch.issue }}">{{ sch.issue }}</td>
-<td class="py-2.5 text-right">
-<span class="inline-flex items-center rounded px-1 py-0.5 text-[11px] font-bold border {{ sch.risk_class }}">
-{{ sch.risk }}
-</span>
-</td>
-</tr>
-{% endfor %}
-</tbody>
-</table>
-</div>
-</div>
-</div>
-
-</div>
-
 
 <!-- ================= QUICK LEADERSHIP ACTIONS ================= -->
-<div class="bg-white p-5 rounded-3xl border border-slate-150 shadow-sm space-y-4">
-<div class="pb-2 border-b border-slate-100">
-<h2 class="text-[14px] font-black text-slate-800 tracking-tight">Quick Leadership Actions</h2>
-</div>
-
-<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-<!-- 1 -->
-<a href="/fund-requests/weekly" class="p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl flex items-center gap-3 transition-colors group">
-<div class="h-8 w-8 rounded-lg bg-emerald-500 text-white flex items-center justify-center text-xs font-black shadow-sm group-hover:scale-105 transition-transform">✓</div>
-<div>
-<span class="text-[11px] font-black text-slate-800 block leading-tight">Review Fund Requests</span>
-<span class="text-[11px] text-slate-400 font-bold block mt-0.5">154 pending approvals</span>
-</div>
-</a>
-
-<!-- 2 -->
-<a href="/planning" class="p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl flex items-center gap-3 transition-colors group">
-<div class="h-8 w-8 rounded-lg bg-rose-500 text-white flex items-center justify-center text-xs font-black shadow-sm group-hover:scale-105 transition-transform">⚠️</div>
-<div>
-<span class="text-[11px] font-black text-slate-800 block leading-tight">View High-Risk Regions</span>
-<span class="text-[11px] text-slate-400 font-bold block mt-0.5">2 regions need attention</span>
-</div>
-</a>
-
-<!-- 3 -->
-<a href="#" class="p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl flex items-center gap-3 transition-colors group">
-<div class="h-8 w-8 rounded-lg bg-amber-500 text-white flex items-center justify-center text-xs font-black shadow-sm group-hover:scale-105 transition-transform">⚡</div>
-<div>
-<span class="text-[11px] font-black text-slate-800 block leading-tight">Inspect SF Backlog</span>
-<span class="text-[11px] text-slate-400 font-bold block mt-0.5">7,842 pending records</span>
-</div>
-</a>
-
-<!-- 4 -->
-<a href="/planning" class="p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl flex items-center gap-3 transition-colors group">
-<div class="h-8 w-8 rounded-lg bg-violet-500 text-white flex items-center justify-center text-xs font-black shadow-sm group-hover:scale-105 transition-transform">🏫</div>
-<div>
-<span class="text-[11px] font-black text-slate-800 block leading-tight">See Core School Delays</span>
-<span class="text-[11px] text-slate-400 font-bold block mt-0.5">842 schools behind</span>
-</div>
-</a>
-
-<!-- 5 -->
-<a href="/reports" class="p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl flex items-center gap-3 transition-colors group">
-<div class="h-8 w-8 rounded-lg bg-blue-500 text-white flex items-center justify-center text-xs font-black shadow-sm group-hover:scale-105 transition-transform">📊</div>
-<div>
-<span class="text-[11px] font-black text-slate-800 block leading-tight">Review Team Targets</span>
-<span class="text-[11px] text-slate-400 font-bold block mt-0.5">6 teams below target</span>
-</div>
-</a>
-
-<!-- 6 -->
-<a href="/reports" class="p-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl flex items-center gap-3 transition-colors group">
-<div class="h-8 w-8 rounded-lg bg-teal-500 text-white flex items-center justify-center text-xs font-black shadow-sm group-hover:scale-105 transition-transform">☁</div>
-<div>
-<span class="text-[11px] font-black text-slate-800 block leading-tight">Open Country Report</span>
-<span class="text-[11px] text-slate-400 font-bold block mt-0.5">Comprehensive overview</span>
-</div>
-</a>
-</div>
-</div>
-
-
-<!-- ================= BUDGET EXPOSURE & COST SETTINGS DRAWER ================= -->
-<div class="grid lg:grid-cols-3 gap-6">
-<div class="lg:col-span-2 bg-white rounded-3xl border border-slate-150 shadow-sm overflow-hidden flex flex-col justify-between">
-<div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-<h2 class="text-[14px] font-black text-slate-800 tracking-tight">Advances Pending Your Final Approval</h2>
-<span class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200">{{ pending_funds|length }} requests</span>
-</div>
-<div class="divide-y divide-slate-100 flex-1">
-{% if pending_funds %}
-{% for fr in pending_funds %}
-<div class="p-4 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
-<div>
-<h4 class="text-[14px] font-extrabold text-slate-800">Week Starting: {{ fr.week_start_date }}</h4>
-<p class="text-[11px] text-slate-500 font-semibold mt-0.5">
-Requester: {{ fr.requester.name }} &bull; Total Requested: {{ fr.total_budget|ugx }}
-</p>
-</div>
-<a href="/fund-requests/weekly" class="h-8 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-black flex items-center justify-center transition-all shadow-sm">
-Approve / Return
-</a>
-</div>
-{% endfor %}
-{% else %}
-<div class="p-8 text-center text-slate-400 text-[12px] font-bold flex flex-col items-center justify-center space-y-2">
-<span>🏫</span>
-<span>No weekly advances currently awaiting your approval decision.</span>
-</div>
-{% endif %}
-</div>
-</div>
-
-<!-- Active catalogue Cost settings -->
-<div class="bg-white rounded-3xl border border-slate-150 shadow-sm p-5 space-y-4">
-<div class="flex items-center justify-between border-b border-slate-100 pb-3">
-<div>
-<h2 class="text-[14px] font-black text-slate-800 tracking-tight">Country Cost Catalogue</h2>
-<p class="text-[11px] text-slate-400 font-bold mt-0.5">FY{{ fy }} Operational rates</p>
-</div>
-{% if active_catalogue %}
-<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wide">
-● Active (v{{ active_catalogue.version }})
-</span>
-{% else %}
-<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200 uppercase tracking-wide animate-pulse">
-⚠️ Inactive
-</span>
-{% endif %}
-</div>
-
-{% if active_catalogue %}
-<div class="overflow-x-auto max-h-[250px] overflow-y-auto pr-1">
-<table class="w-full text-left text-[11px]">
-<thead>
-<tr class="border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-<th class="pb-2">Item Setting</th>
-<th class="pb-2 text-right">Standard Rate</th>
-<th class="pb-2 text-center">Unit</th>
-</tr>
-</thead>
-<tbody class="divide-y divide-slate-100 font-bold text-slate-600">
-{% for c in cost_items %}
-<tr class="hover:bg-slate-50/50">
-<td class="py-2">{{ c.key|title|replace_underscore }}</td>
-<td class="py-2 text-right text-slate-800">{{ c.value|ugx }}</td>
-<td class="py-2 text-center text-slate-500">{{ c.unit|default:"Visit" }}</td>
-</tr>
-{% endfor %}
-</tbody>
-</table>
-</div>
-{% else %}
-<div class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-center space-y-2">
-<p class="text-[11px] font-bold text-amber-800 leading-snug">No active cost catalogue found. Field visit scheduling is currently blocked.</p>
-<form method="post" action="/cost-settings/initialize-default">
-{% csrf_token %}
-<button type="submit" class="w-full h-9 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-black flex items-center justify-center transition-colors shadow-sm">
-Initialize Catalogue
-</button>
-</form>
-</div>
-{% endif %}
-</div>
+<div class="bg-white p-5 rounded-xl shadow-sm">
+  <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight mb-3">Quick Leadership Actions</h3>
+  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+    <a href="/fund-requests/weekly" class="flex flex-col items-center gap-1.5 p-3 bg-slate-50/70 hover:bg-slate-100 rounded-lg transition-colors text-[11px] font-medium text-slate-600 text-center">
+      <svg class="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      Approve Funds
+    </a>
+    <a href="/analytics" class="flex flex-col items-center gap-1.5 p-3 bg-slate-50/70 hover:bg-slate-100 rounded-lg transition-colors text-[11px] font-medium text-slate-600 text-center">
+      <svg class="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      Analytics
+    </a>
+    <a href="/staff" class="flex flex-col items-center gap-1.5 p-3 bg-slate-50/70 hover:bg-slate-100 rounded-lg transition-colors text-[11px] font-medium text-slate-600 text-center">
+      <svg class="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a4 4 0 10-4-4"/></svg>
+      Team
+    </a>
+    <a href="/clusters" class="flex flex-col items-center gap-1.5 p-3 bg-slate-50/70 hover:bg-slate-100 rounded-lg transition-colors text-[11px] font-medium text-slate-600 text-center">
+      <svg class="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+      Clusters
+    </a>
+    <a href="/coverage" class="flex flex-col items-center gap-1.5 p-3 bg-slate-50/70 hover:bg-slate-100 rounded-lg transition-colors text-[11px] font-medium text-slate-600 text-center">
+      <svg class="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/></svg>
+      Coverage
+    </a>
+    <a href="/admin-panel" class="flex flex-col items-center gap-1.5 p-3 bg-slate-50/70 hover:bg-slate-100 rounded-lg transition-colors text-[11px] font-medium text-slate-600 text-center">
+      <svg class="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      Admin
+    </a>
+  </div>
 </div>
 
 </div>

@@ -8,10 +8,10 @@
 <!-- Header -->
 <div class="flex items-center justify-between border-b border-slate-200 pb-4">
 <div>
-<h1 class="text-[20px] font-black text-slate-800 tracking-tight">Import Result Summary</h1>
+<h1 class="text-[20px] font-semibold text-slate-800 tracking-tight">Import Result Summary</h1>
 <p class="text-[12px] text-slate-400 font-semibold mt-0.5">The SSA assessment import batch has been completed successfully.</p>
 </div>
-<a href="/ssa/upload/" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-[12px] rounded-lg shadow transition-colors">
+<a href="/ssa/upload/" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[12px] rounded-lg shadow transition-colors">
 Upload Another File
 </a>
 </div>
@@ -19,26 +19,26 @@ Upload Another File
 <!-- Cards Tally -->
 <div class="grid grid-cols-4 gap-4">
 <div class="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm text-center">
-<p class="text-[28px] font-extrabold text-slate-800">{{ processed }}</p>
+<p class="text-[28px] font-semibold text-slate-800">{{ processed }}</p>
 <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-1">Rows Processed</p>
 </div>
 <div class="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm text-center">
-<p class="text-[28px] font-extrabold text-emerald-600">{{ created }}</p>
+<p class="text-[28px] font-semibold text-emerald-600">{{ created }}</p>
 <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-1">SSA Created / Updated</p>
 </div>
 <div class="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm text-center">
-<p class="text-[28px] font-extrabold text-amber-500">{{ unmatched }}</p>
+<p class="text-[28px] font-semibold text-amber-500">{{ unmatched }}</p>
 <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-1">Unmatched School IDs</p>
 </div>
 <div class="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm text-center">
-<p class="text-[28px] font-extrabold text-rose-500">{{ failed }}</p>
+<p class="text-[28px] font-semibold text-rose-500">{{ failed }}</p>
 <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-1">Invalid Rows</p>
 </div>
 </div>
 
 <!-- Action Queues Grid -->
 <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4">
-<h3 class="text-[14px] font-extrabold text-slate-800">Next Action Steps</h3>
+<h3 class="text-[14px] font-semibold text-slate-800">Next Action Steps</h3>
 
 <div class="grid grid-cols-2 gap-4">
 <a href="/ssa/verification/" class="p-4 bg-slate-50 border border-slate-200/60 rounded-xl hover:bg-slate-100/50 transition-colors flex items-center gap-3 group">
@@ -46,7 +46,7 @@ Upload Another File
 <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" /></svg>
 </div>
 <div>
-<h4 class="text-[14px] font-extrabold text-slate-800">IA Verification Queue &rarr;</h4>
+<h4 class="text-[14px] font-semibold text-slate-800">IA Verification Queue &rarr;</h4>
 <p class="text-[11px] text-slate-400 font-semibold mt-0.5">Verify uploaded scores to officially finalize school baseline values.</p>
 </div>
 </a>
@@ -56,7 +56,7 @@ Upload Another File
 <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
 </div>
 <div>
-<h4 class="text-[14px] font-extrabold text-slate-800">Unmatched SSA Queue &rarr;</h4>
+<h4 class="text-[14px] font-semibold text-slate-800">Unmatched SSA Queue &rarr;</h4>
 <p class="text-[11px] text-slate-400 font-semibold mt-0.5">Link SSA rows that carried unknown School IDs to the directory.</p>
 </div>
 </a>
@@ -66,7 +66,7 @@ Upload Another File
 <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
 </div>
 <div>
-<h4 class="text-[14px] font-extrabold text-slate-800">Open Planning Board &rarr;</h4>
+<h4 class="text-[14px] font-semibold text-slate-800">Open Planning Board &rarr;</h4>
 <p class="text-[11px] text-slate-400 font-semibold mt-0.5">Start scheduling support visits for schools whose baselines are now imported.</p>
 </div>
 </a>

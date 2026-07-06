@@ -4,7 +4,7 @@
 <!-- Card Header -->
 <div class="flex items-center justify-between">
 <div>
-<h3 class="text-[15px] font-black text-slate-800">Weekly Fund Request for {{ selected_week_label }}</h3>
+<h3 class="text-[15px] font-semibold text-slate-800">Weekly Fund Request for {{ selected_week_label }}</h3>
 <p class="text-[11px] text-slate-400 font-semibold mt-0.5">Owner: <span class="font-bold text-slate-600">{{ active_wfr.responsibleUserName }}</span></p>
 </div>
 
@@ -46,7 +46,7 @@
 <td class="px-4 py-3">{{ line.cost_item }}</td>
 <td class="px-4 py-3 font-bold">{{ line.quantity }}</td>
 <td class="px-4 py-3 font-semibold">{{ line.unit_cost|ugx }}</td>
-<td class="px-4 py-3 font-extrabold">{{ line.total_cost|ugx }}</td>
+<td class="px-4 py-3 font-semibold">{{ line.total_cost|ugx }}</td>
 <td class="px-4 py-3">
 <a href="/my-plan/{{ line.activity_id }}" class="inline-flex items-center gap-1 rounded border border-slate-200 px-2 py-0.5 text-[11px] font-bold bg-slate-50 text-slate-600 hover:bg-slate-100">
 From My Plan
@@ -78,7 +78,7 @@ No cost lines calculated for this weekly request.
 <div class="flex items-center justify-between border-t border-slate-100 pt-4">
 <div class="text-right ml-auto">
 <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Weekly Total:</span>
-<span class="text-[18px] font-black text-[#2e505f] block mt-0.5">{{ weekly_total|ugx }}</span>
+<span class="text-[18px] font-semibold text-[#2e505f] block mt-0.5">{{ weekly_total|ugx }}</span>
 </div>
 </div>
 
@@ -103,7 +103,7 @@ Mark as Self-Funded
 {% else %}
 <div class="text-[12px] font-bold text-slate-400 flex items-center gap-1">
 &check; Action completed. Status of this weekly request is locked to 
-<span class="font-extrabold text-slate-600 uppercase">{{ active_wfr.status }}</span>.
+<span class="font-semibold text-slate-600 uppercase">{{ active_wfr.status }}</span>.
 </div>
 {% endif %}
 

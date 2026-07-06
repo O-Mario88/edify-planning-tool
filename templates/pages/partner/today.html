@@ -7,14 +7,14 @@
 
 <div class="flex items-center justify-between">
 <div>
-<h1 class="text-[24px] font-extrabold text-slate-800 tracking-tight">Partner Today</h1>
+<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight">Partner Today</h1>
 <p class="text-[12px] text-[var(--text-secondary)] mt-1 font-semibold">Partner today view</p>
 </div>
 </div>
 
 {% if today_activities|default:activities|default:schools|default:evidence %}
 <div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm">
-<div class="px-5 py-4 border-b border-slate-100"><h2 class="text-[14px] font-extrabold text-slate-700">Items</h2></div>
+<div class="px-5 py-4 border-b border-slate-100"><h2 class="text-[14px] font-semibold text-slate-700">Items</h2></div>
 <ul class="divide-y divide-slate-100">
 {% for item in today_activities|default:activities|default:schools|default:evidence %}
 <li class="px-5 py-3.5 flex items-center justify-between">

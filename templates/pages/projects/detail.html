@@ -9,10 +9,10 @@
 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-100 pb-4">
 <div>
 <div class="flex items-center gap-2 mb-0.5">
-<span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200">
+<span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200">
 Project
 </span>
-<h1 class="text-[24px] font-extrabold text-slate-800 tracking-tight leading-tight">{{ project.name }}</h1>
+<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight leading-tight">{{ project.name }}</h1>
 </div>
 <p class="text-[12px] text-slate-500 mt-1 font-semibold">Monitoring and execution tracker for specialized initiative.</p>
 </div>
@@ -31,8 +31,8 @@ Project
 <div class="lg:col-span-2 space-y-6">
 <div class="card overflow-hidden">
 <div class="px-5 py-4 border-b border-[var(--border-card)] bg-slate-50/50 flex items-center justify-between">
-<h2 class="text-[15px] font-extrabold text-slate-800 tracking-tight">Participating Schools</h2>
-<span class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-indigo-50 text-indigo-700 border border-indigo-200">{{ school_assignments|length }} Schools</span>
+<h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">Participating Schools</h2>
+<span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">{{ school_assignments|length }} Schools</span>
 </div>
 
 <div class="divide-y divide-[var(--border-card)]">
@@ -40,7 +40,7 @@ Project
 {% for sa in school_assignments %}
 <div class="p-4 flex items-center justify-between hover:bg-slate-50/80 transition-colors group">
 <div>
-<h4 class="text-[14px] font-extrabold text-slate-800 group-hover:text-[var(--color-edify-primary)] transition-colors">{{ sa.school.name }}</h4>
+<h4 class="text-[14px] font-semibold text-slate-800 group-hover:text-[var(--color-edify-primary)] transition-colors">{{ sa.school.name }}</h4>
 <p class="text-[12px] text-slate-500 font-semibold mt-0.5">ID: {{ sa.school_id }} &bull; Added to project</p>
 </div>
 <a href="/schools/{{ sa.school_id }}" class="btn btn-smooth h-8 shadow-sm">
@@ -62,14 +62,14 @@ View Profile
 
 <div class="space-y-6">
 <div class="card p-6">
-<h3 class="text-[15px] font-extrabold text-slate-800 tracking-tight mb-4">Project Details</h3>
+<h3 class="text-[15px] font-semibold text-slate-800 tracking-tight mb-4">Project Details</h3>
 <div class="space-y-4">
 <div>
-<p class="text-[11px] text-slate-400 font-extrabold uppercase tracking-wider mb-1">Project Name</p>
+<p class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-1">Project Name</p>
 <p class="text-[14px] font-semibold text-slate-800">{{ project.name }}</p>
 </div>
 <div>
-<p class="text-[11px] text-slate-400 font-extrabold uppercase tracking-wider mb-1">Description</p>
+<p class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-1">Description</p>
 <p class="text-[14px] font-medium text-slate-600 leading-relaxed">Special initiative to track progress and interventions across a selected cohort of schools.</p>
 </div>
 </div>

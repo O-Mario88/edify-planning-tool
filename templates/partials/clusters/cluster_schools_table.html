@@ -1,6 +1,6 @@
 {% load frontend_filters %}
 <div class="px-4 py-3 bg-slate-50/50 border-b border-slate-100 flex justify-between items-center font-sans">
-<h4 class="text-[12px] font-extrabold text-slate-800">Schools in Cluster ({{ schools|length }})</h4>
+<h4 class="text-[12px] font-semibold text-slate-800">Schools in Cluster ({{ schools|length }})</h4>
 <button 
 hx-get="/clusters/{{ cluster_id }}/bulk-assign-drawer"
 hx-target="#drawer-container"
@@ -37,7 +37,7 @@ Add Schools
 <td class="px-4 py-3 font-bold text-[#2563eb] font-mono whitespace-nowrap">{{ s.schoolId }}</td>
 
 <!-- School Name -->
-<td class="px-4 py-3 font-extrabold text-slate-800 whitespace-nowrap">
+<td class="px-4 py-3 font-semibold text-slate-800 whitespace-nowrap">
 <a href="/schools/{{ s.id }}" class="hover:underline">{{ s.name }}</a>
 </td>
 
@@ -54,7 +54,7 @@ Add Schools
 <!-- SSA Avg -->
 <td class="px-4 py-3 whitespace-nowrap">
 {% if s.currentSsaAverage %}
-<span class="flex items-center gap-1 font-extrabold">
+<span class="flex items-center gap-1 font-semibold">
 {{ s.currentSsaAverage|floatformat:1 }} 
 <span class="h-1.5 w-1.5 rounded-full {% if s.currentSsaAverage < 5.0 %}bg-rose-500{% elif s.currentSsaAverage < 6.0 %}bg-amber-500{% else %}bg-emerald-500{% endif %}"></span>
 </span>
@@ -73,8 +73,8 @@ Add Schools
 <!-- Attendance (FY) -->
 <td class="px-4 py-3 whitespace-nowrap">
 <div class="text-[11px] font-semibold text-slate-500">
-<div>Meetings: <span class="font-extrabold text-slate-800">{{ s.meetings_attended }}/{{ s.total_meetings }}</span></div>
-<div class="mt-0.5">Trainings: <span class="font-extrabold text-slate-800">{{ s.trainings_attended }}/{{ s.total_trainings }}</span></div>
+<div>Meetings: <span class="font-semibold text-slate-800">{{ s.meetings_attended }}/{{ s.total_meetings }}</span></div>
+<div class="mt-0.5">Trainings: <span class="font-semibold text-slate-800">{{ s.trainings_attended }}/{{ s.total_trainings }}</span></div>
 </div>
 </td>
 

@@ -1,0 +1,48 @@
+{% comment %}
+  Edify Card — the single source for all card surfaces.
+
+  Usage (simple):
+    {% include "components/card.html" with title="Budget Snapshot" %}
+      <p>Body content goes here.</p>
+    {% endinclude %}
+
+  Usage (with header action + tone):
+    {% include "components/card.html" with title="Schools" subtitle="Q3 portfolio" action_href="/schools" action_label="View all" tone="info" %}
+      ...body...
+    {% endinclude %}
+
+  Because {% include %} cannot capture body blocks, this partial renders ONLY
+  the card shell (header + optional action). Wrap it around your content:
+
+      <div class="card p-5">
+        {% include "components/card_header.html" with title="..." subtitle="..." %}
+        ...your body...
+      </div>
+
+  This file therefore provides the HEADER as the reusable unit, since that is
+  where the most drift occurs (font sizes, weights, action placement).
+
+  Required: title
+  Optional:
+    subtitle    — secondary line under the title (muted)
+    action_label— text of the header action link
+    action_href — href for the action link (rendered only if both label+href set)
+    tone        — info | success | warning | danger | neutral (tints the title accent; default: none)
+    divider     — "true" → render a 1px divider between header and body
+{% endcomment %}
+<div class="flex items-start justify-between gap-3 {% if divider == 'true' %}pb-3 border-b border-slate-100{% endif %}">
+  <div class="min-w-0">
+    <h3 class="text-[15px] font-semibold text-slate-800 tracking-tight leading-tight
+               {% if tone == 'info' %}text-blue-700{% elif tone == 'success' %}text-emerald-700{% elif tone == 'warning' %}text-amber-700{% elif tone == 'danger' %}text-rose-700{% endif %}">
+      {{ title }}
+    </h3>
+    {% if subtitle %}
+      <p class="text-[12px] text-slate-500 font-medium mt-0.5 leading-snug">{{ subtitle }}</p>
+    {% endif %}
+  </div>
+  {% if action_label and action_href %}
+    <a href="{{ action_href }}" class="shrink-0 text-[12px] font-semibold text-blue-600 hover:text-blue-700 hover:underline">
+      {{ action_label }} &rarr;
+    </a>
+  {% endif %}
+</div>

@@ -14,16 +14,11 @@ name="focus_intervention"
 hx-get="/clusters/impact-drawer/{{ cluster_id }}"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
-class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-extrabold bg-white focus:outline-none cursor-pointer"
+class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold bg-white focus:outline-none cursor-pointer"
 >
-<option value="leadership" {% if focus_intervention == 'leadership' %}selected{% endif %}>Leadership</option>
-<option value="teaching_and_learning" {% if focus_intervention == 'teaching_and_learning' %}selected{% endif %}>Teaching & Learning</option>
-<option value="financial_health" {% if focus_intervention == 'financial_health' %}selected{% endif %}>Financial Health</option>
-<option value="exposure_to_the_word" {% if focus_intervention == 'exposure_to_the_word' %}selected{% endif %}>Exposure to the Word of God</option>
-<option value="christlike_behaviour" {% if focus_intervention == 'christlike_behaviour' %}selected{% endif %}>Christlike Behaviour</option>
-<option value="gov_reqs" {% if focus_intervention == 'gov_reqs' %}selected{% endif %}>Government Requirements & Compliance</option>
-<option value="ed_tech" {% if focus_intervention == 'ed_tech' %}selected{% endif %}>Education Technology</option>
-<option value="learning_environment" {% if focus_intervention == 'learning_environment' %}selected{% endif %}>Learning Environment</option>
+{% for code, label in interventions %}
+<option value="{{ code }}" {% if focus_intervention == code %}selected{% endif %}>{{ label }}</option>
+{% endfor %}
 </select>
 </div>
 
@@ -33,15 +28,15 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-extr
 <div class="grid grid-cols-3 gap-3 text-center">
 <div class="bg-slate-50 p-3 rounded-xl border border-slate-100/50">
 <span class="text-[11px] uppercase font-bold text-slate-400 block">Before Average</span>
-<span class="text-[20px] font-black text-slate-700 block mt-1">{{ impact_data.before_avg|floatformat:1 }}</span>
+<span class="text-[20px] font-semibold text-slate-700 block mt-1">{{ impact_data.before_avg|floatformat:1 }}</span>
 </div>
 <div class="bg-slate-50 p-3 rounded-xl border border-slate-100/50">
 <span class="text-[11px] uppercase font-bold text-slate-400 block">After Average</span>
-<span class="text-[20px] font-black text-slate-700 block mt-1">{{ impact_data.after_avg|floatformat:1 }}</span>
+<span class="text-[20px] font-semibold text-slate-700 block mt-1">{{ impact_data.after_avg|floatformat:1 }}</span>
 </div>
 <div class="bg-emerald-50 p-3 rounded-xl border border-emerald-100 flex flex-col justify-center items-center">
 <span class="text-[11px] uppercase font-bold text-emerald-600 block leading-none">Score Delta</span>
-<span class="text-[20px] font-black text-emerald-700 block mt-1 leading-none">
+<span class="text-[20px] font-semibold text-emerald-700 block mt-1 leading-none">
 {% if impact_data.delta >= 0 %}+{% endif %}{{ impact_data.delta|floatformat:1 }}
 </span>
 </div>
@@ -50,11 +45,11 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-extr
 <div class="grid grid-cols-2 gap-3 text-center">
 <div class="p-3 bg-emerald-50/20 border border-emerald-100 rounded-xl">
 <span class="text-[11px] uppercase font-bold text-emerald-600 block">Schools Improved</span>
-<span class="text-[24px] font-black text-emerald-700 block mt-1">{{ impact_data.improved }}</span>
+<span class="text-[24px] font-semibold text-emerald-700 block mt-1">{{ impact_data.improved }}</span>
 </div>
 <div class="p-3 bg-rose-50/20 border border-rose-100 rounded-xl">
 <span class="text-[11px] uppercase font-bold text-rose-500 block">Schools Declined</span>
-<span class="text-[24px] font-black text-rose-700 block mt-1">{{ impact_data.declined }}</span>
+<span class="text-[24px] font-semibold text-rose-700 block mt-1">{{ impact_data.declined }}</span>
 </div>
 </div>
 </div>

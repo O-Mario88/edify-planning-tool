@@ -10,9 +10,9 @@
 <!-- Hero Card -->
 <div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm">
 <div class="flex items-start gap-5">
-<div class="h-16 w-16 rounded-2xl bg-indigo-100 text-indigo-700 font-extrabold text-[20px] grid place-items-center shrink-0">{{ initials }}</div>
+<div class="h-16 w-16 rounded-2xl bg-indigo-100 text-indigo-700 font-semibold text-[20px] grid place-items-center shrink-0">{{ initials }}</div>
 <div class="flex-1">
-<h1 class="text-[24px] font-extrabold text-slate-800 tracking-tight">{{ member.name }}</h1>
+<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight">{{ member.name }}</h1>
 <p class="text-[12px] text-slate-400 font-semibold mt-0.5">{{ member.email }}</p>
 <div class="flex flex-wrap gap-2 mt-3">
 {% for role in member.roles %}
@@ -22,7 +22,7 @@
 </div>
 <div class="text-right">
 <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Status</span>
-<p class="text-[14px] font-extrabold text-emerald-600 mt-0.5">{{ member.status|title }}</p>
+<p class="text-[14px] font-semibold text-emerald-600 mt-0.5">{{ member.status|title }}</p>
 </div>
 </div>
 </div>
@@ -30,15 +30,15 @@
 <!-- KPI Strip -->
 <div class="grid grid-cols-3 gap-4">
 <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm text-center">
-<p class="text-[28px] font-extrabold text-emerald-600">{{ completed_count }}</p>
+<p class="text-[28px] font-semibold text-emerald-600">{{ completed_count }}</p>
 <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-1">Completed</p>
 </div>
 <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm text-center">
-<p class="text-[28px] font-extrabold text-rose-500">{{ overdue_count }}</p>
+<p class="text-[28px] font-semibold text-rose-500">{{ overdue_count }}</p>
 <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-1">Overdue</p>
 </div>
 <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm text-center">
-<p class="text-[28px] font-extrabold text-indigo-600">{{ schools_covered|length }}</p>
+<p class="text-[28px] font-semibold text-indigo-600">{{ schools_covered|length }}</p>
 <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-1">Schools Covered</p>
 </div>
 </div>
@@ -46,13 +46,13 @@
 <!-- Annual SSA Progress (Assigned Schools) -->
 {% if staff_progress %}
 <div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm p-5 space-y-4">
-<h2 class="text-[14px] font-extrabold text-slate-700">Annual SSA Progress (Assigned Schools)</h2>
+<h2 class="text-[14px] font-semibold text-slate-700">Annual SSA Progress (Assigned Schools)</h2>
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 {% for item in staff_progress %}
 <div class="space-y-1">
 <div class="flex items-center justify-between text-[12px] font-semibold text-slate-700">
 <span>FY{{ item.fy }} ({{ item.school_count }} School{{ item.school_count|pluralize }})</span>
-<span class="font-extrabold text-slate-800">{{ item.avg_score|floatformat:1 }} / 10.0</span>
+<span class="font-semibold text-slate-800">{{ item.avg_score|floatformat:1 }} / 10.0</span>
 </div>
 <div class="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
 <div class="h-full bg-indigo-500 rounded-full" style="width: {{ item.avg_score|multiply:10 }}%"></div>
@@ -67,7 +67,7 @@
 {% if upcoming %}
 <div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm">
 <div class="px-5 py-4 border-b border-slate-100">
-<h2 class="text-[14px] font-extrabold text-slate-700">Upcoming Activities</h2>
+<h2 class="text-[14px] font-semibold text-slate-700">Upcoming Activities</h2>
 </div>
 <ul class="divide-y divide-slate-100">
 {% for act in upcoming %}
@@ -87,7 +87,7 @@
 {% if schools_covered %}
 <div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm">
 <div class="px-5 py-4 border-b border-slate-100">
-<h2 class="text-[14px] font-extrabold text-slate-700">Schools Covered</h2>
+<h2 class="text-[14px] font-semibold text-slate-700">Schools Covered</h2>
 </div>
 <div class="px-5 py-4 flex flex-wrap gap-2">
 {% for sc in schools_covered %}

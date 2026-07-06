@@ -37,7 +37,7 @@ matrix: [
 <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-100 pb-4">
 <div>
 <div class="flex items-center gap-2">
-<h1 class="text-[24px] font-black text-slate-800 tracking-tight leading-none">My Targets 🎯</h1>
+<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight leading-none">My Targets 🎯</h1>
 </div>
 <p class="text-[12px] text-slate-500 font-bold mt-1.5">Track your performance across all time periods. Monthly progress rolls up to Quarterly, Mid Year, and FY targets.</p>
 </div>
@@ -45,11 +45,11 @@ matrix: [
 <!-- Actions -->
 <div class="flex flex-wrap items-center gap-2">
 <!-- Export report -->
-<button class="h-9 px-4 bg-blue-700 hover:bg-blue-700 text-white rounded-xl text-[12px] font-black flex items-center gap-1.5 transition-all shadow-sm">
+<button class="h-9 px-4 bg-blue-700 hover:bg-blue-700 text-white rounded-xl text-[12px] font-semibold flex items-center gap-1.5 transition-all shadow-sm">
 📥 Export Report
 </button>
 
-<button class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-extrabold text-slate-700 flex items-center gap-1.5 shadow-sm hover:bg-slate-50">
+<button class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-semibold text-slate-700 flex items-center gap-1.5 shadow-sm hover:bg-slate-50">
 <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
 Filters
 </button>
@@ -60,13 +60,13 @@ Filters
 <!-- Filters dropdown select strip -->
 <div class="grid grid-cols-1 md:grid-cols-2 gap-3 bg-white p-3.5 rounded-2xl border border-slate-100 shadow-sm text-[12px] font-bold text-slate-600">
 <div class="space-y-1">
-<label class="text-[11px] text-slate-400 font-extrabold uppercase">Financial Year</label>
+<label class="text-[11px] text-slate-400 font-semibold uppercase">Financial Year</label>
 <select class="h-8 w-full bg-slate-50 border border-slate-200 rounded-lg px-2 text-[12px] font-bold cursor-pointer focus:outline-none">
 <option>FY 2024/25</option>
 </select>
 </div>
 <div class="space-y-1">
-<label class="text-[11px] text-slate-400 font-extrabold uppercase">Plan Period</label>
+<label class="text-[11px] text-slate-400 font-semibold uppercase">Plan Period</label>
 <select class="h-8 w-full bg-slate-50 border border-slate-200 rounded-lg px-2 text-[12px] font-bold cursor-pointer focus:outline-none">
 <option>May 1 – May 31, 2025</option>
 </select>
@@ -77,18 +77,18 @@ Filters
 <!-- ================= CHEVRON TIMELINE STRIP ================= -->
 <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2.5">
 <template x-for="step in timeline" :key="step.label">
-<div class="bg-white p-3.5 border border-slate-150 rounded-2xl shadow-xs relative overflow-hidden flex flex-col justify-between h-28 hover:scale-102 transition-transform cursor-pointer">
+<div class="bg-white p-3.5  rounded-2xl shadow-xs relative overflow-hidden flex flex-col justify-between h-28 hover:scale-102 transition-transform cursor-pointer">
 <div>
-<span class="text-[11px] font-black text-slate-400 uppercase tracking-widest block leading-none" x-text="step.desc"></span>
-<h4 class="text-[12px] font-extrabold text-slate-800 mt-1 leading-tight" x-text="step.label"></h4>
+<span class="text-[11px] font-semibold text-slate-400 uppercase tracking-widest block leading-none" x-text="step.desc"></span>
+<h4 class="text-[12px] font-semibold text-slate-800 mt-1 leading-tight" x-text="step.label"></h4>
 </div>
 
 <div class="flex items-end justify-between mt-3">
 <div>
-<span class="text-[14px] font-black text-slate-800 leading-none" x-text="step.progress"></span>
+<span class="text-[14px] font-semibold text-slate-800 leading-none" x-text="step.progress"></span>
 <span class="text-[11px] text-slate-400 block font-bold" x-text="step.helper"></span>
 </div>
-<span :class="step.status_class" class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-black border uppercase tracking-wider" x-text="step.pct + ' ' + step.status"></span>
+<span :class="step.status_class" class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold border uppercase tracking-wider" x-text="step.pct + ' ' + step.status"></span>
 </div>
 </div>
 </template>
@@ -101,15 +101,15 @@ Filters
 <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col justify-between h-32 hover:border-slate-300 transition-colors group">
 <div class="flex justify-between items-start gap-2">
 <div>
-<p class="text-[11px] font-black text-slate-400 uppercase tracking-wider leading-none" x-text="kpi.label"></p>
-<h3 class="text-[18px] font-black text-slate-800 leading-none mt-2.5" x-text="kpi.value"></h3>
+<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider leading-none" x-text="kpi.label"></p>
+<h3 class="text-[18px] font-semibold text-slate-800 leading-none mt-2.5" x-text="kpi.value"></h3>
 </div>
-<span class="text-[11px] font-black text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100" x-text="kpi.pct"></span>
+<span class="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100" x-text="kpi.pct"></span>
 </div>
 
 <!-- inline sparkline visual -->
 <div class="flex justify-between items-end mt-4 pt-2 border-t border-slate-50">
-<span class="text-[11px] text-slate-400 font-extrabold uppercase">Mtd Trend</span>
+<span class="text-[11px] text-slate-400 font-semibold uppercase">Mtd Trend</span>
 <svg class="h-6 w-20" viewBox="0 0 100 30">
 <path :d="kpi.spark" fill="none" :stroke="kpi.color" stroke-width="2" stroke-linecap="round"></path>
 </svg>
@@ -120,15 +120,15 @@ Filters
 
 
 <!-- ================= TARGETS BY TIME PERIOD TABLE ================= -->
-<div class="bg-white p-5 rounded-3xl border border-slate-150 shadow-sm space-y-4">
+<div class="bg-white p-5 rounded-xl  shadow-sm space-y-4">
 <div class="flex items-center justify-between pb-2 border-b border-slate-100">
-<h3 class="text-[14px] font-black text-slate-800 tracking-tight">Targets by Time Period</h3>
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Targets by Time Period</h3>
 </div>
 
 <div class="overflow-x-auto">
 <table class="w-full text-left text-[11px] border-collapse min-w-[1000px]">
 <thead>
-<tr class="border-b border-slate-150 text-slate-400 font-extrabold uppercase tracking-wider text-[11px] bg-slate-50/50">
+<tr class="border-b  text-slate-400 font-semibold uppercase tracking-wider text-[11px] bg-slate-50/50">
 <th class="py-3 px-3">Target Area</th>
 <th class="py-3 px-3 text-center border-l border-slate-100" colspan="3">May 2025 (Monthly)</th>
 <th class="py-3 px-3 text-center border-l border-slate-100" colspan="3">Q1 (Apr - Jun)</th>
@@ -166,48 +166,48 @@ Filters
 <tbody class="divide-y divide-slate-50 font-semibold text-slate-700">
 <template x-for="row in matrix" :key="row.area">
 <tr class="hover:bg-slate-50/50">
-<td class="py-2.5 px-3 font-extrabold text-slate-800" x-text="row.area"></td>
+<td class="py-2.5 px-3 font-semibold text-slate-800" x-text="row.area"></td>
 <!-- May -->
 <td class="py-2.5 text-center border-l border-slate-50 font-bold text-slate-400" x-text="row.m_tgt"></td>
-<td class="py-2.5 text-center font-extrabold text-slate-800" x-text="row.m_ach"></td>
-<td class="py-2.5 text-center font-black text-emerald-600" x-text="row.m_pct"></td>
+<td class="py-2.5 text-center font-semibold text-slate-800" x-text="row.m_ach"></td>
+<td class="py-2.5 text-center font-semibold text-emerald-600" x-text="row.m_pct"></td>
 <!-- Q1 -->
 <td class="py-2.5 text-center border-l border-slate-50 font-bold text-slate-400" x-text="row.q1_tgt"></td>
-<td class="py-2.5 text-center font-extrabold text-slate-800" x-text="row.q1_ach"></td>
-<td class="py-2.5 text-center font-black text-emerald-600" x-text="row.q1_pct"></td>
+<td class="py-2.5 text-center font-semibold text-slate-800" x-text="row.q1_ach"></td>
+<td class="py-2.5 text-center font-semibold text-emerald-600" x-text="row.q1_pct"></td>
 <!-- Q2 -->
 <td class="py-2.5 text-center border-l border-slate-50 font-bold text-slate-400" x-text="row.q2_tgt"></td>
-<td class="py-2.5 text-center font-extrabold text-slate-800" x-text="row.q2_ach"></td>
-<td class="py-2.5 text-center font-black text-emerald-600" x-text="row.q2_pct"></td>
+<td class="py-2.5 text-center font-semibold text-slate-800" x-text="row.q2_ach"></td>
+<td class="py-2.5 text-center font-semibold text-emerald-600" x-text="row.q2_pct"></td>
 <!-- Mid Year -->
 <td class="py-2.5 text-center border-l border-slate-50 font-bold text-slate-400" x-text="row.my_tgt"></td>
-<td class="py-2.5 text-center font-extrabold text-slate-800" x-text="row.my_ach"></td>
-<td class="py-2.5 text-center font-black text-emerald-600" x-text="row.my_pct"></td>
+<td class="py-2.5 text-center font-semibold text-slate-800" x-text="row.my_ach"></td>
+<td class="py-2.5 text-center font-semibold text-emerald-600" x-text="row.my_pct"></td>
 <!-- Q3 -->
 <td class="py-2.5 text-center border-l border-slate-50 font-bold text-slate-400" x-text="row.q3_tgt"></td>
-<td class="py-2.5 text-center font-extrabold text-slate-800" x-text="row.q3_ach"></td>
+<td class="py-2.5 text-center font-semibold text-slate-800" x-text="row.q3_ach"></td>
 <td class="py-2.5 text-center font-bold text-slate-400" x-text="row.q3_pct"></td>
 <!-- Q4 -->
 <td class="py-2.5 text-center border-l border-slate-50 font-bold text-slate-400" x-text="row.q4_tgt"></td>
-<td class="py-2.5 text-center font-extrabold text-slate-800" x-text="row.q4_ach"></td>
+<td class="py-2.5 text-center font-semibold text-slate-800" x-text="row.q4_ach"></td>
 <td class="py-2.5 text-center font-bold text-slate-400" x-text="row.q4_pct"></td>
 <!-- FY -->
 <td class="py-2.5 text-center border-l border-slate-50 font-bold text-slate-400" x-text="row.fy_tgt"></td>
-<td class="py-2.5 text-center font-extrabold text-slate-800" x-text="row.fy_ach"></td>
-<td class="py-2.5 text-center font-black text-emerald-600" x-text="row.fy_pct"></td>
+<td class="py-2.5 text-center font-semibold text-slate-800" x-text="row.fy_ach"></td>
+<td class="py-2.5 text-center font-semibold text-emerald-600" x-text="row.fy_pct"></td>
 </tr>
 </template>
 
 <!-- Overall row -->
-<tr class="border-t border-slate-200 text-slate-800 font-black bg-slate-50/50">
-<td class="py-3 px-3 font-extrabold uppercase tracking-wider">Overall Progress</td>
-<td class="py-3 text-center border-l border-slate-100 font-extrabold" colspan="3">68%</td>
-<td class="py-3 text-center border-l border-slate-100 font-extrabold" colspan="3">73%</td>
-<td class="py-3 text-center border-l border-slate-100 font-extrabold" colspan="3">51%</td>
-<td class="py-3 text-center border-l border-slate-100 font-extrabold" colspan="3">61%</td>
-<td class="py-3 text-center border-l border-slate-100 font-extrabold" colspan="3">0%</td>
-<td class="py-3 text-center border-l border-slate-100 font-extrabold" colspan="3">0%</td>
-<td class="py-3 text-center border-l border-slate-100 font-extrabold" colspan="3">31%</td>
+<tr class="border-t border-slate-200 text-slate-800 font-semibold bg-slate-50/50">
+<td class="py-3 px-3 font-semibold uppercase tracking-wider">Overall Progress</td>
+<td class="py-3 text-center border-l border-slate-100 font-semibold" colspan="3">68%</td>
+<td class="py-3 text-center border-l border-slate-100 font-semibold" colspan="3">73%</td>
+<td class="py-3 text-center border-l border-slate-100 font-semibold" colspan="3">51%</td>
+<td class="py-3 text-center border-l border-slate-100 font-semibold" colspan="3">61%</td>
+<td class="py-3 text-center border-l border-slate-100 font-semibold" colspan="3">0%</td>
+<td class="py-3 text-center border-l border-slate-100 font-semibold" colspan="3">0%</td>
+<td class="py-3 text-center border-l border-slate-100 font-semibold" colspan="3">31%</td>
 </tr>
 </tbody>
 </table>
@@ -219,9 +219,9 @@ Filters
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
 <!-- Progress Trend (Cumulative) (Col Span 5) -->
-<div class="lg:col-span-5 bg-white p-5 rounded-3xl border border-slate-150 shadow-sm space-y-4">
+<div class="lg:col-span-5 bg-white p-5 rounded-xl  shadow-sm space-y-4">
 <div class="pb-2 border-b border-slate-100">
-<h3 class="text-[14px] font-black text-slate-800 tracking-tight">Progress Trend (Cumulative)</h3>
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Progress Trend (Cumulative)</h3>
 </div>
 
 <div class="h-56 relative flex flex-col justify-between">
@@ -233,7 +233,7 @@ Filters
 <circle cx="250" cy="85" r="4.5" fill="#3b82f6"></circle>
 </svg>
 
-<div class="flex justify-between items-center text-[11px] font-black text-slate-400 uppercase tracking-wider pt-2 border-t border-slate-50">
+<div class="flex justify-between items-center text-[11px] font-semibold text-slate-400 uppercase tracking-wider pt-2 border-t border-slate-50">
 <span>May</span>
 <span>Jun</span>
 <span>Jul</span>
@@ -250,26 +250,26 @@ Filters
 </div>
 
 <!-- Contribution to Roll-up (Col Span 3) -->
-<div class="lg:col-span-3 bg-white p-5 rounded-3xl border border-slate-150 shadow-sm space-y-4">
+<div class="lg:col-span-3 bg-white p-5 rounded-xl  shadow-sm space-y-4">
 <div class="pb-2 border-b border-slate-100">
-<h3 class="text-[14px] font-black text-slate-800 tracking-tight">Contribution to Roll-up</h3>
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Contribution to Roll-up</h3>
 </div>
 
 <div class="space-y-3.5 text-[11px] font-bold text-slate-500">
 <div class="space-y-1">
-<div class="flex justify-between font-extrabold text-slate-700"><span>Monthly (May)</span> <span>68%</span></div>
+<div class="flex justify-between font-semibold text-slate-700"><span>Monthly (May)</span> <span>68%</span></div>
 <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden"><div class="bg-blue-600 h-full rounded-full" style="width: 68%"></div></div>
 </div>
 <div class="space-y-1">
-<div class="flex justify-between font-extrabold text-slate-700"><span>Q1 (Apr - Jun)</span> <span>72%</span></div>
+<div class="flex justify-between font-semibold text-slate-700"><span>Q1 (Apr - Jun)</span> <span>72%</span></div>
 <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden"><div class="bg-blue-600 h-full rounded-full" style="width: 72%"></div></div>
 </div>
 <div class="space-y-1">
-<div class="flex justify-between font-extrabold text-slate-700"><span>Q2 (Jul - Sep)</span> <span>51%</span></div>
+<div class="flex justify-between font-semibold text-slate-700"><span>Q2 (Jul - Sep)</span> <span>51%</span></div>
 <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden"><div class="bg-blue-600 h-full rounded-full" style="width: 51%"></div></div>
 </div>
 <div class="space-y-1">
-<div class="flex justify-between font-extrabold text-slate-700"><span>Mid Year (Apr - Sep)</span> <span>61%</span></div>
+<div class="flex justify-between font-semibold text-slate-700"><span>Mid Year (Apr - Sep)</span> <span>61%</span></div>
 <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden"><div class="bg-blue-600 h-full rounded-full" style="width: 61%"></div></div>
 </div>
 <div class="space-y-1 text-slate-400">
@@ -280,10 +280,10 @@ Filters
 </div>
 
 <!-- Performance Distribution & Top Focus (Col Span 4) -->
-<div class="lg:col-span-4 bg-white p-5 rounded-3xl border border-slate-150 shadow-sm flex flex-col justify-between space-y-4">
+<div class="lg:col-span-4 bg-white p-5 rounded-xl  shadow-sm flex flex-col justify-between space-y-4">
 <div>
 <div class="pb-2 border-b border-slate-100 flex items-center justify-between">
-<h3 class="text-[14px] font-black text-slate-800 tracking-tight">Performance Distribution</h3>
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Performance Distribution</h3>
 </div>
 
 <div class="flex items-center justify-center gap-4 py-2 border-b border-slate-50">
@@ -295,7 +295,7 @@ Filters
 <path class="text-rose-500" stroke-dasharray="17, 100" stroke-dashoffset="-83" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
 </svg>
 <div class="absolute flex flex-col justify-center items-center text-center">
-<span class="text-[15px] font-black text-slate-800 leading-none">6</span>
+<span class="text-[15px] font-semibold text-slate-800 leading-none">6</span>
 <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wide mt-0.5">Areas</span>
 </div>
 </div>
@@ -309,7 +309,7 @@ Filters
 
 <!-- Top Areas to Focus -->
 <div class="space-y-2">
-<h4 class="text-[11px] font-black text-slate-400 uppercase tracking-wider mb-2 leading-none">Top Areas to Focus</h4>
+<h4 class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2 leading-none">Top Areas to Focus</h4>
 <div class="space-y-2 text-[11px] font-bold">
 <div class="flex justify-between items-center bg-rose-50/50 p-2 rounded-lg border border-rose-100">
 <span class="text-slate-800">1. SSA Visits Completed</span>

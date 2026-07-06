@@ -15,8 +15,8 @@
 <!-- School Summary Card -->
 <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3 font-sans shadow-sm">
 <div class="flex items-center justify-between border-b border-slate-200/60 pb-2">
-<h3 class="text-[11px] font-black text-slate-400 uppercase tracking-wider">School Details</h3>
-<span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wide border {% if school.data_quality_status == 'Clean' %}bg-emerald-50 text-emerald-700 border-emerald-200{% elif school.data_quality_status == 'Needs Review' %}bg-amber-50 text-amber-700 border-amber-200{% else %}bg-rose-50 text-rose-700 border-rose-200{% endif %}">
+<h3 class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">School Details</h3>
+<span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide border {% if school.data_quality_status == 'Clean' %}bg-emerald-50 text-emerald-700 border-emerald-200{% elif school.data_quality_status == 'Needs Review' %}bg-amber-50 text-amber-700 border-amber-200{% else %}bg-rose-50 text-rose-700 border-rose-200{% endif %}">
 Quality: {{ school.data_quality_status }} ({{ school.data_quality_score }}%)
 </span>
 </div>
@@ -70,9 +70,9 @@ x-data="{ actionType: 'existing', selectedClusterId: '{{ existing_covering_clust
 <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
 </svg>
 <div>
-<p class="font-extrabold text-emerald-900">Sub-county already clustered</p>
+<p class="font-semibold text-emerald-900">Sub-county already clustered</p>
 <p class="font-medium text-[11px] text-emerald-700/90 mt-0.5 leading-normal">
-This school's sub-county is already covered by <span class="font-extrabold text-emerald-900">{{ existing_covering_cluster.name }}</span>. 
+This school's sub-county is already covered by <span class="font-semibold text-emerald-900">{{ existing_covering_cluster.name }}</span>. 
 Assignment has been locked to this cluster to maintain geographic consistency.
 </p>
 </div>
@@ -129,7 +129,7 @@ value="{{ rc.id }}"
 class="mt-0.5 rounded-full border-blue-300 text-blue-600 focus:ring-blue-500"
 >
 <div class="text-[12px]">
-<p class="font-extrabold text-blue-900">{{ rc.name }}</p>
+<p class="font-semibold text-blue-900">{{ rc.name }}</p>
 <p class="text-blue-600/80 font-semibold text-[11px] mt-0.5">
 {{ rc.district.name }} &bull; {{ rc.sub_county.name }} &bull; {{ rc.schools_count }} schools capacity
 </p>
@@ -176,7 +176,7 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semi
 <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">District</label>
 <!-- Display district name as read-only and pass via hidden input -->
 <input type="hidden" name="new_district_id" value="{{ school.district_id }}">
-<div class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-extrabold bg-slate-50 text-slate-600 flex items-center shadow-inner">
+<div class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold bg-slate-50 text-slate-600 flex items-center shadow-inner">
 {{ school.district.name }}
 </div>
 </div>
@@ -202,7 +202,7 @@ class="rounded border-emerald-300 text-emerald-600 focus:ring-emerald-500 cursor
 >
 <span>{{ sc.name }} (Home)</span>
 </label>
-<span class="text-[11px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-black">{{ sc.unclustered_schools_count }} schools</span>
+<span class="text-[11px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-semibold">{{ sc.unclustered_schools_count }} schools</span>
 </div>
 {% else %}
 {% if sc.covering_cluster_name %}
@@ -216,7 +216,7 @@ class="rounded border-slate-200 text-slate-300 focus:ring-slate-300 cursor-not-a
 >
 <span class="line-through">{{ sc.name }}</span>
 </label>
-<span class="text-[11px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-black max-w-[120px] truncate" title="Covered by {{ sc.covering_cluster_name }}">
+<span class="text-[11px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-semibold max-w-[120px] truncate" title="Covered by {{ sc.covering_cluster_name }}">
 {{ sc.covering_cluster_name }}
 </span>
 </div>
@@ -232,7 +232,7 @@ class="rounded border-slate-300 text-[#2e505f] focus:ring-[#2e505f]"
 >
 <span>{{ sc.name }}</span>
 </label>
-<span class="text-[11px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-black">{{ sc.unclustered_schools_count }} schools</span>
+<span class="text-[11px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-semibold">{{ sc.unclustered_schools_count }} schools</span>
 </div>
 {% endif %}
 {% endif %}

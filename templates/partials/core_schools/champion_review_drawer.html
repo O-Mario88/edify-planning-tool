@@ -25,7 +25,7 @@ x-transition:leave-end="translate-x-full"
 <!-- Drawer Header -->
 <div class="px-6 py-5 bg-[#0f172a] text-white flex items-center justify-between shadow-md">
 <div>
-<h2 class="text-[18px] font-black tracking-tight leading-tight">Champion Graduation Review</h2>
+<h2 class="text-[18px] font-semibold tracking-tight leading-tight">Champion Graduation Review</h2>
 <p class="text-[11px] text-slate-300 font-bold mt-0.5">{{ school.name }}</p>
 </div>
 <button 
@@ -42,9 +42,9 @@ class="rounded-lg p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 trans
 <!-- Score Circle Hero -->
 <div class="bg-white rounded-xl border border-slate-100 p-5 shadow-sm flex items-center justify-between">
 <div class="space-y-1">
-<span class="text-[11px] font-black uppercase text-slate-400 tracking-wider">Candidate Score</span>
-<h3 class="text-[32px] font-black text-slate-900 leading-none">{{ metrics.score }}<span class="text-[15px] text-slate-400 font-semibold"> /100</span></h3>
-<span class="inline-flex items-center text-[11px] font-black uppercase rounded-lg px-2.5 py-0.5 border {% if metrics.eligible %}bg-emerald-50 text-emerald-700 border-emerald-100{% else %}bg-amber-50 text-amber-700 border-amber-100{% endif %}">
+<span class="text-[11px] font-semibold uppercase text-slate-400 tracking-wider">Candidate Score</span>
+<h3 class="text-[32px] font-semibold text-slate-900 leading-none">{{ metrics.score }}<span class="text-[15px] text-slate-400 font-semibold"> /100</span></h3>
+<span class="inline-flex items-center text-[11px] font-semibold uppercase rounded-lg px-2.5 py-0.5 border {% if metrics.eligible %}bg-emerald-50 text-emerald-700 border-emerald-100{% else %}bg-amber-50 text-amber-700 border-amber-100{% endif %}">
 {% if metrics.eligible %}GRADUATION READY{% else %}INSUFFICIENT MARGINS{% endif %}
 </span>
 </div>
@@ -54,20 +54,20 @@ class="rounded-lg p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 trans
 <circle cx="18" cy="18" r="16" fill="none" stroke="#f1f5f9" stroke-width="2"></circle>
 <circle cx="18" cy="18" r="16" fill="none" stroke="#2563eb" stroke-width="2" stroke-dasharray="{{ metrics.score }}, 100" stroke-linecap="round"></circle>
 </svg>
-<span class="absolute text-[14px] font-black text-slate-800">{{ metrics.score }}%</span>
+<span class="absolute text-[14px] font-semibold text-slate-800">{{ metrics.score }}%</span>
 </div>
 </div>
 
 <!-- Official Formula Scoring Breakdown -->
 <div class="bg-white rounded-xl border border-slate-100 p-5 shadow-sm space-y-4">
-<h3 class="text-[12px] font-black text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-2">Graduation Formula Weights</h3>
+<h3 class="text-[12px] font-semibold text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-2">Graduation Formula Weights</h3>
 
 <div class="space-y-3">
 <!-- 1. Latest SSA -->
 <div class="space-y-1">
 <div class="flex justify-between text-[11px] font-bold text-slate-600">
 <span>Latest SSA Average (40% Weight)</span>
-<span class="text-slate-800 font-black">{{ metrics.latest_avg }} / 10.0</span>
+<span class="text-slate-800 font-semibold">{{ metrics.latest_avg }} / 10.0</span>
 </div>
 <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden">
 <div class="bg-blue-600 h-full" style="width: {% widthratio metrics.latest_avg 10 100 %}%;"></div>
@@ -78,7 +78,7 @@ class="rounded-lg p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 trans
 <div class="space-y-1">
 <div class="flex justify-between text-[11px] font-bold text-slate-600">
 <span>Improvement Delta (25% Weight)</span>
-<span class="text-slate-800 font-black">+{{ metrics.delta }} Average Improvement</span>
+<span class="text-slate-800 font-semibold">+{{ metrics.delta }} Average Improvement</span>
 </div>
 <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden">
 <div class="bg-blue-600 h-full" style="width: {% widthratio metrics.delta 3 100 %}%;"></div>
@@ -89,7 +89,7 @@ class="rounded-lg p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 trans
 <div class="space-y-1">
 <div class="flex justify-between text-[11px] font-bold text-slate-600">
 <span>Intervention Balance (15% Weight)</span>
-<span class="text-slate-800 font-black">Lowest Score: {{ metrics.lowest_score }}</span>
+<span class="text-slate-800 font-semibold">Lowest Score: {{ metrics.lowest_score }}</span>
 </div>
 <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden">
 <div class="bg-blue-600 h-full" style="width: {% widthratio metrics.lowest_score 10 100 %}%;"></div>
@@ -100,7 +100,7 @@ class="rounded-lg p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 trans
 <div class="space-y-1">
 <div class="flex justify-between text-[11px] font-bold text-slate-600">
 <span>Package Completion (10% Weight)</span>
-<span class="text-slate-800 font-black">{{ metrics.completed_slots }} / {{ metrics.total_slots }} Slots Completed</span>
+<span class="text-slate-800 font-semibold">{{ metrics.completed_slots }} / {{ metrics.total_slots }} Slots Completed</span>
 </div>
 <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden">
 <div class="bg-blue-600 h-full" style="width: {% widthratio metrics.completed_slots metrics.total_slots 100 %}%;"></div>
@@ -111,7 +111,7 @@ class="rounded-lg p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 trans
 <div class="space-y-1">
 <div class="flex justify-between text-[11px] font-bold text-slate-600">
 <span>Evidence/IA Quality (5% Weight)</span>
-<span class="text-slate-800 font-black">100% Validated</span>
+<span class="text-slate-800 font-semibold">100% Validated</span>
 </div>
 <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden">
 <div class="bg-blue-600 h-full" style="width: 100%;"></div>
@@ -122,7 +122,7 @@ class="rounded-lg p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 trans
 <div class="space-y-1">
 <div class="flex justify-between text-[11px] font-bold text-slate-600">
 <span>Repeat SSA Performance (5% Weight)</span>
-<span class="text-slate-800 font-black">{{ metrics.all_ssas }} SSA records</span>
+<span class="text-slate-800 font-semibold">{{ metrics.all_ssas }} SSA records</span>
 </div>
 <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden">
 <div class="bg-blue-600 h-full" style="width: {% if metrics.all_ssas >= 2 %}100%{% else %}50%{% endif %};"></div>
@@ -134,7 +134,7 @@ class="rounded-lg p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 trans
 
 <!-- Eligibility Checklist Gate -->
 <div class="bg-white rounded-xl border border-slate-100 p-5 shadow-sm space-y-3.5">
-<h3 class="text-[12px] font-black text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-2">Graduation Gate Checklist</h3>
+<h3 class="text-[12px] font-semibold text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-2">Graduation Gate Checklist</h3>
 
 <ul class="space-y-3 text-[12px] font-bold text-slate-600">
 <!-- Benchmarks checklist -->
@@ -178,7 +178,7 @@ class="rounded-lg p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 trans
 {% csrf_token %}
 <button 
 type="submit"
-class="w-full h-10 border border-slate-200 hover:bg-slate-100 bg-white rounded-lg text-slate-700 text-[11px] font-black uppercase tracking-wider transition-colors shadow-sm"
+class="w-full h-10 border border-slate-200 hover:bg-slate-100 bg-white rounded-lg text-slate-700 text-[11px] font-semibold uppercase tracking-wider transition-colors shadow-sm"
 >
 Reject Candidacy
 </button>
@@ -189,7 +189,7 @@ Reject Candidacy
 <button 
 type="submit"
 {% if not metrics.eligible %}disabled{% endif %}
-class="w-full h-10 text-white rounded-lg text-[11px] font-black uppercase tracking-wider transition-colors shadow-sm flex items-center justify-center
+class="w-full h-10 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wider transition-colors shadow-sm flex items-center justify-center
 {% if metrics.eligible %}bg-emerald-600 hover:bg-emerald-700{% else %}bg-slate-200 text-slate-400 cursor-not-allowed{% endif %}"
 >
 Approve & Graduate

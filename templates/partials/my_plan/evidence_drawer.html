@@ -14,7 +14,7 @@ class="space-y-5 text-[12px] font-bold text-slate-600"
 <div id="evidence-errors"></div>
 
 <div class="space-y-3">
-<h4 class="text-[14px] font-extrabold text-slate-800 flex items-center gap-1.5">
+<h4 class="text-[14px] font-semibold text-slate-800 flex items-center gap-1.5">
 <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-50 text-blue-600 text-[11px]">1</span>
 Select Evidence File
 </h4>
@@ -27,14 +27,14 @@ Upload photos, signed attendance sheets, or completed school visit forms confirm
 type="file" 
 name="evidence_file"
 required
-class="text-[11px] text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-[11px] file:font-extrabold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+class="text-[11px] text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-[11px] file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
 >
 </div>
 
 <!-- Listed uploaded evidence files if any exist -->
 {% if evidence_list %}
 <div class="space-y-1.5 pt-2">
-<p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Previously Uploaded Evidence</p>
+<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Previously Uploaded Evidence</p>
 <div class="space-y-1">
 {% for ev in evidence_list %}
 <div class="flex items-center justify-between text-[11px] bg-slate-50 border border-slate-100 rounded-lg p-2">

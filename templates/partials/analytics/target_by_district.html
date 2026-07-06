@@ -1,14 +1,14 @@
-<div class="bg-white rounded-xl border border-slate-100 p-4 shadow-sm space-y-4">
+<div class="bg-white rounded-xl  p-4 shadow-sm space-y-4">
 <div class="flex items-center justify-between border-b border-slate-50 pb-2">
 <div>
-<h3 class="text-[14px] font-black text-slate-800 tracking-tight flex items-center gap-1.5">
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight flex items-center gap-1.5">
 <span>Target Achievement by District</span>
 <span class="text-[11px] text-slate-400 cursor-help" title="Percentage of assigned targets achieved by schools in each district">ℹ️</span>
 </h3>
 <p class="text-[11px] text-slate-400 font-semibold mt-0.5">District targets achievement progress</p>
 </div>
 
-<select class="bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-extrabold text-slate-500 py-1 px-2.5 outline-none cursor-pointer">
+<select class="bg-slate-50  rounded-lg text-[11px] font-semibold text-slate-500 py-1 px-2.5 outline-none cursor-pointer">
 <option>This Quarter</option>
 </select>
 </div>
@@ -21,10 +21,10 @@
 <span class="truncate">{{ dist.name }}</span>
 <div class="flex items-center gap-2">
 <span class="text-[11px] text-slate-400 font-semibold">({{ dist.achieved }}/{{ dist.planned }})</span>
-<span class="font-extrabold text-slate-800">{{ dist.pct }}%</span>
+<span class="font-semibold text-slate-800">{{ dist.pct }}%</span>
 </div>
 </div>
-<div class="h-1.5 w-full bg-slate-50 border border-slate-100 rounded-full overflow-hidden">
+<div class="h-1.5 w-full bg-slate-50  rounded-full overflow-hidden">
 <div class="h-full rounded-full {{ dist.bar_color }}" style="width: {{ dist.pct }}%"></div>
 </div>
 </div>

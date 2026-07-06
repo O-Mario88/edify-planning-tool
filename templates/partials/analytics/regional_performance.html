@@ -1,14 +1,14 @@
-<div class="bg-white rounded-xl border border-slate-100 p-4 shadow-sm space-y-4">
+<div class="bg-white rounded-xl  p-4 shadow-sm space-y-4">
 <div class="flex items-center justify-between border-b border-slate-50 pb-2">
 <div>
-<h3 class="text-[14px] font-black text-slate-800 tracking-tight flex items-center gap-1.5">
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight flex items-center gap-1.5">
 <span>Regional Performance</span>
 <span class="text-[11px] text-slate-400 cursor-help" title="Average scores and activity totals across regional zones">ℹ️</span>
 </h3>
 <p class="text-[11px] text-slate-400 font-semibold mt-0.5">Regional activity and SSA coverage</p>
 </div>
 
-<select class="bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-extrabold text-slate-500 py-1 px-2.5 outline-none cursor-pointer">
+<select class="bg-slate-50  rounded-lg text-[11px] font-semibold text-slate-500 py-1 px-2.5 outline-none cursor-pointer">
 <option>This Quarter</option>
 </select>
 </div>
@@ -46,7 +46,7 @@
 </div>
 <div class="flex items-center gap-2">
 <span class="text-slate-400 font-semibold">({{ reg.completed }} acts)</span>
-<span class="font-extrabold text-slate-800">{{ reg.ssa_avg }} Avg</span>
+<span class="font-semibold text-slate-800">{{ reg.ssa_avg }} Avg</span>
 </div>
 </div>
 {% endfor %}

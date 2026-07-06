@@ -7,10 +7,10 @@
 <div class="p-6 max-w-7xl mx-auto space-y-6">
 <!-- Back Nav & Header -->
 <div>
-<a href="/clusters" class="text-[11px] font-extrabold text-[var(--color-edify-primary)] hover:underline uppercase tracking-wider">&larr; Back to Cluster Directory</a>
+<a href="/clusters" class="text-[11px] font-semibold text-[var(--color-edify-primary)] hover:underline uppercase tracking-wider">&larr; Back to Cluster Directory</a>
 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-2">
 <div>
-<h1 class="text-[24px] font-extrabold text-slate-800 tracking-tight">{{ cluster.name }}</h1>
+<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight">{{ cluster.name }}</h1>
 <p class="text-[12px] text-[var(--text-secondary)] mt-0.5 font-semibold">
 District: {{ cluster.district.name|default:cluster.district }} &bull; Sub-county: {{ cluster.subCounty.name|default:cluster.subCounty }}
 </p>
@@ -35,7 +35,7 @@ Schedule Cluster Meeting
 <div class="lg:col-span-2 space-y-6">
 <!-- Cluster Info Card -->
 <div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm space-y-6">
-<h3 class="text-[15px] font-extrabold text-slate-800 border-b border-slate-100 pb-3">Cluster Logistics &amp; Contacts</h3>
+<h3 class="text-[15px] font-semibold text-slate-800 border-b border-slate-100 pb-3">Cluster Logistics &amp; Contacts</h3>
 <div class="grid grid-cols-2 gap-y-4 gap-x-6 text-[12px]">
 <div>
 <p class="text-[11px] uppercase font-bold text-slate-400">Cluster Type</p>
@@ -59,7 +59,7 @@ Schedule Cluster Meeting
 <!-- Schools in Cluster Table -->
 <div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm overflow-hidden">
 <div class="px-6 py-4 border-b border-[var(--color-edify-divider)] flex items-center justify-between">
-<h3 class="text-[15px] font-extrabold text-slate-800 tracking-tight">Assigned Roster</h3>
+<h3 class="text-[15px] font-semibold text-slate-800 tracking-tight">Assigned Roster</h3>
 <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-600">{{ schools|length }} Schools</span>
 </div>
 <div class="overflow-x-auto">
@@ -80,9 +80,9 @@ Schedule Cluster Meeting
 <tr class="hover:bg-slate-50/50 transition-colors">
 <td class="px-4 py-3 font-bold text-[var(--color-edify-primary)]">{{ s.schoolId }}</td>
 <td class="px-4 py-3">
-<a href="/schools/{{ s.id }}" class="font-extrabold text-slate-800 hover:underline">{{ s.name }}</a>
+<a href="/schools/{{ s.id }}" class="font-semibold text-slate-800 hover:underline">{{ s.name }}</a>
 </td>
-<td class="px-4 py-3 font-extrabold text-slate-800">{{ s.current_ssa_average|floatformat:1|default:"-" }}</td>
+<td class="px-4 py-3 font-semibold text-slate-800">{{ s.current_ssa_average|floatformat:1|default:"-" }}</td>
 <td class="px-4 py-3 text-slate-500 font-semibold">{{ s.last_visit_date }}</td>
 <td class="px-4 py-3 text-slate-500 font-semibold">{{ s.last_training_date }}</td>
 <td class="px-4 py-3">
@@ -105,24 +105,24 @@ Schedule Cluster Meeting
 <!-- Activity and Impact History -->
 <div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm overflow-hidden">
 <div class="px-6 py-4 border-b border-[var(--color-edify-divider)]">
-<h3 class="text-[15px] font-extrabold text-slate-800 tracking-tight">Cluster Activity &amp; Improvement Impact</h3>
+<h3 class="text-[15px] font-semibold text-slate-800 tracking-tight">Cluster Activity &amp; Improvement Impact</h3>
 </div>
 <div class="divide-y divide-[var(--color-edify-divider)] text-[12px]">
 {% if activity_impact %}
 {% for act in activity_impact %}
 <div class="p-4 flex justify-between items-center hover:bg-slate-50/50 transition-colors">
 <div>
-<h4 class="font-extrabold text-slate-800">{{ act.activityType|title|replace_underscore }}</h4>
+<h4 class="font-semibold text-slate-800">{{ act.activityType|title|replace_underscore }}</h4>
 <p class="text-[11px] text-slate-400 font-semibold mt-0.5">Focus: {{ act.focusIntervention|title|replace_underscore }} &bull; Completed: {{ act.plannedDate }}</p>
 </div>
 <div class="text-right flex items-center gap-4">
 <div class="text-[12px] font-semibold">
 <span class="text-slate-400">Delta:</span>
-<span class="font-extrabold {% if act.impact.delta > 0 %}text-emerald-600{% elif act.impact.delta < 0 %}text-rose-600{% else %}text-slate-500{% endif %}">
+<span class="font-semibold {% if act.impact.delta > 0 %}text-emerald-600{% elif act.impact.delta < 0 %}text-rose-600{% else %}text-slate-500{% endif %}">
 {% if act.impact.delta > 0 %}+{% endif %}{{ act.impact.delta|default:"-" }}
 </span>
 </div>
-<span class="inline-flex items-center rounded px-2 py-0.5 text-[11px] font-extrabold {% if act.impact.status == 'Improved' %}bg-emerald-50 text-emerald-700{% elif act.impact.status == 'Declined' %}bg-rose-50 text-rose-700{% else %}bg-slate-100 text-slate-600{% endif %}">
+<span class="inline-flex items-center rounded px-2 py-0.5 text-[11px] font-semibold {% if act.impact.status == 'Improved' %}bg-emerald-50 text-emerald-700{% elif act.impact.status == 'Declined' %}bg-rose-50 text-rose-700{% else %}bg-slate-100 text-slate-600{% endif %}">
 {{ act.impact.status }}
 </span>
 </div>
@@ -139,7 +139,7 @@ Schedule Cluster Meeting
 <div class="space-y-6">
 <!-- Weakest 4 Interventions -->
 <div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm space-y-4">
-<h3 class="text-[15px] font-extrabold text-slate-800 border-b border-slate-100 pb-3">Struggling Interventions</h3>
+<h3 class="text-[15px] font-semibold text-slate-800 border-b border-slate-100 pb-3">Struggling Interventions</h3>
 <div class="space-y-3">
 {% if weakest_interventions %}
 {% for item in weakest_interventions|slice:":4" %}
@@ -148,7 +148,7 @@ Schedule Cluster Meeting
 <span class="h-2 w-2 rounded-full {% if item.score < 5.5 %}bg-rose-500{% else %}bg-amber-500{% endif %}"></span>
 <span class="truncate">{{ item.label }}</span>
 </div>
-<span class="font-extrabold text-slate-800">{{ item.score|floatformat:1 }}</span>
+<span class="font-semibold text-slate-800">{{ item.score|floatformat:1 }}</span>
 </div>
 {% endfor %}
 {% else %}
@@ -159,14 +159,14 @@ Schedule Cluster Meeting
 
 <!-- Full Intervention Scorecard -->
 <div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm space-y-4">
-<h3 class="text-[15px] font-extrabold text-slate-800 border-b border-slate-100 pb-3">Full Cluster Scorecard</h3>
+<h3 class="text-[15px] font-semibold text-slate-800 border-b border-slate-100 pb-3">Full Cluster Scorecard</h3>
 <div class="space-y-3.5">
 {% if intervention_summary %}
 {% for item in intervention_summary %}
 <div>
 <div class="flex items-center justify-between text-[12px] font-semibold text-slate-700">
 <span class="truncate">{{ item.label }}</span>
-<span class="font-extrabold">{{ item.score|floatformat:1 }}</span>
+<span class="font-semibold">{{ item.score|floatformat:1 }}</span>
 </div>
 <div class="h-1.5 w-full bg-slate-100 rounded-full mt-1 overflow-hidden">
 <div class="h-full bg-[var(--color-edify-primary)] rounded-full" style="width: {{ item.score|multiply:10 }}%"></div>

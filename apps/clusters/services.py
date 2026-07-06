@@ -66,14 +66,17 @@ def list_clusters(principal) -> list[dict]:
 
 
 def _cluster_card(c: Cluster) -> dict:
+    sub_counties_list = [x.sub_county.name for x in c.covered_sub_counties.all()]
     return {
         "id": c.id,
         "name": c.name,
         "district": c.district.name if c.district_id else None,
         "status": c.status,
         "clusterType": c.cluster_type,
-        "subCounty": (c.sub_county.name if c.sub_county_id else None) or c.sub_county_name,
-        "subCounties": [x.sub_county.name for x in c.covered_sub_counties.all()],
+        "subCounty": ", ".join(sub_counties_list) if sub_counties_list else (
+            (c.sub_county.name if c.sub_county_id else None) or c.sub_county_name or "District-level cluster"
+        ),
+        "subCounties": sub_counties_list,
         "clusterLeaderName": c.cluster_leader_name,
         "clusterLeaderPhone": c.cluster_leader_phone,
         "schoolCount": getattr(c, "school_count", 0),
@@ -155,37 +158,41 @@ def create_cluster(data: dict, principal) -> dict:
         sub_ids = list(dict.fromkeys(data["subCountyIds"]))
     elif data.get("subCountyId"):
         sub_ids = [data["subCountyId"]]
-    if not sub_ids:
-        raise BadRequest("At least one sub-county is required")
 
-    subs = list(SubCounty.objects.filter(id__in=sub_ids))
-    if len(subs) != len(set(sub_ids)):
-        raise BadRequest("Unknown sub-county")
-    for sc in subs:
-        if sc.district_id != district_id:
-            raise BadRequest("sub-county does not belong to district")
-    primary = next(s for s in subs if s.id == sub_ids[0])
+    # Sub-county is OPTIONAL. District + Name are the only hard requirements.
+    subs = []
+    primary = None
+    if sub_ids:
+        subs = list(SubCounty.objects.filter(id__in=sub_ids))
+        if len(subs) != len(set(sub_ids)):
+            raise BadRequest("Unknown sub-county")
+        for sc in subs:
+            if sc.district_id != district_id:
+                raise BadRequest("sub-county does not belong to district")
+        primary = next(s for s in subs if s.id == sub_ids[0])
 
     # Sub-county uniqueness: one active cluster per sub-county by default.
     needs_review = False
-    taken = set(
-        Cluster.objects.filter(deleted_at__isnull=True, status__in=["active", "needs_review"])
-        .filter(Q(sub_county_id__in=sub_ids) | Q(covered_sub_counties__sub_county_id__in=sub_ids))
-        .values_list("id", flat=True)
-    )
-    if taken:
-        if Permission.CLUSTER_OVERRIDE.value in scope.permissions and data.get("overrideReason"):
-            needs_review = True
-        else:
-            raise BadRequest("An active cluster already covers this sub-county.")
+    if sub_ids:
+        taken = set(
+            Cluster.objects.filter(deleted_at__isnull=True, status__in=["active", "needs_review"])
+            .filter(Q(sub_county_id__in=sub_ids) | Q(covered_sub_counties__sub_county_id__in=sub_ids))
+            .values_list("id", flat=True)
+        )
+        if taken:
+            if Permission.CLUSTER_OVERRIDE.value in scope.permissions and data.get("overrideReason"):
+                needs_review = True
+            else:
+                raise BadRequest("An active cluster already covers this sub-county.")
 
+    default_name = f"{primary.name} Cluster" if primary else f"{district.name} Cluster"
     with transaction.atomic():
         cluster = Cluster.objects.create(
-            name=data.get("name") or f"{primary.name} Cluster",
+            name=data.get("name") or default_name,
             region_id=region_id,
             district_id=district_id,
             sub_county=primary,
-            sub_county_name=primary.name,
+            sub_county_name=primary.name if primary else None,
             cluster_type=data.get("clusterType", "mixed"),
             status=ClusterRecordStatus.NEEDS_REVIEW if needs_review else ClusterRecordStatus.ACTIVE,
             override_reason=data.get("overrideReason"),
@@ -193,9 +200,10 @@ def create_cluster(data: dict, principal) -> dict:
             cluster_leader_name=data.get("clusterLeaderName"),
             cluster_leader_phone=data.get("clusterLeaderPhone"),
         )
-        ClusterSubCounty.objects.bulk_create(
-            [ClusterSubCounty(cluster=cluster, sub_county_id=sid) for sid in sub_ids]
-        )
+        if sub_ids:
+            ClusterSubCounty.objects.bulk_create(
+                [ClusterSubCounty(cluster=cluster, sub_county_id=sid) for sid in sub_ids]
+            )
     return _cluster_card(cluster)
 
 
@@ -208,12 +216,14 @@ def create_from_school(data: dict, principal) -> dict:
         "name": data.get("name") or f"{school.name} Cluster",
         "regionId": school.region_id,
         "districtId": school.district_id,
-        "subCountyId": school.sub_county_id,
         "clusterType": data.get("clusterType", "mixed"),
         "responsibleStaffId": data.get("responsibleStaffId"),
         "clusterLeaderName": data.get("clusterLeaderName"),
         "clusterLeaderPhone": data.get("clusterLeaderPhone"),
     }
+    # Only pass sub-county if the school actually has one.
+    if school.sub_county_id:
+        payload["subCountyId"] = school.sub_county_id
     return create_cluster(payload, principal)
 
 
@@ -740,11 +750,23 @@ class ClusterDashboardService:
             else:
                 next_action = "Continue support"
                 
+            # Build sub-county display: show all covered sub-counties, or
+            # "District-level cluster" if none selected.
+            covered = list(c.covered_sub_counties.values_list("sub_county__name", flat=True))
+            if covered:
+                sub_county_display = ", ".join(covered)
+            elif c.sub_county:
+                sub_county_display = c.sub_county.name
+            elif c.sub_county_name:
+                sub_county_display = c.sub_county_name
+            else:
+                sub_county_display = "District-level cluster"
+
             cards.append({
                 "id": c.id,
                 "name": c.name,
                 "district": c.district.name if c.district else "Unknown",
-                "sub_county": c.sub_county.name if c.sub_county else c.sub_county_name or "Unknown",
+                "sub_county": sub_county_display,
                 "schools_count": schools_count,
                 "staff_count": staff_count,
                 "avg_ssa": avg_ssa,

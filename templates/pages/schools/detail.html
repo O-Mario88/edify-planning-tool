@@ -7,10 +7,10 @@
 <div class="p-6 max-w-7xl mx-auto space-y-6">
 <!-- Back navigation and Header -->
 <div>
-<a href="/schools" class="text-[11px] font-extrabold text-[var(--color-edify-primary)] hover:underline uppercase tracking-wider">&larr; Back to School Directory</a>
+<a href="/schools" class="text-[11px] font-semibold text-[var(--color-edify-primary)] hover:underline uppercase tracking-wider">&larr; Back to School Directory</a>
 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-2">
 <div>
-<h1 class="text-[24px] font-extrabold text-slate-800 tracking-tight">{{ school.name }}</h1>
+<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight">{{ school.name }}</h1>
 <p class="text-[12px] text-[var(--text-secondary)] mt-0.5 font-semibold">School ID: <span class="font-mono text-slate-600 font-bold">{{ school.school_id }}</span></p>
 </div>
 <div class="flex items-center gap-2">
@@ -34,7 +34,7 @@ class="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-
 <div class="lg:col-span-2 space-y-6">
 <!-- School Information Card -->
 <div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm space-y-6">
-<h3 class="text-[15px] font-extrabold text-slate-800 border-b border-slate-100 pb-3">School Demographics &amp; Assignment</h3>
+<h3 class="text-[15px] font-semibold text-slate-800 border-b border-slate-100 pb-3">School Demographics &amp; Assignment</h3>
 <div class="grid grid-cols-2 gap-y-4 gap-x-6 text-[12px]">
 <div>
 <p class="text-[11px] uppercase font-bold text-slate-400">Region</p>
@@ -58,7 +58,7 @@ class="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-
 </div>
 <div>
 <p class="text-[11px] uppercase font-bold text-slate-400">Assigned Staff</p>
-<p class="font-extrabold text-[var(--color-edify-primary)] mt-0.5">{{ school.assigned_staff }}</p>
+<p class="font-semibold text-[var(--color-edify-primary)] mt-0.5">{{ school.assigned_staff }}</p>
 </div>
 </div>
 </div>
@@ -66,7 +66,7 @@ class="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-
 <!-- SSA Intervention Impact Tracking -->
 <div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm overflow-hidden">
 <div class="px-6 py-4 border-b border-[var(--color-edify-divider)] flex items-center justify-between">
-<h3 class="text-[15px] font-extrabold text-slate-800 tracking-tight">Intervention Impact Timeline</h3>
+<h3 class="text-[15px] font-semibold text-slate-800 tracking-tight">Intervention Impact Timeline</h3>
 <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-bold bg-slate-100 text-slate-600">
 Improved: {{ impact_data.improvedCount }}
 </span>
@@ -83,10 +83,10 @@ Improved: {{ impact_data.improvedCount }}
 <div class="bg-slate-50/50 rounded-xl border border-slate-100 p-4 space-y-3">
 <div class="flex items-center justify-between">
 <div>
-<h4 class="text-[14px] font-extrabold text-slate-800">{{ act.activityType|title|replace_underscore }}</h4>
+<h4 class="text-[14px] font-semibold text-slate-800">{{ act.activityType|title|replace_underscore }}</h4>
 <p class="text-[11px] text-slate-400 font-semibold mt-0.5">Focus: {{ act.focusIntervention|title|replace_underscore }} &bull; Completed: {{ act.plannedDate }}</p>
 </div>
-<span class="inline-flex items-center gap-1.5 text-[12px] font-extrabold text-slate-700">
+<span class="inline-flex items-center gap-1.5 text-[12px] font-semibold text-slate-700">
 {% if act.impact.status == 'Improved' %}
 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
 <span>Improved</span>
@@ -104,15 +104,15 @@ Improved: {{ impact_data.improvedCount }}
 <div class="grid grid-cols-3 gap-4 border-t border-slate-100/50 pt-2 text-center text-[12px]">
 <div>
 <p class="text-[11px] uppercase font-bold text-slate-400">Pre-Score</p>
-<p class="font-extrabold text-slate-700 mt-0.5">{{ act.impact.pre_score|default:"-" }}</p>
+<p class="font-semibold text-slate-700 mt-0.5">{{ act.impact.pre_score|default:"-" }}</p>
 </div>
 <div>
 <p class="text-[11px] uppercase font-bold text-slate-400">Post-Score</p>
-<p class="font-extrabold text-slate-700 mt-0.5">{{ act.impact.post_score|default:"-" }}</p>
+<p class="font-semibold text-slate-700 mt-0.5">{{ act.impact.post_score|default:"-" }}</p>
 </div>
 <div>
 <p class="text-[11px] uppercase font-bold text-slate-400">Delta</p>
-<p class="font-extrabold mt-0.5 {% if act.impact.delta > 0 %}text-emerald-600{% elif act.impact.delta < 0 %}text-rose-600{% else %}text-slate-500{% endif %}">
+<p class="font-semibold mt-0.5 {% if act.impact.delta > 0 %}text-emerald-600{% elif act.impact.delta < 0 %}text-rose-600{% else %}text-slate-500{% endif %}">
 {% if act.impact.delta > 0 %}+{% endif %}{{ act.impact.delta|default:"-" }}
 </p>
 </div>
@@ -130,14 +130,14 @@ Improved: {{ impact_data.improvedCount }}
 <!-- Activities History -->
 <div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm overflow-hidden">
 <div class="px-6 py-4 border-b border-[var(--color-edify-divider)]">
-<h3 class="text-[15px] font-extrabold text-slate-800 tracking-tight">Recent Field Work</h3>
+<h3 class="text-[15px] font-semibold text-slate-800 tracking-tight">Recent Field Work</h3>
 </div>
 <div class="divide-y divide-[var(--color-edify-divider)] text-[12px]">
 {% if activities %}
 {% for act in activities %}
 <div class="p-4 flex justify-between hover:bg-slate-50/50 transition-colors">
 <div>
-<h4 class="font-extrabold text-slate-800">{{ act.activity_type|title|replace_underscore }}</h4>
+<h4 class="font-semibold text-slate-800">{{ act.activity_type|title|replace_underscore }}</h4>
 <p class="text-[11px] text-slate-500 mt-0.5 font-semibold">Planned for {{ act.planned_date }} &bull; Staff: {{ act.responsible_staff.name }}</p>
 {% if act.activity_purpose_text %}
 <p class="text-[12px] text-slate-400 mt-1 italic leading-normal">"{{ act.activity_purpose_text }}"</p>
@@ -174,7 +174,7 @@ Improved: {{ impact_data.improvedCount }}
 <!-- Data Quality Status Card -->
 <div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm space-y-4">
 <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-<h3 class="text-[15px] font-extrabold text-slate-800">Data Quality Score</h3>
+<h3 class="text-[15px] font-semibold text-slate-800">Data Quality Score</h3>
 <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider
 {% if school.data_quality_status == 'Clean' %}bg-emerald-50 text-emerald-700 border border-emerald-200
 {% elif school.data_quality_status == 'Needs Review' %}bg-blue-50 text-blue-700 border border-blue-200
@@ -191,7 +191,7 @@ Improved: {{ impact_data.improvedCount }}
 <circle cx="32" cy="32" r="28" stroke="{% if school.data_quality_status == 'Clean' %}#10b981{% elif school.data_quality_status == 'Needs Review' %}#3b82f6{% elif school.data_quality_status == 'Needs Cleanup' %}#f59e0b{% else %}#ef4444{% endif %}" stroke-width="2" fill="transparent"
 stroke-dasharray="175.9" stroke-dashoffset="{{ stroke_dashoffset }}"></circle>
 </svg>
-<span class="absolute text-[15px] font-black text-slate-700">{{ school.data_quality_score }}%</span>
+<span class="absolute text-[15px] font-semibold text-slate-700">{{ school.data_quality_score }}%</span>
 </div>
 <div class="space-y-1">
 <p class="text-[12px] text-slate-500 font-semibold leading-snug">Score is updated automatically. Keep fields complete and verified to improve it.</p>
@@ -220,12 +220,12 @@ stroke-dasharray="175.9" stroke-dashoffset="{{ stroke_dashoffset }}"></circle>
 <div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm space-y-4">
 <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
 <div>
-<h3 class="text-[15px] font-extrabold text-slate-800">Current SSA Assessment</h3>
+<h3 class="text-[15px] font-semibold text-slate-800">Current SSA Assessment</h3>
 <p class="text-[11px] text-slate-400 font-semibold mt-0.5">FY: {{ latest_ssa.fy }} &bull; Q: {{ latest_ssa.quarter }}</p>
 </div>
 <div class="text-right">
 <p class="text-[11px] uppercase font-bold text-slate-400">Average</p>
-<p class="text-[20px] font-extrabold text-slate-800 mt-0.5">{{ latest_ssa.average_score|floatformat:1|default:"-" }}</p>
+<p class="text-[20px] font-semibold text-slate-800 mt-0.5">{{ latest_ssa.average_score|floatformat:1|default:"-" }}</p>
 </div>
 </div>
 
@@ -235,7 +235,7 @@ stroke-dasharray="175.9" stroke-dashoffset="{{ stroke_dashoffset }}"></circle>
 <div>
 <div class="flex items-center justify-between text-[12px] font-semibold text-slate-700">
 <span class="truncate">{{ sc.get_intervention_display }}</span>
-<span class="font-extrabold">{{ sc.score }}</span>
+<span class="font-semibold">{{ sc.score }}</span>
 </div>
 <!-- Progress bar -->
 <div class="h-1.5 w-full bg-slate-100 rounded-full mt-1 overflow-hidden">
@@ -252,7 +252,7 @@ stroke-dasharray="175.9" stroke-dashoffset="{{ stroke_dashoffset }}"></circle>
 <!-- Year-over-Year SSA Progress Tracker -->
 {% if ssa_progress_history %}
 <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm space-y-4">
-<h3 class="text-[15px] font-extrabold text-slate-800">Annual SSA Progress</h3>
+<h3 class="text-[15px] font-semibold text-slate-800">Annual SSA Progress</h3>
 <div class="space-y-3">
 {% for item in ssa_progress_history %}
 <div class="space-y-1">
@@ -272,7 +272,7 @@ stroke-dasharray="175.9" stroke-dashoffset="{{ stroke_dashoffset }}"></circle>
 <!-- Historical Assessments -->
 {% if historical_ssas %}
 <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm space-y-4">
-<h3 class="text-[15px] font-extrabold text-slate-800">Historical Averages</h3>
+<h3 class="text-[15px] font-semibold text-slate-800">Historical Averages</h3>
 <div class="space-y-2.5">
 {% for h_ssa in historical_ssas %}
 <div class="flex items-center justify-between text-[12px]">

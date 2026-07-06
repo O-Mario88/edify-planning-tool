@@ -56,9 +56,9 @@ aria-modal="true"
 <div>
 <div class="flex items-center gap-2">
 {% if drawer_icon %}
-<span class="text-slate-500 font-extrabold text-[18px]">{{ drawer_icon }}</span>
+<span class="text-slate-500 font-semibold text-[18px]">{{ drawer_icon }}</span>
 {% endif %}
-<h3 class="text-[14px] font-black text-slate-800 tracking-tight leading-none">{% block drawer_title %}{{ drawer_title|default:"Action Drawer" }}{% endblock %}</h3>
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight leading-none">{% block drawer_title %}{{ drawer_title|default:"Action Drawer" }}{% endblock %}</h3>
 {% block drawer_badge %}{% endblock %}
 </div>
 <p class="text-[11px] text-slate-500 font-semibold mt-1">{% block drawer_subtitle %}{{ drawer_subtitle|default:"Configure action details" }}{% endblock %}</p>

@@ -9,59 +9,59 @@
 <!-- Header -->
 <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-100 pb-4">
 <div>
-<h1 class="text-[24px] font-extrabold text-slate-800 tracking-tight leading-tight">Evidence Center</h1>
+<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight leading-tight">Evidence Center</h1>
 <p class="text-[12px] text-slate-500 font-semibold mt-1">Review, audit, and track execution proof packets across all activities.</p>
 </div>
 </div>
 
 <!-- Tabs Navigation -->
-<div class="flex items-center gap-1 border-b border-slate-150 overflow-x-auto pb-px">
+<div class="flex items-center gap-1 border-b  overflow-x-auto pb-px">
 <button 
 @click="tab = 'pending'"
 :class="tab === 'pending' ? 'border-[#2e505f] text-[#2e505f]' : 'border-transparent text-slate-400 hover:text-slate-600'"
-class="px-4 py-2.5 border-b-2 text-[12px] font-extrabold transition-all whitespace-nowrap"
+class="px-4 py-2.5 border-b-2 text-[12px] font-semibold transition-all whitespace-nowrap"
 >
 Evidence Pending ({{ pending|length }})
 </button>
 <button 
 @click="tab = 'sf_missing'"
 :class="tab === 'sf_missing' ? 'border-[#2e505f] text-[#2e505f]' : 'border-transparent text-slate-400 hover:text-slate-600'"
-class="px-4 py-2.5 border-b-2 text-[12px] font-extrabold transition-all whitespace-nowrap"
+class="px-4 py-2.5 border-b-2 text-[12px] font-semibold transition-all whitespace-nowrap"
 >
 SF ID Missing ({{ sf_missing|length }})
 </button>
 <button 
 @click="tab = 'submitted'"
 :class="tab === 'submitted' ? 'border-[#2e505f] text-[#2e505f]' : 'border-transparent text-slate-400 hover:text-slate-600'"
-class="px-4 py-2.5 border-b-2 text-[12px] font-extrabold transition-all whitespace-nowrap"
+class="px-4 py-2.5 border-b-2 text-[12px] font-semibold transition-all whitespace-nowrap"
 >
 Submitted ({{ submitted|length }})
 </button>
 <button 
 @click="tab = 'returned'"
 :class="tab === 'returned' ? 'border-[#2e505f] text-[#2e505f]' : 'border-transparent text-slate-400 hover:text-slate-600'"
-class="px-4 py-2.5 border-b-2 text-[12px] font-extrabold transition-all whitespace-nowrap"
+class="px-4 py-2.5 border-b-2 text-[12px] font-semibold transition-all whitespace-nowrap"
 >
 Returned ({{ returned|length }})
 </button>
 <button 
 @click="tab = 'ia_pending'"
 :class="tab === 'ia_pending' ? 'border-[#2e505f] text-[#2e505f]' : 'border-transparent text-slate-400 hover:text-slate-600'"
-class="px-4 py-2.5 border-b-2 text-[12px] font-extrabold transition-all whitespace-nowrap"
+class="px-4 py-2.5 border-b-2 text-[12px] font-semibold transition-all whitespace-nowrap"
 >
 IA Pending ({{ ia_pending|length }})
 </button>
 <button 
 @click="tab = 'verified'"
 :class="tab === 'verified' ? 'border-[#2e505f] text-[#2e505f]' : 'border-transparent text-slate-400 hover:text-slate-600'"
-class="px-4 py-2.5 border-b-2 text-[12px] font-extrabold transition-all whitespace-nowrap"
+class="px-4 py-2.5 border-b-2 text-[12px] font-semibold transition-all whitespace-nowrap"
 >
 Verified ({{ verified|length }})
 </button>
 <button 
 @click="tab = 'partner_ev'"
 :class="tab === 'partner_ev' ? 'border-[#2e505f] text-[#2e505f]' : 'border-transparent text-slate-400 hover:text-slate-600'"
-class="px-4 py-2.5 border-b-2 text-[12px] font-extrabold transition-all whitespace-nowrap"
+class="px-4 py-2.5 border-b-2 text-[12px] font-semibold transition-all whitespace-nowrap"
 >
 Partner Work ({{ partner_ev|length }})
 </button>
