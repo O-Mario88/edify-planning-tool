@@ -4,20 +4,22 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('schools', '0008_schoolimportbatch_ssaimportbatch_unmatchedssarecord_and_more'),
+        (
+            "schools",
+            "0008_schoolimportbatch_ssaimportbatch_unmatchedssarecord_and_more",
+        ),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='school',
-            name='director_name',
+            model_name="school",
+            name="director_name",
             field=models.CharField(blank=True, max_length=255, null=True),
         ),
         migrations.AddField(
-            model_name='school',
-            name='headteacher_name',
+            model_name="school",
+            name="headteacher_name",
             field=models.CharField(blank=True, max_length=255, null=True),
         ),
     ]

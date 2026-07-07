@@ -2,6 +2,7 @@
 GROUP 3 — Partner Views
 Partner directory, partner detail, partner portal pages
 """
+
 from django.shortcuts import render, get_object_or_404
 from apps.core.permissions import require_page_permission
 from django.db.models import Q
@@ -19,7 +20,9 @@ def partners_list_view(request):
     search = request.GET.get("q", "").strip()
     partners_qs = Partner.objects.filter(deleted_at__isnull=True).order_by("name")
     if search:
-        partners_qs = partners_qs.filter(Q(name__icontains=search) | Q(region_name__icontains=search))
+        partners_qs = partners_qs.filter(
+            Q(name__icontains=search) | Q(region_name__icontains=search)
+        )
 
     partners = list(partners_qs)
     context = {
@@ -39,16 +42,25 @@ def partner_detail_view(request, partner_id):
     partner_user = partner.primary_contact
     activities = []
     if partner_user:
-        activities = Activity.objects.filter(
-            responsible_staff_id=partner_user.id,
-            deleted_at__isnull=True,
-        ).select_related("school").order_by("-planned_date")[:30]
+        activities = (
+            Activity.objects.filter(
+                responsible_staff_id=partner_user.id,
+                deleted_at__isnull=True,
+            )
+            .select_related("school")
+            .order_by("-planned_date")[:30]
+        )
 
     from apps.partners.models import PartnerAssignment
     from apps.schools.models import School
     from apps.ssa.services import get_ssa_progress_by_fy
-    assigned_school_ids = PartnerAssignment.objects.filter(partner=partner).values_list("school_id", flat=True)
-    partner_schools = School.objects.filter(id__in=assigned_school_ids, deleted_at__isnull=True)
+
+    assigned_school_ids = PartnerAssignment.objects.filter(partner=partner).values_list(
+        "school_id", flat=True
+    )
+    partner_schools = School.objects.filter(
+        id__in=assigned_school_ids, deleted_at__isnull=True
+    )
     partner_progress = get_ssa_progress_by_fy(partner_schools)
 
     context = {
@@ -65,18 +77,26 @@ def partner_today_view(request):
     """Partner dashboard — today's work."""
     user = request.user
     today = date.today()
-    today_activities = Activity.objects.filter(
-        responsible_staff_id=user.id,
-        planned_date=today,
-        deleted_at__isnull=True,
-    ).select_related("school", "cluster").order_by("activity_type")
+    today_activities = (
+        Activity.objects.filter(
+            responsible_staff_id=user.id,
+            planned_date=today,
+            deleted_at__isnull=True,
+        )
+        .select_related("school", "cluster")
+        .order_by("activity_type")
+    )
 
-    upcoming = Activity.objects.filter(
-        responsible_staff_id=user.id,
-        planned_date__gt=today,
-        status="scheduled",
-        deleted_at__isnull=True,
-    ).select_related("school").order_by("planned_date")[:5]
+    upcoming = (
+        Activity.objects.filter(
+            responsible_staff_id=user.id,
+            planned_date__gt=today,
+            status="scheduled",
+            deleted_at__isnull=True,
+        )
+        .select_related("school")
+        .order_by("planned_date")[:5]
+    )
 
     context = {
         "today_activities": today_activities,
@@ -90,11 +110,17 @@ def partner_today_view(request):
 def partner_schools_view(request):
     """Partner's assigned schools."""
     user = request.user
-    school_ids = Activity.objects.filter(
-        responsible_staff_id=user.id,
-        deleted_at__isnull=True,
-    ).values_list("school_id", flat=True).distinct()
-    schools = School.objects.filter(id__in=school_ids, deleted_at__isnull=True).order_by("name")
+    school_ids = (
+        Activity.objects.filter(
+            responsible_staff_id=user.id,
+            deleted_at__isnull=True,
+        )
+        .values_list("school_id", flat=True)
+        .distinct()
+    )
+    schools = School.objects.filter(
+        id__in=school_ids, deleted_at__isnull=True
+    ).order_by("name")
 
     context = {"schools": schools, "total": schools.count()}
     return render(request, "pages/partner/schools.html", context)
@@ -105,10 +131,14 @@ def partner_activities_view(request):
     """Partner activities log."""
     user = request.user
     status_filter = request.GET.get("status", "")
-    activities = Activity.objects.filter(
-        responsible_staff_id=user.id,
-        deleted_at__isnull=True,
-    ).select_related("school", "cluster").order_by("-planned_date")
+    activities = (
+        Activity.objects.filter(
+            responsible_staff_id=user.id,
+            deleted_at__isnull=True,
+        )
+        .select_related("school", "cluster")
+        .order_by("-planned_date")
+    )
     if status_filter:
         activities = activities.filter(status=status_filter)
     activities = list(activities[:60])
@@ -128,9 +158,11 @@ def partner_evidence_view(request):
         responsible_staff_id=user.id,
         deleted_at__isnull=True,
     ).values_list("id", flat=True)
-    evidence = EvidenceRecord.objects.filter(activity_id__in=activity_ids).select_related(
-        "activity", "activity__school"
-    ).order_by("-created_at")[:50]
+    evidence = (
+        EvidenceRecord.objects.filter(activity_id__in=activity_ids)
+        .select_related("activity", "activity__school")
+        .order_by("-created_at")[:50]
+    )
 
     pending = Activity.objects.filter(
         responsible_staff_id=user.id,
@@ -147,5 +179,6 @@ def partner_evidence_view(request):
 def partner_my_plan_view(request):
     """Partner cockpit - scheduled activities for the partner organization."""
     from apps.my_plan.services import get_frontend_context
+
     context = get_frontend_context(request.user, request.GET)
     return render(request, "pages/partner/my_plan.html", context)

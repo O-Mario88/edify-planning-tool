@@ -4,6 +4,7 @@ ASGI config for the Edify API.
 ASGI is required for the realtime SSE stream (streaming responses) and the
 in-process background scheduler. Served in production via uvicorn/gunicorn.
 """
+
 import os
 
 from django.core.asgi import get_asgi_application

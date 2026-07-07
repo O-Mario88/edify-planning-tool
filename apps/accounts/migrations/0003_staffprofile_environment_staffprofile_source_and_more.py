@@ -4,30 +4,69 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('accounts', '0002_assignmentaudit_report_leave_staffsupportcapacity_and_more'),
+        ("accounts", "0002_assignmentaudit_report_leave_staffsupportcapacity_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='staffprofile',
-            name='environment',
-            field=models.CharField(choices=[('local', 'Local'), ('staging', 'Staging'), ('production', 'Production')], db_index=True, default='production', max_length=16),
+            model_name="staffprofile",
+            name="environment",
+            field=models.CharField(
+                choices=[
+                    ("local", "Local"),
+                    ("staging", "Staging"),
+                    ("production", "Production"),
+                ],
+                db_index=True,
+                default="production",
+                max_length=16,
+            ),
         ),
         migrations.AddField(
-            model_name='staffprofile',
-            name='source',
-            field=models.CharField(choices=[('manual_upload', 'Manual Upload'), ('admin_created', 'Admin Created'), ('api_import', 'API Import'), ('local_test_upload', 'Local Test Upload'), ('production_upload', 'Production Upload')], db_index=True, default='manual_upload', max_length=32),
+            model_name="staffprofile",
+            name="source",
+            field=models.CharField(
+                choices=[
+                    ("manual_upload", "Manual Upload"),
+                    ("admin_created", "Admin Created"),
+                    ("api_import", "API Import"),
+                    ("local_test_upload", "Local Test Upload"),
+                    ("production_upload", "Production Upload"),
+                ],
+                db_index=True,
+                default="manual_upload",
+                max_length=32,
+            ),
         ),
         migrations.AddField(
-            model_name='user',
-            name='environment',
-            field=models.CharField(choices=[('local', 'Local'), ('staging', 'Staging'), ('production', 'Production')], db_index=True, default='production', max_length=16),
+            model_name="user",
+            name="environment",
+            field=models.CharField(
+                choices=[
+                    ("local", "Local"),
+                    ("staging", "Staging"),
+                    ("production", "Production"),
+                ],
+                db_index=True,
+                default="production",
+                max_length=16,
+            ),
         ),
         migrations.AddField(
-            model_name='user',
-            name='source',
-            field=models.CharField(choices=[('manual_upload', 'Manual Upload'), ('admin_created', 'Admin Created'), ('api_import', 'API Import'), ('local_test_upload', 'Local Test Upload'), ('production_upload', 'Production Upload')], db_index=True, default='manual_upload', max_length=32),
+            model_name="user",
+            name="source",
+            field=models.CharField(
+                choices=[
+                    ("manual_upload", "Manual Upload"),
+                    ("admin_created", "Admin Created"),
+                    ("api_import", "API Import"),
+                    ("local_test_upload", "Local Test Upload"),
+                    ("production_upload", "Production Upload"),
+                ],
+                db_index=True,
+                default="manual_upload",
+                max_length=32,
+            ),
         ),
     ]

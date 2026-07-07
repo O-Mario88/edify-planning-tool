@@ -8,24 +8,25 @@ from apps.activities.ia_services import (
     IAVerificationService,
     DuplicateDetectionService,
     ActivityCertificationService,
-    ActivityReturnService
+    ActivityReturnService,
 )
+
 
 class IAWorkflowTests(TestCase):
     def setUp(self):
         # Create geographical boundaries
         self.region = Region.objects.create(name="Central")
         self.district = District.objects.create(name="Kampala", region=self.region)
-        
+
         # Create test school
         self.school = School.objects.create(
             name="Greenhill Academy",
             school_type="core",
             district=self.district,
             region=self.region,
-            account_owner_id="staff-cceo"
+            account_owner_id="staff-cceo",
         )
-        
+
         # Create a test activity
         self.activity = Activity.objects.create(
             school=self.school,
@@ -35,9 +36,9 @@ class IAWorkflowTests(TestCase):
             planned_date=timezone.now().date(),
             scheduled_date=timezone.now(),
             status="awaiting_ia_verification",
-            salesforce_activity_id="SV-99999"
+            salesforce_activity_id="SV-99999",
         )
-        
+
         # Create actor
         self.actor_id = "test-ia-user"
 
@@ -60,14 +61,18 @@ class IAWorkflowTests(TestCase):
             "duplicate_check_passed": True,
             "analytics_ready": True,
         }
-        
-        ActivityCertificationService.certify_activity(self.activity, checklist_data, self.actor_id)
-        
+
+        ActivityCertificationService.certify_activity(
+            self.activity, checklist_data, self.actor_id
+        )
+
         # Refresh from DB
         self.activity.refresh_from_db()
         self.assertEqual(self.activity.status, ActivityStatus.IA_VERIFIED)
-        self.assertEqual(self.activity.ia_verification_status, VerificationStatus.CONFIRMED)
-        
+        self.assertEqual(
+            self.activity.ia_verification_status, VerificationStatus.CONFIRMED
+        )
+
         # History log check
         history = VerificationHistory.objects.filter(activity=self.activity).first()
         self.assertIsNotNone(history)
@@ -77,14 +82,18 @@ class IAWorkflowTests(TestCase):
         """Returning an activity changes status to returned_by_ia and saves return reasons."""
         reasons = ["Evidence missing", "Wrong School"]
         comment = "Evidence file is empty."
-        
-        ActivityReturnService.return_activity(self.activity, reasons, comment, self.actor_id)
-        
+
+        ActivityReturnService.return_activity(
+            self.activity, reasons, comment, self.actor_id
+        )
+
         # Refresh from DB
         self.activity.refresh_from_db()
         self.assertEqual(self.activity.status, ActivityStatus.RETURNED_BY_IA)
-        self.assertEqual(self.activity.ia_verification_status, VerificationStatus.RETURNED)
-        
+        self.assertEqual(
+            self.activity.ia_verification_status, VerificationStatus.RETURNED
+        )
+
         # Verify reasons are stored
         verification = IAVerification.objects.filter(activity=self.activity).first()
         self.assertIsNotNone(verification)
@@ -102,9 +111,9 @@ class IAWorkflowTests(TestCase):
             planned_date=timezone.now().date(),
             scheduled_date=timezone.now(),
             status="completed",
-            salesforce_activity_id="SV-99999" # Same SF ID
+            salesforce_activity_id="SV-99999",  # Same SF ID
         )
-        
+
         dups = DuplicateDetectionService.detect_duplicates(self.activity)
         self.assertTrue(len(dups) > 0)
         self.assertTrue(any(d["activity"].id == dup_activity.id for d in dups))

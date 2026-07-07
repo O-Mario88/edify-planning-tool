@@ -1,4 +1,5 @@
 """Clusters endpoints — /api/clusters/*."""
+
 from __future__ import annotations
 
 from rest_framework.permissions import IsAuthenticated
@@ -61,7 +62,9 @@ class ClusterFromSchoolView(APIView):
     required_permissions = ASSIGN
 
     def post(self, request: Request) -> Response:
-        return Response(services.create_from_school(request.data, request.user), status=201)
+        return Response(
+            services.create_from_school(request.data, request.user), status=201
+        )
 
 
 class ClusterAssignView(APIView):
@@ -125,7 +128,9 @@ class ClusterWeakestInterventionsView(APIView):
     required_permissions = VIEW
 
     def get(self, request: Request, cluster_id: str) -> Response:
-        return Response(services.cluster_weakest_interventions(cluster_id, request.user))
+        return Response(
+            services.cluster_weakest_interventions(cluster_id, request.user)
+        )
 
 
 class ClusterActivityImpactView(APIView):
@@ -142,4 +147,5 @@ class ClusterImpactView(APIView):
 
     def get(self, request: Request, cluster_id: str) -> Response:
         from apps.analytics.services import cluster_impact
+
         return Response(cluster_impact(cluster_id, request.user))

@@ -1,4 +1,5 @@
 """Evidence model — uploaded files for activities."""
+
 from __future__ import annotations
 
 from django.db import models
@@ -11,7 +12,9 @@ class EvidenceRecord(TimeStampedModel):
     """An evidence file attached to an activity (visit form, photo, PDF, …)."""
 
     id = CuidField()
-    activity = models.ForeignKey("activities.Activity", on_delete=models.CASCADE, related_name="evidence")
+    activity = models.ForeignKey(
+        "activities.Activity", on_delete=models.CASCADE, related_name="evidence"
+    )
     kind = models.CharField(max_length=32, choices=EvidenceKind.choices)
     uri = models.CharField(max_length=512)  # stored filename under EVIDENCE_STORAGE_DIR
     original_name = models.CharField(max_length=512, null=True, blank=True)
@@ -22,14 +25,20 @@ class EvidenceRecord(TimeStampedModel):
     notes = models.TextField(null=True, blank=True)
     uploaded_by = models.CharField(max_length=30)
     uploader_role = models.CharField(max_length=32, null=True, blank=True)
-    status = models.CharField(max_length=16, choices=EvidenceStatus.choices, default=EvidenceStatus.UPLOADED)
+    status = models.CharField(
+        max_length=16, choices=EvidenceStatus.choices, default=EvidenceStatus.UPLOADED
+    )
     reviewed_by = models.CharField(max_length=30, null=True, blank=True)
     reviewed_at = models.DateTimeField(null=True, blank=True)
     review_note = models.CharField(max_length=512, null=True, blank=True)
-    scan_status = models.CharField(max_length=16, default="pending")  # pending|clean|infected|skipped
+    scan_status = models.CharField(
+        max_length=16, default="pending"
+    )  # pending|clean|infected|skipped
     quarantined = models.BooleanField(default=False)
     # Preview pipeline.
-    preview_status = models.CharField(max_length=16, default="not_required")  # not_required|pending|ready|failed
+    preview_status = models.CharField(
+        max_length=16, default="not_required"
+    )  # not_required|pending|ready|failed
     pdf_rendition_storage_key = models.CharField(max_length=512, null=True, blank=True)
     pdf_rendition_status = models.CharField(max_length=16, null=True, blank=True)
     pdf_rendition_error = models.CharField(max_length=512, null=True, blank=True)

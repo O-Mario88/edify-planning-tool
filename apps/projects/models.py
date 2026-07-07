@@ -1,4 +1,5 @@
 """Special-projects models — intervention-specific/pilot/selective projects."""
+
 from __future__ import annotations
 
 from django.db import models
@@ -20,7 +21,9 @@ class Project(SoftDeleteModel):
     code = models.CharField(max_length=64, null=True, blank=True, unique=True)
     name = models.CharField(max_length=255)
     category = models.CharField(max_length=32, choices=ProjectCategory.choices)
-    intervention = models.CharField(max_length=64, choices=SsaIntervention.choices, null=True, blank=True)
+    intervention = models.CharField(
+        max_length=64, choices=SsaIntervention.choices, null=True, blank=True
+    )
     manager_staff_id = models.CharField(max_length=30, null=True, blank=True)
 
     class Meta:
@@ -30,8 +33,12 @@ class Project(SoftDeleteModel):
 
 class ProjectSchoolAssignment(TimeStampedModel):
     id = CuidField()
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="school_assignments")
-    school = models.ForeignKey("schools.School", on_delete=models.CASCADE, related_name="project_assignments")
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE, related_name="school_assignments"
+    )
+    school = models.ForeignKey(
+        "schools.School", on_delete=models.CASCADE, related_name="project_assignments"
+    )
     assigned_by = models.CharField(max_length=30, null=True, blank=True)
     project_type = models.CharField(max_length=128, null=True, blank=True)
     participation_type = models.CharField(max_length=128, null=True, blank=True)
@@ -41,22 +48,36 @@ class ProjectSchoolAssignment(TimeStampedModel):
 
     class Meta:
         db_table = "project_school_assignment"
-        constraints = [models.UniqueConstraint(fields=["project", "school"], name="uniq_project_school")]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["project", "school"], name="uniq_project_school"
+            )
+        ]
 
 
 class ProjectPartnerAssignment(TimeStampedModel):
     id = CuidField()
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="partner_assignments")
-    partner = models.ForeignKey("partners.Partner", on_delete=models.CASCADE, related_name="project_assignments")
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE, related_name="partner_assignments"
+    )
+    partner = models.ForeignKey(
+        "partners.Partner", on_delete=models.CASCADE, related_name="project_assignments"
+    )
 
     class Meta:
         db_table = "project_partner_assignment"
-        constraints = [models.UniqueConstraint(fields=["project", "partner"], name="uniq_project_partner")]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["project", "partner"], name="uniq_project_partner"
+            )
+        ]
 
 
 class ProjectImpactSnapshot(TimeStampedModel):
     id = CuidField()
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="impact_snapshots")
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE, related_name="impact_snapshots"
+    )
     fy = models.CharField(max_length=16)
     metrics_json = models.JSONField(default=dict)
 
@@ -64,4 +85,10 @@ class ProjectImpactSnapshot(TimeStampedModel):
         db_table = "project_impact_snapshot"
 
 
-__all__ = ["ProjectCategory", "Project", "ProjectSchoolAssignment", "ProjectPartnerAssignment", "ProjectImpactSnapshot"]
+__all__ = [
+    "ProjectCategory",
+    "Project",
+    "ProjectSchoolAssignment",
+    "ProjectPartnerAssignment",
+    "ProjectImpactSnapshot",
+]

@@ -1,4 +1,5 @@
 """PL review queue — CCEO completions routed to the supervising PL."""
+
 from __future__ import annotations
 
 from django.utils import timezone
@@ -11,7 +12,9 @@ def queue(principal) -> list[dict]:
     """Activities submitted_to_pl awaiting the PL's confirmation."""
     from apps.activities.services import _serialize
 
-    qs = Activity.objects.filter(deleted_at__isnull=True, status="submitted_to_pl").order_by("-updated_at")
+    qs = Activity.objects.filter(
+        deleted_at__isnull=True, status="submitted_to_pl"
+    ).order_by("-updated_at")
     return [_serialize(a) for a in qs.select_related("school")]
 
 
@@ -44,5 +47,13 @@ def return_activity(activity_id: str, data: dict, principal) -> dict:
     a.pl_review_note = data.get("reason")
     a.pl_reviewed_at = timezone.now()
     a.pl_reviewed_by = principal.user_id
-    a.save(update_fields=["status", "pl_review_note", "pl_reviewed_at", "pl_reviewed_by", "updated_at"])
+    a.save(
+        update_fields=[
+            "status",
+            "pl_review_note",
+            "pl_reviewed_at",
+            "pl_reviewed_by",
+            "updated_at",
+        ]
+    )
     return _serialize(a)

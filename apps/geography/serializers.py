@@ -1,4 +1,5 @@
 """Geography serializers."""
+
 from __future__ import annotations
 
 from rest_framework import serializers
@@ -18,7 +19,17 @@ class DistrictSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = District
-        fields = ["id", "name", "code", "pcode", "region_id", "regionId", "region", "latitude", "longitude"]
+        fields = [
+            "id",
+            "name",
+            "code",
+            "pcode",
+            "region_id",
+            "regionId",
+            "region",
+            "latitude",
+            "longitude",
+        ]
 
     def get_region(self, obj):
         return {"name": obj.region.name} if obj.region_id else None
@@ -27,7 +38,15 @@ class DistrictSerializer(serializers.ModelSerializer):
 class SubCountySerializer(serializers.ModelSerializer):
     class Meta:
         model = SubCounty
-        fields = ["id", "name", "pcode", "source", "district_id", "latitude", "longitude"]
+        fields = [
+            "id",
+            "name",
+            "pcode",
+            "source",
+            "district_id",
+            "latitude",
+            "longitude",
+        ]
 
 
 class ParishSerializer(serializers.ModelSerializer):

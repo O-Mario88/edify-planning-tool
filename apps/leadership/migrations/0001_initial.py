@@ -8,63 +8,186 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='LeadershipDecisionInsight',
+            name="LeadershipDecisionInsight",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('fy', models.CharField(max_length=16)),
-                ('quarter', models.CharField(blank=True, max_length=8, null=True)),
-                ('decision_type', models.CharField(choices=[('recruitment', 'Recruitment'), ('staff_addition', 'Staff Addition'), ('partner', 'Partner'), ('staff_hr', 'Staff HR'), ('regional_investment', 'Regional Investment')], max_length=32)),
-                ('scope_type', models.CharField(choices=[('country', 'Country'), ('region', 'Region'), ('district', 'District'), ('sub_county', 'Sub County'), ('cluster', 'Cluster'), ('school', 'School'), ('staff', 'Staff'), ('partner', 'Partner')], max_length=16)),
-                ('scope_id', models.CharField(blank=True, max_length=30, null=True)),
-                ('scope_name', models.CharField(blank=True, max_length=255, null=True)),
-                ('recommendation', models.TextField()),
-                ('reason', models.TextField()),
-                ('risk_level', models.CharField(choices=[('low', 'Low'), ('medium', 'Medium'), ('high', 'High'), ('critical', 'Critical')], max_length=16)),
-                ('confidence_level', models.CharField(choices=[('high', 'High'), ('medium', 'Medium'), ('low', 'Low'), ('insufficient', 'Insufficient')], max_length=16)),
-                ('confidence_score', models.FloatField()),
-                ('evidence_summary', models.JSONField(blank=True, null=True)),
-                ('context_adjustment', models.CharField(blank=True, max_length=512, null=True)),
-                ('financial_implication', models.CharField(blank=True, max_length=512, null=True)),
-                ('suggested_action', models.CharField(max_length=512)),
-                ('alternatives', models.JSONField(blank=True, null=True)),
-                ('metrics', models.JSONField(blank=True, null=True)),
-                ('risk_flags', django.contrib.postgres.fields.ArrayField(base_field=models.CharField(max_length=64), blank=True, default=list, size=None)),
-                ('status', models.CharField(choices=[('new', 'New'), ('under_review', 'Under Review'), ('accepted', 'Accepted'), ('accepted_with_conditions', 'Accepted with Conditions'), ('rejected', 'Rejected'), ('deferred', 'Deferred'), ('converted_to_action_plan', 'Converted to Action Plan')], default='new', max_length=32)),
-                ('reviewed_by_user_id', models.CharField(blank=True, max_length=30, null=True)),
-                ('reviewed_by_role', models.CharField(blank=True, max_length=64, null=True)),
-                ('reviewed_at', models.DateTimeField(blank=True, null=True)),
-                ('review_note', models.TextField(blank=True, null=True)),
-                ('generated_at', models.DateTimeField()),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("fy", models.CharField(max_length=16)),
+                ("quarter", models.CharField(blank=True, max_length=8, null=True)),
+                (
+                    "decision_type",
+                    models.CharField(
+                        choices=[
+                            ("recruitment", "Recruitment"),
+                            ("staff_addition", "Staff Addition"),
+                            ("partner", "Partner"),
+                            ("staff_hr", "Staff HR"),
+                            ("regional_investment", "Regional Investment"),
+                        ],
+                        max_length=32,
+                    ),
+                ),
+                (
+                    "scope_type",
+                    models.CharField(
+                        choices=[
+                            ("country", "Country"),
+                            ("region", "Region"),
+                            ("district", "District"),
+                            ("sub_county", "Sub County"),
+                            ("cluster", "Cluster"),
+                            ("school", "School"),
+                            ("staff", "Staff"),
+                            ("partner", "Partner"),
+                        ],
+                        max_length=16,
+                    ),
+                ),
+                ("scope_id", models.CharField(blank=True, max_length=30, null=True)),
+                ("scope_name", models.CharField(blank=True, max_length=255, null=True)),
+                ("recommendation", models.TextField()),
+                ("reason", models.TextField()),
+                (
+                    "risk_level",
+                    models.CharField(
+                        choices=[
+                            ("low", "Low"),
+                            ("medium", "Medium"),
+                            ("high", "High"),
+                            ("critical", "Critical"),
+                        ],
+                        max_length=16,
+                    ),
+                ),
+                (
+                    "confidence_level",
+                    models.CharField(
+                        choices=[
+                            ("high", "High"),
+                            ("medium", "Medium"),
+                            ("low", "Low"),
+                            ("insufficient", "Insufficient"),
+                        ],
+                        max_length=16,
+                    ),
+                ),
+                ("confidence_score", models.FloatField()),
+                ("evidence_summary", models.JSONField(blank=True, null=True)),
+                (
+                    "context_adjustment",
+                    models.CharField(blank=True, max_length=512, null=True),
+                ),
+                (
+                    "financial_implication",
+                    models.CharField(blank=True, max_length=512, null=True),
+                ),
+                ("suggested_action", models.CharField(max_length=512)),
+                ("alternatives", models.JSONField(blank=True, null=True)),
+                ("metrics", models.JSONField(blank=True, null=True)),
+                (
+                    "risk_flags",
+                    django.contrib.postgres.fields.ArrayField(
+                        base_field=models.CharField(max_length=64),
+                        blank=True,
+                        default=list,
+                        size=None,
+                    ),
+                ),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("new", "New"),
+                            ("under_review", "Under Review"),
+                            ("accepted", "Accepted"),
+                            ("accepted_with_conditions", "Accepted with Conditions"),
+                            ("rejected", "Rejected"),
+                            ("deferred", "Deferred"),
+                            ("converted_to_action_plan", "Converted to Action Plan"),
+                        ],
+                        default="new",
+                        max_length=32,
+                    ),
+                ),
+                (
+                    "reviewed_by_user_id",
+                    models.CharField(blank=True, max_length=30, null=True),
+                ),
+                (
+                    "reviewed_by_role",
+                    models.CharField(blank=True, max_length=64, null=True),
+                ),
+                ("reviewed_at", models.DateTimeField(blank=True, null=True)),
+                ("review_note", models.TextField(blank=True, null=True)),
+                ("generated_at", models.DateTimeField()),
             ],
             options={
-                'db_table': 'leadership_decision_insight',
-                'indexes': [models.Index(fields=['fy', 'decision_type'], name='leadership__fy_a25299_idx'), models.Index(fields=['scope_type', 'scope_id'], name='leadership__scope_t_2f8a8f_idx'), models.Index(fields=['status'], name='leadership__status_4c8126_idx'), models.Index(fields=['risk_level'], name='leadership__risk_le_7cdca3_idx'), models.Index(fields=['confidence_level'], name='leadership__confide_5ab6a8_idx')],
+                "db_table": "leadership_decision_insight",
+                "indexes": [
+                    models.Index(
+                        fields=["fy", "decision_type"], name="leadership__fy_a25299_idx"
+                    ),
+                    models.Index(
+                        fields=["scope_type", "scope_id"],
+                        name="leadership__scope_t_2f8a8f_idx",
+                    ),
+                    models.Index(
+                        fields=["status"], name="leadership__status_4c8126_idx"
+                    ),
+                    models.Index(
+                        fields=["risk_level"], name="leadership__risk_le_7cdca3_idx"
+                    ),
+                    models.Index(
+                        fields=["confidence_level"],
+                        name="leadership__confide_5ab6a8_idx",
+                    ),
+                ],
             },
         ),
         migrations.CreateModel(
-            name='DecisionNote',
+            name="DecisionNote",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('author_user_id', models.CharField(max_length=30)),
-                ('author_role', models.CharField(max_length=64)),
-                ('note', models.TextField()),
-                ('kind', models.CharField(default='note', max_length=32)),
-                ('insight', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='notes', to='leadership.leadershipdecisioninsight')),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("author_user_id", models.CharField(max_length=30)),
+                ("author_role", models.CharField(max_length=64)),
+                ("note", models.TextField()),
+                ("kind", models.CharField(default="note", max_length=32)),
+                (
+                    "insight",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="notes",
+                        to="leadership.leadershipdecisioninsight",
+                    ),
+                ),
             ],
             options={
-                'abstract': False,
+                "abstract": False,
             },
         ),
     ]

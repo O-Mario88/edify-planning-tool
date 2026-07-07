@@ -57,48 +57,61 @@ class DashboardMetricsService:
 
         # Resolve scoping
         from apps.analytics.services import _scoped_schools
+
         schools_qs, scope = _scoped_schools(user)
         total_schools = schools_qs.count()
 
         # 1. KPI Cards calculations
-        ready_count = schools_qs.exclude(planning_readiness__in=["requires_cluster", "data_cleanup_required"]).count()
+        ready_count = schools_qs.exclude(
+            planning_readiness__in=["requires_cluster", "data_cleanup_required"]
+        ).count()
         ready_pct = round(ready_count / total_schools * 100) if total_schools > 0 else 0
 
         without_ssa_count = schools_qs.exclude(current_fy_ssa_status="done").count()
-        without_ssa_pct = round(without_ssa_count / total_schools * 100) if total_schools > 0 else 0
+        without_ssa_pct = (
+            round(without_ssa_count / total_schools * 100) if total_schools > 0 else 0
+        )
 
         # Scope filter for activities
         activities_qs = Activity.objects.filter(deleted_at__isnull=True, fy=fy)
         if not scope.country_scope:
             if scope.staff_ids:
-                activities_qs = activities_qs.filter(responsible_staff_id__in=scope.staff_ids)
+                activities_qs = activities_qs.filter(
+                    responsible_staff_id__in=scope.staff_ids
+                )
             elif scope.partner_ids:
-                activities_qs = activities_qs.filter(assigned_partner_id__in=scope.partner_ids)
+                activities_qs = activities_qs.filter(
+                    assigned_partner_id__in=scope.partner_ids
+                )
             else:
                 activities_qs = activities_qs.none()
 
         start_week = today - timedelta(days=today.weekday())
         end_week = start_week + timedelta(days=6)
-        activities_this_week = activities_qs.filter(scheduled_date__date__range=[start_week, end_week]).count()
+        activities_this_week = activities_qs.filter(
+            scheduled_date__date__range=[start_week, end_week]
+        ).count()
 
         start_month = today.replace(day=1)
         if today.month == 12:
             end_month = date(today.year + 1, 1, 1) - timedelta(days=1)
         else:
             end_month = date(today.year, today.month + 1, 1) - timedelta(days=1)
-        activities_this_month = activities_qs.filter(scheduled_date__date__range=[start_month, end_month]).count()
+        activities_this_month = activities_qs.filter(
+            scheduled_date__date__range=[start_month, end_month]
+        ).count()
 
         quarter = get_quarter_for_date(today)
         quarter_key = getattr(quarter, "value", quarter)
         activities_this_quarter = activities_qs.filter(quarter=quarter_key).count()
         activities_this_fy = activities_qs.count()
 
-        partner_pending_count = schools_qs.filter(
-            planning_readiness="ready_for_support_planning"
-        ).exclude(
-            activities__delivery_type="partner",
-            activities__fy=fy
-        ).distinct().count()
+        partner_pending_count = (
+            schools_qs.filter(planning_readiness="ready_for_support_planning")
+            .exclude(activities__delivery_type="partner", activities__fy=fy)
+            .distinct()
+            .count()
+        )
 
         # Fund requests awaiting action (confirmation or disbursement)
         fund_requests_pending = WeeklyFundRequest.objects.filter(
@@ -107,21 +120,33 @@ class DashboardMetricsService:
 
         completed_this_month = activities_qs.filter(
             status__in=COMPLETED_STATUSES,
-            scheduled_date__date__range=[start_month, end_month]
+            scheduled_date__date__range=[start_month, end_month],
         ).count()
-        target_achievement = round(completed_this_month / activities_this_month * 100) if activities_this_month > 0 else 0
+        target_achievement = (
+            round(completed_this_month / activities_this_month * 100)
+            if activities_this_month > 0
+            else 0
+        )
 
         # 2. Signal Strips
-        needs_attention = schools_qs.filter(planning_readiness__in=["requires_cluster", "data_cleanup_required"]).count()
-        ready_for_action = schools_qs.exclude(planning_readiness__in=["requires_cluster", "data_cleanup_required"]).count()
-        operational_health = round(ready_for_action / total_schools * 100) if total_schools > 0 else 0
+        needs_attention = schools_qs.filter(
+            planning_readiness__in=["requires_cluster", "data_cleanup_required"]
+        ).count()
+        ready_for_action = schools_qs.exclude(
+            planning_readiness__in=["requires_cluster", "data_cleanup_required"]
+        ).count()
+        operational_health = (
+            round(ready_for_action / total_schools * 100) if total_schools > 0 else 0
+        )
 
         # 3. Today's Priorities
         today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
         today_end = today_start + timedelta(days=1)
-        priorities_qs = activities_qs.filter(
-            scheduled_date__range=[today_start, today_end]
-        ).select_related("school").order_by("scheduled_date")[:6]
+        priorities_qs = (
+            activities_qs.filter(scheduled_date__range=[today_start, today_end])
+            .select_related("school")
+            .order_by("scheduled_date")[:6]
+        )
 
         priorities = []
         for act in priorities_qs:
@@ -134,13 +159,17 @@ class DashboardMetricsService:
                 status_label = "Started"
                 status_class = "s-orange"
 
-            priorities.append({
-                "activity": f"{act.activity_type.replace('_', ' ').title()}",
-                "time": act.scheduled_date.strftime("%I:%M %p") if act.scheduled_date else "—",
-                "related_to": act.school.name if act.school else "—",
-                "status": status_label,
-                "status_class": status_class,
-            })
+            priorities.append(
+                {
+                    "activity": f"{act.activity_type.replace('_', ' ').title()}",
+                    "time": act.scheduled_date.strftime("%I:%M %p")
+                    if act.scheduled_date
+                    else "—",
+                    "related_to": act.school.name if act.school else "—",
+                    "status": status_label,
+                    "status_class": status_class,
+                }
+            )
 
         # 4. Weekly Planning Progress — completed vs scheduled per week, last 5 weeks (live)
         weekly_progress = []
@@ -154,25 +183,36 @@ class DashboardMetricsService:
             weekly_progress.append({"week": ws.strftime("%b %d"), "percentage": pct})
 
         # 5. SSA Interventions Performance (scores are 0–10; scoped to the caller's schools)
-        ssa_averages = list(SsaScore.objects.filter(
-            ssa_record__school__in=schools_qs,
-            ssa_record__verification_status="confirmed",
-            ssa_record__deleted_at__isnull=True
-        ).values("intervention").annotate(avg_val=Avg("score")).order_by("-avg_val"))
+        ssa_averages = list(
+            SsaScore.objects.filter(
+                ssa_record__school__in=schools_qs,
+                ssa_record__verification_status="confirmed",
+                ssa_record__deleted_at__isnull=True,
+            )
+            .values("intervention")
+            .annotate(avg_val=Avg("score"))
+            .order_by("-avg_val")
+        )
 
         interv_map = dict(SsaIntervention.choices)
         rows = []
         for item in ssa_averages:
-            rows.append({
-                "name": interv_map.get(item["intervention"], item["intervention"]),
-                "score": round(item["avg_val"], 1),
-                "percentage": round(item["avg_val"] / 10.0 * 100),
-            })
+            rows.append(
+                {
+                    "name": interv_map.get(item["intervention"], item["intervention"]),
+                    "score": round(item["avg_val"], 1),
+                    "percentage": round(item["avg_val"] / 10.0 * 100),
+                }
+            )
         best_interventions = rows[:3]
-        weakest_interventions = [r for r in reversed(rows) if r not in best_interventions][:3]
+        weakest_interventions = [
+            r for r in reversed(rows) if r not in best_interventions
+        ][:3]
 
         # 6. Team Target Progress — completed vs scheduled per period (live)
-        completed_this_quarter = activities_qs.filter(quarter=quarter_key, status__in=COMPLETED_STATUSES).count()
+        completed_this_quarter = activities_qs.filter(
+            quarter=quarter_key, status__in=COMPLETED_STATUSES
+        ).count()
         completed_this_fy = activities_qs.filter(status__in=COMPLETED_STATUSES).count()
         team_targets = []
         for name, done, planned in [
@@ -182,51 +222,74 @@ class DashboardMetricsService:
         ]:
             pct = round(done / planned * 100) if planned else 0
             status, cls, color = _target_status(pct)
-            team_targets.append({"name": name, "percentage": pct, "status": status, "class": cls, "color": color})
+            team_targets.append(
+                {
+                    "name": name,
+                    "percentage": pct,
+                    "status": status,
+                    "class": cls,
+                    "color": color,
+                }
+            )
 
         # 7. Priority Schools Table — weakest intervention computed from live SSA scores
-        priority_schools_qs = list(schools_qs.exclude(
-            current_fy_ssa_status="done"
-        ).select_related("district").order_by("name")[:5])
+        priority_schools_qs = list(
+            schools_qs.exclude(current_fy_ssa_status="done")
+            .select_related("district")
+            .order_by("name")[:5]
+        )
         ready_extra = []
         if len(priority_schools_qs) < 5:
-            ready_extra = list(schools_qs.filter(
-                planning_readiness="ready_for_support_planning"
-            ).select_related("district")[:5 - len(priority_schools_qs)])
+            ready_extra = list(
+                schools_qs.filter(
+                    planning_readiness="ready_for_support_planning"
+                ).select_related("district")[: 5 - len(priority_schools_qs)]
+            )
 
         shown_ids = [s.id for s in priority_schools_qs + ready_extra]
         weakest_by_school = {}
-        weakest_rows = SsaScore.objects.filter(
-            ssa_record__school_id__in=shown_ids,
-            ssa_record__deleted_at__isnull=True,
-        ).values("ssa_record__school_id", "intervention").annotate(avg_val=Avg("score"))
+        weakest_rows = (
+            SsaScore.objects.filter(
+                ssa_record__school_id__in=shown_ids,
+                ssa_record__deleted_at__isnull=True,
+            )
+            .values("ssa_record__school_id", "intervention")
+            .annotate(avg_val=Avg("score"))
+        )
         for row in weakest_rows:
             sid = row["ssa_record__school_id"]
             cur = weakest_by_school.get(sid)
             if cur is None or row["avg_val"] < cur[1]:
-                weakest_by_school[sid] = (interv_map.get(row["intervention"], row["intervention"]), row["avg_val"])
+                weakest_by_school[sid] = (
+                    interv_map.get(row["intervention"], row["intervention"]),
+                    row["avg_val"],
+                )
 
         priority_schools = []
         for s in priority_schools_qs:
-            priority_schools.append({
-                "name": s.name,
-                "district": s.district.name if s.district else "—",
-                "cluster": s.cluster_id or "—",
-                "weakest": weakest_by_school.get(s.id, ("—",))[0],
-                "readiness": "At Risk",
-                "readiness_class": "s-orange",
-                "action": "Upload SSA"
-            })
+            priority_schools.append(
+                {
+                    "name": s.name,
+                    "district": s.district.name if s.district else "—",
+                    "cluster": s.cluster_id or "—",
+                    "weakest": weakest_by_school.get(s.id, ("—",))[0],
+                    "readiness": "At Risk",
+                    "readiness_class": "s-orange",
+                    "action": "Upload SSA",
+                }
+            )
         for s in ready_extra:
-            priority_schools.append({
-                "name": s.name,
-                "district": s.district.name if s.district else "—",
-                "cluster": s.cluster_id or "—",
-                "weakest": weakest_by_school.get(s.id, ("—",))[0],
-                "readiness": "Ready",
-                "readiness_class": "s-green",
-                "action": "Schedule Visit"
-            })
+            priority_schools.append(
+                {
+                    "name": s.name,
+                    "district": s.district.name if s.district else "—",
+                    "cluster": s.cluster_id or "—",
+                    "weakest": weakest_by_school.get(s.id, ("—",))[0],
+                    "readiness": "Ready",
+                    "readiness_class": "s-green",
+                    "action": "Schedule Visit",
+                }
+            )
 
         # 8. Cluster Performance Table — live per-cluster SSA averages and activity counts
         clusters_qs = Cluster.objects.filter(deleted_at__isnull=True)[:5]
@@ -241,25 +304,37 @@ class DashboardMetricsService:
                     verification_status="confirmed",
                 ).aggregate(v=Avg("average_score"))["v"]
             status, status_class = _ssa_status(avg)
-            cluster_performance.append({
-                "name": c.name,
-                "avg_ssa": round(avg, 1) if avg is not None else "—",
-                "trend": "→",
-                "mtgs": c.activities.filter(deleted_at__isnull=True, fy=fy, activity_type="cluster_meeting").count(),
-                "trainings": c.activities.filter(deleted_at__isnull=True, fy=fy, activity_type="cluster_training").count(),
-                "status": status,
-                "status_class": status_class,
-            })
+            cluster_performance.append(
+                {
+                    "name": c.name,
+                    "avg_ssa": round(avg, 1) if avg is not None else "—",
+                    "trend": "→",
+                    "mtgs": c.activities.filter(
+                        deleted_at__isnull=True, fy=fy, activity_type="cluster_meeting"
+                    ).count(),
+                    "trainings": c.activities.filter(
+                        deleted_at__isnull=True, fy=fy, activity_type="cluster_training"
+                    ).count(),
+                    "status": status,
+                    "status_class": status_class,
+                }
+            )
 
         # 9. Support Overview (live aggregations)
         payments_due_amount = sum(
             (w.total_amount or 0) - (w.disbursed_amount or 0)
-            for w in WeeklyFundRequest.objects.filter(fy=fy, status="confirmed_for_advance")
+            for w in WeeklyFundRequest.objects.filter(
+                fy=fy, status="confirmed_for_advance"
+            )
         )
         support_overview = {
-            "assigned_partners": Partner.objects.filter(deleted_at__isnull=True, active_status=True).count(),
+            "assigned_partners": Partner.objects.filter(
+                deleted_at__isnull=True, active_status=True
+            ).count(),
             "planned_visits": activities_this_month,
-            "evidence_pending": activities_qs.filter(status="completed", evidence__isnull=True).count(),
+            "evidence_pending": activities_qs.filter(
+                status="completed", evidence__isnull=True
+            ).count(),
             "payments_due": _ugx_compact(payments_due_amount),
         }
         evidence_pending_count = support_overview["evidence_pending"]
@@ -269,9 +344,23 @@ class DashboardMetricsService:
             return qs.aggregate(v=Sum("schedule_cost_lines__amount"))["v"] or 0
 
         budget_snapshot = {
-            "week": _ugx_compact(_cost_sum(activities_qs.filter(scheduled_date__date__range=[start_week, end_week]))),
-            "month": _ugx_compact(_cost_sum(activities_qs.filter(scheduled_date__date__range=[start_month, end_month]))),
-            "quarter": _ugx_compact(_cost_sum(activities_qs.filter(quarter=quarter_key))),
+            "week": _ugx_compact(
+                _cost_sum(
+                    activities_qs.filter(
+                        scheduled_date__date__range=[start_week, end_week]
+                    )
+                )
+            ),
+            "month": _ugx_compact(
+                _cost_sum(
+                    activities_qs.filter(
+                        scheduled_date__date__range=[start_month, end_month]
+                    )
+                )
+            ),
+            "quarter": _ugx_compact(
+                _cost_sum(activities_qs.filter(quarter=quarter_key))
+            ),
             "fy": _ugx_compact(_cost_sum(activities_qs)),
         }
 
@@ -289,28 +378,55 @@ class DashboardMetricsService:
         ).select_related("school")[:3]
         upcoming_today = []
         for act in upcoming_today_qs:
-            upcoming_today.append({
-                "type": "school" if act.activity_type == "school_visit" else "training",
-                "type_class": "blue-bg" if act.activity_type == "school_visit" else "purple-bg",
-                "icon": "🏫" if act.activity_type == "school_visit" else "🎓",
-                "time": act.scheduled_date.strftime("%I:%M %p") if act.scheduled_date else "—",
-                "title": act.school.name if act.school else "Cluster Activity",
-                "desc": act.focus_intervention.replace("_", " ").title() if act.focus_intervention else "General Coaching",
-                "info": f"{act.school.district.name if act.school and act.school.district else '—'} • {user.name}"
-            })
+            upcoming_today.append(
+                {
+                    "type": "school"
+                    if act.activity_type == "school_visit"
+                    else "training",
+                    "type_class": "blue-bg"
+                    if act.activity_type == "school_visit"
+                    else "purple-bg",
+                    "icon": "🏫" if act.activity_type == "school_visit" else "🎓",
+                    "time": act.scheduled_date.strftime("%I:%M %p")
+                    if act.scheduled_date
+                    else "—",
+                    "title": act.school.name if act.school else "Cluster Activity",
+                    "desc": act.focus_intervention.replace("_", " ").title()
+                    if act.focus_intervention
+                    else "General Coaching",
+                    "info": f"{act.school.district.name if act.school and act.school.district else '—'} • {user.name}",
+                }
+            )
 
         # Finance rollups reused by role KPI strips
         fy_wfr_qs = WeeklyFundRequest.objects.filter(fy=fy)
-        wfr_confirmed_total = fy_wfr_qs.filter(status__in=[
-            "confirmed_for_advance", "disbursed", "paid", "closed", "cleared",
-            "self_funded", "self_funded_pending_reimbursement",
-        ]).aggregate(v=Sum("total_amount"))["v"] or 0
+        wfr_confirmed_total = (
+            fy_wfr_qs.filter(
+                status__in=[
+                    "confirmed_for_advance",
+                    "disbursed",
+                    "paid",
+                    "closed",
+                    "cleared",
+                    "self_funded",
+                    "self_funded_pending_reimbursement",
+                ]
+            ).aggregate(v=Sum("total_amount"))["v"]
+            or 0
+        )
         wfr_disbursed_total = fy_wfr_qs.aggregate(v=Sum("disbursed_amount"))["v"] or 0
-        budget_util_pct = round(wfr_disbursed_total / wfr_confirmed_total * 100) if wfr_confirmed_total else 0
+        budget_util_pct = (
+            round(wfr_disbursed_total / wfr_confirmed_total * 100)
+            if wfr_confirmed_total
+            else 0
+        )
 
-        schools_visited = activities_qs.filter(
-            status__in=COMPLETED_STATUSES, school__isnull=False
-        ).values("school_id").distinct().count()
+        schools_visited = (
+            activities_qs.filter(status__in=COMPLETED_STATUSES, school__isnull=False)
+            .values("school_id")
+            .distinct()
+            .count()
+        )
 
         # Build standard KPI strip items list based on active role
         role = getattr(user, "active_role", None)
@@ -348,14 +464,17 @@ class DashboardMetricsService:
                     "helper": "needing uploads",
                     "icon": "warning",
                     "variant": "warning",
-                }
+                },
             ]
         elif role == "Program Lead":
             supervisee_count = 0
             profile = getattr(user, "staff_profile", None)
             if profile is not None:
                 from apps.accounts.models import StaffSupervisorAssignment
-                supervisee_count = StaffSupervisorAssignment.objects.filter(supervisor=profile).count()
+
+                supervisee_count = StaffSupervisorAssignment.objects.filter(
+                    supervisor=profile
+                ).count()
             kpi_items = [
                 {
                     "label": "Team Target Achievement",
@@ -388,7 +507,7 @@ class DashboardMetricsService:
                     "helper": "across team",
                     "icon": "calendar",
                     "variant": "blue",
-                }
+                },
             ]
         elif role in ["CountryDirector", "RegionalVicePresident", "Admin"]:
             kpi_items = [
@@ -423,7 +542,7 @@ class DashboardMetricsService:
                     "helper": "needs action",
                     "icon": "warning",
                     "variant": "warning",
-                }
+                },
             ]
         elif role == "Accountant":
             pending_clearance = sum(
@@ -462,7 +581,7 @@ class DashboardMetricsService:
                     "helper": "this month",
                     "icon": "calendar",
                     "variant": "info",
-                }
+                },
             ]
         else:
             kpi_items = [
@@ -497,7 +616,7 @@ class DashboardMetricsService:
                     "helper": "scheduled",
                     "icon": "chart",
                     "variant": "blue",
-                }
+                },
             ]
 
         return {

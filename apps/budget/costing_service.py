@@ -13,6 +13,7 @@ computes or persists activity cost. The service:
 Money is integer UGX throughout. The pure engine (costing.py::cost_for_activity)
 is reused unchanged; this service wraps it with catalogue resolution + persistence.
 """
+
 from __future__ import annotations
 
 from apps.activities.models import Activity, ActivityScheduleCostLine
@@ -31,7 +32,9 @@ def active_catalogue(fy: str | None = None) -> CostCatalogue | None:
     return qs.order_by("-version").first()
 
 
-def _rate_card(catalogue: CostCatalogue | None) -> tuple[dict[str, int], dict[str, CostSetting]]:
+def _rate_card(
+    catalogue: CostCatalogue | None,
+) -> tuple[dict[str, int], dict[str, CostSetting]]:
     """Return (rates dict, settings-by-key) for pricing.
 
     Prefers rates attached to the active catalogue; MERGES in any unattached
@@ -50,11 +53,14 @@ def _rate_card(catalogue: CostCatalogue | None) -> tuple[dict[str, int], dict[st
 _KEY_LABEL = {
     "staff_visit_transport_primary": "Staff visit transport (primary district)",
     "staff_visit_transport_secondary": "Staff visit transport (secondary district)",
-    "breakfast": "Breakfast", "lunch": "Lunch", "dinner": "Dinner",
+    "breakfast": "Breakfast",
+    "lunch": "Lunch",
+    "dinner": "Dinner",
     "accommodation": "Accommodation per night",
     "meals_per_participant": "Group training participant meal cost",
     "cluster_meeting_cost": "Cluster meeting participant meal cost",
-    "venue": "Venue cost", "training_session_fee": "Facilitation fee",
+    "venue": "Venue cost",
+    "training_session_fee": "Facilitation fee",
     "mobilisation_per_participant": "Mobilisation cost per participant",
     "partner_visit_lump_sum": "Partner visit rate",
     "partner_training_lump_sum": "Partner training/facilitation rate",
@@ -92,13 +98,15 @@ def preview(input: dict) -> dict:
         for k in missing
     ]
     if catalogue is None:
-        blockers.insert(0, "No active CD Cost Catalogue — publish one before scheduling.")
+        blockers.insert(
+            0, "No active CD Cost Catalogue — publish one before scheduling."
+        )
     return {
         "catalogueId": catalogue.id if catalogue else None,
         "catalogueVersion": catalogue.version if catalogue else None,
         "currency": "UGX",
         "amount": int(cost.amount),
-        "lines": [_serialize_line(l) for l in cost.lines],
+        "lines": [_serialize_line(line) for line in cost.lines],
         "costMissing": cost.cost_missing or catalogue is None,
         "missingItems": missing,
         "blockers": blockers,
@@ -118,17 +126,23 @@ def assert_schedulable(input: dict) -> None:
     # Check fiscal year can be calculated
     from apps.core.fy import get_operational_fy
     from datetime import datetime
+
     try:
         dt = datetime.fromisoformat(str(scheduled_date_raw).replace("Z", "+00:00"))
         fy = get_operational_fy(dt)
         if not fy:
             raise ValueError()
     except Exception as exc:
-        raise BadRequest("Fiscal year cannot be calculated from scheduled date.") from exc
+        raise BadRequest(
+            "Fiscal year cannot be calculated from scheduled date."
+        ) from exc
 
     activity_type = input.get("activityType", "")
     is_training = activity_type in {
-        "training", "school_improvement_training", "cluster_training", "core_training",
+        "training",
+        "school_improvement_training",
+        "cluster_training",
+        "core_training",
     }
     is_cluster_meeting = activity_type == "cluster_meeting"
     is_training_like = is_training or is_cluster_meeting
@@ -196,7 +210,9 @@ def _line_item_type(key: str) -> str:
 
 
 # ── Persist (the canonical budget-line writer) ───────────────────────────────
-def apply_to_activity(activity: Activity, input: dict, responsible_user_id: str | None = None) -> ActivityCost:
+def apply_to_activity(
+    activity: Activity, input: dict, responsible_user_id: str | None = None
+) -> ActivityCost:
     """Price the activity from the active catalogue and PERSIST its budget lines.
 
     Clears any prior ActivityScheduleCostLine rows, then writes one row per cost
@@ -249,50 +265,74 @@ def apply_to_activity(activity: Activity, input: dict, responsible_user_id: str 
         activity.fy = fiscal_year
 
     ActivityScheduleCostLine.objects.filter(activity=activity).delete()
-    
+
     # Tag Core activity budget lines
     tag = None
     if activity.activity_type == "core_visit":
-        tag = "Core Partner Activity" if activity.delivery_type == "partner" else "Core Visit"
-    elif activity.activity_type == "core_training":
-        tag = "Core Partner Activity" if activity.delivery_type == "partner" else "Core Training"
-        
-    ActivityScheduleCostLine.objects.bulk_create([
-        ActivityScheduleCostLine(
-            activity=activity,
-            cost_setting_key=line.key,
-            label=line.label,
-            unit_cost=0 if line.unit is None else int(line.unit),
-            quantity=int(line.qty),
-            amount=int(line.amount),
-            cost_setting_version=(settings_by_key[line.key].version if line.key in settings_by_key else 1),
-            catalogue_id=catalogue_id,
-            catalogue_version=catalogue_version,
-            line_item_type=_line_item_type(line.key),
-            currency="UGX",
-            description=f"[{tag}] {line.label}" if tag else line.label,
-            total_cost=int(line.amount),
-            planned_date=planned_date,
-            week_start_date=week_start,
-            week_end_date=week_end,
-            month=month,
-            quarter=quarter,
-            fiscal_year=fiscal_year,
-            responsible_user=responsible_user_id or activity.responsible_staff_id,
-            responsible_role=None,
-            school=activity.school,
-            cluster=activity.cluster,
-            partner_id=activity.assigned_partner_id,
-            project_id=activity.project_id,
+        tag = (
+            "Core Partner Activity"
+            if activity.delivery_type == "partner"
+            else "Core Visit"
         )
-        for line in cost.lines
-    ])
+    elif activity.activity_type == "core_training":
+        tag = (
+            "Core Partner Activity"
+            if activity.delivery_type == "partner"
+            else "Core Training"
+        )
+
+    ActivityScheduleCostLine.objects.bulk_create(
+        [
+            ActivityScheduleCostLine(
+                activity=activity,
+                cost_setting_key=line.key,
+                label=line.label,
+                unit_cost=0 if line.unit is None else int(line.unit),
+                quantity=int(line.qty),
+                amount=int(line.amount),
+                cost_setting_version=(
+                    settings_by_key[line.key].version
+                    if line.key in settings_by_key
+                    else 1
+                ),
+                catalogue_id=catalogue_id,
+                catalogue_version=catalogue_version,
+                line_item_type=_line_item_type(line.key),
+                currency="UGX",
+                description=f"[{tag}] {line.label}" if tag else line.label,
+                total_cost=int(line.amount),
+                planned_date=planned_date,
+                week_start_date=week_start,
+                week_end_date=week_end,
+                month=month,
+                quarter=quarter,
+                fiscal_year=fiscal_year,
+                responsible_user=responsible_user_id or activity.responsible_staff_id,
+                responsible_role=None,
+                school=activity.school,
+                cluster=activity.cluster,
+                partner_id=activity.assigned_partner_id,
+                project_id=activity.project_id,
+            )
+            for line in cost.lines
+        ]
+    )
     activity.est_cost_cents = int(cost.amount)
     activity.cost_missing = cost.cost_missing or catalogue is None
-    activity.save(update_fields=[
-        "est_cost_cents", "cost_missing", "planned_date", "week_start_date",
-        "week_end_date", "fiscal_year", "month", "quarter", "fy", "updated_at"
-    ])
+    activity.save(
+        update_fields=[
+            "est_cost_cents",
+            "cost_missing",
+            "planned_date",
+            "week_start_date",
+            "week_end_date",
+            "fiscal_year",
+            "month",
+            "quarter",
+            "fy",
+            "updated_at",
+        ]
+    )
 
     # Auto-create weekly advance requests from the freshly-written budget lines
     # (the responsible user confirms before the Accountant may disburse). Only

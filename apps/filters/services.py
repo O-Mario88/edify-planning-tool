@@ -1,4 +1,5 @@
 """Filters — shared filter-bar options + counts."""
+
 from __future__ import annotations
 
 from django.db.models import Count, Q
@@ -12,12 +13,20 @@ def options(principal) -> dict:
     scope = resolve_user_scope(principal)
     base = school_queryset(scope) or School.objects.none()
     return {
-        "regions": sorted(set(x for x in base.values_list("region__name", flat=True) if x)),
-        "districts": sorted(set(x for x in base.values_list("district__name", flat=True) if x)),
+        "regions": sorted(
+            set(x for x in base.values_list("region__name", flat=True) if x)
+        ),
+        "districts": sorted(
+            set(x for x in base.values_list("district__name", flat=True) if x)
+        ),
         "schoolTypes": sorted(set(base.values_list("school_type", flat=True))),
         "clusterStatuses": sorted(set(base.values_list("cluster_status", flat=True))),
-        "ssaStatuses": sorted(set(base.values_list("current_fy_ssa_status", flat=True))),
-        "planningReadiness": sorted(set(base.values_list("planning_readiness", flat=True))),
+        "ssaStatuses": sorted(
+            set(base.values_list("current_fy_ssa_status", flat=True))
+        ),
+        "planningReadiness": sorted(
+            set(base.values_list("planning_readiness", flat=True))
+        ),
     }
 
 
@@ -25,13 +34,28 @@ def counts(query: dict, principal) -> dict:
     scope = resolve_user_scope(principal)
     base = school_queryset(scope) or School.objects.none()
     q = Q()
-    for f in ("school_type", "cluster_status", "current_fy_ssa_status", "planning_readiness"):
+    for f in (
+        "school_type",
+        "cluster_status",
+        "current_fy_ssa_status",
+        "planning_readiness",
+    ):
         if query.get(f):
             q &= Q(**{f: query[f]})
     return {
         "total": base.filter(q).count(),
-        "bySchoolType": dict(base.filter(q).values_list("school_type").annotate(c=Count("id")).values_list("school_type", "c")),
-        "byClusterStatus": dict(base.filter(q).values_list("cluster_status").annotate(c=Count("id")).values_list("cluster_status", "c")),
+        "bySchoolType": dict(
+            base.filter(q)
+            .values_list("school_type")
+            .annotate(c=Count("id"))
+            .values_list("school_type", "c")
+        ),
+        "byClusterStatus": dict(
+            base.filter(q)
+            .values_list("cluster_status")
+            .annotate(c=Count("id"))
+            .values_list("cluster_status", "c")
+        ),
     }
 
 

@@ -5,6 +5,7 @@ Cross-cutting middleware.
 NestJS `requestContextMiddleware`); `AllExceptionsMiddleware` renders the
 generic error envelope without leaking internals (mirrors `AllExceptionsFilter`).
 """
+
 from __future__ import annotations
 
 import logging
@@ -30,12 +31,13 @@ class RequestContextMiddleware:
         self.get_response = get_response
 
     def __call__(self, request: HttpRequest) -> HttpResponse:
-        correlation_id = (
-            request.headers.get("x-correlation-id")
-            or new_correlation_id()
-        )
+        correlation_id = request.headers.get("x-correlation-id") or new_correlation_id()
         forwarded = request.headers.get("x-forwarded-for", "")
-        ip = forwarded.split(",")[0].strip() if forwarded else request.META.get("REMOTE_ADDR")
+        ip = (
+            forwarded.split(",")[0].strip()
+            if forwarded
+            else request.META.get("REMOTE_ADDR")
+        )
         ctx = RequestContext(
             ip_address=ip,
             user_agent=request.headers.get("user-agent"),
@@ -74,22 +76,34 @@ class AllExceptionsMiddleware:
         if isinstance(exception, DjangoPermissionDenied):
             logger.debug(
                 "[%s] %s %s -> 403 : %s",
-                correlation_id, request.method, request.path,
+                correlation_id,
+                request.method,
+                request.path,
                 str(exception),
             )
             return JsonResponse(
-                {"statusCode": 403, "correlationId": correlation_id, "message": str(exception)},
+                {
+                    "statusCode": 403,
+                    "correlationId": correlation_id,
+                    "message": str(exception),
+                },
                 status=403,
             )
 
         if isinstance(exception, DjangoHttp404):
             logger.debug(
                 "[%s] %s %s -> 404 : %s",
-                correlation_id, request.method, request.path,
+                correlation_id,
+                request.method,
+                request.path,
                 str(exception),
             )
             return JsonResponse(
-                {"statusCode": 404, "correlationId": correlation_id, "message": str(exception)},
+                {
+                    "statusCode": 404,
+                    "correlationId": correlation_id,
+                    "message": str(exception),
+                },
                 status=404,
             )
 
@@ -105,11 +119,18 @@ class AllExceptionsMiddleware:
                 payload_detail = str(detail)
             logger.debug(
                 "[%s] %s %s -> %s : %s",
-                correlation_id, request.method, request.path,
-                status, str(detail),
+                correlation_id,
+                request.method,
+                request.path,
+                status,
+                str(detail),
             )
             return JsonResponse(
-                {"statusCode": status, "correlationId": correlation_id, "message": payload_detail},
+                {
+                    "statusCode": status,
+                    "correlationId": correlation_id,
+                    "message": payload_detail,
+                },
                 status=status,
             )
 
@@ -117,7 +138,10 @@ class AllExceptionsMiddleware:
         status = 500
         logger.exception(
             "[%s] %s %s -> 500 : %s",
-            correlation_id, request.method, request.path, exception,
+            correlation_id,
+            request.method,
+            request.path,
+            exception,
         )
         return JsonResponse(
             {

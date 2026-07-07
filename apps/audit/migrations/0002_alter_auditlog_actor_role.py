@@ -4,15 +4,31 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('audit', '0001_initial'),
+        ("audit", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='auditlog',
-            name='actor_role',
-            field=models.CharField(blank=True, choices=[('CCEO', 'CCEO'), ('Program Lead', 'Program Lead'), ('CountryDirector', 'CountryDirector'), ('RegionalVicePresident', 'RegionalVicePresident'), ('ImpactAssessment', 'ImpactAssessment'), ('Accountant', 'Accountant'), ('HumanResources', 'HumanResources'), ('ProjectCoordinator', 'ProjectCoordinator'), ('PartnerAdmin', 'PartnerAdmin'), ('PartnerFieldOfficer', 'PartnerFieldOfficer'), ('Admin', 'Admin')], max_length=64, null=True),
+            model_name="auditlog",
+            name="actor_role",
+            field=models.CharField(
+                blank=True,
+                choices=[
+                    ("CCEO", "CCEO"),
+                    ("Program Lead", "Program Lead"),
+                    ("CountryDirector", "CountryDirector"),
+                    ("RegionalVicePresident", "RegionalVicePresident"),
+                    ("ImpactAssessment", "ImpactAssessment"),
+                    ("Accountant", "Accountant"),
+                    ("HumanResources", "HumanResources"),
+                    ("ProjectCoordinator", "ProjectCoordinator"),
+                    ("PartnerAdmin", "PartnerAdmin"),
+                    ("PartnerFieldOfficer", "PartnerFieldOfficer"),
+                    ("Admin", "Admin"),
+                ],
+                max_length=64,
+                null=True,
+            ),
         ),
     ]

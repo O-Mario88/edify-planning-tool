@@ -1,4 +1,5 @@
 """Filters endpoints — /api/filters/*."""
+
 from __future__ import annotations
 
 from rest_framework.permissions import IsAuthenticated

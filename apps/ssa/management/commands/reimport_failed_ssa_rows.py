@@ -8,6 +8,7 @@ imported, this command creates the missing SsaRecord entries.
 Usage:
     python manage.py reimport_failed_ssa_rows [--dry-run] [--batch-id ID]
 """
+
 from __future__ import annotations
 
 import logging
@@ -57,7 +58,9 @@ class Command(BaseCommand):
             if count == 0:
                 continue
 
-            self.stdout.write(f"\nBatch {batch.id}  file={batch.file_name}  failed_rows={count}")
+            self.stdout.write(
+                f"\nBatch {batch.id}  file={batch.file_name}  failed_rows={count}"
+            )
             uploader_id = batch.uploaded_by
 
             for r in failed_rows:
@@ -68,7 +71,9 @@ class Command(BaseCommand):
                 school = School.objects.filter(school_id=school_id).first()
                 if not school:
                     self.stdout.write(
-                        self.style.WARNING(f"  row {r.row_number}: School {school_id} still not found — skipping.")
+                        self.style.WARNING(
+                            f"  row {r.row_number}: School {school_id} still not found — skipping."
+                        )
                     )
                     total_skipped += 1
                     continue
@@ -141,12 +146,13 @@ class Command(BaseCommand):
 
                         # Build the scores list in the format services.upload() expects
                         scores_list = [
-                            {"intervention": k, "score": v}
-                            for k, v in scores.items()
+                            {"intervention": k, "score": v} for k, v in scores.items()
                         ]
                         data = {
                             "schoolId": school_id,
-                            "dateOfSsa": datetime.combine(ssa_date, datetime.min.time()).isoformat(),
+                            "dateOfSsa": datetime.combine(
+                                ssa_date, datetime.min.time()
+                            ).isoformat(),
                             "scores": scores_list,
                             "newEnrollment": new_enrollment,
                             "collectorType": "staff",
@@ -158,7 +164,9 @@ class Command(BaseCommand):
                         r.save(update_fields=["status", "error_message"])
 
                     total_imported += 1
-                    self.stdout.write(f"  ✓ SSA created for school_id={school_id} date={ssa_date}")
+                    self.stdout.write(
+                        f"  ✓ SSA created for school_id={school_id} date={ssa_date}"
+                    )
                 except Exception as exc:  # noqa: BLE001
                     self.stdout.write(
                         self.style.ERROR(

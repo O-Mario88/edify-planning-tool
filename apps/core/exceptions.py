@@ -6,6 +6,7 @@ message}`. Business 4xx keep their messages; 5xx are generic. DRF exceptions
 raised in views are handled here, while truly uncaught exceptions fall through
 to AllExceptionsMiddleware.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -30,7 +31,6 @@ def edify_exception_handler(exc: Exception, context: dict):
         message = detail
     else:
         message = str(detail)
-
 
     response.data = {
         "statusCode": response.status_code,

@@ -5,6 +5,7 @@ Ports the NestJS env.validation.ts production safety rails: boot refuses to
 start unless mock data, dev endpoints, and shadow authorization are all off,
 the JWT secret is strong, and evidence storage is on a persistent absolute path.
 """
+
 import sys
 
 from .base import *  # noqa: F401,F403
@@ -25,14 +26,14 @@ if ENABLE_DEV_ENDPOINTS:
 if ENABLE_DEV_SEED:
     _issues.append("ENABLE_DEV_SEED must be false in production (no demo seeding).")
 if ENABLE_DEV_IMPORTS:
-    _issues.append("ENABLE_DEV_IMPORTS must be false in production (no local test imports).")
+    _issues.append(
+        "ENABLE_DEV_IMPORTS must be false in production (no local test imports)."
+    )
 if PARTNER_ROLE_BRIDGE:
-    _issues.append("PARTNER_ROLE_BRIDGE must be false in production (real Partner.userId links required).")
-if (
-    len(JWT_SECRET) < 16
-    or "change-me" in JWT_SECRET
-    or "dev-only" in JWT_SECRET
-):
+    _issues.append(
+        "PARTNER_ROLE_BRIDGE must be false in production (real Partner.userId links required)."
+    )
+if len(JWT_SECRET) < 16 or "change-me" in JWT_SECRET or "dev-only" in JWT_SECRET:
     _issues.append("A strong JWT_SECRET is required in production.")
 if AUTHZ_MODE != "enforce":
     _issues.append(
@@ -49,7 +50,9 @@ if not SUPER_ADMIN_PASSWORD:
     _issues.append("SUPER_ADMIN_PASSWORD must be set (super-admin login).")
 
 if _issues:
-    sys.stderr.write("Production environment is not safe:\n" + "\n".join(_issues) + "\n")
+    sys.stderr.write(
+        "Production environment is not safe:\n" + "\n".join(_issues) + "\n"
+    )
     raise SystemExit(1)
 
 # ── Hardened security posture ────────────────────────────────────────────────
@@ -72,7 +75,9 @@ for host in ["localhost", "127.0.0.1", "0.0.0.0"]:
 
 if not ALLOWED_HOSTS:
     _issues.append("ALLOWED_HOSTS must be set to explicit hosts in production.")
-    sys.stderr.write("Production environment is not safe:\n" + "\n".join(_issues) + "\n")
+    sys.stderr.write(
+        "Production environment is not safe:\n" + "\n".join(_issues) + "\n"
+    )
     raise SystemExit(1)
 
 SECURE_SSL_REDIRECT = _truthy(os.environ.get("SECURE_SSL_REDIRECT"), fallback=True)

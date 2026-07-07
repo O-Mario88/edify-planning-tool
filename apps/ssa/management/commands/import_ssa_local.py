@@ -15,6 +15,7 @@ recomputes the school's planning readiness. Tagged source=local_test_upload.
 
 DEV-ONLY: refuses in production.
 """
+
 from __future__ import annotations
 
 import csv
@@ -50,7 +51,11 @@ class Command(BaseCommand):
             )
         csv_path = options["csv_path"]
         env_tag = options["env_tag"]
-        source = DataSource.LOCAL_TEST_UPLOAD.value if env_tag == "local" else DataSource.PRODUCTION_UPLOAD.value
+        source = (
+            DataSource.LOCAL_TEST_UPLOAD.value
+            if env_tag == "local"
+            else DataSource.PRODUCTION_UPLOAD.value
+        )
         created = skipped = 0
 
         try:
@@ -58,10 +63,14 @@ class Command(BaseCommand):
                 reader = csv.DictReader(fh)
                 for row in reader:
                     try:
-                        school = School.objects.filter(school_id=row["schoolId"].strip()).first()
+                        school = School.objects.filter(
+                            school_id=row["schoolId"].strip()
+                        ).first()
                         if not school:
                             skipped += 1
-                            self.stderr.write(f"  skip {row.get('schoolId')}: school not in directory")
+                            self.stderr.write(
+                                f"  skip {row.get('schoolId')}: school not in directory"
+                            )
                             continue
                         date = datetime.fromisoformat(row["dateOfSsa"].strip())
                         scores = []
@@ -76,21 +85,38 @@ class Command(BaseCommand):
                         collector = row.get("collectorType", "staff").strip() or "staff"
                         partner_collected = collector == "partner"
                         record = SsaRecord.objects.create(
-                            school=school, date_of_ssa=date, fy=get_operational_fy(date),
+                            school=school,
+                            date_of_ssa=date,
+                            fy=get_operational_fy(date),
                             quarter=get_quarter_for_date(date),
-                            new_enrollment=int(row["newEnrollment"]) if row.get("newEnrollment") else None,
-                            average_score=avg, uploaded_by="local_import",
+                            new_enrollment=int(row["newEnrollment"])
+                            if row.get("newEnrollment")
+                            else None,
+                            average_score=avg,
+                            uploaded_by="local_import",
                             collector_type=collector,
-                            verification_status="pending" if partner_collected else "confirmed",
-                            verification_source="partner_submitted" if partner_collected else "staff_self_verified",
-                            source=source, environment=env_tag,
+                            verification_status="pending"
+                            if partner_collected
+                            else "confirmed",
+                            verification_source="partner_submitted"
+                            if partner_collected
+                            else "staff_self_verified",
+                            source=source,
+                            environment=env_tag,
                         )
                         if not partner_collected:
                             record.verified_by_user_id = "local_import"
                             record.verified_at = timezone.now()
-                            record.save(update_fields=["verified_by_user_id", "verified_at"])
+                            record.save(
+                                update_fields=["verified_by_user_id", "verified_at"]
+                            )
                         SsaScore.objects.bulk_create(
-                            [SsaScore(ssa_record=record, intervention=interv, score=score) for interv, score in scores]
+                            [
+                                SsaScore(
+                                    ssa_record=record, intervention=interv, score=score
+                                )
+                                for interv, score in scores
+                            ]
                         )
                         if record.verification_status == "confirmed":
                             school.current_fy_ssa_status = "done"
@@ -103,6 +129,8 @@ class Command(BaseCommand):
         except FileNotFoundError as exc:
             raise CommandError(str(exc)) from exc
 
-        self.stdout.write(self.style.SUCCESS(
-            f"Imported {created} SSA records (skipped={skipped}). source={source}."
-        ))
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"Imported {created} SSA records (skipped={skipped}). source={source}."
+            )
+        )

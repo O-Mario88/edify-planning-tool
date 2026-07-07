@@ -1,4 +1,5 @@
 """Auth DTO serializers (login, refresh, reset, set-password)."""
+
 from __future__ import annotations
 
 from rest_framework import serializers
@@ -17,7 +18,9 @@ class RefreshSerializer(LenientSerializer):
 
 
 class LogoutSerializer(LenientSerializer):
-    refreshToken = serializers.CharField(required=False, allow_blank=True, trim_whitespace=False)
+    refreshToken = serializers.CharField(
+        required=False, allow_blank=True, trim_whitespace=False
+    )
 
 
 class ForgotPasswordSerializer(LenientSerializer):

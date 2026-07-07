@@ -7,76 +7,173 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
-        ('schools', '0001_initial'),
+        ("schools", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='SsaRecord',
+            name="SsaRecord",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('deleted_at', models.DateTimeField(blank=True, db_index=True, null=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('date_of_ssa', models.DateTimeField()),
-                ('fy', models.CharField(max_length=16)),
-                ('quarter', models.CharField(max_length=8)),
-                ('new_enrollment', models.IntegerField(blank=True, null=True)),
-                ('average_score', models.FloatField(blank=True, null=True)),
-                ('salesforce_id', models.CharField(blank=True, max_length=128, null=True)),
-                ('verification_status', models.CharField(choices=[('pending', 'Pending'), ('confirmed', 'Confirmed'), ('returned', 'Returned'), ('flagged', 'Flagged')], default='pending', max_length=32)),
-                ('collector_type', models.CharField(choices=[('staff', 'Staff'), ('partner', 'Partner'), ('ia', 'IA'), ('imported_previous_fy', 'Imported (previous FY)'), ('system_migration', 'System Migration')], default='staff', max_length=32)),
-                ('verification_source', models.CharField(blank=True, max_length=64, null=True)),
-                ('collected_by_user_id', models.CharField(blank=True, max_length=30, null=True)),
-                ('collected_by_partner_id', models.CharField(blank=True, max_length=30, null=True)),
-                ('verified_by_user_id', models.CharField(blank=True, max_length=30, null=True)),
-                ('verified_at', models.DateTimeField(blank=True, null=True)),
-                ('qa_reviewed_by_user_id', models.CharField(blank=True, max_length=30, null=True)),
-                ('qa_reviewed_at', models.DateTimeField(blank=True, null=True)),
-                ('uploaded_by', models.CharField(max_length=30)),
-                ('school', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='ssa_records', to='schools.school')),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "deleted_at",
+                    models.DateTimeField(blank=True, db_index=True, null=True),
+                ),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("date_of_ssa", models.DateTimeField()),
+                ("fy", models.CharField(max_length=16)),
+                ("quarter", models.CharField(max_length=8)),
+                ("new_enrollment", models.IntegerField(blank=True, null=True)),
+                ("average_score", models.FloatField(blank=True, null=True)),
+                (
+                    "salesforce_id",
+                    models.CharField(blank=True, max_length=128, null=True),
+                ),
+                (
+                    "verification_status",
+                    models.CharField(
+                        choices=[
+                            ("pending", "Pending"),
+                            ("confirmed", "Confirmed"),
+                            ("returned", "Returned"),
+                            ("flagged", "Flagged"),
+                        ],
+                        default="pending",
+                        max_length=32,
+                    ),
+                ),
+                (
+                    "collector_type",
+                    models.CharField(
+                        choices=[
+                            ("staff", "Staff"),
+                            ("partner", "Partner"),
+                            ("ia", "IA"),
+                            ("imported_previous_fy", "Imported (previous FY)"),
+                            ("system_migration", "System Migration"),
+                        ],
+                        default="staff",
+                        max_length=32,
+                    ),
+                ),
+                (
+                    "verification_source",
+                    models.CharField(blank=True, max_length=64, null=True),
+                ),
+                (
+                    "collected_by_user_id",
+                    models.CharField(blank=True, max_length=30, null=True),
+                ),
+                (
+                    "collected_by_partner_id",
+                    models.CharField(blank=True, max_length=30, null=True),
+                ),
+                (
+                    "verified_by_user_id",
+                    models.CharField(blank=True, max_length=30, null=True),
+                ),
+                ("verified_at", models.DateTimeField(blank=True, null=True)),
+                (
+                    "qa_reviewed_by_user_id",
+                    models.CharField(blank=True, max_length=30, null=True),
+                ),
+                ("qa_reviewed_at", models.DateTimeField(blank=True, null=True)),
+                ("uploaded_by", models.CharField(max_length=30)),
+                (
+                    "school",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="ssa_records",
+                        to="schools.school",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'ssa_record',
-                'ordering': ['-date_of_ssa'],
+                "db_table": "ssa_record",
+                "ordering": ["-date_of_ssa"],
             },
         ),
         migrations.CreateModel(
-            name='SsaScore',
+            name="SsaScore",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('intervention', models.CharField(choices=[('teaching_and_learning', 'Teaching & Learning'), ('financial_health', 'Financial Health'), ('christlike_behaviour', 'Christlike Behaviour'), ('exposure_to_word_of_god', 'Exposure to Word of God'), ('government_requirements', 'Government Requirements'), ('leadership', 'Leadership'), ('education_technology', 'Education Technology'), ('learning_environment', 'Learning Environment')], max_length=64)),
-                ('score', models.FloatField()),
-                ('ssa_record', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='scores', to='ssa.ssarecord')),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                (
+                    "intervention",
+                    models.CharField(
+                        choices=[
+                            ("teaching_and_learning", "Teaching & Learning"),
+                            ("financial_health", "Financial Health"),
+                            ("christlike_behaviour", "Christlike Behaviour"),
+                            ("exposure_to_word_of_god", "Exposure to Word of God"),
+                            ("government_requirements", "Government Requirements"),
+                            ("leadership", "Leadership"),
+                            ("education_technology", "Education Technology"),
+                            ("learning_environment", "Learning Environment"),
+                        ],
+                        max_length=64,
+                    ),
+                ),
+                ("score", models.FloatField()),
+                (
+                    "ssa_record",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="scores",
+                        to="ssa.ssarecord",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'ssa_score',
+                "db_table": "ssa_score",
             },
         ),
         migrations.AddIndex(
-            model_name='ssarecord',
-            index=models.Index(fields=['school'], name='ssa_record_school__ca2094_idx'),
+            model_name="ssarecord",
+            index=models.Index(fields=["school"], name="ssa_record_school__ca2094_idx"),
         ),
         migrations.AddIndex(
-            model_name='ssarecord',
-            index=models.Index(fields=['fy'], name='ssa_record_fy_8271f2_idx'),
+            model_name="ssarecord",
+            index=models.Index(fields=["fy"], name="ssa_record_fy_8271f2_idx"),
         ),
         migrations.AddIndex(
-            model_name='ssarecord',
-            index=models.Index(fields=['collector_type'], name='ssa_record_collect_44e483_idx'),
+            model_name="ssarecord",
+            index=models.Index(
+                fields=["collector_type"], name="ssa_record_collect_44e483_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='ssarecord',
-            index=models.Index(fields=['verification_status'], name='ssa_record_verific_3ef0d9_idx'),
+            model_name="ssarecord",
+            index=models.Index(
+                fields=["verification_status"], name="ssa_record_verific_3ef0d9_idx"
+            ),
         ),
         migrations.AddConstraint(
-            model_name='ssascore',
-            constraint=models.UniqueConstraint(fields=('ssa_record', 'intervention'), name='uniq_ssa_record_intervention'),
+            model_name="ssascore",
+            constraint=models.UniqueConstraint(
+                fields=("ssa_record", "intervention"),
+                name="uniq_ssa_record_intervention",
+            ),
         ),
     ]

@@ -1,4 +1,5 @@
 """Admin-users endpoints — /api/admin/users/*."""
+
 from __future__ import annotations
 
 from rest_framework.permissions import IsAuthenticated
@@ -53,4 +54,3 @@ class AdminUserDetailAPIView(APIView):
 
     def delete(self, request: Request, user_id: str) -> Response:
         return Response(services.delete_user(user_id, request.user))
-

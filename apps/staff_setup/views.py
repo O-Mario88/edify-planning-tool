@@ -3,6 +3,7 @@
 Admin/CD/HR resolve uploaded staff names into real users (or merge with existing),
 linking the affected schools to the resolved staff so they enter planning scope.
 """
+
 from __future__ import annotations
 
 from rest_framework.permissions import IsAuthenticated
@@ -43,6 +44,7 @@ class StaffCandidateDetailView(APIView):
 class StaffCandidateCreateUserView(APIView):
     """Admin adds email (+phone, role) → User + StaffProfile created; all matching
     schools linked to the new staff. Candidate → active."""
+
     permission_classes = [IsAuthenticated, RequirePermissions]
     required_permissions = MANAGE
 
@@ -53,11 +55,14 @@ class StaffCandidateCreateUserView(APIView):
 class StaffCandidateMatchExistingView(APIView):
     """Admin picks an existing user id → schools linked to that user's staff.
     Candidate → merged."""
+
     permission_classes = [IsAuthenticated, RequirePermissions]
     required_permissions = MANAGE
 
     def post(self, request: Request, candidate_id: str) -> Response:
-        return Response(services.match_existing(candidate_id, request.data, request.user))
+        return Response(
+            services.match_existing(candidate_id, request.data, request.user)
+        )
 
 
 class StaffCandidateIgnoreView(APIView):

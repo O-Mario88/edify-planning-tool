@@ -4,6 +4,7 @@ Schools endpoints — /api/schools/* (the source-of-truth directory).
 Two-layer auth everywhere: JWT + permission (SCHOOL_DIRECTORY_VIEW for the
 directory; SCHOOL_VIEW for proposals/type). Scope-constrained inside the service.
 """
+
 from __future__ import annotations
 
 from rest_framework.permissions import IsAuthenticated
@@ -57,7 +58,9 @@ class SchoolListCreateView(APIView):
         qs = services.list_schools(_query_params(request), request.user)
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(qs, request, self)
-        return paginator.get_paginated_response(SchoolRowSerializer(page, many=True).data)
+        return paginator.get_paginated_response(
+            SchoolRowSerializer(page, many=True).data
+        )
 
     def post(self, request: Request) -> Response:
         school = services.create_one(request.data, request.user)
@@ -105,7 +108,11 @@ class SchoolBulkUploadView(APIView):
     required_permissions = UPLOAD
 
     def post(self, request: Request) -> Response:
-        rows = request.data if isinstance(request.data, list) else request.data.get("schools", [])
+        rows = (
+            request.data
+            if isinstance(request.data, list)
+            else request.data.get("schools", [])
+        )
         return Response(services.bulk_upload(rows, request.user), status=201)
 
 
@@ -144,4 +151,5 @@ class SchoolImpactView(APIView):
 
     def get(self, request: Request, school_id: str) -> Response:
         from apps.analytics.services import school_impact
+
         return Response(school_impact(school_id, request.user))

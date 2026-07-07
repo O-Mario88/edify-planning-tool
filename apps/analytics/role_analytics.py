@@ -5,6 +5,7 @@ decision should I make next?" rather than a firehose of every number. All
 computed from real Django records via the existing analytics services + decision
 engine; scope-constrained per role.
 """
+
 from __future__ import annotations
 
 from apps.core.fy import get_operational_fy

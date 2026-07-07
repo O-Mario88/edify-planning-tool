@@ -4,6 +4,7 @@ from apps.accounts.models import User, StaffProfile, StaffSchoolAssignment
 from apps.geography.models import Region, District
 from apps.schools.models import School
 
+
 class RoleGatingPermissionTest(APITestCase):
     def setUp(self):
         # Setup Geography
@@ -17,7 +18,7 @@ class RoleGatingPermissionTest(APITestCase):
             region=self.region,
             district=self.district,
             enrollment=200,
-            school_type="client"
+            school_type="client",
         )
         self.school_cceo2 = School.objects.create(
             school_id="S-CCEO-2",
@@ -25,7 +26,7 @@ class RoleGatingPermissionTest(APITestCase):
             region=self.region,
             district=self.district,
             enrollment=300,
-            school_type="client"
+            school_type="client",
         )
 
         # Setup CCEO-1 User
@@ -43,8 +44,7 @@ class RoleGatingPermissionTest(APITestCase):
         )
         # Assign School 1 to CCEO 1
         StaffSchoolAssignment.objects.create(
-            staff=self.cceo1_profile,
-            school_id=self.school_cceo1.id
+            staff=self.cceo1_profile, school_id=self.school_cceo1.id
         )
 
         # Setup CCEO-2 User
@@ -62,8 +62,7 @@ class RoleGatingPermissionTest(APITestCase):
         )
         # Assign School 2 to CCEO 2
         StaffSchoolAssignment.objects.create(
-            staff=self.cceo2_profile,
-            school_id=self.school_cceo2.id
+            staff=self.cceo2_profile, school_id=self.school_cceo2.id
         )
 
         # Setup Country Director User (Strategic role)
@@ -118,8 +117,7 @@ class RoleGatingPermissionTest(APITestCase):
 
         # HTMX request -> returns 403 Forbidden
         response_htmx = self.client.get(
-            f"/schools/{self.school_cceo1.id}/edit-drawer",
-            HTTP_HX_REQUEST="true"
+            f"/schools/{self.school_cceo1.id}/edit-drawer", HTTP_HX_REQUEST="true"
         )
         self.assertEqual(response_htmx.status_code, 403)
 
@@ -205,4 +203,3 @@ class RoleGatingPermissionTest(APITestCase):
         # Blocked from school directory
         response_schools = self.client.get("/schools")
         self.assertEqual(response_schools.status_code, 302)
-

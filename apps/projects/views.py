@@ -1,4 +1,5 @@
 """Special-projects endpoints — /api/special-projects/*."""
+
 from __future__ import annotations
 
 from rest_framework.permissions import IsAuthenticated

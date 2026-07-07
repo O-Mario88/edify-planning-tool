@@ -7,32 +7,62 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('partners', '0002_partner_environment_partner_source'),
-        ('schools', '0006_alter_uploadbatch_status'),
+        ("partners", "0002_partner_environment_partner_source"),
+        ("schools", "0006_alter_uploadbatch_status"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='PartnerAssignment',
+            name="PartnerAssignment",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('assigning_staff_id', models.CharField(blank=True, max_length=30, null=True)),
-                ('purpose', models.TextField(blank=True, null=True)),
-                ('focus_intervention', models.CharField(blank=True, max_length=64, null=True)),
-                ('expected_activity_type', models.CharField(blank=True, max_length=64, null=True)),
-                ('scheduled_date', models.DateField(blank=True, null=True)),
-                ('status', models.CharField(default='assigned', max_length=32)),
-                ('notes', models.TextField(blank=True, null=True)),
-                ('partner', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='school_assignments', to='partners.partner')),
-                ('school', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='partner_assignments', to='schools.school')),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                (
+                    "assigning_staff_id",
+                    models.CharField(blank=True, max_length=30, null=True),
+                ),
+                ("purpose", models.TextField(blank=True, null=True)),
+                (
+                    "focus_intervention",
+                    models.CharField(blank=True, max_length=64, null=True),
+                ),
+                (
+                    "expected_activity_type",
+                    models.CharField(blank=True, max_length=64, null=True),
+                ),
+                ("scheduled_date", models.DateField(blank=True, null=True)),
+                ("status", models.CharField(default="assigned", max_length=32)),
+                ("notes", models.TextField(blank=True, null=True)),
+                (
+                    "partner",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="school_assignments",
+                        to="partners.partner",
+                    ),
+                ),
+                (
+                    "school",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="partner_assignments",
+                        to="schools.school",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'partner_assignment',
-                'ordering': ['-created_at'],
+                "db_table": "partner_assignment",
+                "ordering": ["-created_at"],
             },
         ),
     ]

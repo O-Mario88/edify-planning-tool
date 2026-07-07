@@ -18,6 +18,7 @@ LibreOffice is present, otherwise an honest `failed`/`pending` — never a silen
 404). The pipeline degrades gracefully; the test asserts the contract, not the
 external converter's availability.
 """
+
 from __future__ import annotations
 
 import tempfile
@@ -55,8 +56,12 @@ class PartnerAndClusterFlowTest(APITestCase):
 
     def setUp(self):
         self.region = Region.objects.create(name="Flow Region")
-        self.district = District.objects.create(name="Flow District", region=self.region)
-        self.sub_county = SubCounty.objects.create(name="Flow SubCounty", district=self.district)
+        self.district = District.objects.create(
+            name="Flow District", region=self.region
+        )
+        self.sub_county = SubCounty.objects.create(
+            name="Flow SubCounty", district=self.district
+        )
 
         self.ia = self._user("ia@flow.test", EdifyRole.IMPACT_ASSESSMENT.value)
         self.cceo = self._user("cceo@flow.test", EdifyRole.CCEO.value)
@@ -66,13 +71,23 @@ class PartnerAndClusterFlowTest(APITestCase):
 
         # Cost catalogue (reference data) — staff visit + partner lump sum + full
         # cluster-training rate card (training_fee, venue, meals, mobilisation).
-        CostSetting.objects.create(key="staff_visit_transport_primary", label="Transport", unit_cost=10000)
+        CostSetting.objects.create(
+            key="staff_visit_transport_primary", label="Transport", unit_cost=10000
+        )
         CostSetting.objects.create(key="lunch", label="Lunch", unit_cost=5000)
-        CostSetting.objects.create(key="partner_visit_lump_sum", label="Partner Visit", unit_cost=35000)
-        CostSetting.objects.create(key="training_session_fee", label="Training Fee", unit_cost=50000)
+        CostSetting.objects.create(
+            key="partner_visit_lump_sum", label="Partner Visit", unit_cost=35000
+        )
+        CostSetting.objects.create(
+            key="training_session_fee", label="Training Fee", unit_cost=50000
+        )
         CostSetting.objects.create(key="venue", label="Venue", unit_cost=30000)
-        CostSetting.objects.create(key="meals_per_participant", label="Meals", unit_cost=5000)
-        CostSetting.objects.create(key="mobilisation_per_participant", label="Mobilisation", unit_cost=2000)
+        CostSetting.objects.create(
+            key="meals_per_participant", label="Meals", unit_cost=5000
+        )
+        CostSetting.objects.create(
+            key="mobilisation_per_participant", label="Mobilisation", unit_cost=2000
+        )
 
     # ── Demo Flow 4: partner workflow ────────────────────────────────────────
     def test_assign_to_partner_then_partner_schedules_and_uploads_evidence(self):
@@ -82,10 +97,15 @@ class PartnerAndClusterFlowTest(APITestCase):
 
         # A partner field-officer user linked to a Partner record (created first
         # so the staff assignment can reference the real partner id).
-        partner_user = self._user("partner@flow.test", EdifyRole.PARTNER_FIELD_OFFICER.value)
+        partner_user = self._user(
+            "partner@flow.test", EdifyRole.PARTNER_FIELD_OFFICER.value
+        )
         partner = Partner.objects.create(
-            name="Flow Partner Org", user=partner_user, active_status=True,
-            contract_status="active", source="local_test_upload",
+            name="Flow Partner Org",
+            user=partner_user,
+            active_status=True,
+            contract_status="active",
+            source="local_test_upload",
         )
 
         self._as(self.cceo)
@@ -125,7 +145,9 @@ class PartnerAndClusterFlowTest(APITestCase):
 
         # Assigning staff reviews (accepts) the partner evidence.
         self._as(self.cceo)
-        reviewed = self._post(f"/api/evidence/{evidence['id']}/review", {"action": "accept"}, 200)
+        reviewed = self._post(
+            f"/api/evidence/{evidence['id']}/review", {"action": "accept"}, 200
+        )
         self.assertEqual(reviewed["status"], "accepted")
 
         # Staff (CCEO) enters the SV- Activity Code and submits completion. A CCEO
@@ -158,12 +180,20 @@ class PartnerAndClusterFlowTest(APITestCase):
         self._as(self.cceo)
         cluster = self._post(
             "/api/clusters/from-school",
-            {"schoolId": school.school_id, "name": "Flow Cluster", "clusterType": "mixed"},
+            {
+                "schoolId": school.school_id,
+                "name": "Flow Cluster",
+                "clusterType": "mixed",
+            },
             201,
         )
         # Link the school to the cluster (school.cluster_id) so the CCEO's scope
         # covers the cluster they're scheduling training through.
-        self._post("/api/clusters/assign", {"schoolId": school.school_id, "clusterId": cluster["id"]}, 200)
+        self._post(
+            "/api/clusters/assign",
+            {"schoolId": school.school_id, "clusterId": cluster["id"]},
+            200,
+        )
 
         # Direct school training MUST be rejected — trainings go through clusters.
         direct = self.client.post(
@@ -197,7 +227,9 @@ class PartnerAndClusterFlowTest(APITestCase):
         self.assertGreater(scheduled["estCostCents"], 0)
         self.assertFalse(scheduled["costMissing"])
         activity_id = scheduled["id"]
-        self.assertGreater(ActivityScheduleCostLine.objects.filter(activity_id=activity_id).count(), 0)
+        self.assertGreater(
+            ActivityScheduleCostLine.objects.filter(activity_id=activity_id).count(), 0
+        )
 
         # My Plan shows the training.
         my_plan = self._get("/api/my-plan?fy=2026&period=month&month=7", 200)
@@ -234,19 +266,31 @@ class PartnerAndClusterFlowTest(APITestCase):
     # ── helpers ──────────────────────────────────────────────────────────────
     def _user(self, email: str, role: str) -> User:
         return User.objects.create_user(
-            email=email, name=email.split("@")[0].title(),
-            roles=[role], active_role=role, password="not-used", is_active=True,
+            email=email,
+            name=email.split("@")[0].title(),
+            roles=[role],
+            active_role=role,
+            password="not-used",
+            is_active=True,
         )
 
     def _school(self, school_id: str) -> School:
         self._as(self.ia)
         upload = self._post(
             "/api/schools/bulk",
-            {"schools": [{
-                "schoolId": school_id, "name": f"{school_id} Primary",
-                "regionId": self.region.id, "districtId": self.district.id,
-                "subCountyId": self.sub_county.id, "schoolType": "client", "enrollment": 250,
-            }]},
+            {
+                "schools": [
+                    {
+                        "schoolId": school_id,
+                        "name": f"{school_id} Primary",
+                        "regionId": self.region.id,
+                        "districtId": self.district.id,
+                        "subCountyId": self.sub_county.id,
+                        "schoolType": "client",
+                        "enrollment": 250,
+                    }
+                ]
+            },
             201,
         )
         self.assertEqual(upload["accepted"], 1)
@@ -257,13 +301,19 @@ class PartnerAndClusterFlowTest(APITestCase):
         self._as(self.ia)
         self._post(
             "/api/ssa",
-            {"schoolId": school.school_id, "dateOfSsa": "2026-07-01T09:00:00+03:00", "scores": INTERVENTION_SCORES},
+            {
+                "schoolId": school.school_id,
+                "dateOfSsa": "2026-07-01T09:00:00+03:00",
+                "scores": INTERVENTION_SCORES,
+            },
             201,
         )
         self._as(self.cceo)
 
     def _as(self, user: User) -> None:
-        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {issue_access_token(user.id, user.active_role)}")
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {issue_access_token(user.id, user.active_role)}"
+        )
 
     def _get(self, path: str, expected: int):
         response = self.client.get(path)
@@ -279,9 +329,11 @@ class PartnerAndClusterFlowTest(APITestCase):
         response = self.client.post(
             "/api/evidence/upload",
             {
-                "activityId": activity_id, "kind": "visit_form",
+                "activityId": activity_id,
+                "kind": "visit_form",
                 "file": SimpleUploadedFile(
-                    "visit-form.pdf", b"%PDF-1.4\n% partner evidence\n",
+                    "visit-form.pdf",
+                    b"%PDF-1.4\n% partner evidence\n",
                     content_type="application/pdf",
                 ),
             },
@@ -298,14 +350,22 @@ class PartnerAndClusterFlowTest(APITestCase):
 
         buf = io.BytesIO()
         with zipfile.ZipFile(buf, "w") as zf:
-            zf.writestr("[Content_Types].xml", '<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/></Types>')
-            zf.writestr("_rels/.rels", '<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"/>')
+            zf.writestr(
+                "[Content_Types].xml",
+                '<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/></Types>',
+            )
+            zf.writestr(
+                "_rels/.rels",
+                '<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"/>',
+            )
         response = self.client.post(
             "/api/evidence/upload",
             {
-                "activityId": activity_id, "kind": "attendance_form",
+                "activityId": activity_id,
+                "kind": "attendance_form",
                 "file": SimpleUploadedFile(
-                    "training-attendance.docx", buf.getvalue(),
+                    "training-attendance.docx",
+                    buf.getvalue(),
                     content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                 ),
             },

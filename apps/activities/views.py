@@ -1,4 +1,5 @@
 """Activities endpoints — /api/activities/* (the 21-state field-work lifecycle)."""
+
 from __future__ import annotations
 
 from rest_framework.permissions import IsAuthenticated
@@ -88,6 +89,7 @@ class ScheduleSchoolVisitView(APIView):
 
     def post(self, request: Request) -> Response:
         from apps.planning.services import schedule_school_visit
+
         return Response(schedule_school_visit(request.data, request.user), status=201)
 
 
@@ -97,7 +99,10 @@ class ScheduleClusterActivityView(APIView):
 
     def post(self, request: Request) -> Response:
         from apps.planning.services import schedule_cluster_activity
-        return Response(schedule_cluster_activity(request.data, request.user), status=201)
+
+        return Response(
+            schedule_cluster_activity(request.data, request.user), status=201
+        )
 
 
 class SchedulePartnerVisitView(APIView):
@@ -106,7 +111,10 @@ class SchedulePartnerVisitView(APIView):
 
     def post(self, request: Request) -> Response:
         from apps.planning.services import assign_school_visit_to_partner
-        return Response(assign_school_visit_to_partner(request.data, request.user), status=201)
+
+        return Response(
+            assign_school_visit_to_partner(request.data, request.user), status=201
+        )
 
 
 class ActivityDetailView(APIView):
@@ -117,4 +125,6 @@ class ActivityDetailView(APIView):
         return Response(services.get_activity(activity_id, request.user))
 
     def patch(self, request: Request, activity_id: str) -> Response:
-        return Response(services.patch_activity(activity_id, request.data, request.user))
+        return Response(
+            services.patch_activity(activity_id, request.data, request.user)
+        )

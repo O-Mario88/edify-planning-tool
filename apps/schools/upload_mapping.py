@@ -13,6 +13,7 @@ Normalization rules (applied to every header before lookup):
   - collapse any run of whitespace / underscores / hyphens into a single space
   - strip leading/trailing whitespace
 """
+
 from __future__ import annotations
 
 import re
@@ -187,7 +188,9 @@ SSA_EXPECTED_HEADERS = [
 ]
 
 
-def build_field_index(raw_headers: list[str], header_map: dict[str, str]) -> dict[str, int]:
+def build_field_index(
+    raw_headers: list[str], header_map: dict[str, str]
+) -> dict[str, int]:
     """Map canonical field → column index using a header map. First match wins."""
     index: dict[str, int] = {}
     for col, raw in enumerate(raw_headers):
@@ -197,7 +200,9 @@ def build_field_index(raw_headers: list[str], header_map: dict[str, str]) -> dic
     return index
 
 
-def missing_required(field_index: dict[str, int], required: tuple[str, ...]) -> list[str]:
+def missing_required(
+    field_index: dict[str, int], required: tuple[str, ...]
+) -> list[str]:
     return [f for f in required if f not in field_index]
 
 

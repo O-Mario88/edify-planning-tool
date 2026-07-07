@@ -14,6 +14,7 @@ The capability flags (canViewFinancialData, canApprove, …) gate feature
 surfaces. `school_queryset` / `aggregate_school_filter` produce the ORM
 constraints matching the legacy schoolWhere / aggregateSchoolWhere.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -107,7 +108,9 @@ def resolve_user_scope(user) -> UserScope:
             StaffSupervisorAssignment,
         )
     except Exception:  # noqa: BLE001 - accounts may not be ready in some unit contexts
-        StaffGeographyAssignment = StaffSchoolAssignment = StaffSupervisorAssignment = None  # type: ignore
+        StaffGeographyAssignment = StaffSchoolAssignment = StaffSupervisorAssignment = (
+            None  # type: ignore
+        )
 
     if summary_only and staff_id and StaffGeographyAssignment:
         # RVP sees summary performance — scope to assigned region(s). No
@@ -119,9 +122,15 @@ def resolve_user_scope(user) -> UserScope:
     elif country_scope:
         # Country roles are not row-constrained by geography here.
         pass
-    elif role in (EdifyRole.CCEO.value, EdifyRole.COUNTRY_PROGRAM_LEAD.value) and staff_id and StaffSchoolAssignment:
+    elif (
+        role in (EdifyRole.CCEO.value, EdifyRole.COUNTRY_PROGRAM_LEAD.value)
+        and staff_id
+        and StaffSchoolAssignment
+    ):
         # Own assigned schools (personal field work).
-        own = StaffSchoolAssignment.objects.filter(staff_id=staff_id).values_list("school_id", flat=True)
+        own = StaffSchoolAssignment.objects.filter(staff_id=staff_id).values_list(
+            "school_id", flat=True
+        )
         own_school_ids = _uniq(own)
 
         # PL also supervises CCEOs — their schools form the TEAM lens (distinct
@@ -148,8 +157,12 @@ def resolve_user_scope(user) -> UserScope:
                 )
                 district_ids = _uniq([s["district_id"] for s in schools])
                 region_ids = _uniq([s["region_id"] for s in schools])
-                cluster_ids = _uniq([s["cluster_id"] for s in schools if s["cluster_id"]])
-                core_school_ids = [s["id"] for s in schools if s["school_type"] == "core"]
+                cluster_ids = _uniq(
+                    [s["cluster_id"] for s in schools if s["cluster_id"]]
+                )
+                core_school_ids = [
+                    s["id"] for s in schools if s["school_type"] == "core"
+                ]
     elif role in (EdifyRole.PARTNER_ADMIN.value, EdifyRole.PARTNER_FIELD_OFFICER.value):
         # Partner users see ONLY their own partner's activities.
         partner_ids = resolve_partner_ids(user)
@@ -172,11 +185,13 @@ def resolve_user_scope(user) -> UserScope:
         can_view_summary_only=summary_only,
         can_view_school_level_detail=not summary_only,
         can_view_partner_data=has(Permission.PARTNER_VIEW.value),
-        can_view_financial_data=has(Permission.BUDGET_VIEW_DETAIL.value) or has(Permission.PAYMENT_ACT.value),
+        can_view_financial_data=has(Permission.BUDGET_VIEW_DETAIL.value)
+        or has(Permission.PAYMENT_ACT.value),
         can_view_own=bool(own_school_ids) or (not country_scope and not summary_only),
         can_view_team=(role == EdifyRole.COUNTRY_PROGRAM_LEAD.value) or country_scope,
         can_view_country=country_scope,
-        can_approve=has(Permission.BUDGET_APPROVE.value) or has(Permission.IA_VERIFY.value),
+        can_approve=has(Permission.BUDGET_APPROVE.value)
+        or has(Permission.IA_VERIFY.value),
         can_assign=has(Permission.ACTIVITY_ASSIGN.value),
         can_export=has(Permission.EXPORT.value),
     )

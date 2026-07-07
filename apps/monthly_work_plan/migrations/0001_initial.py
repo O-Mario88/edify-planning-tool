@@ -7,61 +7,126 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='MonthlyWorkPlanBudget',
+            name="MonthlyWorkPlanBudget",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('fy', models.CharField(max_length=16)),
-                ('month_key', models.CharField(max_length=16)),
-                ('country_id', models.CharField(blank=True, max_length=64, null=True)),
-                ('generated_at', models.DateTimeField(auto_now_add=True)),
-                ('generated_by', models.CharField(blank=True, max_length=30, null=True)),
-                ('status', models.CharField(choices=[('draft_generated', 'Draft Generated'), ('cd_review', 'CD Review'), ('admin_plan_added', 'Admin Plan Added'), ('submitted_to_rvp', 'Submitted to RVP'), ('approved_by_rvp', 'Approved by RVP'), ('returned_by_rvp', 'Returned by RVP'), ('sent_to_accountant', 'Sent to Accountant'), ('disbursed', 'Disbursed'), ('closed', 'Closed')], default='draft_generated', max_length=32)),
-                ('program_total', models.FloatField(default=0)),
-                ('admin_total', models.FloatField(default=0)),
-                ('total_amount', models.FloatField(default=0)),
-                ('activity_count', models.IntegerField(default=0)),
-                ('submitted_at', models.DateTimeField(blank=True, null=True)),
-                ('submitted_by_user_id', models.CharField(blank=True, max_length=30, null=True)),
-                ('rvp_reviewed_at', models.DateTimeField(blank=True, null=True)),
-                ('rvp_reviewed_by_user_id', models.CharField(blank=True, max_length=30, null=True)),
-                ('rvp_review_note', models.CharField(blank=True, max_length=512, null=True)),
-                ('sent_to_accountant_at', models.DateTimeField(blank=True, null=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("fy", models.CharField(max_length=16)),
+                ("month_key", models.CharField(max_length=16)),
+                ("country_id", models.CharField(blank=True, max_length=64, null=True)),
+                ("generated_at", models.DateTimeField(auto_now_add=True)),
+                (
+                    "generated_by",
+                    models.CharField(blank=True, max_length=30, null=True),
+                ),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("draft_generated", "Draft Generated"),
+                            ("cd_review", "CD Review"),
+                            ("admin_plan_added", "Admin Plan Added"),
+                            ("submitted_to_rvp", "Submitted to RVP"),
+                            ("approved_by_rvp", "Approved by RVP"),
+                            ("returned_by_rvp", "Returned by RVP"),
+                            ("sent_to_accountant", "Sent to Accountant"),
+                            ("disbursed", "Disbursed"),
+                            ("closed", "Closed"),
+                        ],
+                        default="draft_generated",
+                        max_length=32,
+                    ),
+                ),
+                ("program_total", models.FloatField(default=0)),
+                ("admin_total", models.FloatField(default=0)),
+                ("total_amount", models.FloatField(default=0)),
+                ("activity_count", models.IntegerField(default=0)),
+                ("submitted_at", models.DateTimeField(blank=True, null=True)),
+                (
+                    "submitted_by_user_id",
+                    models.CharField(blank=True, max_length=30, null=True),
+                ),
+                ("rvp_reviewed_at", models.DateTimeField(blank=True, null=True)),
+                (
+                    "rvp_reviewed_by_user_id",
+                    models.CharField(blank=True, max_length=30, null=True),
+                ),
+                (
+                    "rvp_review_note",
+                    models.CharField(blank=True, max_length=512, null=True),
+                ),
+                ("sent_to_accountant_at", models.DateTimeField(blank=True, null=True)),
             ],
             options={
-                'db_table': 'monthly_work_plan_budget',
-                'indexes': [models.Index(fields=['status'], name='monthly_wor_status_a0db5d_idx'), models.Index(fields=['fy', 'month_key'], name='monthly_wor_fy_2f2e78_idx')],
-                'constraints': [models.UniqueConstraint(fields=('country_id', 'month_key'), name='uniq_country_month')],
+                "db_table": "monthly_work_plan_budget",
+                "indexes": [
+                    models.Index(
+                        fields=["status"], name="monthly_wor_status_a0db5d_idx"
+                    ),
+                    models.Index(
+                        fields=["fy", "month_key"], name="monthly_wor_fy_2f2e78_idx"
+                    ),
+                ],
+                "constraints": [
+                    models.UniqueConstraint(
+                        fields=("country_id", "month_key"), name="uniq_country_month"
+                    )
+                ],
             },
         ),
         migrations.CreateModel(
-            name='AdminBudgetLine',
+            name="AdminBudgetLine",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('cost_category', models.CharField(max_length=64)),
-                ('description', models.CharField(max_length=512)),
-                ('quantity', models.FloatField(default=1)),
-                ('unit_cost', models.FloatField()),
-                ('total_cost', models.FloatField()),
-                ('justification', models.TextField(blank=True, null=True)),
-                ('created_by_user_id', models.CharField(max_length=30)),
-                ('status', models.CharField(default='active', max_length=32)),
-                ('monthly_budget', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='admin_lines', to='monthly_work_plan.monthlyworkplanbudget')),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("cost_category", models.CharField(max_length=64)),
+                ("description", models.CharField(max_length=512)),
+                ("quantity", models.FloatField(default=1)),
+                ("unit_cost", models.FloatField()),
+                ("total_cost", models.FloatField()),
+                ("justification", models.TextField(blank=True, null=True)),
+                ("created_by_user_id", models.CharField(max_length=30)),
+                ("status", models.CharField(default="active", max_length=32)),
+                (
+                    "monthly_budget",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="admin_lines",
+                        to="monthly_work_plan.monthlyworkplanbudget",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'admin_budget_line',
-                'indexes': [models.Index(fields=['monthly_budget'], name='admin_budge_monthly_0ed267_idx')],
+                "db_table": "admin_budget_line",
+                "indexes": [
+                    models.Index(
+                        fields=["monthly_budget"], name="admin_budge_monthly_0ed267_idx"
+                    )
+                ],
             },
         ),
     ]

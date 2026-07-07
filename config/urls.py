@@ -9,6 +9,7 @@ APPEND_SLASH is disabled in settings. Each module's urls define leaves WITHOUT a
 trailing slash; the `api(...)` helper registers both the bare and slashed prefix
 so `/api/schools` and `/api/schools/proposals` both resolve.
 """
+
 from django.conf import settings
 from django.contrib import admin
 from django.http import HttpRequest, JsonResponse

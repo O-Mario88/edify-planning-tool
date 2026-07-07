@@ -4,32 +4,45 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('activities', '0011_activityclosure_activityreopenrequest_and_more'),
-        ('clusters', '0002_cluster_environment_cluster_source'),
-        ('schools', '0010_alter_unmatchedssarecord_status'),
+        ("activities", "0011_activityclosure_activityreopenrequest_and_more"),
+        ("clusters", "0002_cluster_environment_cluster_source"),
+        ("schools", "0010_alter_unmatchedssarecord_status"),
     ]
 
     operations = [
         migrations.AddIndex(
-            model_name='activityclosure',
-            index=models.Index(fields=['status'], name='activity_cl_status_30186c_idx'),
+            model_name="activityclosure",
+            index=models.Index(fields=["status"], name="activity_cl_status_30186c_idx"),
         ),
         migrations.AddIndex(
-            model_name='analyticspublishrecord',
-            index=models.Index(fields=['status'], name='analytics_p_status_c37880_idx'),
+            model_name="analyticspublishrecord",
+            index=models.Index(fields=["status"], name="analytics_p_status_c37880_idx"),
         ),
         migrations.AddIndex(
-            model_name='closurechecklist',
-            index=models.Index(fields=['ia_verified'], name='closure_che_ia_veri_48a4ef_idx'),
+            model_name="closurechecklist",
+            index=models.Index(
+                fields=["ia_verified"], name="closure_che_ia_veri_48a4ef_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='closurechecklist',
-            index=models.Index(fields=['accounts_cleared'], name='closure_che_account_18117f_idx'),
+            model_name="closurechecklist",
+            index=models.Index(
+                fields=["accounts_cleared"], name="closure_che_account_18117f_idx"
+            ),
         ),
         migrations.AddConstraint(
-            model_name='activity',
-            constraint=models.CheckConstraint(condition=models.Q(models.Q(('status', 'closed'), _negated=True), models.Q(('salesforce_activity_id__isnull', False), models.Q(('salesforce_activity_id', ''), _negated=True)), _connector='OR'), name='closed_activity_must_have_sf_id'),
+            model_name="activity",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    models.Q(("status", "closed"), _negated=True),
+                    models.Q(
+                        ("salesforce_activity_id__isnull", False),
+                        models.Q(("salesforce_activity_id", ""), _negated=True),
+                    ),
+                    _connector="OR",
+                ),
+                name="closed_activity_must_have_sf_id",
+            ),
         ),
     ]

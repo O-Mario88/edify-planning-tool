@@ -1,4 +1,5 @@
 """Command-center endpoints — /api/command-center/*."""
+
 from __future__ import annotations
 
 from rest_framework.permissions import IsAuthenticated

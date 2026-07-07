@@ -1,5 +1,3 @@
-import re
-
 shell_content = """{% extends "base.html" %}
 
 {% block content %}
@@ -246,5 +244,8 @@ shell_content = """{% extends "base.html" %}
 {% endblock %}
 """
 
-with open("/Users/omario/Developer/Edify Planning Tool/edify-api/templates/layouts/shell.html", "w") as f:
+with open(
+    "/Users/omario/Developer/Edify Planning Tool/edify-api/templates/layouts/shell.html",
+    "w",
+) as f:
     f.write(shell_content)

@@ -1,4 +1,5 @@
 """Admin-users service — user provisioning (create+invite, lifecycle)."""
+
 from __future__ import annotations
 
 from django.conf import settings
@@ -15,7 +16,11 @@ def list_users() -> list[dict]:
     qs = User.objects.filter(deleted_at__isnull=True).order_by("-created_at")
     out = []
     for u in qs:
-        last_invite = u.invitations.order_by("-created_at").first() if hasattr(u, "invitations") else None
+        last_invite = (
+            u.invitations.order_by("-created_at").first()
+            if hasattr(u, "invitations")
+            else None
+        )
         inv_status = None
         if last_invite:
             if last_invite.accepted_at:
@@ -26,22 +31,29 @@ def list_users() -> list[dict]:
                 inv_status = "expired"
             else:
                 inv_status = "pending"
-        out.append({
-            "id": u.id,
-            "name": u.name,
-            "email": u.email,
-            "phone": u.phone,
-            "roles": u.roles,
-            "activeRole": u.active_role,
-            "status": u.status,
-            "isActive": u.is_active,
-            "lastLoginAt": u.last_login_at.isoformat() if u.last_login_at else None,
-            "passwordSet": bool(u.password_set_at),
-            "invitation": (
-                {"status": inv_status, "expiresAt": last_invite.expires_at.isoformat(), "createdAt": last_invite.created_at.isoformat()}
-                if last_invite else None
-            ),
-        })
+        out.append(
+            {
+                "id": u.id,
+                "name": u.name,
+                "email": u.email,
+                "phone": u.phone,
+                "roles": u.roles,
+                "activeRole": u.active_role,
+                "status": u.status,
+                "isActive": u.is_active,
+                "lastLoginAt": u.last_login_at.isoformat() if u.last_login_at else None,
+                "passwordSet": bool(u.password_set_at),
+                "invitation": (
+                    {
+                        "status": inv_status,
+                        "expiresAt": last_invite.expires_at.isoformat(),
+                        "createdAt": last_invite.created_at.isoformat(),
+                    }
+                    if last_invite
+                    else None
+                ),
+            }
+        )
     return out
 
 
@@ -69,14 +81,21 @@ def create(data: dict, principal) -> dict:
         if data.get("primaryDistrictId"):
             from apps.accounts.models import StaffProfile
 
-            StaffProfile.objects.create(user=user, primary_district_id=data["primaryDistrictId"])
+            StaffProfile.objects.create(
+                user=user, primary_district_id=data["primaryDistrictId"]
+            )
         invite_token = _create_invitation(user.id, principal.user_id)
 
     mail = mailer.send_invitation(
         to=email, name=user.name, invited_by_name=principal.name, token=invite_token
     )
     return {
-        "user": {"id": user.id, "email": user.email, "name": user.name, "status": user.status},
+        "user": {
+            "id": user.id,
+            "email": user.email,
+            "name": user.name,
+            "status": user.status,
+        },
         "inviteToken": None if mail.get("delivered") else invite_token,
     }
 
@@ -95,12 +114,16 @@ def _create_invitation(user_id: str, invited_by_id: str) -> str:
 def resend_invite(user_id: str, principal) -> dict:
     user = _get_user(user_id)
     token = _create_invitation(user.id, principal.user_id)
-    mailer.send_invitation(to=user.email, name=user.name, invited_by_name=principal.name, token=token)
+    mailer.send_invitation(
+        to=user.email, name=user.name, invited_by_name=principal.name, token=token
+    )
     return {"ok": True, "inviteToken": token if not settings.IS_PRODUCTION else None}
 
 
 def revoke_invite(user_id: str, principal) -> dict:
-    UserInvitation.objects.filter(user_id=user_id, revoked_at__isnull=True).update(revoked_at=timezone.now())
+    UserInvitation.objects.filter(user_id=user_id, revoked_at__isnull=True).update(
+        revoked_at=timezone.now()
+    )
     return {"ok": True}
 
 
@@ -123,6 +146,7 @@ def force_password_reset(user_id: str, principal) -> dict:
     user.password_reset_expires = expiry_from_now_days(1)
     user.save(update_fields=["password_reset_token_hash", "password_reset_expires"])
     from apps.core.security import expiry_from_now
+
     user.password_reset_expires = expiry_from_now(45)
     user.save(update_fields=["password_reset_expires"])
     mailer.send_password_reset(to=user.email, name=user.name, token=raw)
@@ -147,29 +171,34 @@ def _get_user(user_id: str) -> User:
 def update_user(user_id: str, data: dict, principal) -> dict:
     """Updates a user's details, email, roles, and status."""
     user = _get_user(user_id)
-    
+
     email = (data.get("email") or "").lower().strip()
     if email and email != user.email:
-        if User.objects.filter(email=email, deleted_at__isnull=True).exclude(id=user.id).exists():
+        if (
+            User.objects.filter(email=email, deleted_at__isnull=True)
+            .exclude(id=user.id)
+            .exists()
+        ):
             raise ConflictError("A user with this email already exists.")
         user.email = email
-        
+
     name = data.get("name")
     if name:
         user.name = name.strip()
-        
+
     phone = data.get("phone")
     if phone is not None:
         user.phone = phone.strip()
-        
+
     role = data.get("role")
     if role:
         additional = data.get("additionalRoles") or []
         user.roles = list(dict.fromkeys([role, *additional]))
         user.active_role = role
-        
+
         # Sync with StaffProfile title if profile exists
         from apps.accounts.models import StaffProfile
+
         sp = StaffProfile.objects.filter(user=user).first()
         if sp:
             sp.title = role
@@ -184,4 +213,3 @@ def delete_user(user_id: str, principal) -> dict:
     user = _get_user(user_id)
     user.soft_delete()
     return {"ok": True}
-

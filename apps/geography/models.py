@@ -11,6 +11,7 @@ promote these to real ForeignKeys here — Django auto-creates the `<fk>_id`
 column with the same DB name, so the schema stays compatible. ForeignKey fields
 are named without the `_id` suffix to avoid Django's E006 clash.
 """
+
 from __future__ import annotations
 
 from django.db import models
@@ -41,7 +42,9 @@ class SubRegion(TimeStampedModel):
     """Organizational mapping layer (NOT COD-AB)."""
 
     id = CuidField()
-    region = models.ForeignKey(Region, on_delete=models.CASCADE, related_name="sub_regions")
+    region = models.ForeignKey(
+        Region, on_delete=models.CASCADE, related_name="sub_regions"
+    )
     name = models.CharField(max_length=255, unique=True)
     normalized_name = models.CharField(max_length=255)
     source = models.CharField(max_length=64, default="CONTROLLED")
@@ -62,9 +65,15 @@ class District(TimeStampedModel):
     code = models.CharField(max_length=64, null=True, blank=True, unique=True)
     pcode = models.CharField(max_length=64, null=True, blank=True, unique=True)
     source = models.CharField(max_length=255, null=True, blank=True)
-    region = models.ForeignKey(Region, on_delete=models.RESTRICT, related_name="districts")
+    region = models.ForeignKey(
+        Region, on_delete=models.RESTRICT, related_name="districts"
+    )
     sub_region = models.ForeignKey(
-        SubRegion, on_delete=models.SET_NULL, null=True, blank=True, related_name="districts"
+        SubRegion,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="districts",
     )
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
@@ -73,7 +82,9 @@ class District(TimeStampedModel):
         db_table = "district"
         ordering = ["name"]
         constraints = [
-            models.UniqueConstraint(fields=["region", "name"], name="uniq_district_region_name"),
+            models.UniqueConstraint(
+                fields=["region", "name"], name="uniq_district_region_name"
+            ),
         ]
 
     def __str__(self) -> str:
@@ -84,7 +95,9 @@ class County(TimeStampedModel):
     """Ugandan county (admin3)."""
 
     id = CuidField()
-    district = models.ForeignKey(District, on_delete=models.CASCADE, related_name="counties")
+    district = models.ForeignKey(
+        District, on_delete=models.CASCADE, related_name="counties"
+    )
     name = models.CharField(max_length=255)
     normalized_name = models.CharField(max_length=255)
     pcode = models.CharField(max_length=64, null=True, blank=True, unique=True)
@@ -95,7 +108,9 @@ class County(TimeStampedModel):
     class Meta:
         db_table = "county"
         constraints = [
-            models.UniqueConstraint(fields=["district", "name"], name="uniq_county_district_name"),
+            models.UniqueConstraint(
+                fields=["district", "name"], name="uniq_county_district_name"
+            ),
         ]
 
 
@@ -109,16 +124,24 @@ class SubCounty(TimeStampedModel):
     source = models.CharField(max_length=255, null=True, blank=True)
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
-    district = models.ForeignKey(District, on_delete=models.CASCADE, related_name="sub_counties")
+    district = models.ForeignKey(
+        District, on_delete=models.CASCADE, related_name="sub_counties"
+    )
     county = models.ForeignKey(
-        County, on_delete=models.SET_NULL, null=True, blank=True, related_name="sub_counties"
+        County,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="sub_counties",
     )
 
     class Meta:
         db_table = "sub_county"
         ordering = ["name"]
         constraints = [
-            models.UniqueConstraint(fields=["district", "name"], name="uniq_subcounty_district_name"),
+            models.UniqueConstraint(
+                fields=["district", "name"], name="uniq_subcounty_district_name"
+            ),
         ]
 
     def __str__(self) -> str:
@@ -133,13 +156,17 @@ class Parish(TimeStampedModel):
     pcode = models.CharField(max_length=64, null=True, blank=True, unique=True)
     source = models.CharField(max_length=255, null=True, blank=True)
     confidence = models.CharField(max_length=64, null=True, blank=True)
-    sub_county = models.ForeignKey(SubCounty, on_delete=models.CASCADE, related_name="parishes")
+    sub_county = models.ForeignKey(
+        SubCounty, on_delete=models.CASCADE, related_name="parishes"
+    )
 
     class Meta:
         db_table = "parish"
         ordering = ["name"]
         constraints = [
-            models.UniqueConstraint(fields=["sub_county", "name"], name="uniq_parish_subcounty_name"),
+            models.UniqueConstraint(
+                fields=["sub_county", "name"], name="uniq_parish_subcounty_name"
+            ),
         ]
 
 
@@ -148,14 +175,18 @@ class Village(TimeStampedModel):
 
     id = CuidField()
     name = models.CharField(max_length=255)
-    parish = models.ForeignKey(Parish, on_delete=models.CASCADE, related_name="villages")
+    parish = models.ForeignKey(
+        Parish, on_delete=models.CASCADE, related_name="villages"
+    )
     source = models.CharField(max_length=255, null=True, blank=True)
 
     class Meta:
         db_table = "village"
         ordering = ["name"]
         constraints = [
-            models.UniqueConstraint(fields=["parish", "name"], name="uniq_village_parish_name"),
+            models.UniqueConstraint(
+                fields=["parish", "name"], name="uniq_village_parish_name"
+            ),
         ]
         indexes = [models.Index(fields=["parish"])]
 
@@ -174,7 +205,10 @@ class GeographyAlias(TimeStampedModel):
     class Meta:
         db_table = "geography_alias"
         constraints = [
-            models.UniqueConstraint(fields=["admin_level", "normalized_alias"], name="uniq_geoalias_level_norm"),
+            models.UniqueConstraint(
+                fields=["admin_level", "normalized_alias"],
+                name="uniq_geoalias_level_norm",
+            ),
         ]
         indexes = [models.Index(fields=["admin_level", "admin_id"])]
 

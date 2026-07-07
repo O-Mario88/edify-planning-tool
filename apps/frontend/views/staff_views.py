@@ -2,6 +2,7 @@
 GROUP 1 — Core Operations Views
 Staff Directory, Staff Profile, Today, Visits, Trainings, Evidence, Targets, My-Team, Notifications, Profile
 """
+
 from django.shortcuts import render, redirect, get_object_or_404
 from apps.core.permissions import require_page_permission
 from django.db.models import Q, Count
@@ -18,67 +19,95 @@ from apps.core.fy import get_operational_fy
 
 # ─── STAFF DIRECTORY ──────────────────────────────────────────────────────────
 
+
 @require_page_permission("staff_directory")
 def staff_directory_view(request):
     """Staff directory — all users in the system with role, district, and school count."""
-    fy = get_operational_fy()
+    get_operational_fy()
     search = request.GET.get("q", "").strip()
     active_tab = request.GET.get("tab", "all")
 
-    staff_qs = User.objects.filter(
-        status="active",
-        deleted_at__isnull=True,
-    ).prefetch_related("staff_profile").order_by("name")
+    staff_qs = (
+        User.objects.filter(
+            status="active",
+            deleted_at__isnull=True,
+        )
+        .prefetch_related("staff_profile")
+        .order_by("name")
+    )
 
     if search:
         staff_qs = staff_qs.filter(
             Q(name__icontains=search) | Q(email__icontains=search)
         )
-        
+
     if active_tab == "cceo":
         staff_qs = staff_qs.filter(roles__contains=["CCEO"])
     elif active_tab == "pl":
         staff_qs = staff_qs.filter(roles__contains=["ProgramLead"])
     elif active_tab == "admin":
-        staff_qs = staff_qs.exclude(roles__contains=["CCEO"]).exclude(roles__contains=["ProgramLead"])
+        staff_qs = staff_qs.exclude(roles__contains=["CCEO"]).exclude(
+            roles__contains=["ProgramLead"]
+        )
 
     staff_list = []
-    
+
     # KPIs calculation across all active staff (not filtered by tab)
-    all_staff_qs = User.objects.filter(status="active", deleted_at__isnull=True).prefetch_related("staff_profile")
+    all_staff_qs = User.objects.filter(
+        status="active", deleted_at__isnull=True
+    ).prefetch_related("staff_profile")
     total_active = all_staff_qs.count()
     pending_onboarding = 0
     high_risk_count = 0
-    
+
     # We will need to compute this during the loop, but since we are looping filtered list, we should do it separately for the full list if needed, but for performance, we can just do it on the whole list or just approximate.
-    pending_onboarding = StaffProfile.objects.exclude(onboarding_state__in=["active", "complete"]).count()
-    
+    pending_onboarding = StaffProfile.objects.exclude(
+        onboarding_state__in=["active", "complete"]
+    ).count()
+
     # Coverage gap: share of active schools with no matched account owner.
     from apps.schools.models import School
+
     _schools_total = School.objects.filter(deleted_at__isnull=True).count()
-    _schools_unowned = School.objects.filter(deleted_at__isnull=True).exclude(account_owner_status="matched").count()
-    average_coverage_gap = round(_schools_unowned / _schools_total * 100, 1) if _schools_total else 0
-    
+    _schools_unowned = (
+        School.objects.filter(deleted_at__isnull=True)
+        .exclude(account_owner_status="matched")
+        .count()
+    )
+    average_coverage_gap = (
+        round(_schools_unowned / _schools_total * 100, 1) if _schools_total else 0
+    )
+
     # High risk (overdue > 3) - let's count for all staff
     today = date.today()
-    overdue_counts = Activity.objects.filter(
-        planned_date__lt=today,
-        status__in=["scheduled", "started"],
-        deleted_at__isnull=True
-    ).values('responsible_staff_id').annotate(overdue_count=Count('id'))
-    high_risk_count = sum(1 for item in overdue_counts if item['overdue_count'] > 3)
+    overdue_counts = (
+        Activity.objects.filter(
+            planned_date__lt=today,
+            status__in=["scheduled", "started"],
+            deleted_at__isnull=True,
+        )
+        .values("responsible_staff_id")
+        .annotate(overdue_count=Count("id"))
+    )
+    high_risk_count = sum(1 for item in overdue_counts if item["overdue_count"] > 3)
 
     from apps.geography.models import District
+
     district_names = dict(District.objects.values_list("id", "name"))
 
     for u in staff_qs:
         profile = getattr(u, "staff_profile", None)
         # Count schools assigned to this staff member
-        school_count = Activity.objects.filter(
-            responsible_staff_id=u.id,
-            deleted_at__isnull=True,
-            activity_type__in=["school_visit", "follow_up_visit", "coaching_visit"]
-        ).values("school_id").distinct().count()
+        school_count = (
+            Activity.objects.filter(
+                responsible_staff_id=u.id,
+                deleted_at__isnull=True,
+                activity_type__in=["school_visit", "follow_up_visit", "coaching_visit"],
+            )
+            .values("school_id")
+            .distinct()
+            .count()
+        )
 
         completed_visits = Activity.objects.filter(
             responsible_staff_id=u.id,
@@ -87,20 +116,26 @@ def staff_directory_view(request):
             deleted_at__isnull=True,
         ).count()
 
-        staff_list.append({
-            "id": u.id,
-            "name": u.name,
-            "email": u.email,
-            "roles": u.roles or [],
-            "active_role": u.active_role,
-            "district": district_names.get(profile.primary_district_id, "—") if profile else "—",
-            "status": u.status,
-            "profile_id": profile.id if profile else None,
-            "onboarding_state": getattr(profile, "onboarding_state", "unknown") if profile else "no_profile",
-            "school_count": school_count,
-            "completed_visits": completed_visits,
-            "initials": u.name[:2].upper() if u.name else "??",
-        })
+        staff_list.append(
+            {
+                "id": u.id,
+                "name": u.name,
+                "email": u.email,
+                "roles": u.roles or [],
+                "active_role": u.active_role,
+                "district": district_names.get(profile.primary_district_id, "—")
+                if profile
+                else "—",
+                "status": u.status,
+                "profile_id": profile.id if profile else None,
+                "onboarding_state": getattr(profile, "onboarding_state", "unknown")
+                if profile
+                else "no_profile",
+                "school_count": school_count,
+                "completed_visits": completed_visits,
+                "initials": u.name[:2].upper() if u.name else "??",
+            }
+        )
 
     kpis = {
         "total_active": total_active,
@@ -121,36 +156,58 @@ def staff_directory_view(request):
 
 # ─── STAFF PROFILE DETAIL ─────────────────────────────────────────────────────
 
+
 @require_page_permission("staff")
 def staff_profile_view(request, user_id):
     """Full staff 360° profile — activities, visits, evidence, SSA coverage."""
     member = get_object_or_404(User, id=user_id, deleted_at__isnull=True)
-    fy = get_operational_fy()
+    get_operational_fy()
     now = date.today()
 
     # Activities this FY
-    activities = Activity.objects.filter(
-        responsible_staff_id=member.id,
-        deleted_at__isnull=True,
-    ).select_related("school", "cluster").order_by("-planned_date")[:50]
+    activities = (
+        Activity.objects.filter(
+            responsible_staff_id=member.id,
+            deleted_at__isnull=True,
+        )
+        .select_related("school", "cluster")
+        .order_by("-planned_date")[:50]
+    )
 
     completed = [a for a in activities if a.status == "completed"]
-    overdue = [a for a in activities if a.planned_date and a.planned_date < now and a.status in ("scheduled", "started")]
-    upcoming = [a for a in activities if a.planned_date and a.planned_date >= now and a.status == "scheduled"]
+    overdue = [
+        a
+        for a in activities
+        if a.planned_date
+        and a.planned_date < now
+        and a.status in ("scheduled", "started")
+    ]
+    upcoming = [
+        a
+        for a in activities
+        if a.planned_date and a.planned_date >= now and a.status == "scheduled"
+    ]
 
     # Schools covered
-    schools_covered = Activity.objects.filter(
-        responsible_staff_id=member.id,
-        status="completed",
-        activity_type__in=["school_visit", "follow_up_visit", "coaching_visit"],
-        deleted_at__isnull=True,
-    ).values("school_id", "school__name").distinct()
+    schools_covered = (
+        Activity.objects.filter(
+            responsible_staff_id=member.id,
+            status="completed",
+            activity_type__in=["school_visit", "follow_up_visit", "coaching_visit"],
+            deleted_at__isnull=True,
+        )
+        .values("school_id", "school__name")
+        .distinct()
+    )
 
     profile = getattr(member, "staff_profile", None)
 
     from apps.schools.models import School
     from apps.ssa.services import get_ssa_progress_by_fy
-    assigned_schools = School.objects.filter(account_owner_id=member.id, deleted_at__isnull=True)
+
+    assigned_schools = School.objects.filter(
+        account_owner_id=member.id, deleted_at__isnull=True
+    )
     staff_progress = get_ssa_progress_by_fy(assigned_schools)
 
     context = {
@@ -169,6 +226,7 @@ def staff_profile_view(request, user_id):
 
 # ─── TODAY VIEW ───────────────────────────────────────────────────────────────
 
+
 @require_page_permission("dashboard")
 def today_view(request):
     """Today's command center — overdue, today, upcoming, and pending actions."""
@@ -178,27 +236,39 @@ def today_view(request):
     week_end = week_start + timedelta(days=6)
 
     # Overdue activities (past due, not yet completed)
-    overdue = Activity.objects.filter(
-        responsible_staff_id=user.id,
-        planned_date__lt=today,
-        status__in=["scheduled", "started"],
-        deleted_at__isnull=True,
-    ).select_related("school", "cluster").order_by("planned_date")
+    overdue = (
+        Activity.objects.filter(
+            responsible_staff_id=user.id,
+            planned_date__lt=today,
+            status__in=["scheduled", "started"],
+            deleted_at__isnull=True,
+        )
+        .select_related("school", "cluster")
+        .order_by("planned_date")
+    )
 
     # Today's activities
-    today_activities = Activity.objects.filter(
-        responsible_staff_id=user.id,
-        planned_date=today,
-        deleted_at__isnull=True,
-    ).select_related("school", "cluster").order_by("activity_type")
+    today_activities = (
+        Activity.objects.filter(
+            responsible_staff_id=user.id,
+            planned_date=today,
+            deleted_at__isnull=True,
+        )
+        .select_related("school", "cluster")
+        .order_by("activity_type")
+    )
 
     # This week remaining
-    upcoming_week = Activity.objects.filter(
-        responsible_staff_id=user.id,
-        planned_date__range=[today + timedelta(days=1), week_end],
-        status="scheduled",
-        deleted_at__isnull=True,
-    ).select_related("school", "cluster").order_by("planned_date")
+    upcoming_week = (
+        Activity.objects.filter(
+            responsible_staff_id=user.id,
+            planned_date__range=[today + timedelta(days=1), week_end],
+            status="scheduled",
+            deleted_at__isnull=True,
+        )
+        .select_related("school", "cluster")
+        .order_by("planned_date")
+    )
 
     # Evidence missing (completed but no evidence)
     evidence_gap = Activity.objects.filter(
@@ -229,6 +299,7 @@ def today_view(request):
 
 # ─── VISITS LOG ───────────────────────────────────────────────────────────────
 
+
 @require_page_permission("planning")
 def visits_log_view(request):
     """All school visits for the current user — filterable by status."""
@@ -238,11 +309,15 @@ def visits_log_view(request):
 
     VISIT_TYPES = ["school_visit", "follow_up_visit", "coaching_visit", "core_visit"]
 
-    visits_qs = Activity.objects.filter(
-        responsible_staff_id=user.id,
-        activity_type__in=VISIT_TYPES,
-        deleted_at__isnull=True,
-    ).select_related("school", "cluster").order_by("-planned_date")
+    visits_qs = (
+        Activity.objects.filter(
+            responsible_staff_id=user.id,
+            activity_type__in=VISIT_TYPES,
+            deleted_at__isnull=True,
+        )
+        .select_related("school", "cluster")
+        .order_by("-planned_date")
+    )
 
     if status_filter:
         visits_qs = visits_qs.filter(status=status_filter)
@@ -268,6 +343,7 @@ def visits_log_view(request):
 
 # ─── TRAININGS LOG ────────────────────────────────────────────────────────────
 
+
 @require_page_permission("planning")
 def trainings_log_view(request):
     """All group training sessions for the current user."""
@@ -277,11 +353,15 @@ def trainings_log_view(request):
 
     TRAINING_TYPES = ["group_training", "cluster_training", "teachers_training"]
 
-    trainings_qs = Activity.objects.filter(
-        responsible_staff_id=user.id,
-        activity_type__in=TRAINING_TYPES,
-        deleted_at__isnull=True,
-    ).select_related("school", "cluster").order_by("-planned_date")
+    trainings_qs = (
+        Activity.objects.filter(
+            responsible_staff_id=user.id,
+            activity_type__in=TRAINING_TYPES,
+            deleted_at__isnull=True,
+        )
+        .select_related("school", "cluster")
+        .order_by("-planned_date")
+    )
 
     if status_filter:
         trainings_qs = trainings_qs.filter(status=status_filter)
@@ -305,6 +385,7 @@ def trainings_log_view(request):
 
 # ─── EVIDENCE GALLERY ─────────────────────────────────────────────────────────
 
+
 @require_page_permission("planning")
 def evidence_gallery_view(request):
     """Evidence gallery — all submitted photos/reports for user's activities."""
@@ -317,9 +398,13 @@ def evidence_gallery_view(request):
         deleted_at__isnull=True,
     ).values_list("id", flat=True)
 
-    evidence_qs = EvidenceRecord.objects.filter(
-        activity__in=user_activity_ids,
-    ).select_related("activity", "activity__school").order_by("-created_at")
+    evidence_qs = (
+        EvidenceRecord.objects.filter(
+            activity__in=user_activity_ids,
+        )
+        .select_related("activity", "activity__school")
+        .order_by("-created_at")
+    )
 
     if kind_filter:
         evidence_qs = evidence_qs.filter(kind=kind_filter)
@@ -345,6 +430,7 @@ def evidence_gallery_view(request):
 
 
 # ─── MY TARGETS ───────────────────────────────────────────────────────────────
+
 
 @require_page_permission("planning")
 def my_targets_view(request):
@@ -373,13 +459,19 @@ def my_targets_view(request):
 
     # Schools with SSA done
     from apps.core.scoping import resolve_user_scope
+
     scope = resolve_user_scope(user)
     total_schools = len(scope.school_ids)
-    ssa_done = SsaRecord.objects.filter(
-        school_id__in=scope.school_ids,
-        fy=fy,
-        deleted_at__isnull=True,
-    ).values("school_id").distinct().count()
+    ssa_done = (
+        SsaRecord.objects.filter(
+            school_id__in=scope.school_ids,
+            fy=fy,
+            deleted_at__isnull=True,
+        )
+        .values("school_id")
+        .distinct()
+        .count()
+    )
 
     # Evidence gap
     evidence_gap = Activity.objects.filter(
@@ -454,10 +546,10 @@ def my_targets_view(request):
 
 # ─── MY TEAM (PL VIEW) ────────────────────────────────────────────────────────
 
+
 @require_page_permission("my_team")
 def my_team_view(request):
     """Program Lead team overview — all CCEOs under the PL with their activity stats."""
-    user = request.user
     today = date.today()
 
     # Get all CCEOs in the system
@@ -486,16 +578,18 @@ def my_team_view(request):
             evidence__isnull=True,
             deleted_at__isnull=True,
         ).count()
-        team_data.append({
-            "id": cceo.id,
-            "name": cceo.name,
-            "email": cceo.email,
-            "initials": cceo.name[:2].upper() if cceo.name else "??",
-            "completed": completed,
-            "overdue": overdue,
-            "evidence_gap": evidence_gap,
-            "risk": "high" if overdue > 3 else "medium" if overdue > 0 else "low",
-        })
+        team_data.append(
+            {
+                "id": cceo.id,
+                "name": cceo.name,
+                "email": cceo.email,
+                "initials": cceo.name[:2].upper() if cceo.name else "??",
+                "completed": completed,
+                "overdue": overdue,
+                "evidence_gap": evidence_gap,
+                "risk": "high" if overdue > 3 else "medium" if overdue > 0 else "low",
+            }
+        )
 
     total_cceos = len(team_data)
     with_overdue = sum(1 for m in team_data if m["overdue"] > 0)
@@ -525,7 +619,7 @@ def my_team_view(request):
             "helper": "CCEOs",
             "icon": "check",
             "variant": "success",
-        }
+        },
     ]
 
     context = {
@@ -538,14 +632,19 @@ def my_team_view(request):
 
 # ─── NOTIFICATIONS ────────────────────────────────────────────────────────────
 
+
 @require_page_permission("dashboard")
 def notification_drawer_view(request):
     """Notification drawer view — loaded via HTMX when clicking notification bell."""
     user = request.user
-    notifs_qs = Notification.objects.filter(recipient_id=user.id).order_by("-created_at")
-    notifs = list(notifs_qs[:20]) # Limit to 20 recent
-    unread_count = Notification.objects.filter(recipient_id=user.id, status="unread").count()
-    
+    notifs_qs = Notification.objects.filter(recipient_id=user.id).order_by(
+        "-created_at"
+    )
+    notifs = list(notifs_qs[:20])  # Limit to 20 recent
+    unread_count = Notification.objects.filter(
+        recipient_id=user.id, status="unread"
+    ).count()
+
     context = {
         "notifications": notifs,
         "unread_count": unread_count,
@@ -559,17 +658,27 @@ def notification_drawer_view(request):
 def mark_all_notifications_read(request):
     """Mark all unread notifications for the user as read."""
     if request.method == "POST":
-        Notification.objects.filter(recipient_id=request.user.id, status="unread").update(
+        Notification.objects.filter(
+            recipient_id=request.user.id, status="unread"
+        ).update(
             status="read",
             read_at=timezone.now(),
         )
     if request.headers.get("HX-Request") == "true":
         user = request.user
-        notifs = list(Notification.objects.filter(recipient_id=user.id).order_by("-created_at")[:20])
-        return render(request, "partials/notifications/notification_drawer_list.html", {
-            "notifications": notifs,
-            "unread_count": 0,
-        })
+        notifs = list(
+            Notification.objects.filter(recipient_id=user.id).order_by("-created_at")[
+                :20
+            ]
+        )
+        return render(
+            request,
+            "partials/notifications/notification_drawer_list.html",
+            {
+                "notifications": notifs,
+                "unread_count": 0,
+            },
+        )
     return redirect("/")
 
 
@@ -582,13 +691,23 @@ def mark_notification_read(request, notif_id):
     )
     if request.method == "POST" and request.headers.get("HX-Request") == "true":
         user = request.user
-        notifs = list(Notification.objects.filter(recipient_id=user.id).order_by("-created_at")[:20])
-        unread_count = Notification.objects.filter(recipient_id=user.id, status="unread").count()
-        return render(request, "partials/notifications/notification_drawer_list.html", {
-            "notifications": notifs,
-            "unread_count": unread_count,
-        })
-        
+        notifs = list(
+            Notification.objects.filter(recipient_id=user.id).order_by("-created_at")[
+                :20
+            ]
+        )
+        unread_count = Notification.objects.filter(
+            recipient_id=user.id, status="unread"
+        ).count()
+        return render(
+            request,
+            "partials/notifications/notification_drawer_list.html",
+            {
+                "notifications": notifs,
+                "unread_count": unread_count,
+            },
+        )
+
     redirect_to = request.GET.get("redirect") or request.POST.get("redirect") or "/"
     return redirect(redirect_to)
 
@@ -596,11 +715,18 @@ def mark_notification_read(request, notif_id):
 @require_page_permission("dashboard")
 def notification_badge_view(request):
     """Return only the notification badge count HTML."""
-    unread_count = Notification.objects.filter(recipient_id=request.user.id, status="unread").count()
-    return render(request, "partials/notifications/notification_badge.html", {"unread_notifications_count": unread_count})
+    unread_count = Notification.objects.filter(
+        recipient_id=request.user.id, status="unread"
+    ).count()
+    return render(
+        request,
+        "partials/notifications/notification_badge.html",
+        {"unread_notifications_count": unread_count},
+    )
 
 
 # ─── USER PROFILE ─────────────────────────────────────────────────────────────
+
 
 @require_page_permission("dashboard")
 def profile_view(request):
@@ -621,10 +747,14 @@ def profile_view(request):
         deleted_at__isnull=True,
     ).count()
 
-    recent = Activity.objects.filter(
-        responsible_staff_id=user.id,
-        deleted_at__isnull=True,
-    ).select_related("school").order_by("-updated_at")[:5]
+    recent = (
+        Activity.objects.filter(
+            responsible_staff_id=user.id,
+            deleted_at__isnull=True,
+        )
+        .select_related("school")
+        .order_by("-updated_at")[:5]
+    )
 
     context = {
         "member": user,
@@ -632,7 +762,9 @@ def profile_view(request):
         "fy": fy,
         "total_activities": total_activities,
         "completed": completed,
-        "completion_rate": round(completed / total_activities * 100) if total_activities else 0,
+        "completion_rate": round(completed / total_activities * 100)
+        if total_activities
+        else 0,
         "recent": recent,
         "initials": user.name[:2].upper() if user.name else "??",
     }

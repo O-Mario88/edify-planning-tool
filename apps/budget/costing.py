@@ -8,6 +8,7 @@ request until the CD resolves it (spec §10).
 
 This is the SINGLE source of truth for activity cost on the backend.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -38,17 +39,32 @@ DEFAULT_TRAINING_PARTICIPANTS = 25
 DEFAULT_CLUSTER_MEETING_PARTICIPANTS = 10
 
 VISIT_TYPES = {
-    "school_visit", "follow_up_visit", "coaching_visit", "in_school_support", "core_visit",
-    "baseline_ssa_visit", "school_visit_ssa_collection", "partner_ssa_collection", "core_assessment_visit",
+    "school_visit",
+    "follow_up_visit",
+    "coaching_visit",
+    "in_school_support",
+    "core_visit",
+    "baseline_ssa_visit",
+    "school_visit_ssa_collection",
+    "partner_ssa_collection",
+    "core_assessment_visit",
 }
 TRAINING_TYPES = {
-    "training", "school_improvement_training", "cluster_training", "core_training",
-    "cluster_training_ssa_collection", "cluster_meeting_ssa_review",
+    "training",
+    "school_improvement_training",
+    "cluster_training",
+    "core_training",
+    "cluster_training_ssa_collection",
+    "cluster_meeting_ssa_review",
 }
 
 
 def _participants_of(a: dict, default_n: int) -> int:
-    counted = (a.get("teachersAttended") or 0) + (a.get("leadersAttended") or 0) + (a.get("otherParticipants") or 0)
+    counted = (
+        (a.get("teachersAttended") or 0)
+        + (a.get("leadersAttended") or 0)
+        + (a.get("otherParticipants") or 0)
+    )
     if counted > 0:
         return counted
     expected = a.get("expectedParticipants") or 0
@@ -96,7 +112,10 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
             key = "partner_training_lump_sum"
             basis = "per training"
             label = "Partner training rate"
-        elif activity_type == "cluster_meeting" and "partner_cluster_activity_rate" in rates:
+        elif (
+            activity_type == "cluster_meeting"
+            and "partner_cluster_activity_rate" in rates
+        ):
             key = "partner_cluster_activity_rate"
             basis = "per cluster activity"
             label = "Partner cluster activity rate"
@@ -108,7 +127,7 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
             key = "partner_visit_lump_sum"
             basis = "per activity"
             label = "Partner visit lump sum"
-        
+
         label_with_basis = f"{label} [Rate basis: {basis}]"
         add(label_with_basis, key)
 
@@ -126,8 +145,15 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
 
     elif activity_type in VISIT_TYPES:
         if is_secondary:
-            if "school_visit_cost_per_school_secondary" in rates or "school_visit_cost_per_school" in rates:
-                key = "school_visit_cost_per_school_secondary" if "school_visit_cost_per_school_secondary" in rates else "school_visit_cost_per_school"
+            if (
+                "school_visit_cost_per_school_secondary" in rates
+                or "school_visit_cost_per_school" in rates
+            ):
+                key = (
+                    "school_visit_cost_per_school_secondary"
+                    if "school_visit_cost_per_school_secondary" in rates
+                    else "school_visit_cost_per_school"
+                )
                 add("School visit (secondary)", key)
             else:
                 add("Transport (secondary)", "staff_visit_transport_secondary")
@@ -138,15 +164,26 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
                 if nights > 0:
                     add("Accommodation", "accommodation", nights)
         else:
-            if "school_visit_cost_per_school_primary" in rates or "school_visit_cost_per_school" in rates:
-                key = "school_visit_cost_per_school_primary" if "school_visit_cost_per_school_primary" in rates else "school_visit_cost_per_school"
+            if (
+                "school_visit_cost_per_school_primary" in rates
+                or "school_visit_cost_per_school" in rates
+            ):
+                key = (
+                    "school_visit_cost_per_school_primary"
+                    if "school_visit_cost_per_school_primary" in rates
+                    else "school_visit_cost_per_school"
+                )
                 add("School visit (primary)", key)
             else:
                 add("Transport (primary)", "staff_visit_transport_primary")
                 add("Lunch", "lunch")
     elif activity_type in TRAINING_TYPES:
         n = _participants_of(a, DEFAULT_TRAINING_PARTICIPANTS)
-        if "group_training_facilitation_fee" in rates or "group_training_venue_cost" in rates or "group_training_participant_meal_cost_per_head" in rates:
+        if (
+            "group_training_facilitation_fee" in rates
+            or "group_training_venue_cost" in rates
+            or "group_training_participant_meal_cost_per_head" in rates
+        ):
             add("Facilitation", "group_training_facilitation_fee")
             add("Venue", "group_training_venue_cost")
             add("Meals", "group_training_participant_meal_cost_per_head", n)
@@ -158,22 +195,35 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
     elif activity_type == "cluster_meeting":
         n = _participants_of(a, DEFAULT_CLUSTER_MEETING_PARTICIPANTS)
         if "cluster_meeting_participant_meal_cost_per_head" in rates:
-            add("Cluster meeting participant meals", "cluster_meeting_participant_meal_cost_per_head", n)
+            add(
+                "Cluster meeting participant meals",
+                "cluster_meeting_participant_meal_cost_per_head",
+                n,
+            )
         else:
             add("Cluster meeting (per participant)", "cluster_meeting_cost", n)
     elif activity_type in ("partner_activity", "project_activity"):
         project_key = "project_partner_lump_sum" if a.get("projectId") else None
-        key = project_key if (project_key and rates.get(project_key) is not None) else "partner_visit_lump_sum"
+        key = (
+            project_key
+            if (project_key and rates.get(project_key) is not None)
+            else "partner_visit_lump_sum"
+        )
         add("Partner/project lump sum", key)
     else:
         # ssa_activity and anything else default to a staff visit cost.
         add("Transport", "staff_visit_transport_primary")
         add("Lunch", "lunch")
 
-    cost_missing = any(l.missing for l in lines)
-    amount = sum(l.amount for l in lines)
-    missing_items = [l.key for l in lines if l.missing]
-    return ActivityCost(amount=amount, lines=lines, cost_missing=cost_missing, missing_items=missing_items)
+    cost_missing = any(line.missing for line in lines)
+    amount = sum(line.amount for line in lines)
+    missing_items = [line.key for line in lines if line.missing]
+    return ActivityCost(
+        amount=amount,
+        lines=lines,
+        cost_missing=cost_missing,
+        missing_items=missing_items,
+    )
 
 
 def resolve_activity_cost(
@@ -182,24 +232,30 @@ def resolve_activity_cost(
     snapshot_lines: list[dict] | None = None,
 ) -> ActivityCost:
     """Prefer schedule-time snapshot; recalc from attendance when actuals exist."""
-    attended = (a.get("teachersAttended") or 0) + (a.get("leadersAttended") or 0) + (a.get("otherParticipants") or 0)
+    attended = (
+        (a.get("teachersAttended") or 0)
+        + (a.get("leadersAttended") or 0)
+        + (a.get("otherParticipants") or 0)
+    )
     if attended > 0:
         return cost_for_activity(a, rates)
 
     if snapshot_lines:
         lines = [
             CostLine(
-                label=l["label"],
-                key=l["costSettingKey"],
-                unit=l["unitCost"],
-                qty=l["quantity"],
-                amount=l["amount"],
+                label=line["label"],
+                key=line["costSettingKey"],
+                unit=line["unitCost"],
+                qty=line["quantity"],
+                amount=line["amount"],
                 missing=False,
             )
-            for l in snapshot_lines
+            for line in snapshot_lines
         ]
         est = a.get("estCostCents")
-        amount = est if (est is not None and est > 0) else sum(l.amount for l in lines)
+        amount = (
+            est if (est is not None and est > 0) else sum(line.amount for line in lines)
+        )
         return ActivityCost(
             amount=amount,
             lines=lines,

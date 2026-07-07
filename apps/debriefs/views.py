@@ -1,4 +1,5 @@
 """Debriefs endpoints — /api/debriefs/*."""
+
 from __future__ import annotations
 
 from rest_framework.permissions import IsAuthenticated
@@ -50,4 +51,6 @@ class DebriefMergePartnerView(APIView):
     required_permissions = VIEW
 
     def post(self, request: Request) -> Response:
-        return Response(services.merge_partner_debrief(request.data, request.user), status=201)
+        return Response(
+            services.merge_partner_debrief(request.data, request.user), status=201
+        )

@@ -1,4 +1,5 @@
 """CD→PL flag handoff model."""
+
 from __future__ import annotations
 
 from django.db import models
@@ -28,7 +29,9 @@ class CdFlag(TimeStampedModel):
     recommended_action = models.CharField(max_length=512, null=True, blank=True)
     priority = models.CharField(max_length=16, default="normal")
     due_date = models.CharField(max_length=32, null=True, blank=True)
-    status = models.CharField(max_length=16, choices=CdFlagStatus.choices, default=CdFlagStatus.OPEN)
+    status = models.CharField(
+        max_length=16, choices=CdFlagStatus.choices, default=CdFlagStatus.OPEN
+    )
     resolution_note = models.TextField(null=True, blank=True)
     resolved_at = models.DateTimeField(null=True, blank=True)
 

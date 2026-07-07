@@ -4,6 +4,7 @@ The test creates only isolated Django test-database records. It intentionally
 uses API endpoints for the workflow handoffs so persistent/local databases keep
 their honest empty-state behavior and never receive demo records.
 """
+
 from __future__ import annotations
 
 import tempfile
@@ -13,7 +14,12 @@ from django.test import override_settings
 from rest_framework.test import APITestCase
 
 from apps.accounts.jwt import issue_access_token
-from apps.accounts.models import StaffProfile, StaffSchoolAssignment, StaffSupervisorAssignment, User
+from apps.accounts.models import (
+    StaffProfile,
+    StaffSchoolAssignment,
+    StaffSupervisorAssignment,
+    User,
+)
 from apps.activities.models import Activity
 from apps.budget.models import CostSetting
 from apps.core.rbac import EdifyRole
@@ -34,25 +40,37 @@ INTERVENTION_SCORES = [
 ]
 
 
-@override_settings(EVIDENCE_STORAGE_DIR=tempfile.mkdtemp(prefix="edify-evidence-smoke-"))
+@override_settings(
+    EVIDENCE_STORAGE_DIR=tempfile.mkdtemp(prefix="edify-evidence-smoke-")
+)
 class AuthenticatedWorkflowSmokeTest(APITestCase):
     """Proves the July 10 path against authenticated Django API calls."""
 
     def setUp(self):
         self.region = Region.objects.create(name="Smoke Region")
-        self.district = District.objects.create(name="Smoke District", region=self.region)
-        self.sub_county = SubCounty.objects.create(name="Smoke SubCounty", district=self.district)
+        self.district = District.objects.create(
+            name="Smoke District", region=self.region
+        )
+        self.sub_county = SubCounty.objects.create(
+            name="Smoke SubCounty", district=self.district
+        )
 
         self.ia = self._user("ia@example.test", EdifyRole.IMPACT_ASSESSMENT.value)
         self.cceo = self._user("cceo@example.test", EdifyRole.CCEO.value)
         self.pl = self._user("pl@example.test", EdifyRole.COUNTRY_PROGRAM_LEAD.value)
-        self.accountant = self._user("accountant@example.test", EdifyRole.PROGRAM_ACCOUNTANT.value)
+        self.accountant = self._user(
+            "accountant@example.test", EdifyRole.PROGRAM_ACCOUNTANT.value
+        )
 
         self.cceo_staff = StaffProfile.objects.create(user=self.cceo, title="CCEO")
         self.pl_staff = StaffProfile.objects.create(user=self.pl, title="PL")
-        StaffSupervisorAssignment.objects.create(supervisee=self.cceo_staff, supervisor=self.pl_staff)
+        StaffSupervisorAssignment.objects.create(
+            supervisee=self.cceo_staff, supervisor=self.pl_staff
+        )
 
-        CostSetting.objects.create(key="staff_visit_transport_primary", label="Transport", unit_cost=10000)
+        CostSetting.objects.create(
+            key="staff_visit_transport_primary", label="Transport", unit_cost=10000
+        )
         CostSetting.objects.create(key="lunch", label="Lunch", unit_cost=5000)
 
     def test_school_to_accountability_workflow(self):
@@ -80,7 +98,11 @@ class AuthenticatedWorkflowSmokeTest(APITestCase):
 
         ssa = self._post(
             "/api/ssa",
-            {"schoolId": school.school_id, "dateOfSsa": "2026-07-01T09:00:00+03:00", "scores": INTERVENTION_SCORES},
+            {
+                "schoolId": school.school_id,
+                "dateOfSsa": "2026-07-01T09:00:00+03:00",
+                "scores": INTERVENTION_SCORES,
+            },
             201,
         )
         self.assertEqual(ssa["verificationStatus"], "confirmed")
@@ -90,10 +112,18 @@ class AuthenticatedWorkflowSmokeTest(APITestCase):
         self._as(self.cceo)
         cluster = self._post(
             "/api/clusters/from-school",
-            {"schoolId": school.school_id, "name": "Smoke July Cluster", "clusterType": "mixed"},
+            {
+                "schoolId": school.school_id,
+                "name": "Smoke July Cluster",
+                "clusterType": "mixed",
+            },
             201,
         )
-        self._post("/api/clusters/assign", {"schoolId": school.school_id, "clusterId": cluster["id"]}, 200)
+        self._post(
+            "/api/clusters/assign",
+            {"schoolId": school.school_id, "clusterId": cluster["id"]},
+            200,
+        )
 
         scheduled = self._post(
             "/api/planning/schedule-school-visit",
@@ -118,17 +148,23 @@ class AuthenticatedWorkflowSmokeTest(APITestCase):
         evidence = self._upload_evidence(activity_id)
 
         self._as(self.pl)
-        reviewed = self._post(f"/api/evidence/{evidence['id']}/review", {"action": "accept"}, 200)
+        reviewed = self._post(
+            f"/api/evidence/{evidence['id']}/review", {"action": "accept"}, 200
+        )
         self.assertEqual(reviewed["status"], "accepted")
 
         self._as(self.cceo)
-        completed = self._post(f"/api/activities/{activity_id}/complete", {"salesforceId": "SV-JUL10"}, 200)
+        completed = self._post(
+            f"/api/activities/{activity_id}/complete", {"salesforceId": "SV-JUL10"}, 200
+        )
         self.assertEqual(completed["status"], "submitted_to_pl")
 
         self._as(self.pl)
         queue = self._get("/api/pl/review-queue", 200)
         self.assertTrue(any(row["id"] == activity_id for row in queue))
-        pl_confirmed = self._post(f"/api/pl/review-queue/{activity_id}/confirm", {}, 200)
+        pl_confirmed = self._post(
+            f"/api/pl/review-queue/{activity_id}/confirm", {}, 200
+        )
         self.assertEqual(pl_confirmed["status"], "awaiting_ia_verification")
 
         self._as(self.ia)
@@ -140,7 +176,9 @@ class AuthenticatedWorkflowSmokeTest(APITestCase):
         budget = self._get("/api/budget/from-schedule?fy=2026", 200)
         self.assertEqual(budget["activityCount"], 1)
         self.assertEqual(budget["total"], 15000)
-        fund_request = self._post("/api/fund-requests", {"fy": "2026", "period": "monthly", "month": 7}, 201)
+        fund_request = self._post(
+            "/api/fund-requests", {"fy": "2026", "period": "monthly", "month": 7}, 201
+        )
         self.assertEqual(fund_request["periodKey"], "2026-M7")
         self.assertEqual(fund_request["totalAmount"], 15000)
         self.assertEqual(FundRequestItem.objects.count(), 2)
@@ -148,7 +186,11 @@ class AuthenticatedWorkflowSmokeTest(APITestCase):
         self._as(self.pl)
         pl_requests = self._get("/api/fund-requests?fy=2026", 200)
         self.assertTrue(any(row["id"] == fund_request["id"] for row in pl_requests))
-        approved = self._post(f"/api/fund-requests/{fund_request['id']}/approve", {"note": "Looks right"}, 200)
+        approved = self._post(
+            f"/api/fund-requests/{fund_request['id']}/approve",
+            {"note": "Looks right"},
+            200,
+        )
         self.assertEqual(approved["status"], "approved")
 
         self._as(self.accountant)
@@ -168,7 +210,9 @@ class AuthenticatedWorkflowSmokeTest(APITestCase):
         self.assertEqual(accounted["accountabilityStatus"], "submitted")
 
         self._as(self.accountant)
-        closed = self._post(f"/api/fund-requests/{fund_request['id']}/account-approve", {}, 200)
+        closed = self._post(
+            f"/api/fund-requests/{fund_request['id']}/account-approve", {}, 200
+        )
         self.assertEqual(closed["status"], "closed")
         self.assertEqual(closed["accountabilityStatus"], "approved")
 
@@ -186,7 +230,9 @@ class AuthenticatedWorkflowSmokeTest(APITestCase):
         )
 
     def _as(self, user: User) -> None:
-        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {issue_access_token(user.id, user.active_role)}")
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {issue_access_token(user.id, user.active_role)}"
+        )
 
     def _get(self, path: str, expected: int):
         response = self.client.get(path)

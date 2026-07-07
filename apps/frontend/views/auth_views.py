@@ -1,8 +1,13 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login as django_login, logout as django_logout
+from django.contrib.auth import (
+    authenticate,
+    login as django_login,
+    logout as django_logout,
+)
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.contrib import messages
+
 
 def login_view(request):
     if request.user.is_authenticated:
@@ -16,33 +21,37 @@ def login_view(request):
         user = authenticate(request, username=email, password=password)
         if user is not None:
             if user.status != "active":
-                return render(request, "pages/auth/login.html", {
-                    "error": "Invalid email or password.",
-                    "email": email
-                })
-            
+                return render(
+                    request,
+                    "pages/auth/login.html",
+                    {"error": "Invalid email or password.", "email": email},
+                )
+
             django_login(request, user)
-            
+
             if not remember_me:
-                request.session.set_expiry(0) # ends when browser closes
+                request.session.set_expiry(0)  # ends when browser closes
             else:
-                request.session.set_expiry(1209600) # 2 weeks
-                
+                request.session.set_expiry(1209600)  # 2 weeks
+
             messages.success(request, f"Welcome back, {user.name}!")
             return redirect("/dashboard")
         else:
-            return render(request, "pages/auth/login.html", {
-                "error": "Invalid email or password.",
-                "email": email
-            })
+            return render(
+                request,
+                "pages/auth/login.html",
+                {"error": "Invalid email or password.", "email": email},
+            )
 
     return render(request, "pages/auth/login.html")
+
 
 @require_POST
 def logout_view(request):
     django_logout(request)
     messages.success(request, "Logged out successfully.")
     return redirect("/login")
+
 
 @login_required(login_url="/login")
 @require_POST
@@ -54,6 +63,7 @@ def switch_role_view(request):
         user.active_role = role
         user.save()
         from apps.audit.services import log as audit_log
+
         audit_log(
             action="role_switch",
             subject_kind="User",
@@ -61,11 +71,12 @@ def switch_role_view(request):
             actor_id=str(user.id),
             actor_role=role,
             success=True,
-            payload={"old_role": old_role, "new_role": role}
+            payload={"old_role": old_role, "new_role": role},
         )
         messages.success(request, f"Switched active role to {role}.")
     else:
         from apps.audit.services import log as audit_log
+
         audit_log(
             action="role_switch",
             subject_kind="User",
@@ -74,7 +85,7 @@ def switch_role_view(request):
             actor_role=user.active_role,
             success=False,
             reason=f"User attempted to switch to invalid/unassigned role: {role}",
-            payload={"requested_role": role}
+            payload={"requested_role": role},
         )
         messages.error(request, "Access restricted: Invalid role request.")
     return redirect("/dashboard")

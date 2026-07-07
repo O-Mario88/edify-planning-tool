@@ -4,25 +4,24 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('activities', '0005_activity_activity_purpose_text_and_more'),
+        ("activities", "0005_activity_activity_purpose_text_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='activity',
-            name='support_type',
+            model_name="activity",
+            name="support_type",
             field=models.CharField(blank=True, max_length=32, null=True),
         ),
         migrations.AddField(
-            model_name='activity',
-            name='training_number',
+            model_name="activity",
+            name="training_number",
             field=models.CharField(blank=True, max_length=16, null=True),
         ),
         migrations.AddField(
-            model_name='activity',
-            name='visit_number',
+            model_name="activity",
+            name="visit_number",
             field=models.CharField(blank=True, max_length=16, null=True),
         ),
     ]

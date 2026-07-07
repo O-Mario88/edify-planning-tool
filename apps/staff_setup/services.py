@@ -9,6 +9,7 @@ Three resolution paths:
                      the candidate is marked merged.
   • ignore       — invalid name; candidate marked ignored (schools keep raw name).
 """
+
 from __future__ import annotations
 
 from django.db import transaction
@@ -40,8 +41,13 @@ def get_one(candidate_id: str) -> dict:
         raise NotFoundError("Staff candidate not found.")
     data = _serialize(c)
     # Resolve the sample schools for the Admin to preview.
-    schools = School.objects.filter(id__in=(c.sample_school_ids or [])).values("school_id", "name", "district__name")
-    data["sampleSchools"] = [{"schoolId": s["school_id"], "name": s["name"], "district": s["district__name"]} for s in schools]
+    schools = School.objects.filter(id__in=(c.sample_school_ids or [])).values(
+        "school_id", "name", "district__name"
+    )
+    data["sampleSchools"] = [
+        {"schoolId": s["school_id"], "name": s["name"], "district": s["district__name"]}
+        for s in schools
+    ]
     return data
 
 
@@ -73,14 +79,18 @@ def create_user(candidate_id: str, data: dict, principal) -> dict:
             if data.get("phone"):
                 user.phone = data["phone"]
             user.save()
-            
-            sp, _ = StaffProfile.objects.get_or_create(user=user, defaults={"title": role})
+
+            sp, _ = StaffProfile.objects.get_or_create(
+                user=user, defaults={"title": role}
+            )
             if sp.title != role:
                 sp.title = role
                 sp.save(update_fields=["title"])
         else:
             if User.objects.filter(email=email).exists():
-                raise BadRequest(f"A user with email {email} already exists — use 'match existing user' instead.")
+                raise BadRequest(
+                    f"A user with email {email} already exists — use 'match existing user' instead."
+                )
             user = User.objects.create_user(
                 email=email,
                 name=c.full_name,
@@ -101,7 +111,16 @@ def create_user(candidate_id: str, data: dict, principal) -> dict:
         c.phone = data.get("phone") or c.phone
         c.suggested_role = role
         c.status = StaffSetupCandidateStatus.ACTIVE.value
-        c.save(update_fields=["matched_user_id", "email", "phone", "suggested_role", "status", "updated_at"])
+        c.save(
+            update_fields=[
+                "matched_user_id",
+                "email",
+                "phone",
+                "suggested_role",
+                "status",
+                "updated_at",
+            ]
+        )
     return _serialize(c)
 
 
@@ -138,7 +157,9 @@ def ignore(candidate_id: str, principal) -> dict:
     return _serialize(c)
 
 
-def _link_schools(candidate: StaffSetupCandidate, staff_profile_id: str) -> tuple[int, int]:
+def _link_schools(
+    candidate: StaffSetupCandidate, staff_profile_id: str
+) -> tuple[int, int]:
     """Link every School whose account_owner_name_raw normalizes to the
     candidate's name to the resolved staff profile. Writes StaffSchoolAssignment
     (so the schools enter planning scope) + updates account_owner_* fields.
@@ -146,7 +167,11 @@ def _link_schools(candidate: StaffSetupCandidate, staff_profile_id: str) -> tupl
     Returns (schools_linked, assignments_created)."""
     norm = candidate.normalized_name
     # Schools whose raw owner name normalizes to this candidate.
-    affected = [s for s in School.objects.filter(account_owner_name_raw__isnull=False) if normalize_name(s.account_owner_name_raw) == norm]
+    affected = [
+        s
+        for s in School.objects.filter(account_owner_name_raw__isnull=False)
+        if normalize_name(s.account_owner_name_raw) == norm
+    ]
     if not affected:
         return 0, 0
     # Bulk-update the school owner fields.
@@ -162,7 +187,8 @@ def _link_schools(candidate: StaffSetupCandidate, staff_profile_id: str) -> tupl
     )
     new_assignments = [
         StaffSchoolAssignment(staff_id=staff_profile_id, school_id=s.id)
-        for s in affected if s.id not in existing
+        for s in affected
+        if s.id not in existing
     ]
     if new_assignments:
         StaffSchoolAssignment.objects.bulk_create(new_assignments)

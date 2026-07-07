@@ -5,6 +5,7 @@ Scope-constrained list/detail, single + bulk create, duplicate detection, type
 changes, and the school-improvement workflow surface. Every query that returns
 operational records is constrained by the resolved user scope — never all rows.
 """
+
 from __future__ import annotations
 
 from django.db.models import Q
@@ -99,7 +100,9 @@ def create_one(data: dict, principal) -> School:
         sub_county = SubCounty.objects.filter(id=data["subCountyId"]).first()
 
     school = School.objects.create(
-        school_id=data.get("schoolId") or data.get("school_id") or f"S-{data['name'][:20]}",
+        school_id=data.get("schoolId")
+        or data.get("school_id")
+        or f"S-{data['name'][:20]}",
         name=data["name"],
         region=region,
         district=district,
@@ -138,7 +141,9 @@ def bulk_upload(rows: list[dict], principal) -> dict:
             results.append({"schoolId": school.school_id, "ok": True})
         except Exception as exc:  # noqa: BLE001
             flagged += 1
-            results.append({"schoolId": row.get("schoolId"), "ok": False, "error": str(exc)})
+            results.append(
+                {"schoolId": row.get("schoolId"), "ok": False, "error": str(exc)}
+            )
     batch.row_count = len(rows)
     batch.accepted_count = accepted
     batch.flagged_count = flagged
@@ -164,14 +169,15 @@ def set_type(principal, school_id: str, school_type: str) -> dict:
     school = get_one(school_id, principal)
     school.school_type = school_type
     school.save(update_fields=["school_type", "updated_at"])
-    
+
     if school_type == "core":
         try:
             from apps.core_schools.core_planning_services import CoreSchoolsService
+
             CoreSchoolsService.get_core_schools(principal, {})
         except Exception:
             pass
-            
+
     return {"ok": True, "schoolId": school.school_id, "schoolType": school_type}
 
 
@@ -185,7 +191,9 @@ def resolve_duplicate(school_id: str, resolution: str, principal) -> dict:
         resolved=True, resolution=resolution
     )
     school.duplicate_status = (
-        DuplicateStatus.MERGED if resolution == "merged" else DuplicateStatus.NOT_DUPLICATE
+        DuplicateStatus.MERGED
+        if resolution == "merged"
+        else DuplicateStatus.NOT_DUPLICATE
     )
     school.save(update_fields=["duplicate_status", "updated_at"])
     return {"ok": True, "schoolId": school.school_id, "resolution": resolution}
@@ -199,10 +207,9 @@ def proposals(principal, limit: int = 10) -> list[dict]:
     if base is None:
         return []
     # Candidate = a client school with the best current SSA standing.
-    qs = (
-        base.filter(school_type__in=["client", "potential_core"])
-        .order_by("-current_fy_ssa_status", "name")[:limit]
-    )
+    qs = base.filter(school_type__in=["client", "potential_core"]).order_by(
+        "-current_fy_ssa_status", "name"
+    )[:limit]
     return [
         {
             "id": s.id,
@@ -218,7 +225,7 @@ def proposals(principal, limit: int = 10) -> list[dict]:
 def workflow(school_id: str, principal, fy: str | None = None) -> dict:
     """The school improvement journey surface."""
     school = get_one(school_id, principal)
-    
+
     # Calculate stage
     if school.cluster_status != "clustered":
         stage = "cluster_setup"
@@ -239,14 +246,21 @@ def workflow(school_id: str, principal, fy: str | None = None) -> dict:
             "key": "ssa",
             "label": "School Self-Assessment",
             "done": school.current_fy_ssa_status == "done",
-            "status": "done" if school.current_fy_ssa_status == "done" else ("current" if school.cluster_status == "clustered" else "pending"),
+            "status": "done"
+            if school.current_fy_ssa_status == "done"
+            else ("current" if school.cluster_status == "clustered" else "pending"),
         },
         {
             "key": "planning",
             "label": "Plan Support",
             "done": False,
-            "status": "current" if (school.cluster_status == "clustered" and school.current_fy_ssa_status == "done") else "pending",
-        }
+            "status": "current"
+            if (
+                school.cluster_status == "clustered"
+                and school.current_fy_ssa_status == "done"
+            )
+            else "pending",
+        },
     ]
 
     # Calculate nextAction and blockers
@@ -304,7 +318,9 @@ def next_actions(school_id: str, principal, fy: str | None = None) -> dict:
     school = get_one(school_id, principal)
     actions: list[dict] = []
     if school.planning_readiness != "ready":
-        actions.append({"action": "collect_ssa", "reason": "Readiness locked — collect SSA."})
+        actions.append(
+            {"action": "collect_ssa", "reason": "Readiness locked — collect SSA."}
+        )
     if school.cluster_status == "unclustered":
         actions.append({"action": "assign_cluster", "reason": "School is unclustered."})
     return {"schoolId": school.school_id, "fy": fy, "nextActions": actions}

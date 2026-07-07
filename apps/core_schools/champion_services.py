@@ -5,17 +5,24 @@ from apps.core_schools.models import CoreSchoolProfile, CorePlan
 
 logger = logging.getLogger(__name__)
 
+
 class ChampionEligibilityService:
     @staticmethod
     def calculate_score(school: School) -> dict:
         """Calculates the Champion Score and check items using the official formula."""
         # Retrieve CorePlan
-        plan = CorePlan.objects.filter(school_id=school.school_id, status="Active").first()
+        plan = CorePlan.objects.filter(
+            school_id=school.school_id, status="Active"
+        ).first()
         if not plan:
             return {"score": 0.0, "eligible": False, "reason": "No active Core Plan"}
 
         # 1. Latest SSA (40%)
-        latest_ssa = school.ssa_records.filter(deleted_at__isnull=True).order_by("-date_of_ssa").first()
+        latest_ssa = (
+            school.ssa_records.filter(deleted_at__isnull=True)
+            .order_by("-date_of_ssa")
+            .first()
+        )
         if not latest_ssa:
             return {"score": 0.0, "eligible": False, "reason": "No SSA recorded"}
         latest_avg = latest_ssa.average_score or 0.0
@@ -23,8 +30,14 @@ class ChampionEligibilityService:
 
         # 2. Improvement Delta (25%)
         # Compare latest with earliest SSA
-        earliest_ssa = school.ssa_records.filter(deleted_at__isnull=True).order_by("date_of_ssa").first()
-        delta = latest_avg - (earliest_ssa.average_score or 0.0) if earliest_ssa else 0.0
+        earliest_ssa = (
+            school.ssa_records.filter(deleted_at__isnull=True)
+            .order_by("date_of_ssa")
+            .first()
+        )
+        delta = (
+            latest_avg - (earliest_ssa.average_score or 0.0) if earliest_ssa else 0.0
+        )
         # Score scales up to +3.0 points improvement
         delta_score = min(max(delta / 3.0, 0.0), 1.0) * 25.0
 
@@ -38,7 +51,9 @@ class ChampionEligibilityService:
         # 4. Core Package Completion (10%)
         # Total required slots are 8
         total_slots = plan.slots.count()
-        completed_slots = plan.slots.filter(status__in=["Completed", "Closed", "ia_verified", "IA Verified"]).count()
+        completed_slots = plan.slots.filter(
+            status__in=["Completed", "Closed", "ia_verified", "IA Verified"]
+        ).count()
         pkg_pct = (completed_slots / total_slots) if total_slots > 0 else 0.0
         package_score = pkg_pct * 10.0
 
@@ -56,14 +71,17 @@ class ChampionEligibilityService:
         sustain_score = 5.0 if all_ssas >= 2 else 2.5
 
         # Total Champion Score
-        total_score = latest_score_weighted + delta_score + balance_score + package_score + evidence_score + sustain_score
-        
-        # Eligibility Checks
-        eligible = (
-            latest_avg >= 8.0 and 
-            lowest_score >= 7.0 and 
-            completed_slots >= 8
+        total_score = (
+            latest_score_weighted
+            + delta_score
+            + balance_score
+            + package_score
+            + evidence_score
+            + sustain_score
         )
+
+        # Eligibility Checks
+        eligible = latest_avg >= 8.0 and lowest_score >= 7.0 and completed_slots >= 8
 
         return {
             "score": round(total_score, 1),
@@ -74,7 +92,11 @@ class ChampionEligibilityService:
             "completed_slots": completed_slots,
             "total_slots": total_slots,
             "all_ssas": all_ssas,
-            "lowest_intervention": latest_ssa.scores.order_by("score").first().intervention if latest_ssa and latest_ssa.scores.exists() else "None"
+            "lowest_intervention": latest_ssa.scores.order_by("score")
+            .first()
+            .intervention
+            if latest_ssa and latest_ssa.scores.exists()
+            else "None",
         }
 
     @staticmethod
@@ -86,17 +108,15 @@ class ChampionEligibilityService:
             school = School.objects.filter(school_id=profile.school_id).first()
             if not school:
                 continue
-            
+
             metrics = ChampionEligibilityService.calculate_score(school)
             if metrics["eligible"]:
                 if profile.champion_status not in ["Champion", "Approved Champion"]:
                     profile.champion_status = "Potential Champion"
                     profile.save(update_fields=["champion_status"])
-                candidates.append({
-                    "school": school,
-                    "profile": profile,
-                    "metrics": metrics
-                })
+                candidates.append(
+                    {"school": school, "profile": profile, "metrics": metrics}
+                )
         return candidates
 
     @staticmethod
@@ -106,23 +126,26 @@ class ChampionEligibilityService:
         school = School.objects.filter(school_id=school_id).first()
         if not school:
             return False
-        
+
         profile = CoreSchoolProfile.objects.filter(school_id=school_id).first()
         if not profile:
             return False
-            
+
         profile.champion_status = "Champion"
         profile.save(update_fields=["champion_status"])
-        
+
         school.school_type = "champion"
         school.save(update_fields=["school_type"])
-        
+
         # Log audit trail event
         from apps.activities.closure_services import AuditTrailService
+
         dummy_act = school.activities.first()
         if dummy_act:
-            AuditTrailService.log_event(dummy_act, "Champion School Approved", user_id, "Admin")
-        
+            AuditTrailService.log_event(
+                dummy_act, "Champion School Approved", user_id, "Admin"
+            )
+
         return True
 
     @staticmethod
@@ -131,7 +154,7 @@ class ChampionEligibilityService:
         profile = CoreSchoolProfile.objects.filter(school_id=school_id).first()
         if not profile:
             return False
-            
+
         profile.champion_status = "Not Eligible"
         profile.save(update_fields=["champion_status"])
         return True

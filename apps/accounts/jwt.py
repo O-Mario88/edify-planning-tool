@@ -5,6 +5,7 @@ The access JWT carries `{sub: userId, activeRole}` and is signed with JWT_SECRET
 short-lived (15m). A rotating, revocable refresh token (7d, SHA-256 hashed) is
 persisted alongside it. Logout revokes the refresh token.
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone

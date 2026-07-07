@@ -5,6 +5,7 @@ File-upload endpoints:
   GET  /api/uploads/<id>            — one batch + truthful breakdown
   GET  /api/uploads/<id>/rows       — per-row results for a batch
 """
+
 from __future__ import annotations
 
 from rest_framework.parsers import FormParser, MultiPartParser
@@ -106,16 +107,18 @@ class UploadBatchRowsView(APIView):
         status_filter = request.query_params.get("status")
         if status_filter:
             rows = rows.filter(status=status_filter)
-        return Response([
-            {
-                "rowNumber": r.row_number,
-                "schoolId": r.school_id,
-                "status": r.status,
-                "errorMessage": r.error_message,
-                "rawData": r.raw_data_json,
-            }
-            for r in rows
-        ])
+        return Response(
+            [
+                {
+                    "rowNumber": r.row_number,
+                    "schoolId": r.school_id,
+                    "status": r.status,
+                    "errorMessage": r.error_message,
+                    "rawData": r.raw_data_json,
+                }
+                for r in rows
+            ]
+        )
 
 
 class UploadBatchActionView(APIView):
@@ -146,14 +149,16 @@ class UploadBatchActionView(APIView):
                 return Response(_serialize_batch(batch))
             if batch.status not in ("validated", "completed_with_errors", "uploaded"):
                 raise BadRequest("Batch must be validated to import.")
-            
+
             if batch.upload_type == "schools":
                 from apps.schools.upload_service import import_school_batch
+
                 import_school_batch(batch, request.user)
             elif batch.upload_type == "ssa":
                 from apps.ssa.upload_service import import_ssa_batch
+
                 import_ssa_batch(batch, request.user)
-            
+
             batch.status = "imported"
             batch.save()
         else:

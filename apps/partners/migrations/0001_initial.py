@@ -9,7 +9,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
@@ -18,32 +17,91 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Partner',
+            name="Partner",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('deleted_at', models.DateTimeField(blank=True, db_index=True, null=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('name', models.CharField(max_length=255)),
-                ('region_name', models.CharField(blank=True, max_length=255, null=True)),
-                ('trains_on', django.contrib.postgres.fields.ArrayField(base_field=models.CharField(max_length=128), blank=True, default=list, size=None)),
-                ('notes', models.TextField(blank=True, null=True)),
-                ('contact_person', models.CharField(blank=True, max_length=255, null=True)),
-                ('email', models.EmailField(blank=True, max_length=254, null=True)),
-                ('phone', models.CharField(blank=True, max_length=64, null=True)),
-                ('coverage_districts', django.contrib.postgres.fields.ArrayField(base_field=models.CharField(max_length=255), blank=True, default=list, size=None)),
-                ('contract_status', models.CharField(blank=True, max_length=32, null=True)),
-                ('onboarded_by_user_id', models.CharField(blank=True, max_length=30, null=True)),
-                ('onboarded_at', models.DateTimeField(blank=True, null=True)),
-                ('is_certified', models.BooleanField(default=False)),
-                ('certification_status', models.CharField(blank=True, max_length=32, null=True)),
-                ('expertise_areas', django.contrib.postgres.fields.ArrayField(base_field=models.CharField(max_length=128), blank=True, default=list, size=None)),
-                ('active_status', models.BooleanField(default=True)),
-                ('user', models.OneToOneField(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='partner', to=settings.AUTH_USER_MODEL)),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "deleted_at",
+                    models.DateTimeField(blank=True, db_index=True, null=True),
+                ),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("name", models.CharField(max_length=255)),
+                (
+                    "region_name",
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
+                (
+                    "trains_on",
+                    django.contrib.postgres.fields.ArrayField(
+                        base_field=models.CharField(max_length=128),
+                        blank=True,
+                        default=list,
+                        size=None,
+                    ),
+                ),
+                ("notes", models.TextField(blank=True, null=True)),
+                (
+                    "contact_person",
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
+                ("email", models.EmailField(blank=True, max_length=254, null=True)),
+                ("phone", models.CharField(blank=True, max_length=64, null=True)),
+                (
+                    "coverage_districts",
+                    django.contrib.postgres.fields.ArrayField(
+                        base_field=models.CharField(max_length=255),
+                        blank=True,
+                        default=list,
+                        size=None,
+                    ),
+                ),
+                (
+                    "contract_status",
+                    models.CharField(blank=True, max_length=32, null=True),
+                ),
+                (
+                    "onboarded_by_user_id",
+                    models.CharField(blank=True, max_length=30, null=True),
+                ),
+                ("onboarded_at", models.DateTimeField(blank=True, null=True)),
+                ("is_certified", models.BooleanField(default=False)),
+                (
+                    "certification_status",
+                    models.CharField(blank=True, max_length=32, null=True),
+                ),
+                (
+                    "expertise_areas",
+                    django.contrib.postgres.fields.ArrayField(
+                        base_field=models.CharField(max_length=128),
+                        blank=True,
+                        default=list,
+                        size=None,
+                    ),
+                ),
+                ("active_status", models.BooleanField(default=True)),
+                (
+                    "user",
+                    models.OneToOneField(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="partner",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'db_table': 'partner',
-                'ordering': ['name'],
+                "db_table": "partner",
+                "ordering": ["name"],
             },
         ),
     ]

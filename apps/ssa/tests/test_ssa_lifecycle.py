@@ -6,6 +6,7 @@ from apps.ssa.models import SsaRecord
 from apps.accounts.models import User
 from rest_framework.test import APITestCase
 
+
 class SsaLifecycleTest(APITestCase):
     def setUp(self):
         self.region = Region.objects.create(name="Central")
@@ -57,6 +58,7 @@ class SsaLifecycleTest(APITestCase):
 
         # Case 4: SsaRecord is verified
         from apps.core.fy import get_operational_fy
+
         rec.verification_status = "confirmed"
         rec.fy = get_operational_fy()
         rec.save()
@@ -82,19 +84,20 @@ class SsaLifecycleTest(APITestCase):
                 "safe_school_environment": 6.0,
                 "community_engagement": 8.0,
                 "wash_and_infrastructure": 7.0,
-                "special_needs_and_inclusion": 6.5
+                "special_needs_and_inclusion": 6.5,
             },
             reason="School not found",
-            status="pending"
+            status="pending",
         )
-        
+
         # Test creation of school from unmatched row via frontend view route url
-        response = self.client.post("/ssa/unmatched", {
-            "record_id": rec.id,
-            "action": "create_school"
-        }, format="multipart")
+        response = self.client.post(
+            "/ssa/unmatched",
+            {"record_id": rec.id, "action": "create_school"},
+            format="multipart",
+        )
         self.assertEqual(response.status_code, 302)
-        
+
         # Verify school created by numeric ID extraction
         new_school = School.objects.get(school_id="99999")
         self.assertEqual(new_school.name, "Raw School Name")

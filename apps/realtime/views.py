@@ -6,6 +6,7 @@ domain refreshes), with a 25s heartbeat. Accepts a Bearer token. The client's
 EventSource opens this; on each domain event it dispatches a window event +
 debounces a router.refresh() (FE concern).
 """
+
 from __future__ import annotations
 
 import json
@@ -26,6 +27,7 @@ def stream(request):
         user_id = request.user.id
     else:
         from apps.accounts.jwt import JwtAuthentication
+
         # Authenticate manually (StreamingHttpResponse bypasses DRF dispatch).
         auth = JwtAuthentication()
         try:
@@ -37,7 +39,9 @@ def stream(request):
             pass
 
     if not user_id:
-        response = StreamingHttpResponse(["data: unauthorized\n\n"], content_type="text/event-stream")
+        response = StreamingHttpResponse(
+            ["data: unauthorized\n\n"], content_type="text/event-stream"
+        )
         response.status_code = 401
         return response
 
@@ -45,6 +49,7 @@ def stream(request):
     # We must close the Django database connection here so it is not held open
     # indefinitely, which would otherwise exhaust the Postgres connection pool.
     from django.db import connections
+
     connections.close_all()
 
     def event_stream():
@@ -70,4 +75,5 @@ def stream(request):
 
 def _now_iso() -> str:
     from django.utils import timezone
+
     return timezone.now().isoformat()

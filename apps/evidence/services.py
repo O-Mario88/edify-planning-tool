@@ -6,6 +6,7 @@ Files stored on local disk under EVIDENCE_STORAGE_DIR (absolute, persistent in
 production). Downloads send hardened headers and object-authorize the parent
 activity. A quarantined file is never downloadable.
 """
+
 from __future__ import annotations
 
 import os
@@ -66,7 +67,9 @@ def record_upload(*, principal, activity_id: str, kind: str, file_obj) -> dict:
     file_obj.seek(0, os.SEEK_END)
     size = file_obj.tell()
     file_obj.seek(0)
-    ext = assert_safe_upload(original_name=original_name, mime_type=mime_type, head=head, size=size)
+    ext = assert_safe_upload(
+        original_name=original_name, mime_type=mime_type, head=head, size=size
+    )
 
     # Persist to disk under a unique filename.
     stored_name = f"{uuid.uuid4().hex}{ext}"
@@ -78,7 +81,9 @@ def record_upload(*, principal, activity_id: str, kind: str, file_obj) -> dict:
     is_pdf = ext == ".pdf" or mime_type == "application/pdf"
     is_image = mime_type.startswith("image/")
     is_docx = ext in (".docx", ".doc")
-    preview_status = "ready" if (is_pdf or is_image) else ("pending" if is_docx else "not_required")
+    preview_status = (
+        "ready" if (is_pdf or is_image) else ("pending" if is_docx else "not_required")
+    )
 
     record = EvidenceRecord.objects.create(
         activity=activity,
@@ -130,9 +135,22 @@ def file_for(record_id: str, principal, *, download: bool = False):
         raise NotFoundError("File not found on disk.")
     record.view_count += 1
     record.save(update_fields=["view_count"])
-    response = FileResponse(open(path, "rb"), content_type=record.mime_type or "application/octet-stream")
-    disposition = "attachment" if download else ("inline" if (record.mime_type or "").startswith("image/") or record.mime_type == "application/pdf" else "attachment")
-    response["Content-Disposition"] = f'{disposition}; filename="{record.original_name or record.uri}"'
+    response = FileResponse(
+        open(path, "rb"), content_type=record.mime_type or "application/octet-stream"
+    )
+    disposition = (
+        "attachment"
+        if download
+        else (
+            "inline"
+            if (record.mime_type or "").startswith("image/")
+            or record.mime_type == "application/pdf"
+            else "attachment"
+        )
+    )
+    response["Content-Disposition"] = (
+        f'{disposition}; filename="{record.original_name or record.uri}"'
+    )
     response["X-Content-Type-Options"] = "nosniff"
     response["Content-Security-Policy"] = "default-src 'none'"
     response["X-Frame-Options"] = "DENY"
@@ -196,7 +214,9 @@ def _try_docx_to_pdf(record: EvidenceRecord) -> bool:
     try:
         subprocess.run(
             [soffice, "--headless", "--convert-to", "pdf", "--outdir", out_dir, src],
-            check=True, capture_output=True, timeout=60,
+            check=True,
+            capture_output=True,
+            timeout=60,
         )
         pdf_name = os.path.splitext(record.uri)[0] + ".pdf"
         if os.path.exists(os.path.join(out_dir, pdf_name)):
@@ -204,7 +224,14 @@ def _try_docx_to_pdf(record: EvidenceRecord) -> bool:
             record.pdf_rendition_status = "ready"
             record.preview_status = "ready"
             record.pdf_rendition_at = timezone.now()
-            record.save(update_fields=["pdf_rendition_storage_key", "pdf_rendition_status", "preview_status", "pdf_rendition_at"])
+            record.save(
+                update_fields=[
+                    "pdf_rendition_storage_key",
+                    "pdf_rendition_status",
+                    "preview_status",
+                    "pdf_rendition_at",
+                ]
+            )
             return True
     except Exception as exc:  # noqa: BLE001
         record.preview_status = "failed"
@@ -223,7 +250,7 @@ def rendition_for(record_id: str, principal):
     if not os.path.exists(path):
         raise NotFoundError("Rendition file not found.")
     response = FileResponse(open(path, "rb"), content_type="application/pdf")
-    response["Content-Disposition"] = 'inline'
+    response["Content-Disposition"] = "inline"
     response["X-Content-Type-Options"] = "nosniff"
     return response
 

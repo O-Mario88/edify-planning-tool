@@ -15,6 +15,7 @@ from apps.geography.models import District, Region
 from apps.schools.models import School
 from apps.ssa.models import SsaRecord, SsaScore
 
+
 class ActivityPurposeAndImpactTest(TestCase):
     def setUp(self):
         self.region = Region.objects.create(name="Central")
@@ -25,19 +26,21 @@ class ActivityPurposeAndImpactTest(TestCase):
             roles=[EdifyRole.CCEO.value],
             active_role=EdifyRole.CCEO.value,
             password="x",
-            is_active=True
+            is_active=True,
         )
         self.staff = StaffProfile.objects.create(user=self.user, title="CCEO")
-        
+
         self.school = School.objects.create(
             school_id="SCH-99",
             name="Excel Junior Community Primary School",
             region=self.region,
             district=self.district,
-            current_fy_ssa_status="done"
+            current_fy_ssa_status="done",
         )
-        self.cluster = Cluster.objects.create(name="Central Cluster", district=self.district, region=self.region)
-        
+        self.cluster = Cluster.objects.create(
+            name="Central Cluster", district=self.district, region=self.region
+        )
+
         # Staff School Assignment to bypass target scoping check
         StaffSchoolAssignment.objects.create(staff=self.staff, school_id=self.school.id)
 
@@ -49,13 +52,13 @@ class ActivityPurposeAndImpactTest(TestCase):
             fy="2026",
             quarter="Q4",
             uploaded_by="STF-01",
-            average_score=5.0
+            average_score=5.0,
         )
         for intervention in SsaIntervention:
             SsaScore.objects.create(
                 ssa_record=self.pre_ssa,
                 intervention=intervention.value,
-                score=4.0 if intervention.value == "leadership" else 5.0
+                score=4.0 if intervention.value == "leadership" else 5.0,
             )
 
         # Post SSA (after activity date: 2026-06-15)
@@ -65,13 +68,13 @@ class ActivityPurposeAndImpactTest(TestCase):
             fy="2026",
             quarter="Q4",
             uploaded_by="STF-01",
-            average_score=6.0
+            average_score=6.0,
         )
         for intervention in SsaIntervention:
             SsaScore.objects.create(
                 ssa_record=self.post_ssa,
                 intervention=intervention.value,
-                score=3.0 if intervention.value == "leadership" else 5.0
+                score=3.0 if intervention.value == "leadership" else 5.0,
             )
 
     def test_visit_creation_validation(self):
@@ -81,7 +84,7 @@ class ActivityPurposeAndImpactTest(TestCase):
             "schoolId": "SCH-99",
             "scheduledDate": "2026-06-15",
             "responsibleStaffId": self.staff.id,
-            "strict_validation": True
+            "strict_validation": True,
         }
         with self.assertRaises(BadRequest) as ctx:
             create(data, self.user)
@@ -93,9 +96,10 @@ class ActivityPurposeAndImpactTest(TestCase):
         self.assertIn("must have a focus intervention", str(ctx.exception))
 
         data["focusIntervention"] = "leadership"
-        
+
         # Mock assert_schedulable to avoid CD Catalog requirement details
         from unittest.mock import patch
+
         with patch("apps.budget.costing_service.assert_schedulable") as mock_assert:
             res = create(data, self.user)
             self.assertIsNotNone(res["id"])
@@ -115,9 +119,9 @@ class ActivityPurposeAndImpactTest(TestCase):
             planned_date=datetime.date(2026, 6, 15),
             focus_intervention="leadership",
             activity_purpose_text="Visit for leadership support",
-            status="completed"
+            status="completed",
         )
-        
+
         impact = calculate_activity_impact(activity)
         self.assertEqual(impact["status"], "Improved")
         self.assertEqual(impact["preScore"], 4.0)
@@ -127,8 +131,9 @@ class ActivityPurposeAndImpactTest(TestCase):
     def test_cluster_weakest_interventions(self):
         # Assign school to cluster
         from apps.clusters.models import SchoolClusterAssignment
+
         SchoolClusterAssignment.objects.create(school=self.school, cluster=self.cluster)
-        
+
         weakest = cluster_weakest_interventions(self.cluster.id, self.user)
         self.assertEqual(len(weakest), 4)
         self.assertEqual(weakest[0]["intervention"], "leadership")

@@ -1,4 +1,5 @@
 """Debriefs service — daily field debriefs + CCEO merge."""
+
 from __future__ import annotations
 
 from django.utils import timezone
@@ -42,7 +43,11 @@ def list_debriefs(principal, query: dict) -> list[dict]:
 
 def today(principal) -> list[dict]:
     today = timezone.now().date()
-    qs = DailyDebrief.objects.filter(deleted_at__isnull=True, date__date=today, submitted_by_user_id=principal.user_id)
+    qs = DailyDebrief.objects.filter(
+        deleted_at__isnull=True,
+        date__date=today,
+        submitted_by_user_id=principal.user_id,
+    )
     return [_serialize(d) for d in qs]
 
 
@@ -56,6 +61,7 @@ def get_one(debrief_id: str, principal) -> dict:
 def merge_partner_debrief(data: dict, principal) -> dict:
     """CCEO merges a partner debrief -> routes up to PL/CD/IA/HR."""
     from apps.core.rbac import EdifyRole
+
     if principal.active_role != EdifyRole.CCEO.value:
         raise BadRequest("Only a CCEO can merge partner debriefs.")
     parent_id = data.get("parentDebriefId")

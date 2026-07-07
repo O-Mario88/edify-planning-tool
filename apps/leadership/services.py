@@ -1,4 +1,5 @@
 """Leadership Decision Engine service — recommends; leadership decides."""
+
 from __future__ import annotations
 
 from django.utils import timezone
@@ -7,52 +8,58 @@ from apps.core.exceptions import NotFoundError
 from apps.core.fy import get_operational_fy
 
 from .models import (
-    DecisionNote, LeadershipDecisionInsight,
+    DecisionNote,
+    LeadershipDecisionInsight,
 )
 
 
 def boards(principal, query: dict) -> dict:
     fy = query.get("fy") or get_operational_fy()
     insights_list = _list(query)
-    
+
     by_type = {}
     for i in insights_list:
         dtype = i["decisionType"]
         if dtype not in by_type:
             by_type[dtype] = []
         by_type[dtype].append(i)
-        
+
     boards_data = []
     visible_boards = list(by_type.keys())
-    
+
     for dtype, items in by_type.items():
-        boards_data.append({
-            "decisionType": dtype,
-            "canReview": principal.active_role in ("CountryDirector", "Program Lead"),
-            "insights": items
-        })
-        
-    return {
-        "fy": fy,
-        "visibleBoards": visible_boards,
-        "boards": boards_data
-    }
+        boards_data.append(
+            {
+                "decisionType": dtype,
+                "canReview": principal.active_role
+                in ("CountryDirector", "Program Lead"),
+                "insights": items,
+            }
+        )
+
+    return {"fy": fy, "visibleBoards": visible_boards, "boards": boards_data}
 
 
 def snapshot(principal, query: dict) -> dict:
     fy = query.get("fy") or get_operational_fy()
     qs = LeadershipDecisionInsight.objects.filter(fy=fy)
     total = qs.count()
-    
+
     from django.db.models import Avg
+
     avg_conf = qs.aggregate(a=Avg("confidence_score"))["a"]
     data_confidence = round(avg_conf * 100) if avg_conf is not None else 85
-    
+
     high_risk = qs.filter(risk_level__in=["high", "critical"]).count()
-    staff_overload = qs.filter(decision_type__in=["staff_hr", "staff_addition"], risk_level__in=["high", "critical", "medium"]).count()
-    partner_mou_risks = qs.filter(decision_type="partner", risk_level__in=["high", "critical", "medium"]).count()
+    staff_overload = qs.filter(
+        decision_type__in=["staff_hr", "staff_addition"],
+        risk_level__in=["high", "critical", "medium"],
+    ).count()
+    partner_mou_risks = qs.filter(
+        decision_type="partner", risk_level__in=["high", "critical", "medium"]
+    ).count()
     partner_capacity = qs.filter(decision_type="partner").count()
-    
+
     regions_expand = list(
         qs.filter(scope_type="region", recommendation__icontains="expand")
         .values_list("scope_name", flat=True)
@@ -64,17 +71,17 @@ def snapshot(principal, query: dict) -> dict:
             .values_list("scope_name", flat=True)
             .distinct()[:2]
         )
-        
+
     regions_pause = list(
         qs.filter(scope_type="region", recommendation__icontains="pause")
         .values_list("scope_name", flat=True)
         .distinct()
     )
-    
+
     headline = "Strategic posture: stable. Review pending decisions below."
     if total > 0:
         headline = f"Strategic Posture: {high_risk} high-risk decisions pending. Data confidence is at {data_confidence}%."
-        
+
     return {
         "fy": fy,
         "strategicHeadline": headline,
@@ -133,7 +140,15 @@ def review(insight_id: str, data: dict, principal) -> dict:
     i.reviewed_by_role = principal.active_role
     i.reviewed_at = timezone.now()
     i.review_note = data.get("note")
-    i.save(update_fields=["status", "reviewed_by_user_id", "reviewed_by_role", "reviewed_at", "review_note"])
+    i.save(
+        update_fields=[
+            "status",
+            "reviewed_by_user_id",
+            "reviewed_by_role",
+            "reviewed_at",
+            "review_note",
+        ]
+    )
     return _serialize(i)
 
 
@@ -142,8 +157,11 @@ def add_note(insight_id: str, data: dict, principal) -> dict:
     if not i:
         raise NotFoundError("Insight not found.")
     note = DecisionNote.objects.create(
-        insight=i, author_user_id=principal.user_id, author_role=principal.active_role,
-        note=data.get("note", ""), kind=data.get("kind", "note"),
+        insight=i,
+        author_user_id=principal.user_id,
+        author_role=principal.active_role,
+        note=data.get("note", ""),
+        kind=data.get("kind", "note"),
     )
     return {"id": note.id, "note": note.note}
 
@@ -158,12 +176,20 @@ def recompute(query: dict, principal) -> dict:
 
 def _serialize(i: LeadershipDecisionInsight) -> dict:
     return {
-        "id": i.id, "fy": i.fy, "decisionType": i.decision_type,
-        "scopeType": i.scope_type, "scopeId": i.scope_id, "scopeName": i.scope_name,
-        "recommendation": i.recommendation, "reason": i.reason,
-        "riskLevel": i.risk_level, "confidenceLevel": i.confidence_level,
-        "confidenceScore": i.confidence_score, "status": i.status,
-        "suggestedAction": i.suggested_action, "generatedAt": i.generated_at.isoformat(),
+        "id": i.id,
+        "fy": i.fy,
+        "decisionType": i.decision_type,
+        "scopeType": i.scope_type,
+        "scopeId": i.scope_id,
+        "scopeName": i.scope_name,
+        "recommendation": i.recommendation,
+        "reason": i.reason,
+        "riskLevel": i.risk_level,
+        "confidenceLevel": i.confidence_level,
+        "confidenceScore": i.confidence_score,
+        "status": i.status,
+        "suggestedAction": i.suggested_action,
+        "generatedAt": i.generated_at.isoformat(),
         "riskFlags": i.risk_flags or [],
         "evidencePoints": i.evidence_summary or [],
         "alternatives": i.alternatives or [],

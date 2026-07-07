@@ -1,4 +1,5 @@
 """Messaging endpoints — /api/messages/*."""
+
 from __future__ import annotations
 
 from rest_framework.permissions import IsAuthenticated
@@ -55,7 +56,9 @@ class MessageReplyView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request: Request, thread_id: str) -> Response:
-        return Response(services.reply(thread_id, request.data, request.user), status=201)
+        return Response(
+            services.reply(thread_id, request.data, request.user), status=201
+        )
 
 
 class MessageReadView(APIView):

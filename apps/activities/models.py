@@ -6,6 +6,7 @@ rate card at schedule time), and ActivityCompletionVerification (manual
 Salesforce SV-/TS- ID confirmation). Payments models (PaymentRequest etc.) live
 in the payments app.
 """
+
 from __future__ import annotations
 
 from django.db import models
@@ -29,8 +30,20 @@ class Activity(SoftDeleteModel):
 
     id = CuidField()
     activity_type = models.CharField(max_length=48, choices=ActivityType.choices)
-    school = models.ForeignKey("schools.School", on_delete=models.SET_NULL, null=True, blank=True, related_name="activities")
-    cluster = models.ForeignKey("clusters.Cluster", on_delete=models.SET_NULL, null=True, blank=True, related_name="activities")
+    school = models.ForeignKey(
+        "schools.School",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="activities",
+    )
+    cluster = models.ForeignKey(
+        "clusters.Cluster",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="activities",
+    )
     project_id = models.CharField(max_length=30, null=True, blank=True)
 
     fy = models.CharField(max_length=16)
@@ -48,38 +61,62 @@ class Activity(SoftDeleteModel):
     responsible_staff_id = models.CharField(max_length=30, null=True, blank=True)
     monitored_by_staff_id = models.CharField(max_length=30, null=True, blank=True)
     assigned_partner_id = models.CharField(max_length=30, null=True, blank=True)
-    delivery_type = models.CharField(max_length=16, choices=DeliveryType.choices, default=DeliveryType.STAFF)
-    cluster_slot = models.CharField(max_length=16, choices=ClusterMeetingSlot.choices, null=True, blank=True)
+    delivery_type = models.CharField(
+        max_length=16, choices=DeliveryType.choices, default=DeliveryType.STAFF
+    )
+    cluster_slot = models.CharField(
+        max_length=16, choices=ClusterMeetingSlot.choices, null=True, blank=True
+    )
 
     # Core Schools tracking fields
     visit_number = models.CharField(max_length=16, null=True, blank=True)
     training_number = models.CharField(max_length=16, null=True, blank=True)
     support_type = models.CharField(max_length=32, null=True, blank=True)
 
-    purpose_intervention = models.CharField(max_length=64, choices=SsaIntervention.choices, null=True, blank=True)
+    purpose_intervention = models.CharField(
+        max_length=64, choices=SsaIntervention.choices, null=True, blank=True
+    )
     activity_purpose_text = models.TextField(null=True, blank=True)
     purpose_type = models.CharField(max_length=64, null=True, blank=True)
-    focus_intervention = models.CharField(max_length=64, choices=SsaIntervention.choices, null=True, blank=True)
-    secondary_focus_interventions = ArrayField(base_field=models.CharField(max_length=64, choices=SsaIntervention.choices), default=list, blank=True)
+    focus_intervention = models.CharField(
+        max_length=64, choices=SsaIntervention.choices, null=True, blank=True
+    )
+    secondary_focus_interventions = ArrayField(
+        base_field=models.CharField(max_length=64, choices=SsaIntervention.choices),
+        default=list,
+        blank=True,
+    )
     expected_outcome = models.TextField(null=True, blank=True)
 
-    status = models.CharField(max_length=32, choices=ActivityStatus.choices, default=ActivityStatus.NOT_PLANNED)
-    evidence_status = models.CharField(max_length=16, choices=EvidenceStatus.choices, default=EvidenceStatus.NONE)
+    status = models.CharField(
+        max_length=32,
+        choices=ActivityStatus.choices,
+        default=ActivityStatus.NOT_PLANNED,
+    )
+    evidence_status = models.CharField(
+        max_length=16, choices=EvidenceStatus.choices, default=EvidenceStatus.NONE
+    )
 
     # Salesforce-ready (manual ID confirmation, not integrated).
     salesforce_activity_id = models.CharField(max_length=128, null=True, blank=True)
-    salesforce_activity_type = models.CharField(max_length=16, null=True, blank=True)  # visit | training
+    salesforce_activity_type = models.CharField(
+        max_length=16, null=True, blank=True
+    )  # visit | training
 
     # SSA collection integration
     ssa_collection_expected = models.BooleanField(default=False)
     ssa_not_collected_reason = models.CharField(max_length=255, null=True, blank=True)
 
     ia_verification_status = models.CharField(
-        max_length=16, choices=VerificationStatus.choices, default=VerificationStatus.PENDING
+        max_length=16,
+        choices=VerificationStatus.choices,
+        default=VerificationStatus.PENDING,
     )
     ia_confirmed_at = models.DateTimeField(null=True, blank=True)
     ia_confirmed_by = models.CharField(max_length=30, null=True, blank=True)
-    payment_status = models.CharField(max_length=32, choices=PaymentStatus.choices, default=PaymentStatus.NONE)
+    payment_status = models.CharField(
+        max_length=32, choices=PaymentStatus.choices, default=PaymentStatus.NONE
+    )
 
     # Reschedule trail.
     reschedule_count = models.IntegerField(default=0)
@@ -99,7 +136,9 @@ class Activity(SoftDeleteModel):
     leaders_attended = models.IntegerField(null=True, blank=True)
     other_participants = models.IntegerField(null=True, blank=True)
     next_meeting_date = models.DateTimeField(null=True, blank=True)
-    attended_school_ids = ArrayField(base_field=models.CharField(max_length=30), default=list, blank=True)
+    attended_school_ids = ArrayField(
+        base_field=models.CharField(max_length=30), default=list, blank=True
+    )
 
     class Meta:
         db_table = "activity"
@@ -117,8 +156,12 @@ class Activity(SoftDeleteModel):
         ]
         constraints = [
             models.CheckConstraint(
-                check=~models.Q(status="closed") | (models.Q(salesforce_activity_id__isnull=False) & ~models.Q(salesforce_activity_id="")),
-                name="closed_activity_must_have_sf_id"
+                check=~models.Q(status="closed")
+                | (
+                    models.Q(salesforce_activity_id__isnull=False)
+                    & ~models.Q(salesforce_activity_id="")
+                ),
+                name="closed_activity_must_have_sf_id",
             )
         ]
 
@@ -126,6 +169,7 @@ class Activity(SoftDeleteModel):
         super().save(*args, **kwargs)
         try:
             from apps.core_schools.models import CoreActivitySlot
+
             slot = CoreActivitySlot.objects.filter(activity_id=self.id).first()
             if slot:
                 slot.status = self.status
@@ -145,7 +189,9 @@ class ActivityScheduleCostLine(TimeStampedModel):
     priced against. Amounts are integer UGX (whole shillings)."""
 
     id = CuidField()
-    activity = models.ForeignKey(Activity, on_delete=models.CASCADE, related_name="schedule_cost_lines")
+    activity = models.ForeignKey(
+        Activity, on_delete=models.CASCADE, related_name="schedule_cost_lines"
+    )
     cost_setting_key = models.CharField(max_length=128)
     label = models.CharField(max_length=255)
     unit_cost = models.IntegerField()  # UGX, integer
@@ -169,10 +215,18 @@ class ActivityScheduleCostLine(TimeStampedModel):
     fiscal_year = models.CharField(max_length=16, null=True, blank=True)
     responsible_user = models.CharField(max_length=30, null=True, blank=True)
     responsible_role = models.CharField(max_length=64, null=True, blank=True)
-    school = models.ForeignKey("schools.School", on_delete=models.SET_NULL, null=True, blank=True)
-    cluster = models.ForeignKey("clusters.Cluster", on_delete=models.SET_NULL, null=True, blank=True)
-    partner = models.ForeignKey("partners.Partner", on_delete=models.SET_NULL, null=True, blank=True)
-    project = models.ForeignKey("projects.Project", on_delete=models.SET_NULL, null=True, blank=True)
+    school = models.ForeignKey(
+        "schools.School", on_delete=models.SET_NULL, null=True, blank=True
+    )
+    cluster = models.ForeignKey(
+        "clusters.Cluster", on_delete=models.SET_NULL, null=True, blank=True
+    )
+    partner = models.ForeignKey(
+        "partners.Partner", on_delete=models.SET_NULL, null=True, blank=True
+    )
+    project = models.ForeignKey(
+        "projects.Project", on_delete=models.SET_NULL, null=True, blank=True
+    )
 
     @property
     def finance_status(self) -> str:
@@ -237,11 +291,17 @@ class ActivityCompletionVerification(TimeStampedModel):
     """Manual Salesforce SV-/TS- ID confirmation (IA verifies the entry)."""
 
     id = CuidField()
-    activity = models.OneToOneField(Activity, on_delete=models.CASCADE, related_name="verification")
+    activity = models.OneToOneField(
+        Activity, on_delete=models.CASCADE, related_name="verification"
+    )
     salesforce_id = models.CharField(max_length=128)  # SV- or TS-
     entered_by = models.CharField(max_length=30)  # responsible staff userId
     entered_at = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=16, choices=VerificationStatus.choices, default=VerificationStatus.PENDING)
+    status = models.CharField(
+        max_length=16,
+        choices=VerificationStatus.choices,
+        default=VerificationStatus.PENDING,
+    )
     ia_actor_id = models.CharField(max_length=30, null=True, blank=True)
     ia_action_at = models.DateTimeField(null=True, blank=True)
     ia_note = models.CharField(max_length=512, null=True, blank=True)
@@ -249,7 +309,8 @@ class ActivityCompletionVerification(TimeStampedModel):
     class Meta:
         db_table = "activity_completion_verification"
 
-from .ia_models import (
+
+from .ia_models import (  # noqa: E402 — deliberate late import (see module layout)
     IAVerification,
     VerificationChecklist,
     VerificationComment,
@@ -258,7 +319,7 @@ from .ia_models import (
     DuplicateActivity,
     VerificationHistory,
 )
-from .closure_models import (
+from .closure_models import (  # noqa: E402 — deliberate late import (see module layout)
     ActivityClosure,
     ClosureChecklist,
     ClosureBlocker,
@@ -287,4 +348,3 @@ __all__ = [
     "AnalyticsPublishRecord",
     "ActivityTimelineEvent",
 ]
-

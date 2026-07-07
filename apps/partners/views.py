@@ -1,4 +1,5 @@
 """Partners endpoints — /api/partners/*."""
+
 from __future__ import annotations
 
 from rest_framework.permissions import IsAuthenticated
@@ -63,7 +64,9 @@ class PartnerMeScheduleView(APIView):
     required_permissions = [Permission.PLANNING_VIEW.value]
 
     def post(self, request: Request, activity_id: str) -> Response:
-        return Response(services.schedule_activity(activity_id, request.data, request.user))
+        return Response(
+            services.schedule_activity(activity_id, request.data, request.user)
+        )
 
 
 class PartnerUpdateView(APIView):
