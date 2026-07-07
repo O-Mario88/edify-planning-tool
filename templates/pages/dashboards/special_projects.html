@@ -4,7 +4,7 @@
 {% block title %}Special Projects Dashboard — SIPA{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-[1500px] mx-auto space-y-6 text-slate-700 font-sans"
+<div class="p-6 max-w-[1500px] mx-auto space-y-5 text-slate-700 font-sans"
 x-data="{
 portfolio: [],
 attention: [],
@@ -19,86 +19,28 @@ this.milestones = JSON.parse(document.getElementById('sp-milestones-data').textC
 {{ attention|json_script:"sp-attention-data" }}
 {{ milestones|json_script:"sp-milestones-data" }}
 
-<!-- ================= TOP HEADER BAR ================= -->
-<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-100 pb-3">
-<div>
-<div class="flex items-center gap-2">
-<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight leading-none">Special Projects Dashboard</h1>
-</div>
-<p class="text-[12px] text-slate-500 font-bold mt-1.5 font-semibold">Manage high-impact programs, partner delivery, school participation, and teacher outcomes.</p>
-</div>
+{% include "components/page_header.html" with title="Special Projects Dashboard" subtitle="Manage high-impact programs, partner delivery, school participation, and teacher outcomes." actions_template="pages/dashboards/_sp_header_actions.html" %}
 
-<!-- Search / Picker Controls -->
-<div class="flex flex-wrap items-center gap-2">
-<div class="flex items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-xl  text-[11px] font-bold text-slate-600">
-🔍 <input type="text" placeholder="Search projects..." class="bg-transparent focus:outline-none w-32">
-</div>
-<span class="h-8 px-3 bg-slate-100 rounded-xl text-[11px] font-bold text-slate-600 flex items-center">{% now "F Y" %}</span>
+{% include "components/role_scope_notice.html" with scope_text="Showing all special projects in the portfolio." %}
 
-<!-- User profile info -->
-<div class="flex items-center gap-2 pl-2 border-l border-slate-200">
-<div class="h-8 w-8 rounded-full bg-slate-100 font-semibold text-[12px] text-slate-700 flex items-center justify-center ">{{ avatar_initials }}</div>
-<span class="text-[11px] font-semibold text-slate-800 hidden sm:inline">{{ user_name }}</span>
-</div>
-</div>
-</div>
+{% include "components/kpi_strip.html" with items=sp_kpi_strip_items %}
 
+<!-- Decision / Alert / Action row -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+  {% if sp_attention_count %}
+  {% include "components/action_card.html" with kind="alert" title="Projects need attention" body=sp_attention_count|stringformat:"s"|add:" project(s) are behind schedule or have no activity yet." cta_label="Review projects" cta_href="/projects" meta=sp_attention_count %}
+  {% else %}
+  {% include "components/action_card.html" with kind="neutral" title="Portfolio is healthy" body="No projects are behind schedule right now." %}
+  {% endif %}
 
-<!-- Transformational Programs Banner -->
-<div class="bg-[#102a3a] text-white p-6 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative overflow-hidden">
-<!-- SVG background shape decoration -->
-<div class="absolute -right-20 -top-20 w-64 h-64 bg-slate-800/10 rounded-full blur-3xl"></div>
-<div class="relative z-10">
-<h2 class="text-[18px] font-semibold tracking-tight leading-snug">Build transformational programs. Scale impact beyond the core model.</h2>
-<p class="text-[12px] text-slate-300 font-bold mt-1 max-w-[800px]">Special projects expand opportunity, strengthen schools, and equip teachers for lasting change.</p>
+  {% if sp_kpis.total %}
+  {% include "components/action_card.html" with kind="insight" title="Portfolio completion" body=sp_kpis.pct|stringformat:"s"|add:"% of scheduled activities are completed across all projects." cta_label="View projects" cta_href="/projects" meta=sp_kpis.pct|stringformat:"s"|add:"%" %}
+  {% else %}
+  {% include "components/action_card.html" with kind="neutral" title="No projects yet" body="Create a project to start tracking special-project activity." %}
+  {% endif %}
+
+  {% include "components/action_card.html" with kind="action" title="Upcoming milestones" body=sp_milestone_count|stringformat:"s"|add:" milestone(s) scheduled across active projects." cta_label="View calendar" cta_href="/planning" meta=sp_milestone_count %}
 </div>
-
-<!-- Right visual metric display -->
-<div class="flex items-center gap-3 shrink-0 relative z-10 bg-slate-800/40 p-4 rounded-xl border border-slate-700/50">
-<div>
-<span class="text-[11px] font-semibold text-slate-400 uppercase tracking-widest block">Activity Completion</span>
-<span class="text-[18px] font-semibold text-emerald-400 block leading-none mt-1">{{ sp_kpis.pct }}% <span class="text-[11px] text-white/80 font-bold ml-1">across all projects</span></span>
-</div>
-<!-- SVG green sparkline -->
-<svg class="h-6 w-16 text-emerald-500 shrink-0" viewBox="0 0 100 30">
-<path d="M0,25 L20,20 L40,22 L60,10 L80,14 L100,2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
-</svg>
-</div>
-</div>
-
-
-<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3.5">
-  {% include "components/kpi_card.html" with label="Total Special Projects" value=sp_kpis.total %}
-  {% include "components/kpi_card.html" with label="Projects With Activity" value=sp_kpis.active %}
-  {% include "components/kpi_card.html" with label="Schools in Projects" value=sp_kpis.schools %}
-  {% include "components/kpi_card.html" with label="Partners Assigned" value=sp_kpis.partners %}
-  {% include "components/kpi_card.html" with label="Activities Scheduled" value=sp_kpis.activities %}
-  {% include "components/kpi_card.html" with label="Activities Completed" value=sp_kpis.completed tone="success" %}
-</div>
-
-
-<!-- Buttons Toolbar -->
-<div class="flex flex-wrap items-center gap-2">
-<button class="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[12px] font-semibold shadow-sm transition-all">
-+ New Project
-</button>
-<button class="h-9 px-3.5 bg-white  text-slate-700 rounded-xl text-[12px] font-bold shadow-sm hover:bg-slate-50">
-Import Schools
-</button>
-<button class="h-9 px-3.5 bg-white  text-slate-700 rounded-xl text-[12px] font-bold shadow-sm hover:bg-slate-50">
-Assign Partner
-</button>
-<button class="h-9 px-3.5 bg-white  text-slate-700 rounded-xl text-[12px] font-bold shadow-sm hover:bg-slate-50">
-Add Schools to Project
-</button>
-<button class="h-9 px-3.5 bg-white  text-slate-700 rounded-xl text-[12px] font-bold shadow-sm hover:bg-slate-50">
-Track Impact
-</button>
-<button class="h-9 px-3.5 bg-white  text-slate-700 rounded-xl text-[12px] font-bold shadow-sm hover:bg-slate-50 ml-auto">
-Export Summary
-</button>
-</div>
-
 
 <!-- ================= GRID SECTION 1 ================= -->
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -106,7 +48,7 @@ Export Summary
 <!-- 1. Project Portfolio (Col Span 8) -->
 <div class="lg:col-span-8 card p-5 space-y-4">
 <div class="flex items-center justify-between pb-2 border-b border-slate-100">
-<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">1. Project Portfolio</h3>
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Project Portfolio</h3>
 <a href="/projects" class="text-[11px] font-semibold text-blue-600 hover:underline">View all projects &rsaquo;</a>
 </div>
 
@@ -143,6 +85,7 @@ Export Summary
 </template>
 </tbody>
 </table>
+<p x-show="portfolio.length === 0" class="text-slate-400 py-6 text-center text-[11px] font-bold">No special projects created yet.</p>
 </div>
 </div>
 
@@ -150,8 +93,8 @@ Export Summary
 <div class="lg:col-span-4 card p-5 flex flex-col justify-between">
 <div>
 <div class="pb-3 border-b border-slate-100 flex items-center justify-between">
-<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">2. Priority Projects / Needs Attention</h3>
-<a href="#" class="text-[11px] font-semibold text-blue-600 hover:underline">View all</a>
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Priority Projects / Needs Attention</h3>
+<a href="/projects" class="text-[11px] font-semibold text-blue-600 hover:underline">View all</a>
 </div>
 
 <div class="space-y-3.5 mt-4 text-[12px] font-bold text-slate-700">
@@ -167,6 +110,7 @@ Export Summary
 </div>
 </div>
 </template>
+<p x-show="attention.length === 0" class="text-slate-400 py-3 text-center text-[11px] font-bold">No projects need attention right now.</p>
 </div>
 </div>
 </div>
@@ -175,12 +119,12 @@ Export Summary
 
 
 <!-- ================= GRID SECTION 2 ================= -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
 <!-- 3. Project Completion Progress -->
-<div class="lg:col-span-6 card p-5">
+<div class="card p-5">
 <div class="pb-3 border-b border-slate-100 flex items-center justify-between">
-<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">3. Project Completion Progress</h3>
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Project Completion Progress</h3>
 </div>
 <div class="space-y-3.5 mt-4 text-[11px] font-bold text-slate-600">
 <template x-for="item in portfolio" :key="item.name">
@@ -194,9 +138,9 @@ Export Summary
 </div>
 
 <!-- 4. Schools per Project -->
-<div class="lg:col-span-6 card p-5">
+<div class="card p-5">
 <div class="pb-3 border-b border-slate-100 flex items-center justify-between">
-<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">4. Schools &amp; Partners per Project</h3>
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Schools &amp; Partners per Project</h3>
 </div>
 <div class="overflow-x-auto mt-4">
 <table class="w-full text-left text-[11px] border-collapse font-bold text-slate-600">
@@ -223,12 +167,13 @@ Export Summary
 </div>
 </div>
 
-<!-- 5. Upcoming Milestones / Project Calendar (Col Span 6) -->
-<div class="lg:col-span-6 card p-5 flex flex-col justify-between">
-<div>
+</div>
+
+<!-- 5. Upcoming Milestones / Project Calendar (full width) -->
+<div class="card p-5">
 <div class="pb-3 border-b border-slate-100 flex items-center justify-between">
-<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">5. Upcoming Milestones / Project Calendar</h3>
-<button class="text-[11px] font-semibold text-blue-600 hover:underline">View Calendar</button>
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Upcoming Milestones / Project Calendar</h3>
+<a href="/planning" class="text-[11px] font-semibold text-blue-600 hover:underline">View Calendar</a>
 </div>
 
 <div class="grid grid-cols-2 sm:grid-cols-6 gap-3 mt-4">
@@ -245,10 +190,8 @@ Export Summary
 <span class="text-[11px] text-slate-400 block font-bold" x-text="item.time + ' &bull; ' + item.info"></span>
 </div>
 </template>
+<p x-show="milestones.length === 0" class="text-slate-400 py-3 text-center text-[11px] font-bold col-span-full">No upcoming milestones scheduled.</p>
 </div>
-</div>
-</div>
-
 </div>
 
 </div>

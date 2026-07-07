@@ -4,101 +4,43 @@
 {% block title %}Today's Tasks Console — SIPA{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-[1400px] mx-auto space-y-6 text-slate-700">
+<div class="p-6 max-w-[1400px] mx-auto space-y-5 text-slate-700" id="cceo-dashboard-container">
 
-<!-- ================= TOP HEADER BAR ================= -->
-<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-  <div>
-    <h1 class="text-[24px] font-semibold text-slate-800 tracking-tight leading-tight">Good morning, {{ user_name }} <span class="inline-block">👋</span></h1>
-    <p class="text-[13px] text-slate-500 font-normal mt-1">Here's your plan for today. Stay focused, drive impact.</p>
-  </div>
+{% include "components/page_header.html" with title="Good morning, "|add:user_name subtitle="Here's your plan for today. Stay focused, drive impact." actions_template="pages/dashboards/_cceo_header_actions.html" %}
 
-  <!-- Controls -->
-  <div class="flex flex-wrap items-center gap-2.5">
-    <!-- Date Dropdown -->
-    <div class="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-lg shadow-sm cursor-pointer text-[12px] font-medium text-slate-600 hover:bg-slate-50 transition-colors">
-      <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-      📅 {% now "D, M d, Y" %}
-      <svg class="h-3.5 w-3.5 text-slate-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 11-1.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-    </div>
+{% include "components/role_scope_notice.html" with scope_text="Showing only activities and tasks assigned to you." %}
 
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
 
-    <!-- Avatar profile -->
-    <div class="flex items-center gap-2">
-      <div class="h-9 w-9 rounded-full bg-slate-100 font-semibold text-[12px] text-slate-600 flex items-center justify-center">{{ avatar_initials }}</div>
-      <div class="text-left hidden sm:block">
-        <span class="text-[12px] font-semibold text-slate-700 block leading-tight">{{ user_name }}</span>
-        <span class="text-[11px] text-slate-400 block mt-0.5">CCEO / Field Officer</span>
-      </div>
-    </div>
-  </div>
-</div>
+<!-- Primary insight: 2-column -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
-
-<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-  {% include "components/kpi_card.html" with label="Completed" value=kpis.completed tone="success" icon="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" %}
-  {% include "components/kpi_card.html" with label="In Progress" value=kpis.in_progress tone="info" icon="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" %}
-  {% include "components/kpi_card.html" with label="Planned" value=kpis.planned tone="warning" icon="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" %}
-  {% include "components/kpi_card.html" with label="Overdue" value=kpis.overdue tone="danger" icon="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" %}
-</div>
-
-
-<!-- ================= MAIN DASHBOARD CONTENT ================= -->
-<div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
-
-  <!-- TODAY'S AGENDA PANEL (Col Span 8) -->
-  <div class="lg:col-span-8 card p-5 space-y-5">
+  <!-- Today's Agenda -->
+  <div class="card p-5 space-y-5">
     <div class="flex items-center justify-between pb-3 border-b border-slate-100">
       <div class="flex items-center gap-2.5">
-        <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">Today's Agenda</h2>
+        <h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Today's Agenda</h2>
         <span class="bg-slate-100 text-slate-500 font-medium rounded-full px-2 py-0.5 text-[11px]">{{ agenda_total }} task{{ agenda_total|pluralize }}</span>
-      </div>
-
-      <div class="flex items-center gap-2">
-        <select class="h-7 px-2 bg-slate-50 rounded-md text-[11px] font-medium text-slate-600 outline-none">
-          <option>Sort by: Priority</option>
-        </select>
-        <!-- List view toggles -->
-        <div class="flex items-center bg-slate-100 p-0.5 rounded-md">
-          <button class="h-6 w-6 bg-white rounded shadow-sm flex items-center justify-center text-[11px]">☰</button>
-          <button class="h-6 w-6 text-slate-400 hover:text-slate-600 rounded flex items-center justify-center text-[11px]">📅</button>
-          <button class="h-6 w-6 text-slate-400 hover:text-slate-600 rounded flex items-center justify-center text-[11px]">🗺️</button>
-        </div>
       </div>
     </div>
 
-    <!-- Agenda schedule stack -->
     <div class="space-y-5">
-
-      <!-- MORNING Section -->
       <div class="space-y-2.5">
         <div class="flex items-center gap-2 text-[11px] font-semibold text-emerald-600 uppercase tracking-wider">
-          <span>☀️ Morning</span>
-          <span class="h-1 w-1 rounded-full bg-emerald-400"></span>
+          <span>Morning</span>
           <span class="text-slate-400 normal-case font-normal">{{ agenda_morning|length }} task{{ agenda_morning|length|pluralize }}</span>
         </div>
-
         <div class="space-y-2">
           {% for task in agenda_morning %}
-          <div class="p-3 rounded-lg bg-white hover:bg-slate-50/60 flex items-start justify-between gap-4 transition-colors group">
-            <div class="flex items-start gap-3">
-              <div class="h-9 w-9 rounded-lg bg-slate-50 text-[18px] flex items-center justify-center shrink-0" x-text="'{{ task.icon }}'"></div>
-              <div class="space-y-0.5">
-                <h4 class="text-[14px] font-medium text-slate-800 leading-tight">{{ task.title }}</h4>
-                <p class="text-[12px] text-slate-400 font-normal">{{ task.location|safe }}</p>
+          <div class="p-3 rounded-lg bg-slate-50/60 hover:bg-slate-50 flex items-start justify-between gap-4 transition-colors">
+            <div class="flex items-start gap-3 min-w-0">
+              <div class="h-8 w-8 rounded-lg bg-white text-[15px] flex items-center justify-center shrink-0">{{ task.icon }}</div>
+              <div class="min-w-0">
+                <h4 class="text-[13px] font-medium text-slate-800 leading-tight truncate">{{ task.title }}</h4>
+                <p class="text-[11px] text-slate-400 font-normal">{{ task.location|safe }}</p>
               </div>
             </div>
-
-            <div class="flex items-center gap-2.5">
-              {% if task.sf %}
-              <span class="text-[11px] text-emerald-600 font-medium flex items-center gap-0.5">SF ✓</span>
-              {% endif %}
-              {% if task.count %}
-              <span class="text-[11px] text-slate-400 font-normal flex items-center gap-1">👥 {{ task.count }}</span>
-              {% endif %}
-              <span class="{{ task.status_class }} inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide">{{ task.status }}</span>
-              <button class="text-slate-300 hover:text-slate-500 text-[14px] leading-none px-1">&bull;&bull;&bull;</button>
-            </div>
+            <span class="{{ task.status_class }} inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide shrink-0">{{ task.status }}</span>
           </div>
           {% empty %}
           <p class="text-[12px] text-slate-400 font-normal py-1">No morning activities scheduled.</p>
@@ -106,32 +48,22 @@
         </div>
       </div>
 
-      <!-- AFTERNOON Section -->
       <div class="space-y-2.5">
         <div class="flex items-center gap-2 text-[11px] font-semibold text-amber-600 uppercase tracking-wider">
-          <span>⛅ Afternoon</span>
-          <span class="h-1 w-1 rounded-full bg-amber-400"></span>
+          <span>Afternoon</span>
           <span class="text-slate-400 normal-case font-normal">{{ agenda_afternoon|length }} task{{ agenda_afternoon|length|pluralize }}</span>
         </div>
-
         <div class="space-y-2">
           {% for task in agenda_afternoon %}
-          <div class="p-3 rounded-lg bg-white hover:bg-slate-50/60 flex items-start justify-between gap-4 transition-colors group">
-            <div class="flex items-start gap-3">
-              <div class="h-9 w-9 rounded-lg bg-slate-50 text-[18px] flex items-center justify-center shrink-0" x-text="'{{ task.icon }}'"></div>
-              <div class="space-y-0.5">
-                <h4 class="text-[14px] font-medium text-slate-800 leading-tight">{{ task.title }}</h4>
-                <p class="text-[12px] text-slate-400 font-normal">{{ task.location|safe }}</p>
+          <div class="p-3 rounded-lg bg-slate-50/60 hover:bg-slate-50 flex items-start justify-between gap-4 transition-colors">
+            <div class="flex items-start gap-3 min-w-0">
+              <div class="h-8 w-8 rounded-lg bg-white text-[15px] flex items-center justify-center shrink-0">{{ task.icon }}</div>
+              <div class="min-w-0">
+                <h4 class="text-[13px] font-medium text-slate-800 leading-tight truncate">{{ task.title }}</h4>
+                <p class="text-[11px] text-slate-400 font-normal">{{ task.location|safe }}</p>
               </div>
             </div>
-
-            <div class="flex items-center gap-2.5">
-              {% if task.count %}
-              <span class="text-[11px] text-slate-400 font-normal flex items-center gap-1">👥 {{ task.count }}</span>
-              {% endif %}
-              <span class="{{ task.status_class }} inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide">{{ task.status }}</span>
-              <button class="text-slate-300 hover:text-slate-500 text-[14px] leading-none px-1">&bull;&bull;&bull;</button>
-            </div>
+            <span class="{{ task.status_class }} inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide shrink-0">{{ task.status }}</span>
           </div>
           {% empty %}
           <p class="text-[12px] text-slate-400 font-normal py-1">No afternoon activities scheduled.</p>
@@ -139,186 +71,112 @@
         </div>
       </div>
 
-      <!-- EVENING Section -->
       <div class="space-y-2.5">
         <div class="flex items-center gap-2 text-[11px] font-semibold text-indigo-600 uppercase tracking-wider">
-          <span>🌙 Evening</span>
-          <span class="h-1 w-1 rounded-full bg-indigo-400"></span>
+          <span>Evening</span>
           <span class="text-slate-400 normal-case font-normal">{{ agenda_evening|length }} task{{ agenda_evening|length|pluralize }}</span>
         </div>
-
         <div class="space-y-2">
           {% for task in agenda_evening %}
-          <div class="p-3 rounded-lg bg-white hover:bg-slate-50/60 flex items-start justify-between gap-4 transition-colors group">
-            <div class="flex items-start gap-3">
-              <div class="h-9 w-9 rounded-lg bg-slate-50 text-[18px] flex items-center justify-center shrink-0" x-text="'{{ task.icon }}'"></div>
-              <div class="space-y-0.5">
-                <h4 class="text-[14px] font-medium text-slate-800 leading-tight">{{ task.title }}</h4>
-                <p class="text-[12px] text-slate-400 font-normal">{{ task.location|safe }}</p>
+          <div class="p-3 rounded-lg bg-slate-50/60 hover:bg-slate-50 flex items-start justify-between gap-4 transition-colors">
+            <div class="flex items-start gap-3 min-w-0">
+              <div class="h-8 w-8 rounded-lg bg-white text-[15px] flex items-center justify-center shrink-0">{{ task.icon }}</div>
+              <div class="min-w-0">
+                <h4 class="text-[13px] font-medium text-slate-800 leading-tight truncate">{{ task.title }}</h4>
+                <p class="text-[11px] text-slate-400 font-normal">{{ task.location|safe }}</p>
               </div>
             </div>
-
-            <div class="flex items-center gap-2.5">
-              <span class="{{ task.status_class }} inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide">{{ task.status }}</span>
-              <button class="text-slate-300 hover:text-slate-500 text-[14px] leading-none px-1">&bull;&bull;&bull;</button>
-            </div>
+            <span class="{{ task.status_class }} inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide shrink-0">{{ task.status }}</span>
           </div>
           {% empty %}
           <p class="text-[12px] text-slate-400 font-normal py-1">No evening activities scheduled.</p>
           {% endfor %}
         </div>
       </div>
-
     </div>
 
-    <!-- agenda footer links -->
     <div class="flex justify-between items-center pt-3 border-t border-slate-100 text-[12px]">
       <a href="/planning" class="text-blue-600 hover:text-blue-700 font-medium hover:underline">View full calendar &rsaquo;</a>
-      <button class="text-slate-500 hover:text-slate-700 font-medium">+ Add Personal Task</button>
     </div>
   </div>
 
-
-  <!-- RIGHT SIDEBAR PANEL (Col Span 4) -->
-  <div class="lg:col-span-4 space-y-5">
-
-    <!-- At a Glance radial progress donut (live) -->
-    <div class="card p-5 space-y-4">
-      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
-        <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">At a Glance</h3>
-        <a href="/analytics" class="text-[11px] font-medium text-blue-600 hover:underline">View full analytics</a>
-      </div>
-
-      <div class="flex items-center justify-center gap-6">
-        <div class="relative h-28 w-28 flex items-center justify-center shrink-0">
-          <svg class="h-full w-full -rotate-90" viewBox="0 0 36 36">
-            <path class="text-slate-100" stroke-width="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-            {% if glance.completed_pct > 0 %}<path class="text-emerald-500" stroke-dasharray="{{ glance.completed_pct }}, 100" stroke-width="3" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />{% endif %}
-            {% if glance.in_progress_pct > 0 %}<path class="text-blue-500" stroke-dasharray="{{ glance.in_progress_pct }}, 100" stroke-dashoffset="{{ glance.in_progress_offset }}" stroke-width="3" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />{% endif %}
-            {% if glance.planned_pct > 0 %}<path class="text-amber-500" stroke-dasharray="{{ glance.planned_pct }}, 100" stroke-dashoffset="{{ glance.planned_offset }}" stroke-width="3" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />{% endif %}
-            {% if glance.overdue_pct > 0 %}<path class="text-rose-500" stroke-dasharray="{{ glance.overdue_pct }}, 100" stroke-dashoffset="{{ glance.overdue_offset }}" stroke-width="3" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />{% endif %}
-          </svg>
-          <div class="absolute flex flex-col justify-center items-center text-center">
-            <span class="text-[24px] font-semibold text-slate-800 leading-none tabular-nums">{{ kpis.total }}</span>
-            <span class="text-[10px] font-medium text-slate-400 uppercase tracking-wide mt-1">Total Tasks</span>
-          </div>
-        </div>
-
-        <div class="text-[12px] space-y-2 text-slate-500 flex-1">
-          <div class="flex items-center justify-between"><span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-emerald-500 shrink-0"></span> Completed</span> <span class="text-slate-700 font-medium tabular-nums">{{ kpis.completed }} ({{ glance.completed_pct }}%)</span></div>
-          <div class="flex items-center justify-between"><span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-blue-500 shrink-0"></span> In Progress</span> <span class="text-slate-700 font-medium tabular-nums">{{ kpis.in_progress }} ({{ glance.in_progress_pct }}%)</span></div>
-          <div class="flex items-center justify-between"><span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-amber-500 shrink-0"></span> Planned</span> <span class="text-slate-700 font-medium tabular-nums">{{ kpis.planned }} ({{ glance.planned_pct }}%)</span></div>
-          <div class="flex items-center justify-between"><span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-rose-500 shrink-0"></span> Overdue</span> <span class="text-slate-700 font-medium tabular-nums">{{ kpis.overdue }} ({{ glance.overdue_pct }}%)</span></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Upcoming This Week list -->
-    <div class="card p-5 space-y-3.5">
-      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
-        <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Upcoming This Week</h3>
-        <a href="/planning" class="text-[11px] font-medium text-blue-600 hover:underline">View all</a>
-      </div>
-
-      <div class="space-y-3">
-        {% for event in upcoming_week %}
-        <div class="flex gap-3 text-[12px]">
-          <div class="h-8 w-8 rounded-lg flex items-center justify-center shrink-0 text-[15px] {{ event.type_class }}" x-text="'{{ event.icon }}'"></div>
-          <div class="space-y-0.5">
-            <span class="text-[10px] text-slate-400 font-medium uppercase tracking-wide block leading-none">{{ event.day }}</span>
-            <span class="text-slate-700 font-medium block leading-snug">{{ event.title }}</span>
-            <span class="text-slate-400 block leading-tight text-[12px]">{{ event.desc }}</span>
-          </div>
-        </div>
-        {% empty %}
-          <p class="text-[12px] text-slate-400 font-normal py-1">Nothing scheduled in the next 7 days.</p>
-          {% endfor %}
-      </div>
-    </div>
-
-    <!-- Pending Approvals -->
-    <div class="card p-5 space-y-3.5">
-      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
-        <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Pending Approvals</h3>
-        <a href="/fund-requests/weekly" class="text-[11px] font-medium text-blue-600 hover:underline">View all</a>
-      </div>
-
-      <div class="space-y-2.5">
-        {% for approval in pending_approvals %}
-        <div class="p-2.5 rounded-lg flex items-center justify-between gap-3 bg-slate-50/60 hover:bg-slate-50 transition-colors">
-          <div class="flex items-start gap-2.5">
-            <div class="h-8 w-8 rounded-lg bg-orange-50 flex items-center justify-center text-[15px] shrink-0">📄</div>
-            <div>
-              <h4 class="text-[12px] font-medium text-slate-700 leading-tight">{{ approval.title }}</h4>
-              <p class="text-[11px] text-slate-400 mt-0.5">{{ approval.desc|safe }}</p>
-            </div>
-          </div>
-          <span class="bg-amber-50 text-amber-700 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide">{{ approval.status }}</span>
-        </div>
-        {% empty %}
-          <p class="text-[12px] text-slate-400 font-normal py-1">No approvals waiting on you.</p>
-          {% endfor %}
-      </div>
-    </div>
-
-  </div>
-
+  <!-- At a Glance donut -->
+  {% include "components/chart_card.html" with chart_id="cceo-glance-chart" title="At a Glance" subtitle="Task mix across your workload" has_data=has_glance_data height=240 %}
+  {{ glance_chart|json_script:"cceo-glance-chart-config" }}
 </div>
 
+<!-- Decision / Alert / Action row -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+  {% if kpis.overdue %}
+  {% include "components/action_card.html" with kind="alert" title="Overdue activities" body=kpis.overdue|stringformat:"s"|add:" activity(ies) are past due and need action first." cta_label="Open my plan" cta_href="/planning" meta=kpis.overdue %}
+  {% else %}
+  {% include "components/action_card.html" with kind="neutral" title="No overdue activities" body="You're on track — nothing is past due." %}
+  {% endif %}
 
-<!-- ================= BOTTOM ROW GRID ================= -->
-<div class="grid grid-cols-1 md:grid-cols-12 gap-5">
+  {% if pending_approvals %}
+  {% include "components/action_card.html" with kind="action" title="Fund requests awaiting you" body=pending_approvals|length|stringformat:"s"|add:" request(s) need your confirmation." cta_label="Review requests" cta_href="/fund-requests/weekly" meta=pending_approvals|length %}
+  {% else %}
+  {% include "components/action_card.html" with kind="neutral" title="No pending fund requests" body="Nothing is waiting on your confirmation." %}
+  {% endif %}
 
-  <!-- Priority Focus (Col Span 6) -->
-  <div class="md:col-span-6 card p-5 space-y-4">
-    <div class="pb-2 border-b border-slate-100">
-      <h3 class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Priority Focus</h3>
+  {% include "components/action_card.html" with kind="insight" title="Log today's visit" body="Capture evidence and notes as soon as a visit wraps up." cta_label="Log a visit" cta_href="/completed-activities" %}
+</div>
+
+<!-- Supporting: max 3-column -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+  <section class="card p-5 space-y-3.5">
+    <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+      <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Upcoming This Week</h3>
+      <a href="/planning" class="text-[11px] font-medium text-blue-600 hover:underline">View all</a>
     </div>
-
-    <div class="flex items-center gap-4 bg-slate-50/70 p-4 rounded-lg">
-      <div class="h-10 w-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center shrink-0 text-[18px]">🎯</div>
-      <div class="flex-1 space-y-2">
-        <div>
-          <h4 class="text-[14px] font-medium text-slate-800 leading-none">Complete your scheduled activities</h4>
-          <p class="text-[12px] text-slate-500 mt-1.5">{% if kpis.overdue %}{{ kpis.overdue }} overdue task{{ kpis.overdue|pluralize }} need{{ kpis.overdue|pluralize:"s," }} attention first{% elif kpis.planned or kpis.in_progress %}{{ kpis.planned }} planned and {{ kpis.in_progress }} in progress{% else %}All caught up — schedule your next visits{% endif %}</p>
-        </div>
-        <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
-          <div class="bg-blue-500 h-full rounded-full" style="width: {{ glance.completed_pct }}%"></div>
-        </div>
-        <div class="flex justify-between items-center text-[11px] text-slate-400">
-          <span>{{ glance.completed_pct }}% of tasks completed</span>
-          <span>{{ kpis.completed }} of {{ kpis.total }}</span>
+    <div class="space-y-3">
+      {% for event in upcoming_week %}
+      <div class="flex gap-3 text-[12px]">
+        <div class="h-8 w-8 rounded-lg flex items-center justify-center shrink-0 text-[15px] {{ event.type_class }}">{{ event.icon }}</div>
+        <div class="space-y-0.5 min-w-0">
+          <span class="text-[10px] text-slate-400 font-medium uppercase tracking-wide block leading-none">{{ event.day }}</span>
+          <span class="text-slate-700 font-medium block leading-snug truncate">{{ event.title }}</span>
+          <span class="text-slate-400 block leading-tight text-[12px]">{{ event.desc }}</span>
         </div>
       </div>
+      {% empty %}
+      {% include "components/empty_state.html" with title="Nothing this week" message="No activities scheduled in the next 7 days." compact="true" %}
+      {% endfor %}
     </div>
-  </div>
+  </section>
 
-  <!-- Quick Actions grid (Col Span 6) -->
-  <div class="md:col-span-6 card p-5 space-y-3 flex flex-col justify-between">
-    <div class="pb-2 border-b border-slate-100">
-      <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Quick Actions</h3>
+  <section class="card p-5 space-y-3.5">
+    <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+      <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Pending Approvals</h3>
+      <a href="/fund-requests/weekly" class="text-[11px] font-medium text-blue-600 hover:underline">View all</a>
     </div>
-
-    <div class="grid grid-cols-2 gap-2 text-center text-[11px] font-medium text-slate-600 mt-1">
-      <a href="/completed-activities" class="flex flex-col items-center gap-1.5 p-2.5 bg-slate-50/70 hover:bg-slate-100 rounded-lg transition-colors">
-        <span class="text-[18px]">📝</span>
-        Log Visit
-      </a>
-      <a href="/fund-requests/weekly" class="flex flex-col items-center gap-1.5 p-2.5 bg-slate-50/70 hover:bg-slate-100 rounded-lg transition-colors">
-        <span class="text-[18px]">💰</span>
-        Request Funds
-      </a>
-      <a href="/planning" class="flex flex-col items-center gap-1.5 p-2.5 bg-slate-50/70 hover:bg-slate-100 rounded-lg transition-colors">
-        <span class="text-[18px]">🗺️</span>
-        Smart Route
-      </a>
-      <a href="/staff" class="flex flex-col items-center gap-1.5 p-2.5 bg-slate-50/70 hover:bg-slate-100 rounded-lg transition-colors">
-        <span class="text-[18px]">💬</span>
-        Team Chat
-      </a>
+    <div class="space-y-2.5">
+      {% for approval in pending_approvals %}
+      <div class="p-2.5 rounded-lg flex items-center justify-between gap-3 bg-slate-50/60 hover:bg-slate-50 transition-colors">
+        <div class="flex items-start gap-2.5 min-w-0">
+          <div class="h-8 w-8 rounded-lg bg-amber-50 flex items-center justify-center text-[13px] shrink-0">$</div>
+          <div class="min-w-0">
+            <h4 class="text-[12px] font-medium text-slate-700 leading-tight truncate">{{ approval.title }}</h4>
+            <p class="text-[11px] text-slate-400 mt-0.5">{{ approval.desc|safe }}</p>
+          </div>
+        </div>
+        <span class="bg-amber-50 text-amber-700 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide shrink-0">{{ approval.status }}</span>
+      </div>
+      {% empty %}
+      {% include "components/empty_state.html" with title="Nothing waiting" message="No approvals waiting on you." compact="true" %}
+      {% endfor %}
     </div>
-  </div>
+  </section>
 
+  <section class="card p-5 space-y-3">
+    <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight pb-2 border-b border-slate-100">Quick Actions</h3>
+    <div class="grid grid-cols-2 gap-2">
+      {% include "components/button.html" with variant="ghost" size="sm" label="Log Visit" href="/completed-activities" %}
+      {% include "components/button.html" with variant="ghost" size="sm" label="Request Funds" href="/fund-requests/weekly" %}
+      {% include "components/button.html" with variant="ghost" size="sm" label="Smart Route" href="/planning" %}
+      {% include "components/button.html" with variant="ghost" size="sm" label="My Team" href="/staff" %}
+    </div>
+  </section>
 </div>
 
 </div>

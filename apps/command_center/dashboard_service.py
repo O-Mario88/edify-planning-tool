@@ -43,10 +43,10 @@ def _ssa_status(avg):
 
 def _target_status(pct):
     if pct >= 70:
-        return "On track", "s-green", "var(--green)"
+        return "On track", "s-green", "#10b981"
     if pct >= 40:
-        return "At risk", "s-orange", "var(--orange)"
-    return "Behind", "s-red", "var(--red)"
+        return "At risk", "s-orange", "#f59e0b"
+    return "Behind", "s-red", "#f43f5e"
 
 
 class DashboardMetricsService:
@@ -372,6 +372,123 @@ class DashboardMetricsService:
             "fy": activities_this_fy,
         }
 
+        # ── Apex chart options (computed server-side per the design contract) ──
+        has_weekly_data = activities_this_fy > 0
+        weekly_progress_chart = {
+            "chart": {"type": "bar"},
+            "series": [
+                {
+                    "name": "Completion %",
+                    "data": [w["percentage"] for w in weekly_progress],
+                }
+            ],
+            "xaxis": {
+                "categories": [w["week"] for w in weekly_progress],
+                "axisBorder": {"show": False},
+                "axisTicks": {"show": False},
+                "labels": {
+                    "style": {
+                        "colors": "#94a3b8",
+                        "fontSize": "10px",
+                        "fontWeight": 500,
+                    }
+                },
+            },
+            "yaxis": {
+                "max": 100,
+                "labels": {"style": {"colors": "#94a3b8", "fontSize": "10px"}},
+            },
+            "colors": ["#10b981"],
+            "plotOptions": {"bar": {"borderRadius": 4, "columnWidth": "45%"}},
+            "dataLabels": {
+                "enabled": True,
+                "style": {"fontSize": "10px"},
+                "offsetY": -18,
+            },
+            "grid": {"borderColor": "#f1f5f9"},
+            "tooltip": {"theme": "light"},
+        }
+
+        ssa_chart_rows = best_interventions + [
+            r for r in weakest_interventions if r not in best_interventions
+        ]
+        ssa_chart_rows = sorted(ssa_chart_rows, key=lambda r: r["score"], reverse=True)
+        has_ssa_chart_data = bool(ssa_chart_rows)
+
+        def _ssa_bar_color(score):
+            if score >= 7:
+                return "#10b981"
+            if score >= 5:
+                return "#f59e0b"
+            return "#f43f5e"
+
+        ssa_intervention_chart = {
+            "chart": {"type": "bar"},
+            "series": [
+                {"name": "Avg Score", "data": [r["score"] for r in ssa_chart_rows]}
+            ],
+            "xaxis": {
+                "categories": [r["name"] for r in ssa_chart_rows],
+                "max": 10,
+                "labels": {"style": {"colors": "#94a3b8", "fontSize": "10px"}},
+            },
+            "yaxis": {
+                "labels": {
+                    "style": {
+                        "colors": "#64748b",
+                        "fontSize": "10px",
+                        "fontWeight": 600,
+                    }
+                }
+            },
+            "plotOptions": {
+                "bar": {
+                    "horizontal": True,
+                    "borderRadius": 4,
+                    "barHeight": "55%",
+                    "distributed": True,
+                }
+            },
+            "colors": [_ssa_bar_color(r["score"]) for r in ssa_chart_rows],
+            "legend": {"show": False},
+            "dataLabels": {
+                "enabled": True,
+                "style": {"fontSize": "10px", "colors": ["#1e293b"]},
+            },
+            "grid": {"borderColor": "#f1f5f9"},
+            "tooltip": {"theme": "light"},
+        }
+
+        has_team_targets_data = any(
+            [activities_this_month, activities_this_quarter, activities_this_fy]
+        )
+        team_targets_chart = {
+            "chart": {"type": "radialBar"},
+            "series": [t["percentage"] for t in team_targets],
+            "labels": [t["name"] for t in team_targets],
+            "colors": [t["color"] for t in team_targets],
+            "plotOptions": {
+                "radialBar": {
+                    "hollow": {"size": "40%"},
+                    "track": {"background": "#f1f5f9"},
+                    "dataLabels": {
+                        "name": {"fontSize": "10px", "color": "#94a3b8"},
+                        "value": {
+                            "fontSize": "13px",
+                            "fontWeight": 600,
+                            "color": "#1e293b",
+                        },
+                    },
+                }
+            },
+            "legend": {
+                "show": True,
+                "position": "bottom",
+                "fontSize": "10px",
+                "labels": {"colors": "#64748b"},
+            },
+        }
+
         # 12. Right Rail - Upcoming activities today (empty list -> template empty state)
         upcoming_today_qs = activities_qs.filter(
             scheduled_date__range=[today_start, today_end]
@@ -649,4 +766,10 @@ class DashboardMetricsService:
             "execution_summary": execution_summary,
             "upcoming_today": upcoming_today,
             "evidence_pending": evidence_pending_count,
+            "weekly_progress_chart": weekly_progress_chart,
+            "has_weekly_data": has_weekly_data,
+            "ssa_intervention_chart": ssa_intervention_chart,
+            "has_ssa_chart_data": has_ssa_chart_data,
+            "team_targets_chart": team_targets_chart,
+            "has_team_targets_data": has_team_targets_data,
         }

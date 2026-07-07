@@ -3,25 +3,16 @@
 {% block title %}Today — Edify Command Center{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-5xl mx-auto space-y-6">
-<!-- Header -->
-<div>
-<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight">Today</h1>
-<p class="text-[12px] text-[var(--text-secondary)] mt-1 font-semibold">{{ today|date:"l, j F Y" }} · Work waiting on you right now</p>
-</div>
+<div class="p-6 max-w-5xl mx-auto space-y-5">
+
+{% include "components/page_header.html" with title="Today" subtitle=today|date:"l, j F Y"|add:" · Work waiting on you right now" %}
+
+{% include "components/role_scope_notice.html" with scope_text="Showing only activities assigned to you." %}
 
 <!-- Overdue Alert -->
 {% if overdue %}
+{% include "components/action_card.html" with kind="alert" title=overdue|length|stringformat:"s"|add:" overdue activity(ies)" body="These were due in the past and need urgent action." cta_label="Open my plan" cta_href="/planning" meta=overdue|length %}
 <div class="bg-rose-50 border border-rose-200 rounded-2xl p-4">
-<div class="flex items-center gap-3 mb-3">
-<div class="h-8 w-8 rounded-lg bg-rose-100 grid place-items-center">
-<svg class="h-4 w-4 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-</div>
-<div>
-<p class="text-[14px] font-semibold text-rose-800">{{ overdue|length }} Overdue Activit{{ overdue|length|pluralize:"y,ies" }}</p>
-<p class="text-[11px] text-rose-500">These were due in the past and need urgent action</p>
-</div>
-</div>
 <ul class="space-y-2">
 {% for act in overdue %}
 <li class="flex items-center justify-between bg-white rounded-xl px-4 py-3 border border-rose-100">
@@ -29,7 +20,7 @@
 <p class="text-[12px] font-bold text-slate-800">{{ act.activity_type|title }}{% if act.school %} @ {{ act.school.name }}{% endif %}</p>
 <p class="text-[11px] text-slate-400">Due {{ act.planned_date }}</p>
 </div>
-<a href="/my-plan/{{ act.id }}" class="text-[11px] font-bold text-rose-600 hover:underline">Take Action →</a>
+<a href="/my-plan/{{ act.id }}" class="text-[11px] font-bold text-rose-600 hover:underline">Take Action &rarr;</a>
 </li>
 {% endfor %}
 </ul>
@@ -73,11 +64,7 @@
 {% endfor %}
 </ul>
 {% else %}
-<div class="p-8 text-center">
-<p class="text-[20px] mb-2">✅</p>
-<p class="text-[14px] font-semibold text-slate-500">No activities scheduled for today</p>
-<a href="/planning" class="mt-3 inline-flex items-center text-[12px] font-bold text-[var(--color-edify-primary)] hover:underline">Schedule an activity →</a>
-</div>
+{% include "components/empty_state.html" with title="No activities scheduled for today" tone="success" cta_label="Schedule an activity" cta_href="/planning" compact="true" %}
 {% endif %}
 </div>
 

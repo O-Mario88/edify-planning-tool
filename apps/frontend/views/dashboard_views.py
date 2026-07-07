@@ -12,7 +12,7 @@ from apps.accounts.models import User, StaffProfile, StaffSupervisorAssignment
 from apps.command_center import services as cc_services
 from apps.core.permissions import require_page_permission
 from apps.core.enums import SsaIntervention
-from apps.command_center.dashboard_service import DashboardMetricsService
+from apps.command_center.dashboard_service import DashboardMetricsService, _ugx_compact
 
 
 @require_page_permission("dashboard")
@@ -459,6 +459,137 @@ def dashboard_view(request):
             if (total_planned_nat + total_completed_nat)
             else 0
         )
+        has_cd_chart_data = bool(
+            total_planned_nat or total_completed_nat or sum(chart_verified)
+        )
+
+        cd_kpi_strip_items = [
+            {
+                "label": "National Achievement",
+                "value": f"{national_achievement}%",
+                "helper": "completed / (planned + completed)",
+                "icon": "target",
+                "variant": "success",
+            },
+            {
+                "label": "Active Schools",
+                "value": str(total_schools),
+                "helper": "in the directory",
+                "icon": "school",
+                "variant": "blue",
+            },
+            {
+                "label": "Avg National SSA",
+                "value": f"{round(avg_national_ssa, 2)}",
+                "helper": f"confirmed, FY {fy}",
+                "icon": "chart",
+                "variant": "info",
+            },
+            {
+                "label": "SF Backlog",
+                "value": str(sf_backlog),
+                "helper": "completed, missing SF ID",
+                "icon": "warning",
+                "variant": "warning" if sf_backlog else "neutral",
+            },
+            {
+                "label": "Pending Fund Requests",
+                "value": str(len(pending_wfrs)),
+                "helper": "awaiting CD approval",
+                "icon": "clock",
+                "variant": "warning" if pending_wfrs else "neutral",
+            },
+            {
+                "label": "Disbursed (FY)",
+                "value": _ugx_compact(budget_summary["total_disbursed"]),
+                "helper": f"of {_ugx_compact(budget_summary['planned_total'])} planned",
+                "icon": "currency",
+                "variant": "success",
+            },
+            {
+                "label": "Budget Utilization",
+                "value": f"{budget_summary['utilization_pct']}%",
+                "helper": "disbursed vs planned",
+                "icon": "currency",
+                "variant": "info",
+            },
+            {
+                "label": "High-Risk Regions",
+                "value": str(high_risk_count),
+                "helper": "below 60% achievement",
+                "icon": "warning",
+                "variant": "danger" if high_risk_count else "neutral",
+            },
+        ]
+
+        cd_alert_cards = []
+        for region in regions_list:
+            if region["rate"] < 60 and len(cd_alert_cards) < 3:
+                cd_alert_cards.append(
+                    {
+                        "kind": "alert",
+                        "title": f"{region['name']} behind target",
+                        "body": f"{region['name']} is at {region['rate']}% vs national target.",
+                        "cta_label": "View regional performance",
+                        "cta_href": "/coverage",
+                    }
+                )
+        if sf_backlog > 0 and len(cd_alert_cards) < 3:
+            cd_alert_cards.append(
+                {
+                    "kind": "alert",
+                    "title": "Salesforce backlog",
+                    "body": f"{sf_backlog} completed activities are missing Salesforce IDs.",
+                    "cta_label": "Inspect backlog",
+                    "cta_href": "/completed-activities",
+                }
+            )
+        if pending_wfrs and len(cd_alert_cards) < 3:
+            cd_alert_cards.append(
+                {
+                    "kind": "action",
+                    "title": f"{len(pending_wfrs)} fund requests pending",
+                    "body": "Awaiting your Country Director approval.",
+                    "cta_label": "Review approvals",
+                    "cta_href": "/fund-requests/weekly",
+                }
+            )
+
+        cd_performance_chart = {
+            "chart": {"type": "line"},
+            "series": [
+                {"name": "Planned", "type": "column", "data": chart_planned},
+                {"name": "Completed", "type": "column", "data": chart_completed},
+                {"name": "Verified", "type": "line", "data": chart_verified},
+            ],
+            "stroke": {"width": [0, 0, 2], "curve": "smooth"},
+            "colors": ["#94a3b8", "#3b82f6", "#10b981"],
+            "plotOptions": {"bar": {"columnWidth": "45%", "borderRadius": 3}},
+            "labels": chart_labels,
+            "xaxis": {
+                "type": "category",
+                "axisBorder": {"show": False},
+                "axisTicks": {"show": False},
+                "labels": {
+                    "style": {
+                        "colors": "#94a3b8",
+                        "fontSize": "10px",
+                        "fontWeight": 500,
+                    }
+                },
+            },
+            "yaxis": {"labels": {"style": {"colors": "#94a3b8", "fontSize": "10px"}}},
+            "grid": {"borderColor": "#f1f5f9"},
+            "legend": {
+                "position": "top",
+                "horizontalAlign": "right",
+                "fontSize": "11px",
+                "fontWeight": 500,
+                "labels": {"colors": "#64748b"},
+                "markers": {"radius": 12},
+            },
+            "tooltip": {"theme": "dark"},
+        }
 
         context = {
             "alerts": alerts_list,
@@ -496,6 +627,10 @@ def dashboard_view(request):
             "chart_planned": chart_planned,
             "chart_completed": chart_completed,
             "chart_verified": chart_verified,
+            "cd_performance_chart": cd_performance_chart,
+            "has_cd_chart_data": has_cd_chart_data,
+            "cd_kpi_strip_items": cd_kpi_strip_items,
+            "cd_alert_cards": cd_alert_cards,
         }
         return render(request, "pages/dashboards/cd.html", context)
 
@@ -580,6 +715,37 @@ def dashboard_view(request):
         weak_clusters.sort(key=lambda x: x["avg_ssa"])
         weak_clusters = weak_clusters[:6]
 
+        pl_kpi_strip_items = [
+            {
+                "label": "Pending Reviews",
+                "value": str(len(pending_reviews)),
+                "helper": "activities awaiting review",
+                "icon": "document",
+                "variant": "info" if pending_reviews else "neutral",
+            },
+            {
+                "label": "Fund Approvals",
+                "value": str(len(pending_funds)),
+                "helper": "advances awaiting approval",
+                "icon": "currency",
+                "variant": "warning" if pending_funds else "neutral",
+            },
+            {
+                "label": "Overdue Staff",
+                "value": str(len(cceos_overdue)),
+                "helper": "CCEOs with overdue activities",
+                "icon": "warning",
+                "variant": "danger" if cceos_overdue else "neutral",
+            },
+            {
+                "label": "Struggling Clusters",
+                "value": str(len(weak_clusters)),
+                "helper": "avg SSA below 5.5",
+                "icon": "chart",
+                "variant": "danger" if weak_clusters else "neutral",
+            },
+        ]
+
         context = {
             "alerts": alerts_list,
             "alerts_summary": alerts_summary,
@@ -587,6 +753,7 @@ def dashboard_view(request):
             "role": role,
             "user_name": user.name,
             "avatar_initials": avatar_initials,
+            "pl_kpi_strip_items": pl_kpi_strip_items,
             "pending_reviews": pending_reviews,
             "pending_funds": pending_funds,
             "cceos_overdue": cceos_overdue,
@@ -648,12 +815,44 @@ def dashboard_view(request):
                 }
             )
 
+        rvp_kpi_strip_items = [
+            {
+                "label": "Total Schools",
+                "value": str(total_schools),
+                "helper": "across all regions",
+                "icon": "school",
+                "variant": "blue",
+            },
+            {
+                "label": "Schools Missing SSA",
+                "value": str(schools_missing_ssa),
+                "helper": "awaiting field assessment",
+                "icon": "warning",
+                "variant": "warning" if schools_missing_ssa else "neutral",
+            },
+            {
+                "label": "Pending Budget Approvals",
+                "value": str(pending_wfrs),
+                "helper": f"UGX {total_requested:,.0f} requested",
+                "icon": "clock",
+                "variant": "warning" if pending_wfrs else "neutral",
+            },
+            {
+                "label": "Approved Funding (FY)",
+                "value": f"UGX {total_approved:,.0f}",
+                "helper": "disbursed / approved",
+                "icon": "currency",
+                "variant": "success",
+            },
+        ]
+
         context = {
             "alerts": alerts_list,
             "alerts_summary": alerts_summary,
             "role": role,
             "user_name": user.name,
             "avatar_initials": avatar_initials,
+            "rvp_kpi_strip_items": rvp_kpi_strip_items,
             "total_schools": total_schools,
             "schools_missing_ssa": schools_missing_ssa,
             "pending_reviews": pending_wfrs,
@@ -695,12 +894,37 @@ def dashboard_view(request):
                     {"staff_name": c.name, "overdue_count": c_overdue}
                 )
 
+        hr_kpi_strip_items = [
+            {
+                "label": "Overdue Field Activities",
+                "value": str(overdue_count),
+                "helper": "action required by supervisors",
+                "icon": "warning",
+                "variant": "danger" if overdue_count else "neutral",
+            },
+            {
+                "label": "Daily Debriefs Today",
+                "value": str(debrief_count),
+                "helper": "submitted by CCEOs today",
+                "icon": "document",
+                "variant": "info",
+            },
+            {
+                "label": "Pending Leave Requests",
+                "value": str(pending_leaves),
+                "helper": "awaiting approval",
+                "icon": "clock",
+                "variant": "warning" if pending_leaves else "neutral",
+            },
+        ]
+
         context = {
             "alerts": alerts_list,
             "alerts_summary": alerts_summary,
             "role": role,
             "user_name": user.name,
             "avatar_initials": avatar_initials,
+            "hr_kpi_strip_items": hr_kpi_strip_items,
             "overdue_count": overdue_count,
             "debrief_count": debrief_count,
             "pending_leaves": pending_leaves,
@@ -858,6 +1082,34 @@ def dashboard_view(request):
             + _glance["planned_pct"]
         )
 
+        glance_chart = {
+            "chart": {"type": "donut"},
+            "series": [completed_cnt, in_progress_cnt, planned_cnt, overdue_cnt],
+            "labels": ["Completed", "In Progress", "Planned", "Overdue"],
+            "colors": ["#10b981", "#3b82f6", "#f59e0b", "#f43f5e"],
+            "legend": {"show": False},
+            "dataLabels": {"enabled": False},
+            "stroke": {"width": 2, "colors": ["#ffffff"]},
+            "plotOptions": {
+                "pie": {
+                    "donut": {
+                        "size": "72%",
+                        "labels": {
+                            "show": True,
+                            "total": {
+                                "show": True,
+                                "label": "Total Tasks",
+                                "color": "#94a3b8",
+                                "fontSize": "10px",
+                            },
+                        },
+                    }
+                }
+            },
+            "tooltip": {"theme": "light"},
+        }
+        has_glance_data = total_tasks > 0
+
         # Real pending fund-request confirmations for this user
         pending_approvals = []
         for w in WeeklyFundRequest.objects.filter(
@@ -871,12 +1123,44 @@ def dashboard_view(request):
                 }
             )
 
+        kpi_strip_items = [
+            {
+                "label": "Completed",
+                "value": str(completed_cnt),
+                "helper": "activities",
+                "icon": "check",
+                "variant": "success",
+            },
+            {
+                "label": "In Progress",
+                "value": str(in_progress_cnt),
+                "helper": "activities",
+                "icon": "clock",
+                "variant": "info",
+            },
+            {
+                "label": "Planned",
+                "value": str(planned_cnt),
+                "helper": "activities",
+                "icon": "calendar",
+                "variant": "blue",
+            },
+            {
+                "label": "Overdue",
+                "value": str(overdue_cnt),
+                "helper": "need action",
+                "icon": "warning",
+                "variant": "warning" if overdue_cnt else "neutral",
+            },
+        ]
+
         context = {
             "alerts": alerts_list,
             "alerts_summary": alerts_summary,
             "role": role,
             "user_name": user.name,
             "avatar_initials": avatar_initials,
+            "kpi_strip_items": kpi_strip_items,
             "kpis": {
                 "completed": completed_cnt,
                 "in_progress": in_progress_cnt,
@@ -885,6 +1169,8 @@ def dashboard_view(request):
                 "total": total_tasks,
             },
             "glance": _glance,
+            "glance_chart": glance_chart,
+            "has_glance_data": has_glance_data,
             "agenda_morning": agenda_morning,
             "agenda_afternoon": agenda_afternoon,
             "agenda_evening": agenda_evening,
@@ -1011,6 +1297,51 @@ def dashboard_view(request):
             else 0
         )
 
+        sp_kpi_strip_items = [
+            {
+                "label": "Total Projects",
+                "value": str(sp_kpis["total"]),
+                "helper": "special projects",
+                "icon": "briefcase",
+                "variant": "blue",
+            },
+            {
+                "label": "With Activity",
+                "value": str(sp_kpis["active"]),
+                "helper": "have scheduled work",
+                "icon": "check",
+                "variant": "info",
+            },
+            {
+                "label": "Schools in Projects",
+                "value": str(sp_kpis["schools"]),
+                "helper": "participating",
+                "icon": "school",
+                "variant": "blue",
+            },
+            {
+                "label": "Partners Assigned",
+                "value": str(sp_kpis["partners"]),
+                "helper": "delivery partners",
+                "icon": "users",
+                "variant": "info",
+            },
+            {
+                "label": "Activities Scheduled",
+                "value": str(sp_kpis["activities"]),
+                "helper": "across all projects",
+                "icon": "calendar",
+                "variant": "info",
+            },
+            {
+                "label": "Activities Completed",
+                "value": str(sp_kpis["completed"]),
+                "helper": f"{sp_kpis['pct']}% completion",
+                "icon": "check",
+                "variant": "success",
+            },
+        ]
+
         context = {
             "alerts": alerts_list,
             "alerts_summary": alerts_summary,
@@ -1018,6 +1349,9 @@ def dashboard_view(request):
             "user_name": user.name,
             "avatar_initials": avatar_initials,
             "sp_kpis": sp_kpis,
+            "sp_kpi_strip_items": sp_kpi_strip_items,
+            "sp_attention_count": len(attention),
+            "sp_milestone_count": len(milestones),
             "portfolio": portfolio,
             "attention": attention,
             "milestones": milestones,
@@ -1046,6 +1380,13 @@ def dashboard_view(request):
         "budget_snapshot": metrics["budget_snapshot"],
         "execution_summary": metrics["execution_summary"],
         "upcoming_today": metrics["upcoming_today"],
+        "evidence_pending": metrics["evidence_pending"],
+        "weekly_progress_chart": metrics["weekly_progress_chart"],
+        "has_weekly_data": metrics["has_weekly_data"],
+        "ssa_intervention_chart": metrics["ssa_intervention_chart"],
+        "has_ssa_chart_data": metrics["has_ssa_chart_data"],
+        "team_targets_chart": metrics["team_targets_chart"],
+        "has_team_targets_data": metrics["has_team_targets_data"],
         "use_dark_sidebar": False,
     }
 

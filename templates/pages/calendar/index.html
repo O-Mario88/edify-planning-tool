@@ -94,16 +94,11 @@
   }
 </style>
 
-<div class="p-6 max-w-7xl mx-auto space-y-6">
-  <div class="flex items-center justify-between">
-    <div>
-      <h1 class="text-[20px] font-semibold text-slate-800 tracking-tight">Calendar</h1>
-      <p class="text-[12px] text-slate-400 font-semibold mt-0.5">Edify Operations · Interactive Planner</p>
-    </div>
-  </div>
+<div class="p-6 max-w-7xl mx-auto space-y-5">
+  {% include "components/page_header.html" with title="Calendar" subtitle="Edify Operations · Interactive Planner" %}
 
   <!-- FullCalendar Container -->
-  <div class="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
+  <div class="card p-5">
     <div id="fullcalendar-view"></div>
   </div>
 </div>
