@@ -802,8 +802,18 @@ def weekly_fund_requests_view(request):
         "pl_recent": pl_recent,
         "pl_kpis": pl_kpis,
         "month_options": [
-            "October", "November", "December", "January", "February", "March",
-            "April", "May", "June", "July", "August", "September",
+            "October",
+            "November",
+            "December",
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
         ],
     }
 
