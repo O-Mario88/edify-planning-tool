@@ -1,11 +1,11 @@
 {% extends "layouts/shell.html" %}
+{% load static %}
 
 {% block title %}Calendar — Edify{% endblock %}
 
 {% block shell_content %}
 <!-- FullCalendar CSS and JS -->
-<link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/main.min.css' rel='stylesheet' />
-<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+<script src="{% static 'vendor/fullcalendar.min.js' %}"></script>
 
 <style>
   /* Custom premium styles to blend FullCalendar with Edify Design language */

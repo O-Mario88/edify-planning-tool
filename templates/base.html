@@ -8,9 +8,7 @@
 
 <!-- Typography: Outfit is the sole typeface. (Source Sans 3 was loaded but
 never used — dropped to remove the wasted network request.) -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="{% static 'vendor/fonts/outfit.css' %}" rel="stylesheet">
 
 <!-- Compiled Tailwind Styling -->
 <link rel="stylesheet" href="{% static 'css/main.css' %}?v=20260705c">
@@ -24,7 +22,7 @@ here. base.html <style> below only consumes tokens via var(--edify-*). -->
 <link rel="stylesheet" href="{% static 'css/pages.css' %}?v=20260705c">
 <link rel="stylesheet" href="{% static 'css/drawers.css' %}?v=20260705c">
 <link rel="stylesheet" href="{% static 'css/app.css' %}">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
+<link href="{% static 'vendor/flowbite.min.css' %}" rel="stylesheet" />
 
 <style>
 /* base.html consumes tokens defined in design-system.css. No :root here. */
@@ -190,17 +188,17 @@ background-color: rgba(245, 158, 12, 0.1);
 </style>
 
 <!-- HTMX (for fast server-driven partial updates) -->
-<script src="https://unpkg.com/htmx.org@1.9.12" integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2" crossorigin="anonymous"></script>
+<script src="{% static 'vendor/htmx.min.js' %}"></script>
 
 <!-- Alpine.js Components -->
 <script src="{% static 'js/alpine-components.js' %}"></script>
 
 <!-- Alpine.js (for client-side UI states - dropdown toggles, tabs, sidebars) -->
-<script defer src="https://unpkg.com/alpinejs@3.14.0/dist/cdn.min.js"></script>
+<script defer src="{% static 'vendor/alpine.min.js' %}"></script>
 
 <!-- ApexCharts & Flowbite JS -->
-<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
+<script src="{% static 'vendor/apexcharts.min.js' %}"></script>
+<script src="{% static 'vendor/flowbite.min.js' %}"></script>
 </head>
 <body 
 class="h-full bg-[var(--bg-page)] text-[var(--foreground)] font-sans antialiased"
