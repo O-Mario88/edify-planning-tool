@@ -8,7 +8,7 @@
 <div class="p-6 max-w-[1600px] mx-auto space-y-6 text-slate-700 font-sans"
 x-data="{
 queue: {{ pl_queue_items_json|safe }},
-selectedId: ' Sarah M.',
+selectedId: null,
 selectedItem: null,
 activeTab: 'breakdown',
 init() {
@@ -85,38 +85,38 @@ Filters
 <!-- 1 -->
 <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
 <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total Requested This Month</p>
-<h3 class="text-[20px] font-semibold text-slate-800 leading-none">UGX 214.6M</h3>
-<span class="text-[11px] text-emerald-600 font-semibold block pt-1">▲ 18.6% vs Apr</span>
+<h3 class="text-[20px] font-semibold text-slate-800 leading-none">{{ pl_kpis.month_total }}</h3>
+<span class="text-[11px] text-slate-400 font-semibold block pt-1">{{ pl_kpis.request_count }} request{{ pl_kpis.request_count|pluralize }}</span>
 </div>
 <!-- 2 -->
 <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
-<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Awaiting Approval</p>
-<h3 class="text-[20px] font-semibold text-slate-800 leading-none">UGX 128.4M</h3>
-<span class="text-[11px] text-amber-600 font-bold block pt-1">12 requests pending</span>
+<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Awaiting Confirmation</p>
+<h3 class="text-[20px] font-semibold text-slate-800 leading-none">{{ pl_kpis.awaiting_total }}</h3>
+<span class="text-[11px] text-amber-600 font-bold block pt-1">{{ pl_kpis.awaiting_count }} request{{ pl_kpis.awaiting_count|pluralize }} pending</span>
 </div>
 <!-- 3 -->
 <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
-<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Approved Today</p>
-<h3 class="text-[20px] font-semibold text-slate-800 leading-none">UGX 36.2M</h3>
-<span class="text-[11px] text-emerald-600 font-bold block pt-1">5 requests approved</span>
+<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Ready for Disbursement</p>
+<h3 class="text-[20px] font-semibold text-slate-800 leading-none">{{ pl_kpis.ready_total }}</h3>
+<span class="text-[11px] text-emerald-600 font-bold block pt-1">{{ pl_kpis.ready_count }} request{{ pl_kpis.ready_count|pluralize }} confirmed</span>
 </div>
 <!-- 4 -->
 <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
-<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Returned for Review</p>
-<h3 class="text-[20px] font-semibold text-slate-800 leading-none">UGX 12.8M</h3>
-<span class="text-[11px] text-rose-600 font-bold block pt-1">4 requests returned</span>
+<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Disbursed This Month</p>
+<h3 class="text-[20px] font-semibold text-slate-800 leading-none">{{ pl_kpis.disbursed_total }}</h3>
+<span class="text-[11px] text-blue-600 font-bold block pt-1">advances released</span>
 </div>
 <!-- 5 -->
 <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
-<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Planned Activities Funding</p>
-<h3 class="text-[20px] font-semibold text-slate-800 leading-none">UGX 214.6M</h3>
-<span class="text-[11px] text-indigo-700 font-semibold block pt-1">100% of requests</span>
+<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">FY Requested Total</p>
+<h3 class="text-[20px] font-semibold text-slate-800 leading-none">{{ pl_kpis.fy_total }}</h3>
+<span class="text-[11px] text-indigo-700 font-semibold block pt-1">across all weeks</span>
 </div>
 <!-- 6 -->
 <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
-<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Average Cost per School</p>
-<h3 class="text-[20px] font-semibold text-slate-800 leading-none">UGX 468,950</h3>
-<span class="text-[11px] text-emerald-600 font-semibold block pt-1">▲ 7.3% vs Apr</span>
+<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Average per Request</p>
+<h3 class="text-[20px] font-semibold text-slate-800 leading-none">{{ pl_kpis.avg_per_request }}</h3>
+<span class="text-[11px] text-slate-400 font-semibold block pt-1">this month</span>
 </div>
 </div>
 
@@ -425,44 +425,23 @@ View all activity
 <div>
 <div class="pb-3 border-b border-slate-100 flex items-center justify-between">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Recent Approval Activity</h3>
-<a href="#" class="text-[11px] font-semibold text-blue-600 hover:underline">View all activity &rarr;</a>
 </div>
 
 <div class="space-y-3.5 mt-4 text-[12px] font-bold">
-<!-- Item 1 -->
+{% for r in pl_recent %}
 <div class="flex items-center justify-between">
 <div class="flex items-center gap-2">
-<span class="h-6 w-6 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-[11px] font-semibold">✓</span>
+<span class="h-6 w-6 rounded-full {% if r.positive %}bg-emerald-50 text-emerald-600{% else %}bg-rose-50 text-rose-600{% endif %} flex items-center justify-center text-[11px] font-semibold">{% if r.positive %}✓{% else %}↺{% endif %}</span>
 <div>
-<span class="text-slate-800 block leading-tight">Moses T. — May Fund Plan approved</span>
-<span class="text-[11px] text-slate-400 font-bold block mt-0.5">Today, 10:24 AM</span>
+<span class="text-slate-800 block leading-tight">{{ r.who }} — {{ r.what }}</span>
+<span class="text-[11px] text-slate-400 font-bold block mt-0.5">{{ r.when }}</span>
 </div>
 </div>
-<span class="text-slate-800">UGX 24.1M</span>
+<span class="{% if r.positive %}text-slate-800{% else %}text-rose-600{% endif %}">UGX {{ r.amount|floatformat:0 }}</span>
 </div>
-
-<!-- Item 2 -->
-<div class="flex items-center justify-between">
-<div class="flex items-center gap-2">
-<span class="h-6 w-6 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center text-[11px] font-semibold">↺</span>
-<div>
-<span class="text-slate-800 block leading-tight">Joel O. — May Fund Plan returned for review</span>
-<span class="text-[11px] text-slate-400 font-bold block mt-0.5">Today, 9:15 AM</span>
-</div>
-</div>
-<span class="text-rose-600">UGX 19.8M</span>
-</div>
-
-<!-- Item 3 -->
-<div class="flex items-center justify-between">
-<div class="flex items-center gap-2">
-<span class="h-6 w-6 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-[11px] font-semibold">✓</span>
-<div>
-<span class="text-slate-800 block leading-tight">Ruth W. — Apr Fund Plan approved</span>
-<span class="text-[11px] text-slate-400 font-bold block mt-0.5">Yesterday, 4:32 PM</span>
-</div>
-</div>
-<span class="text-slate-800">UGX 18.6M</span>
+{% empty %}
+<p class="text-[12px] text-slate-400 font-bold py-3 text-center">No approval activity yet.</p>
+{% endfor %}
 </div>
 </div>
 </div>

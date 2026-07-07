@@ -114,7 +114,7 @@ Apply Filters
 </td>
 <!-- NetSuite ID -->
 <td class="px-6 py-4 text-center font-mono text-[11px] text-slate-800">
-NS-EXP-777 <!-- mock ID matching evaluated tests -->
+{{ act.netsuite_expenses.first.netsuite_expense_id|default:"—" }}
 </td>
 <!-- Actions -->
 <td class="px-6 py-4 text-right">

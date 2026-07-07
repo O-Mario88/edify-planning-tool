@@ -3,6 +3,7 @@ GROUP 2 — Finance & Budget Views
 Disbursements, Budget Overview, Cost Catalogue, Fund Requests list
 """
 from django.shortcuts import render, redirect, get_object_or_404
+from django.views.decorators.http import require_POST
 from apps.core.permissions import require_page_permission
 from django.contrib import messages
 from django.utils import timezone
@@ -132,6 +133,7 @@ def finance_action_drawer_view(request):
 
 
 @require_page_permission("disbursements")
+@require_POST
 def disburse_advance_action(request):
     """POST to disburse weekly advance."""
     if request.user.active_role != "Accountant":
@@ -160,6 +162,7 @@ def disburse_advance_action(request):
 
 
 @require_page_permission("disbursements")
+@require_POST
 def clear_partner_payment_action(request):
     """POST to clear partner payment."""
     if request.user.active_role != "Accountant":
@@ -198,6 +201,7 @@ def clear_partner_payment_action(request):
 
 
 @require_page_permission("disbursements")
+@require_POST
 def process_reimbursement_action(request):
     """POST to disburse self-funded reimbursement."""
     if request.user.active_role != "Accountant":
@@ -231,6 +235,7 @@ def process_reimbursement_action(request):
 
 
 @require_page_permission("disbursements")
+@require_POST
 def confirm_accountability_action(request):
     """POST to confirm and close advance accountability."""
     if request.user.active_role != "Accountant":
@@ -266,6 +271,7 @@ def confirm_accountability_action(request):
 
 
 @require_page_permission("disbursements")
+@require_POST
 def finance_return_action(request):
     """POST to return fund request for correction."""
     if request.user.active_role != "Accountant":

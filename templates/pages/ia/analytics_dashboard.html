@@ -82,7 +82,7 @@ class="h-9 w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 text-[12
 <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Records Uploaded Today</p>
 <h3 class="text-[20px] font-semibold text-slate-800 mt-0.5">1,248</h3>
 <span class="text-[11px] text-emerald-600 font-semibold flex items-center gap-0.5 mt-0.5">
-▲ 18% <span class="text-slate-400 font-semibold">vs yesterday</span>
+in queue
 </span>
 </div>
 </div>
@@ -95,9 +95,7 @@ class="h-9 w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 text-[12
 <div>
 <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Pending Verification</p>
 <h3 class="text-[20px] font-semibold text-slate-800 mt-0.5">{{ kpis.waiting }}</h3>
-<span class="text-[11px] text-emerald-600 font-semibold flex items-center gap-0.5 mt-0.5">
-▲ 12% <span class="text-slate-400 font-semibold">vs last week</span>
-</span>
+<span class="text-[11px] text-slate-400 font-semibold flex items-center gap-0.5 mt-0.5">in queue now</span>
 </div>
 </div>
 
@@ -108,10 +106,8 @@ class="h-9 w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 text-[12
 </div>
 <div>
 <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Verified This Week</p>
-<h3 class="text-[20px] font-semibold text-slate-800 mt-0.5">2,917</h3>
-<span class="text-[11px] text-emerald-600 font-semibold flex items-center gap-0.5 mt-0.5">
-▲ 23% <span class="text-slate-400 font-semibold">vs last week</span>
-</span>
+<h3 class="text-[20px] font-semibold text-slate-800 mt-0.5">{{ kpis.verified_week }}</h3>
+<span class="text-[11px] text-slate-400 font-semibold flex items-center gap-0.5 mt-0.5">{{ kpis.verified_today }} today</span>
 </div>
 </div>
 
@@ -122,10 +118,8 @@ class="h-9 w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 text-[12
 </div>
 <div>
 <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Returned for Correction</p>
-<h3 class="text-[20px] font-semibold text-slate-800 mt-0.5">312</h3>
-<span class="text-[11px] text-rose-600 font-semibold flex items-center gap-0.5 mt-0.5">
-▲ 5% <span class="text-slate-400 font-semibold">vs last week</span>
-</span>
+<h3 class="text-[20px] font-semibold text-slate-800 mt-0.5">{{ kpis.returned_week }}</h3>
+<span class="text-[11px] text-slate-400 font-semibold flex items-center gap-0.5 mt-0.5">{{ kpis.returned_today }} today</span>
 </div>
 </div>
 
@@ -137,12 +131,12 @@ class="h-9 w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 text-[12
 <div class="flex-1 min-w-0">
 <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Data Quality Score</p>
 <div class="flex items-baseline justify-between mt-0.5">
-<h3 class="text-[20px] font-semibold text-slate-800">86%</h3>
-<span class="text-[11px] text-emerald-600 font-semibold">▲ 4 pts vs last week</span>
+<h3 class="text-[20px] font-semibold text-slate-800">{{ kpis.quality }}</h3>
+<span class="text-[11px] text-slate-400 font-semibold">avg school score</span>
 </div>
 <!-- progress bar -->
 <div class="w-full bg-slate-100 h-1.5 rounded-full mt-1.5 overflow-hidden">
-<div class="bg-teal-500 h-full rounded-full" style="width: 86%"></div>
+<div class="bg-teal-500 h-full rounded-full" style="width: {{ kpis.quality_pct }}%"></div>
 </div>
 </div>
 </div>
@@ -154,7 +148,7 @@ class="h-9 w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 text-[12
 <span class="h-2 w-2 rounded-full bg-blue-500"></span>
 </div>
 <div class="mt-2">
-<h4 class="text-[18px] font-semibold text-slate-800 leading-none">1,156</h4>
+<h4 class="text-[18px] font-semibold text-slate-800 leading-none">{{ kpis.sf_queue }}</h4>
 <span class="text-[11px] font-bold text-slate-400 block mt-1">Pending sync</span>
 </div>
 </div>
@@ -166,7 +160,7 @@ class="h-9 w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 text-[12
 <span class="h-2 w-2 rounded-full bg-amber-500"></span>
 </div>
 <div class="mt-2">
-<h4 class="text-[18px] font-semibold text-slate-800 leading-none">678</h4>
+<h4 class="text-[18px] font-semibold text-slate-800 leading-none">{{ kpis.ssa_pending }}</h4>
 <span class="text-[11px] font-bold text-slate-400 block mt-1">Pending review</span>
 </div>
 </div>
@@ -178,7 +172,7 @@ class="h-9 w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 text-[12
 <span class="h-2 w-2 rounded-full bg-violet-500"></span>
 </div>
 <div class="mt-2">
-<h4 class="text-[18px] font-semibold text-slate-800 leading-none">934</h4>
+<h4 class="text-[18px] font-semibold text-slate-800 leading-none">{{ kpis.evidence_pending }}</h4>
 <span class="text-[11px] font-bold text-slate-400 block mt-1">Pending review</span>
 </div>
 </div>
@@ -254,10 +248,10 @@ Processing now:
 <!-- Interactive Tabs -->
 <div class="flex flex-wrap gap-1 mt-3 border-b border-slate-100 pb-2">
 <button class="px-3 py-1.5 bg-slate-900 text-white text-[11px] font-semibold rounded-lg">All Pending</button>
-<button class="px-3 py-1.5 hover:bg-slate-50 text-slate-500 text-[11px] font-semibold rounded-lg">Salesforce Verification <span class="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full text-[11px] font-semibold">1,156</span></button>
-<button class="px-3 py-1.5 hover:bg-slate-50 text-slate-500 text-[11px] font-semibold rounded-lg">SSA Review <span class="bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full text-[11px] font-semibold">678</span></button>
-<button class="px-3 py-1.5 hover:bg-slate-50 text-slate-500 text-[11px] font-semibold rounded-lg">Evidence Review <span class="bg-violet-100 text-violet-700 px-1.5 py-0.5 rounded-full text-[11px] font-semibold">934</span></button>
-<button class="px-3 py-1.5 hover:bg-slate-50 text-slate-500 text-[11px] font-semibold rounded-lg">Returned <span class="bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded-full text-[11px] font-semibold">312</span></button>
+<button class="px-3 py-1.5 hover:bg-slate-50 text-slate-500 text-[11px] font-semibold rounded-lg">Salesforce Verification <span class="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full text-[11px] font-semibold">{{ kpis.sf_queue }}</span></button>
+<button class="px-3 py-1.5 hover:bg-slate-50 text-slate-500 text-[11px] font-semibold rounded-lg">SSA Review <span class="bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full text-[11px] font-semibold">{{ kpis.ssa_pending }}</span></button>
+<button class="px-3 py-1.5 hover:bg-slate-50 text-slate-500 text-[11px] font-semibold rounded-lg">Evidence Review <span class="bg-violet-100 text-violet-700 px-1.5 py-0.5 rounded-full text-[11px] font-semibold">{{ kpis.evidence_pending }}</span></button>
+<button class="px-3 py-1.5 hover:bg-slate-50 text-slate-500 text-[11px] font-semibold rounded-lg">Returned <span class="bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded-full text-[11px] font-semibold">{{ kpis.returned_week }}</span></button>
 </div>
 
 <!-- Table -->
@@ -394,7 +388,7 @@ Go to Data Quality
 <!-- Aggregate indicator -->
 <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[12px] font-bold">
 <span class="text-slate-500">Overall Data Quality Score</span>
-<span class="text-teal-600">86% &bull; ▲ 4 pts vs last week</span>
+<span class="text-teal-600">{{ kpis.quality }}</span>
 </div>
 </div>
 
@@ -413,19 +407,19 @@ Go to Data Quality
 <div class="relative h-20 w-20 flex items-center justify-center">
 <svg class="h-full w-full -rotate-90" viewBox="0 0 36 36">
 <path class="text-slate-100" stroke-width="2" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-<path class="text-emerald-500" stroke-dasharray="50, 100" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-<path class="text-amber-500" stroke-dasharray="27, 100" stroke-dashoffset="-50" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-<path class="text-violet-500" stroke-dasharray="23, 100" stroke-dashoffset="-77" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+<path class="text-emerald-500" stroke-dasharray="{{ ssa_donut.confirmed_pct }}, 100" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+<path class="text-amber-500" stroke-dasharray="{{ ssa_donut.pending_pct }}, 100" stroke-dashoffset="{{ ssa_donut.pending_offset }}" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+<path class="text-violet-500" stroke-dasharray="{{ ssa_donut.other_pct }}, 100" stroke-dashoffset="{{ ssa_donut.other_offset }}" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
 </svg>
 <div class="absolute flex flex-col justify-center items-center">
-<span class="text-[15px] font-semibold text-slate-800 leading-none">2,489</span>
+<span class="text-[15px] font-semibold text-slate-800 leading-none">{{ ssa_donut.total }}</span>
 <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wide mt-0.5">Total SSAs</span>
 </div>
 </div>
 <div class="text-[11px] space-y-1 font-bold w-full">
-<div class="flex items-center justify-between text-emerald-600"><span>● Verified</span> <span>1,248 (50%)</span></div>
-<div class="flex items-center justify-between text-amber-600"><span>● Pending</span> <span>678 (27%)</span></div>
-<div class="flex items-center justify-between text-violet-600"><span>● Completed</span> <span>563 (23%)</span></div>
+<div class="flex items-center justify-between text-emerald-600"><span>● Confirmed</span> <span>{{ ssa_donut.confirmed }} ({{ ssa_donut.confirmed_pct }}%)</span></div>
+<div class="flex items-center justify-between text-amber-600"><span>● Pending</span> <span>{{ ssa_donut.pending }} ({{ ssa_donut.pending_pct }}%)</span></div>
+<div class="flex items-center justify-between text-violet-600"><span>● Other</span> <span>{{ ssa_donut.other }} ({{ ssa_donut.other_pct }}%)</span></div>
 </div>
 </div>
 
@@ -545,7 +539,7 @@ Go to Data Quality
 <div>
 <div class="flex items-center justify-between pb-3 border-b border-slate-100">
 <h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Recent Activity Feed</h2>
-<a href="#" class="text-[11px] font-semibold text-blue-600 hover:underline">View all &rarr;</a>
+<a href="/ia/history/" class="text-[11px] font-semibold text-blue-600 hover:underline">View all &rarr;</a>
 </div>
 
 <div class="relative border-l  ml-2 pl-4 space-y-5 mt-4">
@@ -565,7 +559,7 @@ Go to Data Quality
 </div>
 </div>
 
-<a href="#" class="text-[11px] font-semibold text-blue-600 hover:underline text-center block mt-4 border-t border-slate-50 pt-3 uppercase tracking-wider">
+<a href="/ia/history/" class="text-[11px] font-semibold text-blue-600 hover:underline text-center block mt-4 border-t border-slate-50 pt-3 uppercase tracking-wider">
 View all activity
 </a>
 </div>

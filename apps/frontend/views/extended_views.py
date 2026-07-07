@@ -4,6 +4,7 @@ GROUPS 4-7 — SSA/FY, Districts/Reports, Admin, Specialised Views
 from django.shortcuts import render, redirect, get_object_or_404
 from apps.core.permissions import require_page_permission, get_scoped_object_or_404
 from django.db.models import Q, Avg, Count
+from django.utils import timezone
 from datetime import date
 
 from apps.ssa.models import SsaRecord
@@ -184,155 +185,227 @@ def district_detail_view(request, district_id):
 
 @require_page_permission("planning")
 def reports_view(request):
-    """Reports overview — all roles."""
-    fy = get_operational_fy()
+    """Reports overview — all roles. Every figure is computed from live
+    activity data for the selected FY (achieved = completed vs scheduled)."""
+    import csv
+    from django.http import HttpResponse as _HttpResponse
+    from apps.core.fy import (
+        fy_options, get_fy_date_range, get_quarter_date_range,
+        get_mid_year_range, get_quarter_for_date, get_cumulative_target_percentage,
+    )
+
+    fy = request.GET.get("fy", "").strip() or get_operational_fy()
+    if fy not in fy_options():
+        fy = get_operational_fy()
+
+    COMPLETED = ["completed", "ia_verified", "closed"]
+    AREAS = [
+        ("Schools Visited", ["school_visit", "follow_up_visit", "coaching_visit", "core_visit", "in_school_support"]),
+        ("Trainings Delivered", ["training", "school_improvement_training", "cluster_training"]),
+        ("SSA Activities", ["ssa_activity"]),
+        ("Cluster Meetings", ["cluster_meeting"]),
+        ("Partner Activities", ["partner_activity"]),
+        ("Project Activities", ["project_activity"]),
+    ]
+
+    acts = Activity.objects.filter(deleted_at__isnull=True, fy=fy)
+    now = timezone.now()
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    if month_start.month == 12:
+        month_end = month_start.replace(year=month_start.year + 1, month=1)
+    else:
+        month_end = month_start.replace(month=month_start.month + 1)
+
+    fy_range = get_fy_date_range(fy)
+    ranges = {
+        "month": (month_start, month_end),
+        "Q1": get_quarter_date_range(fy, "Q1"),
+        "Q2": get_quarter_date_range(fy, "Q2"),
+        "Q3": get_quarter_date_range(fy, "Q3"),
+        "Q4": get_quarter_date_range(fy, "Q4"),
+        "mid": get_mid_year_range(fy),
+        "fy": fy_range,
+    }
+
+    def _counts(types, key):
+        rng = ranges[key]
+        qs = acts.filter(activity_type__in=types, scheduled_date__range=rng)
+        total = qs.count()
+        achieved = qs.filter(status__in=COMPLETED).count()
+        pct = round(achieved / total * 100) if total else 0
+        return total, achieved, pct
+
+    def _pct_color(pct):
+        if pct >= 70:
+            return "text-emerald-600"
+        if pct >= 50:
+            return "text-amber-600"
+        return "text-rose-600"
+
+    matrix_rows = []
+    for label, types in AREAS:
+        m_t, m_a, m_p = _counts(types, "month")
+        q1_t, q1_a, q1_p = _counts(types, "Q1")
+        q2_t, q2_a, q2_p = _counts(types, "Q2")
+        mid_t, mid_a, mid_p = _counts(types, "mid")
+        q3_t, q3_a, q3_p = _counts(types, "Q3")
+        q4_t, q4_a, q4_p = _counts(types, "Q4")
+        fy_t, fy_a, fy_p = _counts(types, "fy")
+        matrix_rows.append({
+            "area": label,
+            "m_t": m_t, "m_a": m_a, "m_p": m_p, "m_c": _pct_color(m_p),
+            "q1_t": q1_t, "q1_a": q1_a, "q1_p": q1_p, "q1_c": _pct_color(q1_p),
+            "q2_t": q2_t, "q2_a": q2_a, "q2_p": q2_p, "q2_c": _pct_color(q2_p),
+            "mid_t": mid_t, "mid_a": mid_a, "mid_p": mid_p, "mid_c": _pct_color(mid_p),
+            "q3_t": q3_t, "q3_a": q3_a, "q3_p": q3_p, "q3_c": _pct_color(q3_p),
+            "q4_t": q4_t, "q4_a": q4_a, "q4_p": q4_p, "q4_c": _pct_color(q4_p),
+            "fy_t": fy_t, "fy_a": fy_a, "fy_p": fy_p, "fy_c": _pct_color(fy_p),
+        })
+
+    if request.GET.get("export") == "csv":
+        response = _HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = f'attachment; filename="edify-performance-report-FY{fy}.csv"'
+        writer = csv.writer(response)
+        writer.writerow(["Target Area"] + [
+            f"{p} {c}" for p in ["This Month", "Q1 (Oct-Dec)", "Q2 (Jan-Mar)", "Mid Year", "Q3 (Apr-Jun)", "Q4 (Jul-Sep)", f"FY {fy}"]
+            for c in ["Target", "Achieved", "%"]
+        ])
+        for r in matrix_rows:
+            writer.writerow([
+                r["area"],
+                r["m_t"], r["m_a"], r["m_p"],
+                r["q1_t"], r["q1_a"], r["q1_p"],
+                r["q2_t"], r["q2_a"], r["q2_p"],
+                r["mid_t"], r["mid_a"], r["mid_p"],
+                r["q3_t"], r["q3_a"], r["q3_p"],
+                r["q4_t"], r["q4_a"], r["q4_p"],
+                r["fy_t"], r["fy_a"], r["fy_p"],
+            ])
+        return response
+
+    def _overall(key):
+        rng = ranges[key]
+        qs = acts.filter(scheduled_date__range=rng)
+        total = qs.count()
+        achieved = qs.filter(status__in=COMPLETED).count()
+        pct = round(achieved / total * 100) if total else 0
+        return total, achieved, pct
+
+    current_q = get_quarter_for_date(now)
+    q_labels = {"Q1": "Q1 (Oct – Dec)", "Q2": "Q2 (Jan – Mar)", "Q3": "Q3 (Apr – Jun)", "Q4": "Q4 (Jul – Sep)"}
+    period_defs = [
+        ("month", now.strftime("%B %Y"), "Monthly", "text-blue-500", True),
+        ("Q1", q_labels["Q1"], "Quarter 1", "text-emerald-500", True),
+        ("Q2", q_labels["Q2"], "Quarter 2", "text-blue-500", True),
+        ("mid", "Mid Year (Oct – Mar)", "Cumulative", "text-violet-500", True),
+        ("Q3", q_labels["Q3"], "Quarter 3", "text-teal-500", True),
+        ("Q4", q_labels["Q4"], "Quarter 4", "text-slate-400", True),
+        ("fy", f"FY {fy}", "Full Year", "text-indigo-600", True),
+    ]
+    quarter_order = ["Q1", "Q2", "Q3", "Q4"]
+    periods = []
+    for key, label, sublabel, color, _ in period_defs:
+        total, achieved, pct = _overall(key)
+        started = True
+        if key in quarter_order:
+            started = quarter_order.index(key) <= quarter_order.index(current_q)
+        periods.append({
+            "key": key, "label": label, "sublabel": sublabel, "color": color,
+            "total": total, "achieved": achieved, "pct": pct,
+            "status": ("On Track" if pct >= 70 else "In Progress") if started and total else ("Not Started" if not achieved else "In Progress"),
+            "dim": key in quarter_order and not started,
+        })
+    overall = {p["key"]: p for p in periods}
+
+    core_cards = []
+    for r in matrix_rows:
+        core_cards.append({
+            "label": r["area"],
+            "value": f"{r['fy_a']} / {r['fy_t']}",
+            "pct": r["fy_p"],
+            "color": _pct_color(r["fy_p"]).replace("emerald", "blue"),
+        })
+
+    # Donut: how many target areas are on/at-risk/off track for the FY
+    active_rows = [r for r in matrix_rows if r["fy_t"] > 0]
+    donut_on = sum(1 for r in active_rows if r["fy_p"] >= 70)
+    donut_risk = sum(1 for r in active_rows if 50 <= r["fy_p"] < 70)
+    donut_off = sum(1 for r in active_rows if r["fy_p"] < 50)
+    donut_total = len(active_rows)
+
+    def _dpct(n):
+        return round(n / donut_total * 100) if donut_total else 0
+
+    donut = {
+        "total": donut_total,
+        "on": donut_on, "on_pct": _dpct(donut_on),
+        "risk": donut_risk, "risk_pct": _dpct(donut_risk),
+        "off": donut_off, "off_pct": _dpct(donut_off),
+        "risk_offset": -_dpct(donut_on),
+        "off_offset": -(_dpct(donut_on) + _dpct(donut_risk)),
+    }
+
+    # Priorities: worst areas by FY completion (only areas with scheduled work)
+    priorities = []
+    for r in sorted(active_rows, key=lambda x: x["fy_p"])[:4]:
+        if r["fy_p"] < 50:
+            status, status_class = "Off Track", "bg-rose-50 text-rose-700 border-rose-200"
+        elif r["fy_p"] < 70:
+            status, status_class = "At Risk", "bg-amber-50 text-amber-700 border-amber-200"
+        else:
+            status, status_class = "On Track", "bg-emerald-50 text-emerald-700 border-emerald-200"
+        priorities.append({
+            "title": r["area"],
+            "desc": f"{r['fy_a']} of {r['fy_t']} scheduled completed ({r['fy_p']}%).",
+            "status": status,
+            "status_class": status_class,
+        })
+
+    # Cumulative trend chart points (SVG viewBox 600x200; y: 190=0%, 10=100%)
+    trend_keys = [("month", now.strftime("%b")), ("Q1", "Q1"), ("Q2", "Q2"), ("mid", "Mid Year"), ("Q3", "Q3"), ("Q4", "Q4"), ("fy", "FY")]
+    target_pcts = {"month": None, "Q1": 25, "Q2": 50, "mid": 50, "Q3": 75, "Q4": 100, "fy": 100}
+    trend = []
+    xs = [40, 125, 210, 295, 380, 465, 550]
+    for (key, short), x in zip(trend_keys, xs):
+        pct = overall[key]["pct"]
+        tgt = target_pcts[key] if target_pcts[key] is not None else get_cumulative_target_percentage("FY")
+        trend.append({
+            "x": x,
+            "y": round(190 - pct * 1.8),
+            "ty": round(190 - tgt * 1.8),
+            "label": f"{short} ({pct}%)",
+        })
+    trend_actual_points = " ".join(f"{t['x']},{t['y']}" for t in trend)
+    trend_target_points = " ".join(f"{t['x']},{t['ty']}" for t in trend)
+
     total_schools = School.objects.filter(deleted_at__isnull=True).count()
-    total_activities = Activity.objects.filter(deleted_at__isnull=True).count()
-    completed = Activity.objects.filter(status="completed", deleted_at__isnull=True).count()
+    total_activities = acts.count()
+    completed = acts.filter(status__in=COMPLETED).count()
 
     context = {
         "fy": fy,
+        "fy_options": fy_options(),
         "total_schools": total_schools,
         "total_activities": total_activities,
         "completed": completed,
-        "completion_rate": round(completed / max(total_activities, 1) * 100) if total_activities > 0 else 0,
-        
-        # May 2025 (Monthly)
-        "monthly_achieved": 21,
-        "monthly_total": 31,
-        "monthly_pct": 68,
-        "monthly_trend": "vs Apr ▲ 6pp",
-        "monthly_trend_class": "text-emerald-600",
-        
-        # Q1 (Apr-Jun)
-        "q1_achieved": 214,
-        "q1_total": 297,
-        "q1_pct": 72,
-        "q1_trend": "vs Q1 Plan ▲ 8pp",
-        "q1_trend_class": "text-emerald-600",
-        
-        # Q2 (Jul-Sep)
-        "q2_achieved": 153,
-        "q2_total": 300,
-        "q2_pct": 51,
-        "q2_trend": "vs Q2 Plan ▼ 3pp",
-        "q2_trend_class": "text-rose-600",
-        
-        # Mid Year (Apr-Sep)
-        "mid_achieved": 367,
-        "mid_total": 597,
-        "mid_pct": 61,
-        "mid_trend": "vs Mid Year Plan ▲ 5pp",
-        "mid_trend_class": "text-emerald-600",
-        
-        # Q3 (Oct-Dec)
-        "q3_achieved": 0,
-        "q3_total": 300,
-        "q3_pct": 0,
-        "q3_trend": "vs Q3 Plan —",
-        "q3_trend_class": "text-slate-400",
-        
-        # Q4 (Jan-Mar)
-        "q4_achieved": 0,
-        "q4_total": 300,
-        "q4_pct": 0,
-        "q4_trend": "vs Q4 Plan —",
-        "q4_trend_class": "text-slate-400",
-        
-        # FY 2024/25
-        "fy_achieved": 367,
-        "fy_total": 1197,
-        "fy_pct": 31,
-        "fy_trend": "vs FY Plan ▲ 4pp",
-        "fy_trend_class": "text-emerald-600",
-
-        # Target Cards
-        "core_cards": [
-            {"label": "Schools Visited", "value": "374 / 480", "pct": 78, "color": "text-blue-600"},
-            {"label": "Trainings Delivered", "value": "91 / 140", "pct": 65, "color": "text-emerald-600"},
-            {"label": "SSA Visits Completed", "value": "122 / 172", "pct": 71, "color": "text-teal-600"},
-            {"label": "Follow-ups Closed", "value": "64 / 78", "pct": 82, "color": "text-indigo-600"},
-            {"label": "Plan Approvals", "value": "28 / 40", "pct": 70, "color": "text-violet-600"},
-            {"label": "Fund Requests Reviewed", "value": "8 / 12", "pct": 67, "color": "text-amber-600"}
-        ],
-
-        # Progress by Time Period (Cumulative) Table Matrix
-        "matrix_rows": [
-            {
-                "area": "Schools Visited",
-                "m_t": 60, "m_a": 42, "m_p": 70, "m_c": "text-blue-600",
-                "q1_t": 150, "q1_a": 122, "q1_p": 81, "q1_c": "text-emerald-600",
-                "q2_t": 150, "q2_a": 92, "q2_p": 61, "q2_c": "text-emerald-600",
-                "mid_t": 300, "mid_a": 214, "mid_p": 71, "mid_c": "text-violet-600",
-                "q3_t": 150, "q3_a": 0, "q3_p": 0, "q3_c": "text-slate-400",
-                "q4_t": 180, "q4_a": 0, "q4_p": 0, "q4_c": "text-slate-400",
-                "fy_t": 630, "fy_a": 214, "fy_p": 34, "fy_c": "text-blue-600"
-            },
-            {
-                "area": "Trainings Delivered",
-                "m_t": 20, "m_a": 14, "m_p": 70, "m_c": "text-blue-600",
-                "q1_t": 50, "q1_a": 36, "q1_p": 72, "q1_c": "text-emerald-600",
-                "q2_t": 50, "q2_a": 27, "q2_p": 54, "q2_c": "text-emerald-600",
-                "mid_t": 100, "mid_a": 63, "mid_p": 63, "mid_c": "text-violet-600",
-                "q3_t": 50, "q3_a": 0, "q3_p": 0, "q3_c": "text-slate-400",
-                "q4_t": 50, "q4_a": 0, "q4_p": 0, "q4_c": "text-slate-400",
-                "fy_t": 200, "fy_a": 63, "fy_p": 32, "fy_c": "text-blue-600"
-            },
-            {
-                "area": "SSA Visits Completed",
-                "m_t": 20, "m_a": 18, "m_p": 90, "m_c": "text-emerald-600",
-                "q1_t": 51, "q1_a": 34, "q1_p": 67, "q1_c": "text-emerald-600",
-                "q2_t": 56, "q2_a": 32, "q2_p": 57, "q2_c": "text-emerald-600",
-                "mid_t": 107, "mid_a": 66, "mid_p": 62, "mid_c": "text-violet-600",
-                "q3_t": 56, "q3_a": 0, "q3_p": 0, "q3_c": "text-slate-400",
-                "q4_t": 58, "q4_a": 0, "q4_p": 0, "q4_c": "text-slate-400",
-                "fy_t": 221, "fy_a": 66, "fy_p": 30, "fy_c": "text-blue-600"
-            },
-            {
-                "area": "Follow-ups Closed",
-                "m_t": 14, "m_a": 11, "m_p": 79, "m_c": "text-emerald-600",
-                "q1_t": 24, "q1_a": 18, "q1_p": 75, "q1_c": "text-emerald-600",
-                "q2_t": 27, "q2_a": 14, "q2_p": 52, "q2_c": "text-emerald-600",
-                "mid_t": 51, "mid_a": 32, "mid_p": 63, "mid_c": "text-violet-600",
-                "q3_t": 27, "q3_a": 0, "q3_p": 0, "q3_c": "text-slate-400",
-                "q4_t": 28, "q4_a": 0, "q4_p": 0, "q4_c": "text-slate-400",
-                "fy_t": 106, "fy_a": 32, "fy_p": 30, "fy_c": "text-blue-600"
-            },
-            {
-                "area": "Plan Approvals",
-                "m_t": 10, "m_a": 7, "m_p": 70, "m_c": "text-blue-600",
-                "q1_t": 24, "q1_a": 17, "q1_p": 71, "q1_c": "text-emerald-600",
-                "q2_t": 16, "q2_a": 11, "q2_p": 69, "q2_c": "text-emerald-600",
-                "mid_t": 40, "mid_a": 28, "mid_p": 70, "mid_c": "text-emerald-600",
-                "q3_t": 16, "q3_a": 0, "q3_p": 0, "q3_c": "text-slate-400",
-                "q4_t": 18, "q4_a": 0, "q4_p": 0, "q4_c": "text-slate-400",
-                "fy_t": 74, "fy_a": 28, "fy_p": 38, "fy_c": "text-blue-600"
-            },
-            {
-                "area": "Fund Requests Reviewed",
-                "m_t": 4, "m_a": 3, "m_p": 75, "m_c": "text-emerald-600",
-                "q1_t": 10, "q1_a": 7, "q1_p": 70, "q1_c": "text-emerald-600",
-                "q2_t": 16, "q2_a": 4, "q2_p": 25, "q2_c": "text-rose-600",
-                "mid_t": 26, "mid_a": 11, "mid_p": 42, "mid_c": "text-amber-600",
-                "q3_t": 16, "q3_a": 0, "q3_p": 0, "q3_c": "text-slate-400",
-                "q4_t": 18, "q4_a": 0, "q4_p": 0, "q4_c": "text-slate-400",
-                "fy_t": 60, "fy_a": 11, "fy_p": 18, "fy_c": "text-rose-600"
-            }
-        ],
-
-        # Donut split
-        "donut_total": 12,
-        "donut_on_track": 6,
-        "donut_at_risk": 4,
-        "donut_off_track": 2,
-
-        # Priorities
-        "priorities": [
-            {"title": "SSA Visits Completed", "desc": "Below target in Q2. Focus on completion.", "status": "At Risk", "status_class": "bg-amber-50 text-amber-700 border-amber-250"},
-            {"title": "Trainings Delivered", "desc": "64% achieved in Q2. Increase coverage.", "status": "At Risk", "status_class": "bg-amber-50 text-amber-700 border-amber-250"},
-            {"title": "Follow-ups Closed", "desc": "82% achieved this month. Keep it up!", "status": "On Track", "status_class": "bg-emerald-50 text-emerald-700 border-emerald-250"},
-            {"title": "Fund Requests Reviewed", "desc": "40% achieved in Q2. Clear outstanding items.", "status": "Off Track", "status_class": "bg-rose-50 text-rose-700 border-rose-250"}
-        ]
+        "completion_rate": round(completed / total_activities * 100) if total_activities else 0,
+        "periods": periods,
+        "current_month_label": now.strftime("%B %Y"),
+        "q_labels": q_labels,
+        "monthly_pct": overall["month"]["pct"],
+        "q1_pct": overall["Q1"]["pct"],
+        "q2_pct": overall["Q2"]["pct"],
+        "mid_pct": overall["mid"]["pct"],
+        "q3_pct": overall["Q3"]["pct"],
+        "q4_pct": overall["Q4"]["pct"],
+        "fy_pct": overall["fy"]["pct"],
+        "core_cards": core_cards,
+        "matrix_rows": matrix_rows,
+        "donut": donut,
+        "priorities": priorities,
+        "trend": trend,
+        "trend_actual_points": trend_actual_points,
+        "trend_target_points": trend_target_points,
     }
     return render(request, "pages/reports/index.html", context)
 
@@ -349,7 +422,7 @@ def coverage_view(request):
     ).values("school_id").distinct().count()
 
     clusters = Cluster.objects.filter(deleted_at__isnull=True).annotate(
-        school_count=Count("schools", filter=Q(schools__deleted_at__isnull=True)),
+        school_count=Count("assignments", distinct=True),
     ).order_by("name")
 
     context = {
@@ -592,17 +665,73 @@ def message_detail_view(request, message_id):
 @require_page_permission("staff")
 def leave_requests_view(request):
     """Leave requests."""
-    user = request.user
-    leaves = Leave.objects.filter(user=user).order_by("-created_at")
+    profile = getattr(request.user, "staff_profile", None)
+    leaves = Leave.objects.filter(staff=profile).order_by("-created_at") if profile else Leave.objects.none()
     context = {"leaves": leaves}
     return render(request, "pages/leave/index.html", context)
 
 
 @require_page_permission("planning")
 def map_view(request):
-    """Geographic map placeholder."""
-    schools = School.objects.filter(deleted_at__isnull=True).values("name", "latitude", "longitude")[:200]
-    context = {"schools": list(schools)}
+    """Geographic coverage map — live region/district rollups plus a
+    library-free scatter for schools that have coordinates."""
+    from apps.geography.models import Region
+
+    live = School.objects.filter(deleted_at__isnull=True)
+    regions = []
+    region_rows = Region.objects.order_by("name")
+    for r in region_rows:
+        districts = []
+        d_rows = r.districts.annotate(
+            school_count=Count("schools", filter=Q(schools__deleted_at__isnull=True)),
+            ssa_avg=Avg("schools__ssa_records__average_score", filter=Q(
+                schools__deleted_at__isnull=True,
+                schools__ssa_records__deleted_at__isnull=True,
+                schools__ssa_records__verification_status="confirmed",
+            )),
+        ).filter(school_count__gt=0).order_by("name")
+        for d in d_rows:
+            avg = round(d.ssa_avg, 1) if d.ssa_avg is not None else None
+            if avg is None:
+                band = "bg-slate-100 text-slate-500"
+            elif avg < 5:
+                band = "bg-rose-50 text-rose-700"
+            elif avg < 7:
+                band = "bg-amber-50 text-amber-700"
+            else:
+                band = "bg-emerald-50 text-emerald-700"
+            districts.append({"name": d.name, "school_count": d.school_count, "ssa_avg": avg, "band": band})
+        if districts:
+            regions.append({
+                "name": r.name,
+                "school_count": sum(d["school_count"] for d in districts),
+                "districts": districts,
+            })
+
+    # Geocoded pins (scaled into a 800x600 canvas)
+    coords = list(live.exclude(latitude__isnull=True).exclude(longitude__isnull=True)
+                  .values("name", "latitude", "longitude")[:500])
+    pins = []
+    if coords:
+        lats = [c["latitude"] for c in coords]
+        lngs = [c["longitude"] for c in coords]
+        lat_min, lat_max = min(lats), max(lats)
+        lng_min, lng_max = min(lngs), max(lngs)
+        lat_span = (lat_max - lat_min) or 1
+        lng_span = (lng_max - lng_min) or 1
+        for c in coords:
+            pins.append({
+                "name": c["name"],
+                "x": round(40 + (c["longitude"] - lng_min) / lng_span * 720),
+                "y": round(40 + (lat_max - c["latitude"]) / lat_span * 520),
+            })
+
+    context = {
+        "regions": regions,
+        "pins": pins,
+        "total_schools": live.count(),
+        "geocoded_count": len(coords),
+    }
     return render(request, "pages/map/index.html", context)
 
 
@@ -719,39 +848,20 @@ def help_view(request):
 
 @require_page_permission("roles_permissions")
 def admin_roles_permissions_view(request):
-    """Roles and permissions matrix."""
-    roles = ["cceo", "pl", "cd", "rvp", "ia", "accountant", "hr", "partner", "admin"]
-    permission_groups = [
-        "Schools", "Clusters", "Planning", "My Plan", "Fund Requests", "Budgets", 
-        "Cost Catalogue", "Evidence", "IA Verification", "Accounts Clearance", 
-        "Analytics", "Messages", "Notifications", "System Settings", "User Management"
-    ]
-    # Standard static matrix of default clearances
+    """Roles and permissions matrix — rendered from the canonical RBAC
+    matrix (apps.core.rbac.ROLE_PERMISSIONS), the same source enforcement uses."""
+    from apps.core.rbac import EdifyRole, Permission, ROLE_PERMISSIONS
+
+    roles = [r.value for r in EdifyRole]
+    granted = {role.value: {p.value for p in perms} for role, perms in ROLE_PERMISSIONS.items()}
+
     matrix = {}
-    for pg in permission_groups:
-        matrix[pg] = {}
-        for r in roles:
-            # Default mock permissions
-            if r == "admin":
-                matrix[pg][r] = True
-            elif pg == "Schools" and r in ["cceo", "pl", "cd", "rvp", "ia"]:
-                matrix[pg][r] = True
-            elif pg == "Planning" and r in ["cceo", "pl", "cd"]:
-                matrix[pg][r] = True
-            elif pg == "Budgets" and r in ["cd", "rvp", "accountant"]:
-                matrix[pg][r] = True
-            elif pg == "Accounts Clearance" and r == "accountant":
-                matrix[pg][r] = True
-            elif pg == "IA Verification" and r == "ia":
-                matrix[pg][r] = True
-            elif pg == "Analytics" and r in ["cd", "rvp", "pl", "admin"]:
-                matrix[pg][r] = True
-            else:
-                matrix[pg][r] = False
+    for perm in Permission:
+        matrix[perm.value] = {r: perm.value in granted.get(r, set()) for r in roles}
 
     context = {
         "roles": roles,
-        "permission_groups": permission_groups,
+        "permission_groups": [p.value for p in Permission],
         "matrix": matrix,
     }
     return render(request, "pages/admin/roles_permissions.html", context)

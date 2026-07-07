@@ -16,7 +16,7 @@ from apps.fund_requests.weekly_service import (
 from apps.fund_requests.models import WeeklyFundRequest
 from apps.activities.models import Activity, ActivityScheduleCostLine
 from apps.geography.models import District
-from apps.accounts.models import StaffProfile
+from apps.accounts.models import StaffProfile, User
 from apps.budget.models import MonthlyFundRequest
 from apps.core.fy import get_operational_fy, get_quarter_date_range, get_fy_date_range
 from apps.core.scoping import resolve_user_scope
@@ -493,122 +493,99 @@ def weekly_fund_requests_view(request):
             "label": f"{wk['start'].strftime('%b %d')} - {wk['end'].strftime('%b %d')}"
         })
 
-    # CCEO Fund Queue mock database for PL layout
+    # PL fund queue — the supervised team's real weekly requests for the selected week
     import json
-    pl_queue_items = [
-        {
-            "id": " Sarah M.",
-            "user_name": "Sarah M.",
-            "district": "Northern District",
-            "region": "Northern Region",
-            "requested": 42600000,
-            "status": "Awaiting Approval",
-            "status_class": "bg-amber-50 text-amber-700 border-amber-200",
-            "visits": 24,
-            "partner": 6,
-            "clusters": 4,
-            "trainings": 6,
-            "lines": [
-                {"category": "Staff School Visits", "quantity": 24, "unit_cost": 140000, "total": 3360000},
-                {"category": "Partner School Visits", "quantity": 8, "unit_cost": 160000, "total": 1280050},
-                {"category": "Cluster Meetings", "quantity": 4, "unit_cost": 500000, "total": 2000000},
-                {"category": "Cluster Trainings", "quantity": 6, "unit_cost": 1200000, "total": 7200000},
-                {"category": "In-School Trainings", "quantity": 6, "unit_cost": 1000000, "total": 6000000},
-                {"category": "SSA Support Visits", "quantity": 5, "unit_cost": 150000, "total": 750000},
-                {"category": "Participant Meals", "quantity": 12, "unit_cost": 20000, "total": 240000},
-                {"category": "Transport / Field Travel", "quantity": 0, "unit_cost": 0, "total": 21790000}
-            ]
-        },
-        {
-            "id": " Peter K.",
-            "user_name": "Peter K. (My Own Plan)",
-            "district": "Central District",
-            "region": "Northern Region",
-            "requested": 38400000,
-            "status": "Awaiting Approval",
-            "status_class": "bg-amber-50 text-amber-700 border-amber-200",
-            "visits": 18,
-            "partner": 6,
-            "clusters": 3,
-            "trainings": 5,
-            "lines": [
-                {"category": "Staff School Visits", "quantity": 18, "unit_cost": 140000, "total": 2520000},
-                {"category": "Partner School Visits", "quantity": 6, "unit_cost": 160000, "total": 960000},
-                {"category": "Cluster Meetings", "quantity": 3, "unit_cost": 500000, "total": 1500000},
-                {"category": "Cluster Trainings", "quantity": 5, "unit_cost": 1200000, "total": 6000000},
-                {"category": "Transport / Field Travel", "quantity": 0, "unit_cost": 0, "total": 27420000}
-            ]
-        },
-        {
-            "id": " Ruth W.",
-            "user_name": "Ruth W.",
-            "district": "Eastern District",
-            "region": "Northern Region",
-            "requested": 26700000,
-            "status": "Needs Review",
-            "status_class": "bg-indigo-50 text-indigo-700 border-indigo-200",
-            "visits": 15,
-            "partner": 6,
-            "clusters": 3,
-            "trainings": 4,
-            "lines": [
-                {"category": "Staff School Visits", "quantity": 15, "unit_cost": 140000, "total": 2100000},
-                {"category": "Cluster Meetings", "quantity": 3, "unit_cost": 500000, "total": 1500000},
-                {"category": "Transport / Field Travel", "quantity": 0, "unit_cost": 0, "total": 23100000}
-            ]
-        },
-        {
-            "id": " Moses T.",
-            "user_name": "Moses T.",
-            "district": "Northern District",
-            "region": "Northern Region",
-            "requested": 24100000,
-            "status": "Ready",
-            "status_class": "bg-emerald-50 text-emerald-700 border-emerald-200",
-            "visits": 12,
-            "partner": 6,
-            "clusters": 3,
-            "trainings": 3,
-            "lines": [
-                {"category": "Staff School Visits", "quantity": 12, "unit_cost": 140000, "total": 1680000},
-                {"category": "Transport / Field Travel", "quantity": 0, "unit_cost": 0, "total": 22420000}
-            ]
-        },
-        {
-            "id": " Joel O.",
-            "user_name": "Joel O.",
-            "district": "Western District",
-            "region": "Northern Region",
-            "requested": 19800000,
-            "status": "Returned",
-            "status_class": "bg-rose-50 text-rose-700 border-rose-200",
-            "visits": 10,
-            "partner": 3,
-            "clusters": 2,
-            "trainings": 3,
-            "lines": [
-                {"category": "Staff School Visits", "quantity": 10, "unit_cost": 140000, "total": 1400000},
-                {"category": "Transport / Field Travel", "quantity": 0, "unit_cost": 0, "total": 18400000}
-            ]
-        },
-        {
-            "id": " Grace A.",
-            "user_name": "Grace A.",
-            "district": "Central District",
-            "region": "Northern Region",
-            "requested": 16900000,
-            "status": "Awaiting Approval",
-            "status_class": "bg-amber-50 text-amber-700 border-amber-200",
-            "visits": 9,
-            "partner": 2,
-            "clusters": 2,
-            "trainings": 3,
-            "lines": [
-                {"category": "Staff School Visits", "quantity": 9, "unit_cost": 140000, "total": 1260000},
-                {"category": "Transport / Field Travel", "quantity": 0, "unit_cost": 0, "total": 15640000}
-            ]
-        }
-    ]
+    _status_display = {
+        "pending_responsible_confirmation": ("Awaiting Confirmation", "bg-amber-50 text-amber-700 border-amber-200"),
+        "confirmed_for_advance": ("Ready", "bg-emerald-50 text-emerald-700 border-emerald-200"),
+        "disbursed": ("Disbursed", "bg-blue-50 text-blue-700 border-blue-200"),
+        "paid": ("Paid", "bg-blue-50 text-blue-700 border-blue-200"),
+        "closed": ("Closed", "bg-emerald-50 text-emerald-700 border-emerald-200"),
+        "cleared": ("Cleared", "bg-emerald-50 text-emerald-700 border-emerald-200"),
+        "cancelled": ("Cancelled", "bg-slate-50 text-slate-500 border-slate-200"),
+        "not_requested": ("Not Requested", "bg-slate-50 text-slate-500 border-slate-200"),
+        "self_funded": ("Self Funded", "bg-indigo-50 text-indigo-700 border-indigo-200"),
+        "self_funded_pending_reimbursement": ("Pending Reimbursement", "bg-indigo-50 text-indigo-700 border-indigo-200"),
+    }
+    pl_week_qs = wfr_qs.filter(week_start_date=selected_week_start).prefetch_related("lines")
+    _pl_user_ids = [w.responsible_user for w in pl_week_qs]
+    _pl_users = {u.id: u for u in User.objects.filter(id__in=_pl_user_ids)}
+    _pl_profiles = {sp.user_id: sp for sp in StaffProfile.objects.filter(user_id__in=_pl_user_ids)}
+    _pl_districts = dict(District.objects.values_list("id", "name"))
+
+    pl_queue_items = []
+    for w in pl_week_qs:
+        u = _pl_users.get(w.responsible_user)
+        sp = _pl_profiles.get(w.responsible_user)
+        lines_list, counts = [], {"visits": 0, "partner": 0, "clusters": 0, "trainings": 0}
+        for line in w.lines.all():
+            lines_list.append({
+                "category": line.description or line.line_item_type,
+                "quantity": line.quantity,
+                "unit_cost": line.unit_cost,
+                "total": line.total_cost,
+            })
+            lt = (line.line_item_type or "").lower()
+            if "partner" in lt:
+                counts["partner"] += line.quantity
+            elif "training" in lt:
+                counts["trainings"] += line.quantity
+            elif "meeting" in lt or "cluster" in lt:
+                counts["clusters"] += line.quantity
+            elif "visit" in lt:
+                counts["visits"] += line.quantity
+        status_label, status_class = _status_display.get(
+            w.status, (w.status.replace("_", " ").title(), "bg-slate-50 text-slate-500 border-slate-200")
+        )
+        pl_queue_items.append({
+            "id": w.id,
+            "user_name": (u.name if u else "—") + (" (My Own Plan)" if w.responsible_user == user.user_id else ""),
+            "district": _pl_districts.get(sp.primary_district_id, "—") if sp else "—",
+            "region": (sp.portfolio if sp and sp.portfolio else "—"),
+            "requested": w.total_amount,
+            "status": status_label,
+            "status_class": status_class,
+            "visits": counts["visits"],
+            "partner": counts["partner"],
+            "clusters": counts["clusters"],
+            "trainings": counts["trainings"],
+            "lines": lines_list,
+        })
+
+    # PL header KPI strip — live sums over the scoped queue
+    month_wfrs = wfr_qs.filter(week_start_date__year=year_num, week_start_date__month=month_num)
+    _m_total = month_wfrs.aggregate(v=Sum("total_amount"))["v"] or 0
+    _m_count = month_wfrs.count()
+    _wait_qs = month_wfrs.filter(status="pending_responsible_confirmation")
+    _ready_qs = month_wfrs.filter(status="confirmed_for_advance")
+    pl_kpis = {
+        "month_total": format_ugx_compact(_m_total),
+        "awaiting_total": format_ugx_compact(_wait_qs.aggregate(v=Sum("total_amount"))["v"] or 0),
+        "awaiting_count": _wait_qs.count(),
+        "ready_total": format_ugx_compact(_ready_qs.aggregate(v=Sum("total_amount"))["v"] or 0),
+        "ready_count": _ready_qs.count(),
+        "disbursed_total": format_ugx_compact(month_wfrs.aggregate(v=Sum("disbursed_amount"))["v"] or 0),
+        "fy_total": format_ugx_compact(breakdown["fy"]),
+        "avg_per_request": format_ugx_compact(round(_m_total / _m_count) if _m_count else 0),
+        "request_count": _m_count,
+    }
+
+    # Recent approval/return activity across the scoped queue (latest status changes)
+    pl_recent = []
+    for w in wfr_qs.exclude(status="pending_responsible_confirmation").order_by("-updated_at")[:3]:
+        u = _pl_users.get(w.responsible_user)
+        if u is None:
+            u = User.objects.filter(id=w.responsible_user).first()
+        status_label, _cls = _status_display.get(
+            w.status, (w.status.replace("_", " ").title(), "")
+        )
+        pl_recent.append({
+            "who": u.name if u else "—",
+            "what": f"Week of {w.week_start_date.strftime('%d %b')} — {status_label}",
+            "when": w.updated_at.strftime("%d %b, %I:%M %p") if w.updated_at else "—",
+            "amount": w.total_amount,
+            "positive": w.status in ["confirmed_for_advance", "disbursed", "paid", "closed", "cleared"],
+        })
 
     pl_queue_items_json = json.dumps(pl_queue_items)
 
@@ -645,6 +622,8 @@ def weekly_fund_requests_view(request):
         "is_pl": (request.user.active_role == "Program Lead"),
         "pl_queue_items": pl_queue_items,
         "pl_queue_items_json": pl_queue_items_json,
+        "pl_recent": pl_recent,
+        "pl_kpis": pl_kpis,
     }
 
     if request.headers.get("HX-Request") == "true":
@@ -686,6 +665,7 @@ def weekly_fund_request_self_funded_action(request, request_id):
 
 @require_page_permission("fund_requests")
 def generate_request_action(request):
+    week_start_str = ""
     if request.method == "POST":
         week_start_str = request.POST.get("week_start", "").strip()
         user_id = request.POST.get("staff_id", request.user.user_id).strip()

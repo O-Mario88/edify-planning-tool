@@ -158,6 +158,8 @@ Today’s Priorities <span class="count text-[11px] bg-blue-50 text-blue-600 px-
 </div>
 {{ w.week|safe }}
 </div>
+{% empty %}
+<p class="text-[11px] text-slate-400 font-semibold">No scheduled activities in recent weeks.</p>
 {% endfor %}
 </div>
 </div>
@@ -180,6 +182,8 @@ Today’s Priorities <span class="count text-[11px] bg-blue-50 text-blue-600 px-
 </div>
 <b class="text-slate-900 text-right">{{ item.score }}</b>
 </div>
+{% empty %}
+<p class="text-[11px] text-slate-400 font-semibold py-1">No confirmed SSA data yet.</p>
 {% endfor %}
 
 <strong class="text-[11px] uppercase tracking-wider text-slate-400 block pt-2 pb-1 border-b border-slate-100">Weakest Interventions</strong>
@@ -191,6 +195,8 @@ Today’s Priorities <span class="count text-[11px] bg-blue-50 text-blue-600 px-
 </div>
 <b class="text-slate-900 text-right">{{ item.score }}</b>
 </div>
+{% empty %}
+<p class="text-[11px] text-slate-400 font-semibold py-1">No confirmed SSA data yet.</p>
 {% endfor %}
 </div>
 </section>
@@ -272,6 +278,8 @@ Today’s Priorities <span class="count text-[11px] bg-blue-50 text-blue-600 px-
 <td class="py-2.5 text-center font-bold text-[14px] {% if c.trend == '↑' %}text-emerald-600{% elif c.trend == '↓' %}text-rose-500{% else %}text-amber-500{% endif %}">{{ c.trend }}</td>
 <td class="py-2.5 text-right"><span class="status {{ c.status_class }}">{{ c.status }}</span></td>
 </tr>
+{% empty %}
+<tr><td colspan="4" class="py-4 text-center text-slate-400 font-semibold">No clusters created yet.</td></tr>
 {% endfor %}
 </tbody>
 </table>
@@ -353,7 +361,6 @@ Today’s Priorities <span class="count text-[11px] bg-blue-50 text-blue-600 px-
 <div>
 <span class="text-slate-400 text-[11px]">This Week</span>
 <strong class="text-[18px] font-semibold text-slate-800 block mt-0.5">{{ execution_summary.week }}</strong>
-<span class="text-emerald-600 text-[11px] font-bold block mt-1">▲ 18% vs last week</span>
 </div>
 </div>
 
@@ -362,7 +369,6 @@ Today’s Priorities <span class="count text-[11px] bg-blue-50 text-blue-600 px-
 <div>
 <span class="text-slate-400 text-[11px]">This Month</span>
 <strong class="text-[18px] font-semibold text-slate-800 block mt-0.5">{{ execution_summary.month }}</strong>
-<span class="text-emerald-600 text-[11px] font-bold block mt-1">▲ 14% vs last month</span>
 </div>
 </div>
 
@@ -371,7 +377,6 @@ Today’s Priorities <span class="count text-[11px] bg-blue-50 text-blue-600 px-
 <div>
 <span class="text-slate-400 text-[11px]">This Quarter</span>
 <strong class="text-[18px] font-semibold text-slate-800 block mt-0.5">{{ execution_summary.quarter }}</strong>
-<span class="text-emerald-600 text-[11px] font-bold block mt-1">▲ 9% vs last quarter</span>
 </div>
 </div>
 
@@ -380,7 +385,6 @@ Today’s Priorities <span class="count text-[11px] bg-blue-50 text-blue-600 px-
 <div>
 <span class="text-slate-400 text-[11px]">This FY</span>
 <strong class="text-[18px] font-semibold text-slate-800 block mt-0.5">{{ execution_summary.fy }}</strong>
-<span class="text-emerald-600 text-[11px] font-bold block mt-1">▲ 11% vs last FY</span>
 </div>
 </div>
 </div>
@@ -408,6 +412,8 @@ Upcoming Today <span class="count text-[11px] bg-blue-50 text-blue-600 px-2 py-0
 <span class="text-slate-400 block text-[11px]">{{ item.info }}</span>
 </div>
 </div>
+{% empty %}
+<p class="text-[11px] text-slate-400 font-semibold">No activities scheduled for today.</p>
 {% endfor %}
 </div>
 
@@ -423,7 +429,7 @@ Attention Needed <span class="count text-[11px] bg-rose-50 text-rose-600 px-2 py
 <div class="attention-item flex items-center gap-3">
 <div class="round-mini red-bg shrink-0">⚠</div>
 <div>
-<strong class="text-slate-900">14 schools</strong>
+<strong class="text-slate-900">{{ signals.needs_attention }} school{{ signals.needs_attention|pluralize }}</strong>
 <span class="text-slate-400 block text-[11px] mt-0.5">Require immediate attention</span>
 </div>
 </div>
@@ -431,16 +437,16 @@ Attention Needed <span class="count text-[11px] bg-rose-50 text-rose-600 px-2 py
 <div class="attention-item flex items-center gap-3">
 <div class="round-mini orange-bg shrink-0">◉</div>
 <div>
-<strong class="text-slate-900">2 fund requests</strong>
-<span class="text-slate-400 block text-[11px] mt-0.5">Awaiting approval</span>
+<strong class="text-slate-900">{{ kpis.fund_requests_pending }} fund request{{ kpis.fund_requests_pending|pluralize }}</strong>
+<span class="text-slate-400 block text-[11px] mt-0.5">Awaiting action</span>
 </div>
 </div>
 
 <div class="attention-item flex items-center gap-3">
 <div class="round-mini purple-bg shrink-0">◫</div>
 <div>
-<strong class="text-slate-900">7 evidence submissions</strong>
-<span class="text-slate-400 block text-[11px] mt-0.5">Past due</span>
+<strong class="text-slate-900">{{ evidence_pending }} evidence submission{{ evidence_pending|pluralize }}</strong>
+<span class="text-slate-400 block text-[11px] mt-0.5">Pending upload</span>
 </div>
 </div>
 </div>

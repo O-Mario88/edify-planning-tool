@@ -53,8 +53,11 @@ def staff_directory_view(request):
     # We will need to compute this during the loop, but since we are looping filtered list, we should do it separately for the full list if needed, but for performance, we can just do it on the whole list or just approximate.
     pending_onboarding = StaffProfile.objects.exclude(onboarding_state__in=["active", "complete"]).count()
     
-    # We can calculate average coverage gap using Activity/SsaRecord if we want, but for now we'll put a placeholder or basic average
-    average_coverage_gap = 12.4
+    # Coverage gap: share of active schools with no matched account owner.
+    from apps.schools.models import School
+    _schools_total = School.objects.filter(deleted_at__isnull=True).count()
+    _schools_unowned = School.objects.filter(deleted_at__isnull=True).exclude(account_owner_status="matched").count()
+    average_coverage_gap = round(_schools_unowned / _schools_total * 100, 1) if _schools_total else 0
     
     # High risk (overdue > 3) - let's count for all staff
     today = date.today()
@@ -64,6 +67,9 @@ def staff_directory_view(request):
         deleted_at__isnull=True
     ).values('responsible_staff_id').annotate(overdue_count=Count('id'))
     high_risk_count = sum(1 for item in overdue_counts if item['overdue_count'] > 3)
+
+    from apps.geography.models import District
+    district_names = dict(District.objects.values_list("id", "name"))
 
     for u in staff_qs:
         profile = getattr(u, "staff_profile", None)
@@ -87,7 +93,7 @@ def staff_directory_view(request):
             "email": u.email,
             "roles": u.roles or [],
             "active_role": u.active_role,
-            "district": profile.location_name if profile else "Unknown",
+            "district": district_names.get(profile.primary_district_id, "—") if profile else "—",
             "status": u.status,
             "profile_id": profile.id if profile else None,
             "onboarding_state": getattr(profile, "onboarding_state", "unknown") if profile else "no_profile",

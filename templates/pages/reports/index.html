@@ -12,32 +12,24 @@
 <h1 class="text-[24px] font-semibold text-slate-800 tracking-tight leading-none">Reports & Performance</h1>
 <span class="text-slate-300 cursor-pointer" title="Reports & performance summary">ⓘ</span>
 </div>
-<p class="text-[12px] text-slate-500 font-bold mt-1.5">Track your progress across all time periods. Monthly performance rolls up to Quarterly, Mid Year, and Full Year targets.</p>
+<p class="text-[12px] text-slate-500 font-bold mt-1.5">Track your progress across all time periods. Monthly performance rolls up to Quarterly, Mid Year, and Full Year.</p>
 </div>
 
 <!-- Toolbar Filters -->
 <div class="flex flex-wrap items-center gap-2">
 <!-- FY Selection -->
-<select class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-semibold text-slate-600 shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
-<option>FY 2024/25</option>
+<form method="get" id="fy-form">
+<select name="fy" onchange="document.getElementById('fy-form').submit()" class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-semibold text-slate-600 shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
+{% for option in fy_options %}
+<option value="{{ option }}" {% if option == fy %}selected{% endif %}>FY {{ option }}</option>
+{% endfor %}
 </select>
-
-<!-- Date selector -->
-<button class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-semibold text-slate-600 flex items-center gap-1.5 shadow-sm hover:bg-slate-50">
-<svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-May 1 – May 31, 2025
-</button>
-
-<!-- Filters -->
-<button class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-semibold text-slate-600 flex items-center gap-1.5 shadow-sm hover:bg-slate-50">
-<svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
-Filters
-</button>
+</form>
 
 <!-- Export Report -->
-<button class="h-9 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-[12px] font-semibold flex items-center gap-1.5 transition-all shadow-sm">
+<a href="?fy={{ fy }}&export=csv" class="h-9 px-4 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-[12px] font-semibold flex items-center gap-1.5 transition-all shadow-sm">
 📥 Export Report
-</button>
+</a>
 </div>
 </div>
 
@@ -45,177 +37,32 @@ Filters
 <!-- ================= KPI TIMELINE ROW (Chevron Sequence) ================= -->
 <div class="overflow-x-auto pb-2">
 <div class="flex items-center gap-2 min-w-[1400px]">
-
-<!-- May 2025 -->
-<div class="flex-1 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between gap-3">
+{% for period in periods %}
+<div class="flex-1 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between gap-3 {% if period.dim %}opacity-60{% endif %}">
 <div class="space-y-1">
-<span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide block">May 2025</span>
-<span class="text-[11px] font-semibold text-slate-400 block uppercase">Monthly</span>
-<h3 class="text-[18px] font-semibold text-slate-800 mt-1 leading-none">{{ monthly_achieved }} / {{ monthly_total }}</h3>
-<span class="text-[11px] font-bold text-slate-400 block">Targets Achieved</span>
-<span class="text-[11px] {{ monthly_trend_class }} font-semibold block pt-1">{{ monthly_trend }}</span>
+<span class="text-[11px] font-semibold {% if period.dim %}text-slate-500{% else %}{{ period.color }}{% endif %} uppercase tracking-wide block">{{ period.label }}</span>
+<span class="text-[11px] font-semibold text-slate-400 block uppercase">{{ period.sublabel }}</span>
+<h3 class="text-[18px] font-semibold text-slate-800 mt-1 leading-none">{{ period.achieved }} / {{ period.total }}</h3>
+<span class="text-[11px] font-bold text-slate-400 block">Completed of Scheduled</span>
 </div>
 <!-- Progress circle -->
 <div class="relative h-14 w-14 flex items-center justify-center shrink-0">
 <svg class="h-full w-full -rotate-90" viewBox="0 0 36 36">
 <path class="text-slate-100" stroke-width="2" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-<path class="text-blue-500" stroke-dasharray="{{ monthly_pct }}, 100" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+{% if period.pct > 0 %}
+<path class="{{ period.color }}" stroke-dasharray="{{ period.pct }}, 100" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+{% endif %}
 </svg>
 <div class="absolute flex flex-col justify-center items-center">
-<span class="text-[11px] font-semibold text-slate-800 leading-none">{{ monthly_pct }}%</span>
-<span class="text-[11px] font-bold text-slate-400 uppercase tracking-wide mt-0.5">On Track</span>
+<span class="text-[11px] font-semibold {% if period.dim %}text-slate-500{% else %}text-slate-800{% endif %} leading-none">{{ period.pct }}%</span>
+<span class="text-[11px] font-bold text-slate-400 uppercase tracking-wide mt-0.5">{{ period.status }}</span>
 </div>
 </div>
 </div>
-
-<!-- Arrow -->
+{% if not forloop.last %}
 <span class="text-slate-300 font-semibold text-[18px] px-0.5 shrink-0">&rarr;</span>
-
-<!-- Q1 (Apr-Jun) -->
-<div class="flex-1 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between gap-3">
-<div class="space-y-1">
-<span class="text-[11px] font-semibold text-emerald-600 uppercase tracking-wide block">Q1 (Apr - Jun)</span>
-<span class="text-[11px] font-semibold text-slate-400 block uppercase">Quarter 1</span>
-<h3 class="text-[18px] font-semibold text-slate-800 mt-1 leading-none">{{ q1_achieved }} / {{ q1_total }}</h3>
-<span class="text-[11px] font-bold text-slate-400 block">Achieved</span>
-<span class="text-[11px] {{ q1_trend_class }} font-semibold block pt-1">{{ q1_trend }}</span>
-</div>
-<!-- Progress circle -->
-<div class="relative h-14 w-14 flex items-center justify-center shrink-0">
-<svg class="h-full w-full -rotate-90" viewBox="0 0 36 36">
-<path class="text-slate-100" stroke-width="2" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-<path class="text-emerald-500" stroke-dasharray="{{ q1_pct }}, 100" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-</svg>
-<div class="absolute flex flex-col justify-center items-center">
-<span class="text-[11px] font-semibold text-slate-800 leading-none">{{ q1_pct }}%</span>
-<span class="text-[11px] font-bold text-slate-400 uppercase tracking-wide mt-0.5">On Track</span>
-</div>
-</div>
-</div>
-
-<!-- Arrow -->
-<span class="text-slate-300 font-semibold text-[18px] px-0.5 shrink-0">&rarr;</span>
-
-<!-- Q2 (Jul-Sep) -->
-<div class="flex-1 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between gap-3">
-<div class="space-y-1">
-<span class="text-[11px] font-semibold text-blue-600 uppercase tracking-wide block">Q2 (Jul - Sep)</span>
-<span class="text-[11px] font-semibold text-slate-400 block uppercase">Quarter 2</span>
-<h3 class="text-[18px] font-semibold text-slate-800 mt-1 leading-none">{{ q2_achieved }} / {{ q2_total }}</h3>
-<span class="text-[11px] font-bold text-slate-400 block">Achieved</span>
-<span class="text-[11px] {{ q2_trend_class }} font-semibold block pt-1">{{ q2_trend }}</span>
-</div>
-<!-- Progress circle -->
-<div class="relative h-14 w-14 flex items-center justify-center shrink-0">
-<svg class="h-full w-full -rotate-90" viewBox="0 0 36 36">
-<path class="text-slate-100" stroke-width="2" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-<path class="text-blue-500" stroke-dasharray="{{ q2_pct }}, 100" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-</svg>
-<div class="absolute flex flex-col justify-center items-center">
-<span class="text-[11px] font-semibold text-slate-800 leading-none">{{ q2_pct }}%</span>
-<span class="text-[11px] font-bold text-slate-400 uppercase tracking-wide mt-0.5">On Track</span>
-</div>
-</div>
-</div>
-
-<!-- Arrow -->
-<span class="text-slate-300 font-semibold text-[18px] px-0.5 shrink-0">&rarr;</span>
-
-<!-- MID YEAR (Apr-Sep) -->
-<div class="flex-1 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between gap-3">
-<div class="space-y-1">
-<span class="text-[11px] font-semibold text-violet-600 uppercase tracking-wide block">MID YEAR (Apr - Sep)</span>
-<span class="text-[11px] font-semibold text-slate-400 block uppercase">Cumulative</span>
-<h3 class="text-[18px] font-semibold text-slate-800 mt-1 leading-none">{{ mid_achieved }} / {{ mid_total }}</h3>
-<span class="text-[11px] font-bold text-slate-400 block">Achieved</span>
-<span class="text-[11px] {{ mid_trend_class }} font-semibold block pt-1">{{ mid_trend }}</span>
-</div>
-<!-- Progress circle -->
-<div class="relative h-14 w-14 flex items-center justify-center shrink-0">
-<svg class="h-full w-full -rotate-90" viewBox="0 0 36 36">
-<path class="text-slate-100" stroke-width="2" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-<path class="text-violet-500" stroke-dasharray="{{ mid_pct }}, 100" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-</svg>
-<div class="absolute flex flex-col justify-center items-center">
-<span class="text-[11px] font-semibold text-slate-800 leading-none">{{ mid_pct }}%</span>
-<span class="text-[11px] font-bold text-slate-400 uppercase tracking-wide mt-0.5">On Track</span>
-</div>
-</div>
-</div>
-
-<!-- Arrow -->
-<span class="text-slate-300 font-semibold text-[18px] px-0.5 shrink-0">&rarr;</span>
-
-<!-- Q3 (Oct-Dec) -->
-<div class="flex-1 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between gap-3 opacity-60">
-<div class="space-y-1">
-<span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide block">Q3 (Oct - Dec)</span>
-<span class="text-[11px] font-semibold text-slate-400 block uppercase">Quarter 3</span>
-<h3 class="text-[18px] font-semibold text-slate-800 mt-1 leading-none">{{ q3_achieved }} / {{ q3_total }}</h3>
-<span class="text-[11px] font-bold text-slate-400 block">Achieved</span>
-<span class="text-[11px] {{ q3_trend_class }} font-semibold block pt-1">{{ q3_trend }}</span>
-</div>
-<!-- Progress circle -->
-<div class="relative h-14 w-14 flex items-center justify-center shrink-0">
-<svg class="h-full w-full -rotate-90" viewBox="0 0 36 36">
-<path class="text-slate-100" stroke-width="2" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-</svg>
-<div class="absolute flex flex-col justify-center items-center">
-<span class="text-[11px] font-semibold text-slate-500 leading-none">0%</span>
-<span class="text-[11px] font-bold text-slate-400 uppercase tracking-wide mt-0.5">Not Started</span>
-</div>
-</div>
-</div>
-
-<!-- Arrow -->
-<span class="text-slate-300 font-semibold text-[18px] px-0.5 shrink-0">&rarr;</span>
-
-<!-- Q4 (Jan-Mar) -->
-<div class="flex-1 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between gap-3 opacity-60">
-<div class="space-y-1">
-<span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide block">Q4 (Jan - Mar)</span>
-<span class="text-[11px] font-semibold text-slate-400 block uppercase">Quarter 4</span>
-<h3 class="text-[18px] font-semibold text-slate-800 mt-1 leading-none">{{ q4_achieved }} / {{ q4_total }}</h3>
-<span class="text-[11px] font-bold text-slate-400 block">Achieved</span>
-<span class="text-[11px] {{ q4_trend_class }} font-semibold block pt-1">{{ q4_trend }}</span>
-</div>
-<!-- Progress circle -->
-<div class="relative h-14 w-14 flex items-center justify-center shrink-0">
-<svg class="h-full w-full -rotate-90" viewBox="0 0 36 36">
-<path class="text-slate-100" stroke-width="2" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-</svg>
-<div class="absolute flex flex-col justify-center items-center">
-<span class="text-[11px] font-semibold text-slate-500 leading-none">0%</span>
-<span class="text-[11px] font-bold text-slate-400 uppercase tracking-wide mt-0.5">Not Started</span>
-</div>
-</div>
-</div>
-
-<!-- Arrow -->
-<span class="text-slate-300 font-semibold text-[18px] px-0.5 shrink-0">&rarr;</span>
-
-<!-- FY 24/25 -->
-<div class="flex-1 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between gap-3">
-<div class="space-y-1">
-<span class="text-[11px] font-semibold text-indigo-700 uppercase tracking-wide block">FY 2024/25</span>
-<span class="text-[11px] font-semibold text-slate-400 block uppercase">Full Year</span>
-<h3 class="text-[18px] font-semibold text-slate-800 mt-1 leading-none">{{ fy_achieved }} / {{ fy_total }}</h3>
-<span class="text-[11px] font-bold text-slate-400 block">Achieved</span>
-<span class="text-[11px] {{ fy_trend_class }} font-semibold block pt-1">{{ fy_trend }}</span>
-</div>
-<!-- Progress circle -->
-<div class="relative h-14 w-14 flex items-center justify-center shrink-0">
-<svg class="h-full w-full -rotate-90" viewBox="0 0 36 36">
-<path class="text-slate-100" stroke-width="2" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-<path class="text-indigo-600" stroke-dasharray="{{ fy_pct }}, 100" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-</svg>
-<div class="absolute flex flex-col justify-center items-center">
-<span class="text-[11px] font-semibold text-slate-800 leading-none">{{ fy_pct }}%</span>
-<span class="text-[11px] font-bold text-slate-400 uppercase tracking-wide mt-0.5">On Track</span>
-</div>
-</div>
-</div>
-
+{% endif %}
+{% endfor %}
 </div>
 </div>
 
@@ -227,19 +74,11 @@ Filters
 <div>
 <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">{{ card.label }}</span>
 <h3 class="text-[20px] font-semibold text-slate-800 mt-1 leading-none">{{ card.value }}</h3>
-<span class="text-[11px] {{ card.color }} font-semibold block mt-1.5">{{ card.pct }}% of Target</span>
+<span class="text-[11px] {{ card.color }} font-semibold block mt-1.5">{{ card.pct }}% completed</span>
 </div>
-<!-- Sparkline simulator using SVG path -->
-<div class="h-8 w-full pt-1">
-<svg class="h-full w-full" viewBox="0 0 100 30" preserveAspectRatio="none">
-{% if card.pct >= 75 %}
-<path d="M0,25 Q15,10 30,18 T60,8 T90,5 L100,5" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round"/>
-{% elif card.pct >= 60 %}
-<path d="M0,28 Q15,20 30,22 T60,15 T90,12 L100,10" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
-{% else %}
-<path d="M0,28 Q15,22 30,25 T60,18 T90,20 L100,22" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
-{% endif %}
-</svg>
+<!-- Progress bar -->
+<div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+<div class="h-full rounded-full {% if card.pct >= 70 %}bg-emerald-500{% elif card.pct >= 50 %}bg-amber-500{% else %}bg-rose-500{% endif %}" style="width: {{ card.pct }}%"></div>
 </div>
 </div>
 {% endfor %}
@@ -249,7 +88,7 @@ Filters
 <!-- ================= TIME PERIOD PROGRESS MATRIX ================= -->
 <div class="bg-white rounded-xl  shadow-sm overflow-hidden">
 <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-<h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Progress by Time Period (Cumulative) ⓘ</h2>
+<h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Progress by Time Period (Completed vs Scheduled) ⓘ</h2>
 </div>
 
 <div class="overflow-x-auto">
@@ -258,43 +97,43 @@ Filters
 <tr class="bg-slate-50 text-slate-500 font-bold border-b ">
 <!-- Headers split -->
 <th class="p-4 font-semibold border-r  w-[200px]" rowspan="2">TARGET AREA</th>
-<th class="py-2.5 text-center border-r  font-bold bg-blue-50/30" colspan="3">MAY 2025 <span class="text-[11px] text-slate-500 block uppercase">Monthly</span></th>
-<th class="py-2.5 text-center border-r  font-bold bg-emerald-50/30" colspan="3">Q1 (Apr – Jun) <span class="text-[11px] text-slate-500 block uppercase">Q1 Total</span></th>
-<th class="py-2.5 text-center border-r  font-bold bg-blue-50/30" colspan="3">Q2 (Jul – Sep) <span class="text-[11px] text-slate-500 block uppercase">Q2 Total</span></th>
-<th class="py-2.5 text-center border-r  font-bold bg-violet-50/30" colspan="3">MID YEAR (Apr – Sep) <span class="text-[11px] text-slate-500 block uppercase">Cumulative</span></th>
-<th class="py-2.5 text-center border-r  font-bold bg-slate-50/30" colspan="3">Q3 (Oct – Dec) <span class="text-[11px] text-slate-500 block uppercase">Q3 Total</span></th>
-<th class="py-2.5 text-center border-r  font-bold bg-slate-50/30" colspan="3">Q4 (Jan – Mar) <span class="text-[11px] text-slate-500 block uppercase">Q4 Total</span></th>
-<th class="py-2.5 text-center font-bold bg-indigo-50/30" colspan="3">FY 2024/25 <span class="text-[11px] text-slate-500 block uppercase">Full Year</span></th>
+<th class="py-2.5 text-center border-r  font-bold bg-blue-50/30" colspan="3">{{ current_month_label|upper }} <span class="text-[11px] text-slate-500 block uppercase">Monthly</span></th>
+<th class="py-2.5 text-center border-r  font-bold bg-emerald-50/30" colspan="3">{{ q_labels.Q1|upper }} <span class="text-[11px] text-slate-500 block uppercase">Q1 Total</span></th>
+<th class="py-2.5 text-center border-r  font-bold bg-blue-50/30" colspan="3">{{ q_labels.Q2|upper }} <span class="text-[11px] text-slate-500 block uppercase">Q2 Total</span></th>
+<th class="py-2.5 text-center border-r  font-bold bg-violet-50/30" colspan="3">MID YEAR (OCT – MAR) <span class="text-[11px] text-slate-500 block uppercase">Cumulative</span></th>
+<th class="py-2.5 text-center border-r  font-bold bg-slate-50/30" colspan="3">{{ q_labels.Q3|upper }} <span class="text-[11px] text-slate-500 block uppercase">Q3 Total</span></th>
+<th class="py-2.5 text-center border-r  font-bold bg-slate-50/30" colspan="3">{{ q_labels.Q4|upper }} <span class="text-[11px] text-slate-500 block uppercase">Q4 Total</span></th>
+<th class="py-2.5 text-center font-bold bg-indigo-50/30" colspan="3">FY {{ fy }} <span class="text-[11px] text-slate-500 block uppercase">Full Year</span></th>
 </tr>
 <tr class="bg-slate-50 text-[11px] text-slate-500 border-b  font-bold">
 <!-- columns labels -->
-<!-- May -->
-<th class="py-2 px-1 text-center font-bold">Target</th>
-<th class="py-2 px-1 text-center font-bold">Achieved</th>
+<!-- Month -->
+<th class="py-2 px-1 text-center font-bold">Sched.</th>
+<th class="py-2 px-1 text-center font-bold">Done</th>
 <th class="py-2 px-1 text-center border-r  font-bold"> % </th>
 <!-- Q1 -->
-<th class="py-2 px-1 text-center font-bold">Target</th>
-<th class="py-2 px-1 text-center font-bold">Achieved</th>
+<th class="py-2 px-1 text-center font-bold">Sched.</th>
+<th class="py-2 px-1 text-center font-bold">Done</th>
 <th class="py-2 px-1 text-center border-r  font-bold"> % </th>
 <!-- Q2 -->
-<th class="py-2 px-1 text-center font-bold">Target</th>
-<th class="py-2 px-1 text-center font-bold">Achieved</th>
+<th class="py-2 px-1 text-center font-bold">Sched.</th>
+<th class="py-2 px-1 text-center font-bold">Done</th>
 <th class="py-2 px-1 text-center border-r  font-bold"> % </th>
 <!-- Mid Year -->
-<th class="py-2 px-1 text-center font-bold">Target</th>
-<th class="py-2 px-1 text-center font-bold">Achieved</th>
+<th class="py-2 px-1 text-center font-bold">Sched.</th>
+<th class="py-2 px-1 text-center font-bold">Done</th>
 <th class="py-2 px-1 text-center border-r  font-bold"> % </th>
 <!-- Q3 -->
-<th class="py-2 px-1 text-center font-bold">Target</th>
-<th class="py-2 px-1 text-center font-bold">Achieved</th>
+<th class="py-2 px-1 text-center font-bold">Sched.</th>
+<th class="py-2 px-1 text-center font-bold">Done</th>
 <th class="py-2 px-1 text-center border-r  font-bold"> % </th>
 <!-- Q4 -->
-<th class="py-2 px-1 text-center font-bold">Target</th>
-<th class="py-2 px-1 text-center font-bold">Achieved</th>
+<th class="py-2 px-1 text-center font-bold">Sched.</th>
+<th class="py-2 px-1 text-center font-bold">Done</th>
 <th class="py-2 px-1 text-center border-r  font-bold"> % </th>
 <!-- FY -->
-<th class="py-2 px-1 text-center font-bold">Target</th>
-<th class="py-2 px-1 text-center font-bold">Achieved</th>
+<th class="py-2 px-1 text-center font-bold">Sched.</th>
+<th class="py-2 px-1 text-center font-bold">Done</th>
 <th class="py-2 px-1 text-center font-bold"> % </th>
 </tr>
 </thead>
@@ -302,40 +141,42 @@ Filters
 {% for row in matrix_rows %}
 <tr class="hover:bg-slate-50/50 transition-colors">
 <td class="p-4 font-semibold text-slate-800 border-r ">{{ row.area }}</td>
-<!-- May -->
+<!-- Month -->
 <td class="py-3 px-1 text-center text-slate-500 font-bold">{{ row.m_t }}</td>
 <td class="py-3 px-1 text-center text-slate-700 font-semibold">{{ row.m_a }}</td>
-<td class="py-3 px-1 text-center border-r  font-semibold text-blue-600">{{ row.m_p }}%</td>
+<td class="py-3 px-1 text-center border-r  font-semibold {{ row.m_c }}">{{ row.m_p }}%</td>
 <!-- Q1 -->
 <td class="py-3 px-1 text-center text-slate-500 font-bold">{{ row.q1_t }}</td>
 <td class="py-3 px-1 text-center text-slate-700 font-semibold">{{ row.q1_a }}</td>
-<td class="py-3 px-1 text-center border-r  font-semibold text-emerald-600">{{ row.q1_p }}%</td>
+<td class="py-3 px-1 text-center border-r  font-semibold {{ row.q1_c }}">{{ row.q1_p }}%</td>
 <!-- Q2 -->
 <td class="py-3 px-1 text-center text-slate-500 font-bold">{{ row.q2_t }}</td>
 <td class="py-3 px-1 text-center text-slate-700 font-semibold">{{ row.q2_a }}</td>
-<td class="py-3 px-1 text-center border-r  font-semibold text-blue-600">{{ row.q2_p }}%</td>
+<td class="py-3 px-1 text-center border-r  font-semibold {{ row.q2_c }}">{{ row.q2_p }}%</td>
 <!-- Mid Year -->
 <td class="py-3 px-1 text-center text-slate-500 font-bold">{{ row.mid_t }}</td>
 <td class="py-3 px-1 text-center text-slate-700 font-semibold">{{ row.mid_a }}</td>
-<td class="py-3 px-1 text-center border-r  font-semibold text-violet-600">{{ row.mid_p }}%</td>
+<td class="py-3 px-1 text-center border-r  font-semibold {{ row.mid_c }}">{{ row.mid_p }}%</td>
 <!-- Q3 -->
-<td class="py-3 px-1 text-center text-slate-400 font-bold">{{ row.q3_t }}</td>
-<td class="py-3 px-1 text-center text-slate-400 font-semibold">{{ row.q3_a }}</td>
-<td class="py-3 px-1 text-center border-r  font-semibold text-slate-400">{{ row.q3_p }}%</td>
+<td class="py-3 px-1 text-center text-slate-500 font-bold">{{ row.q3_t }}</td>
+<td class="py-3 px-1 text-center text-slate-700 font-semibold">{{ row.q3_a }}</td>
+<td class="py-3 px-1 text-center border-r  font-semibold {{ row.q3_c }}">{{ row.q3_p }}%</td>
 <!-- Q4 -->
-<td class="py-3 px-1 text-center text-slate-400 font-bold">{{ row.q4_t }}</td>
-<td class="py-3 px-1 text-center text-slate-400 font-semibold">{{ row.q4_a }}</td>
-<td class="py-3 px-1 text-center border-r  font-semibold text-slate-400">{{ row.q4_p }}%</td>
+<td class="py-3 px-1 text-center text-slate-500 font-bold">{{ row.q4_t }}</td>
+<td class="py-3 px-1 text-center text-slate-700 font-semibold">{{ row.q4_a }}</td>
+<td class="py-3 px-1 text-center border-r  font-semibold {{ row.q4_c }}">{{ row.q4_p }}%</td>
 <!-- FY -->
 <td class="py-3 px-1 text-center text-slate-500 font-bold">{{ row.fy_t }}</td>
 <td class="py-3 px-1 text-center text-slate-700 font-semibold">{{ row.fy_a }}</td>
-<td class="py-3 px-1 text-center font-semibold text-indigo-600">{{ row.fy_p }}%</td>
+<td class="py-3 px-1 text-center font-semibold {{ row.fy_c }}">{{ row.fy_p }}%</td>
 </tr>
+{% empty %}
+<tr><td colspan="22" class="p-6 text-center text-slate-400 font-bold">No scheduled activities for FY {{ fy }} yet.</td></tr>
 {% endfor %}
 <!-- overall progress summary row -->
 <tr class="bg-slate-50/70 text-slate-800 border-t border-slate-200 text-[12px] font-semibold">
 <td class="p-4 font-semibold uppercase tracking-wider border-r ">Overall Progress</td>
-<!-- May -->
+<!-- Month -->
 <td class="py-3 px-1 text-center" colspan="2"></td>
 <td class="py-3 px-1 text-center border-r  font-semibold text-blue-600 text-[14px]">{{ monthly_pct }}%</td>
 <!-- Q1 -->
@@ -349,10 +190,10 @@ Filters
 <td class="py-3 px-1 text-center border-r  font-semibold text-violet-600 text-[14px]">{{ mid_pct }}%</td>
 <!-- Q3 -->
 <td class="py-3 px-1 text-center" colspan="2"></td>
-<td class="py-3 px-1 text-center border-r  font-semibold text-slate-400 text-[14px]">{{ q3_pct }}%</td>
+<td class="py-3 px-1 text-center border-r  font-semibold text-slate-500 text-[14px]">{{ q3_pct }}%</td>
 <!-- Q4 -->
 <td class="py-3 px-1 text-center" colspan="2"></td>
-<td class="py-3 px-1 text-center border-r  font-semibold text-slate-400 text-[14px]">{{ q4_pct }}%</td>
+<td class="py-3 px-1 text-center border-r  font-semibold text-slate-500 text-[14px]">{{ q4_pct }}%</td>
 <!-- FY -->
 <td class="py-3 px-1 text-center" colspan="2"></td>
 <td class="py-3 px-1 text-center font-semibold text-indigo-600 text-[14px]">{{ fy_pct }}%</td>
@@ -369,10 +210,10 @@ Filters
 <!-- CUMULATIVE PROGRESS TREND (Col Span 6) -->
 <div class="lg:col-span-6 bg-white p-5 rounded-xl  shadow-sm space-y-4">
 <div class="pb-2 border-b border-slate-100 flex items-center justify-between">
-<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Cumulative Progress Trend</h3>
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Progress by Period</h3>
 <div class="flex items-center gap-3 text-[11px] font-bold text-slate-500">
 <span class="flex items-center gap-1"><span class="h-2 w-5 bg-blue-500 rounded"></span> Actual</span>
-<span class="flex items-center gap-1"><span class="h-2 w-5 bg-slate-300 rounded border-dashed border"></span> Target</span>
+<span class="flex items-center gap-1"><span class="h-2 w-5 bg-slate-300 rounded border-dashed border"></span> Cumulative Plan</span>
 </div>
 </div>
 
@@ -387,31 +228,25 @@ Filters
 <div class="w-full flex justify-between pr-2"><span>0%</span></div>
 </div>
 
-<!-- SVG lines drawing actual vs target path -->
+<!-- SVG lines drawing actual vs plan path -->
 <svg class="h-full w-full overflow-visible z-10 relative" viewBox="0 0 600 200" preserveAspectRatio="none">
-<!-- Target line (dashed) -->
-<path d="M 50,150 L 150,100 L 250,110 L 350,90 L 450,140 L 550,140" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="6,6" stroke-linecap="round"/>
+<!-- Cumulative plan line (dashed) -->
+<polyline points="{{ trend_target_points }}" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="6,6" stroke-linecap="round"/>
 
 <!-- Actual line (blue solid) -->
-<path d="M 50,150 L 150,100 L 250,130 L 350,110 L 450,180 L 550,180" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
+<polyline points="{{ trend_actual_points }}" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
 
 <!-- Nodes -->
-<circle cx="50" cy="150" r="4.5" fill="#3b82f6" stroke="white" stroke-width="2"/>
-<circle cx="150" cy="100" r="4.5" fill="#3b82f6" stroke="white" stroke-width="2"/>
-<circle cx="250" cy="130" r="4.5" fill="#3b82f6" stroke="white" stroke-width="2"/>
-<circle cx="350" cy="110" r="4.5" fill="#3b82f6" stroke="white" stroke-width="2"/>
-<circle cx="550" cy="180" r="4.5" fill="#3b82f6" stroke="white" stroke-width="2"/>
+{% for t in trend %}
+<circle cx="{{ t.x }}" cy="{{ t.y }}" r="4.5" fill="#3b82f6" stroke="white" stroke-width="2"/>
+{% endfor %}
 </svg>
 
-<!-- Months label row -->
-<div class="flex justify-between text-[11px] font-semibold text-slate-500 mt-2 px-6">
-<span>May (68%)</span>
-<span>Q1 (72%)</span>
-<span>Q2 (51%)</span>
-<span>Mid Year (61%)</span>
-<span>Q3 (0%)</span>
-<span>Q4 (0%)</span>
-<span>FY (31%)</span>
+<!-- Period label row -->
+<div class="flex justify-between text-[11px] font-semibold text-slate-500 mt-2 px-2">
+{% for t in trend %}
+<span>{{ t.label }}</span>
+{% endfor %}
 </div>
 </div>
 </div>
@@ -419,7 +254,7 @@ Filters
 <!-- ACHIEVEMENT VS TARGET DONUT (Col Span 3) -->
 <div class="lg:col-span-3 bg-white p-5 rounded-xl  shadow-sm flex flex-col justify-between space-y-4">
 <div class="pb-2 border-b border-slate-100">
-<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Achievement vs Target</h3>
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Target Areas by Status</h3>
 </div>
 
 <div class="flex flex-col items-center justify-center space-y-4">
@@ -427,30 +262,33 @@ Filters
 <div class="relative h-32 w-32 flex items-center justify-center">
 <svg class="h-full w-full -rotate-90" viewBox="0 0 36 36">
 <path class="text-slate-100" stroke-width="2" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-<!-- On Track: 50% -->
-<path class="text-emerald-500" stroke-dasharray="50, 100" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-<!-- At Risk: 33% -->
-<path class="text-amber-500" stroke-dasharray="33, 100" stroke-dashoffset="-50" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-<!-- Off Track: 17% -->
-<path class="text-rose-500" stroke-dasharray="17, 100" stroke-dashoffset="-83" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+{% if donut.on_pct > 0 %}
+<path class="text-emerald-500" stroke-dasharray="{{ donut.on_pct }}, 100" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+{% endif %}
+{% if donut.risk_pct > 0 %}
+<path class="text-amber-500" stroke-dasharray="{{ donut.risk_pct }}, 100" stroke-dashoffset="{{ donut.risk_offset }}" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+{% endif %}
+{% if donut.off_pct > 0 %}
+<path class="text-rose-500" stroke-dasharray="{{ donut.off_pct }}, 100" stroke-dashoffset="{{ donut.off_offset }}" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+{% endif %}
 </svg>
 <div class="absolute flex flex-col justify-center items-center">
 <span class="text-[12px] font-semibold text-slate-400 uppercase tracking-wide">Total</span>
-<span class="text-[24px] font-semibold text-slate-800 leading-none mt-1">12</span>
-<span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mt-1">Targets</span>
+<span class="text-[24px] font-semibold text-slate-800 leading-none mt-1">{{ donut.total }}</span>
+<span class="text-[11px] font-bold text-slate-500 uppercase tracking-wide mt-1">Areas</span>
 </div>
 </div>
 
 <div class="text-[11px] space-y-1.5 font-bold w-full text-slate-600 px-2">
-<div class="flex items-center justify-between"><span class="text-emerald-600">● On Track (&gt;=70%)</span> <span>6 (50%)</span></div>
-<div class="flex items-center justify-between"><span class="text-amber-600">● At Risk (50-69%)</span> <span>4 (33%)</span></div>
-<div class="flex items-center justify-between"><span class="text-rose-600">● Off Track (&lt;50%)</span> <span>2 (17%)</span></div>
+<div class="flex items-center justify-between"><span class="text-emerald-600">● On Track (&gt;=70%)</span> <span>{{ donut.on }} ({{ donut.on_pct }}%)</span></div>
+<div class="flex items-center justify-between"><span class="text-amber-600">● At Risk (50-69%)</span> <span>{{ donut.risk }} ({{ donut.risk_pct }}%)</span></div>
+<div class="flex items-center justify-between"><span class="text-rose-600">● Off Track (&lt;50%)</span> <span>{{ donut.off }} ({{ donut.off_pct }}%)</span></div>
 </div>
 </div>
 
 <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold">
-<span class="text-slate-500">Overall Achievement</span>
-<span class="text-violet-600">61% &bull; ▲ 5pp vs Mid Plan</span>
+<span class="text-slate-500">Overall FY Completion</span>
+<span class="text-violet-600">{{ fy_pct }}%</span>
 </div>
 </div>
 
@@ -481,6 +319,8 @@ Filters
 {{ prio.status }}
 </span>
 </div>
+{% empty %}
+<p class="text-[12px] text-slate-400 font-semibold py-2">No scheduled work yet for FY {{ fy }}.</p>
 {% endfor %}
 </div>
 </div>

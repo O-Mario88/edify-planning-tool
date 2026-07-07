@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.db.models import Q, Avg, Count, Sum
 from django.utils import timezone
-from datetime import date as date_type
+from datetime import date as date_type, timedelta
 
 from apps.activities.models import Activity, ActivityScheduleCostLine
 from apps.schools.models import School
@@ -149,7 +149,7 @@ def dashboard_view(request):
             # Region: derive from supervised CCEOs' schools
             region_name = "—"
             if supervisee_sp_ids:
-                _sch = School.objects.filter(staff_assignments__staff_id__in=supervisee_sp_ids).select_related("region").first()
+                _sch = School.objects.filter(account_owner_id__in=supervisee_sp_ids).select_related("region").first()
                 if _sch and _sch.region:
                     region_name = _sch.region.name
             planned = Activity.objects.filter(responsible_staff_id__in=supervisee_user_ids, status__in=PLANNED, deleted_at__isnull=True, fy=fy).count()
@@ -473,42 +473,92 @@ def dashboard_view(request):
             deleted_at__isnull=True
         )
         
-        completed_cnt = cc_activities.filter(status="completed").count() or 7
-        in_progress_cnt = cc_activities.filter(status="in_progress").count() or 10
-        planned_cnt = cc_activities.filter(status__in=["scheduled", "planned"]).count() or 5
-        overdue_cnt = cc_activities.filter(planned_date__lt=today).exclude(status__in=["completed", "closed"]).count() or 2
-        
+        completed_cnt = cc_activities.filter(status="completed").count()
+        in_progress_cnt = cc_activities.filter(status="in_progress").count()
+        planned_cnt = cc_activities.filter(status__in=["scheduled", "planned"]).count()
+        overdue_cnt = cc_activities.filter(planned_date__lt=today).exclude(status__in=["completed", "closed"]).count()
+
         total_tasks = completed_cnt + in_progress_cnt + planned_cnt + overdue_cnt
 
-        # Agenda elements fallback to mockup data for layout consistency
-        agenda_morning = [
-            {"title": "Cluster Training — Leadership Best Practice", "location": "Kitgum Central Cluster Hub &bull; Kitgum District", "status": "Completed", "status_class": "bg-emerald-50 text-emerald-700 border-emerald-200", "icon": "📚", "sf": True},
-            {"title": "School Visit — Pope John PS", "location": "Pope John Primary School &bull; Kitgum District", "status": "In Progress", "status_class": "bg-amber-50 text-amber-700 border-amber-200", "icon": "🏫", "count": 3},
-            {"title": "School Visit — St. Peter PS", "location": "St. Peter Primary School &bull; Lamwo District", "status": "Planned", "status_class": "bg-slate-50 text-slate-500 border-slate-200", "icon": "🏫", "count": 2}
-        ]
+        # Today's agenda built from the user's real scheduled activities,
+        # partitioned into morning / afternoon / evening by scheduled time.
+        def _agenda_item(act):
+            atype = act.activity_type or ""
+            if "training" in atype:
+                icon = "📚"
+            elif "meeting" in atype:
+                icon = "👥"
+            elif "ssa" in atype:
+                icon = "📋"
+            else:
+                icon = "🏫"
+            if act.status == "completed":
+                status, status_class = "Completed", "bg-emerald-50 text-emerald-700 border-emerald-200"
+            elif act.status in ("started", "in_progress"):
+                status, status_class = "In Progress", "bg-amber-50 text-amber-700 border-amber-200"
+            elif act.planned_date and act.planned_date.date() < today and act.status not in ("completed", "closed"):
+                status, status_class = "Overdue", "bg-rose-50 text-rose-700 border-rose-200"
+            else:
+                status, status_class = "Planned", "bg-slate-50 text-slate-500 border-slate-200"
+            school_name = act.school.name if act.school else (act.cluster.name if act.cluster else "—")
+            district = act.school.district.name if act.school and act.school.district else ""
+            location = f"{school_name}" + (f" &bull; {district} District" if district else "")
+            return {
+                "title": f"{act.activity_type.replace('_', ' ').title()} — {school_name}",
+                "location": location,
+                "status": status,
+                "status_class": status_class,
+                "icon": icon,
+                "sf": bool(act.salesforce_activity_id),
+            }
 
-        agenda_afternoon = [
-            {"title": "Follow-up Visit — Nigina UMEA", "location": "Nigina UMEA &bull; Pader District", "status": "Planned", "status_class": "bg-slate-50 text-slate-500 border-slate-200", "icon": "🚗", "count": 2},
-            {"title": "SSA Verification — Kal PS", "location": "Kal Primary School &bull; Agago District", "status": "Planned", "status_class": "bg-slate-50 text-slate-500 border-slate-200", "icon": "📋", "count": 2},
-            {"title": "Partner Meeting — Compassion Intl.", "location": "Compassion Field Office &bull; Gulu District", "status": "Overdue", "status_class": "bg-rose-50 text-rose-700 border-rose-200", "icon": "👥", "count": 4},
-            {"title": "Daily Debrief & Task Review", "location": "Virtual (Teams)", "status": "Planned", "status_class": "bg-slate-50 text-slate-500 border-slate-200", "icon": "📄"}
-        ]
+        todays_qs = cc_activities.filter(
+            scheduled_date__date=today
+        ).select_related("school", "school__district", "cluster").order_by("scheduled_date")
+        agenda_morning, agenda_afternoon, agenda_evening = [], [], []
+        for act in todays_qs:
+            hour = timezone.localtime(act.scheduled_date).hour if act.scheduled_date else 9
+            if hour < 12:
+                agenda_morning.append(_agenda_item(act))
+            elif hour < 17:
+                agenda_afternoon.append(_agenda_item(act))
+            else:
+                agenda_evening.append(_agenda_item(act))
 
-        agenda_evening = [
-            {"title": "Cluster Meeting Debrief", "location": "Virtual (WhatsApp)", "status": "Planned", "status_class": "bg-slate-50 text-slate-500 border-slate-200", "icon": "💬"}
-        ]
+        # Next 7 days (excluding today)
+        upcoming_week = []
+        week_qs = cc_activities.filter(
+            scheduled_date__date__gt=today,
+            scheduled_date__date__lte=today + timedelta(days=7),
+        ).select_related("school", "school__district", "cluster").order_by("scheduled_date")[:5]
+        for act in week_qs:
+            atype = act.activity_type or ""
+            if "training" in atype:
+                icon, type_class = "📚", "bg-emerald-50 text-emerald-600"
+            elif "meeting" in atype:
+                icon, type_class = "👥", "bg-violet-50 text-violet-600"
+            else:
+                icon, type_class = "🏫", "bg-blue-50 text-blue-600"
+            school_name = act.school.name if act.school else (act.cluster.name if act.cluster else "—")
+            district = act.school.district.name if act.school and act.school.district else "—"
+            upcoming_week.append({
+                "day": act.scheduled_date.strftime("%a, %b %d") if act.scheduled_date else "—",
+                "title": f"{act.activity_type.replace('_', ' ').title()} — {school_name}",
+                "desc": f"{district} District" if district != "—" else "—",
+                "icon": icon,
+                "type_class": type_class,
+            })
 
-        upcoming_week = [
-            {"day": "Wed, May 14", "title": "Cluster Training — Child Protection", "desc": "Gulu District", "icon": "📚", "type_class": "bg-emerald-50 text-emerald-600"},
-            {"day": "Thu, May 15", "title": "School Visit — Oyeta PS", "desc": "Agago District", "icon": "🏫", "type_class": "bg-blue-50 text-blue-600"},
-            {"day": "Fri, May 16", "title": "Partner Review Meeting", "desc": "Program Office", "icon": "👥", "type_class": "bg-violet-50 text-violet-600"}
-        ]
-
-        pending_approvals = [
-            {"title": "Fund Request - Week 3", "desc": "UGX 18.6M &bull; 3 items", "status": "Awaiting"},
-            {"title": "Visit Report - Week 2", "desc": "3 reports", "status": "Awaiting"},
-            {"title": "Training Report - Week 2", "desc": "2 reports", "status": "Awaiting"}
-        ]
+        # Real pending fund-request confirmations for this user
+        pending_approvals = []
+        for w in WeeklyFundRequest.objects.filter(
+            responsible_user=user.id, status="pending_responsible_confirmation"
+        ).order_by("-week_start_date")[:3]:
+            pending_approvals.append({
+                "title": f"Fund Request — Week of {w.week_start_date.strftime('%d %b')}",
+                "desc": f"UGX {w.total_amount:,} &bull; {w.lines.count()} item{'s' if w.lines.count() != 1 else ''}",
+                "status": "Awaiting",
+            })
 
         context = {
             "alerts": alerts_list,
@@ -526,19 +576,99 @@ def dashboard_view(request):
             "agenda_morning": agenda_morning,
             "agenda_afternoon": agenda_afternoon,
             "agenda_evening": agenda_evening,
+            "agenda_total": len(agenda_morning) + len(agenda_afternoon) + len(agenda_evening),
             "upcoming_week": upcoming_week,
             "pending_approvals": pending_approvals
         }
         return render(request, "pages/dashboards/cceo.html", context)
 
     elif role == "ProjectCoordinator":
-        # ProjectCoordinator Special Projects Dashboard Context
+        # ProjectCoordinator Special Projects Dashboard — live project portfolio
+        import json as _json
+        from apps.projects.models import Project
+
+        today = timezone.now().date()
+        portfolio = []
+        partner_names = {}
+        for proj in Project.objects.filter(deleted_at__isnull=True).prefetch_related("partner_assignments__partner"):
+            proj_acts = Activity.objects.filter(deleted_at__isnull=True, project_id=proj.id)
+            n_total = proj_acts.count()
+            n_done = proj_acts.filter(status__in=["completed", "ia_verified", "closed"]).count()
+            pct = round(n_done / n_total * 100) if n_total else 0
+            partners = [pa.partner.name for pa in proj.partner_assignments.all() if pa.partner]
+            if pct >= 70 or n_total == 0:
+                status, health_class = "Active", "text-emerald-600 bg-emerald-50 border-emerald-100"
+            elif pct >= 40:
+                status, health_class = "At Risk", "text-amber-600 bg-amber-50 border-amber-100"
+            else:
+                status, health_class = "Behind", "text-rose-600 bg-rose-50 border-rose-100"
+            portfolio.append({
+                "name": proj.name,
+                "type": proj.get_category_display(),
+                "partner": ", ".join(partners) if partners else "—",
+                "schools": proj.school_assignments.count(),
+                "activities": n_total,
+                "completed": n_done,
+                "pct": pct,
+                "status": status if n_total else "Not Started",
+                "health": f"{pct}%",
+                "health_class": health_class,
+                "metric": "Activities Completed",
+            })
+
+        project_names = {pr.id: pr.name for pr in Project.objects.filter(deleted_at__isnull=True)}
+        milestones = []
+        for act in Activity.objects.filter(
+            deleted_at__isnull=True, scheduled_date__date__gte=today
+        ).exclude(project_id__isnull=True).exclude(project_id="").select_related("school").order_by("scheduled_date")[:6]:
+            milestones.append({
+                "month": act.scheduled_date.strftime("%b").upper(),
+                "day": act.scheduled_date.strftime("%d"),
+                "title": act.activity_type.replace("_", " ").title(),
+                "desc": project_names.get(act.project_id, "—"),
+                "time": act.scheduled_date.strftime("%I:%M %p"),
+                "info": act.school.name if act.school else "—",
+            })
+
+        # Projects needing attention: behind schedule or no scheduled work
+        attention = []
+        for row in portfolio:
+            if row["status"] in ("Behind", "At Risk"):
+                attention.append({
+                    "project": row["name"],
+                    "issue": f"Only {row['completed']} of {row['activities']} scheduled activities completed",
+                    "risk": row["status"],
+                    "date": today.strftime("%b %d, %Y"),
+                    "risk_class": "text-rose-700 bg-rose-50 border-rose-150" if row["status"] == "Behind" else "text-amber-700 bg-amber-50 border-amber-150",
+                })
+            elif row["activities"] == 0:
+                attention.append({
+                    "project": row["name"],
+                    "issue": "No activities scheduled yet",
+                    "risk": "Not Started",
+                    "date": today.strftime("%b %d, %Y"),
+                    "risk_class": "text-slate-600 bg-slate-50 border-slate-200",
+                })
+
+        sp_kpis = {
+            "total": len(portfolio),
+            "active": sum(1 for row in portfolio if row["activities"] > 0),
+            "schools": sum(row["schools"] for row in portfolio),
+            "partners": sum(1 for row in portfolio if row["partner"] != "—"),
+            "activities": sum(row["activities"] for row in portfolio),
+            "completed": sum(row["completed"] for row in portfolio),
+        }
+
         context = {
             "alerts": alerts_list,
             "alerts_summary": alerts_summary,
             "role": role,
             "user_name": user.name,
             "avatar_initials": avatar_initials,
+            "sp_kpis": sp_kpis,
+            "portfolio_json": _json.dumps(portfolio),
+            "attention_json": _json.dumps(attention),
+            "milestones_json": _json.dumps(milestones),
         }
         return render(request, "pages/dashboards/special_projects.html", context)
 

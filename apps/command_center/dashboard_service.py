@@ -1,20 +1,60 @@
-from django.db.models import Avg
+from django.db.models import Avg, Sum
 from datetime import date, timedelta
 from django.utils import timezone
-from apps.core.fy import get_operational_fy
+from apps.core.fy import get_operational_fy, get_quarter_for_date
 from apps.clusters.models import Cluster
 from apps.activities.models import Activity
 from apps.fund_requests.models import WeeklyFundRequest
 from apps.partners.models import Partner
-from apps.ssa.models import SsaScore
+from apps.ssa.models import SsaRecord, SsaScore
 from apps.core.enums import SsaIntervention
+
+COMPLETED_STATUSES = ["completed", "ia_verified"]
+
+# WeeklyFundRequest statuses that mean "awaiting someone's action".
+WFR_PENDING_STATUSES = ["pending_responsible_confirmation", "confirmed_for_advance"]
+
+
+def _ugx_compact(val):
+    """Format an integer UGX amount compactly (e.g. UGX 2.4B / 186.4M / 65K)."""
+    if not val:
+        return "UGX 0"
+    if val >= 1_000_000_000:
+        return f"UGX {val / 1_000_000_000:.1f}B"
+    if val >= 1_000_000:
+        return f"UGX {val / 1_000_000:.1f}M"
+    if val >= 1_000:
+        return f"UGX {val / 1_000:.0f}K"
+    return f"UGX {val:,}"
+
+
+def _ssa_status(avg):
+    """Canonical SSA severity bands: 0-4 Critical / 5-6 Support / 7-8 Good / 9-10 Strong."""
+    if avg is None:
+        return "No data", "s-orange"
+    if avg < 5:
+        return "Critical", "s-red"
+    if avg < 7:
+        return "Support", "s-orange"
+    if avg < 9:
+        return "Good", "s-green"
+    return "Strong", "s-green"
+
+
+def _target_status(pct):
+    if pct >= 70:
+        return "On track", "s-green", "var(--green)"
+    if pct >= 40:
+        return "At risk", "s-orange", "var(--orange)"
+    return "Behind", "s-red", "var(--red)"
+
 
 class DashboardMetricsService:
     @staticmethod
     def get_dashboard_metrics(user):
         fy = get_operational_fy()
         today = date.today()
-        
+
         # Resolve scoping
         from apps.analytics.services import _scoped_schools
         schools_qs, scope = _scoped_schools(user)
@@ -48,6 +88,11 @@ class DashboardMetricsService:
             end_month = date(today.year, today.month + 1, 1) - timedelta(days=1)
         activities_this_month = activities_qs.filter(scheduled_date__date__range=[start_month, end_month]).count()
 
+        quarter = get_quarter_for_date(today)
+        quarter_key = getattr(quarter, "value", quarter)
+        activities_this_quarter = activities_qs.filter(quarter=quarter_key).count()
+        activities_this_fy = activities_qs.count()
+
         partner_pending_count = schools_qs.filter(
             planning_readiness="ready_for_support_planning"
         ).exclude(
@@ -55,21 +100,21 @@ class DashboardMetricsService:
             activities__fy=fy
         ).distinct().count()
 
-        # Fund requests pending
+        # Fund requests awaiting action (confirmation or disbursement)
         fund_requests_pending = WeeklyFundRequest.objects.filter(
-            status__in=["pending_pl_approval", "pending_cd_approval"]
+            fy=fy, status__in=WFR_PENDING_STATUSES
         ).count()
 
         completed_this_month = activities_qs.filter(
-            status__in=["completed", "ia_verified"],
+            status__in=COMPLETED_STATUSES,
             scheduled_date__date__range=[start_month, end_month]
         ).count()
-        target_achievement = round(completed_this_month / max(1, activities_this_month) * 100) if activities_this_month > 0 else 72
+        target_achievement = round(completed_this_month / activities_this_month * 100) if activities_this_month > 0 else 0
 
         # 2. Signal Strips
         needs_attention = schools_qs.filter(planning_readiness__in=["requires_cluster", "data_cleanup_required"]).count()
         ready_for_action = schools_qs.exclude(planning_readiness__in=["requires_cluster", "data_cleanup_required"]).count()
-        operational_health = 93 # default score
+        operational_health = round(ready_for_action / total_schools * 100) if total_schools > 0 else 0
 
         # 3. Today's Priorities
         today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
@@ -77,7 +122,7 @@ class DashboardMetricsService:
         priorities_qs = activities_qs.filter(
             scheduled_date__range=[today_start, today_end]
         ).select_related("school").order_by("scheduled_date")[:6]
-        
+
         priorities = []
         for act in priorities_qs:
             status_label = "Scheduled"
@@ -88,7 +133,7 @@ class DashboardMetricsService:
             elif act.status == "started":
                 status_label = "Started"
                 status_class = "s-orange"
-            
+
             priorities.append({
                 "activity": f"{act.activity_type.replace('_', ' ').title()}",
                 "time": act.scheduled_date.strftime("%I:%M %p") if act.scheduled_date else "—",
@@ -97,140 +142,148 @@ class DashboardMetricsService:
                 "status_class": status_class,
             })
 
-        # 4. Weekly Planning Progress (Mock dataset for chart representation)
-        weekly_progress = [
-            {"week": "Apr 6 Wk 1", "percentage": 41},
-            {"week": "Apr 13 Wk 2", "percentage": 58},
-            {"week": "Apr 20 Wk 3", "percentage": 72},
-            {"week": "Apr 27 Wk 4", "percentage": 81},
-            {"week": "May 4 Wk 5", "percentage": 87},
-        ]
+        # 4. Weekly Planning Progress — completed vs scheduled per week, last 5 weeks (live)
+        weekly_progress = []
+        for wk_offset in range(4, -1, -1):
+            ws = start_week - timedelta(weeks=wk_offset)
+            we = ws + timedelta(days=6)
+            wk_qs = activities_qs.filter(scheduled_date__date__range=[ws, we])
+            scheduled_n = wk_qs.count()
+            completed_n = wk_qs.filter(status__in=COMPLETED_STATUSES).count()
+            pct = round(completed_n / scheduled_n * 100) if scheduled_n else 0
+            weekly_progress.append({"week": ws.strftime("%b %d"), "percentage": pct})
 
-        # 5. SSA Interventions Performance
-        ssa_averages = SsaScore.objects.filter(
+        # 5. SSA Interventions Performance (scores are 0–10; scoped to the caller's schools)
+        ssa_averages = list(SsaScore.objects.filter(
+            ssa_record__school__in=schools_qs,
             ssa_record__verification_status="confirmed",
             ssa_record__deleted_at__isnull=True
-        ).values("intervention").annotate(avg_val=Avg("score")).order_by("-avg_val")
-        
+        ).values("intervention").annotate(avg_val=Avg("score")).order_by("-avg_val"))
+
         interv_map = dict(SsaIntervention.choices)
-        best_interventions = []
-        weakest_interventions = []
-        
+        rows = []
         for item in ssa_averages:
-            code = item["intervention"]
-            label = interv_map.get(code, code)
-            score = round(item["avg_val"], 1)
-            percentage = round(item["avg_val"] / 5.0 * 100)
-            
-            data_row = {
-                "name": label,
-                "score": score,
-                "percentage": percentage
-            }
-            if len(best_interventions) < 3:
-                best_interventions.append(data_row)
-            else:
-                weakest_interventions.append(data_row)
-                
-        # Fill in defaults if empty
-        if not best_interventions:
-            best_interventions = [
-                {"name": "Leadership", "score": 4.6, "percentage": 92},
-                {"name": "Teaching & Learning", "score": 4.3, "percentage": 86},
-                {"name": "Financial Health", "score": 4.1, "percentage": 82},
-            ]
-        if not weakest_interventions:
-            weakest_interventions = [
-                {"name": "Community Engagement", "score": 3.2, "percentage": 64},
-                {"name": "Learner Wellbeing", "score": 3.3, "percentage": 66},
-                {"name": "Infrastructure", "score": 3.4, "percentage": 68},
-            ]
-        weakest_interventions = weakest_interventions[:3]
+            rows.append({
+                "name": interv_map.get(item["intervention"], item["intervention"]),
+                "score": round(item["avg_val"], 1),
+                "percentage": round(item["avg_val"] / 10.0 * 100),
+            })
+        best_interventions = rows[:3]
+        weakest_interventions = [r for r in reversed(rows) if r not in best_interventions][:3]
 
-        # 6. Team Target Progress
-        team_targets = [
-            {"name": "Monthly Target", "percentage": 72, "status": "On track", "class": "s-green", "color": "var(--green)"},
-            {"name": "Quarterly Target", "percentage": 58, "status": "On track", "class": "s-green", "color": "var(--green)"},
-            {"name": "Mid-Year Target", "percentage": 44, "status": "At risk", "class": "s-orange", "color": "var(--orange)"},
-            {"name": "FY Target", "percentage": 36, "status": "At risk", "class": "s-red", "color": "var(--red)"},
-        ]
+        # 6. Team Target Progress — completed vs scheduled per period (live)
+        completed_this_quarter = activities_qs.filter(quarter=quarter_key, status__in=COMPLETED_STATUSES).count()
+        completed_this_fy = activities_qs.filter(status__in=COMPLETED_STATUSES).count()
+        team_targets = []
+        for name, done, planned in [
+            ("Monthly Target", completed_this_month, activities_this_month),
+            ("Quarterly Target", completed_this_quarter, activities_this_quarter),
+            ("FY Target", completed_this_fy, activities_this_fy),
+        ]:
+            pct = round(done / planned * 100) if planned else 0
+            status, cls, color = _target_status(pct)
+            team_targets.append({"name": name, "percentage": pct, "status": status, "class": cls, "color": color})
 
-        # 7. Priority Schools Table
-        priority_schools_qs = schools_qs.exclude(
+        # 7. Priority Schools Table — weakest intervention computed from live SSA scores
+        priority_schools_qs = list(schools_qs.exclude(
             current_fy_ssa_status="done"
-        ).select_related("district").order_by("name")[:5]
-        
+        ).select_related("district").order_by("name")[:5])
+        ready_extra = []
+        if len(priority_schools_qs) < 5:
+            ready_extra = list(schools_qs.filter(
+                planning_readiness="ready_for_support_planning"
+            ).select_related("district")[:5 - len(priority_schools_qs)])
+
+        shown_ids = [s.id for s in priority_schools_qs + ready_extra]
+        weakest_by_school = {}
+        weakest_rows = SsaScore.objects.filter(
+            ssa_record__school_id__in=shown_ids,
+            ssa_record__deleted_at__isnull=True,
+        ).values("ssa_record__school_id", "intervention").annotate(avg_val=Avg("score"))
+        for row in weakest_rows:
+            sid = row["ssa_record__school_id"]
+            cur = weakest_by_school.get(sid)
+            if cur is None or row["avg_val"] < cur[1]:
+                weakest_by_school[sid] = (interv_map.get(row["intervention"], row["intervention"]), row["avg_val"])
+
         priority_schools = []
         for s in priority_schools_qs:
             priority_schools.append({
                 "name": s.name,
                 "district": s.district.name if s.district else "—",
                 "cluster": s.cluster_id or "—",
-                "weakest": "Leadership",
+                "weakest": weakest_by_school.get(s.id, ("—",))[0],
                 "readiness": "At Risk",
                 "readiness_class": "s-orange",
                 "action": "Upload SSA"
             })
-            
-        # If not enough, fill with standard ready schools
-        if len(priority_schools) < 5:
-            ready_schools_qs = schools_qs.filter(planning_readiness="ready_for_support_planning").select_related("district")[:5 - len(priority_schools)]
-            for s in ready_schools_qs:
-                priority_schools.append({
-                    "name": s.name,
-                    "district": s.district.name if s.district else "—",
-                    "cluster": s.cluster_id or "—",
-                    "weakest": "Teaching & Learning",
-                    "readiness": "Ready",
-                    "readiness_class": "s-green",
-                    "action": "Schedule Visit"
-                })
+        for s in ready_extra:
+            priority_schools.append({
+                "name": s.name,
+                "district": s.district.name if s.district else "—",
+                "cluster": s.cluster_id or "—",
+                "weakest": weakest_by_school.get(s.id, ("—",))[0],
+                "readiness": "Ready",
+                "readiness_class": "s-green",
+                "action": "Schedule Visit"
+            })
 
-        # 8. Cluster Performance Table
+        # 8. Cluster Performance Table — live per-cluster SSA averages and activity counts
         clusters_qs = Cluster.objects.filter(deleted_at__isnull=True)[:5]
         cluster_performance = []
         for c in clusters_qs:
+            member_ids = list(c.assignments.values_list("school_id", flat=True))
+            avg = None
+            if member_ids:
+                avg = SsaRecord.objects.filter(
+                    school_id__in=member_ids,
+                    deleted_at__isnull=True,
+                    verification_status="confirmed",
+                ).aggregate(v=Avg("average_score"))["v"]
+            status, status_class = _ssa_status(avg)
             cluster_performance.append({
                 "name": c.name,
-                "avg_ssa": 4.2,
-                "trend": "↑",
-                "mtgs": 2,
-                "trainings": 1,
-                "status": "Good",
-                "status_class": "s-green"
+                "avg_ssa": round(avg, 1) if avg is not None else "—",
+                "trend": "→",
+                "mtgs": c.activities.filter(deleted_at__isnull=True, fy=fy, activity_type="cluster_meeting").count(),
+                "trainings": c.activities.filter(deleted_at__isnull=True, fy=fy, activity_type="cluster_training").count(),
+                "status": status,
+                "status_class": status_class,
             })
-        if not cluster_performance:
-            cluster_performance = [
-                {"name": "Kigan North", "avg_ssa": 4.5, "trend": "↑", "mtgs": 2, "trainings": 1, "status": "Healthy", "status_class": "s-green"},
-                {"name": "Lira Hope", "avg_ssa": 4.4, "trend": "↑", "mtgs": 1, "trainings": 0, "status": "Good", "status_class": "s-green"},
-                {"name": "Padier West", "avg_ssa": 4.1, "trend": "↓", "mtgs": 2, "trainings": 4, "status": "Attention", "status_class": "s-orange"},
-            ]
 
-        # 9. Support Overview (mock values from database aggregations)
+        # 9. Support Overview (live aggregations)
+        payments_due_amount = sum(
+            (w.total_amount or 0) - (w.disbursed_amount or 0)
+            for w in WeeklyFundRequest.objects.filter(fy=fy, status="confirmed_for_advance")
+        )
         support_overview = {
             "assigned_partners": Partner.objects.filter(deleted_at__isnull=True, active_status=True).count(),
             "planned_visits": activities_this_month,
             "evidence_pending": activities_qs.filter(status="completed", evidence__isnull=True).count(),
-            "payments_due": "UGX 28.4M",
+            "payments_due": _ugx_compact(payments_due_amount),
         }
+        evidence_pending_count = support_overview["evidence_pending"]
 
-        # 10. Budget snap
+        # 10. Budget snapshot — summed from scheduled activities' cost lines (live)
+        def _cost_sum(qs):
+            return qs.aggregate(v=Sum("schedule_cost_lines__amount"))["v"] or 0
+
         budget_snapshot = {
-            "week": "UGX 1.9B",
-            "month": "UGX 12.6B",
-            "quarter": "UGX 36.2B",
-            "fy": "UGX 128.7B",
+            "week": _ugx_compact(_cost_sum(activities_qs.filter(scheduled_date__date__range=[start_week, end_week]))),
+            "month": _ugx_compact(_cost_sum(activities_qs.filter(scheduled_date__date__range=[start_month, end_month]))),
+            "quarter": _ugx_compact(_cost_sum(activities_qs.filter(quarter=quarter_key))),
+            "fy": _ugx_compact(_cost_sum(activities_qs)),
         }
 
-        # 11. Execution Summary
+        # 11. Execution Summary (live counts per period)
         execution_summary = {
             "week": activities_this_week,
             "month": activities_this_month,
-            "quarter": activities_this_month * 3,
-            "fy": activities_this_month * 12,
+            "quarter": activities_this_quarter,
+            "fy": activities_this_fy,
         }
 
-        # 12. Right Rail - Upcoming activities today
+        # 12. Right Rail - Upcoming activities today (empty list -> template empty state)
         upcoming_today_qs = activities_qs.filter(
             scheduled_date__range=[today_start, today_end]
         ).select_related("school")[:3]
@@ -243,35 +296,25 @@ class DashboardMetricsService:
                 "time": act.scheduled_date.strftime("%I:%M %p") if act.scheduled_date else "—",
                 "title": act.school.name if act.school else "Cluster Activity",
                 "desc": act.focus_intervention.replace("_", " ").title() if act.focus_intervention else "General Coaching",
-                "info": f"{act.school.district.name if act.school and act.school.district else 'Kigan District'} • {user.name}"
+                "info": f"{act.school.district.name if act.school and act.school.district else '—'} • {user.name}"
             })
-            
-        if not upcoming_today:
-            upcoming_today = [
-                {
-                    "type": "school",
-                    "type_class": "blue-bg",
-                    "icon": "🏫",
-                    "time": "8:30 AM",
-                    "title": "St. Joseph’s Primary School",
-                    "desc": "Instructional Support Visit",
-                    "info": "Kigan District • Daniel Asante"
-                },
-                {
-                    "type": "training",
-                    "type_class": "purple-bg",
-                    "icon": "🎓",
-                    "time": "10:00 AM",
-                    "title": "Kigan North Cluster Training",
-                    "desc": "Leadership Development",
-                    "info": "24 expected participants"
-                }
-            ]
+
+        # Finance rollups reused by role KPI strips
+        fy_wfr_qs = WeeklyFundRequest.objects.filter(fy=fy)
+        wfr_confirmed_total = fy_wfr_qs.filter(status__in=[
+            "confirmed_for_advance", "disbursed", "paid", "closed", "cleared",
+            "self_funded", "self_funded_pending_reimbursement",
+        ]).aggregate(v=Sum("total_amount"))["v"] or 0
+        wfr_disbursed_total = fy_wfr_qs.aggregate(v=Sum("disbursed_amount"))["v"] or 0
+        budget_util_pct = round(wfr_disbursed_total / wfr_confirmed_total * 100) if wfr_confirmed_total else 0
+
+        schools_visited = activities_qs.filter(
+            status__in=COMPLETED_STATUSES, school__isnull=False
+        ).values("school_id").distinct().count()
 
         # Build standard KPI strip items list based on active role
-        kpi_items = []
         role = getattr(user, "active_role", None)
-        
+
         if role == "CCEO":
             kpi_items = [
                 {
@@ -281,7 +324,6 @@ class DashboardMetricsService:
                     "helper": "completed vs scheduled",
                     "icon": "target",
                     "variant": "success",
-                    "trend": {"direction": "up", "value": "+4%"}
                 },
                 {
                     "label": "Planned This Week",
@@ -293,45 +335,49 @@ class DashboardMetricsService:
                 },
                 {
                     "label": "Schools Visited",
-                    "value": str(ready_count),
-                    "raw_value": ready_count,
-                    "helper": "visited",
+                    "value": str(schools_visited),
+                    "raw_value": schools_visited,
+                    "helper": "this FY",
                     "icon": "school",
                     "variant": "blue",
                 },
                 {
                     "label": "Evidence Pending",
-                    "value": str(without_ssa_count),
-                    "raw_value": without_ssa_count,
+                    "value": str(evidence_pending_count),
+                    "raw_value": evidence_pending_count,
                     "helper": "needing uploads",
                     "icon": "warning",
                     "variant": "warning",
                 }
             ]
         elif role == "Program Lead":
+            supervisee_count = 0
+            profile = getattr(user, "staff_profile", None)
+            if profile is not None:
+                from apps.accounts.models import StaffSupervisorAssignment
+                supervisee_count = StaffSupervisorAssignment.objects.filter(supervisor=profile).count()
             kpi_items = [
                 {
                     "label": "Team Target Achievement",
                     "value": f"{target_achievement}%",
                     "raw_value": target_achievement,
-                    "helper": "vs last month",
+                    "helper": "completed vs scheduled",
                     "icon": "target",
                     "variant": "success",
-                    "trend": {"direction": "up", "value": "+6%"}
                 },
                 {
-                    "label": "CCEOs On Track",
-                    "value": "8/10",
-                    "raw_value": 8,
+                    "label": "Supervised CCEOs",
+                    "value": str(supervisee_count),
+                    "raw_value": supervisee_count,
                     "helper": "active CCEOs",
                     "icon": "users",
                     "variant": "info",
                 },
                 {
-                    "label": "Pending Reviews",
+                    "label": "Pending Fund Requests",
                     "value": str(fund_requests_pending),
                     "raw_value": fund_requests_pending,
-                    "helper": "awaiting PL",
+                    "helper": "awaiting action",
                     "icon": "clock",
                     "variant": "warning",
                 },
@@ -350,16 +396,15 @@ class DashboardMetricsService:
                     "label": "Country Target Achievement",
                     "value": f"{target_achievement}%",
                     "raw_value": target_achievement,
-                    "helper": "vs last quarter",
+                    "helper": "completed vs scheduled",
                     "icon": "target",
                     "variant": "success",
-                    "trend": {"direction": "up", "value": "+12%"}
                 },
                 {
                     "label": "Budget Utilization",
-                    "value": "78%",
-                    "raw_value": 78,
-                    "helper": "utilization",
+                    "value": f"{budget_util_pct}%",
+                    "raw_value": budget_util_pct,
+                    "helper": "disbursed vs confirmed",
                     "icon": "currency",
                     "variant": "finance",
                 },
@@ -381,28 +426,32 @@ class DashboardMetricsService:
                 }
             ]
         elif role == "Accountant":
+            pending_clearance = sum(
+                (w.total_amount or 0) - (w.disbursed_amount or 0)
+                for w in fy_wfr_qs.filter(status="confirmed_for_advance")
+            )
             kpi_items = [
                 {
-                    "label": "Total Allocation",
-                    "value": "UGX 450M",
-                    "raw_value": 450000000,
+                    "label": "Confirmed This FY",
+                    "value": _ugx_compact(wfr_confirmed_total),
+                    "raw_value": wfr_confirmed_total,
                     "helper": "current FY",
                     "icon": "currency",
                     "variant": "finance",
                 },
                 {
-                    "label": "Pending Clearance",
-                    "value": "UGX 12.4M",
-                    "raw_value": 12400000,
+                    "label": "Pending Disbursement",
+                    "value": _ugx_compact(pending_clearance),
+                    "raw_value": pending_clearance,
                     "helper": "advances",
                     "icon": "clock",
                     "variant": "warning",
                 },
                 {
-                    "label": "Cleared Amount",
-                    "value": "UGX 380M",
-                    "raw_value": 380000000,
-                    "helper": "confirmed",
+                    "label": "Disbursed",
+                    "value": _ugx_compact(wfr_disbursed_total),
+                    "raw_value": wfr_disbursed_total,
+                    "helper": "this FY",
                     "icon": "check",
                     "variant": "success",
                 },
@@ -424,7 +473,6 @@ class DashboardMetricsService:
                     "helper": f"{ready_pct}% of total",
                     "icon": "school",
                     "variant": "success",
-                    "trend": {"direction": "up", "value": "+5%"}
                 },
                 {
                     "label": "Schools Without SSA",
@@ -481,4 +529,5 @@ class DashboardMetricsService:
             "budget_snapshot": budget_snapshot,
             "execution_summary": execution_summary,
             "upcoming_today": upcoming_today,
+            "evidence_pending": evidence_pending_count,
         }

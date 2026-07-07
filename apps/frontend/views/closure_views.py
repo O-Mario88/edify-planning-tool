@@ -160,6 +160,7 @@ def reopen_activity_action(request, activity_id):
     return redirect(f"/activities/{a.id}/closure/")
 
 
+@require_page_permission("activity_timeline")
 def activity_timeline_view(request, activity_id):
     """Timeline journey view."""
     a = get_object_or_404(Activity, id=activity_id)
