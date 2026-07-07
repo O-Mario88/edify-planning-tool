@@ -164,6 +164,32 @@ def calendar_view(request):
     cal = calendar.monthcalendar(year, month)
     month_name = calendar.month_name[month]
 
+    total_count = activities.count()
+    completed_count = activities.filter(status__in=["completed", "ia_verified"]).count()
+    kpi_strip_items = [
+        {
+            "label": "Scheduled This Month",
+            "value": str(total_count),
+            "raw_value": total_count,
+            "helper": month_name,
+            "icon": "calendar",
+            "variant": "info",
+        },
+        {
+            "label": "Completed",
+            "value": str(completed_count),
+            "raw_value": completed_count,
+            "helper": "of this month's total",
+            "icon": "check",
+            "variant": "success",
+        },
+    ]
+    scope_text = (
+        "Showing activities assigned to you."
+        if request.user.active_role == "CCEO"
+        else "Showing all scheduled activities for this month."
+    )
+
     context = {
         "activities": activities,
         "calendar_weeks": cal,
@@ -174,6 +200,8 @@ def calendar_view(request):
         "prev_year": year if month > 1 else year - 1,
         "next_month": month + 1 if month < 12 else 1,
         "next_year": year if month < 12 else year + 1,
+        "kpi_strip_items": kpi_strip_items,
+        "scope_text": scope_text,
     }
     return render(request, "pages/calendar/index.html", context)
 
@@ -190,20 +218,93 @@ def work_plan_view(request):
     if user.active_role == "CCEO":
         activities_qs = activities_qs.filter(responsible_staff_id=user.id)
 
-    monthly_summary = (
-        activities_qs.values("planned_date__month")
+    monthly_summary_qs = (
+        activities_qs.filter(planned_date__isnull=False)
+        .values("planned_date__month")
         .annotate(
             total=Count("id"),
-            completed=Count("id", filter=Q(status="completed")),
+            completed=Count("id", filter=Q(status__in=["completed", "ia_verified"])),
         )
         .order_by("planned_date__month")
     )
+    monthly_summary = []
+    for row in monthly_summary_qs:
+        total = row["total"]
+        completed = row["completed"]
+        rate = round(completed / total * 100) if total else 0
+        monthly_summary.append(
+            {
+                "month": row["planned_date__month"],
+                "total": total,
+                "completed": completed,
+                "rate": rate,
+            }
+        )
+
+    total_count = activities_qs.count()
+    completed_count = activities_qs.filter(
+        status__in=["completed", "ia_verified"]
+    ).count()
+    completion_rate = round(completed_count / total_count * 100) if total_count else 0
+
+    kpi_strip_items = [
+        {
+            "label": "Total Activities",
+            "value": str(total_count),
+            "raw_value": total_count,
+            "helper": f"FY{fy}",
+            "icon": "calendar",
+            "variant": "info",
+        },
+        {
+            "label": "Completed",
+            "value": str(completed_count),
+            "raw_value": completed_count,
+            "helper": "this FY",
+            "icon": "check",
+            "variant": "success",
+        },
+        {
+            "label": "Completion Rate",
+            "value": f"{completion_rate}%",
+            "raw_value": completion_rate,
+            "helper": "completed vs total",
+            "icon": "target",
+            "variant": "blue",
+        },
+    ]
+
+    import calendar as _calendar
+
+    monthly_chart = {
+        "chart": {"type": "bar"},
+        "series": [
+            {"name": "Total", "data": [m["total"] for m in monthly_summary]},
+            {"name": "Completed", "data": [m["completed"] for m in monthly_summary]},
+        ],
+        "xaxis": {
+            "categories": [
+                _calendar.month_abbr[m["month"]] if m["month"] else "—"
+                for m in monthly_summary
+            ],
+            "labels": {"style": {"colors": "#94a3b8", "fontSize": "10px"}},
+        },
+        "colors": ["#94a3b8", "#10b981"],
+        "plotOptions": {"bar": {"borderRadius": 4, "columnWidth": "55%"}},
+        "legend": {"show": True, "position": "top", "fontSize": "10px"},
+        "grid": {"borderColor": "#f1f5f9"},
+        "tooltip": {"theme": "light"},
+    }
 
     context = {
         "monthly_summary": monthly_summary,
         "fy": fy,
-        "total": activities_qs.count(),
-        "completed": activities_qs.filter(status="completed").count(),
+        "total": total_count,
+        "completed": completed_count,
+        "completion_rate": completion_rate,
+        "kpi_strip_items": kpi_strip_items,
+        "monthly_chart": monthly_chart,
+        "has_monthly_chart_data": bool(monthly_summary),
     }
     return render(request, "pages/work_plan/index.html", context)
 
@@ -1133,49 +1234,117 @@ def core_school_detail_view(request, plan_id):
 
 @require_page_permission("planning")
 def projects_list_view(request):
-    """Projects list."""
-    projects = Project.objects.filter(deleted_at__isnull=True).order_by("name")
-    context = {"projects": projects}
+    """Projects list — real per-project school/activity counts, no fabricated status."""
+    fy = get_operational_fy()
+    projects = list(
+        Project.objects.filter(deleted_at__isnull=True)
+        .annotate(assigned_school_count=Count("school_assignments", distinct=True))
+        .order_by("name")
+    )
+    project_ids = [p.id for p in projects]
+    activities_by_project = dict(
+        Activity.objects.filter(
+            project_id__in=project_ids, deleted_at__isnull=True, fy=fy
+        )
+        .values("project_id")
+        .annotate(n=Count("id"))
+        .values_list("project_id", "n")
+    )
+    for p in projects:
+        p.activity_count_fy = activities_by_project.get(p.id, 0)
+
+    kpi_strip_items = [
+        {
+            "label": "Special Projects",
+            "value": str(len(projects)),
+            "raw_value": len(projects),
+            "helper": "active",
+            "icon": "briefcase",
+            "variant": "info",
+        },
+        {
+            "label": "Schools Assigned",
+            "value": str(sum(p.assigned_school_count for p in projects)),
+            "raw_value": sum(p.assigned_school_count for p in projects),
+            "helper": "across all projects",
+            "icon": "school",
+            "variant": "blue",
+        },
+        {
+            "label": "Activities This FY",
+            "value": str(sum(activities_by_project.values())),
+            "raw_value": sum(activities_by_project.values()),
+            "helper": f"FY{fy}",
+            "icon": "calendar",
+            "variant": "success",
+        },
+    ]
+    context = {"projects": projects, "kpi_strip_items": kpi_strip_items}
     return render(request, "pages/projects/index.html", context)
 
 
 @require_page_permission("planning")
 def project_detail_view(request, project_id):
-    """Project detail."""
+    """Project detail — real category, partner, and activity data."""
+    fy = get_operational_fy()
     project = get_object_or_404(Project, id=project_id, deleted_at__isnull=True)
     school_assignments = ProjectSchoolAssignment.objects.filter(
         project=project
     ).select_related("school")
     assigned_count = school_assignments.count()
+
+    partner_count = project.partner_assignments.count()
+    activities_qs = Activity.objects.filter(
+        project=project, deleted_at__isnull=True, fy=fy
+    )
+    activities_total = activities_qs.count()
+    activities_completed = activities_qs.filter(
+        status__in=["completed", "ia_verified"]
+    ).count()
+    completion_rate = (
+        round(activities_completed / activities_total * 100) if activities_total else 0
+    )
+
     kpi_strip_items = [
         {
             "label": "Assigned Schools",
             "value": str(assigned_count),
             "raw_value": assigned_count,
-            "helper": "Cohort schools",
+            "helper": "cohort schools",
             "icon": "school",
-            "variant": "primary",
-        },
-        {
-            "label": "Project Status",
-            "value": "Active",
-            "raw_value": 1,
-            "helper": "Execution",
-            "icon": "check",
-            "variant": "success",
-        },
-        {
-            "label": "Progress Status",
-            "value": "Ongoing",
-            "raw_value": 0,
-            "helper": "Active tracking",
-            "icon": "chart",
             "variant": "info",
+        },
+        {
+            "label": "Category",
+            "value": project.get_category_display(),
+            "raw_value": 0,
+            "helper": "project type",
+            "icon": "briefcase",
+            "variant": "blue",
+        },
+        {
+            "label": "Activities This FY",
+            "value": str(activities_total),
+            "raw_value": activities_total,
+            "helper": f"{activities_completed} completed",
+            "icon": "calendar",
+            "variant": "success" if activities_total else "neutral",
+        },
+        {
+            "label": "Assigned Partners",
+            "value": str(partner_count),
+            "raw_value": partner_count,
+            "helper": "delivery partners",
+            "icon": "users",
+            "variant": "purple",
         },
     ]
     context = {
         "project": project,
         "school_assignments": school_assignments,
+        "activities_total": activities_total,
+        "activities_completed": activities_completed,
+        "completion_rate": completion_rate,
         "kpi_strip_items": kpi_strip_items,
     }
     return render(request, "pages/projects/detail.html", context)

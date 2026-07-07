@@ -1,45 +1,44 @@
-<!-- My Plan Workspace container (reloaded by HTMX filters) -->
-<div class="space-y-6">
+{% comment %}
+  My Plan Workspace — the execution cockpit. Urgency-bucket layout driven by
+  real queryset buckets computed in apps/my_plan/services.get_frontend_context
+  (waiting_on_me, due_today, this_week, partner_monitoring,
+  returned_needs_correction, waiting_on_approval, upcoming). Every row keeps
+  its original HTMX endpoints via partials/my_plan/activity_table.html — this
+  file only reorganizes and restyles.
+{% endcomment %}
+<div class="space-y-5">
 
 <!-- 1. Filters Row -->
 {% include "partials/my_plan/filters.html" %}
 
+{% include "components/role_scope_notice.html" with scope_text="Showing activities you own, plus partner activities you monitor." %}
+
 <!-- 2. KPI Cards Strip -->
-{% include "partials/my_plan/kpi_cards.html" %}
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
 
-<!-- 3. Grid Columns Area -->
-<div class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
-
-<!-- Left Column (School Visits, trainings, meetings, and period tabs) -->
-<div class="lg:col-span-3 space-y-6">
-
-<!-- Period Segmented Tabs row -->
+<!-- 3. Period Segmented Tabs row -->
 {% include "partials/my_plan/period_tabs.html" %}
 
-<!-- Activity Tables Grouped by Category exactly like mockup -->
-<div class="space-y-8">
+<!-- 4. Urgency Sections — highest-urgency first, one primary action per row -->
+<div class="space-y-6">
 
-<!-- 1. School Visits Planned for This Week -->
-{% include "partials/my_plan/school_visits.html" %}
+{% include "partials/my_plan/urgency_section.html" with title="Waiting on Me" description="Blocked on evidence, SF ID, SSA, or accountability" items=waiting_on_me tone="danger" empty_title="Nothing waiting on you" empty_message="Activities that need evidence, an SF ID, or accountability details appear here." %}
 
-<!-- 2. Cluster Trainings Planned for This Week -->
-{% include "partials/my_plan/cluster_trainings.html" %}
+{% include "partials/my_plan/urgency_section.html" with title="Due Today" description="Scheduled for today — start or complete" items=due_today tone="warning" empty_title="Nothing due today" empty_message="Activities scheduled for today appear here." %}
 
-<!-- 3. Cluster Meetings Planned for This Week -->
-{% include "partials/my_plan/cluster_meetings.html" %}
+{% include "partials/my_plan/urgency_section.html" with title="This Week" description="Scheduled within the next 7 days" items=this_week tone="info" empty_title="Nothing scheduled this week" empty_message="Activities scheduled in the next 7 days appear here." %}
+
+{% include "partials/my_plan/urgency_section.html" with title="Partner Work I'm Monitoring" description="Delivered by partners, tracked by you" items=partner_monitoring tone="neutral" empty_title="No partner activity to monitor" empty_message="Activities assigned to a partner org you oversee appear here." %}
+
+{% include "partials/my_plan/urgency_section.html" with title="Returned — Needs Correction" description="Sent back by PL or IA" items=returned_needs_correction tone="danger" empty_title="Nothing returned" empty_message="Activities returned for correction by a Program Lead or Internal Auditor appear here." %}
+
+{% include "partials/my_plan/urgency_section.html" with title="Waiting on Approval" description="Submitted — pending PL, IA, or Accounts review" items=waiting_on_approval tone="info" empty_title="Nothing pending approval" empty_message="Submitted activities awaiting review appear here." %}
+
+{% include "partials/my_plan/urgency_section.html" with title="Upcoming" description="Scheduled beyond this week" items=upcoming tone="neutral" empty_title="Nothing further out" empty_message="Activities scheduled beyond this week appear here." %}
 
 </div>
 
-<!-- Bottom Period breakdown -->
+<!-- 5. Bottom Period breakdown -->
 {% include "partials/my_plan/period_breakdown.html" %}
-
-</div>
-
-<!-- Right Insights Column -->
-<div class="lg:col-span-1">
-{% include "partials/my_plan/planning_insights.html" %}
-</div>
-
-</div>
 
 </div>

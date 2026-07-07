@@ -1,4 +1,4 @@
-from django.db.models import Q
+from django.db.models import Count, Q
 from apps.core.fy import get_operational_fy
 from apps.core.enums import SsaIntervention
 from apps.schools.models import School
@@ -629,24 +629,35 @@ class PlanningDashboardService:
             set(scoped_cluster_ids) - set(planned_cluster_ids)
         )
 
+        total_scoped_schools = base_schools_qs.count()
+        unclustered_count = base_schools_qs.filter(
+            Q(cluster_id__isnull=True) | Q(cluster_id="")
+        ).count()
+        scoped_cluster_count = len(scoped_cluster_ids)
+
+        def _pct(numerator, denominator):
+            return round(numerator / denominator * 100) if denominator else 0
+
         kpis = {
             "total_ready": ready_for_support_count,
-            "ready_pct": 100,
+            "ready_pct": _pct(ready_for_support_count, total_scoped_schools),
             "without_ssa": baseline_required_count,
-            "without_ssa_pct": 100,
-            "unclustered": base_schools_qs.filter(
-                Q(cluster_id__isnull=True) | Q(cluster_id="")
-            ).count(),
-            "unclustered_pct": 100,
+            "without_ssa_pct": _pct(baseline_required_count, total_scoped_schools),
+            "unclustered": unclustered_count,
+            "unclustered_pct": _pct(unclustered_count, total_scoped_schools),
             "cluster_activities_needed": clusters_needing_action_count,
-            "cluster_needed_pct": 100,
+            "cluster_needed_pct": _pct(
+                clusters_needing_action_count, scoped_cluster_count
+            ),
             "core_pending": core_package_gaps_count,
-            "core_pending_pct": 100,
+            "core_pending_pct": _pct(core_package_gaps_count, total_scoped_schools),
             "partner_pending": partner_pending_schedule_count,
-            "partner_pending_pct": 100,
+            "partner_pending_pct": _pct(
+                partner_pending_schedule_count, total_scoped_schools
+            ),
             "scheduled_this_week": in_my_plan_count,
-            "scheduled_this_week_pct": 100,
-            "completion_rate": 100,
+            "scheduled_this_week_pct": _pct(in_my_plan_count, total_scoped_schools),
+            "completion_rate": _pct(ready_for_support_count, total_scoped_schools),
         }
 
         kpi_strip_items = [
@@ -777,35 +788,47 @@ class PlanningDashboardService:
                 }
             )
 
-        # 7. Core Schools Summary counts
+        # 7. Core Schools Summary counts — "2nd" visit/training pending is a
+        # real count of core schools with fewer than 2 completed sessions this
+        # FY (annotated), never a fabricated offset of the "1st" count.
         core_schools_qs = schools_qs.filter(school_type__in=["core", "champion"])
         core_no_ssa = core_schools_qs.exclude(current_fy_ssa_status="done").count()
-        core_1st_visit_pending = (
-            core_schools_qs.exclude(
-                activities__activity_type="school_visit",
-                activities__status__in=["completed", "ia_verified"],
-                activities__fy=fy,
-            )
-            .distinct()
-            .count()
+
+        core_visit_counts = list(
+            core_schools_qs.annotate(
+                completed_visits=Count(
+                    "activities",
+                    filter=Q(
+                        activities__activity_type="school_visit",
+                        activities__status__in=["completed", "ia_verified"],
+                        activities__fy=fy,
+                    ),
+                    distinct=True,
+                )
+            ).values_list("completed_visits", flat=True)
+        )
+        core_training_counts = list(
+            core_schools_qs.annotate(
+                completed_trainings=Count(
+                    "activities",
+                    filter=Q(
+                        activities__activity_type__in=[
+                            "training",
+                            "school_improvement_training",
+                            "cluster_training",
+                        ],
+                        activities__status__in=["completed", "ia_verified"],
+                        activities__fy=fy,
+                    ),
+                    distinct=True,
+                )
+            ).values_list("completed_trainings", flat=True)
         )
 
-        core_1st_training_pending = (
-            core_schools_qs.exclude(
-                activities__activity_type__in=[
-                    "training",
-                    "school_improvement_training",
-                    "cluster_training",
-                ],
-                activities__status__in=["completed", "ia_verified"],
-                activities__fy=fy,
-            )
-            .distinct()
-            .count()
-        )
-
-        core_2nd_visit_pending = max(0, core_1st_visit_pending - 15)
-        core_2nd_training_pending = max(0, core_1st_training_pending - 20)
+        core_1st_visit_pending = sum(1 for v in core_visit_counts if v < 1)
+        core_2nd_visit_pending = sum(1 for v in core_visit_counts if v < 2)
+        core_1st_training_pending = sum(1 for v in core_training_counts if v < 1)
+        core_2nd_training_pending = sum(1 for v in core_training_counts if v < 2)
 
         core_summary = {
             "no_ssa": core_no_ssa,
@@ -814,6 +837,38 @@ class PlanningDashboardService:
             "second_visit_pending": core_2nd_visit_pending,
             "second_training_pending": core_2nd_training_pending,
         }
+
+        # Planning intelligence: readiness-state distribution across the
+        # scoped roster (real counts computed above — colors match the
+        # design-contract palette).
+        readiness_distribution_chart = {
+            "chart": {"type": "donut"},
+            "series": [
+                ready_for_support_count,
+                baseline_required_count,
+                unclustered_count,
+                partner_pending_schedule_count,
+                core_package_gaps_count,
+            ],
+            "labels": [
+                "Ready for Support",
+                "SSA Required",
+                "Unclustered",
+                "Partner Pending",
+                "Core Package Gaps",
+            ],
+            "colors": ["#10b981", "#f43f5e", "#f59e0b", "#3b82f6", "#0ea5a4"],
+            "legend": {
+                "show": True,
+                "position": "bottom",
+                "fontSize": "10px",
+                "labels": {"colors": "#64748b"},
+            },
+            "dataLabels": {"enabled": True, "style": {"fontSize": "10px"}},
+            "stroke": {"width": 1, "colors": ["#ffffff"]},
+            "tooltip": {"theme": "light"},
+        }
+        has_readiness_chart_data = bool(total_scoped_schools)
 
         return {
             "schools": schools_data,
@@ -827,4 +882,6 @@ class PlanningDashboardService:
             "per_page": per_page,
             "total_pages": (total_schools_count + per_page - 1) // per_page,
             "active_tab": active_tab,
+            "readiness_distribution_chart": readiness_distribution_chart,
+            "has_readiness_chart_data": has_readiness_chart_data,
         }

@@ -3,7 +3,8 @@ from django.utils import timezone
 from apps.audit.models import AuditLog
 from apps.core.permissions import require_page_permission, RolePermissionService
 from django.contrib import messages
-from django.http import HttpResponse, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseForbidden, Http404
+import csv
 from datetime import date
 from apps.audit.services import log as audit_log
 
@@ -16,7 +17,8 @@ from apps.activities.services import (
     ia_confirm,
     ia_return,
 )
-from apps.evidence.services import record_upload, list_for_activity
+from apps.evidence.services import record_upload, list_for_activity, file_for
+from apps.core.exceptions import NotFoundError, BadRequest, Forbidden
 from apps.core.enums import SsaIntervention
 from apps.pl_review.services import (
     queue as pl_queue,
@@ -43,9 +45,52 @@ def my_plan_view(request):
 
     context = get_my_plan(request.user, query)
 
+    if request.GET.get("export") == "csv":
+        return _export_my_plan_csv(context)
+
     if request.headers.get("HX-Request") == "true":
         return render(request, "partials/my_plan/workspace.html", context)
     return render(request, "pages/my_plan/index.html", context)
+
+
+def _export_my_plan_csv(context):
+    """Flattens every urgency section into one CSV — the same rows the
+    workspace renders, in the same section order."""
+    sections = [
+        ("Waiting on Me", context.get("waiting_on_me", [])),
+        ("Due Today", context.get("due_today", [])),
+        ("This Week", context.get("this_week", [])),
+        ("Partner Work I'm Monitoring", context.get("partner_monitoring", [])),
+        ("Returned - Needs Correction", context.get("returned_needs_correction", [])),
+        ("Waiting on Approval", context.get("waiting_on_approval", [])),
+        ("Upcoming", context.get("upcoming", [])),
+    ]
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = 'attachment; filename="my-plan.csv"'
+    writer = csv.writer(response)
+    writer.writerow(
+        [
+            "Section",
+            "School",
+            "Activity Type",
+            "Status",
+            "Planned Date",
+            "Budget Total",
+        ]
+    )
+    for section_name, rows in sections:
+        for row in rows:
+            writer.writerow(
+                [
+                    section_name,
+                    row.get("school_name", ""),
+                    row.get("activity_type_label", ""),
+                    row.get("status", ""),
+                    row.get("planned_date", "") or "",
+                    row.get("budget_total", ""),
+                ]
+            )
+    return response
 
 
 @require_page_permission("my_plan")
@@ -904,6 +949,18 @@ def evidence_packet_view(request, activity_id):
         "logs": logs,
     }
     return render(request, "pages/my_plan/evidence_packet.html", context)
+
+
+@require_page_permission("my_plan")
+def evidence_download_view(request, record_id):
+    """Streams a stored evidence file. Object-authorized against the parent
+    activity by the evidence service (same scoping as evidence_packet_view)."""
+    try:
+        return file_for(record_id, request.user, download=True)
+    except NotFoundError:
+        raise Http404("Evidence not found.")
+    except (BadRequest, Forbidden) as e:
+        return HttpResponseForbidden(str(e))
 
 
 @require_page_permission("my_plan")

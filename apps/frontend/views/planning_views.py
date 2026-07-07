@@ -13,6 +13,7 @@ from apps.planning.services import schedule_school_visit, schedule_cluster_activ
 from apps.budget.costing_service import preview as cost_preview
 from apps.schools.models import School
 from apps.clusters.models import Cluster
+from apps.activities.models import Activity
 from apps.partners.models import Partner, PartnerAssignment
 from apps.core.enums import (
     SsaIntervention,
@@ -25,6 +26,23 @@ from apps.core.fy import get_operational_fy
 from apps.geography.models import District, SubCounty
 from apps.accounts.models import StaffProfile
 from apps.planning.planning_service import PlanningDashboardService
+
+
+def _planning_scope_text(user, scope):
+    """One calm line describing the data slice on /planning. Checks the
+    caller's role explicitly rather than `scope.can_view_partner_data` alone
+    — that flag can be true for staff with an empty partner_ids list, which
+    would otherwise mislabel a CCEO's own roster as a partner's."""
+    role_label = getattr(user, "active_role", None) or "your role"
+    if scope.country_scope:
+        return f"Showing all schools nationally — scoped to your {role_label} role."
+    if role_label == "Partner" or scope.partner_ids:
+        return "Showing schools linked to your partner organization."
+    if scope.can_view_team:
+        return "Showing schools assigned to you and your supervised team."
+    if scope.can_view_summary_only:
+        return "Showing a summary view for your assigned region(s)."
+    return "Showing schools assigned to you."
 
 
 @require_page_permission("planning")
@@ -51,6 +69,26 @@ def planning_dashboard_view(request):
 
     # 2. Query Dashboard data from Service
     data = PlanningDashboardService.get_dashboard_data(request.user, filters)
+
+    # 2b. Scheduling queue calendar — real activities already scheduled for
+    # the caller's scoped schools this FY (same events-embed pattern as
+    # templates/pages/calendar/index.html; no separate JSON endpoint exists
+    # for this yet, and a page-local fragment keeps the FullCalendar init
+    # identical to the reference page).
+    from apps.analytics.services import _scoped_schools
+
+    scoped_schools_qs, scope = _scoped_schools(request.user)
+    calendar_activities = (
+        Activity.objects.filter(
+            deleted_at__isnull=True,
+            fy=filters["fy"],
+            planned_date__isnull=False,
+            school__in=scoped_schools_qs,
+        )
+        .select_related("school", "cluster")
+        .order_by("planned_date")[:300]
+    )
+    scope_text = _planning_scope_text(request.user, scope)
 
     # 3. Dropdowns options
     districts = District.objects.all().order_by("name")
@@ -87,6 +125,16 @@ def planning_dashboard_view(request):
         int(filters["page"]) * int(filters["per_page"]), data["total_count"]
     )
 
+    cluster_planning = data["cluster_planning"]
+    if cluster_planning:
+        top_cluster = cluster_planning[0]
+        readiness_chart_footer_note = (
+            f"Needs attention: {top_cluster['name']} "
+            f"({top_cluster['school_count']} school{'s' if top_cluster['school_count'] != 1 else ''})"
+        )
+    else:
+        readiness_chart_footer_note = "No clusters currently need action."
+
     # 4. Construct context
     context = {
         "schools": data["schools"],
@@ -96,6 +144,11 @@ def planning_dashboard_view(request):
         "cluster_planning": data["cluster_planning"],
         "core_summary": data["core_summary"],
         "total_count": data["total_count"],
+        "readiness_distribution_chart": data.get("readiness_distribution_chart"),
+        "has_readiness_chart_data": data.get("has_readiness_chart_data", False),
+        "readiness_chart_footer_note": readiness_chart_footer_note,
+        "calendar_activities": calendar_activities,
+        "scope_text": scope_text,
         # Options
         "districts": districts,
         "sub_counties": sub_counties,
@@ -451,14 +504,14 @@ def planning_intelligence_view(request):
     school_id = request.GET.get("school_id")
     if not school_id:
         return HttpResponse(
-            '<p class="text-slate-400 text-[11.5px] font-bold py-6 text-center">Select a school to view planning intelligence.</p>'
+            '<div class="card p-5 h-full flex items-center justify-center" id="planning-intelligence-panel">'
+            '<p class="text-slate-400 text-[11.5px] font-semibold text-center">Select a school to view planning intelligence.</p>'
+            "</div>"
         )
 
-    school = School.objects.filter(Q(id=school_id) | Q(school_id=school_id)).first()
-    if not school:
-        return HttpResponse(
-            '<p class="text-rose-500 text-[11.5px] font-bold py-6 text-center">School not found.</p>'
-        )
+    school = get_scoped_object_or_404(
+        School, request.user, Q(id=school_id) | Q(school_id=school_id)
+    )
 
     # Fetch latest SSA date
     latest_ssa = (
@@ -512,6 +565,8 @@ def planning_intelligence_view(request):
         if c_obj:
             cluster_name = c_obj.name
 
+    from apps.budget.costing_service import active_catalogue
+
     context = {
         "school": school,
         "last_ssa_date": last_ssa_date,
@@ -520,6 +575,7 @@ def planning_intelligence_view(request):
         "recommended_step": recommended_step,
         "recommended_desc": recommended_desc,
         "cluster_name": cluster_name,
+        "cost_ready": active_catalogue() is not None,
     }
     return render(request, "partials/planning/right_panel.html", context)
 

@@ -1,0 +1,27 @@
+{% comment %}
+  Planning — page_header actions slot. Export is a real filter-aware CSV
+  download; Bulk Assign toggles the same Alpine state the floating action
+  bar and bulk-action form already use (x-data on the page root); Open My
+  Plan links to the execution cockpit these schedules feed into.
+{% endcomment %}
+<a
+href="#"
+onclick="this.href='/planning?export=csv&' + new URLSearchParams(new FormData(document.getElementById('filters-form'))).toString()"
+class="btn btn-ghost h-9"
+>
+<svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+Export
+</a>
+<button
+@click="bulkActionOpen = !bulkActionOpen"
+:disabled="selectedSchools.length === 0"
+:class="selectedSchools.length === 0 ? 'opacity-50 cursor-not-allowed' : ''"
+class="btn btn-ghost h-9"
+>
+<svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+Bulk Assign
+</button>
+<a href="/my-plan" class="btn btn-primary h-9">
+<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+Open My Plan
+</a>

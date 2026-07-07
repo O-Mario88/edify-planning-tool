@@ -301,6 +301,11 @@ urlpatterns = [
         name="evidence_packet",
     ),
     path(
+        "evidence/<str:record_id>/download",
+        my_plan_views.evidence_download_view,
+        name="evidence_download",
+    ),
+    path(
         "activities/<str:activity_id>/salesforce-id",
         my_plan_views.salesforce_id_drawer_view,
         name="salesforce_id_drawer",

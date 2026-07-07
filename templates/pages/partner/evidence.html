@@ -3,30 +3,90 @@
 {% block title %}My Evidence — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6">
+<div class="p-6 max-w-[1600px] mx-auto space-y-5 font-sans">
 
-<div class="flex items-center justify-between">
-<div>
-<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight">My Evidence</h1>
-<p class="text-[12px] text-[var(--text-secondary)] mt-1 font-semibold">Partner evidence view</p>
-</div>
-</div>
+{% include "components/page_header.html" with title="My Evidence" subtitle="Evidence uploaded for your activities, and what's still pending." breadcrumb="Partner Portal" %}
 
-{% if today_activities|default:activities|default:schools|default:evidence %}
-<div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm">
-<div class="px-5 py-4 border-b border-slate-100"><h2 class="text-[14px] font-semibold text-slate-700">Items</h2></div>
-<ul class="divide-y divide-slate-100">
-{% for item in today_activities|default:activities|default:schools|default:evidence %}
-<li class="px-5 py-3.5 flex items-center justify-between">
-<div>
-<p class="text-[14px] font-bold text-slate-800">{{ item.name|default:item.activity_type|default:item }}</p>
-<p class="text-[11px] text-slate-400">{{ item.planned_date|default:item.created_at|default:"" }}</p>
-</div>
-</li>
-{% endfor %}
-</ul>
-</div>
-{% else %}<div class="p-12 text-center"><p class="text-[36px] mb-3">📎</p><p class="text-[14px] font-bold text-slate-600">No my evidence data yet</p></div>{% endif %}
+{% include "components/role_scope_notice.html" with scope_text="Showing evidence for activities where you are the responsible staff member." %}
+
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
+
+<section class="space-y-2">
+  <h2 class="text-[13px] font-semibold text-slate-800 tracking-tight">Pending Upload</h2>
+  {% if pending %}
+  <div class="card p-0 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-[12px] border-collapse font-sans">
+        <thead>
+          <tr class="bg-slate-50/50 text-[11px] font-bold uppercase tracking-wider text-slate-400 border-b">
+            <th class="px-5 py-3">Activity</th>
+            <th class="px-4 py-3">School</th>
+            <th class="px-4 py-3">Completed</th>
+            <th class="px-4 py-3 text-right">Action</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 text-slate-700">
+          {% for a in pending %}
+          <tr class="hover:bg-slate-50/40 transition-colors">
+            <td class="px-5 py-3 font-semibold text-slate-900">{{ a.get_activity_type_display }}</td>
+            <td class="px-4 py-3 text-slate-500">{{ a.school.name|default:"—" }}</td>
+            <td class="px-4 py-3 text-slate-500">{{ a.updated_at|date:"M j, Y" }}</td>
+            <td class="px-4 py-3 text-right">
+              <button hx-get="/activities/{{ a.id }}/evidence" hx-target="#drawer-container" hx-swap="innerHTML"
+                class="inline-flex items-center justify-center h-8 px-3 rounded-lg !bg-[#2e505f] !text-white text-[12px] font-semibold hover:bg-opacity-95 shadow-sm transition-all">
+                Upload Evidence
+              </button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="card p-0 overflow-hidden">
+    {% include "components/empty_state.html" with title="Nothing pending" message="Every completed activity has evidence uploaded." tone="success" compact="true" %}
+  </div>
+  {% endif %}
+</section>
+
+<section class="space-y-2">
+  <h2 class="text-[13px] font-semibold text-slate-800 tracking-tight">Recently Uploaded</h2>
+  {% if evidence %}
+  <div class="card p-0 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-[12px] border-collapse font-sans">
+        <thead>
+          <tr class="bg-slate-50/50 text-[11px] font-bold uppercase tracking-wider text-slate-400 border-b">
+            <th class="px-5 py-3">Activity</th>
+            <th class="px-4 py-3">School</th>
+            <th class="px-4 py-3">Kind</th>
+            <th class="px-4 py-3">Uploaded</th>
+            <th class="px-4 py-3 text-right"></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 text-slate-700">
+          {% for e in evidence %}
+          <tr class="hover:bg-slate-50/40 transition-colors">
+            <td class="px-5 py-3 font-semibold text-slate-900">{{ e.activity.get_activity_type_display }}</td>
+            <td class="px-4 py-3 text-slate-500">{{ e.activity.school.name|default:"—" }}</td>
+            <td class="px-4 py-3">{% include "components/badge.html" with tone="info" label=e.get_kind_display %}</td>
+            <td class="px-4 py-3 text-slate-500">{{ e.created_at|date:"M j, Y" }}</td>
+            <td class="px-4 py-3 text-right">
+              <a href="/activities/{{ e.activity_id }}/evidence/detail" class="text-[11px] font-semibold text-blue-600 hover:underline">View</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="card p-0 overflow-hidden">
+    {% include "components/empty_state.html" with title="No evidence uploaded yet" message="Uploaded photos, forms, and attendance sheets will appear here." compact="true" %}
+  </div>
+  {% endif %}
+</section>
 
 </div>
 {% endblock %}

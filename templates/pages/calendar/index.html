@@ -95,7 +95,11 @@
 </style>
 
 <div class="p-6 max-w-7xl mx-auto space-y-5">
-  {% include "components/page_header.html" with title="Calendar" subtitle="Edify Operations · Interactive Planner" %}
+  {% include "components/page_header.html" with title="Calendar" subtitle="Edify Operations · Interactive Planner" breadcrumb="Planning" %}
+
+  {% include "components/role_scope_notice.html" with scope_text=scope_text %}
+
+  {% include "components/kpi_strip.html" with items=kpi_strip_items %}
 
   <!-- FullCalendar Container -->
   <div class="card p-5">

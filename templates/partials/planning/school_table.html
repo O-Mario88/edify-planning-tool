@@ -158,10 +158,14 @@ class="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
 <tbody class="divide-y divide-slate-100 text-slate-700 font-semibold">
 {% if schools %}
 {% for r in schools %}
-<tr 
+<tr
 class="hover:bg-slate-50/50 transition-colors cursor-pointer"
 :class="selectedSchoolId === '{{ r.schoolId }}' ? 'bg-blue-50/40 border-l-2 border-l-blue-600' : (selectedSchools.includes('{{ r.schoolId }}') ? 'bg-blue-50/15' : '')"
 @click="if ($event.target.type !== 'checkbox' && !$event.target.closest('button') && !$event.target.closest('a')) { $dispatch('select-school', { id: '{{ r.schoolId }}' }) }"
+hx-get="/planning/intelligence?school_id={{ r.schoolId }}"
+hx-target="#planning-intelligence-panel"
+hx-swap="outerHTML"
+hx-trigger="click[!event.target.closest('button') && !event.target.closest('a') && event.target.type !== 'checkbox']"
 >
 <!-- Checkbox selection -->
 <td class="px-4 py-3.5">

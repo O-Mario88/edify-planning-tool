@@ -304,10 +304,18 @@ def today_view(request):
 def visits_log_view(request):
     """All school visits for the current user — filterable by status."""
     user = request.user
+    today = date.today()
     status_filter = request.GET.get("status", "")
     search = request.GET.get("q", "").strip()
 
-    VISIT_TYPES = ["school_visit", "follow_up_visit", "coaching_visit", "core_visit"]
+    VISIT_TYPES = [
+        "school_visit",
+        "follow_up_visit",
+        "coaching_visit",
+        "core_visit",
+        "baseline_ssa_visit",
+        "school_visit_ssa_collection",
+    ]
 
     visits_qs = (
         Activity.objects.filter(
@@ -315,7 +323,7 @@ def visits_log_view(request):
             activity_type__in=VISIT_TYPES,
             deleted_at__isnull=True,
         )
-        .select_related("school", "cluster")
+        .select_related("school", "school__district", "school__sub_county", "cluster")
         .order_by("-planned_date")
     )
 
@@ -328,15 +336,52 @@ def visits_log_view(request):
 
     visits = list(visits_qs[:100])
     completed = sum(1 for v in visits if v.status == "completed")
-    pending = sum(1 for v in visits if v.status in ("scheduled", "started"))
+    pending = sum(1 for v in visits if v.status in ("scheduled", "in_progress"))
+
+    from apps.my_plan.services import serialize_activity_row
+    from apps.partners.models import Partner
+
+    partners_map = {p.id: p.name for p in Partner.objects.all()}
+    users_map = {u.id: u.name for u in User.objects.all()}
+    visit_rows = [
+        serialize_activity_row(v, today, partners_map, users_map) for v in visits
+    ]
+
+    kpi_strip_items = [
+        {
+            "label": "Total Visits",
+            "value": str(len(visits)),
+            "raw_value": len(visits),
+            "helper": "most recent 100",
+            "icon": "school",
+            "variant": "info",
+        },
+        {
+            "label": "Completed",
+            "value": str(completed),
+            "raw_value": completed,
+            "helper": "of shown visits",
+            "icon": "check",
+            "variant": "success",
+        },
+        {
+            "label": "Scheduled / In Progress",
+            "value": str(pending),
+            "raw_value": pending,
+            "helper": "not yet completed",
+            "icon": "clock",
+            "variant": "warning",
+        },
+    ]
 
     context = {
-        "visits": visits,
+        "visits": visit_rows,
         "total": len(visits),
         "completed": completed,
         "pending": pending,
         "status_filter": status_filter,
         "search": search,
+        "kpi_strip_items": kpi_strip_items,
     }
     return render(request, "pages/visits/index.html", context)
 
@@ -348,10 +393,19 @@ def visits_log_view(request):
 def trainings_log_view(request):
     """All group training sessions for the current user."""
     user = request.user
+    today = date.today()
     status_filter = request.GET.get("status", "")
     search = request.GET.get("q", "").strip()
 
-    TRAINING_TYPES = ["group_training", "cluster_training", "teachers_training"]
+    # Real ActivityType choices — "group_training" / "teachers_training" were
+    # never valid values, so trainings silently never matched them.
+    TRAINING_TYPES = [
+        "training",
+        "school_improvement_training",
+        "cluster_training",
+        "core_training",
+        "cluster_training_ssa_collection",
+    ]
 
     trainings_qs = (
         Activity.objects.filter(
@@ -359,7 +413,7 @@ def trainings_log_view(request):
             activity_type__in=TRAINING_TYPES,
             deleted_at__isnull=True,
         )
-        .select_related("school", "cluster")
+        .select_related("school", "school__district", "school__sub_county", "cluster")
         .order_by("-planned_date")
     )
 
@@ -373,12 +427,41 @@ def trainings_log_view(request):
     trainings = list(trainings_qs[:100])
     completed = sum(1 for t in trainings if t.status == "completed")
 
+    from apps.my_plan.services import serialize_activity_row
+    from apps.partners.models import Partner
+
+    partners_map = {p.id: p.name for p in Partner.objects.all()}
+    users_map = {u.id: u.name for u in User.objects.all()}
+    training_rows = [
+        serialize_activity_row(t, today, partners_map, users_map) for t in trainings
+    ]
+
+    kpi_strip_items = [
+        {
+            "label": "Total Sessions",
+            "value": str(len(trainings)),
+            "raw_value": len(trainings),
+            "helper": "most recent 100",
+            "icon": "target",
+            "variant": "info",
+        },
+        {
+            "label": "Completed",
+            "value": str(completed),
+            "raw_value": completed,
+            "helper": "of shown sessions",
+            "icon": "check",
+            "variant": "success",
+        },
+    ]
+
     context = {
-        "trainings": trainings,
+        "trainings": training_rows,
         "total": len(trainings),
         "completed": completed,
         "status_filter": status_filter,
         "search": search,
+        "kpi_strip_items": kpi_strip_items,
     }
     return render(request, "pages/trainings/index.html", context)
 

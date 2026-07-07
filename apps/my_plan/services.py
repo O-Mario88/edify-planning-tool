@@ -327,6 +327,221 @@ def compute_next_action(a, today) -> dict:
     }
 
 
+def serialize_activity_row(a, today, partners_map: dict, users_map: dict) -> dict:
+    """Builds the row dict consumed by `partials/my_plan/activity_table.html`
+    (badges, single computed next-action, and display context). Shared by the
+    My Plan workspace and the partner-portal activity views so every screen
+    that lists activities renders the same one-primary-action row."""
+    from apps.schools.models import School
+
+    status_label, status_class = get_activity_status_label_and_class(a, today)
+    next_act = compute_next_action(a, today)
+
+    # Budget status and badges
+    badges = []
+    first_line = (
+        a.schedule_cost_lines.first() if hasattr(a, "schedule_cost_lines") else None
+    )
+
+    if first_line:
+        wfr_line = first_line.weekly_request_lines.first()
+        if wfr_line:
+            wfr = wfr_line.weekly_fund_request
+            if wfr.status == "pending_responsible_confirmation":
+                badges.append(("Included in Weekly Request", "amber"))
+            elif wfr.status == "pending_pl_approval":
+                badges.append(("Submitted", "amber"))
+            elif wfr.status == "approved_by_pl":
+                badges.append(("PL Approved", "green"))
+            elif wfr.status == "approved_by_cd":
+                badges.append(("CD Approved", "green"))
+            elif wfr.status == "approved_by_rvp":
+                badges.append(("RVP Approved", "green"))
+            elif wfr.status == "confirmed_for_advance":
+                badges.append(("Ready for Disbursement", "green"))
+            elif wfr.status == "disbursed":
+                badges.append(("Disbursed", "green"))
+            else:
+                badges.append(("Included in Request", "blue"))
+        else:
+            badges.append(("Budget Created", "blue"))
+    else:
+        badges.append(("No Budget", "slate"))
+
+    # Evidence status
+    if a.status == "completed":
+        if a.evidence_status == "uploaded":
+            badges.append(("Evidence Uploaded", "green"))
+        else:
+            badges.append(("Evidence Pending", "amber"))
+
+    # SF ID status
+    if a.status in ["completed", "submitted"]:
+        if a.salesforce_activity_id:
+            badges.append(("SF ID Entered", "green"))
+        else:
+            badges.append(("SF ID Missing", "red"))
+
+    # IA status
+    if a.ia_verification_status == "pending":
+        badges.append(("IA Pending", "purple"))
+    elif a.ia_verification_status == "verified":
+        badges.append(("IA Verified", "green"))
+    elif a.ia_verification_status == "returned":
+        badges.append(("Returned", "red"))
+
+    # Accounts status
+    if a.payment_status == "pending":
+        badges.append(("Accounts Pending", "amber"))
+    elif a.payment_status == "cleared":
+        badges.append(("Cleared", "green"))
+
+    # Core details
+    is_core = a.school and a.school.school_type == "core"
+    visit_number = ""
+    training_number = ""
+    core_progress = ""
+    if is_core:
+        if a.activity_type == "core_visit":
+            prev_visits = Activity.objects.filter(
+                school=a.school,
+                activity_type="core_visit",
+                fy=a.fy,
+                planned_date__lt=a.planned_date if a.planned_date else date.today(),
+            ).count()
+            visit_number = f"V{prev_visits + 1}"
+        elif a.activity_type == "core_training":
+            prev_trainings = Activity.objects.filter(
+                school=a.school,
+                activity_type="core_training",
+                fy=a.fy,
+                planned_date__lt=a.planned_date if a.planned_date else date.today(),
+            ).count()
+            training_number = f"T{prev_trainings + 1}"
+
+        completed_core = Activity.objects.filter(
+            school=a.school,
+            activity_type__in=["core_visit", "core_training"],
+            status="completed",
+            fy=a.fy,
+        ).count()
+        core_progress = f"{completed_core}/8 Completed"
+
+    # Partner details
+    partner_name = ""
+    assigned_by = ""
+    partner_schedule_status = ""
+    staff_monitoring_status = ""
+    if a.delivery_type == "partner":
+        partner_name = partners_map.get(a.assigned_partner_id, "Partner")
+        assigned_by = users_map.get(a.responsible_staff_id, "Staff")
+        partner_schedule_status = (
+            "Scheduled" if a.planned_date else "Pending Partner Scheduling"
+        )
+        staff_monitoring_status = "Monitoring"
+
+    # Return details
+    return_reason = ""
+    returned_by = ""
+    if a.status == "returned_for_correction":
+        return_reason = a.last_reason or "Correction required"
+        if a.ia_verification_status == "returned":
+            returned_by = "Internal Auditor"
+        else:
+            returned_by = "Project Leader"
+
+    # Budget Total — real cost-line sum (falls back to the estimate the
+    # planner locked in at scheduling time); never a fabricated formula.
+    budget_total = (
+        sum(line.amount for line in a.schedule_cost_lines.all())
+        or a.est_cost_cents
+        or 0
+    )
+
+    return {
+        "id": a.id,
+        "activity_type": a.activity_type,
+        "activity_type_label": a.get_activity_type_display(),
+        "status": a.status,
+        "planned_date": a.planned_date,
+        # School details
+        "school_id": a.school.school_id if a.school else "",
+        "school_name": a.school.name if a.school else "Unknown School",
+        "school_district": a.school.district.name if a.school else "Unknown",
+        "school_sub_county": a.school.sub_county.name
+        if a.school and a.school.sub_county
+        else "",
+        "school_cluster_name": a.cluster.name
+        if a.cluster
+        else (a.school.cluster_id or ""),
+        "school_ssa_status": a.school.get_current_fy_ssa_status_display()
+        if a.school
+        else "No SSA",
+        # Cluster details
+        "cluster_name": a.cluster.name if a.cluster else "Unknown Cluster",
+        "cluster_district": a.cluster.district.name if a.cluster else "Unknown",
+        "cluster_school_count": School.objects.filter(cluster_id=a.cluster.id).count()
+        if a.cluster
+        else 0,
+        "expected_participants": (a.teachers_attended or 0)
+        + (a.leaders_attended or 0)
+        + (a.other_participants or 0)
+        or 20,
+        # Core details
+        "is_core": is_core,
+        "visit_number": visit_number,
+        "training_number": training_number,
+        "core_progress": core_progress,
+        # Partner details
+        "partner_name": partner_name,
+        "assigned_by": assigned_by,
+        "partner_schedule_status": partner_schedule_status,
+        "staff_monitoring_status": staff_monitoring_status,
+        # Return details
+        "return_reason": return_reason,
+        "returned_by": returned_by,
+        # General details
+        "purpose": a.activity_purpose_text or a.get_activity_type_display(),
+        "focus_intervention": a.get_focus_intervention_display()
+        if a.focus_intervention
+        else "General",
+        "owner": users_map.get(a.responsible_staff_id, "Staff"),
+        "execution_role": "Staff" if a.delivery_type == "staff" else "Partner",
+        "budget_total": budget_total,
+        "salesforce_activity_id": a.salesforce_activity_id,
+        "evidence_status": a.evidence_status,
+        "ia_verification_status": a.ia_verification_status,
+        "payment_status": a.payment_status,
+        # Next Action & Badges
+        "next_action": next_act,
+        "badges": badges,
+        "status_label": status_label,
+        "status_class": status_class,
+    }
+
+
+def classify_urgency_bucket(a, activity_data, today) -> str:
+    """Maps one activity to exactly one of the 7 My Plan urgency buckets."""
+    next_act = activity_data["next_action"]
+    if a.status == "returned_for_correction":
+        return "returned_needs_correction"
+    if a.delivery_type == "partner":
+        return "partner_monitoring"
+    if next_act["action"] in ["evidence", "sf_id", "ssa", "netsuite_id", "fix"]:
+        return "waiting_on_me"
+    if a.planned_date == today and a.status in ["scheduled", "in_progress"]:
+        return "due_today"
+    if (
+        a.planned_date
+        and today < a.planned_date <= today + timedelta(days=7)
+        and a.status in ["scheduled", "in_progress"]
+    ):
+        return "this_week"
+    if a.status == "submitted" or next_act["action"] == "view_status":
+        return "waiting_on_approval"
+    return "upcoming"
+
+
 def get_frontend_context(principal, query: dict) -> dict:
     """Consolidated planning dashboard feed resolver for the HTML frontend."""
     today = date.today()
@@ -365,11 +580,14 @@ def get_frontend_context(principal, query: dict) -> dict:
         staff_ids = list(scope.staff_ids or [])
         if scope.supervised_staff_ids:
             staff_ids.extend(scope.supervised_staff_ids)
-        if not staff_ids:
-            # Match the identifier space that activities.services.create writes
-            # (StaffProfile CUID preferred, User CUID fallback). Cover BOTH so
-            # users without a StaffProfile still see their scheduled activities.
-            staff_ids = [principal.staff_profile_id or principal.id, principal.id]
+        # Always add the caller's own identifiers in both ID spaces
+        # activities.services.create() has written for `responsible_staff_id`
+        # (StaffProfile CUID preferred, User CUID fallback — see that
+        # module's `principal_owner_id`). scope.staff_ids normally already
+        # holds the StaffProfile CUID, but some activities (imports, older
+        # seed data) were written with the raw User CUID; without this a
+        # caller's own activities can silently disappear from their plan.
+        staff_ids.extend([principal.staff_profile_id, principal.id])
         staff_ids = [s for s in staff_ids if s]
         qs = qs.filter(
             Q(responsible_staff_id__in=staff_ids)
@@ -557,19 +775,20 @@ def get_frontend_context(principal, query: dict) -> dict:
     # 8. Main Lists for the three categories and 7 sections by urgency
     partners_map = {p.id: p.name for p in Partner.objects.all()}
     users_map = {u.id: u.name for u in User.objects.all()}
-    from apps.schools.models import School
 
     school_visits_list = []
     cluster_trainings_list = []
     cluster_meetings_list = []
 
-    waiting_on_me_list = []
-    due_today_list = []
-    this_week_list = []
-    partner_monitoring_list = []
-    returned_needs_correction_list = []
-    waiting_on_approval_list = []
-    upcoming_list = []
+    buckets = {
+        "waiting_on_me": [],
+        "due_today": [],
+        "this_week": [],
+        "partner_monitoring": [],
+        "returned_needs_correction": [],
+        "waiting_on_approval": [],
+        "upcoming": [],
+    }
 
     activities = qs_period.select_related(
         "school",
@@ -580,196 +799,7 @@ def get_frontend_context(principal, query: dict) -> dict:
     ).order_by("planned_date", "created_at")
 
     for a in activities:
-        status_label, status_class = get_activity_status_label_and_class(a, today)
-        next_act = compute_next_action(a, today)
-
-        # Budget status and badges
-        badges = []
-        first_line = (
-            a.schedule_cost_lines.first() if hasattr(a, "schedule_cost_lines") else None
-        )
-
-        if first_line:
-            wfr_line = first_line.weekly_request_lines.first()
-            if wfr_line:
-                wfr = wfr_line.weekly_fund_request
-                if wfr.status == "pending_responsible_confirmation":
-                    badges.append(("Included in Weekly Request", "amber"))
-                elif wfr.status == "pending_pl_approval":
-                    badges.append(("Submitted", "amber"))
-                elif wfr.status == "approved_by_pl":
-                    badges.append(("PL Approved", "green"))
-                elif wfr.status == "approved_by_cd":
-                    badges.append(("CD Approved", "green"))
-                elif wfr.status == "approved_by_rvp":
-                    badges.append(("RVP Approved", "green"))
-                elif wfr.status == "confirmed_for_advance":
-                    badges.append(("Ready for Disbursement", "green"))
-                elif wfr.status == "disbursed":
-                    badges.append(("Disbursed", "green"))
-                else:
-                    badges.append(("Included in Request", "blue"))
-            else:
-                badges.append(("Budget Created", "blue"))
-        else:
-            badges.append(("No Budget", "slate"))
-
-        # Evidence status
-        if a.status == "completed":
-            if a.evidence_status == "uploaded":
-                badges.append(("Evidence Uploaded", "green"))
-            else:
-                badges.append(("Evidence Pending", "amber"))
-
-        # SF ID status
-        if a.status in ["completed", "submitted"]:
-            if a.salesforce_activity_id:
-                badges.append(("SF ID Entered", "green"))
-            else:
-                badges.append(("SF ID Missing", "red"))
-
-        # IA status
-        if a.ia_verification_status == "pending":
-            badges.append(("IA Pending", "purple"))
-        elif a.ia_verification_status == "verified":
-            badges.append(("IA Verified", "green"))
-        elif a.ia_verification_status == "returned":
-            badges.append(("Returned", "red"))
-
-        # Accounts status
-        if a.payment_status == "pending":
-            badges.append(("Accounts Pending", "amber"))
-        elif a.payment_status == "cleared":
-            badges.append(("Cleared", "green"))
-
-        # Core details
-        is_core = a.school and a.school.school_type == "core"
-        visit_number = ""
-        training_number = ""
-        core_progress = ""
-        if is_core:
-            if a.activity_type == "core_visit":
-                prev_visits = Activity.objects.filter(
-                    school=a.school,
-                    activity_type="core_visit",
-                    fy=a.fy,
-                    planned_date__lt=a.planned_date if a.planned_date else date.today(),
-                ).count()
-                visit_number = f"V{prev_visits + 1}"
-            elif a.activity_type == "core_training":
-                prev_trainings = Activity.objects.filter(
-                    school=a.school,
-                    activity_type="core_training",
-                    fy=a.fy,
-                    planned_date__lt=a.planned_date if a.planned_date else date.today(),
-                ).count()
-                training_number = f"T{prev_trainings + 1}"
-
-            completed_core = Activity.objects.filter(
-                school=a.school,
-                activity_type__in=["core_visit", "core_training"],
-                status="completed",
-                fy=a.fy,
-            ).count()
-            core_progress = f"{completed_core}/8 Completed"
-
-        # Partner details
-        partner_name = ""
-        assigned_by = ""
-        partner_schedule_status = ""
-        staff_monitoring_status = ""
-        if a.delivery_type == "partner":
-            partner_name = partners_map.get(a.assigned_partner_id, "Partner")
-            assigned_by = users_map.get(a.responsible_staff_id, "Staff")
-            partner_schedule_status = (
-                "Scheduled" if a.planned_date else "Pending Partner Scheduling"
-            )
-            staff_monitoring_status = "Monitoring"
-
-        # Return details
-        return_reason = ""
-        returned_by = ""
-        if a.status == "returned_for_correction":
-            return_reason = a.last_reason or "Correction required"
-            if a.ia_verification_status == "returned":
-                returned_by = "Internal Auditor"
-            else:
-                returned_by = "Project Leader"
-
-        # Budget Total
-        budget_total = 0
-        if a.activity_type == "cluster_training":
-            participants = a.teachers_attended or a.leaders_attended or 20
-            budget_total = participants * 15000 + 50000 + 100000
-        elif a.activity_type == "cluster_meeting":
-            participants = a.teachers_attended or a.leaders_attended or 15
-            budget_total = participants * 10000
-        else:
-            budget_total = a.est_cost_cents / 100 if a.est_cost_cents else 50000
-
-        # Construct final dict
-        activity_data = {
-            "id": a.id,
-            "activity_type": a.activity_type,
-            "activity_type_label": a.get_activity_type_display(),
-            "status": a.status,
-            "planned_date": a.planned_date,
-            # School details
-            "school_id": a.school.school_id if a.school else "",
-            "school_name": a.school.name if a.school else "Unknown School",
-            "school_district": a.school.district.name if a.school else "Unknown",
-            "school_sub_county": a.school.sub_county.name
-            if a.school and a.school.sub_county
-            else "",
-            "school_cluster_name": a.cluster.name
-            if a.cluster
-            else (a.school.cluster_id or ""),
-            "school_ssa_status": a.school.get_current_fy_ssa_status_display()
-            if a.school
-            else "No SSA",
-            # Cluster details
-            "cluster_name": a.cluster.name if a.cluster else "Unknown Cluster",
-            "cluster_district": a.cluster.district.name if a.cluster else "Unknown",
-            "cluster_school_count": School.objects.filter(
-                cluster_id=a.cluster.id
-            ).count()
-            if a.cluster
-            else 0,
-            "expected_participants": (a.teachers_attended or 0)
-            + (a.leaders_attended or 0)
-            + (a.other_participants or 0)
-            or 20,
-            # Core details
-            "is_core": is_core,
-            "visit_number": visit_number,
-            "training_number": training_number,
-            "core_progress": core_progress,
-            # Partner details
-            "partner_name": partner_name,
-            "assigned_by": assigned_by,
-            "partner_schedule_status": partner_schedule_status,
-            "staff_monitoring_status": staff_monitoring_status,
-            # Return details
-            "return_reason": return_reason,
-            "returned_by": returned_by,
-            # General details
-            "purpose": a.activity_purpose_text or a.get_activity_type_display(),
-            "focus_intervention": a.get_focus_intervention_display()
-            if a.focus_intervention
-            else "General",
-            "owner": users_map.get(a.responsible_staff_id, "Staff"),
-            "execution_role": "Staff" if a.delivery_type == "staff" else "Partner",
-            "budget_total": budget_total,
-            "salesforce_activity_id": a.salesforce_activity_id,
-            "evidence_status": a.evidence_status,
-            "ia_verification_status": a.ia_verification_status,
-            "payment_status": a.payment_status,
-            # Next Action & Badges
-            "next_action": next_act,
-            "badges": badges,
-            "status_label": status_label,
-            "status_class": status_class,
-        }
+        activity_data = serialize_activity_row(a, today, partners_map, users_map)
 
         # Legacy lists for compatibility
         if a.activity_type in [
@@ -796,24 +826,16 @@ def get_frontend_context(principal, query: dict) -> dict:
             cluster_meetings_list.append(activity_data)
 
         # Classification into 7 Urgency Sections
-        if a.status == "returned_for_correction":
-            returned_needs_correction_list.append(activity_data)
-        elif a.delivery_type == "partner":
-            partner_monitoring_list.append(activity_data)
-        elif next_act["action"] in ["evidence", "sf_id", "ssa", "netsuite_id", "fix"]:
-            waiting_on_me_list.append(activity_data)
-        elif a.planned_date == today and a.status in ["scheduled", "in_progress"]:
-            due_today_list.append(activity_data)
-        elif (
-            a.planned_date
-            and today < a.planned_date <= today + timedelta(days=7)
-            and a.status in ["scheduled", "in_progress"]
-        ):
-            this_week_list.append(activity_data)
-        elif a.status == "submitted" or next_act["action"] == "view_status":
-            waiting_on_approval_list.append(activity_data)
-        else:
-            upcoming_list.append(activity_data)
+        bucket = classify_urgency_bucket(a, activity_data, today)
+        buckets[bucket].append(activity_data)
+
+    waiting_on_me_list = buckets["waiting_on_me"]
+    due_today_list = buckets["due_today"]
+    this_week_list = buckets["this_week"]
+    partner_monitoring_list = buckets["partner_monitoring"]
+    returned_needs_correction_list = buckets["returned_needs_correction"]
+    waiting_on_approval_list = buckets["waiting_on_approval"]
+    upcoming_list = buckets["upcoming"]
 
     # 9. Right Rail: Planning Insights
     today_activities = (
