@@ -6,11 +6,8 @@
 {% block shell_content %}
 <div class="p-6 max-w-4xl mx-auto space-y-6">
 <!-- Page Header -->
-<div>
 <a href="/schools" class="text-[11px] font-semibold text-[var(--color-edify-primary)] hover:underline uppercase tracking-wider">&larr; Back to School Directory</a>
-<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight mt-2">Data Intake Portal</h1>
-<p class="text-[12px] text-[var(--text-secondary)] mt-1 font-semibold">Upload onboarding school roster spreadsheet files or school self-assessment (SSA) reports.</p>
-</div>
+{% include "components/page_header.html" with title="Data Intake Portal" subtitle="Upload onboarding school roster spreadsheet files or school self-assessment (SSA) reports." %}
 
 <div class="grid md:grid-cols-2 gap-6">
 <!-- School Upload Panel -->

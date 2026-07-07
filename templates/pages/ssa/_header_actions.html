@@ -1,0 +1,5 @@
+{% if request.user.active_role in 'ImpactAssessment,Admin,Program Lead' %}
+{% include "components/button.html" with variant="primary" size="sm" label="Upload SSA Report" href="/ssa/upload/" icon="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" %}
+{% include "components/button.html" with variant="ghost" size="sm" label="Verification Queue" href="/ssa/verification/" %}
+{% include "components/button.html" with variant="ghost" size="sm" label="Unmatched Queue" href="/ssa/unmatched" %}
+{% endif %}

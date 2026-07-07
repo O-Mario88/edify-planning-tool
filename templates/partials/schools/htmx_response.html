@@ -10,7 +10,5 @@
 </div>
 
 {% if intelligence %}
-<div id="directory-intelligence-container" hx-swap-oob="true">
-{% include "partials/schools/directory_intelligence.html" %}
-</div>
+{% include "partials/schools/directory_intelligence.html" with oob=True %}
 {% endif %}

@@ -48,12 +48,62 @@ def ssa_master_view(request):
     )
     total_schools = School.objects.filter(deleted_at__isnull=True).count()
     schools_with_ssa = records.values("school_id").distinct().count()
+    pending_ssa = max(total_schools - schools_with_ssa, 0)
+
+    # SSA severity bands (canonical 0-4 Critical / 5-6 Support / 7-8 Good / 9-10 Strong)
+    critical_count = records.filter(average_score__lt=5).count()
+    good_or_strong_count = records.filter(average_score__gte=7).count()
+
+    kpi_strip_items = [
+        {
+            "label": "Average Score",
+            "value": f"{round(avg_score, 1)}",
+            "raw_value": round(avg_score, 1),
+            "helper": "out of 10",
+            "icon": "chart",
+            "variant": "info",
+        },
+        {
+            "label": "Schools Assessed",
+            "value": str(schools_with_ssa),
+            "raw_value": schools_with_ssa,
+            "helper": f"of {total_schools} total",
+            "icon": "school",
+            "variant": "success",
+        },
+        {
+            "label": "Pending SSA",
+            "value": str(pending_ssa),
+            "raw_value": pending_ssa,
+            "helper": "not yet assessed",
+            "icon": "warning",
+            "variant": "warning",
+        },
+        {
+            "label": "Critical (<5)",
+            "value": str(critical_count),
+            "raw_value": critical_count,
+            "helper": "need urgent support",
+            "icon": "warning",
+            "variant": "danger",
+        },
+        {
+            "label": "Good or Strong (7+)",
+            "value": str(good_or_strong_count),
+            "raw_value": good_or_strong_count,
+            "helper": "performing well",
+            "icon": "check",
+            "variant": "success",
+        },
+    ]
 
     context = {
         "records": records_list,
         "avg_score": round(avg_score, 2),
         "total_schools": total_schools,
         "schools_with_ssa": schools_with_ssa,
+        "pending_ssa": pending_ssa,
+        "kpi_strip_items": kpi_strip_items,
         "fy": fy,
         "search": search,
     }
@@ -210,11 +260,54 @@ def district_detail_view(request, district_id):
 
     district_progress = get_ssa_progress_by_fy(schools)
 
+    def _ssa_bar_color(score):
+        if score >= 7:
+            return "#10b981"
+        if score >= 5:
+            return "#f59e0b"
+        return "#f43f5e"
+
+    has_progress_data = bool(district_progress)
+    district_progress_chart = {
+        "chart": {"type": "bar"},
+        "series": [
+            {
+                "name": "Avg SSA (% of max)",
+                "data": [
+                    round(item["avg_score"] / 10 * 100, 1) for item in district_progress
+                ],
+            }
+        ],
+        "xaxis": {
+            "categories": [f"FY{item['fy']}" for item in district_progress],
+            "axisBorder": {"show": False},
+            "axisTicks": {"show": False},
+            "labels": {
+                "style": {"colors": "#94a3b8", "fontSize": "10px", "fontWeight": 500}
+            },
+        },
+        "yaxis": {
+            "max": 100,
+            "labels": {"style": {"colors": "#94a3b8", "fontSize": "10px"}},
+        },
+        "colors": [_ssa_bar_color(item["avg_score"]) for item in district_progress],
+        "plotOptions": {
+            "bar": {"borderRadius": 4, "columnWidth": "45%", "distributed": True}
+        },
+        "legend": {"show": False},
+        "dataLabels": {"enabled": True, "style": {"fontSize": "10px"}},
+        "grid": {"borderColor": "#f1f5f9"},
+        "tooltip": {"theme": "light"},
+    }
+
     context = {
         "district": district,
         "schools": schools,
         "total_schools": schools.count(),
         "district_progress": district_progress,
+        "latest_progress": district_progress[-1] if district_progress else None,
+        "district_progress_chart": district_progress_chart,
+        "has_progress_data": has_progress_data,
     }
     return render(request, "pages/districts/detail.html", context)
 
@@ -589,16 +682,68 @@ def coverage_view(request):
         Cluster.objects.filter(deleted_at__isnull=True)
         .annotate(
             school_count=Count("assignments", distinct=True),
+            visited_count=Count(
+                "assignments__school",
+                filter=Q(
+                    assignments__school__deleted_at__isnull=True,
+                    assignments__school__activities__activity_type__in=[
+                        "school_visit",
+                        "follow_up_visit",
+                        "coaching_visit",
+                    ],
+                    assignments__school__activities__status="completed",
+                ),
+                distinct=True,
+            ),
         )
         .order_by("name")
     )
 
+    unvisited = total_schools - visited
+    coverage_pct = round(visited / max(total_schools, 1) * 100)
+
+    kpi_strip_items = [
+        {
+            "label": "Total Schools",
+            "value": str(total_schools),
+            "raw_value": total_schools,
+            "helper": "in the directory",
+            "icon": "school",
+            "variant": "info",
+        },
+        {
+            "label": "Visited",
+            "value": str(visited),
+            "raw_value": visited,
+            "helper": "at least one completed visit",
+            "icon": "check",
+            "variant": "success",
+        },
+        {
+            "label": "Not Yet Visited",
+            "value": str(unvisited),
+            "raw_value": unvisited,
+            "helper": "no completed visits",
+            "icon": "warning",
+            "variant": "warning",
+        },
+        {
+            "label": "Coverage Rate",
+            "value": f"{coverage_pct}%",
+            "raw_value": coverage_pct,
+            "helper": "schools visited",
+            "icon": "target",
+            "variant": "success" if coverage_pct >= 70 else "warning",
+        },
+    ]
+
     context = {
         "total_schools": total_schools,
         "visited": visited,
-        "unvisited": total_schools - visited,
-        "coverage_pct": round(visited / max(total_schools, 1) * 100),
+        "unvisited": unvisited,
+        "coverage_pct": coverage_pct,
         "clusters": clusters,
+        "kpi_strip_items": kpi_strip_items,
     }
     return render(request, "pages/coverage/index.html", context)
 
@@ -1072,8 +1217,51 @@ def completed_activities_view(request):
 @require_page_permission("quality_checks")
 def quality_checks_view(request):
     """Quality checks — IA role."""
-    flags = CdFlag.objects.all().order_by("-created_at")[:50]
-    context = {"flags": flags}
+    from apps.flags.models import CdFlagStatus
+
+    flags_qs = CdFlag.objects.all().order_by("-created_at")
+    flags = flags_qs[:50]
+    total_flags = flags_qs.count()
+    open_flags = flags_qs.filter(status=CdFlagStatus.OPEN).count()
+    acknowledged_flags = flags_qs.filter(status=CdFlagStatus.ACKNOWLEDGED).count()
+    resolved_flags = flags_qs.filter(status=CdFlagStatus.RESOLVED).count()
+
+    kpi_strip_items = [
+        {
+            "label": "Total Flags",
+            "value": str(total_flags),
+            "helper": "all time",
+            "icon": "document",
+            "variant": "info",
+        },
+        {
+            "label": "Open",
+            "value": str(open_flags),
+            "helper": "needs review",
+            "icon": "warning",
+            "variant": "danger",
+        },
+        {
+            "label": "Acknowledged",
+            "value": str(acknowledged_flags),
+            "helper": "in progress",
+            "icon": "clock",
+            "variant": "warning",
+        },
+        {
+            "label": "Resolved",
+            "value": str(resolved_flags),
+            "helper": "closed out",
+            "icon": "check",
+            "variant": "success",
+        },
+    ]
+
+    context = {
+        "flags": flags,
+        "total_flags": total_flags,
+        "kpi_strip_items": kpi_strip_items,
+    }
     return render(request, "pages/quality_checks/index.html", context)
 
 

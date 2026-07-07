@@ -32,6 +32,106 @@ from apps.clusters.services import (
 )
 
 
+def _score_bar_color(score):
+    """Palette threshold matching the design contract (emerald/amber/rose)."""
+    if score is None:
+        return "#94a3b8"
+    if score >= 7:
+        return "#10b981"
+    if score >= 5:
+        return "#f59e0b"
+    return "#f43f5e"
+
+
+def _build_cluster_filter_fields(
+    *,
+    selected_fy,
+    selected_quarter,
+    selected_district,
+    selected_sub_county,
+    selected_staff,
+    selected_ssa_status,
+    selected_cluster_risk,
+    selected_activity_status,
+    districts,
+    sub_counties,
+    staff_profiles,
+):
+    """Server-built `fields` list for components/filter_bar.html."""
+
+    def opt(value, label, selected):
+        return {"value": value, "label": label, "selected": selected}
+
+    return [
+        {
+            "name": "fy",
+            "label": "Fiscal Year",
+            "options": [
+                opt("2026", "FY 2026", selected_fy == "2026"),
+                opt("2025", "FY 2025", selected_fy == "2025"),
+            ],
+        },
+        {
+            "name": "quarter",
+            "label": "Quarter",
+            "options": [opt("", "All", selected_quarter == "")]
+            + [opt(q, q, selected_quarter == q) for q in ["Q1", "Q2", "Q3", "Q4"]],
+        },
+        {
+            "name": "district",
+            "label": "District",
+            "options": [opt("", "All", selected_district == "")]
+            + [opt(d.id, d.name, selected_district == d.id) for d in districts],
+        },
+        {
+            "name": "sub_county",
+            "label": "Sub-county",
+            "options": [opt("", "All", selected_sub_county == "")]
+            + [
+                opt(sc.id, sc.name, selected_sub_county == sc.id) for sc in sub_counties
+            ],
+        },
+        {
+            "name": "staff",
+            "label": "Staff",
+            "options": [opt("", "All", selected_staff == "")]
+            + [opt(p.id, p.user.name, selected_staff == p.id) for p in staff_profiles],
+        },
+        {
+            "name": "ssa_status",
+            "label": "SSA Status",
+            "options": [
+                opt("", "All", selected_ssa_status == ""),
+                opt("done", "Complete", selected_ssa_status == "done"),
+                opt("not_done", "Incomplete", selected_ssa_status == "not_done"),
+            ],
+        },
+        {
+            "name": "cluster_risk",
+            "label": "Risk",
+            "options": [
+                opt("", "All", selected_cluster_risk == ""),
+                opt("critical", "Critical", selected_cluster_risk == "critical"),
+                opt(
+                    "needs_attention",
+                    "Needs Attention",
+                    selected_cluster_risk == "needs_attention",
+                ),
+                opt("healthy", "Healthy", selected_cluster_risk == "healthy"),
+            ],
+        },
+        {
+            "name": "activity_status",
+            "label": "Activity",
+            "options": [
+                opt("", "All", selected_activity_status == ""),
+                opt("pending", "Pending", selected_activity_status == "pending"),
+                opt("completed", "Completed", selected_activity_status == "completed"),
+            ],
+        },
+    ]
+
+
 def get_cluster_risk(cluster, planning_info, avg_ssa) -> str:
     if avg_ssa is not None and avg_ssa < 5.0:
         return "critical"
@@ -141,7 +241,6 @@ def get_cluster_impact_data(cluster_id, focus_intervention, principal):
 
 
 @require_page_permission("planning")
-@require_page_permission("planning")
 def cluster_list_view(request):
     user = request.user
 
@@ -149,8 +248,17 @@ def cluster_list_view(request):
     data = ClusterDashboardService.get_dashboard_data(request, user)
     cards = data["cards"]
     kpis = data["kpis"]
-    kpi_strip_items = data["kpi_strip_items"]
     risk_counts = data["risk_counts"]
+
+    # Design contract caps the KPI strip at <= 6 items. Drop the two least
+    # decision-critical tiles (the weakest-intervention label duplicates the
+    # detail-page scorecard, and pending-activity count is a secondary signal
+    # vs. the risk-based tiles kept here).
+    kpi_strip_items = [
+        item
+        for item in data["kpi_strip_items"]
+        if item["label"] not in ("Weakest Intervention", "Pending Activities")
+    ]
 
     # Pagination
     from django.core.paginator import Paginator
@@ -243,6 +351,84 @@ def cluster_list_view(request):
         .order_by("user__name")
     )
 
+    # Selected filter states (read once, reused for the filter_bar `fields`).
+    q = request.GET.get("q", "").strip()
+    selected_fy = request.GET.get("fy", "2026").strip()
+    selected_quarter = request.GET.get("quarter", "").strip()
+    selected_district = request.GET.get("district", "").strip()
+    selected_sub_county = request.GET.get("sub_county", "").strip()
+    selected_staff = request.GET.get("staff", "").strip()
+    selected_ssa_status = request.GET.get("ssa_status", "").strip()
+    selected_cluster_risk = request.GET.get("cluster_risk", "").strip()
+    selected_activity_status = request.GET.get("activity_status", "").strip()
+
+    filter_fields = _build_cluster_filter_fields(
+        selected_fy=selected_fy,
+        selected_quarter=selected_quarter,
+        selected_district=selected_district,
+        selected_sub_county=selected_sub_county,
+        selected_staff=selected_staff,
+        selected_ssa_status=selected_ssa_status,
+        selected_cluster_risk=selected_cluster_risk,
+        selected_activity_status=selected_activity_status,
+        districts=districts,
+        sub_counties=sub_counties,
+        staff_profiles=staff_profiles,
+    )
+
+    # Export link — built server-side from the *current* filter querystring so
+    # the button is a plain link (no dead onclick/JS query-string assembly).
+    export_params = request.GET.copy()
+    export_params["export"] = "csv"
+    export_params.pop("page", None)
+    export_href = f"/clusters?{export_params.urlencode()}"
+
+    # Role scope notice — tell the user what slice of clusters they're seeing.
+    scope = resolve_user_scope(user)
+    if scope.country_scope:
+        cluster_scope_text = "Showing all clusters — you have country-wide access."
+    else:
+        scoped_district_names = list(
+            District.objects.filter(id__in=scope.district_ids).values_list(
+                "name", flat=True
+            )
+        )
+        if scoped_district_names:
+            cluster_scope_text = (
+                "Showing clusters in " + ", ".join(sorted(scoped_district_names)) + "."
+            )
+        else:
+            cluster_scope_text = (
+                "Showing clusters scoped to your assigned schools and staff."
+            )
+
+    # Cluster risk distribution chart (real aggregate: risk_counts computed by
+    # ClusterDashboardService from the same filtered cards list).
+    total_clusters_for_chart = sum(risk_counts.values())
+    has_risk_chart_data = total_clusters_for_chart > 0
+    risk_distribution_chart = {
+        "chart": {"type": "donut"},
+        "series": [
+            risk_counts.get("critical", 0),
+            risk_counts.get("needs_attention", 0),
+            risk_counts.get("healthy", 0),
+        ],
+        "labels": ["Critical", "Needs Attention", "Healthy"],
+        "colors": ["#f43f5e", "#f59e0b", "#10b981"],
+        "legend": {
+            "show": True,
+            "position": "bottom",
+            "fontSize": "11px",
+            "labels": {"colors": "#64748b"},
+        },
+        "dataLabels": {
+            "enabled": True,
+            "style": {"fontSize": "11px", "fontWeight": 600},
+        },
+        "stroke": {"width": 0},
+        "tooltip": {"theme": "light"},
+    }
+
     context = {
         "page_obj": page_obj,
         "pages_list": pages_list,
@@ -257,16 +443,21 @@ def cluster_list_view(request):
         "districts": districts,
         "sub_counties": sub_counties,
         "staff_profiles": staff_profiles,
+        "filter_fields": filter_fields,
+        "export_href": export_href,
+        "cluster_scope_text": cluster_scope_text,
+        "risk_distribution_chart": risk_distribution_chart,
+        "has_risk_chart_data": has_risk_chart_data,
         # Selected states
-        "q": request.GET.get("q", "").strip(),
-        "selected_fy": request.GET.get("fy", "2026").strip(),
-        "selected_quarter": request.GET.get("quarter", "").strip(),
-        "selected_district": request.GET.get("district", "").strip(),
-        "selected_sub_county": request.GET.get("sub_county", "").strip(),
-        "selected_staff": request.GET.get("staff", "").strip(),
-        "selected_ssa_status": request.GET.get("ssa_status", "").strip(),
-        "selected_cluster_risk": request.GET.get("cluster_risk", "").strip(),
-        "selected_activity_status": request.GET.get("activity_status", "").strip(),
+        "q": q,
+        "selected_fy": selected_fy,
+        "selected_quarter": selected_quarter,
+        "selected_district": selected_district,
+        "selected_sub_county": selected_sub_county,
+        "selected_staff": selected_staff,
+        "selected_ssa_status": selected_ssa_status,
+        "selected_cluster_risk": selected_cluster_risk,
+        "selected_activity_status": selected_activity_status,
     }
 
     if request.headers.get("HX-Request") == "true":
@@ -533,12 +724,63 @@ def cluster_detail_view(request, cluster_id):
         messages.error(request, f"Error loading cluster details: {e}")
         return redirect("/clusters")
 
+    # Full Cluster Scorecard chart — bar chart of average score (/10) per
+    # intervention, computed server-side from the same summary rows the old
+    # hand-rolled progress bars used.
+    has_scorecard_data = any(item.get("avg") for item in summary)
+    scorecard_chart = {
+        "chart": {"type": "bar"},
+        "series": [
+            {"name": "Avg Score", "data": [item.get("avg") or 0 for item in summary]}
+        ],
+        "xaxis": {
+            "categories": [item["label"] for item in summary],
+            "max": 10,
+            "labels": {"style": {"colors": "#94a3b8", "fontSize": "10px"}},
+        },
+        "yaxis": {
+            "labels": {
+                "style": {"colors": "#64748b", "fontSize": "10px", "fontWeight": 600}
+            }
+        },
+        "plotOptions": {
+            "bar": {
+                "horizontal": True,
+                "borderRadius": 4,
+                "barHeight": "60%",
+                "distributed": True,
+            }
+        },
+        "colors": [_score_bar_color(item.get("avg")) for item in summary],
+        "legend": {"show": False},
+        "dataLabels": {
+            "enabled": True,
+            "style": {"fontSize": "10px", "colors": ["#1e293b"]},
+        },
+        "grid": {"borderColor": "#f1f5f9"},
+        "tooltip": {"theme": "light"},
+    }
+
+    district_name = (
+        detail["district"]["name"] if detail.get("district") else "Unknown district"
+    )
+    sub_county_name = (
+        detail["subCounty"]["name"] if detail.get("subCounty") else "Unknown sub-county"
+    )
+    cluster_subtitle = (
+        f"{district_name} • {sub_county_name} • "
+        f"{detail.get('schoolCount', 0)} school(s)"
+    )
+
     context = {
         "cluster": detail,
+        "cluster_subtitle": cluster_subtitle,
         "weakest_interventions": weakest,
         "intervention_summary": summary,
         "activity_impact": impact,
         "schools": schools,
+        "scorecard_chart": scorecard_chart,
+        "has_scorecard_data": has_scorecard_data,
     }
     return render(request, "pages/clusters/detail.html", context)
 

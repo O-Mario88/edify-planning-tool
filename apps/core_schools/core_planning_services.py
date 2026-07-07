@@ -592,17 +592,43 @@ class CoreInterventionImpactService:
                 .count()
             )
 
-            # Aggregate average baseline vs follow-up scores for this intervention
-            # Since baseline and follow-up are linked via SSA records
+            # Average confirmed SSA score for this intervention across the scoped
+            # core schools (0-10 scale, shown as a percentage of max).
             scores_qs = SsaScore.objects.filter(
-                ssa_record__school__in=core_schools_qs, intervention=code
+                ssa_record__school__in=core_schools_qs,
+                ssa_record__deleted_at__isnull=True,
+                ssa_record__verification_status="confirmed",
+                intervention=code,
             )
-            # Find average score in Q1/baseline vs Q4/follow-up
             avg_score = scores_qs.aggregate(avg=Avg("score"))["avg"]
-            avg_score_pct = int(avg_score * 10) if avg_score is not None else 0
+            avg_score_pct = round(avg_score * 10) if avg_score is not None else None
 
-            # Simple calculated improvement delta
-            avg_improvement = int(avg_score_pct * 0.12) or 3  # Realistic dynamic proxy
+            # Real staff-vs-partner split for this intervention: which delivery
+            # type is doing more of the supporting activity.
+            staff_supported = (
+                Activity.objects.filter(
+                    school__in=core_schools_qs,
+                    focus_intervention=code,
+                    fy=fy,
+                    deleted_at__isnull=True,
+                    delivery_type="staff",
+                )
+                .values("school")
+                .distinct()
+                .count()
+            )
+            partner_supported = (
+                Activity.objects.filter(
+                    school__in=core_schools_qs,
+                    focus_intervention=code,
+                    fy=fy,
+                    deleted_at__isnull=True,
+                    delivery_type="partner",
+                )
+                .values("school")
+                .distinct()
+                .count()
+            )
 
             # Top supporting owner
             top_owner = "Unassigned"
@@ -628,18 +654,20 @@ class CoreInterventionImpactService:
                 if staff:
                     top_owner = staff.user.name
 
+            if staff_supported or partner_supported:
+                comparison = f"Staff {staff_supported} · Partner {partner_supported}"
+            else:
+                comparison = "No delivery data yet"
+
             interventions_data.append(
                 {
                     "code": code,
                     "label": label,
                     "supported_count": supported_count,
-                    "avg_improvement": f"+{avg_improvement} pp",
-                    "avg_improvement_raw": avg_improvement,
+                    "avg_score_pct": avg_score_pct,
+                    "has_score": avg_score_pct is not None,
                     "top_owner": top_owner,
-                    "comparison": "Staff +5pp"
-                    if supported_count % 2 == 0
-                    else "Partner +3pp",
-                    "trend": [2, 3, 4, supported_count + 1, supported_count + 2],
+                    "comparison": comparison,
                 }
             )
 
@@ -671,69 +699,75 @@ class CoreStaffPartnerPerformanceService:
             else:
                 staff_deltas.append(delta)
 
-        avg_staff = sum(staff_deltas) / len(staff_deltas) if staff_deltas else 8.5
+        avg_staff = sum(staff_deltas) / len(staff_deltas) if staff_deltas else None
         avg_partner = (
-            sum(partner_deltas) / len(partner_deltas) if partner_deltas else 6.2
+            sum(partner_deltas) / len(partner_deltas) if partner_deltas else None
         )
-        delta = avg_staff - avg_partner
+        has_delta_data = avg_staff is not None and avg_partner is not None
+        delta = round(avg_staff - avg_partner) if has_delta_data else None
+
+        # Per-staff improvement: real baseline-vs-follow-up delta (0-100 scale)
+        # averaged across each staff member's owned core schools with plan data.
+        owner_by_school = dict(
+            core_schools_qs.exclude(account_owner_id=None).values_list(
+                "id", "account_owner_id"
+            )
+        )
+        plans_by_owner = {}
+        for p in plans:
+            owner_id = owner_by_school.get(p.school_id)
+            if owner_id:
+                plans_by_owner.setdefault(owner_id, []).append(
+                    (p.follow_up_average - p.baseline_average) * 10
+                )
 
         staff_insights = []
-        for staff in StaffProfile.objects.all().select_related("user")[:5]:
-            staff_schools = core_schools_qs.filter(account_owner_id=staff.user_id)
-            if staff_schools.exists():
+        for staff in StaffProfile.objects.filter(
+            id__in=core_schools_qs.exclude(account_owner_id=None).values_list(
+                "account_owner_id", flat=True
+            )
+        ).select_related("user")[:5]:
+            deltas = plans_by_owner.get(staff.id, [])
+            if deltas:
                 staff_insights.append(
-                    {
-                        "name": staff.user.name,
-                        "score": 60 + (staff_schools.count() * 4),
-                    }
-                )
-        # Default fallback if empty: query real staff profiles in the database
-        if not staff_insights:
-            for staff in StaffProfile.objects.all().select_related("user")[:5]:
-                staff_insights.append(
-                    {
-                        "name": staff.user.name,
-                        "score": 0,
-                    }
+                    {"name": staff.user.name, "score": round(sum(deltas) / len(deltas))}
                 )
 
+        # Per-partner improvement: same methodology, keyed by partner assignment.
         partner_insights = []
-        for part in Partner.objects.all()[:5]:
-            part_assignments = PartnerAssignment.objects.filter(
-                partner=part, school__school_type="core"
+        for part in Partner.objects.filter(
+            school_assignments__school__in=core_schools_qs
+        ).distinct()[:5]:
+            part_school_ids = set(
+                PartnerAssignment.objects.filter(
+                    partner=part, school__in=core_schools_qs
+                ).values_list("school_id", flat=True)
             )
-            if part_assignments.exists():
+            deltas = [
+                (p.follow_up_average - p.baseline_average) * 10
+                for p in plans
+                if p.school_id in part_school_ids
+            ]
+            if deltas:
                 partner_insights.append(
-                    {
-                        "name": part.name,
-                        "score": 55 + (part_assignments.count() * 3),
-                    }
-                )
-        # Default fallback if empty: query real partners in the database
-        if not partner_insights:
-            for part in Partner.objects.all()[:5]:
-                partner_insights.append(
-                    {
-                        "name": part.name,
-                        "score": 0,
-                    }
+                    {"name": part.name, "score": round(sum(deltas) / len(deltas))}
                 )
 
-        # Region stats
+        # Region stats: real average confirmed SSA score, skipped where absent.
         region_insights = []
-        for reg in Region.objects.all()[:5]:
+        for reg in Region.objects.filter(schools__in=core_schools_qs).distinct()[:5]:
             avg_reg = SsaRecord.objects.filter(
-                school__region=reg, deleted_at__isnull=True
+                school__region=reg,
+                school__in=core_schools_qs,
+                deleted_at__isnull=True,
+                verification_status="confirmed",
             ).aggregate(avg=Avg("average_score"))["avg"]
-            region_insights.append(
-                {
-                    "name": reg.name,
-                    "score": int((avg_reg or 6.5) * 10),
-                }
-            )
+            if avg_reg is not None:
+                region_insights.append({"name": reg.name, "score": round(avg_reg * 10)})
 
         return {
-            "delta_pp": int(delta),
+            "delta_pp": delta,
+            "has_delta_data": has_delta_data,
             "staff_insights": staff_insights,
             "partner_insights": partner_insights,
             "region_insights": region_insights,

@@ -1,0 +1,23 @@
+{% comment %}
+  Cluster risk distribution chart + risk decision cards. Extracted into its
+  own partial so it can be swapped out-of-band by htmx_response.html when
+  filters change (chart data is scoped to the current filtered cluster list).
+{% endcomment %}
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+{% include "components/chart_card.html" with chart_id="cluster-risk-chart" title="Cluster Risk Distribution" subtitle="Critical / needs-attention / healthy, by current filters" has_data=has_risk_chart_data height=280 footer_note="Computed from the same scoped cluster list shown below." %}
+{{ risk_distribution_chart|json_script:"cluster-risk-chart-config" }}
+
+<div class="grid grid-cols-1 gap-4">
+{% if risk_counts.critical %}
+{% include "components/action_card.html" with kind="alert" title="Critical clusters need attention" body=risk_counts.critical|stringformat:"s"|add:" cluster(s) have an average SSA below 5 and require immediate follow-up." cta_label="Filter to critical" cta_href="/clusters?cluster_risk=critical" meta=risk_counts.critical %}
+{% else %}
+{% include "components/action_card.html" with kind="neutral" title="No critical clusters" body="All scoped clusters are clear of the critical SSA threshold." %}
+{% endif %}
+
+{% if risk_counts.needs_attention %}
+{% include "components/action_card.html" with kind="insight" title="Clusters needing attention" body=risk_counts.needs_attention|stringformat:"s"|add:" cluster(s) are trending below target and could use a scheduled visit or training." cta_label="Filter to needs attention" cta_href="/clusters?cluster_risk=needs_attention" meta=risk_counts.needs_attention %}
+{% else %}
+{% include "components/action_card.html" with kind="neutral" title="Nothing trending down" body="No clusters are currently flagged as needing attention." %}
+{% endif %}
+</div>
+</div>

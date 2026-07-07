@@ -3,7 +3,7 @@ from apps.core.permissions import require_page_permission, get_scoped_object_or_
 from django.core.paginator import Paginator
 from django.db.models import Q, Count
 from django.contrib import messages
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, HttpResponse
 
 from apps.schools.models import School
 from apps.geography.models import Region, District, SubCounty
@@ -17,6 +17,91 @@ from apps.clusters.models import Cluster, SchoolClusterAssignment
 from apps.projects.models import Project, ProjectSchoolAssignment
 from apps.core.scoping import resolve_user_scope, school_queryset
 from apps.frontend.view_models import SchoolDirectoryViewModel
+
+
+PAGE_SIZE_CHOICES = (15, 25, 50)
+
+
+def _export_schools_response(schools_qs, fmt):
+    """Stream the (filtered, scoped) school roster as CSV or XLSX.
+
+    Backs the Export dropdown on the School Directory page — no mock data,
+    real columns pulled straight off the scoped/filtered queryset.
+    """
+    import csv
+
+    headers = [
+        "School ID",
+        "School Name",
+        "District",
+        "Sub-county",
+        "School Type",
+        "Cluster Status",
+        "Project Assignments",
+        "Current FY SSA Status",
+        "Planning Readiness",
+        "Enrollment",
+        "Account Owner",
+    ]
+
+    def row_values(s):
+        return [
+            s.school_id,
+            s.name,
+            s.district.name if s.district_id else "",
+            s.sub_county.name if s.sub_county_id else "",
+            s.get_school_type_display(),
+            s.get_cluster_status_display(),
+            s.project_assignments.count(),
+            s.get_current_fy_ssa_status_display(),
+            s.get_planning_readiness_display(),
+            s.enrollment or 0,
+            s.account_owner_name_raw or "",
+        ]
+
+    ordered_qs = schools_qs.select_related("district", "sub_county").order_by("name")
+
+    if fmt == "csv":
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = (
+            'attachment; filename="school_directory_export.csv"'
+        )
+        writer = csv.writer(response)
+        writer.writerow(headers)
+        for s in ordered_qs:
+            writer.writerow(row_values(s))
+        return response
+
+    import openpyxl
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Schools"
+    ws.append(headers)
+    for s in ordered_qs:
+        ws.append(row_values(s))
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = (
+        'attachment; filename="school_directory_export.xlsx"'
+    )
+    wb.save(response)
+    return response
+
+
+def _school_scope_text(user, scope):
+    """One calm line describing the data slice the current role sees."""
+    role_label = getattr(user, "active_role", None) or "your role"
+    if scope.country_scope:
+        return f"Showing all schools nationally — scoped to your {role_label} role."
+    if scope.can_view_partner_data:
+        return "Showing schools linked to your partner organization."
+    if scope.can_view_team:
+        return "Showing schools assigned to you and your supervised team."
+    if scope.can_view_summary_only:
+        return "Showing a summary view for your assigned region(s)."
+    return "Showing schools assigned to you."
 
 
 def _get_school_intelligence_data(school):
@@ -116,6 +201,12 @@ def school_directory_view(request):
     project_status = request.GET.get("project_status", "").strip()
     active_tab = request.GET.get("tab", "all").strip()
     page_number = request.GET.get("page", 1)
+    try:
+        page_size = int(request.GET.get("page_size", 15))
+    except (TypeError, ValueError):
+        page_size = 15
+    if page_size not in PAGE_SIZE_CHOICES:
+        page_size = 15
 
     # Apply dropdown filters
     filtered_qs = base_qs.order_by("name")
@@ -165,6 +256,12 @@ def school_directory_view(request):
     elif active_tab == "assigned":
         schools_qs = schools_qs.filter(project_assignments__isnull=False).distinct()
 
+    # Real-data export (Export dropdown) — respects the same scope/filter/tab
+    # slice currently on screen. No mock data, no dead link.
+    export_fmt = request.GET.get("export", "").strip().lower()
+    if export_fmt in ("csv", "xlsx"):
+        return _export_schools_response(schools_qs, export_fmt)
+
     # Compute scoped base KPIs for the KPI Row
     total_schools = base_qs.count()
     client_schools = base_qs.filter(school_type="client").count()
@@ -183,7 +280,11 @@ def school_directory_view(request):
     needs_ssa = no_ssa_schools
     ready_for_planning = planning_ready_schools
 
-    # Construct unified KPI strip items
+    # Construct unified KPI strip items — capped at 6 (design contract: KPI
+    # strip is top-of-page only, never more than a handful of items). The
+    # underlying counts for Staff Required / Duplicates are still computed
+    # above and kept in context for any other UI that needs them; they're
+    # just not surfaced in the strip itself.
     kpi_strip_items = [
         {
             "label": "Total Schools",
@@ -226,28 +327,12 @@ def school_directory_view(request):
             "variant": "danger",
         },
         {
-            "label": "Staff Required",
-            "value": str(staff_setup_schools),
-            "raw_value": staff_setup_schools,
-            "helper": f"{round(staff_setup_schools * 100 / total_schools) if total_schools > 0 else 0}% of total",
-            "icon": "users",
-            "variant": "warning",
-        },
-        {
             "label": "Planning Ready",
             "value": str(planning_ready_schools),
             "raw_value": planning_ready_schools,
             "helper": f"{round(planning_ready_schools * 100 / total_schools) if total_schools > 0 else 0}% of total",
             "icon": "check",
             "variant": "success",
-        },
-        {
-            "label": "Duplicates",
-            "value": str(duplicate_schools),
-            "raw_value": duplicate_schools,
-            "helper": f"{round(duplicate_schools * 100 / total_schools) if total_schools > 0 else 0}% of total",
-            "icon": "warning",
-            "variant": "neutral",
         },
     ]
 
@@ -258,7 +343,7 @@ def school_directory_view(request):
     schools_qs = schools_qs.annotate(
         _project_count=Count("project_assignments", distinct=True)
     )
-    paginator = Paginator(schools_qs, 15)
+    paginator = Paginator(schools_qs, page_size)
     page_obj = paginator.get_page(page_number)
     pages_list = list(
         page_obj.paginator.get_elided_page_range(
@@ -296,6 +381,139 @@ def school_directory_view(request):
     clusters = Cluster.objects.filter(deleted_at__isnull=True).order_by("name")
     projects = Project.objects.filter(deleted_at__isnull=True).order_by("name")
 
+    # Filter field definitions — computed server-side (label/options/selected)
+    # so the template only has to loop and render, per the filter_bar.html
+    # `fields` shape. Rendered with page-local markup (see index.html) rather
+    # than a literal {% include "components/filter_bar.html" %} because that
+    # component hard-codes hx-swap="outerHTML" on #schools-table-container,
+    # which would conflict with the topbar search box's hard-coded innerHTML
+    # swap into the same target (templates/layouts/shell.html, out of scope).
+    filter_fields = [
+        {
+            "name": "fy",
+            "label": "Financial Year",
+            "options": [
+                {"value": "2026", "label": "FY 2026", "selected": fy == "2026"},
+                {"value": "2025", "label": "FY 2025", "selected": fy == "2025"},
+            ],
+        },
+        {
+            "name": "region",
+            "label": "Region",
+            "options": [
+                {"value": "", "label": "All Regions", "selected": not region_id}
+            ]
+            + [
+                {
+                    "value": r.id,
+                    "label": r.name,
+                    "selected": str(region_id) == str(r.id),
+                }
+                for r in regions
+            ],
+        },
+        {
+            "name": "district",
+            "label": "District",
+            "options": [
+                {"value": "", "label": "All Districts", "selected": not district_id}
+            ]
+            + [
+                {
+                    "value": d.id,
+                    "label": d.name,
+                    "selected": str(district_id) == str(d.id),
+                }
+                for d in districts
+            ],
+        },
+        {
+            "name": "sub_county",
+            "label": "Sub-county",
+            "options": [
+                {
+                    "value": "",
+                    "label": "All Sub-counties",
+                    "selected": not sub_county_id,
+                }
+            ]
+            + [
+                {
+                    "value": sc.id,
+                    "label": sc.name,
+                    "selected": str(sub_county_id) == str(sc.id),
+                }
+                for sc in sub_counties
+            ],
+        },
+        {
+            "name": "school_type",
+            "label": "School Type",
+            "options": [
+                {"value": "", "label": "All Types", "selected": not school_type}
+            ]
+            + [
+                {"value": val, "label": label, "selected": school_type == val}
+                for val, label in SchoolType.choices
+            ],
+        },
+        {
+            "name": "cluster_status",
+            "label": "Cluster Status",
+            "options": [
+                {"value": "", "label": "All", "selected": not cluster_status},
+                {
+                    "value": "clustered",
+                    "label": "Clustered",
+                    "selected": cluster_status == "clustered",
+                },
+                {
+                    "value": "unclustered",
+                    "label": "Unclustered",
+                    "selected": cluster_status == "unclustered",
+                },
+            ],
+        },
+        {
+            "name": "project_status",
+            "label": "Project Status",
+            "options": [
+                {"value": "", "label": "All", "selected": not project_status},
+                {
+                    "value": "assigned",
+                    "label": "Assigned",
+                    "selected": project_status == "assigned",
+                },
+                {
+                    "value": "unassigned",
+                    "label": "Not Assigned",
+                    "selected": project_status == "unassigned",
+                },
+            ],
+        },
+    ]
+
+    scope_text = _school_scope_text(user, scope)
+
+    # Preserve the current filter/tab slice on the Export links so "export
+    # current view" actually matches what's on screen.
+    from urllib.parse import urlencode
+
+    export_params = {
+        "q": q,
+        "fy": fy,
+        "region": region_id,
+        "district": district_id,
+        "sub_county": sub_county_id,
+        "school_type": school_type,
+        "cluster_status": cluster_status,
+        "project_status": project_status,
+        "tab": active_tab,
+    }
+    export_query = urlencode({k: v for k, v in export_params.items() if v})
+    if export_query:
+        export_query += "&"
+
     context = {
         "page_obj": page_obj,
         "pages_list": pages_list,
@@ -309,6 +527,9 @@ def school_directory_view(request):
         "projects": projects,
         "school_types": SchoolType.choices,
         "readiness_choices": PlanningReadiness.choices,
+        "filter_fields": filter_fields,
+        "scope_text": scope_text,
+        "export_query": export_query,
         # Selected states
         "q": q,
         "selected_fy": fy,
@@ -319,6 +540,8 @@ def school_directory_view(request):
         "selected_cluster_status": cluster_status,
         "selected_project_status": project_status,
         "active_tab": active_tab,
+        "page_size": page_size,
+        "page_size_choices": PAGE_SIZE_CHOICES,
         # KPI Row
         "total_schools": total_schools,
         "client_schools": client_schools,
@@ -1035,9 +1258,6 @@ def add_school_view(request):
             messages.error(request, "Failed to create school: missing required fields.")
 
     return redirect("/schools")
-
-
-from django.http import HttpResponse  # noqa: E402 — deliberate late import (see module layout)
 
 
 @require_page_permission("school_directory")

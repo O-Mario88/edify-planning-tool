@@ -104,14 +104,12 @@ hx-include="#action-planner-form"
 <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Recommended Focus</label>
 <div class="flex flex-wrap gap-1 justify-end max-w-[260px] ml-auto">
 {% for item in weakest_interventions %}
-<span class="inline-block px-2 py-0.5 rounded text-[11px] font-semibold bg-rose-50 text-rose-600 border border-rose-100 uppercase">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200 uppercase whitespace-nowrap">
 {{ item.label }} ({{ item.avg|floatformat:1 }})
 </span>
 {% empty %}
 {% if recommendation %}
-<span class="inline-block px-2.5 py-0.5 rounded text-[11px] font-semibold bg-rose-50 text-rose-600 border border-rose-100 uppercase">
-{{ recommendation.focus_intervention|replace_underscore }}
-</span>
+{% include "components/badge.html" with tone="danger" label=recommendation.focus_intervention|replace_underscore %}
 {% else %}
 <span class="text-slate-400 text-[11px]">No data</span>
 {% endif %}

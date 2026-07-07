@@ -275,18 +275,18 @@ class="w-full p-3 rounded-lg border border-slate-200 text-[12px] bg-slate-50 foc
 ></textarea>
 </div>
 
-<!-- Footer Actions -->
-<div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
-<button 
-type="button" 
-@click="open = false; setTimeout(() => document.getElementById('drawer-container').innerHTML = '', 300)"
-class="px-5 h-9 rounded-xl btn-premium-secondary font-bold text-[12px]"
+<!-- Footer Actions (sticky) -->
+<div class="drawer-footer">
+<button
+type="button"
+@click="$dispatch('close-drawer')"
+class="btn btn-ghost h-9"
 >
 Cancel
 </button>
-<button 
-type="submit" 
-class="px-6 h-9 rounded-xl btn-premium-primary font-bold text-[12px] shadow-sm flex items-center justify-center gap-1.5"
+<button
+type="submit"
+class="btn btn-primary h-9"
 >
 <span>Assign Project</span>
 </button>

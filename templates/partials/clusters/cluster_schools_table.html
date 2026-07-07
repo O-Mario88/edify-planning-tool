@@ -1,18 +1,19 @@
 {% load frontend_filters %}
 <div class="px-4 py-3 bg-slate-50/50 border-b border-slate-100 flex justify-between items-center font-sans">
 <h4 class="text-[12px] font-semibold text-slate-800">Schools in Cluster ({{ schools|length }})</h4>
-<button 
+<button
 hx-get="/clusters/{{ cluster_id }}/bulk-assign-drawer"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
-class="h-7 px-3 btn-premium-primary text-white text-[11px] font-bold rounded-lg shadow-sm flex items-center gap-1.5 transition-colors"
+class="btn btn-primary h-8 inline-flex items-center gap-1.5"
 >
-<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
 </svg>
-Add Schools
+<span>Add Schools</span>
 </button>
 </div>
+{% if schools %}
 <div class="overflow-x-auto">
 <table class="edify-data-table w-full text-left text-[12px] border-collapse font-sans">
 <thead>
@@ -30,7 +31,6 @@ Add Schools
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100 text-slate-700">
-{% if schools %}
 {% for s in schools %}
 <tr class="hover:bg-slate-50/40 transition-colors {% if not s.topStrugglingInterventions %}border-b border-slate-100{% endif %}">
 <!-- School ID -->
@@ -43,9 +43,11 @@ Add Schools
 
 <!-- School Type -->
 <td class="px-4 py-3 whitespace-nowrap">
-<span class="px-2 py-0.5 rounded text-[11px] font-bold {% if s.schoolType == 'client' %}bg-emerald-50 text-emerald-700 border border-emerald-100{% else %}bg-purple-50 text-purple-700 border border-purple-100{% endif %}">
-{{ s.schoolType|title }}
-</span>
+{% if s.schoolType == 'client' %}
+{% include "components/badge.html" with tone="success" label=s.schoolType|title %}
+{% else %}
+{% include "components/badge.html" with tone="purple" label=s.schoolType|title %}
+{% endif %}
 </td>
 
 <!-- Staff count -->
@@ -55,14 +57,13 @@ Add Schools
 <td class="px-4 py-3 whitespace-nowrap">
 {% if s.currentSsaAverage %}
 <span class="flex items-center gap-1 font-semibold">
-{{ s.currentSsaAverage|floatformat:1 }} 
+{{ s.currentSsaAverage|floatformat:1 }}
 <span class="h-1.5 w-1.5 rounded-full {% if s.currentSsaAverage < 5.0 %}bg-rose-500{% elif s.currentSsaAverage < 6.0 %}bg-amber-500{% else %}bg-emerald-500{% endif %}"></span>
 </span>
 {% else %}
 <span class="text-slate-400 italic">No SSA</span>
 {% endif %}
 </td>
-
 
 <!-- Last Visit -->
 <td class="px-4 py-3 font-semibold text-slate-500 whitespace-nowrap">{{ s.lastVisitDate }}</td>
@@ -80,9 +81,13 @@ Add Schools
 
 <!-- Planning Status -->
 <td class="px-4 py-3 whitespace-nowrap">
-<span class="px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider {% if s.planningStatus == 'ready' %}bg-emerald-50 text-emerald-700 border border-emerald-100{% elif s.planningStatus == 'limited' %}bg-amber-50 text-amber-700 border border-amber-100{% else %}bg-slate-100 text-slate-500{% endif %}">
-{{ s.planningStatus|default:"locked" }}
-</span>
+{% if s.planningStatus == 'ready' %}
+{% include "components/badge.html" with tone="success" label="Ready" %}
+{% elif s.planningStatus == 'limited' %}
+{% include "components/badge.html" with tone="warning" label="Limited" %}
+{% else %}
+{% include "components/badge.html" with tone="neutral" label=s.planningStatus|default:"Locked"|title %}
+{% endif %}
 </td>
 
 <!-- Actions -->
@@ -104,9 +109,7 @@ Add Schools
 <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Struggling Interventions:</span>
 <div class="flex flex-wrap gap-1">
 {% for item in s.topStrugglingInterventions %}
-<span class="px-1.5 py-0.5 rounded text-[11px] font-bold {% if forloop.first %}bg-rose-50 text-rose-600 border border-rose-100{% else %}bg-amber-50 text-amber-600 border border-amber-100{% endif %}">
-{{ item }}
-</span>
+{% include "components/badge.html" with tone="danger" label=item %}
 {% endfor %}
 </div>
 </div>
@@ -114,26 +117,9 @@ Add Schools
 </tr>
 {% endif %}
 {% endfor %}
-{% else %}
-<tr>
-<td colspan="10" class="px-6 py-10 text-center text-slate-400 font-bold">
-<div class="flex flex-col items-center gap-2">
-<span class="italic">This cluster has no schools yet.</span>
-<button 
-hx-get="/clusters/{{ cluster_id }}/bulk-assign-drawer"
-hx-target="#drawer-container"
-hx-swap="innerHTML"
-class="mt-1 h-7 px-3.5 btn-premium-primary text-white text-[11px] font-bold rounded-lg shadow-sm flex items-center gap-1.5 transition-colors"
->
-<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-<path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-</svg>
-Add Schools to Cluster
-</button>
-</div>
-</td>
-</tr>
-{% endif %}
 </tbody>
 </table>
 </div>
+{% else %}
+{% include "components/empty_state.html" with title="No schools assigned yet" message="Add schools from this cluster's covered sub-counties to start tracking SSA, visits, and training attendance." compact="true" %}
+{% endif %}

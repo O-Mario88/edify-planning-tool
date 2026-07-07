@@ -1,12 +1,60 @@
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 font-sans select-none">
+<div class="space-y-6 font-sans text-slate-700 select-none">
+
+<!-- Primary: 2-column row — Staff vs Partner comparison + Intervention Impact trend chart -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+<!-- Card D: Staff vs Partner Performance by Intervention (real data — confirmed SSA scores) -->
+<div class="card p-5 flex flex-col min-w-0">
+<div class="pb-3 border-b border-slate-100">
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Staff vs Partner by Intervention</h3>
+<p class="text-[11px] text-slate-400 font-semibold mt-0.5">Confirmed core assessment score average, by delivery owner</p>
+</div>
+
+{% if perf_insights.has_intervention_comparison %}
+<div class="mt-3.5 flex-1">
+<div class="flex justify-between text-[11px] font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-1.5">
+<span>Intervention</span>
+<span>Staff / Partner</span>
+</div>
+<div class="space-y-2.5 mt-2.5 max-h-[220px] overflow-y-auto pr-0.5 scrollbar-thin">
+{% for row in perf_insights.intervention_comparison %}
+<div class="flex justify-between items-center gap-2 border-b border-slate-50 pb-2 last:border-0 last:pb-0">
+<span class="truncate text-[12px] font-semibold text-slate-700">{{ row.label }}</span>
+<div class="flex items-center gap-1 shrink-0">
+<span class="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[11px] font-semibold" title="Staff-delivered average">
+{% if row.staff_pct is not None %}{{ row.staff_pct }}%{% else %}—{% endif %}
+</span>
+<span class="text-slate-300 text-[11px] font-normal">/</span>
+<span class="px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 text-[11px] font-semibold" title="Partner-delivered average">
+{% if row.partner_pct is not None %}{{ row.partner_pct }}%{% else %}—{% endif %}
+</span>
+</div>
+</div>
+{% endfor %}
+</div>
+</div>
+{% else %}
+{% include "components/empty_state.html" with title="No comparison data yet" message="Populates once confirmed SSA records identify staff- and partner-delivered assessments for core schools." compact="true" %}
+{% endif %}
+</div>
+
+<!-- Card E: Intervention Impact Tracker (real ApexCharts line chart, server-computed options) -->
+{% include "components/chart_card.html" with chart_id="core-impact-trend-chart" title="Intervention Impact Tracker" subtitle="Avg core assessment score trend — confirmed SSAs" has_data=perf_insights.has_impact_trend height=280 empty_title="No trend data yet" empty_message="Populates once core schools in scope have confirmed SSA records across multiple months." footer_note="Confirmed SSA records for core schools in scope, grouped by month." %}
+{{ perf_insights.impact_trend_chart|json_script:"core-impact-trend-chart-config" }}
+
+</div>
+
+<!-- Supporting: max 3-column row — Performance by Staff / Partner / Region -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
 <!-- Card A: Core Assessment Performance by Staff -->
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-4 flex flex-col justify-between hover:shadow-md transition-shadow">
+<div class="card p-5 space-y-4 flex flex-col justify-between">
 <div class="space-y-1">
 <h4 class="text-[12px] font-semibold text-slate-800 uppercase tracking-wider">Performance by Staff</h4>
 <p class="text-[11px] text-slate-400 font-semibold leading-normal">Avg core assessment score of owned schools.</p>
 </div>
 
+{% if perf_insights.staff_insights %}
 <div class="space-y-3.5">
 {% for s in perf_insights.staff_insights %}
 <div class="space-y-1.5">
@@ -20,22 +68,19 @@
 </div>
 {% endfor %}
 </div>
-
-<div class="pt-3 border-t border-slate-100 flex items-center justify-between">
-<a href="#" class="text-[11px] font-semibold text-[#2e505f] hover:text-[#2e505f]/80 uppercase tracking-wider flex items-center gap-1 transition-colors">
-<span>View Full Report</span>
-<svg class="h-3 w-3 text-[#2e505f]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
-</a>
-</div>
+{% else %}
+{% include "components/empty_state.html" with title="No staff assignments yet" message="Appears once staff own core schools in scope." compact="true" %}
+{% endif %}
 </div>
 
 <!-- Card B: Core Assessment Performance by Partner -->
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-4 flex flex-col justify-between hover:shadow-md transition-shadow">
+<div class="card p-5 space-y-4 flex flex-col justify-between">
 <div class="space-y-1">
 <h4 class="text-[12px] font-semibold text-slate-800 uppercase tracking-wider">Performance by Partner</h4>
 <p class="text-[11px] text-slate-400 font-semibold leading-normal">Avg core assessment score of assigned partner schools.</p>
 </div>
 
+{% if perf_insights.partner_insights %}
 <div class="space-y-3.5">
 {% for p in perf_insights.partner_insights %}
 <div class="space-y-1.5">
@@ -49,142 +94,38 @@
 </div>
 {% endfor %}
 </div>
-
-<div class="pt-3 border-t border-slate-100 flex items-center justify-between">
-<a href="#" class="text-[11px] font-semibold text-[#2e505f] hover:text-[#2e505f]/80 uppercase tracking-wider flex items-center gap-1 transition-colors">
-<span>View Full Report</span>
-<svg class="h-3 w-3 text-[#2e505f]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
-</a>
-</div>
+{% else %}
+{% include "components/empty_state.html" with title="No partner assignments yet" message="Appears once partners are assigned to core schools in scope." compact="true" %}
+{% endif %}
 </div>
 
 <!-- Card C: Core Assessment Performance by Region -->
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-4 flex flex-col justify-between hover:shadow-md transition-shadow">
+<div class="card p-5 space-y-4 flex flex-col justify-between">
 <div class="space-y-1">
 <h4 class="text-[12px] font-semibold text-slate-800 uppercase tracking-wider">Performance by Region</h4>
 <p class="text-[11px] text-slate-400 font-semibold leading-normal">Avg score comparison across regional teams.</p>
 </div>
 
-<div class="flex items-end justify-between h-[110px] px-3 pb-2.5 bg-slate-50/50 /45 rounded-xl gap-2.5 shadow-inner">
+{% if perf_insights.region_insights %}
+<div class="flex items-end justify-between h-[110px] px-3 pb-2.5 bg-slate-50/50 rounded-xl gap-2.5 shadow-inner">
 {% for r in perf_insights.region_insights %}
 <div class="flex flex-col items-center flex-1 group relative">
-<!-- Tooltip on Hover -->
 <div class="absolute -top-6 bg-slate-800 text-white text-[11px] font-bold px-1.5 py-0.5 rounded shadow opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none select-none z-20">
 {{ r.score }}%
 </div>
-<!-- Premium Gradient Bar -->
-<div 
-class="w-5 bg-gradient-to-t from-[#2e505f]/40 to-[#2e505f] hover:from-[#2e505f]/60 hover:to-[#2e505f] rounded-t-md transition-all duration-300 shadow-sm hover:shadow" 
-style="height: {{ r.score|default:50 }}px;"
+<div
+class="w-5 bg-gradient-to-t from-[#2e505f]/40 to-[#2e505f] hover:from-[#2e505f]/60 hover:to-[#2e505f] rounded-t-md transition-all duration-300 shadow-sm hover:shadow"
+style="height: {{ r.score }}px;"
 ></div>
 <span class="text-[11px] font-semibold text-slate-500 mt-2.5 uppercase tracking-wider truncate max-w-[32px] block">{{ r.name|slice:":3" }}</span>
 </div>
 {% endfor %}
 </div>
-
-<div class="pt-3 border-t border-slate-100 flex items-center justify-between">
-<a href="#" class="text-[11px] font-semibold text-[#2e505f] hover:text-[#2e505f]/80 uppercase tracking-wider flex items-center gap-1 transition-colors">
-<span>View Full Report</span>
-<svg class="h-3 w-3 text-[#2e505f]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
-</a>
-</div>
+{% else %}
+{% include "components/empty_state.html" with title="No regional data yet" message="Appears once regions have core schools with confirmed SSA scores." compact="true" %}
+{% endif %}
 </div>
 
-<!-- Card D: Staff vs Partner Performance by Intervention -->
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-4 flex flex-col justify-between hover:shadow-md transition-shadow">
-<div class="space-y-1">
-<h4 class="text-[12px] font-semibold text-slate-800 uppercase tracking-wider">Staff vs Partner by Intervention</h4>
-<p class="text-[11px] text-slate-400 font-semibold leading-normal">Average score improvement delta per focus area.</p>
-</div>
-
-<div class="space-y-2 text-[11px] font-semibold text-slate-600">
-<div class="flex justify-between text-[11px] font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-1.5">
-<span>Intervention</span>
-<span>Staff / Partner</span>
-</div>
-
-<div class="space-y-2.5 max-h-[110px] overflow-y-auto pr-0.5 scrollbar-thin">
-<div class="flex justify-between items-center gap-2 border-b border-slate-50 pb-1.5 last:border-0 last:pb-0">
-<span class="truncate text-[11px] font-semibold text-slate-700">Reading Fluency</span>
-<div class="flex items-center gap-1 shrink-0">
-<span class="px-1.5 py-0.5 rounded bg-[#2e505f]/10 text-[#2e505f] text-[11px] font-semibold">72%</span>
-<span class="text-slate-300 text-[11px] font-normal">/</span>
-<span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[11px] font-semibold">68%</span>
-</div>
-</div>
-<div class="flex justify-between items-center gap-2 border-b border-slate-50 pb-1.5 last:border-0 last:pb-0">
-<span class="truncate text-[11px] font-semibold text-slate-700">Numeracy</span>
-<div class="flex items-center gap-1 shrink-0">
-<span class="px-1.5 py-0.5 rounded bg-[#2e505f]/10 text-[#2e505f] text-[11px] font-semibold">65%</span>
-<span class="text-slate-300 text-[11px] font-normal">/</span>
-<span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[11px] font-semibold">60%</span>
-</div>
-</div>
-<div class="flex justify-between items-center gap-2 border-b border-slate-50 pb-1.5 last:border-0 last:pb-0">
-<span class="truncate text-[11px] font-semibold text-slate-700">Classroom Mgmt</span>
-<div class="flex items-center gap-1 shrink-0">
-<span class="px-1.5 py-0.5 rounded bg-[#2e505f]/10 text-[#2e505f] text-[11px] font-semibold">68%</span>
-<span class="text-slate-300 text-[11px] font-normal">/</span>
-<span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[11px] font-semibold">58%</span>
-</div>
-</div>
-<div class="flex justify-between items-center gap-2 border-b border-slate-50 pb-1.5 last:border-0 last:pb-0">
-<span class="truncate text-[11px] font-semibold text-slate-700">Leadership</span>
-<div class="flex items-center gap-1 shrink-0">
-<span class="px-1.5 py-0.5 rounded bg-[#2e505f]/10 text-[#2e505f] text-[11px] font-semibold">61%</span>
-<span class="text-slate-300 text-[11px] font-normal">/</span>
-<span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[11px] font-semibold">63%</span>
-</div>
-</div>
-</div>
-</div>
-
-<div class="pt-3 border-t border-slate-100 flex items-center justify-between">
-<a href="#" class="text-[11px] font-semibold text-[#2e505f] hover:text-[#2e505f]/80 uppercase tracking-wider flex items-center gap-1 transition-colors">
-<span>View Full Report</span>
-<svg class="h-3 w-3 text-[#2e505f]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
-</a>
-</div>
-</div>
-
-<!-- Card E: Intervention Impact Tracker (Trend Chart) -->
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-4 flex flex-col justify-between hover:shadow-md transition-shadow">
-<div class="space-y-1">
-<h4 class="text-[12px] font-semibold text-slate-800 uppercase tracking-wider">Intervention Impact Tracker</h4>
-<p class="text-[11px] text-slate-400 font-semibold leading-normal">Overall monthly assessment scores progression.</p>
-</div>
-
-<!-- Mini SVG Line Chart -->
-<div class="h-[110px] flex items-center justify-center bg-slate-50/50 /45 rounded-xl px-2.5 shadow-inner">
-<svg class="h-full w-full overflow-visible" viewBox="0 0 100 50">
-<defs>
-<linearGradient id="staff-gradient" x1="0" y1="0" x2="0" y2="1">
-<stop offset="0%" stop-color="#2e505f" stop-opacity="0.25"/>
-<stop offset="100%" stop-color="#2e505f" stop-opacity="0.0"/>
-</linearGradient>
-</defs>
-<!-- Grid lines -->
-<line x1="0" y1="10" x2="100" y2="10" stroke="#e2e8f0" stroke-width="2"/>
-<line x1="0" y1="25" x2="100" y2="25" stroke="#e2e8f0" stroke-width="2"/>
-<line x1="0" y1="40" x2="100" y2="40" stroke="#e2e8f0" stroke-width="2"/>
-<!-- Gradient fill area under staff path -->
-<path d="M 0 35 Q 20 28 40 32 T 80 18 T 100 12 L 100 50 L 0 50 Z" fill="url(#staff-gradient)"/>
-<!-- Line Staff (Steel Blue) -->
-<path d="M 0 35 Q 20 28 40 32 T 80 18 T 100 12" fill="none" stroke="#2e505f" stroke-width="2" stroke-linecap="round"/>
-<!-- Line Partner (Golden Amber) -->
-<path d="M 0 42 Q 25 38 50 30 T 75 24 T 100 18" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-dasharray="2,2"/>
-<!-- Points -->
-<circle cx="100" cy="12" r="3.5" fill="#2e505f"/>
-<circle cx="100" cy="18" r="2.5" fill="#d97706"/>
-</svg>
-</div>
-
-<div class="pt-3 border-t border-slate-100 flex items-center justify-between">
-<a href="#" class="text-[11px] font-semibold text-[#2e505f] hover:text-[#2e505f]/80 uppercase tracking-wider flex items-center gap-1 transition-colors">
-<span>View Full Report</span>
-<svg class="h-3 w-3 text-[#2e505f]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
-</a>
-</div>
 </div>
 
 </div>

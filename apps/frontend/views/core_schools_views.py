@@ -3,6 +3,8 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse
 from django.contrib import messages
 from django.db import transaction
+from django.db.models import Avg, F
+from django.db.models.functions import TruncMonth
 from django.views.decorators.http import require_POST
 from datetime import date
 
@@ -14,6 +16,7 @@ from apps.geography.models import Region, District
 from apps.accounts.models import StaffProfile
 from apps.partners.models import Partner, PartnerAssignment
 from apps.activities.models import Activity
+from apps.ssa.models import SsaScore, SsaRecord
 from apps.core_schools.models import (
     CorePlan,
     CoreActivitySlot,
@@ -79,10 +82,116 @@ def core_schools_view(request):
     )
     reco_data = CoreRecommendationService.get_recommendation_card(core_schools_qs)
 
+    # ── Real-data Card D/E computation (design contract: zero mock data) ──
+    # Card D: Staff vs Partner average score by intervention, from CONFIRMED SSA
+    # scores whose parent record was collected by staff or by a partner. No
+    # fabricated fallback numbers — an intervention with no confirmed records
+    # on one side simply omits that side (rendered as "—" in the template).
+    interv_map = dict(SsaIntervention.choices)
+    comparison_rows = (
+        SsaScore.objects.filter(
+            ssa_record__school__in=core_schools_qs,
+            ssa_record__deleted_at__isnull=True,
+            ssa_record__verification_status="confirmed",
+            ssa_record__collector_type__in=["staff", "partner"],
+        )
+        .values("intervention", "ssa_record__collector_type")
+        .annotate(avg_val=Avg("score"))
+    )
+    comparison_map = {}
+    for row in comparison_rows:
+        code = row["intervention"]
+        entry = comparison_map.setdefault(
+            code,
+            {
+                "code": code,
+                "label": interv_map.get(code, code),
+                "staff_pct": None,
+                "partner_pct": None,
+            },
+        )
+        pct = round(row["avg_val"] * 10)
+        if row["ssa_record__collector_type"] == "staff":
+            entry["staff_pct"] = pct
+        else:
+            entry["partner_pct"] = pct
+    intervention_comparison = [
+        comparison_map[code]
+        for code, _ in SsaIntervention.choices
+        if code in comparison_map
+    ]
+    perf_insights["intervention_comparison"] = intervention_comparison
+    perf_insights["has_intervention_comparison"] = bool(intervention_comparison)
+
+    # Card E: Intervention Impact Tracker — monthly average SSA score trend from
+    # confirmed records for core schools in scope. Real ApexCharts line series
+    # computed server-side; empty when no confirmed records exist yet.
+    trend_rows = list(
+        SsaRecord.objects.filter(
+            school__in=core_schools_qs,
+            deleted_at__isnull=True,
+            verification_status="confirmed",
+            average_score__isnull=False,
+        )
+        .annotate(month=TruncMonth("date_of_ssa"))
+        .values("month")
+        .annotate(avg_val=Avg("average_score"))
+        .order_by("month")
+    )
+    has_impact_trend = bool(trend_rows)
+    perf_insights["has_impact_trend"] = has_impact_trend
+    perf_insights["impact_trend_chart"] = {
+        "chart": {"type": "line", "toolbar": {"show": False}},
+        "series": [
+            {
+                "name": "Avg Assessment Score",
+                "data": [round(r["avg_val"] * 10) for r in trend_rows],
+            }
+        ],
+        "xaxis": {
+            "categories": [r["month"].strftime("%b %Y") for r in trend_rows],
+            "labels": {
+                "style": {"colors": "#94a3b8", "fontSize": "10px", "fontWeight": 500}
+            },
+            "axisBorder": {"show": False},
+            "axisTicks": {"show": False},
+        },
+        "yaxis": {
+            "max": 100,
+            "labels": {"style": {"colors": "#94a3b8", "fontSize": "10px"}},
+        },
+        "colors": ["#3b82f6"],
+        "stroke": {"curve": "smooth", "width": 2.5},
+        "markers": {
+            "size": 3,
+            "colors": ["#3b82f6"],
+            "strokeColors": "#ffffff",
+            "strokeWidth": 2,
+        },
+        "grid": {"borderColor": "#f1f5f9"},
+        "dataLabels": {"enabled": False},
+        "tooltip": {"theme": "light"},
+    }
+
     # 4. KPI Strip Metrics
     total_core = core_schools_qs.count()
     ready_core = core_schools_qs.filter(current_fy_ssa_status="done").count()
     avg_score = CoreAssessmentService.get_average_score(core_schools_qs)
+
+    # Real improvement trend for the KPI strip: avg(follow_up - baseline) across
+    # core plans that have both values recorded (no fabricated "vs last month").
+    avg_delta_raw = CorePlan.objects.filter(
+        school_id__in=core_schools_qs.values_list("school_id", flat=True),
+        fy=fy,
+        baseline_average__isnull=False,
+        follow_up_average__isnull=False,
+    ).aggregate(v=Avg(F("follow_up_average") - F("baseline_average")))["v"]
+    if avg_delta_raw is None:
+        avg_score_helper = "No baseline vs follow-up data yet"
+    else:
+        avg_delta_pp = round(avg_delta_raw * 10)
+        sign = "▲" if avg_delta_pp > 0 else ("▼" if avg_delta_pp < 0 else "→")
+        avg_score_helper = f"{sign} {abs(avg_delta_pp)}pp vs baseline"
 
     visits_scheduled = (
         Activity.objects.filter(
@@ -107,8 +216,6 @@ def core_schools_view(request):
     )
 
     total_target = total_core * 4
-    regions_covered = core_schools_qs.values("region").distinct().count()
-    total_regions = Region.objects.count()
 
     kpi_strip_items = [
         {
@@ -128,7 +235,7 @@ def core_schools_view(request):
         {
             "label": "Avg. Core Assessment Score",
             "value": f"{int(avg_score * 10)}%",
-            "helper": "▲ 8pp vs last month",
+            "helper": avg_score_helper,
             "icon": "trending-up",
             "variant": "success",
         },
@@ -148,19 +255,36 @@ def core_schools_view(request):
         },
         {
             "label": "Staff vs Partner Performance Delta",
-            "value": f"+{perf_insights['delta_pp']}pp",
-            "helper": "Staff ahead",
+            "value": (
+                f"{'+' if perf_insights['delta_pp'] > 0 else ''}{perf_insights['delta_pp']}pp"
+                if perf_insights["has_delta_data"]
+                else "—"
+            ),
+            "helper": (
+                (
+                    "Staff ahead"
+                    if perf_insights["delta_pp"] > 0
+                    else "Partner ahead"
+                    if perf_insights["delta_pp"] < 0
+                    else "Even"
+                )
+                if perf_insights["has_delta_data"]
+                else "No baseline vs follow-up data yet"
+            ),
             "icon": "chart",
             "variant": "primary",
         },
-        {
-            "label": "Regions Covered",
-            "value": f"{regions_covered} / {total_regions}",
-            "helper": f"{int((regions_covered/total_regions)*100) if total_regions else 0}% coverage",
-            "icon": "target",
-            "variant": "success",
-        },
     ]
+
+    # Role scope notice — one honest line, backend-driven from the same scoped
+    # queryset the page renders (never hidden/derived by CSS).
+    role = getattr(request.user, "active_role", None)
+    if role in ("CountryDirector", "RegionalVicePresident", "Admin"):
+        scope_text = f"Showing all {total_core} core school(s) nationwide."
+    else:
+        scope_text = (
+            f"Showing {total_core} core school(s) scoped to your role and assignments."
+        )
 
     # Dropdowns Options
     regions = Region.objects.all().order_by("name")
@@ -191,6 +315,7 @@ def core_schools_view(request):
         "staff_members": staff_members,
         "partners": partners,
         "kpi_strip_items": kpi_strip_items,
+        "scope_text": scope_text,
         "matrix_rows": matrix_rows,
         "planning_queue": planning_queue,
         "intervention_impact": intervention_impact,

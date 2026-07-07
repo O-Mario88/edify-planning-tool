@@ -5,10 +5,9 @@
 <tr class="border-b border-slate-100 bg-slate-50/50 text-[11px] font-semibold uppercase text-slate-400 tracking-wider text-left">
 <th class="px-4 py-3 font-semibold">Intervention</th>
 <th class="px-4 py-3 font-semibold">Schools Supported</th>
-<th class="px-4 py-3 font-semibold">Avg. Improvement</th>
+<th class="px-4 py-3 font-semibold">Avg. SSA Score</th>
 <th class="px-4 py-3 font-semibold">Top Supporting Owner</th>
 <th class="px-4 py-3 font-semibold">Staff vs Partner</th>
-<th class="px-4 py-3 text-right font-semibold">Trend</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100/45">
@@ -27,9 +26,9 @@
 </div>
 </td>
 
-<!-- Avg Improvement delta -->
-<td class="px-4 py-3 text-emerald-600 font-semibold">
-{{ row.avg_improvement }}
+<!-- Avg confirmed SSA score for this intervention -->
+<td class="px-4 py-3 {% if row.has_score %}text-emerald-600{% else %}text-slate-400{% endif %} font-semibold">
+{% if row.has_score %}{{ row.avg_score_pct }}%{% else %}—{% endif %}
 </td>
 
 <!-- Top Supporting Owner -->
@@ -45,32 +44,20 @@
 <!-- Staff vs Partner delta status -->
 <td class="px-4 py-3">
 <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-semibold border
-{% if 'Staff' in row.comparison %}
-bg-emerald-50 text-emerald-700 border-emerald-150/60
+{% if row.comparison == 'No delivery data yet' %}
+bg-slate-50 text-slate-400 border-slate-150/60
 {% else %}
-bg-indigo-50 text-indigo-700 border-indigo-150/60
+bg-emerald-50 text-emerald-700 border-emerald-150/60
 {% endif %}"
 >
 {{ row.comparison }}
 </span>
-</td>
-
-<!-- Trend Mini-Sparkline -->
-<td class="px-4 py-3 text-right">
-<div class="inline-block h-[20px] w-[60px]">
-<svg class="h-full w-full" viewBox="0 0 60 20">
-<path d="M 0 15 Q 15 10 30 12 T 60 4" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round"/>
-</svg>
-</div>
 </td>
 </tr>
 {% endfor %}
 </tbody>
 </table>
 {% else %}
-<div class="p-8 text-center select-none font-sans">
-<span class="text-[32px] block mb-2">⭐</span>
-<p class="text-[14px] font-semibold text-slate-700">No Intervention Impact Data Found</p>
-</div>
+{% include "components/empty_state.html" with title="No intervention impact data yet" message="Populates once core schools in scope have activities and confirmed SSA scores logged against interventions." compact="true" %}
 {% endif %}
 </div>

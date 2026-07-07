@@ -1,0 +1,8 @@
+{% if request.user.active_role in 'CCEO,Program Lead,CountryDirector' %}
+<a href="/planning?action=training&cluster={{ cluster.id }}" class="btn btn-primary h-9 inline-flex items-center gap-1.5">
+  <span>Schedule Group Training</span>
+</a>
+<a href="/planning?action=meeting&cluster={{ cluster.id }}" class="btn btn-ghost h-9 inline-flex items-center gap-1.5">
+  <span>Schedule Cluster Meeting</span>
+</a>
+{% endif %}

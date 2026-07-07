@@ -24,11 +24,14 @@ class="rounded border-slate-300 text-[#2e505f] focus:ring-[#2e505f]"
 {% for school in view_models %}
 <div 
 class="group transition-all duration-300 border-l-4"
-:class="expandedSchoolId === '{{ school.id }}' ? 'border-l-[#2e505f] bg-[#fdfefe]' : (school.is_high_priority ? 'border-l-rose-500 bg-white' : 'border-l-slate-200 bg-white')"
+:class="expandedSchoolId === '{{ school.id }}' ? 'border-l-[#2e505f] bg-[#fdfefe]' : ({{ school.is_high_priority|yesno:'true,false' }} ? 'border-l-rose-500 bg-white' : 'border-l-slate-200 bg-white')"
 >
 <!-- Card Header -->
-<div 
+<div
 @click="expandedSchoolId = (expandedSchoolId === '{{ school.id }}' ? '' : '{{ school.id }}')"
+hx-get="/schools/partial-intelligence/{{ school.id }}"
+hx-target="#directory-intelligence-container"
+hx-swap="outerHTML"
 class="flex flex-col md:flex-row md:items-center justify-between p-4 gap-4 cursor-pointer hover:bg-slate-50/50 transition-colors"
 >
 <div class="flex items-start gap-3.5 min-w-0">
@@ -75,90 +78,35 @@ class="rounded border-slate-300 text-[#2e505f] focus:ring-[#2e505f]"
 ✨ Support Packages Complete for this FY
 </span>
 {% else %}
-<!-- Core Assessment Status -->
-<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase 
-{% if school.assessment_status_type == 'success' %}bg-emerald-50 text-emerald-700 border border-emerald-150/60
-{% else %}bg-rose-50 text-rose-700 border border-rose-150/60{% endif %}">
-<span class="w-1.5 h-1.5 rounded-full {% if school.assessment_status_type == 'success' %}bg-emerald-500{% else %}bg-rose-500 animate-pulse{% endif %}"></span>
-{{ school.assessment_status_label }}
-</span>
-
-<!-- Core Visit Status -->
-<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase 
-{% if school.visit_status_type == 'success' %}bg-emerald-50 text-emerald-700 border border-emerald-150/60
-{% elif school.visit_status_type == 'warning' %}bg-amber-50 text-amber-700 border border-amber-150/60
-{% else %}bg-rose-50 text-rose-700 border border-rose-150/60{% endif %}">
-<span class="w-1.5 h-1.5 rounded-full 
-{% if school.visit_status_type == 'success' %}bg-emerald-500
-{% elif school.visit_status_type == 'warning' %}bg-amber-500
-{% else %}bg-rose-500 animate-pulse{% endif %}"></span>
-{{ school.visit_status_label }}
-</span>
-
-<!-- Core Training Status -->
-<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase 
-{% if school.training_status_type == 'success' %}bg-emerald-50 text-emerald-700 border border-emerald-150/60
-{% elif school.training_status_type == 'warning' %}bg-amber-50 text-amber-700 border border-amber-150/60
-{% else %}bg-rose-50 text-rose-700 border border-rose-150/60{% endif %}">
-<span class="w-1.5 h-1.5 rounded-full 
-{% if school.training_status_type == 'success' %}bg-emerald-500
-{% elif school.training_status_type == 'warning' %}bg-amber-500
-{% else %}bg-rose-500 animate-pulse{% endif %}"></span>
-{{ school.training_status_label }}
-</span>
+<!-- Core Assessment / Visit / Training status — shared badge component -->
+{% include "components/badge.html" with tone=school.assessment_status_type label=school.assessment_status_label dot="true" %}
+{% include "components/badge.html" with tone=school.visit_status_type label=school.visit_status_label dot="true" %}
+{% include "components/badge.html" with tone=school.training_status_type label=school.training_status_label dot="true" %}
 {% endif %}
 {% else %}
-<!-- Client School Badges -->
-<!-- SSA status -->
+<!-- Client School Badges — shared badge component -->
 {% if school.has_ssa %}
-<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase bg-emerald-50 text-emerald-700 border border-emerald-150/60">
-<span class="w-1 h-1 rounded-full bg-emerald-500"></span>
-SSA Complete
-</span>
+{% include "components/badge.html" with tone="success" label="SSA Complete" dot="true" %}
 {% else %}
-<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase bg-rose-50 text-rose-700 border border-rose-150/60">
-<span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
-No SSA
-</span>
+{% include "components/badge.html" with tone="danger" label="No SSA" dot="true" %}
 {% endif %}
 
-<!-- Visit status -->
 {% if school.has_visit %}
-<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase bg-emerald-50 text-emerald-700 border border-emerald-150/60">
-<span class="w-1 h-1 rounded-full bg-emerald-500"></span>
-Visit Done
-</span>
+{% include "components/badge.html" with tone="success" label="Visit Done" dot="true" %}
 {% else %}
-<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase bg-rose-50 text-rose-700 border border-rose-150/60">
-<span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
-No Visit
-</span>
+{% include "components/badge.html" with tone="danger" label="No Visit" dot="true" %}
 {% endif %}
 
-<!-- Training status -->
 {% if school.has_training %}
-<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase bg-emerald-50 text-emerald-700 border border-emerald-150/60">
-<span class="w-1 h-1 rounded-full bg-emerald-500"></span>
-Trained
-</span>
+{% include "components/badge.html" with tone="success" label="Trained" dot="true" %}
 {% else %}
-<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase bg-rose-50 text-rose-700 border border-rose-150/60">
-<span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
-No Training
-</span>
+{% include "components/badge.html" with tone="danger" label="No Training" dot="true" %}
 {% endif %}
 
-<!-- Cluster status -->
 {% if school.is_clustered %}
-<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase bg-blue-50 text-blue-700 border /60">
-<span class="w-1 h-1 rounded-full bg-blue-500"></span>
-Clustered
-</span>
+{% include "components/badge.html" with tone="info" label="Clustered" dot="true" %}
 {% else %}
-<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase bg-rose-50 text-rose-700 border border-rose-150/60">
-<span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
-No Cluster
-</span>
+{% include "components/badge.html" with tone="danger" label="No Cluster" dot="true" %}
 {% endif %}
 {% endif %}
 </div>
@@ -169,13 +117,12 @@ No Cluster
 <div class="flex items-center justify-between md:justify-end gap-3 shrink-0">
 <!-- Add to Cluster button -->
 {% if not school.is_clustered %}
-<button 
-hx-get="/schools/{{ school.id }}/add-to-cluster" 
+<button
+hx-get="/schools/{{ school.id }}/add-to-cluster"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
 @click.stop
-style="background-color: #2e505f; color: #ffffff;"
-class="inline-flex items-center justify-center h-7 px-3 text-[11px] font-semibold rounded-lg shadow-sm hover:opacity-90 active:scale-95 transition-all text-white"
+class="btn btn-primary h-7"
 >
 Add to Cluster
 </button>
@@ -183,30 +130,31 @@ Add to Cluster
 
 <!-- Add to Project button -->
 {% if school.project_assignment_count == 0 %}
-<button 
-hx-get="/schools/{{ school.id }}/assign-to-project" 
+<button
+hx-get="/schools/{{ school.id }}/assign-to-project"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
 @click.stop
-style="background-color: #1e293b; color: #ffffff;"
-class="inline-flex items-center justify-center h-7 px-3 text-[11px] font-semibold rounded-lg shadow-sm hover:opacity-90 active:scale-95 transition-all text-white"
+class="btn btn-ghost h-7"
 >
 Add to Project
 </button>
 {% endif %}
 
 {% if school.is_high_priority %}
-<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase bg-rose-50 text-rose-700 border border-rose-150 tracking-wider">
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase bg-rose-50 text-rose-700 border border-rose-200 tracking-wider">
 <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span>
 HIGH
 </span>
 {% endif %}
 
 <div class="flex items-center gap-2">
-<span class="inline-flex items-center rounded-lg px-2.5 py-0.5 text-[11px] font-semibold {% if school.school_type == 'Client' %}bg-slate-100 text-slate-700 border border-slate-200{% else %}bg-purple-50 text-purple-700 border border-purple-200/50{% endif %}">
-{{ school.school_type }}
-</span>
-<svg 
+{% if school.school_type == 'Client' %}
+{% include "components/badge.html" with tone="neutral" label=school.school_type %}
+{% else %}
+{% include "components/badge.html" with tone="purple" label=school.school_type %}
+{% endif %}
+<svg
 class="w-5 h-5 text-slate-400 transition-transform duration-300"
 :class="expandedSchoolId === '{{ school.id }}' ? 'rotate-180 text-[#2e505f]' : ''"
 fill="none" 
@@ -297,43 +245,37 @@ style="display: none;"
 <div class="flex items-center gap-2">
 <!-- Add to Cluster button -->
 {% if not school.is_clustered %}
-<button 
-hx-get="/schools/{{ school.id }}/add-to-cluster" 
+<button
+hx-get="/schools/{{ school.id }}/add-to-cluster"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
-style="background-color: #2e505f; color: #ffffff;"
-class="inline-flex items-center justify-center h-8 px-4 text-[12px] font-semibold rounded-xl shadow-sm hover:opacity-90 active:scale-95 transition-all text-white"
+class="btn btn-primary h-8"
 >
 Add to Cluster
 </button>
 {% else %}
-<span class="inline-flex items-center gap-1 px-3 py-1 rounded-xl text-[11px] font-semibold uppercase bg-emerald-50 text-emerald-700 border border-emerald-100">
-Clustered
-</span>
+{% include "components/badge.html" with tone="success" label="Clustered" size="md" %}
 {% endif %}
 
 <!-- Add to Project button -->
 {% if school.project_assignment_count == 0 %}
-<button 
-hx-get="/schools/{{ school.id }}/assign-to-project" 
+<button
+hx-get="/schools/{{ school.id }}/assign-to-project"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
-style="background-color: #1e293b; color: #ffffff;"
-class="inline-flex items-center justify-center h-8 px-4 text-[12px] font-semibold rounded-xl shadow-sm hover:opacity-90 active:scale-95 transition-all text-white"
+class="btn btn-ghost h-8"
 >
 Add to Project
 </button>
 {% else %}
-<span class="inline-flex items-center gap-1 px-3 py-1 rounded-xl text-[11px] font-semibold uppercase bg-blue-50 text-blue-700 border border-blue-100">
-Added to Project
-</span>
+{% include "components/badge.html" with tone="info" label="Added to Project" size="md" %}
 {% endif %}
 </div>
 
 <!-- Inspect Profile view -->
-<a 
-href="/schools/{{ school.school_id }}" 
-class="h-8 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-800 text-[12px] font-semibold flex items-center gap-1 shadow-sm transition-all"
+<a
+href="/schools/{{ school.school_id }}"
+class="btn btn-ghost h-8"
 >
 <span>View School Profile</span>
 <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -346,16 +288,7 @@ class="h-8 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 te
 </div>
 {% endfor %}
 {% else %}
-<div class="px-6 py-16 text-center text-slate-400 font-semibold bg-slate-50/20">
-<div class="max-w-sm mx-auto space-y-3">
-<svg class="h-12 w-12 text-slate-300 mx-auto shadow-inner bg-slate-100 p-2.5 rounded-2xl" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-<path stroke-linecap="round" stroke-linejoin="round" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-</svg>
-<p class="text-[14px] font-semibold text-slate-500">No schools uploaded yet.</p>
-<p class="text-[11px] text-slate-400">Upload schools to build the directory registry.</p>
-<a href="/schools/upload" style="background-color: #2e505f; color: #ffffff;" class="inline-flex h-8 px-4 rounded-xl text-white text-[12px] font-semibold items-center justify-center shadow-sm hover:opacity-90 transition-all">Upload Schools</a>
-</div>
-</div>
+{% include "components/empty_state.html" with title="No schools uploaded yet." message="Upload schools to build the directory registry." cta_label="Upload Schools" cta_href="/schools/upload" %}
 {% endif %}
 </div>
 
@@ -367,21 +300,27 @@ Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.pa
 </div>
 
 <div class="flex items-center gap-1.5">
-<!-- Rows per page info selector mirroring mockup -->
+<!-- Rows per page — a real HTMX control (was decorative/unwired before) -->
 <div class="flex items-center gap-1 mr-4 text-[12px] text-slate-500 font-semibold">
 <span>Rows per page:</span>
-<select class="h-7 px-1 rounded border border-slate-200 text-[12px] bg-white font-bold focus:outline-none">
-<option>15</option>
-<option>25</option>
-<option>50</option>
+<select
+onchange="
+const ps = document.getElementById('filters-page-size-input'); if (ps) { ps.value = this.value; }
+const p = document.getElementById('filters-page-input'); if (p) { p.value = '1'; p.dispatchEvent(new Event('change', { bubbles: true })); }
+"
+class="h-7 px-1 rounded border border-slate-200 text-[12px] bg-white font-bold focus:outline-none"
+>
+{% for size in page_size_choices %}
+<option value="{{ size }}" {% if page_size == size %}selected{% endif %}>{{ size }}</option>
+{% endfor %}
 </select>
 </div>
 
 {% if page_obj.has_previous %}
-<button 
+<button
 type="button"
 @click="const p = document.getElementById('filters-page-input'); if (p) { p.value = '{{ page_obj.previous_page_number }}'; p.dispatchEvent(new Event('change', { bubbles: true })) }"
-class="h-8 px-3 rounded-lg border border-[var(--color-edify-border)] hover:bg-white text-[12px] font-bold text-slate-700 flex items-center justify-center transition-all"
+class="btn btn-ghost h-8"
 >
 Previous
 </button>
@@ -393,9 +332,9 @@ Previous
 {% if num == "..." %}
 <span class="w-8 text-center text-slate-400 font-bold">...</span>
 {% elif num == page_obj.number %}
-<span class="h-8 w-8 rounded-lg btn-premium-primary text-white font-semibold flex items-center justify-center shadow-sm" style="background-color: #2e505f;">{{ num }}</span>
+<span class="h-8 w-8 rounded-lg btn-primary text-white font-semibold flex items-center justify-center shadow-sm">{{ num }}</span>
 {% else %}
-<button 
+<button
 type="button"
 @click="const p = document.getElementById('filters-page-input'); if (p) { p.value = '{{ num }}'; p.dispatchEvent(new Event('change', { bubbles: true })) }"
 class="h-8 w-8 rounded-lg hover:bg-slate-100 text-slate-700 font-bold flex items-center justify-center transition-colors"
@@ -407,10 +346,10 @@ class="h-8 w-8 rounded-lg hover:bg-slate-100 text-slate-700 font-bold flex items
 </div>
 
 {% if page_obj.has_next %}
-<button 
+<button
 type="button"
 @click="const p = document.getElementById('filters-page-input'); if (p) { p.value = '{{ page_obj.next_page_number }}'; p.dispatchEvent(new Event('change', { bubbles: true })) }"
-class="h-8 px-3 rounded-lg border border-[var(--color-edify-border)] hover:bg-white text-[12px] font-bold text-slate-700 flex items-center justify-center transition-all"
+class="btn btn-ghost h-8"
 >
 Next
 </button>

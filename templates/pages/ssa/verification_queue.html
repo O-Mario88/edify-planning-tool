@@ -5,14 +5,7 @@
 {% block shell_content %}
 <div class="p-6 max-w-7xl mx-auto space-y-6 font-sans">
 
-<!-- Header -->
-<div class="flex items-center justify-between border-b border-slate-200 pb-4">
-<div>
-<h1 class="text-[20px] font-semibold text-slate-800 tracking-tight">IA SSA Verification Queue</h1>
-<p class="text-[12px] text-slate-400 font-semibold mt-0.5">Approve or return collected SSA records to ensure they meet quality and audit requirements.</p>
-</div>
-<a href="/admin-panel/data-quality-center" class="text-[12px] text-slate-500 hover:underline">&larr; Back to Quality Center</a>
-</div>
+{% include "components/page_header.html" with title="IA SSA Verification Queue" subtitle="Approve or return collected SSA records to ensure they meet quality and audit requirements." breadcrumb="SSA Scores" actions_template="pages/ssa/_verification_queue_header_actions.html" %}
 
 {% if messages %}
 <div class="space-y-2">
@@ -25,7 +18,8 @@
 {% endif %}
 
 <!-- Table -->
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+<section class="card p-5 space-y-3.5">
+{% if records %}
 <div class="overflow-x-auto">
 <table class="w-full text-[12px] border-collapse text-left">
 <thead>
@@ -71,17 +65,14 @@ Return for Correction
 </div>
 </td>
 </tr>
-{% empty %}
-<tr>
-<td colspan="5" class="px-5 py-10 text-center text-slate-400 font-semibold">
-No pending SSA verification records in queue.
-</td>
-</tr>
 {% endfor %}
 </tbody>
 </table>
 </div>
-</div>
+{% else %}
+{% include "components/empty_state.html" with title="Queue is clear" message="No pending SSA verification records right now." tone="success" compact="true" %}
+{% endif %}
+</section>
 
 </div>
 {% endblock %}

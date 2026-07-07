@@ -28,25 +28,33 @@
 <span class="text-[20px] font-semibold text-blue-800 block mt-1">{{ cluster.schoolCount }}</span>
 </div>
 <div class="p-3 bg-emerald-50/40 border border-emerald-100 rounded-xl flex flex-col justify-center items-center">
-<span class="text-[11px] uppercase font-bold text-emerald-600 block leading-none">Status</span>
-<span class="text-[14px] font-semibold text-emerald-700 block mt-1.5 leading-none">Active</span>
+<span class="text-[11px] uppercase font-bold text-emerald-600 block leading-none">Average SSA</span>
+<span class="text-[14px] font-semibold text-emerald-700 block mt-1.5 leading-none">{{ cluster.averageSsa|floatformat:1|default:"No data" }}</span>
+</div>
+<div class="p-3 bg-slate-50 border border-slate-100 rounded-xl">
+<span class="text-[11px] uppercase font-bold text-slate-400 block">Last Meeting</span>
+<span class="text-[13px] font-semibold text-slate-700 block mt-1">{{ cluster.lastMeeting|default:"Never" }}</span>
+</div>
+<div class="p-3 bg-slate-50 border border-slate-100 rounded-xl">
+<span class="text-[11px] uppercase font-bold text-slate-400 block">Last Training</span>
+<span class="text-[13px] font-semibold text-slate-700 block mt-1">{{ cluster.lastTraining|default:"Never" }}</span>
 </div>
 </div>
 
 <!-- Sticky footer actions -->
 <div class="drawer-footer mt-6">
-<button 
-type="button" 
-@click="$dispatch('close-drawer')" 
-class="edify-action-button secondary h-9 transition-colors"
+<button
+type="button"
+@click="$dispatch('close-drawer')"
+class="px-5 h-9 rounded-xl btn-premium-secondary font-bold text-[12px]"
 >
 Close Details
 </button>
-<button 
+<button
 hx-get="/clusters/planner-drawer?cluster_id={{ cluster.id }}&fixed_cluster=true"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
-class="edify-action-button primary h-9 transition-colors shadow-sm"
+class="px-6 h-9 rounded-xl btn-premium-primary font-bold text-[12px] shadow-sm"
 >
 Open Planner
 </button>
