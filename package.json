@@ -1,0 +1,26 @@
+{
+  "name": "edify-planning-tool",
+  "version": "1.0.0",
+  "description": "The Edify Planning & Monitoring backend, rebuilt in **Django 5 + Django REST Framework** (replacing the previous NestJS + Prisma backend). The School Directory is the source of truth; ~200 endpoints across 33 domain apps; JWT access + rotating refresh tokens; a 38-key RBAC permission matrix with data-access scope resolution; a tamper-evident audit hash-chain; realtime SSE; and 4 background jobs.",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "css": "tailwindcss -c tailwind.config.js -i static/css/tw-input.css -o static/css/utilities.css --minify"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/O-Mario88/edify-planning-tool.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/O-Mario88/edify-planning-tool/issues"
+  },
+  "homepage": "https://github.com/O-Mario88/edify-planning-tool#readme",
+  "devDependencies": {
+    "tailwindcss": "^3.4.17"
+  },
+  "private": true
+}

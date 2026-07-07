@@ -1,0 +1,42 @@
+{% comment %}
+  Edify Chart Card — the ONLY container for ApexCharts.
+
+  Renders the card shell (title, subtitle, actions slot, empty state) and a
+  sized chart mount. The page provides the chart via an inline
+  <script> keyed to `chart_id`, or via the shared `data-apex` initializer in
+  base.html (preferred): put the ApexCharts options JSON in a json_script and
+  set chart_config_id.
+
+  Usage:
+    {% include "components/chart_card.html" with chart_id="ssa-trend" title="SSA Performance" subtitle="Average score by intervention" has_data=ssa_rows %}
+    {{ apex_options|json_script:"ssa-trend-config" }}
+
+  Props:
+    chart_id        (required) — DOM id for the chart mount ("<id>" and "<id>-config")
+    title           (required)
+    subtitle        — metric definition / period
+    has_data        — truthy → chart renders; falsy → empty state
+    empty_title     — default "No data yet"
+    empty_message   — default explains data appears as work is logged
+    height          — chart height px (default 260)
+    footer_note     — small caption under the chart (e.g. scope note)
+{% endcomment %}
+<div class="card p-5 flex flex-col min-w-0">
+  <div class="flex items-start justify-between gap-3 pb-3 border-b border-slate-100">
+    <div class="min-w-0">
+      <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight truncate">{{ title }}</h3>
+      {% if subtitle %}<p class="text-[11px] text-slate-400 font-semibold mt-0.5">{{ subtitle }}</p>{% endif %}
+    </div>
+    {% if actions_template %}<div class="shrink-0">{% include actions_template %}</div>{% endif %}
+  </div>
+
+  {% if has_data %}
+  <div id="{{ chart_id }}" class="w-full mt-3 min-w-0 overflow-hidden" style="min-height: {{ height|default:'260' }}px" data-apex-config="{{ chart_id }}-config"></div>
+  {% else %}
+  {% include "components/empty_state.html" with title=empty_title|default:"No data yet" message=empty_message|default:"This chart populates as activity is logged." compact="true" %}
+  {% endif %}
+
+  {% if footer_note %}
+  <p class="text-[11px] text-slate-400 font-semibold pt-2 mt-auto border-t border-slate-50">{{ footer_note }}</p>
+  {% endif %}
+</div>

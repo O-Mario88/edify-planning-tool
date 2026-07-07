@@ -1,0 +1,15 @@
+<div class="card p-4 border {{ ring }} flex flex-col gap-2.5 min-w-0">
+  <div class="flex items-start justify-between gap-2">
+    <div class="flex items-center gap-2.5 min-w-0">
+      <span class="h-8 w-8 rounded-lg {{ chip }} flex items-center justify-center shrink-0">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="{{ icon_path }}"/></svg>
+      </span>
+      <h4 class="text-[13px] font-semibold text-slate-800 leading-snug">{{ title }}</h4>
+    </div>
+    {% if meta %}<span class="text-[11px] font-bold text-slate-400 shrink-0">{{ meta }}</span>{% endif %}
+  </div>
+  {% if body %}<p class="text-[12px] text-slate-500 font-medium leading-relaxed">{{ body }}</p>{% endif %}
+  {% if cta_label and cta_href %}
+  <a href="{{ cta_href }}" class="text-[12px] font-semibold text-blue-600 hover:underline mt-auto inline-flex items-center gap-1">{{ cta_label }} &rarr;</a>
+  {% endif %}
+</div>

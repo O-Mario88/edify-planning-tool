@@ -1,0 +1,42 @@
+{% comment %}
+  Filter Bar — a GET form of selects that auto-submits (or HTMX-refreshes a target).
+
+  Usage:
+    {% include "components/filter_bar.html" with form_id="planning-filters" fields=filter_fields hx_get="/planning" hx_target="#planning-body" %}
+
+  `fields` is a list of dicts from the view:
+    { "name": "fy", "label": "Financial Year",
+      "options": [{"value": "2026", "label": "FY 2026", "selected": True}, …] }
+
+  If hx_get/hx_target are set the form refreshes that fragment; otherwise it
+  performs a full-page GET. On mobile the bar collapses into a disclosure.
+{% endcomment %}
+<form method="get" id="{{ form_id }}"
+      {% if hx_get %}hx-get="{{ hx_get }}" hx-target="{{ hx_target }}" hx-swap="outerHTML" hx-push-url="true" hx-trigger="change from:select"{% endif %}
+      x-data="{ open: false }"
+      class="card p-3.5">
+  <button type="button" class="lg:hidden flex items-center justify-between w-full text-[12px] font-semibold text-slate-600" @click="open = !open">
+    <span class="flex items-center gap-1.5">
+      <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+      Filters
+    </span>
+    <svg class="h-4 w-4 text-slate-400 transition-transform" :class="open ? 'rotate-180' : ''" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+  </button>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap lg:items-end gap-3 mt-3 lg:mt-0" :class="open ? '' : 'hidden lg:flex'" x-bind:class="open ? '' : 'hidden lg:flex'">
+    {% for field in fields %}
+    <div class="space-y-1 lg:min-w-[150px]">
+      <label class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider block">{{ field.label }}</label>
+      <select name="{{ field.name }}" {% if not hx_get %}onchange="document.getElementById('{{ form_id }}').submit()"{% endif %}
+              class="h-9 w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 text-[12px] font-semibold text-slate-700 cursor-pointer focus:outline-none focus:ring-1 focus:ring-[var(--edify-primary,#2e505f)]">
+        {% for opt in field.options %}
+        <option value="{{ opt.value }}" {% if opt.selected %}selected{% endif %}>{{ opt.label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    {% endfor %}
+    {% if clear_href %}
+    <a href="{{ clear_href }}" class="text-[12px] font-semibold text-slate-500 hover:text-slate-700 flex items-center gap-1 h-9">&times; Clear filters</a>
+    {% endif %}
+  </div>
+</form>

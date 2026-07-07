@@ -23,6 +23,9 @@ here. base.html <style> below only consumes tokens via var(--edify-*). -->
 <link rel="stylesheet" href="{% static 'css/drawers.css' %}?v=20260705c">
 <link rel="stylesheet" href="{% static 'css/app.css' %}">
 <link href="{% static 'vendor/flowbite.min.css' %}" rel="stylesheet" />
+<!-- Generated Tailwind utilities (npm run css) — scanned from templates/, loaded
+last so every utility class used in a template is guaranteed to exist. -->
+<link rel="stylesheet" href="{% static 'css/utilities.css' %}?v=1">
 
 <style>
 /* base.html consumes tokens defined in design-system.css. No :root here. */
@@ -223,5 +226,30 @@ class="pointer-events-auto flex items-center justify-between gap-3 px-4 py-3 rou
 {% endfor %}
 {% endif %}
 </div>
+
+<script>
+/* Shared ApexCharts initializer for chart_card.html.
+   A mount declares data-apex-config="<json_script id>"; the JSON is the full
+   ApexCharts options object (from the Django view via |json_script). Charts
+   re-initialize after HTMX swaps so partial refreshes keep working. */
+(function () {
+  const rendered = new WeakSet();
+  function initApexMounts(root) {
+    (root || document).querySelectorAll("[data-apex-config]").forEach(function (el) {
+      if (rendered.has(el)) return;
+      const cfgEl = document.getElementById(el.getAttribute("data-apex-config"));
+      if (!cfgEl || typeof ApexCharts === "undefined") return;
+      let options;
+      try { options = JSON.parse(cfgEl.textContent); } catch (e) { return; }
+      options.chart = Object.assign({ fontFamily: "Outfit, sans-serif", toolbar: { show: false } }, options.chart || {});
+      if (!options.chart.height) options.chart.height = parseInt(el.style.minHeight) || 260;
+      new ApexCharts(el, options).render();
+      rendered.add(el);
+    });
+  }
+  document.addEventListener("DOMContentLoaded", function () { initApexMounts(document); });
+  document.body.addEventListener("htmx:afterSwap", function (e) { initApexMounts(e.target); });
+})();
+</script>
 </body>
 </html>
