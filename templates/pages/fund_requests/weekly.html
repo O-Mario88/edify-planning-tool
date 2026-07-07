@@ -7,11 +7,12 @@
 {% if is_pl %}
 <div class="p-6 max-w-[1600px] mx-auto space-y-6 text-slate-700 font-sans"
 x-data="{
-queue: {{ pl_queue_items_json|safe }},
+queue: [],
 selectedId: null,
 selectedItem: null,
 activeTab: 'breakdown',
 init() {
+this.queue = JSON.parse(document.getElementById('pl-queue-data').textContent);
 this.selectedItem = this.queue.find(item => item.id === this.selectedId) || this.queue[0];
 },
 selectRequest(id) {
@@ -22,6 +23,7 @@ formatCurrency(val) {
 return 'UGX ' + Number(val).toLocaleString();
 }
 }">
+{{ pl_queue_items|json_script:"pl-queue-data" }}
 
 <!-- ================= TOP HEADER BAR ================= -->
 <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-100 pb-4">
@@ -51,33 +53,41 @@ Filters
 </div>
 
 
-<!-- Filters Row -->
-<div class="grid grid-cols-1 md:grid-cols-4 gap-3 bg-white p-3.5 rounded-2xl border border-slate-100 shadow-sm text-[12px] font-bold text-slate-600">
+<!-- Filters Row (live GET filters) -->
+<form method="get" id="pl-filters" class="grid grid-cols-1 md:grid-cols-4 gap-3 bg-white p-3.5 rounded-2xl border border-slate-100 shadow-sm text-[12px] font-bold text-slate-600">
 <div class="space-y-1">
 <label class="text-[11px] text-slate-400 font-semibold uppercase">Financial Year</label>
-<select class="h-8 w-full bg-slate-50 border border-slate-200 rounded-lg px-2 text-[12px] font-bold cursor-pointer focus:outline-none">
-<option>2024/2025</option>
+<select name="fy" onchange="document.getElementById('pl-filters').submit()" class="h-8 w-full bg-slate-50 border border-slate-200 rounded-lg px-2 text-[12px] font-bold cursor-pointer focus:outline-none">
+<option value="{{ selected_fy }}" selected>FY {{ selected_fy }}</option>
 </select>
 </div>
 <div class="space-y-1">
 <label class="text-[11px] text-slate-400 font-semibold uppercase">Month</label>
-<select class="h-8 w-full bg-slate-50 border border-slate-200 rounded-lg px-2 text-[12px] font-bold cursor-pointer focus:outline-none">
-<option>May 2025</option>
-</select>
-</div>
-<div class="space-y-1">
-<label class="text-[11px] text-slate-400 font-semibold uppercase">Region</label>
-<select class="h-8 w-full bg-slate-50 border border-slate-200 rounded-lg px-2 text-[12px] font-bold cursor-pointer focus:outline-none">
-<option>Northern Region</option>
+<select name="month" onchange="document.getElementById('pl-filters').submit()" class="h-8 w-full bg-slate-50 border border-slate-200 rounded-lg px-2 text-[12px] font-bold cursor-pointer focus:outline-none">
+{% for m in month_options %}
+<option value="{{ m }}" {% if m == selected_month %}selected{% endif %}>{{ m }}</option>
+{% endfor %}
 </select>
 </div>
 <div class="space-y-1">
 <label class="text-[11px] text-slate-400 font-semibold uppercase">District</label>
-<select class="h-8 w-full bg-slate-50 border border-slate-200 rounded-lg px-2 text-[12px] font-bold cursor-pointer focus:outline-none">
-<option>All Districts</option>
+<select name="district" onchange="document.getElementById('pl-filters').submit()" class="h-8 w-full bg-slate-50 border border-slate-200 rounded-lg px-2 text-[12px] font-bold cursor-pointer focus:outline-none">
+<option value="">All Districts</option>
+{% for d in districts %}
+<option value="{{ d.id }}" {% if d.id == selected_district %}selected{% endif %}>{{ d.name }}</option>
+{% endfor %}
 </select>
 </div>
+<div class="space-y-1">
+<label class="text-[11px] text-slate-400 font-semibold uppercase">Staff</label>
+<select name="staff" onchange="document.getElementById('pl-filters').submit()" class="h-8 w-full bg-slate-50 border border-slate-200 rounded-lg px-2 text-[12px] font-bold cursor-pointer focus:outline-none">
+<option value="">All Staff</option>
+{% for sp in staff_profiles %}
+<option value="{{ sp.user_id }}" {% if sp.user_id == selected_staff %}selected{% endif %}>{{ sp.user.name }}</option>
+{% endfor %}
+</select>
 </div>
+</form>
 
 
 <!-- ================= KPI STRIP ================= -->
@@ -130,7 +140,7 @@ Filters
 <div class="flex items-center justify-between pb-3 border-b border-slate-100">
 <div class="flex items-center gap-1.5">
 <h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">CCEO Fund Approval Queue</h2>
-<span class="bg-blue-600 text-white font-semibold rounded-full px-1.5 py-0.5 text-[11px] flex items-center justify-center">6</span>
+<span class="bg-blue-600 text-white font-semibold rounded-full px-1.5 py-0.5 text-[11px] flex items-center justify-center" x-text="queue.length"></span>
 </div>
 
 <select class="h-6 px-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-bold text-slate-500">
@@ -223,7 +233,7 @@ class="p-3.5 border rounded-2xl cursor-pointer flex flex-col justify-between tra
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-50 font-semibold text-slate-700">
-<template x-for="line in selectedItem.lines" :key="line.category">
+<template x-for="line in (selectedItem ? selectedItem.lines : [])" :key="line.category">
 <tr class="hover:bg-slate-50/50">
 <td class="py-2 font-semibold text-slate-800" x-text="line.category"></td>
 <td class="py-2 text-center font-bold text-slate-500" x-text="line.quantity || '—'"></td>
@@ -243,7 +253,7 @@ class="p-3.5 border rounded-2xl cursor-pointer flex flex-col justify-between tra
 <!-- Bold aggregate summary row -->
 <tr class="border-t border-slate-200 text-slate-800 font-semibold">
 <td class="py-3 font-semibold uppercase tracking-wider" colspan="3">Total Requested</td>
-<td class="py-3 text-right font-semibold" x-text="formatCurrency(selectedItem.requested)"></td>
+<td class="py-3 text-right font-semibold" x-text="selectedItem ? formatCurrency(selectedItem.requested) : '—'"></td>
 </tr>
 </tbody>
 </table>
@@ -305,13 +315,10 @@ Return
 <div class="bg-white p-5 rounded-xl  shadow-sm space-y-3">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight pb-2 border-b border-slate-100">This Month</h3>
 <div class="space-y-2 text-[12px] font-bold text-slate-500">
-<div class="flex items-center justify-between"><span>Waiting for Approval</span> <span class="text-slate-800 font-semibold">UGX 128.4M</span></div>
-<div class="flex items-center justify-between text-rose-600"><span>Returned</span> <span class="font-semibold">UGX 12.8M</span></div>
-<div class="flex items-center justify-between text-emerald-600"><span>Approved Today</span> <span class="font-semibold">UGX 36.2M</span></div>
+<div class="flex items-center justify-between"><span>Awaiting Confirmation</span> <span class="text-slate-800 font-semibold">{{ pl_kpis.awaiting_total }}</span></div>
+<div class="flex items-center justify-between text-emerald-600"><span>Ready for Disbursement</span> <span class="font-semibold">{{ pl_kpis.ready_total }}</span></div>
+<div class="flex items-center justify-between text-blue-600"><span>Disbursed</span> <span class="font-semibold">{{ pl_kpis.disbursed_total }}</span></div>
 </div>
-<a href="#" class="text-[11px] font-semibold text-blue-600 hover:underline block pt-2 border-t border-slate-50 text-center uppercase tracking-wider">
-View all activity
-</a>
 </div>
 
 <!-- Monthly Plan & Budget Approval progress bar -->

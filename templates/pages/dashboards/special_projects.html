@@ -6,10 +6,18 @@
 {% block shell_content %}
 <div class="p-6 max-w-[1500px] mx-auto space-y-6 text-slate-700 font-sans"
 x-data="{
-portfolio: {{ portfolio_json|safe }},
-attention: {{ attention_json|safe }},
-milestones: {{ milestones_json|safe }}
+portfolio: [],
+attention: [],
+milestones: [],
+init() {
+this.portfolio = JSON.parse(document.getElementById('sp-portfolio-data').textContent);
+this.attention = JSON.parse(document.getElementById('sp-attention-data').textContent);
+this.milestones = JSON.parse(document.getElementById('sp-milestones-data').textContent);
+}
 }">
+{{ portfolio|json_script:"sp-portfolio-data" }}
+{{ attention|json_script:"sp-attention-data" }}
+{{ milestones|json_script:"sp-milestones-data" }}
 
 <!-- ================= TOP HEADER BAR ================= -->
 <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-100 pb-3">
@@ -25,12 +33,7 @@ milestones: {{ milestones_json|safe }}
 <div class="flex items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-xl  text-[11px] font-bold text-slate-600">
 🔍 <input type="text" placeholder="Search projects..." class="bg-transparent focus:outline-none w-32">
 </div>
-<select class="h-8 px-2 bg-slate-100  rounded-xl text-[11px] font-bold text-slate-600">
-<option>May 2025</option>
-</select>
-<select class="h-8 px-2 bg-slate-100  rounded-xl text-[11px] font-bold text-slate-600">
-<option>All Regions</option>
-</select>
+<span class="h-8 px-3 bg-slate-100 rounded-xl text-[11px] font-bold text-slate-600 flex items-center">{% now "F Y" %}</span>
 
 <!-- User profile info -->
 <div class="flex items-center gap-2 pl-2 border-l border-slate-200">
@@ -53,8 +56,8 @@ milestones: {{ milestones_json|safe }}
 <!-- Right visual metric display -->
 <div class="flex items-center gap-3 shrink-0 relative z-10 bg-slate-800/40 p-4 rounded-xl border border-slate-700/50">
 <div>
-<span class="text-[11px] font-semibold text-slate-400 uppercase tracking-widest block">Special Projects Impact</span>
-<span class="text-[18px] font-semibold text-emerald-400 block leading-none mt-1">92% <span class="text-[11px] text-white/80 font-bold ml-1">Strong Overall</span></span>
+<span class="text-[11px] font-semibold text-slate-400 uppercase tracking-widest block">Activity Completion</span>
+<span class="text-[18px] font-semibold text-emerald-400 block leading-none mt-1">{{ sp_kpis.pct }}% <span class="text-[11px] text-white/80 font-bold ml-1">across all projects</span></span>
 </div>
 <!-- SVG green sparkline -->
 <svg class="h-6 w-16 text-emerald-500 shrink-0" viewBox="0 0 100 30">

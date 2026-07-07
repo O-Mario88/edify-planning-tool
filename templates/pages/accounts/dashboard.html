@@ -5,13 +5,15 @@
 
 {% block shell_content %}
 <div class="p-6 max-w-[1600px] mx-auto space-y-6 text-slate-700 font-sans" 
-x-data="{ 
-allFunds: {{ all_funds_json|safe }}, 
-selectedId: 'FR-2481',
+x-data="{
+allFunds: [],
+selectedId: null,
 selectedItem: null,
 activeTab: 'breakdown',
 init() {
-this.selectedItem = this.allFunds.find(f => f.id === this.selectedId) || this.allFunds[0];
+this.allFunds = JSON.parse(document.getElementById('all-funds-data').textContent);
+this.selectedItem = this.allFunds[0] || null;
+this.selectedId = this.selectedItem ? this.selectedItem.id : null;
 },
 selectFund(id) {
 this.selectedId = id;
@@ -21,6 +23,7 @@ formatCurrency(val) {
 return 'UGX ' + Number(val).toLocaleString();
 }
 }">
+{{ all_funds|json_script:"all-funds-data" }}
 
 <!-- ================= TOP HEADER BAR ================= -->
 <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-100 pb-4">
@@ -34,22 +37,8 @@ return 'UGX ' + Number(val).toLocaleString();
 
 <!-- Filters & Create button -->
 <div class="flex flex-wrap items-center gap-2">
-<!-- FY selector -->
-<select class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-semibold text-slate-600 shadow-sm focus:outline-none">
-<option>FY 2024/25</option>
-</select>
-<!-- Month selector -->
-<select class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-semibold text-slate-600 shadow-sm focus:outline-none">
-<option>May 2025</option>
-</select>
-<!-- Country selector -->
-<select class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-semibold text-slate-600 shadow-sm focus:outline-none">
-<option>All Countries</option>
-</select>
-<!-- Status filter -->
-<select class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-semibold text-slate-600 shadow-sm focus:outline-none">
-<option>All Statuses</option>
-</select>
+<!-- Operational FY badge -->
+<span class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-semibold text-slate-600 shadow-sm flex items-center">FY {{ fy }}</span>
 
 <div class="relative w-48">
 <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -133,7 +122,7 @@ class="h-9 w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 text-[12
 <div class="flex items-center justify-between pb-3 border-b border-slate-100">
 <div class="flex items-center gap-1.5">
 <h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Consolidated Fund Queue</h2>
-<span class="bg-blue-600 text-white font-semibold rounded-full px-1.5 py-0.5 text-[11px] flex items-center justify-center">42</span>
+<span class="bg-blue-600 text-white font-semibold rounded-full px-1.5 py-0.5 text-[11px] flex items-center justify-center" x-text="allFunds.length"></span>
 </div>
 
 <select class="h-6 px-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-bold text-slate-500">
@@ -276,7 +265,7 @@ class="p-3 border rounded-2xl cursor-pointer flex items-center gap-3 transition-
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-50 font-semibold text-slate-700">
-<template x-for="line in selectedItem.lines" :key="line.category">
+<template x-for="line in (selectedItem ? selectedItem.lines : [])" :key="line.category">
 <tr class="hover:bg-slate-50/50">
 <td class="py-2.5 font-semibold text-slate-800" x-text="line.category"></td>
 <td class="py-2.5 text-center font-bold text-slate-500" x-text="line.quantity || '—'"></td>
@@ -287,7 +276,7 @@ class="p-3 border rounded-2xl cursor-pointer flex items-center gap-3 transition-
 <!-- Bold aggregate summary row -->
 <tr class="border-t border-slate-200 text-slate-800 font-semibold">
 <td class="py-3 font-semibold uppercase tracking-wider" colspan="3">Total</td>
-<td class="py-3 text-right font-semibold" x-text="formatCurrency(selectedItem.approved)"></td>
+<td class="py-3 text-right font-semibold" x-text="selectedItem ? formatCurrency(selectedItem.approved) : '—'"></td>
 </tr>
 </tbody>
 </table>
@@ -334,7 +323,7 @@ No documents or receipts attached to this request yet.
 View Full Plan
 </button>
 
-<form x-bind:action="'/accounts/activities/' + selectedItem.id + '/disburse'" method="POST" class="inline">
+<form x-bind:action="'/accounts/activities/' + (selectedItem ? selectedItem.id : '') + '/disburse'" method="POST" class="inline">
 {% csrf_token %}
 <button type="submit" class="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[12px] font-semibold shadow-sm transition-all">
 Disburse Funds

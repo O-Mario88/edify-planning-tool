@@ -839,6 +839,25 @@ def dashboard_view(request):
                 }
             )
 
+        def _gpct(n):
+            return round(n / total_tasks * 100) if total_tasks else 0
+
+        _glance = {
+            "completed_pct": _gpct(completed_cnt),
+            "in_progress_pct": _gpct(in_progress_cnt),
+            "planned_pct": _gpct(planned_cnt),
+            "overdue_pct": _gpct(overdue_cnt),
+        }
+        _glance["in_progress_offset"] = -_glance["completed_pct"]
+        _glance["planned_offset"] = -(
+            _glance["completed_pct"] + _glance["in_progress_pct"]
+        )
+        _glance["overdue_offset"] = -(
+            _glance["completed_pct"]
+            + _glance["in_progress_pct"]
+            + _glance["planned_pct"]
+        )
+
         # Real pending fund-request confirmations for this user
         pending_approvals = []
         for w in WeeklyFundRequest.objects.filter(
@@ -865,6 +884,7 @@ def dashboard_view(request):
                 "overdue": overdue_cnt,
                 "total": total_tasks,
             },
+            "glance": _glance,
             "agenda_morning": agenda_morning,
             "agenda_afternoon": agenda_afternoon,
             "agenda_evening": agenda_evening,
@@ -878,7 +898,6 @@ def dashboard_view(request):
 
     elif role == "ProjectCoordinator":
         # ProjectCoordinator Special Projects Dashboard — live project portfolio
-        import json as _json
         from apps.projects.models import Project
 
         today = timezone.now().date()
@@ -986,6 +1005,11 @@ def dashboard_view(request):
             "activities": sum(row["activities"] for row in portfolio),
             "completed": sum(row["completed"] for row in portfolio),
         }
+        sp_kpis["pct"] = (
+            round(sp_kpis["completed"] / sp_kpis["activities"] * 100)
+            if sp_kpis["activities"]
+            else 0
+        )
 
         context = {
             "alerts": alerts_list,
@@ -994,9 +1018,9 @@ def dashboard_view(request):
             "user_name": user.name,
             "avatar_initials": avatar_initials,
             "sp_kpis": sp_kpis,
-            "portfolio_json": _json.dumps(portfolio),
-            "attention_json": _json.dumps(attention),
-            "milestones_json": _json.dumps(milestones),
+            "portfolio": portfolio,
+            "attention": attention,
+            "milestones": milestones,
         }
         return render(request, "pages/dashboards/special_projects.html", context)
 
