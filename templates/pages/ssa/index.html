@@ -72,7 +72,7 @@ class="flex items-center gap-1.5 px-3 py-2 border border-slate-200 hover:bg-slat
 <tr class="hover:bg-slate-50/60 transition-colors group">
 <td class="px-5 py-3.5"><p class="font-bold text-slate-800">{{ r.school.name|default:"Unknown" }}</p></td>
 <td class="px-4 py-3.5 text-center"><span class="font-bold text-[14px] {% if r.average_score >= 7 %}text-emerald-600{% elif r.average_score >= 5 %}text-amber-600{% else %}text-rose-600{% endif %}">{{ r.average_score|floatformat:1 }}</span></td>
-<td class="px-4 py-3.5 text-right"><a href="/schools/{{ r.school_id }}" class="opacity-0 group-hover:opacity-100 text-[11px] font-bold text-[var(--color-edify-primary)] transition-opacity">View School →</a></td>
+<td class="px-4 py-3.5 text-right"><a href="/schools/{{ r.school_id }}" class="opacity-70 group-hover:opacity-100 focus-visible:opacity-100 text-[11px] font-bold text-[var(--color-edify-primary)] transition-opacity">View School →</a></td>
 </tr>
 {% endfor %}
 </tbody>

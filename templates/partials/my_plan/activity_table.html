@@ -132,9 +132,11 @@ class="inline-flex items-center justify-center h-8 px-3 rounded-lg !bg-[#2e505f]
 
 <!-- Column 5: 3-Dot Dropdown -->
 <td class="px-4 py-3.5 text-center relative" x-data="{ open: false }">
-<button 
-@click="open = !open" 
-@click.outside="open = false" 
+<button
+@click="open = !open"
+@click.outside="open = false"
+aria-label="More actions"
+:aria-expanded="open"
 class="text-slate-400 hover:text-slate-700 h-8 w-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
 >
 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
