@@ -85,7 +85,7 @@ class DashboardMetricsService:
             if act.status == "completed":
                 status_label = "Completed"
                 status_class = "s-green"
-            elif act.status == "started":
+            elif act.status in ("in_progress", "completion_started"):
                 status_label = "Started"
                 status_class = "s-orange"
             

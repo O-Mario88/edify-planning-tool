@@ -184,6 +184,112 @@ def _workflow_issues() -> dict:
         analytics_publish_record__status="published"
     ).count()
 
+    # ── Workflow-consistency checks (clustering → planning → partner → project) ─
+    from apps.clusters.models import SchoolClusterAssignment
+    from apps.partners.models import Partner, PartnerAssignment
+    from apps.projects.models import ProjectSchoolAssignment
+
+    fy = _fy()
+    live_schools = _School.objects.filter(deleted_at__isnull=True)
+
+    # Clustered schools whose readiness state keeps them out of Planning.
+    planning_visible_readiness = ["ready", "limited", "ready_for_support_planning", "ready_for_baseline_ssa"]
+    clustered_not_in_planning = live_schools.filter(cluster_status="clustered").exclude(
+        planning_readiness__in=planning_visible_readiness
+    ).count()
+
+    # Clustered schools with no cluster link (no cluster_id OR no assignment row).
+    assigned_school_ids = SchoolClusterAssignment.objects.values_list("school_id", flat=True)
+    clustered_missing_assignment = live_schools.filter(cluster_status="clustered").filter(
+        Q(cluster_id__isnull=True) | Q(cluster_id="") | ~Q(id__in=assigned_school_ids)
+    ).count()
+
+    # Partner-assignment statuses. Pending = handed to partner but not yet
+    # scheduled; active additionally includes partner_scheduled (mirrors
+    # apps/planning/planning_service.py).
+    pending_partner_statuses = [
+        "assigned", "pending_scheduling", "partner_pending_schedule",
+        "assigned_to_partner_pending_scheduling",
+    ]
+    active_partner_statuses = pending_partner_statuses + ["partner_scheduled"]
+
+    # Partner-assigned schools still rendered actionable in Staff Planning.
+    partner_assigned_still_staff_planning = PartnerAssignment.objects.filter(
+        status__in=pending_partner_statuses,
+        school__deleted_at__isnull=True,
+        school__planning_readiness="ready",
+    ).count()
+
+    # Partner work the partner can never see: active assignments whose partner
+    # has no user link, plus partner-delivery activities with no partner set.
+    partner_assignments_no_user = PartnerAssignment.objects.filter(
+        status__in=active_partner_statuses, partner__user__isnull=True
+    ).count()
+    partner_activities_unassigned = active.filter(delivery_type="partner").filter(
+        Q(assigned_partner_id__isnull=True) | Q(assigned_partner_id="")
+    ).count()
+    partner_assignments_invisible = partner_assignments_no_user + partner_activities_unassigned
+
+    # partner_scheduled activities whose assigned partner has no user link —
+    # scheduled work that appears in no Partner Plan.
+    partner_ids_with_user = Partner.all_objects.filter(user__isnull=False).values_list("id", flat=True)
+    partner_scheduled_no_partner_plan = active.filter(
+        delivery_type="partner", status=ActivityStatus.PARTNER_SCHEDULED,
+        assigned_partner_id__isnull=False,
+    ).exclude(assigned_partner_id="").exclude(assigned_partner_id__in=partner_ids_with_user).count()
+
+    # Partner-delivery activities with no staff monitor — invisible to staff
+    # My Plan monitoring.
+    partner_missing_monitoring = active.filter(delivery_type="partner").filter(
+        Q(monitored_by_staff_id__isnull=True) | Q(monitored_by_staff_id="")
+    ).count()
+
+    # Staff-delivery scheduled activities with no responsible staff — they
+    # appear in nobody's My Plan.
+    staff_scheduled_no_owner = active.filter(
+        delivery_type="staff", status=ActivityStatus.SCHEDULED
+    ).filter(Q(responsible_staff_id__isnull=True) | Q(responsible_staff_id="")).count()
+
+    # Cluster-scoped activities without a cluster.
+    cluster_activity_missing_cluster = active.filter(
+        activity_type__startswith="cluster", cluster__isnull=True
+    ).count()
+
+    # Project schools with no project activity this FY (missing from PC planning).
+    project_school_ids = ProjectSchoolAssignment.objects.filter(
+        school__deleted_at__isnull=True
+    ).values_list("school_id", flat=True).distinct()
+    school_ids_with_project_activity = active.filter(
+        fy=fy, project_id__isnull=False, school_id__isnull=False
+    ).exclude(project_id="").values_list("school_id", flat=True)
+    project_schools_no_activity = live_schools.filter(id__in=project_school_ids).exclude(
+        id__in=school_ids_with_project_activity
+    ).count()
+
+    # Project activities with no responsible staff.
+    project_activities_unowned = active.filter(project_id__isnull=False).exclude(
+        project_id=""
+    ).filter(Q(responsible_staff_id__isnull=True) | Q(responsible_staff_id="")).count()
+
+    # Budget lines missing their catalogue reference (unauditable pricing).
+    budget_lines_missing_catalogue = ActivityScheduleCostLine.objects.filter(
+        activity__deleted_at__isnull=True
+    ).filter(
+        Q(catalogue_id__isnull=True) | Q(catalogue_id="") | Q(catalogue_version__isnull=True)
+    ).count()
+
+    # Active-plan activities with no planned date.
+    active_plan_missing_date = active.filter(
+        status__in=[ActivityStatus.SCHEDULED, ActivityStatus.PARTNER_SCHEDULED, ActivityStatus.IN_PROGRESS],
+        planned_date__isnull=True,
+    ).count()
+
+    # Terminal-status activities still returned by the My Plan feed (feed lacks
+    # a status exclusion).
+    closed_still_in_my_plan = active.filter(
+        status__in=[ActivityStatus.CLOSED, ActivityStatus.CANCELLED, ActivityStatus.REJECTED], fy=fy
+    ).count()
+
     blockers = []
     if unclustered_schools:
         blockers.append(f"{unclustered_schools} school(s) without cluster.")
@@ -232,6 +338,32 @@ def _workflow_issues() -> dict:
         blockers.append(f"{pending_candidates} staff candidate(s) pending Admin profile setup.")
     if cceos_without_supervisor:
         blockers.append(f"{cceos_without_supervisor} CCEO(s) have no PL supervisor — PL team scope is incomplete.")
+    if clustered_not_in_planning:
+        blockers.append(f"{clustered_not_in_planning} clustered school(s) whose readiness state keeps them out of Planning.")
+    if clustered_missing_assignment:
+        blockers.append(f"{clustered_missing_assignment} clustered school(s) missing a cluster link or assignment row.")
+    if partner_assigned_still_staff_planning:
+        blockers.append(f"{partner_assigned_still_staff_planning} partner assignment(s) whose school still renders actionable in Staff Planning.")
+    if partner_assignments_invisible:
+        blockers.append(f"{partner_assignments_invisible} partner work item(s) invisible to any partner (no partner user link or no partner assigned).")
+    if partner_scheduled_no_partner_plan:
+        blockers.append(f"{partner_scheduled_no_partner_plan} partner-scheduled activity(ies) missing from any Partner Plan (partner has no user link).")
+    if partner_missing_monitoring:
+        blockers.append(f"{partner_missing_monitoring} partner activity(ies) with no staff monitor — invisible to My Plan monitoring.")
+    if staff_scheduled_no_owner:
+        blockers.append(f"{staff_scheduled_no_owner} staff scheduled activity(ies) with no responsible staff — in nobody's My Plan.")
+    if cluster_activity_missing_cluster:
+        blockers.append(f"{cluster_activity_missing_cluster} cluster activity(ies) not linked to a cluster.")
+    if project_schools_no_activity:
+        blockers.append(f"{project_schools_no_activity} project school(s) with no project activity this FY — missing from PC planning.")
+    if project_activities_unowned:
+        blockers.append(f"{project_activities_unowned} project activity(ies) with no responsible staff.")
+    if budget_lines_missing_catalogue:
+        blockers.append(f"{budget_lines_missing_catalogue} budget line(s) missing a Cost Catalogue reference.")
+    if active_plan_missing_date:
+        blockers.append(f"{active_plan_missing_date} active-plan activity(ies) with no planned date.")
+    if closed_still_in_my_plan:
+        blockers.append(f"{closed_still_in_my_plan} Terminal-status activities still returned by the My Plan feed (feed lacks a status exclusion).")
 
     return {
         "unclusteredSchools": unclustered_schools,
@@ -244,6 +376,19 @@ def _workflow_issues() -> dict:
         "accountsClearanceBeforeIa": accounts_clearance_before_ia,
         "netsuiteIdMissing": netsuite_id_missing,
         "closedMissingAnalytics": closed_missing_analytics,
+        "clusteredSchoolsNotInPlanning": clustered_not_in_planning,
+        "clusteredSchoolsMissingAssignment": clustered_missing_assignment,
+        "partnerAssignedStillInStaffPlanning": partner_assigned_still_staff_planning,
+        "partnerAssignmentsInvisibleToPartner": partner_assignments_invisible,
+        "partnerScheduledMissingFromPartnerPlan": partner_scheduled_no_partner_plan,
+        "partnerScheduledMissingMonitoring": partner_missing_monitoring,
+        "staffScheduledMissingOwner": staff_scheduled_no_owner,
+        "clusterActivityMissingCluster": cluster_activity_missing_cluster,
+        "projectSchoolsWithoutProjectActivity": project_schools_no_activity,
+        "projectActivitiesUnowned": project_activities_unowned,
+        "budgetLinesMissingCatalogue": budget_lines_missing_catalogue,
+        "activePlanMissingDate": active_plan_missing_date,
+        "closedStillInMyPlanFeed": closed_still_in_my_plan,
         "clean": len(blockers) == 0,
         "blockers": blockers,
     }

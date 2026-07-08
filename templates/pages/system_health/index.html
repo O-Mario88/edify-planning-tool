@@ -236,6 +236,201 @@ FY26 Checks
 </div>
 </div>
 
+<!-- Check 11: Clustered but out of Planning -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">11. Clustered schools excluded from Planning</span>
+<span class="text-[12px] text-slate-500 block">Clustered schools whose readiness state keeps them out of the Planning workspace.</span>
+</div>
+<div class="text-right">
+{% if health.clusteredSchoolsNotInPlanning > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.clusteredSchoolsNotInPlanning }} Schools</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 12: Clustered without cluster link -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">12. Clustered schools missing a cluster link</span>
+<span class="text-[12px] text-slate-500 block">Schools marked clustered with no cluster reference or no cluster assignment row.</span>
+</div>
+<div class="text-right">
+{% if health.clusteredSchoolsMissingAssignment > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.clusteredSchoolsMissingAssignment }} Schools</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 13: Partner-assigned still in Staff Planning -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">13. Partner-assigned schools still in Staff Planning</span>
+<span class="text-[12px] text-slate-500 block">Pending partner assignments whose school still renders actionable in Staff Planning.</span>
+</div>
+<div class="text-right">
+{% if health.partnerAssignedStillInStaffPlanning > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.partnerAssignedStillInStaffPlanning }} Items</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 14: Partner work invisible to partner -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">14. Partner work invisible to any partner</span>
+<span class="text-[12px] text-slate-500 block">Active assignments whose partner has no user account, plus partner activities with no partner set.</span>
+</div>
+<div class="text-right">
+{% if health.partnerAssignmentsInvisibleToPartner > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.partnerAssignmentsInvisibleToPartner }} Items</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 15: Partner scheduled missing from Partner Plan -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">15. Partner-scheduled work missing from Partner Plan</span>
+<span class="text-[12px] text-slate-500 block">Partner-scheduled activities whose assigned partner has no user link to view them.</span>
+</div>
+<div class="text-right">
+{% if health.partnerScheduledMissingFromPartnerPlan > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.partnerScheduledMissingFromPartnerPlan }} Items</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 16: Partner work without staff monitor -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">16. Partner activities with no staff monitor</span>
+<span class="text-[12px] text-slate-500 block">Partner-delivered activities invisible to staff My Plan monitoring.</span>
+</div>
+<div class="text-right">
+{% if health.partnerScheduledMissingMonitoring > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.partnerScheduledMissingMonitoring }} Items</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 17: Staff scheduled without owner -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">17. Scheduled staff activities with no owner</span>
+<span class="text-[12px] text-slate-500 block">Scheduled staff-delivery activities with no responsible staff — in nobody's My Plan.</span>
+</div>
+<div class="text-right">
+{% if health.staffScheduledMissingOwner > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.staffScheduledMissingOwner }} Items</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 18: Cluster activity missing cluster -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">18. Cluster activities not linked to a cluster</span>
+<span class="text-[12px] text-slate-500 block">Cluster meetings/trainings that carry no cluster reference.</span>
+</div>
+<div class="text-right">
+{% if health.clusterActivityMissingCluster > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.clusterActivityMissingCluster }} Items</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 19: Project schools without project activity -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">19. Project schools with no project activity this FY</span>
+<span class="text-[12px] text-slate-500 block">Schools assigned to a project that have no project activity planned — missing from PC planning.</span>
+</div>
+<div class="text-right">
+{% if health.projectSchoolsWithoutProjectActivity > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.projectSchoolsWithoutProjectActivity }} Schools</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 20: Project activities unowned -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">20. Project activities with no responsible staff</span>
+<span class="text-[12px] text-slate-500 block">Project-linked activities that no staff member owns.</span>
+</div>
+<div class="text-right">
+{% if health.projectActivitiesUnowned > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.projectActivitiesUnowned }} Items</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 21: Budget lines missing catalogue -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">21. Budget lines missing a Cost Catalogue reference</span>
+<span class="text-[12px] text-slate-500 block">Cost lines with no catalogue id or version — pricing cannot be audited.</span>
+</div>
+<div class="text-right">
+{% if health.budgetLinesMissingCatalogue > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.budgetLinesMissingCatalogue }} Lines</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 22: Active plan missing date -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">22. Active-plan activities with no planned date</span>
+<span class="text-[12px] text-slate-500 block">Scheduled, partner-scheduled or in-progress activities missing a planned date.</span>
+</div>
+<div class="text-right">
+{% if health.activePlanMissingDate > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.activePlanMissingDate }} Items</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 23: Terminal statuses still in My Plan feed -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">23. Terminal-status activities still in the My Plan feed</span>
+<span class="text-[12px] text-slate-500 block">Terminal-status activities still returned by the My Plan feed (feed lacks a status exclusion).</span>
+</div>
+<div class="text-right">
+{% if health.closedStillInMyPlanFeed > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.closedStillInMyPlanFeed }} Items</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
 </div>
 </div>
 

@@ -59,7 +59,7 @@ def get_activity_status_label_and_class(activity, today) -> tuple[str, str]:
             return "IA Verified", "bg-emerald-50 text-emerald-700 border-emerald-200"
         return "Accounts Pending", "bg-blue-50 text-blue-700 border-blue-200"
 
-    if status == "returned_for_correction":
+    if status in ("returned", "returned_by_pl", "returned_by_ia", "returned_for_correction"):
         return "Returned for Correction", "bg-rose-50 text-rose-700 border-rose-200"
 
     if planned_date == today:
@@ -176,7 +176,7 @@ def get(principal, query: dict) -> dict:
 def compute_next_action(a, today) -> dict:
     """Computes the single primary action and its properties for a given activity."""
     # 1. Returned by IA or PL -> Fix and Resubmit
-    if a.status == "returned_for_correction":
+    if a.status in ("returned", "returned_by_pl", "returned_by_ia", "returned_for_correction"):
         return {
             "text": "Fix and Resubmit",
             "action": "fix",
@@ -501,8 +501,9 @@ def get_frontend_context(principal, query: dict) -> dict:
     returned_needs_correction_list = []
     waiting_on_approval_list = []
     upcoming_list = []
+    finance_pending_list = []
 
-    activities = qs_period.select_related("school", "school__district", "school__sub_county", "cluster", "cluster__district").order_by("planned_date", "created_at")
+    activities = qs_period.select_related("school", "school__district", "school__sub_county", "cluster", "cluster__district").prefetch_related("schedule_cost_lines").order_by("planned_date", "created_at")
     
     for a in activities:
         status_label, status_class = get_activity_status_label_and_class(a, today)
@@ -560,10 +561,14 @@ def get_frontend_context(principal, query: dict) -> dict:
             badges.append(("Returned", "red"))
 
         # Accounts status
-        if a.payment_status == "pending":
+        if a.payment_status in ("pending", "pending_ia"):
             badges.append(("Accounts Pending", "amber"))
-        elif a.payment_status == "cleared":
+        elif a.payment_status in ("cleared", "accountant_cleared"):
             badges.append(("Cleared", "green"))
+        elif a.payment_status in ("disbursed", "netsuite_accountability"):
+            badges.append(("Accountability Pending", "amber"))
+        elif a.payment_status == "paid":
+            badges.append(("Paid", "green"))
 
         # Core details
         is_core = a.school and a.school.school_type == "core"
@@ -610,23 +615,20 @@ def get_frontend_context(principal, query: dict) -> dict:
         # Return details
         return_reason = ""
         returned_by = ""
-        if a.status == "returned_for_correction":
+        if a.status in ("returned", "returned_by_pl", "returned_by_ia", "returned_for_correction"):
             return_reason = a.last_reason or "Correction required"
             if a.ia_verification_status == "returned":
                 returned_by = "Internal Auditor"
             else:
                 returned_by = "Project Leader"
 
-        # Budget Total
-        budget_total = 0
-        if a.activity_type == "cluster_training":
-            participants = a.teachers_attended or a.leaders_attended or 20
-            budget_total = participants * 15000 + 50000 + 100000
-        elif a.activity_type == "cluster_meeting":
-            participants = a.teachers_attended or a.leaders_attended or 15
-            budget_total = participants * 10000
-        else:
-            budget_total = a.est_cost_cents / 100 if a.est_cost_cents else 50000
+        # Budget Total — always the real scheduled budget, never invented rates.
+        # est_cost_cents stores whole UGX (despite the name; the costing engine
+        # writes cost.amount straight into it), so no /100. Zero means the
+        # activity genuinely has no budget lines yet.
+        budget_total = a.est_cost_cents or sum(
+            line.amount or 0 for line in a.schedule_cost_lines.all()
+        )
 
         # Construct final dict
         activity_data = {
@@ -692,8 +694,15 @@ def get_frontend_context(principal, query: dict) -> dict:
         elif a.activity_type in ["cluster_meeting", "cluster_meeting_ssa_review"]:
             cluster_meetings_list.append(activity_data)
 
+        # Finance / Accountability pending — advance disbursed but accountability
+        # (NetSuite expense ID) still outstanding, or payment mid-flight.
+        # ("disbursed" is written by fund_requests.finance_services; the enum
+        # value for the accountability stage is "netsuite_accountability".)
+        if a.payment_status in ("disbursed", "netsuite_accountability") or next_act["action"] == "netsuite_id":
+            finance_pending_list.append(activity_data)
+
         # Classification into 7 Urgency Sections
-        if a.status == "returned_for_correction":
+        if a.status in ("returned", "returned_by_pl", "returned_by_ia", "returned_for_correction"):
             returned_needs_correction_list.append(activity_data)
         elif a.delivery_type == "partner":
             partner_monitoring_list.append(activity_data)
@@ -827,6 +836,8 @@ def get_frontend_context(principal, query: dict) -> dict:
         "returned_needs_correction": returned_needs_correction_list,
         "waiting_on_approval": waiting_on_approval_list,
         "upcoming": upcoming_list,
+        "finance_pending": finance_pending_list,
+        "viewer_is_partner": bool(scope.partner_ids),
         "upcoming_today": upcoming_today,
         "attention_needed": attention_needed,
         "next_recommended_action": next_recommended_action,

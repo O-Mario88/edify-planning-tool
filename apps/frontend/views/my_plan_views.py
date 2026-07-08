@@ -976,7 +976,7 @@ def evidence_center_view(request):
     pending = [a for a in activities if a.status == "completed" and a.evidence_status == "none"]
     sf_missing = [a for a in activities if a.evidence_status == "uploaded" and not a.salesforce_activity_id]
     submitted = [a for a in activities if a.status == "submitted"]
-    returned = [a for a in activities if a.status == "returned_for_correction"]
+    returned = [a for a in activities if a.status in ("returned", "returned_by_pl", "returned_by_ia", "returned_for_correction")]
     ia_pending = [a for a in activities if a.status == "submitted" and a.ia_verification_status == "pending"]
     verified = [a for a in activities if a.ia_verification_status == "verified"]
     partner_ev = [a for a in activities if a.delivery_type == "partner"]
@@ -996,7 +996,7 @@ def evidence_center_view(request):
 @require_page_permission("my_plan")
 def returned_evidence_view(request):
     """View specifically returned evidence items."""
-    activities = Activity.objects.filter(deleted_at__isnull=True, status="returned_for_correction").select_related("school").order_by("-updated_at")
+    activities = Activity.objects.filter(deleted_at__isnull=True, status__in=["returned", "returned_by_pl", "returned_by_ia", "returned_for_correction"]).select_related("school").order_by("-updated_at")
     context = {
         "returned_activities": activities,
     }
