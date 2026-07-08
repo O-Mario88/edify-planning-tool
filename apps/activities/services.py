@@ -188,7 +188,10 @@ def _apply_schedule_cost_snapshot(activity: Activity, data: dict, principal=None
     apply_to_activity(activity, _costing_input(activity, data), responsible_user_id=responsible)
 
     from apps.fund_requests.weekly_service import trigger_generate_for_activity
-    trigger_generate_for_activity(activity)
+    # Pass the same identifier that was stamped onto the cost lines: for staff
+    # with a StaffProfile, activity.responsible_staff_id holds the profile id
+    # while lines carry User.id — mismatch meant no weekly request was created.
+    trigger_generate_for_activity(activity, responsible_user_id=responsible)
 
 
 # ── Create ───────────────────────────────────────────────────────────────────
@@ -614,7 +617,7 @@ def partner_schedule(activity_id: str, data: dict, principal) -> dict:
             pa_rec = PartnerAssignment.objects.filter(
                 pa_filter,
                 partner_id=a.assigned_partner_id,
-                status__in=["assigned", "assigned_to_partner_pending_scheduling"]
+                status__in=["assigned", "pending_scheduling", "partner_pending_schedule", "assigned_to_partner_pending_scheduling"]
             ).first()
             if pa_rec:
                 pa_rec.status = "partner_scheduled"

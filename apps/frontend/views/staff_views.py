@@ -60,7 +60,7 @@ def staff_directory_view(request):
     today = date.today()
     overdue_counts = Activity.objects.filter(
         planned_date__lt=today,
-        status__in=["scheduled", "started"],
+        status__in=["scheduled", "in_progress", "completion_started"],
         deleted_at__isnull=True
     ).values('responsible_staff_id').annotate(overdue_count=Count('id'))
     high_risk_count = sum(1 for item in overdue_counts if item['overdue_count'] > 3)
@@ -140,7 +140,7 @@ def staff_profile_view(request, user_id):
     ).select_related("school", "cluster").order_by("-planned_date")[:50]
 
     completed = [a for a in activities if a.status == "completed"]
-    overdue = [a for a in activities if a.planned_date and a.planned_date < now and a.status in ("scheduled", "started")]
+    overdue = [a for a in activities if a.planned_date and a.planned_date < now and a.status in ("scheduled", "in_progress", "completion_started")]
     upcoming = [a for a in activities if a.planned_date and a.planned_date >= now and a.status == "scheduled"]
 
     # Schools covered
@@ -186,7 +186,7 @@ def today_view(request):
     overdue = Activity.objects.filter(
         responsible_staff_id=user.id,
         planned_date__lt=today,
-        status__in=["scheduled", "started"],
+        status__in=["scheduled", "in_progress", "completion_started"],
         deleted_at__isnull=True,
     ).select_related("school", "cluster").order_by("planned_date")
 
@@ -258,7 +258,7 @@ def visits_log_view(request):
 
     visits = list(visits_qs[:100])
     completed = sum(1 for v in visits if v.status == "completed")
-    pending = sum(1 for v in visits if v.status in ("scheduled", "started"))
+    pending = sum(1 for v in visits if v.status in ("scheduled", "in_progress", "completion_started"))
 
     context = {
         "visits": visits,
@@ -482,7 +482,7 @@ def my_team_view(request):
         overdue = Activity.objects.filter(
             responsible_staff_id=cceo.id,
             planned_date__lt=today,
-            status__in=["scheduled", "started"],
+            status__in=["scheduled", "in_progress", "completion_started"],
             deleted_at__isnull=True,
         ).count()
         evidence_gap = Activity.objects.filter(

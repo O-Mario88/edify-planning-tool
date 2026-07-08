@@ -71,7 +71,7 @@ class PlanningReadinessService:
                     "availableActions": ["Open My Plan"],
                     "blockedActions": ["Schedule visit", "Schedule training", "Assign to Partner"],
                 }
-            elif status == "assigned_to_partner_pending_scheduling" or status == "assigned":
+            elif status in ("assigned", "pending_scheduling", "partner_pending_schedule", "assigned_to_partner_pending_scheduling"):
                 return {
                     "planningReadiness": "Partner Pending Schedule",
                     "recommendedAction": "Monitor Partner Scheduling",
@@ -174,7 +174,7 @@ class PlanningDashboardService:
         ).values_list("school_id", flat=True)
 
         active_partner_school_ids = PartnerAssignment.objects.filter(
-            status__in=["assigned", "assigned_to_partner_pending_scheduling", "partner_scheduled"]
+            status__in=["assigned", "pending_scheduling", "partner_pending_schedule", "assigned_to_partner_pending_scheduling", "partner_scheduled"]
         ).values_list("school_id", flat=True)
 
         exclude_school_ids = set(active_activities_school_ids).union(set(active_partner_school_ids))
@@ -186,7 +186,7 @@ class PlanningDashboardService:
             table_schools_qs = schools_qs.filter(school_type__in=["core", "champion"]).exclude(id__in=exclude_school_ids)
         elif active_tab == "partner":
             partner_school_ids = PartnerAssignment.objects.filter(
-                status__in=["assigned", "assigned_to_partner_pending_scheduling", "partner_scheduled"]
+                status__in=["assigned", "pending_scheduling", "partner_pending_schedule", "assigned_to_partner_pending_scheduling", "partner_scheduled"]
             ).values_list("school_id", flat=True)
             table_schools_qs = schools_qs.filter(id__in=partner_school_ids)
         elif active_tab == "scheduled":
@@ -427,7 +427,7 @@ class PlanningDashboardService:
         ).exclude(status="cancelled").values_list("school_id", flat=True))
         
         partner_pending_ids = set(PartnerAssignment.objects.filter(
-            status__in=["assigned", "assigned_to_partner_pending_scheduling"]
+            status__in=["assigned", "pending_scheduling", "partner_pending_schedule", "assigned_to_partner_pending_scheduling"]
         ).values_list("school_id", flat=True))
         
         ready_for_support_count = 0
@@ -448,7 +448,7 @@ class PlanningDashboardService:
                 baseline_required_count += 1
                 
         partner_pending_schedule_count = PartnerAssignment.objects.filter(
-            status__in=["assigned", "assigned_to_partner_pending_scheduling"]
+            status__in=["assigned", "pending_scheduling", "partner_pending_schedule", "assigned_to_partner_pending_scheduling"]
         ).count()
         
         in_my_plan_count = Activity.objects.filter(

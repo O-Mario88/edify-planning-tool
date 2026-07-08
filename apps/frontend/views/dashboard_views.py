@@ -334,7 +334,7 @@ def dashboard_view(request):
             overdue = Activity.objects.filter(
                 responsible_staff_id=c.id,
                 planned_date__lt=today,
-                status__in=["scheduled", "started", "in_progress"],
+                status__in=["scheduled", "in_progress", "completion_started"],
                 deleted_at__isnull=True,
             ).count()
             if overdue > 0:
@@ -429,7 +429,7 @@ def dashboard_view(request):
         today = timezone.now().date()
         overdue_count = Activity.objects.filter(
             planned_date__lt=today,
-            status__in=["scheduled", "started"],
+            status__in=["scheduled", "in_progress", "completion_started"],
             deleted_at__isnull=True
         ).count()
         
@@ -447,7 +447,7 @@ def dashboard_view(request):
             c_overdue = Activity.objects.filter(
                 responsible_staff_id=c.id,
                 planned_date__lt=today,
-                status__in=["scheduled", "started"],
+                status__in=["scheduled", "in_progress", "completion_started"],
                 deleted_at__isnull=True
             ).count()
             if c_overdue > 3:

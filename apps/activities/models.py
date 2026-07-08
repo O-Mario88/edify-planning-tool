@@ -182,9 +182,11 @@ class ActivityScheduleCostLine(TimeStampedModel):
         if adv:
             status = adv.status
             if status == "accounted":
+                # Accountability isn't complete without the NetSuite reference:
+                # missing ID is a blocking state, not a terminal one.
                 if adv.accountability_netsuite_id:
                     return "Cleared"
-                return "Closed"
+                return "NetSuite ID Required"
             elif status == "disbursed":
                 if self.activity.status == "ia_verified":
                     return "Accountability Pending"

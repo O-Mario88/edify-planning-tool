@@ -94,12 +94,20 @@ def generate_weekly_fund_request(responsible_user_id: str, week_start_date_str: 
     return wfr
 
 
-def trigger_generate_for_activity(activity: Activity) -> None:
-    """Convenience helper to auto-trigger weekly request generation on activity schedule/reschedule."""
-    if activity.scheduled_date and activity.responsible_staff_id and activity.status != "cancelled":
+def trigger_generate_for_activity(activity: Activity, responsible_user_id: str | None = None) -> None:
+    """Convenience helper to auto-trigger weekly request generation on activity schedule/reschedule.
+
+    responsible_user_id must be the SAME identifier stamped onto the activity's
+    cost lines (User.id). Activity.responsible_staff_id may hold a StaffProfile
+    id instead, in which case the generator's line filter matches nothing and
+    the weekly request silently never materialises — so callers that know the
+    scheduling principal should pass it explicitly.
+    """
+    owner = responsible_user_id or activity.responsible_staff_id
+    if activity.scheduled_date and owner and activity.status != "cancelled":
         planned_date = activity.scheduled_date.date()
         week_start = planned_date - timedelta(days=planned_date.weekday())
-        generate_weekly_fund_request(activity.responsible_staff_id, week_start.isoformat())
+        generate_weekly_fund_request(owner, week_start.isoformat())
 
 
 def list_weekly_requests(query: dict, principal) -> list[dict]:

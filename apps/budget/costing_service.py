@@ -15,6 +15,8 @@ is reused unchanged; this service wraps it with catalogue resolution + persisten
 """
 from __future__ import annotations
 
+from django.db.models import Q
+
 from apps.activities.models import Activity, ActivityScheduleCostLine
 from apps.core.exceptions import BadRequest
 
@@ -39,9 +41,21 @@ def _rate_card(catalogue: CostCatalogue | None) -> tuple[dict[str, int], dict[st
     or in tests that create rates directly). This keeps a single source of truth
     — the rate value is always the latest CostSetting for a key — while still
     recognizing the catalogue concept for provenance/versioning."""
-    # Latest setting per key across (catalogue-attached + unattached). A key
-    # attached to the catalogue wins; otherwise the unattached row is used.
-    settings = {s.key: s for s in CostSetting.objects.all()}
+    # Only rates belonging to THIS catalogue (plus unattached back-compat rows)
+    # may price the activity — otherwise the catalogue id/version stamped onto
+    # the budget line would not describe the rates actually used. Unattached
+    # rows load first so a catalogue-attached key always wins.
+    if catalogue is not None:
+        qs = CostSetting.objects.filter(
+            Q(catalogue=catalogue) | Q(catalogue__isnull=True)
+        )
+        settings: dict[str, CostSetting] = {}
+        for s in qs:
+            # Catalogue-attached keys always win; unattached rows only fill gaps.
+            if s.catalogue_id == catalogue.id or s.key not in settings:
+                settings[s.key] = s
+    else:
+        settings = {s.key: s for s in CostSetting.objects.all()}
     rates = {key: s.unit_cost for key, s in settings.items()}
     return rates, settings
 
