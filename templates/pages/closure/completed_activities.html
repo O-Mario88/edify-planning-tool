@@ -67,7 +67,7 @@ Permanent list of financially cleared and closed activities. Locked for edit, pr
 </td>
 <!-- NetSuite ID -->
 <td class="px-6 py-4 text-center font-mono text-[11px] text-slate-800">
-NS-EXP-777 <!-- mock ID matching evaluated tests -->
+{{ act.completed_snapshot.netsuite_expense_id|default:"—" }}
 </td>
 <!-- Actions -->
 <td class="px-6 py-4 text-right">
