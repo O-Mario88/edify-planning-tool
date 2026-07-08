@@ -404,7 +404,9 @@ input[type="text"], input[type="number"], input[type="email"], input[type="passw
   border-radius: var(--edify-radius-sm) !important;
   color: var(--edify-text) !important;
   font-size: 12.5px !important;
-  padding: 6px 12px !important;
+  /* No !important on padding: inputs with icons (e.g. the topbar search)
+     must be able to reserve space for them. */
+  padding: 6px 12px;
   outline: none !important;
   transition: var(--edify-transition-fast) !important;
 }

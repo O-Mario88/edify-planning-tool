@@ -31,3 +31,7 @@ htmlcov/
 
 # Local ZCode agent config (skills, etc.)
 .agents/
+
+# Node (CSS build pipeline)
+node_modules/
+package-lock.json
