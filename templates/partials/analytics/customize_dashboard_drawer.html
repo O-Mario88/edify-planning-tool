@@ -1,59 +1,38 @@
 {% extends "components/drawers/base_drawer.html" %}
 
 {% block drawer_title %}Customize Dashboard{% endblock %}
-{% block drawer_subtitle %}Toggle card visibility and choose layout preferences{% endblock %}
+{% block drawer_subtitle %}Choose which KPI Strip tiles you want to see{% endblock %}
 
 {% block drawer_body %}
-<form 
-@submit.prevent="alert('Dashboard customization preferences saved!'); $dispatch('close-drawer');"
+<form
+hx-post="/analytics/customize-dashboard"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
 class="space-y-4 text-[12px] font-sans"
 >
 <div class="space-y-2">
-<label class="block font-bold text-slate-700">KPI Cards Visibility</label>
+<label class="block font-bold text-slate-700">KPI Strip Visibility</label>
+<p class="text-[11px] text-slate-400 font-semibold">Saved to your session — applies the next time the dashboard loads.</p>
 <div class="space-y-1.5">
+{% for toggle in toggles %}
 <label class="flex items-center justify-between font-semibold text-slate-700 cursor-pointer">
-<span>Overall Target Achievement</span>
-<input type="checkbox" checked class="accent-[#2e505f]">
+<span>{{ toggle.label }}</span>
+<input type="checkbox" name="kpi_toggle" value="{{ toggle.code }}" {% if toggle.checked %}checked{% endif %} class="accent-[#2e505f]">
 </label>
-<label class="flex items-center justify-between font-semibold text-slate-700 cursor-pointer">
-<span>Teachers & Leaders Trained</span>
-<input type="checkbox" checked class="accent-[#2e505f]">
-</label>
-<label class="flex items-center justify-between font-semibold text-slate-700 cursor-pointer">
-<span>Students & Schools Impacted</span>
-<input type="checkbox" checked class="accent-[#2e505f]">
-</label>
-<label class="flex items-center justify-between font-semibold text-slate-700 cursor-pointer">
-<span>SSA Average Performance</span>
-<input type="checkbox" checked class="accent-[#2e505f]">
-</label>
-</div>
-</div>
-
-<div class="space-y-2 mt-4">
-<label class="block font-bold text-slate-700">Display Layout Preference</label>
-<div class="space-y-1.5">
-<label class="inline-flex items-center gap-1.5 font-semibold text-slate-700 cursor-pointer">
-<input type="radio" name="layout" value="grid" checked class="accent-[#2e505f]">
-<span>Standard Grid Layout (Mockup reference)</span>
-</label>
-<label class="inline-flex items-center gap-1.5 font-semibold text-slate-700 cursor-pointer">
-<input type="radio" name="layout" value="compact" class="accent-[#2e505f]">
-<span>Compact Tabular View</span>
-</label>
+{% endfor %}
 </div>
 </div>
 
 <!-- Action buttons -->
 <div class="drawer-footer">
-<button 
-type="button" 
+<button
+type="button"
 @click="$dispatch('close-drawer')"
 class="px-5 h-9 rounded-xl btn-premium-secondary font-bold text-[12px]"
 >
 Cancel
 </button>
-<button 
+<button
 type="submit"
 class="px-6 h-9 rounded-xl btn-premium-primary font-bold text-[12px] shadow-sm flex items-center justify-center"
 >

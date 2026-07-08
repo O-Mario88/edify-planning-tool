@@ -413,7 +413,7 @@ def district_detail_view(request, district_id):
     return render(request, "pages/districts/detail.html", context)
 
 
-@require_page_permission("planning")
+@require_page_permission("reports")
 def reports_view(request):
     """Reports overview — all roles. Every figure is computed from live
     activity data for the selected FY (achieved = completed vs scheduled)."""
@@ -630,16 +630,42 @@ def reports_view(request):
         )
     overall = {p["key"]: p for p in periods}
 
-    core_cards = []
-    for r in matrix_rows:
-        core_cards.append(
-            {
-                "label": r["area"],
-                "value": f"{r['fy_a']} / {r['fy_t']}",
-                "pct": r["fy_p"],
-                "color": _pct_color(r["fy_p"]).replace("emerald", "blue"),
-            }
-        )
+    kpi_strip_items = [
+        {
+            "label": p["label"],
+            "value": f"{p['achieved']} / {p['total']}",
+            "helper": f"{p['pct']}% · {p['status']}",
+            "icon": "calendar",
+            "variant": "success"
+            if p["status"] == "On Track"
+            else ("neutral" if p["status"] == "Not Started" else "warning"),
+        }
+        for p in periods
+    ]
+
+    # FY completion per target area — ApexCharts bar (replaces the old
+    # 6-column mini-card grid, which violated the 3-column layout rule).
+    matrix_chart_has_data = any(r["fy_t"] for r in matrix_rows)
+    matrix_chart_options = {
+        "chart": {
+            "type": "bar",
+            "height": 280,
+            "toolbar": {"show": False},
+            "fontFamily": "inherit",
+        },
+        "series": [
+            {"name": "FY completion %", "data": [r["fy_p"] for r in matrix_rows]}
+        ],
+        "xaxis": {"categories": [r["area"] for r in matrix_rows]},
+        "plotOptions": {
+            "bar": {"borderRadius": 4, "columnWidth": "50%", "distributed": True}
+        },
+        "colors": ["#3b82f6", "#10b981", "#f59e0b", "#0ea5a4", "#f43f5e", "#94a3b8"],
+        "legend": {"show": False},
+        "grid": {"borderColor": "#f1f5f9"},
+        "dataLabels": {"enabled": True},
+        "tooltip": {"theme": "light"},
+    }
 
     # Donut: how many target areas are on/at-risk/off track for the FY
     active_rows = [r for r in matrix_rows if r["fy_t"] > 0]
@@ -661,6 +687,27 @@ def reports_view(request):
         "off_pct": _dpct(donut_off),
         "risk_offset": -_dpct(donut_on),
         "off_offset": -(_dpct(donut_on) + _dpct(donut_risk)),
+    }
+    donut_chart_has_data = donut_total > 0
+    donut_chart_options = {
+        "chart": {"type": "donut", "fontFamily": "inherit"},
+        "labels": ["On Track (≥70%)", "At Risk (50-69%)", "Off Track (<50%)"],
+        "series": [donut_on, donut_risk, donut_off],
+        "colors": ["#10b981", "#f59e0b", "#f43f5e"],
+        "legend": {"show": False},
+        "dataLabels": {"enabled": False},
+        "stroke": {"width": 2, "colors": ["#ffffff"]},
+        "plotOptions": {
+            "pie": {
+                "donut": {
+                    "size": "72%",
+                    "labels": {
+                        "show": True,
+                        "total": {"show": True, "label": "Areas", "color": "#1e293b"},
+                    },
+                }
+            }
+        },
     }
 
     # Priorities: worst areas by FY completion (only areas with scheduled work)
@@ -690,7 +737,8 @@ def reports_view(request):
             }
         )
 
-    # Cumulative trend chart points (SVG viewBox 600x200; y: 190=0%, 10=100%)
+    # Cumulative progress trend — actual % achieved vs the cumulative FY
+    # target, per period. Server-computed ApexCharts series (no SVG math).
     trend_keys = [
         ("month", now.strftime("%b")),
         ("Q1", "Q1"),
@@ -709,25 +757,36 @@ def reports_view(request):
         "Q4": 100,
         "fy": 100,
     }
-    trend = []
-    xs = [40, 125, 210, 295, 380, 465, 550]
-    for (key, short), x in zip(trend_keys, xs):
-        pct = overall[key]["pct"]
-        tgt = (
-            target_pcts[key]
-            if target_pcts[key] is not None
-            else get_cumulative_target_percentage("FY")
-        )
-        trend.append(
-            {
-                "x": x,
-                "y": round(190 - pct * 1.8),
-                "ty": round(190 - tgt * 1.8),
-                "label": f"{short} ({pct}%)",
-            }
-        )
-    trend_actual_points = " ".join(f"{t['x']},{t['y']}" for t in trend)
-    trend_target_points = " ".join(f"{t['x']},{t['ty']}" for t in trend)
+    trend_labels = [short for _key, short in trend_keys]
+    trend_actual = [overall[key]["pct"] for key, _short in trend_keys]
+    trend_plan = [
+        target_pcts[key]
+        if target_pcts[key] is not None
+        else get_cumulative_target_percentage("FY")
+        for key, _short in trend_keys
+    ]
+    trend_chart_has_data = any(overall[key]["total"] for key, _ in trend_keys)
+    trend_chart_options = {
+        "chart": {
+            "type": "line",
+            "height": 260,
+            "toolbar": {"show": False},
+            "fontFamily": "inherit",
+        },
+        "series": [
+            {"name": "Actual %", "data": trend_actual},
+            {"name": "Cumulative Plan %", "data": trend_plan},
+        ],
+        "stroke": {"width": [3, 2], "curve": "smooth", "dashArray": [0, 6]},
+        "colors": ["#3b82f6", "#94a3b8"],
+        "xaxis": {"categories": trend_labels},
+        "yaxis": {"max": 100, "min": 0},
+        "grid": {"borderColor": "#f1f5f9"},
+        "legend": {"position": "top", "horizontalAlign": "right"},
+        "dataLabels": {"enabled": False},
+        "markers": {"size": 4},
+        "tooltip": {"theme": "light"},
+    }
 
     total_schools = School.objects.filter(deleted_at__isnull=True).count()
     total_activities = acts.count()
@@ -743,6 +802,7 @@ def reports_view(request):
         if total_activities
         else 0,
         "periods": periods,
+        "kpi_strip_items": kpi_strip_items,
         "current_month_label": now.strftime("%B %Y"),
         "q_labels": q_labels,
         "monthly_pct": overall["month"]["pct"],
@@ -752,13 +812,16 @@ def reports_view(request):
         "q3_pct": overall["Q3"]["pct"],
         "q4_pct": overall["Q4"]["pct"],
         "fy_pct": overall["fy"]["pct"],
-        "core_cards": core_cards,
         "matrix_rows": matrix_rows,
+        "matrix_chart_options": matrix_chart_options,
+        "matrix_chart_has_data": matrix_chart_has_data,
         "donut": donut,
+        "donut_chart_options": donut_chart_options,
+        "donut_chart_has_data": donut_chart_has_data,
+        "donut_footer_note": f"Overall FY completion: {overall['fy']['pct']}%",
         "priorities": priorities,
-        "trend": trend,
-        "trend_actual_points": trend_actual_points,
-        "trend_target_points": trend_target_points,
+        "trend_chart_options": trend_chart_options,
+        "trend_chart_has_data": trend_chart_has_data,
     }
     return render(request, "pages/reports/index.html", context)
 

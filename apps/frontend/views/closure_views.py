@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.db.models import Count
 
 from apps.core.permissions import require_page_permission
 from apps.core.fy import fy_options
@@ -309,12 +310,97 @@ def activity_timeline_view(request, activity_id):
     return render(request, "pages/closure/activity_timeline.html", context)
 
 
-@require_page_permission("planning")
+@require_page_permission("analytics")
 def analytics_publishing_status_view(request):
-    """Analytics Publishing Status Page."""
-    records = AnalyticsPublishRecord.objects.all().select_related(
-        "activity", "activity__school"
-    )
+    """Analytics Publishing Status — monitors whether IA-verified activities
+    have successfully flowed into official reporting/analytics tables. Cross-
+    role like the main Analytics Dashboard (CD/IA/PL/CCEO/RVP/Accountant all
+    depend on this pipeline being healthy for their own analytics numbers)."""
+    status_filter = request.GET.get("status", "").strip()
 
-    context = {"records": records}
+    records_qs = (
+        AnalyticsPublishRecord.objects.all()
+        .select_related("activity", "activity__school")
+        .order_by("-updated_at")
+    )
+    if status_filter and status_filter != "All":
+        records_qs = records_qs.filter(status=status_filter)
+    records = list(records_qs[:200])
+
+    status_counts = {
+        row["status"]: row["c"]
+        for row in AnalyticsPublishRecord.objects.values("status").annotate(
+            c=Count("id")
+        )
+    }
+    total = AnalyticsPublishRecord.objects.count()
+
+    kpi_strip_items = [
+        {
+            "label": "Total Records",
+            "value": str(total),
+            "helper": "tracked activities",
+            "icon": "document",
+            "variant": "primary",
+        },
+        {
+            "label": "Published",
+            "value": str(status_counts.get("published", 0)),
+            "helper": "successfully synced",
+            "icon": "check",
+            "variant": "success",
+        },
+        {
+            "label": "Pending",
+            "value": str(status_counts.get("pending", 0)),
+            "helper": "awaiting sync",
+            "icon": "clock",
+            "variant": "warning",
+        },
+        {
+            "label": "Recalculation Required",
+            "value": str(status_counts.get("recalculation_required", 0)),
+            "helper": "needs reprocessing",
+            "icon": "chart",
+            "variant": "info",
+        },
+        {
+            "label": "Failed",
+            "value": str(status_counts.get("failed", 0)),
+            "helper": "sync errors",
+            "icon": "warning",
+            "variant": "danger",
+        },
+    ]
+
+    status_options = [
+        ("All", "All statuses"),
+        ("pending", "Pending"),
+        ("published", "Published"),
+        ("recalculation_required", "Recalculation Required"),
+        ("failed", "Failed"),
+        ("excluded", "Excluded"),
+    ]
+    filter_fields = [
+        {
+            "name": "status",
+            "label": "Status",
+            "options": [
+                {
+                    "value": val,
+                    "label": label,
+                    "selected": (status_filter or "All") == val,
+                }
+                for val, label in status_options
+            ],
+        }
+    ]
+
+    context = {
+        "records": records,
+        "kpi_strip_items": kpi_strip_items,
+        "filter_fields": filter_fields,
+        "status_filter": status_filter or "All",
+        "total": total,
+    }
     return render(request, "pages/analytics/publishing_status.html", context)

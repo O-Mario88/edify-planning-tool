@@ -544,34 +544,66 @@ def evidence_gallery_view(request):
 
 @require_page_permission("planning")
 def my_targets_view(request):
-    """Personal targets & KPIs for the signed-in CCEO."""
-    user = request.user
-    fy = get_operational_fy()
-    today = date.today()
-
-    # Completed visits this FY
-    VISIT_TYPES = ["school_visit", "follow_up_visit", "coaching_visit", "core_visit"]
-    visits_done = Activity.objects.filter(
-        responsible_staff_id=user.id,
-        activity_type__in=VISIT_TYPES,
-        status="completed",
-        deleted_at__isnull=True,
-    ).count()
-
-    # Completed trainings this FY
-    TRAINING_TYPES = ["group_training", "cluster_training", "teachers_training"]
-    trainings_done = Activity.objects.filter(
-        responsible_staff_id=user.id,
-        activity_type__in=TRAINING_TYPES,
-        status="completed",
-        deleted_at__isnull=True,
-    ).count()
-
-    # Schools with SSA done
+    """Personal targets & KPIs for the signed-in field staff (CCEO/Program
+    Lead/Project Coordinator). Every figure is a real queryset aggregate;
+    annual targets come from StaffTargetProfile when CD/HR has configured
+    one for this FY, and are shown as "not set" (never a guessed number)
+    otherwise. Period targets are the real annual target divided evenly
+    across the period — the same proportional-target convention used by
+    the Analytics dashboard and Reports pages."""
+    from apps.accounts.models import StaffTargetProfile
     from apps.core.scoping import resolve_user_scope
+    from apps.core.fy import (
+        fy_options,
+        get_fy_date_range,
+        get_quarter_date_range,
+        get_mid_year_range,
+    )
+
+    user = request.user
+    fy = request.GET.get("fy", "").strip() or get_operational_fy()
+    if fy not in fy_options():
+        fy = get_operational_fy()
+
+    COMPLETED = ["completed", "ia_verified", "closed", "accountant_confirmed"]
+    # Canonical activity_type values (apps.core.enums.ActivityType) — the
+    # previous version of this view filtered on "group_training" and
+    # "teachers_training", which are not real activity types and silently
+    # matched nothing.
+    VISIT_TYPES = [
+        "school_visit",
+        "follow_up_visit",
+        "coaching_visit",
+        "core_visit",
+        "in_school_support",
+    ]
+    TRAINING_TYPES = [
+        "training",
+        "school_improvement_training",
+        "cluster_training",
+        "core_training",
+    ]
 
     scope = resolve_user_scope(user)
     total_schools = len(scope.school_ids)
+
+    staff_profile_id = user.staff_profile_id
+    target_profile = None
+    if staff_profile_id:
+        target_profile = StaffTargetProfile.objects.filter(
+            staff_id=staff_profile_id, fy=fy
+        ).first()
+    visits_target = target_profile.visits_target if target_profile else 0
+    trainings_target = (
+        target_profile.group_trainings_target if target_profile else 0
+    ) or (target_profile.trainings_target if target_profile else 0)
+    ssa_target = (target_profile.ssa_target if target_profile else 0) or total_schools
+
+    acts = Activity.objects.filter(
+        responsible_staff_id=user.id, deleted_at__isnull=True, fy=fy
+    )
+
+    # Schools with SSA done this FY (cumulative — not period-sliced)
     ssa_done = (
         SsaRecord.objects.filter(
             school_id__in=scope.school_ids,
@@ -583,73 +615,213 @@ def my_targets_view(request):
         .count()
     )
 
-    # Evidence gap
-    evidence_gap = Activity.objects.filter(
-        responsible_staff_id=user.id,
-        status="completed",
-        evidence__isnull=True,
-        deleted_at__isnull=True,
-    ).count()
+    # Evidence gap — completed activities with no evidence uploaded yet
+    evidence_gap = acts.filter(status__in=COMPLETED, evidence__isnull=True).count()
 
-    # Week performance
-    week_start = today - timedelta(days=today.weekday())
-    week_end = week_start + timedelta(days=6)
-    week_activities = Activity.objects.filter(
-        responsible_staff_id=user.id,
-        planned_date__range=[week_start, week_end],
-        deleted_at__isnull=True,
-    )
-    week_completed = week_activities.filter(status="completed").count()
-    week_total = week_activities.count()
-
-    kpis = [
+    kpi_strip_items = [
         {
             "label": "School Visits",
-            "value": visits_done,
-            "target": 200,
-            "unit": "visits",
+            "value": f"{acts.filter(activity_type__in=VISIT_TYPES, status__in=COMPLETED).count()}"
+            + (f" / {visits_target}" if visits_target else ""),
+            "helper": "this FY" if visits_target else "no target set",
             "icon": "school",
-            "color": "indigo",
+            "variant": "info",
         },
         {
-            "label": "Group Trainings",
-            "value": trainings_done,
-            "target": 48,
-            "unit": "sessions",
-            "icon": "training",
-            "color": "violet",
+            "label": "Trainings Delivered",
+            "value": f"{acts.filter(activity_type__in=TRAINING_TYPES, status__in=COMPLETED).count()}"
+            + (f" / {trainings_target}" if trainings_target else ""),
+            "helper": "this FY" if trainings_target else "no target set",
+            "icon": "target",
+            "variant": "warning",
         },
         {
             "label": "SSA Completed",
-            "value": ssa_done,
-            "target": total_schools,
-            "unit": f"/ {total_schools} schools",
-            "icon": "ssa",
-            "color": "teal",
+            "value": f"{ssa_done} / {total_schools}"
+            if total_schools
+            else str(ssa_done),
+            "helper": "assigned schools",
+            "icon": "chart",
+            "variant": "success",
         },
         {
             "label": "Evidence Gap",
-            "value": evidence_gap,
-            "target": 0,
-            "unit": "pending",
-            "icon": "evidence",
-            "color": "rose",
-            "lower_is_better": True,
+            "value": str(evidence_gap),
+            "helper": "completed, no evidence yet",
+            "icon": "warning",
+            "variant": "danger" if evidence_gap else "success",
         },
     ]
 
+    # ── Real per-period matrix (Month / Q1 / Q2 / Mid Year / Q3 / Q4 / FY) ──
+    now = timezone.now()
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    if month_start.month == 12:
+        month_end = month_start.replace(year=month_start.year + 1, month=1)
+    else:
+        month_end = month_start.replace(month=month_start.month + 1)
+    ranges = {
+        "month": (month_start, month_end),
+        "Q1": get_quarter_date_range(fy, "Q1"),
+        "Q2": get_quarter_date_range(fy, "Q2"),
+        "mid": get_mid_year_range(fy),
+        "Q3": get_quarter_date_range(fy, "Q3"),
+        "Q4": get_quarter_date_range(fy, "Q4"),
+        "fy": get_fy_date_range(fy),
+    }
+    period_fraction = {
+        "month": 1 / 12,
+        "Q1": 1 / 4,
+        "Q2": 1 / 4,
+        "mid": 1 / 2,
+        "Q3": 1 / 4,
+        "Q4": 1 / 4,
+        "fy": 1,
+    }
+    period_labels = {
+        "month": now.strftime("%b %Y"),
+        "Q1": "Q1",
+        "Q2": "Q2",
+        "mid": "Mid Year",
+        "Q3": "Q3",
+        "Q4": "Q4",
+        "fy": f"FY {fy}",
+    }
+
+    def _period_row(label, types, annual_target):
+        row = {"area": label, "has_target": annual_target > 0}
+        for key, rng in ranges.items():
+            ach = acts.filter(
+                activity_type__in=types, scheduled_date__range=rng, status__in=COMPLETED
+            ).count()
+            tgt = round(annual_target * period_fraction[key]) if annual_target else 0
+            pct = round(ach / tgt * 100) if tgt else 0
+            row[f"{key}_a"] = ach
+            row[f"{key}_t"] = tgt
+            row[f"{key}_p"] = pct
+        return row
+
+    matrix_rows = [
+        _period_row("School Visits", VISIT_TYPES, visits_target),
+        _period_row("Trainings Delivered", TRAINING_TYPES, trainings_target),
+    ]
+    active_rows = [r for r in matrix_rows if r["has_target"]]
+
+    overall_pct = {}
+    for key in ranges:
+        tgt_sum = sum(r[f"{key}_t"] for r in active_rows)
+        ach_sum = sum(r[f"{key}_a"] for r in active_rows)
+        overall_pct[key] = round(ach_sum / tgt_sum * 100) if tgt_sum else 0
+
+    # Trend chart — actual cumulative % vs the cumulative plan %
+    trend_target_pcts = {
+        "month": None,
+        "Q1": 25,
+        "Q2": 50,
+        "mid": 50,
+        "Q3": 75,
+        "Q4": 100,
+        "fy": 100,
+    }
+    trend_labels = [period_labels[k] for k in ranges]
+    trend_actual = [overall_pct[k] for k in ranges]
+    trend_plan = [trend_target_pcts[k] or 0 for k in ranges]
+    trend_chart_has_data = bool(active_rows) and any(r["fy_a"] for r in active_rows)
+    trend_chart_options = {
+        "chart": {
+            "type": "line",
+            "height": 240,
+            "toolbar": {"show": False},
+            "fontFamily": "inherit",
+        },
+        "series": [
+            {"name": "Actual %", "data": trend_actual},
+            {"name": "Cumulative Plan %", "data": trend_plan},
+        ],
+        "stroke": {"width": [3, 2], "curve": "smooth", "dashArray": [0, 6]},
+        "colors": ["#3b82f6", "#94a3b8"],
+        "xaxis": {"categories": trend_labels},
+        "yaxis": {"max": 100, "min": 0},
+        "grid": {"borderColor": "#f1f5f9"},
+        "legend": {"position": "top", "horizontalAlign": "right"},
+        "dataLabels": {"enabled": False},
+        "markers": {"size": 4},
+        "tooltip": {"theme": "light"},
+    }
+
+    # Performance distribution donut — FY completion per tracked area
+    on_track = sum(1 for r in active_rows if r["fy_p"] >= 70)
+    at_risk = sum(1 for r in active_rows if 40 <= r["fy_p"] < 70)
+    off_track = sum(1 for r in active_rows if r["fy_p"] < 40)
+    donut_chart_has_data = bool(active_rows)
+    donut_chart_options = {
+        "chart": {"type": "donut", "fontFamily": "inherit"},
+        "labels": ["On Track (≥70%)", "At Risk (40-69%)", "Off Track (<40%)"],
+        "series": [on_track, at_risk, off_track],
+        "colors": ["#10b981", "#f59e0b", "#f43f5e"],
+        "legend": {"show": False},
+        "dataLabels": {"enabled": False},
+        "stroke": {"width": 2, "colors": ["#ffffff"]},
+        "plotOptions": {
+            "pie": {
+                "donut": {
+                    "size": "72%",
+                    "labels": {
+                        "show": True,
+                        "total": {"show": True, "label": "Areas", "color": "#1e293b"},
+                    },
+                }
+            }
+        },
+    }
+
+    focus_areas = [
+        r for r in sorted(active_rows, key=lambda r: r["fy_p"]) if r["fy_p"] < 70
+    ][:2]
+
+    if request.GET.get("export") == "csv":
+        import csv
+        from django.http import HttpResponse
+
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = (
+            f'attachment; filename="my-targets-FY{fy}.csv"'
+        )
+        writer = csv.writer(response)
+        writer.writerow(["My Targets Snapshot", f"FY {fy}", user.email])
+        writer.writerow([])
+        writer.writerow(["Metric", "Value"])
+        for item in kpi_strip_items:
+            writer.writerow([item["label"], item["value"]])
+        writer.writerow([])
+        writer.writerow(["Area"] + [f"{period_labels[k]} Sched." for k in ranges])
+        for row in matrix_rows:
+            writer.writerow(
+                [row["area"]] + [f"{row[f'{k}_a']}/{row[f'{k}_t']}" for k in ranges]
+            )
+        return response
+
     context = {
-        "kpis": kpis,
         "fy": fy,
-        "visits_done": visits_done,
-        "trainings_done": trainings_done,
+        "fy_options": fy_options(),
+        "kpi_strip_items": kpi_strip_items,
+        "matrix_rows": matrix_rows,
+        "has_any_target": bool(active_rows),
+        "period_labels": period_labels,
+        "trend_chart_options": trend_chart_options,
+        "trend_chart_has_data": trend_chart_has_data,
+        "donut_chart_options": donut_chart_options,
+        "donut_chart_has_data": donut_chart_has_data,
+        "on_track": on_track,
+        "at_risk": at_risk,
+        "off_track": off_track,
+        "focus_areas": focus_areas,
+        "overall_fy_pct": overall_pct["fy"],
+        "donut_footer_note": f"Overall FY completion: {overall_pct['fy']}%",
         "ssa_done": ssa_done,
+        "ssa_target": ssa_target,
         "total_schools": total_schools,
         "evidence_gap": evidence_gap,
-        "week_completed": week_completed,
-        "week_total": week_total,
-        "week_start": week_start,
-        "week_end": week_end,
     }
     return render(request, "pages/targets/index.html", context)
 

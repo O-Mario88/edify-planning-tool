@@ -123,7 +123,7 @@ class AnalyticsDashboardTest(TestCase):
         self.client.login(email="cd@edify.org", password="testpassword")
         response = self.client.get(reverse("frontend:analytics_schedule_report"))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Schedule Report")
+        self.assertContains(response, "Save Report Snapshot")
 
     def test_customize_dashboard_drawer(self):
         self.client.login(email="cd@edify.org", password="testpassword")

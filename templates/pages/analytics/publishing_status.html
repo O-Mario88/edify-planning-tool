@@ -1,26 +1,20 @@
 {% extends "layouts/shell.html" %}
 
-{% block title %}Analytics Publishing Status - Edify Command Center{% endblock %}
+{% block title %}Analytics Publishing Status · Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6">
+<div class="p-6 max-w-[1500px] mx-auto space-y-5 text-slate-700 font-sans">
 
-<!-- Premium Header Pane -->
-<div class="relative overflow-hidden rounded-xl bg-slate-900 text-white p-8 shadow-md border border-slate-800">
-<div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-blue-500/10 blur-3xl pointer-events-none"></div>
-<div class="relative z-10 space-y-2">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-500 text-[11px] font-semibold uppercase tracking-widest">
-Data pipelines
-</div>
-<h1 class="text-[32px] font-semibold tracking-tight text-white leading-none">Analytics Publishing Status</h1>
-<p class="text-[14px] text-slate-400 font-medium max-w-xl">
-Monitor integration status of verified activities inside official reporting databases. Ensures analytics targets accurately count verified work.
-</p>
-</div>
-</div>
+{% include "components/page_header.html" with title="Analytics Publishing Status" subtitle="Monitor whether verified activities have synced into official reporting tables." %}
+
+<!-- Filters -->
+{% include "components/filter_bar.html" with form_id="publishing-status-filters" fields=filter_fields clear_href="/analytics/publishing" %}
+
+<!-- KPI Strip -->
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
 
 <!-- Table Card -->
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+<div class="card p-0 overflow-hidden">
 <div class="overflow-x-auto">
 <table class="w-full text-[12px] font-semibold text-slate-700">
 <thead class="bg-slate-50 border-b border-slate-100 text-[11px] uppercase font-bold text-slate-400">
@@ -30,11 +24,10 @@ Monitor integration status of verified activities inside official reporting data
 <th class="px-6 py-4 text-left">Activity Type</th>
 <th class="px-6 py-4 text-center">Status</th>
 <th class="px-6 py-4 text-center">Published Date</th>
-<th class="px-6 py-4 text-left">Logs / Errors</th>
+<th class="px-6 py-4 text-left">Error / Notes</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100">
-{% if records %}
 {% for item in records %}
 <tr class="hover:bg-slate-50/50 transition-colors">
 <!-- ID -->
@@ -53,38 +46,38 @@ Monitor integration status of verified activities inside official reporting data
 </td>
 <!-- Status -->
 <td class="px-6 py-4 text-center">
-<span class="px-2.5 py-0.5 rounded-lg text-[11px] font-semibold uppercase tracking-wider 
-{% if item.status == 'published' %}bg-emerald-50 text-emerald-700 border border-emerald-200
-{% elif item.status == 'recalculation_required' %}bg-amber-50 text-amber-700 border border-amber-200
-{% else %}bg-slate-100 text-slate-500 border border-slate-200/50{% endif %}">
-{{ item.status|title }}
-</span>
+{% if item.status == 'published' %}
+{% include "components/badge.html" with tone="success" label="Published" %}
+{% elif item.status == 'recalculation_required' %}
+{% include "components/badge.html" with tone="warning" label="Recalculation Required" %}
+{% elif item.status == 'failed' %}
+{% include "components/badge.html" with tone="danger" label="Failed" %}
+{% elif item.status == 'excluded' %}
+{% include "components/badge.html" with tone="neutral" label="Excluded" %}
+{% else %}
+{% include "components/badge.html" with tone="info" label="Pending" %}
+{% endif %}
 </td>
 <!-- Date -->
 <td class="px-6 py-4 text-center text-slate-500 font-medium">
-{{ item.published_at|date:"M d, Y H:i"|default:"Pending" }}
+{{ item.published_at|date:"M d, Y H:i"|default:"Not yet published" }}
 </td>
 <!-- Logs -->
 <td class="px-6 py-4 text-slate-500 font-medium">
-{{ item.error_message|default:"Success. Broadcast published to target reports." }}
+{{ item.error_message|default:"—" }}
+</td>
+</tr>
+{% empty %}
+<tr>
+<td colspan="6" class="p-0">
+{% include "components/empty_state.html" with title="No items in the publishing queue" message="Records appear here once activities move through IA verification and the analytics sync job picks them up." %}
 </td>
 </tr>
 {% endfor %}
-{% else %}
-<tr>
-<td colspan="6" class="px-6 py-16 text-center text-[14px] font-semibold text-slate-400 bg-slate-50/20">
-<div class="flex flex-col items-center justify-center gap-3">
-<div class="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 shadow-inner">
-<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" /></svg>
-</div>
-<p class="text-slate-400">No items found in analytics publishing queue.</p>
-</div>
-</td>
-</tr>
-{% endif %}
 </tbody>
 </table>
 </div>
 </div>
+
 </div>
 {% endblock %}
