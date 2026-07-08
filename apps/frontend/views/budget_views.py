@@ -453,18 +453,37 @@ def weekly_fund_requests_view(request):
     
     missing_cost_count = activities_qs.filter(scheduled_date__month=month_num, cost_missing=True).count()
     
-    recommended_action = "Generate this week's requests"
-    recommended_desc = "Compile fund requests from scheduled My Plan activities."
-    can_take_action = True
-    action_type = "generate"
+    # Scheduling an activity auto-generates its Weekly Fund Request (see
+    # activities.services.create/reschedule/partner_schedule ->
+    # weekly_service.trigger_generate_for_activity) — there is no manual
+    # "Generate" step in the normal flow. active_wfr missing here means
+    # either nothing is scheduled this week (nothing to do) or a genuine
+    # sync anomaly (pre-existing/legacy activities that bypassed the
+    # service layer) — the "generate" action_type only ever covers the
+    # latter, as a recovery path.
     if active_wfr:
         if active_wfr.status == "pending_responsible_confirmation":
             recommended_action = "Confirm this week's request"
             recommended_desc = "Verify lines and confirm advance disbursement requests."
+            can_take_action = True
             action_type = "confirm"
         else:
             recommended_action = "No immediate action pending"
             recommended_desc = "All weekly requests have been finalized and routed."
+            can_take_action = False
+            action_type = "none"
+    else:
+        has_scheduled_this_week = budget_qs.filter(
+            planned_date__gte=selected_week_start, planned_date__lte=selected_week_end
+        ).exclude(activity__status="cancelled").exists()
+        if has_scheduled_this_week:
+            recommended_action = "Sync this week's request"
+            recommended_desc = "Activities are scheduled but the request hasn't synced yet — this should be automatic; use this to recover."
+            can_take_action = True
+            action_type = "generate"
+        else:
+            recommended_action = "No immediate action pending"
+            recommended_desc = "No activities scheduled for this week yet."
             can_take_action = False
             action_type = "none"
 

@@ -10,7 +10,7 @@ from __future__ import annotations
 import os
 
 from django.conf import settings
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Sum
 
 from apps.core.models import DataSource
 from apps.schools.models import School
@@ -284,6 +284,28 @@ def _workflow_issues() -> dict:
         planned_date__isnull=True,
     ).count()
 
+    # Confirmed/approved/disbursed weekly fund requests whose LIVE scheduled
+    # cost lines (what a re-sync would compute right now) no longer match the
+    # frozen total. generate_weekly_fund_request() deliberately stops syncing
+    # a request's total/lines once it leaves the draft state
+    # (pending_responsible_confirmation) — a later reschedule/cancellation in
+    # that week can't silently rewrite an approved figure — so this check
+    # can't just compare a request against its OWN (equally frozen) lines; it
+    # has to recompute the live sum the same way the generator would.
+    from apps.fund_requests.models import WeeklyFundRequest
+    confirmed_wfrs_drifted = 0
+    for _wfr in WeeklyFundRequest.objects.exclude(status="pending_responsible_confirmation").only(
+        "id", "responsible_user", "week_start_date", "week_end_date", "total_amount"
+    ):
+        _live_sum = ActivityScheduleCostLine.objects.filter(
+            responsible_user=_wfr.responsible_user,
+            planned_date__gte=_wfr.week_start_date,
+            planned_date__lte=_wfr.week_end_date,
+            activity__deleted_at__isnull=True,
+        ).exclude(activity__status="cancelled").aggregate(s=Sum("amount"))["s"] or 0
+        if _live_sum != _wfr.total_amount:
+            confirmed_wfrs_drifted += 1
+
     # Terminal-status activities still returned by the My Plan feed (feed lacks
     # a status exclusion).
     closed_still_in_my_plan = active.filter(
@@ -364,6 +386,8 @@ def _workflow_issues() -> dict:
         blockers.append(f"{active_plan_missing_date} active-plan activity(ies) with no planned date.")
     if closed_still_in_my_plan:
         blockers.append(f"{closed_still_in_my_plan} Terminal-status activities still returned by the My Plan feed (feed lacks a status exclusion).")
+    if confirmed_wfrs_drifted:
+        blockers.append(f"{confirmed_wfrs_drifted} confirmed/approved weekly fund request(s) whose activities changed after approval — needs reconciliation.")
 
     return {
         "unclusteredSchools": unclustered_schools,
@@ -389,6 +413,7 @@ def _workflow_issues() -> dict:
         "budgetLinesMissingCatalogue": budget_lines_missing_catalogue,
         "activePlanMissingDate": active_plan_missing_date,
         "closedStillInMyPlanFeed": closed_still_in_my_plan,
+        "confirmedWeeklyRequestsDrifted": confirmed_wfrs_drifted,
         "clean": len(blockers) == 0,
         "blockers": blockers,
     }

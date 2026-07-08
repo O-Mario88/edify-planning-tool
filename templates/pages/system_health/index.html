@@ -431,6 +431,21 @@ FY26 Checks
 </div>
 </div>
 
+<!-- Check 24: Confirmed weekly fund requests drifted from their activities -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">24. Confirmed weekly requests drifted from their activities</span>
+<span class="text-[12px] text-slate-500 block">Weekly fund requests past the draft stage whose activity budget lines no longer sum to the confirmed total — a schedule change after approval needs reconciliation, not a silent rewrite.</span>
+</div>
+<div class="text-right">
+{% if health.confirmedWeeklyRequestsDrifted > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.confirmedWeeklyRequestsDrifted }} Items</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
 </div>
 </div>
 

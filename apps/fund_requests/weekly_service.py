@@ -57,14 +57,21 @@ def generate_weekly_fund_request(responsible_user_id: str, week_start_date_str: 
                 wfr.delete()
             return None
 
-        # If a request exists and is already confirmed/disbursed, we shouldn't reset its status
-        # but we can update the total amount.
+        # Once a request has left the draft state (submitted, approved,
+        # confirmed for advance, self-funded, disbursed, ...), a later
+        # schedule/reschedule that re-triggers this sync must NEVER silently
+        # rewrite its amount or delete+rebuild its line items — that would
+        # let a newly-scheduled activity mutate a figure someone already
+        # approved or a payment already disbursed against. This function now
+        # fires automatically on every activity schedule (no manual "Generate
+        # Request" step), so this guard is the difference between "auto"
+        # meaning convenient and "auto" meaning finance-unsafe.
+        if wfr and wfr.status != "pending_responsible_confirmation":
+            return wfr
+
         if wfr:
             wfr.total_amount = total_amount
-            # Only update status if it is still a draft/pending
-            if wfr.status == "pending_responsible_confirmation":
-                wfr.status = "pending_responsible_confirmation"
-            wfr.save()
+            wfr.save(update_fields=["total_amount", "updated_at"])
         else:
             wfr = WeeklyFundRequest.objects.create(
                 fy=fy,
