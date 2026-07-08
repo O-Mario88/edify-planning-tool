@@ -14,11 +14,12 @@ def _floor_money(apps, schema_editor):
             ("fund_request", "returned_amount"),
             ("fund_request_item", "amount"),
         ):
-            c.execute(f"UPDATE {table} SET {col} = floor({col}::numeric) WHERE {col} IS NOT NULL")
+            c.execute(
+                f"UPDATE {table} SET {col} = floor({col}::numeric) WHERE {col} IS NOT NULL"
+            )
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("fund_requests", "0001_initial"),
     ]

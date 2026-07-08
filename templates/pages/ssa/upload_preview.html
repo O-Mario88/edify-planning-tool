@@ -5,23 +5,19 @@
 {% block shell_content %}
 <div class="p-6 max-w-7xl mx-auto space-y-6 font-sans" x-data="{ tab: 'ready' }">
 
-<!-- Header -->
-<div class="flex items-center justify-between border-b border-slate-200 pb-4">
-<div>
-<h1 class="text-[20px] font-semibold text-slate-800 tracking-tight">Upload Preview</h1>
-<p class="text-[12px] text-slate-400 font-semibold mt-0.5">Review the parsed SSA assessment rows before confirming import into the directory.</p>
-</div>
-<div class="flex items-center gap-3">
-<a href="/ssa/upload/" class="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold text-[12px] rounded-lg transition-colors">
-Cancel Upload
-</a>
-<form method="post" action="">
-{% csrf_token %}
-<button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[12px] rounded-lg shadow transition-colors">
-Confirm Import ({{ ready_count }} ready)
-</button>
-</form>
-</div>
+<div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 border-b border-slate-100 pb-4">
+  <div class="min-w-0">
+    <nav class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">SSA Scores</nav>
+    <h1 class="text-[22px] lg:text-[24px] font-semibold text-slate-800 tracking-tight leading-none">Upload Preview</h1>
+    <p class="text-[12px] text-slate-500 font-medium mt-1.5 max-w-2xl">Review the parsed SSA assessment rows before confirming import into the directory.</p>
+  </div>
+  <div class="flex flex-wrap items-center gap-2 shrink-0">
+    {% include "components/button.html" with variant="ghost" size="sm" label="Cancel Upload" href="/ssa/upload/" %}
+    <form method="post" action="" class="m-0">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-primary h-8 inline-flex items-center gap-1.5">Confirm Import ({{ ready_count }} ready)</button>
+    </form>
+  </div>
 </div>
 
 <!-- Tabs Navigation -->

@@ -5,15 +5,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('activities', '0006_activity_support_type_activity_training_number_and_more'),
+        ("activities", "0006_activity_support_type_activity_training_number_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='activity',
-            name='attended_school_ids',
-            field=django.contrib.postgres.fields.ArrayField(base_field=models.CharField(max_length=30), blank=True, default=list, size=None),
+            model_name="activity",
+            name="attended_school_ids",
+            field=django.contrib.postgres.fields.ArrayField(
+                base_field=models.CharField(max_length=30),
+                blank=True,
+                default=list,
+                size=None,
+            ),
         ),
     ]

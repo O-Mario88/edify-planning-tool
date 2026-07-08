@@ -12,6 +12,7 @@ production-upload records (source != local_test_upload).
 
 DEV-ONLY: refuses to run in production.
 """
+
 from __future__ import annotations
 
 from django.conf import settings
@@ -47,7 +48,9 @@ class Command(BaseCommand):
     help = "Purge local test data (source=local_test_upload) from the local database. Dev-only."
 
     def add_arguments(self, parser):
-        parser.add_argument("--yes", action="store_true", help="Skip the confirmation prompt.")
+        parser.add_argument(
+            "--yes", action="store_true", help="Skip the confirmation prompt."
+        )
 
     def handle(self, *args, **options):
         if settings.IS_PRODUCTION:
@@ -64,22 +67,32 @@ class Command(BaseCommand):
                 model = _load(path)
                 if "source" not in {f.name for f in model._meta.get_fields()}:
                     continue
-                counts[path] = model.objects.filter(source=DataSource.LOCAL_TEST_UPLOAD.value).count()
+                counts[path] = model.objects.filter(
+                    source=DataSource.LOCAL_TEST_UPLOAD.value
+                ).count()
             except Exception:  # noqa: BLE001 — model/app may not be installed
                 continue
         total = sum(counts.values())
 
         if total == 0:
-            self.stdout.write(self.style.SUCCESS("No local test records (source=local_test_upload) found. Nothing to purge."))
+            self.stdout.write(
+                self.style.SUCCESS(
+                    "No local test records (source=local_test_upload) found. Nothing to purge."
+                )
+            )
             return
 
-        self.stdout.write(self.style.WARNING(f"Found {total} local test records to purge:"))
+        self.stdout.write(
+            self.style.WARNING(f"Found {total} local test records to purge:")
+        )
         for path, n in counts.items():
             if n:
                 self.stdout.write(f"  {path.rsplit('.',1)[-1]}: {n}")
 
         if not options["yes"]:
-            confirm = input("\nType 'purge' to delete these local test records (reference/production data is safe): ")
+            confirm = input(
+                "\nType 'purge' to delete these local test records (reference/production data is safe): "
+            )
             if confirm.strip().lower() != "purge":
                 self.stdout.write("Aborted.")
                 return
@@ -93,4 +106,8 @@ class Command(BaseCommand):
                 deleted += counts[path]
             except Exception as exc:  # noqa: BLE001
                 self.stderr.write(f"  could not purge {path}: {exc}")
-        self.stdout.write(self.style.SUCCESS(f"Purged {deleted} local test records. Reference + production data untouched."))
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"Purged {deleted} local test records. Reference + production data untouched."
+            )
+        )

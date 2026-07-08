@@ -4,18 +4,24 @@ from apps.accounts.models import User, StaffProfile, UserStatus, StaffSetupCandi
 from apps.core.rbac import EdifyRole
 from apps.geography.models import Region, District, SubCounty
 
+
 class AdminUserOperationsTest(TestCase):
     def setUp(self):
         # Setup geography
         self.region = Region.objects.create(name="Central Region")
         self.district = District.objects.create(name="Kampala", region=self.region)
-        self.sub_county = SubCounty.objects.create(name="SubCounty A", district=self.district)
+        self.sub_county = SubCounty.objects.create(
+            name="SubCounty A", district=self.district
+        )
 
         # Setup administrative users
         self.admin = User.objects.create_user(
-            email="admin@edify.test", name="Admin User",
-            roles=[EdifyRole.ADMIN.value], active_role=EdifyRole.ADMIN.value,
-            password="pwd", is_active=True
+            email="admin@edify.test",
+            name="Admin User",
+            roles=[EdifyRole.ADMIN.value],
+            active_role=EdifyRole.ADMIN.value,
+            password="pwd",
+            is_active=True,
         )
         self.client.force_login(self.admin)
 
@@ -91,12 +97,26 @@ class AdminUserOperationsTest(TestCase):
         # Mock school csv file row structure
         # Salesforce account owner is a new, unmatched name
         from collections import namedtuple
-        Row = namedtuple("Row", [
-            "school_id", "name", "school_type", "district_name", "sub_county_name",
-            "enrollment", "phone", "contact_person", "address", "director_name",
-            "headteacher_name", "account_owner_name", "raw_data"
-        ])
-        
+
+        Row = namedtuple(
+            "Row",
+            [
+                "school_id",
+                "name",
+                "school_type",
+                "district_name",
+                "sub_county_name",
+                "enrollment",
+                "phone",
+                "contact_person",
+                "address",
+                "director_name",
+                "headteacher_name",
+                "account_owner_name",
+                "raw_data",
+            ],
+        )
+
         row = Row(
             school_id="SCH-NEW-99",
             name="New Upload School",
@@ -109,16 +129,16 @@ class AdminUserOperationsTest(TestCase):
             address="Kampala Road",
             director_name="Director",
             headteacher_name="Headteacher",
-            account_owner_name="Grace Mwesigwa", # Unmatched CCEO
-            raw_data={"last_enrollment_date": "2026-01-01"}
+            account_owner_name="Grace Mwesigwa",  # Unmatched CCEO
+            raw_data={"last_enrollment_date": "2026-01-01"},
         )
 
         from apps.schools.upload_service import _auto_create_user_from_upload
-        
+
         # Verify user automatically created
         profile_id = _auto_create_user_from_upload("Grace Mwesigwa")
         self.assertIsNotNone(profile_id)
-        
+
         user = User.objects.get(name="Grace Mwesigwa")
         self.assertEqual(user.status, UserStatus.PENDING_INVITED)
         self.assertFalse(user.is_active)

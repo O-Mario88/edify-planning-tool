@@ -4,49 +4,38 @@
 {% block title %}Cost Catalogue — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6">
+<div class="p-6 max-w-7xl mx-auto space-y-5 font-sans">
 
-<div class="flex items-center justify-between">
-<div>
-<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight">Cost Catalogue</h1>
-<p class="text-[12px] text-[var(--text-secondary)] mt-1 font-semibold">FY{{ fy }} approved cost items for activity budgeting</p>
-</div>
-</div>
-{% if active_catalogue %}
-<div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-center gap-3">
-<span class="text-[20px]">✅</span>
-<div>
-<p class="text-[14px] font-semibold text-emerald-800">Active Catalogue: {{ active_catalogue }}</p>
-<p class="text-[11px] text-emerald-600">Version {{ active_catalogue.version }} · {{ cost_items|length }} cost items</p>
-</div>
-</div>
+{% include "components/page_header.html" with title="Cost Catalogue" subtitle="Approved cost items for activity budgeting." breadcrumb="FY "|add:fy %}
+
+{% if catalogue_notice %}
+{% include "components/role_scope_notice.html" with scope_text=catalogue_notice %}
 {% endif %}
 
-<div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm overflow-hidden">
+<div class="card p-0 overflow-hidden">
 {% if cost_items %}
-<table class="edify-data-table">
-<thead>
+<div class="overflow-x-auto">
+<table class="w-full text-[12px] font-semibold text-slate-700">
+<thead class="bg-slate-50 border-b border-slate-100 text-[11px] uppercase font-bold text-slate-400">
 <tr>
-<th>Item</th>
-<th class="text-right">Rate (UGX)</th>
-<th>Unit</th>
+<th class="px-6 py-4 text-left">Item</th>
+<th class="px-6 py-4 text-right">Rate (UGX)</th>
+<th class="px-6 py-4 text-left">Catalogue Key</th>
 </tr>
 </thead>
-<tbody>
+<tbody class="divide-y divide-slate-100">
 {% for c in cost_items %}
-<tr class="hover:bg-slate-50/60">
-<td class="font-bold text-slate-800">{{ c.item_key|title|replace_underscore }}</td>
-<td class="text-right font-semibold text-indigo-600">{{ c.rate|floatformat:0 }}</td>
-<td class="text-slate-500">{{ c.unit|default:"per unit" }}</td>
+<tr class="hover:bg-slate-50/50 transition-colors">
+<td class="px-6 py-4 font-semibold text-slate-800">{{ c.label }}</td>
+<td class="px-6 py-4 text-right font-semibold text-indigo-600">{{ c.unit_cost|floatformat:0 }}</td>
+<td class="px-6 py-4 text-slate-500 font-mono text-[11px]">{{ c.key }}</td>
 </tr>
 {% endfor %}
 </tbody>
 </table>
-{% else %}
-<div class="edify-empty-state py-12">
-<p class="text-[36px] mb-3">⚙</p>
-<p class="text-[14px] font-bold text-slate-600">No cost items configured for this FY</p>
 </div>
+{% else %}
+{% include "components/empty_state.html" with title="No cost items configured for this FY" message="Cost items populate once a catalogue is initialized for the fiscal year." %}
 {% endif %}
 </div>
 </div>

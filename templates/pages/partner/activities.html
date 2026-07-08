@@ -3,30 +3,38 @@
 {% block title %}My Activities — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6">
+<div class="p-6 max-w-[1600px] mx-auto space-y-5 font-sans">
 
-<div class="flex items-center justify-between">
-<div>
-<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight">My Activities</h1>
-<p class="text-[12px] text-[var(--text-secondary)] mt-1 font-semibold">Partner activities view</p>
-</div>
-</div>
+{% include "components/page_header.html" with title="My Activities" subtitle="Every activity assigned to your organization, most recent first." breadcrumb="Partner Portal" %}
 
-{% if today_activities|default:activities|default:schools|default:evidence %}
-<div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm">
-<div class="px-5 py-4 border-b border-slate-100"><h2 class="text-[14px] font-semibold text-slate-700">Items</h2></div>
-<ul class="divide-y divide-slate-100">
-{% for item in today_activities|default:activities|default:schools|default:evidence %}
-<li class="px-5 py-3.5 flex items-center justify-between">
-<div>
-<p class="text-[14px] font-bold text-slate-800">{{ item.name|default:item.activity_type|default:item }}</p>
-<p class="text-[11px] text-slate-400">{{ item.planned_date|default:item.created_at|default:"" }}</p>
+{% include "components/role_scope_notice.html" with scope_text="Showing activities where you are the responsible staff member." %}
+
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
+
+<form method="get" action="/partner/activities" class="card p-3.5 flex flex-wrap items-end gap-3">
+  <div class="space-y-1 min-w-[160px]">
+    <label class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider block">Status</label>
+    <select name="status" onchange="this.form.submit()" class="h-9 w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 text-[12px] font-semibold text-slate-700 cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#2e505f]">
+      <option value="" {% if not status_filter %}selected{% endif %}>All Status</option>
+      <option value="scheduled" {% if status_filter == 'scheduled' %}selected{% endif %}>Scheduled</option>
+      <option value="in_progress" {% if status_filter == 'in_progress' %}selected{% endif %}>In Progress</option>
+      <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
+      <option value="submitted" {% if status_filter == 'submitted' %}selected{% endif %}>Submitted</option>
+      <option value="returned_for_correction" {% if status_filter == 'returned_for_correction' %}selected{% endif %}>Returned</option>
+    </select>
+  </div>
+  {% if status_filter %}
+  <a href="/partner/activities" class="text-[12px] font-semibold text-slate-500 hover:text-slate-700 flex items-center gap-1 h-9">&times; Clear filter</a>
+  {% endif %}
+</form>
+
+{% if activities %}
+{% include "partials/my_plan/activity_table.html" with activity_list=activities %}
+{% else %}
+<div class="card p-0 overflow-hidden">
+  {% include "components/empty_state.html" with title="No activities found" message="Activities assigned to your organization will appear here." compact="true" %}
 </div>
-</li>
-{% endfor %}
-</ul>
-</div>
-{% else %}<div class="p-12 text-center"><p class="text-[36px] mb-3">📝</p><p class="text-[14px] font-bold text-slate-600">No my activities data yet</p></div>{% endif %}
+{% endif %}
 
 </div>
 {% endblock %}

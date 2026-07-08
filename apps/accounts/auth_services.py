@@ -12,6 +12,7 @@ auth-tokens.service.ts.
 Token storage rule: the DB holds ONLY the SHA-256 hash. The raw token is
 returned to the caller exactly once.
 """
+
 from __future__ import annotations
 
 from datetime import timedelta
@@ -79,7 +80,11 @@ def login(email: str, password: str, requested_active_role: str | None = None) -
         raise Unauthorized("Invalid email or password.")
 
     # A null/unusable password means invited-but-not-set → failed login.
-    password_ok = bool(user and user.password and user.check_password(password)) if user else False
+    password_ok = (
+        bool(user and user.password and user.check_password(password))
+        if user
+        else False
+    )
     if not user or not password_ok or not user.is_active:
         if user:
             failed = user.failed_login_count + 1
@@ -136,7 +141,11 @@ def refresh(refresh_token: str) -> dict:
     token_hash = hash_token(refresh_token or "")
     record = (
         RefreshToken.objects.select_related("user")
-        .filter(token_hash=token_hash, revoked_at__isnull=True, expires_at__gt=timezone.now())
+        .filter(
+            token_hash=token_hash,
+            revoked_at__isnull=True,
+            expires_at__gt=timezone.now(),
+        )
         .first()
     )
     if not record or not record.user or record.user.status != "active":
@@ -162,7 +171,9 @@ def logout(refresh_token: str | None) -> dict:
 def forgot_password(email: str) -> dict:
     """If the email exists, generate a single-use reset token + email it. Always
     returns the same generic response (no user enumeration)."""
-    user = User.objects.filter(email=(email or "").lower().strip(), deleted_at__isnull=True).first()
+    user = User.objects.filter(
+        email=(email or "").lower().strip(), deleted_at__isnull=True
+    ).first()
     if not user:
         return {"ok": True}  # generic — don't reveal existence
 
@@ -200,9 +211,14 @@ def reset_password(token: str, new_password: str, confirm: str) -> dict:
     user.password_reset_expires = None
     user.password_set_at = timezone.now()
     with transaction.atomic():
-        user.save(update_fields=[
-            "password", "password_reset_token_hash", "password_reset_expires", "password_set_at"
-        ])
+        user.save(
+            update_fields=[
+                "password",
+                "password_reset_token_hash",
+                "password_reset_expires",
+                "password_set_at",
+            ]
+        )
         # Revoke all refresh tokens — forces a fresh login everywhere.
         RefreshToken.objects.filter(user_id=user.id, revoked_at__isnull=True).update(
             revoked_at=timezone.now()
@@ -212,7 +228,9 @@ def reset_password(token: str, new_password: str, confirm: str) -> dict:
 
 def _find_user_by_reset_token(token: str) -> User | None:
     token_hash = hash_token(token or "")
-    user = User.objects.filter(password_reset_token_hash=token_hash, deleted_at__isnull=True).first()
+    user = User.objects.filter(
+        password_reset_token_hash=token_hash, deleted_at__isnull=True
+    ).first()
     if not user:
         return None
     if not user.password_reset_expires or user.password_reset_expires < timezone.now():

@@ -14,7 +14,22 @@ jobs:
   django-tests:
     name: Django Lint & Test Suite
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: edify_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
 
     steps:
       - uses: actions/checkout@v4
@@ -24,6 +39,7 @@ jobs:
         with:
           python-version: "3.13"
           cache: "pip"
+          cache-dependency-path: requirements/dev.txt
 
       - name: Install dependencies
         run: |
@@ -40,12 +56,12 @@ jobs:
         run: |
           python manage.py makemigrations --check --dry-run
         env:
-          DATABASE_URL: postgresql://stub@localhost:5432/stub
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/edify_ci
           JWT_SECRET: dev-secret-key-1234567890
 
       - name: Run Tests
-        run: pytest
+        run: python manage.py test --parallel 4
         env:
-          DATABASE_URL: postgresql://stub@localhost:5432/stub
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/edify_ci
           JWT_SECRET: dev-secret-key-1234567890
           DJANGO_SETTINGS_MODULE: config.settings.dev

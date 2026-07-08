@@ -12,6 +12,7 @@ lives in the accounts app — a real FK would create a cross-app dependency that
 the legacy deliberately avoided for the audit/assignment flexibility). The
 cluster FK is added once the clusters app exists.
 """
+
 from __future__ import annotations
 
 from django.contrib.postgres.fields import ArrayField
@@ -45,10 +46,18 @@ class School(SoftDeleteModel):
         "geography.District", on_delete=models.RESTRICT, related_name="schools"
     )
     sub_county = models.ForeignKey(
-        "geography.SubCounty", on_delete=models.SET_NULL, null=True, blank=True, related_name="schools"
+        "geography.SubCounty",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="schools",
     )
     parish = models.ForeignKey(
-        "geography.Parish", on_delete=models.SET_NULL, null=True, blank=True, related_name="schools"
+        "geography.Parish",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="schools",
     )
     # Resolved official sub-region / county ids (plain refs — joined in code).
     sub_region_id = models.CharField(max_length=30, null=True, blank=True)
@@ -84,7 +93,9 @@ class School(SoftDeleteModel):
     account_owner_id = models.CharField(max_length=30, null=True, blank=True)
     account_owner_name_raw = models.CharField(max_length=255, null=True, blank=True)
     account_owner_status = models.CharField(
-        max_length=32, choices=AccountOwnerStatus.choices, default=AccountOwnerStatus.PENDING
+        max_length=32,
+        choices=AccountOwnerStatus.choices,
+        default=AccountOwnerStatus.PENDING,
     )
     duplicate_status = models.CharField(
         max_length=32, choices=DuplicateStatus.choices, default=DuplicateStatus.NONE
@@ -100,7 +111,9 @@ class School(SoftDeleteModel):
         max_length=32, choices=SsaStatus.choices, default=SsaStatus.NOT_DONE
     )
     planning_readiness = models.CharField(
-        max_length=32, choices=PlanningReadiness.choices, default=PlanningReadiness.LOCKED
+        max_length=32,
+        choices=PlanningReadiness.choices,
+        default=PlanningReadiness.LOCKED,
     )
     data_quality_score = models.IntegerField(default=100)
     data_quality_status = models.CharField(max_length=64, default="Clean")
@@ -108,7 +121,9 @@ class School(SoftDeleteModel):
     # Salesforce-ready (not integrated yet).
     salesforce_account_id = models.CharField(max_length=128, null=True, blank=True)
     salesforce_sync_status = models.CharField(
-        max_length=32, choices=SalesforceSyncStatus.choices, default=SalesforceSyncStatus.NOT_SYNCED
+        max_length=32,
+        choices=SalesforceSyncStatus.choices,
+        default=SalesforceSyncStatus.NOT_SYNCED,
     )
     salesforce_last_synced_at = models.DateTimeField(null=True, blank=True)
     salesforce_sync_error = models.CharField(max_length=512, null=True, blank=True)
@@ -126,7 +141,9 @@ class School(SoftDeleteModel):
             models.Index(fields=["school_type"]),
             # Directory filter-bar + dashboard conditional-COUNT fields.
             models.Index(fields=["cluster_status"], name="school_cluster_st_idx"),
-            models.Index(fields=["current_fy_ssa_status"], name="school_ssa_status_idx"),
+            models.Index(
+                fields=["current_fy_ssa_status"], name="school_ssa_status_idx"
+            ),
             models.Index(fields=["planning_readiness"], name="school_plan_ready_idx"),
             models.Index(fields=["account_owner_status"], name="school_owner_st_idx"),
             models.Index(fields=["duplicate_status"], name="school_dup_status_idx"),
@@ -161,7 +178,8 @@ class School(SoftDeleteModel):
 
         # 2. Compute Planning Readiness
         import sys
-        is_testing = 'test' in sys.argv or 'pytest' in sys.modules
+
+        is_testing = "test" in sys.argv or "pytest" in sys.modules
         if is_testing:
             if self.cluster_id or self.current_fy_ssa_status == "done":
                 self.planning_readiness = "ready"
@@ -185,17 +203,24 @@ class School(SoftDeleteModel):
     @property
     def ssa_readiness_state(self) -> str:
         # Find the latest SsaRecord for this school (which is not deleted)
-        latest_ssa = self.ssa_records.filter(deleted_at__isnull=True).order_by("-date_of_ssa").first()
-        
+        latest_ssa = (
+            self.ssa_records.filter(deleted_at__isnull=True)
+            .order_by("-date_of_ssa")
+            .first()
+        )
+
         # Check active activities that are expected to collect SSA
         from apps.activities.models import Activity
-        
-        act = Activity.objects.filter(
-            school=self,
-            deleted_at__isnull=True,
-            ssa_collection_expected=True
-        ).exclude(status__in=["cancelled", "completed", "ia_verified"]).order_by("scheduled_date").first()
-        
+
+        act = (
+            Activity.objects.filter(
+                school=self, deleted_at__isnull=True, ssa_collection_expected=True
+            )
+            .exclude(status__in=["cancelled", "completed", "ia_verified"])
+            .order_by("scheduled_date")
+            .first()
+        )
+
         # If there's an expected activity scheduled
         if act:
             if act.delivery_type == "partner":
@@ -211,21 +236,22 @@ class School(SoftDeleteModel):
                     return "Collected During Cluster Activity"
                 else:
                     return "Scheduled for Collection"
-                    
+
         if not latest_ssa:
             return "No SSA"
-            
+
         if latest_ssa.verification_status == "pending":
             return "Pending IA Verification"
         elif latest_ssa.verification_status == "returned":
             return "Returned for Correction"
         elif latest_ssa.verification_status == "confirmed":
             from apps.core.fy import get_operational_fy
+
             if latest_ssa.fy != get_operational_fy():
                 return "Expired / Needs Refresh"
             else:
                 return "Verified"
-                
+
         return "No SSA"
 
     def save(self, *args, **kwargs):
@@ -249,19 +275,31 @@ class School(SoftDeleteModel):
         if sub_county_changed or district_changed:
             current_cluster = None
             if self.cluster_id:
-                current_cluster = Cluster.objects.filter(id=self.cluster_id, deleted_at__isnull=True, status="active").first()
+                current_cluster = Cluster.objects.filter(
+                    id=self.cluster_id, deleted_at__isnull=True, status="active"
+                ).first()
 
             still_covered = False
             if current_cluster and self.sub_county_id:
-                still_covered = current_cluster.covered_sub_counties.filter(sub_county_id=self.sub_county_id).exists() or current_cluster.sub_county_id == self.sub_county_id
+                still_covered = (
+                    current_cluster.covered_sub_counties.filter(
+                        sub_county_id=self.sub_county_id
+                    ).exists()
+                    or current_cluster.sub_county_id == self.sub_county_id
+                )
 
             if not still_covered:
                 new_cluster = None
                 if self.sub_county_id:
-                    new_cluster = Cluster.objects.filter(
-                        deleted_at__isnull=True,
-                        status="active"
-                    ).filter(Q(sub_county_id=self.sub_county_id) | Q(covered_sub_counties__sub_county_id=self.sub_county_id)).distinct().first()
+                    new_cluster = (
+                        Cluster.objects.filter(deleted_at__isnull=True, status="active")
+                        .filter(
+                            Q(sub_county_id=self.sub_county_id)
+                            | Q(covered_sub_counties__sub_county_id=self.sub_county_id)
+                        )
+                        .distinct()
+                        .first()
+                    )
 
                 if new_cluster:
                     self.cluster_id = new_cluster.id
@@ -284,7 +322,7 @@ class School(SoftDeleteModel):
                 SchoolClusterAssignment.objects.get_or_create(
                     school=self,
                     cluster_id=self.cluster_id,
-                    defaults={"assigned_by": "system_reassign"}
+                    defaults={"assigned_by": "system_reassign"},
                 )
 
 
@@ -293,65 +331,113 @@ def create_data_quality_issues(school):
         return
 
     from apps.schools.models import DataQualityIssue
+
     DataQualityIssue.objects.filter(school=school, status="open").delete()
 
     issues = []
     # Missing Phone
     if not school.school_phone:
-        issues.append(DataQualityIssue(
-            school=school, issue_type="missing_phone", severity="warning",
-            field_name="school_phone", suggested_fix="Add school phone number"
-        ))
+        issues.append(
+            DataQualityIssue(
+                school=school,
+                issue_type="missing_phone",
+                severity="warning",
+                field_name="school_phone",
+                suggested_fix="Add school phone number",
+            )
+        )
     # Missing Contact
     if not school.primary_contact_name:
-        issues.append(DataQualityIssue(
-            school=school, issue_type="missing_contact", severity="warning",
-            field_name="primary_contact_name", suggested_fix="Add primary contact name"
-        ))
+        issues.append(
+            DataQualityIssue(
+                school=school,
+                issue_type="missing_contact",
+                severity="warning",
+                field_name="primary_contact_name",
+                suggested_fix="Add primary contact name",
+            )
+        )
     # Missing Enrollment
     if school.enrollment is None or school.enrollment <= 0:
-        issues.append(DataQualityIssue(
-            school=school, issue_type="missing_enrollment", severity="warning",
-            field_name="enrollment", current_value=str(school.enrollment) if school.enrollment is not None else None,
-            suggested_fix="Update school pupil enrollment counts"
-        ))
+        issues.append(
+            DataQualityIssue(
+                school=school,
+                issue_type="missing_enrollment",
+                severity="warning",
+                field_name="enrollment",
+                current_value=str(school.enrollment)
+                if school.enrollment is not None
+                else None,
+                suggested_fix="Update school pupil enrollment counts",
+            )
+        )
     # Missing School Type
     if not school.school_type:
-        issues.append(DataQualityIssue(
-            school=school, issue_type="missing_school_type", severity="warning",
-            field_name="school_type", suggested_fix="Specify whether school is Core, Client, or Partner"
-        ))
+        issues.append(
+            DataQualityIssue(
+                school=school,
+                issue_type="missing_school_type",
+                severity="warning",
+                field_name="school_type",
+                suggested_fix="Specify whether school is Core, Client, or Partner",
+            )
+        )
     # Missing Sub-county
     if not school.sub_county_id:
-        issues.append(DataQualityIssue(
-            school=school, issue_type="missing_sub_county", severity="warning",
-            field_name="sub_county", suggested_fix="Assign sub-county location"
-        ))
+        issues.append(
+            DataQualityIssue(
+                school=school,
+                issue_type="missing_sub_county",
+                severity="warning",
+                field_name="sub_county",
+                suggested_fix="Assign sub-county location",
+            )
+        )
     # Duplicate Risk
     if school.duplicate_status == "potential":
-        issues.append(DataQualityIssue(
-            school=school, issue_type="duplicate_risk", severity="warning",
-            field_name="duplicate_status", suggested_fix="Review and resolve potential duplicate school conflict"
-        ))
+        issues.append(
+            DataQualityIssue(
+                school=school,
+                issue_type="duplicate_risk",
+                severity="warning",
+                field_name="duplicate_status",
+                suggested_fix="Review and resolve potential duplicate school conflict",
+            )
+        )
     # Unmatched Staff
     if not school.account_owner_id or school.account_owner_status != "matched":
-        issues.append(DataQualityIssue(
-            school=school, issue_type="unmatched_staff", severity="warning",
-            field_name="account_owner_id", current_value=school.account_owner_name_raw,
-            suggested_fix="Match raw owner name to a registered staff user"
-        ))
+        issues.append(
+            DataQualityIssue(
+                school=school,
+                issue_type="unmatched_staff",
+                severity="warning",
+                field_name="account_owner_id",
+                current_value=school.account_owner_name_raw,
+                suggested_fix="Match raw owner name to a registered staff user",
+            )
+        )
     # Schools Not Clustered
     if not school.cluster_id:
-        issues.append(DataQualityIssue(
-            school=school, issue_type="no_cluster", severity="critical",
-            field_name="cluster_id", suggested_fix="Add school to an active cluster"
-        ))
+        issues.append(
+            DataQualityIssue(
+                school=school,
+                issue_type="no_cluster",
+                severity="critical",
+                field_name="cluster_id",
+                suggested_fix="Add school to an active cluster",
+            )
+        )
     # SSA Not Uploaded
     if school.current_fy_ssa_status != "done":
-        issues.append(DataQualityIssue(
-            school=school, issue_type="no_ssa", severity="info",
-            field_name="current_fy_ssa_status", suggested_fix="Collect and upload School Self-Assessment (SSA)"
-        ))
+        issues.append(
+            DataQualityIssue(
+                school=school,
+                issue_type="no_ssa",
+                severity="info",
+                field_name="current_fy_ssa_status",
+                suggested_fix="Collect and upload School Self-Assessment (SSA)",
+            )
+        )
 
     if issues:
         DataQualityIssue.objects.bulk_create(issues)
@@ -385,7 +471,9 @@ class UploadBatch(TimeStampedModel):
     flagged_count = models.IntegerField(default=0)
 
     # Truthful file-upload breakdown.
-    upload_type = models.CharField(max_length=16, choices=UPLOAD_TYPES, default="schools")
+    upload_type = models.CharField(
+        max_length=16, choices=UPLOAD_TYPES, default="schools"
+    )
     original_file_name = models.CharField(max_length=512, null=True, blank=True)
     total_rows = models.IntegerField(default=0)
     created_rows = models.IntegerField(default=0)
@@ -425,7 +513,10 @@ class UploadBatchRowResult(TimeStampedModel):
     class Meta:
         db_table = "upload_batch_row_result"
         ordering = ["upload_batch", "row_number"]
-        indexes = [models.Index(fields=["upload_batch"]), models.Index(fields=["status"])]
+        indexes = [
+            models.Index(fields=["upload_batch"]),
+            models.Index(fields=["status"]),
+        ]
 
 
 class SchoolAccountOwnerUploadMap(TimeStampedModel):
@@ -457,12 +548,16 @@ class SchoolDuplicateCandidate(TimeStampedModel):
     score = models.IntegerField()  # 0-100 similarity
     reasons = ArrayField(base_field=models.CharField(max_length=64), default=list)
     resolved = models.BooleanField(default=False)
-    resolution = models.CharField(max_length=32, null=True, blank=True)  # merged|not_duplicate|archived
+    resolution = models.CharField(
+        max_length=32, null=True, blank=True
+    )  # merged|not_duplicate|archived
 
     class Meta:
         db_table = "school_duplicate_candidate"
         constraints = [
-            models.UniqueConstraint(fields=["school", "candidate"], name="uniq_dup_school_candidate"),
+            models.UniqueConstraint(
+                fields=["school", "candidate"], name="uniq_dup_school_candidate"
+            ),
         ]
 
 
@@ -470,7 +565,9 @@ class SchoolEnrollmentHistory(TimeStampedModel):
     """Per-FY enrollment for trend analysis."""
 
     id = CuidField()
-    school = models.ForeignKey(School, on_delete=models.CASCADE, related_name="enrollment_history")
+    school = models.ForeignKey(
+        School, on_delete=models.CASCADE, related_name="enrollment_history"
+    )
     fy = models.CharField(max_length=16)
     enrollment = models.IntegerField()
     recorded_at = models.DateTimeField()
@@ -478,12 +575,15 @@ class SchoolEnrollmentHistory(TimeStampedModel):
     class Meta:
         db_table = "school_enrollment_history"
         constraints = [
-            models.UniqueConstraint(fields=["school", "fy"], name="uniq_enrollment_school_fy"),
+            models.UniqueConstraint(
+                fields=["school", "fy"], name="uniq_enrollment_school_fy"
+            ),
         ]
 
 
 class SchoolImportBatch(TimeStampedModel):
     """A batch staging schools uploaded from Salesforce."""
+
     STATUSES = (
         ("staged", "Staged"),
         ("imported", "Imported"),
@@ -502,6 +602,7 @@ class SchoolImportBatch(TimeStampedModel):
 
 class SchoolImportRow(TimeStampedModel):
     """Staging row for school import."""
+
     STATUSES = (
         ("ready", "Ready to Import"),
         ("update", "Will Update"),
@@ -510,7 +611,9 @@ class SchoolImportRow(TimeStampedModel):
         ("blocked", "Blocked"),
     )
     id = CuidField()
-    batch = models.ForeignKey(SchoolImportBatch, on_delete=models.CASCADE, related_name="rows")
+    batch = models.ForeignKey(
+        SchoolImportBatch, on_delete=models.CASCADE, related_name="rows"
+    )
     row_number = models.IntegerField()
     school_id = models.CharField(max_length=64, null=True, blank=True)
     name = models.CharField(max_length=512, null=True, blank=True)
@@ -535,6 +638,7 @@ class SchoolImportRow(TimeStampedModel):
 
 class DataQualityIssue(TimeStampedModel):
     """Tracks outstanding validation/quality issues for school records."""
+
     STATUSES = (
         ("open", "Open"),
         ("resolved", "Resolved"),
@@ -545,8 +649,12 @@ class DataQualityIssue(TimeStampedModel):
         ("critical", "Critical"),
     )
     id = CuidField()
-    school = models.ForeignKey(School, on_delete=models.CASCADE, related_name="quality_issues")
-    issue_type = models.CharField(max_length=64)  # e.g., missing_phone, duplicate_risk, etc.
+    school = models.ForeignKey(
+        School, on_delete=models.CASCADE, related_name="quality_issues"
+    )
+    issue_type = models.CharField(
+        max_length=64
+    )  # e.g., missing_phone, duplicate_risk, etc.
     severity = models.CharField(max_length=16, choices=SEVERITIES, default="warning")
     field_name = models.CharField(max_length=64, null=True, blank=True)
     current_value = models.TextField(null=True, blank=True)
@@ -562,8 +670,11 @@ class DataQualityIssue(TimeStampedModel):
 
 class SchoolChangeLog(TimeStampedModel):
     """Tracks field level updates to school records."""
+
     id = CuidField()
-    school = models.ForeignKey(School, on_delete=models.CASCADE, related_name="change_logs")
+    school = models.ForeignKey(
+        School, on_delete=models.CASCADE, related_name="change_logs"
+    )
     field_name = models.CharField(max_length=64)
     old_value = models.TextField(null=True, blank=True)
     new_value = models.TextField(null=True, blank=True)
@@ -577,6 +688,7 @@ class SchoolChangeLog(TimeStampedModel):
 
 class SSAImportBatch(TimeStampedModel):
     """Staging batch for SSA uploads."""
+
     STATUSES = (
         ("staged", "Staged"),
         ("imported", "Imported"),
@@ -595,13 +707,16 @@ class SSAImportBatch(TimeStampedModel):
 
 class SSAImportRow(TimeStampedModel):
     """Staging row for SSA upload."""
+
     STATUSES = (
         ("ready", "Ready"),
         ("unmatched", "Unmatched School ID"),
         ("blocked", "Blocked"),
     )
     id = CuidField()
-    batch = models.ForeignKey(SSAImportBatch, on_delete=models.CASCADE, related_name="rows")
+    batch = models.ForeignKey(
+        SSAImportBatch, on_delete=models.CASCADE, related_name="rows"
+    )
     row_number = models.IntegerField()
     school_id = models.CharField(max_length=64, null=True, blank=True)
     date_of_ssa = models.CharField(max_length=64, null=True, blank=True)
@@ -616,6 +731,7 @@ class SSAImportRow(TimeStampedModel):
 
 class UnmatchedSSARecord(TimeStampedModel):
     """SSA rows whose School ID does not exist in School Directory."""
+
     STATUSES = (
         ("pending", "Pending"),
         ("matched", "Matched"),

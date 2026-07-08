@@ -4,6 +4,7 @@ Audit hash-chain helpers — faithful port of audit-hash.ts.
 Pure functions (no Django deps) so they can be reused by the AuditService, the
 chain verifier management command, and unit tests.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -30,9 +31,11 @@ def stable_stringify(value: Any) -> str:
         return "[" + ",".join(stable_stringify(v) for v in value) + "]"
     obj = value
     keys = sorted(obj.keys())
-    return "{" + ",".join(
-        f"{stable_stringify(k)}:{stable_stringify(obj[k])}" for k in keys
-    ) + "}"
+    return (
+        "{"
+        + ",".join(f"{stable_stringify(k)}:{stable_stringify(obj[k])}" for k in keys)
+        + "}"
+    )
 
 
 def _json_escape(s: str) -> str:

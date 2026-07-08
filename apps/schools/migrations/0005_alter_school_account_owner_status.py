@@ -4,15 +4,23 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('schools', '0004_school_directory_filter_indexes'),
+        ("schools", "0004_school_directory_filter_indexes"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='school',
-            name='account_owner_status',
-            field=models.CharField(choices=[('matched', 'Matched'), ('unmatched', 'Unmatched'), ('ambiguous', 'Ambiguous'), ('pending', 'Pending')], default='pending', max_length=32),
+            model_name="school",
+            name="account_owner_status",
+            field=models.CharField(
+                choices=[
+                    ("matched", "Matched"),
+                    ("unmatched", "Unmatched"),
+                    ("ambiguous", "Ambiguous"),
+                    ("pending", "Pending"),
+                ],
+                default="pending",
+                max_length=32,
+            ),
         ),
     ]

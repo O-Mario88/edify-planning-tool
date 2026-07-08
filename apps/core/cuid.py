@@ -7,6 +7,7 @@ fingerprint) so seeded IDs and any persisted cross-references remain
 lexically and structurally compatible. New IDs generated here intermingle
 cleanly with legacy ones.
 """
+
 from __future__ import annotations
 
 import os
@@ -43,9 +44,9 @@ def _fingerprint() -> str:
     if _FINGERPRINT is None:
         # Mix the PID + a random block so two processes diverge.
         source = f"{os.getpid()}{_random_block(6)}"
-        _FINGERPRINT = "".join(
-            _to_base36(ord(ch) % 36) for ch in source
-        )[:4].ljust(4, "0")
+        _FINGERPRINT = "".join(_to_base36(ord(ch) % 36) for ch in source)[:4].ljust(
+            4, "0"
+        )
     return _FINGERPRINT
 
 

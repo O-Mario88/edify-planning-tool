@@ -6,6 +6,7 @@ sliding window. Applied to `auth/login` (10/min) and `auth/forgot-password`
 (4/10min). Single-instance only — multi-instance would need Redis (noted in
 the legacy code as the future swap).
 """
+
 from __future__ import annotations
 
 import time
@@ -92,8 +93,8 @@ class LoginRateThrottle(RouteRateThrottle):
     def __init__(self):
         super().__init__()
         from django.conf import settings
-        self.rate_limit = getattr(settings, "RATE_LIMIT_LOGIN_PER_MIN", 10)
 
+        self.rate_limit = getattr(settings, "RATE_LIMIT_LOGIN_PER_MIN", 10)
 
 
 class ForgotPasswordRateThrottle(RouteRateThrottle):

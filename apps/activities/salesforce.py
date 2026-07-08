@@ -5,6 +5,7 @@ Salesforce is NOT integrated — users enter these IDs manually and IA confirms.
 Visits use SV- (canonical) AND SVE- (the prefix the FE emits). Trainings /
 cluster meetings / SIT use TS-. Both forms round-trip the same.
 """
+
 from __future__ import annotations
 
 import re

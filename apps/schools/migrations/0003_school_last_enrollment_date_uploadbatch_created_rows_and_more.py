@@ -7,84 +7,129 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('schools', '0002_school_environment_school_source'),
+        ("schools", "0002_school_environment_school_source"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='school',
-            name='last_enrollment_date',
+            model_name="school",
+            name="last_enrollment_date",
             field=models.DateField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='uploadbatch',
-            name='created_rows',
+            model_name="uploadbatch",
+            name="created_rows",
             field=models.IntegerField(default=0),
         ),
         migrations.AddField(
-            model_name='uploadbatch',
-            name='duplicate_rows',
+            model_name="uploadbatch",
+            name="duplicate_rows",
             field=models.IntegerField(default=0),
         ),
         migrations.AddField(
-            model_name='uploadbatch',
-            name='error_summary',
+            model_name="uploadbatch",
+            name="error_summary",
             field=models.TextField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='uploadbatch',
-            name='failed_rows',
+            model_name="uploadbatch",
+            name="failed_rows",
             field=models.IntegerField(default=0),
         ),
         migrations.AddField(
-            model_name='uploadbatch',
-            name='original_file_name',
+            model_name="uploadbatch",
+            name="original_file_name",
             field=models.CharField(blank=True, max_length=512, null=True),
         ),
         migrations.AddField(
-            model_name='uploadbatch',
-            name='skipped_rows',
+            model_name="uploadbatch",
+            name="skipped_rows",
             field=models.IntegerField(default=0),
         ),
         migrations.AddField(
-            model_name='uploadbatch',
-            name='status',
-            field=models.CharField(choices=[('completed', 'Completed'), ('completed_with_errors', 'Completed with errors'), ('failed', 'Failed')], default='completed', max_length=32),
+            model_name="uploadbatch",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("completed", "Completed"),
+                    ("completed_with_errors", "Completed with errors"),
+                    ("failed", "Failed"),
+                ],
+                default="completed",
+                max_length=32,
+            ),
         ),
         migrations.AddField(
-            model_name='uploadbatch',
-            name='total_rows',
+            model_name="uploadbatch",
+            name="total_rows",
             field=models.IntegerField(default=0),
         ),
         migrations.AddField(
-            model_name='uploadbatch',
-            name='updated_rows',
+            model_name="uploadbatch",
+            name="updated_rows",
             field=models.IntegerField(default=0),
         ),
         migrations.AddField(
-            model_name='uploadbatch',
-            name='upload_type',
-            field=models.CharField(choices=[('schools', 'Schools'), ('ssa', 'SSA')], default='schools', max_length=16),
+            model_name="uploadbatch",
+            name="upload_type",
+            field=models.CharField(
+                choices=[("schools", "Schools"), ("ssa", "SSA")],
+                default="schools",
+                max_length=16,
+            ),
         ),
         migrations.CreateModel(
-            name='UploadBatchRowResult',
+            name="UploadBatchRowResult",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('row_number', models.IntegerField()),
-                ('school_id', models.CharField(blank=True, max_length=128, null=True)),
-                ('status', models.CharField(choices=[('created', 'Created'), ('updated', 'Updated'), ('skipped', 'Skipped'), ('failed', 'Failed'), ('duplicate', 'Duplicate')], max_length=16)),
-                ('error_message', models.TextField(blank=True, null=True)),
-                ('raw_data_json', models.JSONField(blank=True, null=True)),
-                ('upload_batch', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='row_results', to='schools.uploadbatch')),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("row_number", models.IntegerField()),
+                ("school_id", models.CharField(blank=True, max_length=128, null=True)),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("created", "Created"),
+                            ("updated", "Updated"),
+                            ("skipped", "Skipped"),
+                            ("failed", "Failed"),
+                            ("duplicate", "Duplicate"),
+                        ],
+                        max_length=16,
+                    ),
+                ),
+                ("error_message", models.TextField(blank=True, null=True)),
+                ("raw_data_json", models.JSONField(blank=True, null=True)),
+                (
+                    "upload_batch",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="row_results",
+                        to="schools.uploadbatch",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'upload_batch_row_result',
-                'ordering': ['upload_batch', 'row_number'],
-                'indexes': [models.Index(fields=['upload_batch'], name='upload_batc_upload__fff631_idx'), models.Index(fields=['status'], name='upload_batc_status_03acec_idx')],
+                "db_table": "upload_batch_row_result",
+                "ordering": ["upload_batch", "row_number"],
+                "indexes": [
+                    models.Index(
+                        fields=["upload_batch"], name="upload_batc_upload__fff631_idx"
+                    ),
+                    models.Index(
+                        fields=["status"], name="upload_batc_status_03acec_idx"
+                    ),
+                ],
             },
         ),
     ]

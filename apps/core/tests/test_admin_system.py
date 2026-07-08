@@ -18,22 +18,24 @@ class AdminSystemTestCase(TestCase):
             email="admin@example.test",
             password="adminpassword123",
             name="Admin User",
-            active_role=EdifyRole.ADMIN.value
+            active_role=EdifyRole.ADMIN.value,
         )
         self.client.login(email="admin@example.test", password="adminpassword123")
 
         # Create basic lookup models
         self.region = Region.objects.create(name="Central Region")
         self.district = District.objects.create(name="Kampala", region=self.region)
-        
+
         # Create standard user CCEO and profile
         self.cceo_user = User.objects.create_user(
             email="cceo@example.test",
             password="cceopassword123",
             name="CCEO User",
-            active_role=EdifyRole.CCEO.value
+            active_role=EdifyRole.CCEO.value,
         )
-        self.cceo_profile = StaffProfile.objects.create(user=self.cceo_user, title="CCEO")
+        self.cceo_profile = StaffProfile.objects.create(
+            user=self.cceo_user, title="CCEO"
+        )
 
         # Create school pending staff matching
         self.school = School.objects.create(
@@ -42,7 +44,7 @@ class AdminSystemTestCase(TestCase):
             region=self.region,
             district=self.district,
             account_owner_status="pending",
-            account_owner_name_raw="CCEO User"
+            account_owner_name_raw="CCEO User",
         )
 
         # Create notification log
@@ -50,7 +52,7 @@ class AdminSystemTestCase(TestCase):
             recipient_id=self.admin_user.id,
             title="System Alert Test",
             body="Smoke check body details",
-            status="unread"
+            status="unread",
         )
 
         # Create upload batch
@@ -59,7 +61,7 @@ class AdminSystemTestCase(TestCase):
             file_name="schools_july.xlsx",
             upload_type="schools",
             total_rows=10,
-            status="completed"
+            status="completed",
         )
 
     def test_admin_dashboard_renders(self):
@@ -90,10 +92,10 @@ class AdminSystemTestCase(TestCase):
         post_data = {
             "school_id": self.school.id,
             "staff_id": self.cceo_profile.id,
-            "action": "match"
+            "action": "match",
         }
         post_response = self.client.post("/admin-panel/staff-setup-queue", post_data)
-        self.assertEqual(post_response.status_code, 302) # redirect back
+        self.assertEqual(post_response.status_code, 302)  # redirect back
         self.school.refresh_from_db()
         self.assertEqual(self.school.account_owner_status, "matched")
         self.assertEqual(self.school.account_owner_id, str(self.cceo_profile.id))
@@ -105,10 +107,10 @@ class AdminSystemTestCase(TestCase):
         self.assertContains(response, "schools_july.xlsx")
 
         # Perform rollback post action
-        post_data = {
-            "rollback_id": self.batch.id
-        }
-        post_response = self.client.post("/admin-panel/school-upload-history", post_data)
+        post_data = {"rollback_id": self.batch.id}
+        post_response = self.client.post(
+            "/admin-panel/school-upload-history", post_data
+        )
         self.assertEqual(post_response.status_code, 302)
         self.batch.refresh_from_db()
         self.assertEqual(self.batch.status, "failed")
@@ -127,9 +129,7 @@ class AdminSystemTestCase(TestCase):
         self.assertContains(response, "School must be clustered before planning")
 
         # Perform rule toggle post action
-        post_data = {
-            "rule_key": "clustered_before_planning"
-        }
+        post_data = {"rule_key": "clustered_before_planning"}
         post_response = self.client.post("/admin-panel/workflow-rules", post_data)
         self.assertEqual(post_response.status_code, 302)
 
@@ -146,11 +146,10 @@ class AdminSystemTestCase(TestCase):
         self.assertContains(response, "Central Region")
 
         # Add new district
-        post_data = {
-            "district_name": "Wakiso",
-            "region_id": self.region.id
-        }
-        post_response = self.client.post("/admin-panel/region-district-setup", post_data)
+        post_data = {"district_name": "Wakiso", "region_id": self.region.id}
+        post_response = self.client.post(
+            "/admin-panel/region-district-setup", post_data
+        )
         self.assertEqual(post_response.status_code, 302)
         self.assertTrue(District.objects.filter(name="Wakiso").exists())
 
@@ -161,8 +160,6 @@ class AdminSystemTestCase(TestCase):
         self.assertContains(response, "System Alert Test")
 
         # Resend alert
-        post_data = {
-            "resend_id": self.notification.id
-        }
+        post_data = {"resend_id": self.notification.id}
         post_response = self.client.post("/admin-panel/notifications-mgmt", post_data)
         self.assertEqual(post_response.status_code, 302)

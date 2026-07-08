@@ -7,6 +7,7 @@ context. They catch wiring regressions that unit tests of services miss.
 Conventions follow the established house style (see test_role_gating.py):
 inline user creation, force_login, hardcoded paths.
 """
+
 from django.test import TestCase, override_settings
 
 from apps.accounts.models import User, StaffProfile, StaffSchoolAssignment
@@ -21,17 +22,27 @@ def _make_geography():
     return region, district
 
 
-def _make_school(region, district, school_id="S-1", name="Test School", school_type="client"):
+def _make_school(
+    region, district, school_id="S-1", name="Test School", school_type="client"
+):
     return School.objects.create(
-        school_id=school_id, name=name, region=region, district=district,
-        enrollment=200, school_type=school_type,
+        school_id=school_id,
+        name=name,
+        region=region,
+        district=district,
+        enrollment=200,
+        school_type=school_type,
     )
 
 
 def _user(email, role, name=None, password="Test-pass-1!"):
     return User.objects.create_user(
-        email=email, name=name or email.split("@")[0].title(),
-        roles=[role], active_role=role, password=password, is_active=True,
+        email=email,
+        name=name or email.split("@")[0].title(),
+        roles=[role],
+        active_role=role,
+        password=password,
+        is_active=True,
     )
 
 
@@ -39,10 +50,14 @@ def _user(email, role, name=None, password="Test-pass-1!"):
 # requires a collected manifest. Tests don't run collectstatic, so override to
 # the plain backend on the shared base — full-page renders then resolve
 # {% static %} tags without a manifest. All subclasses inherit this override.
-@override_settings(STORAGES={
-    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
-})
+@override_settings(
+    STORAGES={
+        "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"
+        },
+    }
+)
 class BaseFlowTest(TestCase):
     """Shared setUp with geography + a CCEO that owns a school."""
 
@@ -51,11 +66,17 @@ class BaseFlowTest(TestCase):
         cls.region, cls.district = _make_geography()
         cls.school = _make_school(cls.region, cls.district)
 
-    def _cceo(self, email="cceo@flow.test", with_assignment=True, password="Test-pass-1!"):
+    def _cceo(
+        self, email="cceo@flow.test", with_assignment=True, password="Test-pass-1!"
+    ):
         u = _user(email, "CCEO", password=password)
         if with_assignment:
-            profile = StaffProfile.objects.create(user=u, staff_number=f"ST-{email[:3]}")
-            StaffSchoolAssignment.objects.create(staff=profile, school_id=self.school.id)
+            profile = StaffProfile.objects.create(
+                user=u, staff_number=f"ST-{email[:3]}"
+            )
+            StaffSchoolAssignment.objects.create(
+                staff=profile, school_id=self.school.id
+            )
         return u
 
 
@@ -87,7 +108,9 @@ class AnonymousAccessFlowTest(BaseFlowTest):
         self.assertEqual(r.status_code, 200)  # re-renders login with error
 
     def test_login_with_unknown_email_fails(self):
-        r = self.client.post("/login", {"email": "nobody@nowhere.test", "password": "x"})
+        r = self.client.post(
+            "/login", {"email": "nobody@nowhere.test", "password": "x"}
+        )
         self.assertEqual(r.status_code, 200)
 
 
@@ -137,9 +160,12 @@ class RoleSwitchFlowTest(BaseFlowTest):
 
     def test_switch_to_held_role_succeeds(self):
         u = User.objects.create_user(
-            email="multi@flow.test", name="Multi Role",
-            roles=["CCEO", "CountryDirector"], active_role="CCEO",
-            password="x", is_active=True,
+            email="multi@flow.test",
+            name="Multi Role",
+            roles=["CCEO", "CountryDirector"],
+            active_role="CCEO",
+            password="x",
+            is_active=True,
         )
         self.client.force_login(u)
         r = self.client.post("/auth/switch-role", {"role": "CountryDirector"})
@@ -149,9 +175,12 @@ class RoleSwitchFlowTest(BaseFlowTest):
 
     def test_switch_to_unheld_role_rejected(self):
         u = User.objects.create_user(
-            email="multi2@flow.test", name="Multi Role",
-            roles=["CCEO"], active_role="CCEO",
-            password="x", is_active=True,
+            email="multi2@flow.test",
+            name="Multi Role",
+            roles=["CCEO"],
+            active_role="CCEO",
+            password="x",
+            is_active=True,
         )
         self.client.force_login(u)
         r = self.client.post("/auth/switch-role", {"role": "CountryDirector"})

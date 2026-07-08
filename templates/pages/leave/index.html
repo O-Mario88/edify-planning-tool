@@ -3,18 +3,39 @@
 {% block title %}Leave Requests — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6">
+<div class="p-6 max-w-5xl mx-auto space-y-5 font-sans">
 
-<div class="flex items-center justify-between">
-<div>
-<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight">Leave Requests</h1>
-<p class="text-[12px] text-[var(--text-secondary)] mt-1 font-semibold">Edify Operations · Leave Requests</p>
-</div>
-</div>
+{% include "components/page_header.html" with title="Leave Requests" subtitle="Your personal leave history and status." %}
 
-<div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm">
-{% if leaves %}<ul class="divide-y divide-slate-100">{% for l in leaves %}<li class="px-5 py-3.5 flex items-center justify-between"><div><p class="text-[14px] font-bold text-slate-800">{{ l.leave_type|default:"Leave" }}</p><p class="text-[11px] text-slate-400">{{ l.start_date }} – {{ l.end_date }}</p></div><span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">{{ l.status|default:"Pending" }}</span></li>{% endfor %}</ul>
-{% else %}<div class="p-12 text-center"><p class="text-[36px] mb-3">🏖</p><p class="text-[14px] font-bold text-slate-600">No leave requests</p></div>{% endif %}
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
+
+<div class="card p-0 overflow-hidden">
+{% if leaves %}
+<ul class="divide-y divide-slate-100">
+{% for l in leaves %}
+<li class="px-5 py-3.5 flex items-center justify-between">
+<div class="min-w-0">
+<p class="text-[13px] font-semibold text-slate-800">{{ l.type|default:"Leave"|title }}</p>
+<p class="text-[11px] text-slate-400 font-medium">{{ l.start_date }} – {{ l.end_date }} · {{ l.days }} day{{ l.days|pluralize }}</p>
+{% if l.reason %}<p class="text-[11px] text-slate-400 font-medium mt-0.5">{{ l.reason }}</p>{% endif %}
+</div>
+{% if l.status == "approved" %}
+{% include "components/badge.html" with tone="success" label="Approved" %}
+{% elif l.status == "rejected" %}
+{% include "components/badge.html" with tone="danger" label="Rejected" %}
+{% else %}
+{% include "components/badge.html" with tone="warning" label="Pending" %}
+{% endif %}
+</li>
+{% endfor %}
+</ul>
+{% else %}
+{% if has_profile %}
+{% include "components/empty_state.html" with title="No leave requests" message="Your leave requests will appear here once submitted." %}
+{% else %}
+{% include "components/empty_state.html" with title="No staff profile on file" message="A staff profile is required before leave requests can be tracked. Contact HR to set one up." %}
+{% endif %}
+{% endif %}
 </div>
 
 </div>

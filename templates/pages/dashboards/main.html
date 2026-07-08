@@ -4,472 +4,260 @@
 {% block title %}Main Dashboard - SIPA{% endblock %}
 
 {% block shell_content %}
-<div class="space-y-6 font-sans text-slate-700" id="main-dashboard-container">
+<div class="p-6 space-y-5 font-sans text-slate-700" id="main-dashboard-container">
 
-<!-- Breadcrumb -->
-<nav class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-<a href="#" class="hover:text-slate-600">Home</a>
-<svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-<span class="text-slate-600 font-semibold">Main Dashboard</span>
-</nav>
+{% include "components/page_header.html" with title="Main Dashboard" subtitle="A complete view of execution, priorities, school improvement, and operational health." actions_template="pages/dashboards/_main_header_actions.html" %}
 
-<!-- Title & Actions Header -->
-<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-100 pb-2">
-<div>
-<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight leading-none">Main Dashboard</h1>
-<p class="text-[12px] text-slate-500 font-semibold mt-1">A complete view of execution, priorities, school improvement, and operational health.</p>
-</div>
-
-<div class="flex items-center gap-2">
-<!-- Export button -->
-<a 
-href="#"
-class="edify-action-button secondary h-9 transition-all shadow-sm"
->
-<svg class="h-4 w-4 text-slate-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-Export
-</a>
-
-<!-- Open My Plan -->
-<a 
-href="/planning" 
-class="edify-action-button primary h-9 transition-all shadow-sm"
->
-<svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-Open My Plan
-</a>
-
-<!-- View Analytics -->
-<a 
-href="/analytics" 
-class="edify-action-button secondary h-9 transition-all shadow-sm"
->
-<svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z"/></svg>
-View Analytics
-</a>
-</div>
-</div>
-
-<!-- Dashboard Grid -->
-<section class="dashboard-grid">
-
-<!-- Left Column: KPIs, Signals, Panels -->
-<div class="content space-y-4">
+{% include "components/role_scope_notice.html" with scope_text="Showing schools and activities scoped to your role." %}
 
 <!-- KPI Strip -->
 {% include "components/kpi_strip.html" with items=kpi_strip_items %}
 
-<!-- Signal Grid -->
-<div class="signal-grid">
-<div class="card signal red ">
-<div class="signal-icon red-bg">♢</div>
-<div>
-<h3 class="text-rose-600 font-semibold whitespace-nowrap">Needs Attention</h3>
-<p class="text-[18px] font-semibold text-slate-800 whitespace-nowrap"><span class="text-rose-600">{{ signals.needs_attention }}</span> Schools</p>
-<p class="text-slate-400 font-bold text-[11px] whitespace-nowrap">Require immediate attention</p>
-</div>
-<svg class="spark" viewBox="0 0 100 30">
-<polyline points="0,20 14,18 26,22 38,15 52,19 66,12 82,16 100,7" fill="none" stroke="#e5484d" stroke-width="2"/>
-</svg>
+<!-- Primary insight: 2-column chart row -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+  {% include "components/chart_card.html" with chart_id="weekly-progress-chart" title="Planning Progress" subtitle="Completion rate — last 5 weeks" has_data=has_weekly_data height=240 footer_note="Completed vs scheduled activities per week." %}
+  {{ weekly_progress_chart|json_script:"weekly-progress-chart-config" }}
+
+  {% include "components/chart_card.html" with chart_id="ssa-intervention-chart" title="SSA Performance" subtitle="Best & weakest interventions (avg score / 10)" has_data=has_ssa_chart_data height=240 footer_note="Confirmed SSA records scoped to your schools." %}
+  {{ ssa_intervention_chart|json_script:"ssa-intervention-chart-config" }}
 </div>
 
-<div class="card signal orange ">
-<div class="signal-icon orange-bg">♧</div>
-<div>
-<h3 class="text-amber-600 font-semibold whitespace-nowrap">Ready for Action</h3>
-<p class="text-[18px] font-semibold text-slate-800 whitespace-nowrap"><span>{{ signals.ready_for_action }}</span> Schools</p>
-<p class="text-slate-400 font-bold text-[11px] whitespace-nowrap">Ready for next steps</p>
-</div>
-<svg class="spark" viewBox="0 0 100 30">
-<polyline points="0,21 12,17 26,20 38,11 50,16 63,8 80,12 100,6" fill="none" stroke="#ff8a00" stroke-width="2"/>
-</svg>
+<!-- Supporting: max 3-column -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+  {% include "components/chart_card.html" with chart_id="team-targets-chart" title="Team Target Progress" subtitle="Completed vs scheduled" has_data=has_team_targets_data height=280 %}
+  {{ team_targets_chart|json_script:"team-targets-chart-config" }}
+
+  <section class="card p-5 space-y-3.5">
+    <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+      <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Partner Support Overview</h3>
+      <a class="text-[11px] font-semibold text-blue-600 hover:underline" href="/partners">View all</a>
+    </div>
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <p class="text-[11px] text-slate-400 font-semibold">Assigned Partners</p>
+        <p class="text-[18px] font-semibold text-slate-800 leading-none mt-1.5">{{ support_overview.assigned_partners }}</p>
+      </div>
+      <div>
+        <p class="text-[11px] text-slate-400 font-semibold">Planned Visits</p>
+        <p class="text-[18px] font-semibold text-slate-800 leading-none mt-1.5">{{ support_overview.planned_visits }}</p>
+      </div>
+      <div>
+        <p class="text-[11px] text-slate-400 font-semibold">Evidence Pending</p>
+        <p class="text-[18px] font-semibold text-rose-600 leading-none mt-1.5">{{ support_overview.evidence_pending }}</p>
+      </div>
+      <div>
+        <p class="text-[11px] text-slate-400 font-semibold">Payments Due</p>
+        <p class="text-[18px] font-semibold text-slate-800 leading-none mt-1.5">{{ support_overview.payments_due }}</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="card p-5 space-y-3.5">
+    <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+      <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Budget &amp; Fund Snapshot</h3>
+      <a class="text-[11px] font-semibold text-blue-600 hover:underline" href="/finance/fund-allocation">View details</a>
+    </div>
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <p class="text-[11px] text-slate-400 font-semibold">This Week</p>
+        <p class="text-[16px] font-semibold text-slate-800 leading-none mt-1.5">{{ budget_snapshot.week }}</p>
+      </div>
+      <div>
+        <p class="text-[11px] text-slate-400 font-semibold">This Month</p>
+        <p class="text-[16px] font-semibold text-slate-800 leading-none mt-1.5">{{ budget_snapshot.month }}</p>
+      </div>
+      <div>
+        <p class="text-[11px] text-slate-400 font-semibold">This Quarter</p>
+        <p class="text-[16px] font-semibold text-slate-800 leading-none mt-1.5">{{ budget_snapshot.quarter }}</p>
+      </div>
+      <div>
+        <p class="text-[11px] text-slate-400 font-semibold">This FY</p>
+        <p class="text-[16px] font-semibold text-slate-800 leading-none mt-1.5">{{ budget_snapshot.fy }}</p>
+      </div>
+    </div>
+  </section>
 </div>
 
-<div class="card signal green ">
-<div class="signal-icon green-bg">♜</div>
-<div>
-<h3 class="text-emerald-600 font-semibold whitespace-nowrap">Operational Health</h3>
-<p class="text-[18px] font-semibold text-slate-800 whitespace-nowrap">{{ signals.operational_health }}%</p>
-<p class="text-slate-400 font-bold text-[11px] whitespace-nowrap">System performance score</p>
-</div>
-<svg class="spark" viewBox="0 0 100 30">
-<polyline points="0,22 12,19 25,17 37,20 48,13 60,15 74,9 86,11 100,5" fill="none" stroke="#0f9f5a" stroke-width="2"/>
-</svg>
-</div>
+<!-- Decision / Alert / Action row -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+  {% if signals.needs_attention %}
+  {% include "components/action_card.html" with kind="alert" title="Schools need attention" body=signals.needs_attention|stringformat:"s"|add:" school(s) require immediate follow-up before planning can continue." cta_label="Review schools" cta_href="/schools" meta=signals.needs_attention %}
+  {% else %}
+  {% include "components/action_card.html" with kind="neutral" title="No schools flagged" body="All scoped schools are clear of readiness or data-cleanup issues." %}
+  {% endif %}
+
+  {% if kpis.fund_requests_pending %}
+  {% include "components/action_card.html" with kind="action" title="Confirm pending fund requests" body=kpis.fund_requests_pending|stringformat:"s"|add:" weekly fund request(s) are awaiting confirmation or advance." cta_label="Open fund requests" cta_href="/fund-requests/weekly" meta=kpis.fund_requests_pending %}
+  {% else %}
+  {% include "components/action_card.html" with kind="neutral" title="Fund requests clear" body="Nothing awaiting confirmation or advance right now." %}
+  {% endif %}
+
+  {% if evidence_pending %}
+  {% include "components/action_card.html" with kind="insight" title="Evidence submissions pending" body=evidence_pending|stringformat:"s"|add:" completed activities are missing evidence uploads." cta_label="View completed activities" cta_href="/completed-activities" meta=evidence_pending %}
+  {% else %}
+  {% include "components/action_card.html" with kind="neutral" title="Evidence up to date" body="No completed activities are missing evidence." %}
+  {% endif %}
 </div>
 
-<!-- Panel Grid (Priorities, Progress, SSA) -->
-<div class="panel-grid">
-<!-- Priorities Table -->
-<section class="card panel space-y-3.5">
-<div class="panel-header border-b border-slate-100 pb-2">
-<div class="panel-title font-semibold text-[#2e505f]">
-Today’s Priorities <span class="count text-[11px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-semibold ml-1.5">{{ priorities|length }}</span>
-</div>
-<a class="link hover:underline text-blue-600 font-bold text-[11px]" href="/planning">View Calendar</a>
-</div>
-<div class="overflow-x-auto">
-<table class="w-full text-left text-[12px] font-semibold text-slate-600 border-collapse">
-<thead>
-<tr class="text-[11px] uppercase tracking-wider text-slate-400 border-b border-slate-100">
-<th class="py-2">Activity</th>
-<th class="py-2">Time</th>
-<th class="py-2">Related To</th>
-<th class="py-2 text-right">Status</th>
-</tr>
-</thead>
-<tbody class="divide-y divide-slate-100">
-{% for p in priorities %}
-<tr>
-<td class="py-2.5 font-semibold text-slate-900">{{ p.activity }}</td>
-<td class="py-2.5 text-slate-500">{{ p.time }}</td>
-<td class="py-2.5 text-slate-500">{{ p.related_to }}</td>
-<td class="py-2.5 text-right"><span class="status {{ p.status_class }}">{{ p.status }}</span></td>
-</tr>
-{% empty %}
-<tr>
-<td colspan="4" class="py-6 text-center text-slate-400 font-bold">No priorities scheduled for today.</td>
-</tr>
-{% endfor %}
-</tbody>
-</table>
-</div>
-<a class="link text-blue-600 hover:underline block text-[11px] font-semibold" href="/planning">View all priorities ({{ priorities|length }}) &rsaquo;</a>
+<!-- Tables: full width -->
+<section class="card p-5 space-y-3.5">
+  <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+    <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Today&rsquo;s Priorities <span class="text-[11px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-semibold ml-1">{{ priorities|length }}</span></h3>
+    <a class="text-[11px] font-semibold text-blue-600 hover:underline" href="/planning">View calendar</a>
+  </div>
+  {% if priorities %}
+  <div class="overflow-x-auto">
+    <table class="w-full text-left text-[12px] font-semibold text-slate-600 border-collapse">
+      <thead>
+        <tr class="text-[11px] uppercase tracking-wider text-slate-400 border-b border-slate-100">
+          <th class="py-2">Activity</th>
+          <th class="py-2">Time</th>
+          <th class="py-2">Related To</th>
+          <th class="py-2 text-right">Status</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for p in priorities %}
+        <tr>
+          <td class="py-2.5 font-semibold text-slate-900">{{ p.activity }}</td>
+          <td class="py-2.5 text-slate-500">{{ p.time }}</td>
+          <td class="py-2.5 text-slate-500">{{ p.related_to }}</td>
+          <td class="py-2.5 text-right"><span class="status {{ p.status_class }}">{{ p.status }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  {% include "components/empty_state.html" with title="No priorities scheduled for today" message="Activities scheduled for today will appear here." cta_label="Schedule an activity" cta_href="/planning" compact="true" %}
+  {% endif %}
 </section>
 
-<!-- Planning Progress -->
-<section class="card panel space-y-3.5">
-<div class="panel-header border-b border-slate-100 pb-2">
-<div class="panel-title font-semibold text-[#2e505f]">Planning Progress</div>
-<a class="link hover:underline text-blue-600 font-bold text-[11px]" href="/planning">View Details</a>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+  <section class="card p-5 space-y-3.5">
+    <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+      <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Priority Schools</h3>
+      <a class="text-[11px] font-semibold text-blue-600 hover:underline" href="/schools">View all</a>
+    </div>
+    {% if priority_schools %}
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-[11px] border-collapse font-semibold text-slate-600">
+        <thead>
+          <tr class="text-[11px] uppercase tracking-wider text-slate-400 border-b border-slate-100">
+            <th class="py-2">School</th>
+            <th class="py-2">District</th>
+            <th class="py-2">Readiness</th>
+            <th class="py-2 text-right">Action</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for s in priority_schools %}
+          <tr>
+            <td class="py-2.5 font-semibold text-slate-900">{{ s.name }}</td>
+            <td class="py-2.5 text-slate-500">{{ s.district }}</td>
+            <td class="py-2.5"><span class="status {{ s.readiness_class }}">{{ s.readiness }}</span></td>
+            <td class="py-2.5 text-right"><a class="text-blue-600 hover:underline" href="/planning">{{ s.action }}</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    {% include "components/empty_state.html" with title="No priority schools" message="Schools needing SSA or planning follow-up will appear here." compact="true" %}
+    {% endif %}
+  </section>
+
+  <section class="card p-5 space-y-3.5">
+    <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+      <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Cluster Performance</h3>
+      <a class="text-[11px] font-semibold text-blue-600 hover:underline" href="/clusters">View all</a>
+    </div>
+    {% if cluster_performance %}
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-[11px] border-collapse font-semibold text-slate-600">
+        <thead>
+          <tr class="text-[11px] uppercase tracking-wider text-slate-400 border-b border-slate-100">
+            <th class="py-2">Cluster</th>
+            <th class="py-2">Avg SSA</th>
+            <th class="py-2 text-right">Status</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for c in cluster_performance %}
+          <tr>
+            <td class="py-2.5 font-semibold text-slate-900">{{ c.name }}</td>
+            <td class="py-2.5 text-slate-500">{{ c.avg_ssa }}</td>
+            <td class="py-2.5 text-right"><span class="status {{ c.status_class }}">{{ c.status }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    {% include "components/empty_state.html" with title="No clusters created yet" message="Cluster performance appears once clusters are set up." cta_label="View clusters" cta_href="/clusters" compact="true" %}
+    {% endif %}
+  </section>
 </div>
-<div class="flex justify-between items-center bg-slate-50 p-1.5 rounded-lg ">
-<span class="px-2.5 py-1 btn-premium-primary text-white rounded text-[11px] font-semibold cursor-pointer shadow-sm">Week</span>
-<span class="px-2.5 py-1 text-slate-400 hover:text-slate-600 text-[11px] font-bold cursor-pointer">Month</span>
-<span class="px-2.5 py-1 text-slate-400 hover:text-slate-600 text-[11px] font-bold cursor-pointer">Quarter</span>
-<span class="px-2.5 py-1 text-slate-400 hover:text-slate-600 text-[11px] font-bold cursor-pointer">FY</span>
-</div>
-<div class="chart pt-2">
-<div class="bars">
-{% for w in weekly_progress %}
-<div class="bar-wrap">
-<div class="bar" style="height:{{ w.percentage }}%;">
-<em>{{ w.percentage }}%</em>
-</div>
-{{ w.week|safe }}
-</div>
-{% endfor %}
-</div>
-</div>
+
+<!-- Execution Summary strip -->
+<section class="card p-5">
+  <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight pb-3 border-b border-slate-100 mb-3">Execution Summary</h3>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div>
+      <span class="text-slate-400 text-[11px] font-semibold">This Week</span>
+      <strong class="text-[18px] font-semibold text-slate-800 block mt-0.5">{{ execution_summary.week }}</strong>
+    </div>
+    <div>
+      <span class="text-slate-400 text-[11px] font-semibold">This Month</span>
+      <strong class="text-[18px] font-semibold text-slate-800 block mt-0.5">{{ execution_summary.month }}</strong>
+    </div>
+    <div>
+      <span class="text-slate-400 text-[11px] font-semibold">This Quarter</span>
+      <strong class="text-[18px] font-semibold text-slate-800 block mt-0.5">{{ execution_summary.quarter }}</strong>
+    </div>
+    <div>
+      <span class="text-slate-400 text-[11px] font-semibold">This FY</span>
+      <strong class="text-[18px] font-semibold text-slate-800 block mt-0.5">{{ execution_summary.fy }}</strong>
+    </div>
+  </div>
 </section>
 
-<!-- SSA snapshot -->
-<section class="card panel space-y-3.5">
-<div class="panel-header border-b border-slate-100 pb-2">
-<div class="panel-title font-semibold text-[#2e505f]">SSA Performance Snapshot</div>
-<a class="link hover:underline text-blue-600 font-bold text-[11px]" href="/schools">View Report</a>
-</div>
+<!-- Upcoming today + Quick actions -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+  <section class="card p-5 space-y-3.5">
+    <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+      <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Upcoming Today <span class="text-[11px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-semibold ml-1">{{ upcoming_today|length }}</span></h3>
+      <a class="text-[11px] font-semibold text-blue-600 hover:underline" href="/planning">View all</a>
+    </div>
+    {% if upcoming_today %}
+    <div class="space-y-3">
+      {% for item in upcoming_today %}
+      <div class="flex gap-3 text-[12px]">
+        <div class="round-mini {{ item.type_class }} shrink-0 mt-0.5">{{ item.icon }}</div>
+        <div class="space-y-0.5 min-w-0">
+          <div class="text-slate-400 font-semibold text-[11px]">{{ item.time }}</div>
+          <strong class="text-slate-800 font-semibold leading-snug block truncate">{{ item.title }}</strong>
+          <span class="text-slate-500 block leading-tight">{{ item.desc }}</span>
+          <span class="text-slate-400 block text-[11px]">{{ item.info }}</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    {% include "components/empty_state.html" with title="No activities scheduled for today" cta_label="Schedule an activity" cta_href="/planning" compact="true" %}
+    {% endif %}
+  </section>
 
-<div class="space-y-3 text-[11px] font-bold text-slate-600">
-<strong class="text-[11px] uppercase tracking-wider text-slate-400 block pb-1 border-b border-slate-100">Best Performing Interventions</strong>
-{% for item in best_interventions %}
-<div class="intervention">
-<span class="truncate block max-w-[130px]">{{ item.name }}</span>
-<div class="progress h-2 bg-slate-100 rounded-full overflow-hidden">
-<div class="h-full rounded-full bg-emerald-500" style="width: {{ item.percentage }}%"></div>
+  <section class="card p-5 space-y-3.5">
+    <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight pb-2 border-b border-slate-100">Quick Actions</h3>
+    <div class="grid grid-cols-2 gap-2">
+      {% include "components/button.html" with variant="ghost" size="sm" label="Schedule Activity" href="/planning" %}
+      {% include "components/button.html" with variant="ghost" size="sm" label="Add School Visit" href="/planning" %}
+      {% include "components/button.html" with variant="ghost" size="sm" label="Create Cluster" href="/clusters" %}
+      {% include "components/button.html" with variant="ghost" size="sm" label="New Fund Request" href="/fund-requests/weekly" %}
+    </div>
+  </section>
 </div>
-<b class="text-slate-900 text-right">{{ item.score }}</b>
-</div>
-{% endfor %}
-
-<strong class="text-[11px] uppercase tracking-wider text-slate-400 block pt-2 pb-1 border-b border-slate-100">Weakest Interventions</strong>
-{% for item in weakest_interventions %}
-<div class="intervention">
-<span class="truncate block max-w-[130px]">{{ item.name }}</span>
-<div class="progress h-2 bg-slate-100 rounded-full overflow-hidden">
-<div class="h-full rounded-full {% if item.score < 3.3 %}bg-rose-500{% else %}bg-amber-500{% endif %}" style="width: {{ item.percentage }}%"></div>
-</div>
-<b class="text-slate-900 text-right">{{ item.score }}</b>
-</div>
-{% endfor %}
-</div>
-</section>
-</div>
-
-<!-- Lower row grids -->
-<div class="three-col">
-<!-- Team Target Progress -->
-<section class="card panel space-y-3.5">
-<div class="panel-header border-b border-slate-100 pb-2">
-<div class="panel-title font-semibold text-[#2e505f]">Team Target Progress</div>
-<a class="link hover:underline text-blue-600 font-bold text-[11px]" href="#">View Details</a>
-</div>
-<div class="progress-list space-y-3">
-{% for target in team_targets %}
-<div class="progress-row">
-<span class="truncate text-slate-500 block max-w-[100px]">{{ target.name }}</span>
-<div class="progress h-2 bg-slate-100 rounded-full overflow-hidden">
-<div class="h-full rounded-full" style="width: {{ target.percentage }}%; background-color: {{ target.color }}"></div>
-</div>
-<b class="text-slate-900 text-[11px]">{{ target.percentage }}%</b>
-<span class="status {{ target.class }} text-center shrink-0">{{ target.status }}</span>
-</div>
-{% endfor %}
-</div>
-</section>
-
-<!-- Priority Schools -->
-<section class="card panel space-y-3.5">
-<div class="panel-header border-b border-slate-100 pb-2">
-<div class="panel-title font-semibold text-[#2e505f]">Priority Schools</div>
-<a class="link hover:underline text-blue-600 font-bold text-[11px]" href="/schools">View All</a>
-</div>
-<div class="overflow-x-auto">
-<table class="w-full text-left text-[11px] border-collapse font-semibold text-slate-600">
-<thead>
-<tr class="text-[11px] uppercase tracking-wider text-slate-400 border-b border-slate-100">
-<th class="py-2">School</th>
-<th class="py-2">District</th>
-<th class="py-2">Readiness</th>
-<th class="py-2 text-right">Action</th>
-</tr>
-</thead>
-<tbody class="divide-y divide-slate-100">
-{% for s in priority_schools %}
-<tr>
-<td class="py-2.5 font-semibold text-slate-900">{{ s.name }}</td>
-<td class="py-2.5 text-slate-500">{{ s.district }}</td>
-<td class="py-2.5"><span class="status {{ s.readiness_class }}">{{ s.readiness }}</span></td>
-<td class="py-2.5 text-right"><a class="link text-blue-600 hover:underline cursor-pointer" href="/planning">{{ s.action }}</a></td>
-</tr>
-{% endfor %}
-</tbody>
-</table>
-</div>
-</section>
-
-<!-- Cluster Performance -->
-<section class="card panel space-y-3.5">
-<div class="panel-header border-b border-slate-100 pb-2">
-<div class="panel-title font-semibold text-[#2e505f]">Cluster Performance</div>
-<a class="link hover:underline text-blue-600 font-bold text-[11px]" href="/clusters">View All</a>
-</div>
-<div class="overflow-x-auto">
-<table class="w-full text-left text-[11px] border-collapse font-semibold text-slate-600">
-<thead>
-<tr class="text-[11px] uppercase tracking-wider text-slate-400 border-b border-slate-100">
-<th class="py-2">Cluster</th>
-<th class="py-2">Avg SSA</th>
-<th class="py-2 text-center">Trend</th>
-<th class="py-2 text-right">Status</th>
-</tr>
-</thead>
-<tbody class="divide-y divide-slate-100">
-{% for c in cluster_performance %}
-<tr>
-<td class="py-2.5 font-semibold text-slate-900">{{ c.name }}</td>
-<td class="py-2.5 text-slate-500">{{ c.avg_ssa }}</td>
-<td class="py-2.5 text-center font-bold text-[14px] {% if c.trend == '↑' %}text-emerald-600{% elif c.trend == '↓' %}text-rose-500{% else %}text-amber-500{% endif %}">{{ c.trend }}</td>
-<td class="py-2.5 text-right"><span class="status {{ c.status_class }}">{{ c.status }}</span></td>
-</tr>
-{% endfor %}
-</tbody>
-</table>
-</div>
-</section>
-</div>
-
-<!-- Support and Budget overview Row -->
-<div class="two-col">
-<!-- Partner Support Overview -->
-<section class="card panel space-y-3.5">
-<div class="panel-header border-b border-slate-100 pb-2">
-<div class="panel-title font-semibold text-[#2e505f]">Partner Support Overview</div>
-<a class="link hover:underline text-blue-600 font-bold text-[11px]" href="/partners">View All</a>
-</div>
-<div class="mini-metrics">
-<div class="mini">
-<small>Assigned Partners</small>
-<strong class="text-[18px] font-semibold text-slate-800 leading-none mt-2 block">{{ support_overview.assigned_partners }}</strong>
-<small class="text-emerald-600 mt-1 block">Active</small>
-</div>
-<div class="mini">
-<small>Planned Visits</small>
-<strong class="text-[18px] font-semibold text-slate-800 leading-none mt-2 block">{{ support_overview.planned_visits }}</strong>
-<small class="text-slate-400 mt-1 block">This Month</small>
-</div>
-<div class="mini">
-<small>Evidence Pending</small>
-<strong class="text-[18px] font-semibold text-slate-800 leading-none mt-2 block">{{ support_overview.evidence_pending }}</strong>
-<small class="text-rose-500 mt-1 block">Submissions</small>
-</div>
-<div class="mini">
-<small>Payments Due</small>
-<strong class="text-[18px] font-semibold text-slate-800 leading-none mt-2 block">{{ support_overview.payments_due }}</strong>
-<small class="text-slate-400 mt-1 block">This Month</small>
-</div>
-</div>
-</section>
-
-<!-- Budget & Fund Request Snapshot -->
-<section class="card panel space-y-3.5">
-<div class="panel-header border-b border-slate-100 pb-2">
-<div class="panel-title font-semibold text-[#2e505f]">Budget &amp; Fund Request Snapshot</div>
-<a class="link hover:underline text-blue-600 font-bold text-[11px]" href="/finance/fund-allocation">View Details</a>
-</div>
-<div class="mini-metrics">
-<div class="mini">
-<small>This Week</small>
-<strong class="text-[18px] font-semibold text-slate-800 leading-none mt-2 block">{{ budget_snapshot.week }}</strong>
-<small class="text-slate-400 mt-1 block">Planned Value</small>
-</div>
-<div class="mini">
-<small>This Month</small>
-<strong class="text-[18px] font-semibold text-slate-800 leading-none mt-2 block">{{ budget_snapshot.month }}</strong>
-<small class="text-slate-400 mt-1 block">Planned Value</small>
-</div>
-<div class="mini">
-<small>This Quarter</small>
-<strong class="text-[18px] font-semibold text-slate-800 leading-none mt-2 block">{{ budget_snapshot.quarter }}</strong>
-<small class="text-slate-400 mt-1 block">Planned Value</small>
-</div>
-<div class="mini">
-<small>This FY</small>
-<strong class="text-[18px] font-semibold text-slate-800 leading-none mt-2 block">{{ budget_snapshot.fy }}</strong>
-<small class="text-slate-400 mt-1 block">Planned Value</small>
-</div>
-</div>
-</section>
-</div>
-
-<!-- Execution Summary card -->
-<section class="card">
-<div class="panel border-b border-slate-100" style="padding-bottom:12px;">
-<div class="panel-title font-semibold text-[#2e505f]">Execution Summary</div>
-</div>
-<div class="summary-strip">
-<div class="summary-card">
-<div class="kicon blue-bg shrink-0">▣</div>
-<div>
-<span class="text-slate-400 text-[11px]">This Week</span>
-<strong class="text-[18px] font-semibold text-slate-800 block mt-0.5">{{ execution_summary.week }}</strong>
-<span class="text-emerald-600 text-[11px] font-bold block mt-1">▲ 18% vs last week</span>
-</div>
-</div>
-
-<div class="summary-card">
-<div class="kicon blue-bg shrink-0">▣</div>
-<div>
-<span class="text-slate-400 text-[11px]">This Month</span>
-<strong class="text-[18px] font-semibold text-slate-800 block mt-0.5">{{ execution_summary.month }}</strong>
-<span class="text-emerald-600 text-[11px] font-bold block mt-1">▲ 14% vs last month</span>
-</div>
-</div>
-
-<div class="summary-card">
-<div class="kicon purple-bg shrink-0">▣</div>
-<div>
-<span class="text-slate-400 text-[11px]">This Quarter</span>
-<strong class="text-[18px] font-semibold text-slate-800 block mt-0.5">{{ execution_summary.quarter }}</strong>
-<span class="text-emerald-600 text-[11px] font-bold block mt-1">▲ 9% vs last quarter</span>
-</div>
-</div>
-
-<div class="summary-card">
-<div class="kicon green-bg shrink-0">▣</div>
-<div>
-<span class="text-slate-400 text-[11px]">This FY</span>
-<strong class="text-[18px] font-semibold text-slate-800 block mt-0.5">{{ execution_summary.fy }}</strong>
-<span class="text-emerald-600 text-[11px] font-bold block mt-1">▲ 11% vs last FY</span>
-</div>
-</div>
-</div>
-</section>
-
-</div>
-
-<!-- Right Column: Rail Cards -->
-<aside class="right-rail">
-
-<!-- Upcoming Today -->
-<section class="card rail-card">
-<div class="rail-title font-semibold text-[#2e505f] text-[14px] border-b border-slate-100 pb-2 mb-3">
-Upcoming Today <span class="count text-[11px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-semibold ml-1.5">{{ upcoming_today|length }}</span>
-</div>
-
-<div class="space-y-3.5">
-{% for item in upcoming_today %}
-<div class="today-item {% if forloop.first %}highlight{% endif %} flex gap-3 text-[11px]">
-<div class="round-mini {{ item.type_class }} shrink-0 mt-0.5">{{ item.icon }}</div>
-<div class="space-y-1">
-<div class="time {% if forloop.first %}text-amber-700{% else %}text-slate-400{% endif %} font-semibold text-[11px]">{{ item.time }}</div>
-<strong class="text-slate-800 font-semibold leading-snug block">{{ item.title }}</strong>
-<span class="text-slate-500 block leading-tight">{{ item.desc }}</span>
-<span class="text-slate-400 block text-[11px]">{{ item.info }}</span>
-</div>
-</div>
-{% endfor %}
-</div>
-
-<a class="link text-blue-600 hover:underline block text-[11px] font-semibold mt-3" href="/planning">View all today’s activities &rsaquo;</a>
-</section>
-
-<!-- Attention Needed Alert Box -->
-<section class="card rail-card">
-<div class="rail-title font-semibold text-rose-600 text-[14px] border-b border-slate-100 pb-2 mb-3">
-Attention Needed <span class="count text-[11px] bg-rose-50 text-rose-600 px-2 py-0.5 rounded-full font-semibold ml-1.5">3</span>
-</div>
-<div class="attention-list space-y-3 text-[12px] font-bold text-slate-700">
-<div class="attention-item flex items-center gap-3">
-<div class="round-mini red-bg shrink-0">⚠</div>
-<div>
-<strong class="text-slate-900">14 schools</strong>
-<span class="text-slate-400 block text-[11px] mt-0.5">Require immediate attention</span>
-</div>
-</div>
-
-<div class="attention-item flex items-center gap-3">
-<div class="round-mini orange-bg shrink-0">◉</div>
-<div>
-<strong class="text-slate-900">2 fund requests</strong>
-<span class="text-slate-400 block text-[11px] mt-0.5">Awaiting approval</span>
-</div>
-</div>
-
-<div class="attention-item flex items-center gap-3">
-<div class="round-mini purple-bg shrink-0">◫</div>
-<div>
-<strong class="text-slate-900">7 evidence submissions</strong>
-<span class="text-slate-400 block text-[11px] mt-0.5">Past due</span>
-</div>
-</div>
-</div>
-</section>
-
-<!-- Recommendation Card -->
-<section class="card rail-card recommend border border-emerald-200 p-5 rounded-xl">
-<h4 class="text-emerald-700 font-semibold text-[14px] mb-2 uppercase tracking-wider">Next Recommended Action</h4>
-<p class="text-[12px] text-slate-600 leading-relaxed mb-4">
-<strong>Confirm this week’s advance request</strong><br>
-Ensure timely disbursement for planned activities.
-</p>
-<a class="edify-action-button primary w-full text-center hover:bg-emerald-600" href="/fund-requests/weekly">Take Action &rarr;</a>
-</section>
-
-<!-- Quick Actions grid -->
-<section class="card rail-card">
-<div class="rail-title font-semibold text-slate-800 text-[14px] border-b border-slate-100 pb-2 mb-3">Quick Actions</div>
-<div class="quick-grid grid grid-cols-2 gap-2">
-<a class="edify-action-button secondary h-8 text-[11px] text-center" href="/planning">▣ Schedule Activity</a>
-<a class="edify-action-button secondary h-8 text-[11px] text-center" href="/planning">＋ Add School Visit</a>
-<a class="edify-action-button secondary h-8 text-[11px] text-center" href="/planning">◎ Create Cluster</a>
-<a class="edify-action-button secondary h-8 text-[11px] text-center" href="/fund-requests/weekly">◉ New Request</a>
-</div>
-</section>
-
-</aside>
-
-</section>
 
 </div>
 {% endblock %}

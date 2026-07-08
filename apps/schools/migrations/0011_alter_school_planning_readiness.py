@@ -4,15 +4,34 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('schools', '0010_alter_unmatchedssarecord_status'),
+        ("schools", "0010_alter_unmatchedssarecord_status"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='school',
-            name='planning_readiness',
-            field=models.CharField(choices=[('requires_cluster', 'Requires Cluster'), ('ready_for_baseline_ssa', 'SSA Required'), ('ready_for_support_planning', 'Ready for Support Planning'), ('ready_for_partner_assignment', 'Ready for Partner Assignment'), ('scheduled', 'Scheduled'), ('in_my_plan', 'In My Plan'), ('awaiting_evidence', 'Awaiting Evidence'), ('awaiting_ia', 'Awaiting IA'), ('finance_pending', 'Finance Pending'), ('closed', 'Closed'), ('data_cleanup_required', 'Data Cleanup Required'), ('cost_catalogue_required', 'Cost Catalogue Required'), ('locked', 'Locked'), ('limited', 'Limited'), ('ready', 'Ready')], default='locked', max_length=32),
+            model_name="school",
+            name="planning_readiness",
+            field=models.CharField(
+                choices=[
+                    ("requires_cluster", "Requires Cluster"),
+                    ("ready_for_baseline_ssa", "SSA Required"),
+                    ("ready_for_support_planning", "Ready for Support Planning"),
+                    ("ready_for_partner_assignment", "Ready for Partner Assignment"),
+                    ("scheduled", "Scheduled"),
+                    ("in_my_plan", "In My Plan"),
+                    ("awaiting_evidence", "Awaiting Evidence"),
+                    ("awaiting_ia", "Awaiting IA"),
+                    ("finance_pending", "Finance Pending"),
+                    ("closed", "Closed"),
+                    ("data_cleanup_required", "Data Cleanup Required"),
+                    ("cost_catalogue_required", "Cost Catalogue Required"),
+                    ("locked", "Locked"),
+                    ("limited", "Limited"),
+                    ("ready", "Ready"),
+                ],
+                default="locked",
+                max_length=32,
+            ),
         ),
     ]

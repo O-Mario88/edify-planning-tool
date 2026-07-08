@@ -10,6 +10,7 @@ Covers the success criteria:
   - purge does not delete reference data
   - dashboards do not show fake counts (empty → zeros)
 """
+
 from __future__ import annotations
 
 import os
@@ -38,7 +39,10 @@ class EmptyDatabaseContractTest(TestCase):
         from apps.schools.services import list_schools
 
         class _P:
-            user_id = "u"; active_role = "Admin"; staff_profile_id = None
+            user_id = "u"
+            active_role = "Admin"
+            staff_profile_id = None
+
         result = list_schools({"pageSize": "25"}, _P())
         self.assertEqual(result.count(), 0)
         self.assertEqual(School.objects.count(), 0)
@@ -47,7 +51,10 @@ class EmptyDatabaseContractTest(TestCase):
         from apps.analytics.services import dashboard_summary
 
         class _P:
-            user_id = "u"; active_role = "Admin"; staff_profile_id = None
+            user_id = "u"
+            active_role = "Admin"
+            staff_profile_id = None
+
         d = dashboard_summary(_P(), {})
         self.assertEqual(d["schools"], 0)
         self.assertEqual(d["ssaDone"], 0)
@@ -59,7 +66,10 @@ class EmptyDatabaseContractTest(TestCase):
         from apps.filters.services import options
 
         class _P:
-            user_id = "u"; active_role = "Admin"; staff_profile_id = None
+            user_id = "u"
+            active_role = "Admin"
+            staff_profile_id = None
+
         o = options(_P())
         self.assertEqual(o["schoolTypes"], [])
         self.assertEqual(o["regions"], [])
@@ -82,12 +92,21 @@ class UploadWiringTest(TestCase):
         from apps.schools.services import create_one
 
         class _P:
-            user_id = "u"; active_role = "ImpactAssessment"; staff_profile_id = None
+            user_id = "u"
+            active_role = "ImpactAssessment"
+            staff_profile_id = None
+
         region = Region.objects.first()
         district = District.objects.first()
         school = create_one(
-            {"schoolId": "UPL-1", "name": "Uploaded Primary", "regionId": region.id,
-             "districtId": district.id, "schoolType": "client", "enrollment": 100},
+            {
+                "schoolId": "UPL-1",
+                "name": "Uploaded Primary",
+                "regionId": region.id,
+                "districtId": district.id,
+                "schoolType": "client",
+                "enrollment": 100,
+            },
             _P(),
         )
         self.assertEqual(School.objects.count(), 1)
@@ -98,10 +117,21 @@ class UploadWiringTest(TestCase):
         from apps.schools.services import create_one, get_one
 
         class _P:
-            user_id = "u"; active_role = "Admin"; staff_profile_id = None
+            user_id = "u"
+            active_role = "Admin"
+            staff_profile_id = None
+
         region = Region.objects.first()
         district = District.objects.first()
-        create_one({"schoolId": "UPL-2", "name": "Dir School", "regionId": region.id, "districtId": district.id}, _P())
+        create_one(
+            {
+                "schoolId": "UPL-2",
+                "name": "Dir School",
+                "regionId": region.id,
+                "districtId": district.id,
+            },
+            _P(),
+        )
         fetched = get_one("UPL-2", _P())
         self.assertEqual(fetched.name, "Dir School")
 
@@ -110,25 +140,39 @@ class UploadWiringTest(TestCase):
         from apps.ssa.services import upload as ssa_upload
 
         class _P:
-            user_id = "u"; active_role = "ImpactAssessment"; staff_profile_id = None
+            user_id = "u"
+            active_role = "ImpactAssessment"
+            staff_profile_id = None
+
         region = Region.objects.first()
         district = District.objects.first()
-        school = create_one({"schoolId": "UPL-3", "name": "Ssa School", "regionId": region.id, "districtId": district.id}, _P())
+        school = create_one(
+            {
+                "schoolId": "UPL-3",
+                "name": "Ssa School",
+                "regionId": region.id,
+                "districtId": district.id,
+            },
+            _P(),
+        )
         # Without SSA the school is locked.
         school.current_fy_ssa_status = "done"
         school.save(update_fields=["current_fy_ssa_status"])
         record = ssa_upload(
-            {"schoolId": "UPL-3", "dateOfSsa": "2026-05-15T09:00:00+03:00",
-             "scores": [
-                 {"intervention": "teaching_environment", "score": 7},
-                 {"intervention": "financial_health", "score": 6},
-                 {"intervention": "christlike_behaviour", "score": 8},
-                 {"intervention": "exposure_to_word_of_god", "score": 7},
-                 {"intervention": "government_requirement", "score": 5},
-                 {"intervention": "leadership", "score": 6},
-                 {"intervention": "enrolment", "score": 4},
-                 {"intervention": "learning_environment", "score": 7},
-             ]},
+            {
+                "schoolId": "UPL-3",
+                "dateOfSsa": "2026-05-15T09:00:00+03:00",
+                "scores": [
+                    {"intervention": "teaching_environment", "score": 7},
+                    {"intervention": "financial_health", "score": 6},
+                    {"intervention": "christlike_behaviour", "score": 8},
+                    {"intervention": "exposure_to_word_of_god", "score": 7},
+                    {"intervention": "government_requirement", "score": 5},
+                    {"intervention": "leadership", "score": 6},
+                    {"intervention": "enrolment", "score": 4},
+                    {"intervention": "learning_environment", "score": 7},
+                ],
+            },
             _P(),
         )
         self.assertEqual(SsaRecord.objects.count(), 1)
@@ -145,18 +189,23 @@ class ProductionBlockingTest(TestCase):
     @override_settings(IS_PRODUCTION=True)
     def test_seed_demo_refuses_production(self):
         from django.core.management.base import CommandError
+
         with self.assertRaises(CommandError):
             call_command("seed", "--demo", stdout=StringIO())
 
     @override_settings(IS_PRODUCTION=True)
     def test_import_schools_refuses_production(self):
         from django.core.management.base import CommandError
+
         with self.assertRaises(CommandError):
-            call_command("import_schools_local", "/tmp/nonexistent.csv", stdout=StringIO())
+            call_command(
+                "import_schools_local", "/tmp/nonexistent.csv", stdout=StringIO()
+            )
 
     @override_settings(IS_PRODUCTION=True)
     def test_purge_refuses_production(self):
         from django.core.management.base import CommandError
+
         with self.assertRaises(CommandError):
             call_command("purge_local_test_data", "--yes", stdout=StringIO())
 
@@ -169,7 +218,10 @@ class PurgePreservesReferenceTest(TestCase):
         region = Region.objects.create(name="R")
         district = District.objects.create(name="D", region=region)
         School.objects.create(
-            school_id="T-1", name="Test", region=region, district=district,
+            school_id="T-1",
+            name="Test",
+            region=region,
+            district=district,
             source=DataSource.LOCAL_TEST_UPLOAD.value,
         )
 
@@ -192,8 +244,10 @@ class ImportCommandsTest(TestCase):
     def test_import_schools_local_csv(self):
         region = Region.objects.first()
         district = District.objects.first()
-        csv = tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False, newline="")
-        csv.write(f"schoolId,name,region,district,schoolType\n")
+        csv = tempfile.NamedTemporaryFile(
+            mode="w", suffix=".csv", delete=False, newline=""
+        )
+        csv.write("schoolId,name,region,district,schoolType\n")
         csv.write(f"IMP-1,Imp School,{region.name},{district.name},client\n")
         csv.close()
         call_command("import_schools_local", csv.name, stdout=StringIO())

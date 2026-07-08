@@ -13,7 +13,7 @@ Click rows to view activity pipelines
 {% for r in matrix_rows %}
 <div 
 class="group transition-all duration-300 border-l-4 bg-white"
-:class="expandedSchoolId === '{{ r.school_id }}' ? 'border-l-[#2e505f] bg-[#fdfefe]' : (r.blocked_reason ? 'border-l-slate-200 bg-white' : 'border-l-emerald-500 bg-white')"
+:class="expandedSchoolId === '{{ r.school_id }}' ? 'border-l-[#2e505f] bg-[#fdfefe]' : ({{ r.blocked_reason|yesno:'true,false' }} ? 'border-l-slate-200 bg-white' : 'border-l-emerald-500 bg-white')"
 >
 <!-- Card Header -->
 <div 
@@ -374,10 +374,6 @@ Next
 </div>
 {% endif %}
 {% else %}
-<div class="p-10 text-center select-none bg-white">
-<span class="text-[32px] block mb-2">⭐</span>
-<p class="text-[14px] font-semibold text-[#2e505f]">No Core Schools Found</p>
-<p class="text-[11px] text-slate-400 font-semibold mt-0.5">Please check your filters or search keywords.</p>
-</div>
+{% include "components/empty_state.html" with title="No core schools found" message="Please check your filters or search keywords." %}
 {% endif %}
 </div>

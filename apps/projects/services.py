@@ -1,4 +1,5 @@
 """Special-projects service — project directory + school/partner assignment + impact."""
+
 from __future__ import annotations
 
 
@@ -32,7 +33,10 @@ def partners(project_id: str) -> list[dict]:
     p = Project.objects.filter(id=project_id, deleted_at__isnull=True).first()
     if not p:
         raise NotFoundError("Project not found.")
-    return [{"id": a.partner_id, "name": a.partner.name} for a in p.partner_assignments.select_related("partner")]
+    return [
+        {"id": a.partner_id, "name": a.partner.name}
+        for a in p.partner_assignments.select_related("partner")
+    ]
 
 
 def assign_school(project_id: str, data: dict) -> dict:
@@ -40,6 +44,7 @@ def assign_school(project_id: str, data: dict) -> dict:
     if not p:
         raise NotFoundError("Project not found.")
     from apps.schools.models import School
+
     school = School.objects.filter(school_id=data.get("schoolId")).first()
     if not school:
         raise BadRequest("Unknown school.")
@@ -48,7 +53,9 @@ def assign_school(project_id: str, data: dict) -> dict:
 
 
 def remove_school(project_id: str, school_id: str) -> dict:
-    ProjectSchoolAssignment.objects.filter(project_id=project_id, school__school_id=school_id).delete()
+    ProjectSchoolAssignment.objects.filter(
+        project_id=project_id, school__school_id=school_id
+    ).delete()
     return {"ok": True}
 
 
@@ -57,7 +64,10 @@ def assign_partner(project_id: str, data: dict) -> dict:
     if not p:
         raise NotFoundError("Project not found.")
     from apps.partners.models import Partner
-    partner = Partner.objects.filter(id=data.get("partnerId"), deleted_at__isnull=True).first()
+
+    partner = Partner.objects.filter(
+        id=data.get("partnerId"), deleted_at__isnull=True
+    ).first()
     if not partner:
         raise BadRequest("Unknown partner.")
     ProjectPartnerAssignment.objects.get_or_create(project=p, partner=partner)
@@ -65,7 +75,9 @@ def assign_partner(project_id: str, data: dict) -> dict:
 
 
 def remove_partner(project_id: str, partner_id: str) -> dict:
-    ProjectPartnerAssignment.objects.filter(project_id=project_id, partner_id=partner_id).delete()
+    ProjectPartnerAssignment.objects.filter(
+        project_id=project_id, partner_id=partner_id
+    ).delete()
     return {"ok": True}
 
 

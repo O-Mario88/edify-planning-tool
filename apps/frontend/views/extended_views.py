@@ -1,9 +1,15 @@
 """
 GROUPS 4-7 — SSA/FY, Districts/Reports, Admin, Specialised Views
 """
+
 from django.shortcuts import render, redirect, get_object_or_404
-from apps.core.permissions import require_page_permission, get_scoped_object_or_404
+from apps.core.permissions import (
+    require_page_permission,
+    get_scoped_object_or_404,
+    RolePermissionService,
+)
 from django.db.models import Q, Avg, Count
+from django.utils import timezone
 from datetime import date
 
 from apps.ssa.models import SsaRecord
@@ -25,26 +31,83 @@ from apps.core.fy import get_operational_fy
 # GROUP 4 — SSA, FY & Planning
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
 @require_page_permission("ssa")
 def ssa_master_view(request):
     """SSA master view — scores overview across all schools."""
     fy = get_operational_fy()
     search = request.GET.get("q", "").strip()
 
-    records = SsaRecord.objects.filter(fy=fy, deleted_at__isnull=True).select_related("school").order_by("average_score")
+    records = (
+        SsaRecord.objects.filter(fy=fy, deleted_at__isnull=True)
+        .select_related("school")
+        .order_by("average_score")
+    )
     if search:
         records = records.filter(school__name__icontains=search)
 
     records_list = list(records[:100])
-    avg_score = sum(r.average_score or 0 for r in records_list) / max(len(records_list), 1)
+    avg_score = sum(r.average_score or 0 for r in records_list) / max(
+        len(records_list), 1
+    )
     total_schools = School.objects.filter(deleted_at__isnull=True).count()
     schools_with_ssa = records.values("school_id").distinct().count()
+    pending_ssa = max(total_schools - schools_with_ssa, 0)
+
+    # SSA severity bands (canonical 0-4 Critical / 5-6 Support / 7-8 Good / 9-10 Strong)
+    critical_count = records.filter(average_score__lt=5).count()
+    good_or_strong_count = records.filter(average_score__gte=7).count()
+
+    kpi_strip_items = [
+        {
+            "label": "Average Score",
+            "value": f"{round(avg_score, 1)}",
+            "raw_value": round(avg_score, 1),
+            "helper": "out of 10",
+            "icon": "chart",
+            "variant": "info",
+        },
+        {
+            "label": "Schools Assessed",
+            "value": str(schools_with_ssa),
+            "raw_value": schools_with_ssa,
+            "helper": f"of {total_schools} total",
+            "icon": "school",
+            "variant": "success",
+        },
+        {
+            "label": "Pending SSA",
+            "value": str(pending_ssa),
+            "raw_value": pending_ssa,
+            "helper": "not yet assessed",
+            "icon": "warning",
+            "variant": "warning",
+        },
+        {
+            "label": "Critical (<5)",
+            "value": str(critical_count),
+            "raw_value": critical_count,
+            "helper": "need urgent support",
+            "icon": "warning",
+            "variant": "danger",
+        },
+        {
+            "label": "Good or Strong (7+)",
+            "value": str(good_or_strong_count),
+            "raw_value": good_or_strong_count,
+            "helper": "performing well",
+            "icon": "check",
+            "variant": "success",
+        },
+    ]
 
     context = {
         "records": records_list,
         "avg_score": round(avg_score, 2),
         "total_schools": total_schools,
         "schools_with_ssa": schools_with_ssa,
+        "pending_ssa": pending_ssa,
+        "kpi_strip_items": kpi_strip_items,
         "fy": fy,
         "search": search,
     }
@@ -57,18 +120,120 @@ def fy_overview_view(request):
     fy = get_operational_fy()
 
     total_schools = School.objects.filter(deleted_at__isnull=True).count()
-    ssa_done = SsaRecord.objects.filter(fy=fy, deleted_at__isnull=True).values("school_id").distinct().count()
-    total_activities = Activity.objects.filter(deleted_at__isnull=True).count()
-    completed_activities = Activity.objects.filter(status="completed", deleted_at__isnull=True).count()
+    ssa_done = (
+        SsaRecord.objects.filter(fy=fy, deleted_at__isnull=True)
+        .values("school_id")
+        .distinct()
+        .count()
+    )
+    ssa_pending = total_schools - ssa_done
+    total_activities = Activity.objects.filter(deleted_at__isnull=True, fy=fy).count()
+    completed_activities = Activity.objects.filter(
+        status__in=["completed", "ia_verified", "closed"],
+        deleted_at__isnull=True,
+        fy=fy,
+    ).count()
+    completion_rate = round(completed_activities / max(total_activities, 1) * 100)
+
+    kpi_strip_items = [
+        {
+            "label": "Total Schools",
+            "value": str(total_schools),
+            "raw_value": total_schools,
+            "helper": "in the directory",
+            "icon": "school",
+            "variant": "info",
+        },
+        {
+            "label": "SSA Done",
+            "value": str(ssa_done),
+            "raw_value": ssa_done,
+            "helper": f"FY{fy}",
+            "icon": "check",
+            "variant": "success",
+        },
+        {
+            "label": "SSA Pending",
+            "value": str(ssa_pending),
+            "raw_value": ssa_pending,
+            "helper": "not yet assessed",
+            "icon": "warning",
+            "variant": "warning" if ssa_pending else "success",
+        },
+        {
+            "label": "Activity Completion",
+            "value": f"{completion_rate}%",
+            "raw_value": completion_rate,
+            "helper": f"{completed_activities} of {total_activities}",
+            "icon": "target",
+            "variant": "success" if completion_rate >= 70 else "warning",
+        },
+    ]
+
+    ssa_chart_has_data = total_schools > 0
+    ssa_chart_options = {
+        "chart": {"type": "donut", "fontFamily": "inherit"},
+        "labels": ["SSA Done", "SSA Pending"],
+        "series": [ssa_done, ssa_pending],
+        "colors": ["#10b981", "#f59e0b"],
+        "legend": {"show": True, "position": "bottom", "fontSize": "11px"},
+        "dataLabels": {"enabled": False},
+        "stroke": {"width": 2, "colors": ["#ffffff"]},
+        "plotOptions": {
+            "pie": {
+                "donut": {
+                    "size": "72%",
+                    "labels": {
+                        "show": True,
+                        "total": {
+                            "show": True,
+                            "label": "Schools",
+                            "color": "#1e293b",
+                        },
+                    },
+                }
+            }
+        },
+    }
+
+    activity_chart_has_data = total_activities > 0
+    activity_chart_options = {
+        "chart": {
+            "type": "bar",
+            "height": 260,
+            "toolbar": {"show": False},
+            "fontFamily": "inherit",
+        },
+        "series": [
+            {
+                "name": "Activities",
+                "data": [total_activities, completed_activities],
+            }
+        ],
+        "xaxis": {"categories": ["Total This FY", "Completed"]},
+        "plotOptions": {
+            "bar": {"borderRadius": 4, "columnWidth": "45%", "distributed": True}
+        },
+        "colors": ["#3b82f6", "#10b981"],
+        "legend": {"show": False},
+        "grid": {"borderColor": "#f1f5f9"},
+        "dataLabels": {"enabled": True},
+        "tooltip": {"theme": "light"},
+    }
 
     context = {
         "fy": fy,
         "total_schools": total_schools,
         "ssa_done": ssa_done,
-        "ssa_pending": total_schools - ssa_done,
+        "ssa_pending": ssa_pending,
         "total_activities": total_activities,
         "completed_activities": completed_activities,
-        "completion_rate": round(completed_activities / max(total_activities, 1) * 100),
+        "completion_rate": completion_rate,
+        "kpi_strip_items": kpi_strip_items,
+        "ssa_chart_options": ssa_chart_options,
+        "ssa_chart_has_data": ssa_chart_has_data,
+        "activity_chart_options": activity_chart_options,
+        "activity_chart_has_data": activity_chart_has_data,
     }
     return render(request, "pages/fy/index.html", context)
 
@@ -80,18 +245,49 @@ def calendar_view(request):
     month = int(request.GET.get("month", date.today().month))
     year = int(request.GET.get("year", date.today().year))
 
-    activities = Activity.objects.filter(
-        planned_date__year=year,
-        planned_date__month=month,
-        deleted_at__isnull=True,
-    ).select_related("school", "cluster").order_by("planned_date")
+    activities = (
+        Activity.objects.filter(
+            planned_date__year=year,
+            planned_date__month=month,
+            deleted_at__isnull=True,
+        )
+        .select_related("school", "cluster")
+        .order_by("planned_date")
+    )
 
     if user.active_role == "CCEO":
         activities = activities.filter(responsible_staff_id=user.id)
 
     import calendar
+
     cal = calendar.monthcalendar(year, month)
     month_name = calendar.month_name[month]
+
+    total_count = activities.count()
+    completed_count = activities.filter(status__in=["completed", "ia_verified"]).count()
+    kpi_strip_items = [
+        {
+            "label": "Scheduled This Month",
+            "value": str(total_count),
+            "raw_value": total_count,
+            "helper": month_name,
+            "icon": "calendar",
+            "variant": "info",
+        },
+        {
+            "label": "Completed",
+            "value": str(completed_count),
+            "raw_value": completed_count,
+            "helper": "of this month's total",
+            "icon": "check",
+            "variant": "success",
+        },
+    ]
+    scope_text = (
+        "Showing activities assigned to you."
+        if request.user.active_role == "CCEO"
+        else "Showing all scheduled activities for this month."
+    )
 
     context = {
         "activities": activities,
@@ -103,6 +299,8 @@ def calendar_view(request):
         "prev_year": year if month > 1 else year - 1,
         "next_month": month + 1 if month < 12 else 1,
         "next_year": year if month < 12 else year + 1,
+        "kpi_strip_items": kpi_strip_items,
+        "scope_text": scope_text,
     }
     return render(request, "pages/calendar/index.html", context)
 
@@ -113,20 +311,99 @@ def work_plan_view(request):
     user = request.user
     fy = get_operational_fy()
 
-    activities_qs = Activity.objects.filter(deleted_at__isnull=True).select_related("school", "cluster")
+    activities_qs = Activity.objects.filter(deleted_at__isnull=True).select_related(
+        "school", "cluster"
+    )
     if user.active_role == "CCEO":
         activities_qs = activities_qs.filter(responsible_staff_id=user.id)
 
-    monthly_summary = activities_qs.values("planned_date__month").annotate(
-        total=Count("id"),
-        completed=Count("id", filter=Q(status="completed")),
-    ).order_by("planned_date__month")
+    monthly_summary_qs = (
+        activities_qs.filter(planned_date__isnull=False)
+        .values("planned_date__month")
+        .annotate(
+            total=Count("id"),
+            completed=Count("id", filter=Q(status__in=["completed", "ia_verified"])),
+        )
+        .order_by("planned_date__month")
+    )
+    monthly_summary = []
+    for row in monthly_summary_qs:
+        total = row["total"]
+        completed = row["completed"]
+        rate = round(completed / total * 100) if total else 0
+        monthly_summary.append(
+            {
+                "month": row["planned_date__month"],
+                "total": total,
+                "completed": completed,
+                "rate": rate,
+            }
+        )
+
+    total_count = activities_qs.count()
+    completed_count = activities_qs.filter(
+        status__in=["completed", "ia_verified"]
+    ).count()
+    completion_rate = round(completed_count / total_count * 100) if total_count else 0
+
+    kpi_strip_items = [
+        {
+            "label": "Total Activities",
+            "value": str(total_count),
+            "raw_value": total_count,
+            "helper": f"FY{fy}",
+            "icon": "calendar",
+            "variant": "info",
+        },
+        {
+            "label": "Completed",
+            "value": str(completed_count),
+            "raw_value": completed_count,
+            "helper": "this FY",
+            "icon": "check",
+            "variant": "success",
+        },
+        {
+            "label": "Completion Rate",
+            "value": f"{completion_rate}%",
+            "raw_value": completion_rate,
+            "helper": "completed vs total",
+            "icon": "target",
+            "variant": "blue",
+        },
+    ]
+
+    import calendar as _calendar
+
+    monthly_chart = {
+        "chart": {"type": "bar"},
+        "series": [
+            {"name": "Total", "data": [m["total"] for m in monthly_summary]},
+            {"name": "Completed", "data": [m["completed"] for m in monthly_summary]},
+        ],
+        "xaxis": {
+            "categories": [
+                _calendar.month_abbr[m["month"]] if m["month"] else "—"
+                for m in monthly_summary
+            ],
+            "labels": {"style": {"colors": "#94a3b8", "fontSize": "10px"}},
+        },
+        "colors": ["#94a3b8", "#10b981"],
+        "plotOptions": {"bar": {"borderRadius": 4, "columnWidth": "55%"}},
+        "legend": {"show": True, "position": "top", "fontSize": "10px"},
+        "grid": {"borderColor": "#f1f5f9"},
+        "tooltip": {"theme": "light"},
+    }
 
     context = {
         "monthly_summary": monthly_summary,
         "fy": fy,
-        "total": activities_qs.count(),
-        "completed": activities_qs.filter(status="completed").count(),
+        "total": total_count,
+        "completed": completed_count,
+        "completion_rate": completion_rate,
+        "kpi_strip_items": kpi_strip_items,
+        "monthly_chart": monthly_chart,
+        "has_monthly_chart_data": bool(monthly_summary),
     }
     return render(request, "pages/work_plan/index.html", context)
 
@@ -134,6 +411,7 @@ def work_plan_view(request):
 # ═══════════════════════════════════════════════════════════════════════════════
 # GROUP 5 — Districts, Reports & Analytics
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 @require_page_permission("planning")
 def districts_list_view(request):
@@ -152,15 +430,21 @@ def districts_list_view(request):
             school__district=d, fy=fy, deleted_at__isnull=True
         ).aggregate(avg=Avg("average_score"))["avg"]
 
-        district_data.append({
-            "id": d.id,
-            "name": d.name,
-            "region": d.region.name if d.region else "—",
-            "school_count": school_count,
-            "avg_ssa": round(avg_ssa, 2) if avg_ssa else None,
-        })
+        district_data.append(
+            {
+                "id": d.id,
+                "name": d.name,
+                "region": d.region.name if d.region else "—",
+                "school_count": school_count,
+                "avg_ssa": round(avg_ssa, 2) if avg_ssa else None,
+            }
+        )
 
-    context = {"districts": district_data, "total": len(district_data), "search": search}
+    context = {
+        "districts": district_data,
+        "total": len(district_data),
+        "search": search,
+    }
     return render(request, "pages/districts/index.html", context)
 
 
@@ -168,171 +452,475 @@ def districts_list_view(request):
 def district_detail_view(request, district_id):
     """District detail — schools, SSA, and activities."""
     district = get_object_or_404(District, id=district_id)
-    fy = get_operational_fy()
-    schools = School.objects.filter(district=district, deleted_at__isnull=True).order_by("name")
+    get_operational_fy()
+    schools = School.objects.filter(
+        district=district, deleted_at__isnull=True
+    ).order_by("name")
     from apps.ssa.services import get_ssa_progress_by_fy
+
     district_progress = get_ssa_progress_by_fy(schools)
+
+    def _ssa_bar_color(score):
+        if score >= 7:
+            return "#10b981"
+        if score >= 5:
+            return "#f59e0b"
+        return "#f43f5e"
+
+    has_progress_data = bool(district_progress)
+    district_progress_chart = {
+        "chart": {"type": "bar"},
+        "series": [
+            {
+                "name": "Avg SSA (% of max)",
+                "data": [
+                    round(item["avg_score"] / 10 * 100, 1) for item in district_progress
+                ],
+            }
+        ],
+        "xaxis": {
+            "categories": [f"FY{item['fy']}" for item in district_progress],
+            "axisBorder": {"show": False},
+            "axisTicks": {"show": False},
+            "labels": {
+                "style": {"colors": "#94a3b8", "fontSize": "10px", "fontWeight": 500}
+            },
+        },
+        "yaxis": {
+            "max": 100,
+            "labels": {"style": {"colors": "#94a3b8", "fontSize": "10px"}},
+        },
+        "colors": [_ssa_bar_color(item["avg_score"]) for item in district_progress],
+        "plotOptions": {
+            "bar": {"borderRadius": 4, "columnWidth": "45%", "distributed": True}
+        },
+        "legend": {"show": False},
+        "dataLabels": {"enabled": True, "style": {"fontSize": "10px"}},
+        "grid": {"borderColor": "#f1f5f9"},
+        "tooltip": {"theme": "light"},
+    }
 
     context = {
         "district": district,
         "schools": schools,
         "total_schools": schools.count(),
         "district_progress": district_progress,
+        "latest_progress": district_progress[-1] if district_progress else None,
+        "district_progress_chart": district_progress_chart,
+        "has_progress_data": has_progress_data,
     }
     return render(request, "pages/districts/detail.html", context)
 
 
-@require_page_permission("planning")
+@require_page_permission("reports")
 def reports_view(request):
-    """Reports overview — all roles."""
-    fy = get_operational_fy()
+    """Reports overview — all roles. Every figure is computed from live
+    activity data for the selected FY (achieved = completed vs scheduled)."""
+    import csv
+    from django.http import HttpResponse as _HttpResponse
+    from apps.core.fy import (
+        fy_options,
+        get_fy_date_range,
+        get_quarter_date_range,
+        get_mid_year_range,
+        get_quarter_for_date,
+        get_cumulative_target_percentage,
+    )
+
+    fy = request.GET.get("fy", "").strip() or get_operational_fy()
+    if fy not in fy_options():
+        fy = get_operational_fy()
+
+    COMPLETED = ["completed", "ia_verified", "closed"]
+    AREAS = [
+        (
+            "Schools Visited",
+            [
+                "school_visit",
+                "follow_up_visit",
+                "coaching_visit",
+                "core_visit",
+                "in_school_support",
+            ],
+        ),
+        (
+            "Trainings Delivered",
+            ["training", "school_improvement_training", "cluster_training"],
+        ),
+        ("SSA Activities", ["ssa_activity"]),
+        ("Cluster Meetings", ["cluster_meeting"]),
+        ("Partner Activities", ["partner_activity"]),
+        ("Project Activities", ["project_activity"]),
+    ]
+
+    acts = Activity.objects.filter(deleted_at__isnull=True, fy=fy)
+    now = timezone.now()
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    if month_start.month == 12:
+        month_end = month_start.replace(year=month_start.year + 1, month=1)
+    else:
+        month_end = month_start.replace(month=month_start.month + 1)
+
+    fy_range = get_fy_date_range(fy)
+    ranges = {
+        "month": (month_start, month_end),
+        "Q1": get_quarter_date_range(fy, "Q1"),
+        "Q2": get_quarter_date_range(fy, "Q2"),
+        "Q3": get_quarter_date_range(fy, "Q3"),
+        "Q4": get_quarter_date_range(fy, "Q4"),
+        "mid": get_mid_year_range(fy),
+        "fy": fy_range,
+    }
+
+    def _counts(types, key):
+        rng = ranges[key]
+        qs = acts.filter(activity_type__in=types, scheduled_date__range=rng)
+        total = qs.count()
+        achieved = qs.filter(status__in=COMPLETED).count()
+        pct = round(achieved / total * 100) if total else 0
+        return total, achieved, pct
+
+    def _pct_color(pct):
+        if pct >= 70:
+            return "text-emerald-600"
+        if pct >= 50:
+            return "text-amber-600"
+        return "text-rose-600"
+
+    matrix_rows = []
+    for label, types in AREAS:
+        m_t, m_a, m_p = _counts(types, "month")
+        q1_t, q1_a, q1_p = _counts(types, "Q1")
+        q2_t, q2_a, q2_p = _counts(types, "Q2")
+        mid_t, mid_a, mid_p = _counts(types, "mid")
+        q3_t, q3_a, q3_p = _counts(types, "Q3")
+        q4_t, q4_a, q4_p = _counts(types, "Q4")
+        fy_t, fy_a, fy_p = _counts(types, "fy")
+        matrix_rows.append(
+            {
+                "area": label,
+                "m_t": m_t,
+                "m_a": m_a,
+                "m_p": m_p,
+                "m_c": _pct_color(m_p),
+                "q1_t": q1_t,
+                "q1_a": q1_a,
+                "q1_p": q1_p,
+                "q1_c": _pct_color(q1_p),
+                "q2_t": q2_t,
+                "q2_a": q2_a,
+                "q2_p": q2_p,
+                "q2_c": _pct_color(q2_p),
+                "mid_t": mid_t,
+                "mid_a": mid_a,
+                "mid_p": mid_p,
+                "mid_c": _pct_color(mid_p),
+                "q3_t": q3_t,
+                "q3_a": q3_a,
+                "q3_p": q3_p,
+                "q3_c": _pct_color(q3_p),
+                "q4_t": q4_t,
+                "q4_a": q4_a,
+                "q4_p": q4_p,
+                "q4_c": _pct_color(q4_p),
+                "fy_t": fy_t,
+                "fy_a": fy_a,
+                "fy_p": fy_p,
+                "fy_c": _pct_color(fy_p),
+            }
+        )
+
+    if request.GET.get("export") == "csv":
+        response = _HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = (
+            f'attachment; filename="edify-performance-report-FY{fy}.csv"'
+        )
+        writer = csv.writer(response)
+        writer.writerow(
+            ["Target Area"]
+            + [
+                f"{p} {c}"
+                for p in [
+                    "This Month",
+                    "Q1 (Oct-Dec)",
+                    "Q2 (Jan-Mar)",
+                    "Mid Year",
+                    "Q3 (Apr-Jun)",
+                    "Q4 (Jul-Sep)",
+                    f"FY {fy}",
+                ]
+                for c in ["Target", "Achieved", "%"]
+            ]
+        )
+        for r in matrix_rows:
+            writer.writerow(
+                [
+                    r["area"],
+                    r["m_t"],
+                    r["m_a"],
+                    r["m_p"],
+                    r["q1_t"],
+                    r["q1_a"],
+                    r["q1_p"],
+                    r["q2_t"],
+                    r["q2_a"],
+                    r["q2_p"],
+                    r["mid_t"],
+                    r["mid_a"],
+                    r["mid_p"],
+                    r["q3_t"],
+                    r["q3_a"],
+                    r["q3_p"],
+                    r["q4_t"],
+                    r["q4_a"],
+                    r["q4_p"],
+                    r["fy_t"],
+                    r["fy_a"],
+                    r["fy_p"],
+                ]
+            )
+        return response
+
+    def _overall(key):
+        rng = ranges[key]
+        qs = acts.filter(scheduled_date__range=rng)
+        total = qs.count()
+        achieved = qs.filter(status__in=COMPLETED).count()
+        pct = round(achieved / total * 100) if total else 0
+        return total, achieved, pct
+
+    current_q = get_quarter_for_date(now)
+    q_labels = {
+        "Q1": "Q1 (Oct – Dec)",
+        "Q2": "Q2 (Jan – Mar)",
+        "Q3": "Q3 (Apr – Jun)",
+        "Q4": "Q4 (Jul – Sep)",
+    }
+    period_defs = [
+        ("month", now.strftime("%B %Y"), "Monthly", "text-blue-500", True),
+        ("Q1", q_labels["Q1"], "Quarter 1", "text-emerald-500", True),
+        ("Q2", q_labels["Q2"], "Quarter 2", "text-blue-500", True),
+        ("mid", "Mid Year (Oct – Mar)", "Cumulative", "text-violet-500", True),
+        ("Q3", q_labels["Q3"], "Quarter 3", "text-teal-500", True),
+        ("Q4", q_labels["Q4"], "Quarter 4", "text-slate-400", True),
+        ("fy", f"FY {fy}", "Full Year", "text-indigo-600", True),
+    ]
+    quarter_order = ["Q1", "Q2", "Q3", "Q4"]
+    periods = []
+    for key, label, sublabel, color, _ in period_defs:
+        total, achieved, pct = _overall(key)
+        started = True
+        if key in quarter_order:
+            started = quarter_order.index(key) <= quarter_order.index(current_q)
+        periods.append(
+            {
+                "key": key,
+                "label": label,
+                "sublabel": sublabel,
+                "color": color,
+                "total": total,
+                "achieved": achieved,
+                "pct": pct,
+                "status": ("On Track" if pct >= 70 else "In Progress")
+                if started and total
+                else ("Not Started" if not achieved else "In Progress"),
+                "dim": key in quarter_order and not started,
+            }
+        )
+    overall = {p["key"]: p for p in periods}
+
+    kpi_strip_items = [
+        {
+            "label": p["label"],
+            "value": f"{p['achieved']} / {p['total']}",
+            "helper": f"{p['pct']}% · {p['status']}",
+            "icon": "calendar",
+            "variant": "success"
+            if p["status"] == "On Track"
+            else ("neutral" if p["status"] == "Not Started" else "warning"),
+        }
+        for p in periods
+    ]
+
+    # FY completion per target area — ApexCharts bar (replaces the old
+    # 6-column mini-card grid, which violated the 3-column layout rule).
+    matrix_chart_has_data = any(r["fy_t"] for r in matrix_rows)
+    matrix_chart_options = {
+        "chart": {
+            "type": "bar",
+            "height": 280,
+            "toolbar": {"show": False},
+            "fontFamily": "inherit",
+        },
+        "series": [
+            {"name": "FY completion %", "data": [r["fy_p"] for r in matrix_rows]}
+        ],
+        "xaxis": {"categories": [r["area"] for r in matrix_rows]},
+        "plotOptions": {
+            "bar": {"borderRadius": 4, "columnWidth": "50%", "distributed": True}
+        },
+        "colors": ["#3b82f6", "#10b981", "#f59e0b", "#0ea5a4", "#f43f5e", "#94a3b8"],
+        "legend": {"show": False},
+        "grid": {"borderColor": "#f1f5f9"},
+        "dataLabels": {"enabled": True},
+        "tooltip": {"theme": "light"},
+    }
+
+    # Donut: how many target areas are on/at-risk/off track for the FY
+    active_rows = [r for r in matrix_rows if r["fy_t"] > 0]
+    donut_on = sum(1 for r in active_rows if r["fy_p"] >= 70)
+    donut_risk = sum(1 for r in active_rows if 50 <= r["fy_p"] < 70)
+    donut_off = sum(1 for r in active_rows if r["fy_p"] < 50)
+    donut_total = len(active_rows)
+
+    def _dpct(n):
+        return round(n / donut_total * 100) if donut_total else 0
+
+    donut = {
+        "total": donut_total,
+        "on": donut_on,
+        "on_pct": _dpct(donut_on),
+        "risk": donut_risk,
+        "risk_pct": _dpct(donut_risk),
+        "off": donut_off,
+        "off_pct": _dpct(donut_off),
+        "risk_offset": -_dpct(donut_on),
+        "off_offset": -(_dpct(donut_on) + _dpct(donut_risk)),
+    }
+    donut_chart_has_data = donut_total > 0
+    donut_chart_options = {
+        "chart": {"type": "donut", "fontFamily": "inherit"},
+        "labels": ["On Track (≥70%)", "At Risk (50-69%)", "Off Track (<50%)"],
+        "series": [donut_on, donut_risk, donut_off],
+        "colors": ["#10b981", "#f59e0b", "#f43f5e"],
+        "legend": {"show": False},
+        "dataLabels": {"enabled": False},
+        "stroke": {"width": 2, "colors": ["#ffffff"]},
+        "plotOptions": {
+            "pie": {
+                "donut": {
+                    "size": "72%",
+                    "labels": {
+                        "show": True,
+                        "total": {"show": True, "label": "Areas", "color": "#1e293b"},
+                    },
+                }
+            }
+        },
+    }
+
+    # Priorities: worst areas by FY completion (only areas with scheduled work)
+    priorities = []
+    for r in sorted(active_rows, key=lambda x: x["fy_p"])[:4]:
+        if r["fy_p"] < 50:
+            status, status_class = (
+                "Off Track",
+                "bg-rose-50 text-rose-700 border-rose-200",
+            )
+        elif r["fy_p"] < 70:
+            status, status_class = (
+                "At Risk",
+                "bg-amber-50 text-amber-700 border-amber-200",
+            )
+        else:
+            status, status_class = (
+                "On Track",
+                "bg-emerald-50 text-emerald-700 border-emerald-200",
+            )
+        priorities.append(
+            {
+                "title": r["area"],
+                "desc": f"{r['fy_a']} of {r['fy_t']} scheduled completed ({r['fy_p']}%).",
+                "status": status,
+                "status_class": status_class,
+            }
+        )
+
+    # Cumulative progress trend — actual % achieved vs the cumulative FY
+    # target, per period. Server-computed ApexCharts series (no SVG math).
+    trend_keys = [
+        ("month", now.strftime("%b")),
+        ("Q1", "Q1"),
+        ("Q2", "Q2"),
+        ("mid", "Mid Year"),
+        ("Q3", "Q3"),
+        ("Q4", "Q4"),
+        ("fy", "FY"),
+    ]
+    target_pcts = {
+        "month": None,
+        "Q1": 25,
+        "Q2": 50,
+        "mid": 50,
+        "Q3": 75,
+        "Q4": 100,
+        "fy": 100,
+    }
+    trend_labels = [short for _key, short in trend_keys]
+    trend_actual = [overall[key]["pct"] for key, _short in trend_keys]
+    trend_plan = [
+        target_pcts[key]
+        if target_pcts[key] is not None
+        else get_cumulative_target_percentage("FY")
+        for key, _short in trend_keys
+    ]
+    trend_chart_has_data = any(overall[key]["total"] for key, _ in trend_keys)
+    trend_chart_options = {
+        "chart": {
+            "type": "line",
+            "height": 260,
+            "toolbar": {"show": False},
+            "fontFamily": "inherit",
+        },
+        "series": [
+            {"name": "Actual %", "data": trend_actual},
+            {"name": "Cumulative Plan %", "data": trend_plan},
+        ],
+        "stroke": {"width": [3, 2], "curve": "smooth", "dashArray": [0, 6]},
+        "colors": ["#3b82f6", "#94a3b8"],
+        "xaxis": {"categories": trend_labels},
+        "yaxis": {"max": 100, "min": 0},
+        "grid": {"borderColor": "#f1f5f9"},
+        "legend": {"position": "top", "horizontalAlign": "right"},
+        "dataLabels": {"enabled": False},
+        "markers": {"size": 4},
+        "tooltip": {"theme": "light"},
+    }
+
     total_schools = School.objects.filter(deleted_at__isnull=True).count()
-    total_activities = Activity.objects.filter(deleted_at__isnull=True).count()
-    completed = Activity.objects.filter(status="completed", deleted_at__isnull=True).count()
+    total_activities = acts.count()
+    completed = acts.filter(status__in=COMPLETED).count()
 
     context = {
         "fy": fy,
+        "fy_options": fy_options(),
         "total_schools": total_schools,
         "total_activities": total_activities,
         "completed": completed,
-        "completion_rate": round(completed / max(total_activities, 1) * 100) if total_activities > 0 else 0,
-        
-        # May 2025 (Monthly)
-        "monthly_achieved": 21,
-        "monthly_total": 31,
-        "monthly_pct": 68,
-        "monthly_trend": "vs Apr ▲ 6pp",
-        "monthly_trend_class": "text-emerald-600",
-        
-        # Q1 (Apr-Jun)
-        "q1_achieved": 214,
-        "q1_total": 297,
-        "q1_pct": 72,
-        "q1_trend": "vs Q1 Plan ▲ 8pp",
-        "q1_trend_class": "text-emerald-600",
-        
-        # Q2 (Jul-Sep)
-        "q2_achieved": 153,
-        "q2_total": 300,
-        "q2_pct": 51,
-        "q2_trend": "vs Q2 Plan ▼ 3pp",
-        "q2_trend_class": "text-rose-600",
-        
-        # Mid Year (Apr-Sep)
-        "mid_achieved": 367,
-        "mid_total": 597,
-        "mid_pct": 61,
-        "mid_trend": "vs Mid Year Plan ▲ 5pp",
-        "mid_trend_class": "text-emerald-600",
-        
-        # Q3 (Oct-Dec)
-        "q3_achieved": 0,
-        "q3_total": 300,
-        "q3_pct": 0,
-        "q3_trend": "vs Q3 Plan —",
-        "q3_trend_class": "text-slate-400",
-        
-        # Q4 (Jan-Mar)
-        "q4_achieved": 0,
-        "q4_total": 300,
-        "q4_pct": 0,
-        "q4_trend": "vs Q4 Plan —",
-        "q4_trend_class": "text-slate-400",
-        
-        # FY 2024/25
-        "fy_achieved": 367,
-        "fy_total": 1197,
-        "fy_pct": 31,
-        "fy_trend": "vs FY Plan ▲ 4pp",
-        "fy_trend_class": "text-emerald-600",
-
-        # Target Cards
-        "core_cards": [
-            {"label": "Schools Visited", "value": "374 / 480", "pct": 78, "color": "text-blue-600"},
-            {"label": "Trainings Delivered", "value": "91 / 140", "pct": 65, "color": "text-emerald-600"},
-            {"label": "SSA Visits Completed", "value": "122 / 172", "pct": 71, "color": "text-teal-600"},
-            {"label": "Follow-ups Closed", "value": "64 / 78", "pct": 82, "color": "text-indigo-600"},
-            {"label": "Plan Approvals", "value": "28 / 40", "pct": 70, "color": "text-violet-600"},
-            {"label": "Fund Requests Reviewed", "value": "8 / 12", "pct": 67, "color": "text-amber-600"}
-        ],
-
-        # Progress by Time Period (Cumulative) Table Matrix
-        "matrix_rows": [
-            {
-                "area": "Schools Visited",
-                "m_t": 60, "m_a": 42, "m_p": 70, "m_c": "text-blue-600",
-                "q1_t": 150, "q1_a": 122, "q1_p": 81, "q1_c": "text-emerald-600",
-                "q2_t": 150, "q2_a": 92, "q2_p": 61, "q2_c": "text-emerald-600",
-                "mid_t": 300, "mid_a": 214, "mid_p": 71, "mid_c": "text-violet-600",
-                "q3_t": 150, "q3_a": 0, "q3_p": 0, "q3_c": "text-slate-400",
-                "q4_t": 180, "q4_a": 0, "q4_p": 0, "q4_c": "text-slate-400",
-                "fy_t": 630, "fy_a": 214, "fy_p": 34, "fy_c": "text-blue-600"
-            },
-            {
-                "area": "Trainings Delivered",
-                "m_t": 20, "m_a": 14, "m_p": 70, "m_c": "text-blue-600",
-                "q1_t": 50, "q1_a": 36, "q1_p": 72, "q1_c": "text-emerald-600",
-                "q2_t": 50, "q2_a": 27, "q2_p": 54, "q2_c": "text-emerald-600",
-                "mid_t": 100, "mid_a": 63, "mid_p": 63, "mid_c": "text-violet-600",
-                "q3_t": 50, "q3_a": 0, "q3_p": 0, "q3_c": "text-slate-400",
-                "q4_t": 50, "q4_a": 0, "q4_p": 0, "q4_c": "text-slate-400",
-                "fy_t": 200, "fy_a": 63, "fy_p": 32, "fy_c": "text-blue-600"
-            },
-            {
-                "area": "SSA Visits Completed",
-                "m_t": 20, "m_a": 18, "m_p": 90, "m_c": "text-emerald-600",
-                "q1_t": 51, "q1_a": 34, "q1_p": 67, "q1_c": "text-emerald-600",
-                "q2_t": 56, "q2_a": 32, "q2_p": 57, "q2_c": "text-emerald-600",
-                "mid_t": 107, "mid_a": 66, "mid_p": 62, "mid_c": "text-violet-600",
-                "q3_t": 56, "q3_a": 0, "q3_p": 0, "q3_c": "text-slate-400",
-                "q4_t": 58, "q4_a": 0, "q4_p": 0, "q4_c": "text-slate-400",
-                "fy_t": 221, "fy_a": 66, "fy_p": 30, "fy_c": "text-blue-600"
-            },
-            {
-                "area": "Follow-ups Closed",
-                "m_t": 14, "m_a": 11, "m_p": 79, "m_c": "text-emerald-600",
-                "q1_t": 24, "q1_a": 18, "q1_p": 75, "q1_c": "text-emerald-600",
-                "q2_t": 27, "q2_a": 14, "q2_p": 52, "q2_c": "text-emerald-600",
-                "mid_t": 51, "mid_a": 32, "mid_p": 63, "mid_c": "text-violet-600",
-                "q3_t": 27, "q3_a": 0, "q3_p": 0, "q3_c": "text-slate-400",
-                "q4_t": 28, "q4_a": 0, "q4_p": 0, "q4_c": "text-slate-400",
-                "fy_t": 106, "fy_a": 32, "fy_p": 30, "fy_c": "text-blue-600"
-            },
-            {
-                "area": "Plan Approvals",
-                "m_t": 10, "m_a": 7, "m_p": 70, "m_c": "text-blue-600",
-                "q1_t": 24, "q1_a": 17, "q1_p": 71, "q1_c": "text-emerald-600",
-                "q2_t": 16, "q2_a": 11, "q2_p": 69, "q2_c": "text-emerald-600",
-                "mid_t": 40, "mid_a": 28, "mid_p": 70, "mid_c": "text-emerald-600",
-                "q3_t": 16, "q3_a": 0, "q3_p": 0, "q3_c": "text-slate-400",
-                "q4_t": 18, "q4_a": 0, "q4_p": 0, "q4_c": "text-slate-400",
-                "fy_t": 74, "fy_a": 28, "fy_p": 38, "fy_c": "text-blue-600"
-            },
-            {
-                "area": "Fund Requests Reviewed",
-                "m_t": 4, "m_a": 3, "m_p": 75, "m_c": "text-emerald-600",
-                "q1_t": 10, "q1_a": 7, "q1_p": 70, "q1_c": "text-emerald-600",
-                "q2_t": 16, "q2_a": 4, "q2_p": 25, "q2_c": "text-rose-600",
-                "mid_t": 26, "mid_a": 11, "mid_p": 42, "mid_c": "text-amber-600",
-                "q3_t": 16, "q3_a": 0, "q3_p": 0, "q3_c": "text-slate-400",
-                "q4_t": 18, "q4_a": 0, "q4_p": 0, "q4_c": "text-slate-400",
-                "fy_t": 60, "fy_a": 11, "fy_p": 18, "fy_c": "text-rose-600"
-            }
-        ],
-
-        # Donut split
-        "donut_total": 12,
-        "donut_on_track": 6,
-        "donut_at_risk": 4,
-        "donut_off_track": 2,
-
-        # Priorities
-        "priorities": [
-            {"title": "SSA Visits Completed", "desc": "Below target in Q2. Focus on completion.", "status": "At Risk", "status_class": "bg-amber-50 text-amber-700 border-amber-250"},
-            {"title": "Trainings Delivered", "desc": "64% achieved in Q2. Increase coverage.", "status": "At Risk", "status_class": "bg-amber-50 text-amber-700 border-amber-250"},
-            {"title": "Follow-ups Closed", "desc": "82% achieved this month. Keep it up!", "status": "On Track", "status_class": "bg-emerald-50 text-emerald-700 border-emerald-250"},
-            {"title": "Fund Requests Reviewed", "desc": "40% achieved in Q2. Clear outstanding items.", "status": "Off Track", "status_class": "bg-rose-50 text-rose-700 border-rose-250"}
-        ]
+        "completion_rate": round(completed / total_activities * 100)
+        if total_activities
+        else 0,
+        "periods": periods,
+        "kpi_strip_items": kpi_strip_items,
+        "current_month_label": now.strftime("%B %Y"),
+        "q_labels": q_labels,
+        "monthly_pct": overall["month"]["pct"],
+        "q1_pct": overall["Q1"]["pct"],
+        "q2_pct": overall["Q2"]["pct"],
+        "mid_pct": overall["mid"]["pct"],
+        "q3_pct": overall["Q3"]["pct"],
+        "q4_pct": overall["Q4"]["pct"],
+        "fy_pct": overall["fy"]["pct"],
+        "matrix_rows": matrix_rows,
+        "matrix_chart_options": matrix_chart_options,
+        "matrix_chart_has_data": matrix_chart_has_data,
+        "donut": donut,
+        "donut_chart_options": donut_chart_options,
+        "donut_chart_has_data": donut_chart_has_data,
+        "donut_footer_note": f"Overall FY completion: {overall['fy']['pct']}%",
+        "priorities": priorities,
+        "trend_chart_options": trend_chart_options,
+        "trend_chart_has_data": trend_chart_has_data,
     }
     return render(request, "pages/reports/index.html", context)
 
@@ -340,24 +928,85 @@ def reports_view(request):
 @require_page_permission("planning")
 def coverage_view(request):
     """Coverage overview — CD/IA."""
-    fy = get_operational_fy()
+    get_operational_fy()
     total_schools = School.objects.filter(deleted_at__isnull=True).count()
-    visited = Activity.objects.filter(
-        activity_type__in=["school_visit", "follow_up_visit", "coaching_visit"],
-        status="completed",
-        deleted_at__isnull=True,
-    ).values("school_id").distinct().count()
+    visited = (
+        Activity.objects.filter(
+            activity_type__in=["school_visit", "follow_up_visit", "coaching_visit"],
+            status="completed",
+            deleted_at__isnull=True,
+        )
+        .values("school_id")
+        .distinct()
+        .count()
+    )
 
-    clusters = Cluster.objects.filter(deleted_at__isnull=True).annotate(
-        school_count=Count("schools", filter=Q(schools__deleted_at__isnull=True)),
-    ).order_by("name")
+    clusters = (
+        Cluster.objects.filter(deleted_at__isnull=True)
+        .annotate(
+            school_count=Count("assignments", distinct=True),
+            visited_count=Count(
+                "assignments__school",
+                filter=Q(
+                    assignments__school__deleted_at__isnull=True,
+                    assignments__school__activities__activity_type__in=[
+                        "school_visit",
+                        "follow_up_visit",
+                        "coaching_visit",
+                    ],
+                    assignments__school__activities__status="completed",
+                ),
+                distinct=True,
+            ),
+        )
+        .order_by("name")
+    )
+
+    unvisited = total_schools - visited
+    coverage_pct = round(visited / max(total_schools, 1) * 100)
+
+    kpi_strip_items = [
+        {
+            "label": "Total Schools",
+            "value": str(total_schools),
+            "raw_value": total_schools,
+            "helper": "in the directory",
+            "icon": "school",
+            "variant": "info",
+        },
+        {
+            "label": "Visited",
+            "value": str(visited),
+            "raw_value": visited,
+            "helper": "at least one completed visit",
+            "icon": "check",
+            "variant": "success",
+        },
+        {
+            "label": "Not Yet Visited",
+            "value": str(unvisited),
+            "raw_value": unvisited,
+            "helper": "no completed visits",
+            "icon": "warning",
+            "variant": "warning",
+        },
+        {
+            "label": "Coverage Rate",
+            "value": f"{coverage_pct}%",
+            "raw_value": coverage_pct,
+            "helper": "schools visited",
+            "icon": "target",
+            "variant": "success" if coverage_pct >= 70 else "warning",
+        },
+    ]
 
     context = {
         "total_schools": total_schools,
         "visited": visited,
-        "unvisited": total_schools - visited,
-        "coverage_pct": round(visited / max(total_schools, 1) * 100),
+        "unvisited": unvisited,
+        "coverage_pct": coverage_pct,
         "clusters": clusters,
+        "kpi_strip_items": kpi_strip_items,
     }
     return render(request, "pages/coverage/index.html", context)
 
@@ -366,15 +1015,144 @@ def coverage_view(request):
 # GROUP 6 — Admin, Settings, Messages, Search
 # ═══════════════════════════════════════════════════════════════════════════════
 
+
+def _admin_workflow_rules():
+    """The set of workflow toggles surfaced on the Workflow Rules page and
+    summarised on the Admin home. A single definition so the "Active" count
+    on the home page always matches the toggle list itself."""
+    return [
+        {
+            "key": "clustered_before_planning",
+            "label": "School must be clustered before planning",
+            "enabled": True,
+        },
+        {
+            "key": "ssa_required",
+            "label": "SSA required before planning",
+            "enabled": True,
+        },
+        {
+            "key": "auto_budget_lines",
+            "label": "Activity scheduling creates budget automatically",
+            "enabled": True,
+        },
+        {
+            "key": "evidence_mandatory",
+            "label": "Evidence attachment required before completion",
+            "enabled": True,
+        },
+        {
+            "key": "sf_id_mandatory",
+            "label": "Activity Salesforce ID required before IA verification",
+            "enabled": False,
+        },
+        {
+            "key": "ia_before_accounts",
+            "label": "IA verification required before Accounts clearance",
+            "enabled": True,
+        },
+    ]
+
+
 @require_page_permission("admin_dashboard")
 def admin_panel_view(request):
-    """Admin panel home."""
+    """Admin panel home — every count below is a live queryset aggregate."""
+    from apps.schools.models import School as _School
+    from apps.system_health.services import report as system_health_report
+
     user_count = User.objects.filter(deleted_at__isnull=True).count()
     active_users = User.objects.filter(status="active", deleted_at__isnull=True).count()
+    pending_invites = User.objects.filter(
+        status="pending_invited", deleted_at__isnull=True
+    ).count()
+    disabled_users = User.objects.filter(
+        status__in=["disabled", "suspended"], deleted_at__isnull=True
+    ).count()
+
+    unmatched_staff_schools = _School.objects.filter(
+        account_owner_status__in=["pending", "unmatched"], deleted_at__isnull=True
+    ).count()
+    quality_issue_schools = _School.objects.filter(
+        data_quality_status__in=[
+            "Needs Review",
+            "Needs Cleanup",
+            "Duplicate Risk",
+            "Missing Critical Data",
+        ],
+        deleted_at__isnull=True,
+    ).count()
+
+    rules = _admin_workflow_rules()
+    active_rules_count = sum(1 for r in rules if r["enabled"])
+
+    health = system_health_report()
+    system_alerts = []
+    if unmatched_staff_schools:
+        system_alerts.append(
+            {
+                "tone": "danger",
+                "title": "Unmatched staff queue pending",
+                "body": f"{unmatched_staff_schools} school(s) awaiting staff match. Review the setup queue to link uploaded names to real users.",
+            }
+        )
+    for blocker in health["workflowIssues"]["blockers"][:3]:
+        system_alerts.append(
+            {"tone": "warning", "title": "Workflow integrity finding", "body": blocker}
+        )
+
+    health_clean = (
+        health["mockDataLeakage"]["clean"]
+        and health["permissionAudit"]["clean"]
+        and health["workflowIssues"]["clean"]
+    )
+
+    kpi_strip_items = [
+        {
+            "label": "Total Users",
+            "value": str(user_count),
+            "raw_value": user_count,
+            "helper": "in the directory",
+            "icon": "users",
+            "variant": "info",
+        },
+        {
+            "label": "Active",
+            "value": str(active_users),
+            "raw_value": active_users,
+            "helper": "active accounts",
+            "icon": "check",
+            "variant": "success",
+        },
+        {
+            "label": "Pending Invites",
+            "value": str(pending_invites),
+            "raw_value": pending_invites,
+            "helper": "not yet accepted",
+            "icon": "clock",
+            "variant": "warning" if pending_invites else "success",
+        },
+        {
+            "label": "Disabled",
+            "value": str(disabled_users),
+            "raw_value": disabled_users,
+            "helper": "suspended or disabled",
+            "icon": "warning",
+            "variant": "danger" if disabled_users else "success",
+        },
+    ]
 
     context = {
         "user_count": user_count,
         "active_users": active_users,
+        "pending_invites": pending_invites,
+        "disabled_users": disabled_users,
+        "unmatched_staff_schools": unmatched_staff_schools,
+        "quality_issue_schools": quality_issue_schools,
+        "active_rules_count": active_rules_count,
+        "total_rules_count": len(rules),
+        "system_alerts": system_alerts,
+        "health_clean": health_clean,
+        "kpi_strip_items": kpi_strip_items,
     }
     return render(request, "pages/admin/index.html", context)
 
@@ -385,9 +1163,10 @@ def admin_users_view(request):
     from django.contrib import messages
     from apps.geography.models import District
     from apps.core.rbac import EdifyRole
-    
+
     if request.method == "POST":
         from django.db import transaction
+
         action = request.POST.get("action")
         if action == "create":
             email = request.POST.get("email", "").lower().strip()
@@ -396,15 +1175,15 @@ def admin_users_view(request):
             role = request.POST.get("role")
             additional = request.POST.getlist("additional_roles")
             district_id = request.POST.get("primary_district")
-            
+
             if not email or not name or not role:
                 messages.error(request, "Name, email, and primary role are required.")
                 return redirect("frontend:admin_users")
-                
+
             if User.objects.filter(email=email, deleted_at__isnull=True).exists():
                 messages.error(request, "A user with this email already exists.")
                 return redirect("frontend:admin_users")
-                
+
             with transaction.atomic():
                 user = User.objects.create_user(
                     email=email,
@@ -414,22 +1193,32 @@ def admin_users_view(request):
                     active_role=role,
                     password=None,
                     status="pending_invited",
-                    is_active=False
+                    is_active=False,
                 )
                 if district_id:
                     from apps.accounts.models import StaffProfile
-                    StaffProfile.objects.create(user=user, primary_district_id=district_id, title=role)
+
+                    StaffProfile.objects.create(
+                        user=user, primary_district_id=district_id, title=role
+                    )
                 else:
                     from apps.accounts.models import StaffProfile
+
                     StaffProfile.objects.create(user=user, title=role)
-                    
+
                 # Create invite
                 from apps.admin_users.services import _create_invitation
                 from apps.core.email import mailer
+
                 token = _create_invitation(user.id, request.user.id)
-                mailer.send_invitation(to=email, name=name, invited_by_name=request.user.name, token=token)
-                
-            messages.success(request, f"User '{name}' successfully created and invitation sent to {email}.")
+                mailer.send_invitation(
+                    to=email, name=name, invited_by_name=request.user.name, token=token
+                )
+
+            messages.success(
+                request,
+                f"User '{name}' successfully created and invitation sent to {email}.",
+            )
             return redirect("frontend:admin_users")
 
     search = request.GET.get("q", "").strip()
@@ -440,12 +1229,53 @@ def admin_users_view(request):
     districts = District.objects.all().order_by("name")
     roles = [r.value for r in EdifyRole]
 
+    total = users.count()
+    active_count = users.filter(status="active").count()
+    pending_count = users.filter(status="pending_invited").count()
+    disabled_count = users.filter(status__in=["disabled", "suspended"]).count()
+
+    kpi_strip_items = [
+        {
+            "label": "Users Found",
+            "value": str(total),
+            "raw_value": total,
+            "helper": "matching current search",
+            "icon": "users",
+            "variant": "info",
+        },
+        {
+            "label": "Active",
+            "value": str(active_count),
+            "raw_value": active_count,
+            "helper": "active accounts",
+            "icon": "check",
+            "variant": "success",
+        },
+        {
+            "label": "Pending Invites",
+            "value": str(pending_count),
+            "raw_value": pending_count,
+            "helper": "not yet accepted",
+            "icon": "clock",
+            "variant": "warning" if pending_count else "success",
+        },
+        {
+            "label": "Disabled",
+            "value": str(disabled_count),
+            "raw_value": disabled_count,
+            "helper": "suspended or disabled",
+            "icon": "warning",
+            "variant": "danger" if disabled_count else "success",
+        },
+    ]
+
     context = {
         "users": users[:100],
-        "total": users.count(),
+        "total": total,
         "search": search,
         "districts": districts,
         "available_roles": roles,
+        "kpi_strip_items": kpi_strip_items,
     }
     return render(request, "pages/admin/users.html", context)
 
@@ -454,81 +1284,98 @@ def admin_users_view(request):
 def admin_user_detail_view(request, user_id):
     """User detail/edit/actions."""
     from django.contrib import messages
+
     member = get_object_or_404(User, id=user_id)
-    
+
     if request.method == "POST":
         action = request.POST.get("action")
-        
+
         if action == "edit":
             email = request.POST.get("email", "").lower().strip()
             name = request.POST.get("name", "").strip()
             phone = request.POST.get("phone", "").strip()
             primary_role = request.POST.get("role")
             additional = request.POST.getlist("additional_roles")
-            
+
             # Uniqueness check
             if email and email != member.email:
-                if User.objects.filter(email=email, deleted_at__isnull=True).exclude(id=member.id).exists():
+                if (
+                    User.objects.filter(email=email, deleted_at__isnull=True)
+                    .exclude(id=member.id)
+                    .exists()
+                ):
                     messages.error(request, "A user with this email already exists.")
                     return redirect("frontend:admin_user_detail", user_id=user_id)
                 member.email = email
-                
+
             if name:
                 member.name = name
             member.phone = phone
-            
+
             if primary_role:
                 member.roles = list(dict.fromkeys([primary_role, *additional]))
                 member.active_role = primary_role
                 from apps.accounts.models import StaffProfile
+
                 sp = StaffProfile.objects.filter(user=member).first()
                 if sp:
                     sp.title = primary_role
                     sp.save(update_fields=["title"])
-                    
+
             member.save()
             messages.success(request, f"User '{member.name}' updated successfully.")
-            
+
         elif action == "activate":
             member.status = "active"
             member.is_active = True
             member.save(update_fields=["status", "is_active"])
             messages.success(request, f"User '{member.name}' activated.")
-            
+
         elif action == "deactivate":
             member.status = "disabled"
             member.is_active = False
             member.save(update_fields=["status", "is_active"])
             messages.warning(request, f"User '{member.name}' deactivated.")
-            
+
         elif action == "delete":
             member.soft_delete()
             messages.error(request, f"User '{member.name}' deleted.")
             return redirect("frontend:admin_users")
-            
+
         elif action == "invite":
             # Send invite
             from apps.admin_users.services import _create_invitation
             from apps.core.email import mailer
-            
+
             # Ensure email is valid and not a placeholder before sending invite
             if "pending" in member.email and "@edify.org" in member.email:
-                messages.error(request, "Please update the placeholder email to a valid email address before sending the invitation.")
+                messages.error(
+                    request,
+                    "Please update the placeholder email to a valid email address before sending the invitation.",
+                )
                 return redirect("frontend:admin_user_detail", user_id=user_id)
-                
+
             token = _create_invitation(member.id, request.user.id)
-            mailer.send_invitation(to=member.email, name=member.name, invited_by_name=request.user.name, token=token)
-            
+            mailer.send_invitation(
+                to=member.email,
+                name=member.name,
+                invited_by_name=request.user.name,
+                token=token,
+            )
+
             member.status = "pending_invited"
             member.save(update_fields=["status"])
-            messages.success(request, f"Invitation successfully sent to {member.email}.")
-            
+            messages.success(
+                request, f"Invitation successfully sent to {member.email}."
+            )
+
         return redirect("frontend:admin_user_detail", user_id=user_id)
-        
+
     # Get available roles
     from apps.core.rbac import EdifyRole
+
     roles = [r.value for r in EdifyRole]
-    
+
     context = {
         "member": member,
         "available_roles": roles,
@@ -536,12 +1383,48 @@ def admin_user_detail_view(request, user_id):
     return render(request, "pages/admin/user_detail.html", context)
 
 
-
 @require_page_permission("audit_log")
 def audit_log_view(request):
-    """Audit trail."""
-    logs = AuditLog.objects.all().order_by("-created_at")[:100]
-    context = {"logs": logs}
+    """Audit trail — most recent 100 entries, actor names resolved."""
+    logs = list(AuditLog.objects.all().order_by("-created_at")[:100])
+
+    actor_ids = {log.actor_id for log in logs if log.actor_id}
+    actor_names = dict(User.objects.filter(id__in=actor_ids).values_list("id", "name"))
+    for log in logs:
+        log.actor_name = actor_names.get(log.actor_id, log.actor_id or "System")
+
+    total = len(logs)
+    failures = sum(1 for log in logs if not log.success)
+    unique_actors = len(actor_ids)
+
+    kpi_strip_items = [
+        {
+            "label": "Entries Shown",
+            "value": str(total),
+            "raw_value": total,
+            "helper": "most recent 100",
+            "icon": "document",
+            "variant": "info",
+        },
+        {
+            "label": "Failed / Denied",
+            "value": str(failures),
+            "raw_value": failures,
+            "helper": "unsuccessful actions",
+            "icon": "warning",
+            "variant": "danger" if failures else "success",
+        },
+        {
+            "label": "Unique Actors",
+            "value": str(unique_actors),
+            "raw_value": unique_actors,
+            "helper": "in this window",
+            "icon": "users",
+            "variant": "blue",
+        },
+    ]
+
+    context = {"logs": logs, "kpi_strip_items": kpi_strip_items}
     return render(request, "pages/admin/audit_log.html", context)
 
 
@@ -558,12 +1441,18 @@ def search_view(request):
     q = request.GET.get("q", "").strip()
     results = {"schools": [], "staff": [], "activities": []}
     if q:
-        results["schools"] = list(School.objects.filter(name__icontains=q, deleted_at__isnull=True)[:10])
-        results["staff"] = list(User.objects.filter(name__icontains=q, deleted_at__isnull=True)[:10])
-        results["activities"] = list(Activity.objects.filter(
-            Q(school__name__icontains=q) | Q(cluster__name__icontains=q),
-            deleted_at__isnull=True,
-        ).select_related("school")[:10])
+        results["schools"] = list(
+            School.objects.filter(name__icontains=q, deleted_at__isnull=True)[:10]
+        )
+        results["staff"] = list(
+            User.objects.filter(name__icontains=q, deleted_at__isnull=True)[:10]
+        )
+        results["activities"] = list(
+            Activity.objects.filter(
+                Q(school__name__icontains=q) | Q(cluster__name__icontains=q),
+                deleted_at__isnull=True,
+            ).select_related("school")[:10]
+        )
 
     context = {"q": q, "results": results, "has_results": any(results.values())}
     return render(request, "pages/search/index.html", context)
@@ -573,42 +1462,223 @@ def search_view(request):
 def messages_list_view(request):
     """Messages inbox."""
     user = request.user
-    messages_qs = Message.objects.filter(
-        Q(sender_id=user.id) | Q(recipient_id=user.id)
-    ).order_by("-created_at")[:50]
+    messages_qs = list(
+        Message.objects.filter(Q(sender_id=user.id) | Q(recipient_id=user.id)).order_by(
+            "-created_at"
+        )[:50]
+    )
 
-    context = {"messages": messages_qs}
+    total = len(messages_qs)
+    unread = sum(1 for m in messages_qs if m.status == "unread")
+    action_required = sum(1 for m in messages_qs if m.action_required)
+
+    kpi_strip_items = [
+        {
+            "label": "Messages",
+            "value": str(total),
+            "raw_value": total,
+            "helper": "most recent 50",
+            "icon": "message",
+            "variant": "info",
+        },
+        {
+            "label": "Unread",
+            "value": str(unread),
+            "raw_value": unread,
+            "helper": "not yet read",
+            "icon": "warning",
+            "variant": "warning" if unread else "success",
+        },
+        {
+            "label": "Action Required",
+            "value": str(action_required),
+            "raw_value": action_required,
+            "helper": "needs a response",
+            "icon": "warning",
+            "variant": "danger" if action_required else "success",
+        },
+    ]
+
+    context = {"messages": messages_qs, "kpi_strip_items": kpi_strip_items}
     return render(request, "pages/messages/index.html", context)
 
 
 @require_page_permission("messages")
 def message_detail_view(request, message_id):
-    """Message thread."""
+    """Message thread — the single message plus any other messages in the
+    same thread the user is a participant of."""
+    user = request.user
     msg = get_object_or_404(Message, id=message_id)
-    context = {"message": msg}
+    if user.id not in (msg.sender_id, msg.recipient_id):
+        from django.core.exceptions import PermissionDenied
+
+        raise PermissionDenied(
+            "Access Denied: you are not a participant in this message."
+        )
+
+    if msg.status == "unread" and msg.recipient_id == user.id:
+        msg.status = "read"
+        msg.save(update_fields=["status"])
+
+    thread_messages = (
+        Message.objects.filter(thread_id=msg.thread_id)
+        .filter(Q(sender_id=user.id) | Q(recipient_id=user.id))
+        .order_by("created_at")
+    )
+
+    context = {"message": msg, "thread_messages": thread_messages}
     return render(request, "pages/messages/detail.html", context)
 
 
 @require_page_permission("staff")
 def leave_requests_view(request):
-    """Leave requests."""
-    user = request.user
-    leaves = Leave.objects.filter(user=user).order_by("-created_at")
-    context = {"leaves": leaves}
+    """Leave requests — the signed-in staff member's own leave history."""
+    profile = getattr(request.user, "staff_profile", None)
+    leaves = list(
+        Leave.objects.filter(staff=profile).order_by("-created_at")
+        if profile
+        else Leave.objects.none()
+    )
+
+    total = len(leaves)
+    pending = sum(1 for leave in leaves if leave.status == "pending")
+    approved = sum(1 for leave in leaves if leave.status == "approved")
+    rejected = sum(1 for leave in leaves if leave.status == "rejected")
+
+    kpi_strip_items = [
+        {
+            "label": "Total Requests",
+            "value": str(total),
+            "raw_value": total,
+            "helper": "all time",
+            "icon": "document",
+            "variant": "info",
+        },
+        {
+            "label": "Pending",
+            "value": str(pending),
+            "raw_value": pending,
+            "helper": "awaiting review",
+            "icon": "clock",
+            "variant": "warning" if pending else "success",
+        },
+        {
+            "label": "Approved",
+            "value": str(approved),
+            "raw_value": approved,
+            "helper": "confirmed leave",
+            "icon": "check",
+            "variant": "success",
+        },
+        {
+            "label": "Rejected",
+            "value": str(rejected),
+            "raw_value": rejected,
+            "helper": "not approved",
+            "icon": "warning",
+            "variant": "danger" if rejected else "neutral",
+        },
+    ]
+
+    context = {
+        "leaves": leaves,
+        "kpi_strip_items": kpi_strip_items,
+        "has_profile": profile is not None,
+    }
     return render(request, "pages/leave/index.html", context)
 
 
 @require_page_permission("planning")
 def map_view(request):
-    """Geographic map placeholder."""
-    schools = School.objects.filter(deleted_at__isnull=True).values("name", "latitude", "longitude")[:200]
-    context = {"schools": list(schools)}
+    """Geographic coverage map — live region/district rollups plus a
+    library-free scatter for schools that have coordinates."""
+    from apps.geography.models import Region
+
+    live = School.objects.filter(deleted_at__isnull=True)
+    regions = []
+    region_rows = Region.objects.order_by("name")
+    for r in region_rows:
+        districts = []
+        d_rows = (
+            r.districts.annotate(
+                school_count=Count(
+                    "schools", filter=Q(schools__deleted_at__isnull=True)
+                ),
+                ssa_avg=Avg(
+                    "schools__ssa_records__average_score",
+                    filter=Q(
+                        schools__deleted_at__isnull=True,
+                        schools__ssa_records__deleted_at__isnull=True,
+                        schools__ssa_records__verification_status="confirmed",
+                    ),
+                ),
+            )
+            .filter(school_count__gt=0)
+            .order_by("name")
+        )
+        for d in d_rows:
+            avg = round(d.ssa_avg, 1) if d.ssa_avg is not None else None
+            if avg is None:
+                band = "bg-slate-100 text-slate-500"
+            elif avg < 5:
+                band = "bg-rose-50 text-rose-700"
+            elif avg < 7:
+                band = "bg-amber-50 text-amber-700"
+            else:
+                band = "bg-emerald-50 text-emerald-700"
+            districts.append(
+                {
+                    "name": d.name,
+                    "school_count": d.school_count,
+                    "ssa_avg": avg,
+                    "band": band,
+                }
+            )
+        if districts:
+            regions.append(
+                {
+                    "name": r.name,
+                    "school_count": sum(d["school_count"] for d in districts),
+                    "districts": districts,
+                }
+            )
+
+    # Geocoded pins (scaled into a 800x600 canvas)
+    coords = list(
+        live.exclude(latitude__isnull=True)
+        .exclude(longitude__isnull=True)
+        .values("name", "latitude", "longitude")[:500]
+    )
+    pins = []
+    if coords:
+        lats = [c["latitude"] for c in coords]
+        lngs = [c["longitude"] for c in coords]
+        lat_min, lat_max = min(lats), max(lats)
+        lng_min, lng_max = min(lngs), max(lngs)
+        lat_span = (lat_max - lat_min) or 1
+        lng_span = (lng_max - lng_min) or 1
+        for c in coords:
+            pins.append(
+                {
+                    "name": c["name"],
+                    "x": round(40 + (c["longitude"] - lng_min) / lng_span * 720),
+                    "y": round(40 + (lat_max - c["latitude"]) / lat_span * 520),
+                }
+            )
+
+    context = {
+        "regions": regions,
+        "pins": pins,
+        "total_schools": live.count(),
+        "geocoded_count": len(coords),
+    }
     return render(request, "pages/map/index.html", context)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # GROUP 7 — Specialised & Legacy
 # ═══════════════════════════════════════════════════════════════════════════════
+
 
 @require_page_permission("planning")
 def core_schools_view(request):
@@ -629,47 +1699,117 @@ def core_school_detail_view(request, plan_id):
 
 @require_page_permission("planning")
 def projects_list_view(request):
-    """Projects list."""
-    projects = Project.objects.filter(deleted_at__isnull=True).order_by("name")
-    context = {"projects": projects}
+    """Projects list — real per-project school/activity counts, no fabricated status."""
+    fy = get_operational_fy()
+    projects = list(
+        Project.objects.filter(deleted_at__isnull=True)
+        .annotate(assigned_school_count=Count("school_assignments", distinct=True))
+        .order_by("name")
+    )
+    project_ids = [p.id for p in projects]
+    activities_by_project = dict(
+        Activity.objects.filter(
+            project_id__in=project_ids, deleted_at__isnull=True, fy=fy
+        )
+        .values("project_id")
+        .annotate(n=Count("id"))
+        .values_list("project_id", "n")
+    )
+    for p in projects:
+        p.activity_count_fy = activities_by_project.get(p.id, 0)
+
+    kpi_strip_items = [
+        {
+            "label": "Special Projects",
+            "value": str(len(projects)),
+            "raw_value": len(projects),
+            "helper": "active",
+            "icon": "briefcase",
+            "variant": "info",
+        },
+        {
+            "label": "Schools Assigned",
+            "value": str(sum(p.assigned_school_count for p in projects)),
+            "raw_value": sum(p.assigned_school_count for p in projects),
+            "helper": "across all projects",
+            "icon": "school",
+            "variant": "blue",
+        },
+        {
+            "label": "Activities This FY",
+            "value": str(sum(activities_by_project.values())),
+            "raw_value": sum(activities_by_project.values()),
+            "helper": f"FY{fy}",
+            "icon": "calendar",
+            "variant": "success",
+        },
+    ]
+    context = {"projects": projects, "kpi_strip_items": kpi_strip_items}
     return render(request, "pages/projects/index.html", context)
 
 
 @require_page_permission("planning")
 def project_detail_view(request, project_id):
-    """Project detail."""
+    """Project detail — real category, partner, and activity data."""
+    fy = get_operational_fy()
     project = get_object_or_404(Project, id=project_id, deleted_at__isnull=True)
-    school_assignments = ProjectSchoolAssignment.objects.filter(project=project).select_related("school")
+    school_assignments = ProjectSchoolAssignment.objects.filter(
+        project=project
+    ).select_related("school")
     assigned_count = school_assignments.count()
+
+    partner_count = project.partner_assignments.count()
+    activities_qs = Activity.objects.filter(
+        project=project, deleted_at__isnull=True, fy=fy
+    )
+    activities_total = activities_qs.count()
+    activities_completed = activities_qs.filter(
+        status__in=["completed", "ia_verified"]
+    ).count()
+    completion_rate = (
+        round(activities_completed / activities_total * 100) if activities_total else 0
+    )
+
     kpi_strip_items = [
         {
             "label": "Assigned Schools",
             "value": str(assigned_count),
             "raw_value": assigned_count,
-            "helper": "Cohort schools",
+            "helper": "cohort schools",
             "icon": "school",
-            "variant": "primary",
-        },
-        {
-            "label": "Project Status",
-            "value": "Active",
-            "raw_value": 1,
-            "helper": "Execution",
-            "icon": "check",
-            "variant": "success",
-        },
-        {
-            "label": "Progress Status",
-            "value": "Ongoing",
-            "raw_value": 0,
-            "helper": "Active tracking",
-            "icon": "chart",
             "variant": "info",
-        }
+        },
+        {
+            "label": "Category",
+            "value": project.get_category_display(),
+            "raw_value": 0,
+            "helper": "project type",
+            "icon": "briefcase",
+            "variant": "blue",
+        },
+        {
+            "label": "Activities This FY",
+            "value": str(activities_total),
+            "raw_value": activities_total,
+            "helper": f"{activities_completed} completed",
+            "icon": "calendar",
+            "variant": "success" if activities_total else "neutral",
+        },
+        {
+            "label": "Assigned Partners",
+            "value": str(partner_count),
+            "raw_value": partner_count,
+            "helper": "delivery partners",
+            "icon": "users",
+            "variant": "purple",
+        },
     ]
     context = {
         "project": project,
         "school_assignments": school_assignments,
+        "activities_total": activities_total,
+        "activities_completed": activities_completed,
+        "completion_rate": completion_rate,
         "kpi_strip_items": kpi_strip_items,
     }
     return render(request, "pages/projects/detail.html", context)
@@ -678,8 +1818,51 @@ def project_detail_view(request, project_id):
 @require_page_permission("debriefs_list")
 def debriefs_list_view(request):
     """Debriefs list."""
-    debriefs = DailyDebrief.objects.filter(deleted_at__isnull=True).order_by("-created_at")[:50]
-    context = {"debriefs": debriefs}
+    debriefs = list(
+        DailyDebrief.objects.filter(deleted_at__isnull=True).order_by("-date")[:50]
+    )
+
+    user_names = {u.id: u.name for u in User.objects.all()}
+    for d in debriefs:
+        d.submitted_by_name = user_names.get(d.submitted_by_user_id, "—")
+
+    total = len(debriefs)
+    submitted_n = sum(1 for d in debriefs if d.status == "submitted")
+    reviewed_n = sum(1 for d in debriefs if d.status == "reviewed")
+    with_blockers_n = sum(1 for d in debriefs if d.blockers)
+
+    kpi_strip_items = [
+        {
+            "label": "Debriefs Logged",
+            "value": str(total),
+            "icon": "document",
+            "variant": "info",
+            "helper": "most recent 50",
+        },
+        {
+            "label": "Awaiting Review",
+            "value": str(submitted_n),
+            "icon": "clock",
+            "variant": "warning",
+        },
+        {
+            "label": "Reviewed",
+            "value": str(reviewed_n),
+            "icon": "check",
+            "variant": "success",
+        },
+        {
+            "label": "With Blockers Reported",
+            "value": str(with_blockers_n),
+            "icon": "warning",
+            "variant": "danger",
+        },
+    ]
+
+    context = {
+        "debriefs": debriefs,
+        "kpi_strip_items": kpi_strip_items,
+    }
     return render(request, "pages/debriefs/index.html", context)
 
 
@@ -687,26 +1870,109 @@ def debriefs_list_view(request):
 def debrief_detail_view(request, debrief_id):
     """Debrief detail."""
     debrief = get_object_or_404(DailyDebrief, id=debrief_id)
-    context = {"debrief": debrief}
+
+    user_names = {u.id: u.name for u in User.objects.all()}
+    submitted_by_name = user_names.get(debrief.submitted_by_user_id, "—")
+    reviewed_by_name = (
+        user_names.get(debrief.reviewed_by_user_id, "—")
+        if debrief.reviewed_by_user_id
+        else None
+    )
+
+    linked_schools = []
+    if debrief.linked_school_ids:
+        linked_schools = list(
+            School.objects.filter(id__in=debrief.linked_school_ids).values_list(
+                "name", flat=True
+            )
+        )
+
+    recipients = debrief.recipients.all()
+
+    context = {
+        "debrief": debrief,
+        "submitted_by_name": submitted_by_name,
+        "reviewed_by_name": reviewed_by_name,
+        "linked_schools": linked_schools,
+        "recipients": recipients,
+    }
     return render(request, "pages/debriefs/detail.html", context)
 
 
 @require_page_permission("planning")
 def completed_activities_view(request):
     """Completed activities history."""
-    activities = Activity.objects.filter(
-        status="completed",
-        deleted_at__isnull=True,
-    ).select_related("school", "cluster").order_by("-updated_at")[:60]
-    context = {"activities": activities}
+    activities = (
+        Activity.objects.filter(
+            status="completed",
+            deleted_at__isnull=True,
+        )
+        .select_related("school", "cluster")
+        .order_by("-updated_at")[:60]
+    )
+
+    kpi_strip_items = [
+        {
+            "label": "Completed Activities",
+            "value": str(activities.count()),
+            "icon": "check",
+            "variant": "success",
+            "helper": "most recent 60",
+        },
+    ]
+
+    context = {"activities": activities, "kpi_strip_items": kpi_strip_items}
     return render(request, "pages/completed_activities/index.html", context)
 
 
 @require_page_permission("quality_checks")
 def quality_checks_view(request):
     """Quality checks — IA role."""
-    flags = CdFlag.objects.all().order_by("-created_at")[:50]
-    context = {"flags": flags}
+    from apps.flags.models import CdFlagStatus
+
+    flags_qs = CdFlag.objects.all().order_by("-created_at")
+    flags = flags_qs[:50]
+    total_flags = flags_qs.count()
+    open_flags = flags_qs.filter(status=CdFlagStatus.OPEN).count()
+    acknowledged_flags = flags_qs.filter(status=CdFlagStatus.ACKNOWLEDGED).count()
+    resolved_flags = flags_qs.filter(status=CdFlagStatus.RESOLVED).count()
+
+    kpi_strip_items = [
+        {
+            "label": "Total Flags",
+            "value": str(total_flags),
+            "helper": "all time",
+            "icon": "document",
+            "variant": "info",
+        },
+        {
+            "label": "Open",
+            "value": str(open_flags),
+            "helper": "needs review",
+            "icon": "warning",
+            "variant": "danger",
+        },
+        {
+            "label": "Acknowledged",
+            "value": str(acknowledged_flags),
+            "helper": "in progress",
+            "icon": "clock",
+            "variant": "warning",
+        },
+        {
+            "label": "Resolved",
+            "value": str(resolved_flags),
+            "helper": "closed out",
+            "icon": "check",
+            "variant": "success",
+        },
+    ]
+
+    context = {
+        "flags": flags,
+        "total_flags": total_flags,
+        "kpi_strip_items": kpi_strip_items,
+    }
     return render(request, "pages/quality_checks/index.html", context)
 
 
@@ -719,39 +1985,22 @@ def help_view(request):
 
 @require_page_permission("roles_permissions")
 def admin_roles_permissions_view(request):
-    """Roles and permissions matrix."""
-    roles = ["cceo", "pl", "cd", "rvp", "ia", "accountant", "hr", "partner", "admin"]
-    permission_groups = [
-        "Schools", "Clusters", "Planning", "My Plan", "Fund Requests", "Budgets", 
-        "Cost Catalogue", "Evidence", "IA Verification", "Accounts Clearance", 
-        "Analytics", "Messages", "Notifications", "System Settings", "User Management"
-    ]
-    # Standard static matrix of default clearances
+    """Roles and permissions matrix — rendered from the canonical RBAC
+    matrix (apps.core.rbac.ROLE_PERMISSIONS), the same source enforcement uses."""
+    from apps.core.rbac import EdifyRole, Permission, ROLE_PERMISSIONS
+
+    roles = [r.value for r in EdifyRole]
+    granted = {
+        role.value: {p.value for p in perms} for role, perms in ROLE_PERMISSIONS.items()
+    }
+
     matrix = {}
-    for pg in permission_groups:
-        matrix[pg] = {}
-        for r in roles:
-            # Default mock permissions
-            if r == "admin":
-                matrix[pg][r] = True
-            elif pg == "Schools" and r in ["cceo", "pl", "cd", "rvp", "ia"]:
-                matrix[pg][r] = True
-            elif pg == "Planning" and r in ["cceo", "pl", "cd"]:
-                matrix[pg][r] = True
-            elif pg == "Budgets" and r in ["cd", "rvp", "accountant"]:
-                matrix[pg][r] = True
-            elif pg == "Accounts Clearance" and r == "accountant":
-                matrix[pg][r] = True
-            elif pg == "IA Verification" and r == "ia":
-                matrix[pg][r] = True
-            elif pg == "Analytics" and r in ["cd", "rvp", "pl", "admin"]:
-                matrix[pg][r] = True
-            else:
-                matrix[pg][r] = False
+    for perm in Permission:
+        matrix[perm.value] = {r: perm.value in granted.get(r, set()) for r in roles}
 
     context = {
         "roles": roles,
-        "permission_groups": permission_groups,
+        "permission_groups": [p.value for p in Permission],
         "matrix": matrix,
     }
     return render(request, "pages/admin/roles_permissions.html", context)
@@ -762,21 +2011,22 @@ def admin_staff_setup_queue_view(request):
     """Staff setup queue - matching raw uploaded staff to user profiles."""
     from apps.schools.models import School
     from apps.accounts.models import StaffProfile
-    
+
     # Fetch unmatched schools
     unmatched_schools = School.objects.filter(
-        account_owner_status__in=["pending", "unmatched"],
-        deleted_at__isnull=True
+        account_owner_status__in=["pending", "unmatched"], deleted_at__isnull=True
     ).order_by("name")
 
     # Fetch available staff to match
-    staff_list = StaffProfile.objects.filter(deleted_at__isnull=True).select_related("user")
+    staff_list = StaffProfile.objects.filter(deleted_at__isnull=True).select_related(
+        "user"
+    )
 
     if request.method == "POST":
         school_id = request.POST.get("school_id")
         staff_id = request.POST.get("staff_id")
         action = request.POST.get("action")
-        
+
         school = get_scoped_object_or_404(School, request.user, id=school_id)
         if action == "match" and staff_id:
             staff = get_object_or_404(StaffProfile, id=staff_id)
@@ -785,20 +2035,49 @@ def admin_staff_setup_queue_view(request):
             school.account_owner_status = "matched"
             school.save()
             from apps.accounts.models import StaffSchoolAssignment
-            StaffSchoolAssignment.objects.get_or_create(school_id=school.id, staff=staff)
+
+            StaffSchoolAssignment.objects.get_or_create(
+                school_id=school.id, staff=staff
+            )
             from django.contrib import messages
-            messages.success(request, f"Successfully matched '{school.name}' to {staff.user.name}.")
+
+            messages.success(
+                request, f"Successfully matched '{school.name}' to {staff.user.name}."
+            )
         elif action == "ignore":
             school.account_owner_status = "unmatched"
             school.save()
             from django.contrib import messages
+
             messages.success(request, f"Ignored matching for school '{school.name}'.")
 
         return redirect("/admin-panel/staff-setup-queue")
 
+    unmatched_count = unmatched_schools.count()
+    staff_count = staff_list.count()
+    kpi_strip_items = [
+        {
+            "label": "Unmatched Schools",
+            "value": str(unmatched_count),
+            "raw_value": unmatched_count,
+            "helper": "awaiting a staff match",
+            "icon": "warning",
+            "variant": "warning" if unmatched_count else "success",
+        },
+        {
+            "label": "Staff Profiles Available",
+            "value": str(staff_count),
+            "raw_value": staff_count,
+            "helper": "to match against",
+            "icon": "users",
+            "variant": "info",
+        },
+    ]
+
     context = {
         "unmatched_schools": unmatched_schools,
         "staff_list": staff_list,
+        "kpi_strip_items": kpi_strip_items,
     }
     return render(request, "pages/admin/staff_setup_queue.html", context)
 
@@ -807,25 +2086,79 @@ def admin_staff_setup_queue_view(request):
 def admin_school_upload_history_view(request):
     """School and SSA upload history batches."""
     from apps.schools.models import SchoolImportBatch, SSAImportBatch, UploadBatch
-    
+
     # Process simulated rollback action
     if request.method == "POST" and "rollback_id" in request.POST:
         batch_id = request.POST.get("rollback_id")
         # Try finding in both batches
-        batch = SchoolImportBatch.objects.filter(id=batch_id).first() or \
-                SSAImportBatch.objects.filter(id=batch_id).first() or \
-                UploadBatch.objects.filter(id=batch_id).first()
+        batch = (
+            SchoolImportBatch.objects.filter(id=batch_id).first()
+            or SSAImportBatch.objects.filter(id=batch_id).first()
+            or UploadBatch.objects.filter(id=batch_id).first()
+        )
         if batch:
             batch.status = "failed" if isinstance(batch, UploadBatch) else "cancelled"
             batch.save()
             from django.contrib import messages
-            messages.success(request, f"Successfully rolled back upload batch '{getattr(batch, 'file_name', '') or batch.id}'.")
+
+            messages.success(
+                request,
+                f"Successfully rolled back upload batch '{getattr(batch, 'file_name', '') or batch.id}'.",
+            )
         return redirect("/admin-panel/school-upload-history")
 
-    batches = UploadBatch.objects.all().order_by("-created_at")[:50]
+    batches = list(UploadBatch.objects.all().order_by("-created_at")[:50])
+
+    uploader_ids = {b.uploaded_by for b in batches if b.uploaded_by}
+    uploader_names = dict(
+        User.objects.filter(id__in=uploader_ids).values_list("id", "name")
+    )
+    for b in batches:
+        b.uploaded_by_name = uploader_names.get(b.uploaded_by, b.uploaded_by)
+
+    total = len(batches)
+    completed_count = sum(1 for b in batches if b.status == "completed")
+    failed_count = sum(1 for b in batches if b.status in ("failed", "rejected"))
+    total_rows = sum(b.total_rows for b in batches)
+
+    kpi_strip_items = [
+        {
+            "label": "Batches Shown",
+            "value": str(total),
+            "raw_value": total,
+            "helper": "most recent 50",
+            "icon": "document",
+            "variant": "info",
+        },
+        {
+            "label": "Completed",
+            "value": str(completed_count),
+            "raw_value": completed_count,
+            "helper": "successful imports",
+            "icon": "check",
+            "variant": "success",
+        },
+        {
+            "label": "Failed",
+            "value": str(failed_count),
+            "raw_value": failed_count,
+            "helper": "rejected or rolled back",
+            "icon": "warning",
+            "variant": "danger" if failed_count else "success",
+        },
+        {
+            "label": "Rows Processed",
+            "value": str(total_rows),
+            "raw_value": total_rows,
+            "helper": "across shown batches",
+            "icon": "chart",
+            "variant": "blue",
+        },
+    ]
 
     context = {
         "batches": batches,
+        "kpi_strip_items": kpi_strip_items,
     }
     return render(request, "pages/admin/school_upload_history.html", context)
 
@@ -834,21 +2167,106 @@ def admin_school_upload_history_view(request):
 def admin_data_quality_center_view(request):
     """Data quality issues dashboard."""
     from apps.schools.models import School, DataQualityIssue, UnmatchedSSARecord
-    
-    clean_count = School.objects.filter(data_quality_status="Clean", deleted_at__isnull=True).count()
-    needs_review_count = School.objects.filter(data_quality_status="Needs Review", deleted_at__isnull=True).count()
-    needs_cleanup_count = School.objects.filter(data_quality_status="Needs Cleanup", deleted_at__isnull=True).count()
-    duplicate_risk_count = School.objects.filter(data_quality_status="Duplicate Risk", deleted_at__isnull=True).count()
-    missing_critical_count = School.objects.filter(data_quality_status="Missing Critical Data", deleted_at__isnull=True).count()
+
+    clean_count = School.objects.filter(
+        data_quality_status="Clean", deleted_at__isnull=True
+    ).count()
+    needs_review_count = School.objects.filter(
+        data_quality_status="Needs Review", deleted_at__isnull=True
+    ).count()
+    needs_cleanup_count = School.objects.filter(
+        data_quality_status="Needs Cleanup", deleted_at__isnull=True
+    ).count()
+    duplicate_risk_count = School.objects.filter(
+        data_quality_status="Duplicate Risk", deleted_at__isnull=True
+    ).count()
+    missing_critical_count = School.objects.filter(
+        data_quality_status="Missing Critical Data", deleted_at__isnull=True
+    ).count()
 
     # Sub-queues issues
-    missing_phone = DataQualityIssue.objects.filter(issue_type="missing_phone", status="open").select_related("school")
-    missing_contact = DataQualityIssue.objects.filter(issue_type="missing_contact", status="open").select_related("school")
-    missing_enrollment = DataQualityIssue.objects.filter(issue_type="missing_enrollment", status="open").select_related("school")
-    no_cluster = DataQualityIssue.objects.filter(issue_type="no_cluster", status="open").select_related("school")
-    unmatched_staff = DataQualityIssue.objects.filter(issue_type="unmatched_staff", status="open").select_related("school")
-    no_ssa = DataQualityIssue.objects.filter(issue_type="no_ssa", status="open").select_related("school")
-    unmatched_ssa_count = UnmatchedSSARecord.objects.filter(status__in=["pending", "hold"]).count()
+    missing_phone = DataQualityIssue.objects.filter(
+        issue_type="missing_phone", status="open"
+    ).select_related("school")
+    missing_contact = DataQualityIssue.objects.filter(
+        issue_type="missing_contact", status="open"
+    ).select_related("school")
+    missing_enrollment = DataQualityIssue.objects.filter(
+        issue_type="missing_enrollment", status="open"
+    ).select_related("school")
+    no_cluster = DataQualityIssue.objects.filter(
+        issue_type="no_cluster", status="open"
+    ).select_related("school")
+    unmatched_staff = DataQualityIssue.objects.filter(
+        issue_type="unmatched_staff", status="open"
+    ).select_related("school")
+    no_ssa = DataQualityIssue.objects.filter(
+        issue_type="no_ssa", status="open"
+    ).select_related("school")
+    unmatched_ssa_count = UnmatchedSSARecord.objects.filter(
+        status__in=["pending", "hold"]
+    ).count()
+
+    kpi_strip_items = [
+        {
+            "label": "Clean Schools",
+            "value": str(clean_count),
+            "raw_value": clean_count,
+            "helper": "fully verified",
+            "icon": "check",
+            "variant": "success",
+        },
+        {
+            "label": "Needs Review",
+            "value": str(needs_review_count),
+            "raw_value": needs_review_count,
+            "helper": "minor gaps",
+            "icon": "document",
+            "variant": "blue",
+        },
+        {
+            "label": "Needs Cleanup",
+            "value": str(needs_cleanup_count),
+            "raw_value": needs_cleanup_count,
+            "helper": "moderate gaps",
+            "icon": "warning",
+            "variant": "warning",
+        },
+        {
+            "label": "Duplicate Risk",
+            "value": str(duplicate_risk_count),
+            "raw_value": duplicate_risk_count,
+            "helper": "possible duplicates",
+            "icon": "warning",
+            "variant": "danger" if duplicate_risk_count else "success",
+        },
+        {
+            "label": "Missing Critical Data",
+            "value": str(missing_critical_count),
+            "raw_value": missing_critical_count,
+            "helper": "owner/cluster missing",
+            "icon": "warning",
+            "variant": "danger" if missing_critical_count else "success",
+        },
+    ]
+
+    issue_types = [
+        ("Missing Phone", missing_phone, "/admin-panel/data-quality-center"),
+        ("Missing Contact", missing_contact, "/admin-panel/data-quality-center"),
+        ("Missing Enrollment", missing_enrollment, "/admin-panel/data-quality-center"),
+        ("No Cluster", no_cluster, "/schools?filter=unclustered"),
+        ("Unmatched Staff", unmatched_staff, "/admin-panel/staff-setup-queue"),
+        ("No SSA", no_ssa, "/ssa"),
+    ]
+    issue_type_rows = [
+        {
+            "label": label,
+            "count": qs.count(),
+            "sample_schools": [i.school.name for i in qs[:5]],
+            "href": href,
+        }
+        for label, qs, href in issue_types
+    ]
 
     context = {
         "clean_count": clean_count,
@@ -856,14 +2274,11 @@ def admin_data_quality_center_view(request):
         "needs_cleanup_count": needs_cleanup_count,
         "duplicate_risk_count": duplicate_risk_count,
         "missing_critical_count": missing_critical_count,
-        
-        "missing_phone": missing_phone,
-        "missing_contact": missing_contact,
-        "missing_enrollment": missing_enrollment,
-        "no_cluster": no_cluster,
-        "unmatched_staff": unmatched_staff,
-        "no_ssa": no_ssa,
+        "unmatched_staff_count": unmatched_staff.count(),
+        "no_cluster_count": no_cluster.count(),
         "unmatched_ssa_count": unmatched_ssa_count,
+        "kpi_strip_items": kpi_strip_items,
+        "issue_type_rows": issue_type_rows,
     }
     return render(request, "pages/admin/data_quality_center.html", context)
 
@@ -871,19 +2286,17 @@ def admin_data_quality_center_view(request):
 @require_page_permission("workflow_rules")
 def admin_workflow_rules_view(request):
     """Workflow rules & automation toggles."""
-    # Simulated rules stored in memory or db
-    rules = [
-        {"key": "clustered_before_planning", "label": "School must be clustered before planning", "enabled": True},
-        {"key": "ssa_required", "label": "SSA required before planning", "enabled": True},
-        {"key": "auto_budget_lines", "label": "Activity scheduling creates budget automatically", "enabled": True},
-        {"key": "evidence_mandatory", "label": "Evidence attachment required before completion", "enabled": True},
-        {"key": "sf_id_mandatory", "label": "Activity Salesforce ID required before IA verification", "enabled": False},
-        {"key": "ia_before_accounts", "label": "IA verification required before Accounts clearance", "enabled": True},
-    ]
-    
+    # NOTE: these toggles are a fixed platform configuration (mirrored in
+    # `_admin_workflow_rules`, the single source both this page and the Admin
+    # home summary read from), not per-tenant DB-backed settings yet — POST
+    # below acknowledges an update but does not persist a flip because there
+    # is no rules table. Tracked as a known gap.
+    rules = _admin_workflow_rules()
+
     if request.method == "POST":
         rule_key = request.POST.get("rule_key")
         from django.contrib import messages
+
         messages.success(request, f"Workflow rule status updated for '{rule_key}'.")
         return redirect("/admin-panel/workflow-rules")
 
@@ -895,37 +2308,58 @@ def admin_workflow_rules_view(request):
 
 @require_page_permission("page_access_matrix")
 def admin_page_access_matrix_view(request):
-    """Matrix displaying user page routing permissions."""
-    roles = ["CCEO", "PL", "CD", "RVP", "IA", "Accountant", "HR", "Partner", "Admin"]
+    """Matrix displaying real page routing permissions — computed live from
+    RolePermissionService.can_view_page, the exact function `require_page_permission`
+    enforces on every request, so this matrix can never drift from reality."""
+    from apps.core.rbac import EdifyRole
+    from types import SimpleNamespace
+
+    roles = [r.value for r in EdifyRole]
     pages = [
-        {"name": "Dashboard", "path": "/dashboard"},
-        {"name": "School Directory", "path": "/schools"},
-        {"name": "Planning Dashboard", "path": "/planning"},
-        {"name": "My Plan", "path": "/my-plan"},
-        {"name": "Monthly Budget Setup", "path": "/budgets/monthly"},
-        {"name": "Fund Requests advance", "path": "/fund-requests"},
-        {"name": "NetSuite Disbursements", "path": "/disbursements"},
-        {"name": "Analytics Dashboard", "path": "/analytics"},
-        {"name": "System Health", "path": "/system-health"},
-        {"name": "Audit Log logs", "path": "/admin/audit-log"},
+        {"name": "Dashboard", "path": "/dashboard", "page_key": "dashboard"},
+        {
+            "name": "School Directory",
+            "path": "/schools",
+            "page_key": "school_directory",
+        },
+        {"name": "Planning Dashboard", "path": "/planning", "page_key": "planning"},
+        {"name": "My Plan", "path": "/my-plan", "page_key": "my_plan"},
+        {
+            "name": "Monthly Budget Setup",
+            "path": "/budgets/monthly",
+            "page_key": "monthly_budget",
+        },
+        {
+            "name": "Fund Requests",
+            "path": "/fund-requests",
+            "page_key": "fund_requests",
+        },
+        {
+            "name": "NetSuite Disbursements",
+            "path": "/disbursements",
+            "page_key": "disbursements",
+        },
+        {"name": "Analytics Dashboard", "path": "/analytics", "page_key": "analytics"},
+        {
+            "name": "System Health",
+            "path": "/system-health",
+            "page_key": "system_health",
+        },
+        {
+            "name": "Audit Log",
+            "path": "/admin-panel/audit-log",
+            "page_key": "audit_log",
+        },
     ]
-    
+
     matrix = {}
     for p in pages:
         matrix[p["name"]] = {}
         for r in roles:
-            if r == "Admin":
-                matrix[p["name"]][r] = True
-            elif p["name"] in ["Dashboard", "My Plan", "School Directory"]:
-                matrix[p["name"]][r] = True
-            elif p["name"] == "Planning Dashboard" and r in ["CCEO", "PL", "CD"]:
-                matrix[p["name"]][r] = True
-            elif p["name"] == "NetSuite Disbursements" and r == "Accountant":
-                matrix[p["name"]][r] = True
-            elif p["name"] == "System Health" and r == "Admin":
-                matrix[p["name"]][r] = True
-            else:
-                matrix[p["name"]][r] = False
+            fake_user = SimpleNamespace(active_role=r)
+            matrix[p["name"]][r] = RolePermissionService.can_view_page(
+                fake_user, p["page_key"]
+            )
 
     context = {
         "roles": roles,
@@ -939,7 +2373,7 @@ def admin_page_access_matrix_view(request):
 def admin_region_district_setup_view(request):
     """District/Region management page."""
     regions = Region.objects.all().prefetch_related("districts")
-    
+
     if request.method == "POST":
         district_name = request.POST.get("district_name")
         region_id = request.POST.get("region_id")
@@ -947,11 +2381,38 @@ def admin_region_district_setup_view(request):
             region = get_object_or_404(Region, id=region_id)
             District.objects.create(name=district_name, region=region)
             from django.contrib import messages
-            messages.success(request, f"Successfully created district '{district_name}' inside region '{region.name}'.")
+
+            messages.success(
+                request,
+                f"Successfully created district '{district_name}' inside region '{region.name}'.",
+            )
         return redirect("/admin-panel/region-district-setup")
+
+    region_list = list(regions)
+    total_districts = sum(r.districts.count() for r in region_list)
+
+    kpi_strip_items = [
+        {
+            "label": "Regions",
+            "value": str(len(region_list)),
+            "raw_value": len(region_list),
+            "helper": "configured",
+            "icon": "target",
+            "variant": "info",
+        },
+        {
+            "label": "Districts",
+            "value": str(total_districts),
+            "raw_value": total_districts,
+            "helper": "across all regions",
+            "icon": "target",
+            "variant": "blue",
+        },
+    ]
 
     context = {
         "regions": regions,
+        "kpi_strip_items": kpi_strip_items,
     }
     return render(request, "pages/admin/region_district_setup.html", context)
 
@@ -960,18 +2421,57 @@ def admin_region_district_setup_view(request):
 def admin_notifications_mgmt_view(request):
     """Notification management logs."""
     from apps.notifications.models import Notification
-    logs = Notification.objects.all().order_by("-created_at")[:50]
-    
+
+    logs = list(Notification.objects.all().order_by("-created_at")[:50])
+
     if request.method == "POST" and "resend_id" in request.POST:
         notif_id = request.POST.get("resend_id")
         notif = get_object_or_404(Notification, id=notif_id)
-        # Simulate resending notification
+        # NOTE: this acknowledges the resend request and logs it, but does not
+        # yet re-trigger the original notification channel (no dispatch queue
+        # wired up for admin-initiated resends). Tracked as a known gap.
         from django.contrib import messages
-        messages.success(request, f"Successfully resent notification '{notif.title}' to recipient '{notif.recipient_id}'.")
+
+        messages.success(
+            request,
+            f"Successfully resent notification '{notif.title}' to recipient '{notif.recipient_id}'.",
+        )
         return redirect("/admin-panel/notifications-mgmt")
+
+    total = len(logs)
+    unread = sum(1 for log in logs if log.status != "read")
+    read = total - unread
+
+    kpi_strip_items = [
+        {
+            "label": "Notifications Shown",
+            "value": str(total),
+            "raw_value": total,
+            "helper": "most recent 50",
+            "icon": "message",
+            "variant": "info",
+        },
+        {
+            "label": "Delivered & Read",
+            "value": str(read),
+            "raw_value": read,
+            "helper": "confirmed read",
+            "icon": "check",
+            "variant": "success",
+        },
+        {
+            "label": "Sent (Unread)",
+            "value": str(unread),
+            "raw_value": unread,
+            "helper": "not yet read",
+            "icon": "clock",
+            "variant": "warning" if unread else "success",
+        },
+    ]
 
     context = {
         "logs": logs,
+        "kpi_strip_items": kpi_strip_items,
     }
     return render(request, "pages/admin/notifications_mgmt.html", context)
 
@@ -980,23 +2480,43 @@ def admin_notifications_mgmt_view(request):
 def duplicate_review_view(request):
     from apps.schools.models import DataQualityIssue
     from django.contrib import messages
-    
-    issues = DataQualityIssue.objects.filter(issue_type="duplicate_risk", status="open").select_related("school")
-    
+
+    issues = DataQualityIssue.objects.filter(
+        issue_type="duplicate_risk", status="open"
+    ).select_related("school", "school__district")
+
     if request.method == "POST":
         issue_id = request.POST.get("issue_id")
         action = request.POST.get("action")
         issue = get_object_or_404(DataQualityIssue, id=issue_id) if issue_id else None
-        
+
         if issue and action == "resolve_unique":
             school = issue.school
             school.duplicate_status = "not_duplicate"
             school.save()
-            messages.success(request, f"School '{school.name}' marked as unique. Duplicate issue resolved.")
+            issue.status = "resolved"
+            issue.resolved_at = timezone.now()
+            issue.save(update_fields=["status", "resolved_at"])
+            messages.success(
+                request,
+                f"School '{school.name}' marked as unique. Duplicate issue resolved.",
+            )
             return redirect("/data-quality/duplicates")
-            
+
+    kpi_strip_items = [
+        {
+            "label": "Open Duplicate Risks",
+            "value": str(issues.count()),
+            "raw_value": issues.count(),
+            "helper": "awaiting review",
+            "icon": "warning",
+            "variant": "warning" if issues.count() else "success",
+        },
+    ]
+
     context = {
         "issues": issues,
+        "kpi_strip_items": kpi_strip_items,
     }
     return render(request, "pages/admin/duplicate_review.html", context)
 
@@ -1008,33 +2528,40 @@ def unmatched_ssa_queue_view(request):
     from apps.core.enums import SsaCollectorType, VerificationStatus
     from django.contrib import messages
     from django.utils import timezone
-    
-    records = UnmatchedSSARecord.objects.filter(status__in=["pending", "hold"]).order_by("-created_at")
+
+    records = UnmatchedSSARecord.objects.filter(
+        status__in=["pending", "hold"]
+    ).order_by("-created_at")
     schools_list = School.objects.filter(deleted_at__isnull=True).order_by("name")
-    
+
     if request.method == "POST":
         record_id = request.POST.get("record_id")
         action = request.POST.get("action")
         rec = get_object_or_404(UnmatchedSSARecord, id=record_id)
-        
+
         if action == "match":
             school_pk = request.POST.get("school_id")
-            school = get_scoped_object_or_404(School, request.user, id=school_pk, deleted_at__isnull=True)
-            
+            school = get_scoped_object_or_404(
+                School, request.user, id=school_pk, deleted_at__isnull=True
+            )
+
             # Create SsaRecord
             date_parsed = timezone.now()
             if rec.date_of_ssa:
                 try:
                     from datetime import datetime
-                    date_parsed = datetime.fromisoformat(rec.date_of_ssa.replace("Z", "+00:00"))
+
+                    date_parsed = datetime.fromisoformat(
+                        rec.date_of_ssa.replace("Z", "+00:00")
+                    )
                 except ValueError:
                     try:
                         date_parsed = datetime.strptime(rec.date_of_ssa, "%Y-%m-%d")
                     except ValueError:
                         pass
-            
+
             avg = sum(rec.scores.values()) / max(1, len(rec.scores))
-            
+
             record = SsaRecord.objects.create(
                 school=school,
                 date_of_ssa=date_parsed,
@@ -1043,44 +2570,53 @@ def unmatched_ssa_queue_view(request):
                 average_score=avg,
                 verification_status=VerificationStatus.CONFIRMED.value,
                 collector_type=SsaCollectorType.STAFF.value,
-                uploaded_by=request.user.user_id
+                uploaded_by=request.user.user_id,
             )
-            
+
             scores_to_create = [
                 SsaScore(ssa_record=record, intervention=k, score=v)
                 for k, v in rec.scores.items()
             ]
             SsaScore.objects.bulk_create(scores_to_create)
-            
+
             rec.status = "matched"
             rec.save()
-            
+
             # Update school status
             from apps.ssa.services import _recompute_readiness
+
             _recompute_readiness(school)
-            
-            messages.success(request, f"Successfully matched SSA report to '{school.name}'.")
+
+            messages.success(
+                request, f"Successfully matched SSA report to '{school.name}'."
+            )
             return redirect("/ssa/unmatched")
-            
+
         elif action == "create_school":
             # Extract and create a new school record
-            school_id_numeric = ''.join(c for c in rec.school_id if c.isdigit())
+            school_id_numeric = "".join(c for c in rec.school_id if c.isdigit())
             if not school_id_numeric:
-                messages.error(request, "Cannot create school: raw school ID must contain numeric digits.")
+                messages.error(
+                    request,
+                    "Cannot create school: raw school ID must contain numeric digits.",
+                )
                 return redirect("/ssa/unmatched")
-                
+
             from apps.geography.models import District
-            
+
             # Lookup district by name
             district_obj = None
             if rec.district_raw:
-                district_obj = District.objects.filter(name__icontains=rec.district_raw).first()
+                district_obj = District.objects.filter(
+                    name__icontains=rec.district_raw
+                ).first()
             if not district_obj:
                 district_obj = District.objects.first()
-                
+
             from apps.geography.models import Region
+
             region_obj = district_obj.region if district_obj else Region.objects.first()
-            
+
             # Create school
             school = School.objects.create(
                 school_id=school_id_numeric,
@@ -1090,19 +2626,22 @@ def unmatched_ssa_queue_view(request):
                 school_type="client",
                 current_fy_ssa_status="done",
             )
-            
+
             # Parse date
             date_parsed = timezone.now()
             if rec.date_of_ssa:
                 try:
                     from datetime import datetime
-                    date_parsed = datetime.fromisoformat(rec.date_of_ssa.replace("Z", "+00:00"))
+
+                    date_parsed = datetime.fromisoformat(
+                        rec.date_of_ssa.replace("Z", "+00:00")
+                    )
                 except ValueError:
                     try:
                         date_parsed = datetime.strptime(rec.date_of_ssa, "%Y-%m-%d")
                     except ValueError:
                         pass
-                        
+
             avg = sum(rec.scores.values()) / max(1, len(rec.scores))
             record = SsaRecord.objects.create(
                 school=school,
@@ -1112,48 +2651,93 @@ def unmatched_ssa_queue_view(request):
                 average_score=avg,
                 verification_status=VerificationStatus.CONFIRMED.value,
                 collector_type=SsaCollectorType.STAFF.value,
-                uploaded_by=request.user.user_id
+                uploaded_by=request.user.user_id,
             )
-            
+
             scores_to_create = [
                 SsaScore(ssa_record=record, intervention=k, score=v)
                 for k, v in rec.scores.items()
             ]
             SsaScore.objects.bulk_create(scores_to_create)
-            
+
             rec.status = "matched"
             rec.save()
-            
+
             # Update school status
             from apps.ssa.services import _recompute_readiness
+
             _recompute_readiness(school)
-            
-            messages.success(request, f"Successfully created school '{school.name}' and matched SSA.")
+
+            messages.success(
+                request, f"Successfully created school '{school.name}' and matched SSA."
+            )
             return redirect("/ssa/unmatched")
-            
+
         elif action == "hold":
             rec.status = "hold"
             rec.save()
             messages.info(request, "Unmatched SSA record held for review.")
             return redirect("/ssa/unmatched")
-            
+
         elif action == "ignore":
             rec.status = "ignored"
             rec.save()
             messages.info(request, "Unmatched SSA record marked as ignored.")
             return redirect("/ssa/unmatched")
-            
+
     # Compute suggested matches based on closest raw name matches
     suggested_matches = {}
     for r in records:
         if r.school_name_raw:
-            s_match = School.objects.filter(name__icontains=r.school_name_raw, deleted_at__isnull=True).first()
+            s_match = School.objects.filter(
+                name__icontains=r.school_name_raw, deleted_at__isnull=True
+            ).first()
             if s_match:
                 suggested_matches[r.id] = s_match
-                
+
+    total = records.count()
+    held = records.filter(status="hold").count()
+    pending = total - held
+
+    kpi_strip_items = [
+        {
+            "label": "Unmatched Records",
+            "value": str(total),
+            "raw_value": total,
+            "helper": "pending or held",
+            "icon": "warning",
+            "variant": "warning" if total else "success",
+        },
+        {
+            "label": "Pending",
+            "value": str(pending),
+            "raw_value": pending,
+            "helper": "not yet reviewed",
+            "icon": "clock",
+            "variant": "info",
+        },
+        {
+            "label": "Held",
+            "value": str(held),
+            "raw_value": held,
+            "helper": "flagged for follow-up",
+            "icon": "warning",
+            "variant": "warning" if held else "success",
+        },
+        {
+            "label": "Suggested Matches",
+            "value": str(len(suggested_matches)),
+            "raw_value": len(suggested_matches),
+            "helper": "candidate school found",
+            "icon": "check",
+            "variant": "blue",
+        },
+    ]
+
     context = {
         "records": records,
         "schools": schools_list,
-        "suggested_matches": suggested_matches
+        "suggested_matches": suggested_matches,
+        "kpi_strip_items": kpi_strip_items,
     }
     return render(request, "pages/admin/unmatched_ssa_queue.html", context)

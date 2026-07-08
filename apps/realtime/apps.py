@@ -25,18 +25,37 @@ class RealtimeConfig(AppConfig):
             scheduler = BackgroundScheduler(timezone="Africa/Kampala")
             scheduler.add_jobstore(DjangoJobStore(), "default")
             # Weekly fund-request: Friday 06:00.
-            scheduler.add_job(jobs.weekly_fund_request_job, CronTrigger(day_of_week="fri", hour=6),
-                              id="weekly_fund_request", replace_existing=True)
+            scheduler.add_job(
+                jobs.weekly_fund_request_job,
+                CronTrigger(day_of_week="fri", hour=6),
+                id="weekly_fund_request",
+                replace_existing=True,
+            )
             # Monthly work-plan budget: 25th 06:00.
-            scheduler.add_job(jobs.monthly_work_plan_job, CronTrigger(day=25, hour=6),
-                              id="monthly_work_plan", replace_existing=True)
+            scheduler.add_job(
+                jobs.monthly_work_plan_job,
+                CronTrigger(day=25, hour=6),
+                id="monthly_work_plan",
+                replace_existing=True,
+            )
             # Notification escalation: hourly.
-            scheduler.add_job(jobs.notification_escalation_job, CronTrigger(minute=0),
-                              id="notification_escalation", replace_existing=True)
+            scheduler.add_job(
+                jobs.notification_escalation_job,
+                CronTrigger(minute=0),
+                id="notification_escalation",
+                replace_existing=True,
+            )
             # Daily digest: 07:30.
-            scheduler.add_job(jobs.daily_digest_job, CronTrigger(hour=7, minute=30),
-                              id="daily_digest", replace_existing=True)
+            scheduler.add_job(
+                jobs.daily_digest_job,
+                CronTrigger(hour=7, minute=30),
+                id="daily_digest",
+                replace_existing=True,
+            )
             scheduler.start()
         except Exception:  # noqa: BLE001 — scheduler must never break boot
             import logging
-            logging.getLogger("edify.jobs").warning("Scheduler did not start (background jobs disabled).")
+
+            logging.getLogger("edify.jobs").warning(
+                "Scheduler did not start (background jobs disabled)."
+            )

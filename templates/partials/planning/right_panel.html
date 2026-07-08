@@ -1,60 +1,100 @@
-<!-- Planning Copilot & Insights Panel -->
-<div class="bg-white rounded-xl border border-slate-100 p-5 shadow-sm space-y-4 font-sans" id="planning-intelligence-panel">
-<div class="flex items-center gap-2 border-b border-slate-100 pb-3">
-<div class="h-2 w-2 rounded-full bg-blue-500 animate-pulse"></div>
-<h3 class="text-[12px] font-semibold text-slate-800 uppercase tracking-wider">Planning Copilot</h3>
-</div>
+{% comment %}
+  Planning Intelligence card — the left half of the 2-column primary insight
+  row on /planning. Two modes, same DOM id so HTMX row-clicks can swap in
+  place (see templates/partials/planning/school_table.html):
+    - No `school` in context → portfolio-wide bottleneck summary (kpis).
+    - `school` in context (from planning_intelligence_view) → single-school
+      readiness state, recommended next action, and cost/SSA readiness —
+      all real query data, no fabricated trends.
+{% endcomment %}
+<div class="card p-5 space-y-4 font-sans h-full" id="planning-intelligence-panel">
+  <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+    <div class="flex items-center gap-2">
+      <div class="h-2 w-2 rounded-full bg-blue-500 {% if not school %}animate-pulse{% endif %}"></div>
+      <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Planning Intelligence</h3>
+    </div>
+    {% if school %}
+    <a href="/schools/{{ school.school_id }}" class="text-[11px] font-semibold text-blue-600 hover:underline">Full profile</a>
+    {% endif %}
+  </div>
 
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-<!-- Left 2 Cols: Bottlenecks -->
-<div class="lg:col-span-2 space-y-3">
-<div class="flex items-center justify-between">
-<h4 class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Critical Bottlenecks</h4>
-<p class="text-[11px] text-slate-500 font-semibold">Review current roadblocks in this cycle.</p>
-</div>
+  {% if school %}
+  <div class="space-y-4">
+    <div>
+      <p class="text-[15px] font-semibold text-slate-800 leading-tight">{{ school.name }}</p>
+      <p class="text-[11px] text-slate-400 font-semibold mt-0.5">{{ school.district.name|default:"—" }} &bull; Cluster: {{ cluster_name }}</p>
+    </div>
 
-{% if kpis %}
-<div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-[12px] font-bold">
-<!-- Block 1: Missing SSA -->
-<div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 /60">
-<div class="flex items-center gap-2">
-<span class="h-2 w-2 rounded-full bg-rose-500"></span>
-<span class="text-slate-700">Missing Current SSA</span>
-</div>
-<span class="text-rose-600 font-semibold">{{ kpis.without_ssa }} schools</span>
-</div>
+    <div class="rounded-xl bg-blue-50/60 border border-blue-100 p-3.5 space-y-1.5">
+      <p class="text-[11px] font-semibold uppercase tracking-wider text-blue-700">Recommended Next Action</p>
+      <p class="text-[13px] font-semibold text-slate-800 leading-snug">{{ recommended_step }}</p>
+      <p class="text-[11px] text-slate-500 font-medium leading-relaxed">{{ recommended_desc }}</p>
+    </div>
 
-<!-- Block 2: Unclustered Schools -->
-<div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 /60">
-<div class="flex items-center gap-2">
-<span class="h-2 w-2 rounded-full bg-amber-500"></span>
-<span class="text-slate-700">Not Grouped in Cluster</span>
-</div>
-<span class="text-amber-600 font-semibold">{{ kpis.unclustered }} schools</span>
-</div>
+    <div class="grid grid-cols-2 gap-3 text-[12px]">
+      <div class="bg-slate-50 border border-slate-100 rounded-xl p-3">
+        <p class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">Last SSA</p>
+        <p class="text-slate-800 font-semibold mt-1">{{ last_ssa_date }}</p>
+      </div>
+      <div class="bg-slate-50 border border-slate-100 rounded-xl p-3">
+        <p class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">Weakest Area</p>
+        <p class="text-slate-800 font-semibold mt-1">{{ weakest_intervention }}</p>
+      </div>
+      <div class="bg-slate-50 border border-slate-100 rounded-xl p-3">
+        <p class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">Cost Readiness</p>
+        <p class="mt-1">
+          {% if cost_ready %}
+          {% include "components/badge.html" with tone="success" label="Ready" dot="true" %}
+          {% else %}
+          {% include "components/badge.html" with tone="danger" label="Blocked" dot="true" %}
+          {% endif %}
+        </p>
+      </div>
+      <div class="bg-slate-50 border border-slate-100 rounded-xl p-3">
+        <p class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">Assigned Staff</p>
+        <p class="text-slate-800 font-semibold mt-1 truncate">{{ assigned_staff }}</p>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="space-y-4">
+    <div class="flex items-center justify-between">
+      <h4 class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Portfolio Bottlenecks</h4>
+      <p class="text-[11px] text-slate-400 font-medium">Click a school row for its readiness detail</p>
+    </div>
 
-<!-- Block 3: Core Pending -->
-<div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 /60">
-<div class="flex items-center gap-2">
-<span class="h-2 w-2 rounded-full bg-blue-500"></span>
-<span class="text-slate-700">Core Pending Visit</span>
-</div>
-<span class="text-blue-600 font-semibold">{{ kpis.core_pending }} schools</span>
-</div>
-</div>
-{% endif %}
-</div>
+    {% if kpis %}
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-[12px] font-semibold">
+      <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50">
+        <div class="flex items-center gap-2">
+          <span class="h-2 w-2 rounded-full bg-rose-500"></span>
+          <span class="text-slate-700">Missing Current SSA</span>
+        </div>
+        <span class="text-rose-600 font-semibold">{{ kpis.without_ssa }}</span>
+      </div>
+      <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50">
+        <div class="flex items-center gap-2">
+          <span class="h-2 w-2 rounded-full bg-amber-500"></span>
+          <span class="text-slate-700">Not Grouped in Cluster</span>
+        </div>
+        <span class="text-amber-600 font-semibold">{{ kpis.unclustered }}</span>
+      </div>
+      <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50">
+        <div class="flex items-center gap-2">
+          <span class="h-2 w-2 rounded-full bg-blue-500"></span>
+          <span class="text-slate-700">Core Pending Visit</span>
+        </div>
+        <span class="text-blue-600 font-semibold">{{ kpis.core_pending }}</span>
+      </div>
+    </div>
+    {% endif %}
 
-<!-- Right 1 Col: Recommendation Tip -->
-<div class="rounded-xl bg-blue-50/50 border border-blue-100 p-4 space-y-2 flex flex-col justify-center">
-<div class="flex items-center gap-2">
-<span class="text-[14px]">💡</span>
-<h4 class="text-[11px] font-semibold uppercase tracking-wider text-blue-700">Workflow Copilot Tip</h4>
+    <div class="rounded-xl bg-blue-50/50 border border-blue-100 p-3.5 space-y-1.5">
+      <p class="text-[11px] font-semibold uppercase tracking-wider text-blue-700">Workflow Copilot Tip</p>
+      <p class="text-[11.5px] text-slate-600 font-medium leading-relaxed">
+        A school does not need a verified SSA before scheduling. If SSA is missing, planning is still allowed — the activity is tagged <strong>SSA Required</strong>. Schedule an SSA visit first so intervention impact can be measured.
+      </p>
+    </div>
+  </div>
+  {% endif %}
 </div>
-<p class="text-[11px] text-slate-600 font-semibold leading-relaxed">
-Under the new workflow rules, a school does <strong>not</strong> need a verified SSA before scheduling. If SSA is missing, planning is allowed, but the activity is tagged as <strong>SSA Required</strong>. We recommend scheduling a SSA Visit first so intervention impact can be measured.
-</p>
-</div>
-</div>
-</div>
-

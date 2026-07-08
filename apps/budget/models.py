@@ -6,6 +6,7 @@ The costing ENGINE itself is pure logic (costing.py) — the single source of
 truth for activity cost. No staff invents a cost; if a required rate is missing,
 the activity is flagged costMissing and must not enter a budget / fund request.
 """
+
 from __future__ import annotations
 
 from django.db import models
@@ -42,7 +43,10 @@ class CostCatalogue(TimeStampedModel):
                 name="uniq_active_catalogue_per_country_fy",
                 condition=models.Q(is_active=True),
             ),
-            models.UniqueConstraint(fields=["country", "fy", "version"], name="uniq_catalogue_country_fy_version"),
+            models.UniqueConstraint(
+                fields=["country", "fy", "version"],
+                name="uniq_catalogue_country_fy_version",
+            ),
         ]
 
     def __str__(self) -> str:
@@ -65,7 +69,11 @@ class CostSetting(TimeStampedModel):
     # The catalogue this rate belongs to. Nullable for back-compat with rows
     # created before catalogues existed (they attach to the seeded active one).
     catalogue = models.ForeignKey(
-        CostCatalogue, on_delete=models.CASCADE, related_name="rates", null=True, blank=True
+        CostCatalogue,
+        on_delete=models.CASCADE,
+        related_name="rates",
+        null=True,
+        blank=True,
     )
 
     class Meta:
@@ -79,7 +87,9 @@ class CostSettingHistory(TimeStampedModel):
     id = CuidField()
     key = models.CharField(max_length=128)
     label = models.CharField(max_length=255)
-    old_unit_cost = models.BigIntegerField(null=True, blank=True)  # UGX; null on first create
+    old_unit_cost = models.BigIntegerField(
+        null=True, blank=True
+    )  # UGX; null on first create
     new_unit_cost = models.BigIntegerField()  # UGX
     version = models.IntegerField()  # the new version after this change
     fy = models.CharField(max_length=16, null=True, blank=True)

@@ -1,0 +1,35 @@
+{% comment %}
+  One urgency-bucket section for the My Plan execution cockpit. Renders a
+  compact header (title, count, one-line description) followed by the
+  shared activity_table.html row component — same HTMX endpoints as before,
+  restyled only. activity_table.html supplies its own bordered/rounded card
+  frame, so this partial stays unboxed to avoid nested double borders.
+
+  Usage:
+    {% include "partials/my_plan/urgency_section.html" with title="Waiting on Me" description="…" items=waiting_on_me tone="danger" empty_title="Nothing waiting on you" empty_message="…" %}
+{% endcomment %}
+<section class="space-y-2">
+  <div class="flex items-center justify-between gap-3">
+    <div class="flex items-center gap-2 min-w-0">
+      <h2 class="text-[13px] font-semibold text-slate-800 tracking-tight truncate">{{ title }}</h2>
+      <span class="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[11px] font-semibold
+        {% if tone == 'danger' %}bg-rose-50 text-rose-700 border border-rose-200
+        {% elif tone == 'warning' %}bg-amber-50 text-amber-700 border border-amber-200
+        {% elif tone == 'info' %}bg-blue-50 text-blue-700 border border-blue-200
+        {% else %}bg-slate-100 text-slate-600 border border-slate-200{% endif %}">
+        {{ items|length }}
+      </span>
+    </div>
+    {% if description %}
+    <p class="text-[11px] text-slate-400 font-semibold hidden sm:block truncate">{{ description }}</p>
+    {% endif %}
+  </div>
+
+  {% if items %}
+  {% include "partials/my_plan/activity_table.html" with activity_list=items %}
+  {% else %}
+  <div class="card compact-empty p-0 overflow-hidden">
+    {% include "components/empty_state.html" with title=empty_title|default:"All clear" message=empty_message tone="success" compact="true" %}
+  </div>
+  {% endif %}
+</section>

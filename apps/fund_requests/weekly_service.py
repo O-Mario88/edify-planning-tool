@@ -24,7 +24,9 @@ def parse_date(d_str: str) -> date:
         raise BadRequest(f"Invalid date format: {d_str}") from exc
 
 
-def generate_weekly_fund_request(responsible_user_id: str, week_start_date_str: str) -> WeeklyFundRequest | None:
+def generate_weekly_fund_request(
+    responsible_user_id: str, week_start_date_str: str
+) -> WeeklyFundRequest | None:
     """Generate or update the WeeklyFundRequest for a user and week start date.
 
     Finds all scheduled, non-cancelled activities for that week owned by the user,
@@ -35,21 +37,25 @@ def generate_weekly_fund_request(responsible_user_id: str, week_start_date_str: 
     week_end = week_start + timedelta(days=6)
 
     # 1. Find all scheduled activities for the selected week that are not cancelled
-    lines = ActivityScheduleCostLine.objects.filter(
-        responsible_user=responsible_user_id,
-        planned_date__gte=week_start,
-        planned_date__lte=week_end,
-        activity__scheduled_date__isnull=False,
-    ).exclude(
-        activity__status="cancelled"
-    ).select_related("activity")
+    lines = (
+        ActivityScheduleCostLine.objects.filter(
+            responsible_user=responsible_user_id,
+            planned_date__gte=week_start,
+            planned_date__lte=week_end,
+            activity__scheduled_date__isnull=False,
+        )
+        .exclude(activity__status="cancelled")
+        .select_related("activity")
+    )
 
     total_amount = sum(line.amount for line in lines)
     fy = get_operational_fy(week_start)
 
     with transaction.atomic():
         # Check if request already exists
-        wfr = WeeklyFundRequest.objects.filter(responsible_user=responsible_user_id, week_start_date=week_start).first()
+        wfr = WeeklyFundRequest.objects.filter(
+            responsible_user=responsible_user_id, week_start_date=week_start
+        ).first()
         if not lines.exists():
             # If no lines exist, and there is a draft request, we delete it
             if wfr and wfr.status == "pending_responsible_confirmation":
@@ -77,29 +83,37 @@ def generate_weekly_fund_request(responsible_user_id: str, week_start_date_str: 
 
         # Sync lines
         wfr.lines.all().delete()
-        WeeklyFundRequestLine.objects.bulk_create([
-            WeeklyFundRequestLine(
-                weekly_fund_request=wfr,
-                activity_budget_line=line,
-                line_item_type=line.line_item_type or "other",
-                description=line.label,
-                quantity=line.quantity,
-                unit_cost=line.unit_cost,
-                total_cost=line.amount,
-                currency=line.currency,
-            )
-            for line in lines
-        ])
+        WeeklyFundRequestLine.objects.bulk_create(
+            [
+                WeeklyFundRequestLine(
+                    weekly_fund_request=wfr,
+                    activity_budget_line=line,
+                    line_item_type=line.line_item_type or "other",
+                    description=line.label,
+                    quantity=line.quantity,
+                    unit_cost=line.unit_cost,
+                    total_cost=line.amount,
+                    currency=line.currency,
+                )
+                for line in lines
+            ]
+        )
 
     return wfr
 
 
 def trigger_generate_for_activity(activity: Activity) -> None:
     """Convenience helper to auto-trigger weekly request generation on activity schedule/reschedule."""
-    if activity.scheduled_date and activity.responsible_staff_id and activity.status != "cancelled":
+    if (
+        activity.scheduled_date
+        and activity.responsible_staff_id
+        and activity.status != "cancelled"
+    ):
         planned_date = activity.scheduled_date.date()
         week_start = planned_date - timedelta(days=planned_date.weekday())
-        generate_weekly_fund_request(activity.responsible_staff_id, week_start.isoformat())
+        generate_weekly_fund_request(
+            activity.responsible_staff_id, week_start.isoformat()
+        )
 
 
 def list_weekly_requests(query: dict, principal) -> list[dict]:
@@ -116,6 +130,7 @@ def list_weekly_requests(query: dict, principal) -> list[dict]:
         q = Q(responsible_user=principal.user_id)
         if scope.supervised_staff_ids:
             from apps.accounts.models import StaffProfile
+
             supervised_user_ids = StaffProfile.objects.filter(
                 id__in=scope.supervised_staff_ids,
             ).values_list("user_id", flat=True)
@@ -136,6 +151,7 @@ def get_weekly_request(request_id: str, principal) -> dict:
     if not scope.country_scope and wfr.responsible_user != principal.user_id:
         if scope.supervised_staff_ids:
             from apps.accounts.models import StaffProfile
+
             supervised_user_ids = StaffProfile.objects.filter(
                 id__in=scope.supervised_staff_ids,
             ).values_list("user_id", flat=True)
@@ -150,10 +166,14 @@ def get_weekly_request(request_id: str, principal) -> dict:
 def request_advance(request_id: str, principal) -> dict:
     """Confirm the weekly request -> status confirmed_for_advance (Accountant may disburse)."""
     with transaction.atomic():
-        wfr = WeeklyFundRequest.objects.select_for_update().filter(id=request_id).first()
+        wfr = (
+            WeeklyFundRequest.objects.select_for_update().filter(id=request_id).first()
+        )
         if not wfr:
             raise NotFoundError("Weekly fund request not found.")
-        if wfr.responsible_user != principal.user_id and not getattr(principal, "country_scope", False):
+        if wfr.responsible_user != principal.user_id and not getattr(
+            principal, "country_scope", False
+        ):
             raise Forbidden("Only the owner can confirm this request.")
         if wfr.status not in ("pending_responsible_confirmation", "not_requested"):
             raise BadRequest(f"Cannot request advance in status '{wfr.status}'.")
@@ -169,7 +189,14 @@ def request_advance(request_id: str, principal) -> dict:
                 adv.status = "confirmed_for_advance"
                 adv.advance_type = "advance"
                 adv.confirmed_at = timezone.now()
-                adv.save(update_fields=["status", "advance_type", "confirmed_at", "updated_at"])
+                adv.save(
+                    update_fields=[
+                        "status",
+                        "advance_type",
+                        "confirmed_at",
+                        "updated_at",
+                    ]
+                )
 
     return _serialize_request(wfr)
 
@@ -177,13 +204,17 @@ def request_advance(request_id: str, principal) -> dict:
 def self_funded(request_id: str, principal) -> dict:
     """Elect self-funded reimbursement -> status self_funded."""
     with transaction.atomic():
-        wfr = WeeklyFundRequest.objects.select_for_update().filter(id=request_id).first()
+        wfr = (
+            WeeklyFundRequest.objects.select_for_update().filter(id=request_id).first()
+        )
         if not wfr:
             raise NotFoundError("Weekly fund request not found.")
-        if wfr.responsible_user != principal.user_id and not getattr(principal, "country_scope", False):
+        if wfr.responsible_user != principal.user_id and not getattr(
+            principal, "country_scope", False
+        ):
             raise Forbidden("Only the owner can confirm this request.")
         if wfr.status in ("disbursed", "accounted"):
-            raise BadRequest(f"Cannot change a disbursed request to self-funded.")
+            raise BadRequest("Cannot change a disbursed request to self-funded.")
 
         wfr.status = "self_funded"
         wfr.confirmed_at = timezone.now()
@@ -196,7 +227,14 @@ def self_funded(request_id: str, principal) -> dict:
                 adv.status = "self_funded_pending_reimbursement"
                 adv.advance_type = "self_funded"
                 adv.confirmed_at = timezone.now()
-                adv.save(update_fields=["status", "advance_type", "confirmed_at", "updated_at"])
+                adv.save(
+                    update_fields=[
+                        "status",
+                        "advance_type",
+                        "confirmed_at",
+                        "updated_at",
+                    ]
+                )
 
     return _serialize_request(wfr)
 
@@ -204,13 +242,17 @@ def self_funded(request_id: str, principal) -> dict:
 def not_requested(request_id: str, principal) -> dict:
     """Mark request as not requested yet."""
     with transaction.atomic():
-        wfr = WeeklyFundRequest.objects.select_for_update().filter(id=request_id).first()
+        wfr = (
+            WeeklyFundRequest.objects.select_for_update().filter(id=request_id).first()
+        )
         if not wfr:
             raise NotFoundError("Weekly fund request not found.")
-        if wfr.responsible_user != principal.user_id and not getattr(principal, "country_scope", False):
+        if wfr.responsible_user != principal.user_id and not getattr(
+            principal, "country_scope", False
+        ):
             raise Forbidden("Only the owner can confirm this request.")
         if wfr.status in ("disbursed", "accounted"):
-            raise BadRequest(f"Cannot cancel a disbursed request.")
+            raise BadRequest("Cannot cancel a disbursed request.")
 
         wfr.status = "not_requested"
         wfr.confirmed_at = timezone.now()
@@ -223,7 +265,14 @@ def not_requested(request_id: str, principal) -> dict:
                 adv.status = "not_requested"
                 adv.advance_type = "not_requested"
                 adv.confirmed_at = timezone.now()
-                adv.save(update_fields=["status", "advance_type", "confirmed_at", "updated_at"])
+                adv.save(
+                    update_fields=[
+                        "status",
+                        "advance_type",
+                        "confirmed_at",
+                        "updated_at",
+                    ]
+                )
 
     return _serialize_request(wfr)
 
@@ -231,11 +280,15 @@ def not_requested(request_id: str, principal) -> dict:
 def disburse(request_id: str, data: dict, principal) -> dict:
     """Accountant disburses a confirmed weekly request."""
     with transaction.atomic():
-        wfr = WeeklyFundRequest.objects.select_for_update().filter(id=request_id).first()
+        wfr = (
+            WeeklyFundRequest.objects.select_for_update().filter(id=request_id).first()
+        )
         if not wfr:
             raise NotFoundError("Weekly fund request not found.")
         if wfr.status != "confirmed_for_advance":
-            raise BadRequest("Only a confirmed request can be disbursed by the accountant.")
+            raise BadRequest(
+                "Only a confirmed request can be disbursed by the accountant."
+            )
 
         disbursed_amount = int(data.get("amount", wfr.total_amount))
         now = timezone.now()
@@ -246,7 +299,17 @@ def disburse(request_id: str, data: dict, principal) -> dict:
         wfr.disbursed_by_user_id = principal.user_id
         wfr.disburse_method = data.get("method")
         wfr.disburse_reference = data.get("reference")
-        wfr.save(update_fields=["status", "disbursed_amount", "disbursed_at", "disbursed_by_user_id", "disburse_method", "disburse_reference", "updated_at"])
+        wfr.save(
+            update_fields=[
+                "status",
+                "disbursed_amount",
+                "disbursed_at",
+                "disbursed_by_user_id",
+                "disburse_method",
+                "disburse_reference",
+                "updated_at",
+            ]
+        )
 
         # Also update linked AdvanceRequests status to keep them in sync
         for line in wfr.lines.select_related("activity_budget_line"):
@@ -258,7 +321,17 @@ def disburse(request_id: str, data: dict, principal) -> dict:
                 adv.disbursed_by_user_id = principal.user_id
                 adv.disburse_method = data.get("method")
                 adv.disburse_reference = data.get("reference")
-                adv.save(update_fields=["status", "disbursed_amount", "disbursed_at", "disbursed_by_user_id", "disburse_method", "disburse_reference", "updated_at"])
+                adv.save(
+                    update_fields=[
+                        "status",
+                        "disbursed_amount",
+                        "disbursed_at",
+                        "disbursed_by_user_id",
+                        "disburse_method",
+                        "disburse_reference",
+                        "updated_at",
+                    ]
+                )
 
     return _serialize_request(wfr)
 
@@ -266,7 +339,9 @@ def disburse(request_id: str, data: dict, principal) -> dict:
 def accountant_weekly_queues() -> dict:
     """Return all weekly requests split by status for the accountant dashboard."""
     return {
-        "pending_responsible_confirmation": _list_status("pending_responsible_confirmation"),
+        "pending_responsible_confirmation": _list_status(
+            "pending_responsible_confirmation"
+        ),
         "ready_for_disbursement": _list_status("confirmed_for_advance"),
         "self_funded": _list_status("self_funded"),
         "disbursed": _list_status("disbursed"),
@@ -282,9 +357,18 @@ def _list_status(status: str) -> list[dict]:
 def _serialize_request(wfr: WeeklyFundRequest, include_lines: bool = False) -> dict:
     # Get the user name / details of the responsible owner
     from apps.accounts.models import StaffProfile
-    profile = StaffProfile.objects.filter(user_id=wfr.responsible_user).select_related("user").first()
-    owner_name = profile.user.name if (profile and profile.user) else wfr.responsible_user
-    owner_initials = "".join([part[0].upper() for part in owner_name.split() if part])[:3]
+
+    profile = (
+        StaffProfile.objects.filter(user_id=wfr.responsible_user)
+        .select_related("user")
+        .first()
+    )
+    owner_name = (
+        profile.user.name if (profile and profile.user) else wfr.responsible_user
+    )
+    owner_initials = "".join([part[0].upper() for part in owner_name.split() if part])[
+        :3
+    ]
 
     res = {
         "id": wfr.id,

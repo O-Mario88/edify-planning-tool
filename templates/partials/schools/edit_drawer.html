@@ -137,20 +137,20 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semi
 </select>
 </div>
 
-<!-- Footer Actions -->
-<div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
-<button 
-type="button" 
+<!-- Footer Actions (sticky) -->
+<div class="drawer-footer">
+<button
+type="button"
 @click="$dispatch('close-drawer')"
-class="px-5 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[12px] transition-colors"
+class="btn btn-ghost h-9"
 >
 Cancel
 </button>
-<button 
-type="submit" 
-class="px-6 h-9 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-[12px] transition-all shadow-sm flex items-center justify-center gap-1.5"
+<button
+type="submit"
+class="btn btn-primary h-9"
 >
-<span>Recalculate & Save</span>
+<span>Recalculate &amp; Save</span>
 </button>
 </div>
 </form>

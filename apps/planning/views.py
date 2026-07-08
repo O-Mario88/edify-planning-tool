@@ -1,4 +1,5 @@
 """Planning endpoints — /api/planning/*."""
+
 from __future__ import annotations
 
 from rest_framework.permissions import IsAuthenticated
@@ -84,7 +85,11 @@ class PlanAddActivityView(APIView):
     required_permissions = CREATE
 
     def post(self, request: Request, plan_id: str) -> Response:
-        return Response(services.create_plan({"monthIso": None, "activities": [request.data]}, request.user))
+        return Response(
+            services.create_plan(
+                {"monthIso": None, "activities": [request.data]}, request.user
+            )
+        )
 
 
 def _lifecycle_view(fn, perm):
@@ -108,7 +113,9 @@ class ScheduleSchoolVisitView(APIView):
     required_permissions = ASSIGN
 
     def post(self, request: Request) -> Response:
-        return Response(services.schedule_school_visit(request.data, request.user), status=201)
+        return Response(
+            services.schedule_school_visit(request.data, request.user), status=201
+        )
 
 
 class AssignSchoolVisitToPartnerView(APIView):
@@ -116,7 +123,10 @@ class AssignSchoolVisitToPartnerView(APIView):
     required_permissions = ASSIGN
 
     def post(self, request: Request) -> Response:
-        return Response(services.assign_school_visit_to_partner(request.data, request.user), status=201)
+        return Response(
+            services.assign_school_visit_to_partner(request.data, request.user),
+            status=201,
+        )
 
 
 class ScheduleClusterTrainingView(APIView):
@@ -124,7 +134,9 @@ class ScheduleClusterTrainingView(APIView):
     required_permissions = ASSIGN
 
     def post(self, request: Request) -> Response:
-        return Response(services.schedule_cluster_training(request.data, request.user), status=201)
+        return Response(
+            services.schedule_cluster_training(request.data, request.user), status=201
+        )
 
 
 class ScheduleClusterActivityView(APIView):
@@ -137,4 +149,6 @@ class ScheduleClusterActivityView(APIView):
     required_permissions = ASSIGN
 
     def post(self, request: Request) -> Response:
-        return Response(services.schedule_cluster_activity(request.data, request.user), status=201)
+        return Response(
+            services.schedule_cluster_activity(request.data, request.user), status=201
+        )

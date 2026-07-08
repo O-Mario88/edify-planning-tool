@@ -1,7 +1,7 @@
 {% load frontend_filters %}
-<div 
-class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden transition-all duration-300"
-x-data="{ 
+<div
+class="card"
+x-data="{
 cardExpanded: {% if forloop.first %}true{% else %}false{% endif %}, 
 subTableLoaded: {% if forloop.first %}true{% else %}false{% endif %}
 }"
@@ -16,11 +16,11 @@ class="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 curso
 <h3 class="text-[18px] font-semibold text-slate-800 leading-tight">{{ cluster.name }}</h3>
 
 {% if cluster.risk == 'critical' %}
-<span class="edify-status-badge danger">Critical</span>
+{% include "components/badge.html" with tone="danger" label="Critical" size="md" dot="true" %}
 {% elif cluster.risk == 'needs_attention' %}
-<span class="edify-status-badge warning">Needs Attention</span>
+{% include "components/badge.html" with tone="warning" label="Needs Attention" size="md" dot="true" %}
 {% else %}
-<span class="edify-status-badge success">Healthy</span>
+{% include "components/badge.html" with tone="success" label="Healthy" size="md" dot="true" %}
 {% endif %}
 </div>
 
@@ -64,31 +64,31 @@ Next Action: {{ cluster.next_action }}
 <div class="shrink-0 flex items-center gap-3">
 <!-- Schedule Button -->
 {% if request.user.active_role != 'PartnerAdmin' and request.user.active_role != 'PartnerFieldOfficer' %}
-<button 
+<button
 hx-get="/clusters/planner-drawer?cluster_id={{ cluster.id }}&activity_type=training&fixed_cluster=true"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
-class="h-8 px-3 bg-white border border-slate-200 text-slate-700 text-[12px] font-bold rounded-lg hover:bg-slate-50 shadow-sm flex items-center gap-1.5 transition-colors"
+class="btn btn-ghost h-8 inline-flex items-center gap-1.5"
 >
-<svg class="shrink-0" style="height: 13px; width: 13px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
 </svg>
-Schedule
+<span>Schedule</span>
 </button>
 {% endif %}
 
 <!-- Assign to Partner Button (Visible only for Staff) -->
 {% if request.user.active_role != 'PartnerAdmin' and request.user.active_role != 'PartnerFieldOfficer' %}
-<button 
+<button
 hx-get="/planning/assign-partner-modal?cluster_id={{ cluster.id }}"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
-class="h-8 px-3 bg-white border border-slate-200 text-slate-700 text-[12px] font-bold rounded-lg hover:bg-slate-50 shadow-sm flex items-center gap-1.5 transition-colors"
+class="btn btn-ghost h-8 inline-flex items-center gap-1.5"
 >
-<svg class="shrink-0" style="height: 13px; width: 13px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
 </svg>
-Assign to Partner
+<span>Assign to Partner</span>
 </button>
 {% endif %}
 
@@ -154,20 +154,23 @@ style="width: {% if item.avg %}{{ item.avg|multiply:10 }}{% else %}0{% endif %}%
 
 <!-- Action buttons -->
 <div class="flex-1 flex flex-wrap gap-2.5">
-<button 
+<button
 hx-get="/clusters/detail-drawer/{{ cluster.id }}"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
-class="px-4 py-2 bg-white border border-slate-200 text-slate-700 text-[12px] font-bold rounded-lg hover:bg-slate-50 shadow-sm flex items-center justify-center transition-colors"
+class="btn btn-ghost h-9 inline-flex items-center gap-1.5"
 >
-View Details
+<span>View Details</span>
 </button>
+<a href="/clusters/{{ cluster.id }}" class="btn btn-smooth h-9 inline-flex items-center gap-1.5">
+<span>Open Full Page</span>
+</a>
 </div>
 </div>
 
 <!-- Nestable sub-table target -->
-<div 
-class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden mt-4" 
+<div
+class="card mt-4"
 id="expanded-schools-{{ cluster.id }}"
 x-ref="schoolsContainer"
 hx-get="/partials/clusters/{{ cluster.id }}/schools"

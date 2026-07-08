@@ -4,6 +4,7 @@ Proves the decision engine computes from real records: per-school SSA delta,
 intervention-level averages, improvement classification, and that
 recommendations fire on real risk conditions (not hardcoded).
 """
+
 from __future__ import annotations
 
 from datetime import timedelta
@@ -28,15 +29,28 @@ from apps.ssa.models import SsaRecord, SsaScore
 
 def _stub_principal(user_id, role, staff_id=None, school_ids=None):
     """Minimal principal for scope resolution."""
-    return type("P", (), {
-        "user_id": user_id, "id": user_id, "active_role": role,
-        "staff_profile_id": staff_id, "country_scope": role in ("CountryDirector", "ImpactAssessment", "Admin"),
-        "can_view_summary_only": role == "RegionalVicePresident",
-        "school_ids": school_ids or [], "staff_ids": [staff_id] if staff_id else [],
-        "supervised_staff_ids": [], "partner_ids": [], "region_ids": [],
-        "district_ids": [], "own_school_ids": school_ids or [],
-        "team_school_ids": [], "core_school_ids": [], "cluster_ids": [],
-    })()
+    return type(
+        "P",
+        (),
+        {
+            "user_id": user_id,
+            "id": user_id,
+            "active_role": role,
+            "staff_profile_id": staff_id,
+            "country_scope": role in ("CountryDirector", "ImpactAssessment", "Admin"),
+            "can_view_summary_only": role == "RegionalVicePresident",
+            "school_ids": school_ids or [],
+            "staff_ids": [staff_id] if staff_id else [],
+            "supervised_staff_ids": [],
+            "partner_ids": [],
+            "region_ids": [],
+            "district_ids": [],
+            "own_school_ids": school_ids or [],
+            "team_school_ids": [],
+            "core_school_ids": [],
+            "cluster_ids": [],
+        },
+    )()
 
 
 class AnalyticsTest(TestCase):
@@ -44,32 +58,48 @@ class AnalyticsTest(TestCase):
         self.fy = get_operational_fy()
         self.prev_fy = str(int(self.fy) - 1)
         self.region = Region.objects.create(name="Analytics Region")
-        self.district = District.objects.create(name="Analytics District", region=self.region)
-        self.sub_county = SubCounty.objects.create(name="Analytics Sub", district=self.district)
+        self.district = District.objects.create(
+            name="Analytics District", region=self.region
+        )
+        self.sub_county = SubCounty.objects.create(
+            name="Analytics Sub", district=self.district
+        )
         # An IA principal (country scope) so all schools are in scope.
         self.ia = User.objects.create_user(
-            email="ia@analytics.test", name="Analytics IA",
-            roles=[EdifyRole.IMPACT_ASSESSMENT.value], active_role=EdifyRole.IMPACT_ASSESSMENT.value,
-            password="x", is_active=True,
+            email="ia@analytics.test",
+            name="Analytics IA",
+            roles=[EdifyRole.IMPACT_ASSESSMENT.value],
+            active_role=EdifyRole.IMPACT_ASSESSMENT.value,
+            password="x",
+            is_active=True,
         )
         self.principal = _stub_principal(self.ia.id, EdifyRole.IMPACT_ASSESSMENT.value)
 
     def _school(self, school_id: str, ssa_status="done") -> School:
         return School.objects.create(
-            school_id=school_id, name=f"{school_id} Primary", region=self.region,
-            district=self.district, sub_county=self.sub_county,
+            school_id=school_id,
+            name=f"{school_id} Primary",
+            region=self.region,
+            district=self.district,
+            sub_county=self.sub_county,
             current_fy_ssa_status=ssa_status,
         )
 
-    def _ssa(self, school: School, fy: str, avg_score: float, verified=True) -> SsaRecord:
+    def _ssa(
+        self, school: School, fy: str, avg_score: float, verified=True
+    ) -> SsaRecord:
         rec = SsaRecord.objects.create(
-            school=school, fy=fy, quarter="Q3",
+            school=school,
+            fy=fy,
+            quarter="Q3",
             date_of_ssa=timezone.now() - timedelta(days=10),
             average_score=avg_score,
             verification_status="confirmed" if verified else "pending",
         )
         for interv in SsaIntervention:
-            SsaScore.objects.create(ssa_record=rec, intervention=interv.value, score=avg_score)
+            SsaScore.objects.create(
+                ssa_record=rec, intervention=interv.value, score=avg_score
+            )
         return rec
 
     # ── SSA improvement ──────────────────────────────────────────────────────
@@ -131,18 +161,22 @@ class AnalyticsTest(TestCase):
         # Create SSA with varied scores per intervention — assign explicitly so
         # the test doesn't depend on enum iteration order.
         rec = SsaRecord.objects.create(
-            school=s1, fy=self.fy, quarter="Q3", date_of_ssa=timezone.now(),
-            average_score=5.0, verification_status="confirmed",
+            school=s1,
+            fy=self.fy,
+            quarter="Q3",
+            date_of_ssa=timezone.now(),
+            average_score=5.0,
+            verification_status="confirmed",
         )
         explicit_scores = {
             "christlike_behaviour": 8.0,
             "exposure_to_word_of_god": 5.0,
-            "financial_health": 3.0,        # weakest
+            "financial_health": 3.0,  # weakest
             "leadership": 7.0,
             "learning_environment": 6.0,
             "government_requirement": 5.0,
             "teaching_environment": 4.0,
-            "enrolment": 9.0,               # strongest
+            "enrolment": 9.0,  # strongest
         }
         for interv, score in explicit_scores.items():
             SsaScore.objects.create(ssa_record=rec, intervention=interv, score=score)
@@ -164,12 +198,19 @@ class AnalyticsTest(TestCase):
     def test_recommendation_fires_for_schools_without_ssa(self):
         """Schools without SSA generate a high-priority recommendation."""
         School.objects.create(
-            school_id="REC-1", name="No SSA School", region=self.region,
-            district=self.district, sub_county=self.sub_county,
+            school_id="REC-1",
+            name="No SSA School",
+            region=self.region,
+            district=self.district,
+            sub_county=self.sub_county,
             current_fy_ssa_status="not_done",
         )
         recs = recommendations(self.principal, {"fy": self.fy})
-        ssa_recs = [r for r in recs if "SSA" in r["reason"] or "no current-FY SSA" in r["reason"]]
+        ssa_recs = [
+            r
+            for r in recs
+            if "SSA" in r["reason"] or "no current-FY SSA" in r["reason"]
+        ]
         self.assertTrue(len(ssa_recs) >= 1)
         self.assertEqual(ssa_recs[0]["priority"], "high")
 
@@ -189,16 +230,21 @@ class AnalyticsTest(TestCase):
         recs = recommendations(self.principal, {"fy": self.fy})
         # No schools without SSA, no declining SSA, but there might be weak-cluster
         # or weak-intervention recs. At least no high-priority SSA-blocked rec.
-        high_recs = [r for r in recs if r["priority"] == "high" and "SSA" in r["reason"]]
+        high_recs = [
+            r for r in recs if r["priority"] == "high" and "SSA" in r["reason"]
+        ]
         self.assertEqual(len(high_recs), 0)
 
     # ── Role scope ───────────────────────────────────────────────────────────
     def test_cceo_scope_restricts_to_own_schools(self):
         """A CCEO should only see SSA for their own schools, not all schools."""
         cceo = User.objects.create_user(
-            email="cceo@analytics.test", name="Analytics CCEO",
-            roles=[EdifyRole.CCEO.value], active_role=EdifyRole.CCEO.value,
-            password="x", is_active=True,
+            email="cceo@analytics.test",
+            name="Analytics CCEO",
+            roles=[EdifyRole.CCEO.value],
+            active_role=EdifyRole.CCEO.value,
+            password="x",
+            is_active=True,
         )
         cceo_staff = StaffProfile.objects.create(user=cceo, title="CCEO")
         own_school = self._school("CCEO-OWN")
@@ -207,9 +253,13 @@ class AnalyticsTest(TestCase):
         self._ssa(own_school, self.fy, 7.0)
         self._ssa(other_school, self.fy, 3.0)  # should NOT appear for this CCEO
         cceo_principal = _stub_principal(
-            cceo.id, EdifyRole.CCEO.value, staff_id=cceo_staff.id, school_ids=[own_school.id],
+            cceo.id,
+            EdifyRole.CCEO.value,
+            staff_id=cceo_staff.id,
+            school_ids=[own_school.id],
         )
         from apps.analytics.services import ssa_performance
+
         result = ssa_performance(cceo_principal, {"fy": self.fy})
         self.assertEqual(result["recordsCount"], 1)  # only own school's SSA
         self.assertEqual(result["averageScore"], 7.0)

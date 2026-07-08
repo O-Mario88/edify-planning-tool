@@ -1,23 +1,14 @@
 {% extends "layouts/shell.html" %}
+{% load frontend_filters %}
 
 {% block title %}Batch Payments - Edify Command Center{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6" x-data="{ activeTab: 'advances' }">
+<div class="p-6 max-w-7xl mx-auto space-y-5 font-sans" x-data="{ activeTab: 'advances' }">
 
-<!-- Premium Header Pane -->
-<div class="relative overflow-hidden rounded-xl bg-slate-900 text-white p-8 shadow-md border border-slate-800">
-<div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-blue-500/10 blur-3xl pointer-events-none"></div>
-<div class="relative z-10 space-y-2">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[11px] font-semibold uppercase tracking-widest">
-Bulk Dispatcher
-</div>
-<h1 class="text-[32px] font-semibold tracking-tight text-white leading-none">Batch Payments Center</h1>
-<p class="text-[14px] text-slate-400 font-medium max-w-xl">
-Execute batch payouts for advances, partner invoices, or staff expenses. Review aggregate volumes and export banking files.
-</p>
-</div>
-</div>
+{% include "components/page_header.html" with title="Batch Payments Center" subtitle="Review aggregate volumes for advances, partner invoices, and staff expenses queued for payout." %}
+
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
 
 <!-- Tabs Navigation -->
 <div class="flex items-center gap-2 border-b border-slate-100 pb-px">
@@ -49,8 +40,8 @@ Reimbursements ({{ reimbursements|length }})
 <!-- Advances Panel -->
 <div x-show="activeTab === 'advances'" class="space-y-4">
 <div class="flex items-center justify-between border-b border-slate-50 pb-3">
-<h3 class="text-[14px] font-semibold text-slate-800">Batch Advances ready for payment file</h3>
-<button class="h-8 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold transition-all shadow-sm">
+<h3 class="text-[14px] font-semibold text-slate-800">Batch Advances ready for payment file &bull; {{ advances_total|ugx }} total</h3>
+<button type="button" disabled title="Bank payout file export is not wired up yet — process advances individually from the Advances Queue." class="h-8 px-4 rounded-xl bg-slate-100 text-slate-400 text-[11px] font-semibold cursor-not-allowed">
 Export Bank Payout CSV
 </button>
 </div>
@@ -64,7 +55,7 @@ Export Bank Payout CSV
 <span class="text-[11px] text-slate-500 block">{{ act.school.name|default:"Cluster-wide" }}</span>
 </div>
 </div>
-<span class="font-semibold text-slate-800 text-[12px]">450,000 UGX</span>
+<span class="font-semibold text-slate-800 text-[12px]">{{ act.approved_amount|ugx }}</span>
 </div>
 {% empty %}
 <p class="text-[12px] text-slate-400 font-semibold py-8 text-center">No pending advances for batch payment.</p>
@@ -75,8 +66,8 @@ Export Bank Payout CSV
 <!-- Partner Panel -->
 <div x-show="activeTab === 'partners'" class="space-y-4" style="display: none;">
 <div class="flex items-center justify-between border-b border-slate-50 pb-3">
-<h3 class="text-[14px] font-semibold text-slate-800">Batch Partner Payments ready for payment file</h3>
-<button class="h-8 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold transition-all shadow-sm">
+<h3 class="text-[14px] font-semibold text-slate-800">Batch Partner Payments ready for payment file &bull; {{ partners_total|ugx }} total</h3>
+<button type="button" disabled title="Mobile money batch export is not wired up yet — process partner payments individually from the Partner Payments Queue." class="h-8 px-4 rounded-xl bg-slate-100 text-slate-400 text-[11px] font-semibold cursor-not-allowed">
 Export Mobile Money Batch
 </button>
 </div>
@@ -86,11 +77,11 @@ Export Mobile Money Batch
 <div class="flex items-center gap-3">
 <input type="checkbox" class="w-4 h-4 rounded text-blue-700 border-slate-300 focus:ring-blue-500">
 <div>
-<span class="font-semibold text-[12px] text-slate-800 block">{{ act.assigned_partner_id }} &bull; #{{ act.id|slice:":8" }}</span>
+<span class="font-semibold text-[12px] text-slate-800 block">{{ act.assigned_partner_id|default:"Unassigned" }} &bull; #{{ act.id|slice:":8" }}</span>
 <span class="text-[11px] text-slate-500 block">{{ act.get_activity_type_display }}</span>
 </div>
 </div>
-<span class="font-semibold text-slate-800 text-[12px]">600,000 UGX</span>
+<span class="font-semibold text-slate-800 text-[12px]">{{ act.approved_amount|ugx }}</span>
 </div>
 {% empty %}
 <p class="text-[12px] text-slate-400 font-semibold py-8 text-center">No pending partner payments for batch payout.</p>
@@ -101,8 +92,8 @@ Export Mobile Money Batch
 <!-- Reimbursements Panel -->
 <div x-show="activeTab === 'reimbursements'" class="space-y-4" style="display: none;">
 <div class="flex items-center justify-between border-b border-slate-50 pb-3">
-<h3 class="text-[14px] font-semibold text-slate-800">Batch Staff Reimbursements ready for payment file</h3>
-<button class="h-8 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold transition-all shadow-sm">
+<h3 class="text-[14px] font-semibold text-slate-800">Batch Staff Reimbursements ready for payment file &bull; {{ reimbursements_total|ugx }} total</h3>
+<button type="button" disabled title="Bank file export is not wired up yet — process reimbursements individually from the Reimbursements Queue." class="h-8 px-4 rounded-xl bg-slate-100 text-slate-400 text-[11px] font-semibold cursor-not-allowed">
 Export Bank File
 </button>
 </div>

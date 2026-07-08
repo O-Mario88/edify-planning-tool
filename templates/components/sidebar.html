@@ -1,4 +1,5 @@
 {% load static %}
+{% load frontend_filters %}
 <div class="app-sidebar__brand">
 <!-- Expanded Logo -->
 <div x-show="!collapsed" class="flex flex-col">
@@ -950,9 +951,7 @@ title="Audit Log">
 <!-- User Profile Area at the bottom -->
 <div class="app-sidebar__footer">
 <div class="app-sidebar__user">
-<img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=256&h=256&fit=crop" 
-alt="User Avatar" 
-class="app-sidebar__user-avatar">
+<div class="app-sidebar__user-avatar" style="display:flex;align-items:center;justify-content:center;font-weight:600;">{% if request.user.is_authenticated %}{{ request.user.name|avatar_initials }}{% else %}GU{% endif %}</div>
 <div class="app-sidebar__user-info">
 <span class="app-sidebar__user-name">{% if request.user.is_authenticated %}{{ request.user.name }}{% else %}Guest User{% endif %}</span>
 <span class="app-sidebar__user-role">{% if request.user.is_authenticated %}{{ request.user.active_role }}{% else %}Visitor{% endif %}</span>

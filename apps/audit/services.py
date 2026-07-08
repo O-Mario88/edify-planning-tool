@@ -6,6 +6,7 @@ Audit must NEVER break the primary action: failures are logged + swallowed.
 The request provenance (ip/user-agent/correlationId) is read from the request
 context (contextvars), so callers don't thread it through.
 """
+
 from __future__ import annotations
 
 import logging
@@ -97,10 +98,17 @@ def verify_chain() -> dict:
 
 def _row_to_fields(row: AuditLog) -> CanonicalAuditFields:
     return CanonicalAuditFields(
-        action=row.action, subject_kind=row.subject_kind, subject_id=row.subject_id,
-        actor_id=row.actor_id, actor_role=row.actor_role, success=row.success,
-        reason=row.reason, ip_address=row.ip_address, user_agent=row.user_agent,
-        correlation_id=row.correlation_id, payload=row.payload,
+        action=row.action,
+        subject_kind=row.subject_kind,
+        subject_id=row.subject_id,
+        actor_id=row.actor_id,
+        actor_role=row.actor_role,
+        success=row.success,
+        reason=row.reason,
+        ip_address=row.ip_address,
+        user_agent=row.user_agent,
+        correlation_id=row.correlation_id,
+        payload=row.payload,
     )
 
 

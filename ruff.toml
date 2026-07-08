@@ -1,0 +1,12 @@
+# Ruff configuration — CI runs `ruff check .` and `ruff format --check .`.
+
+[lint.per-file-ignores]
+# Django settings idioms: `from .base import *` re-exported names.
+"config/settings/*.py" = ["F401", "F403", "F405", "E402"]
+# Entrypoints configure the environment before importing Django internals.
+"manage.py" = ["E402"]
+"config/asgi.py" = ["E402"]
+"config/wsgi.py" = ["E402"]
+# Tests favour readable fixtures over strict naming/unused-var hygiene.
+"apps/**/test*.py" = ["E741", "F841"]
+"apps/**/tests/*.py" = ["E741", "F841"]

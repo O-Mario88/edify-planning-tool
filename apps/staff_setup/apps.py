@@ -5,6 +5,7 @@ the upload creates a StaffSetupCandidate. This app is the Admin surface to turn
 those candidates into real users (or merge them with existing ones) and link the
 affected schools to the resolved user — completing the ownership bridge.
 """
+
 from django.apps import AppConfig
 
 

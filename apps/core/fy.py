@@ -9,6 +9,7 @@ All date math is UTC to match the legacy getUTC* usage. The pinned spec tests
 (see fy.util.spec.ts) must keep passing — especially the FY rollover at
 Sep 30 → Oct 1 and the seeded May–June window being Q3.
 """
+
 from __future__ import annotations
 
 from datetime import date, datetime, timezone

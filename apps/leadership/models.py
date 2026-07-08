@@ -1,4 +1,5 @@
 """Leadership Decision Engine models — recommends; leadership decides."""
+
 from __future__ import annotations
 
 from django.contrib.postgres.fields import ArrayField
@@ -63,7 +64,9 @@ class LeadershipDecisionInsight(TimeStampedModel):
     recommendation = models.TextField()
     reason = models.TextField()
     risk_level = models.CharField(max_length=16, choices=DecisionRiskLevel.choices)
-    confidence_level = models.CharField(max_length=16, choices=DecisionConfidenceLevel.choices)
+    confidence_level = models.CharField(
+        max_length=16, choices=DecisionConfidenceLevel.choices
+    )
     confidence_score = models.FloatField()
     evidence_summary = models.JSONField(null=True, blank=True)
     context_adjustment = models.CharField(max_length=512, null=True, blank=True)
@@ -71,8 +74,12 @@ class LeadershipDecisionInsight(TimeStampedModel):
     suggested_action = models.CharField(max_length=512)
     alternatives = models.JSONField(null=True, blank=True)
     metrics = models.JSONField(null=True, blank=True)
-    risk_flags = ArrayField(base_field=models.CharField(max_length=64), default=list, blank=True)
-    status = models.CharField(max_length=32, choices=DecisionStatus.choices, default=DecisionStatus.NEW)
+    risk_flags = ArrayField(
+        base_field=models.CharField(max_length=64), default=list, blank=True
+    )
+    status = models.CharField(
+        max_length=32, choices=DecisionStatus.choices, default=DecisionStatus.NEW
+    )
     reviewed_by_user_id = models.CharField(max_length=30, null=True, blank=True)
     reviewed_by_role = models.CharField(max_length=64, null=True, blank=True)
     reviewed_at = models.DateTimeField(null=True, blank=True)
@@ -92,7 +99,9 @@ class LeadershipDecisionInsight(TimeStampedModel):
 
 class DecisionNote(TimeStampedModel):
     id = CuidField()
-    insight = models.ForeignKey(LeadershipDecisionInsight, on_delete=models.CASCADE, related_name="notes")
+    insight = models.ForeignKey(
+        LeadershipDecisionInsight, on_delete=models.CASCADE, related_name="notes"
+    )
     author_user_id = models.CharField(max_length=30)
     author_role = models.CharField(max_length=64)
     note = models.TextField()
@@ -100,7 +109,11 @@ class DecisionNote(TimeStampedModel):
 
 
 __all__ = [
-    "DecisionType", "DecisionScopeType", "DecisionRiskLevel",
-    "DecisionConfidenceLevel", "DecisionStatus",
-    "LeadershipDecisionInsight", "DecisionNote",
+    "DecisionType",
+    "DecisionScopeType",
+    "DecisionRiskLevel",
+    "DecisionConfidenceLevel",
+    "DecisionStatus",
+    "LeadershipDecisionInsight",
+    "DecisionNote",
 ]

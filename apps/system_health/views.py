@@ -1,4 +1,5 @@
 """System-health endpoint — /api/system-health."""
+
 from __future__ import annotations
 
 from rest_framework.permissions import IsAuthenticated

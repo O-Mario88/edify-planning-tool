@@ -3,27 +3,13 @@
 {% block title %}Evidence Comparison Workspace - Edify Command Center{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6">
+<div class="p-6 max-w-7xl mx-auto space-y-5 font-sans">
 
-<!-- Premium Header Pane -->
-<div class="relative overflow-hidden rounded-xl bg-slate-900 text-white p-8 shadow-md border border-slate-800">
-<div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-blue-500/10 blur-3xl pointer-events-none"></div>
-<div class="absolute -left-20 -bottom-20 w-80 h-80 rounded-full bg-emerald-500/15 blur-3xl pointer-events-none"></div>
+{% include "components/page_header.html" with title="Evidence Comparison Workspace" subtitle="Side-by-side review of deviations between planned schedule objectives and field execution evidence inputs." %}
 
-<div class="relative z-10 space-y-2">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[11px] font-semibold uppercase tracking-widest">
-Compare &amp; Contrast
-</div>
-<h1 class="text-[32px] font-semibold tracking-tight text-white leading-none">Evidence Comparison Workspace</h1>
-<p class="text-[14px] text-slate-400 font-medium max-w-2xl">
-Side-by-side verification pane. Review deviations between planned schedule objectives and field execution evidence inputs.
-</p>
-</div>
-</div>
-
-<div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 <!-- Sidebar selector of items -->
-<div class="bg-white rounded-xl border border-slate-100 p-5 shadow-sm space-y-4 h-fit">
+<div class="lg:col-span-3 bg-white rounded-xl border border-slate-100 p-5 shadow-sm space-y-4 h-fit">
 <h3 class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Awaiting Verification</h3>
 <div class="space-y-2 max-h-[500px] overflow-y-auto pr-1">
 {% for w in waiting_list %}
@@ -39,7 +25,7 @@ Side-by-side verification pane. Review deviations between planned schedule objec
 </div>
 
 <!-- Comparison details pane -->
-<div class="lg:col-span-3 space-y-6">
+<div class="lg:col-span-9 space-y-6">
 {% if act %}
 <!-- Side-by-Side Panel -->
 <div class="bg-white rounded-xl border border-slate-100 p-6 shadow-sm space-y-6">
@@ -160,13 +146,8 @@ Review Workspace
 </a>
 </div>
 {% else %}
-<div class="bg-white rounded-xl border border-slate-100 p-16 text-center text-slate-400 font-semibold shadow-sm">
-<div class="flex flex-col items-center justify-center gap-3">
-<div class="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 shadow-inner">
-<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" /></svg>
-</div>
-<p class="text-slate-500">Please select an activity from the side panel to begin side-by-side comparison.</p>
-</div>
+<div class="card">
+{% include "components/empty_state.html" with title="No activity selected" message="Select an activity from the side panel to begin side-by-side comparison." %}
 </div>
 {% endif %}
 </div>

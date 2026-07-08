@@ -17,6 +17,7 @@ All counts are DB aggregations (Count with conditional Q filters), never Python
 loops over activities. Scope-aware: a CCEO sees only their own activities
 (responsible_staff_id); a PL sees their supervised team; CD sees the country.
 """
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -37,8 +38,19 @@ from apps.core.fy import (
 ACHIEVED_STATUSES = ("ia_verified", "closed", "accountant_confirmed")
 
 # Activity-type sets.
-VISIT_TYPES = ("school_visit", "follow_up_visit", "coaching_visit", "in_school_support", "core_visit")
-TRAINING_TYPES = ("training", "school_improvement_training", "cluster_training", "core_training")
+VISIT_TYPES = (
+    "school_visit",
+    "follow_up_visit",
+    "coaching_visit",
+    "in_school_support",
+    "core_visit",
+)
+TRAINING_TYPES = (
+    "training",
+    "school_improvement_training",
+    "cluster_training",
+    "core_training",
+)
 CLUSTER_MEETING_TYPE = "cluster_meeting"
 PARTNER_ACTIVITIES = ("partner_activity", "project_activity")
 
@@ -91,12 +103,20 @@ def _evidence_accepted_q() -> Q:
 
 def _activity_code_q() -> Q:
     """Activities with an Activity Code entered."""
-    return ~Q(salesforce_activity_id="") & ~Q(salesforce_activity_id=None) & _achieved_q()
+    return (
+        ~Q(salesforce_activity_id="") & ~Q(salesforce_activity_id=None) & _achieved_q()
+    )
 
 
 # ── Period bounds ────────────────────────────────────────────────────────────
 
-def period_bounds(fy: str, period_type: str = "fy", quarter: str | None = None, month: int | None = None) -> tuple[datetime, datetime]:
+
+def period_bounds(
+    fy: str,
+    period_type: str = "fy",
+    quarter: str | None = None,
+    month: int | None = None,
+) -> tuple[datetime, datetime]:
     """Return the (start, end) datetime range for a performance period.
 
     Cumulative: a quarter spans its 3 months; mid-year = Q1+Q2; FY = all.
@@ -115,7 +135,10 @@ def period_bounds(fy: str, period_type: str = "fy", quarter: str | None = None, 
 
 # ── Core metric computation ─────────────────────────────────────────────────
 
-def staff_metrics(staff_id: str, fy: str, start: datetime | None = None, end: datetime | None = None) -> dict:
+
+def staff_metrics(
+    staff_id: str, fy: str, start: datetime | None = None, end: datetime | None = None
+) -> dict:
     """Compute every performance metric for a staff member in a period.
 
     All counts are DB aggregations. Returns a flat dict of metric→count. The
@@ -140,11 +163,26 @@ def staff_metrics(staff_id: str, fy: str, start: datetime | None = None, end: da
         school_visits=Count("id", filter=_visit_achieved_q()),
         schools_trained=Count("id", filter=_training_achieved_q()),
         cluster_meetings=Count("id", filter=_cluster_meeting_achieved_q()),
-        group_trainings=Count("id", filter=(_training_achieved_q() & Q(activity_type__in=("training", "school_improvement_training", "cluster_training", "core_training")))),
+        group_trainings=Count(
+            "id",
+            filter=(
+                _training_achieved_q()
+                & Q(
+                    activity_type__in=(
+                        "training",
+                        "school_improvement_training",
+                        "cluster_training",
+                        "core_training",
+                    )
+                )
+            ),
+        ),
         evidence_submitted=Count("id", filter=_evidence_accepted_q()),
         activity_codes_submitted=Count("id", filter=_activity_code_q()),
         ia_verified_activities=Count("id", filter=_ia_verified_q()),
-        partner_activities_supervised=Count("id", filter=(_achieved_q() & Q(delivery_type="partner"))),
+        partner_activities_supervised=Count(
+            "id", filter=(_achieved_q() & Q(delivery_type="partner"))
+        ),
         total_planned=Count("id"),
         total_completed=Count("id", filter=_achieved_q()),
         teachers_trained_sum=Sum("teachers_attended", filter=_training_achieved_q()),
@@ -178,7 +216,9 @@ def _count_ssa_for_staff(staff_id: str, fy: str, start: datetime, end: datetime)
     from apps.accounts.models import StaffSchoolAssignment
 
     school_ids = list(
-        StaffSchoolAssignment.objects.filter(staff_id=staff_id).values_list("school_id", flat=True)
+        StaffSchoolAssignment.objects.filter(staff_id=staff_id).values_list(
+            "school_id", flat=True
+        )
     )
     if not school_ids:
         return 0
@@ -194,7 +234,12 @@ def _count_ssa_for_staff(staff_id: str, fy: str, start: datetime, end: datetime)
     # Filter to records with exactly 8 distinct scores.
     count = 0
     for rec in confirmed.values("id"):
-        score_count = SsaScore.objects.filter(ssa_record_id=rec["id"]).values("intervention").distinct().count()
+        score_count = (
+            SsaScore.objects.filter(ssa_record_id=rec["id"])
+            .values("intervention")
+            .distinct()
+            .count()
+        )
         if score_count == 8:
             count += 1
     return count
@@ -202,7 +247,14 @@ def _count_ssa_for_staff(staff_id: str, fy: str, start: datetime, end: datetime)
 
 # ── Drilldown (exact records behind a metric) ───────────────────────────────
 
-def drilldown(staff_id: str, metric: str, fy: str, start: datetime | None = None, end: datetime | None = None) -> list[dict]:
+
+def drilldown(
+    staff_id: str,
+    metric: str,
+    fy: str,
+    start: datetime | None = None,
+    end: datetime | None = None,
+) -> list[dict]:
     """Return the exact Activity/SSA records counted by a metric — so the card
     count always equals the drilldown count."""
     from apps.activities.models import Activity
@@ -211,15 +263,26 @@ def drilldown(staff_id: str, metric: str, fy: str, start: datetime | None = None
         start, end = get_fy_date_range(fy)
 
     base = Activity.objects.filter(
-        responsible_staff_id=staff_id, deleted_at__isnull=True, fy=fy,
-        scheduled_date__gte=start, scheduled_date__lt=end,
+        responsible_staff_id=staff_id,
+        deleted_at__isnull=True,
+        fy=fy,
+        scheduled_date__gte=start,
+        scheduled_date__lt=end,
     ).select_related("school")
 
     metric_q = {
         "school_visits": _visit_achieved_q(),
         "schools_trained": _training_achieved_q(),
         "cluster_meetings": _cluster_meeting_achieved_q(),
-        "group_trainings": _training_achieved_q() & Q(activity_type__in=("training", "school_improvement_training", "cluster_training", "core_training")),
+        "group_trainings": _training_achieved_q()
+        & Q(
+            activity_type__in=(
+                "training",
+                "school_improvement_training",
+                "cluster_training",
+                "core_training",
+            )
+        ),
         "evidence_submitted": _evidence_accepted_q(),
         "activity_codes_submitted": _activity_code_q(),
         "ia_verified_activities": _ia_verified_q(),
@@ -231,43 +294,59 @@ def drilldown(staff_id: str, metric: str, fy: str, start: datetime | None = None
 
     rows = []
     for a in base.filter(metric_q):
-        rows.append({
-            "id": a.id,
-            "activityType": a.activity_type,
-            "status": a.status,
-            "schoolId": a.school.school_id if a.school_id else None,
-            "schoolName": a.school.name if a.school_id else None,
-            "scheduledDate": a.scheduled_date.isoformat() if a.scheduled_date else None,
-            "evidenceStatus": a.evidence_status,
-            "activityCode": a.salesforce_activity_id,
-            "iaVerificationStatus": a.ia_verification_status,
-        })
+        rows.append(
+            {
+                "id": a.id,
+                "activityType": a.activity_type,
+                "status": a.status,
+                "schoolId": a.school.school_id if a.school_id else None,
+                "schoolName": a.school.name if a.school_id else None,
+                "scheduledDate": a.scheduled_date.isoformat()
+                if a.scheduled_date
+                else None,
+                "evidenceStatus": a.evidence_status,
+                "activityCode": a.salesforce_activity_id,
+                "iaVerificationStatus": a.ia_verification_status,
+            }
+        )
     return rows
 
 
-def _drilldown_ssa(staff_id: str, fy: str, start: datetime, end: datetime) -> list[dict]:
+def _drilldown_ssa(
+    staff_id: str, fy: str, start: datetime, end: datetime
+) -> list[dict]:
     from apps.ssa.models import SsaRecord
     from apps.accounts.models import StaffSchoolAssignment
 
-    school_ids = list(StaffSchoolAssignment.objects.filter(staff_id=staff_id).values_list("school_id", flat=True))
+    school_ids = list(
+        StaffSchoolAssignment.objects.filter(staff_id=staff_id).values_list(
+            "school_id", flat=True
+        )
+    )
     if not school_ids:
         return []
     confirmed = SsaRecord.objects.filter(
-        school_id__in=school_ids, fy=fy, verification_status="confirmed",
-        date_of_ssa__gte=start, date_of_ssa__lt=end, deleted_at__isnull=True,
+        school_id__in=school_ids,
+        fy=fy,
+        verification_status="confirmed",
+        date_of_ssa__gte=start,
+        date_of_ssa__lt=end,
+        deleted_at__isnull=True,
     ).select_related("school")
     rows = []
     for rec in confirmed:
         score_count = rec.scores.values("intervention").distinct().count()
         if score_count == 8:
-            rows.append({
-                "id": rec.id,
-                "schoolId": rec.school.school_id,
-                "schoolName": rec.school.name,
-                "dateOfSsa": rec.date_of_ssa.isoformat(),
-                "averageScore": rec.average_score,
-                "verificationStatus": rec.verification_status,
-            })
+            rows.append(
+                {
+                    "id": rec.id,
+                    "schoolId": rec.school.school_id,
+                    "schoolName": rec.school.name,
+                    "dateOfSsa": rec.date_of_ssa.isoformat(),
+                    "averageScore": rec.average_score,
+                    "verificationStatus": rec.verification_status,
+                }
+            )
     return rows
 
 
@@ -318,7 +397,14 @@ def resolve_target(staff_id: str, fy: str, metric: str) -> int:
 
 # ── Target status logic ─────────────────────────────────────────────────────
 
-def target_status(achieved: int, target: int, period_start: datetime, period_end: datetime, now: datetime | None = None) -> str:
+
+def target_status(
+    achieved: int,
+    target: int,
+    period_start: datetime,
+    period_end: datetime,
+    now: datetime | None = None,
+) -> str:
     """Compute a status from achieved vs target + elapsed time within the period.
 
     Returns one of: completed, exceeded, on_track, behind, at_risk, no_target.
@@ -344,7 +430,14 @@ def target_status(achieved: int, target: int, period_start: datetime, period_end
     return "behind"
 
 
-def build_target_card(metric: str, achieved: int, target: int, period_start: datetime, period_end: datetime, now: datetime | None = None) -> dict:
+def build_target_card(
+    metric: str,
+    achieved: int,
+    target: int,
+    period_start: datetime,
+    period_end: datetime,
+    now: datetime | None = None,
+) -> dict:
     """Build a single target card: metric, target, achieved, remaining, pct, status."""
     status = target_status(achieved, target, period_start, period_end, now)
     pct = round((achieved / target) * 100, 1) if target > 0 else 0
@@ -360,7 +453,10 @@ def build_target_card(metric: str, achieved: int, target: int, period_start: dat
 
 # ── Staff metrics + targets combined ────────────────────────────────────────
 
-def staff_metrics_with_targets(staff_id: str, fy: str, start: datetime | None = None, end: datetime | None = None) -> dict:
+
+def staff_metrics_with_targets(
+    staff_id: str, fy: str, start: datetime | None = None, end: datetime | None = None
+) -> dict:
     """Compute metrics + resolve targets + build status cards for every metric.
     This is the single entry point for the 'My Targets' / 'Team Targets' views."""
     metrics = staff_metrics(staff_id, fy, start, end)
@@ -377,12 +473,16 @@ def staff_metrics_with_targets(staff_id: str, fy: str, start: datetime | None = 
         "total_planned": metrics.get("total_planned", 0),
         "total_completed": metrics.get("total_completed", 0),
         "completion_rate": round(
-            (metrics.get("total_completed", 0) / metrics.get("total_planned", 1)) * 100, 1
-        ) if metrics.get("total_planned") else 0,
+            (metrics.get("total_completed", 0) / metrics.get("total_planned", 1)) * 100,
+            1,
+        )
+        if metrics.get("total_planned")
+        else 0,
     }
 
 
 # ── Workload / fairness context ─────────────────────────────────────────────
+
 
 def workload_context(staff_id: str) -> dict:
     """The fairness context alongside achievement — so a CCEO with 5 schools
@@ -392,7 +492,9 @@ def workload_context(staff_id: str) -> dict:
     from apps.schools.models import School
 
     school_ids = list(
-        StaffSchoolAssignment.objects.filter(staff_id=staff_id).values_list("school_id", flat=True)
+        StaffSchoolAssignment.objects.filter(staff_id=staff_id).values_list(
+            "school_id", flat=True
+        )
     )
     schools = School.objects.filter(id__in=school_ids, deleted_at__isnull=True).values(
         "id", "school_type", "district_id"
@@ -403,19 +505,29 @@ def workload_context(staff_id: str) -> dict:
 
     # Cluster count from the schools' cluster_id.
     cluster_ids = list(
-        School.objects.filter(id__in=school_ids, deleted_at__isnull=True, cluster_id__isnull=False)
-        .values_list("cluster_id", flat=True).distinct()
+        School.objects.filter(
+            id__in=school_ids, deleted_at__isnull=True, cluster_id__isnull=False
+        )
+        .values_list("cluster_id", flat=True)
+        .distinct()
     )
 
     # Leave days in the current FY (approved leave).
     from apps.core.fy import get_operational_fy, get_fy_date_range
+
     fy = get_operational_fy()
     fy_start, fy_end = get_fy_date_range(fy)
     from django.db.models import Sum
-    leave = Leave.objects.filter(
-        staff_id=staff_id, status="approved",
-        start_date__gte=fy_start, start_date__lt=fy_end,
-    ).aggregate(total=Sum("days"))["total"] or 0
+
+    leave = (
+        Leave.objects.filter(
+            staff_id=staff_id,
+            status="approved",
+            start_date__gte=fy_start,
+            start_date__lt=fy_end,
+        ).aggregate(total=Sum("days"))["total"]
+        or 0
+    )
 
     return {
         "assignedSchoolCount": len(school_ids),

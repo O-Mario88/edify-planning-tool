@@ -8,152 +8,405 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
-        ('geography', '0001_initial'),
+        ("geography", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='UploadBatch',
+            name="UploadBatch",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('source', models.CharField(default='manual', max_length=64)),
-                ('file_name', models.CharField(blank=True, max_length=512, null=True)),
-                ('uploaded_by', models.CharField(max_length=30)),
-                ('row_count', models.IntegerField(default=0)),
-                ('accepted_count', models.IntegerField(default=0)),
-                ('flagged_count', models.IntegerField(default=0)),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("source", models.CharField(default="manual", max_length=64)),
+                ("file_name", models.CharField(blank=True, max_length=512, null=True)),
+                ("uploaded_by", models.CharField(max_length=30)),
+                ("row_count", models.IntegerField(default=0)),
+                ("accepted_count", models.IntegerField(default=0)),
+                ("flagged_count", models.IntegerField(default=0)),
             ],
             options={
-                'db_table': 'upload_batch',
-                'ordering': ['-created_at'],
+                "db_table": "upload_batch",
+                "ordering": ["-created_at"],
             },
         ),
         migrations.CreateModel(
-            name='School',
+            name="School",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('deleted_at', models.DateTimeField(blank=True, db_index=True, null=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('school_id', models.CharField(max_length=64, unique=True)),
-                ('name', models.CharField(max_length=512)),
-                ('sub_region_id', models.CharField(blank=True, max_length=30, null=True)),
-                ('county_id', models.CharField(blank=True, max_length=30, null=True)),
-                ('latitude', models.FloatField(blank=True, null=True)),
-                ('longitude', models.FloatField(blank=True, null=True)),
-                ('uploaded_region_text', models.CharField(blank=True, max_length=255, null=True)),
-                ('uploaded_district_text', models.CharField(blank=True, max_length=255, null=True)),
-                ('uploaded_sub_county_text', models.CharField(blank=True, max_length=255, null=True)),
-                ('uploaded_parish_text', models.CharField(blank=True, max_length=255, null=True)),
-                ('geography_match_status', models.CharField(blank=True, max_length=64, null=True)),
-                ('geography_match_confidence', models.FloatField(blank=True, null=True)),
-                ('geography_match_warnings', models.JSONField(blank=True, null=True)),
-                ('shipping_address', models.CharField(blank=True, max_length=512, null=True)),
-                ('school_phone', models.CharField(blank=True, max_length=64, null=True)),
-                ('primary_contact_name', models.CharField(blank=True, max_length=255, null=True)),
-                ('primary_contact_phone', models.CharField(blank=True, max_length=64, null=True)),
-                ('enrollment', models.IntegerField(blank=True, null=True)),
-                ('school_type', models.CharField(choices=[('client', 'Client'), ('core', 'Core'), ('potential_core', 'Potential Core'), ('champion', 'Champion'), ('potential_champion', 'Potential Champion'), ('other', 'Other')], default='client', max_length=32)),
-                ('account_owner_id', models.CharField(blank=True, max_length=30, null=True)),
-                ('account_owner_name_raw', models.CharField(blank=True, max_length=255, null=True)),
-                ('account_owner_status', models.CharField(choices=[('matched', 'Matched'), ('unmatched', 'Unmatched'), ('pending', 'Pending')], default='pending', max_length=32)),
-                ('duplicate_status', models.CharField(choices=[('none', 'None'), ('potential', 'Potential'), ('confirmed', 'Confirmed'), ('not_duplicate', 'Not Duplicate'), ('merged', 'Merged')], default='none', max_length=32)),
-                ('cluster_id', models.CharField(blank=True, max_length=30, null=True)),
-                ('cluster_status', models.CharField(choices=[('unclustered', 'Unclustered'), ('clustered', 'Clustered'), ('needs_review', 'Needs Review')], default='unclustered', max_length=32)),
-                ('current_fy_ssa_status', models.CharField(choices=[('not_done', 'Not Done'), ('scheduled', 'Scheduled'), ('partner_assigned', 'Partner Assigned'), ('done', 'Done')], default='not_done', max_length=32)),
-                ('planning_readiness', models.CharField(choices=[('locked', 'Locked'), ('limited', 'Limited'), ('ready', 'Ready')], default='locked', max_length=32)),
-                ('salesforce_account_id', models.CharField(blank=True, max_length=128, null=True)),
-                ('salesforce_sync_status', models.CharField(choices=[('not_synced', 'Not Synced'), ('pending', 'Pending'), ('synced', 'Synced'), ('error', 'Error')], default='not_synced', max_length=32)),
-                ('salesforce_last_synced_at', models.DateTimeField(blank=True, null=True)),
-                ('salesforce_sync_error', models.CharField(blank=True, max_length=512, null=True)),
-                ('created_by_ia', models.BooleanField(default=False)),
-                ('upload_batch_id', models.CharField(blank=True, max_length=30, null=True)),
-                ('district', models.ForeignKey(on_delete=django.db.models.deletion.RESTRICT, related_name='schools', to='geography.district')),
-                ('parish', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='schools', to='geography.parish')),
-                ('region', models.ForeignKey(on_delete=django.db.models.deletion.RESTRICT, related_name='schools', to='geography.region')),
-                ('sub_county', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='schools', to='geography.subcounty')),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "deleted_at",
+                    models.DateTimeField(blank=True, db_index=True, null=True),
+                ),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("school_id", models.CharField(max_length=64, unique=True)),
+                ("name", models.CharField(max_length=512)),
+                (
+                    "sub_region_id",
+                    models.CharField(blank=True, max_length=30, null=True),
+                ),
+                ("county_id", models.CharField(blank=True, max_length=30, null=True)),
+                ("latitude", models.FloatField(blank=True, null=True)),
+                ("longitude", models.FloatField(blank=True, null=True)),
+                (
+                    "uploaded_region_text",
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
+                (
+                    "uploaded_district_text",
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
+                (
+                    "uploaded_sub_county_text",
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
+                (
+                    "uploaded_parish_text",
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
+                (
+                    "geography_match_status",
+                    models.CharField(blank=True, max_length=64, null=True),
+                ),
+                (
+                    "geography_match_confidence",
+                    models.FloatField(blank=True, null=True),
+                ),
+                ("geography_match_warnings", models.JSONField(blank=True, null=True)),
+                (
+                    "shipping_address",
+                    models.CharField(blank=True, max_length=512, null=True),
+                ),
+                (
+                    "school_phone",
+                    models.CharField(blank=True, max_length=64, null=True),
+                ),
+                (
+                    "primary_contact_name",
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
+                (
+                    "primary_contact_phone",
+                    models.CharField(blank=True, max_length=64, null=True),
+                ),
+                ("enrollment", models.IntegerField(blank=True, null=True)),
+                (
+                    "school_type",
+                    models.CharField(
+                        choices=[
+                            ("client", "Client"),
+                            ("core", "Core"),
+                            ("potential_core", "Potential Core"),
+                            ("champion", "Champion"),
+                            ("potential_champion", "Potential Champion"),
+                            ("other", "Other"),
+                        ],
+                        default="client",
+                        max_length=32,
+                    ),
+                ),
+                (
+                    "account_owner_id",
+                    models.CharField(blank=True, max_length=30, null=True),
+                ),
+                (
+                    "account_owner_name_raw",
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
+                (
+                    "account_owner_status",
+                    models.CharField(
+                        choices=[
+                            ("matched", "Matched"),
+                            ("unmatched", "Unmatched"),
+                            ("pending", "Pending"),
+                        ],
+                        default="pending",
+                        max_length=32,
+                    ),
+                ),
+                (
+                    "duplicate_status",
+                    models.CharField(
+                        choices=[
+                            ("none", "None"),
+                            ("potential", "Potential"),
+                            ("confirmed", "Confirmed"),
+                            ("not_duplicate", "Not Duplicate"),
+                            ("merged", "Merged"),
+                        ],
+                        default="none",
+                        max_length=32,
+                    ),
+                ),
+                ("cluster_id", models.CharField(blank=True, max_length=30, null=True)),
+                (
+                    "cluster_status",
+                    models.CharField(
+                        choices=[
+                            ("unclustered", "Unclustered"),
+                            ("clustered", "Clustered"),
+                            ("needs_review", "Needs Review"),
+                        ],
+                        default="unclustered",
+                        max_length=32,
+                    ),
+                ),
+                (
+                    "current_fy_ssa_status",
+                    models.CharField(
+                        choices=[
+                            ("not_done", "Not Done"),
+                            ("scheduled", "Scheduled"),
+                            ("partner_assigned", "Partner Assigned"),
+                            ("done", "Done"),
+                        ],
+                        default="not_done",
+                        max_length=32,
+                    ),
+                ),
+                (
+                    "planning_readiness",
+                    models.CharField(
+                        choices=[
+                            ("locked", "Locked"),
+                            ("limited", "Limited"),
+                            ("ready", "Ready"),
+                        ],
+                        default="locked",
+                        max_length=32,
+                    ),
+                ),
+                (
+                    "salesforce_account_id",
+                    models.CharField(blank=True, max_length=128, null=True),
+                ),
+                (
+                    "salesforce_sync_status",
+                    models.CharField(
+                        choices=[
+                            ("not_synced", "Not Synced"),
+                            ("pending", "Pending"),
+                            ("synced", "Synced"),
+                            ("error", "Error"),
+                        ],
+                        default="not_synced",
+                        max_length=32,
+                    ),
+                ),
+                (
+                    "salesforce_last_synced_at",
+                    models.DateTimeField(blank=True, null=True),
+                ),
+                (
+                    "salesforce_sync_error",
+                    models.CharField(blank=True, max_length=512, null=True),
+                ),
+                ("created_by_ia", models.BooleanField(default=False)),
+                (
+                    "upload_batch_id",
+                    models.CharField(blank=True, max_length=30, null=True),
+                ),
+                (
+                    "district",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.RESTRICT,
+                        related_name="schools",
+                        to="geography.district",
+                    ),
+                ),
+                (
+                    "parish",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="schools",
+                        to="geography.parish",
+                    ),
+                ),
+                (
+                    "region",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.RESTRICT,
+                        related_name="schools",
+                        to="geography.region",
+                    ),
+                ),
+                (
+                    "sub_county",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="schools",
+                        to="geography.subcounty",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'school',
-                'ordering': ['-created_at'],
+                "db_table": "school",
+                "ordering": ["-created_at"],
             },
         ),
         migrations.CreateModel(
-            name='SchoolDuplicateCandidate',
+            name="SchoolDuplicateCandidate",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('score', models.IntegerField()),
-                ('reasons', django.contrib.postgres.fields.ArrayField(base_field=models.CharField(max_length=64), default=list, size=None)),
-                ('resolved', models.BooleanField(default=False)),
-                ('resolution', models.CharField(blank=True, max_length=32, null=True)),
-                ('candidate', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='duplicate_matches', to='schools.school')),
-                ('school', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='duplicate_candidates', to='schools.school')),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("score", models.IntegerField()),
+                (
+                    "reasons",
+                    django.contrib.postgres.fields.ArrayField(
+                        base_field=models.CharField(max_length=64),
+                        default=list,
+                        size=None,
+                    ),
+                ),
+                ("resolved", models.BooleanField(default=False)),
+                ("resolution", models.CharField(blank=True, max_length=32, null=True)),
+                (
+                    "candidate",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="duplicate_matches",
+                        to="schools.school",
+                    ),
+                ),
+                (
+                    "school",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="duplicate_candidates",
+                        to="schools.school",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'school_duplicate_candidate',
+                "db_table": "school_duplicate_candidate",
             },
         ),
         migrations.CreateModel(
-            name='SchoolEnrollmentHistory',
+            name="SchoolEnrollmentHistory",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('fy', models.CharField(max_length=16)),
-                ('enrollment', models.IntegerField()),
-                ('recorded_at', models.DateTimeField()),
-                ('school', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='enrollment_history', to='schools.school')),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("fy", models.CharField(max_length=16)),
+                ("enrollment", models.IntegerField()),
+                ("recorded_at", models.DateTimeField()),
+                (
+                    "school",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="enrollment_history",
+                        to="schools.school",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'school_enrollment_history',
+                "db_table": "school_enrollment_history",
             },
         ),
         migrations.CreateModel(
-            name='SchoolAccountOwnerUploadMap',
+            name="SchoolAccountOwnerUploadMap",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('school_id_raw', models.CharField(max_length=128)),
-                ('owner_name_raw', models.CharField(max_length=255)),
-                ('matched_staff_id', models.CharField(blank=True, max_length=30, null=True)),
-                ('matched', models.BooleanField(default=False)),
-                ('upload_batch', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='owner_maps', to='schools.uploadbatch')),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("school_id_raw", models.CharField(max_length=128)),
+                ("owner_name_raw", models.CharField(max_length=255)),
+                (
+                    "matched_staff_id",
+                    models.CharField(blank=True, max_length=30, null=True),
+                ),
+                ("matched", models.BooleanField(default=False)),
+                (
+                    "upload_batch",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="owner_maps",
+                        to="schools.uploadbatch",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'school_account_owner_upload_map',
+                "db_table": "school_account_owner_upload_map",
             },
         ),
         migrations.AddIndex(
-            model_name='school',
-            index=models.Index(fields=['region'], name='school_region__236ce4_idx'),
+            model_name="school",
+            index=models.Index(fields=["region"], name="school_region__236ce4_idx"),
         ),
         migrations.AddIndex(
-            model_name='school',
-            index=models.Index(fields=['district'], name='school_distric_656d13_idx'),
+            model_name="school",
+            index=models.Index(fields=["district"], name="school_distric_656d13_idx"),
         ),
         migrations.AddIndex(
-            model_name='school',
-            index=models.Index(fields=['cluster_id'], name='school_cluster_edaa4b_idx'),
+            model_name="school",
+            index=models.Index(fields=["cluster_id"], name="school_cluster_edaa4b_idx"),
         ),
         migrations.AddIndex(
-            model_name='school',
-            index=models.Index(fields=['school_type'], name='school_school__12f8fd_idx'),
+            model_name="school",
+            index=models.Index(
+                fields=["school_type"], name="school_school__12f8fd_idx"
+            ),
         ),
         migrations.AddConstraint(
-            model_name='schoolduplicatecandidate',
-            constraint=models.UniqueConstraint(fields=('school', 'candidate'), name='uniq_dup_school_candidate'),
+            model_name="schoolduplicatecandidate",
+            constraint=models.UniqueConstraint(
+                fields=("school", "candidate"), name="uniq_dup_school_candidate"
+            ),
         ),
         migrations.AddConstraint(
-            model_name='schoolenrollmenthistory',
-            constraint=models.UniqueConstraint(fields=('school', 'fy'), name='uniq_enrollment_school_fy'),
+            model_name="schoolenrollmenthistory",
+            constraint=models.UniqueConstraint(
+                fields=("school", "fy"), name="uniq_enrollment_school_fy"
+            ),
         ),
     ]

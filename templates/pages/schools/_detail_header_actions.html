@@ -1,0 +1,21 @@
+{% comment %}School 360 — page_header actions slot: readiness badge + Edit Details drawer trigger.{% endcomment %}
+{% with label="Readiness: "|add:school.get_planning_readiness_display %}
+{% if school.planning_readiness == 'ready' %}
+{% include "components/badge.html" with tone="success" label=label size="md" %}
+{% elif school.planning_readiness == 'limited' %}
+{% include "components/badge.html" with tone="warning" label=label size="md" %}
+{% else %}
+{% include "components/badge.html" with tone="neutral" label=label size="md" %}
+{% endif %}
+{% endwith %}
+<button
+hx-get="/schools/{{ school.id }}/edit-drawer"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+class="btn btn-primary h-9"
+>
+<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+</svg>
+<span>Edit Details</span>
+</button>

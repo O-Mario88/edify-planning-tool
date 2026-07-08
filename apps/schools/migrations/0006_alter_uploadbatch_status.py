@@ -4,15 +4,26 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('schools', '0005_alter_school_account_owner_status'),
+        ("schools", "0005_alter_school_account_owner_status"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='uploadbatch',
-            name='status',
-            field=models.CharField(choices=[('completed', 'Completed'), ('completed_with_errors', 'Completed with errors'), ('failed', 'Failed'), ('uploaded', 'Uploaded'), ('validated', 'Validated'), ('imported', 'Imported'), ('rejected', 'Rejected')], default='completed', max_length=32),
+            model_name="uploadbatch",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("completed", "Completed"),
+                    ("completed_with_errors", "Completed with errors"),
+                    ("failed", "Failed"),
+                    ("uploaded", "Uploaded"),
+                    ("validated", "Validated"),
+                    ("imported", "Imported"),
+                    ("rejected", "Rejected"),
+                ],
+                default="completed",
+                max_length=32,
+            ),
         ),
     ]

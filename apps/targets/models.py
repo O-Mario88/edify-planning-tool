@@ -1,4 +1,5 @@
 """Targets models — CD/IA annual commitments."""
+
 from __future__ import annotations
 
 from django.db import models
@@ -47,7 +48,9 @@ class TargetSetting(TimeStampedModel):
     scope_type = models.CharField(max_length=16, choices=TargetScopeType.choices)
     scope_id = models.CharField(max_length=30, null=True, blank=True)
     target_value = models.FloatField(null=True, blank=True)
-    target_unit = models.CharField(max_length=16, choices=TargetUnit.choices, default=TargetUnit.PERCENTAGE)
+    target_unit = models.CharField(
+        max_length=16, choices=TargetUnit.choices, default=TargetUnit.PERCENTAGE
+    )
     target_percentage = models.FloatField(null=True, blank=True)
     quarter_distribution = models.JSONField(null=True, blank=True)
     set_by_user_id = models.CharField(max_length=30)

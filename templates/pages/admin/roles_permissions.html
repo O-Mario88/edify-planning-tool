@@ -4,33 +4,14 @@
 {% block title %}Roles & Permissions — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6 font-sans">
+<div class="p-6 max-w-7xl mx-auto space-y-5 font-sans">
 
-<!-- Header -->
-<div class="flex items-center justify-between border-b border-slate-200 pb-4">
-<div>
-<h1 class="text-[20px] font-semibold text-slate-800 tracking-tight">Roles & Permissions Matrix</h1>
-<p class="text-[12px] text-slate-400 font-semibold mt-0.5">Define operational boundaries, read/write locks, and pipeline approvals per role group</p>
-</div>
+{% include "components/page_header.html" with title="Roles & Permissions Matrix" subtitle="Live view of the RBAC matrix the backend enforces on every request." %}
 
-<div class="flex gap-2">
-<button 
-onclick="alert('Default permissions restored successfully!')"
-class="px-3 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 hover:text-slate-800 text-[11px] font-semibold uppercase tracking-wider rounded-lg transition-all focus:outline-none"
->
-Restore Defaults
-</button>
-<button 
-onclick="alert('Role permissions saved successfully!')"
-class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold uppercase tracking-wider rounded-lg shadow-sm transition-all focus:outline-none"
->
-Save System Changes
-</button>
-</div>
-</div>
+{% include "components/role_scope_notice.html" with scope_text="This matrix is read-only — it mirrors apps.core.rbac.ROLE_PERMISSIONS, the single source of truth enforcement uses. To change access, update the RBAC matrix in code." %}
 
 <!-- Matrix Card Table -->
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+<div class="card p-0 overflow-hidden">
 <div class="overflow-x-auto">
 <table class="w-full text-[12px] border-collapse">
 <thead>
@@ -47,7 +28,7 @@ Save System Changes
 {% for group, role_map in matrix.items %}
 <tr class="hover:bg-slate-50/50 transition-colors">
 <td class="px-5 py-3.5 font-semibold text-slate-800 border-r border-slate-50">
-{{ group }}
+{{ group|replace_underscore }}
 </td>
 {% for role in roles %}
 <td class="px-3 py-3.5 text-center">
@@ -71,7 +52,9 @@ Save System Changes
 </tr>
 {% empty %}
 <tr>
-<td colspan="{{ roles|length|add:1 }}" class="px-5 py-6 text-center text-slate-400 font-bold">No permission groups defined in matrix.</td>
+<td colspan="{{ roles|length|add:1 }}" class="p-0">
+{% include "components/empty_state.html" with title="No permission groups defined" message="The RBAC matrix has no entries." %}
+</td>
 </tr>
 {% endfor %}
 </tbody>

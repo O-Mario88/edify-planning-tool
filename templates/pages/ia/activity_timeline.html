@@ -3,20 +3,20 @@
 {% block title %}Activity Timeline - Edify Command Center{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-3xl mx-auto space-y-6">
+<div class="p-6 max-w-3xl mx-auto space-y-5 font-sans">
 <!-- Header -->
 <div class="flex items-center gap-3">
 <a href="javascript:history.back()" class="h-9 w-9 rounded-xl hover:bg-slate-100 text-slate-500 flex items-center justify-center transition-colors border border-slate-200 bg-white shadow-sm">
 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
 </a>
 <div>
-<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight leading-none">Activity Execution Timeline</h1>
+<h1 class="text-[22px] font-semibold text-slate-800 tracking-tight leading-none">Activity Execution Timeline</h1>
 <p class="text-[12px] text-slate-500 mt-1.5 font-semibold">Complete lifecycle audit trail for Activity #{{ act.id|slice:":8" }} &bull; ({{ act.get_activity_type_display }}).</p>
 </div>
 </div>
 
 <!-- Stepper Card -->
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm p-8 relative">
+<div class="card p-8 relative">
 
 <!-- Left connecting vertical bar -->
 <div class="absolute left-[39px] top-12 bottom-12 w-0.5 bg-slate-100"></div>

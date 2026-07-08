@@ -3,24 +3,15 @@
 {% block title %}Blocked Closures - Edify Command Center{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6">
+<div class="p-6 max-w-7xl mx-auto space-y-5 font-sans">
 
-<!-- Premium Header Pane -->
-<div class="relative overflow-hidden rounded-xl bg-slate-900 text-white p-8 shadow-md border border-slate-800">
-<div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-rose-500/10 blur-3xl pointer-events-none"></div>
-<div class="relative z-10 space-y-2">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-500 text-[11px] font-semibold uppercase tracking-widest">
-Blocker Dashboard
-</div>
-<h1 class="text-[32px] font-semibold tracking-tight text-white leading-none">Blocked Closures Directory</h1>
-<p class="text-[14px] text-slate-400 font-medium max-w-xl">
-Review activities that are stuck and cannot close because of missing quality or accountability checks.
-</p>
-</div>
-</div>
+{% include "components/page_header.html" with title="Blocked Closures Directory" subtitle="Activities that cannot close yet because of missing quality or accountability checks." %}
+
+<!-- KPI Strip -->
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
 
 <!-- Table Card -->
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+<div class="card p-0 overflow-hidden">
 <div class="overflow-x-auto">
 <table class="w-full text-[12px] font-semibold text-slate-700">
 <thead class="bg-slate-50 border-b border-slate-100 text-[11px] uppercase font-bold text-slate-400">
@@ -45,9 +36,7 @@ Review activities that are stuck and cannot close because of missing quality or 
 </td>
 <!-- Reason -->
 <td class="px-6 py-4">
-<span class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-semibold uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-150">
-{{ item.blocking_reason }}
-</span>
+{% include "components/badge.html" with tone="danger" label=item.blocking_reason %}
 </td>
 <!-- Role -->
 <td class="px-6 py-4 font-semibold text-slate-800">
@@ -59,7 +48,7 @@ Review activities that are stuck and cannot close because of missing quality or 
 </td>
 <!-- Days Blocked -->
 <td class="px-6 py-4 text-center text-slate-500 font-medium">
-3 days <!-- mock duration from creation -->
+{{ item.activity.updated_at|timesince }}
 </td>
 <!-- Next Action -->
 <td class="px-6 py-4 text-slate-500 font-medium leading-relaxed">
@@ -83,13 +72,8 @@ Resolve Blocker
 {% endfor %}
 {% else %}
 <tr>
-<td colspan="7" class="px-6 py-16 text-center text-[14px] font-semibold text-slate-400 bg-slate-50/20">
-<div class="flex flex-col items-center justify-center gap-3">
-<div class="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 shadow-inner">
-<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" /></svg>
-</div>
-<p class="text-slate-400">Perfect compliance! No activities blocked for closure.</p>
-</div>
+<td colspan="7" class="p-0">
+{% include "components/empty_state.html" with title="Perfect compliance" message="No activities are blocked for closure." tone="success" %}
 </td>
 </tr>
 {% endif %}

@@ -4,58 +4,17 @@
 {% block title %}Manage User: {{ member.name }} — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-4xl mx-auto space-y-6 font-sans text-slate-700 bg-[#f8fafc] min-h-screen">
+<div class="p-6 max-w-4xl mx-auto space-y-5 font-sans">
 
-<!-- Breadcrumbs & Header -->
-<div class="flex items-center justify-between border-b border-slate-200 pb-4">
-<div>
-<div class="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-<a href="{% url 'frontend:admin_users' %}" class="hover:text-slate-600 transition-colors">User Management</a>
-<span>&bull;</span>
-<span class="text-slate-500">Edit Profile</span>
-</div>
-<h1 class="text-[24px] font-semibold text-slate-900 tracking-tight mt-1">{{ member.name }}</h1>
-<p class="text-[12px] text-slate-500 mt-1 font-semibold">Configure roles, credentials, and account lifecycle status.</p>
-</div>
-
-<div class="flex gap-2">
-<!-- Status Badge -->
-{% if member.is_active %}
-<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold uppercase bg-emerald-50 text-emerald-700 border border-emerald-100 shadow-sm">
-<span class="h-2 w-2 rounded-full bg-emerald-500"></span>
-Active
-</span>
-{% else %}
-<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-semibold uppercase bg-slate-100 text-slate-500 border border-slate-200 shadow-sm">
-<span class="h-2 w-2 rounded-full bg-slate-400"></span>
-Inactive ({{ member.status|capfirst }})
-</span>
-{% endif %}
-</div>
-</div>
-
-<!-- Messages / Django Alerts -->
-{% if messages %}
-<div class="space-y-2">
-{% for msg in messages %}
-<div class="p-3.5 rounded-xl border font-semibold text-[12px] flex items-center justify-between shadow-sm
-{% if msg.tags == 'success' %}bg-emerald-50 text-emerald-700 border-emerald-200
-{% elif msg.tags == 'warning' %}bg-amber-50 text-amber-700 border-amber-200
-{% else %}bg-rose-50 text-rose-700 border-rose-200{% endif %}"
->
-<span>{{ msg }}</span>
-</div>
-{% endfor %}
-</div>
-{% endif %}
+{% include "components/page_header.html" with title=member.name subtitle="Configure roles, credentials, and account lifecycle status." breadcrumb="User Management" actions_template="pages/admin/_user_detail_header_actions.html" %}
 
 <!-- Auto-created User Warning Banner -->
 {% if "pending." in member.email and "@edify.org" in member.email %}
 <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3 shadow-sm">
-<div class="text-[20px] text-amber-500 leading-none mt-0.5">⚠️</div>
+<svg class="h-5 w-5 text-amber-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
 <div class="space-y-1">
 <h4 class="text-[12px] font-semibold text-amber-800 uppercase tracking-wider">Action Required: Placeholder Email Profile</h4>
-<p class="text-[12px] text-amber-700 font-semibold leading-relaxed">
+<p class="text-[12px] text-amber-700 font-medium leading-relaxed">
 This user profile was automatically created during a school upload. The email address is currently a placeholder.
 You must edit it to their valid operational email address before sending the invitation.
 </p>
@@ -63,14 +22,14 @@ You must edit it to their valid operational email address before sending the inv
 </div>
 {% endif %}
 
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-5">
 
 <!-- Left 2 Columns: Edit Details & Roles -->
-<div class="md:col-span-2 space-y-6">
+<div class="md:col-span-2 space-y-5">
 
 <!-- General Settings Form -->
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm p-6 space-y-4">
-<h3 class="text-[14px] font-semibold text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-2">Profile Details</h3>
+<div class="card p-5 space-y-4">
+<h3 class="text-[14px] font-semibold text-slate-800 border-b border-slate-100 pb-2">Profile Details</h3>
 
 <form method="POST" action="{% url 'frontend:admin_user_detail' member.id %}" class="space-y-4 font-semibold text-[12px]">
 {% csrf_token %}
@@ -78,46 +37,46 @@ You must edit it to their valid operational email address before sending the inv
 
 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 <div>
-<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1.5">Full Name</label>
-<input 
-type="text" 
-name="name" 
-value="{{ member.name }}" 
+<label class="block text-[11px] uppercase font-semibold text-slate-400 mb-1.5">Full Name</label>
+<input
+type="text"
+name="name"
+value="{{ member.name }}"
 required
-class="w-full h-9 px-3 rounded-lg border border-slate-200 focus:outline-none focus:border-blue-500 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-blue-500/10 transition-all"
+class="w-full h-9 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[var(--color-edify-primary)] bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-[var(--color-edify-primary)]/10 transition-all"
 >
 </div>
 
 <div>
-<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1.5">Email Address</label>
-<input 
-type="email" 
-name="email" 
-value="{{ member.email }}" 
+<label class="block text-[11px] uppercase font-semibold text-slate-400 mb-1.5">Email Address</label>
+<input
+type="email"
+name="email"
+value="{{ member.email }}"
 required
-class="w-full h-9 px-3 rounded-lg border border-slate-200 focus:outline-none focus:border-blue-500 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-blue-500/10 transition-all"
+class="w-full h-9 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[var(--color-edify-primary)] bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-[var(--color-edify-primary)]/10 transition-all"
 >
 </div>
 </div>
 
 <div>
-<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1.5">Phone Number</label>
-<input 
-type="text" 
-name="phone" 
-value="{{ member.phone|default:'' }}" 
+<label class="block text-[11px] uppercase font-semibold text-slate-400 mb-1.5">Phone Number</label>
+<input
+type="text"
+name="phone"
+value="{{ member.phone|default:'' }}"
 placeholder="+256..."
-class="w-full h-9 px-3 rounded-lg border border-slate-200 focus:outline-none focus:border-blue-500 bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-blue-500/10 transition-all"
+class="w-full h-9 px-3 rounded-xl border border-slate-200 focus:outline-none focus:border-[var(--color-edify-primary)] bg-slate-50/50 focus:bg-white focus:ring-2 focus:ring-[var(--color-edify-primary)]/10 transition-all"
 >
 </div>
 
 <!-- Role Assignment -->
 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
 <div>
-<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1.5">Primary Active Role</label>
-<select 
-name="role" 
-class="w-full h-9 px-2.5 rounded-lg border border-slate-200 focus:outline-none focus:border-blue-500 bg-slate-50/50 focus:bg-white transition-all cursor-pointer"
+<label class="block text-[11px] uppercase font-semibold text-slate-400 mb-1.5">Primary Active Role</label>
+<select
+name="role"
+class="w-full h-9 px-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-[var(--color-edify-primary)] bg-slate-50/50 focus:bg-white transition-all cursor-pointer"
 >
 {% for r in available_roles %}
 <option value="{{ r }}" {% if member.active_role == r %}selected{% endif %}>{{ r }}</option>
@@ -126,13 +85,13 @@ class="w-full h-9 px-2.5 rounded-lg border border-slate-200 focus:outline-none f
 </div>
 
 <div>
-<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1.5">Additional/Secondary Roles</label>
-<div class="bg-slate-50/50 border border-slate-100 rounded-lg p-3 space-y-2 max-h-48 overflow-y-auto">
+<label class="block text-[11px] uppercase font-semibold text-slate-400 mb-1.5">Additional/Secondary Roles</label>
+<div class="bg-slate-50/50 border border-slate-100 rounded-xl p-3 space-y-2 max-h-48 overflow-y-auto">
 {% for r in available_roles %}
 <label class="flex items-center gap-2 cursor-pointer select-none">
-<input 
-type="checkbox" 
-name="additional_roles" 
+<input
+type="checkbox"
+name="additional_roles"
 value="{{ r }}"
 {% if r in member.roles and r != member.active_role %}checked{% endif %}
 class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
@@ -145,9 +104,9 @@ class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
 </div>
 
 <div class="pt-4 border-t border-slate-100 flex justify-end">
-<button 
-type="submit" 
-class="h-9 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wider shadow-sm transition-all focus:outline-none"
+<button
+type="submit"
+class="h-9 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[11px] font-semibold uppercase tracking-wider shadow-sm transition-all focus:outline-none"
 >
 Save Profile Updates
 </button>
@@ -158,11 +117,11 @@ Save Profile Updates
 </div>
 
 <!-- Right Column: Quick Status & Account Actions -->
-<div class="md:col-span-1 space-y-6">
+<div class="md:col-span-1 space-y-5">
 
 <!-- Lifecycle Status Card -->
-<div class="bg-white rounded-xl border border-slate-100 p-5 shadow-sm space-y-4">
-<h3 class="text-[12px] font-semibold text-slate-800 uppercase tracking-wider border-b border-slate-100 pb-2">Account Lifecycle</h3>
+<div class="card p-5 space-y-4">
+<h3 class="text-[14px] font-semibold text-slate-800 border-b border-slate-100 pb-2">Account Lifecycle</h3>
 
 <div class="space-y-3 font-semibold text-[12px] text-slate-600">
 <div class="flex justify-between">
@@ -173,9 +132,9 @@ Save Profile Updates
 <span class="text-slate-400">Primary Role:</span>
 <span class="text-slate-800 font-semibold">{{ member.active_role }}</span>
 </div>
-<div class="flex justify-between">
-<span class="text-slate-400">Member ID:</span>
-<span class="text-slate-800 font-bold truncate max-w-[120px]">{{ member.id }}</span>
+<div class="flex justify-between gap-3">
+<span class="text-slate-400 shrink-0">Member ID:</span>
+<span class="text-slate-800 font-semibold truncate">{{ member.id }}</span>
 </div>
 </div>
 
@@ -186,9 +145,9 @@ Save Profile Updates
 <form method="POST" action="{% url 'frontend:admin_user_detail' member.id %}">
 {% csrf_token %}
 <input type="hidden" name="action" value="invite">
-<button 
+<button
 type="submit"
-class="w-full h-9 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold uppercase tracking-wider rounded-lg shadow-sm transition-all focus:outline-none"
+class="w-full h-9 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold uppercase tracking-wider rounded-xl shadow-sm transition-all focus:outline-none"
 >
 Send Invitation Link
 </button>
@@ -200,9 +159,9 @@ Send Invitation Link
 <form method="POST" action="{% url 'frontend:admin_user_detail' member.id %}">
 {% csrf_token %}
 <input type="hidden" name="action" value="deactivate">
-<button 
+<button
 type="submit"
-class="w-full h-9 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-[11px] font-semibold uppercase tracking-wider rounded-lg shadow-sm transition-all focus:outline-none"
+class="w-full h-9 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-[11px] font-semibold uppercase tracking-wider rounded-xl shadow-sm transition-all focus:outline-none"
 >
 Deactivate User Account
 </button>
@@ -211,9 +170,9 @@ Deactivate User Account
 <form method="POST" action="{% url 'frontend:admin_user_detail' member.id %}">
 {% csrf_token %}
 <input type="hidden" name="action" value="activate">
-<button 
+<button
 type="submit"
-class="w-full h-9 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold uppercase tracking-wider rounded-lg shadow-sm transition-all focus:outline-none"
+class="w-full h-9 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold uppercase tracking-wider rounded-xl shadow-sm transition-all focus:outline-none"
 >
 Activate User Account
 </button>
@@ -224,22 +183,22 @@ Activate User Account
 </div>
 
 <!-- Critical Danger Zone -->
-<div class="bg-red-50/40 border border-red-100 rounded-xl p-5 shadow-sm space-y-4">
-<h3 class="text-[12px] font-semibold text-rose-800 uppercase tracking-wider border-b border-red-200/50 pb-2">Danger Zone</h3>
+<div class="rounded-xl border border-rose-100 bg-rose-50/40 p-5 shadow-sm space-y-4">
+<h3 class="text-[12px] font-semibold text-rose-800 uppercase tracking-wider border-b border-rose-200/50 pb-2">Danger Zone</h3>
 <p class="text-[11px] text-rose-700 font-semibold leading-relaxed">
 Soft-deleting this user removes their access privileges and marks their profile as deleted. This will retain history logs.
 </p>
 
-<form 
-method="POST" 
-action="{% url 'frontend:admin_user_detail' member.id %}" 
+<form
+method="POST"
+action="{% url 'frontend:admin_user_detail' member.id %}"
 onsubmit="return confirm('Are you sure you want to delete this user profile? This marks their account as deleted.');"
 >
 {% csrf_token %}
 <input type="hidden" name="action" value="delete">
-<button 
+<button
 type="submit"
-class="w-full h-9 bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-semibold uppercase tracking-wider rounded-lg shadow-sm transition-all focus:outline-none"
+class="w-full h-9 bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-semibold uppercase tracking-wider rounded-xl shadow-sm transition-all focus:outline-none"
 >
 Delete User Profile
 </button>

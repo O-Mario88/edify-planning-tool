@@ -3,16 +3,123 @@
 {% block title %}Debrief — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6">
+<div class="p-6 max-w-5xl mx-auto space-y-5 font-sans">
 
 <div class="flex items-center justify-between">
-<div>
-<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight">Debrief</h1>
-<p class="text-[12px] text-[var(--text-secondary)] mt-1 font-semibold">Edify Operations · Debrief</p>
-</div>
+<a href="/debriefs" class="inline-flex items-center gap-1.5 text-[12px] font-bold text-slate-500 hover:text-slate-800 transition-colors">&larr; Back to Debriefs</a>
+{% if debrief.status == "reviewed" %}
+{% include "components/badge.html" with tone="success" label=debrief.get_status_display size="md" %}
+{% elif debrief.status == "returned" %}
+{% include "components/badge.html" with tone="danger" label=debrief.get_status_display size="md" %}
+{% else %}
+{% include "components/badge.html" with tone="warning" label=debrief.get_status_display size="md" %}
+{% endif %}
 </div>
 
-<div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm"><h2 class="text-[18px] font-semibold text-slate-800">{{ debrief.title|default:"Debrief" }}</h2><p class="text-[12px] text-slate-500 mt-2">{{ debrief.body|default:"No content" }}</p><p class="text-[11px] text-slate-400 mt-3">Status: {{ debrief.status }} · Created: {{ debrief.created_at }}</p></div>
+{% include "components/page_header.html" with title=debrief.get_debrief_type_display|add:" Debrief" subtitle=submitted_by_name %}
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+<div class="lg:col-span-2 space-y-5">
+<section class="card p-5 space-y-3">
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight pb-2 border-b border-slate-100">Summary</h3>
+<p class="text-[12px] text-slate-600 leading-relaxed">{{ debrief.summary|default:"No summary recorded." }}</p>
+</section>
+
+<section class="card p-5 space-y-3">
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight pb-2 border-b border-slate-100">What Happened</h3>
+<p class="text-[12px] text-slate-600 leading-relaxed">{{ debrief.what_happened|default:"Not provided." }}</p>
+</section>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+<section class="card p-5 space-y-3">
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight pb-2 border-b border-slate-100">What Went Well</h3>
+<p class="text-[12px] text-slate-600 leading-relaxed">{{ debrief.what_went_well|default:"Not provided." }}</p>
+</section>
+<section class="card p-5 space-y-3">
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight pb-2 border-b border-slate-100">What Didn't Go Well</h3>
+<p class="text-[12px] text-slate-600 leading-relaxed">{{ debrief.what_did_not_go_well|default:"Not provided." }}</p>
+</section>
+</div>
+
+<section class="card p-5 space-y-3">
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight pb-2 border-b border-slate-100">Blockers</h3>
+{% if debrief.blockers %}
+<div class="flex flex-wrap gap-1.5">
+{% for b in debrief.blockers %}
+{% include "components/badge.html" with tone="danger" label=b %}
+{% endfor %}
+</div>
+{% endif %}
+{% if debrief.blocker_other %}
+<p class="text-[12px] text-slate-600 leading-relaxed mt-2">{{ debrief.blocker_other }}</p>
+{% endif %}
+{% if not debrief.blockers and not debrief.blocker_other %}
+<p class="text-[12px] text-slate-400 font-semibold">No blockers reported.</p>
+{% endif %}
+</section>
+
+<section class="card p-5 space-y-3">
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight pb-2 border-b border-slate-100">Support Needed &amp; Recommendations</h3>
+<p class="text-[12px] text-slate-600 leading-relaxed"><span class="font-semibold text-slate-500">Support needed:</span> {{ debrief.support_needed|default:"None." }}</p>
+<p class="text-[12px] text-slate-600 leading-relaxed"><span class="font-semibold text-slate-500">Recommendations:</span> {{ debrief.recommendations|default:"None." }}</p>
+{% if debrief.next_action %}
+<p class="text-[12px] text-slate-600 leading-relaxed"><span class="font-semibold text-slate-500">Next action:</span> {{ debrief.next_action }}</p>
+{% endif %}
+</section>
+</div>
+
+<div class="space-y-5">
+<section class="card p-5 space-y-3">
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight pb-2 border-b border-slate-100">Details</h3>
+<div class="space-y-2.5 text-[12px] font-semibold text-slate-700">
+<p class="flex justify-between"><span class="text-slate-400">Date</span><span>{{ debrief.date|date:"M d, Y" }}</span></p>
+<p class="flex justify-between"><span class="text-slate-400">FY</span><span>{{ debrief.fy }}</span></p>
+<p class="flex justify-between"><span class="text-slate-400">Submitted by</span><span>{{ submitted_by_name }}</span></p>
+<p class="flex justify-between"><span class="text-slate-400">Role</span><span>{{ debrief.submitted_by_role }}</span></p>
+<p class="flex justify-between"><span class="text-slate-400">Submitted at</span><span>{{ debrief.submitted_at|date:"M d, Y H:i" }}</span></p>
+{% if debrief.reviewed_by_name %}
+<p class="flex justify-between"><span class="text-slate-400">Reviewed by</span><span>{{ reviewed_by_name }}</span></p>
+{% endif %}
+</div>
+</section>
+
+{% if linked_schools %}
+<section class="card p-5 space-y-3">
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight pb-2 border-b border-slate-100">Linked Schools</h3>
+<div class="flex flex-wrap gap-1.5">
+{% for s in linked_schools %}
+{% include "components/badge.html" with tone="info" label=s %}
+{% endfor %}
+</div>
+</section>
+{% endif %}
+
+{% if recipients %}
+<section class="card p-5 space-y-3">
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight pb-2 border-b border-slate-100">Routed To</h3>
+<div class="space-y-2">
+{% for r in recipients %}
+<div class="flex items-center justify-between text-[12px] font-semibold">
+<span class="text-slate-700">{{ r.recipient_role }}</span>
+{% if r.read_at %}
+{% include "components/badge.html" with tone="success" label="Read" %}
+{% else %}
+{% include "components/badge.html" with tone="neutral" label="Unread" %}
+{% endif %}
+</div>
+{% endfor %}
+</div>
+</section>
+{% endif %}
+
+{% if debrief.review_note %}
+<section class="card p-5 space-y-3">
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight pb-2 border-b border-slate-100">Review Note</h3>
+<p class="text-[12px] text-slate-600 leading-relaxed">{{ debrief.review_note }}</p>
+</section>
+{% endif %}
+</div>
+</div>
 
 </div>
 {% endblock %}

@@ -5,6 +5,7 @@ from apps.geography.models import Region, District, SubCounty
 from apps.schools.models import School
 from apps.clusters.models import Cluster
 
+
 class FrontendViewsTestCase(TestCase):
     def setUp(self):
         User = get_user_model()
@@ -15,22 +16,22 @@ class FrontendViewsTestCase(TestCase):
             name="CCEO User",
             roles=["CCEO"],
             active_role="CCEO",
-            is_active=True
+            is_active=True,
         )
         self.cceo_user.set_password("pass123")
         self.cceo_user.save()
 
         # Create StaffProfile for CCEO
         self.cceo_profile = StaffProfile.objects.create(
-            id="staff-cceo-1",
-            user=self.cceo_user,
-            title="CCEO"
+            id="staff-cceo-1", user=self.cceo_user, title="CCEO"
         )
 
         # Create basic geography
         self.region = Region.objects.create(name="Central Region")
         self.district = District.objects.create(name="Kampola", region=self.region)
-        self.sub_county = SubCounty.objects.create(name="Central Subcounty", district=self.district)
+        self.sub_county = SubCounty.objects.create(
+            name="Central Subcounty", district=self.district
+        )
 
         # Create a school
         self.school = School.objects.create(
@@ -41,13 +42,12 @@ class FrontendViewsTestCase(TestCase):
             sub_county=self.sub_county,
             school_type="client",
             current_fy_ssa_status="not_done",
-            planning_readiness="locked"
+            planning_readiness="locked",
         )
 
         # Assign CCEO to the school so it is in scope
         StaffSchoolAssignment.objects.create(
-            staff=self.cceo_profile,
-            school_id=self.school.id
+            staff=self.cceo_profile, school_id=self.school.id
         )
 
         # Create a cluster
@@ -56,7 +56,7 @@ class FrontendViewsTestCase(TestCase):
             region=self.region,
             district=self.district,
             sub_county=self.sub_county,
-            status="active"
+            status="active",
         )
 
     def test_anonymous_redirect_to_login(self):
@@ -79,7 +79,7 @@ class FrontendViewsTestCase(TestCase):
             name="CD User",
             roles=["CountryDirector"],
             active_role="CountryDirector",
-            is_active=True
+            is_active=True,
         )
         cd_user.save()
         self.client.force_login(cd_user)
@@ -95,7 +95,7 @@ class FrontendViewsTestCase(TestCase):
             name="Special Projects User",
             roles=["ProjectCoordinator"],
             active_role="ProjectCoordinator",
-            is_active=True
+            is_active=True,
         )
         sp_user.save()
         self.client.force_login(sp_user)
@@ -165,16 +165,21 @@ class FrontendViewsTestCase(TestCase):
 
     def test_school_directory_view_model_mapping(self):
         from apps.frontend.view_models import SchoolDirectoryViewModel
-        
+
         # Test mapping unclustered school
         clusters_dict = {self.cluster.id: self.cluster.name}
-        vm = SchoolDirectoryViewModel.from_school(self.school, self.cceo_user, clusters_dict, active_projects_exist=True)
+        vm = SchoolDirectoryViewModel.from_school(
+            self.school, self.cceo_user, clusters_dict, active_projects_exist=True
+        )
         self.assertEqual(vm["school_name"], "Kampola High School")
         self.assertFalse(vm["is_clustered"])
         self.assertIn("add_to_cluster", vm["available_actions"])
         # CCEO lacks project manage permission
         self.assertNotIn("assign_to_project", vm["available_actions"])
-        self.assertEqual(vm["disabled_reasons"]["assign_to_project"], "You do not have permission to assign projects.")
+        self.assertEqual(
+            vm["disabled_reasons"]["assign_to_project"],
+            "You do not have permission to assign projects.",
+        )
 
     def test_add_to_cluster_drawer_get(self):
         self.client.force_login(self.cceo_user)
@@ -187,7 +192,7 @@ class FrontendViewsTestCase(TestCase):
         # Post assignment to existing cluster
         response = self.client.post(
             f"/schools/{self.school.id}/add-to-cluster",
-            {"cluster_action_type": "existing", "existing_cluster_id": self.cluster.id}
+            {"cluster_action_type": "existing", "existing_cluster_id": self.cluster.id},
         )
         self.assertEqual(response.status_code, 200)
         self.school.refresh_from_db()
@@ -209,23 +214,26 @@ class FrontendViewsTestCase(TestCase):
             name="Admin User",
             roles=["Admin"],
             active_role="Admin",
-            is_active=True
+            is_active=True,
         )
         self.client.force_login(admin_user)
-        
+
         # Create a project
         from apps.projects.models import Project
+
         project = Project.objects.create(
             name="Edify Tech Upgrade 2026",
             code="ETU26",
-            category="intervention_specific"
+            category="intervention_specific",
         )
-        
+
         # GET drawer
         response = self.client.get(f"/schools/{self.school.id}/assign-to-project")
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "partials/schools/assign_to_project_drawer.html")
-        
+        self.assertTemplateUsed(
+            response, "partials/schools/assign_to_project_drawer.html"
+        )
+
         # POST assignment
         response = self.client.post(
             f"/schools/{self.school.id}/assign-to-project",
@@ -235,29 +243,31 @@ class FrontendViewsTestCase(TestCase):
                 "participation_type": "Partner",
                 "start_date": "2026-07-01",
                 "support_area": "Laptops",
-                "notes": "Assigning laptops to Kampola High."
-            }
+                "notes": "Assigning laptops to Kampola High.",
+            },
         )
         self.assertEqual(response.status_code, 200)
-        
+
         # Verify assignment in DB
         from apps.projects.models import ProjectSchoolAssignment
-        assignment = ProjectSchoolAssignment.objects.get(school=self.school, project=project)
+
+        assignment = ProjectSchoolAssignment.objects.get(
+            school=self.school, project=project
+        )
         self.assertEqual(assignment.project_type, "Tech Support")
         self.assertEqual(assignment.support_area, "Laptops")
 
     def test_my_plan_view_model_and_filters(self):
         self.client.force_login(self.cceo_user)
-        
+
         # Test basic view rendering
         response = self.client.get("/my-plan?period=week&month=5&week=2")
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "My Plan")
-        
+
         # Test filters via HTMX request
         response = self.client.get(
-            "/my-plan?period=week&month=5&week=2",
-            HTTP_HX_REQUEST="true"
+            "/my-plan?period=week&month=5&week=2", HTTP_HX_REQUEST="true"
         )
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "partials/my_plan/workspace.html")
@@ -270,38 +280,47 @@ class FrontendViewsTestCase(TestCase):
             name="CD User 2",
             roles=["CountryDirector"],
             active_role="CountryDirector",
-            is_active=True
+            is_active=True,
         )
         cd_user.save()
         self.client.force_login(cd_user)
 
         # 1. Initialize default catalogue
         response = self.client.post("/cost-settings/initialize-default")
-        self.assertEqual(response.status_code, 302) # redirects to /dashboard
+        self.assertEqual(response.status_code, 302)  # redirects to /dashboard
 
         # Verify active catalogue in DB
         from apps.budget.models import CostCatalogue, CostSetting
+
         active_cat = CostCatalogue.objects.filter(is_active=True).first()
         self.assertIsNotNone(active_cat)
 
         # Verify default settings created/attached
-        breakfast_setting = CostSetting.objects.get(key="breakfast", catalogue=active_cat)
+        breakfast_setting = CostSetting.objects.get(
+            key="breakfast", catalogue=active_cat
+        )
         self.assertEqual(breakfast_setting.unit_cost, 8000)
 
         # 2. Get edit row view
-        response = self.client.get(f"/cost-settings/row/{breakfast_setting.key}?mode=edit")
+        response = self.client.get(
+            f"/cost-settings/row/{breakfast_setting.key}?mode=edit"
+        )
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "partials/cost_settings/cost_setting_row.html")
+        self.assertTemplateUsed(
+            response, "partials/cost_settings/cost_setting_row.html"
+        )
         self.assertContains(response, 'name="unit_cost"')
 
         # 3. Post cost update
         response = self.client.post(
             f"/cost-settings/row/{breakfast_setting.key}",
-            {"unit_cost": "9,500", "reason": "Inflation adjustment"}
+            {"unit_cost": "9,500", "reason": "Inflation adjustment"},
         )
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "partials/cost_settings/cost_setting_row.html")
-        
+        self.assertTemplateUsed(
+            response, "partials/cost_settings/cost_setting_row.html"
+        )
+
         # Verify DB updated
         breakfast_setting.refresh_from_db()
         self.assertEqual(breakfast_setting.unit_cost, 9500)
@@ -312,19 +331,17 @@ class FrontendViewsTestCase(TestCase):
         from apps.partners.models import Partner
         from apps.activities.models import Activity
         from apps.accounts.models import StaffSupervisorAssignment, StaffProfile
+
         User = get_user_model()
-        
-        partner = Partner.objects.create(
-            name="Partner Org",
-            active_status=True
-        )
+
+        partner = Partner.objects.create(name="Partner Org", active_status=True)
         partner_user = User.objects.create(
             id="partner-u-1",
             email="partner@edify.org",
             name="Partner User",
             roles=["PartnerFieldOfficer"],
             active_role="PartnerFieldOfficer",
-            is_active=True
+            is_active=True,
         )
         partner.user_id = partner_user.id
         partner.save()
@@ -336,20 +353,17 @@ class FrontendViewsTestCase(TestCase):
             name="PL User",
             roles=["Program Lead"],
             active_role="Program Lead",
-            is_active=True
+            is_active=True,
         )
         pl_profile = StaffProfile.objects.create(
-            id="staff-pl-1",
-            user=pl_user,
-            title="PL"
+            id="staff-pl-1", user=pl_user, title="PL"
         )
-        
+
         # Supervise CCEO
         StaffSupervisorAssignment.objects.create(
-            supervisor=pl_profile,
-            supervisee=self.cceo_profile
+            supervisor=pl_profile, supervisee=self.cceo_profile
         )
-        
+
         # Link cluster to school to bring it in scope
         self.school.cluster_id = self.cluster.id
         self.school.save()
@@ -361,8 +375,8 @@ class FrontendViewsTestCase(TestCase):
             {
                 "cluster_id": self.cluster.id,
                 "partner_id": partner.id,
-                "activity_type": "meeting"
-            }
+                "activity_type": "meeting",
+            },
         )
         self.assertEqual(response.status_code, 200, response.content)
 
@@ -381,11 +395,8 @@ class FrontendViewsTestCase(TestCase):
         # Post scheduling date
         response = self.client.post(
             f"/my-plan/{act.id}/reschedule",
-            {
-                "scheduled_date": "2026-07-15",
-                "reason": "Scheduling based on plan"
-            },
-            HTTP_HX_REQUEST="true"
+            {"scheduled_date": "2026-07-15", "reason": "Scheduling based on plan"},
+            HTTP_HX_REQUEST="true",
         )
         self.assertEqual(response.status_code, 200)
 
@@ -401,21 +412,21 @@ class FrontendViewsTestCase(TestCase):
 
     def test_notification_drawer_and_mark_read(self):
         from apps.notifications.models import Notification
-        
+
         # 1. Create notifications for CCEO
         n1 = Notification.objects.create(
             recipient_id=self.cceo_user.id,
             title="Notification A",
             body="First message body",
             priority="urgent",
-            status="unread"
+            status="unread",
         )
         n2 = Notification.objects.create(
             recipient_id=self.cceo_user.id,
             title="Notification B",
             body="Second message body",
             priority="high",
-            status="unread"
+            status="unread",
         )
 
         # Log in and check drawer view
@@ -428,24 +439,22 @@ class FrontendViewsTestCase(TestCase):
 
         # 2. Mark one notification as read
         response = self.client.post(
-            f"/notifications/{n1.id}/read",
-            HTTP_HX_REQUEST="true"
+            f"/notifications/{n1.id}/read", HTTP_HX_REQUEST="true"
         )
         self.assertEqual(response.status_code, 200)
-        
+
         n1.refresh_from_db()
         self.assertEqual(n1.status, "read")
-        
+
         # Verify drawer count decreased
         self.assertContains(response, "notification-badge-container")
         self.assertContains(response, "notification-badge-count")
 
         # 3. Mark all notifications as read
         response = self.client.post(
-            "/notifications/mark-all-read",
-            HTTP_HX_REQUEST="true"
+            "/notifications/mark-all-read", HTTP_HX_REQUEST="true"
         )
         self.assertEqual(response.status_code, 200)
-        
+
         n2.refresh_from_db()
         self.assertEqual(n2.status, "read")

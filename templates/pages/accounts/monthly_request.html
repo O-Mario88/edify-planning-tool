@@ -1,46 +1,37 @@
 {% extends "layouts/shell.html" %}
+{% load frontend_filters %}
 
 {% block title %}Monthly Fund Request - Edify Command Center{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6">
+<div class="p-6 max-w-7xl mx-auto space-y-5 font-sans">
 
-<!-- Premium Header Pane -->
-<div class="relative overflow-hidden rounded-xl bg-slate-900 text-white p-8 shadow-md border border-slate-800">
-<div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-blue-500/10 blur-3xl pointer-events-none"></div>
-<div class="relative z-10 space-y-2">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-500 text-[11px] font-semibold uppercase tracking-widest">
-Country Budget snapshots
-</div>
-<h1 class="text-[32px] font-semibold tracking-tight text-white leading-none">Monthly Country Fund Request</h1>
-<p class="text-[14px] text-slate-400 font-medium max-w-xl">
-Monthly consolidation of scheduled activities, partner allocations, core school visits, and variance adjustments.
-</p>
-</div>
-</div>
+{% include "components/page_header.html" with title="Monthly Country Fund Request" subtitle="Live consolidation of this month's costed activity lines — staff visits, partner interventions, trainings/meetings, and reimbursement claims." breadcrumb="FY "|add:fy|add:" · "|add:quarter|add:" · "|add:month_label %}
 
 <!-- Main grid -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-<div class="bg-white rounded-xl border border-slate-100 p-6 shadow-sm space-y-4 md:col-span-2">
-<h3 class="text-[15px] font-semibold text-slate-800 border-b border-slate-50 pb-2">Request Breakdown</h3>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+<div class="card p-6 space-y-4 md:col-span-2">
+<h3 class="text-[14px] font-semibold text-slate-800 border-b border-slate-50 pb-2">Request Breakdown &mdash; {{ month_label }}</h3>
 <div class="space-y-4 text-[12px] font-bold text-slate-700">
-<p class="flex justify-between"><span>Core Activity Budget:</span> <span class="text-slate-800 font-semibold">142,400,000 UGX</span></p>
-<p class="flex justify-between"><span>Partner Budget:</span> <span class="text-slate-800 font-semibold">28,000,000 UGX</span></p>
-<p class="flex justify-between"><span>Core Schools Support Capacity:</span> <span class="text-slate-800 font-semibold">12,500,000 UGX</span></p>
-<p class="flex justify-between"><span>Cluster Mobilisation:</span> <span class="text-slate-800 font-semibold">15,100,000 UGX</span></p>
-<p class="flex justify-between"><span>Reimbursements & Claims:</span> <span class="text-slate-800 font-semibold">12,000,000 UGX</span></p>
-<p class="flex justify-between border-t border-slate-100 pt-3 text-[14px]"><span>Aggregate Request Amount:</span> <span class="text-[#2563eb] font-semibold">210,000,000 UGX</span></p>
+<p class="flex justify-between"><span>Staff-Led Visits:</span> <span class="text-slate-800 font-semibold">{{ breakdown.staff_visits|ugx }}</span></p>
+<p class="flex justify-between"><span>Partner-Delivered Activities:</span> <span class="text-slate-800 font-semibold">{{ breakdown.partner|ugx }}</span></p>
+<p class="flex justify-between"><span>Cluster Trainings &amp; Meetings:</span> <span class="text-slate-800 font-semibold">{{ breakdown.trainings_meetings|ugx }}</span></p>
+<p class="flex justify-between"><span>Reimbursements &amp; Claims:</span> <span class="text-slate-800 font-semibold">{{ breakdown.reimbursements|ugx }}</span></p>
+<p class="flex justify-between border-t border-slate-100 pt-3 text-[14px]"><span>Aggregate Request Amount:</span> <span class="text-[#2563eb] font-semibold">{{ breakdown.total|ugx }}</span></p>
 </div>
+{% if breakdown.total == 0 %}
+{% include "components/empty_state.html" with title="No costed activity lines this month" message="Totals populate automatically as staff schedule and cost activities for the current month." compact="true" %}
+{% endif %}
 </div>
 
-<div class="bg-white rounded-xl border border-slate-100 p-6 shadow-sm space-y-4">
-<h3 class="text-[15px] font-semibold text-slate-800">Review & Submit</h3>
+<div class="card p-6 space-y-4">
+<h3 class="text-[15px] font-semibold text-slate-800">Consolidation Summary</h3>
 <p class="text-[12px] text-slate-500 leading-relaxed font-semibold">
-Once submitted, the CD and RVP must authorize this snapshot request before funds are released to country accounts.
+This snapshot aggregates {{ activity_count }} costed activit{{ activity_count|pluralize:"y,ies" }} for {{ month_label }}. It is a live read of the budget ledger — there is no separate monthly submission step in the current fund-request workflow; requests route weekly via each owner's confirmation.
 </p>
-<button class="w-full h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-semibold transition-all shadow-md">
-Submit Monthly Request
-</button>
+<a href="/fund-requests/weekly" class="w-full h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-semibold transition-all shadow-md flex items-center justify-center">
+Open Weekly Fund Requests
+</a>
 </div>
 </div>
 </div>

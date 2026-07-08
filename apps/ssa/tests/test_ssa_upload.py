@@ -5,6 +5,7 @@ Authenticated (IA), isolated test DB. Valid rows save + link to an existing
 school and flip its SSA status to done; invalid school ids and missing/non-numeric
 scores fail those rows truthfully.
 """
+
 from __future__ import annotations
 
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -31,15 +32,22 @@ class SsaUploadTest(APITestCase):
         self.region = Region.objects.create(name="Northern")
         self.district = District.objects.create(name="Gulu", region=self.region)
         self.school = School.objects.create(
-            school_id="SSA-SCH-1", name="SSA Primary", region=self.region, district=self.district,
+            school_id="SSA-SCH-1",
+            name="SSA Primary",
+            region=self.region,
+            district=self.district,
         )
         self.ia = User.objects.create_user(
-            email="ia@ssa.test", name="Aisha Dar",
+            email="ia@ssa.test",
+            name="Aisha Dar",
             roles=[EdifyRole.IMPACT_ASSESSMENT.value],
             active_role=EdifyRole.IMPACT_ASSESSMENT.value,
-            password="x", is_active=True,
+            password="x",
+            is_active=True,
         )
-        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {issue_access_token(self.ia.id, self.ia.active_role)}")
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {issue_access_token(self.ia.id, self.ia.active_role)}"
+        )
 
     def _csv(self, body, name="ssa.csv"):
         return SimpleUploadedFile(name, body.encode("utf-8"), content_type="text/csv")
@@ -105,7 +113,12 @@ class SsaUploadTest(APITestCase):
         self.assertEqual(SsaRecord.objects.count(), 0)
 
     def test_valid_and_invalid_mixed(self):
-        School.objects.create(school_id="SSA-SCH-2", name="Second", region=self.region, district=self.district)
+        School.objects.create(
+            school_id="SSA-SCH-2",
+            name="Second",
+            region=self.region,
+            district=self.district,
+        )
         body = (
             f"{SSA_HEADERS}\n"
             f"SSA-SCH-1,2026-07-01,{SCORES}\n"

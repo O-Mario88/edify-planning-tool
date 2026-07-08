@@ -4,67 +4,12 @@
 {% block title %}Clusters Dashboard - Edify Planning Tool{% endblock %}
 
 {% block shell_content %}
-<div 
+<div
 x-data="{}"
 class="p-6 max-w-[1600px] mx-auto space-y-6 font-sans"
  >
-<!-- Breadcrumb -->
-<nav class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-<a href="#" class="hover:text-slate-600">Clusters</a>
-<svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-<span class="text-slate-600 font-semibold">Cluster planning &amp; operations</span>
-</nav>
 
-<!-- Page Header Row -->
-<div class="edify-page-header flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-100 pb-2">
-<div>
-<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight leading-none">Clusters</h1>
-<p class="text-[12px] text-slate-500 font-semibold mt-1">Manage cluster performance, SSA weaknesses, meetings, trainings, and school-level improvement.</p>
-</div>
-
-<!-- Action buttons -->
-<div class="flex items-center gap-2">
-<button 
-hx-get="/clusters/create-drawer"
-hx-target="#drawer-container"
-hx-swap="innerHTML"
-class="edify-action-button primary h-9 transition-all shadow-sm"
->
-<svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-Create Cluster
-</button>
-
-<button 
-hx-get="/clusters/planner-drawer?activity_type=training"
-hx-target="#drawer-container"
-hx-swap="innerHTML"
-class="edify-action-button secondary h-9 transition-all shadow-sm"
->
-<svg class="h-4 w-4 text-slate-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-Schedule Group Training
-</button>
-
-<button 
-hx-get="/clusters/planner-drawer?activity_type=meeting"
-hx-target="#drawer-container"
-hx-swap="innerHTML"
-class="edify-action-button secondary h-9 transition-all shadow-sm"
->
-<svg class="h-4 w-4 text-slate-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-Schedule Cluster Meeting
-</button>
-
-<!-- Export button using current filters -->
-<a 
-href="#"
-onclick="this.href='/clusters?export=csv&' + new URLSearchParams(new FormData(document.getElementById('filters-form'))).toString()"
-class="edify-action-button secondary h-9 transition-all shadow-sm"
->
-<svg class="h-4 w-4 text-slate-400 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-Export
-</a>
-</div>
-</div>
+{% include "components/page_header.html" with title="Clusters" subtitle="Manage cluster performance, SSA weaknesses, meetings, trainings, and school-level improvement." breadcrumb="Cluster planning & operations" actions_template="pages/clusters/_header_actions.html" %}
 
 <!-- Messages notifications wrapper -->
 {% if messages %}
@@ -81,12 +26,18 @@ Export
 <!-- Filters Row -->
 {% include "partials/clusters/filters.html" %}
 
-<!-- 8 KPI Cards Grid -->
+<!-- Role scope notice -->
+{% include "components/role_scope_notice.html" with scope_text=cluster_scope_text %}
+
+<!-- KPI Strip -->
 <div id="clusters-kpi-row" class="w-full">
 {% include "partials/clusters/kpi_strip.html" %}
 </div>
 
-
+<!-- Primary insight: risk distribution chart + weakest-cluster action -->
+<div id="clusters-insights-row">
+{% include "partials/clusters/insights_row.html" %}
+</div>
 
 <!-- Main Canvas: Cluster list (Full row) -->
 <div class="w-full space-y-4 min-w-0" id="clusters-table-container">

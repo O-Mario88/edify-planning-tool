@@ -5,37 +5,32 @@
 {% block title %}Unmatched SSA Queue — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6 font-sans">
+<div class="p-6 max-w-7xl mx-auto space-y-5 font-sans">
 
-<!-- Header -->
-<div class="flex items-center justify-between border-b border-slate-200 pb-4">
-<div>
-<h1 class="text-[20px] font-semibold text-slate-800 tracking-tight">Unmatched SSA Queue</h1>
-<p class="text-[12px] text-slate-400 font-semibold mt-0.5">Manually link SSA records that were uploaded with unknown School IDs.</p>
-</div>
-<a href="/admin-panel/data-quality-center" class="text-[12px] text-slate-500 hover:underline">&larr; Back to Quality Center</a>
-</div>
+{% include "components/page_header.html" with title="Unmatched SSA Queue" subtitle="Manually link SSA records that were uploaded with unknown School IDs." breadcrumb="Data Quality Center" %}
+
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
 
 <!-- Table -->
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+<div class="card p-0 overflow-hidden">
 <div class="overflow-x-auto">
 <table class="w-full text-[12px] border-collapse text-left">
 <thead>
 <tr class="bg-slate-50 border-b border-slate-100">
-<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-500 tracking-wider">SSA School ID</th>
-<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-500 tracking-wider">School Name from SSA</th>
-<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-500 tracking-wider">District</th>
-<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-500 tracking-wider">Assessment Date</th>
-<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-500 tracking-wider">Reason</th>
-<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-500 tracking-wider">Suggested Match</th>
-<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-500 tracking-wider">Status</th>
-<th class="px-4 py-3 text-right text-[11px] font-semibold uppercase text-slate-500 tracking-wider">Actions</th>
+<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-400 tracking-wider">SSA School ID</th>
+<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-400 tracking-wider">School Name from SSA</th>
+<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-400 tracking-wider">District</th>
+<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-400 tracking-wider">Assessment Date</th>
+<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-400 tracking-wider">Reason</th>
+<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-400 tracking-wider">Suggested Match</th>
+<th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-400 tracking-wider">Status</th>
+<th class="px-4 py-3 text-right text-[11px] font-semibold uppercase text-slate-400 tracking-wider">Actions</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100 font-medium">
 {% for r in records %}
-<tr class="hover:bg-slate-50/20">
-<td class="px-4 py-4 font-mono font-bold text-slate-900">ID: {{ r.school_id }}</td>
+<tr class="hover:bg-slate-50/50 transition-colors">
+<td class="px-4 py-4 font-mono font-semibold text-slate-900">ID: {{ r.school_id }}</td>
 <td class="px-4 py-4 text-slate-800 font-semibold">{{ r.school_name_raw|default:"—" }}</td>
 <td class="px-4 py-4 text-slate-500">{{ r.district_raw|default:"—" }}</td>
 <td class="px-4 py-4 text-slate-500">{{ r.date_of_ssa }}</td>
@@ -52,16 +47,16 @@
 </td>
 <td class="px-4 py-4">
 {% if r.status == 'hold' %}
-<span class="px-2 py-0.5 bg-amber-50 text-amber-700 text-[11px] rounded font-bold uppercase tracking-wider">Held</span>
+{% include "components/badge.html" with tone="warning" label="Held" %}
 {% else %}
-<span class="px-2 py-0.5 bg-slate-50 text-slate-500 text-[11px] rounded font-bold uppercase tracking-wider">Pending</span>
+{% include "components/badge.html" with tone="neutral" label="Pending" %}
 {% endif %}
 </td>
 <td class="px-4 py-4 text-right">
 <div class="flex items-center justify-end gap-2.5">
 
 <!-- Link Form -->
-<form method="post" action="" class="inline-flex items-center gap-1.5 m-0">
+<form method="post" class="inline-flex items-center gap-1.5 m-0">
 {% csrf_token %}
 <input type="hidden" name="record_id" value="{{ r.id }}">
 <input type="hidden" name="action" value="match">
@@ -79,33 +74,33 @@ Link
 </form>
 
 <!-- Create School -->
-<form method="post" action="" class="inline m-0">
+<form method="post" class="inline m-0">
 {% csrf_token %}
 <input type="hidden" name="record_id" value="{{ r.id }}">
 <input type="hidden" name="action" value="create_school">
-<button type="submit" class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] rounded-lg transition-all shadow-sm">
+<button type="submit" class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-[11px] rounded-lg transition-all shadow-sm">
 Create School
 </button>
 </form>
 
 <!-- Hold -->
 {% if r.status != 'hold' %}
-<form method="post" action="" class="inline m-0">
+<form method="post" class="inline m-0">
 {% csrf_token %}
 <input type="hidden" name="record_id" value="{{ r.id }}">
 <input type="hidden" name="action" value="hold">
-<button type="submit" class="px-2 py-1.5 border border-slate-200 hover:bg-slate-50 text-slate-500 font-bold text-[11px] rounded-lg transition-all">
+<button type="submit" class="px-2 py-1.5 border border-slate-200 hover:bg-slate-50 text-slate-500 font-semibold text-[11px] rounded-lg transition-all">
 Hold
 </button>
 </form>
 {% endif %}
 
 <!-- Ignore -->
-<form method="post" action="" class="inline m-0">
+<form method="post" class="inline m-0">
 {% csrf_token %}
 <input type="hidden" name="record_id" value="{{ r.id }}">
 <input type="hidden" name="action" value="ignore">
-<button type="submit" class="px-2 py-1.5 border border-slate-200 hover:bg-slate-50 text-rose-500 font-bold text-[11px] rounded-lg transition-all">
+<button type="submit" class="px-2 py-1.5 border border-slate-200 hover:bg-slate-50 text-rose-500 font-semibold text-[11px] rounded-lg transition-all">
 Ignore
 </button>
 </form>
@@ -115,8 +110,8 @@ Ignore
 </tr>
 {% empty %}
 <tr>
-<td colspan="8" class="px-5 py-8 text-center text-slate-400 font-semibold">
-No unmatched SSA records pending in queue.
+<td colspan="8" class="p-0">
+{% include "components/empty_state.html" with title="Queue is clear" message="No unmatched SSA records pending in queue." tone="success" %}
 </td>
 </tr>
 {% endfor %}

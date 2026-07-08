@@ -4,20 +4,39 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('debriefs', '0001_initial'),
+        ("debriefs", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='dailydebrief',
-            name='environment',
-            field=models.CharField(choices=[('local', 'Local'), ('staging', 'Staging'), ('production', 'Production')], db_index=True, default='production', max_length=16),
+            model_name="dailydebrief",
+            name="environment",
+            field=models.CharField(
+                choices=[
+                    ("local", "Local"),
+                    ("staging", "Staging"),
+                    ("production", "Production"),
+                ],
+                db_index=True,
+                default="production",
+                max_length=16,
+            ),
         ),
         migrations.AddField(
-            model_name='dailydebrief',
-            name='source',
-            field=models.CharField(choices=[('manual_upload', 'Manual Upload'), ('admin_created', 'Admin Created'), ('api_import', 'API Import'), ('local_test_upload', 'Local Test Upload'), ('production_upload', 'Production Upload')], db_index=True, default='manual_upload', max_length=32),
+            model_name="dailydebrief",
+            name="source",
+            field=models.CharField(
+                choices=[
+                    ("manual_upload", "Manual Upload"),
+                    ("admin_created", "Admin Created"),
+                    ("api_import", "API Import"),
+                    ("local_test_upload", "Local Test Upload"),
+                    ("production_upload", "Production Upload"),
+                ],
+                db_index=True,
+                default="manual_upload",
+                max_length=32,
+            ),
         ),
     ]

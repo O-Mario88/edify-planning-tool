@@ -5,35 +5,114 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('accounts', '0005_stafftargetprofile_accountability_target_and_more'),
+        ("accounts", "0005_stafftargetprofile_accountability_target_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='assignmentaudit',
-            name='assigner_role',
-            field=models.CharField(choices=[('CCEO', 'CCEO'), ('Program Lead', 'Program Lead'), ('CountryDirector', 'CountryDirector'), ('RegionalVicePresident', 'RegionalVicePresident'), ('ImpactAssessment', 'ImpactAssessment'), ('Accountant', 'Accountant'), ('HumanResources', 'HumanResources'), ('ProjectCoordinator', 'ProjectCoordinator'), ('PartnerAdmin', 'PartnerAdmin'), ('PartnerFieldOfficer', 'PartnerFieldOfficer'), ('Admin', 'Admin')], max_length=64),
+            model_name="assignmentaudit",
+            name="assigner_role",
+            field=models.CharField(
+                choices=[
+                    ("CCEO", "CCEO"),
+                    ("Program Lead", "Program Lead"),
+                    ("CountryDirector", "CountryDirector"),
+                    ("RegionalVicePresident", "RegionalVicePresident"),
+                    ("ImpactAssessment", "ImpactAssessment"),
+                    ("Accountant", "Accountant"),
+                    ("HumanResources", "HumanResources"),
+                    ("ProjectCoordinator", "ProjectCoordinator"),
+                    ("PartnerAdmin", "PartnerAdmin"),
+                    ("PartnerFieldOfficer", "PartnerFieldOfficer"),
+                    ("Admin", "Admin"),
+                ],
+                max_length=64,
+            ),
         ),
         migrations.AlterField(
-            model_name='rolepermission',
-            name='role',
-            field=models.CharField(choices=[('CCEO', 'CCEO'), ('Program Lead', 'Program Lead'), ('CountryDirector', 'CountryDirector'), ('RegionalVicePresident', 'RegionalVicePresident'), ('ImpactAssessment', 'ImpactAssessment'), ('Accountant', 'Accountant'), ('HumanResources', 'HumanResources'), ('ProjectCoordinator', 'ProjectCoordinator'), ('PartnerAdmin', 'PartnerAdmin'), ('PartnerFieldOfficer', 'PartnerFieldOfficer'), ('Admin', 'Admin')], max_length=64),
+            model_name="rolepermission",
+            name="role",
+            field=models.CharField(
+                choices=[
+                    ("CCEO", "CCEO"),
+                    ("Program Lead", "Program Lead"),
+                    ("CountryDirector", "CountryDirector"),
+                    ("RegionalVicePresident", "RegionalVicePresident"),
+                    ("ImpactAssessment", "ImpactAssessment"),
+                    ("Accountant", "Accountant"),
+                    ("HumanResources", "HumanResources"),
+                    ("ProjectCoordinator", "ProjectCoordinator"),
+                    ("PartnerAdmin", "PartnerAdmin"),
+                    ("PartnerFieldOfficer", "PartnerFieldOfficer"),
+                    ("Admin", "Admin"),
+                ],
+                max_length=64,
+            ),
         ),
         migrations.AlterField(
-            model_name='staffsupportcapacity',
-            name='set_by_role',
-            field=models.CharField(choices=[('CCEO', 'CCEO'), ('Program Lead', 'Program Lead'), ('CountryDirector', 'CountryDirector'), ('RegionalVicePresident', 'RegionalVicePresident'), ('ImpactAssessment', 'ImpactAssessment'), ('Accountant', 'Accountant'), ('HumanResources', 'HumanResources'), ('ProjectCoordinator', 'ProjectCoordinator'), ('PartnerAdmin', 'PartnerAdmin'), ('PartnerFieldOfficer', 'PartnerFieldOfficer'), ('Admin', 'Admin')], max_length=64),
+            model_name="staffsupportcapacity",
+            name="set_by_role",
+            field=models.CharField(
+                choices=[
+                    ("CCEO", "CCEO"),
+                    ("Program Lead", "Program Lead"),
+                    ("CountryDirector", "CountryDirector"),
+                    ("RegionalVicePresident", "RegionalVicePresident"),
+                    ("ImpactAssessment", "ImpactAssessment"),
+                    ("Accountant", "Accountant"),
+                    ("HumanResources", "HumanResources"),
+                    ("ProjectCoordinator", "ProjectCoordinator"),
+                    ("PartnerAdmin", "PartnerAdmin"),
+                    ("PartnerFieldOfficer", "PartnerFieldOfficer"),
+                    ("Admin", "Admin"),
+                ],
+                max_length=64,
+            ),
         ),
         migrations.AlterField(
-            model_name='user',
-            name='active_role',
-            field=models.CharField(choices=[('CCEO', 'CCEO'), ('Program Lead', 'Program Lead'), ('CountryDirector', 'CountryDirector'), ('RegionalVicePresident', 'RegionalVicePresident'), ('ImpactAssessment', 'ImpactAssessment'), ('Accountant', 'Accountant'), ('HumanResources', 'HumanResources'), ('ProjectCoordinator', 'ProjectCoordinator'), ('PartnerAdmin', 'PartnerAdmin'), ('PartnerFieldOfficer', 'PartnerFieldOfficer'), ('Admin', 'Admin')], default='CCEO', max_length=64),
+            model_name="user",
+            name="active_role",
+            field=models.CharField(
+                choices=[
+                    ("CCEO", "CCEO"),
+                    ("Program Lead", "Program Lead"),
+                    ("CountryDirector", "CountryDirector"),
+                    ("RegionalVicePresident", "RegionalVicePresident"),
+                    ("ImpactAssessment", "ImpactAssessment"),
+                    ("Accountant", "Accountant"),
+                    ("HumanResources", "HumanResources"),
+                    ("ProjectCoordinator", "ProjectCoordinator"),
+                    ("PartnerAdmin", "PartnerAdmin"),
+                    ("PartnerFieldOfficer", "PartnerFieldOfficer"),
+                    ("Admin", "Admin"),
+                ],
+                default="CCEO",
+                max_length=64,
+            ),
         ),
         migrations.AlterField(
-            model_name='user',
-            name='roles',
-            field=django.contrib.postgres.fields.ArrayField(base_field=models.CharField(choices=[('CCEO', 'CCEO'), ('Program Lead', 'Program Lead'), ('CountryDirector', 'CountryDirector'), ('RegionalVicePresident', 'RegionalVicePresident'), ('ImpactAssessment', 'ImpactAssessment'), ('Accountant', 'Accountant'), ('HumanResources', 'HumanResources'), ('ProjectCoordinator', 'ProjectCoordinator'), ('PartnerAdmin', 'PartnerAdmin'), ('PartnerFieldOfficer', 'PartnerFieldOfficer'), ('Admin', 'Admin')], max_length=64), default=list, size=None),
+            model_name="user",
+            name="roles",
+            field=django.contrib.postgres.fields.ArrayField(
+                base_field=models.CharField(
+                    choices=[
+                        ("CCEO", "CCEO"),
+                        ("Program Lead", "Program Lead"),
+                        ("CountryDirector", "CountryDirector"),
+                        ("RegionalVicePresident", "RegionalVicePresident"),
+                        ("ImpactAssessment", "ImpactAssessment"),
+                        ("Accountant", "Accountant"),
+                        ("HumanResources", "HumanResources"),
+                        ("ProjectCoordinator", "ProjectCoordinator"),
+                        ("PartnerAdmin", "PartnerAdmin"),
+                        ("PartnerFieldOfficer", "PartnerFieldOfficer"),
+                        ("Admin", "Admin"),
+                    ],
+                    max_length=64,
+                ),
+                default=list,
+                size=None,
+            ),
         ),
     ]

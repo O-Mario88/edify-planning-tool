@@ -7,49 +7,104 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='CommandCenterAlert',
+            name="CommandCenterAlert",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('alert_type', models.CharField(max_length=64)),
-                ('severity', models.CharField(choices=[('low', 'Low'), ('normal', 'Normal'), ('high', 'High'), ('urgent', 'Urgent')], default='high', max_length=16)),
-                ('scope', models.CharField(blank=True, max_length=64, null=True)),
-                ('context_type', models.CharField(blank=True, max_length=64, null=True)),
-                ('context_id', models.CharField(blank=True, max_length=30, null=True)),
-                ('title', models.CharField(max_length=255)),
-                ('body', models.TextField(blank=True, null=True)),
-                ('target_route', models.CharField(blank=True, max_length=255, null=True)),
-                ('condition_hash', models.CharField(max_length=128, unique=True)),
-                ('status', models.CharField(default='open', max_length=16)),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("alert_type", models.CharField(max_length=64)),
+                (
+                    "severity",
+                    models.CharField(
+                        choices=[
+                            ("low", "Low"),
+                            ("normal", "Normal"),
+                            ("high", "High"),
+                            ("urgent", "Urgent"),
+                        ],
+                        default="high",
+                        max_length=16,
+                    ),
+                ),
+                ("scope", models.CharField(blank=True, max_length=64, null=True)),
+                (
+                    "context_type",
+                    models.CharField(blank=True, max_length=64, null=True),
+                ),
+                ("context_id", models.CharField(blank=True, max_length=30, null=True)),
+                ("title", models.CharField(max_length=255)),
+                ("body", models.TextField(blank=True, null=True)),
+                (
+                    "target_route",
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
+                ("condition_hash", models.CharField(max_length=128, unique=True)),
+                ("status", models.CharField(default="open", max_length=16)),
             ],
             options={
-                'db_table': 'command_center_alert',
-                'indexes': [models.Index(fields=['status'], name='command_cen_status_896519_idx'), models.Index(fields=['alert_type', 'status'], name='command_cen_alert_t_d2f61e_idx')],
+                "db_table": "command_center_alert",
+                "indexes": [
+                    models.Index(
+                        fields=["status"], name="command_cen_status_896519_idx"
+                    ),
+                    models.Index(
+                        fields=["alert_type", "status"],
+                        name="command_cen_alert_t_d2f61e_idx",
+                    ),
+                ],
             },
         ),
         migrations.CreateModel(
-            name='CommandCenterAlertDismissal',
+            name="CommandCenterAlertDismissal",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('user_id', models.CharField(max_length=30)),
-                ('dismissed_until', models.DateTimeField()),
-                ('alert', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='dismissals', to='command_center.commandcenteralert')),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("user_id", models.CharField(max_length=30)),
+                ("dismissed_until", models.DateTimeField()),
+                (
+                    "alert",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="dismissals",
+                        to="command_center.commandcenteralert",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'command_center_alert_dismissal',
-                'indexes': [models.Index(fields=['user_id'], name='command_cen_user_id_3f14af_idx')],
-                'constraints': [models.UniqueConstraint(fields=('alert', 'user_id'), name='uniq_alert_dismissal_user')],
+                "db_table": "command_center_alert_dismissal",
+                "indexes": [
+                    models.Index(
+                        fields=["user_id"], name="command_cen_user_id_3f14af_idx"
+                    )
+                ],
+                "constraints": [
+                    models.UniqueConstraint(
+                        fields=("alert", "user_id"), name="uniq_alert_dismissal_user"
+                    )
+                ],
             },
         ),
     ]

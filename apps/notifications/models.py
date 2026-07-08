@@ -1,4 +1,5 @@
 """Notification model — per-user notification rail."""
+
 from __future__ import annotations
 
 from django.db import models
@@ -20,8 +21,14 @@ class Notification(TimeStampedModel):
     target_route = models.CharField(max_length=255, null=True, blank=True)
     action_label = models.CharField(max_length=64, null=True, blank=True)
     action_required = models.BooleanField(default=False)
-    priority = models.CharField(max_length=16, choices=NotificationPriority.choices, default=NotificationPriority.NORMAL)
-    status = models.CharField(max_length=16, choices=MessageStatus.choices, default=MessageStatus.UNREAD)
+    priority = models.CharField(
+        max_length=16,
+        choices=NotificationPriority.choices,
+        default=NotificationPriority.NORMAL,
+    )
+    status = models.CharField(
+        max_length=16, choices=MessageStatus.choices, default=MessageStatus.UNREAD
+    )
     source_event_type = models.CharField(max_length=64, null=True, blank=True)
     source_event_id = models.CharField(max_length=30, null=True, blank=True)
     expires_at = models.DateTimeField(null=True, blank=True)

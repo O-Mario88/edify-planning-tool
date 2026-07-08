@@ -1,29 +1,54 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from apps.core.permissions import require_page_permission, RolePermissionService, get_scoped_object_or_404
+from apps.core.permissions import (
+    require_page_permission,
+    RolePermissionService,
+    get_scoped_object_or_404,
+)
 from django.contrib import messages
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseForbidden
 from django.utils import timezone
 
-from apps.planning.services import (
-    schedule_school_visit,
-    schedule_cluster_activity
-)
+from apps.planning.services import schedule_school_visit, schedule_cluster_activity
 from apps.budget.costing_service import preview as cost_preview
 from apps.schools.models import School
 from apps.clusters.models import Cluster
+from apps.activities.models import Activity
 from apps.partners.models import Partner, PartnerAssignment
-from apps.core.enums import SsaIntervention, PlanningReadiness, SsaStatus, SchoolType, ClusterStatus
+from apps.core.enums import (
+    SsaIntervention,
+    PlanningReadiness,
+    SsaStatus,
+    SchoolType,
+    ClusterStatus,
+)
 from apps.core.fy import get_operational_fy
 from apps.geography.models import District, SubCounty
 from apps.accounts.models import StaffProfile
 from apps.planning.planning_service import PlanningDashboardService
 
 
+def _planning_scope_text(user, scope):
+    """One calm line describing the data slice on /planning. Checks the
+    caller's role explicitly rather than `scope.can_view_partner_data` alone
+    — that flag can be true for staff with an empty partner_ids list, which
+    would otherwise mislabel a CCEO's own roster as a partner's."""
+    role_label = getattr(user, "active_role", None) or "your role"
+    if scope.country_scope:
+        return f"Showing all schools nationally — scoped to your {role_label} role."
+    if role_label == "Partner" or scope.partner_ids:
+        return "Showing schools linked to your partner organization."
+    if scope.can_view_team:
+        return "Showing schools assigned to you and your supervised team."
+    if scope.can_view_summary_only:
+        return "Showing a summary view for your assigned region(s)."
+    return "Showing schools assigned to you."
+
+
 @require_page_permission("planning")
 def planning_dashboard_view(request):
-    fy = get_operational_fy()
-    
+    get_operational_fy()
+
     # 1. Gather all filters from GET
     filters = {
         "fy": request.GET.get("fy", "2026"),
@@ -45,25 +70,70 @@ def planning_dashboard_view(request):
     # 2. Query Dashboard data from Service
     data = PlanningDashboardService.get_dashboard_data(request.user, filters)
 
+    # 2b. Scheduling queue calendar — real activities already scheduled for
+    # the caller's scoped schools this FY (same events-embed pattern as
+    # templates/pages/calendar/index.html; no separate JSON endpoint exists
+    # for this yet, and a page-local fragment keeps the FullCalendar init
+    # identical to the reference page).
+    from apps.analytics.services import _scoped_schools
+
+    scoped_schools_qs, scope = _scoped_schools(request.user)
+    calendar_activities = (
+        Activity.objects.filter(
+            deleted_at__isnull=True,
+            fy=filters["fy"],
+            planned_date__isnull=False,
+            school__in=scoped_schools_qs,
+        )
+        .select_related("school", "cluster")
+        .order_by("planned_date")[:300]
+    )
+    scope_text = _planning_scope_text(request.user, scope)
+
     # 3. Dropdowns options
     districts = District.objects.all().order_by("name")
-    
+
     # Filter sub-counties by district if a district is selected
     if filters["district"] and filters["district"] != "All":
-        sub_counties = SubCounty.objects.filter(district_id=filters["district"]).order_by("name")
+        sub_counties = SubCounty.objects.filter(
+            district_id=filters["district"]
+        ).order_by("name")
     else:
         sub_counties = SubCounty.objects.all().order_by("name")
-        
-    staff_members = StaffProfile.objects.filter(deleted_at__isnull=True).select_related("user").order_by("user__name")
-    partners = Partner.objects.filter(deleted_at__isnull=True, active_status=True).order_by("name")
+
+    staff_members = (
+        StaffProfile.objects.filter(deleted_at__isnull=True)
+        .select_related("user")
+        .order_by("user__name")
+    )
+    partners = Partner.objects.filter(
+        deleted_at__isnull=True, active_status=True
+    ).order_by("name")
 
     # Pagination pages list
     total_pages = data["total_pages"]
     from apps.core.pagination import make_pagination_window
+
     pages_list = make_pagination_window(int(filters["page"]), total_pages)
-    
-    showing_start = (int(filters["page"]) - 1) * int(filters["per_page"]) + 1 if data["total_count"] > 0 else 0
-    showing_end = min(int(filters["page"]) * int(filters["per_page"]), data["total_count"])
+
+    showing_start = (
+        (int(filters["page"]) - 1) * int(filters["per_page"]) + 1
+        if data["total_count"] > 0
+        else 0
+    )
+    showing_end = min(
+        int(filters["page"]) * int(filters["per_page"]), data["total_count"]
+    )
+
+    cluster_planning = data["cluster_planning"]
+    if cluster_planning:
+        top_cluster = cluster_planning[0]
+        readiness_chart_footer_note = (
+            f"Needs attention: {top_cluster['name']} "
+            f"({top_cluster['school_count']} school{'s' if top_cluster['school_count'] != 1 else ''})"
+        )
+    else:
+        readiness_chart_footer_note = "No clusters currently need action."
 
     # 4. Construct context
     context = {
@@ -74,7 +144,11 @@ def planning_dashboard_view(request):
         "cluster_planning": data["cluster_planning"],
         "core_summary": data["core_summary"],
         "total_count": data["total_count"],
-        
+        "readiness_distribution_chart": data.get("readiness_distribution_chart"),
+        "has_readiness_chart_data": data.get("has_readiness_chart_data", False),
+        "readiness_chart_footer_note": readiness_chart_footer_note,
+        "calendar_activities": calendar_activities,
+        "scope_text": scope_text,
         # Options
         "districts": districts,
         "sub_counties": sub_counties,
@@ -86,7 +160,6 @@ def planning_dashboard_view(request):
         "readiness_choices": PlanningReadiness.choices,
         "ssa_statuses": SsaStatus.choices,
         "cluster_statuses": ClusterStatus.choices,
-
         # Selected filters/states
         "selected_fy": filters["fy"],
         "selected_quarter": filters["quarter"],
@@ -100,7 +173,6 @@ def planning_dashboard_view(request):
         "selected_partner": filters["partner"],
         "search_q": filters["q"],
         "active_tab": filters["tab"],
-        
         # Pagination
         "page": int(filters["page"]),
         "per_page": int(filters["per_page"]),
@@ -108,11 +180,12 @@ def planning_dashboard_view(request):
         "pages_list": pages_list,
         "showing_start": showing_start,
         "showing_end": showing_end,
-        
         # Base Template choice for HTMX vs direct visits
-        "base_template": "layouts/blank.html" if request.headers.get("HX-Request") == "true" and not request.headers.get("HX-Target") else "layouts/shell.html",
+        "base_template": "layouts/blank.html"
+        if request.headers.get("HX-Request") == "true"
+        and not request.headers.get("HX-Target")
+        else "layouts/shell.html",
         "use_dark_sidebar": False,
-
         # Guards
         "can_schedule": RolePermissionService.can_schedule_activity(request.user),
         "can_assign_partner": RolePermissionService.can_assign_to_partner(request.user),
@@ -128,39 +201,52 @@ def planning_dashboard_view(request):
 @require_page_permission("planning")
 def schedule_modal_view(request):
     if not RolePermissionService.can_schedule_activity(request.user):
-        return HttpResponseForbidden("Access Denied: You do not have permission to schedule activities.")
+        return HttpResponseForbidden(
+            "Access Denied: You do not have permission to schedule activities."
+        )
 
     cluster_id = request.GET.get("cluster_id")
     if cluster_id:
         cluster = get_scoped_object_or_404(Cluster, request.user, id=cluster_id)
         action = request.GET.get("action", "training")
-        partners = Partner.objects.filter(deleted_at__isnull=True, active_status=True).order_by("name")
+        partners = Partner.objects.filter(
+            deleted_at__isnull=True, active_status=True
+        ).order_by("name")
         context = {
             "cluster": cluster,
             "action": action,
             "partners": partners,
             "drawer_size": "lg",
         }
-        return render(request, "partials/planning/schedule_cluster_drawer.html", context)
+        return render(
+            request, "partials/planning/schedule_cluster_drawer.html", context
+        )
 
     school_id = request.GET.get("school_id")
-    school = get_scoped_object_or_404(School, request.user, Q(id=school_id) | Q(school_id=school_id))
+    school = get_scoped_object_or_404(
+        School, request.user, Q(id=school_id) | Q(school_id=school_id)
+    )
 
     # Resolve focus recommendations
     recommendations = []
-    latest_ssa = school.ssa_records.filter(deleted_at__isnull=True).order_by("-date_of_ssa").first()
+    latest_ssa = (
+        school.ssa_records.filter(deleted_at__isnull=True)
+        .order_by("-date_of_ssa")
+        .first()
+    )
     if latest_ssa:
-        scores = sorted(list(latest_ssa.scores.all().values("intervention", "score")), key=lambda s: s["score"])
+        scores = sorted(
+            list(latest_ssa.scores.all().values("intervention", "score")),
+            key=lambda s: s["score"],
+        )
         for s in scores[:2]:
             code = s["intervention"]
             label = dict(SsaIntervention.choices).get(code, code)
-            recommendations.append({
-                "code": code,
-                "label": label,
-                "score": s["score"]
-            })
+            recommendations.append({"code": code, "label": label, "score": s["score"]})
 
-    partners = Partner.objects.filter(deleted_at__isnull=True, active_status=True).order_by("name")
+    partners = Partner.objects.filter(
+        deleted_at__isnull=True, active_status=True
+    ).order_by("name")
 
     context = {
         "school": school,
@@ -175,7 +261,9 @@ def schedule_modal_view(request):
 @require_page_permission("planning")
 def schedule_action_view(request):
     if not RolePermissionService.can_schedule_activity(request.user):
-        return HttpResponseForbidden("Access Denied: You do not have permission to schedule activities.")
+        return HttpResponseForbidden(
+            "Access Denied: You do not have permission to schedule activities."
+        )
 
     if request.method != "POST":
         return HttpResponse("Method not allowed", status=405)
@@ -195,10 +283,15 @@ def schedule_action_view(request):
     from datetime import date
 
     # Build payload
-    is_ssa_expected = request.POST.get("ssa_collection_expected") == "yes" or activity_type in [
-        "baseline_ssa_visit", "school_visit_ssa_collection",
-        "cluster_training_ssa_collection", "cluster_meeting_ssa_review",
-        "partner_ssa_collection", "core_assessment_visit"
+    is_ssa_expected = request.POST.get(
+        "ssa_collection_expected"
+    ) == "yes" or activity_type in [
+        "baseline_ssa_visit",
+        "school_visit_ssa_collection",
+        "cluster_training_ssa_collection",
+        "cluster_meeting_ssa_review",
+        "partner_ssa_collection",
+        "core_assessment_visit",
     ]
     payload = {
         "activityType": activity_type,
@@ -208,7 +301,7 @@ def schedule_action_view(request):
         "deliveryType": delivery_type,
         "ssaCollectionExpected": is_ssa_expected,
     }
-    
+
     if scheduled_date:
         try:
             dt = date.fromisoformat(scheduled_date)
@@ -232,38 +325,51 @@ def schedule_action_view(request):
         payload["assignedPartnerId"] = partner_id
 
     try:
-        if activity_type in ["school_visit", "baseline_ssa_visit", "school_visit_ssa_collection"]:
+        if activity_type in [
+            "school_visit",
+            "baseline_ssa_visit",
+            "school_visit_ssa_collection",
+        ]:
             schedule_school_visit(payload, request.user)
-            messages.success(request, f"School visit scheduled successfully.")
+            messages.success(request, "School visit scheduled successfully.")
         else:
             schedule_cluster_activity(payload, request.user)
-            messages.success(request, f"Cluster activity scheduled successfully.")
-            
+            messages.success(request, "Cluster activity scheduled successfully.")
+
         # Redirect to My Plan and close drawer via client headers
         response = HttpResponse('<script>window.location.href = "/my-plan/";</script>')
         response["HX-Trigger"] = "close-drawer"
         return response
     except Exception as e:
-        return HttpResponse(f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error: {str(e)}</div>', status=400)
+        return HttpResponse(
+            f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error: {str(e)}</div>',
+            status=400,
+        )
 
 
 @require_page_permission("planning")
 def assign_partner_modal_view(request):
     if not RolePermissionService.can_assign_to_partner(request.user):
-        return HttpResponseForbidden("Access Denied: You do not have permission to assign to partner.")
+        return HttpResponseForbidden(
+            "Access Denied: You do not have permission to assign to partner."
+        )
 
     school_id = request.GET.get("school_id")
     cluster_id = request.GET.get("cluster_id")
-    
+
     school = None
     cluster = None
     if school_id:
-        school = get_scoped_object_or_404(School, request.user, Q(id=school_id) | Q(school_id=school_id))
+        school = get_scoped_object_or_404(
+            School, request.user, Q(id=school_id) | Q(school_id=school_id)
+        )
     if cluster_id:
         cluster = get_scoped_object_or_404(Cluster, request.user, id=cluster_id)
 
-    partners = Partner.objects.filter(deleted_at__isnull=True, active_status=True).order_by("name")
-    
+    partners = Partner.objects.filter(
+        deleted_at__isnull=True, active_status=True
+    ).order_by("name")
+
     context = {
         "school": school,
         "cluster": cluster,
@@ -278,7 +384,9 @@ def assign_partner_modal_view(request):
 @require_page_permission("planning")
 def assign_partner_action_view(request):
     if not RolePermissionService.can_assign_to_partner(request.user):
-        return HttpResponseForbidden("Access Denied: You do not have permission to assign to partner.")
+        return HttpResponseForbidden(
+            "Access Denied: You do not have permission to assign to partner."
+        )
 
     if request.method != "POST":
         return HttpResponse("Method not allowed", status=405)
@@ -287,28 +395,33 @@ def assign_partner_action_view(request):
     cluster_id = request.POST.get("cluster_id")
     partner_id = request.POST.get("partner_id")
     activity_type = request.POST.get("activity_type", "school_visit")
-    
+
     try:
         partner = get_object_or_404(Partner, id=partner_id)
-        
+
         from apps.activities.models import Activity
         from apps.core.fy import get_operational_fy, get_quarter_for_date
-        
+
         fy = get_operational_fy()
         quarter = get_quarter_for_date(timezone.now().date())
-        
+
         if school_id:
-            school = get_scoped_object_or_404(School, request.user, Q(id=school_id) | Q(school_id=school_id))
+            school = get_scoped_object_or_404(
+                School, request.user, Q(id=school_id) | Q(school_id=school_id)
+            )
             PartnerAssignment.objects.create(
                 school=school,
                 partner=partner,
                 assigning_staff_id=request.user.user_id or request.user.id,
                 purpose=f"Assigned for {activity_type}",
-                status="pending_scheduling"
+                status="pending_scheduling",
             )
             # Create Activity
             Activity.objects.create(
-                activity_type=activity_type if activity_type in ["school_visit", "follow_up_visit", "coaching_visit"] else "school_visit",
+                activity_type=activity_type
+                if activity_type
+                in ["school_visit", "follow_up_visit", "coaching_visit"]
+                else "school_visit",
                 school=school,
                 fy=fy,
                 quarter=quarter,
@@ -316,12 +429,18 @@ def assign_partner_action_view(request):
                 assigned_partner_id=partner.id,
                 monitored_by_staff_id=request.user.user_id or request.user.id,
                 status="assigned_to_partner",
-                activity_purpose_text=f"Assigned for {activity_type}"
+                activity_purpose_text=f"Assigned for {activity_type}",
             )
             # Update status
             school.current_fy_ssa_status = "partner_assigned"
             school.planning_readiness = "limited"
-            school.save(update_fields=["current_fy_ssa_status", "planning_readiness", "updated_at"])
+            school.save(
+                update_fields=[
+                    "current_fy_ssa_status",
+                    "planning_readiness",
+                    "updated_at",
+                ]
+            )
 
         if cluster_id:
             cluster = get_scoped_object_or_404(Cluster, request.user, id=cluster_id)
@@ -331,10 +450,12 @@ def assign_partner_action_view(request):
                 partner=partner,
                 assigning_staff_id=request.user.user_id or request.user.id,
                 purpose=f"Cluster assignment: {cluster.name}",
-                status="pending_scheduling"
+                status="pending_scheduling",
             )
             # Create Activity for cluster
-            act_type = "cluster_meeting" if activity_type == "meeting" else "cluster_training"
+            act_type = (
+                "cluster_meeting" if activity_type == "meeting" else "cluster_training"
+            )
             Activity.objects.create(
                 activity_type=act_type,
                 cluster=cluster,
@@ -344,61 +465,89 @@ def assign_partner_action_view(request):
                 assigned_partner_id=partner.id,
                 monitored_by_staff_id=request.user.user_id or request.user.id,
                 status="assigned_to_partner",
-                activity_purpose_text=f"Cluster assignment: {cluster.name}"
+                activity_purpose_text=f"Cluster assignment: {cluster.name}",
             )
             # Assign all schools in the cluster
-            for school in School.objects.filter(cluster_assignments__cluster=cluster, deleted_at__isnull=True):
+            for school in School.objects.filter(
+                cluster_assignments__cluster=cluster, deleted_at__isnull=True
+            ):
                 PartnerAssignment.objects.create(
                     school=school,
                     partner=partner,
                     assigning_staff_id=request.user.user_id or request.user.id,
                     purpose=f"Cluster assignment: {cluster.name}",
-                    status="pending_scheduling"
+                    status="pending_scheduling",
                 )
                 school.current_fy_ssa_status = "partner_assigned"
                 school.planning_readiness = "limited"
-                school.save(update_fields=["current_fy_ssa_status", "planning_readiness", "updated_at"])
+                school.save(
+                    update_fields=[
+                        "current_fy_ssa_status",
+                        "planning_readiness",
+                        "updated_at",
+                    ]
+                )
 
         # Return refresh trigger and close drawer
-        response = HttpResponse('<script>window.location.reload();</script>')
+        response = HttpResponse("<script>window.location.reload();</script>")
         response["HX-Trigger"] = "close-drawer"
         return response
     except Exception as e:
-        return HttpResponse(f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error: {str(e)}</div>', status=400)
+        return HttpResponse(
+            f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error: {str(e)}</div>',
+            status=400,
+        )
 
 
 @require_page_permission("planning")
 def planning_intelligence_view(request):
     school_id = request.GET.get("school_id")
     if not school_id:
-        return HttpResponse('<p class="text-slate-400 text-[11.5px] font-bold py-6 text-center">Select a school to view planning intelligence.</p>')
+        return HttpResponse(
+            '<div class="card p-5 h-full flex items-center justify-center" id="planning-intelligence-panel">'
+            '<p class="text-slate-400 text-[11.5px] font-semibold text-center">Select a school to view planning intelligence.</p>'
+            "</div>"
+        )
 
-    school = School.objects.filter(Q(id=school_id) | Q(school_id=school_id)).first()
-    if not school:
-        return HttpResponse('<p class="text-rose-500 text-[11.5px] font-bold py-6 text-center">School not found.</p>')
+    school = get_scoped_object_or_404(
+        School, request.user, Q(id=school_id) | Q(school_id=school_id)
+    )
 
     # Fetch latest SSA date
-    latest_ssa = school.ssa_records.filter(deleted_at__isnull=True).order_by("-date_of_ssa").first()
+    latest_ssa = (
+        school.ssa_records.filter(deleted_at__isnull=True)
+        .order_by("-date_of_ssa")
+        .first()
+    )
     last_ssa_date = latest_ssa.date_of_ssa.strftime("%d %b %Y") if latest_ssa else "—"
 
     # Weakest area
     weakest_area = "—"
     if latest_ssa:
-        scores = sorted(list(latest_ssa.scores.all().values("intervention", "score")), key=lambda s: s["score"])
+        scores = sorted(
+            list(latest_ssa.scores.all().values("intervention", "score")),
+            key=lambda s: s["score"],
+        )
         if scores:
-            weakest_area = dict(SsaIntervention.choices).get(scores[0]["intervention"], scores[0]["intervention"])
+            weakest_area = dict(SsaIntervention.choices).get(
+                scores[0]["intervention"], scores[0]["intervention"]
+            )
 
     # Assigned staff
     assigned_staff = "—"
     if school.account_owner_id:
-        owner_profile = StaffProfile.objects.filter(user_id=school.account_owner_id).select_related("user").first()
+        owner_profile = (
+            StaffProfile.objects.filter(user_id=school.account_owner_id)
+            .select_related("user")
+            .first()
+        )
         if owner_profile:
             assigned_staff = owner_profile.user.name
 
     # recommended step
     recommended_step = "Schedule visit"
     recommended_desc = "SSA is complete and the school is ready for planning."
-    
+
     if school.current_fy_ssa_status != "done":
         recommended_step = "Upload SSA before planning"
         recommended_desc = "SSA has not been recorded for this FY yet."
@@ -416,6 +565,8 @@ def planning_intelligence_view(request):
         if c_obj:
             cluster_name = c_obj.name
 
+    from apps.budget.costing_service import active_catalogue
+
     context = {
         "school": school,
         "last_ssa_date": last_ssa_date,
@@ -424,6 +575,7 @@ def planning_intelligence_view(request):
         "recommended_step": recommended_step,
         "recommended_desc": recommended_desc,
         "cluster_name": cluster_name,
+        "cost_ready": active_catalogue() is not None,
     }
     return render(request, "partials/planning/right_panel.html", context)
 
@@ -440,74 +592,110 @@ def bulk_action_view(request):
         return HttpResponse("No schools selected", status=400)
 
     schools = School.objects.filter(school_id__in=school_ids)
-    
+
     if action == "export":
         # CSV Export simple response
         import csv
+
         response = HttpResponse(content_type="text/csv")
-        response["Content-Disposition"] = 'attachment; filename="bulk_planning_export.csv"'
+        response["Content-Disposition"] = (
+            'attachment; filename="bulk_planning_export.csv"'
+        )
         writer = csv.writer(response)
-        writer.writerow(["School ID", "Name", "District", "Cluster", "Planning Readiness"])
+        writer.writerow(
+            ["School ID", "Name", "District", "Cluster", "Planning Readiness"]
+        )
         for s in schools:
-            writer.writerow([s.school_id, s.name, s.district.name, s.cluster_id or "—", s.planning_readiness])
+            writer.writerow(
+                [
+                    s.school_id,
+                    s.name,
+                    s.district.name,
+                    s.cluster_id or "—",
+                    s.planning_readiness,
+                ]
+            )
         return response
 
     elif action == "partner":
         # Bulk Assign Partner
         if not RolePermissionService.can_assign_to_partner(request.user):
-            return HttpResponseForbidden("Access Denied: You do not have permission to assign to partner.")
+            return HttpResponseForbidden(
+                "Access Denied: You do not have permission to assign to partner."
+            )
 
         partner_id = request.POST.get("partner_id")
         partner = get_object_or_404(Partner, id=partner_id)
-        
+
         for s in schools:
             PartnerAssignment.objects.create(
                 school=s,
                 partner=partner,
                 assigning_staff_id=request.user.user_id,
-                purpose="Bulk Partner Assignment"
+                purpose="Bulk Partner Assignment",
             )
             s.current_fy_ssa_status = "partner_assigned"
             s.planning_readiness = "limited"
-            s.save(update_fields=["current_fy_ssa_status", "planning_readiness", "updated_at"])
+            s.save(
+                update_fields=[
+                    "current_fy_ssa_status",
+                    "planning_readiness",
+                    "updated_at",
+                ]
+            )
 
-        return HttpResponse('<script>window.location.reload();</script>')
+        return HttpResponse("<script>window.location.reload();</script>")
 
     return HttpResponse("Action processed", status=200)
 
 
 @require_page_permission("planning")
 def schedule_activity_form_view(request):
-    action = request.GET.get("action", "visit") # visit, training, meeting
+    action = request.GET.get("action", "visit")  # visit, training, meeting
     school_id = request.GET.get("school", "")
     cluster_id = request.GET.get("cluster", "")
 
     # Populate lookups
     schools = School.objects.filter(deleted_at__isnull=True).order_by("name")
     clusters = Cluster.objects.filter(deleted_at__isnull=True).order_by("name")
-    partners = Partner.objects.filter(deleted_at__isnull=True, active_status=True).order_by("name")
+    partners = Partner.objects.filter(
+        deleted_at__isnull=True, active_status=True
+    ).order_by("name")
 
-    selected_school = School.objects.filter(Q(id=school_id) | Q(school_id=school_id)).first() if school_id else None
-    selected_cluster = Cluster.objects.filter(id=cluster_id).first() if cluster_id else None
+    selected_school = (
+        School.objects.filter(Q(id=school_id) | Q(school_id=school_id)).first()
+        if school_id
+        else None
+    )
+    selected_cluster = (
+        Cluster.objects.filter(id=cluster_id).first() if cluster_id else None
+    )
 
     # Resolve focus recommendations if school chosen
     recommendations = []
     if selected_school:
-        latest_ssa = selected_school.ssa_records.filter(deleted_at__isnull=True).order_by("-date_of_ssa").first()
+        latest_ssa = (
+            selected_school.ssa_records.filter(deleted_at__isnull=True)
+            .order_by("-date_of_ssa")
+            .first()
+        )
         if latest_ssa:
-            scores = sorted(list(latest_ssa.scores.all().values("intervention", "score")), key=lambda s: s["score"])
+            scores = sorted(
+                list(latest_ssa.scores.all().values("intervention", "score")),
+                key=lambda s: s["score"],
+            )
             for s in scores[:2]:
                 code = s["intervention"]
                 label = dict(SsaIntervention.choices).get(code, code)
-                recommendations.append({
-                    "code": code,
-                    "label": label,
-                    "score": s["score"]
-                })
+                recommendations.append(
+                    {"code": code, "label": label, "score": s["score"]}
+                )
 
     if request.method == "POST":
         if not RolePermissionService.can_schedule_activity(request.user):
-            return HttpResponseForbidden("Access Denied: You do not have permission to schedule activities.")
+            return HttpResponseForbidden(
+                "Access Denied: You do not have permission to schedule activities."
+            )
 
         activity_type = request.POST.get("activity_type", "")
         school_id_str = request.POST.get("school_id", "").strip()
@@ -531,7 +719,7 @@ def schedule_activity_form_view(request):
             "expectedOutcome": expected_outcome,
             "deliveryType": delivery_type,
         }
-        
+
         if scheduled_date:
             try:
                 dt = date.fromisoformat(scheduled_date)
@@ -557,10 +745,10 @@ def schedule_activity_form_view(request):
         try:
             if activity_type == "school_visit":
                 schedule_school_visit(payload, request.user)
-                messages.success(request, f"School visit scheduled successfully.")
+                messages.success(request, "School visit scheduled successfully.")
             else:
                 schedule_cluster_activity(payload, request.user)
-                messages.success(request, f"Cluster activity scheduled successfully.")
+                messages.success(request, "Cluster activity scheduled successfully.")
             return redirect("/planning")
         except Exception as e:
             messages.error(request, f"Error: {e}")

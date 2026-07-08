@@ -3,21 +3,52 @@
 {% block title %}Coverage — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6">
+<div class="p-6 space-y-5 font-sans text-slate-700">
 
-<div class="flex items-center justify-between">
-<div>
-<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight">Coverage</h1>
-<p class="text-[12px] text-[var(--text-secondary)] mt-1 font-semibold">Edify Operations · Coverage</p>
-</div>
-</div>
+{% include "components/page_header.html" with title="Coverage" subtitle="School visit coverage across the directory and by cluster." %}
 
-<div class="grid grid-cols-3 gap-4">
-<div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm text-center"><p class="text-[28px] font-semibold text-indigo-600">{{ total_schools }}</p><p class="text-[11px] font-bold text-slate-400 uppercase mt-1">Total Schools</p></div>
-<div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm text-center"><p class="text-[28px] font-semibold text-emerald-600">{{ visited }}</p><p class="text-[11px] font-bold text-slate-400 uppercase mt-1">Visited</p></div>
-<div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm text-center"><p class="text-[28px] font-semibold text-rose-500">{{ unvisited }}</p><p class="text-[11px] font-bold text-slate-400 uppercase mt-1">Not Yet Visited</p></div>
-</div>
-<div class="bg-gradient-to-r from-indigo-600 to-violet-600 rounded-2xl p-5 text-white"><p class="text-[11px] font-bold uppercase tracking-wider text-indigo-200">Coverage Rate</p><p class="text-[36px] font-semibold mt-1">{{ coverage_pct }}%</p></div>
+{% include "components/role_scope_notice.html" with scope_text="Showing all schools in the directory and their visit coverage." %}
+
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
+
+<section class="card p-5 space-y-3.5">
+  <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+    <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Cluster Coverage <span class="text-[11px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-semibold ml-1">{{ clusters|length }}</span></h3>
+    <a class="text-[11px] font-semibold text-blue-600 hover:underline" href="/clusters">View all clusters</a>
+  </div>
+  {% if clusters %}
+  <div class="overflow-x-auto">
+    <table class="w-full text-left text-[12px] font-semibold text-slate-600 border-collapse">
+      <thead>
+        <tr class="text-[11px] uppercase tracking-wider text-slate-400 border-b border-slate-100">
+          <th class="py-2 px-2">Cluster</th>
+          <th class="py-2 px-2 text-center">Schools</th>
+          <th class="py-2 px-2 text-center">Visited</th>
+          <th class="py-2 px-2 text-right">Coverage</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for c in clusters %}
+        <tr class="hover:bg-slate-50/60 transition-colors">
+          <td class="py-2.5 px-2 font-semibold text-slate-900">{{ c.name }}</td>
+          <td class="py-2.5 px-2 text-center">{{ c.school_count }}</td>
+          <td class="py-2.5 px-2 text-center">{{ c.visited_count }}</td>
+          <td class="py-2.5 px-2 text-right">
+            {% if c.school_count %}
+              {% widthratio c.visited_count c.school_count 100 %}%
+            {% else %}
+              <span class="text-slate-300">—</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  {% include "components/empty_state.html" with title="No clusters created yet" message="Cluster-level coverage appears once clusters are set up." cta_label="View clusters" cta_href="/clusters" compact="true" %}
+  {% endif %}
+</section>
 
 </div>
 {% endblock %}

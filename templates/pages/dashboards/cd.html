@@ -6,163 +6,29 @@
 {% block shell_content %}
 <div class="p-6 max-w-[1500px] mx-auto space-y-5 text-slate-700" id="main-dashboard-container">
 
-<!-- ================= HEADER ================= -->
-<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 border-b border-slate-100 pb-3">
-  <div>
-    <h1 class="text-[18px] font-semibold text-slate-800 tracking-tight">Country Director Dashboard</h1>
-    <p class="text-[12px] text-slate-500 font-normal mt-0.5">National program performance, approvals, targets, and operational risk.</p>
-  </div>
-  <div class="flex flex-wrap items-center gap-2">
-    <select class="h-8 px-3 bg-white rounded-md text-[12px] font-medium text-slate-600 shadow-sm outline-none">
-      <option>FY {{ fy }}</option>
-    </select>
-    <select class="h-8 px-3 bg-white rounded-md text-[12px] font-medium text-slate-600 shadow-sm outline-none">
-      <option>Uganda</option>
-    </select>
-  </div>
-</div>
+{% include "components/page_header.html" with title="Country Director Dashboard" subtitle="National program performance, approvals, targets, and operational risk." %}
 
-<!-- ================= KPI STRIP (8 cards, all real) ================= -->
-<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
-  {% include "components/kpi_card.html" with label="National Achievement" value=national_achievement|add:"%" tone="info" hint="Completed / (Planned + Completed)" %}
-  {% include "components/kpi_card.html" with label="Active Schools" value=total_schools hint="In the directory" %}
-  {% include "components/kpi_card.html" with label="Avg National SSA" value=avg_national_ssa tone="info" hint="Confirmed records, FY"|add:fy %}
-  {% include "components/kpi_card.html" with label="SF Backlog" value=sf_backlog tone="warning" hint="Completed, missing SF ID" %}
-  {% include "components/kpi_card.html" with label="Pending Fund Requests" value=pending_funds|length hint="Awaiting CD approval" %}
-  {% include "components/kpi_card.html" with label="Disbursed (FY)" value=budget_summary.total_disbursed|ugx tone="success" hint="Of UGX "|add:budget_summary.planned_total|ugx|add:" planned" %}
-  {% include "components/kpi_card.html" with label="Budget Util." value=budget_summary.utilization_pct|add:"%" tone="info" hint="Disbursed vs planned" %}
-  {% include "components/kpi_card.html" with label="High-Risk Regions" value=high_risk_count tone="danger" hint="Below 60% achievement" %}
-</div>
+{% include "components/role_scope_notice.html" with scope_text="Showing national data for FY "|add:fy %}
 
-<!-- ================= LEADERSHIP ATTENTION (real alerts only) ================= -->
+<!-- ================= KPI STRIP (8 metrics, all real) ================= -->
+{% include "components/kpi_strip.html" with items=cd_kpi_strip_items %}
+
+<!-- ================= LEADERSHIP ATTENTION (real alerts only, max 3) ================= -->
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-  {% for region in regions_list %}
-    {% if region.rate < 60 %}
-    <div class="p-4 bg-rose-50 rounded-xl flex items-start gap-3">
-      <div class="h-8 w-8 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-      </div>
-      <div class="flex-1 min-w-0">
-        <h4 class="text-[13px] font-semibold text-slate-800">{{ region.name }} Behind Target</h4>
-        <p class="text-[12px] text-slate-500 font-normal mt-0.5">{{ region.name }} is at {{ region.rate }}% vs national target.</p>
-        <a href="/coverage" class="text-[12px] font-medium text-blue-600 hover:underline block mt-1.5">View Regional Performance &rarr;</a>
-      </div>
-    </div>
-    {% endif %}
+  {% for card in cd_alert_cards %}
+  {% include "components/action_card.html" with kind=card.kind title=card.title body=card.body cta_label=card.cta_label cta_href=card.cta_href %}
+  {% empty %}
+  {% include "components/action_card.html" with kind="neutral" title="No leadership alerts" body="Regional performance, Salesforce sync, and fund approvals are all within range." %}
   {% endfor %}
-  {% if sf_backlog > 0 %}
-  <div class="p-4 bg-amber-50 rounded-xl flex items-start gap-3">
-    <div class="h-8 w-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
-      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-    </div>
-    <div class="flex-1 min-w-0">
-      <h4 class="text-[13px] font-semibold text-slate-800">Salesforce Backlog</h4>
-      <p class="text-[12px] text-slate-500 font-normal mt-0.5">{{ sf_backlog }} completed activities missing Salesforce IDs.</p>
-      <a href="/completed-activities" class="text-[12px] font-medium text-blue-600 hover:underline block mt-1.5">Inspect Backlog &rarr;</a>
-    </div>
-  </div>
-  {% endif %}
-  {% if pending_funds %}
-  <div class="p-4 bg-blue-50 rounded-xl flex items-start gap-3">
-    <div class="h-8 w-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
-      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-    </div>
-    <div class="flex-1 min-w-0">
-      <h4 class="text-[13px] font-semibold text-slate-800">{{ pending_funds|length }} Fund Requests Pending</h4>
-      <p class="text-[12px] text-slate-500 font-normal mt-0.5">Awaiting your Country Director approval.</p>
-      <a href="/fund-requests/weekly" class="text-[12px] font-medium text-blue-600 hover:underline block mt-1.5">Review Approvals &rarr;</a>
-    </div>
-  </div>
-  {% endif %}
 </div>
 
 <!-- ================= MIDDLE ROW ================= -->
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
 
   <!-- Country Performance Overview (Chart) -->
-  <div class="lg:col-span-8 card p-5 space-y-3"
-    x-data="{
-      chart: null,
-      initChart() {
-        if (this.chart) this.chart.destroy();
-        
-        const options = {
-          series: [
-            { name: 'Planned', type: 'column', data: {{ chart_planned|safe }} },
-            { name: 'Completed', type: 'column', data: {{ chart_completed|safe }} },
-            { name: 'Verified', type: 'line', data: {{ chart_verified|safe }} }
-          ],
-          chart: {
-            height: 220,
-            type: 'line',
-            toolbar: { show: false },
-            fontFamily: 'Outfit, sans-serif'
-          },
-          stroke: {
-            width: [0, 0, 2],
-            curve: 'smooth'
-          },
-          colors: ['#e2e8f0', '#3b82f6', '#10b981'],
-          plotOptions: {
-            bar: {
-              columnWidth: '45%',
-              borderRadius: 3
-            }
-          },
-          labels: {{ chart_labels|safe }},
-          xaxis: {
-            type: 'category',
-            axisBorder: { show: false },
-            axisTicks: { show: false },
-            labels: {
-              style: {
-                colors: '#94a3b8',
-                fontSize: '10px',
-                fontWeight: '500'
-              }
-            }
-          },
-          yaxis: {
-            labels: {
-              style: {
-                colors: '#94a3b8',
-                fontSize: '10px'
-              }
-            }
-          },
-          grid: {
-            borderColor: '#f1f5f9'
-          },
-          legend: {
-            position: 'top',
-            horizontalAlign: 'right',
-            fontSize: '11px',
-            fontWeight: '500',
-            labels: {
-              colors: '#64748b'
-            },
-            markers: {
-              radius: 12
-            }
-          },
-          tooltip: {
-            theme: 'dark'
-          }
-        };
-
-        this.chart = new ApexCharts(document.querySelector('#cdPerformanceChart'), options);
-        this.chart.render();
-      }
-    }"
-    x-init="initChart()"
-  >
-    <div class="flex items-start justify-between">
-      <div>
-        <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Country Performance Overview</h3>
-        <p class="text-[11px] text-slate-400 font-normal mt-0.5">Planned vs Completed vs Verified activities across FY{{ fy }}</p>
-      </div>
-    </div>
-    <div class="h-[220px] w-full" id="cdPerformanceChart"></div>
+  <div class="lg:col-span-8">
+    {% include "components/chart_card.html" with chart_id="cd-performance-chart" title="Country Performance Overview" subtitle="Planned vs Completed vs Verified activities across FY"|add:fy has_data=has_cd_chart_data height=240 %}
+    {{ cd_performance_chart|json_script:"cd-performance-chart-config" }}
   </div>
 
   <!-- Regional Performance -->

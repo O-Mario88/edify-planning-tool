@@ -11,7 +11,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("fund_requests", "0003_advancerequest"),
     ]
@@ -23,4 +22,3 @@ class Migration(migrations.Migration):
             # No-op on backends that don't have the table (e.g. fresh test DB).
         ),
     ]
-

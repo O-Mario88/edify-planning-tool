@@ -4,6 +4,7 @@ Auth endpoints — /api/auth/* (login, me, refresh, logout, forgot/reset, invite
 The ONLY controller without a class-level auth guard: login/refresh/reset are
 public; `me` requires JWT. Login + forgot-password are rate-limited.
 """
+
 from __future__ import annotations
 
 from rest_framework.permissions import AllowAny
@@ -70,7 +71,9 @@ class MeView(APIView):
                     "canApprove": scope.can_approve,
                     "canAssign": scope.can_assign,
                     "canExport": scope.can_export,
-                    "schoolsInScope": None if scope.country_scope else len(scope.school_ids),
+                    "schoolsInScope": None
+                    if scope.country_scope
+                    else len(scope.school_ids),
                 },
             }
         )
@@ -112,7 +115,9 @@ class ResetPasswordView(APIView):
         s = ResetPasswordSerializer(data=request.data)
         s.is_valid(raise_exception=True)
         d = s.validated_data
-        return Response(auth_services.reset_password(d["token"], d["password"], d["confirm"]))
+        return Response(
+            auth_services.reset_password(d["token"], d["password"], d["confirm"])
+        )
 
 
 class InviteValidateView(APIView):
@@ -130,4 +135,6 @@ class SetPasswordView(APIView):
         s = SetPasswordSerializer(data=request.data)
         s.is_valid(raise_exception=True)
         d = s.validated_data
-        return Response(auth_services.set_password(d["token"], d["password"], d["confirm"]))
+        return Response(
+            auth_services.set_password(d["token"], d["password"], d["confirm"])
+        )

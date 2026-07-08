@@ -1,4 +1,5 @@
 """Schools serializers."""
+
 from __future__ import annotations
 
 from rest_framework import serializers
@@ -87,6 +88,8 @@ class SchoolDetailSerializer(SchoolRowSerializer):
     uploadedSubCountyText = serializers.CharField(source="uploaded_sub_county_text")
     uploadedParishText = serializers.CharField(source="uploaded_parish_text")
     geographyMatchStatus = serializers.CharField(source="geography_match_status")
-    geographyMatchConfidence = serializers.FloatField(source="geography_match_confidence")
+    geographyMatchConfidence = serializers.FloatField(
+        source="geography_match_confidence"
+    )
     salesforceAccountId = serializers.CharField(source="salesforce_account_id")
     createdByIa = serializers.BooleanField(source="created_by_ia")

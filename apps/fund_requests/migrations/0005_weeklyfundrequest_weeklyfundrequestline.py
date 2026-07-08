@@ -7,61 +7,126 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('activities', '0004_activity_fiscal_year_activity_planned_date_and_more'),
-        ('fund_requests', '0004_alter_advancerequest_responsible_user_id'),
+        ("activities", "0004_activity_fiscal_year_activity_planned_date_and_more"),
+        ("fund_requests", "0004_alter_advancerequest_responsible_user_id"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='WeeklyFundRequest',
+            name="WeeklyFundRequest",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('fy', models.CharField(max_length=16)),
-                ('week_start_date', models.DateField()),
-                ('week_end_date', models.DateField()),
-                ('responsible_user', models.CharField(max_length=30)),
-                ('responsible_role', models.CharField(blank=True, max_length=64, null=True)),
-                ('total_amount', models.BigIntegerField(default=0)),
-                ('status', models.CharField(default='pending_responsible_confirmation', max_length=40)),
-                ('disbursed_amount', models.BigIntegerField(blank=True, null=True)),
-                ('disbursed_at', models.DateTimeField(blank=True, null=True)),
-                ('disbursed_by_user_id', models.CharField(blank=True, max_length=30, null=True)),
-                ('disburse_method', models.CharField(blank=True, max_length=64, null=True)),
-                ('disburse_reference', models.CharField(blank=True, max_length=128, null=True)),
-                ('accounted_amount', models.BigIntegerField(blank=True, null=True)),
-                ('returned_amount', models.BigIntegerField(blank=True, null=True)),
-                ('accountability_netsuite_id', models.CharField(blank=True, max_length=128, null=True)),
-                ('accountability_submitted_at', models.DateTimeField(blank=True, null=True)),
-                ('accountability_reviewed_at', models.DateTimeField(blank=True, null=True)),
-                ('confirmed_at', models.DateTimeField(blank=True, null=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("fy", models.CharField(max_length=16)),
+                ("week_start_date", models.DateField()),
+                ("week_end_date", models.DateField()),
+                ("responsible_user", models.CharField(max_length=30)),
+                (
+                    "responsible_role",
+                    models.CharField(blank=True, max_length=64, null=True),
+                ),
+                ("total_amount", models.BigIntegerField(default=0)),
+                (
+                    "status",
+                    models.CharField(
+                        default="pending_responsible_confirmation", max_length=40
+                    ),
+                ),
+                ("disbursed_amount", models.BigIntegerField(blank=True, null=True)),
+                ("disbursed_at", models.DateTimeField(blank=True, null=True)),
+                (
+                    "disbursed_by_user_id",
+                    models.CharField(blank=True, max_length=30, null=True),
+                ),
+                (
+                    "disburse_method",
+                    models.CharField(blank=True, max_length=64, null=True),
+                ),
+                (
+                    "disburse_reference",
+                    models.CharField(blank=True, max_length=128, null=True),
+                ),
+                ("accounted_amount", models.BigIntegerField(blank=True, null=True)),
+                ("returned_amount", models.BigIntegerField(blank=True, null=True)),
+                (
+                    "accountability_netsuite_id",
+                    models.CharField(blank=True, max_length=128, null=True),
+                ),
+                (
+                    "accountability_submitted_at",
+                    models.DateTimeField(blank=True, null=True),
+                ),
+                (
+                    "accountability_reviewed_at",
+                    models.DateTimeField(blank=True, null=True),
+                ),
+                ("confirmed_at", models.DateTimeField(blank=True, null=True)),
             ],
             options={
-                'db_table': 'weekly_fund_request',
-                'constraints': [models.UniqueConstraint(fields=('responsible_user', 'week_start_date'), name='uniq_weekly_request_owner_week')],
+                "db_table": "weekly_fund_request",
+                "constraints": [
+                    models.UniqueConstraint(
+                        fields=("responsible_user", "week_start_date"),
+                        name="uniq_weekly_request_owner_week",
+                    )
+                ],
             },
         ),
         migrations.CreateModel(
-            name='WeeklyFundRequestLine',
+            name="WeeklyFundRequestLine",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('line_item_type', models.CharField(max_length=64)),
-                ('description', models.CharField(max_length=255)),
-                ('quantity', models.IntegerField(default=1)),
-                ('unit_cost', models.BigIntegerField()),
-                ('total_cost', models.BigIntegerField()),
-                ('currency', models.CharField(default='UGX', max_length=8)),
-                ('activity_budget_line', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='weekly_request_lines', to='activities.activityschedulecostline')),
-                ('weekly_fund_request', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='lines', to='fund_requests.weeklyfundrequest')),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("line_item_type", models.CharField(max_length=64)),
+                ("description", models.CharField(max_length=255)),
+                ("quantity", models.IntegerField(default=1)),
+                ("unit_cost", models.BigIntegerField()),
+                ("total_cost", models.BigIntegerField()),
+                ("currency", models.CharField(default="UGX", max_length=8)),
+                (
+                    "activity_budget_line",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="weekly_request_lines",
+                        to="activities.activityschedulecostline",
+                    ),
+                ),
+                (
+                    "weekly_fund_request",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="lines",
+                        to="fund_requests.weeklyfundrequest",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'weekly_fund_request_line',
-                'constraints': [models.UniqueConstraint(fields=('weekly_fund_request', 'activity_budget_line'), name='uniq_weekly_line_budget_line')],
+                "db_table": "weekly_fund_request_line",
+                "constraints": [
+                    models.UniqueConstraint(
+                        fields=("weekly_fund_request", "activity_budget_line"),
+                        name="uniq_weekly_line_budget_line",
+                    )
+                ],
             },
         ),
     ]

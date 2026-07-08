@@ -1,4 +1,5 @@
 """Budgets URL routes — /api/budgets/* (program + admin aggregation by period)."""
+
 from django.urls import path
 
 from . import views

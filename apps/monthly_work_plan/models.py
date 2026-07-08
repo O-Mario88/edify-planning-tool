@@ -1,4 +1,5 @@
 """Monthly work-plan budget models — CD→RVP monthly budget routing."""
+
 from __future__ import annotations
 
 from django.db import models
@@ -27,7 +28,11 @@ class MonthlyWorkPlanBudget(TimeStampedModel):
     country_id = models.CharField(max_length=64, null=True, blank=True)
     generated_at = models.DateTimeField(auto_now_add=True)
     generated_by = models.CharField(max_length=30, null=True, blank=True)
-    status = models.CharField(max_length=32, choices=MonthlyWorkPlanBudgetStatus.choices, default=MonthlyWorkPlanBudgetStatus.DRAFT_GENERATED)
+    status = models.CharField(
+        max_length=32,
+        choices=MonthlyWorkPlanBudgetStatus.choices,
+        default=MonthlyWorkPlanBudgetStatus.DRAFT_GENERATED,
+    )
     program_total = models.BigIntegerField(default=0)  # UGX
     admin_total = models.BigIntegerField(default=0)  # UGX
     total_amount = models.BigIntegerField(default=0)  # UGX
@@ -41,18 +46,29 @@ class MonthlyWorkPlanBudget(TimeStampedModel):
 
     class Meta:
         db_table = "monthly_work_plan_budget"
-        constraints = [models.UniqueConstraint(fields=["country_id", "month_key"], name="uniq_country_month")]
-        indexes = [models.Index(fields=["status"]), models.Index(fields=["fy", "month_key"])]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["country_id", "month_key"], name="uniq_country_month"
+            )
+        ]
+        indexes = [
+            models.Index(fields=["status"]),
+            models.Index(fields=["fy", "month_key"]),
+        ]
 
 
 class AdminBudgetLine(TimeStampedModel):
     """A CD-added administrative budget line (rent, airtime, …)."""
 
     id = CuidField()
-    monthly_budget = models.ForeignKey(MonthlyWorkPlanBudget, on_delete=models.CASCADE, related_name="admin_lines")
+    monthly_budget = models.ForeignKey(
+        MonthlyWorkPlanBudget, on_delete=models.CASCADE, related_name="admin_lines"
+    )
     cost_category = models.CharField(max_length=64)
     description = models.CharField(max_length=512)
-    quantity = models.DecimalField(max_digits=12, decimal_places=2, default=1)  # qty may be fractional (days)
+    quantity = models.DecimalField(
+        max_digits=12, decimal_places=2, default=1
+    )  # qty may be fractional (days)
     unit_cost = models.BigIntegerField()  # UGX
     total_cost = models.BigIntegerField()  # UGX
     justification = models.TextField(null=True, blank=True)

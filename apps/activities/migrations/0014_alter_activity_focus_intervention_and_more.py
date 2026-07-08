@@ -5,25 +5,69 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('activities', '0013_alter_activity_activity_type'),
+        ("activities", "0013_alter_activity_activity_type"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='activity',
-            name='focus_intervention',
-            field=models.CharField(blank=True, choices=[('christlike_behaviour', 'Christlike Behaviour'), ('exposure_to_word_of_god', 'Exposure to Word of God'), ('financial_health', 'Financial Health'), ('leadership', 'Leadership'), ('learning_environment', 'Learning Environment'), ('government_requirement', 'Government Requirement'), ('teaching_environment', 'Teaching Environment'), ('enrolment', 'Enrolment')], max_length=64, null=True),
+            model_name="activity",
+            name="focus_intervention",
+            field=models.CharField(
+                blank=True,
+                choices=[
+                    ("christlike_behaviour", "Christlike Behaviour"),
+                    ("exposure_to_word_of_god", "Exposure to Word of God"),
+                    ("financial_health", "Financial Health"),
+                    ("leadership", "Leadership"),
+                    ("learning_environment", "Learning Environment"),
+                    ("government_requirement", "Government Requirement"),
+                    ("teaching_environment", "Teaching Environment"),
+                    ("enrolment", "Enrolment"),
+                ],
+                max_length=64,
+                null=True,
+            ),
         ),
         migrations.AlterField(
-            model_name='activity',
-            name='purpose_intervention',
-            field=models.CharField(blank=True, choices=[('christlike_behaviour', 'Christlike Behaviour'), ('exposure_to_word_of_god', 'Exposure to Word of God'), ('financial_health', 'Financial Health'), ('leadership', 'Leadership'), ('learning_environment', 'Learning Environment'), ('government_requirement', 'Government Requirement'), ('teaching_environment', 'Teaching Environment'), ('enrolment', 'Enrolment')], max_length=64, null=True),
+            model_name="activity",
+            name="purpose_intervention",
+            field=models.CharField(
+                blank=True,
+                choices=[
+                    ("christlike_behaviour", "Christlike Behaviour"),
+                    ("exposure_to_word_of_god", "Exposure to Word of God"),
+                    ("financial_health", "Financial Health"),
+                    ("leadership", "Leadership"),
+                    ("learning_environment", "Learning Environment"),
+                    ("government_requirement", "Government Requirement"),
+                    ("teaching_environment", "Teaching Environment"),
+                    ("enrolment", "Enrolment"),
+                ],
+                max_length=64,
+                null=True,
+            ),
         ),
         migrations.AlterField(
-            model_name='activity',
-            name='secondary_focus_interventions',
-            field=django.contrib.postgres.fields.ArrayField(base_field=models.CharField(choices=[('christlike_behaviour', 'Christlike Behaviour'), ('exposure_to_word_of_god', 'Exposure to Word of God'), ('financial_health', 'Financial Health'), ('leadership', 'Leadership'), ('learning_environment', 'Learning Environment'), ('government_requirement', 'Government Requirement'), ('teaching_environment', 'Teaching Environment'), ('enrolment', 'Enrolment')], max_length=64), blank=True, default=list, size=None),
+            model_name="activity",
+            name="secondary_focus_interventions",
+            field=django.contrib.postgres.fields.ArrayField(
+                base_field=models.CharField(
+                    choices=[
+                        ("christlike_behaviour", "Christlike Behaviour"),
+                        ("exposure_to_word_of_god", "Exposure to Word of God"),
+                        ("financial_health", "Financial Health"),
+                        ("leadership", "Leadership"),
+                        ("learning_environment", "Learning Environment"),
+                        ("government_requirement", "Government Requirement"),
+                        ("teaching_environment", "Teaching Environment"),
+                        ("enrolment", "Enrolment"),
+                    ],
+                    max_length=64,
+                ),
+                blank=True,
+                default=list,
+                size=None,
+            ),
         ),
     ]

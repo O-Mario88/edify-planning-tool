@@ -11,6 +11,7 @@ Two modes:
 Rule: NEVER include a password in any email. Only links + context. Reset +
 invite links carry a one-time token; the email contains only that link.
 """
+
 from __future__ import annotations
 
 import json
@@ -43,9 +44,8 @@ class MailerService:
 
     @property
     def provider(self) -> str:
-        if (
-            os.environ.get("EMAIL_PROVIDER") == "resend"
-            and os.environ.get("RESEND_API_KEY")
+        if os.environ.get("EMAIL_PROVIDER") == "resend" and os.environ.get(
+            "RESEND_API_KEY"
         ):
             return "resend"
         return "console"
@@ -59,12 +59,15 @@ class MailerService:
         if self.provider == "resend":
             return self._send_via_resend(msg)
         # Console / dev — log the full message so a tester can complete the flow.
-        logger.info("📧 [dev mail] To: %s | Subject: %s\n%s", msg.to, msg.subject, msg.text)
+        logger.info(
+            "📧 [dev mail] To: %s | Subject: %s\n%s", msg.to, msg.subject, msg.text
+        )
         return {"delivered": False, "devPreview": msg.text}
 
     def _send_via_resend(self, msg: MailMessage) -> dict:
         payload = {
-            "from": os.environ.get("EMAIL_FROM") or "Edify Planning <noreply@edify.org>",
+            "from": os.environ.get("EMAIL_FROM")
+            or "Edify Planning <noreply@edify.org>",
             "to": msg.to,
             "subject": msg.subject,
             "text": msg.text,
@@ -93,7 +96,9 @@ class MailerService:
             return {"delivered": False}
 
     # ── Templates ────────────────────────────────────────────────────────
-    def send_invitation(self, *, to: str, name: str, invited_by_name: str, token: str) -> dict:
+    def send_invitation(
+        self, *, to: str, name: str, invited_by_name: str, token: str
+    ) -> dict:
         link = f"{self._app_base_url}/set-password?token={token}"
         subject = "You have been invited to Edify Planning and Monitoring Tool"
         text = "\n".join(

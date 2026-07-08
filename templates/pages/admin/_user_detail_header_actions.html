@@ -1,0 +1,5 @@
+{% if member.is_active %}
+{% include "components/badge.html" with tone="success" label="Active" size="md" dot="true" %}
+{% else %}
+{% include "components/badge.html" with tone="neutral" label="Inactive ("|add:member.status|add:")" size="md" dot="true" %}
+{% endif %}

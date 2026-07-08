@@ -4,15 +4,40 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('activities', '0012_activityclosure_activity_cl_status_30186c_idx_and_more'),
+        ("activities", "0012_activityclosure_activity_cl_status_30186c_idx_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='activity',
-            name='activity_type',
-            field=models.CharField(choices=[('school_visit', 'School Visit'), ('follow_up_visit', 'Follow-up Visit'), ('coaching_visit', 'Coaching Visit'), ('in_school_support', 'In-school Support'), ('training', 'Training'), ('school_improvement_training', 'School Improvement Training'), ('cluster_meeting', 'Cluster Meeting'), ('cluster_training', 'Cluster Training'), ('ssa_activity', 'SSA Activity'), ('project_activity', 'Project Activity'), ('partner_activity', 'Partner Activity'), ('core_visit', 'Core Visit'), ('core_training', 'Core Training'), ('baseline_ssa_visit', 'SSA Visit'), ('school_visit_ssa_collection', 'School Visit + SSA Collection'), ('cluster_training_ssa_collection', 'Cluster Training + SSA Collection'), ('cluster_meeting_ssa_review', 'Cluster Meeting + SSA Review'), ('partner_ssa_collection', 'Partner SSA Collection'), ('core_assessment_visit', 'Core Assessment Visit')], max_length=48),
+            model_name="activity",
+            name="activity_type",
+            field=models.CharField(
+                choices=[
+                    ("school_visit", "School Visit"),
+                    ("follow_up_visit", "Follow-up Visit"),
+                    ("coaching_visit", "Coaching Visit"),
+                    ("in_school_support", "In-school Support"),
+                    ("training", "Training"),
+                    ("school_improvement_training", "School Improvement Training"),
+                    ("cluster_meeting", "Cluster Meeting"),
+                    ("cluster_training", "Cluster Training"),
+                    ("ssa_activity", "SSA Activity"),
+                    ("project_activity", "Project Activity"),
+                    ("partner_activity", "Partner Activity"),
+                    ("core_visit", "Core Visit"),
+                    ("core_training", "Core Training"),
+                    ("baseline_ssa_visit", "SSA Visit"),
+                    ("school_visit_ssa_collection", "School Visit + SSA Collection"),
+                    (
+                        "cluster_training_ssa_collection",
+                        "Cluster Training + SSA Collection",
+                    ),
+                    ("cluster_meeting_ssa_review", "Cluster Meeting + SSA Review"),
+                    ("partner_ssa_collection", "Partner SSA Collection"),
+                    ("core_assessment_visit", "Core Assessment Visit"),
+                ],
+                max_length=48,
+            ),
         ),
     ]

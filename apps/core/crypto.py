@@ -12,6 +12,7 @@ key and re-encrypting with the new (out-of-band migration).
 
 Stored format:  v1:<iv_b64>:<authTag_b64>:<ciphertext_b64>
 """
+
 from __future__ import annotations
 
 import base64

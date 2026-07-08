@@ -1,93 +1,83 @@
 {% extends base_template %}
-{% load frontend_filters %}
+{% load frontend_filters static %}
 
 {% block title %}Planning - SIPA{% endblock %}
 
 {% block shell_content %}
-<div 
+<script src="{% static 'vendor/fullcalendar.min.js' %}"></script>
+<style>
+  #planning-calendar-view { font-family: 'Outfit', sans-serif; }
+  #planning-calendar-view .fc { --fc-border-color: #f1f5f9; --fc-daygrid-event-dot-width: 6px; }
+  #planning-calendar-view .fc .fc-toolbar { margin-bottom: 1rem !important; }
+  #planning-calendar-view .fc .fc-toolbar-title { font-size: 13px !important; font-weight: 600 !important; color: #1e293b !important; }
+  #planning-calendar-view .fc .fc-button-primary {
+    background-color: #2e505f !important; border-color: #2e505f !important;
+    font-size: 10px !important; font-weight: 600 !important; text-transform: uppercase !important;
+    letter-spacing: 0.05em !important; padding: 0.35rem 0.6rem !important; border-radius: 8px !important;
+  }
+  #planning-calendar-view .fc .fc-button-primary:not(:disabled).fc-button-active,
+  #planning-calendar-view .fc .fc-button-primary:not(:disabled):active { background-color: #1e293b !important; border-color: #1e293b !important; }
+  #planning-calendar-view .fc .fc-col-header-cell-cushion { font-size: 10px !important; font-weight: 600 !important; color: #94a3b8 !important; text-transform: uppercase !important; padding: 6px 0 !important; }
+  #planning-calendar-view .fc .fc-daygrid-day-number { font-size: 11px !important; font-weight: 500 !important; color: #64748b !important; }
+  #planning-calendar-view .fc-event-completed { background-color: #ecfdf5 !important; color: #065f46 !important; border: 1px solid #a7f3d0 !important; border-radius: 6px !important; padding: 2px 5px !important; font-size: 10px !important; font-weight: 600 !important; }
+  #planning-calendar-view .fc-event-planned { background-color: #eff6ff !important; color: #1e40af !important; border: 1px solid #bfdbfe !important; border-radius: 6px !important; padding: 2px 5px !important; font-size: 10px !important; font-weight: 600 !important; }
+  #planning-calendar-view .fc-event-partner { background-color: #fdf4ff !important; color: #7e22ce !important; border: 1px solid #f0abfc !important; border-radius: 6px !important; padding: 2px 5px !important; font-size: 10px !important; font-weight: 600 !important; }
+</style>
+
+<div
 x-data="{
 selectedSchools: [],
 bulkActionOpen: false,
 selectedSchoolId: null
 }"
 @select-school.window="selectedSchoolId = $event.detail.id;"
-class="p-6 max-w-[1600px] mx-auto space-y-6 font-sans text-slate-700"
+class="p-6 max-w-[1600px] mx-auto space-y-5 font-sans text-slate-700"
 id="planning-main-container"
 >
 
-<!-- Breadcrumb -->
-<nav class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-<a href="#" class="hover:text-slate-600">Planning</a>
-<svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-<span class="text-slate-600 font-semibold">School visit &amp; training plan</span>
-</nav>
+{% include "components/page_header.html" with title="Planning" subtitle="Schedule school visits, cluster activities, and partner assignments based on SSA readiness and school needs." breadcrumb="Planning" actions_template="pages/planning/_header_actions.html" %}
 
-<!-- Header -->
-<div class="edify-page-header flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-100 pb-2">
-<div>
-<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight leading-none">Planning</h1>
-<p class="text-[12px] text-slate-500 font-semibold mt-1">Plan school visits, cluster activities, and partner assignments based on SSA readiness and school needs.</p>
-</div>
-
-<!-- Header Actions -->
-<div class="flex items-center gap-2">
-<!-- Export button -->
-<a 
-href="#"
-onclick="this.href='/planning?export=csv&' + new URLSearchParams(new FormData(document.getElementById('filters-form'))).toString()"
-class="edify-action-button secondary h-9 transition-all shadow-sm"
->
-<svg class="h-4 w-4 text-slate-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-Export
-</a>
-
-<!-- Bulk Action trigger -->
-<button 
-@click="bulkActionOpen = !bulkActionOpen"
-:disabled="selectedSchools.length === 0"
-:class="selectedSchools.length === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-50'"
-class="edify-action-button secondary h-9 transition-all shadow-sm"
->
-<svg class="h-4 w-4 text-slate-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-Bulk Assign
-</button>
-
-<!-- Open My Plan -->
-<a 
-href="/my-plan"
-class="edify-action-button primary h-9 transition-all shadow-sm"
->
-<svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-Open My Plan
-</a>
-</div>
-</div>
+{% include "components/role_scope_notice.html" with scope_text=scope_text %}
 
 <!-- Filters Row -->
-<form 
+<form
 id="filters-form"
 hx-get="/planning"
 hx-trigger="change delay:100ms, keyup delay:200ms changed from:input[name='q']"
 hx-target="#schools-table-container"
+hx-swap="outerHTML"
 hx-push-url="true"
-class="flex flex-wrap items-center gap-2.5 text-[11px] font-bold"
+x-data="{ open: false }"
+class="card p-3.5"
 >
 <input type="hidden" name="tab" value="{{ active_tab }}">
 
-<!-- Quarter -->
-<div class="flex items-center gap-1 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-sm">
-<span class="text-slate-400">Quarter</span>
-<select name="quarter" class="bg-transparent focus:outline-none cursor-pointer">
+<button type="button" class="lg:hidden flex items-center justify-between w-full text-[12px] font-semibold text-slate-600" @click="open = !open">
+<span class="flex items-center gap-1.5">
+<svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+Filters
+</span>
+<svg class="h-4 w-4 text-slate-400 transition-transform" :class="open ? 'rotate-180' : ''" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+</button>
+
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap lg:items-end gap-3 mt-3 lg:mt-0" :class="open ? '' : 'hidden lg:flex'">
+<div class="space-y-1 lg:min-w-[180px]">
+<label class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider block">Search</label>
+<input type="text" name="q" value="{{ search_q }}" placeholder="School name or ID…"
+class="h-9 w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 text-[12px] font-semibold text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#2e505f]">
+</div>
+<div class="space-y-1 lg:min-w-[110px]">
+<label class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider block">Quarter</label>
+<select name="quarter" class="h-9 w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 text-[12px] font-semibold text-slate-700 cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#2e505f]">
 {% for q in quarter_options %}
 <option value="{{ q }}" {% if selected_quarter == q %}selected{% endif %}>{{ q }}</option>
 {% endfor %}
 </select>
 </div>
 
-<!-- District -->
-<div class="flex items-center gap-1 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-sm">
-<span class="text-slate-400">District</span>
-<select name="district" class="bg-transparent focus:outline-none cursor-pointer">
+<div class="space-y-1 lg:min-w-[150px]">
+<label class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider block">District</label>
+<select name="district" class="h-9 w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 text-[12px] font-semibold text-slate-700 cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#2e505f]">
 <option value="All">All Districts</option>
 {% for d in districts %}
 <option value="{{ d.id }}" {% if selected_district == d.id %}selected{% endif %}>{{ d.name }}</option>
@@ -95,10 +85,9 @@ class="flex flex-wrap items-center gap-2.5 text-[11px] font-bold"
 </select>
 </div>
 
-<!-- Staff -->
-<div class="flex items-center gap-1 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-sm">
-<span class="text-slate-400">Staff</span>
-<select name="staff" class="bg-transparent focus:outline-none cursor-pointer">
+<div class="space-y-1 lg:min-w-[150px]">
+<label class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider block">Staff</label>
+<select name="staff" class="h-9 w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 text-[12px] font-semibold text-slate-700 cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#2e505f]">
 <option value="All">All Staff</option>
 {% for s in staff_members %}
 <option value="{{ s.user.user_id }}" {% if selected_staff == s.user.user_id %}selected{% endif %}>{{ s.user.name }}</option>
@@ -106,10 +95,9 @@ class="flex flex-wrap items-center gap-2.5 text-[11px] font-bold"
 </select>
 </div>
 
-<!-- Planning Readiness -->
-<div class="flex items-center gap-1 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 shadow-sm">
-<span class="text-slate-400">Readiness</span>
-<select name="planning_readiness" class="bg-transparent focus:outline-none cursor-pointer">
+<div class="space-y-1 lg:min-w-[170px]">
+<label class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider block">Readiness</label>
+<select name="planning_readiness" class="h-9 w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 text-[12px] font-semibold text-slate-700 cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#2e505f]">
 <option value="All">All Readiness</option>
 {% for val, label in readiness_choices %}
 <option value="{{ val }}" {% if selected_readiness == val %}selected{% endif %}>{{ label }}</option>
@@ -117,58 +105,147 @@ class="flex flex-wrap items-center gap-2.5 text-[11px] font-bold"
 </select>
 </div>
 
-<!-- Clear Filters -->
-<button 
-type="button"
-onclick="document.getElementById('filters-form').reset(); document.querySelectorAll('select').forEach(s => s.value = 'All'); document.getElementsByName('q')[0].value = ''; document.getElementById('filters-form').dispatchEvent(new Event('change'));"
-class="text-blue-600 hover:text-blue-700 text-[11px] font-semibold tracking-wider uppercase ml-1 flex items-center gap-1"
->
-<svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-Clear Filters
-</button>
+<a href="/planning" class="text-[12px] font-semibold text-slate-500 hover:text-slate-700 flex items-center gap-1 h-9">
+<svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+<span>Clear filters</span>
+</a>
+</div>
 </form>
 
-<!-- KPI cards Row -->
+<!-- KPI Strip -->
 {% include "components/kpi_strip.html" with items=kpi_strip_items %}
 
-
-
-<!-- Planning Copilot Banner -->
+<!-- Primary insight: Planning Intelligence + Scheduling Calendar -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
 {% include "partials/planning/right_panel.html" %}
 
+<div class="card p-5 flex flex-col min-w-0">
+  <div class="flex items-start justify-between gap-3 pb-3 border-b border-slate-100">
+    <div class="min-w-0">
+      <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight truncate">Scheduling Calendar</h3>
+      <p class="text-[11px] text-slate-400 font-semibold mt-0.5">Activities scheduled for your scoped schools this FY</p>
+    </div>
+    <a href="/calendar" class="text-[11px] font-semibold text-blue-600 hover:underline shrink-0">Full calendar</a>
+  </div>
+  {% if calendar_activities %}
+  <div id="planning-calendar-view" class="mt-3"></div>
+  {% else %}
+  {% include "components/empty_state.html" with title="Nothing scheduled yet" message="Schedule a visit or training below and it will appear here." compact="true" %}
+  {% endif %}
+</div>
+</div>
+
+<!-- Supporting: max 3-column -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+{% include "components/chart_card.html" with chart_id="planning-readiness-chart" title="Readiness Distribution" subtitle="Scoped schools, by planning-readiness state" has_data=has_readiness_chart_data height=280 footer_note=readiness_chart_footer_note %}
+{{ readiness_distribution_chart|json_script:"planning-readiness-chart-config" }}
+
+<section class="card p-5 space-y-3.5">
+  <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+    <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Cluster Planning</h3>
+    <a class="text-[11px] font-semibold text-blue-600 hover:underline" href="/clusters">View all</a>
+  </div>
+  {% if cluster_planning %}
+  <div class="space-y-2.5">
+    {% for c in cluster_planning %}
+    <div class="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+      <div class="min-w-0">
+        <p class="text-[12px] font-semibold text-slate-800 truncate">{{ c.name }}</p>
+        <p class="text-[11px] text-slate-400 font-semibold">{{ c.school_count }} school{{ c.school_count|pluralize }} &bull; Avg SSA {{ c.avg_ssa }}%</p>
+      </div>
+      <span class="text-[11px] font-semibold text-blue-600 shrink-0">{{ c.weakest_interventions|first|default:"—" }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  {% include "components/empty_state.html" with title="No clusters in scope" compact="true" %}
+  {% endif %}
+</section>
+
+<section class="card p-5 space-y-3.5">
+  <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+    <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Core Package Progress</h3>
+    <a class="text-[11px] font-semibold text-blue-600 hover:underline" href="/core-schools">Open core schools</a>
+  </div>
+  <div class="grid grid-cols-2 gap-3 text-[12px]">
+    <div>
+      <p class="text-[11px] text-slate-400 font-semibold">Missing SSA</p>
+      <p class="text-[16px] font-semibold text-rose-600 leading-none mt-1.5">{{ core_summary.no_ssa }}</p>
+    </div>
+    <div>
+      <p class="text-[11px] text-slate-400 font-semibold">1st Visit Pending</p>
+      <p class="text-[16px] font-semibold text-slate-800 leading-none mt-1.5">{{ core_summary.first_visit_pending }}</p>
+    </div>
+    <div>
+      <p class="text-[11px] text-slate-400 font-semibold">2nd Visit Pending</p>
+      <p class="text-[16px] font-semibold text-slate-800 leading-none mt-1.5">{{ core_summary.second_visit_pending }}</p>
+    </div>
+    <div>
+      <p class="text-[11px] text-slate-400 font-semibold">Training Pending</p>
+      <p class="text-[16px] font-semibold text-slate-800 leading-none mt-1.5">{{ core_summary.first_training_pending }}</p>
+    </div>
+  </div>
+</section>
+
+<section class="card p-5 space-y-3.5">
+  <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+    <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Partner &amp; My Plan</h3>
+    <a class="text-[11px] font-semibold text-blue-600 hover:underline" href="/my-plan">Open My Plan</a>
+  </div>
+  <div class="grid grid-cols-2 gap-3 text-[12px]">
+    <div>
+      <p class="text-[11px] text-slate-400 font-semibold">Partner Pending</p>
+      <p class="text-[16px] font-semibold text-slate-800 leading-none mt-1.5">{{ kpis.partner_pending }}</p>
+    </div>
+    <div>
+      <p class="text-[11px] text-slate-400 font-semibold">In My Plan</p>
+      <p class="text-[16px] font-semibold text-emerald-600 leading-none mt-1.5">{{ kpis.scheduled_this_week }}</p>
+    </div>
+    <div>
+      <p class="text-[11px] text-slate-400 font-semibold">Clusters Needing Action</p>
+      <p class="text-[16px] font-semibold text-slate-800 leading-none mt-1.5">{{ kpis.cluster_activities_needed }}</p>
+    </div>
+    <div>
+      <p class="text-[11px] text-slate-400 font-semibold">Ready %</p>
+      <p class="text-[16px] font-semibold text-slate-800 leading-none mt-1.5">{{ kpis.ready_pct }}%</p>
+    </div>
+  </div>
+</section>
+</div>
+
 <!-- Main Content Column -->
-<div class="space-y-6">
+<div class="space-y-4">
 
 <nav class="edify-tab-container">
-<button 
+<button
 onclick="document.getElementsByName('tab')[0].value = 'client'; document.getElementById('filters-form').dispatchEvent(new Event('change'));"
 class="edify-tab-btn {% if active_tab == 'client' %}active{% endif %}"
 >
 Client Schools
 </button>
 
-<button 
+<button
 onclick="document.getElementsByName('tab')[0].value = 'core'; document.getElementById('filters-form').dispatchEvent(new Event('change'));"
 class="edify-tab-btn {% if active_tab == 'core' %}active{% endif %}"
 >
 Core Schools
 </button>
 
-<button 
+<button
 onclick="document.getElementsByName('tab')[0].value = 'clusters'; document.getElementById('filters-form').dispatchEvent(new Event('change'));"
 class="edify-tab-btn {% if active_tab == 'clusters' %}active{% endif %}"
 >
 Clusters
 </button>
 
-<button 
+<button
 onclick="document.getElementsByName('tab')[0].value = 'partner'; document.getElementById('filters-form').dispatchEvent(new Event('change'));"
 class="edify-tab-btn {% if active_tab == 'partner' %}active{% endif %}"
 >
 Assigned to Partner
 </button>
 
-<button 
+<button
 onclick="document.getElementsByName('tab')[0].value = 'scheduled'; document.getElementById('filters-form').dispatchEvent(new Event('change'));"
 class="edify-tab-btn {% if active_tab == 'scheduled' %}active{% endif %}"
 >
@@ -179,12 +256,10 @@ Scheduled / In My Plan
 <!-- School Table Container -->
 {% include "partials/planning/school_table.html" %}
 
-
-
 </div>
 
 <!-- Floating Bulk Actions Bar -->
-<div 
+<div
 x-show="selectedSchools.length > 0"
 x-transition:enter="transition ease-out duration-300 transform"
 x-transition:enter-start="translate-y-24 opacity-0"
@@ -202,8 +277,8 @@ style="display: none;"
 
 <div class="h-5 w-px bg-slate-700"></div>
 
-<form 
-hx-post="/planning/bulk-action" 
+<form
+hx-post="/planning/bulk-action"
 hx-target="body"
 class="flex items-center gap-2"
 >
@@ -212,7 +287,7 @@ class="flex items-center gap-2"
 <input type="hidden" name="school_ids" :value="sid">
 </template>
 
-<button 
+<button
 type="submit"
 name="action"
 value="partner"
@@ -222,7 +297,7 @@ class="h-8 px-4 bg-slate-800 hover:bg-slate-800 text-slate-200 rounded-xl text-[
 Assign Partner
 </button>
 
-<button 
+<button
 type="submit"
 name="action"
 value="schedule"
@@ -232,7 +307,7 @@ class="h-8 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[11px] 
 Schedule Visits
 </button>
 
-<button 
+<button
 type="submit"
 name="action"
 value="export"
@@ -244,4 +319,50 @@ Export Selected
 </form>
 </div>
 
+<!-- Drawer Container for HTMX drawer rendering (Schedule, Assign Partner) -->
+<div id="drawer-container"></div>
+
+</div>
+
+<!-- Embedded scheduling-queue events payload (same pattern as
+     templates/pages/calendar/index.html) -->
+<script id="planning-calendar-events-data" type="application/json">
+  [
+    {% for a in calendar_activities %}
+      {
+        "id": "{{ a.id }}",
+        "title": "{{ a.activity_type|title }}{% if a.school %} @ {{ a.school.name }}{% endif %}",
+        "start": "{{ a.planned_date|date:'Y-m-d' }}",
+        "classNames": ["{% if a.status == 'completed' or a.status == 'ia_verified' %}fc-event-completed{% elif a.delivery_type == 'partner' %}fc-event-partner{% else %}fc-event-planned{% endif %}"],
+        "extendedProps": {
+          "status": "{{ a.status }}",
+          "school": "{{ a.school.name|default:'' }}",
+          "activity_type": "{{ a.activity_type|title }}"
+        }
+      }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ]
+</script>
+
+{% if calendar_activities %}
+<script>
+(function () {
+  var mount = document.getElementById('planning-calendar-view');
+  if (!mount || !window.FullCalendar) return;
+  var eventsData = JSON.parse(document.getElementById('planning-calendar-events-data').textContent);
+  var calendar = new FullCalendar.Calendar(mount, {
+    initialView: 'dayGridMonth',
+    headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,listMonth' },
+    events: eventsData,
+    themeSystem: 'standard',
+    height: 420,
+    eventClick: function (info) {
+      var props = info.event.extendedProps;
+      alert(props.activity_type + '\nStatus: ' + props.status.toUpperCase() + '\nSchool: ' + (props.school || 'N/A'));
+    }
+  });
+  calendar.render();
+})();
+</script>
+{% endif %}
 {% endblock %}

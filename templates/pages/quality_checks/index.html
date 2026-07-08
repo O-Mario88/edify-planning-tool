@@ -3,19 +3,42 @@
 {% block title %}Quality Checks — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6">
+<div class="p-6 space-y-5 font-sans text-slate-700">
 
-<div class="flex items-center justify-between">
-<div>
-<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight">Quality Checks</h1>
-<p class="text-[12px] text-[var(--text-secondary)] mt-1 font-semibold">Edify Operations · Quality Checks</p>
-</div>
-</div>
+{% include "components/page_header.html" with title="Quality Checks" subtitle="CD-raised flags handed off to Program Leads for follow-up." %}
 
-<div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm">
-{% if flags %}<ul class="divide-y divide-slate-100">{% for f in flags %}<li class="px-5 py-3.5 flex items-center justify-between"><div><p class="text-[14px] font-bold text-slate-800">{{ f.scope_name|default:"Flag" }}</p><p class="text-[11px] text-slate-400">{{ f.raised_by_name|default:"System" }} · {{ f.created_at }}</p></div><span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">{{ f.status }}</span></li>{% endfor %}</ul>
-{% else %}<div class="p-12 text-center"><p class="text-[36px] mb-3">🔍</p><p class="text-[14px] font-bold text-slate-600">No quality flags raised</p></div>{% endif %}
-</div>
+{% include "components/role_scope_notice.html" with scope_text="Showing all quality flags raised by Country Directors, most recent first." %}
+
+{% if kpi_strip_items %}
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
+{% endif %}
+
+<section class="card p-5 space-y-3.5">
+  <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+    <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Flags <span class="text-[11px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-semibold ml-1">{{ flags|length }}</span></h3>
+  </div>
+  {% if flags %}
+  <ul class="divide-y divide-slate-100">
+    {% for f in flags %}
+    <li class="py-3.5 flex items-center justify-between gap-3">
+      <div class="min-w-0">
+        <p class="text-[13px] font-semibold text-slate-800 truncate">{{ f.scope_name|default:f.category|default:"Flag" }}</p>
+        <p class="text-[11px] text-slate-400 font-semibold mt-0.5">{{ f.raised_by_name|default:"System" }} · {{ f.created_at|date:"N j, Y" }}{% if f.priority and f.priority != "normal" %} · {{ f.priority|title }} priority{% endif %}</p>
+      </div>
+      {% if f.status == "open" %}
+        {% include "components/badge.html" with tone="danger" label="Open" %}
+      {% elif f.status == "acknowledged" %}
+        {% include "components/badge.html" with tone="warning" label="Acknowledged" %}
+      {% else %}
+        {% include "components/badge.html" with tone="success" label="Resolved" %}
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  {% include "components/empty_state.html" with title="No quality flags raised" message="Flags raised by Country Directors for Program Lead follow-up will appear here." tone="success" compact="true" %}
+  {% endif %}
+</section>
 
 </div>
 {% endblock %}

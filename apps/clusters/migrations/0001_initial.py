@@ -7,84 +7,206 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
-        ('geography', '0001_initial'),
-        ('schools', '0001_initial'),
+        ("geography", "0001_initial"),
+        ("schools", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Cluster',
+            name="Cluster",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('deleted_at', models.DateTimeField(blank=True, db_index=True, null=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('name', models.CharField(max_length=255)),
-                ('sub_county_name', models.CharField(blank=True, max_length=255, null=True)),
-                ('cluster_type', models.CharField(choices=[('client', 'Client'), ('core', 'Core'), ('mixed', 'Mixed')], default='mixed', max_length=16)),
-                ('status', models.CharField(choices=[('active', 'Active'), ('needs_review', 'Needs Review'), ('inactive', 'Inactive')], default='active', max_length=32)),
-                ('override_reason', models.CharField(blank=True, max_length=512, null=True)),
-                ('responsible_staff_id', models.CharField(blank=True, max_length=30, null=True)),
-                ('cluster_leader_name', models.CharField(blank=True, max_length=255, null=True)),
-                ('cluster_leader_phone', models.CharField(blank=True, max_length=64, null=True)),
-                ('district', models.ForeignKey(on_delete=django.db.models.deletion.RESTRICT, related_name='clusters', to='geography.district')),
-                ('region', models.ForeignKey(on_delete=django.db.models.deletion.RESTRICT, related_name='clusters', to='geography.region')),
-                ('sub_county', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='clusters', to='geography.subcounty')),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "deleted_at",
+                    models.DateTimeField(blank=True, db_index=True, null=True),
+                ),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("name", models.CharField(max_length=255)),
+                (
+                    "sub_county_name",
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
+                (
+                    "cluster_type",
+                    models.CharField(
+                        choices=[
+                            ("client", "Client"),
+                            ("core", "Core"),
+                            ("mixed", "Mixed"),
+                        ],
+                        default="mixed",
+                        max_length=16,
+                    ),
+                ),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("active", "Active"),
+                            ("needs_review", "Needs Review"),
+                            ("inactive", "Inactive"),
+                        ],
+                        default="active",
+                        max_length=32,
+                    ),
+                ),
+                (
+                    "override_reason",
+                    models.CharField(blank=True, max_length=512, null=True),
+                ),
+                (
+                    "responsible_staff_id",
+                    models.CharField(blank=True, max_length=30, null=True),
+                ),
+                (
+                    "cluster_leader_name",
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
+                (
+                    "cluster_leader_phone",
+                    models.CharField(blank=True, max_length=64, null=True),
+                ),
+                (
+                    "district",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.RESTRICT,
+                        related_name="clusters",
+                        to="geography.district",
+                    ),
+                ),
+                (
+                    "region",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.RESTRICT,
+                        related_name="clusters",
+                        to="geography.region",
+                    ),
+                ),
+                (
+                    "sub_county",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="clusters",
+                        to="geography.subcounty",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'cluster',
-                'ordering': ['name'],
+                "db_table": "cluster",
+                "ordering": ["name"],
             },
         ),
         migrations.CreateModel(
-            name='ClusterSubCounty',
+            name="ClusterSubCounty",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('cluster', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='covered_sub_counties', to='clusters.cluster')),
-                ('sub_county', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='cluster_coverage', to='geography.subcounty')),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                (
+                    "cluster",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="covered_sub_counties",
+                        to="clusters.cluster",
+                    ),
+                ),
+                (
+                    "sub_county",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="cluster_coverage",
+                        to="geography.subcounty",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'cluster_sub_county',
+                "db_table": "cluster_sub_county",
             },
         ),
         migrations.CreateModel(
-            name='SchoolClusterAssignment',
+            name="SchoolClusterAssignment",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('assigned_by', models.CharField(max_length=30)),
-                ('cluster', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='assignments', to='clusters.cluster')),
-                ('school', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='cluster_assignments', to='schools.school')),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("assigned_by", models.CharField(max_length=30)),
+                (
+                    "cluster",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="assignments",
+                        to="clusters.cluster",
+                    ),
+                ),
+                (
+                    "school",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="cluster_assignments",
+                        to="schools.school",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'school_cluster_assignment',
+                "db_table": "school_cluster_assignment",
             },
         ),
         migrations.AddIndex(
-            model_name='cluster',
-            index=models.Index(fields=['district'], name='cluster_distric_4ea716_idx'),
+            model_name="cluster",
+            index=models.Index(fields=["district"], name="cluster_distric_4ea716_idx"),
         ),
         migrations.AddIndex(
-            model_name='cluster',
-            index=models.Index(fields=['sub_county'], name='cluster_sub_cou_781328_idx'),
+            model_name="cluster",
+            index=models.Index(
+                fields=["sub_county"], name="cluster_sub_cou_781328_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='clustersubcounty',
-            index=models.Index(fields=['sub_county'], name='cluster_sub_sub_cou_972ce2_idx'),
+            model_name="clustersubcounty",
+            index=models.Index(
+                fields=["sub_county"], name="cluster_sub_sub_cou_972ce2_idx"
+            ),
         ),
         migrations.AddConstraint(
-            model_name='clustersubcounty',
-            constraint=models.UniqueConstraint(fields=('cluster', 'sub_county'), name='uniq_cluster_subcounty'),
+            model_name="clustersubcounty",
+            constraint=models.UniqueConstraint(
+                fields=("cluster", "sub_county"), name="uniq_cluster_subcounty"
+            ),
         ),
         migrations.AddConstraint(
-            model_name='schoolclusterassignment',
-            constraint=models.UniqueConstraint(fields=('school', 'cluster'), name='uniq_school_cluster'),
+            model_name="schoolclusterassignment",
+            constraint=models.UniqueConstraint(
+                fields=("school", "cluster"), name="uniq_school_cluster"
+            ),
         ),
     ]

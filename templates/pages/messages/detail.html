@@ -3,16 +3,35 @@
 {% block title %}Message — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6">
+<div class="p-6 max-w-3xl mx-auto space-y-5 font-sans">
 
-<div class="flex items-center justify-between">
-<div>
-<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight">Message</h1>
-<p class="text-[12px] text-[var(--text-secondary)] mt-1 font-semibold">Edify Operations · Message</p>
-</div>
-</div>
+{% include "components/page_header.html" with title="Message" breadcrumb="Messages" %}
 
-<div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm"><p class="text-[14px] text-slate-800">{{ message.body }}</p><p class="text-[11px] text-slate-400 mt-3">{{ message.created_at }}</p></div>
+<div class="card p-0 overflow-hidden">
+{% if thread_messages %}
+<ul class="divide-y divide-slate-100">
+{% for m in thread_messages %}
+<li class="px-5 py-4 {% if m.id == message.id %}bg-blue-50/40{% endif %}">
+<div class="flex items-center justify-between gap-3 mb-1.5">
+<div class="flex items-center gap-2">
+{% if m.priority == "urgent" %}{% include "components/badge.html" with tone="danger" label="Urgent" %}
+{% elif m.priority == "high" %}{% include "components/badge.html" with tone="warning" label="High" %}
+{% endif %}
+{% if m.action_required %}{% include "components/badge.html" with tone="info" label="Action needed" %}{% endif %}
+</div>
+<span class="text-[11px] text-slate-400 font-medium shrink-0">{{ m.created_at|date:"M d, Y H:i" }}</span>
+</div>
+<p class="text-[13px] text-slate-800 font-medium leading-relaxed">{{ m.body }}</p>
+{% if m.action_required and m.target_route %}
+<a href="{{ m.target_route }}" class="inline-flex items-center gap-1 mt-3 text-[12px] font-semibold text-[var(--color-edify-primary)] hover:underline">Open related item →</a>
+{% endif %}
+</li>
+{% endfor %}
+</ul>
+{% else %}
+{% include "components/empty_state.html" with title="Message not found" message="This message may have been removed." %}
+{% endif %}
+</div>
 
 </div>
 {% endblock %}

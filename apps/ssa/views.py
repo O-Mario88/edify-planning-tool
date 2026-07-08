@@ -1,4 +1,5 @@
 """SSA endpoints — /api/ssa/*."""
+
 from __future__ import annotations
 
 from rest_framework.parsers import FormParser, MultiPartParser

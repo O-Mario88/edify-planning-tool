@@ -3,9 +3,12 @@ from django.utils import timezone
 from apps.core.models import CuidField, TimeStampedModel
 from apps.activities.models import Activity
 
+
 class ActivityClosure(TimeStampedModel):
     id = CuidField()
-    activity = models.OneToOneField(Activity, on_delete=models.CASCADE, related_name="closure_details")
+    activity = models.OneToOneField(
+        Activity, on_delete=models.CASCADE, related_name="closure_details"
+    )
     closed_at = models.DateTimeField(null=True, blank=True)
     closed_by = models.CharField(max_length=30, default="system")
     status = models.CharField(max_length=32, default="closure_not_ready")
@@ -21,7 +24,9 @@ class ActivityClosure(TimeStampedModel):
 
 class ClosureChecklist(TimeStampedModel):
     id = CuidField()
-    activity = models.OneToOneField(Activity, on_delete=models.CASCADE, related_name="closure_checklist")
+    activity = models.OneToOneField(
+        Activity, on_delete=models.CASCADE, related_name="closure_checklist"
+    )
     activity_executed = models.BooleanField(default=False)
     evidence_uploaded = models.BooleanField(default=False)
     salesforce_id_entered = models.BooleanField(default=False)
@@ -43,7 +48,9 @@ class ClosureChecklist(TimeStampedModel):
 
 class ClosureBlocker(TimeStampedModel):
     id = CuidField()
-    activity = models.ForeignKey(Activity, on_delete=models.CASCADE, related_name="closure_blockers")
+    activity = models.ForeignKey(
+        Activity, on_delete=models.CASCADE, related_name="closure_blockers"
+    )
     blocking_reason = models.CharField(max_length=255)
     responsible_role = models.CharField(max_length=64)
     created_at = models.DateTimeField(default=timezone.now)
@@ -54,7 +61,9 @@ class ClosureBlocker(TimeStampedModel):
 
 class CompletedActivitySnapshot(TimeStampedModel):
     id = CuidField()
-    activity = models.OneToOneField(Activity, on_delete=models.CASCADE, related_name="completed_snapshot")
+    activity = models.OneToOneField(
+        Activity, on_delete=models.CASCADE, related_name="completed_snapshot"
+    )
     final_budget_amount = models.BigIntegerField(default=0)
     disbursed_amount = models.BigIntegerField(default=0)
     actual_spend_amount = models.BigIntegerField(default=0)
@@ -68,10 +77,14 @@ class CompletedActivitySnapshot(TimeStampedModel):
 
 class ActivityReopenRequest(TimeStampedModel):
     id = CuidField()
-    activity = models.ForeignKey(Activity, on_delete=models.CASCADE, related_name="reopen_requests")
+    activity = models.ForeignKey(
+        Activity, on_delete=models.CASCADE, related_name="reopen_requests"
+    )
     reopened_by = models.CharField(max_length=30)
     reason = models.TextField()
-    category = models.CharField(max_length=64)  # wrong_evidence, wrong_salesforce_id, wrong_school, wrong_finance_clearance, duplicate_discovered, audit_correction, analytics_correction, other
+    category = models.CharField(
+        max_length=64
+    )  # wrong_evidence, wrong_salesforce_id, wrong_school, wrong_finance_clearance, duplicate_discovered, audit_correction, analytics_correction, other
     requested_at = models.DateTimeField(default=timezone.now)
     approved = models.BooleanField(default=False)
 
@@ -81,8 +94,12 @@ class ActivityReopenRequest(TimeStampedModel):
 
 class AnalyticsPublishRecord(TimeStampedModel):
     id = CuidField()
-    activity = models.OneToOneField(Activity, on_delete=models.CASCADE, related_name="analytics_publish_record")
-    status = models.CharField(max_length=32, default="pending")  # pending, published, failed, recalculation_required, excluded
+    activity = models.OneToOneField(
+        Activity, on_delete=models.CASCADE, related_name="analytics_publish_record"
+    )
+    status = models.CharField(
+        max_length=32, default="pending"
+    )  # pending, published, failed, recalculation_required, excluded
     published_at = models.DateTimeField(null=True, blank=True)
     error_message = models.TextField(null=True, blank=True)
 
@@ -95,7 +112,9 @@ class AnalyticsPublishRecord(TimeStampedModel):
 
 class ActivityTimelineEvent(TimeStampedModel):
     id = CuidField()
-    activity = models.ForeignKey(Activity, on_delete=models.CASCADE, related_name="timeline_events")
+    activity = models.ForeignKey(
+        Activity, on_delete=models.CASCADE, related_name="timeline_events"
+    )
     event_name = models.CharField(max_length=128)
     actor_id = models.CharField(max_length=30, default="system")
     actor_role = models.CharField(max_length=64, null=True, blank=True)

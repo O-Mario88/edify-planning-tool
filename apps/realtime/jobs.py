@@ -10,6 +10,7 @@ Faithful port of the NestJS @Cron jobs (single-process worker parity):
 
 Each early-returns unless ENABLE_BACKGROUND_JOBS is true.
 """
+
 from __future__ import annotations
 
 import logging
@@ -50,7 +51,8 @@ def monthly_work_plan_job():
         month_key = next_month.strftime("%Y-%m")
         fy = str(next_month.year + (1 if next_month.month >= 10 else 0))
         MonthlyWorkPlanBudget.objects.update_or_create(
-            country_id="Uganda", month_key=month_key,
+            country_id="Uganda",
+            month_key=month_key,
             defaults={"fy": fy, "generated_by": None, "status": "draft_generated"},
         )
         logger.info("Monthly work-plan job completed for %s.", month_key)
@@ -67,7 +69,9 @@ def notification_escalation_job():
 
         cutoff = timezone.now() - timedelta(hours=48)
         stale = Notification.objects.filter(
-            status="unread", action_required=True, priority__in=["normal", "high"],
+            status="unread",
+            action_required=True,
+            priority__in=["normal", "high"],
             created_at__lt=cutoff,
         )
         count = stale.update(priority="urgent")
@@ -84,15 +88,23 @@ def daily_digest_job():
         from apps.notifications.models import Notification
 
         today = timezone.now().date()
-        unread = Notification.objects.filter(status="unread").values_list("recipient_id", flat=True).distinct()
+        unread = (
+            Notification.objects.filter(status="unread")
+            .values_list("recipient_id", flat=True)
+            .distinct()
+        )
         created = 0
         for recipient_id in unread:
-            n = Notification.objects.filter(recipient_id=recipient_id, status="unread").count()
+            n = Notification.objects.filter(
+                recipient_id=recipient_id, status="unread"
+            ).count()
             if n == 0:
                 continue
             # Dedupe per calendar day via source_event_id.
             digest_id = f"digest-{recipient_id}-{today.isoformat()}"[:30]
-            if Notification.objects.filter(recipient_id=recipient_id, source_event_id=digest_id).exists():
+            if Notification.objects.filter(
+                recipient_id=recipient_id, source_event_id=digest_id
+            ).exists():
                 continue
             Notification.objects.create(
                 recipient_id=recipient_id,
@@ -118,8 +130,15 @@ def _system_principal():
 
     class _P(AuthPrincipal):
         def __init__(self):
-            super().__init__(user=_SystemUser(), user_id="system", email="system@edify",
-                             name="System", roles=[], active_role="Admin", staff_profile_id=None)
+            super().__init__(
+                user=_SystemUser(),
+                user_id="system",
+                email="system@edify",
+                name="System",
+                roles=[],
+                active_role="Admin",
+                staff_profile_id=None,
+            )
 
     return _P()
 

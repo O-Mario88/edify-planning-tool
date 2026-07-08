@@ -1,4 +1,5 @@
 """Fund-requests service — submit/approve/disburse + accountability."""
+
 from __future__ import annotations
 
 import re
@@ -30,11 +31,15 @@ def submit(data: dict, principal) -> dict:
     qs = Activity.objects.filter(deleted_at__isnull=True, fy=fy)
     if scope.staff_ids:
         qs = qs.filter(responsible_staff_id__in=scope.staff_ids)
-    qs = _filter_period(qs, period, period_key, data).prefetch_related("schedule_cost_lines")
+    qs = _filter_period(qs, period, period_key, data).prefetch_related(
+        "schedule_cost_lines"
+    )
 
     activities = list(qs)
     # Cost blocker: any in-period activity flagged cost-missing, or with no lines.
-    bad = [a for a in activities if a.cost_missing or not list(a.schedule_cost_lines.all())]
+    bad = [
+        a for a in activities if a.cost_missing or not list(a.schedule_cost_lines.all())
+    ]
     if bad:
         raise BadRequest(
             f"Cannot submit — {len(bad)} activity(ies) are missing a cost rate or budget lines."
@@ -47,28 +52,37 @@ def submit(data: dict, principal) -> dict:
             request_items.append((a, line))
             total += line.amount
 
-    lens = "country" if scope.country_scope else ("team" if scope.can_view_team else "own")
+    lens = (
+        "country" if scope.country_scope else ("team" if scope.can_view_team else "own")
+    )
     with transaction.atomic():
         fr, created = FundRequest.objects.update_or_create(
-            submitted_by_user_id=principal.user_id, period=period, period_key=period_key,
+            submitted_by_user_id=principal.user_id,
+            period=period,
+            period_key=period_key,
             defaults={
-                "fy": fy, "scope": lens, "submitted_by_role": principal.active_role,
-                "total_amount": total, "activity_count": len(activities),
+                "fy": fy,
+                "scope": lens,
+                "submitted_by_role": principal.active_role,
+                "total_amount": total,
+                "activity_count": len(activities),
                 "status": FundRequestStatus.SUBMITTED,
             },
         )
         fr.items.all().delete()
-        FundRequestItem.objects.bulk_create([
-            FundRequestItem(
-                fund_request=fr,
-                activity_id=activity.id,
-                activity_schedule_cost_line_id=line.id,
-                amount=line.amount,
-                period=period,
-                period_key=period_key,
-            )
-            for activity, line in request_items
-        ])
+        FundRequestItem.objects.bulk_create(
+            [
+                FundRequestItem(
+                    fund_request=fr,
+                    activity_id=activity.id,
+                    activity_schedule_cost_line_id=line.id,
+                    amount=line.amount,
+                    period=period,
+                    period_key=period_key,
+                )
+                for activity, line in request_items
+            ]
+        )
     return _serialize(fr)
 
 
@@ -155,7 +169,9 @@ def _review(request_id: str, new_status: str, data: dict, principal) -> dict:
     fr.reviewed_by_user_id = principal.user_id
     fr.reviewed_at = timezone.now()
     fr.review_note = data.get("note")
-    fr.save(update_fields=["status", "reviewed_by_user_id", "reviewed_at", "review_note"])
+    fr.save(
+        update_fields=["status", "reviewed_by_user_id", "reviewed_at", "review_note"]
+    )
     return _serialize(fr)
 
 
@@ -176,7 +192,10 @@ def disburse(request_id: str, data: dict, principal) -> dict:
     fr = FundRequest.objects.filter(id=request_id).first()
     if not fr:
         raise NotFoundError("Fund request not found.")
-    if fr.status not in (FundRequestStatus.APPROVED, FundRequestStatus.SENT_TO_ACCOUNTANT):
+    if fr.status not in (
+        FundRequestStatus.APPROVED,
+        FundRequestStatus.SENT_TO_ACCOUNTANT,
+    ):
         raise BadRequest("Only an approved request can be disbursed.")
     fr.status = FundRequestStatus.DISBURSED
     fr.disbursed_amount = data.get("amount", fr.total_amount)
@@ -184,7 +203,16 @@ def disburse(request_id: str, data: dict, principal) -> dict:
     fr.disbursed_by_user_id = principal.user_id
     fr.disburse_method = data.get("method")
     fr.disburse_reference = data.get("reference")
-    fr.save(update_fields=["status", "disbursed_amount", "disbursed_at", "disbursed_by_user_id", "disburse_method", "disburse_reference"])
+    fr.save(
+        update_fields=[
+            "status",
+            "disbursed_amount",
+            "disbursed_at",
+            "disbursed_by_user_id",
+            "disburse_method",
+            "disburse_reference",
+        ]
+    )
     return _serialize(fr)
 
 
@@ -197,11 +225,21 @@ def submit_accountability(request_id: str, data: dict, principal) -> dict:
     fr.accountability_netsuite_id = data.get("netsuiteId")
     fr.accountability_status = "submitted"
     fr.accountability_submitted_at = timezone.now()
-    fr.save(update_fields=["accounted_amount", "returned_amount", "accountability_netsuite_id", "accountability_status", "accountability_submitted_at"])
+    fr.save(
+        update_fields=[
+            "accounted_amount",
+            "returned_amount",
+            "accountability_netsuite_id",
+            "accountability_status",
+            "accountability_submitted_at",
+        ]
+    )
     return _serialize(fr)
 
 
-def review_accountability(request_id: str, decision: str, data: dict, principal) -> dict:
+def review_accountability(
+    request_id: str, decision: str, data: dict, principal
+) -> dict:
     fr = FundRequest.objects.filter(id=request_id).first()
     if not fr:
         raise NotFoundError("Fund request not found.")
@@ -213,7 +251,14 @@ def review_accountability(request_id: str, decision: str, data: dict, principal)
         fr.status = FundRequestStatus.RETURNED_BY_ACCOUNTANT
     fr.accountability_reviewed_at = timezone.now()
     fr.reviewed_by_user_id = principal.user_id
-    fr.save(update_fields=["accountability_status", "status", "accountability_reviewed_at", "reviewed_by_user_id"])
+    fr.save(
+        update_fields=[
+            "accountability_status",
+            "status",
+            "accountability_reviewed_at",
+            "reviewed_by_user_id",
+        ]
+    )
     return _serialize(fr)
 
 
@@ -225,10 +270,14 @@ def regenerate(period: str, principal) -> dict:
 
 def _to_costable(a: Activity) -> dict:
     return {
-        "activityType": a.activity_type, "deliveryType": a.delivery_type,
-        "teachersAttended": a.teachers_attended, "leadersAttended": a.leaders_attended,
-        "otherParticipants": a.other_participants, "projectId": a.project_id,
-        "estCostCents": a.est_cost_cents, "costMissing": a.cost_missing,
+        "activityType": a.activity_type,
+        "deliveryType": a.delivery_type,
+        "teachersAttended": a.teachers_attended,
+        "leadersAttended": a.leaders_attended,
+        "otherParticipants": a.other_participants,
+        "projectId": a.project_id,
+        "estCostCents": a.est_cost_cents,
+        "costMissing": a.cost_missing,
     }
 
 

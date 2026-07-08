@@ -1,4 +1,5 @@
 """Planning models — annual + monthly plans."""
+
 from __future__ import annotations
 
 from django.db import models
@@ -15,12 +16,18 @@ class AnnualPlan(TimeStampedModel):
 
     class Meta:
         db_table = "annual_plan"
-        constraints = [models.UniqueConstraint(fields=["fy", "owner_staff_id"], name="uniq_annualplan_fy_owner")]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["fy", "owner_staff_id"], name="uniq_annualplan_fy_owner"
+            )
+        ]
 
 
 class AnnualPlanActivity(TimeStampedModel):
     id = CuidField()
-    annual_plan = models.ForeignKey(AnnualPlan, on_delete=models.CASCADE, related_name="activities")
+    annual_plan = models.ForeignKey(
+        AnnualPlan, on_delete=models.CASCADE, related_name="activities"
+    )
     activity_type = models.CharField(max_length=48, choices=ActivityType.choices)
     school_id = models.CharField(max_length=30, null=True, blank=True)
     cluster_id = models.CharField(max_length=30, null=True, blank=True)
@@ -46,13 +53,23 @@ class MonthlyPlan(TimeStampedModel):
 
     class Meta:
         db_table = "monthly_plan"
-        constraints = [models.UniqueConstraint(fields=["month_iso", "owner_staff_id"], name="uniq_monthlyplan_month_owner")]
-        indexes = [models.Index(fields=["status"]), models.Index(fields=["owner_staff_id"])]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["month_iso", "owner_staff_id"],
+                name="uniq_monthlyplan_month_owner",
+            )
+        ]
+        indexes = [
+            models.Index(fields=["status"]),
+            models.Index(fields=["owner_staff_id"]),
+        ]
 
 
 class MonthlyPlanActivity(TimeStampedModel):
     id = CuidField()
-    plan = models.ForeignKey(MonthlyPlan, on_delete=models.CASCADE, related_name="activities")
+    plan = models.ForeignKey(
+        MonthlyPlan, on_delete=models.CASCADE, related_name="activities"
+    )
     kind = models.CharField(max_length=48)
     title = models.CharField(max_length=255)
     week_of_month = models.IntegerField(default=1)

@@ -9,6 +9,7 @@ Matching is case-insensitive + whitespace-normalized (so "Ojok Amos",
 "ojok amos", "OJOK  AMOS" all match). Fuzzy matching is deliberately NOT used
 for auto-linking; it is unsafe at the ownership level.
 """
+
 from __future__ import annotations
 
 import re
@@ -46,13 +47,16 @@ def match(name: str | None) -> tuple[str | None, str]:
     if not name or not name.strip():
         return None, AccountOwnerStatus.PENDING.value
 
-    normalized = normalize_name(name)
+    normalize_name(name)
     # Match field-staff users by normalized name. ArrayField `__contains` would
     # be ideal but cross-DB portability + the multi-role array shape makes an
     # iexact name filter + Python role check the clearer path.
     candidates = list(
-        StaffProfile.objects.select_related("user")
-        .filter(user__name__iexact=name.strip(), deleted_at__isnull=True, user__is_active=True)
+        StaffProfile.objects.select_related("user").filter(
+            user__name__iexact=name.strip(),
+            deleted_at__isnull=True,
+            user__is_active=True,
+        )
     )
     # Keep only users whose roles include a field-staff role (CCEO/PL). A
     # same-named Accountant must never be auto-linked.

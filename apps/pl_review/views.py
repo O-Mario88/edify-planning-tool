@@ -1,4 +1,5 @@
 """PL review endpoints — /api/pl/review-queue/*."""
+
 from __future__ import annotations
 
 from rest_framework.permissions import IsAuthenticated
@@ -33,4 +34,6 @@ class PlReviewReturnView(APIView):
     required_permissions = [Permission.PLANNING_VIEW.value]
 
     def post(self, request: Request, activity_id: str) -> Response:
-        return Response(services.return_activity(activity_id, request.data, request.user))
+        return Response(
+            services.return_activity(activity_id, request.data, request.user)
+        )

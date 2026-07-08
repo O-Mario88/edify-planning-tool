@@ -1,23 +1,14 @@
 {% extends "layouts/shell.html" %}
+{% load frontend_filters %}
 
 {% block title %}Partner Payments - Edify Command Center{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6" x-data="{ payOpen: false, selectedAct: null, partnerName: '', payAmount: 0 }">
+<div class="p-6 max-w-7xl mx-auto space-y-5 font-sans" x-data="{ payOpen: false, selectedAct: null, partnerName: '', payAmount: 0 }">
 
-<!-- Premium Header Pane -->
-<div class="relative overflow-hidden rounded-xl bg-slate-900 text-white p-8 shadow-md border border-slate-800">
-<div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none"></div>
-<div class="relative z-10 space-y-2">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[11px] font-semibold uppercase tracking-widest">
-Partner Operations
-</div>
-<h1 class="text-[32px] font-semibold tracking-tight text-white leading-none">Partner Payment Queue</h1>
-<p class="text-[14px] text-slate-400 font-medium max-w-xl">
-Manage and release payments for verified partner activities. Partner items appear here only after full IA Verification.
-</p>
-</div>
-</div>
+{% include "components/page_header.html" with title="Partner Payment Queue" subtitle="Manage and release payments for verified partner activities. Partner items appear here only after full IA Verification." %}
+
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
 
 <!-- Table Card -->
 <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden relative">
@@ -41,7 +32,7 @@ Manage and release payments for verified partner activities. Partner items appea
 <tr class="hover:bg-slate-50/50 transition-colors">
 <!-- Partner -->
 <td class="px-6 py-4">
-<div class="font-semibold text-slate-900 text-[12px]">{{ act.assigned_partner_id }}</div>
+<div class="font-semibold text-slate-900 text-[12px]">{{ act.partner_name|default:"Unassigned" }}</div>
 </td>
 <!-- ID -->
 <td class="px-6 py-4">
@@ -69,13 +60,13 @@ Verified
 </td>
 <!-- Payment Amount -->
 <td class="px-6 py-4 text-center text-emerald-600 font-semibold">
-UGX 600,000
+{{ act.payment_amount|ugx }}
 </td>
 <!-- Actions -->
 <td class="px-6 py-4 text-right">
 <div class="flex items-center justify-end gap-2">
-<button 
-@click="payOpen = true; selectedAct = '{{ act.id }}'; partnerName = '{{ act.assigned_partner_id }}'; payAmount = 600000"
+<button
+@click="payOpen = true; selectedAct = '{{ act.id }}'; partnerName = '{{ act.partner_name|default:"Unassigned"|escapejs }}'; payAmount = {{ act.payment_amount }}"
 type="button" 
 class="h-8 px-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-semibold flex items-center justify-center transition-colors shadow-sm"
 >

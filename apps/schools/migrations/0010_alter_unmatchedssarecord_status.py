@@ -4,15 +4,23 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('schools', '0009_school_director_name_school_headteacher_name'),
+        ("schools", "0009_school_director_name_school_headteacher_name"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='unmatchedssarecord',
-            name='status',
-            field=models.CharField(choices=[('pending', 'Pending'), ('matched', 'Matched'), ('ignored', 'Ignored'), ('hold', 'Hold for Review')], default='pending', max_length=32),
+            model_name="unmatchedssarecord",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("pending", "Pending"),
+                    ("matched", "Matched"),
+                    ("ignored", "Ignored"),
+                    ("hold", "Hold for Review"),
+                ],
+                default="pending",
+                max_length=32,
+            ),
         ),
     ]

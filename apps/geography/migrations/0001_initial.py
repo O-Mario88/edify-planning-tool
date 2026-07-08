@@ -7,210 +7,390 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='BoundaryImportRun',
+            name="BoundaryImportRun",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('source_name', models.CharField(max_length=255)),
-                ('source_url', models.CharField(blank=True, max_length=1024, null=True)),
-                ('source_last_modified', models.CharField(blank=True, max_length=255, null=True)),
-                ('imported_at', models.DateTimeField()),
-                ('imported_by', models.CharField(blank=True, max_length=255, null=True)),
-                ('level_counts', models.JSONField(default=dict)),
-                ('checksum', models.CharField(blank=True, max_length=255, null=True)),
-                ('status', models.CharField(max_length=64)),
-                ('errors', models.JSONField(blank=True, null=True)),
-                ('warnings', models.JSONField(blank=True, null=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("source_name", models.CharField(max_length=255)),
+                (
+                    "source_url",
+                    models.CharField(blank=True, max_length=1024, null=True),
+                ),
+                (
+                    "source_last_modified",
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
+                ("imported_at", models.DateTimeField()),
+                (
+                    "imported_by",
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
+                ("level_counts", models.JSONField(default=dict)),
+                ("checksum", models.CharField(blank=True, max_length=255, null=True)),
+                ("status", models.CharField(max_length=64)),
+                ("errors", models.JSONField(blank=True, null=True)),
+                ("warnings", models.JSONField(blank=True, null=True)),
             ],
             options={
-                'db_table': 'boundary_import_run',
+                "db_table": "boundary_import_run",
             },
         ),
         migrations.CreateModel(
-            name='District',
+            name="District",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('name', models.CharField(max_length=255)),
-                ('code', models.CharField(blank=True, max_length=64, null=True, unique=True)),
-                ('pcode', models.CharField(blank=True, max_length=64, null=True, unique=True)),
-                ('source', models.CharField(blank=True, max_length=255, null=True)),
-                ('latitude', models.FloatField(blank=True, null=True)),
-                ('longitude', models.FloatField(blank=True, null=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("name", models.CharField(max_length=255)),
+                (
+                    "code",
+                    models.CharField(blank=True, max_length=64, null=True, unique=True),
+                ),
+                (
+                    "pcode",
+                    models.CharField(blank=True, max_length=64, null=True, unique=True),
+                ),
+                ("source", models.CharField(blank=True, max_length=255, null=True)),
+                ("latitude", models.FloatField(blank=True, null=True)),
+                ("longitude", models.FloatField(blank=True, null=True)),
             ],
             options={
-                'db_table': 'district',
-                'ordering': ['name'],
+                "db_table": "district",
+                "ordering": ["name"],
             },
         ),
         migrations.CreateModel(
-            name='Region',
+            name="Region",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('name', models.CharField(max_length=255, unique=True)),
-                ('code', models.CharField(blank=True, max_length=64, null=True, unique=True)),
-                ('pcode', models.CharField(blank=True, max_length=64, null=True, unique=True)),
-                ('source', models.CharField(blank=True, max_length=255, null=True)),
-                ('latitude', models.FloatField(blank=True, null=True)),
-                ('longitude', models.FloatField(blank=True, null=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("name", models.CharField(max_length=255, unique=True)),
+                (
+                    "code",
+                    models.CharField(blank=True, max_length=64, null=True, unique=True),
+                ),
+                (
+                    "pcode",
+                    models.CharField(blank=True, max_length=64, null=True, unique=True),
+                ),
+                ("source", models.CharField(blank=True, max_length=255, null=True)),
+                ("latitude", models.FloatField(blank=True, null=True)),
+                ("longitude", models.FloatField(blank=True, null=True)),
             ],
             options={
-                'db_table': 'region',
-                'ordering': ['name'],
+                "db_table": "region",
+                "ordering": ["name"],
             },
         ),
         migrations.CreateModel(
-            name='County',
+            name="County",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('name', models.CharField(max_length=255)),
-                ('normalized_name', models.CharField(max_length=255)),
-                ('pcode', models.CharField(blank=True, max_length=64, null=True, unique=True)),
-                ('source', models.CharField(blank=True, max_length=255, null=True)),
-                ('latitude', models.FloatField(blank=True, null=True)),
-                ('longitude', models.FloatField(blank=True, null=True)),
-                ('district', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='counties', to='geography.district')),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("name", models.CharField(max_length=255)),
+                ("normalized_name", models.CharField(max_length=255)),
+                (
+                    "pcode",
+                    models.CharField(blank=True, max_length=64, null=True, unique=True),
+                ),
+                ("source", models.CharField(blank=True, max_length=255, null=True)),
+                ("latitude", models.FloatField(blank=True, null=True)),
+                ("longitude", models.FloatField(blank=True, null=True)),
+                (
+                    "district",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="counties",
+                        to="geography.district",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'county',
+                "db_table": "county",
             },
         ),
         migrations.CreateModel(
-            name='GeographyAlias',
+            name="GeographyAlias",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('admin_level', models.CharField(max_length=64)),
-                ('admin_id', models.CharField(max_length=30)),
-                ('alias', models.CharField(max_length=255)),
-                ('normalized_alias', models.CharField(max_length=255)),
-                ('source', models.CharField(blank=True, max_length=255, null=True)),
-                ('confidence', models.CharField(blank=True, max_length=64, null=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("admin_level", models.CharField(max_length=64)),
+                ("admin_id", models.CharField(max_length=30)),
+                ("alias", models.CharField(max_length=255)),
+                ("normalized_alias", models.CharField(max_length=255)),
+                ("source", models.CharField(blank=True, max_length=255, null=True)),
+                ("confidence", models.CharField(blank=True, max_length=64, null=True)),
             ],
             options={
-                'db_table': 'geography_alias',
-                'indexes': [models.Index(fields=['admin_level', 'admin_id'], name='geography_a_admin_l_c988c7_idx')],
-                'constraints': [models.UniqueConstraint(fields=('admin_level', 'normalized_alias'), name='uniq_geoalias_level_norm')],
+                "db_table": "geography_alias",
+                "indexes": [
+                    models.Index(
+                        fields=["admin_level", "admin_id"],
+                        name="geography_a_admin_l_c988c7_idx",
+                    )
+                ],
+                "constraints": [
+                    models.UniqueConstraint(
+                        fields=("admin_level", "normalized_alias"),
+                        name="uniq_geoalias_level_norm",
+                    )
+                ],
             },
         ),
         migrations.AddField(
-            model_name='district',
-            name='region',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.RESTRICT, related_name='districts', to='geography.region'),
+            model_name="district",
+            name="region",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.RESTRICT,
+                related_name="districts",
+                to="geography.region",
+            ),
         ),
         migrations.CreateModel(
-            name='SubCounty',
+            name="SubCounty",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('name', models.CharField(max_length=255)),
-                ('seeded', models.BooleanField(default=False)),
-                ('pcode', models.CharField(blank=True, max_length=64, null=True, unique=True)),
-                ('source', models.CharField(blank=True, max_length=255, null=True)),
-                ('latitude', models.FloatField(blank=True, null=True)),
-                ('longitude', models.FloatField(blank=True, null=True)),
-                ('county', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='sub_counties', to='geography.county')),
-                ('district', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='sub_counties', to='geography.district')),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("name", models.CharField(max_length=255)),
+                ("seeded", models.BooleanField(default=False)),
+                (
+                    "pcode",
+                    models.CharField(blank=True, max_length=64, null=True, unique=True),
+                ),
+                ("source", models.CharField(blank=True, max_length=255, null=True)),
+                ("latitude", models.FloatField(blank=True, null=True)),
+                ("longitude", models.FloatField(blank=True, null=True)),
+                (
+                    "county",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="sub_counties",
+                        to="geography.county",
+                    ),
+                ),
+                (
+                    "district",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="sub_counties",
+                        to="geography.district",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'sub_county',
-                'ordering': ['name'],
+                "db_table": "sub_county",
+                "ordering": ["name"],
             },
         ),
         migrations.CreateModel(
-            name='Parish',
+            name="Parish",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('name', models.CharField(max_length=255)),
-                ('pcode', models.CharField(blank=True, max_length=64, null=True, unique=True)),
-                ('source', models.CharField(blank=True, max_length=255, null=True)),
-                ('confidence', models.CharField(blank=True, max_length=64, null=True)),
-                ('sub_county', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='parishes', to='geography.subcounty')),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("name", models.CharField(max_length=255)),
+                (
+                    "pcode",
+                    models.CharField(blank=True, max_length=64, null=True, unique=True),
+                ),
+                ("source", models.CharField(blank=True, max_length=255, null=True)),
+                ("confidence", models.CharField(blank=True, max_length=64, null=True)),
+                (
+                    "sub_county",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="parishes",
+                        to="geography.subcounty",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'parish',
-                'ordering': ['name'],
+                "db_table": "parish",
+                "ordering": ["name"],
             },
         ),
         migrations.CreateModel(
-            name='SubRegion',
+            name="SubRegion",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('name', models.CharField(max_length=255, unique=True)),
-                ('normalized_name', models.CharField(max_length=255)),
-                ('source', models.CharField(default='CONTROLLED', max_length=64)),
-                ('confidence', models.CharField(default='REVIEW_REQUIRED', max_length=64)),
-                ('verified_by', models.CharField(blank=True, max_length=255, null=True)),
-                ('verified_at', models.DateTimeField(blank=True, null=True)),
-                ('notes', models.TextField(blank=True, null=True)),
-                ('region', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='sub_regions', to='geography.region')),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("name", models.CharField(max_length=255, unique=True)),
+                ("normalized_name", models.CharField(max_length=255)),
+                ("source", models.CharField(default="CONTROLLED", max_length=64)),
+                (
+                    "confidence",
+                    models.CharField(default="REVIEW_REQUIRED", max_length=64),
+                ),
+                (
+                    "verified_by",
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
+                ("verified_at", models.DateTimeField(blank=True, null=True)),
+                ("notes", models.TextField(blank=True, null=True)),
+                (
+                    "region",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="sub_regions",
+                        to="geography.region",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'sub_region',
+                "db_table": "sub_region",
             },
         ),
         migrations.AddField(
-            model_name='district',
-            name='sub_region',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='districts', to='geography.subregion'),
+            model_name="district",
+            name="sub_region",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="districts",
+                to="geography.subregion",
+            ),
         ),
         migrations.CreateModel(
-            name='Village',
+            name="Village",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('name', models.CharField(max_length=255)),
-                ('source', models.CharField(blank=True, max_length=255, null=True)),
-                ('parish', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='villages', to='geography.parish')),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("name", models.CharField(max_length=255)),
+                ("source", models.CharField(blank=True, max_length=255, null=True)),
+                (
+                    "parish",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="villages",
+                        to="geography.parish",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'village',
-                'ordering': ['name'],
+                "db_table": "village",
+                "ordering": ["name"],
             },
         ),
         migrations.AddConstraint(
-            model_name='county',
-            constraint=models.UniqueConstraint(fields=('district', 'name'), name='uniq_county_district_name'),
+            model_name="county",
+            constraint=models.UniqueConstraint(
+                fields=("district", "name"), name="uniq_county_district_name"
+            ),
         ),
         migrations.AddConstraint(
-            model_name='subcounty',
-            constraint=models.UniqueConstraint(fields=('district', 'name'), name='uniq_subcounty_district_name'),
+            model_name="subcounty",
+            constraint=models.UniqueConstraint(
+                fields=("district", "name"), name="uniq_subcounty_district_name"
+            ),
         ),
         migrations.AddConstraint(
-            model_name='parish',
-            constraint=models.UniqueConstraint(fields=('sub_county', 'name'), name='uniq_parish_subcounty_name'),
+            model_name="parish",
+            constraint=models.UniqueConstraint(
+                fields=("sub_county", "name"), name="uniq_parish_subcounty_name"
+            ),
         ),
         migrations.AddConstraint(
-            model_name='district',
-            constraint=models.UniqueConstraint(fields=('region', 'name'), name='uniq_district_region_name'),
+            model_name="district",
+            constraint=models.UniqueConstraint(
+                fields=("region", "name"), name="uniq_district_region_name"
+            ),
         ),
         migrations.AddIndex(
-            model_name='village',
-            index=models.Index(fields=['parish'], name='village_parish__967e80_idx'),
+            model_name="village",
+            index=models.Index(fields=["parish"], name="village_parish__967e80_idx"),
         ),
         migrations.AddConstraint(
-            model_name='village',
-            constraint=models.UniqueConstraint(fields=('parish', 'name'), name='uniq_village_parish_name'),
+            model_name="village",
+            constraint=models.UniqueConstraint(
+                fields=("parish", "name"), name="uniq_village_parish_name"
+            ),
         ),
     ]

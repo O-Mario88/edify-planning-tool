@@ -1,0 +1,30 @@
+{% comment %}
+  Edify Page Header — every page starts with this.
+
+  Usage:
+    {% include "components/page_header.html" with title="Planning" subtitle="Schedule support for ready schools" %}
+    …with optional action buttons passed via the `actions` block-style include:
+    {% include "components/page_header.html" with title="Reports" subtitle="…" actions_template="pages/reports/_header_actions.html" %}
+
+  Props:
+    title            (required)
+    subtitle         — one-line purpose statement
+    breadcrumb       — optional short parent label (renders "parent / title")
+    actions_template — template path rendered right-aligned (buttons, filters)
+{% endcomment %}
+<div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 border-b border-slate-100 pb-4">
+  <div class="min-w-0">
+    {% if breadcrumb %}
+    <nav class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">{{ breadcrumb }}</nav>
+    {% endif %}
+    <h1 class="text-[22px] lg:text-[24px] font-semibold text-slate-800 tracking-tight leading-none">{{ title }}</h1>
+    {% if subtitle %}
+    <p class="text-[12px] text-slate-500 font-medium mt-1.5 max-w-2xl">{{ subtitle }}</p>
+    {% endif %}
+  </div>
+  {% if actions_template %}
+  <div class="flex flex-wrap items-center gap-2 shrink-0">
+    {% include actions_template %}
+  </div>
+  {% endif %}
+</div>

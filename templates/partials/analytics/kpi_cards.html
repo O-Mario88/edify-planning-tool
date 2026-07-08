@@ -1,49 +1,348 @@
 {% load frontend_filters %}
 
-<div id="analytics-kpi-and-content-container" class="space-y-6 font-sans">
+<div id="analytics-kpi-and-content-container" class="space-y-5 font-sans">
 
 <!-- KPI Strip -->
 {% include "components/kpi_strip.html" with items=kpi_strip_items %}
 
-<!-- Main grid section (Layout Alignment Fixed using compiled lg:col-span-9 and lg:col-span-3) -->
-<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
 
-<!-- Left 9 columns: Core dashboard content (lg:col-span-9) -->
-<div class="lg:col-span-9 space-y-6">
+<!-- Main column (lg:col-span-8) -->
+<div class="lg:col-span-8 space-y-5">
 
-<!-- Row 1: Charts (Performance Overview & SSA by Intervention) -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-{% include "partials/analytics/performance_overview.html" %}
-{% include "partials/analytics/ssa_performance.html" %}
-</div>
+<!-- Primary Insight Area: 2-column chart grid -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
-<!-- Row 2: Regional performance, targets by district, cluster table -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-{% include "partials/analytics/target_by_district.html" %}
-{% include "partials/analytics/regional_performance.html" %}
-{% include "partials/analytics/cluster_performance.html" %}
-</div>
+{% include "components/chart_card.html" with chart_id="performance-overview-chart" title="Performance Overview" subtitle="Planned vs achieved activities across the fiscal year" has_data=performance_chart_has_data height=260 %}
+{{ performance_chart_options|json_script:"performance-overview-chart-config" }}
 
-<!-- Row 3: Impact Summary & Activity tracking -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-{% include "partials/analytics/impact_summary.html" %}
-{% include "partials/analytics/activity_tracking.html" %}
-</div>
-
-<!-- Row 4: Staff/Partner performance, Core/Champion metrics, Donor Reporting Snapshot -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-{% include "partials/analytics/staff_partner_performance.html" %}
-{% include "partials/analytics/core_champion_performance.html" %}
-{% include "partials/analytics/donor_reporting_snapshot.html" %}
-</div>
+{% include "components/chart_card.html" with chart_id="ssa-intervention-chart" title="SSA Performance by Intervention" subtitle="Average score out of 6.0, current scope" has_data=ssa_chart_has_data height=280 %}
+{{ ssa_chart_options|json_script:"ssa-intervention-chart-config" }}
 
 </div>
 
-<!-- Right 3 columns: Recommended Insights Rail (lg:col-span-3) -->
-<div class="lg:col-span-3">
-{% include "partials/analytics/recommended_insights.html" %}
+<!-- Supporting Area: max 3-column -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+<!-- Target Achievement by District -->
+<div class="card p-4 space-y-3">
+  <div class="pb-2 border-b border-slate-100">
+    <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Target Achievement by District</h3>
+    <p class="text-[11px] text-slate-400 font-semibold mt-0.5">District targets progress, {{ filters.selected_quarter }}</p>
+  </div>
+  {% if target_by_district %}
+  <div class="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+    {% for dist in target_by_district %}
+    <div class="space-y-1">
+      <div class="flex items-center justify-between text-[11px] font-bold text-slate-600">
+        <span class="truncate">{{ dist.name }}</span>
+        <div class="flex items-center gap-2">
+          <span class="text-[11px] text-slate-400 font-semibold">({{ dist.achieved }}/{{ dist.planned }})</span>
+          <span class="font-semibold text-slate-800">{{ dist.pct }}%</span>
+        </div>
+      </div>
+      <div class="h-1.5 w-full bg-slate-50 rounded-full overflow-hidden">
+        <div class="h-full rounded-full {{ dist.bar_color }}" style="width: {{ dist.pct }}%"></div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  {% include "components/empty_state.html" with title="No district data" message="No targets or activities in this period." compact="true" %}
+  {% endif %}
 </div>
 
+<!-- Regional Performance -->
+{% include "components/chart_card.html" with chart_id="regional-performance-chart" title="Regional Performance" subtitle="Target achievement % by region" has_data=regional_chart_has_data height=220 %}
+{{ regional_chart_options|json_script:"regional-performance-chart-config" }}
+
+<!-- Impact Summary -->
+<div class="card p-4 space-y-3">
+  <div class="pb-2 border-b border-slate-100">
+    <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Impact Summary</h3>
+    <p class="text-[11px] text-slate-400 font-semibold mt-0.5">Educational footprint, FY {{ filters.selected_fy }}</p>
+  </div>
+  <div class="grid grid-cols-2 gap-3">
+    <div class="bg-slate-50 rounded-xl p-3 text-center">
+      <span class="text-[10px] uppercase font-semibold text-slate-400 tracking-wider">Teachers Trained</span>
+      <p class="text-[18px] font-semibold text-slate-800 mt-1">{{ impact_summary.teachers_trained|currency }}</p>
+    </div>
+    <div class="bg-slate-50 rounded-xl p-3 text-center">
+      <span class="text-[10px] uppercase font-semibold text-slate-400 tracking-wider">Leaders Trained</span>
+      <p class="text-[18px] font-semibold text-slate-800 mt-1">{{ impact_summary.leaders_trained|currency }}</p>
+    </div>
+    <div class="bg-slate-50 rounded-xl p-3 text-center">
+      <span class="text-[10px] uppercase font-semibold text-slate-400 tracking-wider">Students Reached</span>
+      <p class="text-[18px] font-semibold text-slate-800 mt-1">
+        {% if impact_summary.students_impacted >= 1000000 %}{{ impact_summary.students_impacted|divide:1000000|floatformat:2 }}M
+        {% elif impact_summary.students_impacted >= 1000 %}{{ impact_summary.students_impacted|divide:1000|floatformat:0 }}K
+        {% else %}{{ impact_summary.students_impacted }}{% endif %}
+      </p>
+    </div>
+    <div class="bg-slate-50 rounded-xl p-3 text-center">
+      <span class="text-[10px] uppercase font-semibold text-slate-400 tracking-wider">Schools Improved</span>
+      <p class="text-[18px] font-semibold text-emerald-600 mt-1">+{{ impact_summary.schools_improved }}</p>
+    </div>
+  </div>
+  <p class="text-[11px] text-slate-400 font-semibold pt-1 border-t border-slate-50">Improved = SSA average up &gt;0.05 vs FY{{ filters.selected_fy|add:"-1" }}.</p>
+</div>
+
+</div>
+
+<!-- Supporting Area 2: max 3-column -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+<!-- Activity Tracking -->
+<div class="card p-4 space-y-3">
+  <div class="pb-2 border-b border-slate-100">
+    <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Activity Tracking</h3>
+    <p class="text-[11px] text-slate-400 font-semibold mt-0.5">Logged this quarter, by category</p>
+  </div>
+  <div class="space-y-2">
+    <div class="flex items-center justify-between border-b border-slate-50 pb-2 text-[11px] font-bold text-slate-600">
+      <span>School Visits</span>
+      <span class="font-semibold text-slate-800">{{ activity_tracking.school_visits }}</span>
+    </div>
+    <div class="flex items-center justify-between border-b border-slate-50 pb-2 text-[11px] font-bold text-slate-600">
+      <span>Cluster Trainings</span>
+      <span class="font-semibold text-slate-800">{{ activity_tracking.cluster_trainings }}</span>
+    </div>
+    <div class="flex items-center justify-between border-b border-slate-50 pb-2 text-[11px] font-bold text-slate-600">
+      <span>Cluster Meetings</span>
+      <span class="font-semibold text-slate-800">{{ activity_tracking.cluster_meetings }}</span>
+    </div>
+    <div class="flex items-center justify-between border-b border-slate-50 pb-2 text-[11px] font-bold text-slate-600">
+      <span>SSA Support</span>
+      <span class="font-semibold text-slate-800">{{ activity_tracking.ssa_support }}</span>
+    </div>
+    <div class="flex items-center justify-between border-b border-slate-50 pb-2 text-[11px] font-bold text-slate-600">
+      <span>Partner Activities</span>
+      <span class="font-semibold text-slate-800">{{ activity_tracking.partner_activities }}</span>
+    </div>
+    <div class="flex items-center justify-between text-[11px] font-bold text-slate-600">
+      <span>Project Activities</span>
+      <span class="font-semibold text-slate-800">{{ activity_tracking.project_activities }}</span>
+    </div>
+  </div>
+</div>
+
+<!-- Core & Champion Schools -->
+<div class="card p-4 space-y-3">
+  <div class="pb-2 border-b border-slate-100">
+    <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Core & Champion Schools</h3>
+    <p class="text-[11px] text-slate-400 font-semibold mt-0.5">Category-based SSA performance</p>
+  </div>
+  <div class="space-y-3">
+    <div class="bg-slate-50 rounded-xl p-3 flex items-center justify-between">
+      <div>
+        <span class="text-[10px] uppercase font-semibold text-slate-400 tracking-wider">Core Schools</span>
+        <p class="text-[15px] font-semibold text-slate-800 mt-0.5">{{ core_champion.core_count }} schools</p>
+      </div>
+      <div class="text-right">
+        <span class="text-[18px] font-semibold text-slate-800">{{ core_champion.core_ssa|default:"—" }}</span>
+        {% if core_champion.core_ssa_trend %}
+        <span class="text-[11px] {% if '+' in core_champion.core_ssa_trend %}text-emerald-600{% else %}text-rose-600{% endif %} font-bold block mt-0.5">{{ core_champion.core_ssa_trend }}</span>
+        {% else %}
+        <span class="text-[11px] text-slate-400 font-bold block mt-0.5">no prior FY data</span>
+        {% endif %}
+      </div>
+    </div>
+    <div class="bg-slate-50 rounded-xl p-3 flex items-center justify-between">
+      <div>
+        <span class="text-[10px] uppercase font-semibold text-slate-400 tracking-wider">Champion Schools</span>
+        <p class="text-[15px] font-semibold text-slate-800 mt-0.5">{{ core_champion.champion_count }} schools</p>
+      </div>
+      <div class="text-right">
+        <span class="text-[18px] font-semibold text-slate-800">{{ core_champion.champion_ssa|default:"—" }}</span>
+        {% if core_champion.champion_ssa_trend %}
+        <span class="text-[11px] {% if '+' in core_champion.champion_ssa_trend %}text-emerald-600{% else %}text-rose-600{% endif %} font-bold block mt-0.5">{{ core_champion.champion_ssa_trend }}</span>
+        {% else %}
+        <span class="text-[11px] text-slate-400 font-bold block mt-0.5">no prior FY data</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Staff & Partner Performance -->
+{% include "components/chart_card.html" with chart_id="staff-partner-chart" title="Staff & Partner Performance" subtitle="Completed activities, current vs prior quarter" has_data=staff_partner_has_data height=180 %}
+{{ staff_partner_chart_options|json_script:"staff-partner-chart-config" }}
+
+</div>
+
+</div>
+
+<!-- Sidebar (lg:col-span-4) -->
+<div class="lg:col-span-4 space-y-5">
+
+<!-- Recommended Actions Rail -->
+<div class="card p-4 space-y-4">
+  <div class="border-b border-slate-100 pb-2">
+    <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Recommended Actions</h3>
+    <p class="text-[11px] text-slate-400 font-semibold mt-0.5">Live risk signals from current-scope data</p>
+  </div>
+
+  <div class="space-y-3">
+    {% for insight in insights %}
+    <div
+      class="border rounded-xl p-3 shadow-sm hover:shadow-md transition-all cursor-pointer bg-white {{ insight.color }}"
+      hx-get="/analytics/drilldown?metric={{ insight.key }}&fy={{ filters.selected_fy }}&quarter={{ filters.selected_quarter }}"
+      hx-target="#drawer-container"
+      hx-swap="innerHTML"
+    >
+      <div class="flex items-center justify-between font-semibold text-[11px] uppercase tracking-wider">
+        <span class="flex items-center gap-2">
+          <span>{{ insight.icon }}</span>
+          <span class="truncate max-w-[150px] font-semibold">{{ insight.label }}</span>
+        </span>
+        <span class="text-[14px] font-semibold">{{ insight.count }}</span>
+      </div>
+      <p class="text-[11px] font-bold opacity-75 mt-1 leading-snug">{{ insight.description }}</p>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Focus card callout — real weakest intervention/district, not static copy -->
+  {% if weakest_intervention or weakest_district %}
+  <div class="btn-premium-primary text-white border border-[#213a45] rounded-xl p-4 shadow-sm space-y-3">
+    <div class="flex items-center gap-2 text-[11px] font-semibold uppercase text-amber-300 tracking-wider">
+      <span>Recommended Focus</span>
+    </div>
+    <p class="text-[11px] font-bold leading-relaxed text-slate-200">
+      {% if weakest_intervention %}Weakest intervention in scope: <span class="text-white">{{ weakest_intervention.label }}</span> ({{ weakest_intervention.value }}/6.0).{% endif %}
+      {% if weakest_district %} Lowest-achieving district: <span class="text-white">{{ weakest_district.name }}</span> ({{ weakest_district.pct }}%).{% endif %}
+    </p>
+    <a href="/districts" class="w-full bg-amber-400 text-slate-900 hover:bg-amber-500 py-1.5 rounded-lg text-[11px] font-semibold uppercase tracking-wider text-center transition-all block">
+      Open District Performance
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Donor Reporting Snapshot -->
+<div class="card p-4 space-y-3">
+  <div class="pb-2 border-b border-slate-100">
+    <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Donor Reporting Snapshot</h3>
+    <p class="text-[11px] text-slate-400 font-semibold mt-0.5">Traceable KPI summary for donor reporting</p>
+  </div>
+  <div class="space-y-2 text-[11px] font-bold text-slate-600">
+    <div class="flex items-center justify-between border-b border-slate-50 pb-1.5">
+      <span>Teachers Trained</span>
+      <span class="font-semibold text-slate-800">{{ donor_snapshot.teachers_trained|currency }}</span>
+    </div>
+    <div class="flex items-center justify-between border-b border-slate-50 pb-1.5">
+      <span>Leaders Trained</span>
+      <span class="font-semibold text-slate-800">{{ donor_snapshot.leaders_trained|currency }}</span>
+    </div>
+    <div class="flex items-center justify-between border-b border-slate-50 pb-1.5">
+      <span>Students Reached</span>
+      <span class="font-semibold text-slate-800">
+        {% if donor_snapshot.students_impacted >= 1000000 %}{{ donor_snapshot.students_impacted|divide:1000000|floatformat:2 }}M
+        {% elif donor_snapshot.students_impacted >= 1000 %}{{ donor_snapshot.students_impacted|divide:1000|floatformat:0 }}K
+        {% else %}{{ donor_snapshot.students_impacted }}{% endif %}
+      </span>
+    </div>
+    <div class="flex items-center justify-between border-b border-slate-50 pb-1.5">
+      <span>Districts Covered</span>
+      <span class="font-semibold text-slate-800">{{ donor_snapshot.districts_covered }}</span>
+    </div>
+    <div class="flex items-center justify-between">
+      <span>Schools Impacted</span>
+      <span class="font-semibold text-slate-800">{{ donor_snapshot.schools_impacted }}</span>
+    </div>
+  </div>
+  <a
+    href="?fy={{ filters.selected_fy }}&quarter={{ filters.selected_quarter }}&export=csv"
+    class="flex items-center justify-center gap-1.5 w-full bg-slate-50 text-slate-600 hover:text-slate-800 hover:bg-slate-100 py-1.5 rounded-lg text-[11px] font-semibold uppercase tracking-wider text-center transition-all mt-1"
+  >
+    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+    </svg>
+    <span>Export CSV Snapshot</span>
+  </a>
+</div>
+
+</div>
+
+</div>
+
+<!-- Full-width detail: Staff & Partner leaderboard -->
+<div class="card p-4 space-y-3">
+  <div class="pb-2 border-b border-slate-100">
+    <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Top Performers</h3>
+    <p class="text-[11px] text-slate-400 font-semibold mt-0.5">Ranked by activities completed this FY, scoped to your visibility</p>
+  </div>
+  {% if staff_partner_performance.leaderboard %}
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+    {% for st in staff_partner_performance.leaderboard %}
+    <div class="flex items-center justify-between text-[11px] font-bold text-slate-600 bg-slate-50 rounded-xl p-3">
+      <div class="flex items-center gap-2">
+        <span class="h-6 w-6 bg-blue-50 text-blue-600 font-semibold text-[11px] rounded-full flex items-center justify-center border border-blue-100">{{ forloop.counter }}</span>
+        <div>
+          <p class="font-bold text-slate-800 text-[12px] leading-tight">{{ st.name }}</p>
+          <p class="text-[11px] text-slate-400 font-semibold leading-none">{{ st.role }}</p>
+        </div>
+      </div>
+      <div class="text-right">
+        <p class="font-semibold text-slate-800">{{ st.activities }} acts</p>
+        <p class="text-[11px] text-emerald-600 font-bold leading-none">{{ st.pct }}% ach.</p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  {% include "components/empty_state.html" with title="No scheduled work yet" message="Staff and partner performance appears once activities are planned in your scope." compact="true" %}
+  {% endif %}
+</div>
+
+<!-- Full-width detail: Cluster Performance table -->
+<div class="card p-0 overflow-hidden">
+  <div class="px-4 pt-4 pb-2 border-b border-slate-100">
+    <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Cluster Performance (Top 10)</h3>
+    <p class="text-[11px] text-slate-400 font-semibold mt-0.5">Ranked cluster networks — click a row for details</p>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="w-full text-left text-[12px] border-collapse bg-white">
+      <thead>
+        <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+          <th class="px-4 py-2.5">Rank</th>
+          <th class="px-4 py-2.5">Cluster</th>
+          <th class="px-4 py-2.5 text-center">Avg SSA</th>
+          <th class="px-4 py-2.5">Best Intervention</th>
+          <th class="px-4 py-2.5">Weakest Intervention</th>
+          <th class="px-4 py-2.5 text-center">Trainings</th>
+          <th class="px-4 py-2.5 text-center">Visits</th>
+          <th class="px-4 py-2.5 text-center">Trend</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100 text-slate-700 font-medium">
+        {% for c in cluster_performance %}
+        <tr
+          class="hover:bg-slate-50/50 cursor-pointer"
+          hx-get="/analytics/drilldown?metric=cluster&id={{ c.id }}&fy={{ filters.selected_fy }}&quarter={{ filters.selected_quarter }}"
+          hx-target="#drawer-container"
+          hx-swap="innerHTML"
+        >
+          <td class="px-4 py-2.5 text-slate-400 font-semibold">{{ c.rank }}</td>
+          <td class="px-4 py-2.5 font-bold text-slate-800">{{ c.name }}</td>
+          <td class="px-4 py-2.5 text-center font-semibold text-slate-700">{{ c.ssa_avg }}</td>
+          <td class="px-4 py-2.5 text-[11px] text-emerald-600 font-bold truncate max-w-[140px]">{{ c.best_intervention }}</td>
+          <td class="px-4 py-2.5 text-[11px] text-rose-600 font-bold truncate max-w-[140px]">{{ c.worst_intervention }}</td>
+          <td class="px-4 py-2.5 text-center font-semibold">{{ c.trainings }}</td>
+          <td class="px-4 py-2.5 text-center font-semibold">{{ c.visits }}</td>
+          <td class="px-4 py-2.5 text-center">
+            {% if c.trend == 'up' %}<span class="text-emerald-500 font-semibold">&#9650;</span>
+            {% elif c.trend == 'down' %}<span class="text-rose-500 font-semibold">&#9660;</span>
+            {% else %}<span class="text-slate-300 font-semibold">&mdash;</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if not cluster_performance %}
+    {% include "components/empty_state.html" with title="No clusters in scope" message="Clusters and their SSA performance appear here once assigned schools have activity." compact="true" %}
+    {% endif %}
+  </div>
 </div>
 
 </div>

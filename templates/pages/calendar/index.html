@@ -1,11 +1,11 @@
 {% extends "layouts/shell.html" %}
+{% load static %}
 
 {% block title %}Calendar — Edify{% endblock %}
 
 {% block shell_content %}
 <!-- FullCalendar CSS and JS -->
-<link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/main.min.css' rel='stylesheet' />
-<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+<script src="{% static 'vendor/fullcalendar.min.js' %}"></script>
 
 <style>
   /* Custom premium styles to blend FullCalendar with Edify Design language */
@@ -94,16 +94,15 @@
   }
 </style>
 
-<div class="p-6 max-w-7xl mx-auto space-y-6">
-  <div class="flex items-center justify-between">
-    <div>
-      <h1 class="text-[20px] font-semibold text-slate-800 tracking-tight">Calendar</h1>
-      <p class="text-[12px] text-slate-400 font-semibold mt-0.5">Edify Operations · Interactive Planner</p>
-    </div>
-  </div>
+<div class="p-6 max-w-7xl mx-auto space-y-5">
+  {% include "components/page_header.html" with title="Calendar" subtitle="Edify Operations · Interactive Planner" breadcrumb="Planning" %}
+
+  {% include "components/role_scope_notice.html" with scope_text=scope_text %}
+
+  {% include "components/kpi_strip.html" with items=kpi_strip_items %}
 
   <!-- FullCalendar Container -->
-  <div class="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
+  <div class="card p-5">
     <div id="fullcalendar-view"></div>
   </div>
 </div>

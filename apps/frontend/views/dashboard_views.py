@@ -1,40 +1,40 @@
 from django.shortcuts import render, redirect
 from django.db.models import Q, Avg, Count, Sum
 from django.utils import timezone
-from datetime import date as date_type
+from datetime import date as date_type, timedelta
 
 from apps.activities.models import Activity, ActivityScheduleCostLine
 from apps.schools.models import School
 from apps.clusters.models import Cluster
 from apps.fund_requests.models import WeeklyFundRequest
 from apps.ssa.models import SsaRecord, SsaScore
-from apps.accounts.models import User, StaffProfile, StaffSupervisorAssignment, StaffSchoolAssignment
-from apps.geography.models import Region
+from apps.accounts.models import User, StaffProfile, StaffSupervisorAssignment
 from apps.command_center import services as cc_services
 from apps.core.permissions import require_page_permission
 from apps.core.enums import SsaIntervention
-from apps.command_center.dashboard_service import DashboardMetricsService
+from apps.command_center.dashboard_service import DashboardMetricsService, _ugx_compact
+
 
 @require_page_permission("dashboard")
 def dashboard_view(request):
     user = request.user
     role = user.active_role
-    
+
     # Fetch common alerts and todays items
     alerts_list = cc_services.alerts(user)
     alerts_summary = cc_services.alerts_summary(user)
     today_context = cc_services.today(user)
-    
+
     # Fetch unified dashboard metrics from the service
     metrics = DashboardMetricsService.get_dashboard_metrics(user)
-    
+
     # Get user avatar initials
     names = user.name.split()
     avatar_initials = "".join([n[0].upper() for n in names[:2]]) if names else "US"
 
     if role == "Accountant":
         return redirect("/accounts")
-        
+
     if role == "ImpactAssessment":
         return redirect("/ia/dashboard/")
 
@@ -48,80 +48,178 @@ def dashboard_view(request):
 
         # Activity status buckets (used across all CD queries).
         ACHIEVED = ["completed", "closed"]
-        PLANNED = ["planned", "scheduled", "in_progress", "completion_started",
-                   "evidence_uploaded", "evidence_accepted", "salesforce_id_required",
-                   "submitted_to_pl", "returned_by_pl", "awaiting_ia_verification",
-                   "rescheduled"]
+        PLANNED = [
+            "planned",
+            "scheduled",
+            "in_progress",
+            "completion_started",
+            "evidence_uploaded",
+            "evidence_accepted",
+            "salesforce_id_required",
+            "submitted_to_pl",
+            "returned_by_pl",
+            "awaiting_ia_verification",
+            "rescheduled",
+        ]
         VERIFIED = ["ia_verified"]
-        VISIT_TYPES = ["school_visit", "follow_up_visit", "coaching_visit",
-                       "baseline_ssa_visit", "school_visit_ssa_collection",
-                       "core_visit", "core_assessment_visit"]
-        TRAINING_TYPES = ["training", "school_improvement_training", "cluster_training",
-                          "cluster_training_ssa_collection", "core_training"]
+        VISIT_TYPES = [
+            "school_visit",
+            "follow_up_visit",
+            "coaching_visit",
+            "baseline_ssa_visit",
+            "school_visit_ssa_collection",
+            "core_visit",
+            "core_assessment_visit",
+        ]
+        TRAINING_TYPES = [
+            "training",
+            "school_improvement_training",
+            "cluster_training",
+            "cluster_training_ssa_collection",
+            "core_training",
+        ]
 
         # ── KPI strip ────────────────────────────────────────────────────────
         total_schools = School.objects.filter(deleted_at__isnull=True).count()
         completed_visits = Activity.objects.filter(
-            status="completed", activity_type__in=VISIT_TYPES,
-            deleted_at__isnull=True, fy=fy,
+            status="completed",
+            activity_type__in=VISIT_TYPES,
+            deleted_at__isnull=True,
+            fy=fy,
         ).count()
         planned_visits = Activity.objects.filter(
-            status__in=PLANNED, activity_type__in=VISIT_TYPES,
-            deleted_at__isnull=True, fy=fy,
+            status__in=PLANNED,
+            activity_type__in=VISIT_TYPES,
+            deleted_at__isnull=True,
+            fy=fy,
         ).count()
         verified_visits = Activity.objects.filter(
-            status__in=VERIFIED, deleted_at__isnull=True, fy=fy,
+            status__in=VERIFIED,
+            deleted_at__isnull=True,
+            fy=fy,
         ).count()
-        avg_national_ssa = (SsaRecord.objects.filter(deleted_at__isnull=True, fy=fy)
-                            .aggregate(a=Avg("average_score"))["a"]) or 0.0
+        avg_national_ssa = (
+            (
+                SsaRecord.objects.filter(deleted_at__isnull=True, fy=fy).aggregate(
+                    a=Avg("average_score")
+                )["a"]
+            )
+            or 0.0
+        )
 
         # ── Fund requests & budget ───────────────────────────────────────────
-        pending_wfrs = list(WeeklyFundRequest.objects.filter(status="submitted_to_cd").order_by("-week_start_date"))
+        pending_wfrs = list(
+            WeeklyFundRequest.objects.filter(status="submitted_to_cd").order_by(
+                "-week_start_date"
+            )
+        )
         _wfr_user_ids = [w.responsible_user for w in pending_wfrs]
         _wfr_users = {u.id: u for u in User.objects.filter(id__in=_wfr_user_ids)}
         for w in pending_wfrs:
             w.requester = _wfr_users.get(w.responsible_user)
             w.total_budget = w.total_amount
 
-        total_approved = WeeklyFundRequest.objects.filter(
-            fy=fy, status__in=["approved_by_cd", "sent_to_accountant", "disbursed", "accounted", "accountability_pending"]
-        ).aggregate(s=Sum("total_amount"))["s"] or 0
-        total_requested = WeeklyFundRequest.objects.filter(
-            fy=fy, status__in=["submitted_to_cd", "submitted_to_pl", "approved_by_pl"]
-        ).aggregate(s=Sum("total_amount"))["s"] or 0
-        total_disbursed = WeeklyFundRequest.objects.filter(fy=fy).aggregate(s=Sum("disbursed_amount"))["s"] or 0
-        budget_planned_total = ActivityScheduleCostLine.objects.filter(
-            activity__fy=fy, activity__deleted_at__isnull=True
-        ).aggregate(s=Sum("amount"))["s"] or 0
+        total_approved = (
+            WeeklyFundRequest.objects.filter(
+                fy=fy,
+                status__in=[
+                    "approved_by_cd",
+                    "sent_to_accountant",
+                    "disbursed",
+                    "accounted",
+                    "accountability_pending",
+                ],
+            ).aggregate(s=Sum("total_amount"))["s"]
+            or 0
+        )
+        total_requested = (
+            WeeklyFundRequest.objects.filter(
+                fy=fy,
+                status__in=["submitted_to_cd", "submitted_to_pl", "approved_by_pl"],
+            ).aggregate(s=Sum("total_amount"))["s"]
+            or 0
+        )
+        total_disbursed = (
+            WeeklyFundRequest.objects.filter(fy=fy).aggregate(
+                s=Sum("disbursed_amount")
+            )["s"]
+            or 0
+        )
+        budget_planned_total = (
+            ActivityScheduleCostLine.objects.filter(
+                activity__fy=fy, activity__deleted_at__isnull=True
+            ).aggregate(s=Sum("amount"))["s"]
+            or 0
+        )
 
         budget_summary = {
             "total_approved": total_approved,
             "total_requested": total_requested,
             "total_disbursed": total_disbursed,
             "planned_total": budget_planned_total,
-            "utilization_pct": round(total_disbursed / budget_planned_total * 100, 1) if budget_planned_total else 0,
+            "utilization_pct": round(total_disbursed / budget_planned_total * 100, 1)
+            if budget_planned_total
+            else 0,
         }
 
         active_catalogue = CostCatalogue.objects.filter(fy=fy, is_active=True).first()
-        cost_items = list(CostSetting.objects.filter(catalogue=active_catalogue).order_by("key")) if active_catalogue else []
+        cost_items = (
+            list(CostSetting.objects.filter(catalogue=active_catalogue).order_by("key"))
+            if active_catalogue
+            else []
+        )
 
         # ── District risk table (existing real query, kept) ──────────────────
-        districts = District.objects.annotate(
-            total=Count("schools", filter=Q(schools__deleted_at__isnull=True)),
-            missing_ssa=Count("schools", filter=Q(schools__deleted_at__isnull=True) & ~Q(schools__current_fy_ssa_status="done")),
-            avg_ssa=Avg("schools__ssa_records__average_score", filter=Q(schools__deleted_at__isnull=True) & Q(schools__ssa_records__deleted_at__isnull=True))
-        ).filter(total__gt=0).order_by("-missing_ssa")[:8]
-        district_risks = [{
-            "district": d.name, "total": d.total,
-            "missing_ssa": d.missing_ssa, "avg_ssa": round(d.avg_ssa or 0.0, 2),
-        } for d in districts]
+        districts = (
+            District.objects.annotate(
+                total=Count("schools", filter=Q(schools__deleted_at__isnull=True)),
+                missing_ssa=Count(
+                    "schools",
+                    filter=Q(schools__deleted_at__isnull=True)
+                    & ~Q(schools__current_fy_ssa_status="done"),
+                ),
+                avg_ssa=Avg(
+                    "schools__ssa_records__average_score",
+                    filter=Q(schools__deleted_at__isnull=True)
+                    & Q(schools__ssa_records__deleted_at__isnull=True),
+                ),
+            )
+            .filter(total__gt=0)
+            .order_by("-missing_ssa")[:8]
+        )
+        district_risks = [
+            {
+                "district": d.name,
+                "total": d.total,
+                "missing_ssa": d.missing_ssa,
+                "avg_ssa": round(d.avg_ssa or 0.0, 2),
+            }
+            for d in districts
+        ]
 
         # ── Regional performance (real Region annotations) ───────────────────
         regions_qs = Region.objects.annotate(
             school_count=Count("schools", filter=Q(schools__deleted_at__isnull=True)),
-            planned=Count("schools__activities", filter=Q(schools__deleted_at__isnull=True) & Q(schools__activities__deleted_at__isnull=True) & Q(schools__activities__fy=fy) & Q(schools__activities__status__in=PLANNED)),
-            completed=Count("schools__activities", filter=Q(schools__deleted_at__isnull=True) & Q(schools__activities__deleted_at__isnull=True) & Q(schools__activities__fy=fy) & Q(schools__activities__status__in=ACHIEVED)),
-            avg_ssa=Avg("schools__ssa_records__average_score", filter=Q(schools__deleted_at__isnull=True) & Q(schools__ssa_records__deleted_at__isnull=True) & Q(schools__ssa_records__fy=fy)),
+            planned=Count(
+                "schools__activities",
+                filter=Q(schools__deleted_at__isnull=True)
+                & Q(schools__activities__deleted_at__isnull=True)
+                & Q(schools__activities__fy=fy)
+                & Q(schools__activities__status__in=PLANNED),
+            ),
+            completed=Count(
+                "schools__activities",
+                filter=Q(schools__deleted_at__isnull=True)
+                & Q(schools__activities__deleted_at__isnull=True)
+                & Q(schools__activities__fy=fy)
+                & Q(schools__activities__status__in=ACHIEVED),
+            ),
+            avg_ssa=Avg(
+                "schools__ssa_records__average_score",
+                filter=Q(schools__deleted_at__isnull=True)
+                & Q(schools__ssa_records__deleted_at__isnull=True)
+                & Q(schools__ssa_records__fy=fy),
+            ),
         ).filter(school_count__gt=0)
         regions_list = []
         for r in regions_qs:
@@ -133,30 +231,78 @@ def dashboard_view(request):
                 color = "bg-amber-500"
             else:
                 color = "bg-rose-500"
-            regions_list.append({
-                "name": r.name, "rate": rate, "color": color,
-                "school_count": r.school_count,
-                "avg_ssa": round(r.avg_ssa or 0.0, 2),
-            })
+            regions_list.append(
+                {
+                    "name": r.name,
+                    "rate": rate,
+                    "color": color,
+                    "school_count": r.school_count,
+                    "avg_ssa": round(r.avg_ssa or 0.0, 2),
+                }
+            )
         regions_list.sort(key=lambda x: x["rate"], reverse=True)
 
         # ── Country Program Leads performance (real supervised-team data) ───
         leads_performance = []
-        for pl in User.objects.filter(roles__contains=["Program Lead"], deleted_at__isnull=True):
+        for pl in User.objects.filter(
+            roles__contains=["Program Lead"], deleted_at__isnull=True
+        ):
             sp = getattr(pl, "staff_profile", None)
-            supervisee_sp_ids = list(StaffSupervisorAssignment.objects.filter(supervisor=sp).values_list("supervisee_id", flat=True)) if sp else []
-            supervisee_user_ids = list(StaffProfile.objects.filter(id__in=supervisee_sp_ids).values_list("user_id", flat=True))
+            supervisee_sp_ids = (
+                list(
+                    StaffSupervisorAssignment.objects.filter(supervisor=sp).values_list(
+                        "supervisee_id", flat=True
+                    )
+                )
+                if sp
+                else []
+            )
+            supervisee_user_ids = list(
+                StaffProfile.objects.filter(id__in=supervisee_sp_ids).values_list(
+                    "user_id", flat=True
+                )
+            )
             # Region: derive from supervised CCEOs' schools
             region_name = "—"
             if supervisee_sp_ids:
-                _sch = School.objects.filter(staff_assignments__staff_id__in=supervisee_sp_ids).select_related("region").first()
+                _sch = (
+                    School.objects.filter(account_owner_id__in=supervisee_sp_ids)
+                    .select_related("region")
+                    .first()
+                )
                 if _sch and _sch.region:
                     region_name = _sch.region.name
-            planned = Activity.objects.filter(responsible_staff_id__in=supervisee_user_ids, status__in=PLANNED, deleted_at__isnull=True, fy=fy).count()
-            completed = Activity.objects.filter(responsible_staff_id__in=supervisee_user_ids, status__in=ACHIEVED, deleted_at__isnull=True, fy=fy).count()
-            verified = Activity.objects.filter(responsible_staff_id__in=supervisee_user_ids, status__in=VERIFIED, deleted_at__isnull=True, fy=fy).count()
-            sf_pending = Activity.objects.filter(responsible_staff_id__in=supervisee_user_ids, salesforce_activity_id__isnull=True, status__in=ACHIEVED + VERIFIED, deleted_at__isnull=True, fy=fy).count()
-            backlog = Activity.objects.filter(responsible_staff_id__in=supervisee_user_ids, planned_date__lt=today, status__in=PLANNED, deleted_at__isnull=True).count()
+            planned = Activity.objects.filter(
+                responsible_staff_id__in=supervisee_user_ids,
+                status__in=PLANNED,
+                deleted_at__isnull=True,
+                fy=fy,
+            ).count()
+            completed = Activity.objects.filter(
+                responsible_staff_id__in=supervisee_user_ids,
+                status__in=ACHIEVED,
+                deleted_at__isnull=True,
+                fy=fy,
+            ).count()
+            verified = Activity.objects.filter(
+                responsible_staff_id__in=supervisee_user_ids,
+                status__in=VERIFIED,
+                deleted_at__isnull=True,
+                fy=fy,
+            ).count()
+            sf_pending = Activity.objects.filter(
+                responsible_staff_id__in=supervisee_user_ids,
+                salesforce_activity_id__isnull=True,
+                status__in=ACHIEVED + VERIFIED,
+                deleted_at__isnull=True,
+                fy=fy,
+            ).count()
+            backlog = Activity.objects.filter(
+                responsible_staff_id__in=supervisee_user_ids,
+                planned_date__lt=today,
+                status__in=PLANNED,
+                deleted_at__isnull=True,
+            ).count()
             denom = planned + completed
             target_pct = round(completed / denom * 100) if denom else 0
             if denom == 0:
@@ -167,54 +313,90 @@ def dashboard_view(request):
                 status, status_class = "Watch", "bg-amber-50 text-amber-700"
             else:
                 status, status_class = "High Risk", "bg-rose-50 text-rose-700"
-            leads_performance.append({
-                "name": pl.name, "region": region_name,
-                "staff": len(supervisee_sp_ids),
-                "planned": planned, "verified": verified,
-                "sf_pending": sf_pending, "backlog": backlog,
-                "target_pct": target_pct, "status": status, "status_class": status_class,
-            })
-        high_risk_count = sum(1 for l in leads_performance if l["status"] == "High Risk")
+            leads_performance.append(
+                {
+                    "name": pl.name,
+                    "region": region_name,
+                    "staff": len(supervisee_sp_ids),
+                    "planned": planned,
+                    "verified": verified,
+                    "sf_pending": sf_pending,
+                    "backlog": backlog,
+                    "target_pct": target_pct,
+                    "status": status,
+                    "status_class": status_class,
+                }
+            )
+        high_risk_count = sum(
+            1 for lead in leads_performance if lead["status"] == "High Risk"
+        )
 
         # ── SSA Intervention Heat Matrix (region × 8 interventions) ──────────
-        intervention_codes = [code for code, _label in SsaIntervention.choices]
-        heat_qs = (SsaScore.objects
-                   .filter(ssa_record__deleted_at__isnull=True, ssa_record__school__deleted_at__isnull=True, ssa_record__fy=fy)
-                   .values("ssa_record__school__region__name", "intervention")
-                   .annotate(avg=Avg("score")))
+        [code for code, _label in SsaIntervention.choices]
+        heat_qs = (
+            SsaScore.objects.filter(
+                ssa_record__deleted_at__isnull=True,
+                ssa_record__school__deleted_at__isnull=True,
+                ssa_record__fy=fy,
+            )
+            .values("ssa_record__school__region__name", "intervention")
+            .annotate(avg=Avg("score"))
+        )
         # Pivot into region rows × intervention columns
         _heat_map = {}
         for row in heat_qs:
             rname = row["ssa_record__school__region__name"] or "Unknown"
-            _heat_map.setdefault(rname, {})[row["intervention"]] = round(row["avg"], 1) if row["avg"] is not None else None
+            _heat_map.setdefault(rname, {})[row["intervention"]] = (
+                round(row["avg"], 1) if row["avg"] is not None else None
+            )
         ssa_heat_rows = []
         for rname, scores in _heat_map.items():
             rrow = {"name": rname, "scores": scores}
             ssa_heat_rows.append(rrow)
 
         # ── Fund Approval & Finance Snapshot (by region, from cost lines) ────
-        fin_qs = (ActivityScheduleCostLine.objects
-                  .filter(activity__fy=fy, activity__deleted_at__isnull=True, school__isnull=False)
-                  .values("school__region__name")
-                  .annotate(total=Sum("amount"), count=Count("id", distinct=True)))
-        finance_snapshot_pending = [{
-            "region": r["school__region__name"] or "Unknown",
-            "requested": r["total"] or 0,
-            "activities": r["count"],
-        } for r in fin_qs.order_by("-total")[:6]]
+        fin_qs = (
+            ActivityScheduleCostLine.objects.filter(
+                activity__fy=fy, activity__deleted_at__isnull=True, school__isnull=False
+            )
+            .values("school__region__name")
+            .annotate(total=Sum("amount"), count=Count("id", distinct=True))
+        )
+        finance_snapshot_pending = [
+            {
+                "region": r["school__region__name"] or "Unknown",
+                "requested": r["total"] or 0,
+                "activities": r["count"],
+            }
+            for r in fin_qs.order_by("-total")[:6]
+        ]
 
         # ── Priority Schools (flagged issues, real queries) ──────────────────
-        visited_school_ids = set(Activity.objects.filter(
-            activity_type__in=VISIT_TYPES, fy=fy, deleted_at__isnull=True, school__isnull=False
-        ).values_list("school_id", flat=True))
-        trained_school_ids = set(Activity.objects.filter(
-            activity_type__in=TRAINING_TYPES, fy=fy, deleted_at__isnull=True, school__isnull=False
-        ).values_list("school_id", flat=True))
-        weak_ssa_school_ids = set(SsaRecord.objects.filter(
-            deleted_at__isnull=True, fy=fy, average_score__lt=5.0
-        ).values_list("school_id", flat=True))
+        visited_school_ids = set(
+            Activity.objects.filter(
+                activity_type__in=VISIT_TYPES,
+                fy=fy,
+                deleted_at__isnull=True,
+                school__isnull=False,
+            ).values_list("school_id", flat=True)
+        )
+        trained_school_ids = set(
+            Activity.objects.filter(
+                activity_type__in=TRAINING_TYPES,
+                fy=fy,
+                deleted_at__isnull=True,
+                school__isnull=False,
+            ).values_list("school_id", flat=True)
+        )
+        weak_ssa_school_ids = set(
+            SsaRecord.objects.filter(
+                deleted_at__isnull=True, fy=fy, average_score__lt=5.0
+            ).values_list("school_id", flat=True)
+        )
         priority_schools = []
-        for s in School.objects.filter(deleted_at__isnull=True).select_related("region"):
+        for s in School.objects.filter(deleted_at__isnull=True).select_related(
+            "region"
+        ):
             flags = []
             if s.id not in visited_school_ids:
                 flags.append("No Visit")
@@ -228,11 +410,16 @@ def dashboard_view(request):
                 risk, risk_class = "High", "bg-rose-50 text-rose-700"
             else:
                 risk, risk_class = "Medium", "bg-amber-50 text-amber-700"
-            priority_schools.append({
-                "name": s.name, "region": s.region.name if s.region_id else "—",
-                "issue": ", ".join(flags), "risk": risk, "risk_class": risk_class,
-                "school_id": s.school_id,
-            })
+            priority_schools.append(
+                {
+                    "name": s.name,
+                    "region": s.region.name if s.region_id else "—",
+                    "issue": ", ".join(flags),
+                    "risk": risk,
+                    "risk_class": risk_class,
+                    "school_id": s.school_id,
+                }
+            )
             if len(priority_schools) >= 10:
                 break
 
@@ -240,26 +427,179 @@ def dashboard_view(request):
         chart_labels, chart_planned, chart_completed, chart_verified = [], [], [], []
         for m in range(1, 13):
             chart_labels.append(date_type(2026, m, 1).strftime("%b"))
-            chart_planned.append(Activity.objects.filter(fy=fy, planned_month=m, status__in=PLANNED, deleted_at__isnull=True).count())
-            chart_completed.append(Activity.objects.filter(fy=fy, planned_month=m, status__in=ACHIEVED, deleted_at__isnull=True).count())
-            chart_verified.append(Activity.objects.filter(fy=fy, planned_month=m, status__in=VERIFIED, deleted_at__isnull=True).count())
+            chart_planned.append(
+                Activity.objects.filter(
+                    fy=fy, planned_month=m, status__in=PLANNED, deleted_at__isnull=True
+                ).count()
+            )
+            chart_completed.append(
+                Activity.objects.filter(
+                    fy=fy, planned_month=m, status__in=ACHIEVED, deleted_at__isnull=True
+                ).count()
+            )
+            chart_verified.append(
+                Activity.objects.filter(
+                    fy=fy, planned_month=m, status__in=VERIFIED, deleted_at__isnull=True
+                ).count()
+            )
 
         # SF backlog count (activities completed but missing SF id)
         sf_backlog = Activity.objects.filter(
-            status__in=ACHIEVED, salesforce_activity_id__isnull=True,
-            deleted_at__isnull=True, fy=fy,
+            status__in=ACHIEVED,
+            salesforce_activity_id__isnull=True,
+            deleted_at__isnull=True,
+            fy=fy,
         ).count()
 
         # National achievement rate
         total_planned_nat = sum(chart_planned)
         total_completed_nat = sum(chart_completed)
-        national_achievement = round(total_completed_nat / (total_planned_nat + total_completed_nat) * 100) if (total_planned_nat + total_completed_nat) else 0
+        national_achievement = (
+            round(total_completed_nat / (total_planned_nat + total_completed_nat) * 100)
+            if (total_planned_nat + total_completed_nat)
+            else 0
+        )
+        has_cd_chart_data = bool(
+            total_planned_nat or total_completed_nat or sum(chart_verified)
+        )
+
+        cd_kpi_strip_items = [
+            {
+                "label": "National Achievement",
+                "value": f"{national_achievement}%",
+                "helper": "completed / (planned + completed)",
+                "icon": "target",
+                "variant": "success",
+            },
+            {
+                "label": "Active Schools",
+                "value": str(total_schools),
+                "helper": "in the directory",
+                "icon": "school",
+                "variant": "blue",
+            },
+            {
+                "label": "Avg National SSA",
+                "value": f"{round(avg_national_ssa, 2)}",
+                "helper": f"confirmed, FY {fy}",
+                "icon": "chart",
+                "variant": "info",
+            },
+            {
+                "label": "SF Backlog",
+                "value": str(sf_backlog),
+                "helper": "completed, missing SF ID",
+                "icon": "warning",
+                "variant": "warning" if sf_backlog else "neutral",
+            },
+            {
+                "label": "Pending Fund Requests",
+                "value": str(len(pending_wfrs)),
+                "helper": "awaiting CD approval",
+                "icon": "clock",
+                "variant": "warning" if pending_wfrs else "neutral",
+            },
+            {
+                "label": "Disbursed (FY)",
+                "value": _ugx_compact(budget_summary["total_disbursed"]),
+                "helper": f"of {_ugx_compact(budget_summary['planned_total'])} planned",
+                "icon": "currency",
+                "variant": "success",
+            },
+            {
+                "label": "Budget Utilization",
+                "value": f"{budget_summary['utilization_pct']}%",
+                "helper": "disbursed vs planned",
+                "icon": "currency",
+                "variant": "info",
+            },
+            {
+                "label": "High-Risk Regions",
+                "value": str(high_risk_count),
+                "helper": "below 60% achievement",
+                "icon": "warning",
+                "variant": "danger" if high_risk_count else "neutral",
+            },
+        ]
+
+        cd_alert_cards = []
+        for region in regions_list:
+            if region["rate"] < 60 and len(cd_alert_cards) < 3:
+                cd_alert_cards.append(
+                    {
+                        "kind": "alert",
+                        "title": f"{region['name']} behind target",
+                        "body": f"{region['name']} is at {region['rate']}% vs national target.",
+                        "cta_label": "View regional performance",
+                        "cta_href": "/coverage",
+                    }
+                )
+        if sf_backlog > 0 and len(cd_alert_cards) < 3:
+            cd_alert_cards.append(
+                {
+                    "kind": "alert",
+                    "title": "Salesforce backlog",
+                    "body": f"{sf_backlog} completed activities are missing Salesforce IDs.",
+                    "cta_label": "Inspect backlog",
+                    "cta_href": "/completed-activities",
+                }
+            )
+        if pending_wfrs and len(cd_alert_cards) < 3:
+            cd_alert_cards.append(
+                {
+                    "kind": "action",
+                    "title": f"{len(pending_wfrs)} fund requests pending",
+                    "body": "Awaiting your Country Director approval.",
+                    "cta_label": "Review approvals",
+                    "cta_href": "/fund-requests/weekly",
+                }
+            )
+
+        cd_performance_chart = {
+            "chart": {"type": "line"},
+            "series": [
+                {"name": "Planned", "type": "column", "data": chart_planned},
+                {"name": "Completed", "type": "column", "data": chart_completed},
+                {"name": "Verified", "type": "line", "data": chart_verified},
+            ],
+            "stroke": {"width": [0, 0, 2], "curve": "smooth"},
+            "colors": ["#94a3b8", "#3b82f6", "#10b981"],
+            "plotOptions": {"bar": {"columnWidth": "45%", "borderRadius": 3}},
+            "labels": chart_labels,
+            "xaxis": {
+                "type": "category",
+                "axisBorder": {"show": False},
+                "axisTicks": {"show": False},
+                "labels": {
+                    "style": {
+                        "colors": "#94a3b8",
+                        "fontSize": "10px",
+                        "fontWeight": 500,
+                    }
+                },
+            },
+            "yaxis": {"labels": {"style": {"colors": "#94a3b8", "fontSize": "10px"}}},
+            "grid": {"borderColor": "#f1f5f9"},
+            "legend": {
+                "position": "top",
+                "horizontalAlign": "right",
+                "fontSize": "11px",
+                "fontWeight": 500,
+                "labels": {"colors": "#64748b"},
+                "markers": {"radius": 12},
+            },
+            "tooltip": {"theme": "dark"},
+        }
 
         context = {
-            "alerts": alerts_list, "alerts_summary": alerts_summary,
-            "today_context": today_context, "role": role,
-            "user_name": user.name, "avatar_initials": avatar_initials,
-            "use_dark_sidebar": False, "fy": fy,
+            "alerts": alerts_list,
+            "alerts_summary": alerts_summary,
+            "today_context": today_context,
+            "role": role,
+            "user_name": user.name,
+            "avatar_initials": avatar_initials,
+            "use_dark_sidebar": False,
+            "fy": fy,
             # KPIs
             "total_schools": total_schools,
             "completed_visits": completed_visits,
@@ -287,6 +627,10 @@ def dashboard_view(request):
             "chart_planned": chart_planned,
             "chart_completed": chart_completed,
             "chart_verified": chart_verified,
+            "cd_performance_chart": cd_performance_chart,
+            "has_cd_chart_data": has_cd_chart_data,
+            "cd_kpi_strip_items": cd_kpi_strip_items,
+            "cd_alert_cards": cd_alert_cards,
         }
         return render(request, "pages/dashboards/cd.html", context)
 
@@ -298,11 +642,17 @@ def dashboard_view(request):
 
         # Activities submitted by CCEOs awaiting PL review. Attach the
         # responsible staff user (Activity stores only responsible_staff_id).
-        pending_reviews = list(Activity.objects.filter(
-            status="submitted_to_pl",
-            deleted_at__isnull=True,
-        ).select_related("school", "cluster").order_by("-updated_at")[:10])
-        _act_user_ids = [a.responsible_staff_id for a in pending_reviews if a.responsible_staff_id]
+        pending_reviews = list(
+            Activity.objects.filter(
+                status="submitted_to_pl",
+                deleted_at__isnull=True,
+            )
+            .select_related("school", "cluster")
+            .order_by("-updated_at")[:10]
+        )
+        _act_user_ids = [
+            a.responsible_staff_id for a in pending_reviews if a.responsible_staff_id
+        ]
         _act_users = {u.id: u for u in User.objects.filter(id__in=_act_user_ids)}
         for a in pending_reviews:
             a.responsible_staff = _act_users.get(a.responsible_staff_id)
@@ -310,19 +660,21 @@ def dashboard_view(request):
         # Weekly fund requests awaiting PL approval. Attach the requester user
         # and a display-friendly total_budget, matching how the CD branch
         # prepares these for the template.
-        pending_funds = list(WeeklyFundRequest.objects.filter(
-            status="submitted_to_pl",
-        ).order_by("-week_start_date")[:10])
-        _wfr_user_ids = [wfr.responsible_user for wfr in pending_funds if wfr.responsible_user]
+        pending_funds = list(
+            WeeklyFundRequest.objects.filter(
+                status="submitted_to_pl",
+            ).order_by("-week_start_date")[:10]
+        )
+        _wfr_user_ids = [
+            wfr.responsible_user for wfr in pending_funds if wfr.responsible_user
+        ]
         _wfr_users = {u.id: u for u in User.objects.filter(id__in=_wfr_user_ids)}
         for wfr in pending_funds:
             wfr.requester = _wfr_users.get(wfr.responsible_user)
             wfr.total_budget = wfr.total_amount
 
         # CCEOs with overdue activities (mirrors the HR workload pattern).
-        cceos = User.objects.filter(
-            roles__contains=["CCEO"], deleted_at__isnull=True
-        )
+        cceos = User.objects.filter(roles__contains=["CCEO"], deleted_at__isnull=True)
         cceos_overdue = []
         for c in cceos:
             overdue = Activity.objects.filter(
@@ -332,30 +684,67 @@ def dashboard_view(request):
                 deleted_at__isnull=True,
             ).count()
             if overdue > 0:
-                cceos_overdue.append({
-                    "name": c.name,
-                    "overdue_count": overdue,
-                })
+                cceos_overdue.append(
+                    {
+                        "name": c.name,
+                        "overdue_count": overdue,
+                    }
+                )
         cceos_overdue.sort(key=lambda x: x["overdue_count"], reverse=True)
         cceos_overdue = cceos_overdue[:6]
 
         # Clusters with weak average SSA across their schools.
         weak_clusters = []
-        for clus in Cluster.objects.filter(deleted_at__isnull=True).select_related("region", "district"):
+        for clus in Cluster.objects.filter(deleted_at__isnull=True).select_related(
+            "region", "district"
+        ):
             avg = SsaRecord.objects.filter(
                 school__cluster_assignments__cluster=clus,
                 deleted_at__isnull=True,
             ).aggregate(Avg("average_score"))["average_score__avg"]
             if avg is not None and avg < 5.0:
-                weak_clusters.append({
-                    "id": clus.id,
-                    "name": clus.name,
-                    "region": clus.region.name if clus.region_id else "—",
-                    "district": clus.district.name if clus.district_id else "—",
-                    "avg_ssa": round(avg, 2),
-                })
+                weak_clusters.append(
+                    {
+                        "id": clus.id,
+                        "name": clus.name,
+                        "region": clus.region.name if clus.region_id else "—",
+                        "district": clus.district.name if clus.district_id else "—",
+                        "avg_ssa": round(avg, 2),
+                    }
+                )
         weak_clusters.sort(key=lambda x: x["avg_ssa"])
         weak_clusters = weak_clusters[:6]
+
+        pl_kpi_strip_items = [
+            {
+                "label": "Pending Reviews",
+                "value": str(len(pending_reviews)),
+                "helper": "activities awaiting review",
+                "icon": "document",
+                "variant": "info" if pending_reviews else "neutral",
+            },
+            {
+                "label": "Fund Approvals",
+                "value": str(len(pending_funds)),
+                "helper": "advances awaiting approval",
+                "icon": "currency",
+                "variant": "warning" if pending_funds else "neutral",
+            },
+            {
+                "label": "Overdue Staff",
+                "value": str(len(cceos_overdue)),
+                "helper": "CCEOs with overdue activities",
+                "icon": "warning",
+                "variant": "danger" if cceos_overdue else "neutral",
+            },
+            {
+                "label": "Struggling Clusters",
+                "value": str(len(weak_clusters)),
+                "helper": "avg SSA below 5.5",
+                "icon": "chart",
+                "variant": "danger" if weak_clusters else "neutral",
+            },
+        ]
 
         context = {
             "alerts": alerts_list,
@@ -364,6 +753,7 @@ def dashboard_view(request):
             "role": role,
             "user_name": user.name,
             "avatar_initials": avatar_initials,
+            "pl_kpi_strip_items": pl_kpi_strip_items,
             "pending_reviews": pending_reviews,
             "pending_funds": pending_funds,
             "cceos_overdue": cceos_overdue,
@@ -373,33 +763,88 @@ def dashboard_view(request):
 
     elif role == "RegionalVicePresident":
         from apps.geography.models import Region
-        
+
         total_schools = School.objects.filter(deleted_at__isnull=True).count()
-        schools_missing_ssa = School.objects.filter(deleted_at__isnull=True).exclude(current_fy_ssa_status="done").count()
-        
+        schools_missing_ssa = (
+            School.objects.filter(deleted_at__isnull=True)
+            .exclude(current_fy_ssa_status="done")
+            .count()
+        )
+
         pending_wfrs = WeeklyFundRequest.objects.filter(
             status__in=["submitted_to_cd", "approved_by_pl"]
         ).count()
-        
-        total_requested = WeeklyFundRequest.objects.filter(
-            status__in=["submitted_to_cd", "submitted_to_pl", "approved_by_pl"]
-        ).aggregate(Sum("total_amount"))["total_amount__sum"] or 0
-        
-        total_approved = WeeklyFundRequest.objects.filter(
-            status__in=["approved_by_cd", "sent_to_accountant", "disbursed", "accounted"]
-        ).aggregate(Sum("total_amount"))["total_amount__sum"] or 0
-        
+
+        total_requested = (
+            WeeklyFundRequest.objects.filter(
+                status__in=["submitted_to_cd", "submitted_to_pl", "approved_by_pl"]
+            ).aggregate(Sum("total_amount"))["total_amount__sum"]
+            or 0
+        )
+
+        total_approved = (
+            WeeklyFundRequest.objects.filter(
+                status__in=[
+                    "approved_by_cd",
+                    "sent_to_accountant",
+                    "disbursed",
+                    "accounted",
+                ]
+            ).aggregate(Sum("total_amount"))["total_amount__sum"]
+            or 0
+        )
+
         regions_summary = []
         regions = Region.objects.annotate(
-            school_count=Count("districts__schools", filter=Q(districts__schools__deleted_at__isnull=True)),
-            missing_ssa=Count("districts__schools", filter=Q(districts__schools__deleted_at__isnull=True) & ~Q(districts__schools__current_fy_ssa_status="done"))
+            school_count=Count(
+                "districts__schools",
+                filter=Q(districts__schools__deleted_at__isnull=True),
+            ),
+            missing_ssa=Count(
+                "districts__schools",
+                filter=Q(districts__schools__deleted_at__isnull=True)
+                & ~Q(districts__schools__current_fy_ssa_status="done"),
+            ),
         ).filter(school_count__gt=0)
         for r in regions:
-            regions_summary.append({
-                "name": r.name,
-                "school_count": r.school_count,
-                "missing_ssa": r.missing_ssa
-            })
+            regions_summary.append(
+                {
+                    "name": r.name,
+                    "school_count": r.school_count,
+                    "missing_ssa": r.missing_ssa,
+                }
+            )
+
+        rvp_kpi_strip_items = [
+            {
+                "label": "Total Schools",
+                "value": str(total_schools),
+                "helper": "across all regions",
+                "icon": "school",
+                "variant": "blue",
+            },
+            {
+                "label": "Schools Missing SSA",
+                "value": str(schools_missing_ssa),
+                "helper": "awaiting field assessment",
+                "icon": "warning",
+                "variant": "warning" if schools_missing_ssa else "neutral",
+            },
+            {
+                "label": "Pending Budget Approvals",
+                "value": str(pending_wfrs),
+                "helper": f"UGX {total_requested:,.0f} requested",
+                "icon": "clock",
+                "variant": "warning" if pending_wfrs else "neutral",
+            },
+            {
+                "label": "Approved Funding (FY)",
+                "value": f"UGX {total_approved:,.0f}",
+                "helper": "disbursed / approved",
+                "icon": "currency",
+                "variant": "success",
+            },
+        ]
 
         context = {
             "alerts": alerts_list,
@@ -407,6 +852,7 @@ def dashboard_view(request):
             "role": role,
             "user_name": user.name,
             "avatar_initials": avatar_initials,
+            "rvp_kpi_strip_items": rvp_kpi_strip_items,
             "total_schools": total_schools,
             "schools_missing_ssa": schools_missing_ssa,
             "pending_reviews": pending_wfrs,
@@ -419,21 +865,20 @@ def dashboard_view(request):
     elif role == "HumanResources":
         from apps.debriefs.models import DailyDebrief
         from apps.accounts.models import Leave
-        
+
         today = timezone.now().date()
         overdue_count = Activity.objects.filter(
             planned_date__lt=today,
             status__in=["scheduled", "started"],
-            deleted_at__isnull=True
-        ).count()
-        
-        debrief_count = DailyDebrief.objects.filter(
             deleted_at__isnull=True,
-            created_at__date=today
         ).count()
-        
+
+        debrief_count = DailyDebrief.objects.filter(
+            deleted_at__isnull=True, created_at__date=today
+        ).count()
+
         pending_leaves = Leave.objects.filter(status="pending").count()
-        
+
         # Overdue per CCEO count
         cceos = User.objects.filter(roles__contains=["CCEO"], deleted_at__isnull=True)
         workload_alerts = []
@@ -442,20 +887,44 @@ def dashboard_view(request):
                 responsible_staff_id=c.id,
                 planned_date__lt=today,
                 status__in=["scheduled", "started"],
-                deleted_at__isnull=True
+                deleted_at__isnull=True,
             ).count()
             if c_overdue > 3:
-                workload_alerts.append({
-                    "staff_name": c.name,
-                    "overdue_count": c_overdue
-                })
-                
+                workload_alerts.append(
+                    {"staff_name": c.name, "overdue_count": c_overdue}
+                )
+
+        hr_kpi_strip_items = [
+            {
+                "label": "Overdue Field Activities",
+                "value": str(overdue_count),
+                "helper": "action required by supervisors",
+                "icon": "warning",
+                "variant": "danger" if overdue_count else "neutral",
+            },
+            {
+                "label": "Daily Debriefs Today",
+                "value": str(debrief_count),
+                "helper": "submitted by CCEOs today",
+                "icon": "document",
+                "variant": "info",
+            },
+            {
+                "label": "Pending Leave Requests",
+                "value": str(pending_leaves),
+                "helper": "awaiting approval",
+                "icon": "clock",
+                "variant": "warning" if pending_leaves else "neutral",
+            },
+        ]
+
         context = {
             "alerts": alerts_list,
             "alerts_summary": alerts_summary,
             "role": role,
             "user_name": user.name,
             "avatar_initials": avatar_initials,
+            "hr_kpi_strip_items": hr_kpi_strip_items,
             "overdue_count": overdue_count,
             "debrief_count": debrief_count,
             "pending_leaves": pending_leaves,
@@ -466,48 +935,223 @@ def dashboard_view(request):
     elif role == "CCEO":
         # CCEO Field Officer Dashboard Context
         today = timezone.now().date()
-        
+
         # Fetch actual user tasks
         cc_activities = Activity.objects.filter(
-            responsible_staff_id=user.id,
-            deleted_at__isnull=True
+            responsible_staff_id=user.id, deleted_at__isnull=True
         )
-        
-        completed_cnt = cc_activities.filter(status="completed").count() or 7
-        in_progress_cnt = cc_activities.filter(status="in_progress").count() or 10
-        planned_cnt = cc_activities.filter(status__in=["scheduled", "planned"]).count() or 5
-        overdue_cnt = cc_activities.filter(planned_date__lt=today).exclude(status__in=["completed", "closed"]).count() or 2
-        
+
+        completed_cnt = cc_activities.filter(status="completed").count()
+        in_progress_cnt = cc_activities.filter(status="in_progress").count()
+        planned_cnt = cc_activities.filter(status__in=["scheduled", "planned"]).count()
+        overdue_cnt = (
+            cc_activities.filter(planned_date__lt=today)
+            .exclude(status__in=["completed", "closed"])
+            .count()
+        )
+
         total_tasks = completed_cnt + in_progress_cnt + planned_cnt + overdue_cnt
 
-        # Agenda elements fallback to mockup data for layout consistency
-        agenda_morning = [
-            {"title": "Cluster Training — Leadership Best Practice", "location": "Kitgum Central Cluster Hub &bull; Kitgum District", "status": "Completed", "status_class": "bg-emerald-50 text-emerald-700 border-emerald-200", "icon": "📚", "sf": True},
-            {"title": "School Visit — Pope John PS", "location": "Pope John Primary School &bull; Kitgum District", "status": "In Progress", "status_class": "bg-amber-50 text-amber-700 border-amber-200", "icon": "🏫", "count": 3},
-            {"title": "School Visit — St. Peter PS", "location": "St. Peter Primary School &bull; Lamwo District", "status": "Planned", "status_class": "bg-slate-50 text-slate-500 border-slate-200", "icon": "🏫", "count": 2}
-        ]
+        # Today's agenda built from the user's real scheduled activities,
+        # partitioned into morning / afternoon / evening by scheduled time.
+        def _agenda_item(act):
+            atype = act.activity_type or ""
+            if "training" in atype:
+                icon = "📚"
+            elif "meeting" in atype:
+                icon = "👥"
+            elif "ssa" in atype:
+                icon = "📋"
+            else:
+                icon = "🏫"
+            if act.status == "completed":
+                status, status_class = (
+                    "Completed",
+                    "bg-emerald-50 text-emerald-700 border-emerald-200",
+                )
+            elif act.status in ("started", "in_progress"):
+                status, status_class = (
+                    "In Progress",
+                    "bg-amber-50 text-amber-700 border-amber-200",
+                )
+            elif (
+                act.planned_date
+                and act.planned_date.date() < today
+                and act.status not in ("completed", "closed")
+            ):
+                status, status_class = (
+                    "Overdue",
+                    "bg-rose-50 text-rose-700 border-rose-200",
+                )
+            else:
+                status, status_class = (
+                    "Planned",
+                    "bg-slate-50 text-slate-500 border-slate-200",
+                )
+            school_name = (
+                act.school.name
+                if act.school
+                else (act.cluster.name if act.cluster else "—")
+            )
+            district = (
+                act.school.district.name if act.school and act.school.district else ""
+            )
+            location = f"{school_name}" + (
+                f" &bull; {district} District" if district else ""
+            )
+            return {
+                "title": f"{act.activity_type.replace('_', ' ').title()} — {school_name}",
+                "location": location,
+                "status": status,
+                "status_class": status_class,
+                "icon": icon,
+                "sf": bool(act.salesforce_activity_id),
+            }
 
-        agenda_afternoon = [
-            {"title": "Follow-up Visit — Nigina UMEA", "location": "Nigina UMEA &bull; Pader District", "status": "Planned", "status_class": "bg-slate-50 text-slate-500 border-slate-200", "icon": "🚗", "count": 2},
-            {"title": "SSA Verification — Kal PS", "location": "Kal Primary School &bull; Agago District", "status": "Planned", "status_class": "bg-slate-50 text-slate-500 border-slate-200", "icon": "📋", "count": 2},
-            {"title": "Partner Meeting — Compassion Intl.", "location": "Compassion Field Office &bull; Gulu District", "status": "Overdue", "status_class": "bg-rose-50 text-rose-700 border-rose-200", "icon": "👥", "count": 4},
-            {"title": "Daily Debrief & Task Review", "location": "Virtual (Teams)", "status": "Planned", "status_class": "bg-slate-50 text-slate-500 border-slate-200", "icon": "📄"}
-        ]
+        todays_qs = (
+            cc_activities.filter(scheduled_date__date=today)
+            .select_related("school", "school__district", "cluster")
+            .order_by("scheduled_date")
+        )
+        agenda_morning, agenda_afternoon, agenda_evening = [], [], []
+        for act in todays_qs:
+            hour = (
+                timezone.localtime(act.scheduled_date).hour if act.scheduled_date else 9
+            )
+            if hour < 12:
+                agenda_morning.append(_agenda_item(act))
+            elif hour < 17:
+                agenda_afternoon.append(_agenda_item(act))
+            else:
+                agenda_evening.append(_agenda_item(act))
 
-        agenda_evening = [
-            {"title": "Cluster Meeting Debrief", "location": "Virtual (WhatsApp)", "status": "Planned", "status_class": "bg-slate-50 text-slate-500 border-slate-200", "icon": "💬"}
-        ]
+        # Next 7 days (excluding today)
+        upcoming_week = []
+        week_qs = (
+            cc_activities.filter(
+                scheduled_date__date__gt=today,
+                scheduled_date__date__lte=today + timedelta(days=7),
+            )
+            .select_related("school", "school__district", "cluster")
+            .order_by("scheduled_date")[:5]
+        )
+        for act in week_qs:
+            atype = act.activity_type or ""
+            if "training" in atype:
+                icon, type_class = "📚", "bg-emerald-50 text-emerald-600"
+            elif "meeting" in atype:
+                icon, type_class = "👥", "bg-violet-50 text-violet-600"
+            else:
+                icon, type_class = "🏫", "bg-blue-50 text-blue-600"
+            school_name = (
+                act.school.name
+                if act.school
+                else (act.cluster.name if act.cluster else "—")
+            )
+            district = (
+                act.school.district.name if act.school and act.school.district else "—"
+            )
+            upcoming_week.append(
+                {
+                    "day": act.scheduled_date.strftime("%a, %b %d")
+                    if act.scheduled_date
+                    else "—",
+                    "title": f"{act.activity_type.replace('_', ' ').title()} — {school_name}",
+                    "desc": f"{district} District" if district != "—" else "—",
+                    "icon": icon,
+                    "type_class": type_class,
+                }
+            )
 
-        upcoming_week = [
-            {"day": "Wed, May 14", "title": "Cluster Training — Child Protection", "desc": "Gulu District", "icon": "📚", "type_class": "bg-emerald-50 text-emerald-600"},
-            {"day": "Thu, May 15", "title": "School Visit — Oyeta PS", "desc": "Agago District", "icon": "🏫", "type_class": "bg-blue-50 text-blue-600"},
-            {"day": "Fri, May 16", "title": "Partner Review Meeting", "desc": "Program Office", "icon": "👥", "type_class": "bg-violet-50 text-violet-600"}
-        ]
+        def _gpct(n):
+            return round(n / total_tasks * 100) if total_tasks else 0
 
-        pending_approvals = [
-            {"title": "Fund Request - Week 3", "desc": "UGX 18.6M &bull; 3 items", "status": "Awaiting"},
-            {"title": "Visit Report - Week 2", "desc": "3 reports", "status": "Awaiting"},
-            {"title": "Training Report - Week 2", "desc": "2 reports", "status": "Awaiting"}
+        _glance = {
+            "completed_pct": _gpct(completed_cnt),
+            "in_progress_pct": _gpct(in_progress_cnt),
+            "planned_pct": _gpct(planned_cnt),
+            "overdue_pct": _gpct(overdue_cnt),
+        }
+        _glance["in_progress_offset"] = -_glance["completed_pct"]
+        _glance["planned_offset"] = -(
+            _glance["completed_pct"] + _glance["in_progress_pct"]
+        )
+        _glance["overdue_offset"] = -(
+            _glance["completed_pct"]
+            + _glance["in_progress_pct"]
+            + _glance["planned_pct"]
+        )
+
+        glance_chart = {
+            "chart": {"type": "donut"},
+            "series": [completed_cnt, in_progress_cnt, planned_cnt, overdue_cnt],
+            "labels": ["Completed", "In Progress", "Planned", "Overdue"],
+            "colors": ["#10b981", "#3b82f6", "#f59e0b", "#f43f5e"],
+            "legend": {"show": False},
+            "dataLabels": {"enabled": False},
+            "stroke": {"width": 2, "colors": ["#ffffff"]},
+            "plotOptions": {
+                "pie": {
+                    "donut": {
+                        "size": "72%",
+                        "labels": {
+                            "show": True,
+                            "total": {
+                                "show": True,
+                                "label": "Total Tasks",
+                                "color": "#94a3b8",
+                                "fontSize": "10px",
+                            },
+                        },
+                    }
+                }
+            },
+            "tooltip": {"theme": "light"},
+        }
+        has_glance_data = total_tasks > 0
+
+        # Real pending fund-request confirmations for this user
+        pending_approvals = []
+        for w in WeeklyFundRequest.objects.filter(
+            responsible_user=user.id, status="pending_responsible_confirmation"
+        ).order_by("-week_start_date")[:3]:
+            pending_approvals.append(
+                {
+                    "title": f"Fund Request — Week of {w.week_start_date.strftime('%d %b')}",
+                    "desc": f"UGX {w.total_amount:,} &bull; {w.lines.count()} item{'s' if w.lines.count() != 1 else ''}",
+                    "status": "Awaiting",
+                }
+            )
+
+        kpi_strip_items = [
+            {
+                "label": "Completed",
+                "value": str(completed_cnt),
+                "helper": "activities",
+                "icon": "check",
+                "variant": "success",
+            },
+            {
+                "label": "In Progress",
+                "value": str(in_progress_cnt),
+                "helper": "activities",
+                "icon": "clock",
+                "variant": "info",
+            },
+            {
+                "label": "Planned",
+                "value": str(planned_cnt),
+                "helper": "activities",
+                "icon": "calendar",
+                "variant": "blue",
+            },
+            {
+                "label": "Overdue",
+                "value": str(overdue_cnt),
+                "helper": "need action",
+                "icon": "warning",
+                "variant": "warning" if overdue_cnt else "neutral",
+            },
         ]
 
         context = {
@@ -516,29 +1160,201 @@ def dashboard_view(request):
             "role": role,
             "user_name": user.name,
             "avatar_initials": avatar_initials,
+            "kpi_strip_items": kpi_strip_items,
             "kpis": {
                 "completed": completed_cnt,
                 "in_progress": in_progress_cnt,
                 "planned": planned_cnt,
                 "overdue": overdue_cnt,
-                "total": total_tasks
+                "total": total_tasks,
             },
+            "glance": _glance,
+            "glance_chart": glance_chart,
+            "has_glance_data": has_glance_data,
             "agenda_morning": agenda_morning,
             "agenda_afternoon": agenda_afternoon,
             "agenda_evening": agenda_evening,
+            "agenda_total": len(agenda_morning)
+            + len(agenda_afternoon)
+            + len(agenda_evening),
             "upcoming_week": upcoming_week,
-            "pending_approvals": pending_approvals
+            "pending_approvals": pending_approvals,
         }
         return render(request, "pages/dashboards/cceo.html", context)
 
     elif role == "ProjectCoordinator":
-        # ProjectCoordinator Special Projects Dashboard Context
+        # ProjectCoordinator Special Projects Dashboard — live project portfolio
+        from apps.projects.models import Project
+
+        today = timezone.now().date()
+        portfolio = []
+        for proj in Project.objects.filter(deleted_at__isnull=True).prefetch_related(
+            "partner_assignments__partner"
+        ):
+            proj_acts = Activity.objects.filter(
+                deleted_at__isnull=True, project_id=proj.id
+            )
+            n_total = proj_acts.count()
+            n_done = proj_acts.filter(
+                status__in=["completed", "ia_verified", "closed"]
+            ).count()
+            pct = round(n_done / n_total * 100) if n_total else 0
+            partners = [
+                pa.partner.name for pa in proj.partner_assignments.all() if pa.partner
+            ]
+            if pct >= 70 or n_total == 0:
+                status, health_class = (
+                    "Active",
+                    "text-emerald-600 bg-emerald-50 border-emerald-100",
+                )
+            elif pct >= 40:
+                status, health_class = (
+                    "At Risk",
+                    "text-amber-600 bg-amber-50 border-amber-100",
+                )
+            else:
+                status, health_class = (
+                    "Behind",
+                    "text-rose-600 bg-rose-50 border-rose-100",
+                )
+            portfolio.append(
+                {
+                    "name": proj.name,
+                    "type": proj.get_category_display(),
+                    "partner": ", ".join(partners) if partners else "—",
+                    "schools": proj.school_assignments.count(),
+                    "activities": n_total,
+                    "completed": n_done,
+                    "pct": pct,
+                    "status": status if n_total else "Not Started",
+                    "health": f"{pct}%",
+                    "health_class": health_class,
+                    "metric": "Activities Completed",
+                }
+            )
+
+        project_names = {
+            pr.id: pr.name for pr in Project.objects.filter(deleted_at__isnull=True)
+        }
+        milestones = []
+        for act in (
+            Activity.objects.filter(
+                deleted_at__isnull=True, scheduled_date__date__gte=today
+            )
+            .exclude(project_id__isnull=True)
+            .exclude(project_id="")
+            .select_related("school")
+            .order_by("scheduled_date")[:6]
+        ):
+            milestones.append(
+                {
+                    "month": act.scheduled_date.strftime("%b").upper(),
+                    "day": act.scheduled_date.strftime("%d"),
+                    "title": act.activity_type.replace("_", " ").title(),
+                    "desc": project_names.get(act.project_id, "—"),
+                    "time": act.scheduled_date.strftime("%I:%M %p"),
+                    "info": act.school.name if act.school else "—",
+                }
+            )
+
+        # Projects needing attention: behind schedule or no scheduled work
+        attention = []
+        for row in portfolio:
+            if row["status"] in ("Behind", "At Risk"):
+                attention.append(
+                    {
+                        "project": row["name"],
+                        "issue": f"Only {row['completed']} of {row['activities']} scheduled activities completed",
+                        "risk": row["status"],
+                        "date": today.strftime("%b %d, %Y"),
+                        "risk_class": "text-rose-700 bg-rose-50 border-rose-150"
+                        if row["status"] == "Behind"
+                        else "text-amber-700 bg-amber-50 border-amber-150",
+                    }
+                )
+            elif row["activities"] == 0:
+                attention.append(
+                    {
+                        "project": row["name"],
+                        "issue": "No activities scheduled yet",
+                        "risk": "Not Started",
+                        "date": today.strftime("%b %d, %Y"),
+                        "risk_class": "text-slate-600 bg-slate-50 border-slate-200",
+                    }
+                )
+
+        sp_kpis = {
+            "total": len(portfolio),
+            "active": sum(1 for row in portfolio if row["activities"] > 0),
+            "schools": sum(row["schools"] for row in portfolio),
+            "partners": sum(1 for row in portfolio if row["partner"] != "—"),
+            "activities": sum(row["activities"] for row in portfolio),
+            "completed": sum(row["completed"] for row in portfolio),
+        }
+        sp_kpis["pct"] = (
+            round(sp_kpis["completed"] / sp_kpis["activities"] * 100)
+            if sp_kpis["activities"]
+            else 0
+        )
+
+        sp_kpi_strip_items = [
+            {
+                "label": "Total Projects",
+                "value": str(sp_kpis["total"]),
+                "helper": "special projects",
+                "icon": "briefcase",
+                "variant": "blue",
+            },
+            {
+                "label": "With Activity",
+                "value": str(sp_kpis["active"]),
+                "helper": "have scheduled work",
+                "icon": "check",
+                "variant": "info",
+            },
+            {
+                "label": "Schools in Projects",
+                "value": str(sp_kpis["schools"]),
+                "helper": "participating",
+                "icon": "school",
+                "variant": "blue",
+            },
+            {
+                "label": "Partners Assigned",
+                "value": str(sp_kpis["partners"]),
+                "helper": "delivery partners",
+                "icon": "users",
+                "variant": "info",
+            },
+            {
+                "label": "Activities Scheduled",
+                "value": str(sp_kpis["activities"]),
+                "helper": "across all projects",
+                "icon": "calendar",
+                "variant": "info",
+            },
+            {
+                "label": "Activities Completed",
+                "value": str(sp_kpis["completed"]),
+                "helper": f"{sp_kpis['pct']}% completion",
+                "icon": "check",
+                "variant": "success",
+            },
+        ]
+
         context = {
             "alerts": alerts_list,
             "alerts_summary": alerts_summary,
             "role": role,
             "user_name": user.name,
             "avatar_initials": avatar_initials,
+            "sp_kpis": sp_kpis,
+            "sp_kpi_strip_items": sp_kpi_strip_items,
+            "sp_attention_count": len(attention),
+            "sp_milestone_count": len(milestones),
+            "portfolio": portfolio,
+            "attention": attention,
+            "milestones": milestones,
         }
         return render(request, "pages/dashboards/special_projects.html", context)
 
@@ -549,7 +1365,6 @@ def dashboard_view(request):
         "role": role,
         "user_name": user.name,
         "avatar_initials": avatar_initials,
-        
         # Computed metrics
         "kpis": metrics["kpis"],
         "kpi_strip_items": metrics.get("kpi_strip_items", []),
@@ -565,7 +1380,13 @@ def dashboard_view(request):
         "budget_snapshot": metrics["budget_snapshot"],
         "execution_summary": metrics["execution_summary"],
         "upcoming_today": metrics["upcoming_today"],
-        
+        "evidence_pending": metrics["evidence_pending"],
+        "weekly_progress_chart": metrics["weekly_progress_chart"],
+        "has_weekly_data": metrics["has_weekly_data"],
+        "ssa_intervention_chart": metrics["ssa_intervention_chart"],
+        "has_ssa_chart_data": metrics["has_ssa_chart_data"],
+        "team_targets_chart": metrics["team_targets_chart"],
+        "has_team_targets_data": metrics["has_team_targets_data"],
         "use_dark_sidebar": False,
     }
 

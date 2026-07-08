@@ -6,14 +6,7 @@
 {% block shell_content %}
 <div class="p-6 max-w-4xl mx-auto space-y-5 text-slate-700">
 
-<!-- Header -->
-<div class="flex items-center justify-between border-b border-slate-100 pb-3">
-  <div>
-    <h1 class="text-[18px] font-semibold text-slate-800 tracking-tight">SSA Upload Center</h1>
-    <p class="text-[12px] text-slate-500 font-normal mt-0.5">Upload a sheet of SSA baseline/monitoring scores to map directly to school records.</p>
-  </div>
-  <a href="/ssa" class="text-[12px] text-slate-500 hover:underline">&larr; Back to SSA Scores</a>
-</div>
+{% include "components/page_header.html" with title="SSA Upload Center" subtitle="Upload a sheet of SSA baseline/monitoring scores to map directly to school records." breadcrumb="SSA Scores" actions_template="pages/ssa/_upload_center_header_actions.html" %}
 
 {% if messages %}
 <div class="space-y-2">

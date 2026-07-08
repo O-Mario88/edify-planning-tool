@@ -1,143 +1,104 @@
 {% load frontend_filters %}
 <div class="overflow-x-auto">
 <table class="w-full text-[12px] font-semibold text-slate-700">
-<thead class="bg-slate-50 border-b border-slate-100 text-[11px] uppercase font-bold text-slate-400">
+<thead class="bg-slate-50 border-b border-slate-100 text-[11px] uppercase font-bold text-slate-400 sticky top-0 z-10">
 <tr>
-<th class="px-6 py-4 text-left">Activity / ID</th>
-<th class="px-6 py-4 text-left">School / Cluster</th>
-<th class="px-6 py-4 text-left">Owner / Partner</th>
-<th class="px-6 py-4 text-left">Activity Type</th>
-<th class="px-6 py-4 text-center">Evidence</th>
-<th class="px-6 py-4 text-center">SSA</th>
-<th class="px-6 py-4 text-left">Salesforce ID</th>
-<th class="px-6 py-4 text-center">Attendance</th>
-<th class="px-6 py-4 text-center">Priority</th>
-<th class="px-6 py-4 text-left">Submitted Date</th>
-<th class="px-6 py-4 text-right">Actions</th>
+<th class="px-4 py-3 text-left">Activity / ID</th>
+<th class="px-4 py-3 text-left">School / Cluster</th>
+<th class="px-4 py-3 text-left">Owner / Partner</th>
+<th class="px-4 py-3 text-left">Type</th>
+<th class="px-4 py-3 text-center">Evidence</th>
+<th class="px-4 py-3 text-center">SSA</th>
+<th class="px-4 py-3 text-left">Salesforce ID</th>
+<th class="px-4 py-3 text-center">Priority</th>
+<th class="px-4 py-3 text-left">Submitted</th>
+<th class="px-4 py-3 text-right">Action</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100">
-{% if queue %}
 {% for act in queue %}
 <tr class="hover:bg-slate-50/50 transition-all duration-200">
 <!-- Activity ID -->
-<td class="px-6 py-4">
-<div class="font-semibold text-slate-900 text-[12px] hover:text-[#2563eb] transition-colors">
-<a href="/ia/verification/{{ act.id }}/">#{{ act.id|slice:":8" }}</a>
-</div>
-<div class="text-[11px] text-slate-400 font-bold uppercase mt-0.5">{{ act.fy }} &bull; {{ act.quarter }}</div>
+<td class="px-4 py-3">
+<a href="/ia/verification/{{ act.id }}/" class="font-semibold text-slate-900 text-[12px] hover:text-blue-600 transition-colors">#{{ act.id|slice:":8" }}</a>
+<div class="text-[11px] text-slate-400 font-semibold uppercase mt-0.5">{{ act.fy }} &bull; {{ act.quarter }}</div>
 </td>
 <!-- School / Cluster -->
-<td class="px-6 py-4">
+<td class="px-4 py-3">
 <div class="font-semibold text-slate-800 text-[12px]">{{ act.schoolName|default:"Cluster-wide" }}</div>
 <div class="text-[11px] text-slate-400 mt-0.5 font-semibold">{{ act.clusterName|default:"No Cluster" }}</div>
 </td>
 <!-- Owner -->
-<td class="px-6 py-4">
+<td class="px-4 py-3">
 <div class="font-semibold text-slate-800">{{ act.responsibleStaffId|default:"Unassigned" }}</div>
-<div class="text-[11px] text-[#2563eb] font-bold mt-0.5 capitalize">{{ act.deliveryType }}</div>
+<div class="text-[11px] text-blue-600 font-semibold mt-0.5 capitalize">{{ act.deliveryType }}</div>
 </td>
 <!-- Activity Type -->
-<td class="px-6 py-4">
-<div class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-[11px] font-semibold uppercase tracking-wide bg-slate-100 text-slate-700 border border-slate-200/50">
-{{ act.activityType|title|replace_underscore }}
-</div>
+<td class="px-4 py-3">
+{% include "components/badge.html" with tone="neutral" label=act.activityType|title|replace_underscore %}
 </td>
 <!-- Evidence Status -->
-<td class="px-6 py-4 text-center">
+<td class="px-4 py-3 text-center">
 {% if act.has_evidence %}
-<span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-150 shadow-sm" title="Evidence accepted/uploaded">
-<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
-</span>
+{% include "components/badge.html" with tone="success" label="Yes" %}
 {% else %}
-<span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-rose-50 text-rose-600 border border-rose-150 shadow-sm" title="Evidence missing!">
-<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-</span>
+{% include "components/badge.html" with tone="danger" label="Missing" %}
 {% endif %}
 </td>
 <!-- SSA Status -->
-<td class="px-6 py-4 text-center">
+<td class="px-4 py-3 text-center">
 {% if act.ssa_collection_expected %}
 {% if act.has_ssa %}
-<span class="px-2.5 py-0.5 rounded-lg text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">Collected</span>
+{% include "components/badge.html" with tone="success" label="Collected" %}
 {% else %}
-<span class="px-2.5 py-0.5 rounded-lg text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">Missing</span>
+{% include "components/badge.html" with tone="danger" label="Missing" %}
 {% endif %}
 {% else %}
 <span class="text-slate-400 text-[11px] font-normal">N/A</span>
 {% endif %}
 </td>
 <!-- Salesforce ID -->
-<td class="px-6 py-4">
+<td class="px-4 py-3">
 {% if act.salesforceActivityId %}
-<span class="font-mono text-slate-800 font-bold bg-slate-50 px-2 py-0.5 border border-slate-200 rounded-lg text-[11px]">{{ act.salesforceActivityId }}</span>
+<span class="font-mono text-slate-800 font-semibold bg-slate-50 px-2 py-0.5 border border-slate-200 rounded-lg text-[11px]">{{ act.salesforceActivityId }}</span>
 {% else %}
-<span class="text-rose-600 font-semibold text-[11px] inline-flex items-center gap-0.5">
-<svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01" /></svg>
-Unlinked
-</span>
-{% endif %}
-</td>
-<!-- Attendance -->
-<td class="px-6 py-4 text-center">
-{% if act.teachersAttended is not None or act.leadersAttended is not None %}
-<span class="font-semibold text-slate-800 bg-slate-50 px-2 py-1 border border-slate-200/50 rounded-lg text-[11px]">
-T:{{ act.teachersAttended|default:0 }} &bull; L:{{ act.leadersAttended|default:0 }}
-</span>
-{% else %}
-<span class="text-slate-400 font-normal">N/A</span>
+{% include "components/badge.html" with tone="danger" label="Unlinked" %}
 {% endif %}
 </td>
 <!-- Priority -->
-<td class="px-6 py-4 text-center">
+<td class="px-4 py-3 text-center">
 {% if act.is_high_priority %}
-<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase bg-rose-50 text-rose-700 border border-rose-200 tracking-wider">
-<span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping"></span>
-High
-</span>
+{% include "components/badge.html" with tone="danger" label="High" dot="true" %}
 {% else %}
-<span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase bg-slate-50 text-slate-500 border border-slate-200/50 tracking-wider">
-Normal
-</span>
+{% include "components/badge.html" with tone="neutral" label="Normal" %}
 {% endif %}
 </td>
 <!-- Submitted Date -->
-<td class="px-6 py-4 text-slate-500 font-medium">
+<td class="px-4 py-3 text-slate-500 font-medium whitespace-nowrap">
 {{ act.updatedAt|date:"M d, Y H:i" }}
 </td>
 <!-- Actions -->
-<td class="px-6 py-4 text-right">
-<div class="flex items-center justify-end gap-2">
-<!-- Open Workspace -->
-<a href="/ia/verification/{{ act.id }}/" class="h-8 px-3 rounded-xl bg-blue-50 text-[#2563eb] hover:bg-[#2563eb] hover:text-white text-[11px] font-semibold flex items-center justify-center transition-all shadow-sm">
-Review Action
+<td class="px-4 py-3 text-right">
+<div class="flex items-center justify-end gap-1.5">
+<a href="/ia/verification/{{ act.id }}/" class="h-8 px-3 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white text-[11px] font-semibold flex items-center justify-center transition-all">
+Review
 </a>
-
-<!-- Side-by-side comparison icon link -->
 <a href="/ia/compare/?activity_id={{ act.id }}" class="h-8 w-8 rounded-xl border border-slate-200 text-slate-400 hover:text-slate-700 hover:bg-slate-50 flex items-center justify-center transition-colors" title="Compare side-by-side">
 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" /></svg>
 </a>
-
-<!-- Timeline stepper icon link -->
 <a href="/activities/{{ act.id }}/timeline/" class="h-8 w-8 rounded-xl border border-slate-200 text-slate-400 hover:text-slate-700 hover:bg-slate-50 flex items-center justify-center transition-colors" title="View Audit Timeline">
 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
 </a>
 </div>
 </td>
 </tr>
-{% endfor %}
-{% else %}
+{% empty %}
 <tr>
-<td colspan="11" class="px-6 py-16 text-center text-[14px] font-semibold text-slate-400 bg-slate-50/20">
-<div class="flex flex-col items-center justify-center gap-3">
-<div class="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-300 shadow-inner">
-<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" /></svg>
-</div>
-<p class="text-slate-400">All activities verified. The queue is empty.</p>
-</div>
+<td colspan="10" class="p-0">
+{% include "components/empty_state.html" with title="Queue is clear" message="All activities are verified. New submissions will appear here." tone="success" %}
 </td>
 </tr>
-{% endif %}
+{% endfor %}
 </tbody>
 </table>
 </div>

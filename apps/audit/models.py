@@ -7,6 +7,7 @@ ms-resolution createdAt ties are unambiguous). hash = sha256(prevHash + canonica
 (record)); prevHash links to the previous row. A model-level guard + the chain
 verification make the log tamper-evident.
 """
+
 from __future__ import annotations
 
 from django.db import models
@@ -27,7 +28,12 @@ class AuditLog(models.Model):
     subject_kind = models.CharField(max_length=64, null=True, blank=True)
     subject_id = models.CharField(max_length=30, null=True, blank=True)
     actor_id = models.CharField(max_length=30, null=True, blank=True)
-    actor_role = models.CharField(max_length=64, choices=[(r.value, r.value) for r in EdifyRole], null=True, blank=True)
+    actor_role = models.CharField(
+        max_length=64,
+        choices=[(r.value, r.value) for r in EdifyRole],
+        null=True,
+        blank=True,
+    )
     payload = models.JSONField(null=True, blank=True)
     # Request provenance (captured via request context).
     ip_address = models.CharField(max_length=128, null=True, blank=True)

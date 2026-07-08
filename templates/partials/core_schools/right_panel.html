@@ -28,9 +28,14 @@
 </ul>
 
 <div class="pt-2.5 border-t border-slate-100">
-<a href="#" class="text-[11px] font-semibold text-[#2e505f] hover:text-[#2e505f]/80 uppercase tracking-wider hover:underline block text-center transition-colors">
+<button
+type="button"
+hx-get="/core-schools/strategy-playbook"
+hx-target="#drawer-container"
+class="w-full text-[11px] font-semibold text-[#2e505f] hover:text-[#2e505f]/80 uppercase tracking-wider hover:underline block text-center transition-colors cursor-pointer"
+>
 View Full Guidelines
-</a>
+</button>
 </div>
 </div>
 
@@ -72,14 +77,13 @@ All schools have full support planned.
 <!-- Card E: System Note -->
 <div class="rounded-xl bg-slate-50 /40 p-4 space-y-2 flex flex-col justify-center shadow-2xs">
 <div class="flex items-center gap-2">
-<svg class="h-4 w-4 text-slate-500 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<svg class="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89M9 11l3-3m0 0l3 3m-3-3v12" />
 </svg>
 <h4 class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">System Note</h4>
 </div>
 <p class="text-[11px] text-slate-400 font-semibold leading-relaxed">
-All core activities are synced to My Plan in real time.<br>
-Last sync: 2 mins ago.
+Scheduled visits and trainings sync to My Plan automatically as soon as they're confirmed.
 </p>
 </div>
 

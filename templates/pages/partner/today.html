@@ -3,30 +3,35 @@
 {% block title %}Partner Today — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6">
+<div class="p-6 max-w-[1600px] mx-auto space-y-5 font-sans">
 
-<div class="flex items-center justify-between">
-<div>
-<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight">Partner Today</h1>
-<p class="text-[12px] text-[var(--text-secondary)] mt-1 font-semibold">Partner today view</p>
-</div>
-</div>
+{% include "components/page_header.html" with title="Partner Today" subtitle="Today's scheduled work, plus what's coming up next." breadcrumb="Partner Portal" %}
 
-{% if today_activities|default:activities|default:schools|default:evidence %}
-<div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm">
-<div class="px-5 py-4 border-b border-slate-100"><h2 class="text-[14px] font-semibold text-slate-700">Items</h2></div>
-<ul class="divide-y divide-slate-100">
-{% for item in today_activities|default:activities|default:schools|default:evidence %}
-<li class="px-5 py-3.5 flex items-center justify-between">
-<div>
-<p class="text-[14px] font-bold text-slate-800">{{ item.name|default:item.activity_type|default:item }}</p>
-<p class="text-[11px] text-slate-400">{{ item.planned_date|default:item.created_at|default:"" }}</p>
-</div>
-</li>
-{% endfor %}
-</ul>
-</div>
-{% else %}<div class="p-12 text-center"><p class="text-[36px] mb-3">📋</p><p class="text-[14px] font-bold text-slate-600">No partner today data yet</p></div>{% endif %}
+{% include "components/role_scope_notice.html" with scope_text="Showing activities assigned to you as the responsible partner staff." %}
+
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
+
+<section class="space-y-2">
+  <h2 class="text-[13px] font-semibold text-slate-800 tracking-tight">Due Today &mdash; {{ today|date:"M j, Y" }}</h2>
+  {% if today_activities %}
+  {% include "partials/my_plan/activity_table.html" with activity_list=today_activities %}
+  {% else %}
+  <div class="card p-0 overflow-hidden">
+    {% include "components/empty_state.html" with title="Nothing scheduled today" message="Activities scheduled for today will appear here." tone="success" compact="true" %}
+  </div>
+  {% endif %}
+</section>
+
+<section class="space-y-2">
+  <h2 class="text-[13px] font-semibold text-slate-800 tracking-tight">Upcoming</h2>
+  {% if upcoming %}
+  {% include "partials/my_plan/activity_table.html" with activity_list=upcoming %}
+  {% else %}
+  <div class="card p-0 overflow-hidden">
+    {% include "components/empty_state.html" with title="Nothing else scheduled" message="Future scheduled activities will appear here." compact="true" %}
+  </div>
+  {% endif %}
+</section>
 
 </div>
 {% endblock %}

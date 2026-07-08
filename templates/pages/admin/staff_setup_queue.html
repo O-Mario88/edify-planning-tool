@@ -3,18 +3,14 @@
 {% block title %}Staff Setup Queue — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6 font-sans">
+<div class="p-6 max-w-7xl mx-auto space-y-5 font-sans">
 
-<!-- Header -->
-<div class="flex items-center justify-between border-b border-slate-200 pb-4">
-<div>
-<h1 class="text-[20px] font-semibold text-slate-800 tracking-tight">Staff Setup Queue</h1>
-<p class="text-[12px] text-slate-400 font-semibold mt-0.5">Resolve raw staff name mappings from onboarding data to match registered CCEOs</p>
-</div>
-</div>
+{% include "components/page_header.html" with title="Staff Setup Queue" subtitle="Resolve raw staff name mappings from onboarding data to match registered CCEOs." %}
+
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
 
 <!-- Listings Table -->
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+<div class="card p-0 overflow-hidden">
 <div class="overflow-x-auto">
 <table class="w-full text-[12px] border-collapse">
 <thead>
@@ -31,24 +27,22 @@
 <tr class="hover:bg-slate-50/50 transition-colors">
 <td class="px-5 py-4">
 <span class="font-semibold text-slate-800 block">{{ school.name }}</span>
-<span class="text-[11px] text-slate-400 font-bold block mt-0.5">Uploaded Owner: {{ school.account_owner_name_raw|default:"None Specified" }}</span>
+<span class="text-[11px] text-slate-400 font-semibold block mt-0.5">Uploaded Owner: {{ school.account_owner_name_raw|default:"None Specified" }}</span>
 </td>
 <td class="px-4 py-4 text-slate-500 font-semibold">
-{{ school.district.name }} district / {{ school.region.name }} region
+{{ school.district.name|default:"—" }} district / {{ school.region.name|default:"—" }} region
 </td>
 <td class="px-4 py-4">
-<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider bg-amber-50 text-amber-700">
-Pending Link
-</span>
+{% include "components/badge.html" with tone="warning" label="Pending Link" %}
 </td>
 <td class="px-4 py-4">
-<form id="match-form-{{ school.id }}" method="post" action="/admin/staff-setup-queue">
+<form id="match-form-{{ school.id }}" method="post" action="{% url 'frontend:admin_staff_setup_queue' %}">
 {% csrf_token %}
 <input type="hidden" name="school_id" value="{{ school.id }}">
 <input type="hidden" name="action" value="match">
-<select 
-name="staff_id" 
-class="rounded border border-slate-200 px-2 py-1 text-[11px] font-semibold bg-slate-50 focus:outline-none focus:border-blue-500 focus:bg-white"
+<select
+name="staff_id"
+class="rounded-lg border border-slate-200 px-2 py-1 text-[11px] font-semibold bg-slate-50 focus:outline-none focus:border-[var(--color-edify-primary)] focus:bg-white"
 >
 <option value="">Select CCEO profile...</option>
 {% for staff in staff_list %}
@@ -58,20 +52,20 @@ class="rounded border border-slate-200 px-2 py-1 text-[11px] font-semibold bg-sl
 </form>
 </td>
 <td class="px-5 py-4 text-right space-x-1.5">
-<button 
-type="submit" 
+<button
+type="submit"
 form="match-form-{{ school.id }}"
-class="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-[11px] font-semibold uppercase tracking-wider transition-all focus:outline-none"
+class="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[11px] font-semibold uppercase tracking-wider transition-all focus:outline-none"
 >
 Match
 </button>
-<form method="post" action="/admin/staff-setup-queue" class="inline">
+<form method="post" action="{% url 'frontend:admin_staff_setup_queue' %}" class="inline">
 {% csrf_token %}
 <input type="hidden" name="school_id" value="{{ school.id }}">
 <input type="hidden" name="action" value="ignore">
-<button 
-type="submit" 
-class="px-2.5 py-1 border border-slate-200 hover:bg-slate-50 text-slate-500 hover:text-slate-800 rounded text-[11px] font-semibold uppercase tracking-wider transition-all focus:outline-none"
+<button
+type="submit"
+class="px-2.5 py-1 border border-slate-200 hover:bg-slate-50 text-slate-500 hover:text-slate-800 rounded-lg text-[11px] font-semibold uppercase tracking-wider transition-all focus:outline-none"
 >
 Ignore
 </button>
@@ -80,8 +74,8 @@ Ignore
 </tr>
 {% empty %}
 <tr>
-<td colspan="5" class="px-5 py-8 text-center text-slate-400 font-semibold">
-No unmatched school records currently in queue. Data integrity is clean!
+<td colspan="5" class="p-0">
+{% include "components/empty_state.html" with title="Queue is clear" message="No unmatched school records currently in queue. Data integrity is clean." tone="success" %}
 </td>
 </tr>
 {% endfor %}

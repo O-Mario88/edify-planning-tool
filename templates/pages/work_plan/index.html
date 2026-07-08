@@ -3,20 +3,69 @@
 {% block title %}Work Plan — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6">
+<div class="p-6 max-w-[1600px] mx-auto space-y-5 font-sans">
 
-<div class="flex items-center justify-between">
-<div>
-<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight">Work Plan</h1>
-<p class="text-[12px] text-[var(--text-secondary)] mt-1 font-semibold">Edify Operations · Work Plan</p>
-</div>
+{% include "components/page_header.html" with title="Work Plan" subtitle="Full fiscal-year activity plan, by month." breadcrumb="Planning" %}
+
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+  {% include "components/chart_card.html" with chart_id="work-plan-monthly-chart" title="Monthly Activity Volume" subtitle="Total scheduled vs completed, by month" has_data=has_monthly_chart_data height=280 footer_note="Scoped to your activities this FY." %}
+  {{ monthly_chart|json_script:"work-plan-monthly-chart-config" }}
+
+  <section class="card p-5 space-y-3.5">
+    <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight pb-2 border-b border-slate-100">FY{{ fy }} Summary</h3>
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <span class="text-slate-400 text-[11px] font-semibold">Total Activities</span>
+        <strong class="text-[20px] font-semibold text-slate-800 block mt-0.5">{{ total }}</strong>
+      </div>
+      <div>
+        <span class="text-slate-400 text-[11px] font-semibold">Completed</span>
+        <strong class="text-[20px] font-semibold text-emerald-600 block mt-0.5">{{ completed }}</strong>
+      </div>
+      <div class="col-span-2">
+        <span class="text-slate-400 text-[11px] font-semibold">Completion Rate</span>
+        <div class="h-2 w-full bg-slate-100 rounded-full overflow-hidden mt-2">
+          <div class="h-full bg-emerald-500 rounded-full" style="width: {{ completion_rate }}%"></div>
+        </div>
+        <span class="text-[12px] font-semibold text-slate-600 mt-1 block">{{ completion_rate }}%</span>
+      </div>
+    </div>
+  </section>
 </div>
 
-<div class="bg-gradient-to-r from-indigo-600 to-violet-600 rounded-2xl p-5 text-white"><p class="text-[11px] font-bold uppercase tracking-wider text-indigo-200">FY{{ fy }} Work Plan</p><p class="text-[28px] font-semibold mt-1">{{ completed }} / {{ total }}</p><p class="text-[12px] text-indigo-200">activities completed this FY</p></div>
-<div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm overflow-hidden">
-<table class="w-full text-[12px]"><thead><tr class="bg-slate-50/60 border-b border-slate-100"><th class="text-left px-5 py-3 text-[11px] font-bold uppercase text-slate-400">Month</th><th class="text-center px-4 py-3 text-[11px] font-bold uppercase text-slate-400">Total</th><th class="text-center px-4 py-3 text-[11px] font-bold uppercase text-slate-400">Completed</th><th class="text-center px-4 py-3 text-[11px] font-bold uppercase text-slate-400">Rate</th></tr></thead>
-<tbody class="divide-y divide-slate-100">{% for m in monthly_summary %}<tr class="hover:bg-slate-50/60"><td class="px-5 py-3.5 font-bold text-slate-700">Month {{ m.planned_date__month }}</td><td class="px-4 py-3.5 text-center">{{ m.total }}</td><td class="px-4 py-3.5 text-center font-bold text-emerald-600">{{ m.completed }}</td><td class="px-4 py-3.5 text-center">{% widthratio m.completed m.total 100 %}%</td></tr>{% endfor %}</tbody></table>
-</div>
+<section class="card p-0 overflow-hidden">
+  <div class="px-5 py-3.5 border-b border-slate-100 bg-slate-50/50">
+    <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Monthly Breakdown</h3>
+  </div>
+  {% if monthly_summary %}
+  <div class="overflow-x-auto">
+    <table class="w-full text-[12px] border-collapse">
+      <thead>
+        <tr class="bg-slate-50/50 border-b border-slate-100 text-[11px] font-bold uppercase text-slate-400">
+          <th class="text-left px-5 py-3">Month</th>
+          <th class="text-center px-4 py-3">Total</th>
+          <th class="text-center px-4 py-3">Completed</th>
+          <th class="text-center px-4 py-3">Rate</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for m in monthly_summary %}
+        <tr class="hover:bg-slate-50/60">
+          <td class="px-5 py-3.5 font-semibold text-slate-700">{{ m.month|stringformat:"02d" }}</td>
+          <td class="px-4 py-3.5 text-center text-slate-600">{{ m.total }}</td>
+          <td class="px-4 py-3.5 text-center font-semibold text-emerald-600">{{ m.completed }}</td>
+          <td class="px-4 py-3.5 text-center text-slate-600">{{ m.rate }}%</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  {% include "components/empty_state.html" with title="No activities logged yet" message="Monthly totals appear once activities are scheduled this FY." cta_label="Open Planning" cta_href="/planning" compact="true" %}
+  {% endif %}
+</section>
 
 </div>
 {% endblock %}

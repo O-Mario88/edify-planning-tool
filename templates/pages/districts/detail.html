@@ -3,48 +3,67 @@
 {% block title %}{{ district.name }} District — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6">
+<div class="p-6 space-y-5 font-sans text-slate-700">
 
-<div class="flex items-center justify-between">
-<div>
-<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight">{{ district.name }} District</h1>
-<p class="text-[12px] text-[var(--text-secondary)] mt-1 font-semibold">Edify Operations · {{ district.name }} District</p>
-</div>
+{% include "components/page_header.html" with title=district.name|add:" District" breadcrumb="Districts" subtitle=total_schools|stringformat:"s"|add:" school"|add:total_schools|pluralize|add:" in this district" %}
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+  <div class="card p-5 flex flex-col justify-between">
+    {% include "components/card.html" with title="District Overview" subtitle=district.region.name|default:"No region assigned" divider="true" %}
+    <div class="grid grid-cols-2 gap-3 mt-3.5">
+      <div>
+        <p class="text-[11px] text-slate-400 font-semibold">Region</p>
+        <p class="text-[16px] font-semibold text-slate-800 leading-none mt-1.5">{{ district.region.name|default:"—" }}</p>
+      </div>
+      <div>
+        <p class="text-[11px] text-slate-400 font-semibold">Total Schools</p>
+        <p class="text-[16px] font-semibold text-slate-800 leading-none mt-1.5">{{ total_schools }}</p>
+      </div>
+      {% if latest_progress %}
+      <div>
+        <p class="text-[11px] text-slate-400 font-semibold">Latest FY Avg SSA</p>
+        <p class="text-[16px] font-semibold text-slate-800 leading-none mt-1.5">{{ latest_progress.avg_score|floatformat:1 }} / 10</p>
+      </div>
+      <div>
+        <p class="text-[11px] text-slate-400 font-semibold">Assessed (Latest FY)</p>
+        <p class="text-[16px] font-semibold text-slate-800 leading-none mt-1.5">{{ latest_progress.school_count }}</p>
+      </div>
+      {% endif %}
+    </div>
+    <a href="/schools?district={{ district.name|urlencode }}" class="mt-4 text-[12px] font-semibold text-blue-600 hover:underline self-start">View schools in this district &rarr;</a>
+  </div>
+
+  {% include "components/chart_card.html" with chart_id="district-ssa-progress-chart" title="Annual SSA Progress" subtitle="Average SSA score by fiscal year (% of 10-point max)" has_data=has_progress_data height=280 footer_note="Confirmed SSA records for schools in this district." %}
+  {{ district_progress_chart|json_script:"district-ssa-progress-chart-config" }}
 </div>
 
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-<div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm flex flex-col justify-between">
-<div>
-<p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Region</p>
-<p class="text-[18px] font-semibold text-slate-800 mt-1">{{ district.region.name|default:"—" }}</p>
-</div>
-<p class="text-[12px] text-slate-400 mt-4">{{ total_schools }} schools in this district</p>
-</div>
-
-<!-- Annual SSA Progress -->
-{% if district_progress %}
-<div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm space-y-4">
-<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Annual SSA Progress</h3>
-<div class="space-y-3">
-{% for item in district_progress %}
-<div class="space-y-1">
-<div class="flex items-center justify-between text-[12px] font-semibold text-slate-700">
-<span>FY{{ item.fy }} ({{ item.school_count }} School{{ item.school_count|pluralize }})</span>
-<span class="font-semibold text-slate-800">{{ item.avg_score|floatformat:1 }} / 10.0</span>
-</div>
-<div class="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-<div class="h-full bg-[var(--color-edify-primary)] rounded-full" style="width: {{ item.avg_score|multiply:10 }}%"></div>
-</div>
-</div>
-{% endfor %}
-</div>
-</div>
-{% endif %}
-</div>
-<div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm overflow-hidden">
-{% if schools %}<table class="w-full text-[12px]"><thead><tr class="bg-slate-50/60 border-b border-slate-100"><th class="text-left px-5 py-3 text-[11px] font-bold uppercase text-slate-400">School</th><th class="px-4 py-3"></th></tr></thead><tbody class="divide-y divide-slate-100">{% for s in schools %}<tr class="hover:bg-slate-50/60 group"><td class="px-5 py-3.5 font-bold text-slate-800">{{ s.name }}</td><td class="px-4 py-3.5 text-right"><a href="/schools/{{ s.id }}" class="opacity-0 group-hover:opacity-100 text-[11px] font-bold text-[var(--color-edify-primary)] transition-opacity">View →</a></td></tr>{% endfor %}</tbody></table>
-{% else %}<div class="p-12 text-center"><p class="text-[36px] mb-3">🏫</p><p class="text-[14px] font-bold text-slate-600">No schools in this district</p></div>{% endif %}
-</div>
+<section class="card p-5 space-y-3.5">
+  <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+    <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Schools <span class="text-[11px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-semibold ml-1">{{ total_schools }}</span></h3>
+  </div>
+  {% if schools %}
+  <div class="overflow-x-auto">
+    <table class="w-full text-left text-[12px] font-semibold text-slate-600 border-collapse">
+      <thead>
+        <tr class="text-[11px] uppercase tracking-wider text-slate-400 border-b border-slate-100">
+          <th class="py-2 px-2">School</th>
+          <th class="py-2 px-2 text-right"></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for s in schools %}
+        <tr class="hover:bg-slate-50/60 transition-colors group">
+          <td class="py-2.5 px-2 font-semibold text-slate-900">{{ s.name }}</td>
+          <td class="py-2.5 px-2 text-right"><a href="/schools/{{ s.id }}" class="opacity-0 group-hover:opacity-100 text-[11px] font-semibold text-blue-600 hover:underline transition-opacity">View &rarr;</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  {% include "components/empty_state.html" with title="No schools in this district" message="Schools appear here once they are assigned to this district." compact="true" %}
+  {% endif %}
+</section>
 
 </div>
 {% endblock %}
