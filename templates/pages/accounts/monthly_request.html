@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load frontend_filters %}
 
 {% block title %}Monthly Fund Request - Edify Command Center{% endblock %}
 
@@ -22,14 +23,12 @@ Monthly consolidation of scheduled activities, partner allocations, core school 
 <!-- Main grid -->
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 <div class="bg-white rounded-xl border border-slate-100 p-6 shadow-sm space-y-4 md:col-span-2">
-<h3 class="text-[15px] font-semibold text-slate-800 border-b border-slate-50 pb-2">Request Breakdown</h3>
+<h3 class="text-[15px] font-semibold text-slate-800 border-b border-slate-50 pb-2">Request Breakdown &mdash; {{ month_label }}</h3>
 <div class="space-y-4 text-[12px] font-bold text-slate-700">
-<p class="flex justify-between"><span>Core Activity Budget:</span> <span class="text-slate-800 font-semibold">142,400,000 UGX</span></p>
-<p class="flex justify-between"><span>Partner Budget:</span> <span class="text-slate-800 font-semibold">28,000,000 UGX</span></p>
-<p class="flex justify-between"><span>Core Schools Support Capacity:</span> <span class="text-slate-800 font-semibold">12,500,000 UGX</span></p>
-<p class="flex justify-between"><span>Cluster Mobilisation:</span> <span class="text-slate-800 font-semibold">15,100,000 UGX</span></p>
-<p class="flex justify-between"><span>Reimbursements & Claims:</span> <span class="text-slate-800 font-semibold">12,000,000 UGX</span></p>
-<p class="flex justify-between border-t border-slate-100 pt-3 text-[14px]"><span>Aggregate Request Amount:</span> <span class="text-[#2563eb] font-semibold">210,000,000 UGX</span></p>
+{% for item in breakdown %}
+<p class="flex justify-between"><span>{{ item.label }}:</span> <span class="text-slate-800 font-semibold">{{ item.amount|currency }} UGX</span></p>
+{% endfor %}
+<p class="flex justify-between border-t border-slate-100 pt-3 text-[14px]"><span>Aggregate Request Amount:</span> <span class="text-[#2563eb] font-semibold">{{ total_requested|currency }} UGX</span></p>
 </div>
 </div>
 

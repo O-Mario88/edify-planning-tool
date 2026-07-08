@@ -27,6 +27,24 @@ from apps.pl_review.services import (
 from apps.activities.models import Activity
 
 
+def _forbid_staff_on_partner_activity(request, a):
+    """Partner-owned activities are read-only for staff monitors.
+
+    Returns an HttpResponseForbidden when the activity is partner-delivered
+    and the requesting user has no partner scope covering the assigned
+    partner (i.e. a staff/monitoring user). Returns None when the actor IS
+    the assigned partner's user, or when the activity is staff-delivered —
+    so partners keep full use of these endpoints via /partner/my-plan.
+    """
+    if a.delivery_type != "partner":
+        return None
+    from apps.core.scoping import resolve_user_scope
+    scope = resolve_user_scope(request.user)
+    if a.assigned_partner_id and a.assigned_partner_id in (scope.partner_ids or []):
+        return None
+    return HttpResponseForbidden("Partner-owned activity — staff can only monitor.")
+
+
 @require_page_permission("my_plan")
 def my_plan_view(request):
     """The planning dashboard main view."""
@@ -136,6 +154,9 @@ def complete_drawer_view(request, activity_id):
     
     # Auto-start completion if in scheduling status to unlock files/codes
     if act.get("status") in ("scheduled", "in_progress", "assigned_to_partner", "partner_scheduled"):
+        forbidden = _forbid_staff_on_partner_activity(request, a)
+        if forbidden:
+            return forbidden
         try:
             start_completion(activity_id, principal=request.user)
             act = get_activity(activity_id, request.user)
@@ -589,7 +610,11 @@ def start_activity_action(request, activity_id):
     a = get_object_or_404(Activity, id=activity_id, deleted_at__isnull=True)
     if not RolePermissionService.can_view_record(request.user, a):
         return HttpResponseForbidden("Access Denied.")
-        
+
+    forbidden = _forbid_staff_on_partner_activity(request, a)
+    if forbidden:
+        return forbidden
+
     if request.method == "POST":
         notes = request.POST.get("notes", "").strip()
         a.status = "in_progress"
@@ -639,7 +664,11 @@ def evidence_upload_action(request, activity_id):
     a = get_object_or_404(Activity, id=activity_id, deleted_at__isnull=True)
     if not RolePermissionService.can_view_record(request.user, a):
         return HttpResponseForbidden("Access Denied.")
-        
+
+    forbidden = _forbid_staff_on_partner_activity(request, a)
+    if forbidden:
+        return forbidden
+
     if request.method == "POST":
         evidence_file = request.FILES.get("evidence_file")
         if evidence_file:
@@ -686,7 +715,11 @@ def salesforce_id_action(request, activity_id):
     a = get_object_or_404(Activity, id=activity_id, deleted_at__isnull=True)
     if not RolePermissionService.can_view_record(request.user, a):
         return HttpResponseForbidden("Access Denied.")
-        
+
+    forbidden = _forbid_staff_on_partner_activity(request, a)
+    if forbidden:
+        return forbidden
+
     if request.method == "POST":
         salesforce_id = request.POST.get("salesforce_id", "").strip()
         if not salesforce_id:
@@ -754,7 +787,11 @@ def submit_for_review_action(request, activity_id):
     a = get_object_or_404(Activity, id=activity_id, deleted_at__isnull=True)
     if not RolePermissionService.can_view_record(request.user, a):
         return HttpResponseForbidden("Access Denied.")
-        
+
+    forbidden = _forbid_staff_on_partner_activity(request, a)
+    if forbidden:
+        return forbidden
+
     if request.method == "POST":
         # Route to appropriate state: if supervision or PL review is needed, move to pl_review_queue
         # Default workflow: PL Review Pending -> IA Verification Pending

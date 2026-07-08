@@ -416,8 +416,15 @@ def returned_view(request):
 @require_page_permission("disbursements")
 def cleared_view(request):
     """Cleared / Closed Finance Ledger."""
-    closed_activities = Activity.objects.filter(deleted_at__isnull=True, status="closed").select_related("school", "cluster").order_by("-updated_at")
-    
+    closed_activities = list(
+        Activity.objects.filter(deleted_at__isnull=True, status="closed")
+        .select_related("school", "cluster", "completed_snapshot")
+        .order_by("-updated_at")
+    )
+    for a in closed_activities:
+        snap = a.completed_snapshot if hasattr(a, "completed_snapshot") else None
+        a.variance = (snap.actual_spend_amount - snap.disbursed_amount) if snap else None
+
     context = {
         "closed": closed_activities
     }
@@ -524,15 +531,32 @@ def audit_log_view(request):
 @require_page_permission("disbursements")
 def monthly_request_view(request):
     """Monthly Country Finance Request Page."""
-    # Gather sum of all cost lines grouped by type
-    budget_lines = Activity.objects.filter(deleted_at__isnull=True, fy="FY25").aggregate(
-        total=Sum("schedule_cost_lines__amount")
+    from datetime import date
+    from apps.core.fy import get_operational_fy
+
+    fy = get_operational_fy()
+    today = date.today()
+    month_qs = WeeklyFundRequest.objects.filter(
+        fy=fy, week_start_date__year=today.year, week_start_date__month=today.month
     )
-    
+
+    def _sum(qs, field="total_amount"):
+        return qs.aggregate(s=Sum(field))["s"] or 0
+
+    breakdown = [
+        {"label": "Waiting for Approval", "amount": _sum(month_qs.filter(status__startswith="submitted"))},
+        {"label": "Returned", "amount": _sum(month_qs.filter(status__startswith="returned"))},
+        {"label": "Approved (not yet disbursed)", "amount": _sum(month_qs.filter(
+            status__in=["approved_by_cd", "sent_to_accountant", "confirmed_for_advance"]))},
+        {"label": "Disbursed", "amount": _sum(month_qs, "disbursed_amount")},
+        {"label": "Reconciled", "amount": _sum(month_qs, "accounted_amount")},
+    ]
+
     context = {
-        "total_budget": budget_lines["total"] or 0,
-        "monthly_allocation": "210,000,000 UGX",
-        "quarter": "Q2"
+        "breakdown": breakdown,
+        "total_requested": _sum(month_qs),
+        "month_label": today.strftime("%B %Y"),
+        "fy": fy,
     }
     return render(request, "pages/accounts/monthly_request.html", context)
 

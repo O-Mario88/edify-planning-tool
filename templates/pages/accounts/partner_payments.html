@@ -70,13 +70,13 @@ Verified
 </td>
 <!-- Payment Amount -->
 <td class="px-6 py-4 text-center text-emerald-600 font-semibold">
-UGX 600,000
+{% if act.est_cost_cents %}{{ act.est_cost_cents|ugx }}{% else %}&mdash;{% endif %}
 </td>
 <!-- Actions -->
 <td class="px-6 py-4 text-right">
 <div class="flex items-center justify-end gap-2">
-<button 
-@click="payOpen = true; selectedAct = '{{ act.id }}'; partnerName = '{{ act.assigned_partner_id }}'; payAmount = 600000"
+<button
+@click="payOpen = true; selectedAct = '{{ act.id }}'; partnerName = '{{ act.assigned_partner_id }}'; payAmount = {{ act.est_cost_cents|default:0 }}"
 type="button" 
 class="h-8 px-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-semibold flex items-center justify-center transition-colors shadow-sm"
 >

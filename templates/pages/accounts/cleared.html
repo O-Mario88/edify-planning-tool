@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load frontend_filters %}
 
 {% block title %}Cleared Ledger - Edify Command Center{% endblock %}
 
@@ -57,25 +58,27 @@ Archive of all financially closed activities. These records have passed program 
 </td>
 <!-- Approved -->
 <td class="px-6 py-4 text-center text-slate-700">
-450,000 UGX
+{% if act.completed_snapshot %}{{ act.completed_snapshot.final_budget_amount|currency }} UGX{% else %}&mdash;{% endif %}
 </td>
 <!-- Disbursed -->
 <td class="px-6 py-4 text-center text-slate-700">
-450,000 UGX
+{% if act.completed_snapshot %}{{ act.completed_snapshot.disbursed_amount|currency }} UGX{% else %}&mdash;{% endif %}
 </td>
 <!-- Spend -->
 <td class="px-6 py-4 text-center text-slate-800 font-semibold">
-450,000 UGX
+{% if act.completed_snapshot %}{{ act.completed_snapshot.actual_spend_amount|currency }} UGX{% else %}&mdash;{% endif %}
 </td>
 <!-- Variance -->
 <td class="px-6 py-4 text-center text-slate-500">
-0 UGX
+{% if act.variance is not None %}{{ act.variance|currency }} UGX{% else %}&mdash;{% endif %}
 </td>
 <!-- NetSuite ID -->
 <td class="px-6 py-4 text-center">
+{% if act.completed_snapshot.netsuite_expense_id %}
 <span class="font-mono text-slate-800 bg-slate-50 px-2.5 py-0.5 border border-slate-200 rounded-lg text-[11px]">
-EXP-2200115
+{{ act.completed_snapshot.netsuite_expense_id }}
 </span>
+{% else %}&mdash;{% endif %}
 </td>
 <!-- Closed Date -->
 <td class="px-6 py-4 text-center text-slate-500 font-medium">

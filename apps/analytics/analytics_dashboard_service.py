@@ -154,7 +154,7 @@ class AnalyticsDashboardService:
         kpi_data["target_achievement"] = {
             "value": f"{achievement_pct}%",
             "trend": get_trend(achievement_pct, achievement_prior_pct, "pp"),
-            "points": [45, 52, 48, 62, achievement_pct],
+            "points": [],
             "class": "text-emerald-600" if achievement_pct >= 90 else ("text-amber-600" if achievement_pct >= 70 else "text-rose-600")
         }
         
@@ -164,7 +164,7 @@ class AnalyticsDashboardService:
         kpi_data["teachers_trained"] = {
             "value": f"{teachers:,}",
             "trend": get_trend(teachers, teachers_prior),
-            "points": [2000, 3500, 4800, 8000, teachers],
+            "points": [],
         }
         
         # Card 3: School Leaders Trained
@@ -173,7 +173,7 @@ class AnalyticsDashboardService:
         kpi_data["leaders_trained"] = {
             "value": f"{leaders:,}",
             "trend": get_trend(leaders, leaders_prior),
-            "points": [800, 1500, 2400, 3800, leaders],
+            "points": [],
         }
         
         # Card 4: Students Impacted (Sum enrollment of reached schools, distinct)
@@ -193,7 +193,7 @@ class AnalyticsDashboardService:
         kpi_data["students_impacted"] = {
             "value": format_large(students),
             "trend": get_trend(students, students_prior),
-            "points": [400000, 650000, 900000, 1100000, students],
+            "points": [],
         }
         
         # Card 5: Schools Impacted (Distinct)
@@ -202,7 +202,7 @@ class AnalyticsDashboardService:
         kpi_data["schools_impacted"] = {
             "value": f"{schools_imp:,}",
             "trend": get_trend(schools_imp, schools_imp_prior),
-            "points": [300, 600, 850, 1100, schools_imp],
+            "points": [],
         }
         
         # Card 6: Districts Covered
@@ -211,7 +211,7 @@ class AnalyticsDashboardService:
         kpi_data["districts_covered"] = {
             "value": str(districts),
             "trend": get_trend(districts, districts_prior),
-            "points": [45, 78, 92, 105, districts],
+            "points": [],
         }
         
         # Card 7: Clusters Covered
@@ -220,7 +220,7 @@ class AnalyticsDashboardService:
         kpi_data["clusters_covered"] = {
             "value": str(clusters),
             "trend": get_trend(clusters, clusters_prior),
-            "points": [120, 240, 310, 420, clusters],
+            "points": [],
         }
         
         # Card 8: Total Activities Completed
@@ -229,7 +229,7 @@ class AnalyticsDashboardService:
         kpi_data["activities_completed"] = {
             "value": f"{completed:,}",
             "trend": get_trend(completed, completed_prior),
-            "points": [800, 1600, 2400, 3100, completed],
+            "points": [],
         }
         
         # Card 9: SSA Average
@@ -237,9 +237,9 @@ class AnalyticsDashboardService:
         ssa_avg_prior = prior_ssa.aggregate(a=Avg("average_score"))["a"] or 0
         ssa_diff = ssa_avg - ssa_avg_prior
         kpi_data["ssa_average"] = {
-            "value": f"{ssa_avg:.2f}" if ssa_avg > 0 else "4.47",  # Fallback to screenshot average if no assessments
+            "value": f"{ssa_avg:.2f}" if ssa_avg > 0 else "\u2014",
             "trend": f"+{ssa_diff:.2f} vs {prior_q}" if ssa_diff >= 0 else f"{ssa_diff:.2f} vs {prior_q}",
-            "points": [4.1, 4.25, 4.38, 4.41, ssa_avg if ssa_avg > 0 else 4.47],
+            "points": [],
         }
 
         # Construct unified KPI strip items

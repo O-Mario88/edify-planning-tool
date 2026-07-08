@@ -188,7 +188,7 @@ class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 te
 {% endif %}
 
 <!-- Start Activity -->
-{% if act.status == 'scheduled' %}
+{% if act.status == 'scheduled' or act.status == 'partner_scheduled' or act.status == 'assigned_to_partner' %}
 <button 
 hx-get="/activities/{{ act.id }}/start"
 hx-target="#drawer-container"
