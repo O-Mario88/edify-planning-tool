@@ -8,7 +8,6 @@
 hx-post="/planning/schedule-action"
 hx-target="#form-errors"
 class="space-y-4 text-[12px] font-bold text-slate-600"
-@submit="$dispatch('close-drawer')"
 x-data="{ delivery: 'staff', ssa_expected: 'yes' }"
 >
 <input type="hidden" name="school_id" value="{{ school.school_id }}">

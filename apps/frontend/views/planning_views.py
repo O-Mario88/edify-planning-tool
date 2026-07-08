@@ -158,6 +158,7 @@ def schedule_modal_view(request):
             "cluster": cluster,
             "action": action,
             "partners": partners,
+            "interventions": SsaIntervention.choices,
             "drawer_size": "lg",
         }
         return render(request, "partials/planning/schedule_cluster_drawer.html", context)
@@ -205,7 +206,9 @@ def schedule_action_view(request):
     scheduled_date = request.POST.get("scheduled_date")
     focus_intervention = request.POST.get("focus_intervention")
     purpose_type = request.POST.get("purpose_type", "focus_intervention")
-    purpose_text = request.POST.get("activity_purpose_text", "").strip()
+    # The drawer's textarea is named "activity_goal" ("Activity Goal / Purpose");
+    # "activity_purpose_text" is kept as a fallback for any other caller.
+    purpose_text = request.POST.get("activity_goal", request.POST.get("activity_purpose_text", "")).strip()
     expected_outcome = request.POST.get("expected_outcome", "").strip()
     expected_participants = request.POST.get("expected_participants", "").strip()
     delivery_type = request.POST.get("delivery_type", "staff")
@@ -258,8 +261,11 @@ def schedule_action_view(request):
             schedule_cluster_activity(payload, request.user)
             messages.success(request, f"Cluster activity scheduled successfully.")
             
-        # Redirect to My Plan and close drawer via client headers
-        response = HttpResponse('<script>window.location.href = "/my-plan/";</script>')
+        # Redirect to My Plan and close drawer via client headers.
+        # APPEND_SLASH is off and "/my-plan" has no trailing-slash route, so a
+        # redirect to "/my-plan/" 404s — the activity saves but the user lands
+        # on an error page and never sees confirmation.
+        response = HttpResponse('<script>window.location.href = "/my-plan";</script>')
         response["HX-Trigger"] = "close-drawer"
         return response
     except Exception as e:
@@ -306,23 +312,40 @@ def assign_partner_action_view(request):
     cluster_id = request.POST.get("cluster_id")
     partner_id = request.POST.get("partner_id")
     activity_type = request.POST.get("activity_type", "school_visit")
-    
+    focus_intervention = request.POST.get("focus_intervention") or None
+    purpose = request.POST.get("purpose", "").strip()
+    notes = request.POST.get("notes", "").strip() or None
+
+    from datetime import date as _date
+    expected_date_raw = request.POST.get("expected_date", "").strip()
+    expected_date = None
+    if expected_date_raw:
+        try:
+            expected_date = _date.fromisoformat(expected_date_raw)
+        except ValueError:
+            pass
+
     try:
         partner = get_object_or_404(Partner, id=partner_id)
-        
+
         from apps.activities.models import Activity
         from apps.core.fy import get_operational_fy, get_quarter_for_date
-        
+
         fy = get_operational_fy()
         quarter = get_quarter_for_date(timezone.now().date())
-        
+
         if school_id:
             school = get_scoped_object_or_404(School, request.user, Q(id=school_id) | Q(school_id=school_id))
+            assignment_purpose = purpose or f"Assigned for {activity_type}"
             PartnerAssignment.objects.create(
                 school=school,
                 partner=partner,
                 assigning_staff_id=request.user.user_id or request.user.id,
-                purpose=f"Assigned for {activity_type}",
+                purpose=assignment_purpose,
+                focus_intervention=focus_intervention,
+                expected_activity_type=activity_type,
+                scheduled_date=expected_date,
+                notes=notes,
                 status="pending_scheduling"
             )
             # Create Activity
@@ -335,7 +358,8 @@ def assign_partner_action_view(request):
                 assigned_partner_id=partner.id,
                 monitored_by_staff_id=request.user.user_id or request.user.id,
                 status="assigned_to_partner",
-                activity_purpose_text=f"Assigned for {activity_type}"
+                focus_intervention=focus_intervention,
+                activity_purpose_text=assignment_purpose
             )
             # Update status
             school.current_fy_ssa_status = "partner_assigned"
@@ -344,12 +368,17 @@ def assign_partner_action_view(request):
 
         if cluster_id:
             cluster = get_scoped_object_or_404(Cluster, request.user, id=cluster_id)
+            assignment_purpose = purpose or f"Cluster assignment: {cluster.name}"
             # Create PartnerAssignment for cluster
             PartnerAssignment.objects.create(
                 cluster=cluster,
                 partner=partner,
                 assigning_staff_id=request.user.user_id or request.user.id,
-                purpose=f"Cluster assignment: {cluster.name}",
+                purpose=assignment_purpose,
+                focus_intervention=focus_intervention,
+                expected_activity_type=activity_type,
+                scheduled_date=expected_date,
+                notes=notes,
                 status="pending_scheduling"
             )
             # Create Activity for cluster
@@ -363,7 +392,8 @@ def assign_partner_action_view(request):
                 assigned_partner_id=partner.id,
                 monitored_by_staff_id=request.user.user_id or request.user.id,
                 status="assigned_to_partner",
-                activity_purpose_text=f"Cluster assignment: {cluster.name}"
+                focus_intervention=focus_intervention,
+                activity_purpose_text=assignment_purpose
             )
             # Assign all schools in the cluster
             for school in School.objects.filter(cluster_assignments__cluster=cluster, deleted_at__isnull=True):
@@ -371,7 +401,11 @@ def assign_partner_action_view(request):
                     school=school,
                     partner=partner,
                     assigning_staff_id=request.user.user_id or request.user.id,
-                    purpose=f"Cluster assignment: {cluster.name}",
+                    purpose=assignment_purpose,
+                    focus_intervention=focus_intervention,
+                    expected_activity_type=activity_type,
+                    scheduled_date=expected_date,
+                    notes=notes,
                     status="pending_scheduling"
                 )
                 school.current_fy_ssa_status = "partner_assigned"

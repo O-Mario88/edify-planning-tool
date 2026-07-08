@@ -9,14 +9,16 @@ Configure cluster activity details for {{ cluster.name }}
 {% endblock %}
 
 {% block drawer_body %}
-<form 
+<form
 hx-post="/planning/schedule-action"
 hx-target="#form-errors"
 class="space-y-4 text-[12px] font-bold text-slate-600"
-@submit="$dispatch('close-drawer')"
 >
 <input type="hidden" name="cluster_id" value="{{ cluster.id }}">
 <input type="hidden" name="activity_type" value="{% if action == 'meeting' %}cluster_meeting{% else %}cluster_training{% endif %}">
+{% if action == 'meeting' %}
+<input type="hidden" name="purpose_type" value="operational_admin">
+{% endif %}
 
 <!-- Form Error Messages container -->
 <div id="form-errors"></div>
@@ -205,11 +207,29 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 mt-1 focu
 </div>
 </div>
 
+{% if action != 'meeting' %}
+<!-- Focus Intervention (required for training; meetings default to operational/admin) -->
+<div>
+<label for="focus_intervention" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Primary Focus Intervention</label>
+<select
+name="focus_intervention"
+id="focus_intervention"
+required
+class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+>
+<option value="">Select Focus Intervention...</option>
+{% for code, label in interventions %}
+<option value="{{ code }}">{{ label }}</option>
+{% endfor %}
+</select>
+</div>
+{% endif %}
+
 <!-- Activity Goal -->
 <div>
 <label for="activity_goal" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Activity Goal / Purpose</label>
-<textarea 
-name="activity_goal" 
+<textarea
+name="activity_goal"
 id="activity_goal"
 required
 rows="2"
