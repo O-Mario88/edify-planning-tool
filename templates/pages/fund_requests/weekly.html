@@ -5,14 +5,16 @@
 
 {% block shell_content %}
 {% if is_pl %}
+{{ pl_queue_items|json_script:"pl-queue-data" }}
 <div class="p-6 max-w-[1600px] mx-auto space-y-6 text-slate-700 font-sans"
 x-data="{
-queue: {{ pl_queue_items_json|safe }},
-selectedId: ' Sarah M.',
+queue: JSON.parse(document.getElementById('pl-queue-data').textContent),
+selectedId: null,
 selectedItem: null,
 activeTab: 'breakdown',
 init() {
-this.selectedItem = this.queue.find(item => item.id === this.selectedId) || this.queue[0];
+this.selectedItem = this.queue.find(item => item.id === this.selectedId) || this.queue[0] || null;
+if (this.selectedItem) { this.selectedId = this.selectedItem.id; }
 },
 selectRequest(id) {
 this.selectedId = id;
@@ -35,86 +37,39 @@ return 'UGX ' + Number(val).toLocaleString();
 
 <!-- Actions toolbar -->
 <div class="flex flex-wrap items-center gap-2">
-<a href="#"
-onclick="this.href='/fund-requests/weekly?export=csv&' + new URLSearchParams(new FormData(document.getElementById('filters-form'))).toString()"
+<a href="/fund-requests/weekly?export=csv"
 class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-semibold text-slate-700 flex items-center gap-1.5 shadow-sm hover:bg-slate-50">
 📥 Export
 </a>
-
-<button onclick="document.getElementById('filters-form').scrollIntoView({ behavior: 'smooth' })" class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-semibold text-slate-700 flex items-center gap-1.5 shadow-sm hover:bg-slate-50">
-<svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
-Filters
-</button>
-</div>
-</div>
-
-
-<!-- Filters Row -->
-<div class="grid grid-cols-1 md:grid-cols-4 gap-3 bg-white p-3.5 rounded-2xl border border-slate-100 shadow-sm text-[12px] font-bold text-slate-600">
-<div class="space-y-1">
-<label class="text-[11px] text-slate-400 font-semibold uppercase">Financial Year</label>
-<select class="h-8 w-full bg-slate-50 border border-slate-200 rounded-lg px-2 text-[12px] font-bold cursor-pointer focus:outline-none">
-<option>2024/2025</option>
-</select>
-</div>
-<div class="space-y-1">
-<label class="text-[11px] text-slate-400 font-semibold uppercase">Month</label>
-<select class="h-8 w-full bg-slate-50 border border-slate-200 rounded-lg px-2 text-[12px] font-bold cursor-pointer focus:outline-none">
-<option>May 2025</option>
-</select>
-</div>
-<div class="space-y-1">
-<label class="text-[11px] text-slate-400 font-semibold uppercase">Region</label>
-<select class="h-8 w-full bg-slate-50 border border-slate-200 rounded-lg px-2 text-[12px] font-bold cursor-pointer focus:outline-none">
-<option>Northern Region</option>
-</select>
-</div>
-<div class="space-y-1">
-<label class="text-[11px] text-slate-400 font-semibold uppercase">District</label>
-<select class="h-8 w-full bg-slate-50 border border-slate-200 rounded-lg px-2 text-[12px] font-bold cursor-pointer focus:outline-none">
-<option>All Districts</option>
-</select>
 </div>
 </div>
 
 
 <!-- ================= KPI STRIP ================= -->
-<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
 <!-- 1 -->
 <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
 <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total Requested This Month</p>
-<h3 class="text-[20px] font-semibold text-slate-800 leading-none">UGX 214.6M</h3>
-<span class="text-[11px] text-emerald-600 font-semibold block pt-1">▲ 18.6% vs Apr</span>
+<h3 class="text-[20px] font-semibold text-slate-800 leading-none">{{ pl_kpis.requested_month }}</h3>
+<span class="text-[11px] text-emerald-600 font-semibold block pt-1">{{ pl_kpis.requested_month_count }} request{{ pl_kpis.requested_month_count|pluralize }}</span>
 </div>
 <!-- 2 -->
 <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
 <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Awaiting Approval</p>
-<h3 class="text-[20px] font-semibold text-slate-800 leading-none">UGX 128.4M</h3>
-<span class="text-[11px] text-amber-600 font-bold block pt-1">12 requests pending</span>
+<h3 class="text-[20px] font-semibold text-slate-800 leading-none">{{ pl_kpis.awaiting_sum }}</h3>
+<span class="text-[11px] text-amber-600 font-bold block pt-1">{{ pl_kpis.awaiting_count }} request{{ pl_kpis.awaiting_count|pluralize }} pending</span>
 </div>
 <!-- 3 -->
 <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
 <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Approved Today</p>
-<h3 class="text-[20px] font-semibold text-slate-800 leading-none">UGX 36.2M</h3>
-<span class="text-[11px] text-emerald-600 font-bold block pt-1">5 requests approved</span>
+<h3 class="text-[20px] font-semibold text-slate-800 leading-none">{{ pl_kpis.approved_today_sum }}</h3>
+<span class="text-[11px] text-emerald-600 font-bold block pt-1">{{ pl_kpis.approved_today_count }} request{{ pl_kpis.approved_today_count|pluralize }} approved</span>
 </div>
 <!-- 4 -->
 <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
 <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Returned for Review</p>
-<h3 class="text-[20px] font-semibold text-slate-800 leading-none">UGX 12.8M</h3>
-<span class="text-[11px] text-rose-600 font-bold block pt-1">4 requests returned</span>
-</div>
-<!-- 5 -->
-<div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
-<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Planned Activities Funding</p>
-<h3 class="text-[20px] font-semibold text-slate-800 leading-none">UGX 214.6M</h3>
-<span class="text-[11px] text-indigo-700 font-semibold block pt-1">100% of requests</span>
-</div>
-<!-- 6 -->
-<div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
-<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Average Cost per School</p>
-<h3 class="text-[20px] font-semibold text-slate-800 leading-none">UGX 468,950</h3>
-<span class="text-[11px] text-emerald-600 font-semibold block pt-1">▲ 7.3% vs Apr</span>
+<h3 class="text-[20px] font-semibold text-slate-800 leading-none">{{ pl_kpis.returned_sum }}</h3>
+<span class="text-[11px] text-rose-600 font-bold block pt-1">{{ pl_kpis.returned_count }} request{{ pl_kpis.returned_count|pluralize }} returned</span>
 </div>
 </div>
 
@@ -128,15 +83,14 @@ Filters
 <div class="flex items-center justify-between pb-3 border-b border-slate-100">
 <div class="flex items-center gap-1.5">
 <h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">CCEO Fund Approval Queue</h2>
-<span class="bg-blue-600 text-white font-semibold rounded-full px-1.5 py-0.5 text-[11px] flex items-center justify-center">6</span>
+<span class="bg-blue-600 text-white font-semibold rounded-full px-1.5 py-0.5 text-[11px] flex items-center justify-center">{{ pl_queue_items|length }}</span>
 </div>
-
-<select class="h-6 px-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-bold text-slate-500">
-<option>Sort by: Amount</option>
-</select>
 </div>
 
 <div class="space-y-2 mt-4">
+{% if not pl_queue_items %}
+<p class="text-[11px] text-slate-400 font-bold text-center py-8">No fund requests awaiting your approval.</p>
+{% endif %}
 <template x-for="item in queue" :key="item.id">
 <div 
 @click="selectRequest(item.id)"
@@ -175,11 +129,7 @@ class="p-3.5 border rounded-2xl cursor-pointer flex flex-col justify-between tra
 </div>
 
 <div class="flex items-center justify-between border-t border-slate-100 pt-4 mt-4 text-[11px] font-bold text-slate-400">
-<span>Showing 1-6 of 6</span>
-<div class="flex items-center gap-1.5">
-<button class="h-6 w-6 rounded border border-slate-200 flex items-center justify-center hover:bg-slate-50">&lt;</button>
-<button class="h-6 w-6 rounded border border-slate-200 flex items-center justify-center hover:bg-slate-50">&gt;</button>
-</div>
+<span>Showing {{ pl_queue_items|length }} request{{ pl_queue_items|length|pluralize }}</span>
 </div>
 </div>
 
@@ -190,7 +140,7 @@ class="p-3.5 border rounded-2xl cursor-pointer flex flex-col justify-between tra
 <div class="flex items-center gap-3">
 <div class="h-10 w-10 rounded-full bg-slate-100 font-semibold text-slate-700 flex items-center justify-center text-[14px]" x-text="selectedItem ? selectedItem.user_name.slice(0,2) : ''"></div>
 <div>
-<h3 class="text-[18px] font-semibold text-slate-800 leading-none" x-text="selectedItem ? selectedItem.user_name + ' — May Fund Plan' : ''"></h3>
+<h3 class="text-[18px] font-semibold text-slate-800 leading-none" x-text="selectedItem ? selectedItem.user_name + ' — Weekly Fund Plan' : ''"></h3>
 <p class="text-[11px] text-slate-500 font-bold mt-1.5">
 <span x-text="selectedItem ? selectedItem.district : ''"></span> &bull; <span x-text="selectedItem ? selectedItem.region : ''"></span>
 </p>
@@ -200,7 +150,7 @@ class="p-3.5 border rounded-2xl cursor-pointer flex flex-col justify-between tra
 <div class="flex items-center gap-3">
 <div class="text-right">
 <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Plan Period</span>
-<span class="text-[11px] font-semibold text-slate-800 block">May 1 – May 31, 2025</span>
+<span class="text-[11px] font-semibold text-slate-800 block" x-text="selectedItem ? selectedItem.week_start + ' – ' + selectedItem.week_end : ''"></span>
 </div>
 <span :class="selectedItem ? selectedItem.status_class : ''" class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold border uppercase tracking-wider" x-text="selectedItem ? selectedItem.status : ''"></span>
 </div>
@@ -221,7 +171,7 @@ class="p-3.5 border rounded-2xl cursor-pointer flex flex-col justify-between tra
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-50 font-semibold text-slate-700">
-<template x-for="line in selectedItem.lines" :key="line.category">
+<template x-for="line in (selectedItem ? selectedItem.lines : [])" :key="line.category">
 <tr class="hover:bg-slate-50/50">
 <td class="py-2 font-semibold text-slate-800" x-text="line.category"></td>
 <td class="py-2 text-center font-bold text-slate-500" x-text="line.quantity || '—'"></td>
@@ -230,18 +180,10 @@ class="p-3.5 border rounded-2xl cursor-pointer flex flex-col justify-between tra
 </tr>
 </template>
 
-<!-- Adjustments row -->
-<tr>
-<td class="py-2 text-slate-500 font-bold">Adjustments (Rounding)</td>
-<td class="py-2 text-center">—</td>
-<td class="py-2 text-right">—</td>
-<td class="py-2 text-right text-rose-600 font-bold">-20,000</td>
-</tr>
-
 <!-- Bold aggregate summary row -->
 <tr class="border-t border-slate-200 text-slate-800 font-semibold">
 <td class="py-3 font-semibold uppercase tracking-wider" colspan="3">Total Requested</td>
-<td class="py-3 text-right font-semibold" x-text="formatCurrency(selectedItem.requested)"></td>
+<td class="py-3 text-right font-semibold" x-text="selectedItem ? formatCurrency(selectedItem.requested) : ''"></td>
 </tr>
 </tbody>
 </table>
@@ -255,24 +197,20 @@ class="p-3.5 border rounded-2xl cursor-pointer flex flex-col justify-between tra
 
 <div class="space-y-3 mt-4 text-[11px] font-bold text-slate-500">
 <div class="flex justify-between items-start gap-1">
-<span>🏫 Planned schools by staff</span>
-<span class="text-slate-800 font-semibold shrink-0">24</span>
+<span>🏫 Staff school visits planned</span>
+<span class="text-slate-800 font-semibold shrink-0" x-text="selectedItem ? selectedItem.visits : ''"></span>
 </div>
 <div class="flex justify-between items-start gap-1">
 <span>🚗 Planned school visits by partners</span>
-<span class="text-slate-800 font-semibold shrink-0">4</span>
+<span class="text-slate-800 font-semibold shrink-0" x-text="selectedItem ? selectedItem.partner : ''"></span>
 </div>
 <div class="flex justify-between items-start gap-1">
 <span>👥 Cluster meetings planned</span>
-<span class="text-slate-800 font-semibold shrink-0">4</span>
+<span class="text-slate-800 font-semibold shrink-0" x-text="selectedItem ? selectedItem.clusters : ''"></span>
 </div>
 <div class="flex justify-between items-start gap-1">
 <span>📚 Trainings planned (Cluster/In-school)</span>
-<span class="text-slate-800 font-semibold shrink-0">12</span>
-</div>
-<div class="flex justify-between items-start gap-1 border-t border-slate-200 pt-2">
-<span>🗺️ Total schools covered (Unique)</span>
-<span class="text-slate-800 font-semibold shrink-0">5</span>
+<span class="text-slate-800 font-semibold shrink-0" x-text="selectedItem ? selectedItem.trainings : ''"></span>
 </div>
 </div>
 </div>
@@ -289,27 +227,9 @@ class="p-3.5 border rounded-2xl cursor-pointer flex flex-col justify-between tra
 <div class="bg-white p-5 rounded-xl  shadow-sm space-y-3">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight pb-2 border-b border-slate-100">This Month</h3>
 <div class="space-y-2 text-[12px] font-bold text-slate-500">
-<div class="flex items-center justify-between"><span>Waiting for Approval</span> <span class="text-slate-800 font-semibold">UGX 128.4M</span></div>
-<div class="flex items-center justify-between text-rose-600"><span>Returned</span> <span class="font-semibold">UGX 12.8M</span></div>
-<div class="flex items-center justify-between text-emerald-600"><span>Approved Today</span> <span class="font-semibold">UGX 36.2M</span></div>
-</div>
-</div>
-
-<!-- Monthly Plan & Budget Approval progress bar -->
-<div class="bg-white p-5 rounded-xl  shadow-sm space-y-3">
-<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Monthly Plan &amp; Budget Approval</h3>
-<div class="space-y-1.5">
-<div class="flex items-center justify-between text-[11px] font-bold text-slate-500">
-<span>Total Allocation</span>
-<span class="text-slate-800 font-semibold">UGX 300.0M</span>
-</div>
-<div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-<div class="bg-emerald-500 h-full rounded-full" style="width: 56%"></div>
-</div>
-<div class="flex justify-between items-center text-[11px] font-bold text-slate-500">
-<span>Approved (to date): UGX 167.8M (55.9%)</span>
-<span class="text-emerald-600 font-semibold">On Track</span>
-</div>
+<div class="flex items-center justify-between"><span>Waiting for Approval</span> <span class="text-slate-800 font-semibold">{{ pl_kpis.awaiting_sum }}</span></div>
+<div class="flex items-center justify-between text-rose-600"><span>Returned</span> <span class="font-semibold">{{ pl_kpis.returned_sum }}</span></div>
+<div class="flex items-center justify-between text-emerald-600"><span>Approved Today</span> <span class="font-semibold">{{ pl_kpis.approved_today_sum }}</span></div>
 </div>
 </div>
 
@@ -321,22 +241,24 @@ class="p-3.5 border rounded-2xl cursor-pointer flex flex-col justify-between tra
 <div class="relative h-24 w-24 flex items-center justify-center shrink-0">
 <svg class="h-full w-full -rotate-90" viewBox="0 0 36 36">
 <path class="text-slate-100" stroke-width="2" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-<!-- Approved: 72% -->
-<path class="text-emerald-500" stroke-dasharray="72, 100" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-<!-- Returned: 12% -->
-<path class="text-rose-500" stroke-dasharray="12, 100" stroke-dashoffset="-72" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-<!-- Pending: 16% -->
-<path class="text-amber-500" stroke-dasharray="16, 100" stroke-dashoffset="-84" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+{% if pl_rate.total %}
+<!-- Approved -->
+<path class="text-emerald-500" stroke-dasharray="{{ pl_rate.approved_pct }}, 100" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+<!-- Returned -->
+<path class="text-rose-500" stroke-dasharray="{{ pl_rate.returned_pct }}, 100" stroke-dashoffset="-{{ pl_rate.returned_offset }}" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+<!-- Pending -->
+<path class="text-amber-500" stroke-dasharray="{{ pl_rate.pending_pct }}, 100" stroke-dashoffset="-{{ pl_rate.pending_offset }}" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+{% endif %}
 </svg>
 <div class="absolute flex flex-col justify-center items-center text-center">
-<span class="text-[18px] font-semibold text-slate-800 leading-none">72%</span>
+<span class="text-[18px] font-semibold text-slate-800 leading-none">{{ pl_rate.approved_pct }}%</span>
 <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wide mt-0.5">Approval Rate</span>
 </div>
 </div>
 <div class="text-[11px] space-y-1 font-bold text-slate-500">
-<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-emerald-500"></span> Approved (72%)</div>
-<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-rose-500"></span> Returned (12%)</div>
-<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-amber-500"></span> Pending (16%)</div>
+<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-emerald-500"></span> Approved ({{ pl_rate.approved_pct }}%)</div>
+<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-rose-500"></span> Returned ({{ pl_rate.returned_pct }}%)</div>
+<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-amber-500"></span> Pending ({{ pl_rate.pending_pct }}%)</div>
 </div>
 </div>
 </div>
@@ -381,22 +303,22 @@ class="p-3.5 border rounded-2xl cursor-pointer flex flex-col justify-between tra
 <div class="space-y-4">
 <!-- Horizontal stacked bar chart visual -->
 <div class="w-full h-8 rounded-xl overflow-hidden flex font-bold text-white text-[11px] text-center shadow-sm">
-<div class="bg-emerald-500 h-full flex items-center justify-center" style="width: 26%">26%</div>
-<div class="bg-teal-500 h-full flex items-center justify-center" style="width: 16%">16%</div>
-<div class="bg-indigo-500 h-full flex items-center justify-center" style="width: 12%">12%</div>
-<div class="bg-amber-500 h-full flex items-center justify-center" style="width: 23%">23%</div>
-<div class="bg-sky-500 h-full flex items-center justify-center" style="width: 8%">8%</div>
-<div class="bg-slate-400 h-full flex items-center justify-center" style="width: 15%">15%</div>
+{% if pl_budget_mix.total %}
+<div class="bg-emerald-500 h-full flex items-center justify-center overflow-hidden" style="width: {{ pl_budget_mix.visits.pct }}%">{{ pl_budget_mix.visits.pct }}%</div>
+<div class="bg-amber-500 h-full flex items-center justify-center overflow-hidden" style="width: {{ pl_budget_mix.trainings.pct }}%">{{ pl_budget_mix.trainings.pct }}%</div>
+<div class="bg-indigo-500 h-full flex items-center justify-center overflow-hidden" style="width: {{ pl_budget_mix.meetings.pct }}%">{{ pl_budget_mix.meetings.pct }}%</div>
+<div class="bg-slate-400 h-full flex items-center justify-center overflow-hidden" style="width: {{ pl_budget_mix.admin.pct }}%">{{ pl_budget_mix.admin.pct }}%</div>
+{% else %}
+<div class="bg-slate-100 h-full w-full flex items-center justify-center text-slate-400">No planned budget this month</div>
+{% endif %}
 </div>
 
 <!-- Legend with amounts -->
-<div class="grid grid-cols-2 sm:grid-cols-6 gap-3 text-[11px] font-bold text-slate-500">
-<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-emerald-500"></span> Staff Visits: UGX 55.2M</div>
-<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-teal-500"></span> Partner Visits: UGX 34.1M</div>
-<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-indigo-500"></span> Cluster Meetings: UGX 25.3M</div>
-<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-amber-500"></span> Trainings: UGX 49.3M</div>
-<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-sky-500"></span> SSA Support: UGX 17.6M</div>
-<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-slate-400"></span> Other: UGX 32.1M</div>
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-[11px] font-bold text-slate-500">
+<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-emerald-500"></span> School Visits: {{ pl_budget_mix.visits.amount }}</div>
+<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-amber-500"></span> Trainings: {{ pl_budget_mix.trainings.amount }}</div>
+<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-indigo-500"></span> Cluster Meetings: {{ pl_budget_mix.meetings.amount }}</div>
+<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-slate-400"></span> Other / Admin: {{ pl_budget_mix.admin.amount }}</div>
 </div>
 </div>
 </div>
@@ -409,41 +331,24 @@ class="p-3.5 border rounded-2xl cursor-pointer flex flex-col justify-between tra
 </div>
 
 <div class="space-y-3.5 mt-4 text-[12px] font-bold">
-<!-- Item 1 -->
+{% for item in pl_recent %}
 <div class="flex items-center justify-between">
 <div class="flex items-center gap-2">
+{% if item.approved %}
 <span class="h-6 w-6 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-[11px] font-semibold">✓</span>
-<div>
-<span class="text-slate-800 block leading-tight">Moses T. — May Fund Plan approved</span>
-<span class="text-[11px] text-slate-400 font-bold block mt-0.5">Today, 10:24 AM</span>
-</div>
-</div>
-<span class="text-slate-800">UGX 24.1M</span>
-</div>
-
-<!-- Item 2 -->
-<div class="flex items-center justify-between">
-<div class="flex items-center gap-2">
+{% else %}
 <span class="h-6 w-6 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center text-[11px] font-semibold">↺</span>
+{% endif %}
 <div>
-<span class="text-slate-800 block leading-tight">Joel O. — May Fund Plan returned for review</span>
-<span class="text-[11px] text-slate-400 font-bold block mt-0.5">Today, 9:15 AM</span>
+<span class="text-slate-800 block leading-tight">{{ item.name }} — Fund Plan {% if item.approved %}approved{% else %}returned for review{% endif %}</span>
+<span class="text-[11px] text-slate-400 font-bold block mt-0.5">{{ item.when }}</span>
 </div>
 </div>
-<span class="text-rose-600">UGX 19.8M</span>
+<span class="{% if item.approved %}text-slate-800{% else %}text-rose-600{% endif %}">{{ item.amount }}</span>
 </div>
-
-<!-- Item 3 -->
-<div class="flex items-center justify-between">
-<div class="flex items-center gap-2">
-<span class="h-6 w-6 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-[11px] font-semibold">✓</span>
-<div>
-<span class="text-slate-800 block leading-tight">Ruth W. — Apr Fund Plan approved</span>
-<span class="text-[11px] text-slate-400 font-bold block mt-0.5">Yesterday, 4:32 PM</span>
-</div>
-</div>
-<span class="text-slate-800">UGX 18.6M</span>
-</div>
+{% empty %}
+<p class="text-[11px] text-slate-400 font-bold text-center py-6">No approval activity yet.</p>
+{% endfor %}
 </div>
 </div>
 </div>

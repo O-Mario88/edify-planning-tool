@@ -4,14 +4,16 @@
 {% block title %}Fund Disbursement Dashboard — SIPA{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-[1600px] mx-auto space-y-6 text-slate-700 font-sans" 
-x-data="{ 
-allFunds: {{ all_funds_json|safe }}, 
-selectedId: 'FR-2481',
+{{ all_funds|json_script:"all-funds-data" }}
+<div class="p-6 max-w-[1600px] mx-auto space-y-6 text-slate-700 font-sans"
+x-data="{
+allFunds: JSON.parse(document.getElementById('all-funds-data').textContent),
+selectedId: null,
 selectedItem: null,
 activeTab: 'breakdown',
 init() {
-this.selectedItem = this.allFunds.find(f => f.id === this.selectedId) || this.allFunds[0];
+this.selectedItem = this.allFunds.find(f => f.id === this.selectedId) || this.allFunds[0] || null;
+if (this.selectedItem) { this.selectedId = this.selectedItem.id; }
 },
 selectFund(id) {
 this.selectedId = id;
@@ -70,54 +72,40 @@ class="h-9 w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 text-[12
 
 
 <!-- ================= TOP KPI STRIP ================= -->
-<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-10 gap-4">
+<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
 <!-- Total Funds -->
 <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
-<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total Funds This Month</p>
+<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total Approved Funds</p>
 <h3 class="text-[18px] font-semibold text-slate-800 leading-none">{{ kpis.total_approved }}</h3>
-<span class="text-[11px] text-emerald-600 font-semibold block pt-1">▲ 18.6% vs Apr</span>
+<span class="text-[11px] text-emerald-600 font-semibold block pt-1">FY {{ fy }}</span>
 </div>
 
 <!-- Pending Disbursement -->
 <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
 <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Pending Disbursement</p>
 <h3 class="text-[18px] font-semibold text-slate-800 leading-none">{{ kpis.pending_disb }}</h3>
-<span class="text-[11px] text-amber-600 font-bold block pt-1">28 requests awaiting</span>
+<span class="text-[11px] text-amber-600 font-bold block pt-1">{{ kpis.pending_disb_count }} request{{ kpis.pending_disb_count|pluralize }} awaiting</span>
 </div>
 
-<!-- Disbursed Today -->
+<!-- Total Disbursed -->
 <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
-<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Disbursed Today</p>
+<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total Disbursed</p>
 <h3 class="text-[18px] font-semibold text-slate-800 leading-none">{{ kpis.total_disbursed }}</h3>
-<span class="text-[11px] text-blue-600 font-bold block pt-1">12 disbursements made</span>
+<span class="text-[11px] text-blue-600 font-bold block pt-1">{{ kpis.disbursed_count }} disbursement{{ kpis.disbursed_count|pluralize }} made</span>
 </div>
 
 <!-- Awaiting Approval -->
 <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
 <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Awaiting Approvals</p>
 <h3 class="text-[18px] font-semibold text-slate-800 leading-none">{{ kpis.awaiting_approval }}</h3>
-<span class="text-[11px] text-indigo-600 font-bold block pt-1">19 requests in chain</span>
-</div>
-
-<!-- Special Projects -->
-<div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
-<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Special Projects Funds</p>
-<h3 class="text-[18px] font-semibold text-slate-800 leading-none">{{ kpis.special_projects }}</h3>
-<span class="text-[11px] text-slate-400 font-bold block pt-1">7 active projects</span>
-</div>
-
-<!-- Admin Budgets -->
-<div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
-<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Admin Budget Pending</p>
-<h3 class="text-[18px] font-semibold text-slate-800 leading-none">{{ kpis.admin_pending }}</h3>
-<span class="text-[11px] text-amber-600 font-bold block pt-1">11 requests pending</span>
+<span class="text-[11px] text-indigo-600 font-bold block pt-1">{{ kpis.awaiting_count }} request{{ kpis.awaiting_count|pluralize }} in chain</span>
 </div>
 
 <!-- Reconciliation Rate -->
 <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
 <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Reconciliation Rate</p>
 <h3 class="text-[18px] font-semibold text-slate-800 leading-none">{{ kpis.recon_rate }}</h3>
-<span class="text-[11px] text-emerald-600 font-semibold block pt-1">▲ 9% vs Apr</span>
+<span class="text-[11px] text-emerald-600 font-semibold block pt-1">{{ kpis.accounted_count }} of {{ kpis.disbursed_count }} accounted</span>
 </div>
 
 <!-- Budget Utilization -->
@@ -125,10 +113,10 @@ class="h-9 w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 text-[12
 <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Budget Util.</p>
 <div class="flex items-baseline justify-between mt-1">
 <h3 class="text-[18px] font-semibold text-slate-800 leading-none">{{ kpis.budget_util }}</h3>
-<span class="text-[11px] text-slate-400 font-bold">UGX 1.59B used</span>
+<span class="text-[11px] text-slate-400 font-bold">{{ kpis.total_disbursed }} used</span>
 </div>
 <div class="w-full bg-slate-100 h-1.5 rounded-full mt-1 overflow-hidden">
-<div class="bg-teal-500 h-full rounded-full" style="width: 64%"></div>
+<div class="bg-teal-500 h-full rounded-full" style="width: {{ kpis.budget_util_pct }}%"></div>
 </div>
 </div>
 </div>
@@ -143,7 +131,7 @@ class="h-9 w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 text-[12
 <div class="flex items-center justify-between pb-3 border-b border-slate-100">
 <div class="flex items-center gap-1.5">
 <h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Consolidated Fund Queue</h2>
-<span class="bg-blue-600 text-white font-semibold rounded-full px-1.5 py-0.5 text-[11px] flex items-center justify-center">42</span>
+<span class="bg-blue-600 text-white font-semibold rounded-full px-1.5 py-0.5 text-[11px] flex items-center justify-center">{{ all_funds|length }}</span>
 </div>
 
 <select class="h-6 px-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-bold text-slate-500">
@@ -181,7 +169,7 @@ class="p-3 border rounded-2xl cursor-pointer flex items-center gap-3 transition-
 
 <!-- Pagination -->
 <div class="flex items-center justify-between border-t border-slate-100 pt-4 mt-4 text-[11px] font-bold text-slate-400">
-<span>Showing 1-8 of 42 funds</span>
+<span>Showing {{ all_funds|length }} fund{{ all_funds|length|pluralize }}</span>
 </div>
 </div>
 
@@ -283,7 +271,7 @@ class="p-3 border rounded-2xl cursor-pointer flex items-center gap-3 transition-
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-50 font-semibold text-slate-700">
-<template x-for="line in selectedItem.lines" :key="line.category">
+<template x-for="line in (selectedItem ? selectedItem.lines : [])" :key="line.category">
 <tr class="hover:bg-slate-50/50">
 <td class="py-2.5 font-semibold text-slate-800" x-text="line.category"></td>
 <td class="py-2.5 text-center font-bold text-slate-500" x-text="line.quantity || '—'"></td>
@@ -294,7 +282,7 @@ class="p-3 border rounded-2xl cursor-pointer flex items-center gap-3 transition-
 <!-- Bold aggregate summary row -->
 <tr class="border-t border-slate-200 text-slate-800 font-semibold">
 <td class="py-3 font-semibold uppercase tracking-wider" colspan="3">Total</td>
-<td class="py-3 text-right font-semibold" x-text="formatCurrency(selectedItem.approved)"></td>
+<td class="py-3 text-right font-semibold" x-text="selectedItem ? formatCurrency(selectedItem.approved) : ''"></td>
 </tr>
 </tbody>
 </table>
@@ -348,7 +336,7 @@ No documents or receipts attached to this request yet.
 
 <!-- Action buttons -->
 <div class="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4 mt-6">
-<form x-bind:action="'/accounts/activities/' + selectedItem.id + '/disburse'" method="POST" class="inline">
+<form x-bind:action="'/accounts/activities/' + (selectedItem ? selectedItem.id : '') + '/disburse'" method="POST" class="inline">
 {% csrf_token %}
 <button type="submit" class="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[12px] font-semibold shadow-sm transition-all">
 Disburse Funds
@@ -364,11 +352,11 @@ Disburse Funds
 <div class="bg-white p-5 rounded-xl  shadow-sm space-y-3">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight pb-2 border-b border-slate-100">This Month Overview</h3>
 <div class="space-y-2 text-[12px] font-bold text-slate-500">
-<div class="flex items-center justify-between"><span>Waiting for Approval</span> <span class="text-slate-800 font-semibold">UGX 524.3M</span></div>
-<div class="flex items-center justify-between text-rose-600"><span>Returned</span> <span class="font-semibold">UGX 98.6M</span></div>
-<div class="flex items-center justify-between text-amber-600"><span>Approved (Not Disbursed)</span> <span class="font-semibold">UGX 742.6M</span></div>
-<div class="flex items-center justify-between text-blue-700"><span>Disbursed</span> <span class="font-semibold">UGX 1.26B</span></div>
-<div class="flex items-center justify-between text-emerald-600"><span>Reconciled</span> <span class="font-semibold">UGX 1.04B</span></div>
+<div class="flex items-center justify-between"><span>Waiting for Approval</span> <span class="text-slate-800 font-semibold">{{ month_overview.waiting_for_approval }}</span></div>
+<div class="flex items-center justify-between text-rose-600"><span>Returned</span> <span class="font-semibold">{{ month_overview.returned }}</span></div>
+<div class="flex items-center justify-between text-amber-600"><span>Approved (Not Disbursed)</span> <span class="font-semibold">{{ month_overview.approved_not_disbursed }}</span></div>
+<div class="flex items-center justify-between text-blue-700"><span>Disbursed</span> <span class="font-semibold">{{ month_overview.disbursed }}</span></div>
+<div class="flex items-center justify-between text-emerald-600"><span>Reconciled</span> <span class="font-semibold">{{ month_overview.reconciled }}</span></div>
 </div>
 <a href="/accounts/audit-log" class="text-[11px] font-semibold text-blue-600 hover:underline block pt-2 border-t border-slate-50 text-center uppercase tracking-wider">
 View all activity &rarr;
@@ -383,25 +371,27 @@ View all activity &rarr;
 <div class="relative h-24 w-24 flex items-center justify-center shrink-0">
 <svg class="h-full w-full -rotate-90" viewBox="0 0 36 36">
 <path class="text-slate-100" stroke-width="2" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-<!-- Approved: 34% -->
-<path class="text-emerald-500" stroke-dasharray="34, 100" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-<!-- Pending: 30% -->
-<path class="text-amber-500" stroke-dasharray="30, 100" stroke-dashoffset="-34" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-<!-- Disbursed: 29% -->
-<path class="text-blue-500" stroke-dasharray="29, 100" stroke-dashoffset="-64" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-<!-- Returned: 7% -->
-<path class="text-rose-500" stroke-dasharray="7, 100" stroke-dashoffset="-93" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+{% if donut.total %}
+<!-- Approved -->
+<path class="text-emerald-500" stroke-dasharray="{{ donut.approved_pct }}, 100" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+<!-- Pending -->
+<path class="text-amber-500" stroke-dasharray="{{ donut.pending_pct }}, 100" stroke-dashoffset="-{{ donut.pending_offset }}" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+<!-- Disbursed -->
+<path class="text-blue-500" stroke-dasharray="{{ donut.disbursed_pct }}, 100" stroke-dashoffset="-{{ donut.disbursed_offset }}" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+<!-- Returned -->
+<path class="text-rose-500" stroke-dasharray="{{ donut.returned_pct }}, 100" stroke-dashoffset="-{{ donut.returned_offset }}" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+{% endif %}
 </svg>
 <div class="absolute flex flex-col justify-center items-center text-center">
-<span class="text-[12px] font-semibold text-slate-800 leading-none">UGX 2.48B</span>
+<span class="text-[12px] font-semibold text-slate-800 leading-none">{{ donut.total_compact }}</span>
 <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wide mt-0.5">Total</span>
 </div>
 </div>
 <div class="text-[11px] space-y-1 font-bold text-slate-500">
-<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-emerald-500"></span> Approved (34%)</div>
-<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-amber-500"></span> Pending (30%)</div>
-<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-blue-500"></span> Disbursed (29%)</div>
-<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-rose-500"></span> Returned (7%)</div>
+<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-emerald-500"></span> Approved ({{ donut.approved_pct }}%)</div>
+<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-amber-500"></span> Pending ({{ donut.pending_pct }}%)</div>
+<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-blue-500"></span> Disbursed ({{ donut.disbursed_pct }}%)</div>
+<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-rose-500"></span> Returned ({{ donut.returned_pct }}%)</div>
 </div>
 </div>
 </div>
@@ -450,65 +440,23 @@ View all activity &rarr;
 </div>
 
 <div class="space-y-3.5 mt-4">
-<!-- Item 1 -->
+{% for item in recent_activity %}
 <div class="flex items-center justify-between text-[12px] font-bold">
 <div class="flex items-center gap-2">
-<span class="h-6 w-6 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-[11px] font-semibold">RW</span>
+<span class="h-6 w-6 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-[11px] font-semibold">{{ item.name|slice:":2"|upper }}</span>
 <div>
-<span class="text-slate-800 block leading-tight">Ruth W. &bull; Eastern Region</span>
-<span class="text-[11px] text-slate-400 font-bold block mt-0.5">Today, 10:24 AM</span>
+<span class="text-slate-800 block leading-tight">{{ item.name }} &bull; {{ item.region }}</span>
+<span class="text-[11px] text-slate-400 font-bold block mt-0.5">{{ item.when }}</span>
 </div>
 </div>
 <div class="text-right">
-<span class="text-slate-800 block">UGX 98.3M</span>
+<span class="text-slate-800 block">{{ item.amount }}</span>
 <span class="text-[11px] text-blue-600 font-semibold uppercase tracking-wide">Disbursed</span>
 </div>
 </div>
-
-<!-- Item 2 -->
-<div class="flex items-center justify-between text-[12px] font-bold">
-<div class="flex items-center gap-2">
-<span class="h-6 w-6 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-[11px] font-semibold">PK</span>
-<div>
-<span class="text-slate-800 block leading-tight">Peter K. &bull; Western Region</span>
-<span class="text-[11px] text-slate-400 font-bold block mt-0.5">Today, 9:45 AM</span>
-</div>
-</div>
-<div class="text-right">
-<span class="text-slate-800 block">UGX 124.7M</span>
-<span class="text-[11px] text-blue-600 font-semibold uppercase tracking-wide">Disbursed</span>
-</div>
-</div>
-
-<!-- Item 3 -->
-<div class="flex items-center justify-between text-[12px] font-bold">
-<div class="flex items-center gap-2">
-<span class="h-6 w-6 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-[11px] font-semibold">SP</span>
-<div>
-<span class="text-slate-800 block leading-tight">Special Project &bull; Digital Learning</span>
-<span class="text-[11px] text-slate-400 font-bold block mt-0.5">Today, 8:15 AM</span>
-</div>
-</div>
-<div class="text-right">
-<span class="text-slate-800 block">UGX 60.0M</span>
-<span class="text-[11px] text-blue-600 font-semibold uppercase tracking-wide">Disbursed</span>
-</div>
-</div>
-
-<!-- Item 4 -->
-<div class="flex items-center justify-between text-[12px] font-bold">
-<div class="flex items-center gap-2">
-<span class="h-6 w-6 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center text-[11px] font-semibold">JO</span>
-<div>
-<span class="text-slate-800 block leading-tight">Joel O. &bull; Karamoja Region</span>
-<span class="text-[11px] text-slate-400 font-bold block mt-0.5">Yesterday, 4:32 PM</span>
-</div>
-</div>
-<div class="text-right">
-<span class="text-slate-800 block">UGX 62.1M</span>
-<span class="text-[11px] text-rose-600 font-semibold uppercase tracking-wide">Returned</span>
-</div>
-</div>
+{% empty %}
+<p class="text-[11px] text-slate-400 font-bold text-center py-6">No disbursements recorded yet.</p>
+{% endfor %}
 </div>
 </div>
 </div>
@@ -522,25 +470,13 @@ View all activity &rarr;
 </div>
 
 <!-- mini status labels -->
-<div class="grid grid-cols-5 gap-2 mt-4 text-center">
+<div class="grid grid-cols-2 gap-2 mt-4 text-center">
 <div class="p-2 bg-slate-50 border border-slate-100 rounded-xl">
-<h4 class="text-[18px] font-semibold text-slate-800 leading-none">26</h4>
+<h4 class="text-[18px] font-semibold text-slate-800 leading-none">{{ recon_stats.awaiting_receipts }}</h4>
 <span class="text-[11px] text-slate-400 font-bold uppercase tracking-wider block mt-1">Awaiting Receipts</span>
 </div>
-<div class="p-2 bg-slate-50 border border-slate-100 rounded-xl">
-<h4 class="text-[18px] font-semibold text-slate-800 leading-none">18</h4>
-<span class="text-[11px] text-slate-400 font-bold uppercase tracking-wider block mt-1">Salesforce Match</span>
-</div>
-<div class="p-2 bg-slate-50 border border-slate-100 rounded-xl">
-<h4 class="text-[18px] font-semibold text-slate-800 leading-none">14</h4>
-<span class="text-[11px] text-slate-400 font-bold uppercase tracking-wider block mt-1">Liquidation</span>
-</div>
-<div class="p-2 bg-slate-50 border border-slate-100 rounded-xl">
-<h4 class="text-[18px] font-semibold text-slate-800 leading-none">9</h4>
-<span class="text-[11px] text-slate-400 font-bold uppercase tracking-wider block mt-1">Partially Accounted</span>
-</div>
 <div class="p-2 bg-emerald-50 border border-emerald-100 rounded-xl">
-<h4 class="text-[18px] font-semibold text-emerald-600 leading-none">124</h4>
+<h4 class="text-[18px] font-semibold text-emerald-600 leading-none">{{ recon_stats.closed }}</h4>
 <span class="text-[11px] text-emerald-500 font-bold uppercase tracking-wider block mt-1">Closed</span>
 </div>
 </div>
@@ -556,24 +492,16 @@ View all activity &rarr;
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-50 font-semibold text-slate-700">
+{% for row in recon_pending %}
 <tr class="hover:bg-slate-50/50">
-<td class="py-2.5 font-bold text-slate-800">Sarah M. &bull; Northern Region</td>
-<td class="py-2.5 text-right font-semibold text-slate-800">186,400,000</td>
+<td class="py-2.5 font-bold text-slate-800">{{ row.name }} &bull; {{ row.region }}</td>
+<td class="py-2.5 text-right font-semibold text-slate-800">{{ row.amount|floatformat:"0g" }}</td>
 <td class="py-2.5 text-center"><span class="inline-flex items-center rounded-md bg-amber-50 border border-amber-200 px-1.5 py-0.5 text-[11px] font-bold text-amber-700">Awaiting Receipts</span></td>
-<td class="py-2.5 text-right text-rose-600 font-semibold">6 days</td>
+<td class="py-2.5 text-right {% if row.days > 5 %}text-rose-600{% elif row.days > 3 %}text-amber-600{% else %}text-slate-500{% endif %} font-semibold">{{ row.days }} day{{ row.days|pluralize }}</td>
 </tr>
-<tr class="hover:bg-slate-50/50">
-<td class="py-2.5 font-bold text-slate-800">Grace A. &bull; Central Region</td>
-<td class="py-2.5 text-right font-semibold text-slate-800">86,200,000</td>
-<td class="py-2.5 text-center"><span class="inline-flex items-center rounded-md bg-blue-50 border border-blue-200 px-1.5 py-0.5 text-[11px] font-bold text-blue-700">Salesforce Match</span></td>
-<td class="py-2.5 text-right text-amber-600 font-semibold">4 days</td>
-</tr>
-<tr class="hover:bg-slate-50/50">
-<td class="py-2.5 font-bold text-slate-800">Peter K. &bull; Western Region</td>
-<td class="py-2.5 text-right font-semibold text-slate-800">124,700,000</td>
-<td class="py-2.5 text-center"><span class="inline-flex items-center rounded-md bg-violet-50 border border-violet-200 px-1.5 py-0.5 text-[11px] font-bold text-violet-700">Awaiting Liquidation</span></td>
-<td class="py-2.5 text-right text-slate-500 font-semibold">3 days</td>
-</tr>
+{% empty %}
+<tr><td colspan="4" class="py-6 text-center text-slate-400 font-bold">No disbursed funds awaiting reconciliation.</td></tr>
+{% endfor %}
 </tbody>
 </table>
 </div>
@@ -591,30 +519,23 @@ View all activity &rarr;
 <div class="grid grid-cols-2 gap-3 mt-4">
 <!-- 1 -->
 <div class="p-3 bg-slate-50 border border-slate-100 rounded-2xl">
-<span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wide block">Total Available</span>
-<h4 class="text-[18px] font-semibold text-slate-800 leading-none mt-1">UGX 890M</h4>
-<span class="text-[11px] text-slate-400 block mt-1">Available for disbursement</span>
+<span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide block">Committed</span>
+<h4 class="text-[18px] font-semibold text-slate-800 leading-none mt-1">{{ kpis.pending_disb }}</h4>
+<span class="text-[11px] text-slate-400 block mt-1">Approved, not disbursed</span>
 </div>
 
 <!-- 2 -->
 <div class="p-3 bg-slate-50 border border-slate-100 rounded-2xl">
-<span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide block">Committed</span>
-<h4 class="text-[18px] font-semibold text-slate-800 leading-none mt-1">UGX 742.6M</h4>
-<span class="text-[11px] text-slate-400 block mt-1">Approved, not disbursed</span>
-</div>
-
-<!-- 3 -->
-<div class="p-3 bg-slate-50 border border-slate-100 rounded-2xl">
 <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide block">Pending Requests</span>
-<h4 class="text-[18px] font-semibold text-slate-800 leading-none mt-1">UGX 524.3M</h4>
+<h4 class="text-[18px] font-semibold text-slate-800 leading-none mt-1">{{ kpis.awaiting_approval }}</h4>
 <span class="text-[11px] text-slate-400 block mt-1">Awaiting approval decision</span>
 </div>
 
-<!-- 4 -->
-<div class="p-3 bg-slate-50 border border-slate-100 rounded-2xl">
+<!-- 3 -->
+<div class="p-3 bg-slate-50 border border-slate-100 rounded-2xl col-span-2">
 <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide block">Program Funds</span>
-<h4 class="text-[18px] font-semibold text-slate-800 leading-none mt-1">UGX 1.59B</h4>
-<span class="text-[11px] text-slate-500 block mt-1">64% utilized</span>
+<h4 class="text-[18px] font-semibold text-slate-800 leading-none mt-1">{{ kpis.total_approved }}</h4>
+<span class="text-[11px] text-slate-500 block mt-1">{{ kpis.budget_util_pct }}% utilized</span>
 </div>
 </div>
 </div>

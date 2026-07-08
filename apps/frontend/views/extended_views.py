@@ -1,6 +1,8 @@
 """
 GROUPS 4-7 — SSA/FY, Districts/Reports, Admin, Specialised Views
 """
+import re
+
 from django.shortcuts import render, redirect, get_object_or_404
 from apps.core.permissions import require_page_permission, get_scoped_object_or_404
 from django.db.models import Q, Avg, Count
@@ -730,42 +732,47 @@ def help_view(request):
     return render(request, "pages/help/index.html", context)
 
 
+def _humanize_rbac_token(token):
+    """'budgetIntelligence' -> 'Budget Intelligence', 'resolve_duplicate' -> 'Resolve Duplicate'."""
+    spaced = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", " ", token).replace("_", " ").strip()
+    return spaced[:1].upper() + spaced[1:] if spaced else token
+
+
 @require_page_permission("roles_permissions")
 def admin_roles_permissions_view(request):
-    """Roles and permissions matrix."""
-    roles = ["cceo", "pl", "cd", "rvp", "ia", "accountant", "hr", "partner", "admin"]
-    permission_groups = [
-        "Schools", "Clusters", "Planning", "My Plan", "Fund Requests", "Budgets", 
-        "Cost Catalogue", "Evidence", "IA Verification", "Accounts Clearance", 
-        "Analytics", "Messages", "Notifications", "System Settings", "User Management"
-    ]
-    # Standard static matrix of default clearances
-    matrix = {}
-    for pg in permission_groups:
-        matrix[pg] = {}
-        for r in roles:
-            # Default mock permissions
-            if r == "admin":
-                matrix[pg][r] = True
-            elif pg == "Schools" and r in ["cceo", "pl", "cd", "rvp", "ia"]:
-                matrix[pg][r] = True
-            elif pg == "Planning" and r in ["cceo", "pl", "cd"]:
-                matrix[pg][r] = True
-            elif pg == "Budgets" and r in ["cd", "rvp", "accountant"]:
-                matrix[pg][r] = True
-            elif pg == "Accounts Clearance" and r == "accountant":
-                matrix[pg][r] = True
-            elif pg == "IA Verification" and r == "ia":
-                matrix[pg][r] = True
-            elif pg == "Analytics" and r in ["cd", "rvp", "pl", "admin"]:
-                matrix[pg][r] = True
-            else:
-                matrix[pg][r] = False
+    """Roles and permissions matrix, built from the real RBAC tables
+    (accounts.Permission / accounts.RolePermission)."""
+    from apps.accounts.models import Permission, RolePermission
+    from apps.core.rbac import EdifyRole
+
+    db_roles = set(RolePermission.objects.values_list("role", flat=True).distinct())
+    # Order roles as declared in EdifyRole (Admin last); append any unknown extras.
+    role_values = [r.value for r in EdifyRole if r.value in db_roles]
+    role_values += sorted(db_roles - set(role_values))
+    roles = [{"value": r, "label": _humanize_rbac_token(r)} for r in role_values]
+
+    granted = set(RolePermission.objects.values_list("permission__key", "role"))
+
+    # Group permissions by their key namespace ("school.view" -> "School").
+    groups_by_prefix = {}
+    for perm in Permission.objects.order_by("key"):
+        prefix, _, rest = perm.key.partition(".")
+        group = groups_by_prefix.setdefault(prefix, {
+            "name": _humanize_rbac_token(prefix),
+            "permissions": [],
+        })
+        group["permissions"].append({
+            "key": perm.key,
+            "label": _humanize_rbac_token(rest) if rest else _humanize_rbac_token(prefix),
+            "description": perm.description,
+            "grants": {r: (perm.key, r) in granted for r in role_values},
+        })
+
+    permission_groups = [groups_by_prefix[p] for p in sorted(groups_by_prefix)]
 
     context = {
         "roles": roles,
         "permission_groups": permission_groups,
-        "matrix": matrix,
     }
     return render(request, "pages/admin/roles_permissions.html", context)
 

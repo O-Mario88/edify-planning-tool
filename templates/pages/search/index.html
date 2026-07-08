@@ -16,7 +16,7 @@
 {% if has_results %}
 {% if results.schools %}<div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm"><div class="px-5 py-4 border-b border-slate-100"><h2 class="text-[14px] font-semibold text-slate-700">Schools</h2></div><ul class="divide-y divide-slate-100">{% for s in results.schools %}<li class="px-5 py-3 flex items-center justify-between"><a href="/schools/{{ s.id }}" class="text-[14px] font-bold text-slate-800 hover:text-indigo-600">{{ s.name }}</a></li>{% endfor %}</ul></div>{% endif %}
 {% if results.staff %}<div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm"><div class="px-5 py-4 border-b border-slate-100"><h2 class="text-[14px] font-semibold text-slate-700">Staff</h2></div><ul class="divide-y divide-slate-100">{% for s in results.staff %}<li class="px-5 py-3 flex items-center justify-between"><a href="/staff/{{ s.id }}" class="text-[14px] font-bold text-slate-800 hover:text-indigo-600">{{ s.name }}</a></li>{% endfor %}</ul></div>{% endif %}
-{% elif q %}<div class="p-12 text-center"><p class="text-[36px] mb-3">🔍</p><p class="text-[14px] font-bold text-slate-600">No results found for "{ q }"</p></div>{% endif %}
+{% elif q %}<div class="p-12 text-center"><p class="text-[36px] mb-3">🔍</p><p class="text-[14px] font-bold text-slate-600">No results found for "{{ q }}"</p></div>{% endif %}
 
 </div>
 {% endblock %}

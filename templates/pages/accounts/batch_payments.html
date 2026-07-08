@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load frontend_filters %}
 
 {% block title %}Batch Payments - Edify Command Center{% endblock %}
 
@@ -50,6 +51,7 @@ Reimbursements ({{ reimbursements|length }})
 <div x-show="activeTab === 'advances'" class="space-y-4">
 <div class="flex items-center justify-between border-b border-slate-50 pb-3">
 <h3 class="text-[14px] font-semibold text-slate-800">Batch Advances ready for payment file</h3>
+<a href="?export=advances" class="h-8 px-3 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-1.5 shadow-sm">📥 Export Advances CSV</a>
 </div>
 <div class="divide-y divide-slate-50">
 {% for act in advances %}
@@ -61,7 +63,7 @@ Reimbursements ({{ reimbursements|length }})
 <span class="text-[11px] text-slate-500 block">{{ act.school.name|default:"Cluster-wide" }}</span>
 </div>
 </div>
-<span class="font-semibold text-slate-800 text-[12px]">450,000 UGX</span>
+<span class="font-semibold text-slate-800 text-[12px]">{{ act.amount_ugx|ugx }}</span>
 </div>
 {% empty %}
 <p class="text-[12px] text-slate-400 font-semibold py-8 text-center">No pending advances for batch payment.</p>
@@ -73,6 +75,7 @@ Reimbursements ({{ reimbursements|length }})
 <div x-show="activeTab === 'partners'" class="space-y-4" style="display: none;">
 <div class="flex items-center justify-between border-b border-slate-50 pb-3">
 <h3 class="text-[14px] font-semibold text-slate-800">Batch Partner Payments ready for payment file</h3>
+<a href="?export=partners" class="h-8 px-3 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-1.5 shadow-sm">📥 Export Partner Payments CSV</a>
 </div>
 <div class="divide-y divide-slate-50">
 {% for act in partners %}
@@ -84,7 +87,7 @@ Reimbursements ({{ reimbursements|length }})
 <span class="text-[11px] text-slate-500 block">{{ act.get_activity_type_display }}</span>
 </div>
 </div>
-<span class="font-semibold text-slate-800 text-[12px]">600,000 UGX</span>
+<span class="font-semibold text-slate-800 text-[12px]">{{ act.amount_ugx|ugx }}</span>
 </div>
 {% empty %}
 <p class="text-[12px] text-slate-400 font-semibold py-8 text-center">No pending partner payments for batch payout.</p>
@@ -96,6 +99,7 @@ Reimbursements ({{ reimbursements|length }})
 <div x-show="activeTab === 'reimbursements'" class="space-y-4" style="display: none;">
 <div class="flex items-center justify-between border-b border-slate-50 pb-3">
 <h3 class="text-[14px] font-semibold text-slate-800">Batch Staff Reimbursements ready for payment file</h3>
+<a href="?export=reimbursements" class="h-8 px-3 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-1.5 shadow-sm">📥 Export Reimbursements CSV</a>
 </div>
 <div class="divide-y divide-slate-50">
 {% for claim in reimbursements %}
@@ -107,7 +111,7 @@ Reimbursements ({{ reimbursements|length }})
 <span class="text-[11px] text-slate-500 block">{{ claim.activity.get_activity_type_display }}</span>
 </div>
 </div>
-<span class="font-semibold text-slate-800 text-[12px]">{{ claim.reimbursement_amount }} UGX</span>
+<span class="font-semibold text-slate-800 text-[12px]">{% widthratio claim.reimbursement_amount 100 1 %} UGX</span>
 </div>
 {% empty %}
 <p class="text-[12px] text-slate-400 font-semibold py-8 text-center">No pending reimbursement claims for batch payment.</p>

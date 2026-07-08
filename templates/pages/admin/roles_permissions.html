@@ -21,23 +21,29 @@
 <table class="w-full text-[12px] border-collapse">
 <thead>
 <tr class="bg-slate-50 border-b border-slate-100 text-left">
-<th class="px-5 py-3.5 text-[11px] font-semibold uppercase text-slate-400 tracking-wider w-[240px]">Permission Group</th>
+<th class="px-5 py-3.5 text-[11px] font-semibold uppercase text-slate-400 tracking-wider w-[240px]">Permission</th>
 {% for role in roles %}
-<th class="px-3 py-3.5 text-center text-[11px] font-semibold uppercase text-slate-500 tracking-wider">
-{{ role|upper }}
+<th class="px-3 py-3.5 text-center text-[11px] font-semibold uppercase text-slate-500 tracking-wider" title="{{ role.value }}">
+{{ role.label }}
 </th>
 {% endfor %}
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100 font-medium">
-{% for group, role_map in matrix.items %}
+{% for group in permission_groups %}
+<tr class="bg-slate-50/70">
+<td colspan="{{ roles|length|add:1 }}" class="px-5 py-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+{{ group.name }}
+</td>
+</tr>
+{% for perm in group.permissions %}
 <tr class="hover:bg-slate-50/50 transition-colors">
-<td class="px-5 py-3.5 font-semibold text-slate-800 border-r border-slate-50">
-{{ group }}
+<td class="px-5 py-3.5 font-semibold text-slate-800 border-r border-slate-50" title="{{ perm.key }}{% if perm.description %} — {{ perm.description }}{% endif %}">
+{{ perm.label }}
 </td>
 {% for role in roles %}
 <td class="px-3 py-3.5 text-center">
-{% with val=role_map|lookup:role %}
+{% with val=perm.grants|lookup:role.value %}
 {% if val %}
 <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-emerald-50 text-emerald-600">
 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -55,9 +61,10 @@
 </td>
 {% endfor %}
 </tr>
+{% endfor %}
 {% empty %}
 <tr>
-<td colspan="{{ roles|length|add:1 }}" class="px-5 py-6 text-center text-slate-400 font-bold">No permission groups defined in matrix.</td>
+<td colspan="{{ roles|length|add:1 }}" class="px-5 py-6 text-center text-slate-400 font-bold">No permissions defined.</td>
 </tr>
 {% endfor %}
 </tbody>
