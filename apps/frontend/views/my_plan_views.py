@@ -1295,7 +1295,7 @@ def returned_evidence_view(request):
     return render(request, "pages/evidence/returned.html", context)
 
 
-@require_page_permission("my_plan")
+@require_page_permission("disbursements")
 def accounts_activity_evidence_view(request, activity_id):
     """Read-only view of activity evidence for Accountants."""
     a = get_object_or_404(Activity, id=activity_id, deleted_at__isnull=True)

@@ -4,60 +4,20 @@
 {% block title %}Budget Overview — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6">
+<div class="p-6 max-w-7xl mx-auto space-y-5 font-sans">
 
-<div class="flex items-center justify-between">
-<div>
-<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight">Budget Overview</h1>
-<p class="text-[12px] text-[var(--text-secondary)] mt-1 font-semibold">FY{{ fy }} budget performance across all requests</p>
-</div>
-</div>
-<div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-<div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm">
-<p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Planned Budget</p>
-<p class="text-[24px] font-semibold text-[#2e505f] mt-1">{{ fy_data.plannedBudget|ugx }}</p>
-</div>
-<div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm">
-<p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Requested Budget</p>
-<p class="text-[24px] font-semibold text-indigo-600 mt-1">{{ fy_data.requestedBudget|ugx }}</p>
-</div>
-<div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm">
-<p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Approved Budget</p>
-<p class="text-[24px] font-semibold text-emerald-600 mt-1">{{ fy_data.approvedBudget|ugx }}</p>
-</div>
-<div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm">
-<p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Disbursed Amount</p>
-<p class="text-[24px] font-semibold text-violet-600 mt-1">{{ fy_data.disbursedAmount|ugx }}</p>
-</div>
-<div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm">
-<p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Cleared Amount</p>
-<p class="text-[24px] font-semibold text-teal-600 mt-1">{{ fy_data.clearedAmount|ugx }}</p>
-</div>
-<div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm">
-<p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Pending Amount</p>
-<p class="text-[24px] font-semibold text-amber-600 mt-1">{{ fy_data.pendingAmount|ugx }}</p>
-</div>
-<div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm">
-<p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Variance</p>
-<p class="text-[24px] font-semibold text-rose-600 mt-1">{{ fy_data.variance|ugx }}</p>
-</div>
-<div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm">
-<p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Scheduled Activities</p>
-<p class="text-[24px] font-semibold text-slate-700 mt-1">{{ fy_data.activity_count }}</p>
-</div>
-</div>
+{% include "components/page_header.html" with title="Budget Overview" subtitle="Budget performance across all requests." breadcrumb="FY "|add:fy %}
+
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
 
 {% if pending_approvals %}
-<div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center gap-3">
-<span class="text-[20px]">⏳</span>
-<p class="text-[12px] font-bold text-amber-800">{{ pending_approvals }} Weekly Request{{ pending_approvals|pluralize }} awaiting approval</p>
-<a href="/fund-requests" class="text-[11px] font-bold text-amber-700 hover:underline ml-auto">Review Requests →</a>
-</div>
+{% include "components/action_card.html" with kind="alert" title=pending_approvals|stringformat:"s"|add:" weekly request(s) awaiting approval" body="Review pending requests routed for PL/CD sign-off." cta_label="Review Requests" cta_href="/fund-requests" %}
 {% endif %}
 
-<div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm">
+<div class="card p-0 overflow-hidden">
 <div class="px-5 py-4 border-b border-slate-100"><h2 class="text-[14px] font-semibold text-slate-700">Monthly Breakdown</h2></div>
 {% if monthly_data %}
+<div class="overflow-x-auto">
 <table class="w-full text-[12px] font-semibold text-slate-600">
 <thead>
 <tr class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-100">
@@ -86,11 +46,9 @@
 {% endfor %}
 </tbody>
 </table>
-{% else %}
-<div class="p-12 text-center">
-<p class="text-[36px] mb-3">📊</p>
-<p class="text-[14px] font-bold text-slate-500">No budget data found for this FY</p>
 </div>
+{% else %}
+{% include "components/empty_state.html" with title="No budget data found for this FY" message="Monthly totals populate as activities are scheduled and costed." %}
 {% endif %}
 </div>
 </div>

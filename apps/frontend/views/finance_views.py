@@ -37,6 +37,13 @@ def fund_requests_list_view(request):
     return redirect("/fund-requests/weekly")
 
 
+def _activity_est_cost(activity):
+    """Real cost of an activity — sum of its budget lines, falling back to
+    the auto-costed estimate. Mirrors apps.budget.services' accessor."""
+    total = sum(line.amount for line in activity.schedule_cost_lines.all())
+    return total or activity.est_cost_cents or 0
+
+
 @require_page_permission("disbursements")
 def disbursements_view(request):
     """Fully automated, investor-grade Accountant Dashboard."""
@@ -44,24 +51,32 @@ def disbursements_view(request):
         messages.error(request, "Access restricted to Program Accountants.")
         return redirect("/dashboard")
 
+    from apps.accounts.models import User
+    from apps.partners.models import Partner
+
     fy = get_operational_fy()
 
     # 1. Ready for Advance Disbursement
-    ready_disburse = WeeklyFundRequest.objects.filter(
+    ready_disburse_qs = WeeklyFundRequest.objects.filter(
         status="confirmed_for_advance"
     ).order_by("-week_start_date")
 
     # 2. Ready for Partner Payment
-    ready_partner_payments = Activity.objects.filter(
-        deleted_at__isnull=True,
-        delivery_type="partner",
-        status="ia_verified",
-        payment_status="ia_confirmed",
-    ).order_by("-updated_at")
+    ready_partner_payments_qs = (
+        Activity.objects.filter(
+            deleted_at__isnull=True,
+            delivery_type="partner",
+            status="ia_verified",
+            payment_status="ia_confirmed",
+        )
+        .select_related("school")
+        .prefetch_related("schedule_cost_lines")
+        .order_by("-updated_at")
+    )
 
     # 3. Accountability Pending
     # Weekly fund requests that are disbursed and CCEO has submitted accountability
-    pending_accountability = (
+    pending_accountability_qs = (
         WeeklyFundRequest.objects.filter(
             status="disbursed", accounted_amount__isnull=False
         )
@@ -71,27 +86,166 @@ def disbursements_view(request):
 
     # 4. Ready for Reimbursement
     # Advance requests where staff chose self-funded path and submitted reimbursement
-    ready_reimbursement = AdvanceRequest.objects.filter(
-        status="reimbursement_submitted"
-    ).order_by("-accountability_submitted_at")
+    ready_reimbursement_qs = (
+        AdvanceRequest.objects.filter(status="reimbursement_submitted")
+        .select_related("activity", "activity__school")
+        .order_by("-accountability_submitted_at")
+    )
 
     # 5. Returned Finance Items
-    returned_items = WeeklyFundRequest.objects.filter(
+    returned_items_qs = WeeklyFundRequest.objects.filter(
         status="returned_by_accountant"
     ).order_by("-updated_at")
 
     # 6. Cleared / Closed
-    cleared_weekly = WeeklyFundRequest.objects.filter(status="accounted").order_by(
+    cleared_weekly_qs = WeeklyFundRequest.objects.filter(status="accounted").order_by(
         "-accountability_reviewed_at"
     )[:10]
 
-    cleared_partners = Activity.objects.filter(
+    cleared_partners_qs = Activity.objects.filter(
         deleted_at__isnull=True, delivery_type="partner", payment_status="paid"
     ).order_by("-updated_at")[:10]
 
-    cleared_reimbursements = AdvanceRequest.objects.filter(
+    cleared_reimbursements_qs = AdvanceRequest.objects.filter(
         status="reimbursed"
     ).order_by("-updated_at")[:10]
+
+    # Resolve owner names for every WeeklyFundRequest/AdvanceRequest involved,
+    # in one batch (avoids N+1 and gives the template real names/initials).
+    wfr_lists = [
+        list(ready_disburse_qs),
+        list(pending_accountability_qs),
+        list(returned_items_qs),
+        list(cleared_weekly_qs),
+    ]
+    user_ids = set()
+    for lst in wfr_lists:
+        user_ids.update(w.responsible_user for w in lst)
+    adv_lists = [list(ready_reimbursement_qs), list(cleared_reimbursements_qs)]
+    for lst in adv_lists:
+        user_ids.update(a.responsible_user_id for a in lst if a.responsible_user_id)
+    users_by_id = {u.id: u for u in User.objects.filter(id__in=user_ids)}
+
+    def _owner_name(user_id):
+        u = users_by_id.get(user_id)
+        return u.name if u else (user_id or "—")
+
+    def _initials(name):
+        parts = [p for p in (name or "").split() if p]
+        return "".join(p[0].upper() for p in parts[:3]) or "—"
+
+    def _wfr_dict(w):
+        name = _owner_name(w.responsible_user)
+        return {
+            "id": w.id,
+            "responsible_user_name": name,
+            "responsible_user_initials": _initials(name),
+            "week_start_date": w.week_start_date,
+            "week_end_date": w.week_end_date,
+            "total_amount": w.total_amount,
+            "disbursed_amount": w.disbursed_amount,
+            "accounted_amount": w.accounted_amount,
+            "returned_amount": w.returned_amount,
+            "accountability_submitted_at": w.accountability_submitted_at,
+            "accountability_netsuite_id": w.accountability_netsuite_id,
+        }
+
+    ready_disburse = [_wfr_dict(w) for w in wfr_lists[0]]
+    pending_accountability = [_wfr_dict(w) for w in wfr_lists[1]]
+    returned_items = [_wfr_dict(w) for w in wfr_lists[2]]
+    cleared_weekly = [_wfr_dict(w) for w in wfr_lists[3]]
+
+    cleared_partners_list = list(cleared_partners_qs)
+    partner_ids = [
+        a.assigned_partner_id
+        for a in list(ready_partner_payments_qs) + cleared_partners_list
+        if a.assigned_partner_id
+    ]
+    partners_by_id = {p.id: p for p in Partner.objects.filter(id__in=partner_ids)}
+    ready_partner_payments = []
+    for act in ready_partner_payments_qs:
+        partner = partners_by_id.get(act.assigned_partner_id)
+        ready_partner_payments.append(
+            {
+                "id": act.id,
+                "activity_type_display": act.get_activity_type_display(),
+                "school_name": act.school.name if act.school else None,
+                "partner_name": partner.name if partner else act.assigned_partner_id,
+                "salesforce_activity_id": act.salesforce_activity_id,
+                "est_cost": _activity_est_cost(act),
+            }
+        )
+
+    cleared_partners = []
+    for act in cleared_partners_list:
+        partner = partners_by_id.get(act.assigned_partner_id)
+        cleared_partners.append(
+            {
+                "id": act.id,
+                "activity_type_display": act.get_activity_type_display(),
+                "partner_name": partner.name if partner else act.assigned_partner_id,
+                "salesforce_activity_id": act.salesforce_activity_id,
+            }
+        )
+
+    ready_reimbursement = []
+    for adv in adv_lists[0]:
+        name = _owner_name(adv.responsible_user_id)
+        ready_reimbursement.append(
+            {
+                "id": adv.id,
+                "responsible_user_name": name,
+                "activity_type_display": adv.activity.get_activity_type_display()
+                if adv.activity
+                else None,
+                "school_name": adv.activity.school.name
+                if adv.activity and adv.activity.school
+                else None,
+                "accountability_submitted_at": adv.accountability_submitted_at,
+                "amount": adv.amount,
+            }
+        )
+
+    cleared_reimbursements = []
+    for adv in adv_lists[1]:
+        cleared_reimbursements.append(
+            {
+                "id": adv.id,
+                "responsible_user_name": _owner_name(adv.responsible_user_id),
+                "accountability_netsuite_id": adv.accountability_netsuite_id,
+            }
+        )
+
+    queue_kpi_strip_items = [
+        {
+            "label": "Ready to Disburse",
+            "value": str(len(ready_disburse)),
+            "helper": "Queue items",
+            "icon": "clock",
+            "variant": "warning",
+        },
+        {
+            "label": "Partner Payments Pending",
+            "value": str(len(ready_partner_payments)),
+            "helper": "Queue items",
+            "icon": "users",
+            "variant": "blue",
+        },
+        {
+            "label": "Accountability Pending",
+            "value": str(len(pending_accountability)),
+            "helper": "Queue items",
+            "icon": "report",
+            "variant": "purple",
+        },
+        {
+            "label": "Reimbursement Claims",
+            "value": str(len(ready_reimbursement)),
+            "helper": "Queue items",
+            "icon": "currency",
+            "variant": "success",
+        },
+    ]
 
     context = {
         "ready_disburse": ready_disburse,
@@ -102,6 +256,7 @@ def disbursements_view(request):
         "cleared_weekly": cleared_weekly,
         "cleared_partners": cleared_partners,
         "cleared_reimbursements": cleared_reimbursements,
+        "queue_kpi_strip_items": queue_kpi_strip_items,
         "fy": fy,
     }
     return render(request, "pages/disbursements/index.html", context)
@@ -401,10 +556,62 @@ def budget_overview_view(request):
         status__in=["pending_pl_approval", "pending_cd_approval"]
     ).count()
 
+    kpi_strip_items = [
+        {
+            "label": "Planned Budget",
+            "value": f"{fy_data.get('plannedBudget', 0):,} UGX",
+            "icon": "target",
+            "variant": "neutral",
+        },
+        {
+            "label": "Requested Budget",
+            "value": f"{fy_data.get('requestedBudget', 0):,} UGX",
+            "icon": "chart",
+            "variant": "purple",
+        },
+        {
+            "label": "Approved Budget",
+            "value": f"{fy_data.get('approvedBudget', 0):,} UGX",
+            "icon": "check",
+            "variant": "success",
+        },
+        {
+            "label": "Disbursed Amount",
+            "value": f"{fy_data.get('disbursedAmount', 0):,} UGX",
+            "icon": "currency",
+            "variant": "blue",
+        },
+        {
+            "label": "Cleared Amount",
+            "value": f"{fy_data.get('clearedAmount', 0):,} UGX",
+            "icon": "shield",
+            "variant": "finance",
+        },
+        {
+            "label": "Pending Amount",
+            "value": f"{fy_data.get('pendingAmount', 0):,} UGX",
+            "icon": "clock",
+            "variant": "warning",
+        },
+        {
+            "label": "Variance",
+            "value": f"{fy_data.get('variance', 0):,} UGX",
+            "icon": "warning",
+            "variant": "danger" if fy_data.get("variance", 0) else "neutral",
+        },
+        {
+            "label": "Scheduled Activities",
+            "value": str(fy_data.get("activity_count", 0)),
+            "icon": "calendar",
+            "variant": "neutral",
+        },
+    ]
+
     context = {
         "monthly_data": monthly_data,
         "fy_data": fy_data,
         "pending_approvals": pending_approvals,
+        "kpi_strip_items": kpi_strip_items,
         "fy": fy,
     }
     return render(request, "pages/budget/index.html", context)
@@ -419,15 +626,22 @@ def cost_settings_view(request):
     active_catalogue = catalogues.filter(is_active=True).first()
 
     cost_items = []
+    catalogue_notice = None
     if active_catalogue:
         cost_items = list(
             CostSetting.objects.filter(catalogue=active_catalogue).order_by("key")
+        )
+        catalogue_notice = (
+            f"Active catalogue: {active_catalogue.label or active_catalogue.id} "
+            f"— version {active_catalogue.version} · {len(cost_items)} cost item"
+            f"{'s' if len(cost_items) != 1 else ''}"
         )
 
     context = {
         "catalogues": catalogues,
         "active_catalogue": active_catalogue,
         "cost_items": cost_items,
+        "catalogue_notice": catalogue_notice,
         "fy": fy,
     }
     return render(request, "pages/cost_settings/index.html", context)

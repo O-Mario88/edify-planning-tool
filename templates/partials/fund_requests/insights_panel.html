@@ -32,9 +32,8 @@
 <span class="text-[11px] font-bold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded border border-orange-100">{{ insights.attention_count }} Items</span>
 </div>
 <div class="text-[12px] text-slate-500 font-semibold space-y-1 ml-8">
-<p>&bull; {{ insights.attention_count }} request awaiting responsible confirmation</p>
-<p>&bull; 2 activities marked self-funded</p>
-<a href="#" class="text-[#2563eb] hover:underline font-bold block mt-1">View details</a>
+<p>&bull; {{ insights.attention_count }} request{{ insights.attention_count|pluralize }} awaiting responsible confirmation</p>
+{% if insights.self_funded_count %}<p>&bull; {{ insights.self_funded_count }} activit{{ insights.self_funded_count|pluralize:"y,ies" }} marked self-funded</p>{% endif %}
 </div>
 </div>
 
@@ -49,7 +48,7 @@
 <div class="text-[12px] text-slate-500 font-semibold space-y-0.5 ml-8">
 <p>Due on <span class="font-bold text-slate-700">{{ insights.due_date_str }}</span></p>
 <p>{{ insights.days_remaining }} days remaining</p>
-<a href="#" class="text-[#2563eb] hover:underline font-bold block mt-1">Prepare monthly request</a>
+<a href="/fund-requests/weekly?tab=monthly" class="text-[#2563eb] hover:underline font-bold block mt-1">View monthly request &rarr;</a>
 </div>
 </div>
 
@@ -66,9 +65,8 @@
 <p class="font-bold text-slate-700">&check; All scheduled activities are costed.</p>
 {% else %}
 <p class="font-bold text-rose-600">&#9888; {{ insights.missing_cost_count }} missing catalogue items.</p>
+<a href="/my-plan" class="text-[#2563eb] hover:underline font-bold block mt-1">Review in My Plan &rarr;</a>
 {% endif %}
-<p>Last checked: today</p>
-<a href="#" class="text-[#2563eb] hover:underline font-bold block mt-1">View report</a>
 </div>
 </div>
 

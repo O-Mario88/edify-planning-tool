@@ -351,6 +351,10 @@ def weekly_fund_requests_view(request):
     if active_wfr:
         wfr_status = active_wfr.status
         weekly_total = active_wfr.total_amount
+        owner = User.objects.filter(id=active_wfr.responsible_user).first()
+        active_wfr.responsible_user_name = (
+            owner.name if owner else active_wfr.responsible_user
+        )
         for line in active_wfr.lines.select_related("activity_budget_line__activity"):
             adv = line.activity_budget_line.advance_requests.first()
             status_raw = adv.status if adv else "draft_from_schedule"
@@ -547,6 +551,9 @@ def weekly_fund_requests_view(request):
         status__in=["pending_responsible_confirmation", "not_requested"]
     )
     attention_count = attention_wfr.count()
+    self_funded_count = wfr_qs.filter(
+        status__in=["self_funded", "self_funded_pending_reimbursement"]
+    ).count()
 
     due_date = date(year_num, month_num, 25)
     days_remaining = (due_date - date.today()).days
@@ -574,6 +581,7 @@ def weekly_fund_requests_view(request):
         "this_week_count": this_week_count,
         "this_week_val": this_week_val,
         "attention_count": attention_count,
+        "self_funded_count": self_funded_count,
         "due_date_str": due_date.strftime("%b %d, %Y"),
         "days_remaining": max(0, days_remaining),
         "missing_cost_count": missing_cost_count,
@@ -661,6 +669,10 @@ def weekly_fund_requests_view(request):
         sp.user_id: sp for sp in StaffProfile.objects.filter(user_id__in=_pl_user_ids)
     }
     _pl_districts = dict(District.objects.values_list("id", "name"))
+    _pl_regions = {
+        d.id: (d.region.name if d.region_id else "—")
+        for d in District.objects.select_related("region")
+    }
 
     pl_queue_items = []
     for w in pl_week_qs:
@@ -703,7 +715,11 @@ def weekly_fund_requests_view(request):
                 "district": _pl_districts.get(sp.primary_district_id, "—")
                 if sp
                 else "—",
-                "region": (sp.portfolio if sp and sp.portfolio else "—"),
+                "region": (
+                    _pl_regions.get(sp.primary_district_id, "—")
+                    if sp and sp.primary_district_id
+                    else "—"
+                ),
                 "requested": w.total_amount,
                 "status": status_label,
                 "status_class": status_class,
@@ -723,6 +739,20 @@ def weekly_fund_requests_view(request):
     _m_count = month_wfrs.count()
     _wait_qs = month_wfrs.filter(status="pending_responsible_confirmation")
     _ready_qs = month_wfrs.filter(status="confirmed_for_advance")
+    _approved_statuses = [
+        "confirmed_for_advance",
+        "disbursed",
+        "paid",
+        "closed",
+        "cleared",
+        "self_funded",
+        "self_funded_pending_reimbursement",
+    ]
+    _approved_count = month_wfrs.filter(status__in=_approved_statuses).count()
+    _returned_count = month_wfrs.filter(
+        status__in=["returned_by_accountant", "cancelled"]
+    ).count()
+    _pending_count = max(0, _m_count - _approved_count - _returned_count)
     pl_kpis = {
         "month_total": format_ugx_compact(_m_total),
         "awaiting_total": format_ugx_compact(
@@ -741,6 +771,95 @@ def weekly_fund_requests_view(request):
             round(_m_total / _m_count) if _m_count else 0
         ),
         "request_count": _m_count,
+        "ready_pct": round(_approved_count / _m_count * 100) if _m_count else 0,
+    }
+
+    # Real approval-rate donut for this month's scoped queue (counts, not
+    # invented percentages) — Confirmed/Ready-onward vs Returned vs Pending.
+    pl_approval_donut_options = {
+        "chart": {"type": "donut", "fontFamily": "inherit"},
+        "labels": ["Approved", "Returned", "Pending"],
+        "series": [_approved_count, _returned_count, _pending_count],
+        "colors": ["#10b981", "#f43f5e", "#f59e0b"],
+        "legend": {"show": False},
+        "dataLabels": {"enabled": False},
+        "stroke": {"width": 2, "colors": ["#ffffff"]},
+        "plotOptions": {
+            "pie": {
+                "donut": {
+                    "size": "72%",
+                    "labels": {
+                        "show": True,
+                        "total": {
+                            "show": True,
+                            "label": "Requests",
+                            "color": "#1e293b",
+                        },
+                    },
+                }
+            }
+        },
+    }
+
+    pl_kpi_strip_items = [
+        {
+            "label": "Total Requested This Month",
+            "value": pl_kpis["month_total"],
+            "helper": f"{pl_kpis['request_count']} requests",
+            "icon": "currency",
+            "variant": "finance",
+        },
+        {
+            "label": "Awaiting Confirmation",
+            "value": pl_kpis["awaiting_total"],
+            "helper": f"{pl_kpis['awaiting_count']} pending",
+            "icon": "clock",
+            "variant": "warning",
+        },
+        {
+            "label": "Ready for Disbursement",
+            "value": pl_kpis["ready_total"],
+            "helper": f"{pl_kpis['ready_count']} confirmed",
+            "icon": "check",
+            "variant": "success",
+        },
+        {
+            "label": "Disbursed This Month",
+            "value": pl_kpis["disbursed_total"],
+            "helper": "Advances released",
+            "icon": "report",
+            "variant": "blue",
+        },
+        {
+            "label": "FY Requested Total",
+            "value": pl_kpis["fy_total"],
+            "helper": "Across all weeks",
+            "icon": "chart",
+            "variant": "purple",
+        },
+        {
+            "label": "Average per Request",
+            "value": pl_kpis["avg_per_request"],
+            "helper": "This month",
+            "icon": "target",
+            "variant": "neutral",
+        },
+    ]
+
+    # Real budget-mix donut for this month — reuses the same PL-scoped
+    # category aggregates computed above (monthly_totals_by_type).
+    pl_budget_mix_options = {
+        "chart": {"type": "donut", "fontFamily": "inherit"},
+        "labels": ["School Visits", "Trainings & Meetings", "Admin / Other"],
+        "series": [
+            monthly_totals_by_type["visits"],
+            monthly_totals_by_type["trainings"] + monthly_totals_by_type["meetings"],
+            monthly_totals_by_type["admin"],
+        ],
+        "colors": ["#10b981", "#3b82f6", "#94a3b8"],
+        "legend": {"show": False},
+        "dataLabels": {"enabled": True},
+        "stroke": {"width": 2, "colors": ["#ffffff"]},
     }
 
     # Recent approval/return activity across the scoped queue (latest status changes)
@@ -801,6 +920,11 @@ def weekly_fund_requests_view(request):
         "pl_queue_items_json": pl_queue_items_json,
         "pl_recent": pl_recent,
         "pl_kpis": pl_kpis,
+        "pl_kpi_strip_items": pl_kpi_strip_items,
+        "pl_approval_donut_options": pl_approval_donut_options,
+        "pl_approval_donut_has_data": _m_count > 0,
+        "pl_budget_mix_options": pl_budget_mix_options,
+        "pl_budget_mix_has_data": monthly_totals_by_type["total"] > 0,
         "month_options": [
             "October",
             "November",

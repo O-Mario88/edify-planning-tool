@@ -4,47 +4,12 @@
 {% block title %}Financial Operations &amp; Disbursements — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-8" x-data="{ activeTab: new URLSearchParams(window.location.search).get('tab') || 'disbursements' }">
+<div class="p-6 max-w-7xl mx-auto space-y-6 font-sans" x-data="{ activeTab: new URLSearchParams(window.location.search).get('tab') || 'disbursements' }">
 
-<!-- Sleek Header -->
-<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-5">
-<div>
-<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight flex items-center gap-2">
-<span class="p-2 bg-blue-50 text-blue-600 rounded-xl">
-<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-</span>
-Financial Operations
-</h1>
-<p class="text-[12px] text-slate-500 mt-1 font-semibold">Investor-grade operational ledger, disbursement queues, and accountability verifications</p>
-</div>
+{% include "components/page_header.html" with title="Financial Operations" subtitle="Operational ledger, disbursement queues, and accountability verifications" breadcrumb="FY "|add:fy|add:" Ledger" %}
 
-<!-- Active FY Indicator -->
-<div class="flex items-center gap-2 self-start md:self-auto">
-<span class="inline-flex items-center rounded-lg bg-slate-50 border border-slate-200/60 px-3 py-1.5 text-[12px] font-bold text-slate-600">
-FY {{ fy }} Ledger
-</span>
-</div>
-</div>
-
-<!-- Queue Overview KPI Stripe -->
-<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-<div class="bg-white rounded-2xl border border-[var(--border-card)] p-4 shadow-sm space-y-1">
-<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Ready to Disburse</p>
-<p class="text-[20px] font-semibold text-amber-600 tracking-tight">{{ ready_disburse|length }} Queue Items</p>
-</div>
-<div class="bg-white rounded-2xl border border-[var(--border-card)] p-4 shadow-sm space-y-1">
-<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Partner Payments Pending</p>
-<p class="text-[20px] font-semibold text-blue-600 tracking-tight">{{ ready_partner_payments|length }} Queue Items</p>
-</div>
-<div class="bg-white rounded-2xl border border-[var(--border-card)] p-4 shadow-sm space-y-1">
-<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Accountability Pending</p>
-<p class="text-[20px] font-semibold text-indigo-600 tracking-tight">{{ pending_accountability|length }} Queue Items</p>
-</div>
-<div class="bg-white rounded-2xl border border-[var(--border-card)] p-4 shadow-sm space-y-1">
-<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Reimbursements Claims</p>
-<p class="text-[20px] font-semibold text-emerald-600 tracking-tight">{{ ready_reimbursement|length }} Queue Items</p>
-</div>
-</div>
+<!-- Queue Overview KPI Strip -->
+{% include "components/kpi_strip.html" with items=queue_kpi_strip_items %}
 
 <!-- Dashboard Navigation Tabs -->
 <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl self-start max-w-max text-[12px] font-bold">
@@ -96,17 +61,17 @@ Cleared &amp; Closed
 <div class="px-5 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-slate-50/50 transition-colors">
 <div class="space-y-1 text-[12px] font-bold text-slate-700">
 <div class="flex items-center gap-2">
-<span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-100 text-slate-700 text-[11px] font-semibold">{{ r.responsibleUserInitials }}</span>
+<span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-100 text-slate-700 text-[11px] font-semibold">{{ r.responsible_user_initials }}</span>
 <div>
-<p class="text-slate-800 font-semibold">{{ r.responsibleUserName }}</p>
-<p class="text-[11px] text-slate-400 font-semibold">{{ r.weekStartDate }} &ndash; {{ r.weekEndDate }}</p>
+<p class="text-slate-800 font-semibold">{{ r.responsible_user_name }}</p>
+<p class="text-[11px] text-slate-400 font-semibold">{{ r.week_start_date|date:"M d" }} &ndash; {{ r.week_end_date|date:"M d, Y" }}</p>
 </div>
 </div>
 </div>
 <div class="flex items-center gap-4 text-right">
 <div class="space-y-0.5">
 <p class="text-[11px] uppercase font-bold text-slate-400 tracking-wider">Est. Budget</p>
-<p class="font-semibold text-slate-800 text-[15px]">{{ r.totalAmount|ugx }} UGX</p>
+<p class="font-semibold text-slate-800 text-[15px]">{{ r.total_amount|ugx }}</p>
 </div>
 <div class="flex gap-2">
 <button 
@@ -147,15 +112,15 @@ No weekly advances currently await disbursement.
 {% for act in ready_partner_payments %}
 <div class="px-5 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-slate-50/50 transition-colors">
 <div class="space-y-1 text-[12px] font-bold text-slate-700">
-<p class="text-slate-800 font-semibold">{{ act.activity_type|title|replace_underscore }} {% if act.school %}@ {{ act.school.name }}{% endif %}</p>
-<p class="text-[11px] text-slate-400 font-semibold">Partner: {{ act.assigned_partner.name }} &bull; SF ID: {{ act.salesforce_activity_id }}</p>
+<p class="text-slate-800 font-semibold">{{ act.activity_type_display }} {% if act.school_name %}@ {{ act.school_name }}{% endif %}</p>
+<p class="text-[11px] text-slate-400 font-semibold">Partner: {{ act.partner_name|default:"Unassigned" }} &bull; SF ID: {{ act.salesforce_activity_id|default:"—" }}</p>
 </div>
 <div class="flex items-center gap-4 text-right">
 <div class="space-y-0.5">
 <p class="text-[11px] uppercase font-bold text-slate-400 tracking-wider">Intervention Cost</p>
-<p class="font-semibold text-slate-800 text-[15px]">{{ act.estCostCents|ugx }} UGX</p>
+<p class="font-semibold text-slate-800 text-[15px]">{{ act.est_cost|ugx }}</p>
 </div>
-<button 
+<button
 hx-get="/finance/actions/drawer?action=clear_partner_payment&amp;activity_id={{ act.id }}"
 hx-target="#drawer-container"
 class="h-8 px-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-[12px] transition-colors shadow-sm"
@@ -190,8 +155,8 @@ No partner activities currently await payment clearing.
 {% for r in pending_accountability %}
 <div class="px-5 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-slate-50/50 transition-colors">
 <div class="space-y-1 text-[12px] font-bold text-slate-700">
-<p class="text-slate-800 font-semibold">{{ r.responsibleUserName }}</p>
-<p class="text-[11px] text-slate-400 font-semibold">Period: {{ r.weekStartDate }} &bull; Submitted: {{ r.accountability_submitted_at|date:"M d, Y" }}</p>
+<p class="text-slate-800 font-semibold">{{ r.responsible_user_name }}</p>
+<p class="text-[11px] text-slate-400 font-semibold">Period: {{ r.week_start_date|date:"M d, Y" }} &bull; Submitted: {{ r.accountability_submitted_at|date:"M d, Y" }}</p>
 </div>
 <div class="flex items-center gap-6 text-right">
 <div class="space-y-0.5">
@@ -239,13 +204,13 @@ No weekly accountability requests currently await review.
 {% for r in ready_reimbursement %}
 <div class="px-5 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-slate-50/50 transition-colors">
 <div class="space-y-1 text-[12px] font-bold text-slate-700">
-<p class="text-slate-800 font-semibold">Staff ID: {{ r.responsible_user_id }}</p>
-<p class="text-[11px] text-slate-400 font-semibold">Activity: {{ r.activity.activity_type|title }} @ {{ r.activity.school.name }} &bull; Claimed: {{ r.accountability_submitted_at|date:"M d, Y" }}</p>
+<p class="text-slate-800 font-semibold">{{ r.responsible_user_name }}</p>
+<p class="text-[11px] text-slate-400 font-semibold">Activity: {{ r.activity_type_display|default:"—" }} {% if r.school_name %}@ {{ r.school_name }}{% endif %} &bull; Claimed: {{ r.accountability_submitted_at|date:"M d, Y" }}</p>
 </div>
 <div class="flex items-center gap-4 text-right">
 <div class="space-y-0.5">
 <p class="text-[11px] uppercase font-bold text-slate-400 tracking-wider">Claim Amount</p>
-<p class="font-semibold text-slate-800 text-[15px]">{{ r.amount|ugx }} UGX</p>
+<p class="font-semibold text-slate-800 text-[15px]">{{ r.amount|ugx }}</p>
 </div>
 <button 
 hx-get="/finance/actions/drawer?action=process_reimbursement&amp;advance_id={{ r.id }}"
@@ -280,12 +245,12 @@ No self-funded reimbursement claims currently await disbursement.
 {% for r in returned_items %}
 <div class="px-5 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-rose-50/20 transition-colors">
 <div class="space-y-1 text-[12px] font-bold text-slate-700">
-<p class="text-slate-800 font-semibold">{{ r.responsibleUserName }}</p>
-<p class="text-[11px] text-slate-400 font-semibold">Returned status &bull; Week: {{ r.weekStartDate }}</p>
+<p class="text-slate-800 font-semibold">{{ r.responsible_user_name }}</p>
+<p class="text-[11px] text-slate-400 font-semibold">Returned status &bull; Week: {{ r.week_start_date|date:"M d, Y" }}</p>
 </div>
 <div class="text-right">
 <p class="text-[11px] uppercase font-bold text-slate-400 tracking-wider">Amount</p>
-<p class="font-semibold text-slate-800 text-[15px]">{{ r.totalAmount|ugx }} UGX</p>
+<p class="font-semibold text-slate-800 text-[15px]">{{ r.total_amount|ugx }}</p>
 </div>
 </div>
 {% endfor %}
@@ -311,8 +276,8 @@ No items have been returned to staff.
 {% for r in cleared_weekly %}
 <div class="px-5 py-3.5 flex items-center justify-between text-[12px] font-bold text-slate-600">
 <div>
-<p class="text-slate-800 font-semibold">Advance Accounted: {{ r.responsibleUserName }}</p>
-<p class="text-[11px] text-slate-400 font-semibold">Week: {{ r.weekStartDate }} &bull; NetSuite ID: {{ r.accountabilityNetsuiteId }}</p>
+<p class="text-slate-800 font-semibold">Advance Accounted: {{ r.responsible_user_name }}</p>
+<p class="text-[11px] text-slate-400 font-semibold">Week: {{ r.week_start_date|date:"M d, Y" }} &bull; NetSuite ID: {{ r.accountability_netsuite_id|default:"—" }}</p>
 </div>
 <span class="inline-flex items-center rounded-md bg-emerald-50 px-2 py-1 text-[11px] font-bold uppercase text-emerald-700 border border-emerald-200">Cleared</span>
 </div>
@@ -322,8 +287,8 @@ No items have been returned to staff.
 {% for act in cleared_partners %}
 <div class="px-5 py-3.5 flex items-center justify-between text-[12px] font-bold text-slate-600">
 <div>
-<p class="text-slate-800 font-semibold">Partner Paid: {{ act.assigned_partner.name }}</p>
-<p class="text-[11px] text-slate-400 font-semibold">Activity: {{ act.activity_type|title|replace_underscore }} &bull; SF ID: {{ act.salesforce_activity_id }}</p>
+<p class="text-slate-800 font-semibold">Partner Paid: {{ act.partner_name|default:"Unassigned" }}</p>
+<p class="text-[11px] text-slate-400 font-semibold">Activity: {{ act.activity_type_display }} &bull; SF ID: {{ act.salesforce_activity_id|default:"—" }}</p>
 </div>
 <span class="inline-flex items-center rounded-md bg-emerald-50 px-2 py-1 text-[11px] font-bold uppercase text-emerald-700 border border-emerald-200">Paid</span>
 </div>
@@ -333,8 +298,8 @@ No items have been returned to staff.
 {% for r in cleared_reimbursements %}
 <div class="px-5 py-3.5 flex items-center justify-between text-[12px] font-bold text-slate-600">
 <div>
-<p class="text-slate-800 font-semibold">Reimbursement Paid: Staff ID {{ r.responsible_user_id }}</p>
-<p class="text-[11px] text-slate-400 font-semibold">NetSuite ID: {{ r.accountability_netsuite_id }}</p>
+<p class="text-slate-800 font-semibold">Reimbursement Paid: {{ r.responsible_user_name }}</p>
+<p class="text-[11px] text-slate-400 font-semibold">NetSuite ID: {{ r.accountability_netsuite_id|default:"—" }}</p>
 </div>
 <span class="inline-flex items-center rounded-md bg-emerald-50 px-2 py-1 text-[11px] font-bold uppercase text-emerald-700 border border-emerald-200">Reimbursed</span>
 </div>

@@ -4,9 +4,10 @@
 {% block title %}Fund Disbursement Dashboard — SIPA{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-[1600px] mx-auto space-y-6 text-slate-700 font-sans" 
+<div class="p-6 max-w-[1600px] mx-auto space-y-6 text-slate-700 font-sans"
 x-data="{
 allFunds: [],
+searchQuery: '',
 selectedId: null,
 selectedItem: null,
 activeTab: 'breakdown',
@@ -14,6 +15,11 @@ init() {
 this.allFunds = JSON.parse(document.getElementById('all-funds-data').textContent);
 this.selectedItem = this.allFunds[0] || null;
 this.selectedId = this.selectedItem ? this.selectedItem.id : null;
+},
+get filteredFunds() {
+if (!this.searchQuery) return this.allFunds;
+const q = this.searchQuery.toLowerCase();
+return this.allFunds.filter(f => (f.user_name || '').toLowerCase().includes(q) || (f.region || '').toLowerCase().includes(q) || (f.role || '').toLowerCase().includes(q));
 },
 selectFund(id) {
 this.selectedId = id;
@@ -28,10 +34,7 @@ return 'UGX ' + Number(val).toLocaleString();
 <!-- ================= TOP HEADER BAR ================= -->
 <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-100 pb-4">
 <div>
-<div class="flex items-center gap-2">
 <h1 class="text-[24px] font-semibold text-slate-800 tracking-tight leading-none">Fund Disbursement Dashboard</h1>
-<span class="text-slate-300 cursor-pointer" title="Reconcile and disburse funds">ⓘ</span>
-</div>
 <p class="text-[12px] text-slate-500 font-bold mt-1.5">Monitor all approved funds, disbursements, balances, and reconciliation across the organization.</p>
 </div>
 
@@ -44,73 +47,23 @@ return 'UGX ' + Number(val).toLocaleString();
 <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
 <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
 </span>
-<input 
-type="text" 
-placeholder="Search funds, people, activities..." 
+<input
+type="text"
+x-model="searchQuery"
+placeholder="Search funds, people, roles..."
 class="h-9 w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 text-[12px] font-semibold focus:outline-none shadow-sm placeholder-slate-400"
 >
 </div>
 
-<button class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-semibold text-slate-600 flex items-center gap-1.5 shadow-sm hover:bg-slate-50">
-📥 Export
-</button>
-
-<button class="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[12px] font-semibold flex items-center gap-1.5 transition-all shadow-sm">
-⚡ Create Disbursement
-</button>
+<a href="/accounts/advances/" class="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[12px] font-semibold flex items-center gap-1.5 transition-all shadow-sm">
+Process Disbursements
+</a>
 </div>
 </div>
 
 
 <!-- ================= TOP KPI STRIP ================= -->
-<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-<!-- Total Funds -->
-<div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
-<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Approved This FY</p>
-<h3 class="text-[18px] font-semibold text-slate-800 leading-none">{{ kpis.total_approved }}</h3>
-<span class="text-[11px] text-emerald-600 font-semibold block pt-1">{{ kpis.approved_count }} request{{ kpis.approved_count|pluralize }}</span>
-</div>
-
-<!-- Pending Disbursement -->
-<div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
-<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Pending Disbursement</p>
-<h3 class="text-[18px] font-semibold text-slate-800 leading-none">{{ kpis.pending_disb }}</h3>
-<span class="text-[11px] text-amber-600 font-bold block pt-1">{{ kpis.pending_disb_count }} request{{ kpis.pending_disb_count|pluralize }} awaiting</span>
-</div>
-
-<!-- Disbursed -->
-<div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
-<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Disbursed This FY</p>
-<h3 class="text-[18px] font-semibold text-slate-800 leading-none">{{ kpis.total_disbursed }}</h3>
-<span class="text-[11px] text-blue-600 font-bold block pt-1">{{ kpis.disbursed_count }} disbursement{{ kpis.disbursed_count|pluralize }}</span>
-</div>
-
-<!-- Awaiting Approval -->
-<div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
-<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Awaiting Approvals</p>
-<h3 class="text-[18px] font-semibold text-slate-800 leading-none">{{ kpis.awaiting_approval }}</h3>
-<span class="text-[11px] text-indigo-600 font-bold block pt-1">{{ kpis.awaiting_count }} request{{ kpis.awaiting_count|pluralize }} in chain</span>
-</div>
-
-<!-- Reconciliation Rate -->
-<div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
-<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Reconciliation Rate</p>
-<h3 class="text-[18px] font-semibold text-slate-800 leading-none">{{ kpis.recon_rate }}</h3>
-<span class="text-[11px] text-slate-400 font-semibold block pt-1">accounted of disbursed</span>
-</div>
-
-<!-- Budget Utilization -->
-<div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-1">
-<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Budget Util.</p>
-<div class="flex items-baseline justify-between mt-1">
-<h3 class="text-[18px] font-semibold text-slate-800 leading-none">{{ kpis.budget_util }}</h3>
-<span class="text-[11px] text-slate-400 font-bold">{{ kpis.disbursed_raw }} used</span>
-</div>
-<div class="w-full bg-slate-100 h-1.5 rounded-full mt-1 overflow-hidden">
-<div class="bg-teal-500 h-full rounded-full" style="width: {{ kpis.budget_util_pct }}%"></div>
-</div>
-</div>
-</div>
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
 
 
 <!-- ================= MAIN WORKSPACE GRID ================= -->
@@ -122,17 +75,13 @@ class="h-9 w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 text-[12
 <div class="flex items-center justify-between pb-3 border-b border-slate-100">
 <div class="flex items-center gap-1.5">
 <h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Consolidated Fund Queue</h2>
-<span class="bg-blue-600 text-white font-semibold rounded-full px-1.5 py-0.5 text-[11px] flex items-center justify-center" x-text="allFunds.length"></span>
+<span class="bg-blue-600 text-white font-semibold rounded-full px-1.5 py-0.5 text-[11px] flex items-center justify-center" x-text="filteredFunds.length"></span>
 </div>
-
-<select class="h-6 px-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-bold text-slate-500">
-<option>Sort by: Priority</option>
-</select>
 </div>
 
 <div class="space-y-2 mt-4 max-h-[600px] overflow-y-auto pr-1">
-<template x-for="fund in allFunds" :key="fund.id">
-<div 
+<template x-for="fund in filteredFunds" :key="fund.id">
+<div
 @click="selectFund(fund.id)"
 :class="selectedId === fund.id ? 'border-slate-800 bg-slate-50' : 'border-slate-100 bg-white hover:bg-slate-50/50'"
 class="p-3 border rounded-2xl cursor-pointer flex items-center gap-3 transition-all group"
@@ -155,15 +104,15 @@ class="p-3 border rounded-2xl cursor-pointer flex items-center gap-3 transition-
 </div>
 </div>
 </template>
-<div x-show="allFunds.length === 0" class="p-6 border border-dashed border-slate-200 rounded-2xl text-center">
-<p class="text-[13px] font-semibold text-slate-600">No fund requests yet</p>
-<p class="text-[11px] text-slate-400 font-semibold mt-1">Requests appear here once staff submit weekly fund plans.</p>
+<div x-show="filteredFunds.length === 0" class="p-6 border border-dashed border-slate-200 rounded-2xl text-center">
+<p class="text-[13px] font-semibold text-slate-600" x-text="allFunds.length === 0 ? 'No fund requests yet' : 'No matches for this search'"></p>
+<p class="text-[11px] text-slate-400 font-semibold mt-1" x-text="allFunds.length === 0 ? 'Requests appear here once staff submit weekly fund plans.' : 'Try a different name, region, or role.'"></p>
 </div>
 </div>
 </div>
 
 <div class="flex items-center justify-between border-t border-slate-100 pt-4 mt-4 text-[11px] font-bold text-slate-400">
-<span x-text="'Showing ' + allFunds.length + ' fund request' + (allFunds.length === 1 ? '' : 's')"></span>
+<span x-text="'Showing ' + filteredFunds.length + ' of ' + allFunds.length + ' fund request' + (allFunds.length === 1 ? '' : 's')"></span>
 </div>
 </div>
 
@@ -175,7 +124,7 @@ class="p-3 border rounded-2xl cursor-pointer flex items-center gap-3 transition-
 <div class="flex items-center gap-3">
 <div class="h-10 w-10 rounded-full bg-slate-100 font-semibold text-slate-700 flex items-center justify-center text-[14px]" x-text="selectedItem ? selectedItem.user_name.slice(0,2) : ''"></div>
 <div>
-<h3 class="text-[18px] font-semibold text-slate-800 leading-none" x-text="selectedItem ? selectedItem.user_name + ' — ' + selectedItem.region + ' Team Fund Plan' : ''"></h3>
+<h3 class="text-[18px] font-semibold text-slate-800 leading-none" x-text="selectedItem ? selectedItem.user_name + (selectedItem.region && selectedItem.region !== '—' ? ' — ' + selectedItem.region : '') + ' Team Fund Plan' : ''"></h3>
 <p class="text-[11px] text-slate-500 font-bold mt-1.5">
 <span x-text="selectedItem ? selectedItem.role : ''"></span> &bull; <span x-text="selectedItem ? selectedItem.region : ''"></span>
 </p>
@@ -319,27 +268,26 @@ No documents or receipts attached to this request yet.
 
 <!-- Action buttons -->
 <div class="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4 mt-6">
-<button class="h-9 px-4 border border-slate-200 rounded-xl text-[12px] font-bold text-slate-700 hover:bg-slate-50">
+<a x-bind:href="selectedItem ? '/fund-requests/weekly/' + selectedItem.id : '#'" class="h-9 px-4 border border-slate-200 rounded-xl text-[12px] font-bold text-slate-700 hover:bg-slate-50 flex items-center">
 View Full Plan
-</button>
+</a>
 
-<form x-bind:action="'/accounts/activities/' + (selectedItem ? selectedItem.id : '') + '/disburse'" method="POST" class="inline">
-{% csrf_token %}
-<button type="submit" class="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[12px] font-semibold shadow-sm transition-all">
+<button
+type="button"
+x-show="selectedItem && !selectedItem.finance_completed"
+@click="htmx.ajax('GET', '/finance/actions/drawer?action=disburse_advance&request_id=' + selectedItem.id, {target: '#drawer-container', swap: 'innerHTML'})"
+class="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[12px] font-semibold shadow-sm transition-all"
+>
 Disburse Funds
 </button>
-</form>
 
-<button class="h-9 px-4 border border-rose-200 rounded-xl text-[12px] font-bold text-rose-600 hover:bg-rose-50">
+<button
+type="button"
+x-show="selectedItem && !selectedItem.finance_completed"
+@click="htmx.ajax('GET', '/finance/actions/drawer?action=return_correction&request_id=' + selectedItem.id, {target: '#drawer-container', swap: 'innerHTML'})"
+class="h-9 px-4 border border-rose-200 rounded-xl text-[12px] font-bold text-rose-600 hover:bg-rose-50"
+>
 Return
-</button>
-
-<button class="h-9 px-4 border border-slate-200 rounded-xl text-[12px] font-bold text-slate-500 hover:bg-slate-50">
-Hold
-</button>
-
-<button class="h-9 px-3 border border-slate-200 rounded-xl text-[12px] font-bold text-slate-700 flex items-center gap-1.5 hover:bg-slate-50">
-📥 Download Voucher
 </button>
 </div>
 </div>
@@ -361,32 +309,9 @@ View all activity &rarr;
 </a>
 </div>
 
-<!-- Disbursement Status Chart Visual -->
-<div class="bg-white p-5 rounded-xl  shadow-sm flex flex-col justify-between space-y-4">
-<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Disbursement Status</h3>
-<div class="flex items-center justify-center gap-4">
-<!-- circular svg representation -->
-<div class="relative h-24 w-24 flex items-center justify-center shrink-0">
-<svg class="h-full w-full -rotate-90" viewBox="0 0 36 36">
-<path class="text-slate-100" stroke-width="2" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-{% if disb_donut.confirmed > 0 %}<path class="text-emerald-500" stroke-dasharray="{{ disb_donut.confirmed }}, 100" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />{% endif %}
-{% if disb_donut.waiting > 0 %}<path class="text-amber-500" stroke-dasharray="{{ disb_donut.waiting }}, 100" stroke-dashoffset="{{ disb_donut.waiting_offset }}" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />{% endif %}
-{% if disb_donut.disbursed > 0 %}<path class="text-blue-500" stroke-dasharray="{{ disb_donut.disbursed }}, 100" stroke-dashoffset="{{ disb_donut.disbursed_offset }}" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />{% endif %}
-{% if disb_donut.other > 0 %}<path class="text-rose-500" stroke-dasharray="{{ disb_donut.other }}, 100" stroke-dashoffset="{{ disb_donut.other_offset }}" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />{% endif %}
-</svg>
-<div class="absolute flex flex-col justify-center items-center text-center">
-<span class="text-[12px] font-semibold text-slate-800 leading-none">{{ disb_donut.total }}</span>
-<span class="text-[11px] font-bold text-slate-400 uppercase tracking-wide mt-0.5">Total</span>
-</div>
-</div>
-<div class="text-[11px] space-y-1 font-bold text-slate-500">
-<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-emerald-500"></span> Confirmed ({{ disb_donut.confirmed }}%)</div>
-<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-amber-500"></span> Awaiting Confirmation ({{ disb_donut.waiting }}%)</div>
-<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-blue-500"></span> Disbursed ({{ disb_donut.disbursed }}%)</div>
-<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-rose-500"></span> Other ({{ disb_donut.other }}%)</div>
-</div>
-</div>
-</div>
+<!-- Disbursement Status Chart -->
+{% include "components/chart_card.html" with chart_id="disb-status-donut" title="Disbursement Status" subtitle="Share of this FY's fund requests, by count" has_data=disb_donut_has_data height=220 footer_note="Total requested: "|add:disb_donut.total %}
+{{ disb_donut_options|json_script:"disb-status-donut-config" }}
 
 <!-- Finance & Disbursement Rules -->
 <div class="bg-white p-5 rounded-xl  shadow-sm space-y-4">

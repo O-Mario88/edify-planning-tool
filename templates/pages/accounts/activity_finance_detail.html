@@ -13,6 +13,9 @@
 
 <!-- Status Badge -->
 <div class="flex items-center gap-2">
+<a href="/accounts/activity-evidence/{{ act.id }}" class="h-8 px-3 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-[11px] font-semibold flex items-center transition-colors">
+View Evidence Packet
+</a>
 {% if blocked_reasons %}
 <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider bg-rose-50 text-rose-700 border border-rose-200">
 <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
@@ -174,21 +177,22 @@ class="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[12px] fo
 <div class="grid grid-cols-2 gap-2">
 <div>
 <label class="block text-[11px] uppercase font-bold text-slate-400 mb-1">Expense Date</label>
-<input 
-type="date" 
-name="expense_date" 
-required 
-value="2026-07-03"
+<input
+type="date"
+name="expense_date"
+required
+value="{{ today }}"
 class="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[12px] font-bold text-slate-700 px-2 focus:bg-white focus:border-blue-500 focus:outline-none transition-all"
 >
 </div>
 <div>
 <label class="block text-[11px] uppercase font-bold text-slate-400 mb-1">Amount</label>
-<input 
-type="number" 
-name="amount_entered" 
-required 
-value="450000"
+<input
+type="number"
+name="amount_entered"
+required
+value="{{ suggested_amount }}"
+placeholder="Actual spend amount"
 class="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[12px] font-bold text-slate-700 px-2 focus:bg-white focus:border-blue-500 focus:outline-none transition-all"
 >
 </div>

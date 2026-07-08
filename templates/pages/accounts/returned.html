@@ -3,21 +3,11 @@
 {% block title %}Returned Items - Edify Command Center{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6">
+<div class="p-6 max-w-7xl mx-auto space-y-5 font-sans">
 
-<!-- Premium Header Pane -->
-<div class="relative overflow-hidden rounded-xl bg-slate-900 text-white p-8 shadow-md border border-slate-800">
-<div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-rose-500/10 blur-3xl pointer-events-none"></div>
-<div class="relative z-10 space-y-2">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-500 text-[11px] font-semibold uppercase tracking-widest">
-Correction Flow
-</div>
-<h1 class="text-[32px] font-semibold tracking-tight text-white leading-none">Returned Finance Ledger</h1>
-<p class="text-[14px] text-slate-400 font-medium max-w-xl">
-Track finance items returned to staff or partners for correction of receipts, amounts, or NetSuite details.
-</p>
-</div>
-</div>
+{% include "components/page_header.html" with title="Returned Finance Ledger" subtitle="Finance items returned to staff or partners for correction of receipts, amounts, or NetSuite details." %}
+
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
 
 <!-- Table Card -->
 <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">

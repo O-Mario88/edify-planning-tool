@@ -6,20 +6,7 @@
 {% block shell_content %}
 <div class="p-6 max-w-[1400px] mx-auto space-y-6">
 
-<!-- Page Header -->
-<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-100 pb-4">
-<div>
-<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight">Consolidated Fund Allocation</h1>
-<p class="text-[12px] text-slate-500 mt-1 font-semibold">Aggregated program activity budgets for the current fiscal year (FY{{ fy }}).</p>
-</div>
-
-<div>
-<button class="btn btn-primary h-9 shadow-sm">
-<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-Export Report
-</button>
-</div>
-</div>
+{% include "components/page_header.html" with title="Consolidated Fund Allocation" subtitle="Aggregated program activity budgets for the current fiscal year." breadcrumb="FY "|add:fy %}
 
 <!-- Unified KPI Strip -->
 {% include "components/kpi_strip.html" with items=kpi_strip_items %}
@@ -36,7 +23,7 @@ Export Report
 {{ cat }}
 </h3>
 <span class="inline-flex items-center rounded-full px-3 py-1 text-[11px] font-bold tracking-wider bg-slate-200 text-slate-700">
-Total: {{ board.category_data|lookup:cat|ugx }} UGX
+Total: {{ board.category_data|lookup:cat|ugx }}
 </span>
 </div>
 
@@ -76,12 +63,8 @@ Total: {{ board.category_data|lookup:cat|ugx }} UGX
 </div>
 {% endfor %}
 {% else %}
-<div class="premium-card p-16 text-center">
-<div class="flex flex-col items-center justify-center">
-<svg class="h-12 w-12 text-slate-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-<p class="text-[15px] font-bold text-slate-800">No scheduled activities found</p>
-<p class="text-[12px] font-semibold text-slate-500 mt-1">There are no activities in the budget system for this FY.</p>
-</div>
+<div class="card">
+{% include "components/empty_state.html" with title="No scheduled activities found" message="There are no activities in the budget system for this FY yet." %}
 </div>
 {% endif %}
 </div>

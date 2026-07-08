@@ -1,23 +1,14 @@
 {% extends "layouts/shell.html" %}
+{% load frontend_filters %}
 
 {% block title %}Cleared Ledger - Edify Command Center{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6">
+<div class="p-6 max-w-7xl mx-auto space-y-5 font-sans">
 
-<!-- Premium Header Pane -->
-<div class="relative overflow-hidden rounded-xl bg-slate-900 text-white p-8 shadow-md border border-slate-800">
-<div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none"></div>
-<div class="relative z-10 space-y-2">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[11px] font-semibold uppercase tracking-widest">
-Permanent Record
-</div>
-<h1 class="text-[32px] font-semibold tracking-tight text-white leading-none">Cleared / Closed Finance Ledger</h1>
-<p class="text-[14px] text-slate-400 font-medium max-w-xl">
-Archive of all financially closed activities. These records have passed program quality and financial accountability certifications.
-</p>
-</div>
-</div>
+{% include "components/page_header.html" with title="Cleared / Closed Finance Ledger" subtitle="Archive of financially closed activities that have passed program quality and financial accountability certifications." %}
+
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
 
 <!-- Table Card -->
 <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
@@ -57,25 +48,29 @@ Archive of all financially closed activities. These records have passed program 
 </td>
 <!-- Approved -->
 <td class="px-6 py-4 text-center text-slate-700">
-450,000 UGX
+{{ act.approved_amount|ugx }}
 </td>
 <!-- Disbursed -->
 <td class="px-6 py-4 text-center text-slate-700">
-450,000 UGX
+{{ act.disbursed_amount|ugx }}
 </td>
 <!-- Spend -->
 <td class="px-6 py-4 text-center text-slate-800 font-semibold">
-450,000 UGX
+{{ act.spend_amount|ugx }}
 </td>
 <!-- Variance -->
-<td class="px-6 py-4 text-center text-slate-500">
-0 UGX
+<td class="px-6 py-4 text-center {% if act.variance_amount > 0 %}text-rose-600 font-semibold{% elif act.variance_amount < 0 %}text-blue-600 font-semibold{% else %}text-slate-500{% endif %}">
+{{ act.variance_amount|ugx }}
 </td>
 <!-- NetSuite ID -->
 <td class="px-6 py-4 text-center">
+{% if act.netsuite_id %}
 <span class="font-mono text-slate-800 bg-slate-50 px-2.5 py-0.5 border border-slate-200 rounded-lg text-[11px]">
-EXP-2200115
+{{ act.netsuite_id }}
 </span>
+{% else %}
+<span class="text-slate-400 text-[11px]">&mdash;</span>
+{% endif %}
 </td>
 <!-- Closed Date -->
 <td class="px-6 py-4 text-center text-slate-500 font-medium">
