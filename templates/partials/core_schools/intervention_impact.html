@@ -55,12 +55,16 @@ bg-indigo-50 text-indigo-700 border-indigo-150/60
 </span>
 </td>
 
-<!-- Trend Mini-Sparkline -->
+<!-- Trend Mini-Sparkline (built from real row.trend history) -->
 <td class="px-4 py-3 text-right">
 <div class="inline-block h-[20px] w-[60px]">
+{% if row.trend_path %}
 <svg class="h-full w-full" viewBox="0 0 60 20">
-<path d="M 0 15 Q 15 10 30 12 T 60 4" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round"/>
+<path d="{{ row.trend_path }}" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round"/>
 </svg>
+{% else %}
+<span class="text-[10px] text-slate-300 font-semibold">Not enough data</span>
+{% endif %}
 </div>
 </td>
 </tr>

@@ -197,12 +197,11 @@ required
 <div class="grid grid-cols-2 gap-4">
 <div>
 <label class="block text-[11px] uppercase tracking-wider text-slate-400 mb-1">Purpose for Meeting / Training <span class="text-rose-500">*</span></label>
-<input 
-type="text" 
+<input
+type="text"
 name="purpose"
-placeholder="e.g. Focus on Leadership strategies" 
+placeholder="{{ recommendation.headline|default:'e.g. Focus on Leadership strategies' }}"
 class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold bg-white focus:outline-none text-slate-700"
-value="{{ recommendation.headline|default:'No cluster meetings held this FY' }}"
 required
 >
 </div>

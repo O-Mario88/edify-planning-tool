@@ -59,7 +59,7 @@ Review activities that are stuck and cannot close because of missing quality or 
 </td>
 <!-- Days Blocked -->
 <td class="px-6 py-4 text-center text-slate-500 font-medium">
-3 days <!-- mock duration from creation -->
+{{ item.created_at|timesince }}
 </td>
 <!-- Next Action -->
 <td class="px-6 py-4 text-slate-500 font-medium leading-relaxed">

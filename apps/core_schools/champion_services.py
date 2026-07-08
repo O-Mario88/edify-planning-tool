@@ -74,6 +74,8 @@ class ChampionEligibilityService:
             "completed_slots": completed_slots,
             "total_slots": total_slots,
             "all_ssas": all_ssas,
+            "evidence_pct": round(evidence_pct * 100, 1),
+            "evidence_score": round(evidence_score, 1),
             "lowest_intervention": latest_ssa.scores.order_by("score").first().intervention if latest_ssa and latest_ssa.scores.exists() else "None"
         }
 

@@ -46,8 +46,10 @@ hx-swap="innerHTML"
 <td class="px-2 py-2 text-center">
 {% if c.trend == 'up' %}
 <span class="text-emerald-500 font-semibold">▲</span>
-{% else %}
+{% elif c.trend == 'down' %}
 <span class="text-rose-500 font-semibold">▼</span>
+{% else %}
+<span class="text-slate-300 font-semibold">—</span>
 {% endif %}
 </td>
 </tr>

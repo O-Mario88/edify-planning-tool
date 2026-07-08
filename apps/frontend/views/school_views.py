@@ -166,6 +166,7 @@ def school_directory_view(request):
     staff_setup_schools = base_qs.filter(Q(account_owner_id__isnull=True) | Q(account_owner_id="") | Q(account_owner_status="pending")).count()
     planning_ready_schools = base_qs.filter(planning_readiness="ready").count()
     duplicate_schools = base_qs.filter(duplicate_status="duplicate").count()
+    district_count = base_qs.exclude(district_id__isnull=True).values("district_id").distinct().count()
 
     needs_setup = staff_setup_schools
     needs_ssa = no_ssa_schools
@@ -177,7 +178,7 @@ def school_directory_view(request):
             "label": "Total Schools",
             "value": str(total_schools),
             "raw_value": total_schools,
-            "helper": "Across 5 districts",
+            "helper": f"Across {district_count} district{'' if district_count == 1 else 's'}",
             "icon": "school",
             "variant": "primary",
         },

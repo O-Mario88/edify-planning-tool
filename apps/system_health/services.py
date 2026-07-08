@@ -53,6 +53,18 @@ def _fy() -> str:
     return get_operational_fy()
 
 
+def missing_cost_lines_count() -> int:
+    """Scheduled activities carrying no budget/cost line. Broken out as its own
+    function so other pages (e.g. the admin dashboard) can surface this exact
+    real count without running the full `report()` (which does much more work,
+    including filesystem checks)."""
+    from apps.activities.models import Activity
+
+    active = Activity.objects.filter(deleted_at__isnull=True)
+    scheduled = active.exclude(status__in=["not_planned", "cancelled", "deferred", "rejected"])
+    return scheduled.annotate(cost_line_count=Count("schedule_cost_lines")).filter(cost_line_count=0).count()
+
+
 def _mock_leakage() -> dict:
     """Detect mock/demo data in the runtime database. In production EVERY one of
     these should be zero/empty; a non-zero count is a critical finding."""
@@ -90,7 +102,7 @@ def _workflow_issues() -> dict:
 
     active = Activity.objects.filter(deleted_at__isnull=True)
     scheduled = active.exclude(status__in=["not_planned", "cancelled", "deferred", "rejected"])
-    missing_cost_lines = scheduled.annotate(cost_line_count=Count("schedule_cost_lines")).filter(cost_line_count=0).count()
+    missing_cost_lines = missing_cost_lines_count()
     missing_rates = scheduled.filter(cost_missing=True).count()
 
     missing_evidence_files = 0
@@ -473,4 +485,4 @@ def _permission_guards_audit() -> dict:
     }
 
 
-__all__ = ["report"]
+__all__ = ["report", "missing_cost_lines_count"]

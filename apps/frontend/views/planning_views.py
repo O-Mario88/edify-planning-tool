@@ -14,7 +14,7 @@ from apps.schools.models import School
 from apps.clusters.models import Cluster
 from apps.partners.models import Partner, PartnerAssignment
 from apps.core.enums import SsaIntervention, PlanningReadiness, SsaStatus, SchoolType, ClusterStatus
-from apps.core.fy import get_operational_fy
+from apps.core.fy import get_operational_fy, get_quarter_for_date, fy_options
 from apps.geography.models import District, SubCounty
 from apps.accounts.models import StaffProfile
 from apps.planning.planning_service import PlanningDashboardService
@@ -23,11 +23,11 @@ from apps.planning.planning_service import PlanningDashboardService
 @require_page_permission("planning")
 def planning_dashboard_view(request):
     fy = get_operational_fy()
-    
+
     # 1. Gather all filters from GET
     filters = {
-        "fy": request.GET.get("fy", "2026"),
-        "quarter": request.GET.get("quarter", "Q2"),
+        "fy": request.GET.get("fy", fy),
+        "quarter": request.GET.get("quarter", get_quarter_for_date(timezone.now().date())),
         "district": request.GET.get("district", "All"),
         "sub_county": request.GET.get("sub_county", "All"),
         "staff": request.GET.get("staff", "All"),
@@ -99,7 +99,7 @@ def planning_dashboard_view(request):
         "sub_counties": sub_counties,
         "staff_members": staff_members,
         "partners": partners,
-        "fy_options": ["2026", "2025", "2024"],
+        "fy_options": fy_options(),
         "quarter_options": ["Q1", "Q2", "Q3", "Q4"],
         "school_types": SchoolType.choices,
         "readiness_choices": PlanningReadiness.choices,

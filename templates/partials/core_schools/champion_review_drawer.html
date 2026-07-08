@@ -111,10 +111,10 @@ class="rounded-lg p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 trans
 <div class="space-y-1">
 <div class="flex justify-between text-[11px] font-bold text-slate-600">
 <span>Evidence/IA Quality (5% Weight)</span>
-<span class="text-slate-800 font-semibold">100% Validated</span>
+<span class="text-slate-800 font-semibold">{{ metrics.evidence_pct }}% Validated</span>
 </div>
 <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-<div class="bg-blue-600 h-full" style="width: 100%;"></div>
+<div class="bg-blue-600 h-full" style="width: {{ metrics.evidence_pct }}%;"></div>
 </div>
 </div>
 

@@ -63,7 +63,11 @@ Permanent list of financially cleared and closed activities. Locked for edit, pr
 </td>
 <!-- IA Status -->
 <td class="px-6 py-4 text-center">
+{% if act.closure_checklist.ia_verified %}
 <span class="text-emerald-600 font-bold">Verified</span>
+{% else %}
+<span class="text-rose-600 font-bold">Not Verified</span>
+{% endif %}
 </td>
 <!-- NetSuite ID -->
 <td class="px-6 py-4 text-center font-mono text-[11px] text-slate-800">

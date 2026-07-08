@@ -5,7 +5,7 @@ import re
 
 from django.shortcuts import render, redirect, get_object_or_404
 from apps.core.permissions import require_page_permission, get_scoped_object_or_404
-from django.db.models import Q, Avg, Count
+from django.db.models import Q, Avg, Count, Sum
 from datetime import date
 
 from apps.ssa.models import SsaRecord
@@ -20,7 +20,8 @@ from apps.core_schools.models import CorePlan, CoreActivitySlot
 from apps.audit.models import AuditLog
 from apps.flags.models import CdFlag
 from apps.clusters.models import Cluster
-from apps.core.fy import get_operational_fy
+from apps.core.fy import get_operational_fy, get_quarter_for_date, fy_options
+from apps.targets.models import TargetSetting, TargetType
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -184,157 +185,230 @@ def district_detail_view(request, district_id):
     return render(request, "pages/districts/detail.html", context)
 
 
+def _reports_pct_class(pct):
+    """Colour a percentage the same way everywhere on this page — real
+    thresholds, not a per-row hand-picked colour."""
+    if pct is None:
+        return "text-slate-400"
+    if pct >= 70:
+        return "text-emerald-600"
+    if pct >= 50:
+        return "text-blue-600"
+    return "text-rose-600"
+
+
+# Areas of work with a defensible activity_type mapping — every bucket below
+# corresponds to activity_type values that actually exist on the Activity
+# model (apps.core.enums.ActivityType), and (where one exists) a real
+# apps.targets.models.TargetType so the "target" side of the page can be
+# backed by real TargetSetting rows instead of invented numbers.
+_REPORTS_VISIT_TYPES = ("school_visit", "follow_up_visit", "coaching_visit", "in_school_support", "core_visit")
+_REPORTS_TRAINING_TYPES = ("training", "school_improvement_training", "cluster_training", "core_training")
+_REPORTS_ACHIEVED_STATUSES = ("completed", "ia_verified", "accountant_confirmed", "closed")
+
+_REPORTS_AREA_DEFS = [
+    {"key": "school_visits", "label": "School Visits", "types": _REPORTS_VISIT_TYPES, "target_type": TargetType.SCHOOL_VISIT},
+    {"key": "trainings", "label": "Trainings Delivered", "types": _REPORTS_TRAINING_TYPES, "target_type": TargetType.TRAINING},
+    {"key": "ssa_activities", "label": "SSA Activities", "types": ("ssa_activity",), "target_type": TargetType.SSA},
+    {"key": "cluster_meetings", "label": "Cluster Meetings", "types": ("cluster_meeting",), "target_type": None},
+    {"key": "partner_activities", "label": "Partner Activities", "types": ("partner_activity",), "target_type": TargetType.PARTNER_SUPPORT},
+]
+
+# Real FY quarter definitions (apps.core.fy: FY runs Oct 1 -> Sep 30).
+_REPORTS_QUARTER_PERIODS = [
+    ("q1", "Q1", "Q1 (Oct - Dec)", 1),
+    ("q2", "Q2", "Q2 (Jan - Mar)", 2),
+    ("q3", "Q3", "Q3 (Apr - Jun)", 3),
+    ("q4", "Q4", "Q4 (Jul - Sep)", 4),
+]
+
+
 @require_page_permission("planning")
 def reports_view(request):
-    """Reports overview — all roles."""
-    fy = get_operational_fy()
+    """Reports overview — all roles.
+
+    Achieved-vs-target figures are built from real Activity records against
+    real apps.targets.models.TargetSetting rows for the selected FY. Where no
+    TargetSetting row exists for a given area, the target/percentage are left
+    unset (None) and the template renders an honest "no target configured"
+    state instead of a made-up percentage.
+    """
+    operational_fy = get_operational_fy()
+    fy_choices = fy_options()
+    requested_fy = request.GET.get("fy")
+    fy = requested_fy if requested_fy in fy_choices else operational_fy
+
     total_schools = School.objects.filter(deleted_at__isnull=True).count()
     total_activities = Activity.objects.filter(deleted_at__isnull=True).count()
     completed = Activity.objects.filter(status="completed", deleted_at__isnull=True).count()
 
+    activities_fy = Activity.objects.filter(deleted_at__isnull=True, fy=fy)
+    today = date.today()
+    current_quarter = get_quarter_for_date(today) if fy == operational_fy else None
+    quarter_order = {q[1]: q[3] for q in _REPORTS_QUARTER_PERIODS}
+    current_quarter_order = quarter_order.get(current_quarter)
+
+    # ── Period definitions (chevron row + matrix columns), in chronological
+    # order: current Month -> Q1 -> Q2 -> Mid Year (Q1+Q2) -> Q3 -> Q4 -> FY.
+    quarter_periods_by_key = {
+        key: {
+            "key": key,
+            "chevron_label": label,
+            "kind_label": f"Quarter {order}",
+            "filter": Q(quarter=quarter_code),
+            "dimmed": current_quarter_order is not None and order > current_quarter_order,
+        }
+        for key, quarter_code, label, order in _REPORTS_QUARTER_PERIODS
+    }
+    periods = [
+        {
+            "key": "month",
+            "chevron_label": today.strftime("%b %Y"),
+            "kind_label": "Monthly",
+            "filter": Q(month=today.month),
+            "dimmed": fy != operational_fy,
+        },
+        quarter_periods_by_key["q1"],
+        quarter_periods_by_key["q2"],
+        {
+            "key": "mid",
+            "chevron_label": "Mid Year (Oct - Mar)",
+            "kind_label": "Cumulative",
+            "filter": Q(quarter__in=["Q1", "Q2"]),
+            "dimmed": current_quarter_order is not None and current_quarter_order < 2,
+        },
+        quarter_periods_by_key["q3"],
+        quarter_periods_by_key["q4"],
+        {
+            "key": "fy",
+            "chevron_label": f"FY {fy}",
+            "kind_label": "Full Year",
+            "filter": Q(),
+            "dimmed": False,
+        },
+    ]
+
+    def _target_for(target_type):
+        if not target_type:
+            return None
+        return TargetSetting.objects.filter(
+            fy=fy, target_type=target_type, is_active=True
+        ).aggregate(s=Sum("target_value"))["s"]
+
+    matrix_rows = []
+    # Running totals across all areas, per period — backs the chevron row and
+    # the "Overall Progress" summary line.
+    period_totals = {p["key"]: {"achieved": 0, "target": 0, "has_target": False} for p in periods}
+
+    for area in _REPORTS_AREA_DEFS:
+        base_qs = activities_fy.filter(activity_type__in=area["types"])
+        target_total = _target_for(area["target_type"])
+        row = {"area": area["label"], "periods": []}
+        for p in periods:
+            achieved = base_qs.filter(p["filter"], status__in=_REPORTS_ACHIEVED_STATUSES).count()
+            pct = round(achieved / target_total * 100) if target_total else None
+            row["periods"].append({
+                "achieved": achieved,
+                "target": target_total,
+                "pct": pct,
+                "has_target": target_total is not None,
+                "pct_class": _reports_pct_class(pct),
+            })
+            period_totals[p["key"]]["achieved"] += achieved
+            if target_total:
+                period_totals[p["key"]]["target"] += target_total
+                period_totals[p["key"]]["has_target"] = True
+        matrix_rows.append(row)
+
+    # ── Chevron summary row (Monthly / Q1 .. Q4 / Mid Year / FY) ────────────
+    for p in periods:
+        totals = period_totals[p["key"]]
+        target = totals["target"] if totals["has_target"] else None
+        pct = round(totals["achieved"] / target * 100) if target else None
+        p.update({
+            "achieved": totals["achieved"],
+            "target": target,
+            "pct": pct,
+            "has_target": target is not None,
+            "pct_class": _reports_pct_class(pct),
+        })
+
+    # ── Core target cards (FY-to-date per area) ─────────────────────────────
+    card_colors = ["text-blue-600", "text-emerald-600", "text-teal-600", "text-indigo-600", "text-violet-600"]
+    core_cards = []
+    for i, area in enumerate(_REPORTS_AREA_DEFS):
+        fy_cell = matrix_rows[i]["periods"][-1]
+        core_cards.append({
+            "label": area["label"],
+            "achieved": fy_cell["achieved"],
+            "target": fy_cell["target"],
+            "has_target": fy_cell["has_target"],
+            "pct": fy_cell["pct"],
+            "color": card_colors[i % len(card_colors)],
+        })
+
+    # ── Achievement vs target donut — only areas with a real FY target can
+    # honestly be classified as on/at-risk/off-track. ─────────────────────
+    donut_on_track = donut_at_risk = donut_off_track = 0
+    for i, area in enumerate(_REPORTS_AREA_DEFS):
+        fy_cell = matrix_rows[i]["periods"][-1]
+        if not fy_cell["has_target"]:
+            continue
+        pct = fy_cell["pct"] or 0
+        if pct >= 70:
+            donut_on_track += 1
+        elif pct >= 50:
+            donut_at_risk += 1
+        else:
+            donut_off_track += 1
+    donut_total = donut_on_track + donut_at_risk + donut_off_track
+
+    # ── Priorities — one real card per area, driven by the same FY figures
+    # as the matrix/cards above. Areas with no configured target say so
+    # honestly instead of inventing an achievement narrative. ──────────────
+    priorities = []
+    for i, area in enumerate(_REPORTS_AREA_DEFS):
+        fy_cell = matrix_rows[i]["periods"][-1]
+        if not fy_cell["has_target"]:
+            priorities.append({
+                "title": area["label"],
+                "desc": f"No FY{fy} target configured — set a target to track achievement.",
+                "status": "No Target",
+                "status_class": "bg-slate-100 text-slate-500 border-slate-200",
+            })
+            continue
+        pct = fy_cell["pct"] or 0
+        if pct >= 70:
+            status, status_class = "On Track", "bg-emerald-50 text-emerald-700 border-emerald-250"
+        elif pct >= 50:
+            status, status_class = "At Risk", "bg-amber-50 text-amber-700 border-amber-250"
+        else:
+            status, status_class = "Off Track", "bg-rose-50 text-rose-700 border-rose-250"
+        priorities.append({
+            "title": area["label"],
+            "desc": f"{pct}% achieved against the FY{fy} target ({fy_cell['achieved']} / {fy_cell['target']:.0f}).",
+            "status": status,
+            "status_class": status_class,
+        })
+
     context = {
         "fy": fy,
+        "fy_choices": fy_choices,
         "total_schools": total_schools,
         "total_activities": total_activities,
         "completed": completed,
         "completion_rate": round(completed / max(total_activities, 1) * 100) if total_activities > 0 else 0,
-        
-        # May 2025 (Monthly)
-        "monthly_achieved": 21,
-        "monthly_total": 31,
-        "monthly_pct": 68,
-        "monthly_trend": "vs Apr ▲ 6pp",
-        "monthly_trend_class": "text-emerald-600",
-        
-        # Q1 (Apr-Jun)
-        "q1_achieved": 214,
-        "q1_total": 297,
-        "q1_pct": 72,
-        "q1_trend": "vs Q1 Plan ▲ 8pp",
-        "q1_trend_class": "text-emerald-600",
-        
-        # Q2 (Jul-Sep)
-        "q2_achieved": 153,
-        "q2_total": 300,
-        "q2_pct": 51,
-        "q2_trend": "vs Q2 Plan ▼ 3pp",
-        "q2_trend_class": "text-rose-600",
-        
-        # Mid Year (Apr-Sep)
-        "mid_achieved": 367,
-        "mid_total": 597,
-        "mid_pct": 61,
-        "mid_trend": "vs Mid Year Plan ▲ 5pp",
-        "mid_trend_class": "text-emerald-600",
-        
-        # Q3 (Oct-Dec)
-        "q3_achieved": 0,
-        "q3_total": 300,
-        "q3_pct": 0,
-        "q3_trend": "vs Q3 Plan —",
-        "q3_trend_class": "text-slate-400",
-        
-        # Q4 (Jan-Mar)
-        "q4_achieved": 0,
-        "q4_total": 300,
-        "q4_pct": 0,
-        "q4_trend": "vs Q4 Plan —",
-        "q4_trend_class": "text-slate-400",
-        
-        # FY 2024/25
-        "fy_achieved": 367,
-        "fy_total": 1197,
-        "fy_pct": 31,
-        "fy_trend": "vs FY Plan ▲ 4pp",
-        "fy_trend_class": "text-emerald-600",
 
-        # Target Cards
-        "core_cards": [
-            {"label": "Schools Visited", "value": "374 / 480", "pct": 78, "color": "text-blue-600"},
-            {"label": "Trainings Delivered", "value": "91 / 140", "pct": 65, "color": "text-emerald-600"},
-            {"label": "SSA Visits Completed", "value": "122 / 172", "pct": 71, "color": "text-teal-600"},
-            {"label": "Follow-ups Closed", "value": "64 / 78", "pct": 82, "color": "text-indigo-600"},
-            {"label": "Plan Approvals", "value": "28 / 40", "pct": 70, "color": "text-violet-600"},
-            {"label": "Fund Requests Reviewed", "value": "8 / 12", "pct": 67, "color": "text-amber-600"}
-        ],
+        "periods": periods,
+        "core_cards": core_cards,
+        "matrix_rows": matrix_rows,
 
-        # Progress by Time Period (Cumulative) Table Matrix
-        "matrix_rows": [
-            {
-                "area": "Schools Visited",
-                "m_t": 60, "m_a": 42, "m_p": 70, "m_c": "text-blue-600",
-                "q1_t": 150, "q1_a": 122, "q1_p": 81, "q1_c": "text-emerald-600",
-                "q2_t": 150, "q2_a": 92, "q2_p": 61, "q2_c": "text-emerald-600",
-                "mid_t": 300, "mid_a": 214, "mid_p": 71, "mid_c": "text-violet-600",
-                "q3_t": 150, "q3_a": 0, "q3_p": 0, "q3_c": "text-slate-400",
-                "q4_t": 180, "q4_a": 0, "q4_p": 0, "q4_c": "text-slate-400",
-                "fy_t": 630, "fy_a": 214, "fy_p": 34, "fy_c": "text-blue-600"
-            },
-            {
-                "area": "Trainings Delivered",
-                "m_t": 20, "m_a": 14, "m_p": 70, "m_c": "text-blue-600",
-                "q1_t": 50, "q1_a": 36, "q1_p": 72, "q1_c": "text-emerald-600",
-                "q2_t": 50, "q2_a": 27, "q2_p": 54, "q2_c": "text-emerald-600",
-                "mid_t": 100, "mid_a": 63, "mid_p": 63, "mid_c": "text-violet-600",
-                "q3_t": 50, "q3_a": 0, "q3_p": 0, "q3_c": "text-slate-400",
-                "q4_t": 50, "q4_a": 0, "q4_p": 0, "q4_c": "text-slate-400",
-                "fy_t": 200, "fy_a": 63, "fy_p": 32, "fy_c": "text-blue-600"
-            },
-            {
-                "area": "SSA Visits Completed",
-                "m_t": 20, "m_a": 18, "m_p": 90, "m_c": "text-emerald-600",
-                "q1_t": 51, "q1_a": 34, "q1_p": 67, "q1_c": "text-emerald-600",
-                "q2_t": 56, "q2_a": 32, "q2_p": 57, "q2_c": "text-emerald-600",
-                "mid_t": 107, "mid_a": 66, "mid_p": 62, "mid_c": "text-violet-600",
-                "q3_t": 56, "q3_a": 0, "q3_p": 0, "q3_c": "text-slate-400",
-                "q4_t": 58, "q4_a": 0, "q4_p": 0, "q4_c": "text-slate-400",
-                "fy_t": 221, "fy_a": 66, "fy_p": 30, "fy_c": "text-blue-600"
-            },
-            {
-                "area": "Follow-ups Closed",
-                "m_t": 14, "m_a": 11, "m_p": 79, "m_c": "text-emerald-600",
-                "q1_t": 24, "q1_a": 18, "q1_p": 75, "q1_c": "text-emerald-600",
-                "q2_t": 27, "q2_a": 14, "q2_p": 52, "q2_c": "text-emerald-600",
-                "mid_t": 51, "mid_a": 32, "mid_p": 63, "mid_c": "text-violet-600",
-                "q3_t": 27, "q3_a": 0, "q3_p": 0, "q3_c": "text-slate-400",
-                "q4_t": 28, "q4_a": 0, "q4_p": 0, "q4_c": "text-slate-400",
-                "fy_t": 106, "fy_a": 32, "fy_p": 30, "fy_c": "text-blue-600"
-            },
-            {
-                "area": "Plan Approvals",
-                "m_t": 10, "m_a": 7, "m_p": 70, "m_c": "text-blue-600",
-                "q1_t": 24, "q1_a": 17, "q1_p": 71, "q1_c": "text-emerald-600",
-                "q2_t": 16, "q2_a": 11, "q2_p": 69, "q2_c": "text-emerald-600",
-                "mid_t": 40, "mid_a": 28, "mid_p": 70, "mid_c": "text-emerald-600",
-                "q3_t": 16, "q3_a": 0, "q3_p": 0, "q3_c": "text-slate-400",
-                "q4_t": 18, "q4_a": 0, "q4_p": 0, "q4_c": "text-slate-400",
-                "fy_t": 74, "fy_a": 28, "fy_p": 38, "fy_c": "text-blue-600"
-            },
-            {
-                "area": "Fund Requests Reviewed",
-                "m_t": 4, "m_a": 3, "m_p": 75, "m_c": "text-emerald-600",
-                "q1_t": 10, "q1_a": 7, "q1_p": 70, "q1_c": "text-emerald-600",
-                "q2_t": 16, "q2_a": 4, "q2_p": 25, "q2_c": "text-rose-600",
-                "mid_t": 26, "mid_a": 11, "mid_p": 42, "mid_c": "text-amber-600",
-                "q3_t": 16, "q3_a": 0, "q3_p": 0, "q3_c": "text-slate-400",
-                "q4_t": 18, "q4_a": 0, "q4_p": 0, "q4_c": "text-slate-400",
-                "fy_t": 60, "fy_a": 11, "fy_p": 18, "fy_c": "text-rose-600"
-            }
-        ],
+        "donut_total": donut_total,
+        "donut_on_track": donut_on_track,
+        "donut_at_risk": donut_at_risk,
+        "donut_off_track": donut_off_track,
 
-        # Donut split
-        "donut_total": 12,
-        "donut_on_track": 6,
-        "donut_at_risk": 4,
-        "donut_off_track": 2,
-
-        # Priorities
-        "priorities": [
-            {"title": "SSA Visits Completed", "desc": "Below target in Q2. Focus on completion.", "status": "At Risk", "status_class": "bg-amber-50 text-amber-700 border-amber-250"},
-            {"title": "Trainings Delivered", "desc": "64% achieved in Q2. Increase coverage.", "status": "At Risk", "status_class": "bg-amber-50 text-amber-700 border-amber-250"},
-            {"title": "Follow-ups Closed", "desc": "82% achieved this month. Keep it up!", "status": "On Track", "status_class": "bg-emerald-50 text-emerald-700 border-emerald-250"},
-            {"title": "Fund Requests Reviewed", "desc": "40% achieved in Q2. Clear outstanding items.", "status": "Off Track", "status_class": "bg-rose-50 text-rose-700 border-rose-250"}
-        ]
+        "priorities": priorities,
     }
     return render(request, "pages/reports/index.html", context)
 
@@ -377,12 +451,25 @@ def coverage_view(request):
 @require_page_permission("admin_dashboard")
 def admin_panel_view(request):
     """Admin panel home."""
+    from apps.system_health.services import missing_cost_lines_count
+
     user_count = User.objects.filter(deleted_at__isnull=True).count()
     active_users = User.objects.filter(status="active", deleted_at__isnull=True).count()
+    pending_invites = User.objects.filter(status="pending_invited", deleted_at__isnull=True).count()
+    suspended_users = User.objects.filter(status="suspended", deleted_at__isnull=True).count()
+
+    # Same real signals surfaced on /system-health — reused here so the two
+    # pages never disagree about what's actually broken.
+    unmatched_staff_schools = School.objects.filter(account_owner_status="unmatched").count()
+    missing_cost_lines = missing_cost_lines_count()
 
     context = {
         "user_count": user_count,
         "active_users": active_users,
+        "pending_invites": pending_invites,
+        "suspended_users": suspended_users,
+        "unmatched_staff_schools": unmatched_staff_schools,
+        "missing_cost_lines": missing_cost_lines,
     }
     return render(request, "pages/admin/index.html", context)
 
@@ -637,7 +724,7 @@ def core_schools_view(request):
 def core_school_detail_view(request, plan_id):
     """Core school detail."""
     plan = get_object_or_404(CorePlan, id=plan_id)
-    slots = CoreActivitySlot.objects.filter(core_plan=plan).order_by("slot_number")
+    slots = CoreActivitySlot.objects.filter(core_plan=plan).order_by("sequence_number")
     context = {"plan": plan, "slots": slots}
     return render(request, "pages/core_schools/detail.html", context)
 
@@ -656,6 +743,10 @@ def project_detail_view(request, project_id):
     project = get_object_or_404(Project, id=project_id, deleted_at__isnull=True)
     school_assignments = ProjectSchoolAssignment.objects.filter(project=project).select_related("school")
     assigned_count = school_assignments.count()
+    # NOTE: Project has no status field in the schema — the fake "Project
+    # Status: Active" / "Progress Status: Ongoing" tiles that used to sit here
+    # were hardcoded for every project and have been removed rather than show
+    # a status that isn't real.
     kpi_strip_items = [
         {
             "label": "Assigned Schools",
@@ -665,22 +756,6 @@ def project_detail_view(request, project_id):
             "icon": "school",
             "variant": "primary",
         },
-        {
-            "label": "Project Status",
-            "value": "Active",
-            "raw_value": 1,
-            "helper": "Execution",
-            "icon": "check",
-            "variant": "success",
-        },
-        {
-            "label": "Progress Status",
-            "value": "Ongoing",
-            "raw_value": 0,
-            "helper": "Active tracking",
-            "icon": "chart",
-            "variant": "info",
-        }
     ]
     context = {
         "project": project,
@@ -890,22 +965,22 @@ def admin_data_quality_center_view(request):
 
 @require_page_permission("workflow_rules")
 def admin_workflow_rules_view(request):
-    """Workflow rules & automation toggles."""
-    # Simulated rules stored in memory or db
+    """Workflow rules reference panel.
+
+    There is no WorkflowRule model — these rules are enforced directly in code
+    (apps.core.rbac / apps.activities.closure_services / apps.core.permissions),
+    not as toggleable DB rows. This is intentionally a read-only reference: it
+    used to offer fake toggle switches that didn't persist anything anywhere;
+    that's been removed so the page stops lying about being configurable.
+    """
     rules = [
-        {"key": "clustered_before_planning", "label": "School must be clustered before planning", "enabled": True},
-        {"key": "ssa_required", "label": "SSA required before planning", "enabled": True},
-        {"key": "auto_budget_lines", "label": "Activity scheduling creates budget automatically", "enabled": True},
-        {"key": "evidence_mandatory", "label": "Evidence attachment required before completion", "enabled": True},
-        {"key": "sf_id_mandatory", "label": "Activity Salesforce ID required before IA verification", "enabled": False},
-        {"key": "ia_before_accounts", "label": "IA verification required before Accounts clearance", "enabled": True},
+        {"key": "clustered_before_planning", "label": "School must be clustered before planning"},
+        {"key": "ssa_required", "label": "SSA required before planning"},
+        {"key": "auto_budget_lines", "label": "Activity scheduling creates budget automatically"},
+        {"key": "evidence_mandatory", "label": "Evidence attachment required before completion"},
+        {"key": "sf_id_mandatory", "label": "Activity Salesforce ID required before IA verification"},
+        {"key": "ia_before_accounts", "label": "IA verification required before Accounts clearance"},
     ]
-    
-    if request.method == "POST":
-        rule_key = request.POST.get("rule_key")
-        from django.contrib import messages
-        messages.success(request, f"Workflow rule status updated for '{rule_key}'.")
-        return redirect("/admin-panel/workflow-rules")
 
     context = {
         "rules": rules,
@@ -915,37 +990,55 @@ def admin_workflow_rules_view(request):
 
 @require_page_permission("page_access_matrix")
 def admin_page_access_matrix_view(request):
-    """Matrix displaying user page routing permissions."""
-    roles = ["CCEO", "PL", "CD", "RVP", "IA", "Accountant", "HR", "Partner", "Admin"]
-    pages = [
-        {"name": "Dashboard", "path": "/dashboard"},
-        {"name": "School Directory", "path": "/schools"},
-        {"name": "Planning Dashboard", "path": "/planning"},
-        {"name": "My Plan", "path": "/my-plan"},
-        {"name": "Monthly Budget Setup", "path": "/budgets/monthly"},
-        {"name": "Fund Requests advance", "path": "/fund-requests"},
-        {"name": "NetSuite Disbursements", "path": "/disbursements"},
-        {"name": "Analytics Dashboard", "path": "/analytics"},
-        {"name": "System Health", "path": "/system-health"},
-        {"name": "Audit Log logs", "path": "/admin/audit-log"},
-    ]
-    
-    matrix = {}
-    for p in pages:
-        matrix[p["name"]] = {}
-        for r in roles:
-            if r == "Admin":
-                matrix[p["name"]][r] = True
-            elif p["name"] in ["Dashboard", "My Plan", "School Directory"]:
-                matrix[p["name"]][r] = True
-            elif p["name"] == "Planning Dashboard" and r in ["CCEO", "PL", "CD"]:
-                matrix[p["name"]][r] = True
-            elif p["name"] == "NetSuite Disbursements" and r == "Accountant":
-                matrix[p["name"]][r] = True
-            elif p["name"] == "System Health" and r == "Admin":
-                matrix[p["name"]][r] = True
+    """Matrix displaying user page routing permissions.
+
+    Built entirely from real data: the routed pages are discovered by walking
+    the URL config for views wrapped in @require_page_permission (same
+    decorator enforcing access on every request — see apps.core.permissions),
+    and every cell is a live call to
+    RolePermissionService.can_view_page(user, page), the same function that
+    actually gates the route. No page names, role lists, or grants are
+    hand-typed here, mirroring how admin_roles_permissions_view above builds
+    its matrix from the real RolePermission table.
+    """
+    from django.urls import get_resolver
+    from apps.core.rbac import EdifyRole
+    from apps.core.permissions import RolePermissionService
+
+    class _RoleProbe:
+        """Minimal stand-in for a user — can_view_page only reads active_role."""
+        def __init__(self, role):
+            self.active_role = role
+
+    def _discover_pages(patterns, prefix=""):
+        found = []
+        for pattern in patterns:
+            full = prefix + str(pattern.pattern)
+            if hasattr(pattern, "url_patterns"):
+                found.extend(_discover_pages(pattern.url_patterns, full))
             else:
-                matrix[p["name"]][r] = False
+                page_key = getattr(getattr(pattern, "callback", None), "page_permission", None)
+                if page_key:
+                    found.append((page_key, full))
+        return found
+
+    # Dedupe by page key, keeping the first (shortest-prefix) route seen for
+    # display purposes.
+    pages_by_key = {}
+    for page_key, path in _discover_pages(get_resolver().url_patterns):
+        pages_by_key.setdefault(page_key, "/" + path.lstrip("/"))
+
+    roles = [r.value for r in EdifyRole]
+
+    pages = [
+        {"key": key, "name": _humanize_rbac_token(key), "path": path}
+        for key, path in sorted(pages_by_key.items(), key=lambda kv: kv[1])
+    ]
+
+    matrix = {
+        p["name"]: {r: RolePermissionService.can_view_page(_RoleProbe(r), p["key"]) for r in roles}
+        for p in pages
+    }
 
     context = {
         "roles": roles,
@@ -978,17 +1071,16 @@ def admin_region_district_setup_view(request):
 
 @require_page_permission("notifications_mgmt")
 def admin_notifications_mgmt_view(request):
-    """Notification management logs."""
+    """Notification management logs.
+
+    Read-only log view. There used to be a POST "resend" action here, but
+    apps.notifications has no send/resend/dispatch service — it only supports
+    mark_read/mark_all_read/resolve on notifications a user already has. The
+    fake resend button (which just flashed a success message without sending
+    anything) has been removed rather than pretend to resend.
+    """
     from apps.notifications.models import Notification
     logs = Notification.objects.all().order_by("-created_at")[:50]
-    
-    if request.method == "POST" and "resend_id" in request.POST:
-        notif_id = request.POST.get("resend_id")
-        notif = get_object_or_404(Notification, id=notif_id)
-        # Simulate resending notification
-        from django.contrib import messages
-        messages.success(request, f"Successfully resent notification '{notif.title}' to recipient '{notif.recipient_id}'.")
-        return redirect("/admin-panel/notifications-mgmt")
 
     context = {
         "logs": logs,
