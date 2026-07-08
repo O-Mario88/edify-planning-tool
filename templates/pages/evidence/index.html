@@ -4,61 +4,159 @@
 {% block title %}Evidence Center — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-[1600px] mx-auto space-y-6 font-sans" x-data="{ tab: 'pending' }">
+<div class="p-6 max-w-[1600px] mx-auto space-y-5 font-sans" {% if mode == "center" %}x-data="{ tab: 'pending' }"{% endif %}>
 
-<!-- Header -->
-<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-100 pb-4">
-<div>
-<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight leading-tight">Evidence Center</h1>
-<p class="text-[12px] text-slate-500 font-semibold mt-1">Review, audit, and track execution proof packets across all activities.</p>
+{% if mode == "gallery" %}
+{% include "components/page_header.html" with title="Evidence" subtitle="Your submitted evidence packets and activities still missing evidence." %}
+
+<!-- KPI Strip -->
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
+
+<!-- Kind filter -->
+<form method="get" id="evidence-kind-filter" class="card p-3.5">
+<div class="flex flex-wrap items-end gap-3">
+<div class="space-y-1 lg:min-w-[180px]">
+<label class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider block">Evidence Kind</label>
+<select name="kind" onchange="document.getElementById('evidence-kind-filter').submit()" class="h-9 w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 text-[12px] font-semibold text-slate-700 cursor-pointer focus:outline-none focus:ring-1 focus:ring-[var(--edify-primary,#2e505f)]">
+{% for opt in kind_field_options %}<option value="{{ opt.value }}" {% if opt.selected %}selected{% endif %}>{{ opt.label }}</option>{% endfor %}
+</select>
 </div>
+{% if kind_filter %}
+<a href="/evidence" class="text-[12px] font-semibold text-slate-500 hover:text-slate-700 flex items-center gap-1 h-9">&times; Clear filter</a>
+{% endif %}
 </div>
+</form>
+
+<!-- Evidence packet cards -->
+<section class="space-y-3">
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Evidence Packets <span class="text-[11px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-semibold ml-1">{{ total }}</span></h3>
+{% if evidence_list %}
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+{% for ev in evidence_list %}
+<div class="card p-3.5 space-y-3">
+<div class="flex items-center justify-between gap-2">
+<span class="text-[11px] font-semibold text-slate-800 truncate" title="{{ ev.original_name }}">{{ ev.original_name|default:"Untitled file" }}</span>
+{% if ev.status == "accepted" %}
+{% include "components/badge.html" with tone="success" label="Accepted" %}
+{% elif ev.status == "returned" %}
+{% include "components/badge.html" with tone="danger" label="Returned" %}
+{% elif ev.status == "rejected" %}
+{% include "components/badge.html" with tone="danger" label="Rejected" %}
+{% else %}
+{% include "components/badge.html" with tone="warning" label="Uploaded" %}
+{% endif %}
+</div>
+{% if ev.mime_type and 'image' in ev.mime_type %}
+<a href="/evidence/{{ ev.id }}/download" target="_blank" class="aspect-video block bg-slate-50 rounded-xl overflow-hidden">
+<img src="/evidence/{{ ev.id }}/download" class="w-full h-full object-cover" alt="Evidence preview">
+</a>
+{% else %}
+<a href="/evidence/{{ ev.id }}/download" target="_blank" class="aspect-video bg-slate-50 border border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center gap-1.5">
+<svg class="w-7 h-7 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+<span class="text-[11px] font-semibold text-blue-600">Download file</span>
+</a>
+{% endif %}
+<div class="flex items-center justify-between text-[11px] text-slate-400 font-semibold">
+<span>{{ ev.get_kind_display }}</span>
+<span>{{ ev.created_at|date:"M d, Y" }}</span>
+</div>
+<a href="/my-plan/{{ ev.activity_id }}" class="text-[11px] font-semibold text-slate-600 hover:text-blue-600 block truncate">{{ ev.activity.school.name|default:"View activity" }}</a>
+</div>
+{% endfor %}
+</div>
+{% else %}
+{% include "components/empty_state.html" with title="No evidence yet" message="Evidence you upload for your activities will appear here." cta_label="Go to My Plan" cta_href="/my-plan" %}
+{% endif %}
+</section>
+
+<!-- Pending evidence -->
+<section class="card p-5 space-y-3">
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight pb-2 border-b border-slate-100">Activities Missing Evidence</h3>
+{% if pending_evidence %}
+<div class="overflow-x-auto">
+<table class="w-full text-left text-[12px] font-semibold text-slate-700">
+<thead>
+<tr class="text-[11px] uppercase tracking-wider text-slate-400 border-b border-slate-100">
+<th class="py-2">Activity</th>
+<th class="py-2">School</th>
+<th class="py-2">Completed</th>
+<th class="py-2 text-right">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100">
+{% for a in pending_evidence %}
+<tr>
+<td class="py-2.5 font-semibold text-slate-900">{{ a.get_activity_type_display }}</td>
+<td class="py-2.5 text-slate-500">{{ a.school.name|default:"Cluster-wide" }}</td>
+<td class="py-2.5 text-slate-500">{{ a.updated_at|date:"M d, Y" }}</td>
+<td class="py-2.5 text-right">
+<button hx-get="/activities/{{ a.id }}/evidence" hx-target="#drawer-container" hx-swap="innerHTML" class="h-8 px-3 rounded-lg !bg-[#2e505f] !text-white text-[11px] font-semibold hover:bg-opacity-95 transition-all">
+Upload Evidence
+</button>
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% else %}
+{% include "components/empty_state.html" with title="Nothing missing" message="Every completed activity has evidence attached." tone="success" compact="true" %}
+{% endif %}
+</section>
+
+<div id="drawer-container"></div>
+
+{% else %}
+{% include "components/page_header.html" with title="Evidence Center" subtitle="Review, audit, and track execution proof packets across all activities." %}
+
+<!-- KPI Strip -->
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
 
 <!-- Tabs Navigation -->
-<div class="flex items-center gap-1 border-b  overflow-x-auto pb-px">
-<button 
+<div class="flex items-center gap-1 border-b overflow-x-auto pb-px">
+<button
 @click="tab = 'pending'"
 :class="tab === 'pending' ? 'border-[#2e505f] text-[#2e505f]' : 'border-transparent text-slate-400 hover:text-slate-600'"
 class="px-4 py-2.5 border-b-2 text-[12px] font-semibold transition-all whitespace-nowrap"
 >
 Evidence Pending ({{ pending|length }})
 </button>
-<button 
+<button
 @click="tab = 'sf_missing'"
 :class="tab === 'sf_missing' ? 'border-[#2e505f] text-[#2e505f]' : 'border-transparent text-slate-400 hover:text-slate-600'"
 class="px-4 py-2.5 border-b-2 text-[12px] font-semibold transition-all whitespace-nowrap"
 >
 SF ID Missing ({{ sf_missing|length }})
 </button>
-<button 
+<button
 @click="tab = 'submitted'"
 :class="tab === 'submitted' ? 'border-[#2e505f] text-[#2e505f]' : 'border-transparent text-slate-400 hover:text-slate-600'"
 class="px-4 py-2.5 border-b-2 text-[12px] font-semibold transition-all whitespace-nowrap"
 >
 Submitted ({{ submitted|length }})
 </button>
-<button 
+<button
 @click="tab = 'returned'"
 :class="tab === 'returned' ? 'border-[#2e505f] text-[#2e505f]' : 'border-transparent text-slate-400 hover:text-slate-600'"
 class="px-4 py-2.5 border-b-2 text-[12px] font-semibold transition-all whitespace-nowrap"
 >
 Returned ({{ returned|length }})
 </button>
-<button 
+<button
 @click="tab = 'ia_pending'"
 :class="tab === 'ia_pending' ? 'border-[#2e505f] text-[#2e505f]' : 'border-transparent text-slate-400 hover:text-slate-600'"
 class="px-4 py-2.5 border-b-2 text-[12px] font-semibold transition-all whitespace-nowrap"
 >
 IA Pending ({{ ia_pending|length }})
 </button>
-<button 
+<button
 @click="tab = 'verified'"
 :class="tab === 'verified' ? 'border-[#2e505f] text-[#2e505f]' : 'border-transparent text-slate-400 hover:text-slate-600'"
 class="px-4 py-2.5 border-b-2 text-[12px] font-semibold transition-all whitespace-nowrap"
 >
 Verified ({{ verified|length }})
 </button>
-<button 
+<button
 @click="tab = 'partner_ev'"
 :class="tab === 'partner_ev' ? 'border-[#2e505f] text-[#2e505f]' : 'border-transparent text-slate-400 hover:text-slate-600'"
 class="px-4 py-2.5 border-b-2 text-[12px] font-semibold transition-all whitespace-nowrap"
@@ -69,41 +167,51 @@ Partner Work ({{ partner_ev|length }})
 
 <!-- Content Panels -->
 <div>
-<!-- Pending Tab -->
 <template x-if="tab === 'pending'">
-{% include "partials/my_plan/activity_table.html" with activity_list=pending %}
+<div>
+{% if pending %}{% include "partials/my_plan/activity_table.html" with activity_list=pending %}{% else %}<div class="card">{% include "components/empty_state.html" with title="Nothing pending" message="No completed activities are missing evidence." tone="success" %}</div>{% endif %}
+</div>
 </template>
 
-<!-- SF Missing Tab -->
 <template x-if="tab === 'sf_missing'">
-{% include "partials/my_plan/activity_table.html" with activity_list=sf_missing %}
+<div>
+{% if sf_missing %}{% include "partials/my_plan/activity_table.html" with activity_list=sf_missing %}{% else %}<div class="card">{% include "components/empty_state.html" with title="No SF IDs missing" message="Every uploaded evidence record has a Salesforce Activity ID." tone="success" %}</div>{% endif %}
+</div>
 </template>
 
-<!-- Submitted Tab -->
 <template x-if="tab === 'submitted'">
-{% include "partials/my_plan/activity_table.html" with activity_list=submitted %}
+<div>
+{% if submitted %}{% include "partials/my_plan/activity_table.html" with activity_list=submitted %}{% else %}<div class="card">{% include "components/empty_state.html" with title="Nothing submitted" message="Activities awaiting review will appear here." %}</div>{% endif %}
+</div>
 </template>
 
-<!-- Returned Tab -->
 <template x-if="tab === 'returned'">
-{% include "partials/my_plan/activity_table.html" with activity_list=returned %}
+<div>
+{% if returned %}{% include "partials/my_plan/activity_table.html" with activity_list=returned %}{% else %}<div class="card">{% include "components/empty_state.html" with title="Nothing returned" message="No activities are currently returned for correction." tone="success" %}</div>{% endif %}
+</div>
 </template>
 
-<!-- IA Pending Tab -->
 <template x-if="tab === 'ia_pending'">
-{% include "partials/my_plan/activity_table.html" with activity_list=ia_pending %}
+<div>
+{% if ia_pending %}{% include "partials/my_plan/activity_table.html" with activity_list=ia_pending %}{% else %}<div class="card">{% include "components/empty_state.html" with title="Nothing pending IA" message="No activities are waiting on Impact Assessment review." tone="success" %}</div>{% endif %}
+</div>
 </template>
 
-<!-- Verified Tab -->
 <template x-if="tab === 'verified'">
-{% include "partials/my_plan/activity_table.html" with activity_list=verified %}
+<div>
+{% if verified %}{% include "partials/my_plan/activity_table.html" with activity_list=verified %}{% else %}<div class="card">{% include "components/empty_state.html" with title="Nothing verified yet" message="Activities verified by IA will appear here." %}</div>{% endif %}
+</div>
 </template>
 
-<!-- Partner Ev Tab -->
 <template x-if="tab === 'partner_ev'">
-{% include "partials/my_plan/activity_table.html" with activity_list=partner_ev %}
+<div>
+{% if partner_ev %}{% include "partials/my_plan/activity_table.html" with activity_list=partner_ev %}{% else %}<div class="card">{% include "components/empty_state.html" with title="No partner activities" message="Activities delivered by partners will appear here." %}</div>{% endif %}
+</div>
 </template>
 </div>
+
+<div id="drawer-container"></div>
+{% endif %}
 
 </div>
 {% endblock %}

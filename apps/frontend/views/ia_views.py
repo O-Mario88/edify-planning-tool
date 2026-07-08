@@ -6,6 +6,7 @@ from datetime import timedelta
 from django.db.models import Q
 
 from apps.core.permissions import require_page_permission, RolePermissionService
+from apps.core.fy import fy_options
 from apps.audit.services import log as audit_log
 from apps.activities.models import (
     Activity,
@@ -21,7 +22,7 @@ from apps.activities.ia_services import (
     ActivityCertificationService,
     ActivityReturnService,
 )
-from apps.core.enums import ActivityStatus
+from apps.core.enums import ActivityStatus, ActivityType
 
 
 @require_page_permission("ia_verification_queue")
@@ -34,7 +35,8 @@ def ia_verification_queue_view(request):
     # ── KPI Strip Calculation ────────────────────────────────────────────────
     waiting_count = activities.count()
 
-    today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    now = timezone.now()
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     verified_today = VerificationHistory.objects.filter(
         verified_at__gte=today_start
     ).count()
@@ -43,9 +45,16 @@ def ia_verification_queue_view(request):
         decision="RETURN", decided_at__gte=today_start
     ).count()
 
-    # Average Verification Time (in hours)
-    # We calculate the average time between submission and verification
-    avg_hours = 1.8  # Default baseline SLA
+    # Oldest item currently waiting — an honest turnaround signal (no fabricated
+    # SLA baseline; this is a real queryset aggregate).
+    oldest_waiting = activities.order_by("updated_at").first()
+    if oldest_waiting and oldest_waiting.updated_at:
+        age = now - oldest_waiting.updated_at
+        oldest_waiting_label = (
+            f"{age.days}d" if age.days >= 1 else f"{int(age.seconds / 3600)}h"
+        )
+    else:
+        oldest_waiting_label = "—"
 
     ssa_pending = activities.filter(ssa_collection_expected=True).count()
     duplicate_risks = (
@@ -121,17 +130,85 @@ def ia_verification_queue_view(request):
         ]
         serialized_queue.append(data)
 
+    kpi_strip_items = [
+        {
+            "label": "Awaiting Verification",
+            "value": str(waiting_count),
+            "icon": "clock",
+            "variant": "info",
+            "helper": "in queue now",
+        },
+        {
+            "label": "Verified Today",
+            "value": str(verified_today),
+            "icon": "check",
+            "variant": "success",
+        },
+        {
+            "label": "Returned Today",
+            "value": str(returned_today),
+            "icon": "warning",
+            "variant": "danger",
+        },
+        {
+            "label": "Oldest Waiting Item",
+            "value": oldest_waiting_label,
+            "icon": "clock",
+            "variant": "neutral",
+            "helper": "time in queue",
+        },
+        {
+            "label": "SSA Pending",
+            "value": str(ssa_pending),
+            "icon": "document",
+            "variant": "warning",
+        },
+        {
+            "label": "Duplicate Risks",
+            "value": str(duplicate_risks),
+            "icon": "warning",
+            "variant": "danger",
+        },
+        {
+            "label": "High Priority",
+            "value": str(high_priority),
+            "icon": "target",
+            "variant": "info",
+        },
+    ]
+
+    fy_field_options = [{"value": "", "label": "All FYs", "selected": not fy_filter}]
+    for opt in fy_options():
+        fy_field_options.append(
+            {"value": opt, "label": f"FY{opt}", "selected": fy_filter == opt}
+        )
+
+    quarter_field_options = [
+        {"value": "", "label": "All Quarters", "selected": not quarter_filter}
+    ] + [
+        {"value": q, "label": q, "selected": quarter_filter == q}
+        for q in ["Q1", "Q2", "Q3", "Q4"]
+    ]
+
+    type_field_options = [
+        {"value": "", "label": "All Types", "selected": not type_filter}
+    ] + [
+        {"value": value, "label": label, "selected": type_filter == value}
+        for value, label in ActivityType.choices
+    ]
+
     context = {
         "queue": serialized_queue,
         "kpis": {
             "waiting": waiting_count,
             "verified_today": verified_today,
             "returned_today": returned_today,
-            "avg_time": f"{avg_hours}h",
+            "oldest_waiting": oldest_waiting_label,
             "ssa_pending": ssa_pending,
             "duplicate_risks": duplicate_risks,
             "high_priority": high_priority,
         },
+        "kpi_strip_items": kpi_strip_items,
         "filters": {
             "fy": fy_filter,
             "quarter": quarter_filter,
@@ -140,7 +217,11 @@ def ia_verification_queue_view(request):
             "staff": staff_filter,
             "partner": partner_filter,
             "activity_type": type_filter,
+            "core_school": core_school_filter,
         },
+        "fy_field_options": fy_field_options,
+        "quarter_field_options": quarter_field_options,
+        "type_field_options": type_field_options,
     }
 
     if request.headers.get("HX-Request") == "true":
@@ -184,6 +265,24 @@ def ia_review_workspace_view(request, activity_id):
             ).select_related("school")
         ]
 
+    # Real SSA intervention scores for the activity's school (replaces any
+    # invented sample scores) — most recent confirmed/pending record.
+    ssa_record = None
+    ssa_scores = []
+    if a.school:
+        from apps.ssa.models import SsaRecord
+
+        ssa_record = (
+            SsaRecord.objects.filter(school=a.school, deleted_at__isnull=True)
+            .order_by("-date_of_ssa")
+            .first()
+        )
+        if ssa_record:
+            ssa_scores = [
+                {"name": s.get_intervention_display(), "score": s.score}
+                for s in ssa_record.scores.all().order_by("intervention")
+            ]
+
     context = {
         "act": a,
         "checks": checks,
@@ -192,6 +291,8 @@ def ia_review_workspace_view(request, activity_id):
         "timeline": timeline,
         "comments": comments,
         "cluster_schools": cluster_schools,
+        "ssa_record": ssa_record,
+        "ssa_scores": ssa_scores,
         "suggested_reasons": [
             "Evidence missing",
             "Evidence unclear",
@@ -419,6 +520,9 @@ def ia_dashboard_view(request):
         decision="RETURN", decided_at__gte=week_start
     ).count()
     duplicate_risk_cnt = DuplicateActivity.objects.filter(status="potential").count()
+    activities_logged_today = live_activities.filter(
+        created_at__gte=today_start
+    ).count()
 
     schools_qs = School.objects.filter(deleted_at__isnull=True)
     total_schools = schools_qs.count()
@@ -453,6 +557,7 @@ def ia_dashboard_view(request):
     ):
         queue_items.append(
             {
+                "id": a.id,
                 "record_id": a.id[:12].upper(),
                 "school": a.school.name if a.school else "—",
                 "district": a.school.district.name
@@ -581,15 +686,24 @@ def ia_dashboard_view(request):
         base = EvidenceRecord.objects.filter(
             activity__deleted_at__isnull=True, kind=kind
         )
+        verified_n = base.filter(activity__status__in=["ia_verified", "closed"]).count()
+        returned_n = base.filter(activity__status="returned_by_ia").count()
         evidence_metrics.append(
             {
                 "category": kind_map.get(kind, kind),
-                "submitted": f"{row['n']:,}",
-                "verified": f"{base.filter(activity__status__in=['ia_verified', 'closed']).count():,}",
-                "returned": f"{base.filter(activity__status='returned_by_ia').count():,}",
-                "rejected": "0",
+                "submitted": row["n"],
+                "verified": verified_n,
+                "returned": returned_n,
+                "rejected": 0,
             }
         )
+
+    evidence_totals = {
+        "submitted": sum(m["submitted"] for m in evidence_metrics),
+        "verified": sum(m["verified"] for m in evidence_metrics),
+        "returned": sum(m["returned"] for m in evidence_metrics),
+        "rejected": sum(m["rejected"] for m in evidence_metrics),
+    }
 
     # Recent verification activity feed
     recent_activities = []
@@ -677,9 +791,101 @@ def ia_dashboard_view(request):
         "pending_pct": _pct(ssa_pending),
         "other": ssa_other,
         "other_pct": _pct(ssa_other),
-        "pending_offset": -_pct(ssa_confirmed),
-        "other_offset": -(_pct(ssa_confirmed) + _pct(ssa_pending)),
     }
+
+    # ── ApexCharts option dicts (real hex palette, computed server-side) ─────
+    ssa_donut_chart = {
+        "chart": {"type": "donut", "toolbar": {"show": False}},
+        "labels": ["Confirmed", "Pending", "Other"],
+        "series": [ssa_confirmed, ssa_pending, ssa_other],
+        "colors": ["#10b981", "#f59e0b", "#94a3b8"],
+        "legend": {"position": "bottom", "fontSize": "11px"},
+        "dataLabels": {"enabled": False},
+        "stroke": {"width": 0},
+    }
+
+    lowest_performing_chart = {
+        "chart": {"type": "bar", "toolbar": {"show": False}},
+        "series": [
+            {"name": "Avg score", "data": [i["rate"] for i in lowest_performing]}
+        ],
+        "xaxis": {
+            "categories": [i["name"] for i in lowest_performing],
+            "labels": {"style": {"fontSize": "10px"}},
+        },
+        "plotOptions": {"bar": {"horizontal": True, "borderRadius": 4}},
+        "colors": ["#f43f5e"],
+        "dataLabels": {"enabled": True},
+        "grid": {"borderColor": "#f1f5f9"},
+    }
+
+    leaderboard_chart = {
+        "chart": {"type": "bar", "toolbar": {"show": False}},
+        "series": [
+            {"name": "SSA completion", "data": [i["rate"] for i in leaderboard_dc]}
+        ],
+        "xaxis": {
+            "categories": [i["name"] for i in leaderboard_dc],
+            "labels": {"style": {"fontSize": "10px"}},
+        },
+        "plotOptions": {"bar": {"horizontal": True, "borderRadius": 4}},
+        "colors": ["#0ea5a4"],
+        "dataLabels": {"enabled": True},
+        "grid": {"borderColor": "#f1f5f9"},
+    }
+
+    kpi_strip_items = [
+        {
+            "label": "Activities Logged Today",
+            "value": str(activities_logged_today),
+            "icon": "document",
+            "variant": "info",
+        },
+        {
+            "label": "Pending Verification",
+            "value": str(waiting_cnt),
+            "icon": "clock",
+            "variant": "warning",
+        },
+        {
+            "label": "Verified This Week",
+            "value": str(verified_week),
+            "icon": "check",
+            "variant": "success",
+            "helper": f"{verified_today} today",
+        },
+        {
+            "label": "Returned This Week",
+            "value": str(returned_week),
+            "icon": "warning",
+            "variant": "danger",
+            "helper": f"{returned_today} today",
+        },
+        {
+            "label": "Data Quality Score",
+            "value": f"{quality_pct}%",
+            "icon": "shield",
+            "variant": "info",
+        },
+        {
+            "label": "Salesforce Queue",
+            "value": str(sf_queue_cnt),
+            "icon": "briefcase",
+            "variant": "neutral",
+        },
+        {
+            "label": "SSA Pending Review",
+            "value": str(ssa_pending_cnt),
+            "icon": "document",
+            "variant": "warning",
+        },
+        {
+            "label": "Evidence Pending",
+            "value": str(evidence_pending_cnt),
+            "icon": "file",
+            "variant": "neutral",
+        },
+    ]
 
     context = {
         "kpis": {
@@ -695,13 +901,17 @@ def ia_dashboard_view(request):
             "sf_queue": sf_queue_cnt,
             "ssa_pending": ssa_pending_cnt,
             "evidence_pending": evidence_pending_cnt,
+            "overdue_returns": overdue_returns,
+            "activities_logged_today": activities_logged_today,
         },
+        "kpi_strip_items": kpi_strip_items,
         "queue_items": queue_items,
         "exceptions": exceptions,
         "dq_metrics": dq_metrics,
         "lowest_performing": lowest_performing,
         "leaderboard_dc": leaderboard_dc,
         "evidence_metrics": evidence_metrics,
+        "evidence_totals": evidence_totals,
         "recent_activities": recent_activities,
         "field_monitoring": {
             "highest_pending": highest_pending,
@@ -710,6 +920,12 @@ def ia_dashboard_view(request):
             "slowest_turnaround": slowest_turnaround,
         },
         "ssa_donut": ssa_donut,
+        "ssa_donut_chart": ssa_donut_chart,
+        "has_ssa_donut_data": ssa_total > 0,
+        "lowest_performing_chart": lowest_performing_chart,
+        "has_lowest_performing_data": bool(lowest_performing),
+        "leaderboard_chart": leaderboard_chart,
+        "has_leaderboard_data": bool(leaderboard_dc),
     }
     return render(request, "pages/ia/analytics_dashboard.html", context)
 

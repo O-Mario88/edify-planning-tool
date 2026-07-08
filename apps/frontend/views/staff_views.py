@@ -15,6 +15,7 @@ from apps.evidence.models import EvidenceRecord
 from apps.notifications.models import Notification
 from apps.ssa.models import SsaRecord
 from apps.core.fy import get_operational_fy
+from apps.core.enums import EvidenceKind
 
 
 # ─── STAFF DIRECTORY ──────────────────────────────────────────────────────────
@@ -502,12 +503,38 @@ def evidence_gallery_view(request):
         deleted_at__isnull=True,
     ).select_related("school")[:10]
 
+    kind_field_options = [
+        {"value": "", "label": "All Kinds", "selected": not kind_filter}
+    ] + [
+        {"value": value, "label": label, "selected": kind_filter == value}
+        for value, label in EvidenceKind.choices
+    ]
+
+    kpi_strip_items = [
+        {
+            "label": "Evidence Packets",
+            "value": str(len(evidence_list)),
+            "icon": "file",
+            "variant": "info",
+            "helper": "most recent 100",
+        },
+        {
+            "label": "Pending Uploads",
+            "value": str(pending_evidence.count()),
+            "icon": "warning",
+            "variant": "warning",
+            "helper": "completed, no evidence",
+        },
+    ]
+
     context = {
+        "mode": "gallery",
         "evidence_list": evidence_list,
         "pending_evidence": pending_evidence,
         "total": len(evidence_list),
         "kind_filter": kind_filter,
-        "kinds": ["photo", "document", "visit_form", "pdf"],
+        "kind_field_options": kind_field_options,
+        "kpi_strip_items": kpi_strip_items,
     }
     return render(request, "pages/evidence/index.html", context)
 

@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 
 from apps.core.permissions import require_page_permission
+from apps.core.fy import fy_options
 from apps.activities.models import Activity, ClosureBlocker, AnalyticsPublishRecord
 from apps.activities.closure_services import (
     ClosureEligibilityService,
@@ -63,6 +64,45 @@ def closure_readiness_queue_view(request):
         else:
             blocked_list.append(a)
 
+    kpi_strip_items = [
+        {
+            "label": "Ready to Close",
+            "value": str(len(ready_list)),
+            "icon": "check",
+            "variant": "success",
+        },
+        {
+            "label": "Finance Pending",
+            "value": str(len(finance_pending_list)),
+            "icon": "currency",
+            "variant": "warning",
+        },
+        {
+            "label": "Accountability Pending",
+            "value": str(len(accountability_list)),
+            "icon": "document",
+            "variant": "warning",
+        },
+        {
+            "label": "Analytics Pending",
+            "value": str(len(analytics_list)),
+            "icon": "chart",
+            "variant": "info",
+        },
+        {
+            "label": "Blocked",
+            "value": str(len(blocked_list)),
+            "icon": "warning",
+            "variant": "danger",
+        },
+        {
+            "label": "Closed",
+            "value": str(len(closed_list)),
+            "icon": "shield",
+            "variant": "neutral",
+        },
+    ]
+
     context = {
         "ready": ready_list,
         "finance_pending": finance_pending_list,
@@ -70,6 +110,7 @@ def closure_readiness_queue_view(request):
         "analytics_pending": analytics_list,
         "blocked": blocked_list,
         "closed": closed_list,
+        "kpi_strip_items": kpi_strip_items,
     }
     return render(request, "pages/closure/readiness_queue.html", context)
 
@@ -125,7 +166,53 @@ def completed_activities_view(request):
         .order_by("-updated_at")
     )
 
-    context = {"closed": closed_activities}
+    fy_filter = request.GET.get("fy", "")
+    quarter_filter = request.GET.get("quarter", "")
+    if fy_filter:
+        closed_activities = closed_activities.filter(fy=fy_filter)
+    if quarter_filter:
+        closed_activities = closed_activities.filter(quarter=quarter_filter)
+
+    total_closed = closed_activities.count()
+    netsuite_linked = (
+        closed_activities.filter(netsuite_expenses__isnull=False).distinct().count()
+    )
+
+    fy_field_options = [{"value": "", "label": "All FYs", "selected": not fy_filter}]
+    for opt in fy_options():
+        fy_field_options.append(
+            {"value": opt, "label": f"FY{opt}", "selected": fy_filter == opt}
+        )
+    quarter_field_options = [
+        {"value": "", "label": "All Quarters", "selected": not quarter_filter}
+    ] + [
+        {"value": q, "label": q, "selected": quarter_filter == q}
+        for q in ["Q1", "Q2", "Q3", "Q4"]
+    ]
+
+    kpi_strip_items = [
+        {
+            "label": "Closed Activities",
+            "value": str(total_closed),
+            "icon": "check",
+            "variant": "success",
+        },
+        {
+            "label": "NetSuite Linked",
+            "value": str(netsuite_linked),
+            "icon": "currency",
+            "variant": "info",
+            "helper": f"of {total_closed}",
+        },
+    ]
+
+    context = {
+        "closed": closed_activities,
+        "filters": {"fy": fy_filter, "quarter": quarter_filter},
+        "fy_field_options": fy_field_options,
+        "quarter_field_options": quarter_field_options,
+        "kpi_strip_items": kpi_strip_items,
+    }
     return render(request, "pages/closure/completed_activities.html", context)
 
 
@@ -134,10 +221,12 @@ def completed_activity_detail_view(request, activity_id):
     """Read-only final record details."""
     a = get_object_or_404(Activity, id=activity_id, status="closed")
     snapshot = getattr(a, "completed_snapshot", None)
+    checklist = getattr(a, "closure_checklist", None)
 
     context = {
         "act": a,
         "snapshot": snapshot,
+        "checklist": checklist,
         "evidence": a.evidence.all(),
         "timeline": a.timeline_events.all().order_by("-timestamp"),
     }
@@ -151,7 +240,41 @@ def blocked_closure_view(request):
         "activity", "activity__school"
     )
 
-    context = {"blockers": blockers}
+    from django.db.models import Count
+
+    by_role = {
+        row["responsible_role"]: row["n"]
+        for row in blockers.values("responsible_role").annotate(n=Count("id"))
+    }
+
+    kpi_strip_items = [
+        {
+            "label": "Total Blockers",
+            "value": str(blockers.count()),
+            "icon": "warning",
+            "variant": "danger",
+        },
+        {
+            "label": "CCEO Action",
+            "value": str(by_role.get("CCEO", 0)),
+            "icon": "users",
+            "variant": "warning",
+        },
+        {
+            "label": "Impact Assessment",
+            "value": str(by_role.get("ImpactAssessment", 0)),
+            "icon": "shield",
+            "variant": "info",
+        },
+        {
+            "label": "Accountant",
+            "value": str(by_role.get("Accountant", 0)),
+            "icon": "currency",
+            "variant": "neutral",
+        },
+    ]
+
+    context = {"blockers": blockers, "kpi_strip_items": kpi_strip_items}
     return render(request, "pages/closure/blocked_closure.html", context)
 
 

@@ -29,7 +29,7 @@ zoomSrc: ''
 </a>
 <div>
 <div class="flex items-center gap-2">
-<span class="text-[11px] font-semibold uppercase bg-[#2563eb]/10 text-[#2563eb] px-1.5 py-0.5 rounded">FY25</span>
+<span class="text-[11px] font-semibold uppercase bg-[#2563eb]/10 text-[#2563eb] px-1.5 py-0.5 rounded">{{ act.fy|default:"—" }}</span>
 <h2 class="text-[18px] font-semibold text-slate-800 tracking-tight">Review Workspace</h2>
 </div>
 <p class="text-[12px] text-slate-400 font-semibold mt-0.5">Activity ID: #{{ act.id }}</p>
@@ -186,26 +186,20 @@ No evidence uploads available for this activity.
 {{ checks.ssa_desc }}
 </p>
 
-<!-- Intervention breakdown if SSA available -->
-{% if checks.ssa_uploaded %}
+<!-- Intervention breakdown from the school's latest real SSA record -->
+{% if ssa_scores %}
 <div class="grid grid-cols-2 gap-3 mt-4 text-[12px] font-bold">
+{% for s in ssa_scores %}
 <div class="flex items-center justify-between p-2 bg-slate-50 rounded border border-slate-100">
-<span class="text-slate-500">Teaching &amp; Learning</span>
-<span class="text-slate-800">8.2 / 10</span>
+<span class="text-slate-500">{{ s.name }}</span>
+<span class="text-slate-800">{{ s.score }} / 10</span>
 </div>
-<div class="flex items-center justify-between p-2 bg-slate-50 rounded border border-slate-100">
-<span class="text-slate-500">Christian Ethos</span>
-<span class="text-slate-800">9.0 / 10</span>
+{% endfor %}
 </div>
-<div class="flex items-center justify-between p-2 bg-slate-50 rounded border border-slate-100">
-<span class="text-slate-500">Leadership &amp; Governance</span>
-<span class="text-slate-800">7.5 / 10</span>
-</div>
-<div class="flex items-center justify-between p-2 bg-slate-50 rounded border border-slate-100">
-<span class="text-slate-500">Safe Environment</span>
-<span class="text-slate-800">8.0 / 10</span>
-</div>
-</div>
+{% elif ssa_record %}
+<p class="text-[11px] text-slate-400 font-semibold mt-3">SSA record found but no intervention scores recorded.</p>
+{% else %}
+<p class="text-[11px] text-slate-400 font-semibold mt-3">No SSA record on file for this school yet.</p>
 {% endif %}
 </div>
 </div>

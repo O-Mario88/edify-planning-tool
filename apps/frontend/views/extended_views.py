@@ -1353,10 +1353,51 @@ def project_detail_view(request, project_id):
 @require_page_permission("debriefs_list")
 def debriefs_list_view(request):
     """Debriefs list."""
-    debriefs = DailyDebrief.objects.filter(deleted_at__isnull=True).order_by(
-        "-created_at"
-    )[:50]
-    context = {"debriefs": debriefs}
+    debriefs = list(
+        DailyDebrief.objects.filter(deleted_at__isnull=True).order_by("-date")[:50]
+    )
+
+    user_names = {u.id: u.name for u in User.objects.all()}
+    for d in debriefs:
+        d.submitted_by_name = user_names.get(d.submitted_by_user_id, "—")
+
+    total = len(debriefs)
+    submitted_n = sum(1 for d in debriefs if d.status == "submitted")
+    reviewed_n = sum(1 for d in debriefs if d.status == "reviewed")
+    with_blockers_n = sum(1 for d in debriefs if d.blockers)
+
+    kpi_strip_items = [
+        {
+            "label": "Debriefs Logged",
+            "value": str(total),
+            "icon": "document",
+            "variant": "info",
+            "helper": "most recent 50",
+        },
+        {
+            "label": "Awaiting Review",
+            "value": str(submitted_n),
+            "icon": "clock",
+            "variant": "warning",
+        },
+        {
+            "label": "Reviewed",
+            "value": str(reviewed_n),
+            "icon": "check",
+            "variant": "success",
+        },
+        {
+            "label": "With Blockers Reported",
+            "value": str(with_blockers_n),
+            "icon": "warning",
+            "variant": "danger",
+        },
+    ]
+
+    context = {
+        "debriefs": debriefs,
+        "kpi_strip_items": kpi_strip_items,
+    }
     return render(request, "pages/debriefs/index.html", context)
 
 
@@ -1364,7 +1405,32 @@ def debriefs_list_view(request):
 def debrief_detail_view(request, debrief_id):
     """Debrief detail."""
     debrief = get_object_or_404(DailyDebrief, id=debrief_id)
-    context = {"debrief": debrief}
+
+    user_names = {u.id: u.name for u in User.objects.all()}
+    submitted_by_name = user_names.get(debrief.submitted_by_user_id, "—")
+    reviewed_by_name = (
+        user_names.get(debrief.reviewed_by_user_id, "—")
+        if debrief.reviewed_by_user_id
+        else None
+    )
+
+    linked_schools = []
+    if debrief.linked_school_ids:
+        linked_schools = list(
+            School.objects.filter(id__in=debrief.linked_school_ids).values_list(
+                "name", flat=True
+            )
+        )
+
+    recipients = debrief.recipients.all()
+
+    context = {
+        "debrief": debrief,
+        "submitted_by_name": submitted_by_name,
+        "reviewed_by_name": reviewed_by_name,
+        "linked_schools": linked_schools,
+        "recipients": recipients,
+    }
     return render(request, "pages/debriefs/detail.html", context)
 
 
@@ -1379,7 +1445,18 @@ def completed_activities_view(request):
         .select_related("school", "cluster")
         .order_by("-updated_at")[:60]
     )
-    context = {"activities": activities}
+
+    kpi_strip_items = [
+        {
+            "label": "Completed Activities",
+            "value": str(activities.count()),
+            "icon": "check",
+            "variant": "success",
+            "helper": "most recent 60",
+        },
+    ]
+
+    context = {"activities": activities, "kpi_strip_items": kpi_strip_items}
     return render(request, "pages/completed_activities/index.html", context)
 
 

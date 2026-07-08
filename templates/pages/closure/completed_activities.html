@@ -3,71 +3,34 @@
 {% block title %}Completed Archive - Edify Command Center{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6">
+<div class="p-6 max-w-7xl mx-auto space-y-5 font-sans">
 
-<!-- Premium Header Pane -->
-<div class="relative overflow-hidden rounded-xl bg-slate-900 text-white p-8 shadow-md border border-slate-800">
-<div class="absolute -right-20 -top-20 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none"></div>
-<div class="relative z-10 space-y-2">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[11px] font-semibold uppercase tracking-widest">
-Permanent Archive
-</div>
-<h1 class="text-[32px] font-semibold tracking-tight text-white leading-none">Completed Activities ledger</h1>
-<p class="text-[14px] text-slate-400 font-medium max-w-xl">
-Permanent list of financially cleared and closed activities. Locked for edit, preserved for audits.
-</p>
-</div>
-</div>
+{% include "components/page_header.html" with title="Completed Activities Ledger" subtitle="Permanent list of financially cleared and closed activities. Locked for edit, preserved for audits." %}
 
-<!-- Filters Section -->
-<div class="bg-white rounded-xl border border-slate-100 p-5 shadow-sm grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 text-[12px] font-bold text-slate-700">
-<div>
-<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1">Fiscal Year</label>
-<select class="h-9 w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 focus:bg-white focus:outline-none">
-<option>FY25</option>
-<option>FY26</option>
+<!-- KPI Strip -->
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
+
+<!-- Filters -->
+<form method="get" id="completed-filters-form" class="card p-3.5">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap lg:items-end gap-3">
+<div class="space-y-1 lg:min-w-[150px]">
+<label class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider block">Fiscal Year</label>
+<select name="fy" onchange="document.getElementById('completed-filters-form').submit()" class="h-9 w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 text-[12px] font-semibold text-slate-700 cursor-pointer focus:outline-none focus:ring-1 focus:ring-[var(--edify-primary,#2e505f)]">
+{% for opt in fy_field_options %}<option value="{{ opt.value }}" {% if opt.selected %}selected{% endif %}>{{ opt.label }}</option>{% endfor %}
 </select>
 </div>
-<div>
-<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1">Quarter</label>
-<select class="h-9 w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 focus:bg-white focus:outline-none">
-<option>All Quarters</option>
-<option>Q1</option>
-<option>Q2</option>
-<option>Q3</option>
-<option>Q4</option>
+<div class="space-y-1 lg:min-w-[150px]">
+<label class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider block">Quarter</label>
+<select name="quarter" onchange="document.getElementById('completed-filters-form').submit()" class="h-9 w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 text-[12px] font-semibold text-slate-700 cursor-pointer focus:outline-none focus:ring-1 focus:ring-[var(--edify-primary,#2e505f)]">
+{% for opt in quarter_field_options %}<option value="{{ opt.value }}" {% if opt.selected %}selected{% endif %}>{{ opt.label }}</option>{% endfor %}
 </select>
 </div>
-<div>
-<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1">Region</label>
-<select class="h-9 w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 focus:bg-white focus:outline-none">
-<option>All Regions</option>
-<option>Central</option>
-<option>Northern</option>
-<option>Western</option>
-</select>
+<a href="/completed-activities" class="text-[12px] font-semibold text-slate-500 hover:text-slate-700 flex items-center gap-1 h-9">&times; Clear filters</a>
 </div>
-<div>
-<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1">Staff / CCEO</label>
-<input type="text" placeholder="Filter owner..." class="h-9 w-full bg-slate-50 border border-slate-200 rounded-xl px-3 focus:bg-white focus:outline-none">
-</div>
-<div>
-<label class="block text-[11px] uppercase font-bold text-slate-400 mb-1">Activity Type</label>
-<select class="h-9 w-full bg-slate-50 border border-slate-200 rounded-xl px-2.5 focus:bg-white focus:outline-none">
-<option>All Types</option>
-<option>School Visit</option>
-<option>Training</option>
-</select>
-</div>
-<div class="flex items-end">
-<button class="h-9 w-full bg-slate-800 hover:bg-slate-900 text-white rounded-xl font-semibold transition-colors">
-Apply Filters
-</button>
-</div>
-</div>
+</form>
 
 <!-- Table Card -->
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+<div class="card p-0 overflow-hidden">
 <div class="overflow-x-auto">
 <table class="w-full text-[12px] font-semibold text-slate-700">
 <thead class="bg-slate-50 border-b border-slate-100 text-[11px] uppercase font-bold text-slate-400">
@@ -96,7 +59,7 @@ Apply Filters
 </td>
 <!-- Owner -->
 <td class="px-6 py-4">
-<div class="font-semibold text-slate-800">{{ act.responsible_staff_id }}</div>
+<div class="font-semibold text-slate-800">{{ act.responsible_staff_id|default:"—" }}</div>
 </td>
 <!-- Type -->
 <td class="px-6 py-4">
@@ -108,9 +71,12 @@ Apply Filters
 <td class="px-6 py-4 text-center text-slate-500 font-medium">
 {{ act.planned_date|date:"M d, Y" }}
 </td>
-<!-- IA Status -->
+<!-- IA Status: closure is only permitted once IA has verified the
+     activity (ClosureEligibilityService.is_eligible requires
+     checklist.ia_verified) so every closed record here is honestly
+     verified. -->
 <td class="px-6 py-4 text-center">
-<span class="text-emerald-600 font-bold">Verified</span>
+{% include "components/badge.html" with tone="success" label="Verified" %}
 </td>
 <!-- NetSuite ID -->
 <td class="px-6 py-4 text-center font-mono text-[11px] text-slate-800">
@@ -118,7 +84,7 @@ Apply Filters
 </td>
 <!-- Actions -->
 <td class="px-6 py-4 text-right">
-<a href="/completed-activities/{{ act.id }}/" class="h-8 px-4 rounded-xl bg-slate-50 text-slate-700 hover:bg-slate-100 hover:text-slate-800 text-[11px] font-semibold flex items-center justify-center border border-slate-200/60 shadow-sm transition-colors">
+<a href="/completed-activities/{{ act.id }}/" class="h-8 px-4 rounded-xl bg-slate-50 text-slate-700 hover:bg-slate-100 hover:text-slate-800 text-[11px] font-semibold flex items-center justify-center border border-slate-200/60 shadow-sm transition-colors inline-flex">
 View Record
 </a>
 </td>
@@ -126,13 +92,8 @@ View Record
 {% endfor %}
 {% else %}
 <tr>
-<td colspan="8" class="px-6 py-16 text-center text-[14px] font-semibold text-slate-400 bg-slate-50/20">
-<div class="flex flex-col items-center justify-center gap-3">
-<div class="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 shadow-inner">
-<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" /></svg>
-</div>
-<p class="text-slate-400">No activities found in completed archive ledger.</p>
-</div>
+<td colspan="8" class="p-0">
+{% include "components/empty_state.html" with title="No completed activities" message="Activities appear here once they clear every closure check and are locked." %}
 </td>
 </tr>
 {% endif %}

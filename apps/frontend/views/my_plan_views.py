@@ -1156,7 +1156,7 @@ def ssa_evidence_upload_action(request, activity_id):
 @require_page_permission("my_plan")
 def evidence_center_view(request):
     """Evidence Center showing tabs of different evidence/verification states."""
-    activities = (
+    activities = list(
         Activity.objects.filter(deleted_at__isnull=True)
         .select_related("school")
         .order_by("-updated_at")
@@ -1180,7 +1180,72 @@ def evidence_center_view(request):
     verified = [a for a in activities if a.ia_verification_status == "verified"]
     partner_ev = [a for a in activities if a.delivery_type == "partner"]
 
+    # Serialize every tab into the row shape `partials/my_plan/activity_table.html`
+    # expects (badges, single next-action) — previously raw Activity instances
+    # were passed straight through, so every field the partial reads
+    # (activity_type_label, next_action, badges, ...) silently rendered blank.
+    from apps.my_plan.services import serialize_activity_row
+    from apps.partners.models import Partner
+    from apps.accounts.models import User
+
+    today = timezone.now().date()
+    partners_map = {p.id: p.name for p in Partner.objects.all()}
+    users_map = {u.id: u.name for u in User.objects.all()}
+
+    def _rows(items):
+        return [
+            serialize_activity_row(a, today, partners_map, users_map) for a in items
+        ]
+
+    pending = _rows(pending)
+    sf_missing = _rows(sf_missing)
+    submitted = _rows(submitted)
+    returned = _rows(returned)
+    ia_pending = _rows(ia_pending)
+    verified = _rows(verified)
+    partner_ev = _rows(partner_ev)
+
+    kpi_strip_items = [
+        {
+            "label": "Evidence Pending",
+            "value": str(len(pending)),
+            "icon": "warning",
+            "variant": "warning",
+        },
+        {
+            "label": "SF ID Missing",
+            "value": str(len(sf_missing)),
+            "icon": "warning",
+            "variant": "danger",
+        },
+        {
+            "label": "Submitted",
+            "value": str(len(submitted)),
+            "icon": "document",
+            "variant": "info",
+        },
+        {
+            "label": "Returned",
+            "value": str(len(returned)),
+            "icon": "warning",
+            "variant": "danger",
+        },
+        {
+            "label": "IA Pending",
+            "value": str(len(ia_pending)),
+            "icon": "clock",
+            "variant": "warning",
+        },
+        {
+            "label": "Verified",
+            "value": str(len(verified)),
+            "icon": "check",
+            "variant": "success",
+        },
+    ]
+
     context = {
+        "mode": "center",
         "pending": pending,
         "sf_missing": sf_missing,
         "submitted": submitted,
@@ -1188,6 +1253,7 @@ def evidence_center_view(request):
         "ia_pending": ia_pending,
         "verified": verified,
         "partner_ev": partner_ev,
+        "kpi_strip_items": kpi_strip_items,
     }
     return render(request, "pages/evidence/index.html", context)
 
@@ -1195,15 +1261,36 @@ def evidence_center_view(request):
 @require_page_permission("my_plan")
 def returned_evidence_view(request):
     """View specifically returned evidence items."""
-    activities = (
+    activities = list(
         Activity.objects.filter(
             deleted_at__isnull=True, status="returned_for_correction"
         )
         .select_related("school")
         .order_by("-updated_at")
     )
+
+    from apps.my_plan.services import serialize_activity_row
+    from apps.partners.models import Partner
+    from apps.accounts.models import User
+
+    today = timezone.now().date()
+    partners_map = {p.id: p.name for p in Partner.objects.all()}
+    users_map = {u.id: u.name for u in User.objects.all()}
+    returned_rows = [
+        serialize_activity_row(a, today, partners_map, users_map) for a in activities
+    ]
+
+    kpi_strip_items = [
+        {
+            "label": "Returned Activities",
+            "value": str(len(returned_rows)),
+            "icon": "warning",
+            "variant": "danger",
+        },
+    ]
     context = {
-        "returned_activities": activities,
+        "returned_activities": returned_rows,
+        "kpi_strip_items": kpi_strip_items,
     }
     return render(request, "pages/evidence/returned.html", context)
 

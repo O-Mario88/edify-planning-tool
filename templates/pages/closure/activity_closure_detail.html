@@ -3,7 +3,7 @@
 {% block title %}Closure Workspace - Edify Command Center{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6" x-data="{ reopenOpen: false, submittingClose: false, submittingReopen: false }">
+<div class="p-6 max-w-7xl mx-auto space-y-5 font-sans" x-data="{ reopenOpen: false, submittingClose: false, submittingReopen: false }">
 
 <!-- Back navigation -->
 <div class="flex items-center justify-between">
@@ -14,13 +14,9 @@
 <!-- Status Badge -->
 <div class="flex items-center gap-2">
 {% if act.status == "closed" %}
-<span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
-Closed
-</span>
+{% include "components/badge.html" with tone="success" label="Closed" size="md" %}
 {% else %}
-<span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider bg-slate-900 text-white">
-{{ act.get_status_display }}
-</span>
+{% include "components/badge.html" with tone="neutral" label=act.get_status_display size="md" %}
 {% endif %}
 </div>
 </div>

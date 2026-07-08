@@ -3,18 +3,64 @@
 {% block title %}Debriefs — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6">
+<div class="p-6 max-w-7xl mx-auto space-y-5 font-sans">
 
-<div class="flex items-center justify-between">
-<div>
-<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight">Debriefs</h1>
-<p class="text-[12px] text-[var(--text-secondary)] mt-1 font-semibold">Edify Operations · Debriefs</p>
-</div>
-</div>
+{% include "components/page_header.html" with title="Debriefs" subtitle="Daily field debriefs submitted by staff and partners — most recent first." %}
 
-<div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm">
-{% if debriefs %}<ul class="divide-y divide-slate-100">{% for d in debriefs %}<li class="px-5 py-3.5 flex items-center justify-between"><div><p class="text-[14px] font-bold text-slate-800">{{ d.title|default:"Debrief" }}</p><p class="text-[11px] text-slate-400">{{ d.created_at }}</p></div><span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">{{ d.status }}</span></li>{% endfor %}</ul>
-{% else %}<div class="p-12 text-center"><p class="text-[36px] mb-3">📝</p><p class="text-[14px] font-bold text-slate-600">No debriefs recorded</p></div>{% endif %}
+<!-- KPI Strip -->
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
+
+<div class="card p-0 overflow-hidden">
+{% if debriefs %}
+<div class="overflow-x-auto">
+<table class="w-full text-[12px] font-semibold text-slate-700">
+<thead class="bg-slate-50 border-b border-slate-100 text-[11px] uppercase font-bold text-slate-400">
+<tr>
+<th class="px-6 py-3 text-left">Date</th>
+<th class="px-6 py-3 text-left">Submitted By</th>
+<th class="px-6 py-3 text-left">Type</th>
+<th class="px-6 py-3 text-left">Summary</th>
+<th class="px-6 py-3 text-center">Blockers</th>
+<th class="px-6 py-3 text-center">Status</th>
+<th class="px-6 py-3 text-right">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100">
+{% for d in debriefs %}
+<tr class="hover:bg-slate-50/50 transition-colors">
+<td class="px-6 py-3.5 text-slate-500 whitespace-nowrap">{{ d.date|date:"M d, Y" }}</td>
+<td class="px-6 py-3.5 font-semibold text-slate-900">{{ d.submitted_by_name }}</td>
+<td class="px-6 py-3.5 text-slate-600">{{ d.get_debrief_type_display }}</td>
+<td class="px-6 py-3.5 text-slate-600 max-w-xs truncate">{{ d.summary|default:"—" }}</td>
+<td class="px-6 py-3.5 text-center">
+{% if d.blockers %}
+{% include "components/badge.html" with tone="danger" label=d.blockers|length|stringformat:"s" %}
+{% else %}
+<span class="text-slate-300">—</span>
+{% endif %}
+</td>
+<td class="px-6 py-3.5 text-center">
+{% if d.status == "reviewed" %}
+{% include "components/badge.html" with tone="success" label=d.get_status_display %}
+{% elif d.status == "returned" %}
+{% include "components/badge.html" with tone="danger" label=d.get_status_display %}
+{% elif d.status == "draft" %}
+{% include "components/badge.html" with tone="neutral" label=d.get_status_display %}
+{% else %}
+{% include "components/badge.html" with tone="warning" label=d.get_status_display %}
+{% endif %}
+</td>
+<td class="px-6 py-3.5 text-right">
+<a href="/debriefs/{{ d.id }}" class="h-8 px-3 rounded-xl bg-slate-50 text-slate-700 hover:bg-slate-100 hover:text-slate-800 text-[11px] font-semibold inline-flex items-center justify-center border border-slate-200/60 transition-colors">View</a>
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% else %}
+{% include "components/empty_state.html" with title="No debriefs recorded" message="Field debriefs submitted by staff and partners will appear here." %}
+{% endif %}
 </div>
 
 </div>
