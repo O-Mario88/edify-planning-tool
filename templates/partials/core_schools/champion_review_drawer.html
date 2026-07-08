@@ -174,7 +174,7 @@ class="rounded-lg p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 trans
 
 <!-- Action Drawer Footer -->
 <div class="bg-slate-50 border-t border-slate-100 p-6 flex items-center justify-between gap-4">
-<form action="{% url 'champion_reject_action' school.school_id %}" method="POST" class="w-1/2">
+<form action="{% url 'frontend:champion_reject_action' school.school_id %}" method="POST" class="w-1/2">
 {% csrf_token %}
 <button 
 type="submit"
@@ -184,7 +184,7 @@ Reject Candidacy
 </button>
 </form>
 
-<form action="{% url 'champion_approve_action' school.school_id %}" method="POST" class="w-1/2">
+<form action="{% url 'frontend:champion_approve_action' school.school_id %}" method="POST" class="w-1/2">
 {% csrf_token %}
 <button 
 type="submit"

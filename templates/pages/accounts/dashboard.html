@@ -62,13 +62,9 @@ class="h-9 w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 text-[12
 >
 </div>
 
-<button class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-semibold text-slate-600 flex items-center gap-1.5 shadow-sm hover:bg-slate-50">
-📥 Export
-</button>
-
-<button class="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[12px] font-semibold flex items-center gap-1.5 transition-all shadow-sm">
+<a href="/accounts/advances" class="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[12px] font-semibold flex items-center gap-1.5 transition-all shadow-sm">
 ⚡ Create Disbursement
-</button>
+</a>
 </div>
 </div>
 
@@ -186,13 +182,6 @@ class="p-3 border rounded-2xl cursor-pointer flex items-center gap-3 transition-
 <!-- Pagination -->
 <div class="flex items-center justify-between border-t border-slate-100 pt-4 mt-4 text-[11px] font-bold text-slate-400">
 <span>Showing 1-8 of 42 funds</span>
-<div class="flex items-center gap-1">
-<button class="h-6 w-6 rounded border border-slate-200 flex items-center justify-center hover:bg-slate-50">&lt;</button>
-<button class="h-6 w-6 rounded bg-slate-900 text-white flex items-center justify-center">1</button>
-<button class="h-6 w-6 rounded border border-slate-200 flex items-center justify-center hover:bg-slate-50 text-slate-600">2</button>
-<button class="h-6 w-6 rounded border border-slate-200 flex items-center justify-center hover:bg-slate-50 text-slate-600">3</button>
-<button class="h-6 w-6 rounded border border-slate-200 flex items-center justify-center hover:bg-slate-50 text-slate-600">&gt;</button>
-</div>
 </div>
 </div>
 
@@ -359,28 +348,12 @@ No documents or receipts attached to this request yet.
 
 <!-- Action buttons -->
 <div class="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4 mt-6">
-<button class="h-9 px-4 border border-slate-200 rounded-xl text-[12px] font-bold text-slate-700 hover:bg-slate-50">
-View Full Plan
-</button>
-
 <form x-bind:action="'/accounts/activities/' + selectedItem.id + '/disburse'" method="POST" class="inline">
 {% csrf_token %}
 <button type="submit" class="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[12px] font-semibold shadow-sm transition-all">
 Disburse Funds
 </button>
 </form>
-
-<button class="h-9 px-4 border border-rose-200 rounded-xl text-[12px] font-bold text-rose-600 hover:bg-rose-50">
-Return
-</button>
-
-<button class="h-9 px-4 border border-slate-200 rounded-xl text-[12px] font-bold text-slate-500 hover:bg-slate-50">
-Hold
-</button>
-
-<button class="h-9 px-3 border border-slate-200 rounded-xl text-[12px] font-bold text-slate-700 flex items-center gap-1.5 hover:bg-slate-50">
-📥 Download Voucher
-</button>
 </div>
 </div>
 
@@ -397,7 +370,7 @@ Hold
 <div class="flex items-center justify-between text-blue-700"><span>Disbursed</span> <span class="font-semibold">UGX 1.26B</span></div>
 <div class="flex items-center justify-between text-emerald-600"><span>Reconciled</span> <span class="font-semibold">UGX 1.04B</span></div>
 </div>
-<a href="#" class="text-[11px] font-semibold text-blue-600 hover:underline block pt-2 border-t border-slate-50 text-center uppercase tracking-wider">
+<a href="/accounts/audit-log" class="text-[11px] font-semibold text-blue-600 hover:underline block pt-2 border-t border-slate-50 text-center uppercase tracking-wider">
 View all activity &rarr;
 </a>
 </div>
@@ -473,7 +446,7 @@ View all activity &rarr;
 <div>
 <div class="pb-3 border-b border-slate-100 flex items-center justify-between">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Recent Disbursement Activity</h3>
-<a href="#" class="text-[11px] font-semibold text-blue-600 hover:underline">View all activity &rarr;</a>
+<a href="/accounts/audit-log" class="text-[11px] font-semibold text-blue-600 hover:underline">View all activity &rarr;</a>
 </div>
 
 <div class="space-y-3.5 mt-4">
@@ -545,7 +518,7 @@ View all activity &rarr;
 <div>
 <div class="pb-3 border-b border-slate-100 flex items-center justify-between">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Reconciliation &amp; Proof Tracker</h3>
-<a href="#" class="text-[11px] font-semibold text-blue-600 hover:underline">View reconciliation queue &rarr;</a>
+<a href="/accounts/accountability" class="text-[11px] font-semibold text-blue-600 hover:underline">View reconciliation queue &rarr;</a>
 </div>
 
 <!-- mini status labels -->
@@ -612,7 +585,7 @@ View all activity &rarr;
 <div>
 <div class="pb-3 border-b border-slate-100 flex items-center justify-between">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Cash Position / Budget Balance</h3>
-<a href="#" class="text-[11px] font-semibold text-blue-600 hover:underline">View cash report &rarr;</a>
+<a href="/accounts/batch-payments" class="text-[11px] font-semibold text-blue-600 hover:underline">View cash report &rarr;</a>
 </div>
 
 <div class="grid grid-cols-2 gap-3 mt-4">

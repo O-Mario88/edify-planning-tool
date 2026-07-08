@@ -63,12 +63,6 @@
         <select class="h-7 px-2 bg-slate-50 rounded-md text-[11px] font-medium text-slate-600 outline-none">
           <option>Sort by: Priority</option>
         </select>
-        <!-- List view toggles -->
-        <div class="flex items-center bg-slate-100 p-0.5 rounded-md">
-          <button class="h-6 w-6 bg-white rounded shadow-sm flex items-center justify-center text-[11px]">☰</button>
-          <button class="h-6 w-6 text-slate-400 hover:text-slate-600 rounded flex items-center justify-center text-[11px]">📅</button>
-          <button class="h-6 w-6 text-slate-400 hover:text-slate-600 rounded flex items-center justify-center text-[11px]">🗺️</button>
-        </div>
       </div>
     </div>
 
@@ -102,7 +96,6 @@
               <span class="text-[11px] text-slate-400 font-normal flex items-center gap-1">👥 {{ task.count }}</span>
               {% endif %}
               <span class="{{ task.status_class }} inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide">{{ task.status }}</span>
-              <button class="text-slate-300 hover:text-slate-500 text-[14px] leading-none px-1">&bull;&bull;&bull;</button>
             </div>
           </div>
           {% endfor %}
@@ -133,7 +126,6 @@
               <span class="text-[11px] text-slate-400 font-normal flex items-center gap-1">👥 {{ task.count }}</span>
               {% endif %}
               <span class="{{ task.status_class }} inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide">{{ task.status }}</span>
-              <button class="text-slate-300 hover:text-slate-500 text-[14px] leading-none px-1">&bull;&bull;&bull;</button>
             </div>
           </div>
           {% endfor %}
@@ -161,7 +153,6 @@
 
             <div class="flex items-center gap-2.5">
               <span class="{{ task.status_class }} inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide">{{ task.status }}</span>
-              <button class="text-slate-300 hover:text-slate-500 text-[14px] leading-none px-1">&bull;&bull;&bull;</button>
             </div>
           </div>
           {% endfor %}
@@ -173,7 +164,6 @@
     <!-- agenda footer links -->
     <div class="flex justify-between items-center pt-3 border-t border-slate-100 text-[12px]">
       <a href="/planning" class="text-blue-600 hover:text-blue-700 font-medium hover:underline">View full calendar &rsaquo;</a>
-      <button class="text-slate-500 hover:text-slate-700 font-medium">+ Add Personal Task</button>
     </div>
   </div>
 

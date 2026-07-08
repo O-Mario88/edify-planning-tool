@@ -14,7 +14,7 @@ from apps.geography.models import Region, District
 from apps.accounts.models import StaffProfile
 from apps.partners.models import Partner, PartnerAssignment
 from apps.activities.models import Activity
-from apps.core_schools.models import CorePlan, CoreActivitySlot, cslot_id
+from apps.core_schools.models import CorePlan, CoreActivitySlot, CoreSchoolProfile, cslot_id
 from apps.audit.services import log as audit_log
 from apps.notifications.models import Notification
 
@@ -590,7 +590,7 @@ def champion_approve_action(request, school_id):
         messages.success(request, f"School successfully graduated to Champion Status!")
     else:
         messages.error(request, f"Failed to graduate school.")
-    return redirect("core_schools")
+    return redirect("/core-schools")
 
 @require_POST
 @require_page_permission("core_schools")
@@ -601,7 +601,7 @@ def champion_reject_action(request, school_id):
         messages.warning(request, f"Candidacy proposal rejected.")
     else:
         messages.error(request, f"Failed to reject candidacy.")
-    return redirect("core_schools")
+    return redirect("/core-schools")
 
 @require_page_permission("core_schools")
 def champions_list_view(request):

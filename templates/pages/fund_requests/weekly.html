@@ -35,15 +35,13 @@ return 'UGX ' + Number(val).toLocaleString();
 
 <!-- Actions toolbar -->
 <div class="flex flex-wrap items-center gap-2">
-<button class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-semibold text-slate-700 flex items-center gap-1.5 shadow-sm hover:bg-slate-50">
+<a href="#"
+onclick="this.href='/fund-requests/weekly?export=csv&' + new URLSearchParams(new FormData(document.getElementById('filters-form'))).toString()"
+class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-semibold text-slate-700 flex items-center gap-1.5 shadow-sm hover:bg-slate-50">
 📥 Export
-</button>
+</a>
 
-<button class="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[12px] font-semibold flex items-center gap-1.5 transition-all shadow-sm">
-✓ Approve All Valid
-</button>
-
-<button class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-semibold text-slate-700 flex items-center gap-1.5 shadow-sm hover:bg-slate-50">
+<button onclick="document.getElementById('filters-form').scrollIntoView({ behavior: 'smooth' })" class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-semibold text-slate-700 flex items-center gap-1.5 shadow-sm hover:bg-slate-50">
 <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
 Filters
 </button>
@@ -282,20 +280,6 @@ class="p-3.5 border rounded-2xl cursor-pointer flex flex-col justify-between tra
 </div>
 </div>
 
-<!-- Action buttons -->
-<div class="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4 mt-6">
-<button class="h-9 px-4 border border-slate-200 rounded-xl text-[12px] font-bold text-slate-700 hover:bg-slate-50">
-View Full Plan
-</button>
-
-<button class="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[12px] font-semibold shadow-sm transition-all">
-Approve
-</button>
-
-<button class="h-9 px-4 border border-rose-200 rounded-xl text-[12px] font-bold text-rose-600 hover:bg-rose-50">
-Return
-</button>
-</div>
 </div>
 
 <!-- RIGHT PANEL SIDEBAR (Col Span 3) -->
@@ -309,9 +293,6 @@ Return
 <div class="flex items-center justify-between text-rose-600"><span>Returned</span> <span class="font-semibold">UGX 12.8M</span></div>
 <div class="flex items-center justify-between text-emerald-600"><span>Approved Today</span> <span class="font-semibold">UGX 36.2M</span></div>
 </div>
-<a href="#" class="text-[11px] font-semibold text-blue-600 hover:underline block pt-2 border-t border-slate-50 text-center uppercase tracking-wider">
-View all activity
-</a>
 </div>
 
 <!-- Monthly Plan & Budget Approval progress bar -->
@@ -425,7 +406,6 @@ View all activity
 <div>
 <div class="pb-3 border-b border-slate-100 flex items-center justify-between">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Recent Approval Activity</h3>
-<a href="#" class="text-[11px] font-semibold text-blue-600 hover:underline">View all activity &rarr;</a>
 </div>
 
 <div class="space-y-3.5 mt-4 text-[12px] font-bold">
@@ -492,7 +472,7 @@ class="p-6 max-w-[1600px] mx-auto space-y-6 font-sans text-slate-700"
 <!-- Export button -->
 <a 
 href="#"
-onclick="this.href='/fund-requests?export=csv&' + new URLSearchParams(new FormData(document.getElementById('filters-form'))).toString()"
+onclick="this.href='/fund-requests/weekly?export=csv&' + new URLSearchParams(new FormData(document.getElementById('filters-form'))).toString()"
 class="btn btn-ghost h-9 shadow-sm"
 >
 <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
@@ -686,7 +666,7 @@ class="bg-blue-50 text-blue-800 p-3.5 rounded-xl border border-blue-100 flex ite
 <span>Fund requests are automatically generated from school visits, cluster trainings, and cluster meetings scheduled in My Plan.</span>
 </div>
 <div class="flex items-center gap-3">
-<a href="#" class="text-blue-700 hover:underline flex items-center gap-0.5">
+<a href="/help" class="text-blue-700 hover:underline flex items-center gap-0.5">
 Learn more about the process
 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
 </a>

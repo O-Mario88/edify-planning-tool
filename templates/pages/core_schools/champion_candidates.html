@@ -10,7 +10,7 @@
 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4">
 <div>
 <div class="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-<a href="{% url 'core_schools' %}" class="hover:text-slate-600 transition-colors">Core Schools</a>
+<a href="{% url 'frontend:core_schools' %}" class="hover:text-slate-600 transition-colors">Core Schools</a>
 <span>&bull;</span>
 <span class="text-slate-500">Champion Pipeline</span>
 </div>
@@ -20,7 +20,7 @@
 
 <div>
 <a 
-href="{% url 'champions_list' %}"
+href="{% url 'frontend:champions_list' %}"
 class="bg-[#1e293b] hover:bg-[#0f172a] text-white border border-transparent rounded-lg px-4 py-2 text-[12px] font-semibold shadow-sm flex items-center gap-1.5 transition-all"
 >
 <span>View Graduated Champions</span>
@@ -75,7 +75,7 @@ class="bg-[#1e293b] hover:bg-[#0f172a] text-white border border-transparent roun
 </td>
 <td class="py-3.5 text-right">
 <button
-hx-get="{% url 'champion_review_drawer' c.school_id %}"
+hx-get="{% url 'frontend:champion_review_drawer' c.school_id %}"
 hx-target="#drawer-container"
 class="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider shadow-sm transition-colors"
 >

@@ -34,37 +34,12 @@ border-radius: 4px;
 <p class="text-[12px] text-slate-500 font-bold mt-1.5">Data upload, verification, quality control, and compliance monitoring.</p>
 </div>
 
-<!-- Filters & Search Toolbar -->
+<!-- Date range (static) -->
 <div class="flex flex-wrap items-center gap-2">
-<!-- Date selector -->
-<div class="relative">
-<button class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-semibold text-slate-600 flex items-center gap-1.5 shadow-sm hover:bg-slate-50">
+<span class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-semibold text-slate-600 flex items-center gap-1.5 shadow-sm">
 <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
 May 19 – May 25, 2025
-</button>
-</div>
-
-<!-- District filter -->
-<select class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-semibold text-slate-600 shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
-<option>All Districts</option>
-</select>
-
-<!-- Cluster filter -->
-<select class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-semibold text-slate-600 shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500">
-<option>All Clusters</option>
-</select>
-
-<!-- Search bar -->
-<div class="relative w-64">
-<span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-<svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
 </span>
-<input 
-type="text" 
-placeholder="Search records, schools, IDs..." 
-class="h-9 w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 text-[12px] font-semibold focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-sm placeholder-slate-400"
->
-</div>
 </div>
 </div>
 
@@ -199,27 +174,12 @@ class="h-9 w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 text-[12
 </div>
 
 <div class="grid grid-cols-1 gap-2 mt-4">
-<button class="h-9 w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-[11px] font-semibold text-slate-700 flex items-center justify-start px-3 gap-2 transition-all">
+<a href="/ssa/upload/" class="h-9 w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-[11px] font-semibold text-slate-700 flex items-center justify-start px-3 gap-2 transition-all">
 📤 Upload SSA Data
-</button>
-<button class="h-9 w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-[11px] font-semibold text-slate-700 flex items-center justify-start px-3 gap-2 transition-all">
-📤 Upload Visit Data
-</button>
-<button class="h-9 w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-[11px] font-semibold text-slate-700 flex items-center justify-start px-3 gap-2 transition-all">
-📤 Upload Training Attendance
-</button>
-<button class="h-9 w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-[11px] font-semibold text-slate-700 flex items-center justify-start px-3 gap-2 transition-all">
-📤 Upload MSC Stories
-</button>
-<button class="h-9 w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-[11px] font-semibold text-slate-700 flex items-center justify-start px-3 gap-2 transition-all">
-📤 Upload Exam Results
-</button>
-<button class="h-9 w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-[11px] font-semibold text-slate-700 flex items-center justify-start px-3 gap-2 transition-all">
-📤 Upload Enrollment Updates
-</button>
-<button class="h-9 w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[12px] font-semibold flex items-center justify-center gap-1.5 transition-all shadow-sm">
+</a>
+<a href="/ssa/upload/" class="h-9 w-full bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[12px] font-semibold flex items-center justify-center gap-1.5 transition-all shadow-sm">
 ⚡ Import Bulk File
-</button>
+</a>
 </div>
 </div>
 
@@ -231,7 +191,7 @@ class="h-9 w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 text-[12
 </div>
 <div class="flex items-center justify-between text-[11px]">
 <span class="text-slate-500 font-bold">Failed uploads:</span>
-<span class="text-rose-600 font-semibold cursor-pointer hover:underline">5 &bull; View all</span>
+<span class="text-rose-600 font-semibold">5</span>
 </div>
 <div class="flex items-center justify-between text-[11px]">
 <span class="text-slate-500 font-bold flex items-center gap-1">
@@ -253,11 +213,11 @@ Processing now:
 
 <!-- Interactive Tabs -->
 <div class="flex flex-wrap gap-1 mt-3 border-b border-slate-100 pb-2">
-<button class="px-3 py-1.5 bg-slate-900 text-white text-[11px] font-semibold rounded-lg">All Pending</button>
-<button class="px-3 py-1.5 hover:bg-slate-50 text-slate-500 text-[11px] font-semibold rounded-lg">Salesforce Verification <span class="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full text-[11px] font-semibold">1,156</span></button>
-<button class="px-3 py-1.5 hover:bg-slate-50 text-slate-500 text-[11px] font-semibold rounded-lg">SSA Review <span class="bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full text-[11px] font-semibold">678</span></button>
-<button class="px-3 py-1.5 hover:bg-slate-50 text-slate-500 text-[11px] font-semibold rounded-lg">Evidence Review <span class="bg-violet-100 text-violet-700 px-1.5 py-0.5 rounded-full text-[11px] font-semibold">934</span></button>
-<button class="px-3 py-1.5 hover:bg-slate-50 text-slate-500 text-[11px] font-semibold rounded-lg">Returned <span class="bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded-full text-[11px] font-semibold">312</span></button>
+<a href="/ia/verification/" class="px-3 py-1.5 bg-slate-900 text-white text-[11px] font-semibold rounded-lg">All Pending</a>
+<a href="/ia/verification/" class="px-3 py-1.5 hover:bg-slate-50 text-slate-500 text-[11px] font-semibold rounded-lg">Salesforce Verification <span class="bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full text-[11px] font-semibold">1,156</span></a>
+<a href="/ia/verification/" class="px-3 py-1.5 hover:bg-slate-50 text-slate-500 text-[11px] font-semibold rounded-lg">SSA Review <span class="bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full text-[11px] font-semibold">678</span></a>
+<a href="/ia/verification/" class="px-3 py-1.5 hover:bg-slate-50 text-slate-500 text-[11px] font-semibold rounded-lg">Evidence Review <span class="bg-violet-100 text-violet-700 px-1.5 py-0.5 rounded-full text-[11px] font-semibold">934</span></a>
+<a href="/ia/returned/" class="px-3 py-1.5 hover:bg-slate-50 text-slate-500 text-[11px] font-semibold rounded-lg">Returned <span class="bg-rose-100 text-rose-700 px-1.5 py-0.5 rounded-full text-[11px] font-semibold">312</span></a>
 </div>
 
 <!-- Table -->
@@ -295,9 +255,7 @@ Processing now:
 </td>
 <td class="py-3 text-right">
 <div class="flex items-center justify-end gap-1.5">
-<button class="h-6 px-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[11px] font-semibold">Verify</button>
-<button class="h-6 px-2 bg-white border border-rose-200 hover:bg-rose-50 text-rose-600 rounded text-[11px] font-semibold">Return</button>
-<span class="text-slate-300 font-bold cursor-pointer px-1 hover:text-slate-600">&#8942;</span>
+<a href="/ia/verification/" class="h-6 px-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[11px] font-semibold inline-flex items-center">Open queue &rarr;</a>
 </div>
 </td>
 </tr>
@@ -311,20 +269,9 @@ Processing now:
 </div>
 </div>
 
-<!-- Table Pagination / Footer -->
+<!-- Table Footer -->
 <div class="flex items-center justify-between border-t border-slate-100 pt-4 mt-4">
 <span class="text-[11px] text-slate-400 font-bold">Showing 1 to 5 of 3,842 records</span>
-<div class="flex items-center gap-1">
-<button class="h-7 w-7 rounded-lg border border-slate-200 hover:bg-slate-50 text-[11px] font-semibold flex items-center justify-center text-slate-400">&lt;</button>
-<button class="h-7 w-7 rounded-lg bg-slate-900 text-white text-[11px] font-semibold flex items-center justify-center">1</button>
-<button class="h-7 w-7 rounded-lg border border-slate-200 hover:bg-slate-50 text-[11px] font-semibold flex items-center justify-center text-slate-600">2</button>
-<button class="h-7 w-7 rounded-lg border border-slate-200 hover:bg-slate-50 text-[11px] font-semibold flex items-center justify-center text-slate-600">3</button>
-<button class="h-7 w-7 rounded-lg border border-slate-200 hover:bg-slate-50 text-[11px] font-semibold flex items-center justify-center text-slate-600">4</button>
-<button class="h-7 w-7 rounded-lg border border-slate-200 hover:bg-slate-50 text-[11px] font-semibold flex items-center justify-center text-slate-600">5</button>
-<span class="text-slate-400 font-bold px-1">..</span>
-<button class="h-7 w-7 rounded-lg border border-slate-200 hover:bg-slate-50 text-[11px] font-semibold flex items-center justify-center text-slate-600">769</button>
-<button class="h-7 w-7 rounded-lg border border-slate-200 hover:bg-slate-50 text-[11px] font-semibold flex items-center justify-center text-slate-600">&gt;</button>
-</div>
 </div>
 </div>
 
@@ -545,7 +492,7 @@ Go to Data Quality
 <div>
 <div class="flex items-center justify-between pb-3 border-b border-slate-100">
 <h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Recent Activity Feed</h2>
-<a href="#" class="text-[11px] font-semibold text-blue-600 hover:underline">View all &rarr;</a>
+<a href="/ia/verification/" class="text-[11px] font-semibold text-blue-600 hover:underline">View all &rarr;</a>
 </div>
 
 <div class="relative border-l  ml-2 pl-4 space-y-5 mt-4">
@@ -565,7 +512,7 @@ Go to Data Quality
 </div>
 </div>
 
-<a href="#" class="text-[11px] font-semibold text-blue-600 hover:underline text-center block mt-4 border-t border-slate-50 pt-3 uppercase tracking-wider">
+<a href="/ia/history/" class="text-[11px] font-semibold text-blue-600 hover:underline text-center block mt-4 border-t border-slate-50 pt-3 uppercase tracking-wider">
 View all activity
 </a>
 </div>
@@ -672,40 +619,28 @@ View all activity
 
 <div class="grid grid-cols-2 gap-2">
 <!-- Start Verification -->
-<button class="h-20 bg-emerald-50 hover:bg-emerald-100/70 border border-emerald-100 rounded-2xl p-3 flex flex-col justify-between items-center text-center transition-all group">
+<a href="/ia/verification/" class="h-20 bg-emerald-50 hover:bg-emerald-100/70 border border-emerald-100 rounded-2xl p-3 flex flex-col justify-between items-center text-center transition-all group">
 <div class="h-7 w-7 rounded-full bg-emerald-500 text-white flex items-center justify-center text-xs shadow-sm font-semibold group-hover:scale-105 transition-transform">✓</div>
 <span class="text-[11px] font-semibold text-slate-700 block mt-1">Start Verification</span>
-</button>
+</a>
 
 <!-- Review Returned -->
-<button class="h-20 bg-amber-50 hover:bg-amber-100/70 border border-amber-100 rounded-2xl p-3 flex flex-col justify-between items-center text-center transition-all group">
+<a href="/ia/returned/" class="h-20 bg-amber-50 hover:bg-amber-100/70 border border-amber-100 rounded-2xl p-3 flex flex-col justify-between items-center text-center transition-all group">
 <div class="h-7 w-7 rounded-full bg-amber-500 text-white flex items-center justify-center text-xs shadow-sm font-semibold group-hover:scale-105 transition-transform">↺</div>
 <span class="text-[11px] font-semibold text-slate-700 block mt-1">Review Returned</span>
-</button>
+</a>
 
 <!-- Open Salesforce Queue -->
-<button class="h-20 bg-blue-50 hover:bg-blue-100/70 border border-blue-100 rounded-2xl p-3 flex flex-col justify-between items-center text-center transition-all group">
+<a href="/ia/verification/" class="h-20 bg-blue-50 hover:bg-blue-100/70 border border-blue-100 rounded-2xl p-3 flex flex-col justify-between items-center text-center transition-all group">
 <div class="h-7 w-7 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs shadow-sm font-semibold group-hover:scale-105 transition-transform">☁</div>
 <span class="text-[11px] font-semibold text-slate-700 block mt-1">Salesforce Queue</span>
-</button>
+</a>
 
 <!-- View School 360 -->
-<button class="h-20 bg-teal-50 hover:bg-teal-100/70 border border-teal-100 rounded-2xl p-3 flex flex-col justify-between items-center text-center transition-all group">
+<a href="/schools" class="h-20 bg-teal-50 hover:bg-teal-100/70 border border-teal-100 rounded-2xl p-3 flex flex-col justify-between items-center text-center transition-all group">
 <div class="h-7 w-7 rounded-full bg-teal-500 text-white flex items-center justify-center text-xs shadow-sm font-semibold group-hover:scale-105 transition-transform">🏫</div>
 <span class="text-[11px] font-semibold text-slate-700 block mt-1">View School 360</span>
-</button>
-
-<!-- Export Verification Report -->
-<button class="h-20 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl p-3 flex flex-col justify-between items-center text-center transition-all group">
-<div class="h-7 w-7 rounded-full bg-slate-500 text-white flex items-center justify-center text-xs shadow-sm font-semibold group-hover:scale-105 transition-transform">📋</div>
-<span class="text-[11px] font-semibold text-slate-700 block mt-1">Export Report</span>
-</button>
-
-<!-- Escalate Data Issue -->
-<button class="h-20 bg-rose-50 hover:bg-rose-100/70 border border-rose-100 rounded-2xl p-3 flex flex-col justify-between items-center text-center transition-all group">
-<div class="h-7 w-7 rounded-full bg-rose-500 text-white flex items-center justify-center text-xs shadow-sm font-semibold group-hover:scale-105 transition-transform">🚨</div>
-<span class="text-[11px] font-semibold text-slate-700 block mt-1">Escalate Issue</span>
-</button>
+</a>
 </div>
 </div>
 

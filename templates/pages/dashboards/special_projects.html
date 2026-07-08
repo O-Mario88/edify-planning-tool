@@ -39,20 +39,9 @@ milestones: [
 <p class="text-[12px] text-slate-500 font-bold mt-1.5 font-semibold">Manage high-impact programs, partner delivery, school participation, and teacher outcomes.</p>
 </div>
 
-<!-- Search / Picker Controls -->
 <div class="flex flex-wrap items-center gap-2">
-<div class="flex items-center gap-1.5 bg-slate-100 px-3 py-1.5 rounded-xl  text-[11px] font-bold text-slate-600">
-🔍 <input type="text" placeholder="Search projects..." class="bg-transparent focus:outline-none w-32">
-</div>
-<select class="h-8 px-2 bg-slate-100  rounded-xl text-[11px] font-bold text-slate-600">
-<option>May 2025</option>
-</select>
-<select class="h-8 px-2 bg-slate-100  rounded-xl text-[11px] font-bold text-slate-600">
-<option>All Regions</option>
-</select>
-
 <!-- User profile info -->
-<div class="flex items-center gap-2 pl-2 border-l border-slate-200">
+<div class="flex items-center gap-2">
 <div class="h-8 w-8 rounded-full bg-slate-100 font-semibold text-[12px] text-slate-700 flex items-center justify-center ">{{ avatar_initials }}</div>
 <span class="text-[11px] font-semibold text-slate-800 hidden sm:inline">{{ user_name }}</span>
 </div>
@@ -97,24 +86,12 @@ milestones: [
 
 <!-- Buttons Toolbar -->
 <div class="flex flex-wrap items-center gap-2">
-<button class="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[12px] font-semibold shadow-sm transition-all">
-+ New Project
-</button>
-<button class="h-9 px-3.5 bg-white  text-slate-700 rounded-xl text-[12px] font-bold shadow-sm hover:bg-slate-50">
+<a href="/schools/upload" class="inline-flex items-center h-9 px-3.5 bg-white  text-slate-700 rounded-xl text-[12px] font-bold shadow-sm hover:bg-slate-50">
 Import Schools
-</button>
-<button class="h-9 px-3.5 bg-white  text-slate-700 rounded-xl text-[12px] font-bold shadow-sm hover:bg-slate-50">
-Assign Partner
-</button>
-<button class="h-9 px-3.5 bg-white  text-slate-700 rounded-xl text-[12px] font-bold shadow-sm hover:bg-slate-50">
-Add Schools to Project
-</button>
-<button class="h-9 px-3.5 bg-white  text-slate-700 rounded-xl text-[12px] font-bold shadow-sm hover:bg-slate-50">
+</a>
+<a href="/analytics" class="inline-flex items-center h-9 px-3.5 bg-white  text-slate-700 rounded-xl text-[12px] font-bold shadow-sm hover:bg-slate-50">
 Track Impact
-</button>
-<button class="h-9 px-3.5 bg-white  text-slate-700 rounded-xl text-[12px] font-bold shadow-sm hover:bg-slate-50 ml-auto">
-Export Summary
-</button>
+</a>
 </div>
 
 
@@ -125,7 +102,7 @@ Export Summary
 <div class="lg:col-span-8 card p-5 space-y-4">
 <div class="flex items-center justify-between pb-2 border-b border-slate-100">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">1. Project Portfolio</h3>
-<a href="#" class="text-[11px] font-semibold text-blue-600 hover:underline">View all projects &rsaquo;</a>
+<a href="/projects" class="text-[11px] font-semibold text-blue-600 hover:underline">View all projects &rsaquo;</a>
 </div>
 
 <div class="overflow-x-auto">
@@ -171,7 +148,7 @@ Export Summary
 <div>
 <div class="pb-3 border-b border-slate-100 flex items-center justify-between">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">2. Priority Projects / Needs Attention</h3>
-<a href="#" class="text-[11px] font-semibold text-blue-600 hover:underline">View all</a>
+<a href="/projects" class="text-[11px] font-semibold text-blue-600 hover:underline">View all</a>
 </div>
 
 <div class="space-y-3.5 mt-4 text-[12px] font-bold text-slate-700">
@@ -201,7 +178,7 @@ Export Summary
 <div class="card p-5 space-y-4">
 <div class="pb-2 border-b border-slate-100 flex items-center justify-between">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">3. Project Impact Overview</h3>
-<a href="#" class="text-[11px] font-semibold text-blue-600 hover:underline">View detailed impact</a>
+<a href="/analytics" class="text-[11px] font-semibold text-blue-600 hover:underline">View detailed impact</a>
 </div>
 
 <div class="space-y-3 text-[11px] font-bold text-slate-500">
@@ -232,7 +209,7 @@ Export Summary
 <div class="card p-5 space-y-4">
 <div class="pb-2 border-b border-slate-100 flex items-center justify-between">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">4. Schools in Projects</h3>
-<a href="#" class="text-[11px] font-semibold text-blue-600 hover:underline">View all</a>
+<a href="/schools" class="text-[11px] font-semibold text-blue-600 hover:underline">View all</a>
 </div>
 
 <div class="space-y-3.5 text-[11px] font-bold text-slate-700">
@@ -271,7 +248,7 @@ Export Summary
 <div class="card p-5 space-y-4">
 <div class="pb-2 border-b border-slate-100 flex items-center justify-between">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">5. Partner Assignment &amp; Delivery</h3>
-<a href="#" class="text-[11px] font-semibold text-blue-600 hover:underline">View all</a>
+<a href="/analytics" class="text-[11px] font-semibold text-blue-600 hover:underline">View all</a>
 </div>
 
 <div class="space-y-3.5 text-[11px] font-bold text-slate-700">
@@ -308,7 +285,7 @@ Export Summary
 <div class="lg:col-span-6 card p-5 space-y-4">
 <div class="pb-2 border-b border-slate-100 flex items-center justify-between">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">6. Teacher Impact Tracker</h3>
-<a href="#" class="text-[11px] font-semibold text-blue-600 hover:underline">View all</a>
+<a href="/analytics" class="text-[11px] font-semibold text-blue-600 hover:underline">View all</a>
 </div>
 
 <div class="overflow-x-auto">
@@ -354,7 +331,7 @@ Export Summary
 <div>
 <div class="pb-3 border-b border-slate-100 flex items-center justify-between">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">7. Upcoming Milestones / Project Calendar</h3>
-<button class="text-[11px] font-semibold text-blue-600 hover:underline">View Calendar</button>
+<a href="/calendar" class="text-[11px] font-semibold text-blue-600 hover:underline">View Calendar</a>
 </div>
 
 <div class="grid grid-cols-2 sm:grid-cols-6 gap-3 mt-4">

@@ -10,7 +10,7 @@
 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4">
 <div>
 <div class="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-<a href="{% url 'core_schools' %}" class="hover:text-slate-600 transition-colors">Core Schools</a>
+<a href="{% url 'frontend:core_schools' %}" class="hover:text-slate-600 transition-colors">Core Schools</a>
 <span>&bull;</span>
 <span class="text-slate-500">Graduates Directory</span>
 </div>
@@ -20,7 +20,7 @@
 
 <div>
 <a 
-href="{% url 'champion_candidates' %}"
+href="{% url 'frontend:champion_candidates' %}"
 class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg px-4 py-2 text-[12px] font-semibold shadow-sm flex items-center gap-1.5 transition-all"
 >
 <span>&larr; Back to Candidates Queue</span>

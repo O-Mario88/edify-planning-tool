@@ -42,6 +42,25 @@ def planning_dashboard_view(request):
         "per_page": request.GET.get("per_page", 10),
     }
 
+    # CSV export of the currently filtered list (same pattern as /clusters).
+    if request.GET.get("export", "").strip() == "csv":
+        import csv
+        from django.http import HttpResponse
+        export_filters = dict(filters, page=1, per_page=5000)
+        export_data = PlanningDashboardService.get_dashboard_data(request.user, export_filters)
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="planning_export.csv"'
+        writer = csv.writer(response)
+        writer.writerow(["School ID", "Name", "District", "Type", "SSA Status",
+                         "Weakest Intervention", "Planning Readiness", "Recommended Action", "Owner"])
+        for s in export_data["schools"]:
+            writer.writerow([
+                s["schoolId"], s["name"], s["district"], s["schoolType"],
+                s["ssaStatus"], s["weakestIntervention"], s["planningReadiness"],
+                s["recommendedAction"], s["ownerName"],
+            ])
+        return response
+
     # 2. Query Dashboard data from Service
     data = PlanningDashboardService.get_dashboard_data(request.user, filters)
 

@@ -43,7 +43,29 @@ def my_plan_view(request):
     }
     
     context = get_my_plan(request.user, query)
-    
+
+    # CSV export of the currently filtered feed (same pattern as /clusters).
+    if request.GET.get("export", "").strip() == "csv":
+        import csv
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="my_plan_export.csv"'
+        writer = csv.writer(response)
+        writer.writerow(["Activity ID", "Type", "School / Cluster", "District",
+                         "Planned Date", "Status", "Owner", "Budget (UGX)"])
+        rows = (context.get("school_visits", [])
+                + context.get("cluster_trainings", [])
+                + context.get("cluster_meetings", []))
+        for a in rows:
+            is_cluster = a["activity_type"].startswith("cluster")
+            writer.writerow([
+                a["id"], a["activity_type_label"],
+                a["cluster_name"] if is_cluster else a["school_name"],
+                a["cluster_district"] if is_cluster else a["school_district"],
+                a["planned_date"] or "", a["status_label"],
+                a.get("owner", ""), a.get("budget_total", ""),
+            ])
+        return response
+
     if request.headers.get("HX-Request") == "true":
         return render(request, "partials/my_plan/workspace.html", context)
     return render(request, "pages/my_plan/index.html", context)

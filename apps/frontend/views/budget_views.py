@@ -187,7 +187,28 @@ def weekly_fund_requests_view(request):
         activities_qs = activities_qs.filter(responsible_staff_id=staff_id)
     if status_filter:
         wfr_qs = wfr_qs.filter(status=status_filter)
-        
+
+    # CSV export of the currently filtered requests (same pattern as /clusters).
+    if request.GET.get("export", "").strip() == "csv":
+        import csv
+        from django.http import HttpResponse
+        from apps.accounts.models import User
+        rows = list(wfr_qs[:5000])
+        requester_names = dict(
+            User.objects.filter(id__in=[r.responsible_user for r in rows]).values_list("id", "name")
+        )
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="weekly_fund_requests.csv"'
+        writer = csv.writer(response)
+        writer.writerow(["Request ID", "Week Start", "Requested By", "Total Amount (UGX)",
+                         "Disbursed (UGX)", "Status", "FY"])
+        for r in rows:
+            writer.writerow([
+                r.id, r.week_start_date, requester_names.get(r.responsible_user, r.responsible_user),
+                r.total_amount or 0, r.disbursed_amount or 0, r.status, r.fy,
+            ])
+        return response
+
     # 3. Calculate KPIs
     weekly_requests_count = wfr_qs.filter(week_start_date=selected_week_start).count()
     monthly_requests_count = wfr_qs.filter(week_start_date__month=month_num).count()
