@@ -67,7 +67,11 @@ def ia_verification_queue_view(request):
     if quarter_filter:
         filtered_qs = filtered_qs.filter(quarter=quarter_filter)
     if month_filter:
-        filtered_qs = filtered_qs.filter(month=month_filter)
+        # Activity stores planned_month (int), not "month".
+        try:
+            filtered_qs = filtered_qs.filter(planned_month=int(month_filter))
+        except (TypeError, ValueError):
+            pass
     if district_filter:
         filtered_qs = filtered_qs.filter(school__district_id=district_filter)
     if cluster_filter:

@@ -348,8 +348,14 @@ def coverage_view(request):
         deleted_at__isnull=True,
     ).values("school_id").distinct().count()
 
+    # Cluster has no direct "schools" relation — schools attach via
+    # SchoolClusterAssignment (related_name="assignments" on Cluster).
     clusters = Cluster.objects.filter(deleted_at__isnull=True).annotate(
-        school_count=Count("schools", filter=Q(schools__deleted_at__isnull=True)),
+        school_count=Count(
+            "assignments",
+            filter=Q(assignments__school__deleted_at__isnull=True),
+            distinct=True,
+        ),
     ).order_by("name")
 
     context = {
@@ -593,7 +599,14 @@ def message_detail_view(request, message_id):
 def leave_requests_view(request):
     """Leave requests."""
     user = request.user
-    leaves = Leave.objects.filter(user=user).order_by("-created_at")
+    # Leave links to StaffProfile (field: staff), not directly to User.
+    # HR/Admin review everyone's requests; other roles see their own.
+    if getattr(user, "active_role", None) in ("HumanResources", "Admin"):
+        leaves = Leave.objects.select_related("staff__user").order_by("-created_at")[:100]
+    else:
+        profile = getattr(user, "staff_profile", None)
+        leaves = (Leave.objects.filter(staff=profile).order_by("-created_at")
+                  if profile else Leave.objects.none())
     context = {"leaves": leaves}
     return render(request, "pages/leave/index.html", context)
 

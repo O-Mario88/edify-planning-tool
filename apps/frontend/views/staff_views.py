@@ -38,9 +38,9 @@ def staff_directory_view(request):
     if active_tab == "cceo":
         staff_qs = staff_qs.filter(roles__contains=["CCEO"])
     elif active_tab == "pl":
-        staff_qs = staff_qs.filter(roles__contains=["ProgramLead"])
+        staff_qs = staff_qs.filter(roles__contains=["Program Lead"])
     elif active_tab == "admin":
-        staff_qs = staff_qs.exclude(roles__contains=["CCEO"]).exclude(roles__contains=["ProgramLead"])
+        staff_qs = staff_qs.exclude(roles__contains=["CCEO"]).exclude(roles__contains=["Program Lead"])
 
     staff_list = []
     
@@ -65,6 +65,17 @@ def staff_directory_view(request):
     ).values('responsible_staff_id').annotate(overdue_count=Count('id'))
     high_risk_count = sum(1 for item in overdue_counts if item['overdue_count'] > 3)
 
+    # StaffProfile has no location_name — resolve primary_district_id → name in one query.
+    from apps.geography.models import District
+    _district_ids = {
+        u.staff_profile.primary_district_id
+        for u in staff_qs
+        if getattr(u, "staff_profile", None) and u.staff_profile.primary_district_id
+    }
+    district_names = dict(
+        District.objects.filter(id__in=_district_ids).values_list("id", "name")
+    ) if _district_ids else {}
+
     for u in staff_qs:
         profile = getattr(u, "staff_profile", None)
         # Count schools assigned to this staff member
@@ -87,7 +98,7 @@ def staff_directory_view(request):
             "email": u.email,
             "roles": u.roles or [],
             "active_role": u.active_role,
-            "district": profile.location_name if profile else "Unknown",
+            "district": district_names.get(profile.primary_district_id, "Unknown") if profile else "Unknown",
             "status": u.status,
             "profile_id": profile.id if profile else None,
             "onboarding_state": getattr(profile, "onboarding_state", "unknown") if profile else "no_profile",

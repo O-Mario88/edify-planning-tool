@@ -146,10 +146,16 @@ def dashboard_view(request):
             sp = getattr(pl, "staff_profile", None)
             supervisee_sp_ids = list(StaffSupervisorAssignment.objects.filter(supervisor=sp).values_list("supervisee_id", flat=True)) if sp else []
             supervisee_user_ids = list(StaffProfile.objects.filter(id__in=supervisee_sp_ids).values_list("user_id", flat=True))
-            # Region: derive from supervised CCEOs' schools
+            # Region: derive from supervised CCEOs' schools.
+            # StaffSchoolAssignment.school_id is a plain CharField (no FK), so
+            # resolve the school ids first, then look the School up by pk.
             region_name = "—"
             if supervisee_sp_ids:
-                _sch = School.objects.filter(staff_assignments__staff_id__in=supervisee_sp_ids).select_related("region").first()
+                _school_ids = list(StaffSchoolAssignment.objects.filter(
+                    staff_id__in=supervisee_sp_ids
+                ).values_list("school_id", flat=True)[:50])
+                _sch = (School.objects.filter(id__in=_school_ids, region__isnull=False)
+                        .select_related("region").first())
                 if _sch and _sch.region:
                     region_name = _sch.region.name
             planned = Activity.objects.filter(responsible_staff_id__in=supervisee_user_ids, status__in=PLANNED, deleted_at__isnull=True, fy=fy).count()
