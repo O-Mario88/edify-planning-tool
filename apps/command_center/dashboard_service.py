@@ -381,28 +381,52 @@ class DashboardMetricsService:
                 }
             ]
         elif role == "Accountant":
+            # Real FY aggregates from WeeklyFundRequest (mirrors
+            # apps/frontend/views/finance_operating_views.accountant_dashboard_view).
+            from django.db.models import Sum
+
+            def _ugx_compact(val):
+                if not val:
+                    return "UGX 0"
+                if val >= 1_000_000_000:
+                    return f"UGX {val / 1_000_000_000:.1f}B"
+                if val >= 1_000_000:
+                    return f"UGX {val / 1_000_000:.1f}M"
+                if val >= 1_000:
+                    return f"UGX {val / 1_000:.0f}K"
+                return f"UGX {val}"
+
+            fy_requests = WeeklyFundRequest.objects.filter(fy=fy)
+            total_allocation = fy_requests.filter(
+                status__in=["approved_by_cd", "sent_to_accountant", "disbursed", "accounted", "accountability_pending"]
+            ).aggregate(Sum("total_amount"))["total_amount__sum"] or 0
+            pending_clearance = fy_requests.filter(
+                status__in=["disbursed", "accountability_pending"]
+            ).aggregate(Sum("disbursed_amount"))["disbursed_amount__sum"] or 0
+            cleared_amount = fy_requests.aggregate(Sum("accounted_amount"))["accounted_amount__sum"] or 0
+
             kpi_items = [
                 {
                     "label": "Total Allocation",
-                    "value": "UGX 450M",
-                    "raw_value": 450000000,
-                    "helper": "current FY",
+                    "value": _ugx_compact(total_allocation),
+                    "raw_value": total_allocation,
+                    "helper": "approved current FY",
                     "icon": "currency",
                     "variant": "finance",
                 },
                 {
                     "label": "Pending Clearance",
-                    "value": "UGX 12.4M",
-                    "raw_value": 12400000,
+                    "value": _ugx_compact(pending_clearance),
+                    "raw_value": pending_clearance,
                     "helper": "advances",
                     "icon": "clock",
                     "variant": "warning",
                 },
                 {
                     "label": "Cleared Amount",
-                    "value": "UGX 380M",
-                    "raw_value": 380000000,
-                    "helper": "confirmed",
+                    "value": _ugx_compact(cleared_amount),
+                    "raw_value": cleared_amount,
+                    "helper": "accounted",
                     "icon": "check",
                     "variant": "success",
                 },

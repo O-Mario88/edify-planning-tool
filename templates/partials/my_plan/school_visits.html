@@ -37,14 +37,15 @@ Open Planning
 {% for row in school_visits %}
 <tr>
 <td class="font-semibold text-slate-800 text-[14px]">{{ row.school_name }}</td>
-<td class="font-semibold text-slate-500">{{ row.district }}</td>
+<td class="font-semibold text-slate-500">{{ row.school_district }}</td>
 <td class="font-bold text-slate-700">{{ row.planned_date|date:"M j, D"|default:"Unscheduled" }}</td>
 <td class="text-slate-600 font-semibold">{{ row.purpose }}</td>
-<td class="font-bold text-slate-700">{{ row.assigned_partner }}</td>
+<td class="font-bold text-slate-700">{{ row.owner }}</td>
 <td>
 <span class="edify-status-badge {{ row.status_class }} px-2 py-0.5 rounded text-[11px]">
 {{ row.status_label }}
 </span>
+{% include "partials/my_plan/row_badges.html" %}
 </td>
 <!-- Include more action menu -->
 {% include "partials/my_plan/activity_row.html" %}
