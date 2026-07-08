@@ -158,7 +158,17 @@ class FrontendViewsTestCase(TestCase):
         self.assertTemplateUsed(response, "pages/analytics/index.html")
 
     def test_system_health_view_renders(self):
-        self.client.force_login(self.cceo_user)
+        admin_user = get_user_model().objects.create(
+            id="admin-health-1",
+            email="admin-health@edify.org",
+            name="Admin Health User",
+            roles=["Admin"],
+            active_role="Admin",
+            is_active=True
+        )
+        admin_user.set_password("pass123")
+        admin_user.save()
+        self.client.force_login(admin_user)
         response = self.client.get("/system-health")
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "pages/system_health/index.html")
@@ -172,9 +182,9 @@ class FrontendViewsTestCase(TestCase):
         self.assertEqual(vm["school_name"], "Kampola High School")
         self.assertFalse(vm["is_clustered"])
         self.assertIn("add_to_cluster", vm["available_actions"])
-        # CCEO lacks project manage permission
-        self.assertNotIn("assign_to_project", vm["available_actions"])
-        self.assertEqual(vm["disabled_reasons"]["assign_to_project"], "You do not have permission to assign projects.")
+        # CCEO works the operational school directory, including project assignment.
+        self.assertIn("assign_to_project", vm["available_actions"])
+        self.assertNotIn("assign_to_project", vm["disabled_reasons"])
 
     def test_add_to_cluster_drawer_get(self):
         self.client.force_login(self.cceo_user)
@@ -195,11 +205,37 @@ class FrontendViewsTestCase(TestCase):
         self.assertEqual(self.school.cluster_status, "clustered")
 
     def test_assign_to_project_permission_gate(self):
-        # CCEO has no project manage permission, should show error
+        # Accountant is finance-only and has no school_directory page access at
+        # all (a stricter, page-level gate than project.assignSchool), so it's
+        # redirected before ever reaching the drawer view.
+        User = get_user_model()
+        accountant_user = User.objects.create(
+            id="accountant-1",
+            email="accountant@edify.org",
+            name="Accountant User",
+            roles=["Accountant"],
+            active_role="Accountant",
+            is_active=True
+        )
+        self.client.force_login(accountant_user)
+        response = self.client.get(f"/schools/{self.school.id}/assign-to-project")
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "/dashboard")
+
+    def test_assign_to_project_drawer_cceo(self):
+        # CCEO works the operational school directory, including project assignment.
         self.client.force_login(self.cceo_user)
+
+        from apps.projects.models import Project
+        project = Project.objects.create(
+            name="Edify Tech Upgrade 2026",
+            code="ETU26",
+            category="intervention_specific"
+        )
+
         response = self.client.get(f"/schools/{self.school.id}/assign-to-project")
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "partials/schools/drawer_error.html")
+        self.assertTemplateUsed(response, "partials/schools/assign_to_project_drawer.html")
 
     def test_assign_to_project_drawer_admin(self):
         User = get_user_model()

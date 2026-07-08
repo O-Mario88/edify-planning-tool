@@ -1,0 +1,98 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Leave Approvals Queue — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="p-6 max-w-7xl mx-auto space-y-6 font-sans">
+
+  <!-- Header -->
+  <div class="border-b border-slate-200 pb-4">
+    <h1 class="text-[22px] font-bold text-slate-800 tracking-tight">Leave Approvals Queue</h1>
+    <p class="text-[12px] text-slate-400 font-semibold mt-0.5">Review pending requests, analyze calendar overlaps, and authorize delegated coverage access</p>
+  </div>
+
+  <!-- Messages -->
+  {% if messages %}
+  <div class="space-y-2">
+    {% for msg in messages %}
+    <div class="p-4 rounded-xl border font-semibold text-[13px] flex items-center justify-between shadow-sm
+      {% if msg.tags == 'success' %}bg-emerald-50 text-emerald-700 border-emerald-100
+      {% elif msg.tags == 'warning' %}bg-amber-50 text-amber-700 border-amber-100
+      {% else %}bg-rose-50 text-rose-700 border-rose-100{% endif %}"
+    >
+      <span>{{ msg }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Main Grid layout: left column list, right column detail panel -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+    
+    <!-- Left Column: Pending List (7 cols) -->
+    <div class="lg:col-span-6 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col">
+      <div class="p-5 border-b border-slate-100">
+        <h3 class="text-[15px] font-bold text-slate-800">Pending Requests</h3>
+      </div>
+      
+      <div class="divide-y divide-slate-150/60 overflow-y-auto max-h-[600px]">
+        {% for r in requests %}
+        <div 
+          class="p-5 hover:bg-slate-50 cursor-pointer transition relative group"
+          hx-get="{% url 'frontend:leave_impact_partial' r.id %}"
+          hx-target="#impact-panel-placeholder"
+          hx-trigger="click"
+        >
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <span class="font-bold text-slate-800 text-[14px] group-hover:text-indigo-600 transition">{{ r.staff.user.name }}</span>
+              <span class="text-[11px] text-slate-400 font-bold ml-2">({{ r.staff.user.active_role }})</span>
+              
+              <div class="flex items-center gap-2 mt-2">
+                <span class="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-lg text-[10.5px] font-bold uppercase tracking-wider">
+                  {{ r.type|replace:"_"|title }}
+                </span>
+                <span class="text-[12px] text-slate-500 font-semibold">
+                  {{ r.start_date }} → {{ r.end_date }}
+                </span>
+              </div>
+              
+              <div class="text-[11.5px] text-slate-400 font-semibold mt-2.5">
+                <span>Handover to: </span>
+                <span class="font-bold text-slate-600">{{ r.covering_staff.user.name|default:"None" }}</span>
+              </div>
+            </div>
+            
+            <div class="text-right">
+              <span class="text-[20px] font-extrabold text-slate-800 tracking-tight block">{{ r.days_charged }}</span>
+              <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">working days</span>
+            </div>
+          </div>
+          
+          <!-- Hover indicator -->
+          <div class="absolute left-0 top-0 bottom-0 w-1 bg-indigo-600 opacity-0 group-hover:opacity-100 transition"></div>
+        </div>
+        {% empty %}
+        <div class="p-8 text-center text-slate-400 py-16">
+          <p class="text-[36px] mb-2">🏖</p>
+          <p class="font-bold text-[14px]">No leave requests pending review.</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Right Column: Detail / Impact Panel (6 cols) -->
+    <div class="lg:col-span-6 sticky top-6">
+      <div id="impact-panel-placeholder">
+        <div class="bg-white rounded-2xl border border-slate-100 p-8 text-center text-slate-400 py-24 shadow-sm">
+          <p class="text-[42px] mb-3">👁</p>
+          <h3 class="font-bold text-[15px] text-slate-800">Select Request to Audit Impact</h3>
+          <p class="text-[12px] text-slate-400 mt-1 max-w-xs mx-auto leading-relaxed">Choose a pending leave request from the list to analyze conflicts, overlap risk, and approve coverage assignments.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

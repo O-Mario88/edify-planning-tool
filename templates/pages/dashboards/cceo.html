@@ -40,12 +40,8 @@
 </div>
 
 
-<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-  {% include "components/kpi_card.html" with label="Completed" value=kpis.completed delta="29% vs last week ▲" delta_tone="success" tone="success" icon="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" %}
-  {% include "components/kpi_card.html" with label="In Progress" value=kpis.in_progress delta="41% vs last week ▲" delta_tone="success" tone="info" icon="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" %}
-  {% include "components/kpi_card.html" with label="Planned" value=kpis.planned delta="No change —" delta_tone="neutral" tone="warning" icon="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" %}
-  {% include "components/kpi_card.html" with label="Overdue" value=kpis.overdue delta="▲ 1 vs last week" delta_tone="danger" tone="danger" icon="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" %}
-</div>
+<!-- Unified KPI Strip -->
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
 
 
 <!-- ================= MAIN DASHBOARD CONTENT ================= -->

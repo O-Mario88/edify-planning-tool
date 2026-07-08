@@ -5,7 +5,7 @@ from .views import (
     planning_views, budget_views, my_plan_views, analytics_views,
     staff_views, finance_views, partner_views, extended_views,
     core_schools_views, ssa_views, ia_views, finance_operating_views,
-    closure_views,
+    closure_views, leave_views,
 )
 
 app_name = "frontend"
@@ -15,6 +15,7 @@ urlpatterns = [
     path("login", auth_views.login_view, name="login"),
     path("logout", auth_views.logout_view, name="logout"),
     path("auth/switch-role", auth_views.switch_role_view, name="switch_role"),
+    path("change-password", auth_views.force_change_password_view, name="change_password"),
     
     # Dashboards
     path("dashboard", dashboard_views.dashboard_view, name="dashboard"),
@@ -150,6 +151,38 @@ urlpatterns = [
     
     # Targets (My Targets)
     path("my-targets", staff_views.my_targets_view, name="my_targets"),
+    path("team-targets", staff_views.team_targets_view, name="team_targets"),
+    path("team-targets/", staff_views.team_targets_view),
+    
+    # Personal Time Off & Leave Workflow
+    path("personal-time-off", leave_views.personal_time_off_view, name="personal_time_off"),
+    path("personal-time-off/", leave_views.personal_time_off_view),
+    path("personal-time-off/request", leave_views.request_leave_drawer_view, name="request_leave_drawer"),
+    path("personal-time-off/request/", leave_views.request_leave_drawer_view),
+    path("personal-time-off/eligible-cover", leave_views.eligible_cover_api, name="eligible_cover_api"),
+    path("leave/tracker", leave_views.leave_tracker_view, name="leave_tracker"),
+    path("leave/tracker/", leave_views.leave_tracker_view),
+    path("leave/approvals", leave_views.leave_approvals_view, name="leave_approvals"),
+    path("leave/approvals/", leave_views.leave_approvals_view),
+    path("leave/approvals/<str:leave_id>/approve", leave_views.leave_approve_action, name="leave_approve_action"),
+    path("leave/approvals/<str:leave_id>/reject", leave_views.leave_reject_action, name="leave_reject_action"),
+    path("leave/approvals/<str:leave_id>/return", leave_views.leave_return_action, name="leave_return_action"),
+    path("leave/approvals/<str:leave_id>/impact", leave_views.leave_impact_partial, name="leave_impact_partial"),
+    path("leave/coverage", leave_views.leave_coverage_view, name="leave_coverage"),
+    path("leave/coverage/", leave_views.leave_coverage_view),
+    path("leave/coverage/<str:assignment_id>/revoke", leave_views.revoke_coverage_action, name="revoke_coverage_action"),
+    path("leave/calendar", leave_views.leave_calendar_view, name="leave_calendar"),
+    path("leave/calendar/", leave_views.leave_calendar_view),
+    path("admin/leave-policies", leave_views.leave_policies_view, name="leave_policies"),
+    path("admin/leave-policies/", leave_views.leave_policies_view),
+    path("public-holidays", leave_views.public_holidays_view, name="public_holidays"),
+    path("public-holidays/", leave_views.public_holidays_view),
+    path("leave/team-availability", leave_views.team_availability_view, name="team_availability"),
+    path("leave/team-availability/", leave_views.team_availability_view),
+    
+    # Country Budget
+    path("country-budget", finance_views.country_budget_view, name="country_budget"),
+    path("country-budget/", finance_views.country_budget_view),
     
     # My Team (PL view)
     path("my-team", staff_views.my_team_view, name="my_team"),

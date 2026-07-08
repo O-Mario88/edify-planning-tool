@@ -77,109 +77,38 @@ class RolePermissionService:
 
     @staticmethod
     def can_view_page(user, page: str) -> bool:
-        role = getattr(user, "active_role", None)
-        if not role:
+        if not user or not user.is_authenticated:
             return False
-
-        if role == "Admin":
-            return True
-
-        # Admin pages
-        if page in ["admin_dashboard", "users", "roles_permissions", "page_access_matrix", "audit_log", "workflow_rules", "feature_flags", "security_center", "upload_history", "notifications_mgmt", "region_district_setup"]:
-            return False
-
-        # IA Dashboards and queues
-        if page in [
-            "ia_dashboard", "ia_verification_queue", "ia_verification", "ia_review_workspace",
-            "ia_returned", "ia_history", "ia_duplicates", "ia_notifications", "ia_compare",
-            "data_quality_center", "intervention_impact_review", "core_assessment_verification",
-            "cluster_ssa_review", "analytics_quality", "ia_reports"
-        ]:
-            return role in ["ImpactAssessment", "Admin"]
-
-        # RVP Strategic oversight pages
-        if page in [
-            "rvp_dashboard", "regional_performance", "country_performance", "cd_performance",
-            "pl_performance", "cceo_performance_rollups", "budget_approval", "monthly_fund_request",
-            "donor_metrics", "strategic_reports", "finance_summary", "risk_dashboard"
-        ]:
-            return role in ["RegionalVicePresident", "Admin"]
-
-        # HR People management pages
-        if page in [
-            "hr_dashboard", "staff_performance", "workload_health", "returned_work_patterns",
-            "performance_risk", "staff_activity_trends", "workload_balance"
-        ]:
-            return role in ["HumanResources", "Admin"]
-
-        # Accountant Dashboard
-        if page == "accountant_dashboard":
-            return role in ["Accountant", "Admin"]
-
-        # School Directory vs Profiles
-        if page == "school_directory":
-            return role in ["CCEO", "Program Lead", "ProjectCoordinator"]
             
-        if page in ["school_profile", "school_action_drawer"]:
-            return role in ["CCEO", "Program Lead", "ImpactAssessment", "ProjectCoordinator"]
+        from apps.core.navigation import get_user_role_slug, PAGE_PERMISSIONS
+        
+        role_slug = get_user_role_slug(user)
+        if not role_slug:
+            return False
+            
+        # Admin bypass
+        if role_slug == "ADMIN":
+            return True
+            
+        # Check against centralized PAGE_PERMISSIONS map
+        if page in PAGE_PERMISSIONS:
+            return role_slug in PAGE_PERMISSIONS[page]
+            
+        # Fallbacks for legacy/common views
+        if page in ["settings", "help", "profile", "calendar"]:
+            return True
+        if page.startswith("ia_"):
+            return role_slug in ("IA", "ADMIN")
+        if page.startswith("rvp_"):
+            return role_slug in ("RVP", "ADMIN")
+        if page.startswith("hr_"):
+            return role_slug in ("HR", "ADMIN")
+        if page.startswith("partner_"):
+            return role_slug in ("PARTNER", "ADMIN")
+            
+        # Secure default to prevent fallthrough leaks (e.g. system-health, partner/my-plan)
+        return False
 
-        if page == "school_upload":
-            return role in ["ImpactAssessment"]
-
-        # Program scheduling pages
-        if page in ["planning", "planning_dashboard", "planning_schedule", "planning_schedule_modal", "planning_schedule_action", "planning_assign_partner_modal", "planning_assign_partner_action", "planning_intelligence", "planning_bulk_action", "cost_preview"]:
-            return role in ["CCEO", "Program Lead", "ProjectCoordinator"]
-
-        if page == "core_schools":
-            return role in ["CCEO", "Program Lead", "ProjectCoordinator"]
-
-        # Clusters & Cluster Planning
-        if page in ["clusters", "cluster_planning", "cluster_detail"]:
-            return role in ["CCEO", "Program Lead", "ProjectCoordinator"]
-
-        # Personal and partner planning
-        if page == "my_plan":
-            return role in ["CCEO", "Program Lead", "ProjectCoordinator", "PartnerAdmin", "PartnerFieldOfficer"]
-
-        if page == "partner_scheduling":
-            return role in ["PartnerAdmin", "PartnerFieldOfficer"]
-
-        if page == "evidence_upload":
-            return role in ["CCEO", "Program Lead", "PartnerAdmin", "PartnerFieldOfficer"]
-
-        # Consolidated finance page
-        if page in ["consolidated_fund_allocation", "fund_allocation", "budget_overview", "cost_settings"]:
-            return role in ["Accountant", "CountryDirector", "RegionalVicePresident", "Program Lead"]
-
-        # Budgets & Fund Requests
-        if page in ["monthly_budget", "fund_requests"]:
-            return role in ["CCEO", "Program Lead", "CountryDirector", "RegionalVicePresident", "Accountant"]
-
-        # Disbursement / Accountant views
-        if page in ["disbursements", "reimbursements", "accountability", "finance_action_drawer", "weekly_fund_request_confirm", "weekly_fund_request_self_funded", "weekly_fund_request_disburse"]:
-            return role in ["Accountant"]
-
-        # Staff records / HR
-        if page in ["staff_directory", "staff", "my_team", "debriefs_list", "debrief_detail", "leave_planner", "leave_planner_view"]:
-            return role in ["HumanResources", "Program Lead", "CountryDirector", "RegionalVicePresident"]
-
-        if page == "activity_timeline":
-            return role in ["ImpactAssessment", "Admin", "CCEO", "Program Lead", "Accountant", "ProjectCoordinator"]
-
-        # SSA pages
-        if page in ["ssa_master", "ssa_upload", "ssa_history", "ssa"]:
-            return role in ["ImpactAssessment", "CountryDirector", "RegionalVicePresident", "Program Lead", "CCEO"]
-
-        # Partner dashboards
-        if page in ["partner_today", "partner_schools", "partner_activities", "partner_evidence"]:
-            return role in ["PartnerAdmin", "PartnerFieldOfficer"]
-
-        # Partners directory
-        if page in ["partners", "partner_detail"]:
-            return role in ["CCEO", "Program Lead", "CountryDirector", "RegionalVicePresident", "ImpactAssessment", "ProjectCoordinator"]
-
-        # Default allowed for personal views (dashboard, my-plan, profile, settings, help, calendar)
-        return True
 
     @staticmethod
     def can_view_record(user, obj) -> bool:
@@ -190,8 +119,14 @@ class RolePermissionService:
         obj_type = obj.__class__.__name__
 
         # CountryDirector and RegionalVicePresident cannot view raw field/planning records directly
-        if role in ["CountryDirector", "RegionalVicePresident"] and obj_type in ["School", "Cluster", "Activity", "CorePlan", "CoreActivitySlot"]:
-            return False
+        if role == "CountryDirector":
+            from django.conf import settings
+            if not getattr(settings, "ALLOW_CD_OPERATIONAL_PLANNING", False):
+                if obj_type in ["School", "Cluster", "Activity", "CorePlan", "CoreActivitySlot"]:
+                    return False
+        elif role == "RegionalVicePresident":
+            if obj_type in ["School", "Cluster", "Activity", "CorePlan", "CoreActivitySlot"]:
+                return False
 
         from apps.core.scoping import resolve_user_scope
         scope = resolve_user_scope(user)
@@ -212,7 +147,19 @@ class RolePermissionService:
                 return True
             if role in ["PartnerAdmin", "PartnerFieldOfficer"]:
                 return obj.assigned_partner_id in scope.partner_ids
-            return obj.school_id in scope.school_ids or obj.responsible_staff_id == user.id
+            is_covering = False
+            if obj.responsible_staff_id and obj.responsible_staff_id != user.id:
+                from django.utils import timezone
+                from apps.accounts.models import TemporaryCoverageAssignment
+                now = timezone.now()
+                is_covering = TemporaryCoverageAssignment.objects.filter(
+                    covering_staff__user=user,
+                    original_staff__user_id=obj.responsible_staff_id,
+                    start_datetime__lte=now,
+                    end_datetime__gte=now,
+                    status="active"
+                ).exists()
+            return obj.school_id in scope.school_ids or obj.responsible_staff_id == user.id or is_covering
 
         elif obj_type in ["CorePlan", "CoreActivitySlot"]:
             if scope.country_scope:
@@ -297,9 +244,7 @@ class RolePermissionService:
     @staticmethod
     def can_assign_to_project(user, school) -> bool:
         role = getattr(user, "active_role", None)
-        if role == "CountryDirector":
-            return False
-        return role in ["ProjectCoordinator", "Admin"]
+        return role in ["CCEO", "Program Lead", "ImpactAssessment", "ProjectCoordinator", "Admin"]
 
     @staticmethod
     def can_add_to_cluster(user, school) -> bool:

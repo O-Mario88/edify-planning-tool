@@ -226,6 +226,65 @@ def accountant_dashboard_view(request):
     all_funds = queue_items + mock_items
     all_funds_json = json.dumps(all_funds)
 
+    kpi_items = [
+        {
+            "label": "Total Funds This Month",
+            "value": "UGX 2.48B",
+            "helper": "▲ 18.6% vs last month",
+            "icon": "check",
+            "variant": "success",
+        },
+        {
+            "label": "Pending Disbursement",
+            "value": "UGX 742.6M",
+            "helper": "28 requests awaiting",
+            "icon": "warning",
+            "variant": "warning",
+        },
+        {
+            "label": "Disbursed Today",
+            "value": "UGX 186.4M",
+            "helper": "12 disbursements made",
+            "icon": "info",
+            "variant": "info",
+        },
+        {
+            "label": "Awaiting Approval",
+            "value": "UGX 524.3M",
+            "helper": "By CD/RVP",
+            "icon": "warning",
+            "variant": "warning",
+        },
+        {
+            "label": "Special Projects",
+            "value": "UGX 216.4M",
+            "helper": "Restricted funding",
+            "icon": "info",
+            "variant": "info",
+        },
+        {
+            "label": "Admin Pending",
+            "value": "UGX 128.7M",
+            "helper": "Travel/Op overheads",
+            "icon": "warning",
+            "variant": "warning",
+        },
+        {
+            "label": "Recon Rate",
+            "value": "78%",
+            "helper": "Target: >95%",
+            "icon": "info",
+            "variant": "info",
+        },
+        {
+            "label": "Budget Util",
+            "value": "64%",
+            "helper": "FY26 Allocation",
+            "icon": "info",
+            "variant": "info",
+        }
+    ]
+
     context = {
         "kpis": {
             "total_approved": "UGX 2.48B",
@@ -237,6 +296,7 @@ def accountant_dashboard_view(request):
             "recon_rate": "78%",
             "budget_util": "64%"
         },
+        "kpi_strip_items": kpi_items,
         "all_funds": all_funds,
         "all_funds_json": all_funds_json,
         "fy": fy,

@@ -255,11 +255,71 @@ def dashboard_view(request):
         total_completed_nat = sum(chart_completed)
         national_achievement = round(total_completed_nat / (total_planned_nat + total_completed_nat) * 100) if (total_planned_nat + total_completed_nat) else 0
 
+        cd_kpi_items = [
+            {
+                "label": "National Achievement",
+                "value": f"{national_achievement}%",
+                "helper": "Completed / (Planned + Completed)",
+                "icon": "chart",
+                "variant": "info",
+            },
+            {
+                "label": "Active Schools",
+                "value": str(total_schools),
+                "helper": "In the directory",
+                "icon": "school",
+                "variant": "success",
+            },
+            {
+                "label": "Avg National SSA",
+                "value": f"{round(avg_national_ssa, 2)}",
+                "helper": f"Confirmed records, FY{fy}",
+                "icon": "check",
+                "variant": "info",
+            },
+            {
+                "label": "SF Backlog",
+                "value": str(sf_backlog),
+                "helper": "Completed, missing SF ID",
+                "icon": "warning",
+                "variant": "warning",
+            },
+            {
+                "label": "Pending Fund Requests",
+                "value": str(len(pending_wfrs)),
+                "helper": "Awaiting CD approval",
+                "icon": "clock",
+                "variant": "amber",
+            },
+            {
+                "label": "Disbursed (FY)",
+                "value": f"UGX {round(budget_summary['total_disbursed']/1000000, 1)}M" if budget_summary['total_disbursed'] else "UGX 0M",
+                "helper": f"Planned: UGX {round(budget_summary['planned_total']/1000000, 1)}M" if budget_summary['planned_total'] else "UGX 0M",
+                "icon": "currency",
+                "variant": "success",
+            },
+            {
+                "label": "Budget Util.",
+                "value": f"{budget_summary['utilization_pct']}%",
+                "helper": "Disbursed vs planned",
+                "icon": "trending-up",
+                "variant": "info",
+            },
+            {
+                "label": "High-Risk Regions",
+                "value": str(high_risk_count),
+                "helper": "Below 60% achievement",
+                "icon": "danger",
+                "variant": "danger",
+            }
+        ]
+
         context = {
             "alerts": alerts_list, "alerts_summary": alerts_summary,
             "today_context": today_context, "role": role,
             "user_name": user.name, "avatar_initials": avatar_initials,
             "use_dark_sidebar": False, "fy": fy,
+            "kpi_strip_items": cd_kpi_items,
             # KPIs
             "total_schools": total_schools,
             "completed_visits": completed_visits,
@@ -357,6 +417,37 @@ def dashboard_view(request):
         weak_clusters.sort(key=lambda x: x["avg_ssa"])
         weak_clusters = weak_clusters[:6]
 
+        pl_kpi_items = [
+            {
+                "label": "Pending Reviews",
+                "value": str(len(pending_reviews)),
+                "helper": "CCEO activities",
+                "icon": "report",
+                "variant": "info",
+            },
+            {
+                "label": "Fund Approvals",
+                "value": str(len(pending_funds)),
+                "helper": "Awaiting your sign-off",
+                "icon": "currency",
+                "variant": "warning",
+            },
+            {
+                "label": "Overdue Staff",
+                "value": str(len(cceos_overdue)),
+                "helper": "CCEOs with delay issues",
+                "icon": "warning",
+                "variant": "danger",
+            },
+            {
+                "label": "Struggling Clusters",
+                "value": str(len(weak_clusters)),
+                "helper": "Avg SSA below 5.0",
+                "icon": "chart",
+                "variant": "purple",
+            }
+        ]
+
         context = {
             "alerts": alerts_list,
             "alerts_summary": alerts_summary,
@@ -368,6 +459,7 @@ def dashboard_view(request):
             "pending_funds": pending_funds,
             "cceos_overdue": cceos_overdue,
             "weak_clusters": weak_clusters,
+            "kpi_strip_items": pl_kpi_items,
         }
         return render(request, "pages/dashboards/pl.html", context)
 
@@ -401,6 +493,37 @@ def dashboard_view(request):
                 "missing_ssa": r.missing_ssa
             })
 
+        rvp_kpi_items = [
+            {
+                "label": "Total Schools",
+                "value": str(total_schools),
+                "helper": "Across all regions",
+                "icon": "school",
+                "variant": "success",
+            },
+            {
+                "label": "Schools Missing SSA",
+                "value": str(schools_missing_ssa),
+                "helper": "Awaiting field assessment",
+                "icon": "warning",
+                "variant": "warning",
+            },
+            {
+                "label": "Pending Budget Approvals",
+                "value": str(pending_wfrs),
+                "helper": f"Value: UGX {round(total_requested/1000000, 1)}M" if total_requested else "Value: UGX 0M",
+                "icon": "clock",
+                "variant": "info",
+            },
+            {
+                "label": "Approved Funding (FY)",
+                "value": f"UGX {round(total_approved/1000000, 1)}M" if total_approved else "UGX 0M",
+                "helper": "UGX disbursed/approved",
+                "icon": "currency",
+                "variant": "success",
+            }
+        ]
+
         context = {
             "alerts": alerts_list,
             "alerts_summary": alerts_summary,
@@ -413,6 +536,7 @@ def dashboard_view(request):
             "total_requested": total_requested,
             "total_approved": total_approved,
             "regions_summary": regions_summary,
+            "kpi_strip_items": rvp_kpi_items,
         }
         return render(request, "pages/dashboards/rvp.html", context)
 
@@ -450,6 +574,30 @@ def dashboard_view(request):
                     "overdue_count": c_overdue
                 })
                 
+        hr_kpi_items = [
+            {
+                "label": "Overdue Field Activities",
+                "value": str(overdue_count),
+                "helper": "Action required by supervisors",
+                "icon": "danger",
+                "variant": "danger",
+            },
+            {
+                "label": "Daily Debriefs Today",
+                "value": str(debrief_count),
+                "helper": "Submitted by CCEOs today",
+                "icon": "report",
+                "variant": "success",
+            },
+            {
+                "label": "Pending Leave Requests",
+                "value": str(pending_leaves),
+                "helper": "Awaiting approval",
+                "icon": "clock",
+                "variant": "warning",
+            }
+        ]
+
         context = {
             "alerts": alerts_list,
             "alerts_summary": alerts_summary,
@@ -460,6 +608,7 @@ def dashboard_view(request):
             "debrief_count": debrief_count,
             "pending_leaves": pending_leaves,
             "workload_alerts": workload_alerts[:5],
+            "kpi_strip_items": hr_kpi_items,
         }
         return render(request, "pages/dashboards/hr.html", context)
 
@@ -510,6 +659,37 @@ def dashboard_view(request):
             {"title": "Training Report - Week 2", "desc": "2 reports", "status": "Awaiting"}
         ]
 
+        cceo_kpi_items = [
+            {
+                "label": "Completed Tasks",
+                "value": str(completed_cnt),
+                "helper": "29% vs last week ▲",
+                "icon": "check",
+                "variant": "success",
+            },
+            {
+                "label": "In Progress",
+                "value": str(in_progress_cnt),
+                "helper": "41% vs last week ▲",
+                "icon": "clock",
+                "variant": "info",
+            },
+            {
+                "label": "Planned Tasks",
+                "value": str(planned_cnt),
+                "helper": "No change —",
+                "icon": "calendar",
+                "variant": "warning",
+            },
+            {
+                "label": "Overdue Tasks",
+                "value": str(overdue_cnt),
+                "helper": "▲ 1 vs last week",
+                "icon": "warning",
+                "variant": "danger",
+            }
+        ]
+
         context = {
             "alerts": alerts_list,
             "alerts_summary": alerts_summary,
@@ -527,7 +707,8 @@ def dashboard_view(request):
             "agenda_afternoon": agenda_afternoon,
             "agenda_evening": agenda_evening,
             "upcoming_week": upcoming_week,
-            "pending_approvals": pending_approvals
+            "pending_approvals": pending_approvals,
+            "kpi_strip_items": cceo_kpi_items,
         }
         return render(request, "pages/dashboards/cceo.html", context)
 

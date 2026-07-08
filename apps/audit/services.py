@@ -37,6 +37,36 @@ def log(
 ) -> None:
     """Append a hash-chained audit row. Best-effort — never raises."""
     try:
+        if actor_id:
+            try:
+                from apps.accounts.models import TemporaryCoverageAssignment, StaffProfile
+                from django.utils import timezone
+                now = timezone.now()
+                sp = StaffProfile.objects.filter(user_id=actor_id).first()
+                if sp:
+                    cov = TemporaryCoverageAssignment.objects.filter(
+                        covering_staff=sp,
+                        start_datetime__lte=now,
+                        end_datetime__gte=now,
+                        status="active"
+                    ).select_related("original_staff__user", "leave_request").first()
+                    if cov:
+                        if not payload:
+                            payload = {}
+                        elif not isinstance(payload, dict):
+                            payload = {"original_payload": payload}
+                        payload.update({
+                            "acting_for": {
+                                "staff_profile_id": cov.original_staff.id,
+                                "user_id": cov.original_staff.user.id,
+                                "name": cov.original_staff.user.name,
+                            },
+                            "reason": "Leave Coverage",
+                            "leave_request_id": cov.leave_request.id,
+                        })
+            except Exception as e:
+                logger.error("Failed to intercept audit for coverage: %s", e)
+
         ctx = get_request_context()
         fields = CanonicalAuditFields(
             action=action,

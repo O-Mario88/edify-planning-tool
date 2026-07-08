@@ -65,6 +65,18 @@ def planning_dashboard_view(request):
     showing_start = (int(filters["page"]) - 1) * int(filters["per_page"]) + 1 if data["total_count"] > 0 else 0
     showing_end = min(int(filters["page"]) * int(filters["per_page"]), data["total_count"])
 
+    # Query scheduled activities if tab is scheduled for FullCalendar.js representation
+    scheduled_activities = []
+    if filters["tab"] == "scheduled":
+        from apps.activities.models import Activity
+        scheduled_activities = Activity.objects.filter(
+            deleted_at__isnull=True,
+            status__in=["planned", "scheduled", "partner_scheduled", "in_progress", "completed", "ia_verified"],
+            fy=fy
+        ).select_related("school")
+        if request.user.active_role == "CCEO":
+            scheduled_activities = scheduled_activities.filter(responsible_staff_id=request.user.id)
+
     # 4. Construct context
     context = {
         "schools": data["schools"],
@@ -74,6 +86,7 @@ def planning_dashboard_view(request):
         "cluster_planning": data["cluster_planning"],
         "core_summary": data["core_summary"],
         "total_count": data["total_count"],
+        "scheduled_activities": scheduled_activities,
         
         # Options
         "districts": districts,
@@ -186,7 +199,7 @@ def schedule_action_view(request):
     scheduled_date = request.POST.get("scheduled_date")
     focus_intervention = request.POST.get("focus_intervention")
     purpose_type = request.POST.get("purpose_type", "focus_intervention")
-    purpose_text = request.POST.get("activity_purpose_text", "").strip()
+    purpose_text = (request.POST.get("activity_purpose_text") or request.POST.get("activity_goal") or "").strip()
     expected_outcome = request.POST.get("expected_outcome", "").strip()
     expected_participants = request.POST.get("expected_participants", "").strip()
     delivery_type = request.POST.get("delivery_type", "staff")
@@ -240,7 +253,7 @@ def schedule_action_view(request):
             messages.success(request, f"Cluster activity scheduled successfully.")
             
         # Redirect to My Plan and close drawer via client headers
-        response = HttpResponse('<script>window.location.href = "/my-plan/";</script>')
+        response = HttpResponse('<script>window.location.href = "/my-plan";</script>')
         response["HX-Trigger"] = "close-drawer"
         return response
     except Exception as e:

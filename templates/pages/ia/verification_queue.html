@@ -40,78 +40,7 @@ Authoritative validation layer. Review implementation evidence, detect anomalies
 </div>
 
 <!-- KPI Strip -->
-<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-<!-- Waiting -->
-<div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group">
-<span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Awaiting Verification</span>
-<div class="flex items-baseline justify-between mt-3">
-<span class="text-[28px] font-semibold text-slate-800 leading-none">{{ kpis.waiting }}</span>
-<span class="p-1 rounded-lg bg-blue-50 text-blue-600 transition-colors group-hover:bg-blue-100">
-<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-</span>
-</div>
-</div>
-<!-- Verified Today -->
-<div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group">
-<span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Verified Today</span>
-<div class="flex items-baseline justify-between mt-3">
-<span class="text-[28px] font-semibold text-emerald-600 leading-none">+{{ kpis.verified_today }}</span>
-<span class="p-1 rounded-lg bg-emerald-50 text-emerald-600 transition-colors group-hover:bg-emerald-100">
-<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
-</span>
-</div>
-</div>
-<!-- Returned Today -->
-<div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group">
-<span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Returned Today</span>
-<div class="flex items-baseline justify-between mt-3">
-<span class="text-[28px] font-semibold text-rose-600 leading-none">+{{ kpis.returned_today }}</span>
-<span class="p-1 rounded-lg bg-rose-50 text-rose-600 transition-colors group-hover:bg-rose-100">
-<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-</span>
-</div>
-</div>
-<!-- Avg SLA -->
-<div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group">
-<span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Avg Process SLA</span>
-<div class="flex items-baseline justify-between mt-3">
-<span class="text-[28px] font-semibold text-slate-800 leading-none">{{ kpis.avg_time }}</span>
-<span class="p-1 rounded-lg bg-slate-50 text-slate-600 transition-colors group-hover:bg-slate-100">
-<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-</span>
-</div>
-</div>
-<!-- SSA Pending -->
-<div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group">
-<span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">SSA Pending</span>
-<div class="flex items-baseline justify-between mt-3">
-<span class="text-[28px] font-semibold text-amber-600 leading-none">{{ kpis.ssa_pending }}</span>
-<span class="p-1 rounded-lg bg-amber-50 text-amber-600 transition-colors group-hover:bg-amber-100">
-<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-</span>
-</div>
-</div>
-<!-- Duplicate Risks -->
-<div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group">
-<span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Duplicate Risks</span>
-<div class="flex items-baseline justify-between mt-3">
-<span class="text-[28px] font-semibold text-rose-600 leading-none">{{ kpis.duplicate_risks }}</span>
-<span class="p-1 rounded-lg bg-rose-50 text-rose-600 transition-colors group-hover:bg-rose-100">
-<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
-</span>
-</div>
-</div>
-<!-- High Priority -->
-<div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between group">
-<span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">High Priority</span>
-<div class="flex items-baseline justify-between mt-3">
-<span class="text-[28px] font-semibold text-[#2563eb] leading-none">{{ kpis.high_priority }}</span>
-<span class="p-1 rounded-lg bg-blue-50 text-[#2563eb] transition-colors group-hover:bg-blue-100">
-<svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.907c.969 0 1.371 1.24.588 1.81l-3.97 2.883a1 1 0 00-.364 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.971-2.883a1 1 0 00-1.18 0l-3.97 2.883c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h4.907a1 1 0 00.95-.69l1.519-4.674z" /></svg>
-</span>
-</div>
-</div>
-</div>
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
 
 <!-- Filters Panel -->
 <div class="bg-white rounded-xl border border-slate-100 p-6 shadow-sm space-y-4">

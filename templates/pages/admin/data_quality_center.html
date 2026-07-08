@@ -23,80 +23,8 @@ class="flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-wh
 </button>
 </div>
 
-<!-- Quality Metrics Summary Cards -->
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-
-<!-- Stat 1: Clean -->
-<div class="bg-white rounded-xl border border-slate-100 p-4 shadow-sm flex flex-col justify-between">
-<div class="flex items-center justify-between text-[11px] font-semibold uppercase text-slate-400">
-<span>Clean Schools</span>
-<div class="h-6 w-6 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 font-bold">
-✓
-</div>
-</div>
-<div class="mt-4">
-<span class="text-[20px] font-semibold text-emerald-600">{{ clean_count }}</span>
-<p class="text-[11px] text-slate-400 font-bold mt-1 leading-snug">Fully complete and verified school data</p>
-</div>
-</div>
-
-<!-- Stat 2: Needs Review -->
-<div class="bg-white rounded-xl border border-slate-100 p-4 shadow-sm flex flex-col justify-between">
-<div class="flex items-center justify-between text-[11px] font-semibold uppercase text-slate-400">
-<span>Needs Review</span>
-<div class="h-6 w-6 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 font-bold">
-✎
-</div>
-</div>
-<div class="mt-4">
-<span class="text-[20px] font-semibold text-blue-600">{{ needs_review_count }}</span>
-<p class="text-[11px] text-slate-400 font-bold mt-1 leading-snug">Minor operational gaps detected</p>
-</div>
-</div>
-
-<!-- Stat 3: Needs Cleanup -->
-<div class="bg-white rounded-xl border border-slate-100 p-4 shadow-sm flex flex-col justify-between">
-<div class="flex items-center justify-between text-[11px] font-semibold uppercase text-slate-400">
-<span>Needs Cleanup</span>
-<div class="h-6 w-6 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 font-bold">
-⚠
-</div>
-</div>
-<div class="mt-4">
-<span class="text-[20px] font-semibold text-amber-600">{{ needs_cleanup_count }}</span>
-<p class="text-[11px] text-slate-400 font-bold mt-1 leading-snug">Moderate data quality gaps present</p>
-</div>
-</div>
-
-<!-- Stat 4: Duplicate Risk -->
-<div class="bg-white rounded-xl border border-slate-100 p-4 shadow-sm flex flex-col justify-between">
-<div class="flex items-center justify-between text-[11px] font-semibold uppercase text-slate-400">
-<span>Duplicate Risk</span>
-<div class="h-6 w-6 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 font-bold">
-❐
-</div>
-</div>
-<div class="mt-4">
-<span class="text-[20px] font-semibold text-rose-600">{{ duplicate_risk_count }}</span>
-<p class="text-[11px] text-slate-400 font-bold mt-1 leading-snug">Potential duplicate entries detected</p>
-</div>
-</div>
-
-<!-- Stat 5: Missing Critical Data -->
-<div class="bg-white rounded-xl border border-slate-100 p-4 shadow-sm flex flex-col justify-between">
-<div class="flex items-center justify-between text-[11px] font-semibold uppercase text-slate-400">
-<span>Missing Critical Data</span>
-<div class="h-6 w-6 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center shrink-0 font-bold">
-✘
-</div>
-</div>
-<div class="mt-4">
-<span class="text-[20px] font-semibold text-rose-700">{{ missing_critical_count }}</span>
-<p class="text-[11px] text-slate-400 font-bold mt-1 leading-snug">Missing critical setup info (owner/cluster)</p>
-</div>
-</div>
-
-</div>
+<!-- Quality Metrics KPI Strip -->
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
 
 <!-- Resolution Guides Callout -->
 <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-4">

@@ -6,3 +6,6 @@ class PlanningConfig(AppConfig):
     name = "apps.planning"
     label = "planning"
     verbose_name = "Edify Planning"
+
+    def ready(self):
+        import apps.planning.checks

@@ -279,6 +279,16 @@ def create(data: dict, principal) -> dict:
     monitored_by_staff_id = principal_owner_id if is_partner else None
 
     scheduled_date = _parse_date(data["scheduledDate"]) if data.get("scheduledDate") else None
+    
+    if scheduled_date and responsible_staff_id:
+        from apps.accounts.models import User
+        resp_user = User.objects.filter(id=responsible_staff_id).first()
+        if resp_user:
+            from apps.hr.leave_services import PlanningAvailabilityService
+            avail = PlanningAvailabilityService.check(resp_user, scheduled_date)
+            if avail["status"] == "blocked":
+                raise BadRequest("Scheduling blocked: " + " · ".join(avail["blockers"]))
+
     fy = get_operational_fy(scheduled_date) if scheduled_date else data.get("fy", get_operational_fy())
     quarter = get_quarter_for_date(scheduled_date) if scheduled_date else data.get("quarter", get_quarter_for_date())
 
@@ -486,7 +496,18 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
     a = _get_in_scope(activity_id, principal)
     if a.reschedule_count >= RESCHEDULE_SLIP_LIMIT:
         raise BadRequest(f"Reschedule limit reached ({RESCHEDULE_SLIP_LIMIT}). Escalate or convert this activity instead.")
+    old_date = a.scheduled_date
     new_date = _parse_date(data["scheduledDate"])
+    
+    if new_date and a.responsible_staff_id:
+        from apps.accounts.models import User
+        resp_user = User.objects.filter(id=a.responsible_staff_id).first()
+        if resp_user:
+            from apps.hr.leave_services import PlanningAvailabilityService
+            avail = PlanningAvailabilityService.check(resp_user, new_date)
+            if avail["status"] == "blocked":
+                raise BadRequest("Scheduling blocked: " + " · ".join(avail["blockers"]))
+
     new_fy = get_operational_fy(new_date)
     new_quarter = get_quarter_for_date(new_date)
     a.scheduled_date = new_date
@@ -515,6 +536,11 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
     # schedule (rates may have changed; participant/period inputs may have too).
     _apply_schedule_cost_snapshot(a, data, principal=principal)
     a.save(update_fields=["est_cost_cents", "cost_missing", "updated_at"])
+    
+    if old_date != new_date:
+        from apps.hr.leave_services import LeaveBudgetImpactService
+        LeaveBudgetImpactService.handle_reschedule(a, old_date, new_date, data.get("reason", "Rescheduling"))
+        
     return _serialize(a)
 
 

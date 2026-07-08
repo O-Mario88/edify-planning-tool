@@ -20,7 +20,7 @@ class SchoolDirectoryViewModel:
             
         # Determine available actions & disabled reasons
         can_assign_cluster = has_permission(user, "cluster.assign")
-        can_assign_project = has_permission(user, "project.manage")
+        can_assign_project = has_permission(user, "project.assignSchool")
         
         available_actions = []
         disabled_reasons = {}

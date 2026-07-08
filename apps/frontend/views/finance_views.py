@@ -750,3 +750,160 @@ def initialize_default_catalogue_view(request):
     CostSetting.objects.filter(catalogue__isnull=True).update(catalogue=active)
         
     return redirect("/dashboard")
+
+
+@require_page_permission("country_budget")
+def country_budget_view(request):
+    """Country Budget rollup dashboard view."""
+    from apps.core.fy import get_operational_fy
+    from apps.activities.models import ActivityScheduleCostLine
+    from django.db.models import Sum
+    from apps.accounts.models import User
+    from apps.fund_requests.models import WeeklyFundRequest
+    
+    fy = get_operational_fy()
+    
+    # Base query for this FY
+    cost_lines = ActivityScheduleCostLine.objects.filter(fiscal_year=fy)
+    
+    # Financial state values (Approved, Disbursed, Accounted, Variance)
+    wfrs = WeeklyFundRequest.objects.filter(fy=fy)
+    
+    approved_total = wfrs.exclude(status__in=("draft", "rejected")).aggregate(s=Sum("total_amount"))["s"] or 0
+    disbursed_total = wfrs.aggregate(s=Sum("disbursed_amount"))["s"] or 0
+    accounted_total = wfrs.aggregate(s=Sum("accounted_amount"))["s"] or 0
+    variance_total = disbursed_total - accounted_total
+    
+    # 1. Weekly activity budget totals
+    weekly_totals = cost_lines.values("week_start_date").annotate(total=Sum("amount")).order_by("-week_start_date")[:12]
+    
+    # 2. Monthly rollups
+    monthly_totals = cost_lines.values("month").annotate(total=Sum("amount")).order_by("month")
+    month_names = {
+        10: "October", 11: "November", 12: "December",
+        1: "January", 2: "February", 3: "March",
+        4: "April", 5: "May", 6: "June",
+        7: "July", 8: "August", 9: "September"
+    }
+    monthly_rollups = []
+    for m in monthly_totals:
+        monthly_rollups.append({
+            "label": month_names.get(m["month"], f"Month {m['month']}"),
+            "total": m["total"] or 0
+        })
+        
+    # 3. Quarterly rollups
+    quarterly_totals = cost_lines.values("quarter").annotate(total=Sum("amount")).order_by("quarter")
+    quarterly_rollups = []
+    for q in quarterly_totals:
+        quarterly_rollups.append({
+            "label": f"Q{q['quarter']}" if not str(q['quarter']).lower().startswith("q") else str(q['quarter']).upper(),
+            "total": q["total"] or 0
+        })
+        
+    # 4. Annual rollup
+    annual_rollup = cost_lines.aggregate(total=Sum("amount"))["total"] or 0
+    
+    # 5. Breakdown by staff
+    user_map = {u.id: u.name for u in User.objects.all()}
+    staff_totals = cost_lines.values("responsible_user").annotate(total=Sum("amount")).order_by("-total")
+    staff_breakdown = []
+    for st in staff_totals:
+        user_id = st["responsible_user"]
+        staff_breakdown.append({
+            "name": user_map.get(user_id, f"User {user_id}" if user_id else "Unassigned"),
+            "total": st["total"] or 0
+        })
+        
+    # 6. Breakdown by PL (Program Lead)
+    from apps.accounts.models import StaffSupervisorAssignment
+    pl_breakdown = {}
+    assignments = StaffSupervisorAssignment.objects.select_related("supervisor__user", "supervisee__user")
+    supervisee_to_pl = {}
+    for ass in assignments:
+        if ass.supervisee and ass.supervisor:
+            supervisee_to_pl[ass.supervisee.user.id] = ass.supervisor.user.name
+            
+    for cl in cost_lines:
+        pl_name = supervisee_to_pl.get(cl.responsible_user, "Other / Direct")
+        pl_breakdown[pl_name] = pl_breakdown.get(pl_name, 0) + cl.amount
+    pl_rollups = [{"name": name, "total": total} for name, total in sorted(pl_breakdown.items(), key=lambda x: x[1], reverse=True)]
+    
+    # 7. Breakdown by activity type
+    activity_totals = cost_lines.values("activity__activity_type").annotate(total=Sum("amount")).order_by("-total")
+    activity_breakdown = []
+    for act in activity_totals:
+        act_type = act["activity__activity_type"]
+        if act_type:
+            label = act_type.replace("_", " ").title()
+            activity_breakdown.append({
+                "label": label,
+                "total": act["total"] or 0
+            })
+            
+    # 8. Breakdown by district/region
+    district_totals = cost_lines.values("school__district__name").annotate(total=Sum("amount")).order_by("-total")
+    district_breakdown = []
+    for dt in district_totals:
+        name = dt["school__district__name"] or "Regional / Unassigned"
+        district_breakdown.append({
+            "label": name,
+            "total": dt["total"] or 0
+        })
+        
+    # 9. Breakdown by partner
+    partner_totals = cost_lines.values("partner__name").annotate(total=Sum("amount")).order_by("-total")
+    partner_breakdown = []
+    for pt in partner_totals:
+        name = pt["partner__name"]
+        if name:
+            partner_breakdown.append({
+                "label": name,
+                "total": pt["total"] or 0
+            })
+            
+    # 10. Breakdown by core schools
+    school_type_totals = cost_lines.values("school__school_type").annotate(total=Sum("amount")).order_by("-total")
+    school_type_breakdown = []
+    for st in school_type_totals:
+        type_name = st["school__school_type"]
+        if type_name:
+            label = "Core Schools" if type_name == "core" else "Client Schools" if type_name == "client" else type_name.title()
+            school_type_breakdown.append({
+                "label": label,
+                "total": st["total"] or 0
+            })
+            
+    # 11. Breakdown by project
+    project_totals = cost_lines.values("project__name").annotate(total=Sum("amount")).order_by("-total")
+    project_breakdown = []
+    for pr in project_totals:
+        name = pr["project__name"]
+        if name:
+            project_breakdown.append({
+                "label": name,
+                "total": pr["total"] or 0
+            })
+
+    context = {
+        "fy": fy,
+        "approved": approved_total,
+        "disbursed": disbursed_total,
+        "accounted": accounted_total,
+        "variance": variance_total,
+        
+        "weekly_totals": weekly_totals,
+        "monthly_rollups": monthly_rollups,
+        "quarterly_rollups": quarterly_rollups,
+        "annual_rollup": annual_rollup,
+        
+        "staff_breakdown": staff_breakdown[:10],
+        "pl_breakdown": pl_rollups,
+        "activity_breakdown": activity_breakdown,
+        "district_breakdown": district_breakdown[:10],
+        "partner_breakdown": partner_breakdown,
+        "school_type_breakdown": school_type_breakdown,
+        "project_breakdown": project_breakdown,
+    }
+    return render(request, "pages/finance/country_budget.html", context)
+

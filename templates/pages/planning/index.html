@@ -8,7 +8,8 @@
 x-data="{
 selectedSchools: [],
 bulkActionOpen: false,
-selectedSchoolId: null
+selectedSchoolId: null,
+activeView: 'list'
 }"
 @select-school.window="selectedSchoolId = $event.detail.id;"
 class="p-6 max-w-[1600px] mx-auto space-y-6 font-sans text-slate-700"
@@ -176,10 +177,97 @@ Scheduled / In My Plan
 </button>
 </nav>
 
+{% if active_tab == 'scheduled' %}
+<div class="flex justify-end mb-4">
+  <div class="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 shadow-sm">
+    <button @click="activeView = 'list'" :class="activeView === 'list' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="px-3 py-1 rounded-lg text-[12px] font-semibold transition-all">List View</button>
+    <button @click="activeView = 'calendar'" :class="activeView === 'calendar' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="px-3 py-1 rounded-lg text-[12px] font-semibold transition-all">Calendar View</button>
+  </div>
+</div>
+{% endif %}
+
 <!-- School Table Container -->
-{% include "partials/planning/school_table.html" %}
+<div x-show="activeView === 'list'">
+  {% include "partials/planning/school_table.html" %}
+</div>
 
+{% if active_tab == 'scheduled' %}
+<div x-show="activeView === 'calendar'" style="display: none;" class="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
+  <div id="planning-calendar-view" class="w-full"></div>
+</div>
 
+<!-- Embedded JSON Events Payload -->
+<script id="calendar-events-data" type="application/json">
+  [
+    {% for a in scheduled_activities %}
+      {
+        "id": "{{ a.id }}",
+        "title": "{{ a.activity_type|title }}{% if a.school %} @ {{ a.school.name }}{% endif %}",
+        "start": "{{ a.planned_date|date:'Y-m-d' }}",
+        "classNames": ["{% if a.status == 'completed' %}fc-event-completed{% else %}fc-event-planned{% endif %}"],
+        "extendedProps": {
+          "status": "{{ a.status }}",
+          "school": "{{ a.school.name|default:'' }}",
+          "activity_type": "{{ a.activity_type|title }}"
+        }
+      }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ]
+</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const calendarEl = document.getElementById('planning-calendar-view');
+    if (calendarEl) {
+      const eventsData = JSON.parse(document.getElementById('calendar-events-data').textContent);
+      
+      const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek'
+        },
+        events: eventsData,
+        themeSystem: 'standard',
+        height: 'auto',
+        eventClick: function(info) {
+          // Open reschedule drawer via HTMX
+          htmx.ajax('GET', `/my-plan/${info.event.id}/reschedule-drawer`, {target:'#drawer-container', swap:'innerHTML'});
+        }
+      });
+
+      document.addEventListener('click', function(e) {
+        if (e.target.innerText === 'Calendar View') {
+          setTimeout(() => {
+            calendar.render();
+          }, 100);
+        }
+      });
+    }
+  });
+</script>
+<style>
+  .fc-event-completed {
+    background-color: #ecfdf5 !important;
+    color: #065f46 !important;
+    border: 1px solid #a7f3d0 !important;
+    border-radius: 6px !important;
+    padding: 3px 6px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+  }
+  .fc-event-planned {
+    background-color: #eff6ff !important;
+    color: #1e40af !important;
+    border: 1px solid #bfdbfe !important;
+    border-radius: 6px !important;
+    padding: 3px 6px !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+  }
+</style>
+{% endif %}
 
 </div>
 
@@ -212,6 +300,7 @@ class="flex items-center gap-2"
 <input type="hidden" name="school_ids" :value="sid">
 </template>
 
+{% if can_assign_partner %}
 <button 
 type="submit"
 name="action"
@@ -221,6 +310,7 @@ class="h-8 px-4 bg-slate-800 hover:bg-slate-800 text-slate-200 rounded-xl text-[
 <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
 Assign Partner
 </button>
+{% endif %}
 
 <button 
 type="submit"

@@ -21,12 +21,8 @@ Monitor field staff workload health, daily debrief submissions, leave requests, 
 </div>
 </div>
 
-<!-- KPI Cards Row -->
-<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-  {% include "components/kpi_card.html" with label="Overdue Field Activities" value=overdue_count tone="danger" hint="Action required by supervisors" %}
-  {% include "components/kpi_card.html" with label="Daily Debriefs Today" value=debrief_count hint="Submitted by CCEOs today" %}
-  {% include "components/kpi_card.html" with label="Pending Leave Requests" value=pending_leaves tone="warning" hint="Awaiting approval" %}
-</div>
+<!-- Unified KPI Strip -->
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
 
 <div class="grid lg:grid-cols-3 gap-6 items-start">
 <!-- Left: Workload Alert List -->

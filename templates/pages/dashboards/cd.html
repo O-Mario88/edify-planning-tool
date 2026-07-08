@@ -22,17 +22,8 @@
   </div>
 </div>
 
-<!-- ================= KPI STRIP (8 cards, all real) ================= -->
-<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
-  {% include "components/kpi_card.html" with label="National Achievement" value=national_achievement|add:"%" tone="info" hint="Completed / (Planned + Completed)" %}
-  {% include "components/kpi_card.html" with label="Active Schools" value=total_schools hint="In the directory" %}
-  {% include "components/kpi_card.html" with label="Avg National SSA" value=avg_national_ssa tone="info" hint="Confirmed records, FY"|add:fy %}
-  {% include "components/kpi_card.html" with label="SF Backlog" value=sf_backlog tone="warning" hint="Completed, missing SF ID" %}
-  {% include "components/kpi_card.html" with label="Pending Fund Requests" value=pending_funds|length hint="Awaiting CD approval" %}
-  {% include "components/kpi_card.html" with label="Disbursed (FY)" value=budget_summary.total_disbursed|ugx tone="success" hint="Of UGX "|add:budget_summary.planned_total|ugx|add:" planned" %}
-  {% include "components/kpi_card.html" with label="Budget Util." value=budget_summary.utilization_pct|add:"%" tone="info" hint="Disbursed vs planned" %}
-  {% include "components/kpi_card.html" with label="High-Risk Regions" value=high_risk_count tone="danger" hint="Below 60% achievement" %}
-</div>
+<!-- ================= KPI STRIP (Unified, real-time) ================= -->
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
 
 <!-- ================= LEADERSHIP ATTENTION (real alerts only) ================= -->
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">

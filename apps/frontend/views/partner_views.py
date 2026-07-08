@@ -145,7 +145,7 @@ def partner_evidence_view(request):
 
 @require_page_permission("partner_my_plan")
 def partner_my_plan_view(request):
-    """Partner cockpit - scheduled activities for the partner organization."""
-    from apps.my_plan.services import get_frontend_context
-    context = get_frontend_context(request.user, request.GET)
-    return render(request, "pages/partner/my_plan.html", context)
+    """Redirect legacy partner plan view to unified my-plan view."""
+    from django.shortcuts import redirect
+    return redirect("/my-plan")
+

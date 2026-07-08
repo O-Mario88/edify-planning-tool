@@ -15,12 +15,7 @@
 </div>
 
 <!-- Matrix KPI Strip -->
-<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-  {% include "components/kpi_card.html" with label="Pending Reviews" value=pending_reviews|length tone="info" %}
-  {% include "components/kpi_card.html" with label="Fund Approvals" value=pending_funds|length tone="warning" %}
-  {% include "components/kpi_card.html" with label="Overdue Staff" value=cceos_overdue|length tone="danger" %}
-  {% include "components/kpi_card.html" with label="Struggling Clusters" value=weak_clusters|length tone="purple" %}
-</div>
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
 
 <!-- Alerts / Attention Banner -->
 {% if alerts %}

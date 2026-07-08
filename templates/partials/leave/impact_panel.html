@@ -1,0 +1,206 @@
+<div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col font-sans">
+  
+  <!-- Panel Header -->
+  <div class="p-5 bg-slate-50/50 border-b border-slate-150 flex items-center justify-between">
+    <div>
+      <h3 class="text-[15px] font-bold text-slate-800">Leave Impact & Coverage Audit</h3>
+      <p class="text-[11px] text-slate-400 font-semibold mt-0.5">Request Ref: #{{ leave.id|slice:":8" }}</p>
+    </div>
+    <span class="px-2.5 py-0.5 bg-amber-50 border border-amber-200 text-amber-700 rounded-full text-[10px] font-extrabold uppercase tracking-wider">
+      Pending Review
+    </span>
+  </div>
+
+  <div class="p-6 space-y-6 overflow-y-auto max-h-[650px]">
+    
+    <!-- Meta Summary -->
+    <div class="flex justify-between items-start gap-4">
+      <div>
+        <h4 class="text-[16px] font-extrabold text-slate-800">{{ leave.staff.user.name }}</h4>
+        <span class="text-[12px] text-slate-400 font-semibold mt-0.5 block">{{ leave.staff.user.active_role }}</span>
+        
+        <p class="text-[13px] text-slate-700 font-semibold mt-3 flex items-center gap-1">
+          <span>🏖</span> {{ leave.type|replace:"_"|title }}
+        </p>
+        <p class="text-[12px] text-slate-500 font-semibold mt-1">
+          {{ leave.start_date }} to {{ leave.end_date }}
+        </p>
+      </div>
+      
+      <div class="text-right">
+        <div class="p-4 bg-slate-50 rounded-2xl border border-slate-150">
+          <span class="text-[26px] font-extrabold text-slate-800 tracking-tight block">{{ leave.days_charged }}</span>
+          <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Charged Days</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Handover Details -->
+    <div class="bg-slate-50/50 rounded-2xl border border-slate-150 p-4 space-y-3">
+      <div>
+        <h5 class="text-[11px] font-bold uppercase text-slate-400 tracking-wider">Assigned Coverage Person</h5>
+        <p class="text-[13px] font-bold text-slate-800 mt-1 flex items-center gap-1.5">
+          <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
+          {{ leave.covering_staff.user.name }}
+        </p>
+      </div>
+
+      <div class="border-t border-slate-150/60 pt-3">
+        <h5 class="text-[11px] font-bold uppercase text-slate-400 tracking-wider">Handover & Coverage Notes</h5>
+        <p class="text-[12.5px] text-slate-600 font-medium leading-relaxed mt-1">
+          {{ leave.coverage_notes|default:"No notes provided." }}
+        </p>
+      </div>
+
+      {% if leave.urgent_activities %}
+      <div class="border-t border-slate-150/60 pt-3">
+        <h5 class="text-[11px] font-bold uppercase text-slate-400 tracking-wider">Urgent Activities during leave</h5>
+        <p class="text-[12px] text-rose-700 font-bold leading-relaxed mt-1">
+          ⚠️ {{ leave.urgent_activities }}
+        </p>
+      </div>
+      {% endif %}
+
+      <div class="border-t border-slate-150/60 pt-3">
+        <h5 class="text-[11px] font-bold uppercase text-slate-400 tracking-wider">Emergency Contact</h5>
+        <p class="text-[12px] text-slate-700 font-bold mt-1">
+          {{ leave.emergency_contact|default:"None" }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Attachment Link -->
+    {% if leave.attachment %}
+    <div class="flex items-center justify-between p-3.5 bg-sky-50 border border-sky-100 rounded-xl text-sky-800 text-[12px] font-semibold">
+      <span class="flex items-center gap-1.5">
+        <span>📄</span> Medical / Supporting Attachment
+      </span>
+      <a 
+        href="{{ leave.attachment.url }}" 
+        target="_blank"
+        class="text-indigo-600 hover:text-indigo-800 font-extrabold uppercase tracking-wide"
+      >
+        View File
+      </a>
+    </div>
+    {% endif %}
+
+    <!-- Leave Overlaps Audit -->
+    <div class="space-y-2">
+      <h5 class="text-[11px] font-bold uppercase text-slate-400 tracking-wider">Leave Overlap Check</h5>
+      
+      {% if overlaps or impact.overlaps %}
+      <div class="border border-amber-100 bg-amber-50/50 rounded-2xl p-4 space-y-3">
+        <div class="flex gap-2 text-amber-700 text-[12px] font-bold">
+          <span>⚠️</span>
+          <span>Overlap Risk: {{ overlaps|length|default:impact.overlaps|length }} active overlaps during this period.</span>
+        </div>
+        <div class="divide-y divide-amber-100 text-[11.5px] font-medium">
+          {% if overlaps %}
+            {% for ov in overlaps %}
+            <div class="py-2 flex justify-between text-slate-700">
+              <span>{{ ov.recommended_action }}</span>
+              <span class="font-bold">{{ ov.date_range }}</span>
+            </div>
+            {% endfor %}
+          {% else %}
+            {% for ov in impact.overlaps %}
+            <div class="py-2 flex justify-between text-slate-700">
+              <span>{{ ov.name }} ({{ ov.role }})</span>
+              <span class="font-bold">{{ ov.start }} to {{ ov.end }}</span>
+            </div>
+            {% endfor %}
+          {% endif %}
+        </div>
+      </div>
+      {% else %}
+      <div class="p-3.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-100 text-[12px] font-semibold flex items-center gap-1.5">
+        <span>✅</span> No leave overlaps in this supervisor group during this period.
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Activity Slot Conflicts -->
+    <div class="space-y-2">
+      <h5 class="text-[11px] font-bold uppercase text-slate-400 tracking-wider">Scheduled Field Activities Conflict Check</h5>
+      
+      {% if act_conflicts or impact.conflicts %}
+      <div class="border border-rose-100 bg-rose-50/50 rounded-2xl p-4 space-y-3">
+        <div class="flex gap-2 text-rose-700 text-[12px] font-bold">
+          <span>🚨</span>
+          <span>Conflict Warning: {{ act_conflicts|length|default:impact.conflict_count }} active activities scheduled during this leave.</span>
+        </div>
+        <div class="divide-y divide-rose-100 text-[11.5px] font-medium max-h-48 overflow-y-auto">
+          {% if act_conflicts %}
+            {% for conf in act_conflicts %}
+            <div class="py-2.5 flex justify-between items-start text-slate-700">
+              <div>
+                <span class="font-bold text-slate-800 block">{{ conf.affected_activity.activity_type|title }}</span>
+                <span class="text-[10px] text-slate-400 block mt-0.5">{{ conf.affected_activity.school.name|default:"General" }}</span>
+              </div>
+              <span class="font-bold text-slate-500 whitespace-nowrap">{{ conf.date_range }}</span>
+            </div>
+            {% endfor %}
+          {% else %}
+            {% for conf in impact.conflicts %}
+            <div class="py-2.5 flex justify-between items-start text-slate-700">
+              <div>
+                <span class="font-bold text-slate-800 block">{{ conf.type }}</span>
+                <span class="text-[10px] text-slate-400 block mt-0.5">{{ conf.school }}</span>
+              </div>
+              <span class="font-bold text-slate-500 whitespace-nowrap">{{ conf.date }}</span>
+            </div>
+            {% endfor %}
+          {% endif %}
+        </div>
+      </div>
+      {% else %}
+      <div class="p-3.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-100 text-[12px] font-semibold flex items-center gap-1.5">
+        <span>✅</span> No active school visits or planning slots scheduled for this user during this leave.
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Reviewer Form -->
+    <form method="POST" id="reviewer-action-form" class="space-y-4 pt-4 border-t border-slate-150">
+      {% csrf_token %}
+      
+      <div class="space-y-1.5">
+        <label class="block text-[11px] font-bold uppercase text-slate-400 tracking-wider">Review Comments / Reason</label>
+        <textarea 
+          name="reason" 
+          rows="3"
+          placeholder="Provide review feedback (mandatory if rejecting or returning for updates)..."
+          class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-[13px] font-semibold text-slate-700 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition"
+        ></textarea>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="grid grid-cols-3 gap-2">
+        <button 
+          type="submit" 
+          formaction="{% url 'frontend:leave_reject_action' leave.id %}"
+          class="px-3 py-2.5 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-[11px] font-bold uppercase rounded-xl tracking-wider transition text-center"
+        >
+          Reject
+        </button>
+        <button 
+          type="submit" 
+          formaction="{% url 'frontend:leave_return_action' leave.id %}"
+          class="px-3 py-2.5 bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-700 text-[11px] font-bold uppercase rounded-xl tracking-wider transition text-center"
+        >
+          Return
+        </button>
+        <button 
+          type="submit" 
+          formaction="{% url 'frontend:leave_approve_action' leave.id %}"
+          class="px-3 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold uppercase rounded-xl tracking-wider shadow-sm transition text-center col-span-1"
+        >
+          Approve
+        </button>
+      </div>
+    </form>
+
+  </div>
+  
+</div>

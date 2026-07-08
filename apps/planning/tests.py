@@ -83,7 +83,7 @@ class PlanningReadinessTestCase(TestCase):
         # Clustered, clean data, but current_fy_ssa_status is not 'done'
         res = PlanningReadinessService.get_school_readiness(school, has_catalogue=True, has_scheduled=False, partner_assignment=None, weakest_area="—")
         self.assertEqual(res["planningReadiness"], "SSA Required")
-        self.assertEqual(res["recommendedAction"], "Schedule SSA Visit")
+        self.assertEqual(res["recommendedAction"], "Schedule Baseline SSA Visit")
 
     def test_readiness_ready_for_support(self):
         school = School.objects.create(
@@ -117,7 +117,7 @@ class PlanningReadinessTestCase(TestCase):
         
         res = PlanningReadinessService.get_school_readiness(school, has_catalogue=True, has_scheduled=False, partner_assignment=None, weakest_area="Leadership")
         self.assertEqual(res["planningReadiness"], "Ready for Support")
-        self.assertEqual(res["recommendedAction"], "Schedule Leadership-focused Visit")
+        self.assertEqual(res["recommendedAction"], "Recommend Staff (Visit/training support)")
 
     def test_baseline_ssa_visit_costing_custom_rate(self):
         from apps.budget.costing import cost_for_activity

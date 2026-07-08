@@ -19,13 +19,8 @@
   </div>
 </div>
 
-<!-- KPI Cards Row -->
-<div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-  {% include "components/kpi_card.html" with label="Total Schools" value=total_schools hint="Across all regions" %}
-  {% include "components/kpi_card.html" with label="Schools Missing SSA" value=schools_missing_ssa tone="warning" hint="Awaiting field assessment" %}
-  {% include "components/kpi_card.html" with label="Pending Budget Approvals" value=pending_reviews hint="Value: {{ total_requested }} UGX" %}
-  {% include "components/kpi_card.html" with label="Approved Funding (FY)" value=total_approved tone="success" hint="UGX disbursed/approved" %}
-</div>
+<!-- Unified KPI Strip -->
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
 
 <div class="grid lg:grid-cols-3 gap-6 items-start">
   <!-- Left: Regions summary -->

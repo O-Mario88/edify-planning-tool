@@ -124,6 +124,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "apps.accounts.middleware.ForcePasswordChangeMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # Generic error envelope — no stack traces / DB errors to clients; mirrors
@@ -144,6 +145,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "apps.core.context_processors.sidebar_counts",
+                "apps.core.context_processors.sidebar_context",
             ],
         },
     },
@@ -301,7 +303,7 @@ PASSWORD_RESET_TOKEN_TTL_MINUTES = _as_int(
 INVITE_TOKEN_TTL_DAYS = _as_int(os.environ.get("INVITE_TOKEN_TTL_DAYS"), 7)
 
 # Brute-force protection (login lockout).
-AUTH_MAX_FAILED_LOGINS = _as_int(os.environ.get("AUTH_MAX_FAILED_LOGINS"), 5)
+AUTH_MAX_FAILED_LOGINS = _as_int(os.environ.get("AUTH_MAX_FAILED_LOGINS"), 10)
 AUTH_LOCK_MINUTES = _as_int(os.environ.get("AUTH_LOCK_MINUTES"), 15)
 
 # Rate limits.

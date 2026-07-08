@@ -390,19 +390,32 @@ def admin_users_view(request):
         from django.db import transaction
         action = request.POST.get("action")
         if action == "create":
+            from django.utils import timezone
             email = request.POST.get("email", "").lower().strip()
             name = request.POST.get("name", "").strip()
             phone = request.POST.get("phone", "").strip()
             role = request.POST.get("role")
             additional = request.POST.getlist("additional_roles")
             district_id = request.POST.get("primary_district")
+            additional_districts = request.POST.getlist("additional_districts")
+            password = request.POST.get("password", "").strip()
             
             if not email or not name or not role:
                 messages.error(request, "Name, email, and primary role are required.")
                 return redirect("frontend:admin_users")
+
+            if not password:
+                messages.error(request, "Password is required when creating a user.")
+                return redirect("frontend:admin_users")
                 
             if User.objects.filter(email=email, deleted_at__isnull=True).exists():
                 messages.error(request, "A user with this email already exists.")
+                return redirect("frontend:admin_users")
+
+            from apps.core.security import validate_password
+            violations = validate_password(password, email)
+            if violations:
+                messages.error(request, " ".join(violations))
                 return redirect("frontend:admin_users")
                 
             with transaction.atomic():
@@ -412,24 +425,30 @@ def admin_users_view(request):
                     phone=phone,
                     roles=list(dict.fromkeys([role, *additional])),
                     active_role=role,
-                    password=None,
-                    status="pending_invited",
-                    is_active=False
+                    password=password,
+                    status="active",
+                    is_active=True,
+                    password_set_at=timezone.now(),
+                    must_change_password=True,
                 )
-                if district_id:
-                    from apps.accounts.models import StaffProfile
-                    StaffProfile.objects.create(user=user, primary_district_id=district_id, title=role)
-                else:
-                    from apps.accounts.models import StaffProfile
-                    StaffProfile.objects.create(user=user, title=role)
-                    
-                # Create invite
-                from apps.admin_users.services import _create_invitation
-                from apps.core.email import mailer
-                token = _create_invitation(user.id, request.user.id)
-                mailer.send_invitation(to=email, name=name, invited_by_name=request.user.name, token=token)
+                from apps.accounts.models import StaffProfile, StaffGeographyAssignment
+                sp = StaffProfile.objects.create(user=user, primary_district_id=district_id or None, title=role)
                 
-            messages.success(request, f"User '{name}' successfully created and invitation sent to {email}.")
+                selected_districts = []
+                if district_id:
+                    selected_districts.append(district_id)
+                for ad in additional_districts:
+                    if ad:
+                        selected_districts.append(ad)
+                selected_districts = list(dict.fromkeys(selected_districts))
+                
+                for d_id in selected_districts:
+                    StaffGeographyAssignment.objects.create(staff=sp, district_id=d_id)
+                    
+                from apps.core.email import mailer
+                mailer.send_temporary_password_notification(to=email, name=name, invited_by_name=request.user.name)
+                
+            messages.success(request, f"User '{name}' successfully created with password set. Notification sent to {email}.")
             return redirect("frontend:admin_users")
 
     search = request.GET.get("q", "").strip()
@@ -465,6 +484,8 @@ def admin_user_detail_view(request, user_id):
             phone = request.POST.get("phone", "").strip()
             primary_role = request.POST.get("role")
             additional = request.POST.getlist("additional_roles")
+            primary_district = request.POST.get("primary_district")
+            additional_districts = request.POST.getlist("additional_districts")
             
             # Uniqueness check
             if email and email != member.email:
@@ -480,13 +501,29 @@ def admin_user_detail_view(request, user_id):
             if primary_role:
                 member.roles = list(dict.fromkeys([primary_role, *additional]))
                 member.active_role = primary_role
-                from apps.accounts.models import StaffProfile
-                sp = StaffProfile.objects.filter(user=member).first()
-                if sp:
-                    sp.title = primary_role
-                    sp.save(update_fields=["title"])
-                    
+                
             member.save()
+
+            from apps.accounts.models import StaffProfile, StaffGeographyAssignment
+            sp, _ = StaffProfile.objects.get_or_create(user=member)
+            sp.primary_district_id = primary_district or None
+            if primary_role:
+                sp.title = primary_role
+            sp.save()
+            
+            # Sync assignments
+            selected_districts = []
+            if primary_district:
+                selected_districts.append(primary_district)
+            for ad in additional_districts:
+                if ad:
+                    selected_districts.append(ad)
+            selected_districts = list(dict.fromkeys(selected_districts))
+            
+            StaffGeographyAssignment.objects.filter(staff=sp).delete()
+            for d_id in selected_districts:
+                StaffGeographyAssignment.objects.create(staff=sp, district_id=d_id)
+                
             messages.success(request, f"User '{member.name}' updated successfully.")
             
         elif action == "activate":
@@ -522,16 +559,71 @@ def admin_user_detail_view(request, user_id):
             member.status = "pending_invited"
             member.save(update_fields=["status"])
             messages.success(request, f"Invitation successfully sent to {member.email}.")
+
+        elif action == "reset_password":
+            new_password = request.POST.get("new_password", "").strip()
+            if not new_password:
+                messages.error(request, "Password cannot be empty.")
+                return redirect("frontend:admin_user_detail", user_id=user_id)
+
+            from apps.core.security import validate_password
+            violations = validate_password(new_password, member.email)
+            if violations:
+                messages.error(request, " ".join(violations))
+                return redirect("frontend:admin_user_detail", user_id=user_id)
+
+            from django.utils import timezone
+            member.set_password(new_password)
+            member.must_change_password = True
+            member.password_set_at = timezone.now()
+            member.failed_login_count = 0
+            member.locked_until = None
+            member.status = "active"
+            member.is_active = True
+            member.save(update_fields=[
+                "password", "must_change_password", "password_set_at",
+                "failed_login_count", "locked_until", "status", "is_active"
+            ])
+
+            from apps.core.email import mailer
+            mailer.send_password_reset_by_admin_notification(
+                to=member.email, name=member.name, reset_by_name=request.user.name
+            )
+            messages.success(request, f"Password reset for '{member.name}'. They will be required to change it on next login.")
+
+        elif action == "unlock":
+            member.failed_login_count = 0
+            member.locked_until = None
+            member.save(update_fields=["failed_login_count", "locked_until"])
+            messages.success(request, f"Account for '{member.name}' has been unlocked.")
             
         return redirect("frontend:admin_user_detail", user_id=user_id)
         
-    # Get available roles
+    # Get available roles & districts
     from apps.core.rbac import EdifyRole
+    from apps.geography.models import District
+    from apps.accounts.models import StaffProfile, StaffGeographyAssignment
+    
     roles = [r.value for r in EdifyRole]
+    districts = District.objects.all().order_by("name")
+    
+    sp = StaffProfile.objects.filter(user=member).first()
+    primary_district_id = sp.primary_district_id if sp else None
+    assigned_districts = (
+        list(StaffGeographyAssignment.objects.filter(staff=sp).values_list("district_id", flat=True))
+        if sp else []
+    )
+
+    from django.utils import timezone
+    is_locked = bool(member.locked_until and member.locked_until > timezone.now())
     
     context = {
         "member": member,
         "available_roles": roles,
+        "districts": districts,
+        "primary_district_id": primary_district_id,
+        "assigned_districts": assigned_districts,
+        "is_locked": is_locked,
     }
     return render(request, "pages/admin/user_detail.html", context)
 
@@ -589,13 +681,85 @@ def message_detail_view(request, message_id):
     return render(request, "pages/messages/detail.html", context)
 
 
-@require_page_permission("staff")
+@require_page_permission("personal_time_off")
 def leave_requests_view(request):
-    """Leave requests."""
+    """Redirect legacy leave requests view to new personal-time-off view."""
+    from django.shortcuts import redirect
+    return redirect("/personal-time-off/")
+
+
+@require_page_permission("personal_time_off")
+def personal_time_off_view(request):
+    """Personal Time Off request and list cockpit."""
     user = request.user
-    leaves = Leave.objects.filter(user=user).order_by("-created_at")
-    context = {"leaves": leaves}
-    return render(request, "pages/leave/index.html", context)
+    from apps.accounts.models import Leave, StaffProfile
+    from django.shortcuts import redirect, render
+    from django.contrib import messages
+    from datetime import datetime
+    
+    sp = getattr(user, "staff_profile", None)
+    if not sp:
+        sp, _ = StaffProfile.objects.get_or_create(
+            user=user,
+            defaults={"onboarding_state": "active", "title": "Staff"}
+        )
+
+    if request.method == "POST":
+        start_date_str = request.POST.get("start_date")
+        end_date_str = request.POST.get("end_date")
+        reason = request.POST.get("reason")
+        coverage_notes = request.POST.get("coverage_notes")
+        leave_type = request.POST.get("type", "annual")
+        
+        try:
+            start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
+            end_date = datetime.strptime(end_date_str, "%Y-%m-%d")
+            days = (end_date - start_date).days + 1
+            if days <= 0:
+                raise ValueError("End date must be on or after start date.")
+        except Exception as e:
+            messages.error(request, f"Invalid date range: {e}")
+            return redirect("/personal-time-off/")
+            
+        Leave.objects.create(
+            staff=sp,
+            type=leave_type,
+            start_date=start_date_str,
+            end_date=end_date_str,
+            days=days,
+            reason=reason,
+            coverage_notes=coverage_notes,
+            status="pending"
+        )
+        messages.success(request, "Leave request submitted successfully.")
+        return redirect("/personal-time-off/")
+        
+    leaves = Leave.objects.filter(staff=sp).order_by("-created_at")
+    
+    from apps.accounts.models import User
+    reviewer_ids = [l.reviewed_by_user_id for l in leaves if l.reviewed_by_user_id]
+    reviewer_map = {u.id: u.name for u in User.objects.filter(id__in=reviewer_ids)}
+    
+    leaves_data = []
+    for l in leaves:
+        leaves_data.append({
+            "id": l.id,
+            "type": str(l.type).replace("_", " ").title(),
+            "start_date": l.start_date,
+            "end_date": l.end_date,
+            "days": l.days,
+            "status": l.status,
+            "reason": l.reason,
+            "coverage_notes": l.coverage_notes,
+            "reviewer_name": reviewer_map.get(l.reviewed_by_user_id, "Pending Review") if l.reviewed_by_user_id else "Pending Review"
+        })
+        
+    context = {
+        "leaves": leaves_data,
+        "profile": sp
+    }
+    return render(request, "pages/leave/personal_time_off.html", context)
+
 
 
 @require_page_permission("planning")
@@ -850,12 +1014,51 @@ def admin_data_quality_center_view(request):
     no_ssa = DataQualityIssue.objects.filter(issue_type="no_ssa", status="open").select_related("school")
     unmatched_ssa_count = UnmatchedSSARecord.objects.filter(status__in=["pending", "hold"]).count()
 
+    kpi_items = [
+        {
+            "label": "Clean Schools",
+            "value": str(clean_count),
+            "helper": "Fully complete verified roster",
+            "icon": "check",
+            "variant": "success",
+        },
+        {
+            "label": "Needs Review",
+            "value": str(needs_review_count),
+            "helper": "Minor operational gaps",
+            "icon": "chat",
+            "variant": "info",
+        },
+        {
+            "label": "Needs Cleanup",
+            "value": str(needs_cleanup_count),
+            "helper": "Moderate gaps present",
+            "icon": "warning",
+            "variant": "warning",
+        },
+        {
+            "label": "Duplicate Risk",
+            "value": str(duplicate_risk_count),
+            "helper": "Potential duplicate entries",
+            "icon": "danger",
+            "variant": "danger",
+        },
+        {
+            "label": "Missing Critical Data",
+            "value": str(missing_critical_count),
+            "helper": "Missing owner/cluster info",
+            "icon": "danger",
+            "variant": "red",
+        }
+    ]
+
     context = {
         "clean_count": clean_count,
         "needs_review_count": needs_review_count,
         "needs_cleanup_count": needs_cleanup_count,
         "duplicate_risk_count": duplicate_risk_count,
         "missing_critical_count": missing_critical_count,
+        "kpi_strip_items": kpi_items,
         
         "missing_phone": missing_phone,
         "missing_contact": missing_contact,

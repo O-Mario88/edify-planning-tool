@@ -114,6 +114,26 @@ class MailerService:
         )
         return self.send(MailMessage(to=to, subject=subject, text=text))
 
+    def send_temporary_password_notification(self, *, to: str, name: str, invited_by_name: str) -> dict:
+        link = f"{self._app_base_url}/login"
+        subject = "Your account has been created on Edify Planning and Monitoring Tool"
+        text = "\n".join(
+            [
+                f"Hello {name},",
+                "",
+                f"{invited_by_name} has created an account for you on the Edify Planning and Monitoring Tool.",
+                "",
+                "Your administrator has configured a temporary password for your account.",
+                "You can log in using your email and that temporary password here:",
+                link,
+                "",
+                "Please update your password after logging in for the first time.",
+                "",
+                "— Edify Planning and Monitoring Tool",
+            ]
+        )
+        return self.send(MailMessage(to=to, subject=subject, text=text))
+
     def send_password_reset(self, *, to: str, name: str, token: str) -> dict:
         link = f"{self._app_base_url}/reset-password?token={token}"
         subject = "Reset your Edify Planning password"
@@ -127,6 +147,27 @@ class MailerService:
                 "This link expires in 45 minutes and can only be used once.",
                 "",
                 "If you did not request a password reset, you can safely ignore this email.",
+                "",
+                "— Edify Planning and Monitoring Tool",
+            ]
+        )
+        return self.send(MailMessage(to=to, subject=subject, text=text))
+
+    def send_password_reset_by_admin_notification(self, *, to: str, name: str, reset_by_name: str) -> dict:
+        link = f"{self._app_base_url}/login"
+        subject = "Your Edify account password has been reset"
+        text = "\n".join(
+            [
+                f"Hello {name},",
+                "",
+                f"Your password has been reset by {reset_by_name}.",
+                "",
+                "You can log in using your email and the new password provided by your administrator:",
+                link,
+                "",
+                "You will be required to change your password after logging in.",
+                "",
+                "If you did not expect this change, please contact your administrator immediately.",
                 "",
                 "— Edify Planning and Monitoring Tool",
             ]

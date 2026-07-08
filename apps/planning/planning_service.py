@@ -15,7 +15,7 @@ class PlanningReadinessService:
             return {
                 "planningReadiness": "Cluster Required",
                 "recommendedAction": "Add to Cluster",
-                "reason": "School exists in School Directory but has not yet been added to a cluster.",
+                "reason": "Unclustered schools block activity scheduling.",
                 "availableActions": ["Add to Cluster"],
                 "blockedActions": ["Schedule visit", "Schedule training", "Assign to Partner"],
             }
@@ -80,26 +80,8 @@ class PlanningReadinessService:
                     "blockedActions": ["Schedule visit", "Schedule training", "Assign to Partner"],
                 }
 
-        # 6. SSA Required
-        ssa_state = school.ssa_readiness_state
-        if ssa_state in ["No SSA", "Expired / Needs Refresh", "Returned for Correction"]:
-            return {
-                "planningReadiness": "SSA Required",
-                "recommendedAction": "Schedule SSA Visit",
-                "reason": "This school has no verified SSA for this year. Complete SSA first so intervention impact can be measured.",
-                "availableActions": ["Schedule SSA Visit", "Schedule School Visit + SSA", "Assign Partner SSA Collection", "Schedule Activity Anyway"],
-                "blockedActions": [],
-            }
-
-        # 7. Ready for Support
-        weak_str = weakest_area if weakest_area and weakest_area != "—" else "general"
-        return {
-            "planningReadiness": "Ready for Support",
-            "recommendedAction": f"Schedule {weak_str}-focused Visit",
-            "reason": f"{weak_str} is the weakest verified intervention score for this school." if weak_str != "general" else "School is ready for support interventions.",
-            "availableActions": ["Schedule visit", "Schedule training", "Assign to Partner"],
-            "blockedActions": [],
-        }
+        from apps.planning.recommendation_services import PlanningRecommendationService
+        return PlanningRecommendationService.get_recommendation(school, has_catalogue, has_scheduled, partner_assignment)
 
 
 class ClusterRecommendationService:

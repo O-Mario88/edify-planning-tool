@@ -53,8 +53,8 @@ padding: 4px 28px 28px 28px !important;
 hx-post="/planning/assign-partner-action"
 hx-target="#assign-errors"
 class="space-y-4 text-[12px] font-bold text-slate-600"
-@submit="$dispatch('close-drawer')"
 >
+{% csrf_token %}
 {% if school %}
 <input type="hidden" name="school_id" value="{{ school.school_id }}">
 {% endif %}

@@ -97,6 +97,8 @@ class User(AbstractBaseUser, PermissionsMixin, SoftDeleteModel):
     status = models.CharField(max_length=32, choices=UserStatus.choices, default=UserStatus.ACTIVE)
     password_set_at = models.DateTimeField(null=True, blank=True)
     last_login_at = models.DateTimeField(null=True, blank=True)
+    # Set True when an admin creates/resets the password. The user must change it on next login.
+    must_change_password = models.BooleanField(default=False)
     # Brute-force protection (auth.service login gate).
     failed_login_count = models.IntegerField(default=0)
     locked_until = models.DateTimeField(null=True, blank=True)
@@ -366,12 +368,20 @@ class Leave(TimeStampedModel):
 
     id = CuidField()
     staff = models.ForeignKey(StaffProfile, on_delete=models.CASCADE, related_name="leaves")
-    type = models.CharField(max_length=64)  # annual|sick|compassionate|unpaid
+    type = models.CharField(max_length=64)  # personal_time_off|sick_leave|maternity_leave|paternity_leave|bereavement_leave
     start_date = models.CharField(max_length=32)
     end_date = models.CharField(max_length=32)
     days = models.IntegerField()
+    days_charged = models.IntegerField(null=True, blank=True)
+    hours_covered = models.IntegerField(null=True, blank=True)
     status = models.CharField(max_length=32, default="pending")
     reason = models.TextField(null=True, blank=True)
+    covering_staff = models.ForeignKey(StaffProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name="leaves_covered")
+    coverage_notes = models.TextField(null=True, blank=True)
+    emergency_contact = models.TextField(null=True, blank=True)
+    handover_notes = models.TextField(null=True, blank=True)
+    urgent_activities = models.TextField(null=True, blank=True)
+    attachment = models.FileField(upload_to="leave_attachments/", null=True, blank=True)
     reviewed_by_user_id = models.CharField(max_length=30, null=True, blank=True)
     reviewed_at = models.DateTimeField(null=True, blank=True)
 
@@ -381,6 +391,100 @@ class Leave(TimeStampedModel):
             models.Index(fields=["staff"]),
             models.Index(fields=["status"]),
         ]
+
+
+class LeaveTypePolicy(TimeStampedModel):
+    id = CuidField()
+    leave_type = models.CharField(max_length=64, unique=True)  # personal_time_off, sick_leave, maternity_leave, paternity_leave, bereavement_leave
+    label = models.CharField(max_length=128)
+    annual_entitlement = models.IntegerField(default=21)
+    requires_attachment = models.BooleanField(default=False)
+    approver_role = models.CharField(max_length=64, default="Program Lead")
+    weekends_count = models.BooleanField(default=False)
+    public_holidays_count = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = "leave_type_policy"
+
+    def __str__(self) -> str:
+        return self.label
+
+
+class LeaveBalance(TimeStampedModel):
+    id = CuidField()
+    staff = models.ForeignKey(StaffProfile, on_delete=models.CASCADE, related_name="leave_balances")
+    leave_type = models.CharField(max_length=64)
+    year = models.IntegerField(default=2026)
+    entitlement = models.IntegerField(default=21)
+    used = models.IntegerField(default=0)
+    pending = models.IntegerField(default=0)
+    approved = models.IntegerField(default=0)
+    remaining = models.IntegerField(default=21)
+    expired = models.IntegerField(default=0)
+
+    class Meta:
+        db_table = "leave_balance"
+        constraints = [
+            models.UniqueConstraint(fields=["staff", "leave_type", "year"], name="uniq_staff_leave_type_year")
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.staff.user.name} - {self.leave_type} ({self.year})"
+
+
+class TemporaryCoverageAssignment(TimeStampedModel):
+    id = CuidField()
+    leave_request = models.ForeignKey(Leave, on_delete=models.CASCADE, related_name="coverage_assignments")
+    original_staff = models.ForeignKey(StaffProfile, on_delete=models.CASCADE, related_name="coverages_given")
+    covering_staff = models.ForeignKey(StaffProfile, on_delete=models.CASCADE, related_name="coverages_received")
+    start_datetime = models.DateTimeField()
+    end_datetime = models.DateTimeField()
+    scope = models.CharField(max_length=255, default="operational_work")
+    status = models.CharField(max_length=32, default="active")  # active, expired, revoked
+    created_by_user_id = models.CharField(max_length=30, null=True, blank=True)
+    approved_by_user_id = models.CharField(max_length=30, null=True, blank=True)
+    revoked_at = models.DateTimeField(null=True, blank=True)
+    revoked_by_user_id = models.CharField(max_length=30, null=True, blank=True)
+
+    class Meta:
+        db_table = "temporary_coverage_assignment"
+
+    def __str__(self) -> str:
+        return f"{self.covering_staff.user.name} covering for {self.original_staff.user.name}"
+
+
+class PublicHoliday(TimeStampedModel):
+    id = CuidField()
+    name = models.CharField(max_length=255)
+    date = models.DateField(unique=True)
+
+    class Meta:
+        db_table = "public_holiday"
+
+    def __str__(self) -> str:
+        return f"{self.name} ({self.date})"
+
+
+class CalendarBlock(TimeStampedModel):
+    id = CuidField()
+    title = models.CharField(max_length=255)
+    description = models.TextField(null=True, blank=True)
+    block_type = models.CharField(max_length=64, default="PUBLIC_HOLIDAY")  # PUBLIC_HOLIDAY, BLACKOUT_DATE, STAFF_CONFERENCE, REGIONAL_EVENT, ORG_EVENT, CUSTOM_BLOCK
+    start_date = models.DateField()
+    end_date = models.DateField()
+    country = models.CharField(max_length=64, default="Uganda")
+    region = models.ForeignKey("geography.Region", on_delete=models.SET_NULL, null=True, blank=True, related_name="calendar_blocks")
+    district = models.ForeignKey("geography.District", on_delete=models.SET_NULL, null=True, blank=True, related_name="calendar_blocks")
+    applies_to_all_roles = models.BooleanField(default=True)
+    applies_to_roles = models.JSONField(null=True, blank=True)  # List of role strings
+    created_by = models.CharField(max_length=30, null=True, blank=True)  # userId
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = "calendar_block"
+
+    def __str__(self) -> str:
+        return f"{self.title} ({self.block_type}): {self.start_date} -> {self.end_date}"
 
 
 class Report(TimeStampedModel):
@@ -464,6 +568,11 @@ __all__ = [
     "AssignmentAudit",
     "StaffTargetProfile",
     "Leave",
+    "LeaveTypePolicy",
+    "LeaveBalance",
+    "TemporaryCoverageAssignment",
+    "PublicHoliday",
+    "CalendarBlock",
     "Report",
     "StaffSetupCandidateStatus",
     "StaffSetupCandidate",

@@ -1,0 +1,134 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Team Targets — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="p-6 max-w-7xl mx-auto space-y-6">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-[24px] font-semibold text-slate-800 tracking-tight">Team Targets & Performance</h1>
+      <p class="text-[12px] text-[var(--text-secondary)] mt-1 font-semibold">Edify Operations · FY{{ fy }} KPI Rollups</p>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+    <!-- Card 1 -->
+    <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm flex items-center space-x-4">
+      <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a4 4 0 10-4-4" />
+        </svg>
+      </div>
+      <div>
+        <p class="text-[12px] text-[var(--text-secondary)] font-semibold uppercase tracking-wider">Team Size</p>
+        <p class="text-[24px] font-bold text-slate-800 mt-1">{{ total_members }} Members</p>
+      </div>
+    </div>
+
+    <!-- Card 2 -->
+    <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm flex items-center space-x-4">
+      <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+        </svg>
+      </div>
+      <div>
+        <p class="text-[12px] text-[var(--text-secondary)] font-semibold uppercase tracking-wider">Scoping Integrity</p>
+        <p class="text-[24px] font-bold text-slate-800 mt-1">100% Dynamic</p>
+      </div>
+    </div>
+
+    <!-- Card 3 -->
+    <div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm flex items-center space-x-4">
+      <div class="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+      </div>
+      <div>
+        <p class="text-[12px] text-[var(--text-secondary)] font-semibold uppercase tracking-wider">Assigned Targets</p>
+        <p class="text-[24px] font-bold text-slate-800 mt-1">Active</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Performance Table -->
+  <div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm overflow-hidden">
+    <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+      <h3 class="text-[16px] font-bold text-slate-800">Team Target Summary</h3>
+      <span class="text-[11px] font-bold text-slate-400">Sorted by Achievement %</span>
+    </div>
+    
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-slate-50 border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+            <th class="px-6 py-4">Team Member</th>
+            <th class="px-6 py-4">Role</th>
+            <th class="px-6 py-4 text-center">Targets (Act / Target)</th>
+            <th class="px-6 py-4">Achievement %</th>
+            <th class="px-6 py-4 text-center">Overdue Items</th>
+            <th class="px-6 py-4 text-center">Trend</th>
+            <th class="px-6 py-4 text-center">Risk Status</th>
+            <th class="px-6 py-4">Next Action</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 text-[13px] text-slate-600">
+          {% for row in team_rows %}
+          <tr class="hover:bg-slate-50/50 transition">
+            <td class="px-6 py-4 font-bold text-slate-800">{{ row.name }}</td>
+            <td class="px-6 py-4">
+              <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700">
+                {{ row.role }}
+              </span>
+            </td>
+            <td class="px-6 py-4 text-center font-semibold text-slate-700">
+              {{ row.completed_targets }} / {{ row.assigned_targets }}
+            </td>
+            <td class="px-6 py-4">
+              <div class="flex items-center space-x-3">
+                <span class="font-bold text-slate-800 w-12">{{ row.achievement_pct }}%</span>
+                <div class="w-24 bg-slate-100 h-2 rounded-full overflow-hidden">
+                  <div class="h-full bg-indigo-600" style="width: {{ row.achievement_pct }}%"></div>
+                </div>
+              </div>
+            </td>
+            <td class="px-6 py-4 text-center">
+              {% if row.overdue_items > 0 %}
+                <span class="text-rose-600 font-bold">{{ row.overdue_items }}</span>
+              {% else %}
+                <span class="text-emerald-600 font-bold">—</span>
+              {% endif %}
+            </td>
+            <td class="px-6 py-4 text-center font-medium">
+              {% if row.trend == 'Stable' %}
+                <span class="text-emerald-600">↗ Stable</span>
+              {% else %}
+                <span class="text-amber-600">↘ Needs Support</span>
+              {% endif %}
+            </td>
+            <td class="px-6 py-4 text-center">
+              <span class="px-2 py-0.5 rounded-full text-[11px] font-bold border {{ row.risk_class }}">
+                {{ row.risk }}
+              </span>
+            </td>
+            <td class="px-6 py-4 text-[12px] text-slate-400 font-medium">{{ row.next_action }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8" class="px-6 py-12 text-center text-slate-400">
+              <p class="text-[32px] mb-2">📋</p>
+              <p class="font-semibold">No supervised team members or targets found for this role scoping.</p>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

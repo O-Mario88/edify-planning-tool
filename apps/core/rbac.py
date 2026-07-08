@@ -80,6 +80,10 @@ class Permission(str, Enum):
     PARTNER_VIEW = "partner.view"
     PARTNER_MANAGE = "partner.manage"
     PROJECT_MANAGE = "project.manage"
+    # Assign a school to a project. Distinct from PROJECT_MANAGE (which gates
+    # setting a project's manager) — broader set of operational roles work
+    # schools day-to-day and need this without gaining manager-assignment rights.
+    PROJECT_ASSIGN_SCHOOL = "project.assignSchool"
     ANALYTICS_VIEW = "analytics.view"
     EXPORT = "data.export"
     SYSTEM_ADMIN = "system.admin"
@@ -107,7 +111,7 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.EVIDENCE_REVIEW, P.BUDGET_VIEW_SUMMARY, P.BUDGET_VIEW_DETAIL,
         P.COST_SETTINGS_MANAGE,
         P.STAFF_MANAGE, P.USER_MANAGE, P.STAFF_PERFORMANCE_VIEW, P.PARTNER_VIEW,
-        P.PARTNER_MANAGE, P.PROJECT_MANAGE, P.ANALYTICS_VIEW, P.EXPORT,
+        P.PARTNER_MANAGE, P.PROJECT_MANAGE, P.PROJECT_ASSIGN_SCHOOL, P.ANALYTICS_VIEW, P.EXPORT,
         P.RECRUITMENT_INTELLIGENCE_VIEW,
         # Full country leadership decision authority.
         P.LEADERSHIP_ENGINE_VIEW, P.LEADERSHIP_DECISION_REVIEW,
@@ -135,6 +139,8 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.LEADERSHIP_ENGINE_VIEW, P.LEADERSHIP_DECISION_REVIEW,
         P.BUDGET_INTELLIGENCE_VIEW,  # supervised-team budget/fund view
         P.STAFF_PERFORMANCE_VIEW,  # supervised-team roster only (scoped)
+        # PL works the operational school directory, including project assignment.
+        P.PROJECT_ASSIGN_SCHOOL,
     ],
     EdifyRole.CCEO: [
         # The CCEO is the primary cluster-assigning field role. Not CLUSTER_OVERRIDE.
@@ -146,6 +152,8 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.BUDGET_VIEW_DETAIL, P.BUDGET_APPROVE,
         P.ANALYTICS_VIEW, P.RECRUITMENT_INTELLIGENCE_VIEW,
         P.BUDGET_INTELLIGENCE_VIEW,  # own planned/funded activities view
+        # CCEO works the operational school directory, including project assignment.
+        P.PROJECT_ASSIGN_SCHOOL,
     ],
     EdifyRole.IMPACT_ASSESSMENT: [
         P.SCHOOL_VIEW, P.SCHOOL_DIRECTORY_VIEW, P.SCHOOL_UPLOAD,
@@ -155,6 +163,8 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.PARTNER_VIEW,
         # Data-confidence + SSA-impact readiness lens (no decision review authority).
         P.LEADERSHIP_ENGINE_VIEW,
+        # IA works the operational school directory, including project assignment.
+        P.PROJECT_ASSIGN_SCHOOL,
     ],
     EdifyRole.PROGRAM_ACCOUNTANT: [
         # No SCHOOL_DIRECTORY_VIEW — finance/accountability only.
@@ -175,7 +185,7 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
     EdifyRole.PROJECT_COORDINATOR: [
         # Explicitly granted directory access — assigns project schools.
         P.SCHOOL_VIEW, P.SCHOOL_DIRECTORY_VIEW, P.PLANNING_VIEW, P.PLANNING_CREATE,
-        P.ACTIVITY_ASSIGN, P.EVIDENCE_REVIEW, P.PROJECT_MANAGE, P.PARTNER_VIEW,
+        P.ACTIVITY_ASSIGN, P.EVIDENCE_REVIEW, P.PROJECT_MANAGE, P.PROJECT_ASSIGN_SCHOOL, P.PARTNER_VIEW,
         P.ANALYTICS_VIEW,
     ],
     EdifyRole.PARTNER_ADMIN: [

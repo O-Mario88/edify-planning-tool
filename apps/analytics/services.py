@@ -15,6 +15,10 @@ from apps.schools.models import School
 def _scoped_schools(principal):
     scope = resolve_user_scope(principal)
     qs = School.objects.filter(deleted_at__isnull=True)
+    if scope.active_role == "CountryDirector":
+        from django.conf import settings
+        if not getattr(settings, "ALLOW_CD_OPERATIONAL_PLANNING", False):
+            return qs.none(), scope
     if scope.country_scope or scope.can_view_summary_only:
         return qs, scope
     if scope.school_ids:

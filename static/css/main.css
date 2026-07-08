@@ -9163,6 +9163,21 @@
       grid-column: span 9 / span 9;
     }
   }
+  .lg\:col-span-10 {
+    @media (width >= 64rem) {
+      grid-column: span 10 / span 10;
+    }
+  }
+  .lg\:col-span-11 {
+    @media (width >= 64rem) {
+      grid-column: span 11 / span 11;
+    }
+  }
+  .lg\:col-span-12 {
+    @media (width >= 64rem) {
+      grid-column: span 12 / span 12;
+    }
+  }
   .lg\:mx-5 {
     @media (width >= 64rem) {
       margin-inline: calc(var(--spacing) * 5);

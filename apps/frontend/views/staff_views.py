@@ -223,7 +223,7 @@ def today_view(request):
 
 # ─── VISITS LOG ───────────────────────────────────────────────────────────────
 
-@require_page_permission("planning")
+@require_page_permission("my_plan")
 def visits_log_view(request):
     """All school visits for the current user — filterable by status."""
     user = request.user
@@ -262,7 +262,7 @@ def visits_log_view(request):
 
 # ─── TRAININGS LOG ────────────────────────────────────────────────────────────
 
-@require_page_permission("planning")
+@require_page_permission("my_plan")
 def trainings_log_view(request):
     """All group training sessions for the current user."""
     user = request.user
@@ -340,7 +340,7 @@ def evidence_gallery_view(request):
 
 # ─── MY TARGETS ───────────────────────────────────────────────────────────────
 
-@require_page_permission("planning")
+@require_page_permission("my_target")
 def my_targets_view(request):
     """Personal targets & KPIs for the signed-in CCEO."""
     user = request.user
@@ -631,3 +631,123 @@ def profile_view(request):
         "initials": user.name[:2].upper() if user.name else "??",
     }
     return render(request, "pages/profile/index.html", context)
+
+
+@require_page_permission("team_targets")
+def team_targets_view(request):
+    """Team targets dashboard resolver."""
+    user = request.user
+    fy = get_operational_fy()
+    today = date.today()
+
+    from apps.core.navigation import get_user_role_slug
+    from apps.accounts.models import User, StaffProfile, StaffSupervisorAssignment
+    from apps.targets.performance import staff_metrics_with_targets
+
+    role = get_user_role_slug(user)
+    target_users = []
+
+    if role == "PL":
+        sp = getattr(user, "staff_profile", None)
+        if sp:
+            supervisee_ids = list(StaffSupervisorAssignment.objects.filter(supervisor=sp).values_list("supervisee_id", flat=True))
+            target_users = User.objects.filter(
+                staff_profile__id__in=supervisee_ids,
+                status="active",
+                deleted_at__isnull=True
+            ).select_related("staff_profile").order_by("name")
+    elif role in ("CD", "ADMIN"):
+        target_users = User.objects.filter(
+            status="active",
+            deleted_at__isnull=True
+        ).exclude(
+            roles__contains=["CountryDirector"]
+        ).exclude(
+            roles__contains=["RegionalVicePresident"]
+        ).select_related("staff_profile").order_by("name")
+    elif role == "HR":
+        target_users = User.objects.filter(
+            status="active",
+            deleted_at__isnull=True,
+            roles__contains=["CCEO"]
+        ) | User.objects.filter(
+            status="active",
+            deleted_at__isnull=True,
+            roles__contains=["Program Lead"]
+        )
+        target_users = target_users.select_related("staff_profile").order_by("name")
+    elif role == "IA":
+        target_users = User.objects.filter(
+            status="active",
+            deleted_at__isnull=True,
+            roles__contains=["ImpactAssessment"]
+        ).select_related("staff_profile").order_by("name")
+    elif role == "ACCOUNTANT":
+        target_users = User.objects.filter(
+            status="active",
+            deleted_at__isnull=True,
+            roles__contains=["Accountant"]
+        ).select_related("staff_profile").order_by("name")
+
+    rows = []
+    for u in target_users:
+        sp = getattr(u, "staff_profile", None)
+        if not sp:
+            continue
+        
+        perf = staff_metrics_with_targets(sp.id, fy)
+        
+        total_target = 0
+        total_achieved = 0
+        
+        for k, card in perf.get("cards", {}).items():
+            total_target += card.get("target", 0)
+            total_achieved += card.get("achieved", 0)
+            
+        achievement_pct = round((total_achieved / total_target * 100), 1) if total_target > 0 else 0.0
+        
+        from apps.activities.models import Activity
+        overdue_act = Activity.objects.filter(
+            responsible_staff_id=sp.id,
+            planned_date__lt=today,
+            status__in=["scheduled", "started"],
+            deleted_at__isnull=True
+        ).count()
+        
+        if overdue_act > 3 or (total_target > 0 and achievement_pct < 40):
+            risk = "High"
+            risk_class = "bg-rose-50 text-rose-700 border-rose-250"
+            next_action = "Supervisor review required"
+        elif overdue_act > 0 or (total_target > 0 and achievement_pct < 70):
+            risk = "Medium"
+            risk_class = "bg-amber-50 text-amber-700 border-amber-250"
+            next_action = "Check workload balance"
+        else:
+            risk = "Low"
+            risk_class = "bg-emerald-50 text-emerald-700 border-emerald-250"
+            next_action = "On track"
+            
+        role_label = u.roles[0] if u.roles else "Staff"
+        
+        rows.append({
+            "name": u.name,
+            "role": role_label,
+            "assigned_targets": total_target,
+            "completed_targets": total_achieved,
+            "achievement_pct": achievement_pct,
+            "overdue_items": overdue_act,
+            "trend": "Stable" if achievement_pct >= 70 else "Needs Support",
+            "risk": risk,
+            "risk_class": risk_class,
+            "next_action": next_action
+        })
+        
+    rows.sort(key=lambda x: x["achievement_pct"], reverse=True)
+    
+    context = {
+        "team_rows": rows,
+        "fy": fy,
+        "total_members": len(rows),
+    }
+    return render(request, "pages/targets/team.html", context)
+

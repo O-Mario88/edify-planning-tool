@@ -553,7 +553,7 @@ def assign_to_project_drawer_view(request, school_id):
     user = request.user
     
     from apps.core.permissions import has_permission
-    if not has_permission(user, "project.manage"):
+    if not has_permission(user, "project.assignSchool"):
         return render(request, "partials/schools/drawer_error.html", {"error": "You do not have permission to assign projects."})
         
     if request.method == "POST":

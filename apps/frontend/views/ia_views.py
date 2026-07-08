@@ -97,8 +97,61 @@ def ia_verification_queue_view(request):
         data["is_high_priority"] = a.activity_type in ["core_visit", "core_training", "baseline_ssa_visit"]
         serialized_queue.append(data)
         
+    kpi_items = [
+        {
+            "label": "Awaiting Verification",
+            "value": str(waiting_count),
+            "helper": "Active certification queue",
+            "icon": "clock",
+            "variant": "info",
+        },
+        {
+            "label": "Verified Today",
+            "value": f"+{verified_today}",
+            "helper": "SLA Compliant",
+            "icon": "check",
+            "variant": "success",
+        },
+        {
+            "label": "Returned Today",
+            "value": str(returned_today),
+            "helper": "Returned to field",
+            "icon": "warning",
+            "variant": "danger",
+        },
+        {
+            "label": "Avg Process SLA",
+            "value": f"{avg_hours}h",
+            "helper": "Baseline SLA: 24h",
+            "icon": "clock",
+            "variant": "info",
+        },
+        {
+            "label": "SSA Pending",
+            "value": str(ssa_pending),
+            "helper": "Needs collection",
+            "icon": "warning",
+            "variant": "warning",
+        },
+        {
+            "label": "Duplicate Risks",
+            "value": str(duplicate_risks),
+            "helper": "Potential duplicates",
+            "icon": "danger",
+            "variant": "danger",
+        },
+        {
+            "label": "High Priority",
+            "value": str(high_priority),
+            "helper": "Core visits/trainings",
+            "icon": "warning",
+            "variant": "warning",
+        }
+    ]
+
     context = {
         "queue": serialized_queue,
+        "kpi_strip_items": kpi_items,
         "kpis": {
             "waiting": waiting_count,
             "verified_today": verified_today,
@@ -352,6 +405,65 @@ def ia_dashboard_view(request):
     ssa_coverage = 87.5
     duplicate_risk_cnt = DuplicateActivity.objects.filter(status="potential").count()
     
+    kpi_items = [
+        {
+            "label": "Uploaded Today",
+            "value": "1,248",
+            "helper": "▲ 18% vs yesterday",
+            "icon": "info",
+            "variant": "info",
+        },
+        {
+            "label": "Pending Verification",
+            "value": str(waiting_cnt),
+            "helper": "▲ 12% vs last week",
+            "icon": "clock",
+            "variant": "warning",
+        },
+        {
+            "label": "Verified This Week",
+            "value": "2,917",
+            "helper": "▲ 23% vs last week",
+            "icon": "check",
+            "variant": "success",
+        },
+        {
+            "label": "Returned",
+            "value": "312",
+            "helper": "▲ 5% vs last week",
+            "icon": "danger",
+            "variant": "danger",
+        },
+        {
+            "label": "Data Quality Score",
+            "value": "86%",
+            "helper": "▲ 4 pts vs last week",
+            "icon": "check",
+            "variant": "success",
+        },
+        {
+            "label": "Salesforce Queue",
+            "value": "1,156",
+            "helper": "Pending sync",
+            "icon": "info",
+            "variant": "info",
+        },
+        {
+            "label": "SSA Submissions",
+            "value": "678",
+            "helper": "Pending review",
+            "icon": "warning",
+            "variant": "warning",
+        },
+        {
+            "label": "Evidence Files",
+            "value": "934",
+            "helper": "Pending review",
+            "icon": "info",
+            "variant": "info",
+        }
+    ]
+
     context = {
         "kpis": {
             "waiting": waiting_cnt,
@@ -362,6 +474,7 @@ def ia_dashboard_view(request):
             "duplicate_risk": duplicate_risk_cnt,
             "quality": "98.1%"
         },
+        "kpi_strip_items": kpi_items,
         # Verification Work Queue List matching Mockup
         "queue_items": [
             {
@@ -423,15 +536,66 @@ def ia_dashboard_view(request):
             {"count": 5, "text": "bulk uploads failed validation", "severity": "error"},
             {"count": 16, "text": "records returned for correction over 7 days", "severity": "warning"}
         ],
-        # Data Quality & Compliance Panel
+        # Data Quality & Compliance KPI strip — rendered via
+        # components/kpi_strip.html. Each tile links to the relevant
+        # work queue so auditors can jump straight to the records.
         "dq_metrics": [
-            {"label": "Missing Fields", "value": "1,284", "trend": "+ 6%", "trend_class": "text-rose-600"},
-            {"label": "Duplicate Records Detected", "value": "326", "trend": "- 4%", "trend_class": "text-emerald-600"},
-            {"label": "Orphan Salesforce Entries", "value": "215", "trend": "- 5%", "trend_class": "text-emerald-600"},
-            {"label": "Invalid Visit Counts", "value": "178", "trend": "+ 3%", "trend_class": "text-rose-600"},
-            {"label": "Non-certified Partner Visits", "value": "112", "trend": "+ 7%", "trend_class": "text-rose-600"},
-            {"label": "Schools Missing SSA", "value": "87", "trend": "+ 11%", "trend_class": "text-rose-600"},
-            {"label": "Records with Date Mismatch", "value": "243", "trend": "+ 1%", "trend_class": "text-rose-600"}
+            {
+                "label": "Missing Fields",
+                "value": "1,284",
+                "helper": "+6% vs last wk",
+                "icon": "warning",
+                "variant": "danger",
+                "link": "/admin-panel/data-quality-center",
+            },
+            {
+                "label": "Duplicate Records",
+                "value": "326",
+                "helper": "-4% vs last wk",
+                "icon": "report",
+                "variant": "info",
+                "link": "/data-quality/duplicates",
+            },
+            {
+                "label": "Orphan SF Entries",
+                "value": "215",
+                "helper": "-5% vs last wk",
+                "icon": "analytics",
+                "variant": "info",
+                "link": "/ia/verification/?tab=salesforce",
+            },
+            {
+                "label": "Invalid Visit Counts",
+                "value": "178",
+                "helper": "+3% vs last wk",
+                "icon": "analytics",
+                "variant": "warning",
+                "link": "/ia/verification/?tab=evidence",
+            },
+            {
+                "label": "Non-certified Visits",
+                "value": "112",
+                "helper": "+7% vs last wk",
+                "icon": "briefcase",
+                "variant": "warning",
+                "link": "/ia/verification/?tab=evidence",
+            },
+            {
+                "label": "Schools Missing SSA",
+                "value": "87",
+                "helper": "+11% vs last wk",
+                "icon": "school",
+                "variant": "danger",
+                "link": "/ssa/unmatched",
+            },
+            {
+                "label": "Date Mismatches",
+                "value": "243",
+                "helper": "+1% vs last wk",
+                "icon": "calendar",
+                "variant": "warning",
+                "link": "/ia/compare/",
+            },
         ],
         # Lowest-performing interventions list
         "lowest_performing": [

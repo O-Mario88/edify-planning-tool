@@ -140,10 +140,9 @@ class RoleGatingPermissionTest(APITestCase):
         self.assertEqual(response.status_code, 302)
         self.assertTrue(response.url.endswith("/ia/dashboard/"))
 
-        # Blocked from normal school directory
+        # Allowed to view schools in the improved access matrix
         response_schools = self.client.get("/schools")
-        self.assertEqual(response_schools.status_code, 302)
-        self.assertTrue(response_schools.url.endswith("/dashboard"))
+        self.assertEqual(response_schools.status_code, 200)
 
     def test_accountant_dashboard_redirection_and_blocking(self):
         """Program Accountant should be redirected to /accounts when accessing /dashboard and blocked from field planning."""
@@ -205,4 +204,72 @@ class RoleGatingPermissionTest(APITestCase):
         # Blocked from school directory
         response_schools = self.client.get("/schools")
         self.assertEqual(response_schools.status_code, 302)
+
+    def test_new_pages_accessibility_and_gating(self):
+        """Verify access control mapping for team-targets, country-budget, personal-time-off, and system health."""
+        # 1. CCEO User
+        self.client.force_login(self.cceo1_user)
+        # Should be able to access personal-time-off
+        response_pto = self.client.get("/personal-time-off/")
+        self.assertEqual(response_pto.status_code, 200)
+        # Should be blocked from team-targets, country-budget, system-health
+        self.assertEqual(self.client.get("/team-targets/").status_code, 302)
+        self.assertEqual(self.client.get("/country-budget/").status_code, 302)
+        self.assertEqual(self.client.get("/system-health").status_code, 302)
+
+        # 2. Country Director User
+        self.client.force_login(self.cd_user)
+        # Should be able to access personal-time-off, team-targets, country-budget
+        self.assertEqual(self.client.get("/personal-time-off/").status_code, 200)
+        self.assertEqual(self.client.get("/team-targets/").status_code, 200)
+        self.assertEqual(self.client.get("/country-budget/").status_code, 200)
+        # Should be blocked from system-health
+        self.assertEqual(self.client.get("/system-health").status_code, 302)
+
+        # 3. Admin User
+        admin_user = User.objects.create_user(
+            email="admin@edify.test",
+            name="Admin User",
+            roles=["Admin"],
+            active_role="Admin",
+            password="x",
+            is_active=True,
+        )
+        self.client.force_login(admin_user)
+        # Should be able to access ALL pages including system-health
+        self.assertEqual(self.client.get("/personal-time-off/").status_code, 200)
+        self.assertEqual(self.client.get("/team-targets/").status_code, 200)
+        self.assertEqual(self.client.get("/country-budget/").status_code, 200)
+        self.assertEqual(self.client.get("/system-health").status_code, 200)
+
+    def test_legacy_removed_links_not_in_sidebar(self):
+        """Verify that legacy removed links (FY, Calendar, District, School Visits, Group Training, Partner Plan) are not built in sidebar."""
+        from apps.core.navigation import build_sidebar_for_user
+        
+        # Test CCEO sidebar
+        sections = build_sidebar_for_user(self.cceo1_user, "/dashboard")
+        all_labels = []
+        for sec in sections:
+            for item in sec["items"]:
+                all_labels.append(item["label"])
+                
+        # Must not contain removed links
+        for removed in ("FY", "Calendar", "District", "School Visits", "Group Training", "Partner Plan"):
+            self.assertNotIn(removed, all_labels)
+
+    def test_partner_plan_redirects_to_unified_my_plan(self):
+        """Verify that partner/my-plan redirects to /my-plan."""
+        partner_user = User.objects.create_user(
+            email="partner@edify.test",
+            name="Partner Field Officer",
+            roles=["PartnerFieldOfficer"],
+            active_role="PartnerFieldOfficer",
+            password="x",
+            is_active=True,
+        )
+        self.client.force_login(partner_user)
+        response = self.client.get("/partner/my-plan")
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response.url.endswith("/my-plan"))
+
 

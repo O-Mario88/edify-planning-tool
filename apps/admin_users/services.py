@@ -55,29 +55,73 @@ def create(data: dict, principal) -> dict:
     additional = data.get("additionalRoles") or []
     roles = list(dict.fromkeys([role, *additional]))
 
+    password = data.get("password")
+    if password:
+        from apps.core.security import validate_password
+        violations = validate_password(password, email)
+        if violations:
+            raise BadRequest(" ".join(violations))
+
     with transaction.atomic():
-        user = User.objects.create_user(
-            email=email,
-            name=data["name"],
-            phone=data.get("phone"),
-            roles=roles,
-            active_role=role,
-            password=None,  # set via the invite link
-            status="pending_invited",
-            is_active=False,
+        if password:
+            user = User.objects.create_user(
+                email=email,
+                name=data["name"],
+                phone=data.get("phone"),
+                roles=roles,
+                active_role=role,
+                password=password,
+                status="active",
+                is_active=True,
+                password_set_at=timezone.now(),
+            )
+            invite_token = None
+        else:
+            user = User.objects.create_user(
+                email=email,
+                name=data["name"],
+                phone=data.get("phone"),
+                roles=roles,
+                active_role=role,
+                password=None,  # set via the invite link
+                status="pending_invited",
+                is_active=False,
+            )
+            invite_token = _create_invitation(user.id, principal.user_id)
+
+        from apps.accounts.models import StaffProfile, StaffGeographyAssignment
+        primary_district_id = data.get("primaryDistrictId")
+        additional_districts = data.get("additionalDistrictIds") or []
+        
+        sp = StaffProfile.objects.create(
+            user=user,
+            primary_district_id=primary_district_id,
+            title=role
         )
-        if data.get("primaryDistrictId"):
-            from apps.accounts.models import StaffProfile
+        
+        selected_districts = []
+        if primary_district_id:
+            selected_districts.append(primary_district_id)
+        for d_id in additional_districts:
+            if d_id:
+                selected_districts.append(d_id)
+        selected_districts = list(dict.fromkeys(selected_districts))
+        
+        for d_id in selected_districts:
+            StaffGeographyAssignment.objects.create(staff=sp, district_id=d_id)
 
-            StaffProfile.objects.create(user=user, primary_district_id=data["primaryDistrictId"])
-        invite_token = _create_invitation(user.id, principal.user_id)
+    if password:
+        mail = mailer.send_temporary_password_notification(
+            to=email, name=user.name, invited_by_name=principal.name
+        )
+    else:
+        mail = mailer.send_invitation(
+            to=email, name=user.name, invited_by_name=principal.name, token=invite_token
+        )
 
-    mail = mailer.send_invitation(
-        to=email, name=user.name, invited_by_name=principal.name, token=invite_token
-    )
     return {
         "user": {"id": user.id, "email": user.email, "name": user.name, "status": user.status},
-        "inviteToken": None if mail.get("delivered") else invite_token,
+        "inviteToken": None if (password or mail.get("delivered")) else invite_token,
     }
 
 
