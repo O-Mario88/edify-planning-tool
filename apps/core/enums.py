@@ -52,6 +52,11 @@ class ClusterType(models.TextChoices):
     MIXED = "mixed", "Mixed"
 
 
+class DistrictType(models.TextChoices):
+    PRIMARY = "primary", "Primary"
+    SECONDARY = "secondary", "Secondary"
+
+
 class SsaStatus(models.TextChoices):
     NOT_DONE = "not_done", "Not Done"
     SCHEDULED = "scheduled", "Scheduled"
@@ -234,6 +239,7 @@ __all__ = [
     "ClusterStatus",
     "ClusterRecordStatus",
     "ClusterType",
+    "DistrictType",
     "SsaStatus",
     "PlanningReadiness",
     "SsaCollectorType",

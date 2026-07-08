@@ -1,5 +1,6 @@
 import logging
 from django.db.models import Avg, Count
+from django.db.models.functions import TruncMonth
 from apps.core.enums import SsaIntervention
 from apps.core.fy import get_operational_fy
 from apps.schools.models import School
@@ -11,6 +12,28 @@ from apps.ssa.models import SsaRecord, SsaScore
 from apps.core_schools.models import CorePlan, CoreActivitySlot, CoreSchoolProfile, cplan_id, cslot_id, cprof_id
 
 logger = logging.getLogger(__name__)
+
+
+def build_sparkline_path(values: list, width: int = 60, height: int = 20, padding: int = 2) -> str:
+    """Builds a simple SVG path `d` attribute from a list of real values."""
+    if not values:
+        return ""
+    if len(values) == 1:
+        mid = height / 2
+        return f"M {padding} {mid:.1f} L {width - padding} {mid:.1f}"
+
+    vmin, vmax = min(values), max(values)
+    rng = (vmax - vmin) or 1
+    step = (width - 2 * padding) / (len(values) - 1)
+    points = []
+    for i, v in enumerate(values):
+        x = padding + i * step
+        y = height - padding - ((v - vmin) / rng) * (height - 2 * padding)
+        points.append((x, y))
+    d = f"M {points[0][0]:.1f} {points[0][1]:.1f}"
+    for x, y in points[1:]:
+        d += f" L {x:.1f} {y:.1f}"
+    return d
 
 class CoreSchoolsService:
     @staticmethod
@@ -365,7 +388,80 @@ class CoreAssessmentService:
         avg = SsaRecord.objects.filter(id__in=latest_record_ids).aggregate(avg=Avg("average_score"))["avg"]
         return round(avg, 2) if avg is not None else 0.0
 
+    @staticmethod
+    def get_monthly_trend(core_schools_qs) -> list:
+        """Real month-over-month average Core Assessment score, built from SsaRecord
+        history. Returns [] when there is less than two distinct months of data —
+        i.e. not enough real history yet to plot a trend.
+        """
+        monthly = (
+            SsaRecord.objects.filter(school__in=core_schools_qs, deleted_at__isnull=True)
+            .annotate(month=TruncMonth("date_of_ssa"))
+            .values("month")
+            .annotate(avg=Avg("average_score"))
+            .order_by("month")
+        )
+        trend = [round(m["avg"] * 10, 1) for m in monthly if m["avg"] is not None]
+        return trend if len(trend) >= 2 else []
+
 class CoreInterventionImpactService:
+    @staticmethod
+    def _staff_partner_split_for_intervention(core_schools_qs, fy: str, code: str, school_ids: list) -> tuple:
+        """Real staff-vs-partner score comparison for a single intervention.
+
+        Splits schools by whether their CoreActivitySlot for this intervention is
+        partner-owned (`owner="partner"`) vs staff-led (everything else — the same
+        "not partner" convention already used by
+        CoreStaffPartnerPerformanceService.get_staff_vs_partner_performance), then
+        averages each group's SsaScore for that intervention. Returns (None, None)
+        when there isn't genuinely a split to compare (e.g. no partner-owned slots
+        recorded yet for this intervention).
+        """
+        slots = CoreActivitySlot.objects.filter(
+            school_id__in=school_ids, core_plan__fy=fy, intervention=code
+        )
+        partner_school_ids = list(slots.filter(owner="partner").values_list("school_id", flat=True).distinct())
+        staff_school_ids = list(slots.exclude(owner="partner").values_list("school_id", flat=True).distinct())
+
+        if not partner_school_ids or not staff_school_ids:
+            return None, None
+
+        staff_avg = SsaScore.objects.filter(
+            ssa_record__school__school_id__in=staff_school_ids,
+            ssa_record__deleted_at__isnull=True,
+            intervention=code,
+        ).aggregate(avg=Avg("score"))["avg"]
+        partner_avg = SsaScore.objects.filter(
+            ssa_record__school__school_id__in=partner_school_ids,
+            ssa_record__deleted_at__isnull=True,
+            intervention=code,
+        ).aggregate(avg=Avg("score"))["avg"]
+
+        if staff_avg is None or partner_avg is None:
+            return None, None
+
+        return int(staff_avg * 10), int(partner_avg * 10)
+
+    @staticmethod
+    def _monthly_trend_for_intervention(core_schools_qs, code: str) -> list:
+        """Real month-over-month average score trend for an intervention, built from
+        SsaScore/SsaRecord history. Returns [] when there is less than two distinct
+        months of data — i.e. no genuine trend to plot yet (rather than fabricating one).
+        """
+        monthly = (
+            SsaScore.objects.filter(
+                ssa_record__school__in=core_schools_qs,
+                ssa_record__deleted_at__isnull=True,
+                intervention=code,
+            )
+            .annotate(month=TruncMonth("ssa_record__date_of_ssa"))
+            .values("month")
+            .annotate(avg=Avg("score"))
+            .order_by("month")
+        )
+        trend = [round(m["avg"], 2) for m in monthly if m["avg"] is not None]
+        return trend if len(trend) >= 2 else []
+
     @staticmethod
     def get_intervention_impact(core_schools_qs, fy: str) -> list[dict]:
         """Prepares rows for bottom table Intervention Support & Impact."""
@@ -373,7 +469,7 @@ class CoreInterventionImpactService:
         school_ids = list(core_schools_qs.values_list("school_id", flat=True))
         plans = CorePlan.objects.filter(school_id__in=school_ids, fy=fy)
         plan_ids = [p.id for p in plans]
-        
+
         # Group by intervention and aggregate
         interventions_data = []
         for code, label in SsaIntervention.choices:
@@ -385,7 +481,7 @@ class CoreInterventionImpactService:
                 deleted_at__isnull=True,
                 status__in=["planned", "scheduled", "partner_scheduled", "in_progress", "completed", "accountant_confirmed"]
             ).values("school").distinct().count()
-            
+
             # Aggregate average baseline vs follow-up scores for this intervention
             # Since baseline and follow-up are linked via SSA records
             scores_qs = SsaScore.objects.filter(
@@ -395,10 +491,25 @@ class CoreInterventionImpactService:
             # Find average score in Q1/baseline vs Q4/follow-up
             avg_score = scores_qs.aggregate(avg=Avg("score"))["avg"]
             avg_score_pct = int(avg_score * 10) if avg_score is not None else 0
-            
-            # Simple calculated improvement delta
-            avg_improvement = int(avg_score_pct * 0.12) or 3  # Realistic dynamic proxy
-            
+
+            # Real improvement delta: average (follow_up_average - baseline_average) for
+            # schools whose slot for this intervention has actually been completed. Both
+            # baseline_average and follow_up_average come from real SSA records; this is
+            # 0 rather than fabricated when no follow-up SSA has been collected yet.
+            completed_school_ids = list(
+                CoreActivitySlot.objects.filter(
+                    school_id__in=school_ids, core_plan__fy=fy, intervention=code,
+                    status__in=["Completed", "Accountant Confirmed", "accountant_confirmed", "ia_verified", "IA Verified", "iaVerify"],
+                ).values_list("school_id", flat=True).distinct()
+            )
+            plans_for_intervention = CorePlan.objects.filter(
+                school_id__in=completed_school_ids, fy=fy,
+                baseline_average__isnull=False, follow_up_average__isnull=False,
+            )
+            deltas = [(p.follow_up_average - p.baseline_average) * 10 for p in plans_for_intervention]
+            has_improvement_data = bool(deltas)
+            avg_improvement = round(sum(deltas) / len(deltas), 1) if deltas else 0
+
             # Top supporting owner
             top_owner = "Unassigned"
             top_act = Activity.objects.filter(
@@ -407,23 +518,35 @@ class CoreInterventionImpactService:
                 fy=fy,
                 deleted_at__isnull=True
             ).values("responsible_staff_id").annotate(cnt=Count("id")).order_by("-cnt").first()
-            
+
             if top_act and top_act["responsible_staff_id"]:
                 staff = StaffProfile.objects.filter(user_id=top_act["responsible_staff_id"]).select_related("user").first()
                 if staff:
                     top_owner = staff.user.name
 
+            staff_pct, partner_pct = CoreInterventionImpactService._staff_partner_split_for_intervention(
+                core_schools_qs, fy, code, school_ids
+            )
+            if staff_pct is not None and partner_pct is not None:
+                diff = staff_pct - partner_pct
+                comparison = f"Staff +{diff}pp" if diff >= 0 else f"Partner +{abs(diff)}pp"
+            else:
+                comparison = "Insufficient data"
+
+            trend = CoreInterventionImpactService._monthly_trend_for_intervention(core_schools_qs, code)
+
             interventions_data.append({
                 "code": code,
                 "label": label,
                 "supported_count": supported_count,
-                "avg_improvement": f"+{avg_improvement} pp",
+                "avg_improvement": f"+{avg_improvement} pp" if has_improvement_data else "No data yet",
                 "avg_improvement_raw": avg_improvement,
                 "top_owner": top_owner,
-                "comparison": "Staff +5pp" if supported_count % 2 == 0 else "Partner +3pp",
-                "trend": [2, 3, 4, supported_count + 1, supported_count + 2],
+                "comparison": comparison,
+                "trend": trend,
+                "trend_path": build_sparkline_path(trend),
             })
-            
+
         return sorted(interventions_data, key=lambda x: x["supported_count"], reverse=True)
 
 class CoreStaffPartnerPerformanceService:
@@ -449,17 +572,20 @@ class CoreStaffPartnerPerformanceService:
             else:
                 staff_deltas.append(delta)
                 
-        avg_staff = sum(staff_deltas) / len(staff_deltas) if staff_deltas else 8.5
-        avg_partner = sum(partner_deltas) / len(partner_deltas) if partner_deltas else 6.2
+        # Honest 0 when there simply isn't any baseline/follow-up delta data yet
+        # (e.g. no follow-up SSA has been collected for any plan in scope).
+        avg_staff = sum(staff_deltas) / len(staff_deltas) if staff_deltas else 0
+        avg_partner = sum(partner_deltas) / len(partner_deltas) if partner_deltas else 0
         delta = avg_staff - avg_partner
-        
+
         staff_insights = []
         for staff in StaffProfile.objects.all().select_related("user")[:5]:
             staff_schools = core_schools_qs.filter(account_owner_id=staff.user_id)
             if staff_schools.exists():
+                avg = CoreAssessmentService.get_average_score(staff_schools)
                 staff_insights.append({
                     "name": staff.user.name,
-                    "score": 60 + (staff_schools.count() * 4),
+                    "score": int(avg * 10) if avg else 0,
                 })
         # Default fallback if empty: query real staff profiles in the database
         if not staff_insights:
@@ -473,9 +599,12 @@ class CoreStaffPartnerPerformanceService:
         for part in Partner.objects.all()[:5]:
             part_assignments = PartnerAssignment.objects.filter(partner=part, school__school_type="core")
             if part_assignments.exists():
+                assigned_school_ids = part_assignments.values_list("school_id", flat=True)
+                partner_schools = core_schools_qs.filter(id__in=assigned_school_ids)
+                avg = CoreAssessmentService.get_average_score(partner_schools) if partner_schools.exists() else None
                 partner_insights.append({
                     "name": part.name,
-                    "score": 55 + (part_assignments.count() * 3),
+                    "score": int(avg * 10) if avg else 0,
                 })
         # Default fallback if empty: query real partners in the database
         if not partner_insights:
@@ -491,7 +620,7 @@ class CoreStaffPartnerPerformanceService:
             avg_reg = SsaRecord.objects.filter(school__region=reg, deleted_at__isnull=True).aggregate(avg=Avg("average_score"))["avg"]
             region_insights.append({
                 "name": reg.name,
-                "score": int((avg_reg or 6.5) * 10),
+                "score": int((avg_reg or 0) * 10),
             })
             
         return {
@@ -500,6 +629,32 @@ class CoreStaffPartnerPerformanceService:
             "partner_insights": partner_insights,
             "region_insights": region_insights,
         }
+
+    @staticmethod
+    def get_intervention_comparison_rows(core_schools_qs, fy: str) -> list[dict]:
+        """Real per-intervention Staff vs Partner score comparison for Card D.
+
+        Reuses CoreInterventionImpactService's staff/partner split (based on
+        CoreActivitySlot.owner). Only returns a row for an intervention when there
+        is genuinely a comparable split (partner-owned slots exist alongside
+        staff-led ones with real SsaScore data) — otherwise the intervention is
+        omitted rather than showing a fabricated comparison.
+        """
+        school_ids = list(core_schools_qs.values_list("school_id", flat=True))
+        rows = []
+        for code, label in SsaIntervention.choices:
+            staff_pct, partner_pct = CoreInterventionImpactService._staff_partner_split_for_intervention(
+                core_schools_qs, fy, code, school_ids
+            )
+            if staff_pct is None or partner_pct is None:
+                continue
+            rows.append({
+                "code": code,
+                "label": label,
+                "staff_pct": staff_pct,
+                "partner_pct": partner_pct,
+            })
+        return rows
 
 class CoreRecommendationService:
     @staticmethod

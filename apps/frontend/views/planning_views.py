@@ -14,7 +14,7 @@ from apps.schools.models import School
 from apps.clusters.models import Cluster
 from apps.partners.models import Partner, PartnerAssignment
 from apps.core.enums import SsaIntervention, PlanningReadiness, SsaStatus, SchoolType, ClusterStatus
-from apps.core.fy import get_operational_fy
+from apps.core.fy import get_operational_fy, get_quarter_for_date, fy_options
 from apps.geography.models import District, SubCounty
 from apps.accounts.models import StaffProfile
 from apps.planning.planning_service import PlanningDashboardService
@@ -23,11 +23,11 @@ from apps.planning.planning_service import PlanningDashboardService
 @require_page_permission("planning")
 def planning_dashboard_view(request):
     fy = get_operational_fy()
-    
+
     # 1. Gather all filters from GET
     filters = {
-        "fy": request.GET.get("fy", "2026"),
-        "quarter": request.GET.get("quarter", "Q2"),
+        "fy": request.GET.get("fy", fy),
+        "quarter": request.GET.get("quarter", get_quarter_for_date(timezone.now().date())),
         "district": request.GET.get("district", "All"),
         "sub_county": request.GET.get("sub_county", "All"),
         "staff": request.GET.get("staff", "All"),
@@ -41,6 +41,25 @@ def planning_dashboard_view(request):
         "page": request.GET.get("page", 1),
         "per_page": request.GET.get("per_page", 10),
     }
+
+    # CSV export of the currently filtered list (same pattern as /clusters).
+    if request.GET.get("export", "").strip() == "csv":
+        import csv
+        from django.http import HttpResponse
+        export_filters = dict(filters, page=1, per_page=5000)
+        export_data = PlanningDashboardService.get_dashboard_data(request.user, export_filters)
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="planning_export.csv"'
+        writer = csv.writer(response)
+        writer.writerow(["School ID", "Name", "District", "Type", "SSA Status",
+                         "Weakest Intervention", "Planning Readiness", "Recommended Action", "Owner"])
+        for s in export_data["schools"]:
+            writer.writerow([
+                s["schoolId"], s["name"], s["district"], s["schoolType"],
+                s["ssaStatus"], s["weakestIntervention"], s["planningReadiness"],
+                s["recommendedAction"], s["ownerName"],
+            ])
+        return response
 
     # 2. Query Dashboard data from Service
     data = PlanningDashboardService.get_dashboard_data(request.user, filters)
@@ -80,12 +99,13 @@ def planning_dashboard_view(request):
         "sub_counties": sub_counties,
         "staff_members": staff_members,
         "partners": partners,
-        "fy_options": ["2026", "2025", "2024"],
+        "fy_options": fy_options(),
         "quarter_options": ["Q1", "Q2", "Q3", "Q4"],
         "school_types": SchoolType.choices,
         "readiness_choices": PlanningReadiness.choices,
         "ssa_statuses": SsaStatus.choices,
         "cluster_statuses": ClusterStatus.choices,
+        "interventions": SsaIntervention.choices,
 
         # Selected filters/states
         "selected_fy": filters["fy"],
@@ -139,6 +159,7 @@ def schedule_modal_view(request):
             "cluster": cluster,
             "action": action,
             "partners": partners,
+            "interventions": SsaIntervention.choices,
             "drawer_size": "lg",
         }
         return render(request, "partials/planning/schedule_cluster_drawer.html", context)
@@ -186,7 +207,9 @@ def schedule_action_view(request):
     scheduled_date = request.POST.get("scheduled_date")
     focus_intervention = request.POST.get("focus_intervention")
     purpose_type = request.POST.get("purpose_type", "focus_intervention")
-    purpose_text = request.POST.get("activity_purpose_text", "").strip()
+    # The drawer's textarea is named "activity_goal" ("Activity Goal / Purpose");
+    # "activity_purpose_text" is kept as a fallback for any other caller.
+    purpose_text = request.POST.get("activity_goal", request.POST.get("activity_purpose_text", "")).strip()
     expected_outcome = request.POST.get("expected_outcome", "").strip()
     expected_participants = request.POST.get("expected_participants", "").strip()
     delivery_type = request.POST.get("delivery_type", "staff")
@@ -231,18 +254,40 @@ def schedule_action_view(request):
     if partner_id:
         payload["assignedPartnerId"] = partner_id
 
+    from apps.daily_visit_batches.exceptions import ReasonRequiredError
+
     try:
-        if activity_type in ["school_visit", "baseline_ssa_visit", "school_visit_ssa_collection"]:
+        if activity_type == "school_visit" and delivery_type == "staff" and school_id:
+            # Staff-conducted school visits route through DailyVisitBatchService
+            # so this day's transport/lunch(/accommodation/dinner) cost pool is
+            # shared with any other schools already scheduled for this staff
+            # member on the same date, rather than costed for this school alone.
+            from apps.daily_visit_batches.services import schedule_visits
+
+            schedule_visits(
+                school_ids=[school_id],
+                scheduled_date=date.fromisoformat(scheduled_date),
+                activity_common_fields=payload,
+                reason=request.POST.get("reason", "").strip() or None,
+                principal=request.user,
+            )
+            messages.success(request, f"School visit scheduled successfully.")
+        elif activity_type in ["school_visit", "baseline_ssa_visit", "school_visit_ssa_collection"]:
             schedule_school_visit(payload, request.user)
             messages.success(request, f"School visit scheduled successfully.")
         else:
             schedule_cluster_activity(payload, request.user)
             messages.success(request, f"Cluster activity scheduled successfully.")
-            
-        # Redirect to My Plan and close drawer via client headers
-        response = HttpResponse('<script>window.location.href = "/my-plan/";</script>')
+
+        # Redirect to My Plan and close drawer via client headers.
+        # APPEND_SLASH is off and "/my-plan" has no trailing-slash route, so a
+        # redirect to "/my-plan/" 404s — the activity saves but the user lands
+        # on an error page and never sees confirmation.
+        response = HttpResponse('<script>window.location.href = "/my-plan";</script>')
         response["HX-Trigger"] = "close-drawer"
         return response
+    except ReasonRequiredError as e:
+        return render(request, "partials/planning/reason_required_notice.html", {"message": str(e)}, status=400)
     except Exception as e:
         return HttpResponse(f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error: {str(e)}</div>', status=400)
 
@@ -287,23 +332,40 @@ def assign_partner_action_view(request):
     cluster_id = request.POST.get("cluster_id")
     partner_id = request.POST.get("partner_id")
     activity_type = request.POST.get("activity_type", "school_visit")
-    
+    focus_intervention = request.POST.get("focus_intervention") or None
+    purpose = request.POST.get("purpose", "").strip()
+    notes = request.POST.get("notes", "").strip() or None
+
+    from datetime import date as _date
+    expected_date_raw = request.POST.get("expected_date", "").strip()
+    expected_date = None
+    if expected_date_raw:
+        try:
+            expected_date = _date.fromisoformat(expected_date_raw)
+        except ValueError:
+            pass
+
     try:
         partner = get_object_or_404(Partner, id=partner_id)
-        
+
         from apps.activities.models import Activity
         from apps.core.fy import get_operational_fy, get_quarter_for_date
-        
+
         fy = get_operational_fy()
         quarter = get_quarter_for_date(timezone.now().date())
-        
+
         if school_id:
             school = get_scoped_object_or_404(School, request.user, Q(id=school_id) | Q(school_id=school_id))
+            assignment_purpose = purpose or f"Assigned for {activity_type}"
             PartnerAssignment.objects.create(
                 school=school,
                 partner=partner,
                 assigning_staff_id=request.user.user_id or request.user.id,
-                purpose=f"Assigned for {activity_type}",
+                purpose=assignment_purpose,
+                focus_intervention=focus_intervention,
+                expected_activity_type=activity_type,
+                scheduled_date=expected_date,
+                notes=notes,
                 status="pending_scheduling"
             )
             # Create Activity
@@ -316,7 +378,8 @@ def assign_partner_action_view(request):
                 assigned_partner_id=partner.id,
                 monitored_by_staff_id=request.user.user_id or request.user.id,
                 status="assigned_to_partner",
-                activity_purpose_text=f"Assigned for {activity_type}"
+                focus_intervention=focus_intervention,
+                activity_purpose_text=assignment_purpose
             )
             # Update status
             school.current_fy_ssa_status = "partner_assigned"
@@ -325,12 +388,17 @@ def assign_partner_action_view(request):
 
         if cluster_id:
             cluster = get_scoped_object_or_404(Cluster, request.user, id=cluster_id)
+            assignment_purpose = purpose or f"Cluster assignment: {cluster.name}"
             # Create PartnerAssignment for cluster
             PartnerAssignment.objects.create(
                 cluster=cluster,
                 partner=partner,
                 assigning_staff_id=request.user.user_id or request.user.id,
-                purpose=f"Cluster assignment: {cluster.name}",
+                purpose=assignment_purpose,
+                focus_intervention=focus_intervention,
+                expected_activity_type=activity_type,
+                scheduled_date=expected_date,
+                notes=notes,
                 status="pending_scheduling"
             )
             # Create Activity for cluster
@@ -344,7 +412,8 @@ def assign_partner_action_view(request):
                 assigned_partner_id=partner.id,
                 monitored_by_staff_id=request.user.user_id or request.user.id,
                 status="assigned_to_partner",
-                activity_purpose_text=f"Cluster assignment: {cluster.name}"
+                focus_intervention=focus_intervention,
+                activity_purpose_text=assignment_purpose
             )
             # Assign all schools in the cluster
             for school in School.objects.filter(cluster_assignments__cluster=cluster, deleted_at__isnull=True):
@@ -352,7 +421,11 @@ def assign_partner_action_view(request):
                     school=school,
                     partner=partner,
                     assigning_staff_id=request.user.user_id or request.user.id,
-                    purpose=f"Cluster assignment: {cluster.name}",
+                    purpose=assignment_purpose,
+                    focus_intervention=focus_intervention,
+                    expected_activity_type=activity_type,
+                    scheduled_date=expected_date,
+                    notes=notes,
                     status="pending_scheduling"
                 )
                 school.current_fy_ssa_status = "partner_assigned"
@@ -472,6 +545,61 @@ def bulk_action_view(request):
             s.save(update_fields=["current_fy_ssa_status", "planning_readiness", "updated_at"])
 
         return HttpResponse('<script>window.location.reload();</script>')
+
+    elif action == "schedule":
+        # Bulk schedule staff-conducted school visits for one day — routes
+        # through DailyVisitBatchService so the day's transport/lunch(/
+        # accommodation/dinner) cost pool is shared and split across every
+        # school selected here, not costed per school in isolation.
+        if not RolePermissionService.can_schedule_activity(request.user):
+            return HttpResponseForbidden("Access Denied: You do not have permission to schedule activities.")
+
+        from datetime import date as _date
+
+        scheduled_date_raw = request.POST.get("scheduled_date", "").strip()
+        reason = request.POST.get("reason", "").strip() or None
+        if not scheduled_date_raw:
+            return HttpResponse(
+                '<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Scheduled date is required.</div>',
+                status=400,
+            )
+        try:
+            scheduled_date = _date.fromisoformat(scheduled_date_raw)
+        except ValueError:
+            return HttpResponse(
+                '<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Invalid date.</div>',
+                status=400,
+            )
+
+        from apps.core.exceptions import BadRequest
+        from apps.daily_visit_batches.exceptions import ReasonRequiredError
+        from apps.daily_visit_batches.services import schedule_visits
+
+        try:
+            schedule_visits(
+                school_ids=school_ids,
+                scheduled_date=scheduled_date,
+                activity_common_fields={
+                    "activityType": "school_visit",
+                    "activityPurposeText": request.POST.get("activity_goal", "Bulk-scheduled visit"),
+                    "focusIntervention": request.POST.get("focus_intervention") or None,
+                    "deliveryType": "staff",
+                },
+                reason=reason,
+                principal=request.user,
+            )
+            response = HttpResponse('<script>window.location.href = "/my-plan";</script>')
+            response["HX-Trigger"] = "close-drawer"
+            return response
+        except ReasonRequiredError as e:
+            return render(
+                request, "partials/planning/reason_required_notice.html",
+                {"message": str(e), "school_ids": school_ids, "scheduled_date": scheduled_date_raw}, status=400,
+            )
+        except BadRequest as e:
+            return HttpResponse(
+                f'<div class="p-3 bg-rose-50 text-rose-700 rounded-lg text-[12px] font-bold">Error: {e}</div>', status=400,
+            )
 
     return HttpResponse("Action processed", status=200)
 

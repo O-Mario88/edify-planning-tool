@@ -137,6 +137,26 @@ def school_directory_view(request):
     elif active_tab == "assigned":
         schools_qs = schools_qs.filter(project_assignments__isnull=False).distinct()
 
+    # CSV export of the currently filtered list (same pattern as /clusters).
+    if request.GET.get("export", "").strip() in ("csv", "xlsx"):
+        import csv
+        from django.http import HttpResponse
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="schools_export.csv"'
+        writer = csv.writer(response)
+        writer.writerow(["School ID", "Name", "Type", "District", "Sub-county", "Region",
+                         "Enrollment", "Cluster Status", "SSA Status", "Planning Readiness"])
+        for s in schools_qs.select_related("district", "sub_county", "region")[:5000]:
+            writer.writerow([
+                s.school_id, s.name, s.school_type,
+                s.district.name if s.district else "",
+                s.sub_county.name if s.sub_county else "",
+                s.region.name if s.region else "",
+                s.enrollment or "", s.cluster_status or "",
+                s.current_fy_ssa_status or "", s.planning_readiness or "",
+            ])
+        return response
+
     # Compute scoped base KPIs for the KPI Row
     total_schools = base_qs.count()
     client_schools = base_qs.filter(school_type="client").count()
@@ -146,6 +166,7 @@ def school_directory_view(request):
     staff_setup_schools = base_qs.filter(Q(account_owner_id__isnull=True) | Q(account_owner_id="") | Q(account_owner_status="pending")).count()
     planning_ready_schools = base_qs.filter(planning_readiness="ready").count()
     duplicate_schools = base_qs.filter(duplicate_status="duplicate").count()
+    district_count = base_qs.exclude(district_id__isnull=True).values("district_id").distinct().count()
 
     needs_setup = staff_setup_schools
     needs_ssa = no_ssa_schools
@@ -157,7 +178,7 @@ def school_directory_view(request):
             "label": "Total Schools",
             "value": str(total_schools),
             "raw_value": total_schools,
-            "helper": "Across 5 districts",
+            "helper": f"Across {district_count} district{'' if district_count == 1 else 's'}",
             "icon": "school",
             "variant": "primary",
         },

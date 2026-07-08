@@ -14,7 +14,7 @@ from apps.geography.models import Region, District
 from apps.accounts.models import StaffProfile
 from apps.partners.models import Partner, PartnerAssignment
 from apps.activities.models import Activity
-from apps.core_schools.models import CorePlan, CoreActivitySlot, cslot_id
+from apps.core_schools.models import CorePlan, CoreActivitySlot, CoreSchoolProfile, cslot_id
 from apps.audit.services import log as audit_log
 from apps.notifications.models import Notification
 
@@ -26,6 +26,7 @@ from apps.core_schools.core_planning_services import (
     CoreInterventionImpactService,
     CoreStaffPartnerPerformanceService,
     CoreRecommendationService,
+    build_sparkline_path,
 )
 
 logger = logging.getLogger(__name__)
@@ -62,12 +63,16 @@ def core_schools_view(request):
     planning_queue = CorePlanningService.get_planning_queue(page_obj.object_list, fy)
     intervention_impact = CoreInterventionImpactService.get_intervention_impact(core_schools_qs, fy)
     perf_insights = CoreStaffPartnerPerformanceService.get_staff_vs_partner_performance(core_schools_qs, fy)
+    perf_insights["intervention_comparison"] = CoreStaffPartnerPerformanceService.get_intervention_comparison_rows(core_schools_qs, fy)
     reco_data = CoreRecommendationService.get_recommendation_card(core_schools_qs)
-    
+
     # 4. KPI Strip Metrics
     total_core = core_schools_qs.count()
     ready_core = core_schools_qs.filter(current_fy_ssa_status="done").count()
     avg_score = CoreAssessmentService.get_average_score(core_schools_qs)
+    overall_trend = CoreAssessmentService.get_monthly_trend(core_schools_qs)
+    perf_insights["overall_trend"] = overall_trend
+    perf_insights["overall_trend_path"] = build_sparkline_path(overall_trend, width=100, height=50, padding=3) if overall_trend else ""
     
     visits_scheduled = Activity.objects.filter(
         school__in=core_schools_qs,
@@ -91,7 +96,6 @@ def core_schools_view(request):
         {
             "label": "Total Core Schools",
             "value": f"{total_core}",
-            "helper": "100% of core",
             "icon": "school",
             "variant": "primary",
         },
@@ -105,7 +109,6 @@ def core_schools_view(request):
         {
             "label": "Avg. Core Assessment Score",
             "value": f"{int(avg_score * 10)}%",
-            "helper": "▲ 8pp vs last month",
             "icon": "trending-up",
             "variant": "success",
         },
@@ -125,8 +128,8 @@ def core_schools_view(request):
         },
         {
             "label": "Staff vs Partner Performance Delta",
-            "value": f"+{perf_insights['delta_pp']}pp",
-            "helper": "Staff ahead",
+            "value": f"{'+' if perf_insights['delta_pp'] >= 0 else ''}{perf_insights['delta_pp']}pp",
+            "helper": "Staff ahead" if perf_insights['delta_pp'] >= 0 else "Partner ahead",
             "icon": "chart",
             "variant": "primary",
         },
@@ -590,7 +593,7 @@ def champion_approve_action(request, school_id):
         messages.success(request, f"School successfully graduated to Champion Status!")
     else:
         messages.error(request, f"Failed to graduate school.")
-    return redirect("core_schools")
+    return redirect("/core-schools")
 
 @require_POST
 @require_page_permission("core_schools")
@@ -601,7 +604,7 @@ def champion_reject_action(request, school_id):
         messages.warning(request, f"Candidacy proposal rejected.")
     else:
         messages.error(request, f"Failed to reject candidacy.")
-    return redirect("core_schools")
+    return redirect("/core-schools")
 
 @require_page_permission("core_schools")
 def champions_list_view(request):

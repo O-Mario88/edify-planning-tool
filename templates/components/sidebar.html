@@ -82,7 +82,8 @@ title="My Targets">
 </a>
 {% endif %}
 
-<!-- Daily Debrief -->
+<!-- Daily Debrief (page permission: debriefs_list — CD/RVP/HR/PL; HR gets its own link in the HR section) -->
+{% if request.user.active_role in 'CountryDirector,RegionalVicePresident,Program Lead' %}
 <a href="/debriefs"
 class="app-sidebar__item {% if '/debriefs' in request.path %}app-sidebar__item--active{% endif %}"
 {% if '/debriefs' in request.path %}aria-current="page"{% endif %}
@@ -94,6 +95,7 @@ title="Daily Debrief">
 </div>
 <span class="app-sidebar__item-label" x-show="!collapsed">Daily Debrief</span>
 </a>
+{% endif %}
 
 <!-- Today -->
 {% if request.user.active_role in 'CCEO,Program Lead,PartnerFieldOfficer' %}
@@ -111,7 +113,7 @@ title="Today">
 {% endif %}
 
 <!-- Calendar -->
-{% if request.user.active_role in 'CCEO,Program Lead,CountryDirector' %}
+{% if request.user.active_role in 'CCEO,Program Lead' %}
 <a href="/calendar"
 class="app-sidebar__item {% if '/calendar' in request.path %}app-sidebar__item--active{% endif %}"
 {% if '/calendar' in request.path %}aria-current="page"{% endif %}
@@ -224,7 +226,8 @@ title="Quality Checks">
 <div class="app-sidebar__section">
 <p class="app-sidebar__section-title" x-show="!collapsed">Schools</p>
 
-<!-- Schools -->
+<!-- Schools (page permission: school_directory) -->
+{% if request.user.active_role in 'CCEO,Program Lead,ProjectCoordinator,Admin' %}
 <a href="/schools" 
 class="app-sidebar__item {% if '/schools' in request.path %}app-sidebar__item--active{% endif %}"
 {% if '/schools' in request.path %}aria-current="page"{% endif %}
@@ -236,8 +239,10 @@ title="Schools">
 </div>
 <span class="app-sidebar__item-label" x-show="!collapsed">Schools</span>
 </a>
+{% endif %}
 
-<!-- Clusters -->
+<!-- Clusters (page permission: planning) -->
+{% if request.user.active_role in 'CCEO,Program Lead,ProjectCoordinator,Admin' %}
 <a href="/clusters" 
 class="app-sidebar__item {% if '/clusters' in request.path %}app-sidebar__item--active{% endif %}"
 {% if '/clusters' in request.path %}aria-current="page"{% endif %}
@@ -249,9 +254,10 @@ title="Clusters">
 </div>
 <span class="app-sidebar__item-label" x-show="!collapsed">Clusters</span>
 </a>
+{% endif %}
 
 <!-- Partners -->
-{% if request.user.active_role in 'CountryDirector,Program Lead,Admin,PartnerFieldOfficer' %}
+{% if request.user.active_role in 'CountryDirector,Program Lead,Admin' %}
 <a href="/partners" 
 class="app-sidebar__item {% if '/partners' in request.path %}app-sidebar__item--active{% endif %}"
 {% if '/partners' in request.path %}aria-current="page"{% endif %}
@@ -296,7 +302,7 @@ title="SSA Scores">
 {% endif %}
 
 <!-- Coverage -->
-{% if request.user.active_role in 'CountryDirector,Program Lead,ImpactAssessment' %}
+{% if request.user.active_role in 'Program Lead' %}
 <a href="/coverage"
 class="app-sidebar__item {% if '/coverage' in request.path %}app-sidebar__item--active{% endif %}"
 {% if '/coverage' in request.path %}aria-current="page"{% endif %}
@@ -311,7 +317,7 @@ title="Coverage">
 {% endif %}
 
 <!-- Map -->
-{% if request.user.active_role in 'CCEO,Program Lead,CountryDirector' %}
+{% if request.user.active_role in 'CCEO,Program Lead' %}
 <a href="/map"
 class="app-sidebar__item {% if '/map' in request.path %}app-sidebar__item--active{% endif %}"
 {% if '/map' in request.path %}aria-current="page"{% endif %}
@@ -326,7 +332,7 @@ title="Map">
 {% endif %}
 
 <!-- Districts -->
-{% if request.user.active_role in 'CountryDirector,Program Lead,ImpactAssessment' %}
+{% if request.user.active_role in 'Program Lead' %}
 <a href="/districts"
 class="app-sidebar__item {% if '/districts' in request.path %}app-sidebar__item--active{% endif %}"
 {% if '/districts' in request.path %}aria-current="page"{% endif %}
@@ -365,7 +371,6 @@ title="Evidence">
 {% if request.user.active_role in 'Accountant,CCEO,Program Lead,CountryDirector' %}
 <a href="/fund-requests/weekly" 
 class="app-sidebar__item {% if '/fund-requests' in request.path %}app-sidebar__item--active{% endif %}"
-{% if '/fund-requests' in request.path %}aria-current="page"{% endif %}
 title="Fund Requests">
 <div class="app-sidebar__item-icon">
 <svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -392,7 +397,7 @@ title="My Budget">
 {% endif %}
 
 <!-- Completed Activities -->
-{% if request.user.active_role in 'CCEO,Program Lead,CountryDirector' %}
+{% if request.user.active_role in 'CCEO,Program Lead' %}
 <a href="/completed-activities" 
 class="app-sidebar__item {% if '/completed-activities' in request.path %}app-sidebar__item--active{% endif %}"
 {% if '/completed-activities' in request.path %}aria-current="page"{% endif %}
@@ -407,7 +412,7 @@ title="Completed Activities">
 {% endif %}
 
 <!-- School Visits -->
-{% if request.user.active_role in 'CCEO,Program Lead,PartnerFieldOfficer' %}
+{% if request.user.active_role in 'CCEO,Program Lead' %}
 <a href="/visits"
 class="app-sidebar__item {% if '/visits' in request.path %}app-sidebar__item--active{% endif %}"
 {% if '/visits' in request.path %}aria-current="page"{% endif %}
@@ -422,7 +427,7 @@ title="School Visits">
 {% endif %}
 
 <!-- Group Trainings -->
-{% if request.user.active_role in 'CCEO,Program Lead,PartnerFieldOfficer' %}
+{% if request.user.active_role in 'CCEO,Program Lead' %}
 <a href="/trainings"
 class="app-sidebar__item {% if '/trainings' in request.path %}app-sidebar__item--active{% endif %}"
 {% if '/trainings' in request.path %}aria-current="page"{% endif %}
@@ -632,7 +637,7 @@ title="Monthly Request">
 </a>
 
 <!-- Disbursements -->
-{% if request.user.active_role in 'Accountant,CountryDirector' %}
+{% if request.user.active_role in 'Accountant' %}
 <a href="/disbursements"
 class="app-sidebar__item {% if '/disbursements' in request.path %}app-sidebar__item--active{% endif %}"
 {% if '/disbursements' in request.path %}aria-current="page"{% endif %}
@@ -661,7 +666,7 @@ title="Audit Log">
 </div>
 
 <!-- AUDIT & CLOSURE section -->
-{% if request.user.active_role in 'Admin,CountryDirector,ImpactAssessment,Accountant,Program Lead' %}
+{% if request.user.active_role in 'Admin,Program Lead' %}
 <div class="app-sidebar__section-divider" style="margin: 12px 16px; border-top: 1px solid rgba(255,255,255,0.08);"></div>
 <p class="app-sidebar__section-title" x-show="!collapsed" style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: rgba(255,255,255,0.4); margin-left: 16px; margin-bottom: 8px;">AUDIT & CLOSURE</p>
 
@@ -731,7 +736,8 @@ title="Analytics">
 <span class="app-sidebar__item-label" x-show="!collapsed">Analytics</span>
 </a>
 
-<!-- Reports -->
+<!-- Reports (page permission: planning) -->
+{% if request.user.active_role in 'CCEO,Program Lead,ProjectCoordinator,Admin' %}
 <a href="/reports" 
 class="app-sidebar__item {% if '/reports' in request.path %}app-sidebar__item--active{% endif %}"
 {% if '/reports' in request.path %}aria-current="page"{% endif %}
@@ -743,9 +749,10 @@ title="Reports">
 </div>
 <span class="app-sidebar__item-label" x-show="!collapsed">Reports</span>
 </a>
+{% endif %}
 
 <!-- Fiscal Year -->
-{% if request.user.active_role in 'CountryDirector,Program Lead,Accountant' %}
+{% if request.user.active_role in 'Program Lead' %}
 <a href="/fy"
 class="app-sidebar__item {% if '/fy' in request.path %}app-sidebar__item--active{% endif %}"
 {% if '/fy' in request.path %}aria-current="page"{% endif %}
@@ -766,8 +773,8 @@ title="Fiscal Year">
 <p class="app-sidebar__section-title" x-show="!collapsed" style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: rgba(255,255,255,0.4); margin-left: 16px; margin-bottom: 8px;">Regional Executive</p>
 
 <!-- Budget Approvals -->
-<a href="/fund-requests" 
-class="app-sidebar__item {% if request.path == '/fund-requests' %}app-sidebar__item--active{% endif %}"
+<a href="/fund-requests/weekly"
+class="app-sidebar__item {% if '/fund-requests' in request.path %}app-sidebar__item--active{% endif %}"
 title="Budget Approvals">
 <div class="app-sidebar__item-icon">
 <svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -777,9 +784,9 @@ title="Budget Approvals">
 <span class="app-sidebar__item-label" x-show="!collapsed">Budget Approvals</span>
 </a>
 
-<!-- Monthly Requests -->
-<a href="/accounts/monthly-request/" 
-class="app-sidebar__item {% if '/accounts/monthly-request/' in request.path %}app-sidebar__item--active{% endif %}"
+<!-- Monthly Requests (RVP approves via the monthly budget surface, not the accountant page) -->
+<a href="/budgets/monthly"
+class="app-sidebar__item {% if '/budgets/monthly' in request.path %}app-sidebar__item--active{% endif %}"
 title="Monthly Requests">
 <div class="app-sidebar__item-icon">
 <svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -872,8 +879,8 @@ title="Messages">
 
 </div>
 
-<!-- SECTION: ADMIN -->
-{% if request.user.active_role in 'Admin,CountryDirector' %}
+<!-- SECTION: ADMIN (admin-panel pages are Admin-only per can_view_page) -->
+{% if request.user.active_role in 'Admin' %}
 <div class="app-sidebar__section">
 <p class="app-sidebar__section-title" x-show="!collapsed">Admin</p>
 

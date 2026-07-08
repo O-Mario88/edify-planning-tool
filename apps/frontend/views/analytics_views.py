@@ -208,7 +208,9 @@ def analytics_customize_dashboard_view(request):
 def system_health_view(request):
     from apps.system_health.services import report as system_health_report
     health = system_health_report()
+    # The template reads workflow counts as top-level keys (health.unclusteredSchools
+    # etc.), but report() nests them under workflowIssues — flatten them in.
     context = {
-        "health": health,
+        "health": {**health, **health["workflowIssues"]},
     }
     return render(request, "pages/system_health/index.html", context)

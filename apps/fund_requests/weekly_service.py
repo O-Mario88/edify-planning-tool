@@ -57,14 +57,21 @@ def generate_weekly_fund_request(responsible_user_id: str, week_start_date_str: 
                 wfr.delete()
             return None
 
-        # If a request exists and is already confirmed/disbursed, we shouldn't reset its status
-        # but we can update the total amount.
+        # Once a request has left the draft state (submitted, approved,
+        # confirmed for advance, self-funded, disbursed, ...), a later
+        # schedule/reschedule that re-triggers this sync must NEVER silently
+        # rewrite its amount or delete+rebuild its line items — that would
+        # let a newly-scheduled activity mutate a figure someone already
+        # approved or a payment already disbursed against. This function now
+        # fires automatically on every activity schedule (no manual "Generate
+        # Request" step), so this guard is the difference between "auto"
+        # meaning convenient and "auto" meaning finance-unsafe.
+        if wfr and wfr.status != "pending_responsible_confirmation":
+            return wfr
+
         if wfr:
             wfr.total_amount = total_amount
-            # Only update status if it is still a draft/pending
-            if wfr.status == "pending_responsible_confirmation":
-                wfr.status = "pending_responsible_confirmation"
-            wfr.save()
+            wfr.save(update_fields=["total_amount", "updated_at"])
         else:
             wfr = WeeklyFundRequest.objects.create(
                 fy=fy,
@@ -94,12 +101,20 @@ def generate_weekly_fund_request(responsible_user_id: str, week_start_date_str: 
     return wfr
 
 
-def trigger_generate_for_activity(activity: Activity) -> None:
-    """Convenience helper to auto-trigger weekly request generation on activity schedule/reschedule."""
-    if activity.scheduled_date and activity.responsible_staff_id and activity.status != "cancelled":
+def trigger_generate_for_activity(activity: Activity, responsible_user_id: str | None = None) -> None:
+    """Convenience helper to auto-trigger weekly request generation on activity schedule/reschedule.
+
+    responsible_user_id must be the SAME identifier stamped onto the activity's
+    cost lines (User.id). Activity.responsible_staff_id may hold a StaffProfile
+    id instead, in which case the generator's line filter matches nothing and
+    the weekly request silently never materialises — so callers that know the
+    scheduling principal should pass it explicitly.
+    """
+    owner = responsible_user_id or activity.responsible_staff_id
+    if activity.scheduled_date and owner and activity.status != "cancelled":
         planned_date = activity.scheduled_date.date()
         week_start = planned_date - timedelta(days=planned_date.weekday())
-        generate_weekly_fund_request(activity.responsible_staff_id, week_start.isoformat())
+        generate_weekly_fund_request(owner, week_start.isoformat())
 
 
 def list_weekly_requests(query: dict, principal) -> list[dict]:

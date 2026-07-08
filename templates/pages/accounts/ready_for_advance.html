@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load frontend_filters %}
 
 {% block title %}Advances Queue - Edify Command Center{% endblock %}
 
@@ -62,13 +63,13 @@ Process approved fund requests ready for disbursement. These advances are releas
 </td>
 <!-- Approved Amount -->
 <td class="px-6 py-4 text-center text-[#2563eb] font-semibold">
-UGX 450,000 <!-- Sourced dynamically from actual cost aggregate -->
+{% if act.est_cost_cents %}{{ act.est_cost_cents|ugx }}{% else %}&mdash;{% endif %}
 </td>
 <!-- Actions -->
 <td class="px-6 py-4 text-right">
 <div class="flex items-center justify-end gap-2">
-<button 
-@click="disburseOpen = true; selectedAct = '{{ act.id }}'; budgetSum = 450000"
+<button
+@click="disburseOpen = true; selectedAct = '{{ act.id }}'; budgetSum = {{ act.est_cost_cents|default:0 }}"
 type="button" 
 class="h-8 px-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-semibold flex items-center justify-center transition-colors shadow-sm"
 >
@@ -143,7 +144,7 @@ class="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[12px] fo
 type="date" 
 name="disbursed_at" 
 required
-value="2026-07-03"
+value="{% now "Y-m-d" %}"
 class="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[12px] font-bold text-slate-700 px-3 focus:bg-white focus:border-blue-500 focus:outline-none transition-all"
 >
 </div>

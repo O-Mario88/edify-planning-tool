@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.db.models import Q, Avg, Count, Sum
 from django.utils import timezone
-from datetime import date as date_type
+from datetime import date as date_type, timedelta
 
 from apps.activities.models import Activity, ActivityScheduleCostLine
 from apps.schools.models import School
@@ -14,6 +14,111 @@ from apps.command_center import services as cc_services
 from apps.core.permissions import require_page_permission
 from apps.core.enums import SsaIntervention
 from apps.command_center.dashboard_service import DashboardMetricsService
+
+
+def _format_ugx_compact(val):
+    """Compact UGX formatting helper (mirrors budget_views.format_ugx_compact)."""
+    if not val:
+        return "UGX 0"
+    if val >= 1_000_000_000:
+        return f"UGX {val / 1_000_000_000:.1f}B"
+    if val >= 1_000_000:
+        return f"UGX {val / 1_000_000:.1f}M"
+    if val >= 1_000:
+        return f"UGX {val / 1_000:.0f}K"
+    return f"UGX {val}"
+
+
+# Activity-type groupings shared by the agenda-building helpers below.
+_VISIT_TYPES = {
+    "school_visit", "follow_up_visit", "coaching_visit", "core_visit",
+    "core_assessment_visit", "baseline_ssa_visit", "school_visit_ssa_collection",
+    "in_school_support",
+}
+_TRAINING_TYPES = {
+    "training", "school_improvement_training", "cluster_training",
+    "cluster_training_ssa_collection", "core_training",
+}
+_MEETING_TYPES = {"cluster_meeting", "cluster_meeting_ssa_review"}
+_SSA_TYPES = {"ssa_activity", "partner_ssa_collection"}
+_PARTNER_TYPES = {"partner_activity"}
+_PROJECT_TYPES = {"project_activity"}
+
+
+def _agenda_icon(activity_type):
+    if activity_type in _VISIT_TYPES:
+        return "🏫"
+    if activity_type in _TRAINING_TYPES:
+        return "📚"
+    if activity_type in _MEETING_TYPES:
+        return "👥"
+    if activity_type in _SSA_TYPES:
+        return "📋"
+    if activity_type in _PARTNER_TYPES:
+        return "🤝"
+    if activity_type in _PROJECT_TYPES:
+        return "🎯"
+    return "📄"
+
+
+def _agenda_type_class(activity_type):
+    if activity_type in _TRAINING_TYPES:
+        return "bg-emerald-50 text-emerald-600"
+    if activity_type in _VISIT_TYPES:
+        return "bg-blue-50 text-blue-600"
+    if activity_type in _MEETING_TYPES or activity_type in _PARTNER_TYPES:
+        return "bg-violet-50 text-violet-600"
+    if activity_type in _SSA_TYPES:
+        return "bg-amber-50 text-amber-600"
+    return "bg-slate-50 text-slate-600"
+
+
+def _agenda_status_pill(activity, today):
+    if activity.status == "completed":
+        return "Completed", "bg-emerald-50 text-emerald-700 border-emerald-200"
+    if activity.status in ("in_progress", "completion_started"):
+        return "In Progress", "bg-amber-50 text-amber-700 border-amber-200"
+    if activity.planned_date and activity.planned_date < today and activity.status not in ("completed", "closed"):
+        return "Overdue", "bg-rose-50 text-rose-700 border-rose-200"
+    return "Planned", "bg-slate-50 text-slate-500 border-slate-200"
+
+
+def _agenda_title_and_location(activity):
+    """Real title/location strings sourced from the activity's actual school/cluster."""
+    title_base = activity.get_activity_type_display()
+    if activity.school_id and activity.school:
+        title = f"{title_base} — {activity.school.name}"
+        district_name = activity.school.district.name if activity.school.district_id else None
+        location = f"{activity.school.name} &bull; {district_name} District" if district_name else activity.school.name
+        short_location = f"{district_name} District" if district_name else activity.school.name
+    elif activity.cluster_id and activity.cluster:
+        title = f"{title_base} — {activity.cluster.name} Cluster"
+        district_name = activity.cluster.district.name if activity.cluster.district_id else None
+        location = f"{activity.cluster.name} Cluster &bull; {district_name} District" if district_name else f"{activity.cluster.name} Cluster"
+        short_location = f"{district_name} District" if district_name else f"{activity.cluster.name} Cluster"
+    else:
+        title = title_base
+        location = "Field Activity"
+        short_location = "Field Activity"
+    return title, location, short_location
+
+
+def _build_agenda_item(activity, today):
+    title, location, _ = _agenda_title_and_location(activity)
+    status, status_class = _agenda_status_pill(activity, today)
+    item = {
+        "title": title,
+        "location": location,
+        "status": status,
+        "status_class": status_class,
+        "icon": _agenda_icon(activity.activity_type),
+    }
+    if activity.salesforce_activity_id:
+        item["sf"] = True
+    participant_count = (activity.teachers_attended or 0) + (activity.leaders_attended or 0) + (activity.other_participants or 0)
+    if participant_count:
+        item["count"] = participant_count
+    return item
 
 @require_page_permission("dashboard")
 def dashboard_view(request):
@@ -146,10 +251,16 @@ def dashboard_view(request):
             sp = getattr(pl, "staff_profile", None)
             supervisee_sp_ids = list(StaffSupervisorAssignment.objects.filter(supervisor=sp).values_list("supervisee_id", flat=True)) if sp else []
             supervisee_user_ids = list(StaffProfile.objects.filter(id__in=supervisee_sp_ids).values_list("user_id", flat=True))
-            # Region: derive from supervised CCEOs' schools
+            # Region: derive from supervised CCEOs' schools.
+            # StaffSchoolAssignment.school_id is a plain CharField (no FK), so
+            # resolve the school ids first, then look the School up by pk.
             region_name = "—"
             if supervisee_sp_ids:
-                _sch = School.objects.filter(staff_assignments__staff_id__in=supervisee_sp_ids).select_related("region").first()
+                _school_ids = list(StaffSchoolAssignment.objects.filter(
+                    staff_id__in=supervisee_sp_ids
+                ).values_list("school_id", flat=True)[:50])
+                _sch = (School.objects.filter(id__in=_school_ids, region__isnull=False)
+                        .select_related("region").first())
                 if _sch and _sch.region:
                     region_name = _sch.region.name
             planned = Activity.objects.filter(responsible_staff_id__in=supervisee_user_ids, status__in=PLANNED, deleted_at__isnull=True, fy=fy).count()
@@ -328,7 +439,7 @@ def dashboard_view(request):
             overdue = Activity.objects.filter(
                 responsible_staff_id=c.id,
                 planned_date__lt=today,
-                status__in=["scheduled", "started", "in_progress"],
+                status__in=["scheduled", "in_progress", "completion_started"],
                 deleted_at__isnull=True,
             ).count()
             if overdue > 0:
@@ -423,7 +534,7 @@ def dashboard_view(request):
         today = timezone.now().date()
         overdue_count = Activity.objects.filter(
             planned_date__lt=today,
-            status__in=["scheduled", "started"],
+            status__in=["scheduled", "in_progress", "completion_started"],
             deleted_at__isnull=True
         ).count()
         
@@ -441,7 +552,7 @@ def dashboard_view(request):
             c_overdue = Activity.objects.filter(
                 responsible_staff_id=c.id,
                 planned_date__lt=today,
-                status__in=["scheduled", "started"],
+                status__in=["scheduled", "in_progress", "completion_started"],
                 deleted_at__isnull=True
             ).count()
             if c_overdue > 3:
@@ -464,51 +575,101 @@ def dashboard_view(request):
         return render(request, "pages/dashboards/hr.html", context)
 
     elif role == "CCEO":
-        # CCEO Field Officer Dashboard Context
+        # CCEO Field Officer Dashboard Context — all figures are scoped to
+        # this CCEO's own activities/fund requests, no fabricated fallbacks.
         today = timezone.now().date()
-        
-        # Fetch actual user tasks
+        week_start = today - timedelta(days=today.weekday())
+        week_end = week_start + timedelta(days=6)
+
         cc_activities = Activity.objects.filter(
             responsible_staff_id=user.id,
             deleted_at__isnull=True
         )
-        
-        completed_cnt = cc_activities.filter(status="completed").count() or 7
-        in_progress_cnt = cc_activities.filter(status="in_progress").count() or 10
-        planned_cnt = cc_activities.filter(status__in=["scheduled", "planned"]).count() or 5
-        overdue_cnt = cc_activities.filter(planned_date__lt=today).exclude(status__in=["completed", "closed"]).count() or 2
-        
+
+        completed_cnt = cc_activities.filter(status="completed").count()
+        in_progress_cnt = cc_activities.filter(status__in=["in_progress", "completion_started"]).count()
+        planned_cnt = cc_activities.filter(status__in=["scheduled", "planned"]).count()
+        overdue_cnt = cc_activities.filter(planned_date__lt=today).exclude(status__in=["completed", "closed"]).count()
+
         total_tasks = completed_cnt + in_progress_cnt + planned_cnt + overdue_cnt
 
-        # Agenda elements fallback to mockup data for layout consistency
-        agenda_morning = [
-            {"title": "Cluster Training — Leadership Best Practice", "location": "Kitgum Central Cluster Hub &bull; Kitgum District", "status": "Completed", "status_class": "bg-emerald-50 text-emerald-700 border-emerald-200", "icon": "📚", "sf": True},
-            {"title": "School Visit — Pope John PS", "location": "Pope John Primary School &bull; Kitgum District", "status": "In Progress", "status_class": "bg-amber-50 text-amber-700 border-amber-200", "icon": "🏫", "count": 3},
-            {"title": "School Visit — St. Peter PS", "location": "St. Peter Primary School &bull; Lamwo District", "status": "Planned", "status_class": "bg-slate-50 text-slate-500 border-slate-200", "icon": "🏫", "count": 2}
-        ]
+        def _pct(n):
+            return round(n / total_tasks * 100) if total_tasks else 0
 
-        agenda_afternoon = [
-            {"title": "Follow-up Visit — Nigina UMEA", "location": "Nigina UMEA &bull; Pader District", "status": "Planned", "status_class": "bg-slate-50 text-slate-500 border-slate-200", "icon": "🚗", "count": 2},
-            {"title": "SSA Verification — Kal PS", "location": "Kal Primary School &bull; Agago District", "status": "Planned", "status_class": "bg-slate-50 text-slate-500 border-slate-200", "icon": "📋", "count": 2},
-            {"title": "Partner Meeting — Compassion Intl.", "location": "Compassion Field Office &bull; Gulu District", "status": "Overdue", "status_class": "bg-rose-50 text-rose-700 border-rose-200", "icon": "👥", "count": 4},
-            {"title": "Daily Debrief & Task Review", "location": "Virtual (Teams)", "status": "Planned", "status_class": "bg-slate-50 text-slate-500 border-slate-200", "icon": "📄"}
-        ]
+        completed_pct = _pct(completed_cnt)
+        in_progress_pct = _pct(in_progress_cnt)
+        planned_pct = _pct(planned_cnt)
+        overdue_pct = _pct(overdue_cnt)
 
-        agenda_evening = [
-            {"title": "Cluster Meeting Debrief", "location": "Virtual (WhatsApp)", "status": "Planned", "status_class": "bg-slate-50 text-slate-500 border-slate-200", "icon": "💬"}
-        ]
+        # Today's schedule, split into morning / afternoon / evening by the
+        # real scheduled_date time-of-day (this CCEO's own activities only).
+        todays_activities = cc_activities.filter(
+            scheduled_date__date=today
+        ).select_related(
+            "school", "school__district", "cluster", "cluster__district"
+        ).order_by("scheduled_date")
 
-        upcoming_week = [
-            {"day": "Wed, May 14", "title": "Cluster Training — Child Protection", "desc": "Gulu District", "icon": "📚", "type_class": "bg-emerald-50 text-emerald-600"},
-            {"day": "Thu, May 15", "title": "School Visit — Oyeta PS", "desc": "Agago District", "icon": "🏫", "type_class": "bg-blue-50 text-blue-600"},
-            {"day": "Fri, May 16", "title": "Partner Review Meeting", "desc": "Program Office", "icon": "👥", "type_class": "bg-violet-50 text-violet-600"}
-        ]
+        agenda_morning = []
+        agenda_afternoon = []
+        agenda_evening = []
+        for a in todays_activities:
+            item = _build_agenda_item(a, today)
+            hour = a.scheduled_date.hour
+            if hour < 12:
+                agenda_morning.append(item)
+            elif hour < 17:
+                agenda_afternoon.append(item)
+            else:
+                agenda_evening.append(item)
 
-        pending_approvals = [
-            {"title": "Fund Request - Week 3", "desc": "UGX 18.6M &bull; 3 items", "status": "Awaiting"},
-            {"title": "Visit Report - Week 2", "desc": "3 reports", "status": "Awaiting"},
-            {"title": "Training Report - Week 2", "desc": "2 reports", "status": "Awaiting"}
+        # Rest of the coming week — real activities, not yet done.
+        upcoming_qs = cc_activities.filter(
+            planned_date__range=[today + timedelta(days=1), week_end],
+        ).exclude(status__in=["completed", "closed"]).select_related(
+            "school", "school__district", "cluster", "cluster__district"
+        ).order_by("planned_date")[:10]
+
+        upcoming_week = []
+        for a in upcoming_qs:
+            title, _, short_location = _agenda_title_and_location(a)
+            upcoming_week.append({
+                "day": a.planned_date.strftime("%a, %b %-d"),
+                "title": title,
+                "desc": short_location,
+                "icon": _agenda_icon(a.activity_type),
+                "type_class": _agenda_type_class(a.activity_type),
+            })
+
+        # Pending approvals — this CCEO's own weekly fund requests that need
+        # their action (awaiting confirmation, or bounced back for fixes).
+        CCEO_ACTION_STATUSES = [
+            "pending_responsible_confirmation",
+            "returned_by_pl", "returned_by_cd", "returned_by_rvp", "returned_by_accountant",
         ]
+        STATUS_LABELS = {
+            "pending_responsible_confirmation": "Awaiting",
+            "returned_by_pl": "Returned",
+            "returned_by_cd": "Returned",
+            "returned_by_rvp": "Returned",
+            "returned_by_accountant": "Returned",
+        }
+        wfrs = WeeklyFundRequest.objects.filter(
+            responsible_user=user.id,
+            status__in=CCEO_ACTION_STATUSES,
+        ).order_by("-week_start_date")[:5]
+
+        pending_approvals = []
+        for w in wfrs:
+            line_count = w.lines.count()
+            pending_approvals.append({
+                "title": f"Weekly Fund Request — {w.week_start_date.strftime('%b %-d')}–{w.week_end_date.strftime('%b %-d')}",
+                "desc": f"{_format_ugx_compact(w.total_amount)} &bull; {line_count} item{'s' if line_count != 1 else ''}",
+                "status": STATUS_LABELS.get(w.status, "Awaiting"),
+            })
+
+        # Unread notifications, for the header bell badge.
+        from apps.notifications.models import Notification
+        unread_notifications_count = Notification.objects.filter(recipient_id=user.id, status="unread").count()
 
         context = {
             "alerts": alerts_list,
@@ -516,29 +677,93 @@ def dashboard_view(request):
             "role": role,
             "user_name": user.name,
             "avatar_initials": avatar_initials,
+            "today": today,
+            "current_week_number": today.isocalendar()[1],
+            "unread_notifications_count": unread_notifications_count,
             "kpis": {
                 "completed": completed_cnt,
                 "in_progress": in_progress_cnt,
                 "planned": planned_cnt,
                 "overdue": overdue_cnt,
-                "total": total_tasks
+                "total": total_tasks,
+                "completed_pct": completed_pct,
+                "in_progress_pct": in_progress_pct,
+                "planned_pct": planned_pct,
+                "overdue_pct": overdue_pct,
+                "in_progress_offset": -completed_pct,
+                "planned_offset": -(completed_pct + in_progress_pct),
+                "overdue_offset": -(completed_pct + in_progress_pct + planned_pct),
             },
             "agenda_morning": agenda_morning,
             "agenda_afternoon": agenda_afternoon,
             "agenda_evening": agenda_evening,
+            "agenda_total": len(agenda_morning) + len(agenda_afternoon) + len(agenda_evening),
             "upcoming_week": upcoming_week,
-            "pending_approvals": pending_approvals
+            "pending_approvals": pending_approvals,
         }
         return render(request, "pages/dashboards/cceo.html", context)
 
     elif role == "ProjectCoordinator":
-        # ProjectCoordinator Special Projects Dashboard Context
+        # Special Projects Dashboard Context — sourced entirely from the real
+        # Project / ProjectSchoolAssignment / ProjectPartnerAssignment tables.
+        # No health scores, teacher-impact counts, budgets, or status/dates are
+        # rendered here because the Project model has no such fields yet.
+        from apps.projects.models import Project, ProjectSchoolAssignment, ProjectPartnerAssignment
+
+        projects_qs = Project.objects.filter(deleted_at__isnull=True).order_by("name").prefetch_related(
+            "partner_assignments__partner", "school_assignments"
+        )
+
+        portfolio = []
+        for p in projects_qs:
+            partner_names = [pa.partner.name for pa in p.partner_assignments.all()]
+            portfolio.append({
+                "name": p.name,
+                "code": p.code,
+                "category": p.get_category_display(),
+                "partners": ", ".join(partner_names) if partner_names else "Unassigned",
+                "schools_enrolled": len(p.school_assignments.all()),
+            })
+
+        schools_in_projects = ProjectSchoolAssignment.objects.filter(
+            project__deleted_at__isnull=True
+        ).values("school_id").distinct().count()
+        partners_assigned = ProjectPartnerAssignment.objects.filter(
+            project__deleted_at__isnull=True
+        ).values("partner_id").distinct().count()
+
+        # Schools actually assigned to a special project.
+        project_schools = [
+            {
+                "school_name": a.school.name,
+                "project_name": a.project.name,
+                "district": a.school.district.name if a.school.district_id else "—",
+            }
+            for a in ProjectSchoolAssignment.objects.filter(project__deleted_at__isnull=True)
+            .select_related("school", "school__district", "project")
+            .order_by("-created_at")[:8]
+        ]
+
+        # Partners actually assigned to a special project.
+        project_partners = [
+            {"partner_name": a.partner.name, "project_name": a.project.name}
+            for a in ProjectPartnerAssignment.objects.filter(project__deleted_at__isnull=True)
+            .select_related("partner", "project")
+            .order_by("partner__name")
+        ]
+
         context = {
             "alerts": alerts_list,
             "alerts_summary": alerts_summary,
             "role": role,
             "user_name": user.name,
             "avatar_initials": avatar_initials,
+            "portfolio": portfolio,
+            "total_projects": len(portfolio),
+            "schools_in_projects": schools_in_projects,
+            "partners_assigned": partners_assigned,
+            "project_schools": project_schools,
+            "project_partners": project_partners,
         }
         return render(request, "pages/dashboards/special_projects.html", context)
 
@@ -565,6 +790,7 @@ def dashboard_view(request):
         "budget_snapshot": metrics["budget_snapshot"],
         "execution_summary": metrics["execution_summary"],
         "upcoming_today": metrics["upcoming_today"],
+        "attention_items": metrics.get("attention_items", []),
         
         "use_dark_sidebar": False,
     }

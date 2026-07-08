@@ -8,7 +8,7 @@
 
 <!-- Breadcrumb -->
 <nav class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-<a href="#" class="hover:text-slate-600">Home</a>
+<a href="/dashboard" class="hover:text-slate-600">Home</a>
 <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
 <span class="text-slate-600 font-semibold">Main Dashboard</span>
 </nav>
@@ -21,15 +21,6 @@
 </div>
 
 <div class="flex items-center gap-2">
-<!-- Export button -->
-<a 
-href="#"
-class="edify-action-button secondary h-9 transition-all shadow-sm"
->
-<svg class="h-4 w-4 text-slate-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-Export
-</a>
-
 <!-- Open My Plan -->
 <a 
 href="/planning" 
@@ -202,7 +193,7 @@ Today’s Priorities <span class="count text-[11px] bg-blue-50 text-blue-600 px-
 <section class="card panel space-y-3.5">
 <div class="panel-header border-b border-slate-100 pb-2">
 <div class="panel-title font-semibold text-[#2e505f]">Team Target Progress</div>
-<a class="link hover:underline text-blue-600 font-bold text-[11px]" href="#">View Details</a>
+<a class="link hover:underline text-blue-600 font-bold text-[11px]" href="/analytics">View Details</a>
 </div>
 <div class="progress-list space-y-3">
 {% for target in team_targets %}
@@ -408,6 +399,8 @@ Upcoming Today <span class="count text-[11px] bg-blue-50 text-blue-600 px-2 py-0
 <span class="text-slate-400 block text-[11px]">{{ item.info }}</span>
 </div>
 </div>
+{% empty %}
+<p class="text-[11px] text-slate-400 font-semibold py-2">Nothing scheduled for today.</p>
 {% endfor %}
 </div>
 
@@ -417,32 +410,20 @@ Upcoming Today <span class="count text-[11px] bg-blue-50 text-blue-600 px-2 py-0
 <!-- Attention Needed Alert Box -->
 <section class="card rail-card">
 <div class="rail-title font-semibold text-rose-600 text-[14px] border-b border-slate-100 pb-2 mb-3">
-Attention Needed <span class="count text-[11px] bg-rose-50 text-rose-600 px-2 py-0.5 rounded-full font-semibold ml-1.5">3</span>
+Attention Needed <span class="count text-[11px] bg-rose-50 text-rose-600 px-2 py-0.5 rounded-full font-semibold ml-1.5">{{ attention_items|length }}</span>
 </div>
 <div class="attention-list space-y-3 text-[12px] font-bold text-slate-700">
+{% for item in attention_items %}
 <div class="attention-item flex items-center gap-3">
-<div class="round-mini red-bg shrink-0">⚠</div>
+<div class="round-mini {{ item.cls }} shrink-0">{{ item.icon }}</div>
 <div>
-<strong class="text-slate-900">14 schools</strong>
-<span class="text-slate-400 block text-[11px] mt-0.5">Require immediate attention</span>
+<strong class="text-slate-900">{{ item.title }}</strong>
+<span class="text-slate-400 block text-[11px] mt-0.5">{{ item.detail }}</span>
 </div>
 </div>
-
-<div class="attention-item flex items-center gap-3">
-<div class="round-mini orange-bg shrink-0">◉</div>
-<div>
-<strong class="text-slate-900">2 fund requests</strong>
-<span class="text-slate-400 block text-[11px] mt-0.5">Awaiting approval</span>
-</div>
-</div>
-
-<div class="attention-item flex items-center gap-3">
-<div class="round-mini purple-bg shrink-0">◫</div>
-<div>
-<strong class="text-slate-900">7 evidence submissions</strong>
-<span class="text-slate-400 block text-[11px] mt-0.5">Past due</span>
-</div>
-</div>
+{% empty %}
+<p class="text-[11px] text-slate-400 font-semibold py-2">Nothing needs attention right now.</p>
+{% endfor %}
 </div>
 </section>
 

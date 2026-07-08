@@ -13,18 +13,20 @@ never used — dropped to remove the wasted network request.) -->
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <!-- Compiled Tailwind Styling -->
-<link rel="stylesheet" href="{% static 'css/main.css' %}?v=20260705c">
+<link rel="stylesheet" href="{% static 'css/main.css' %}?v=20260708a">
 
 <!-- Edify Design System — the SINGLE source of truth for tokens.
 All design tokens (color, type, spacing, radius, shadow, motion) live
 here. base.html <style> below only consumes tokens via var(--edify-*). -->
-<link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260705c">
-<link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260705c">
-<link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260705c">
-<link rel="stylesheet" href="{% static 'css/pages.css' %}?v=20260705c">
-<link rel="stylesheet" href="{% static 'css/drawers.css' %}?v=20260705c">
+<link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260708a">
+<link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260708a">
+<link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260708a">
+<link rel="stylesheet" href="{% static 'css/pages.css' %}?v=20260708a">
+<link rel="stylesheet" href="{% static 'css/drawers.css' %}?v=20260708a">
 <link rel="stylesheet" href="{% static 'css/app.css' %}">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
+<!-- Flowbite removed: no template uses its components, and its un-layered
+button/preflight CSS (loaded after main.css) overrode Tailwind's layered
+bg-* utilities, rendering primary buttons white-on-white. -->
 
 <style>
 /* base.html consumes tokens defined in design-system.css. No :root here. */
@@ -120,9 +122,11 @@ font-size: var(--edify-text-micro-size);
 }
 table tbody tr:hover { background-color: rgba(15, 23, 42, 0.02); }
 
-/* Form fields — body type, radius-sm, subtle focus ring using accent. */
-input[type="text"], input[type="number"], input[type="email"],
-input[type="password"], select, textarea {
+/* Form fields — body type, radius-sm, subtle focus ring using accent.
+:where() keeps specificity at zero so Tailwind utilities (e.g. pl-9 on the
+topbar search, which reserves room for its icon) can override these defaults. */
+:where(input[type="text"], input[type="number"], input[type="email"],
+input[type="password"], select, textarea) {
 border: 1px solid var(--edify-border);
 background-color: var(--edify-surface);
 border-radius: var(--edify-radius-md);
@@ -198,9 +202,8 @@ background-color: rgba(245, 158, 12, 0.1);
 <!-- Alpine.js (for client-side UI states - dropdown toggles, tabs, sidebars) -->
 <script defer src="https://unpkg.com/alpinejs@3.14.0/dist/cdn.min.js"></script>
 
-<!-- ApexCharts & Flowbite JS -->
+<!-- ApexCharts -->
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
 </head>
 <body 
 class="h-full bg-[var(--bg-page)] text-[var(--foreground)] font-sans antialiased"

@@ -32,9 +32,10 @@ class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50"
 <span>🔎</span> View Details
 </button>
 
+{% if row.execution_role != 'Partner' or viewer_is_partner %}
 <!-- Reschedule -->
 {% if row.status != 'completed' %}
-<button 
+<button
 hx-get="/my-plan/{{ row.id }}/reschedule-drawer"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
@@ -45,9 +46,22 @@ class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 te
 </button>
 {% endif %}
 
+<!-- Start Activity -->
+{% if row.status == 'scheduled' or row.status == 'partner_scheduled' or row.status == 'assigned_to_partner' %}
+<button
+hx-get="/activities/{{ row.id }}/start"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+@click="open = false"
+class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 text-indigo-600 hover:text-indigo-700"
+>
+<span>🚀</span> Start Activity
+</button>
+{% endif %}
+
 <!-- Complete -->
 {% if row.status != 'completed' %}
-<button 
+<button
 hx-get="/my-plan/{{ row.id }}/complete-drawer"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
@@ -59,7 +73,7 @@ class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 te
 {% endif %}
 
 <!-- Upload Evidence -->
-<button 
+<button
 hx-get="/my-plan/{{ row.id }}/complete-drawer"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
@@ -70,7 +84,7 @@ class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50"
 </button>
 
 <!-- Enter Activity SF ID -->
-<button 
+<button
 hx-get="/my-plan/{{ row.id }}/complete-drawer"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
@@ -79,6 +93,25 @@ class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50"
 >
 <span>🏷️</span> Enter Activity SF ID
 </button>
+
+<!-- Submit for Review -->
+{% if row.next_action.action == 'submit' %}
+<button
+hx-get="{{ row.next_action.url }}"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+@click="open = false"
+class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 text-blue-600 hover:text-blue-700"
+>
+<span>📤</span> Submit for Review
+</button>
+{% endif %}
+{% else %}
+<!-- Staff viewing partner-owned activity: read-only monitoring -->
+<div class="px-3.5 py-2 text-[11px] text-slate-400 font-bold uppercase tracking-wider">
+Monitoring — partner-owned
+</div>
+{% endif %}
 
 <!-- View Budget Lines -->
 <button 

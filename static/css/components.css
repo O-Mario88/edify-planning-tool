@@ -169,29 +169,32 @@
   border: 1px solid transparent;
   line-height: 1;
 }
+/* Badge text uses 700-tone colors (not the 500-tone semantic tokens): at
+   10-11px uppercase, the 500 tones sit at ~2.2-2.5:1 contrast on their
+   50-tone backgrounds — below WCAG. The darker text keeps the same hue. */
 .edify-status-badge.success, .status-pill.success, .badge.success {
   background-color: var(--edify-success-light);
-  color: var(--edify-success);
+  color: #047857;
   border-color: var(--edify-success-border);
 }
 .edify-status-badge.warning, .status-pill.warning, .badge.warning {
   background-color: var(--edify-warning-light);
-  color: var(--edify-warning);
+  color: #b45309;
   border-color: var(--edify-warning-border);
 }
 .edify-status-badge.danger, .status-pill.danger, .badge.danger {
   background-color: var(--edify-danger-light);
-  color: var(--edify-danger);
+  color: #be123c;
   border-color: var(--edify-danger-border);
 }
 .edify-status-badge.info, .status-pill.info, .badge.info {
   background-color: var(--edify-info-light);
-  color: var(--edify-info);
+  color: #1d4ed8;
   border-color: var(--edify-info-border);
 }
 .edify-status-badge.pending, .status-pill.pending, .badge.pending {
   background-color: var(--edify-purple-light);
-  color: var(--edify-purple);
+  color: #6d28d9;
   border-color: var(--edify-purple-border);
 }
 
@@ -404,7 +407,9 @@ input[type="text"], input[type="number"], input[type="email"], input[type="passw
   border-radius: var(--edify-radius-sm) !important;
   color: var(--edify-text) !important;
   font-size: 12.5px !important;
-  padding: 6px 12px !important;
+  /* No !important on padding: inputs with icons (e.g. the topbar search)
+     must be able to reserve space for them. */
+  padding: 6px 12px;
   outline: none !important;
   transition: var(--edify-transition-fast) !important;
 }

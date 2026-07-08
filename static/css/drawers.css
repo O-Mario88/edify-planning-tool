@@ -111,7 +111,7 @@
 .drawer-close-btn {
   background: transparent;
   border: none;
-  color: #a0aec0;
+  color: #64748b; /* slate-500: ≥4.5:1 on white (was #a0aec0 at ~2.4:1) */
   cursor: pointer;
   padding: 0.5rem;
   border-radius: 9999px;

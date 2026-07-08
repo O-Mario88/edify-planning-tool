@@ -18,14 +18,16 @@
     <!-- Date Dropdown -->
     <div class="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-lg shadow-sm cursor-pointer text-[12px] font-medium text-slate-600 hover:bg-slate-50 transition-colors">
       <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-      📅 Mon, May 12, 2025 - Week 3
+      📅 {{ today|date:"D, N j, Y" }} - Week {{ current_week_number }}
       <svg class="h-3.5 w-3.5 text-slate-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 11-1.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
     </div>
 
     <!-- Notifications -->
     <div class="h-9 w-9 bg-white rounded-lg flex items-center justify-center relative cursor-pointer hover:bg-slate-50 shadow-sm transition-colors">
       <svg class="h-5 w-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-      <span class="absolute -top-1 -right-1 bg-rose-500 text-white rounded-full text-[10px] font-semibold h-4 w-4 flex items-center justify-center">3</span>
+      {% if unread_notifications_count %}
+      <span class="absolute -top-1 -right-1 bg-rose-500 text-white rounded-full text-[10px] font-semibold h-4 w-4 flex items-center justify-center">{{ unread_notifications_count }}</span>
+      {% endif %}
     </div>
 
     <!-- Avatar profile -->
@@ -56,19 +58,13 @@
     <div class="flex items-center justify-between pb-3 border-b border-slate-100">
       <div class="flex items-center gap-2.5">
         <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">Today's Agenda</h2>
-        <span class="bg-slate-100 text-slate-500 font-medium rounded-full px-2 py-0.5 text-[11px]">24 tasks</span>
+        <span class="bg-slate-100 text-slate-500 font-medium rounded-full px-2 py-0.5 text-[11px]">{{ agenda_total }} task{{ agenda_total|pluralize }}</span>
       </div>
 
       <div class="flex items-center gap-2">
         <select class="h-7 px-2 bg-slate-50 rounded-md text-[11px] font-medium text-slate-600 outline-none">
           <option>Sort by: Priority</option>
         </select>
-        <!-- List view toggles -->
-        <div class="flex items-center bg-slate-100 p-0.5 rounded-md">
-          <button class="h-6 w-6 bg-white rounded shadow-sm flex items-center justify-center text-[11px]">☰</button>
-          <button class="h-6 w-6 text-slate-400 hover:text-slate-600 rounded flex items-center justify-center text-[11px]">📅</button>
-          <button class="h-6 w-6 text-slate-400 hover:text-slate-600 rounded flex items-center justify-center text-[11px]">🗺️</button>
-        </div>
       </div>
     </div>
 
@@ -80,7 +76,7 @@
         <div class="flex items-center gap-2 text-[11px] font-semibold text-emerald-600 uppercase tracking-wider">
           <span>☀️ Morning</span>
           <span class="h-1 w-1 rounded-full bg-emerald-400"></span>
-          <span class="text-slate-400 normal-case font-normal">3 tasks</span>
+          <span class="text-slate-400 normal-case font-normal">{{ agenda_morning|length }} task{{ agenda_morning|length|pluralize }}</span>
         </div>
 
         <div class="space-y-2">
@@ -102,9 +98,10 @@
               <span class="text-[11px] text-slate-400 font-normal flex items-center gap-1">👥 {{ task.count }}</span>
               {% endif %}
               <span class="{{ task.status_class }} inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide">{{ task.status }}</span>
-              <button class="text-slate-300 hover:text-slate-500 text-[14px] leading-none px-1">&bull;&bull;&bull;</button>
             </div>
           </div>
+          {% empty %}
+          <p class="text-[11px] text-slate-400 font-semibold py-2">Nothing scheduled this morning.</p>
           {% endfor %}
         </div>
       </div>
@@ -114,7 +111,7 @@
         <div class="flex items-center gap-2 text-[11px] font-semibold text-amber-600 uppercase tracking-wider">
           <span>⛅ Afternoon</span>
           <span class="h-1 w-1 rounded-full bg-amber-400"></span>
-          <span class="text-slate-400 normal-case font-normal">4 tasks</span>
+          <span class="text-slate-400 normal-case font-normal">{{ agenda_afternoon|length }} task{{ agenda_afternoon|length|pluralize }}</span>
         </div>
 
         <div class="space-y-2">
@@ -133,9 +130,10 @@
               <span class="text-[11px] text-slate-400 font-normal flex items-center gap-1">👥 {{ task.count }}</span>
               {% endif %}
               <span class="{{ task.status_class }} inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide">{{ task.status }}</span>
-              <button class="text-slate-300 hover:text-slate-500 text-[14px] leading-none px-1">&bull;&bull;&bull;</button>
             </div>
           </div>
+          {% empty %}
+          <p class="text-[11px] text-slate-400 font-semibold py-2">Nothing scheduled this afternoon.</p>
           {% endfor %}
         </div>
       </div>
@@ -145,7 +143,7 @@
         <div class="flex items-center gap-2 text-[11px] font-semibold text-indigo-600 uppercase tracking-wider">
           <span>🌙 Evening</span>
           <span class="h-1 w-1 rounded-full bg-indigo-400"></span>
-          <span class="text-slate-400 normal-case font-normal">1 task</span>
+          <span class="text-slate-400 normal-case font-normal">{{ agenda_evening|length }} task{{ agenda_evening|length|pluralize }}</span>
         </div>
 
         <div class="space-y-2">
@@ -161,9 +159,10 @@
 
             <div class="flex items-center gap-2.5">
               <span class="{{ task.status_class }} inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide">{{ task.status }}</span>
-              <button class="text-slate-300 hover:text-slate-500 text-[14px] leading-none px-1">&bull;&bull;&bull;</button>
             </div>
           </div>
+          {% empty %}
+          <p class="text-[11px] text-slate-400 font-semibold py-2">Nothing scheduled this evening.</p>
           {% endfor %}
         </div>
       </div>
@@ -173,7 +172,6 @@
     <!-- agenda footer links -->
     <div class="flex justify-between items-center pt-3 border-t border-slate-100 text-[12px]">
       <a href="/planning" class="text-blue-600 hover:text-blue-700 font-medium hover:underline">View full calendar &rsaquo;</a>
-      <button class="text-slate-500 hover:text-slate-700 font-medium">+ Add Personal Task</button>
     </div>
   </div>
 
@@ -192,26 +190,26 @@
         <div class="relative h-28 w-28 flex items-center justify-center shrink-0">
           <svg class="h-full w-full -rotate-90" viewBox="0 0 36 36">
             <path class="text-slate-100" stroke-width="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-            <!-- Completed (29%) -->
-            <path class="text-emerald-500" stroke-dasharray="29, 100" stroke-width="3" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-            <!-- In Progress (41%) -->
-            <path class="text-blue-500" stroke-dasharray="41, 100" stroke-dashoffset="-29" stroke-width="3" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-            <!-- Planned (21%) -->
-            <path class="text-amber-500" stroke-dasharray="21, 100" stroke-dashoffset="-70" stroke-width="3" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-            <!-- Overdue (8%) -->
-            <path class="text-rose-500" stroke-dasharray="8, 100" stroke-dashoffset="-91" stroke-width="3" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            <!-- Completed -->
+            <path class="text-emerald-500" stroke-dasharray="{{ kpis.completed_pct }}, 100" stroke-width="3" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            <!-- In Progress -->
+            <path class="text-blue-500" stroke-dasharray="{{ kpis.in_progress_pct }}, 100" stroke-dashoffset="{{ kpis.in_progress_offset }}" stroke-width="3" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            <!-- Planned -->
+            <path class="text-amber-500" stroke-dasharray="{{ kpis.planned_pct }}, 100" stroke-dashoffset="{{ kpis.planned_offset }}" stroke-width="3" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            <!-- Overdue -->
+            <path class="text-rose-500" stroke-dasharray="{{ kpis.overdue_pct }}, 100" stroke-dashoffset="{{ kpis.overdue_offset }}" stroke-width="3" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
           </svg>
           <div class="absolute flex flex-col justify-center items-center text-center">
-            <span class="text-[24px] font-semibold text-slate-800 leading-none tabular-nums">24</span>
+            <span class="text-[24px] font-semibold text-slate-800 leading-none tabular-nums">{{ kpis.total }}</span>
             <span class="text-[10px] font-medium text-slate-400 uppercase tracking-wide mt-1">Total Tasks</span>
           </div>
         </div>
 
         <div class="text-[12px] space-y-2 text-slate-500 flex-1">
-          <div class="flex items-center justify-between"><span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-emerald-500 shrink-0"></span> Completed</span> <span class="text-slate-700 font-medium tabular-nums">7 (29%)</span></div>
-          <div class="flex items-center justify-between"><span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-blue-500 shrink-0"></span> In Progress</span> <span class="text-slate-700 font-medium tabular-nums">10 (41%)</span></div>
-          <div class="flex items-center justify-between"><span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-amber-500 shrink-0"></span> Planned</span> <span class="text-slate-700 font-medium tabular-nums">5 (21%)</span></div>
-          <div class="flex items-center justify-between"><span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-rose-500 shrink-0"></span> Overdue</span> <span class="text-slate-700 font-medium tabular-nums">2 (8%)</span></div>
+          <div class="flex items-center justify-between"><span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-emerald-500 shrink-0"></span> Completed</span> <span class="text-slate-700 font-medium tabular-nums">{{ kpis.completed }} ({{ kpis.completed_pct }}%)</span></div>
+          <div class="flex items-center justify-between"><span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-blue-500 shrink-0"></span> In Progress</span> <span class="text-slate-700 font-medium tabular-nums">{{ kpis.in_progress }} ({{ kpis.in_progress_pct }}%)</span></div>
+          <div class="flex items-center justify-between"><span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-amber-500 shrink-0"></span> Planned</span> <span class="text-slate-700 font-medium tabular-nums">{{ kpis.planned }} ({{ kpis.planned_pct }}%)</span></div>
+          <div class="flex items-center justify-between"><span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-rose-500 shrink-0"></span> Overdue</span> <span class="text-slate-700 font-medium tabular-nums">{{ kpis.overdue }} ({{ kpis.overdue_pct }}%)</span></div>
         </div>
       </div>
     </div>
@@ -233,6 +231,8 @@
             <span class="text-slate-400 block leading-tight text-[12px]">{{ event.desc }}</span>
           </div>
         </div>
+        {% empty %}
+        <p class="text-[11px] text-slate-400 font-semibold py-2">Nothing scheduled for the rest of this week.</p>
         {% endfor %}
       </div>
     </div>
@@ -256,6 +256,8 @@
           </div>
           <span class="bg-amber-50 text-amber-700 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide">{{ approval.status }}</span>
         </div>
+        {% empty %}
+        <p class="text-[11px] text-slate-400 font-semibold py-2">No fund requests need your attention.</p>
         {% endfor %}
       </div>
     </div>
@@ -266,74 +268,15 @@
 
 
 <!-- ================= BOTTOM ROW GRID ================= -->
-<div class="grid grid-cols-1 md:grid-cols-12 gap-5">
+<div class="grid grid-cols-1 gap-5">
 
-  <!-- Priority Focus (Col Span 6) -->
-  <div class="md:col-span-6 card p-5 space-y-4">
-    <div class="pb-2 border-b border-slate-100">
-      <h3 class="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Priority Focus</h3>
-    </div>
-
-    <div class="flex items-center gap-4 bg-slate-50/70 p-4 rounded-lg">
-      <div class="h-10 w-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center shrink-0 text-[18px]">🎯</div>
-      <div class="flex-1 space-y-2">
-        <div>
-          <h4 class="text-[14px] font-medium text-slate-800 leading-none">Improve learning outcomes in Kitgum</h4>
-          <p class="text-[12px] text-slate-500 mt-1.5">2 more school visits to complete target</p>
-        </div>
-        <div class="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
-          <div class="bg-blue-500 h-full rounded-full" style="width: 75%"></div>
-        </div>
-        <div class="flex justify-between items-center text-[11px] text-slate-400">
-          <span>75% target achievement</span>
-          <span>Target: 12 visits</span>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Team Check-In (Col Span 3) -->
-  <div class="md:col-span-3 card p-5 flex flex-col justify-between">
-    <div>
-      <div class="pb-2 border-b border-slate-100 flex items-center justify-between">
-        <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Team Check-In</h3>
-        <a href="/staff" class="text-[11px] font-medium text-blue-600 hover:underline">View team</a>
-      </div>
-
-      <!-- Online avatars with status dot -->
-      <div class="flex flex-wrap gap-2 mt-4">
-        <div class="relative">
-          <div class="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-[11px] font-medium text-slate-500">JM</div>
-          <span class="absolute bottom-0 right-0 h-2.5 w-2.5 bg-emerald-500 rounded-full border-2 border-white"></span>
-        </div>
-        <div class="relative">
-          <div class="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-[11px] font-medium text-slate-500">AN</div>
-          <span class="absolute bottom-0 right-0 h-2.5 w-2.5 bg-emerald-500 rounded-full border-2 border-white"></span>
-        </div>
-        <div class="relative">
-          <div class="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-[11px] font-medium text-slate-500">PK</div>
-          <span class="absolute bottom-0 right-0 h-2.5 w-2.5 bg-emerald-500 rounded-full border-2 border-white"></span>
-        </div>
-        <div class="relative">
-          <div class="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-[11px] font-medium text-slate-500">SK</div>
-          <span class="absolute bottom-0 right-0 h-2.5 w-2.5 bg-emerald-500 rounded-full border-2 border-white"></span>
-        </div>
-      </div>
-    </div>
-
-    <div class="flex items-center gap-3 text-[11px] text-slate-500 pt-3 border-t border-slate-100 mt-4">
-      <span class="flex items-center gap-1"><span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span> 8 Active</span>
-      <span class="flex items-center gap-1"><span class="h-1.5 w-1.5 rounded-full bg-slate-300"></span> 2 Offline</span>
-    </div>
-  </div>
-
-  <!-- Quick Actions grid (Col Span 3) -->
-  <div class="md:col-span-3 card p-5 space-y-3 flex flex-col justify-between">
+  <!-- Quick Actions -->
+  <div class="card p-5 space-y-3">
     <div class="pb-2 border-b border-slate-100">
       <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Quick Actions</h3>
     </div>
 
-    <div class="grid grid-cols-2 gap-2 text-center text-[11px] font-medium text-slate-600 mt-1">
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-[11px] font-medium text-slate-600 mt-1">
       <a href="/completed-activities" class="flex flex-col items-center gap-1.5 p-2.5 bg-slate-50/70 hover:bg-slate-100 rounded-lg transition-colors">
         <span class="text-[18px]">📝</span>
         Log Visit
@@ -347,8 +290,8 @@
         Smart Route
       </a>
       <a href="/staff" class="flex flex-col items-center gap-1.5 p-2.5 bg-slate-50/70 hover:bg-slate-100 rounded-lg transition-colors">
-        <span class="text-[18px]">💬</span>
-        Team Chat
+        <span class="text-[18px]">👥</span>
+        My Team
       </a>
     </div>
   </div>

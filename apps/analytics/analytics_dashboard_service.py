@@ -143,8 +143,8 @@ class AnalyticsDashboardService:
             )
             targets_sum = (targets_sum["v"] or 0) + (targets_sum["t"] or 0)
         if targets_sum == 0:
-            # High-level fallback to planned count to prevent division by zero
-            targets_sum = activities_qs.count() or 100
+            # High-level fallback to planned count (a genuine zero renders as zero)
+            targets_sum = activities_qs.count()
             
         # Target for this quarter is roughly 25% of annual targets
         q_target = max(1, round(targets_sum / 4))
@@ -154,7 +154,7 @@ class AnalyticsDashboardService:
         kpi_data["target_achievement"] = {
             "value": f"{achievement_pct}%",
             "trend": get_trend(achievement_pct, achievement_prior_pct, "pp"),
-            "points": [45, 52, 48, 62, achievement_pct],
+            "points": [],
             "class": "text-emerald-600" if achievement_pct >= 90 else ("text-amber-600" if achievement_pct >= 70 else "text-rose-600")
         }
         
@@ -164,7 +164,7 @@ class AnalyticsDashboardService:
         kpi_data["teachers_trained"] = {
             "value": f"{teachers:,}",
             "trend": get_trend(teachers, teachers_prior),
-            "points": [2000, 3500, 4800, 8000, teachers],
+            "points": [],
         }
         
         # Card 3: School Leaders Trained
@@ -173,7 +173,7 @@ class AnalyticsDashboardService:
         kpi_data["leaders_trained"] = {
             "value": f"{leaders:,}",
             "trend": get_trend(leaders, leaders_prior),
-            "points": [800, 1500, 2400, 3800, leaders],
+            "points": [],
         }
         
         # Card 4: Students Impacted (Sum enrollment of reached schools, distinct)
@@ -193,7 +193,7 @@ class AnalyticsDashboardService:
         kpi_data["students_impacted"] = {
             "value": format_large(students),
             "trend": get_trend(students, students_prior),
-            "points": [400000, 650000, 900000, 1100000, students],
+            "points": [],
         }
         
         # Card 5: Schools Impacted (Distinct)
@@ -202,7 +202,7 @@ class AnalyticsDashboardService:
         kpi_data["schools_impacted"] = {
             "value": f"{schools_imp:,}",
             "trend": get_trend(schools_imp, schools_imp_prior),
-            "points": [300, 600, 850, 1100, schools_imp],
+            "points": [],
         }
         
         # Card 6: Districts Covered
@@ -211,7 +211,7 @@ class AnalyticsDashboardService:
         kpi_data["districts_covered"] = {
             "value": str(districts),
             "trend": get_trend(districts, districts_prior),
-            "points": [45, 78, 92, 105, districts],
+            "points": [],
         }
         
         # Card 7: Clusters Covered
@@ -220,7 +220,7 @@ class AnalyticsDashboardService:
         kpi_data["clusters_covered"] = {
             "value": str(clusters),
             "trend": get_trend(clusters, clusters_prior),
-            "points": [120, 240, 310, 420, clusters],
+            "points": [],
         }
         
         # Card 8: Total Activities Completed
@@ -229,7 +229,7 @@ class AnalyticsDashboardService:
         kpi_data["activities_completed"] = {
             "value": f"{completed:,}",
             "trend": get_trend(completed, completed_prior),
-            "points": [800, 1600, 2400, 3100, completed],
+            "points": [],
         }
         
         # Card 9: SSA Average
@@ -237,9 +237,9 @@ class AnalyticsDashboardService:
         ssa_avg_prior = prior_ssa.aggregate(a=Avg("average_score"))["a"] or 0
         ssa_diff = ssa_avg - ssa_avg_prior
         kpi_data["ssa_average"] = {
-            "value": f"{ssa_avg:.2f}" if ssa_avg > 0 else "4.47",  # Fallback to screenshot average if no assessments
+            "value": f"{ssa_avg:.2f}" if ssa_avg > 0 else "\u2014",
             "trend": f"+{ssa_diff:.2f} vs {prior_q}" if ssa_diff >= 0 else f"{ssa_diff:.2f} vs {prior_q}",
-            "points": [4.1, 4.25, 4.38, 4.41, ssa_avg if ssa_avg > 0 else 4.47],
+            "points": [],
         }
 
         # Construct unified KPI strip items
@@ -343,7 +343,7 @@ class AnalyticsDashboardService:
             {
                 "label": "SSA Average",
                 "value": kpi_data["ssa_average"]["value"],
-                "raw_value": float(ssa_avg) if ssa_avg > 0 else 4.47,
+                "raw_value": float(ssa_avg) if ssa_avg > 0 else None,
                 "helper": "average score",
                 "icon": "chart",
                 "variant": "blue",
@@ -446,33 +446,62 @@ class AnalyticsDashboardService:
             regional_perf.append({
                 "id": reg.id,
                 "name": reg.name,
-                "ssa_avg": round(reg_ssa, 2) if reg_ssa else 4.25,
+                "ssa_avg": round(reg_ssa, 2) if reg_ssa is not None else None,
                 "pct": reg_pct,
                 "schools_count": reg_schools.count(),
                 "completed": reg_ach,
             })
             
         # 9. Cluster Performance (Top 10 ranked table)
+        intervention_labels = dict(SsaIntervention.choices)
         cluster_perf = []
         clusters_list = Cluster.objects.all()
         for i, cl in enumerate(clusters_list[:10]):
             cl_schools = School.objects.filter(cluster_id=cl.id)
             cl_ssa = SsaRecord.objects.filter(school__cluster_id=cl.id, fy=fy, verification_status="confirmed").aggregate(a=Avg("average_score"))["a"]
             cl_acts = activities_qs.filter(school__cluster_id=cl.id)
-            
+
             train_cnt = cl_acts.filter(activity_type__in=TRAINING_TYPES).count()
             visit_cnt = cl_acts.filter(activity_type__in=VISIT_TYPES).count()
-            
+
+            # Real best/worst intervention, derived the same way as the SSA
+            # Performance by Intervention section (SsaScore per-intervention averages).
+            cl_intervention_scores = list(
+                SsaScore.objects.filter(ssa_record__school__cluster_id=cl.id, ssa_record__fy=fy)
+                .values("intervention")
+                .annotate(avg=Avg("score"))
+            )
+            if cl_intervention_scores:
+                best_row = max(cl_intervention_scores, key=lambda r: r["avg"])
+                worst_row = min(cl_intervention_scores, key=lambda r: r["avg"])
+                best_intervention = intervention_labels.get(best_row["intervention"], best_row["intervention"])
+                worst_intervention = intervention_labels.get(worst_row["intervention"], worst_row["intervention"])
+            else:
+                best_intervention = "—"
+                worst_intervention = "—"
+
+            # Real trend: compare this cluster's current-FY SSA average against
+            # the prior FY (same comparison basis used for Impact Summary below).
+            prev_fy = str(int(fy) - 1)
+            cl_ssa_prev = SsaRecord.objects.filter(
+                school__cluster_id=cl.id, fy=prev_fy, verification_status="confirmed"
+            ).aggregate(a=Avg("average_score"))["a"]
+            if cl_ssa is not None and cl_ssa_prev is not None and cl_ssa != cl_ssa_prev:
+                cl_trend = "up" if cl_ssa > cl_ssa_prev else "down"
+            else:
+                cl_trend = None
+
             cluster_perf.append({
                 "rank": i + 1,
                 "id": cl.id,
                 "name": cl.name,
-                "ssa_avg": f"{cl_ssa:.2f}" if cl_ssa else "4.30",
-                "best_intervention": "Teaching & Learning" if i % 2 == 0 else "Leadership",
-                "worst_intervention": "Data Use & Planning" if i % 2 == 0 else "Safety & Wellbeing",
+                "ssa_avg": f"{cl_ssa:.2f}" if cl_ssa is not None else "—",
+                "ssa_avg_raw": round(cl_ssa, 2) if cl_ssa is not None else None,
+                "best_intervention": best_intervention,
+                "worst_intervention": worst_intervention,
                 "trainings": train_cnt,
                 "visits": visit_cnt,
-                "trend": "up" if i % 3 != 0 else "down",
+                "trend": cl_trend,
             })
             
         # 10. Impact Summary
@@ -491,7 +520,7 @@ class AnalyticsDashboardService:
             "teachers_trained": teachers,
             "leaders_trained": leaders,
             "students_impacted": students,
-            "schools_improved": improved_cnt or 124,  # fallback if no prior data
+            "schools_improved": improved_cnt,
         }
         
         # 11. Activity Tracking Section
@@ -511,9 +540,21 @@ class AnalyticsDashboardService:
         partner_q1 = activities_qs.filter(quarter="Q1", delivery_type="partner", status__in=ACHIEVED_STATUSES).count()
         partner_q2 = activities_qs.filter(quarter="Q2", delivery_type="partner", status__in=ACHIEVED_STATUSES).count()
         
+        # Overall achievement rate (achieved / planned) per delivery channel —
+        # this is the real figure the bar comparison in the template renders.
+        staff_planned_total = activities_qs.filter(delivery_type="staff").count()
+        staff_achieved_total = activities_qs.filter(delivery_type="staff", status__in=ACHIEVED_STATUSES).count()
+        staff_pct = round(staff_achieved_total / staff_planned_total * 100) if staff_planned_total > 0 else 0
+
+        partner_planned_total = activities_qs.filter(delivery_type="partner").count()
+        partner_achieved_total = activities_qs.filter(delivery_type="partner", status__in=ACHIEVED_STATUSES).count()
+        partner_pct = round(partner_achieved_total / partner_planned_total * 100) if partner_planned_total > 0 else 0
+
         staff_partner_chart = {
             "staff": [staff_q1, staff_q2],
             "partner": [partner_q1, partner_q2],
+            "staff_pct": staff_pct,
+            "partner_pct": partner_pct,
         }
         
         # Leaderboard table
@@ -522,7 +563,7 @@ class AnalyticsDashboardService:
         for st in active_staff[:5]:
             completed_cnt = activities_qs.filter(responsible_staff_id=st.id, status__in=ACHIEVED_STATUSES).count()
             planned_cnt = activities_qs.filter(responsible_staff_id=st.id).count()
-            ach_pct = round((completed_cnt / planned_cnt * 100)) if planned_cnt > 0 else 100
+            ach_pct = round((completed_cnt / planned_cnt * 100)) if planned_cnt > 0 else 0
             
             leaderboard.append({
                 "name": st.user.name,
@@ -533,16 +574,16 @@ class AnalyticsDashboardService:
             
         # 13. Core & Champion School Performance
         core_schools_count = schools_qs.filter(school_type="core").count()
-        core_ssa_avg = SsaRecord.objects.filter(school__school_type="core", fy=fy, verification_status="confirmed").aggregate(a=Avg("average_score"))["a"] or 4.31
-        
+        core_ssa_avg = SsaRecord.objects.filter(school__school_type="core", fy=fy, verification_status="confirmed").aggregate(a=Avg("average_score"))["a"]
+
         champion_schools_count = schools_qs.filter(school_type="champion").count()
-        champion_ssa_avg = SsaRecord.objects.filter(school__school_type="champion", fy=fy, verification_status="confirmed").aggregate(a=Avg("average_score"))["a"] or 5.02
-        
+        champion_ssa_avg = SsaRecord.objects.filter(school__school_type="champion", fy=fy, verification_status="confirmed").aggregate(a=Avg("average_score"))["a"]
+
         core_champion = {
             "core_count": core_schools_count,
-            "core_ssa": round(core_ssa_avg, 2),
+            "core_ssa": round(core_ssa_avg, 2) if core_ssa_avg is not None else None,
             "champion_count": champion_schools_count,
-            "champion_ssa": round(champion_ssa_avg, 2),
+            "champion_ssa": round(champion_ssa_avg, 2) if champion_ssa_avg is not None else None,
         }
         
         # 14. Donor reporting snapshot matches KPI values
@@ -578,10 +619,10 @@ class AnalyticsDashboardService:
             if dp["pct"] < 60:
                 high_risk_districts += 1
                 
-        # Risk 5: Clusters needing attention (SSA avg < 3.5)
+        # Risk 5: Clusters needing attention (SSA avg < 4.0)
         clusters_attn = 0
         for cp in cluster_perf:
-            if float(cp["ssa_avg"]) < 4.0:
+            if cp["ssa_avg_raw"] is not None and cp["ssa_avg_raw"] < 4.0:
                 clusters_attn += 1
                 
         insights = [

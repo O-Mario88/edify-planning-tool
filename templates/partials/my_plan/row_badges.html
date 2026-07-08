@@ -1,0 +1,16 @@
+<!-- Status/finance badges for a My Plan category-table row (expects `row`) -->
+{% if row.badges %}
+<div class="flex items-center gap-1 flex-wrap mt-1 max-w-[220px]">
+{% for label, variant in row.badges %}
+<span class="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase border
+{% if variant == 'green' %}bg-emerald-50 text-emerald-700 border-emerald-150
+{% elif variant == 'amber' %}bg-amber-50 text-amber-600 border-amber-150
+{% elif variant == 'red' %}bg-rose-50 text-rose-700 border-rose-150
+{% elif variant == 'purple' %}bg-indigo-50 text-indigo-700 border-indigo-150
+{% elif variant == 'blue' %}bg-blue-50 text-blue-700 border-blue-150
+{% else %}bg-slate-50 text-slate-500 border-slate-200{% endif %}">
+{{ label }}
+</span>
+{% endfor %}
+</div>
+{% endif %}

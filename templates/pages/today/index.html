@@ -67,7 +67,7 @@
 {% if act.status == 'completed' %}bg-emerald-50 text-emerald-700{% elif act.status == 'scheduled' %}bg-blue-50 text-blue-700{% else %}bg-amber-50 text-amber-700{% endif %}">
 {{ act.status|title }}
 </span>
-<a href="/my-plan/{{ act.id }}" class="opacity-0 group-hover:opacity-100 text-[11px] font-bold text-[var(--color-edify-primary)] transition-opacity">View →</a>
+<a href="/my-plan/{{ act.id }}" class="opacity-70 group-hover:opacity-100 focus-visible:opacity-100 text-[11px] font-bold text-[var(--color-edify-primary)] transition-opacity">View →</a>
 </div>
 </li>
 {% endfor %}

@@ -283,9 +283,10 @@ class RolePermissionService:
     @staticmethod
     def can_assign_to_partner(user, school_or_cluster=None) -> bool:
         role = getattr(user, "active_role", None)
-        if role == "CountryDirector":
-            return False
-        return role in ["Program Lead", "ProjectCoordinator", "Admin"]
+        # Mirrors can_schedule_activity's allowed set: assigning to a partner
+        # is the alternative to scheduling yourself (spec §5), so whoever can
+        # schedule for their portfolio can also hand it off to a partner.
+        return role in ["CCEO", "Program Lead", "ProjectCoordinator", "Admin"]
 
     @staticmethod
     def can_assign_to_staff(user, school) -> bool:

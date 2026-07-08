@@ -188,7 +188,10 @@ def _apply_schedule_cost_snapshot(activity: Activity, data: dict, principal=None
     apply_to_activity(activity, _costing_input(activity, data), responsible_user_id=responsible)
 
     from apps.fund_requests.weekly_service import trigger_generate_for_activity
-    trigger_generate_for_activity(activity)
+    # Pass the same identifier that was stamped onto the cost lines: for staff
+    # with a StaffProfile, activity.responsible_staff_id holds the profile id
+    # while lines carry User.id — mismatch meant no weekly request was created.
+    trigger_generate_for_activity(activity, responsible_user_id=responsible)
 
 
 # ── Create ───────────────────────────────────────────────────────────────────
@@ -285,21 +288,26 @@ def create(data: dict, principal) -> dict:
     # Central cost gate: block scheduling if the activity cannot be priced from
     # the active CD Cost Catalogue (missing rate / no catalogue / missing
     # participants for training). No activity is ever created with a fake cost.
-    from apps.budget.costing_service import assert_schedulable
+    # Skipped when Daily Visit Batch scheduling calls this per-school with
+    # _skip_cost_snapshot — the batch service already validated pricing
+    # feasibility (compute_daily_pool) against its own catalogue keys before
+    # calling here, and will price + gate this activity itself afterward.
+    if not data.get("_skip_cost_snapshot"):
+        from apps.budget.costing_service import assert_schedulable
 
-    assert_schedulable({
-        "activityType": activity_type,
-        "deliveryType": "partner" if is_partner else "staff",
-        "teachersAttended": data.get("teachersAttended"),
-        "leadersAttended": data.get("leadersAttended"),
-        "otherParticipants": data.get("otherParticipants"),
-        "expectedParticipants": data.get("expectedParticipants"),
-        "districtType": data.get("districtType"),
-        "nights": data.get("nights"),
-        "projectId": data.get("projectId"),
-        "fy": fy,
-        "scheduledDate": data.get("scheduledDate"),
-    })
+        assert_schedulable({
+            "activityType": activity_type,
+            "deliveryType": "partner" if is_partner else "staff",
+            "teachersAttended": data.get("teachersAttended"),
+            "leadersAttended": data.get("leadersAttended"),
+            "otherParticipants": data.get("otherParticipants"),
+            "expectedParticipants": data.get("expectedParticipants"),
+            "districtType": data.get("districtType"),
+            "nights": data.get("nights"),
+            "projectId": data.get("projectId"),
+            "fy": fy,
+            "scheduledDate": data.get("scheduledDate"),
+        })
 
     status = "assigned_to_partner" if is_partner else ("scheduled" if scheduled_date else "planned")
     activity = Activity.objects.create(
@@ -327,7 +335,12 @@ def create(data: dict, principal) -> dict:
         salesforce_activity_type=sf_kind(activity_type),
         ssa_collection_expected=is_ssa_activity,
     )
-    _apply_schedule_cost_snapshot(activity, data, principal=principal)
+    # Daily Visit Batch scheduling (apps.daily_visit_batches.services) creates
+    # each school's Activity via this function, then prices the whole batch in
+    # one pass afterward — skip the single-activity cost snapshot here so a
+    # school is never priced twice (once alone, once as part of its batch).
+    if not data.get("_skip_cost_snapshot"):
+        _apply_schedule_cost_snapshot(activity, data, principal=principal)
     return _serialize(activity)
 
 
@@ -511,10 +524,26 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
         "scheduled_date", "fy", "quarter", "planned_month", "planned_week",
         "reschedule_count", "last_reason", "status", "updated_at",
     ])
-    # Re-price against the current catalogue so the budget line follows the new
-    # schedule (rates may have changed; participant/period inputs may have too).
-    _apply_schedule_cost_snapshot(a, data, principal=principal)
-    a.save(update_fields=["est_cost_cents", "cost_missing", "updated_at"])
+
+    from apps.daily_visit_batches.pricing import DAILY_BATCH_ELIGIBLE_TYPES
+
+    if a.activity_type in DAILY_BATCH_ELIGIBLE_TYPES and a.delivery_type == "staff" and a.school_id:
+        # Leave the OLD day's batch (recomputed for its remaining schools,
+        # unless already locked — same rationale as everywhere else: reschedule
+        # is the sanctioned post-approval escape hatch, so it isn't itself
+        # blocked, but a locked batch's other members stay frozen).
+        _detach_from_daily_visit_batch(a)
+        from apps.daily_visit_batches.services import reschedule_within_batch
+
+        reschedule_within_batch(
+            activity=a, new_date=new_date.date(), reason=data.get("reason"), principal=principal
+        )
+    else:
+        # Re-price against the current catalogue so the budget line follows the
+        # new schedule (rates may have changed; participant/period inputs may
+        # have too).
+        _apply_schedule_cost_snapshot(a, data, principal=principal)
+        a.save(update_fields=["est_cost_cents", "cost_missing", "updated_at"])
     return _serialize(a)
 
 
@@ -614,7 +643,7 @@ def partner_schedule(activity_id: str, data: dict, principal) -> dict:
             pa_rec = PartnerAssignment.objects.filter(
                 pa_filter,
                 partner_id=a.assigned_partner_id,
-                status__in=["assigned", "assigned_to_partner_pending_scheduling"]
+                status__in=["assigned", "pending_scheduling", "partner_pending_schedule", "assigned_to_partner_pending_scheduling"]
             ).first()
             if pa_rec:
                 pa_rec.status = "partner_scheduled"
@@ -635,11 +664,29 @@ def partner_schedule(activity_id: str, data: dict, principal) -> dict:
         return _serialize(a)
 
 
+def _detach_from_daily_visit_batch(a: Activity) -> None:
+    """If this activity is part of a Daily Visit Batch and that batch hasn't
+    left draft status yet, detach it and recompute the remaining schools'
+    allocated cost. If the batch is locked, leave it untouched — same
+    rationale as reschedule(): post-approval changes go through the
+    reschedule/cancel escape hatch, not silent batch recompute."""
+    if not a.daily_visit_batch_id:
+        return
+    from apps.daily_visit_batches.services import remove_school
+
+    try:
+        remove_school(activity_id=a.id)
+    except BadRequest:
+        # Batch is locked (left draft) — leave its remaining lines frozen.
+        pass
+
+
 def cancel(activity_id: str, data: dict, principal) -> dict:
     a = _get_in_scope(activity_id, principal)
     a.status = "cancelled"
     a.last_reason = data.get("reason")
     a.save(update_fields=["status", "last_reason", "updated_at"])
+    _detach_from_daily_visit_batch(a)
     return _serialize(a)
 
 
@@ -648,6 +695,7 @@ def defer(activity_id: str, data: dict, principal) -> dict:
     a.status = "deferred"
     a.last_reason = data.get("reason")
     a.save(update_fields=["status", "last_reason", "updated_at"])
+    _detach_from_daily_visit_batch(a)
     return _serialize(a)
 
 

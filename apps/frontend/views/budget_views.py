@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from apps.core.permissions import require_page_permission
 from django.contrib import messages
-from django.db.models import Q, Sum
+from django.db.models import Q, Sum, Count
 from datetime import datetime, date, timedelta
 import calendar
 
@@ -187,7 +187,28 @@ def weekly_fund_requests_view(request):
         activities_qs = activities_qs.filter(responsible_staff_id=staff_id)
     if status_filter:
         wfr_qs = wfr_qs.filter(status=status_filter)
-        
+
+    # CSV export of the currently filtered requests (same pattern as /clusters).
+    if request.GET.get("export", "").strip() == "csv":
+        import csv
+        from django.http import HttpResponse
+        from apps.accounts.models import User
+        rows = list(wfr_qs[:5000])
+        requester_names = dict(
+            User.objects.filter(id__in=[r.responsible_user for r in rows]).values_list("id", "name")
+        )
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="weekly_fund_requests.csv"'
+        writer = csv.writer(response)
+        writer.writerow(["Request ID", "Week Start", "Requested By", "Total Amount (UGX)",
+                         "Disbursed (UGX)", "Status", "FY"])
+        for r in rows:
+            writer.writerow([
+                r.id, r.week_start_date, requester_names.get(r.responsible_user, r.responsible_user),
+                r.total_amount or 0, r.disbursed_amount or 0, r.status, r.fy,
+            ])
+        return response
+
     # 3. Calculate KPIs
     weekly_requests_count = wfr_qs.filter(week_start_date=selected_week_start).count()
     monthly_requests_count = wfr_qs.filter(week_start_date__month=month_num).count()
@@ -432,18 +453,37 @@ def weekly_fund_requests_view(request):
     
     missing_cost_count = activities_qs.filter(scheduled_date__month=month_num, cost_missing=True).count()
     
-    recommended_action = "Generate this week's requests"
-    recommended_desc = "Compile fund requests from scheduled My Plan activities."
-    can_take_action = True
-    action_type = "generate"
+    # Scheduling an activity auto-generates its Weekly Fund Request (see
+    # activities.services.create/reschedule/partner_schedule ->
+    # weekly_service.trigger_generate_for_activity) — there is no manual
+    # "Generate" step in the normal flow. active_wfr missing here means
+    # either nothing is scheduled this week (nothing to do) or a genuine
+    # sync anomaly (pre-existing/legacy activities that bypassed the
+    # service layer) — the "generate" action_type only ever covers the
+    # latter, as a recovery path.
     if active_wfr:
         if active_wfr.status == "pending_responsible_confirmation":
             recommended_action = "Confirm this week's request"
             recommended_desc = "Verify lines and confirm advance disbursement requests."
+            can_take_action = True
             action_type = "confirm"
         else:
             recommended_action = "No immediate action pending"
             recommended_desc = "All weekly requests have been finalized and routed."
+            can_take_action = False
+            action_type = "none"
+    else:
+        has_scheduled_this_week = budget_qs.filter(
+            planned_date__gte=selected_week_start, planned_date__lte=selected_week_end
+        ).exclude(activity__status="cancelled").exists()
+        if has_scheduled_this_week:
+            recommended_action = "Sync this week's request"
+            recommended_desc = "Activities are scheduled but the request hasn't synced yet — this should be automatic; use this to recover."
+            can_take_action = True
+            action_type = "generate"
+        else:
+            recommended_action = "No immediate action pending"
+            recommended_desc = "No activities scheduled for this week yet."
             can_take_action = False
             action_type = "none"
 
@@ -493,124 +533,126 @@ def weekly_fund_requests_view(request):
             "label": f"{wk['start'].strftime('%b %d')} - {wk['end'].strftime('%b %d')}"
         })
 
-    # CCEO Fund Queue mock database for PL layout
-    import json
-    pl_queue_items = [
-        {
-            "id": " Sarah M.",
-            "user_name": "Sarah M.",
-            "district": "Northern District",
-            "region": "Northern Region",
-            "requested": 42600000,
-            "status": "Awaiting Approval",
-            "status_class": "bg-amber-50 text-amber-700 border-amber-200",
-            "visits": 24,
-            "partner": 6,
-            "clusters": 4,
-            "trainings": 6,
-            "lines": [
-                {"category": "Staff School Visits", "quantity": 24, "unit_cost": 140000, "total": 3360000},
-                {"category": "Partner School Visits", "quantity": 8, "unit_cost": 160000, "total": 1280050},
-                {"category": "Cluster Meetings", "quantity": 4, "unit_cost": 500000, "total": 2000000},
-                {"category": "Cluster Trainings", "quantity": 6, "unit_cost": 1200000, "total": 7200000},
-                {"category": "In-School Trainings", "quantity": 6, "unit_cost": 1000000, "total": 6000000},
-                {"category": "SSA Support Visits", "quantity": 5, "unit_cost": 150000, "total": 750000},
-                {"category": "Participant Meals", "quantity": 12, "unit_cost": 20000, "total": 240000},
-                {"category": "Transport / Field Travel", "quantity": 0, "unit_cost": 0, "total": 21790000}
-            ]
-        },
-        {
-            "id": " Peter K.",
-            "user_name": "Peter K. (My Own Plan)",
-            "district": "Central District",
-            "region": "Northern Region",
-            "requested": 38400000,
-            "status": "Awaiting Approval",
-            "status_class": "bg-amber-50 text-amber-700 border-amber-200",
-            "visits": 18,
-            "partner": 6,
-            "clusters": 3,
-            "trainings": 5,
-            "lines": [
-                {"category": "Staff School Visits", "quantity": 18, "unit_cost": 140000, "total": 2520000},
-                {"category": "Partner School Visits", "quantity": 6, "unit_cost": 160000, "total": 960000},
-                {"category": "Cluster Meetings", "quantity": 3, "unit_cost": 500000, "total": 1500000},
-                {"category": "Cluster Trainings", "quantity": 5, "unit_cost": 1200000, "total": 6000000},
-                {"category": "Transport / Field Travel", "quantity": 0, "unit_cost": 0, "total": 27420000}
-            ]
-        },
-        {
-            "id": " Ruth W.",
-            "user_name": "Ruth W.",
-            "district": "Eastern District",
-            "region": "Northern Region",
-            "requested": 26700000,
-            "status": "Needs Review",
-            "status_class": "bg-indigo-50 text-indigo-700 border-indigo-200",
-            "visits": 15,
-            "partner": 6,
-            "clusters": 3,
-            "trainings": 4,
-            "lines": [
-                {"category": "Staff School Visits", "quantity": 15, "unit_cost": 140000, "total": 2100000},
-                {"category": "Cluster Meetings", "quantity": 3, "unit_cost": 500000, "total": 1500000},
-                {"category": "Transport / Field Travel", "quantity": 0, "unit_cost": 0, "total": 23100000}
-            ]
-        },
-        {
-            "id": " Moses T.",
-            "user_name": "Moses T.",
-            "district": "Northern District",
-            "region": "Northern Region",
-            "requested": 24100000,
-            "status": "Ready",
-            "status_class": "bg-emerald-50 text-emerald-700 border-emerald-200",
-            "visits": 12,
-            "partner": 6,
-            "clusters": 3,
-            "trainings": 3,
-            "lines": [
-                {"category": "Staff School Visits", "quantity": 12, "unit_cost": 140000, "total": 1680000},
-                {"category": "Transport / Field Travel", "quantity": 0, "unit_cost": 0, "total": 22420000}
-            ]
-        },
-        {
-            "id": " Joel O.",
-            "user_name": "Joel O.",
-            "district": "Western District",
-            "region": "Northern Region",
-            "requested": 19800000,
-            "status": "Returned",
-            "status_class": "bg-rose-50 text-rose-700 border-rose-200",
-            "visits": 10,
-            "partner": 3,
-            "clusters": 2,
-            "trainings": 3,
-            "lines": [
-                {"category": "Staff School Visits", "quantity": 10, "unit_cost": 140000, "total": 1400000},
-                {"category": "Transport / Field Travel", "quantity": 0, "unit_cost": 0, "total": 18400000}
-            ]
-        },
-        {
-            "id": " Grace A.",
-            "user_name": "Grace A.",
-            "district": "Central District",
-            "region": "Northern Region",
-            "requested": 16900000,
-            "status": "Awaiting Approval",
-            "status_class": "bg-amber-50 text-amber-700 border-amber-200",
-            "visits": 9,
-            "partner": 2,
-            "clusters": 2,
-            "trainings": 3,
-            "lines": [
-                {"category": "Staff School Visits", "quantity": 9, "unit_cost": 140000, "total": 1260000},
-                {"category": "Transport / Field Travel", "quantity": 0, "unit_cost": 0, "total": 15640000}
-            ]
-        }
-    ]
+    # CCEO Fund Queue for PL layout — real WeeklyFundRequests awaiting PL action
+    from apps.accounts.models import User
 
-    pl_queue_items_json = json.dumps(pl_queue_items)
+    pl_awaiting_statuses = ["submitted_to_pl", "pending_pl_approval"]
+    pl_queue_qs = wfr_qs.filter(fy=fy, status__in=pl_awaiting_statuses).order_by("-week_start_date").prefetch_related("lines")
+    pl_queue_wfrs = list(pl_queue_qs[:20])
+
+    pl_user_ids = [w.responsible_user for w in pl_queue_wfrs]
+    pl_users_by_id = {u.id: u for u in User.objects.filter(id__in=pl_user_ids)}
+    pl_profiles_by_user_id = {p.user_id: p for p in StaffProfile.objects.filter(user_id__in=pl_user_ids)}
+    pl_district_ids = {p.primary_district_id for p in pl_profiles_by_user_id.values() if p.primary_district_id}
+    pl_districts_by_id = {d.id: d for d in District.objects.filter(id__in=pl_district_ids).select_related("region")}
+
+    def _count_lines(lines, include=(), exclude=()):
+        total = 0
+        for l in lines:
+            text = f"{l.description or ''} {l.line_item_type or ''}".lower()
+            if any(kw in text for kw in include) and not any(kw in text for kw in exclude):
+                total += l.quantity or 0
+        return total
+
+    pl_queue_items = []
+    for w in pl_queue_wfrs:
+        user_obj = pl_users_by_id.get(w.responsible_user)
+        profile_obj = pl_profiles_by_user_id.get(w.responsible_user)
+        district_name = "—"
+        region_name = "—"
+        if profile_obj and profile_obj.primary_district_id:
+            d_obj = pl_districts_by_id.get(profile_obj.primary_district_id)
+            if d_obj:
+                district_name = d_obj.name
+                region_name = d_obj.region.name if d_obj.region else "—"
+
+        lines_all = list(w.lines.all())
+        lines_list = [{
+            "category": l.description or l.line_item_type,
+            "quantity": l.quantity,
+            "unit_cost": l.unit_cost,
+            "total": l.total_cost,
+        } for l in lines_all]
+
+        status_display = "Awaiting Approval"
+        status_class = "bg-amber-50 text-amber-700 border-amber-200"
+        if w.status.startswith("returned"):
+            status_display = "Returned"
+            status_class = "bg-rose-50 text-rose-700 border-rose-200"
+
+        pl_queue_items.append({
+            "id": w.id,
+            "user_name": user_obj.name if user_obj else "System User",
+            "district": district_name,
+            "region": region_name,
+            "requested": w.total_amount,
+            "status": status_display,
+            "status_class": status_class,
+            "visits": _count_lines(lines_all, include=["visit"], exclude=["partner"]),
+            "partner": _count_lines(lines_all, include=["partner"]),
+            "clusters": _count_lines(lines_all, include=["meeting"]),
+            "trainings": _count_lines(lines_all, include=["training"]),
+            "lines": lines_list,
+            "week_start": w.week_start_date.strftime("%b %d, %Y"),
+            "week_end": w.week_end_date.strftime("%b %d, %Y"),
+        })
+
+    # PL KPI strip — real aggregates over the scoped queryset
+    pl_fy_qs = wfr_qs.filter(fy=fy)
+    pl_awaiting_agg = pl_fy_qs.filter(status__in=pl_awaiting_statuses).aggregate(total=Sum("total_amount"), n=Count("id"))
+    pl_approved_today_agg = pl_fy_qs.filter(status="approved_by_pl", updated_at__date=date.today()).aggregate(total=Sum("total_amount"), n=Count("id"))
+    pl_returned_agg = pl_fy_qs.filter(status="returned_by_pl").aggregate(total=Sum("total_amount"), n=Count("id"))
+    pl_kpis = {
+        "requested_month": format_ugx_compact(requested_this_month),
+        "requested_month_count": monthly_requests_count,
+        "awaiting_sum": format_ugx_compact(pl_awaiting_agg["total"] or 0),
+        "awaiting_count": pl_awaiting_agg["n"] or 0,
+        "approved_today_sum": format_ugx_compact(pl_approved_today_agg["total"] or 0),
+        "approved_today_count": pl_approved_today_agg["n"] or 0,
+        "returned_sum": format_ugx_compact(pl_returned_agg["total"] or 0),
+        "returned_count": pl_returned_agg["n"] or 0,
+    }
+
+    # Recent PL approval activity (latest real decisions)
+    pl_recent_wfrs = list(pl_fy_qs.filter(status__in=["approved_by_pl", "returned_by_pl"]).order_by("-updated_at")[:3])
+    pl_recent_users = {u.id: u.name for u in User.objects.filter(id__in=[w.responsible_user for w in pl_recent_wfrs])}
+    pl_recent = [{
+        "name": pl_recent_users.get(w.responsible_user, "System User"),
+        "approved": w.status == "approved_by_pl",
+        "when": w.updated_at.strftime("%d %b %Y, %I:%M %p"),
+        "amount": format_ugx_compact(w.total_amount or 0),
+    } for w in pl_recent_wfrs]
+
+    # Approval rate donut (selected month, by request count)
+    passed_pl_statuses = ["approved_by_pl", "submitted_to_cd", "approved_by_cd", "submitted_to_rvp",
+                          "approved_by_rvp", "sent_to_accountant", "disbursed", "accounted", "accountability_pending"]
+    month_pl_qs = pl_fy_qs.filter(week_start_date__month=month_num)
+    rate_approved = month_pl_qs.filter(status__in=passed_pl_statuses).count()
+    rate_returned = month_pl_qs.filter(status="returned_by_pl").count()
+    rate_pending = month_pl_qs.filter(status__in=pl_awaiting_statuses).count()
+    rate_total = rate_approved + rate_returned + rate_pending
+    pl_rate = {
+        "total": rate_total,
+        "approved_pct": round(rate_approved * 100 / rate_total) if rate_total else 0,
+        "returned_pct": round(rate_returned * 100 / rate_total) if rate_total else 0,
+        "pending_pct": round(rate_pending * 100 / rate_total) if rate_total else 0,
+    }
+    pl_rate["returned_offset"] = pl_rate["approved_pct"]
+    pl_rate["pending_offset"] = pl_rate["approved_pct"] + pl_rate["returned_pct"]
+
+    # Budget mix (selected month, from the real planned cost-line aggregates above)
+    mix_total = monthly_totals_by_type["total"]
+
+    def _mix_part(v):
+        return {"amount": format_ugx_compact(v), "pct": round(v * 100 / mix_total, 1) if mix_total else 0}
+
+    pl_budget_mix = {
+        "total": mix_total,
+        "visits": _mix_part(monthly_totals_by_type["visits"]),
+        "trainings": _mix_part(monthly_totals_by_type["trainings"]),
+        "meetings": _mix_part(monthly_totals_by_type["meetings"]),
+        "admin": _mix_part(monthly_totals_by_type["admin"]),
+    }
 
     context = {
         "kpis": kpis,
@@ -644,7 +686,10 @@ def weekly_fund_requests_view(request):
         # PL Specific Data
         "is_pl": (request.user.active_role == "Program Lead"),
         "pl_queue_items": pl_queue_items,
-        "pl_queue_items_json": pl_queue_items_json,
+        "pl_kpis": pl_kpis,
+        "pl_recent": pl_recent,
+        "pl_rate": pl_rate,
+        "pl_budget_mix": pl_budget_mix,
     }
 
     if request.headers.get("HX-Request") == "true":

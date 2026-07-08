@@ -22,7 +22,7 @@
 </div>
 
 <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
-<a href="#" class="text-[11px] font-semibold text-[#2e505f] hover:text-[#2e505f]/80 uppercase tracking-wider flex items-center gap-1 transition-colors">
+<a href="/analytics" class="text-[11px] font-semibold text-[#2e505f] hover:text-[#2e505f]/80 uppercase tracking-wider flex items-center gap-1 transition-colors">
 <span>View Full Report</span>
 <svg class="h-3 w-3 text-[#2e505f]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
 </a>
@@ -51,7 +51,7 @@
 </div>
 
 <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
-<a href="#" class="text-[11px] font-semibold text-[#2e505f] hover:text-[#2e505f]/80 uppercase tracking-wider flex items-center gap-1 transition-colors">
+<a href="/analytics" class="text-[11px] font-semibold text-[#2e505f] hover:text-[#2e505f]/80 uppercase tracking-wider flex items-center gap-1 transition-colors">
 <span>View Full Report</span>
 <svg class="h-3 w-3 text-[#2e505f]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
 </a>
@@ -83,7 +83,7 @@ style="height: {{ r.score|default:50 }}px;"
 </div>
 
 <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
-<a href="#" class="text-[11px] font-semibold text-[#2e505f] hover:text-[#2e505f]/80 uppercase tracking-wider flex items-center gap-1 transition-colors">
+<a href="/analytics" class="text-[11px] font-semibold text-[#2e505f] hover:text-[#2e505f]/80 uppercase tracking-wider flex items-center gap-1 transition-colors">
 <span>View Full Report</span>
 <svg class="h-3 w-3 text-[#2e505f]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
 </a>
@@ -104,43 +104,25 @@ style="height: {{ r.score|default:50 }}px;"
 </div>
 
 <div class="space-y-2.5 max-h-[110px] overflow-y-auto pr-0.5 scrollbar-thin">
+{% for row in perf_insights.intervention_comparison %}
 <div class="flex justify-between items-center gap-2 border-b border-slate-50 pb-1.5 last:border-0 last:pb-0">
-<span class="truncate text-[11px] font-semibold text-slate-700">Reading Fluency</span>
+<span class="truncate text-[11px] font-semibold text-slate-700">{{ row.label }}</span>
 <div class="flex items-center gap-1 shrink-0">
-<span class="px-1.5 py-0.5 rounded bg-[#2e505f]/10 text-[#2e505f] text-[11px] font-semibold">72%</span>
+<span class="px-1.5 py-0.5 rounded bg-[#2e505f]/10 text-[#2e505f] text-[11px] font-semibold">{{ row.staff_pct }}%</span>
 <span class="text-slate-300 text-[11px] font-normal">/</span>
-<span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[11px] font-semibold">68%</span>
+<span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[11px] font-semibold">{{ row.partner_pct }}%</span>
 </div>
 </div>
-<div class="flex justify-between items-center gap-2 border-b border-slate-50 pb-1.5 last:border-0 last:pb-0">
-<span class="truncate text-[11px] font-semibold text-slate-700">Numeracy</span>
-<div class="flex items-center gap-1 shrink-0">
-<span class="px-1.5 py-0.5 rounded bg-[#2e505f]/10 text-[#2e505f] text-[11px] font-semibold">65%</span>
-<span class="text-slate-300 text-[11px] font-normal">/</span>
-<span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[11px] font-semibold">60%</span>
+{% empty %}
+<div class="py-6 text-center text-[11px] text-slate-400 font-semibold">
+Not enough staff/partner split data yet.
 </div>
-</div>
-<div class="flex justify-between items-center gap-2 border-b border-slate-50 pb-1.5 last:border-0 last:pb-0">
-<span class="truncate text-[11px] font-semibold text-slate-700">Classroom Mgmt</span>
-<div class="flex items-center gap-1 shrink-0">
-<span class="px-1.5 py-0.5 rounded bg-[#2e505f]/10 text-[#2e505f] text-[11px] font-semibold">68%</span>
-<span class="text-slate-300 text-[11px] font-normal">/</span>
-<span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[11px] font-semibold">58%</span>
-</div>
-</div>
-<div class="flex justify-between items-center gap-2 border-b border-slate-50 pb-1.5 last:border-0 last:pb-0">
-<span class="truncate text-[11px] font-semibold text-slate-700">Leadership</span>
-<div class="flex items-center gap-1 shrink-0">
-<span class="px-1.5 py-0.5 rounded bg-[#2e505f]/10 text-[#2e505f] text-[11px] font-semibold">61%</span>
-<span class="text-slate-300 text-[11px] font-normal">/</span>
-<span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[11px] font-semibold">63%</span>
-</div>
-</div>
+{% endfor %}
 </div>
 </div>
 
 <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
-<a href="#" class="text-[11px] font-semibold text-[#2e505f] hover:text-[#2e505f]/80 uppercase tracking-wider flex items-center gap-1 transition-colors">
+<a href="/analytics" class="text-[11px] font-semibold text-[#2e505f] hover:text-[#2e505f]/80 uppercase tracking-wider flex items-center gap-1 transition-colors">
 <span>View Full Report</span>
 <svg class="h-3 w-3 text-[#2e505f]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
 </a>
@@ -154,8 +136,9 @@ style="height: {{ r.score|default:50 }}px;"
 <p class="text-[11px] text-slate-400 font-semibold leading-normal">Overall monthly assessment scores progression.</p>
 </div>
 
-<!-- Mini SVG Line Chart -->
+<!-- Mini SVG Line Chart (built from real perf_insights.overall_trend history) -->
 <div class="h-[110px] flex items-center justify-center bg-slate-50/50 /45 rounded-xl px-2.5 shadow-inner">
+{% if perf_insights.overall_trend_path %}
 <svg class="h-full w-full overflow-visible" viewBox="0 0 100 50">
 <defs>
 <linearGradient id="staff-gradient" x1="0" y1="0" x2="0" y2="1">
@@ -167,20 +150,21 @@ style="height: {{ r.score|default:50 }}px;"
 <line x1="0" y1="10" x2="100" y2="10" stroke="#e2e8f0" stroke-width="2"/>
 <line x1="0" y1="25" x2="100" y2="25" stroke="#e2e8f0" stroke-width="2"/>
 <line x1="0" y1="40" x2="100" y2="40" stroke="#e2e8f0" stroke-width="2"/>
-<!-- Gradient fill area under staff path -->
-<path d="M 0 35 Q 20 28 40 32 T 80 18 T 100 12 L 100 50 L 0 50 Z" fill="url(#staff-gradient)"/>
-<!-- Line Staff (Steel Blue) -->
-<path d="M 0 35 Q 20 28 40 32 T 80 18 T 100 12" fill="none" stroke="#2e505f" stroke-width="2" stroke-linecap="round"/>
-<!-- Line Partner (Golden Amber) -->
-<path d="M 0 42 Q 25 38 50 30 T 75 24 T 100 18" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-dasharray="2,2"/>
-<!-- Points -->
-<circle cx="100" cy="12" r="3.5" fill="#2e505f"/>
-<circle cx="100" cy="18" r="2.5" fill="#d97706"/>
+<!-- Gradient fill area under real trend path -->
+<path d="{{ perf_insights.overall_trend_path }} L 100 50 L 0 50 Z" fill="url(#staff-gradient)"/>
+<!-- Line (real monthly average score history) -->
+<path d="{{ perf_insights.overall_trend_path }}" fill="none" stroke="#2e505f" stroke-width="2" stroke-linecap="round"/>
 </svg>
+{% else %}
+<div class="text-center px-4">
+<span class="text-[24px] block mb-1 text-slate-300">📈</span>
+<p class="text-[11px] font-semibold text-slate-400">Not enough historical data yet</p>
+</div>
+{% endif %}
 </div>
 
 <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
-<a href="#" class="text-[11px] font-semibold text-[#2e505f] hover:text-[#2e505f]/80 uppercase tracking-wider flex items-center gap-1 transition-colors">
+<a href="/analytics" class="text-[11px] font-semibold text-[#2e505f] hover:text-[#2e505f]/80 uppercase tracking-wider flex items-center gap-1 transition-colors">
 <span>View Full Report</span>
 <svg class="h-3 w-3 text-[#2e505f]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
 </a>

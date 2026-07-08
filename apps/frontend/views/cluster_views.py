@@ -52,49 +52,39 @@ def get_cluster_risk(cluster, planning_info, avg_ssa) -> str:
     return "healthy"
 
 def _get_cost_preview_data(activity_type, participants, cluster_id):
-    from apps.budget.costing_service import active_catalogue, _rate_card
-    catalogue = active_catalogue("2026")
-    rates, _ = _rate_card(catalogue)
-    
-    meals_unit = rates.get("group_training_participant_meal_cost_per_head", 12000)
-    venue_unit = rates.get("group_training_venue_cost", 50000)
-    facilitation_unit = rates.get("group_training_facilitation_fee", 200000)
-    meeting_meals_unit = rates.get("cluster_meeting_participant_meal_cost_per_head", 8000)
-    
+    """Cost preview via the central CostingService — no fallback/fabricated rates.
+
+    Missing rates surface as blockers instead of fake prices."""
+    from apps.budget.costing_service import preview
+
+    act_type = "cluster_training" if activity_type == "training" else "cluster_meeting"
+    result = preview({
+        "activityType": act_type,
+        "expectedParticipants": participants,
+        "clusterId": cluster_id,
+    })
+
     cost_lines = []
-    total_cost = 0
-    if activity_type == "training":
-        meals_total = participants * meals_unit
+    for line in result["lines"]:
+        if line["missing"]:
+            formula = "Rate not set"
+        elif line["qty"] and line["qty"] > 1:
+            formula = f"{line['qty']} x UGX {line['unit']:,.0f}"
+        else:
+            formula = f"UGX {line['unit']:,.0f}"
         cost_lines.append({
-            "label": "Participant meals",
-            "formula": f"{participants} x UGX {meals_unit:,.0f}",
-            "amount": meals_total
+            "label": line["label"],
+            "formula": formula,
+            "amount": line["amount"],
+            "missing": line["missing"],
         })
-        cost_lines.append({
-            "label": "Venue",
-            "formula": f"UGX {venue_unit:,.0f}",
-            "amount": venue_unit
-        })
-        cost_lines.append({
-            "label": "Facilitation",
-            "formula": f"UGX {facilitation_unit:,.0f}",
-            "amount": facilitation_unit
-        })
-        total_cost = meals_total + venue_unit + facilitation_unit
-    else:
-        meals_total = participants * meeting_meals_unit
-        cost_lines.append({
-            "label": "Participant meals",
-            "formula": f"{participants} x UGX {meeting_meals_unit:,.0f}",
-            "amount": meals_total
-        })
-        total_cost = meals_total
-        
+
     return {
-        "catalogue_version": catalogue.version if catalogue else "None active",
+        "catalogue_version": result["catalogueVersion"] or "None active",
         "lines": cost_lines,
-        "amount": total_cost,
-        "can_schedule": catalogue is not None,
+        "amount": result["amount"],
+        "can_schedule": result["canSchedule"],
+        "blockers": result["blockers"],
     }
 
 def get_cluster_impact_data(cluster_id, focus_intervention, principal):

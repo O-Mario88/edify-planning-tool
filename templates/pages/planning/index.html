@@ -8,7 +8,8 @@
 x-data="{
 selectedSchools: [],
 bulkActionOpen: false,
-selectedSchoolId: null
+selectedSchoolId: null,
+showScheduleForm: false
 }"
 @select-school.window="selectedSchoolId = $event.detail.id;"
 class="p-6 max-w-[1600px] mx-auto space-y-6 font-sans text-slate-700"
@@ -17,7 +18,7 @@ id="planning-main-container"
 
 <!-- Breadcrumb -->
 <nav class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-<a href="#" class="hover:text-slate-600">Planning</a>
+<span>Planning</span>
 <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
 <span class="text-slate-600 font-semibold">School visit &amp; training plan</span>
 </nav>
@@ -222,10 +223,9 @@ class="h-8 px-4 bg-slate-800 hover:bg-slate-800 text-slate-200 rounded-xl text-[
 Assign Partner
 </button>
 
-<button 
-type="submit"
-name="action"
-value="schedule"
+<button
+type="button"
+@click="showScheduleForm = true"
 class="h-8 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[11px] font-bold flex items-center gap-1.5 transition-all shadow-md shadow-blue-500/10"
 >
 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
@@ -240,6 +240,55 @@ class="h-8 px-4 bg-slate-800 hover:bg-slate-800 text-slate-300 rounded-xl text-[
 >
 <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
 Export Selected
+</button>
+</form>
+</div>
+
+<!-- Bulk Schedule Visits popover: collects the shared visit day (+ an
+optional reason, required only if the CD's daily target isn't met) before
+POSTing — DailyVisitBatchService prices the whole day's pool and splits it
+across every school selected above. -->
+<div
+x-show="showScheduleForm"
+x-transition
+@click.outside="showScheduleForm = false"
+class="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-white text-slate-700 rounded-2xl shadow-xl border border-slate-200 p-5 w-[360px] space-y-3"
+style="display: none;"
+>
+<div class="flex items-center justify-between">
+<h4 class="text-[13px] font-bold text-slate-800">Schedule School Visits</h4>
+<button type="button" @click="showScheduleForm = false" class="text-slate-400 hover:text-slate-600">&times;</button>
+</div>
+<p class="text-[11px] text-slate-400">
+Cost is shared for the day and split across <span x-text="selectedSchools.length"></span> selected school(s).
+</p>
+<form
+hx-post="/planning/bulk-action"
+hx-target="#bulk-schedule-feedback"
+hx-swap="innerHTML"
+class="space-y-3"
+>
+{% csrf_token %}
+<template x-for="sid in selectedSchools">
+<input type="hidden" name="school_ids" :value="sid">
+</template>
+<input type="hidden" name="action" value="schedule">
+<div>
+<label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Visit Date</label>
+<input type="date" name="scheduled_date" required class="mt-1 w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px]">
+</div>
+<div>
+<label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Focus Intervention</label>
+<select name="focus_intervention" class="mt-1 w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px]">
+<option value="">Select...</option>
+{% for code, label in interventions %}
+<option value="{{ code }}">{{ label }}</option>
+{% endfor %}
+</select>
+</div>
+<div id="bulk-schedule-feedback"></div>
+<button type="submit" class="w-full h-9 rounded-lg btn-premium-primary text-white text-[12px] font-bold">
+Confirm Schedule
 </button>
 </form>
 </div>

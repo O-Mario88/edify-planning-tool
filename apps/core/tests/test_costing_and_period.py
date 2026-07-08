@@ -29,13 +29,23 @@ from apps.schools.models import School
 class CostingBudgetPeriodTest(APITestCase):
     def setUp(self):
         self.region = Region.objects.create(name="Cost Region")
-        self.district = District.objects.create(name="Cost District", region=self.region)
+        # district_type is required for staff school-visit reschedule, which
+        # now routes through Daily Visit Batch pricing (day-based, shared cost
+        # across schools scheduled the same day) rather than a flat per-visit
+        # rate — see apps.daily_visit_batches.
+        self.district = District.objects.create(name="Cost District", region=self.region, district_type="primary")
         self.sub_county = SubCounty.objects.create(name="Cost Sub", district=self.district)
-        # Complete rate card so no scheduled activity is cost-missing.
+        # Complete rate card so no scheduled activity is cost-missing. Legacy
+        # keys price the initial /api/planning/schedule-school-visit create;
+        # the Daily Visit Batch keys price any subsequent reschedule.
         for key, cost in [
             ("staff_visit_transport_primary", 15000), ("lunch", 8000),
+            ("primary_transport_per_day", 15000), ("primary_lunch_per_day", 8000),
         ]:
-            CostSetting.objects.create(key=key, label=key, unit_cost=cost, version=1)
+            # update_or_create: primary_transport_per_day/primary_lunch_per_day
+            # are seeded by a data migration (apps.budget.migrations.0005) onto
+            # every environment including the test DB, so they may already exist.
+            CostSetting.objects.update_or_create(key=key, defaults={"label": key, "unit_cost": cost, "version": 1})
 
         self.cceo = User.objects.create_user(
             email="cost@cceo.test", name="Cost Cceo",
@@ -83,7 +93,9 @@ class CostingBudgetPeriodTest(APITestCase):
         self.assertEqual(a["plannedMonth"] if "plannedMonth" in a else 7, 7)
 
         # Raise the transport rate, then reschedule into a different month.
-        CostSetting.objects.filter(key="staff_visit_transport_primary").update(unit_cost=99999)
+        # Reschedule prices via Daily Visit Batch (primary_transport_per_day),
+        # not the legacy staff_visit_transport_primary key used at create time.
+        CostSetting.objects.filter(key="primary_transport_per_day").update(unit_cost=99999)
         rescheduled = self._post(f"/api/activities/{aid}/reschedule", {
             "scheduledDate": "2026-09-15T09:00:00+03:00",
             "plannedMonth": 9, "plannedWeek": 3,

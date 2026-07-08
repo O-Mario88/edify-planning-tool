@@ -20,40 +20,76 @@ from apps.fund_requests.finance_services import (
     NetSuiteExpenseService
 )
 
-@require_page_permission("disbursements")
+def format_ugx_compact(val):
+    """Compact UGX formatting helper (same as apps/frontend/views/budget_views.py)."""
+    if not val:
+        return "UGX 0"
+    if val >= 1_000_000_000:
+        return f"UGX {val / 1_000_000_000:.1f}B"
+    if val >= 1_000_000:
+        return f"UGX {val / 1_000_000:.1f}M"
+    if val >= 1_000:
+        return f"UGX {val / 1_000:.0f}K"
+    return f"UGX {val}"
+
+
 @require_page_permission("disbursements")
 def accountant_dashboard_view(request):
     """Main Accountant Dashboard / Finance Command Center."""
-    import json
+    from datetime import date
     from apps.core.fy import get_operational_fy
     from apps.fund_requests.models import WeeklyFundRequest
     from apps.accounts.models import User, StaffProfile
+    from apps.geography.models import District
 
     fy = get_operational_fy()
+    fy_qs = WeeklyFundRequest.objects.filter(fy=fy)
 
     # 1. Real database queries for KPIs
-    total_approved_db = WeeklyFundRequest.objects.filter(
-        fy=fy,
+    total_approved_db = fy_qs.filter(
         status__in=["approved_by_cd", "sent_to_accountant", "disbursed", "accounted", "accountability_pending"]
     ).aggregate(Sum("total_amount"))["total_amount__sum"] or 0
-    
-    total_disbursed_db = WeeklyFundRequest.objects.filter(fy=fy).aggregate(Sum("disbursed_amount"))["disbursed_amount__sum"] or 0
+
+    total_disbursed_db = fy_qs.aggregate(Sum("disbursed_amount"))["disbursed_amount__sum"] or 0
+
+    # Approved but not yet disbursed
+    pending_disb_statuses = ["approved_by_cd", "sent_to_accountant", "confirmed_for_advance"]
+    pending_disb_qs = fy_qs.filter(status__in=pending_disb_statuses)
+    pending_disb_sum = pending_disb_qs.aggregate(Sum("total_amount"))["total_amount__sum"] or 0
+    pending_disb_count = pending_disb_qs.count()
+
+    # Still travelling up the approval chain
+    awaiting_qs = fy_qs.filter(status__startswith="submitted")
+    awaiting_sum = awaiting_qs.aggregate(Sum("total_amount"))["total_amount__sum"] or 0
+    awaiting_count = awaiting_qs.count()
+
+    returned_qs = fy_qs.filter(status__startswith="returned")
+    returned_sum = returned_qs.aggregate(Sum("total_amount"))["total_amount__sum"] or 0
+
+    reconciled_sum = fy_qs.aggregate(Sum("accounted_amount"))["accounted_amount__sum"] or 0
+
+    disbursed_count = fy_qs.filter(disbursed_at__isnull=False).count()
+    accounted_count = fy_qs.filter(status="accounted").count()
+    recon_rate = round(accounted_count * 100 / disbursed_count) if disbursed_count else 0
+    budget_util = round(total_disbursed_db * 100 / total_approved_db) if total_approved_db else 0
 
     # Let's query all WeeklyFundRequests
     wfrs_db = list(WeeklyFundRequest.objects.all().order_by("-week_start_date"))
     user_ids = [w.responsible_user for w in wfrs_db]
     users_by_id = {u.id: u for u in User.objects.filter(id__in=user_ids)}
     profiles_by_id = {p.user_id: p for p in StaffProfile.objects.filter(user_id__in=user_ids)}
+    district_ids = {p.primary_district_id for p in profiles_by_id.values() if p.primary_district_id}
+    district_names_by_id = {d.id: d.name for d in District.objects.filter(id__in=district_ids)}
 
     queue_items = []
-    
+
     # Map real DB requests to queue items
     for w in wfrs_db:
         user_obj = users_by_id.get(w.responsible_user)
         profile_obj = profiles_by_id.get(w.responsible_user)
         user_name = user_obj.name if user_obj else "System User"
         role_name = w.responsible_role or "CCEO"
-        
+
         # Serialize lines
         lines_list = []
         for l in w.lines.all():
@@ -63,7 +99,7 @@ def accountant_dashboard_view(request):
                 "unit_cost": l.unit_cost,
                 "total": l.total_cost
             })
-            
+
         status_display = w.status.replace("_", " ").title()
         status_class = "bg-amber-50 text-amber-700 border-amber-250"
         if w.status == "disbursed":
@@ -73,11 +109,15 @@ def accountant_dashboard_view(request):
         elif w.status == "returned_by_accountant":
             status_class = "bg-rose-50 text-rose-700 border-rose-250"
 
+        district_name = "—"
+        if profile_obj and profile_obj.primary_district_id:
+            district_name = district_names_by_id.get(profile_obj.primary_district_id, "—")
+
         queue_items.append({
             "id": w.id,
             "user_name": user_name,
             "role": role_name,
-            "region": profile_obj.portfolio if profile_obj else "Central",
+            "region": district_name,
             "requested": w.total_amount,
             "approved": w.total_amount,
             "disbursed": w.disbursed_amount or 0,
@@ -94,151 +134,92 @@ def accountant_dashboard_view(request):
             "disbursed_completed": w.status in ["disbursed", "accounted"]
         })
 
-    # Mock Data matching mockup exactly for display fallback
-    mock_items = [
-        {
-            "id": "FR-2481",
-            "user_name": "Sarah M.",
-            "role": "Program Lead",
-            "region": "Northern Region",
-            "requested": 186400000,
-            "approved": 186400000,
-            "disbursed": 0,
-            "balance": 186400000,
-            "status": "Pending Disbursement",
-            "status_class": "bg-amber-50 text-amber-700 border-amber-200",
-            "week_start": "May 1, 2025",
-            "week_end": "May 31, 2025",
-            "lines": [
-                {"category": "Staff School Visits", "quantity": 32, "unit_cost": 140000, "total": 4480000},
-                {"category": "Partner School Visits", "quantity": 18, "unit_cost": 160000, "total": 2880000},
-                {"category": "Cluster Meetings", "quantity": 6, "unit_cost": 500000, "total": 3000000},
-                {"category": "Cluster Trainings", "quantity": 8, "unit_cost": 1200000, "total": 9600000},
-                {"category": "In-School Trainings", "quantity": 10, "unit_cost": 1000000, "total": 10000050},
-                {"category": "SSA Support Visits", "quantity": 7, "unit_cost": 150000, "total": 1050000},
-                {"category": "Participant Meals", "quantity": 250, "unit_cost": 20000, "total": 5000000},
-                {"category": "Transport / Field Travel", "quantity": 0, "unit_cost": 0, "total": 21010000}
-            ],
-            "pl_approved": True,
-            "cd_approved": True,
-            "rvp_approved": False,
-            "finance_completed": False,
-            "disbursed_completed": False
-        },
-        {
-            "id": "FR-2638",
-            "user_name": "Peter K.",
-            "role": "Program Lead",
-            "region": "Western Region",
-            "requested": 124700000,
-            "approved": 124700000,
-            "disbursed": 0,
-            "balance": 124700000,
-            "status": "Approved",
-            "status_class": "bg-emerald-50 text-emerald-700 border-emerald-200",
-            "week_start": "May 1, 2025",
-            "week_end": "May 31, 2025",
-            "lines": [
-                {"category": "Staff School Visits", "quantity": 20, "unit_cost": 140000, "total": 2800000},
-                {"category": "Cluster Meetings", "quantity": 4, "unit_cost": 500000, "total": 2000000},
-                {"category": "Transport / Field Travel", "quantity": 0, "unit_cost": 0, "total": 119900000}
-            ],
-            "pl_approved": True,
-            "cd_approved": True,
-            "rvp_approved": True,
-            "finance_completed": False,
-            "disbursed_completed": False
-        },
-        {
-            "id": "FR-2472",
-            "user_name": "Ruth W.",
-            "role": "Program Lead",
-            "region": "Eastern Region",
-            "requested": 98300000,
-            "approved": 98300000,
-            "disbursed": 98300000,
-            "balance": 0,
-            "status": "Disbursed",
-            "status_class": "bg-blue-50 text-blue-700 border-blue-200",
-            "week_start": "May 1, 2025",
-            "week_end": "May 31, 2025",
-            "lines": [
-                {"category": "Partner School Visits", "quantity": 10, "unit_cost": 160000, "total": 1600000},
-                {"category": "Cluster Trainings", "quantity": 6, "unit_cost": 1200000, "total": 7200000},
-                {"category": "Transport / Field Travel", "quantity": 0, "unit_cost": 0, "total": 89500000}
-            ],
-            "pl_approved": True,
-            "cd_approved": True,
-            "rvp_approved": True,
-            "finance_completed": True,
-            "disbursed_completed": True
-        },
-        {
-            "id": "FR-2475",
-            "user_name": "Grace A.",
-            "role": "Program Lead",
-            "region": "Central Region",
-            "requested": 86200000,
-            "approved": 86200000,
-            "disbursed": 0,
-            "balance": 86200000,
-            "status": "Pending Approval",
-            "status_class": "bg-amber-50 text-amber-700 border-amber-200",
-            "week_start": "May 1, 2025",
-            "week_end": "May 31, 2025",
-            "lines": [
-                {"category": "Staff School Visits", "quantity": 15, "unit_cost": 140000, "total": 2100000},
-                {"category": "Participant Meals", "quantity": 100, "unit_cost": 20000, "total": 2000000},
-                {"category": "Transport / Field Travel", "quantity": 0, "unit_cost": 0, "total": 82100000}
-            ],
-            "pl_approved": True,
-            "cd_approved": False,
-            "rvp_approved": False,
-            "finance_completed": False,
-            "disbursed_completed": False
-        },
-        {
-            "id": "FR-2469",
-            "user_name": "Joel O.",
-            "role": "Program Lead",
-            "region": "Karamoja Region",
-            "requested": 62100000,
-            "approved": 62100000,
-            "disbursed": 0,
-            "balance": 62100000,
-            "status": "Returned",
-            "status_class": "bg-rose-50 text-rose-700 border-rose-200",
-            "week_start": "May 1, 2025",
-            "week_end": "May 31, 2025",
-            "lines": [
-                {"category": "Staff School Visits", "quantity": 8, "unit_cost": 140000, "total": 1120000},
-                {"category": "Transport / Field Travel", "quantity": 0, "unit_cost": 0, "total": 60980000}
-            ],
-            "pl_approved": True,
-            "cd_approved": False,
-            "rvp_approved": False,
-            "finance_completed": False,
-            "disbursed_completed": False
-        }
-    ]
+    all_funds = queue_items
 
-    # Combine lists (mockup acts as backup/additional mockups for full visuals)
-    all_funds = queue_items + mock_items
-    all_funds_json = json.dumps(all_funds)
+    # This Month Overview (current calendar month, by week start date)
+    today = date.today()
+    month_qs = fy_qs.filter(week_start_date__year=today.year, week_start_date__month=today.month)
+    month_overview = {
+        "waiting_for_approval": format_ugx_compact(month_qs.filter(status__startswith="submitted").aggregate(Sum("total_amount"))["total_amount__sum"] or 0),
+        "returned": format_ugx_compact(month_qs.filter(status__startswith="returned").aggregate(Sum("total_amount"))["total_amount__sum"] or 0),
+        "approved_not_disbursed": format_ugx_compact(month_qs.filter(status__in=pending_disb_statuses).aggregate(Sum("total_amount"))["total_amount__sum"] or 0),
+        "disbursed": format_ugx_compact(month_qs.aggregate(Sum("disbursed_amount"))["disbursed_amount__sum"] or 0),
+        "reconciled": format_ugx_compact(month_qs.aggregate(Sum("accounted_amount"))["accounted_amount__sum"] or 0),
+    }
+
+    # Disbursement Status donut (share of FY value per stage)
+    donut_parts = {
+        "approved": pending_disb_sum,
+        "pending": awaiting_sum,
+        "disbursed": total_disbursed_db,
+        "returned": returned_sum,
+    }
+    donut_total = sum(donut_parts.values())
+    donut = {"total": donut_total, "total_compact": format_ugx_compact(donut_total)}
+    offset = 0.0
+    for key, val in donut_parts.items():
+        pct = round(val * 100 / donut_total, 1) if donut_total else 0
+        donut[f"{key}_pct"] = pct
+        donut[f"{key}_offset"] = round(offset, 1)
+        offset += pct
+
+    # Recent disbursement activity (latest real disbursements)
+    recent_activity = []
+    for w in sorted([w for w in wfrs_db if w.disbursed_at], key=lambda w: w.disbursed_at, reverse=True)[:4]:
+        user_obj = users_by_id.get(w.responsible_user)
+        profile_obj = profiles_by_id.get(w.responsible_user)
+        district_name = "—"
+        if profile_obj and profile_obj.primary_district_id:
+            district_name = district_names_by_id.get(profile_obj.primary_district_id, "—")
+        recent_activity.append({
+            "name": user_obj.name if user_obj else "System User",
+            "region": district_name,
+            "when": w.disbursed_at.strftime("%d %b %Y, %I:%M %p"),
+            "amount": format_ugx_compact(w.disbursed_amount or 0),
+        })
+
+    # Reconciliation & proof tracker (disbursed, awaiting accountability)
+    recon_pending = []
+    for w in wfrs_db:
+        if w.status in ["disbursed", "accountability_pending"] and w.fy == fy:
+            user_obj = users_by_id.get(w.responsible_user)
+            profile_obj = profiles_by_id.get(w.responsible_user)
+            district_name = "—"
+            if profile_obj and profile_obj.primary_district_id:
+                district_name = district_names_by_id.get(profile_obj.primary_district_id, "—")
+            days_outstanding = (today - w.disbursed_at.date()).days if w.disbursed_at else 0
+            recon_pending.append({
+                "name": user_obj.name if user_obj else "System User",
+                "region": district_name,
+                "amount": w.disbursed_amount or w.total_amount,
+                "days": days_outstanding,
+            })
+    recon_pending = sorted(recon_pending, key=lambda r: r["days"], reverse=True)[:5]
+    recon_stats = {
+        "awaiting_receipts": len([w for w in wfrs_db if w.fy == fy and w.status in ["disbursed", "accountability_pending"]]),
+        "closed": accounted_count,
+    }
 
     context = {
         "kpis": {
-            "total_approved": "UGX 2.48B",
-            "total_disbursed": "UGX 186.4M",
-            "pending_disb": "UGX 742.6M",
-            "awaiting_approval": "UGX 524.3M",
-            "special_projects": "UGX 216.4M",
-            "admin_pending": "UGX 128.7M",
-            "recon_rate": "78%",
-            "budget_util": "64%"
+            "total_approved": format_ugx_compact(total_approved_db),
+            "total_disbursed": format_ugx_compact(total_disbursed_db),
+            "pending_disb": format_ugx_compact(pending_disb_sum),
+            "pending_disb_count": pending_disb_count,
+            "awaiting_approval": format_ugx_compact(awaiting_sum),
+            "awaiting_count": awaiting_count,
+            "disbursed_count": disbursed_count,
+            "accounted_count": accounted_count,
+            "recon_rate": f"{recon_rate}%",
+            "budget_util": f"{budget_util}%",
+            "budget_util_pct": budget_util,
         },
         "all_funds": all_funds,
-        "all_funds_json": all_funds_json,
+        "month_overview": month_overview,
+        "donut": donut,
+        "recent_activity": recent_activity,
+        "recon_pending": recon_pending,
+        "recon_stats": recon_stats,
         "fy": fy,
     }
     return render(request, "pages/accounts/dashboard.html", context)
@@ -435,8 +416,15 @@ def returned_view(request):
 @require_page_permission("disbursements")
 def cleared_view(request):
     """Cleared / Closed Finance Ledger."""
-    closed_activities = Activity.objects.filter(deleted_at__isnull=True, status="closed").select_related("school", "cluster").order_by("-updated_at")
-    
+    closed_activities = list(
+        Activity.objects.filter(deleted_at__isnull=True, status="closed")
+        .select_related("school", "cluster", "completed_snapshot")
+        .order_by("-updated_at")
+    )
+    for a in closed_activities:
+        snap = a.completed_snapshot if hasattr(a, "completed_snapshot") else None
+        a.variance = (snap.actual_spend_amount - snap.disbursed_amount) if snap else None
+
     context = {
         "closed": closed_activities
     }
@@ -474,10 +462,42 @@ def activity_finance_detail_view(request, activity_id):
 @require_page_permission("disbursements")
 def batch_payments_view(request):
     """Batch Payments Page."""
-    advances = Activity.objects.filter(deleted_at__isnull=True, payment_status="pending", delivery_type="staff")
-    partners = Activity.objects.filter(deleted_at__isnull=True, delivery_type="partner", status="ia_verified", payment_status__in=["pending", "ia_confirmed"])
-    reimbursements = ReimbursementClaim.objects.filter(status="pending")
-    
+    from django.db.models import F
+    advances = (Activity.objects.filter(deleted_at__isnull=True, payment_status="pending", delivery_type="staff")
+                .select_related("school").annotate(amount_ugx=F("est_cost_cents") / 100))
+    partners = (Activity.objects.filter(deleted_at__isnull=True, delivery_type="partner", status="ia_verified", payment_status__in=["pending", "ia_confirmed"])
+                .select_related("school").annotate(amount_ugx=F("est_cost_cents") / 100))
+    reimbursements = ReimbursementClaim.objects.filter(status="pending").select_related("activity")
+
+    # CSV payout-file exports per tab.
+    export = request.GET.get("export", "").strip()
+    if export in ("advances", "partners", "reimbursements"):
+        import csv
+        from django.http import HttpResponse
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = f'attachment; filename="batch_{export}.csv"'
+        writer = csv.writer(response)
+        if export == "advances":
+            writer.writerow(["Activity ID", "Type", "School", "Responsible Staff ID", "Amount (UGX)"])
+            for a in advances[:5000]:
+                writer.writerow([a.id, a.get_activity_type_display(),
+                                 a.school.name if a.school else "Cluster-wide",
+                                 a.responsible_staff_id, a.amount_ugx or 0])
+        elif export == "partners":
+            writer.writerow(["Activity ID", "Type", "School", "Partner ID", "Amount (UGX)"])
+            for a in partners[:5000]:
+                writer.writerow([a.id, a.get_activity_type_display(),
+                                 a.school.name if a.school else "Cluster-wide",
+                                 a.assigned_partner_id, a.amount_ugx or 0])
+        else:
+            writer.writerow(["Claim ID", "Staff ID", "Activity Type", "Approved Budget (UGX)",
+                             "Advanced (UGX)", "Actual Spend (UGX)", "Reimbursement (UGX)"])
+            for c in reimbursements[:5000]:
+                writer.writerow([c.id, c.staff_id, c.activity.get_activity_type_display(),
+                                 c.approved_budget // 100, c.amount_advanced // 100,
+                                 c.actual_spend // 100, c.reimbursement_amount // 100])
+        return response
+
     context = {
         "advances": advances,
         "partners": partners,
@@ -511,15 +531,32 @@ def audit_log_view(request):
 @require_page_permission("disbursements")
 def monthly_request_view(request):
     """Monthly Country Finance Request Page."""
-    # Gather sum of all cost lines grouped by type
-    budget_lines = Activity.objects.filter(deleted_at__isnull=True, fy="FY25").aggregate(
-        total=Sum("schedule_cost_lines__amount")
+    from datetime import date
+    from apps.core.fy import get_operational_fy
+
+    fy = get_operational_fy()
+    today = date.today()
+    month_qs = WeeklyFundRequest.objects.filter(
+        fy=fy, week_start_date__year=today.year, week_start_date__month=today.month
     )
-    
+
+    def _sum(qs, field="total_amount"):
+        return qs.aggregate(s=Sum(field))["s"] or 0
+
+    breakdown = [
+        {"label": "Waiting for Approval", "amount": _sum(month_qs.filter(status__startswith="submitted"))},
+        {"label": "Returned", "amount": _sum(month_qs.filter(status__startswith="returned"))},
+        {"label": "Approved (not yet disbursed)", "amount": _sum(month_qs.filter(
+            status__in=["approved_by_cd", "sent_to_accountant", "confirmed_for_advance"]))},
+        {"label": "Disbursed", "amount": _sum(month_qs, "disbursed_amount")},
+        {"label": "Reconciled", "amount": _sum(month_qs, "accounted_amount")},
+    ]
+
     context = {
-        "total_budget": budget_lines["total"] or 0,
-        "monthly_allocation": "210,000,000 UGX",
-        "quarter": "Q2"
+        "breakdown": breakdown,
+        "total_requested": _sum(month_qs),
+        "month_label": today.strftime("%B %Y"),
+        "fy": fy,
     }
     return render(request, "pages/accounts/monthly_request.html", context)
 

@@ -111,10 +111,10 @@ class="rounded-lg p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 trans
 <div class="space-y-1">
 <div class="flex justify-between text-[11px] font-bold text-slate-600">
 <span>Evidence/IA Quality (5% Weight)</span>
-<span class="text-slate-800 font-semibold">100% Validated</span>
+<span class="text-slate-800 font-semibold">{{ metrics.evidence_pct }}% Validated</span>
 </div>
 <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-<div class="bg-blue-600 h-full" style="width: 100%;"></div>
+<div class="bg-blue-600 h-full" style="width: {{ metrics.evidence_pct }}%;"></div>
 </div>
 </div>
 
@@ -174,7 +174,7 @@ class="rounded-lg p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 trans
 
 <!-- Action Drawer Footer -->
 <div class="bg-slate-50 border-t border-slate-100 p-6 flex items-center justify-between gap-4">
-<form action="{% url 'champion_reject_action' school.school_id %}" method="POST" class="w-1/2">
+<form action="{% url 'frontend:champion_reject_action' school.school_id %}" method="POST" class="w-1/2">
 {% csrf_token %}
 <button 
 type="submit"
@@ -184,7 +184,7 @@ Reject Candidacy
 </button>
 </form>
 
-<form action="{% url 'champion_approve_action' school.school_id %}" method="POST" class="w-1/2">
+<form action="{% url 'frontend:champion_approve_action' school.school_id %}" method="POST" class="w-1/2">
 {% csrf_token %}
 <button 
 type="submit"

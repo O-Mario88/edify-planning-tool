@@ -49,11 +49,10 @@ border-color: #94a3b8 !important;
 padding: 4px 28px 28px 28px !important;
 }
 </style>
-<form 
+<form
 hx-post="/planning/assign-partner-action"
 hx-target="#assign-errors"
 class="space-y-4 text-[12px] font-bold text-slate-600"
-@submit="$dispatch('close-drawer')"
 >
 {% if school %}
 <input type="hidden" name="school_id" value="{{ school.school_id }}">

@@ -124,18 +124,11 @@ View Source Activities
 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
 </svg>
 <div>
-<p class="text-[14px] text-slate-800 font-bold">No fund requests generated yet.</p>
-<p class="text-[11px] text-slate-400 mt-1">Schedule activities in My Plan to generate weekly fund requests, or click the Generate Request button above.</p>
+<p class="text-[14px] text-slate-800 font-bold">No activities scheduled for this week.</p>
+<p class="text-[11px] text-slate-400 mt-1">The fund request populates automatically the moment an activity is scheduled in My Plan — nothing to generate manually.</p>
 </div>
 <div class="flex items-center justify-center gap-2 pt-2">
-<form action="/fund-requests/generate-request" method="post" class="inline-block">
-{% csrf_token %}
-<input type="hidden" name="week_start" value="{{ selected_week }}">
-<button type="submit" class="h-9 px-4 rounded-lg btn-premium-primary text-white text-[12px] font-bold hover:bg-opacity-95 shadow-sm">
-Generate Request
-</button>
-</form>
-<a href="/my-plan" class="h-9 px-4 rounded-lg border border-slate-200 text-[12px] font-bold text-slate-600 hover:bg-slate-50 inline-flex items-center justify-center">
+<a href="/my-plan" class="h-9 px-4 rounded-lg btn-premium-primary text-white text-[12px] font-bold hover:bg-opacity-95 shadow-sm inline-flex items-center justify-center">
 Open My Plan
 </a>
 </div>

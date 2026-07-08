@@ -108,7 +108,7 @@ def close_activity_action(request, activity_id):
 @require_page_permission("planning")
 def completed_activities_view(request):
     """Permanent archive list of closed activities."""
-    closed_activities = Activity.objects.filter(deleted_at__isnull=True, status="closed").select_related("school", "cluster").order_by("-updated_at")
+    closed_activities = Activity.objects.filter(deleted_at__isnull=True, status="closed").select_related("school", "cluster", "closure_checklist").order_by("-updated_at")
     
     context = {
         "closed": closed_activities

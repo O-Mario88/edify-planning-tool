@@ -10,7 +10,7 @@ from __future__ import annotations
 import os
 
 from django.conf import settings
-from django.db.models import Count, Q
+from django.db.models import Count, F, Q, Sum
 
 from apps.core.models import DataSource
 from apps.schools.models import School
@@ -53,6 +53,18 @@ def _fy() -> str:
     return get_operational_fy()
 
 
+def missing_cost_lines_count() -> int:
+    """Scheduled activities carrying no budget/cost line. Broken out as its own
+    function so other pages (e.g. the admin dashboard) can surface this exact
+    real count without running the full `report()` (which does much more work,
+    including filesystem checks)."""
+    from apps.activities.models import Activity
+
+    active = Activity.objects.filter(deleted_at__isnull=True)
+    scheduled = active.exclude(status__in=["not_planned", "cancelled", "deferred", "rejected"])
+    return scheduled.annotate(cost_line_count=Count("schedule_cost_lines")).filter(cost_line_count=0).count()
+
+
 def _mock_leakage() -> dict:
     """Detect mock/demo data in the runtime database. In production EVERY one of
     these should be zero/empty; a non-zero count is a critical finding."""
@@ -90,7 +102,7 @@ def _workflow_issues() -> dict:
 
     active = Activity.objects.filter(deleted_at__isnull=True)
     scheduled = active.exclude(status__in=["not_planned", "cancelled", "deferred", "rejected"])
-    missing_cost_lines = scheduled.annotate(cost_line_count=Count("schedule_cost_lines")).filter(cost_line_count=0).count()
+    missing_cost_lines = missing_cost_lines_count()
     missing_rates = scheduled.filter(cost_missing=True).count()
 
     missing_evidence_files = 0
@@ -184,6 +196,209 @@ def _workflow_issues() -> dict:
         analytics_publish_record__status="published"
     ).count()
 
+    # ── Workflow-consistency checks (clustering → planning → partner → project) ─
+    from apps.clusters.models import SchoolClusterAssignment
+    from apps.partners.models import Partner, PartnerAssignment
+    from apps.projects.models import ProjectSchoolAssignment
+
+    fy = _fy()
+    live_schools = _School.objects.filter(deleted_at__isnull=True)
+
+    # Clustered schools whose readiness state keeps them out of Planning.
+    planning_visible_readiness = ["ready", "limited", "ready_for_support_planning", "ready_for_baseline_ssa"]
+    clustered_not_in_planning = live_schools.filter(cluster_status="clustered").exclude(
+        planning_readiness__in=planning_visible_readiness
+    ).count()
+
+    # Clustered schools with no cluster link (no cluster_id OR no assignment row).
+    assigned_school_ids = SchoolClusterAssignment.objects.values_list("school_id", flat=True)
+    clustered_missing_assignment = live_schools.filter(cluster_status="clustered").filter(
+        Q(cluster_id__isnull=True) | Q(cluster_id="") | ~Q(id__in=assigned_school_ids)
+    ).count()
+
+    # Partner-assignment statuses. Pending = handed to partner but not yet
+    # scheduled; active additionally includes partner_scheduled (mirrors
+    # apps/planning/planning_service.py).
+    pending_partner_statuses = [
+        "assigned", "pending_scheduling", "partner_pending_schedule",
+        "assigned_to_partner_pending_scheduling",
+    ]
+    active_partner_statuses = pending_partner_statuses + ["partner_scheduled"]
+
+    # Partner-assigned schools still rendered actionable in Staff Planning.
+    partner_assigned_still_staff_planning = PartnerAssignment.objects.filter(
+        status__in=pending_partner_statuses,
+        school__deleted_at__isnull=True,
+        school__planning_readiness="ready",
+    ).count()
+
+    # Partner work the partner can never see: active assignments whose partner
+    # has no user link, plus partner-delivery activities with no partner set.
+    partner_assignments_no_user = PartnerAssignment.objects.filter(
+        status__in=active_partner_statuses, partner__user__isnull=True
+    ).count()
+    partner_activities_unassigned = active.filter(delivery_type="partner").filter(
+        Q(assigned_partner_id__isnull=True) | Q(assigned_partner_id="")
+    ).count()
+    partner_assignments_invisible = partner_assignments_no_user + partner_activities_unassigned
+
+    # partner_scheduled activities whose assigned partner has no user link —
+    # scheduled work that appears in no Partner Plan.
+    partner_ids_with_user = Partner.all_objects.filter(user__isnull=False).values_list("id", flat=True)
+    partner_scheduled_no_partner_plan = active.filter(
+        delivery_type="partner", status=ActivityStatus.PARTNER_SCHEDULED,
+        assigned_partner_id__isnull=False,
+    ).exclude(assigned_partner_id="").exclude(assigned_partner_id__in=partner_ids_with_user).count()
+
+    # Partner-delivery activities with no staff monitor — invisible to staff
+    # My Plan monitoring.
+    partner_missing_monitoring = active.filter(delivery_type="partner").filter(
+        Q(monitored_by_staff_id__isnull=True) | Q(monitored_by_staff_id="")
+    ).count()
+
+    # Staff-delivery scheduled activities with no responsible staff — they
+    # appear in nobody's My Plan.
+    staff_scheduled_no_owner = active.filter(
+        delivery_type="staff", status=ActivityStatus.SCHEDULED
+    ).filter(Q(responsible_staff_id__isnull=True) | Q(responsible_staff_id="")).count()
+
+    # Cluster-scoped activities without a cluster.
+    cluster_activity_missing_cluster = active.filter(
+        activity_type__startswith="cluster", cluster__isnull=True
+    ).count()
+
+    # Project schools with no project activity this FY (missing from PC planning).
+    project_school_ids = ProjectSchoolAssignment.objects.filter(
+        school__deleted_at__isnull=True
+    ).values_list("school_id", flat=True).distinct()
+    school_ids_with_project_activity = active.filter(
+        fy=fy, project_id__isnull=False, school_id__isnull=False
+    ).exclude(project_id="").values_list("school_id", flat=True)
+    project_schools_no_activity = live_schools.filter(id__in=project_school_ids).exclude(
+        id__in=school_ids_with_project_activity
+    ).count()
+
+    # Project activities with no responsible staff.
+    project_activities_unowned = active.filter(project_id__isnull=False).exclude(
+        project_id=""
+    ).filter(Q(responsible_staff_id__isnull=True) | Q(responsible_staff_id="")).count()
+
+    # Budget lines missing their catalogue reference (unauditable pricing).
+    budget_lines_missing_catalogue = ActivityScheduleCostLine.objects.filter(
+        activity__deleted_at__isnull=True
+    ).filter(
+        Q(catalogue_id__isnull=True) | Q(catalogue_id="") | Q(catalogue_version__isnull=True)
+    ).count()
+
+    # Active-plan activities with no planned date.
+    active_plan_missing_date = active.filter(
+        status__in=[ActivityStatus.SCHEDULED, ActivityStatus.PARTNER_SCHEDULED, ActivityStatus.IN_PROGRESS],
+        planned_date__isnull=True,
+    ).count()
+
+    # Confirmed/approved/disbursed weekly fund requests whose LIVE scheduled
+    # cost lines (what a re-sync would compute right now) no longer match the
+    # frozen total. generate_weekly_fund_request() deliberately stops syncing
+    # a request's total/lines once it leaves the draft state
+    # (pending_responsible_confirmation) — a later reschedule/cancellation in
+    # that week can't silently rewrite an approved figure — so this check
+    # can't just compare a request against its OWN (equally frozen) lines; it
+    # has to recompute the live sum the same way the generator would.
+    from apps.fund_requests.models import WeeklyFundRequest
+    confirmed_wfrs_drifted = 0
+    for _wfr in WeeklyFundRequest.objects.exclude(status="pending_responsible_confirmation").only(
+        "id", "responsible_user", "week_start_date", "week_end_date", "total_amount"
+    ):
+        _live_sum = ActivityScheduleCostLine.objects.filter(
+            responsible_user=_wfr.responsible_user,
+            planned_date__gte=_wfr.week_start_date,
+            planned_date__lte=_wfr.week_end_date,
+            activity__deleted_at__isnull=True,
+        ).exclude(activity__status="cancelled").aggregate(s=Sum("amount"))["s"] or 0
+        if _live_sum != _wfr.total_amount:
+            confirmed_wfrs_drifted += 1
+
+    # Terminal-status activities still returned by the My Plan feed (feed lacks
+    # a status exclusion).
+    closed_still_in_my_plan = active.filter(
+        status__in=[ActivityStatus.CLOSED, ActivityStatus.CANCELLED, ActivityStatus.REJECTED], fy=fy
+    ).count()
+
+    # ── Daily Visit Batch integrity checks ───────────────────────────────────
+    from apps.daily_visit_batches.models import DailyVisitBatch
+    from apps.daily_visit_batches.pricing import DAILY_BATCH_ELIGIBLE_TYPES, REQUIRED_KEYS
+    from apps.geography.models import District, SecondaryDistrictGroup
+
+    # Districts with no primary/secondary classification yet — the root cause
+    # of most "cannot schedule" errors below; actionable at
+    # /admin-panel/region-district-setup.
+    districts_missing_classification = District.objects.filter(district_type__isnull=True).count()
+
+    # Batch-eligible staff visits scheduled but never assigned a batch.
+    scheduled_visits_missing_batch = scheduled.filter(
+        activity_type__in=DAILY_BATCH_ELIGIBLE_TYPES, delivery_type="staff",
+        school__isnull=False, daily_visit_batch__isnull=True,
+    ).count()
+
+    mixed_district_batches = 0
+    unapproved_secondary_batches = 0
+    batch_count_mismatch = 0
+    budget_changed_after_approval = 0
+    from apps.fund_requests.models import WeeklyFundRequest as _WFR
+    for _batch in DailyVisitBatch.objects.all().only(
+        "id", "district_type", "school_count", "responsible_user", "visit_date"
+    ):
+        _member_activities = _batch.activities.filter(deleted_at__isnull=True).exclude(status="cancelled").select_related("school")
+        _live_district_ids = set()
+        _live_types = set()
+        for _a in _member_activities:
+            if _a.school_id and _a.school.district_id:
+                _live_district_ids.add(_a.school.district_id)
+                if _a.school.district.district_type:
+                    _live_types.add(_a.school.district.district_type)
+        _live_count = len(_member_activities)
+        if len(_live_types) > 1:
+            mixed_district_batches += 1
+        if _batch.district_type == "secondary" and len(_live_district_ids) > 1:
+            _match = (
+                SecondaryDistrictGroup.objects.filter(status="approved")
+                .annotate(n=Count("members__district_id", distinct=True, filter=Q(members__district_id__in=_live_district_ids)))
+                .filter(n=len(_live_district_ids))
+                .exists()
+            )
+            if not _match:
+                unapproved_secondary_batches += 1
+        if _live_count and _live_count != _batch.school_count:
+            batch_count_mismatch += 1
+            is_locked = _WFR.objects.filter(
+                responsible_user=_batch.responsible_user,
+                week_start_date__lte=_batch.visit_date, week_end_date__gte=_batch.visit_date,
+            ).exclude(status="pending_responsible_confirmation").exists()
+            if is_locked:
+                budget_changed_after_approval += 1
+
+    # Batch-linked active activities with zero cost lines.
+    batch_activities_missing_lines = active.filter(
+        daily_visit_batch__isnull=False, deleted_at__isnull=True
+    ).exclude(status="cancelled").annotate(n=Count("schedule_cost_lines")).filter(n=0).count()
+
+    # Under-target batch with no reason recorded.
+    under_target_missing_reason = DailyVisitBatch.objects.filter(
+        school_count__lt=F("required_target_snapshot")
+    ).filter(Q(reason__isnull=True) | Q(reason="")).count()
+
+    # Active Cost Catalogue missing one of the Daily Visit Batch required keys.
+    _all_required_batch_keys = set(REQUIRED_KEYS["primary"]) | set(REQUIRED_KEYS["secondary"])
+    _active_cat = CostCatalogue.objects.filter(is_active=True).order_by("-version").first()
+    if _active_cat:
+        from apps.budget.models import CostSetting as _CostSetting
+        _present_keys = set(
+            _CostSetting.objects.filter(Q(catalogue=_active_cat) | Q(catalogue__isnull=True)).values_list("key", flat=True)
+        )
+        catalogue_missing_batch_keys = len(_all_required_batch_keys - _present_keys)
+    else:
+        catalogue_missing_batch_keys = len(_all_required_batch_keys)
+
     blockers = []
     if unclustered_schools:
         blockers.append(f"{unclustered_schools} school(s) without cluster.")
@@ -232,6 +447,52 @@ def _workflow_issues() -> dict:
         blockers.append(f"{pending_candidates} staff candidate(s) pending Admin profile setup.")
     if cceos_without_supervisor:
         blockers.append(f"{cceos_without_supervisor} CCEO(s) have no PL supervisor — PL team scope is incomplete.")
+    if clustered_not_in_planning:
+        blockers.append(f"{clustered_not_in_planning} clustered school(s) whose readiness state keeps them out of Planning.")
+    if clustered_missing_assignment:
+        blockers.append(f"{clustered_missing_assignment} clustered school(s) missing a cluster link or assignment row.")
+    if partner_assigned_still_staff_planning:
+        blockers.append(f"{partner_assigned_still_staff_planning} partner assignment(s) whose school still renders actionable in Staff Planning.")
+    if partner_assignments_invisible:
+        blockers.append(f"{partner_assignments_invisible} partner work item(s) invisible to any partner (no partner user link or no partner assigned).")
+    if partner_scheduled_no_partner_plan:
+        blockers.append(f"{partner_scheduled_no_partner_plan} partner-scheduled activity(ies) missing from any Partner Plan (partner has no user link).")
+    if partner_missing_monitoring:
+        blockers.append(f"{partner_missing_monitoring} partner activity(ies) with no staff monitor — invisible to My Plan monitoring.")
+    if staff_scheduled_no_owner:
+        blockers.append(f"{staff_scheduled_no_owner} staff scheduled activity(ies) with no responsible staff — in nobody's My Plan.")
+    if cluster_activity_missing_cluster:
+        blockers.append(f"{cluster_activity_missing_cluster} cluster activity(ies) not linked to a cluster.")
+    if project_schools_no_activity:
+        blockers.append(f"{project_schools_no_activity} project school(s) with no project activity this FY — missing from PC planning.")
+    if project_activities_unowned:
+        blockers.append(f"{project_activities_unowned} project activity(ies) with no responsible staff.")
+    if budget_lines_missing_catalogue:
+        blockers.append(f"{budget_lines_missing_catalogue} budget line(s) missing a Cost Catalogue reference.")
+    if active_plan_missing_date:
+        blockers.append(f"{active_plan_missing_date} active-plan activity(ies) with no planned date.")
+    if closed_still_in_my_plan:
+        blockers.append(f"{closed_still_in_my_plan} Terminal-status activities still returned by the My Plan feed (feed lacks a status exclusion).")
+    if confirmed_wfrs_drifted:
+        blockers.append(f"{confirmed_wfrs_drifted} confirmed/approved weekly fund request(s) whose activities changed after approval — needs reconciliation.")
+    if scheduled_visits_missing_batch:
+        blockers.append(f"{scheduled_visits_missing_batch} staff school visit(s) scheduled without a Daily Visit Batch.")
+    if mixed_district_batches:
+        blockers.append(f"{mixed_district_batches} Daily Visit Batch(es) mix primary and secondary district schools.")
+    if unapproved_secondary_batches:
+        blockers.append(f"{unapproved_secondary_batches} secondary-district Daily Visit Batch(es) span districts with no approved group.")
+    if batch_activities_missing_lines:
+        blockers.append(f"{batch_activities_missing_lines} batch-linked activity(ies) have no cost-line breakdown.")
+    if batch_count_mismatch:
+        blockers.append(f"{batch_count_mismatch} Daily Visit Batch(es) have a stale school count (out of sync with live members).")
+    if under_target_missing_reason:
+        blockers.append(f"{under_target_missing_reason} Daily Visit Batch(es) are below the CD daily target with no reason recorded.")
+    if budget_changed_after_approval:
+        blockers.append(f"{budget_changed_after_approval} Daily Visit Batch(es) changed after their weekly fund request left draft status.")
+    if catalogue_missing_batch_keys:
+        blockers.append(f"The active Cost Catalogue is missing {catalogue_missing_batch_keys} Daily Visit Batch rate(s).")
+    if districts_missing_classification:
+        blockers.append(f"{districts_missing_classification} district(s) have no primary/secondary classification — school visits there cannot be scheduled.")
 
     return {
         "unclusteredSchools": unclustered_schools,
@@ -244,6 +505,29 @@ def _workflow_issues() -> dict:
         "accountsClearanceBeforeIa": accounts_clearance_before_ia,
         "netsuiteIdMissing": netsuite_id_missing,
         "closedMissingAnalytics": closed_missing_analytics,
+        "clusteredSchoolsNotInPlanning": clustered_not_in_planning,
+        "clusteredSchoolsMissingAssignment": clustered_missing_assignment,
+        "partnerAssignedStillInStaffPlanning": partner_assigned_still_staff_planning,
+        "partnerAssignmentsInvisibleToPartner": partner_assignments_invisible,
+        "partnerScheduledMissingFromPartnerPlan": partner_scheduled_no_partner_plan,
+        "partnerScheduledMissingMonitoring": partner_missing_monitoring,
+        "staffScheduledMissingOwner": staff_scheduled_no_owner,
+        "clusterActivityMissingCluster": cluster_activity_missing_cluster,
+        "projectSchoolsWithoutProjectActivity": project_schools_no_activity,
+        "projectActivitiesUnowned": project_activities_unowned,
+        "budgetLinesMissingCatalogue": budget_lines_missing_catalogue,
+        "activePlanMissingDate": active_plan_missing_date,
+        "closedStillInMyPlanFeed": closed_still_in_my_plan,
+        "confirmedWeeklyRequestsDrifted": confirmed_wfrs_drifted,
+        "scheduledVisitsMissingBatch": scheduled_visits_missing_batch,
+        "mixedDistrictBatches": mixed_district_batches,
+        "unapprovedSecondaryGroupBatches": unapproved_secondary_batches,
+        "batchActivitiesMissingCostLines": batch_activities_missing_lines,
+        "batchSchoolCountMismatch": batch_count_mismatch,
+        "underTargetBatchesMissingReason": under_target_missing_reason,
+        "budgetChangedAfterApprovalBypass": budget_changed_after_approval,
+        "catalogueMissingDailyBatchKeys": catalogue_missing_batch_keys,
+        "districtsMissingClassification": districts_missing_classification,
         "clean": len(blockers) == 0,
         "blockers": blockers,
     }
@@ -303,4 +587,4 @@ def _permission_guards_audit() -> dict:
     }
 
 
-__all__ = ["report"]
+__all__ = ["report", "missing_cost_lines_count"]

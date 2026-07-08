@@ -374,6 +374,7 @@ def cluster_detail(cluster_id: str, principal) -> dict:
     return {
         "id": cluster.id,
         "name": cluster.name,
+        "status": cluster.status,
         "district": {"name": cluster.district.name} if cluster.district else None,
         "subCounty": {"name": cluster.sub_county.name} if cluster.sub_county else None,
         "schoolCount": school_count,
