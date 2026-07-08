@@ -32,6 +32,12 @@ class Activity(SoftDeleteModel):
     school = models.ForeignKey("schools.School", on_delete=models.SET_NULL, null=True, blank=True, related_name="activities")
     cluster = models.ForeignKey("clusters.Cluster", on_delete=models.SET_NULL, null=True, blank=True, related_name="activities")
     project_id = models.CharField(max_length=30, null=True, blank=True)
+    # Set only for staff-conducted school visits priced via a shared daily cost
+    # pool (see apps.daily_visit_batches) — null for every other activity type.
+    daily_visit_batch = models.ForeignKey(
+        "daily_visit_batches.DailyVisitBatch", on_delete=models.SET_NULL,
+        null=True, blank=True, related_name="activities",
+    )
 
     fy = models.CharField(max_length=16)
     quarter = models.CharField(max_length=8)
@@ -114,6 +120,7 @@ class Activity(SoftDeleteModel):
             models.Index(fields=["assigned_partner_id"]),
             models.Index(fields=["ia_verification_status", "payment_status"]),
             models.Index(fields=["evidence_status"]),
+            models.Index(fields=["daily_visit_batch"]),
         ]
         constraints = [
             models.CheckConstraint(

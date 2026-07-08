@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from django.db import models
 
+from apps.core.enums import DistrictType
 from apps.core.models import CuidField, TimeStampedModel
 
 
@@ -68,6 +69,12 @@ class District(TimeStampedModel):
     )
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
+    # Nullable, no default: classifying primary vs. secondary is a manual CD/Admin
+    # data-entry step (not derivable from any existing field), required for
+    # Daily Visit Batch costing/scheduling validation.
+    district_type = models.CharField(
+        max_length=16, choices=DistrictType.choices, null=True, blank=True
+    )
 
     class Meta:
         db_table = "district"
@@ -160,6 +167,51 @@ class Village(TimeStampedModel):
         indexes = [models.Index(fields=["parish"])]
 
 
+class SecondaryDistrictGroupStatus(models.TextChoices):
+    DRAFT = "draft", "Draft"
+    APPROVED = "approved", "Approved"
+    INACTIVE = "inactive", "Inactive"
+
+
+class SecondaryDistrictGroup(TimeStampedModel):
+    """CD/Admin-approved group of nearby secondary districts that may be
+    combined in one staff member's same-day Daily Visit Batch (e.g. a
+    "Kitgum Secondary Route" covering Lamwo/Pader/Agago). Only groups with
+    status=APPROVED count for same-day scheduling validation."""
+
+    id = CuidField()
+    name = models.CharField(max_length=255, unique=True)
+    status = models.CharField(
+        max_length=16, choices=SecondaryDistrictGroupStatus.choices,
+        default=SecondaryDistrictGroupStatus.DRAFT,
+    )
+    approved_by = models.CharField(max_length=30, null=True, blank=True)
+    approved_at = models.DateTimeField(null=True, blank=True)
+    notes = models.CharField(max_length=512, null=True, blank=True)
+
+    class Meta:
+        db_table = "secondary_district_group"
+        ordering = ["name"]
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class SecondaryDistrictGroupMember(TimeStampedModel):
+    """Join: the set of districts a SecondaryDistrictGroup covers."""
+
+    id = CuidField()
+    group = models.ForeignKey(SecondaryDistrictGroup, on_delete=models.CASCADE, related_name="members")
+    district = models.ForeignKey(District, on_delete=models.CASCADE, related_name="secondary_group_memberships")
+
+    class Meta:
+        db_table = "secondary_district_group_member"
+        constraints = [
+            models.UniqueConstraint(fields=["group", "district"], name="uniq_secondary_group_district"),
+        ]
+        indexes = [models.Index(fields=["district"])]
+
+
 class GeographyAlias(TimeStampedModel):
     """Tolerant matching aliases for free-text uploads."""
 
@@ -208,4 +260,7 @@ __all__ = [
     "Village",
     "GeographyAlias",
     "BoundaryImportRun",
+    "SecondaryDistrictGroupStatus",
+    "SecondaryDistrictGroup",
+    "SecondaryDistrictGroupMember",
 ]

@@ -1050,21 +1050,74 @@ def admin_page_access_matrix_view(request):
 
 @require_page_permission("region_district_setup")
 def admin_region_district_setup_view(request):
-    """District/Region management page."""
+    """District/Region management page.
+
+    Also the CD/Admin's classification surface for Daily Visit Batch costing:
+    every district needs a primary/secondary district_type before staff school
+    visits there can be scheduled (see apps.daily_visit_batches), and nearby
+    secondary districts can only be combined on the same day's batch once
+    grouped here into an approved SecondaryDistrictGroup.
+    """
+    from django.contrib import messages
+    from apps.geography.models import SecondaryDistrictGroup, SecondaryDistrictGroupMember
+
     regions = Region.objects.all().prefetch_related("districts")
-    
+
     if request.method == "POST":
-        district_name = request.POST.get("district_name")
-        region_id = request.POST.get("region_id")
-        if district_name and region_id:
-            region = get_object_or_404(Region, id=region_id)
-            District.objects.create(name=district_name, region=region)
-            from django.contrib import messages
-            messages.success(request, f"Successfully created district '{district_name}' inside region '{region.name}'.")
+        action = request.POST.get("action", "create_district")
+
+        if action == "classify_district":
+            district_id = request.POST.get("district_id")
+            district_type = request.POST.get("district_type")
+            district = get_object_or_404(District, id=district_id)
+            if district_type in ("primary", "secondary"):
+                district.district_type = district_type
+                district.save(update_fields=["district_type", "updated_at"])
+                messages.success(request, f"'{district.name}' classified as {district_type}.")
+
+        elif action == "create_group":
+            group_name = request.POST.get("group_name", "").strip()
+            if group_name:
+                SecondaryDistrictGroup.objects.get_or_create(name=group_name)
+                messages.success(request, f"Secondary District Group '{group_name}' created.")
+
+        elif action == "add_group_member":
+            group = get_object_or_404(SecondaryDistrictGroup, id=request.POST.get("group_id"))
+            district = get_object_or_404(District, id=request.POST.get("district_id"))
+            if district.district_type != "secondary":
+                messages.error(request, f"'{district.name}' is not classified as secondary — classify it first.")
+            else:
+                SecondaryDistrictGroupMember.objects.get_or_create(group=group, district=district)
+                messages.success(request, f"Added '{district.name}' to '{group.name}'.")
+
+        elif action == "remove_group_member":
+            SecondaryDistrictGroupMember.objects.filter(id=request.POST.get("member_id")).delete()
+
+        elif action == "approve_group":
+            from django.utils import timezone as _timezone
+
+            group = get_object_or_404(SecondaryDistrictGroup, id=request.POST.get("group_id"))
+            group.status = "approved"
+            group.approved_by = request.user.user_id
+            group.approved_at = _timezone.now()
+            group.save(update_fields=["status", "approved_by", "approved_at", "updated_at"])
+            messages.success(request, f"'{group.name}' approved for same-day scheduling.")
+
+        else:
+            district_name = request.POST.get("district_name")
+            region_id = request.POST.get("region_id")
+            if district_name and region_id:
+                region = get_object_or_404(Region, id=region_id)
+                District.objects.create(name=district_name, region=region)
+                messages.success(request, f"Successfully created district '{district_name}' inside region '{region.name}'.")
+
         return redirect("/admin-panel/region-district-setup")
 
     context = {
         "regions": regions,
+        "secondary_groups": SecondaryDistrictGroup.objects.all().prefetch_related("members__district"),
+        "secondary_districts": District.objects.filter(district_type="secondary").order_by("name"),
+        "unclassified_count": District.objects.filter(district_type__isnull=True).count(),
     }
     return render(request, "pages/admin/region_district_setup.html", context)
 

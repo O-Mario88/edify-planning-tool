@@ -30,6 +30,10 @@ class CostCatalogue(TimeStampedModel):
     label = models.CharField(max_length=255, null=True, blank=True)
     published_by = models.CharField(max_length=30, null=True, blank=True)
     activated_at = models.DateTimeField(null=True, blank=True)
+    # CD-set operational target for Daily Visit Batch scheduling: the max
+    # schools a staff member may schedule for one day (hard cap — excess is
+    # rejected) and the threshold below which a scheduling reason is required.
+    required_school_visits_per_day = models.IntegerField(default=5)
 
     class Meta:
         db_table = "cost_catalogue"

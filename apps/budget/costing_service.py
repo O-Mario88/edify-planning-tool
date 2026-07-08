@@ -81,6 +81,14 @@ _KEY_LABEL = {
     "group_training_facilitation_fee": "Group training facilitation fee",
     "cluster_meeting_participant_meal_cost_per_head": "Cluster meeting participant meal cost per head",
     "partner_visit_rate": "Partner visit rate",
+    "primary_transport_per_day": "Primary district daily transport pool",
+    "primary_lunch_per_day": "Primary district daily lunch pool",
+    "secondary_transport_per_day": "Secondary district daily transport pool",
+    "secondary_lunch_per_day": "Secondary district daily lunch pool",
+    "secondary_accommodation_per_night": "Secondary district accommodation per night",
+    "secondary_overnight_dinner_per_day": "Secondary district overnight dinner",
+    "secondary_breakfast_per_day": "Secondary district breakfast (optional)",
+    "secondary_incidentals_per_day": "Secondary district incidentals (optional)",
 }
 
 
@@ -190,6 +198,21 @@ def _line_item_type(key: str) -> str:
         return "cluster_meeting_participant_meals"
     if key == "partner_visit_rate":
         return "partner_visit"
+    # Daily Visit Batch keys (primary_transport_per_day, secondary_lunch_per_day,
+    # etc.) — explicit branches since the generic substring/exact-match checks
+    # below wouldn't catch lunch/accommodation/dinner/breakfast variants.
+    if key in ("primary_transport_per_day", "secondary_transport_per_day"):
+        return "transport"
+    if key in ("primary_lunch_per_day", "secondary_lunch_per_day"):
+        return "lunch"
+    if key == "secondary_accommodation_per_night":
+        return "accommodation"
+    if key == "secondary_overnight_dinner_per_day":
+        return "dinner"
+    if key == "secondary_breakfast_per_day":
+        return "breakfast"
+    if key == "secondary_incidentals_per_day":
+        return "incidentals"
     if "transport" in key:
         return "transport"
     if key in ("breakfast", "lunch", "dinner", "accommodation"):
@@ -210,7 +233,12 @@ def _line_item_type(key: str) -> str:
 
 
 # ── Persist (the canonical budget-line writer) ───────────────────────────────
-def apply_to_activity(activity: Activity, input: dict, responsible_user_id: str | None = None) -> ActivityCost:
+def apply_to_activity(
+    activity: Activity,
+    input: dict,
+    responsible_user_id: str | None = None,
+    precomputed_cost: ActivityCost | None = None,
+) -> ActivityCost:
     """Price the activity from the active catalogue and PERSIST its budget lines.
 
     Clears any prior ActivityScheduleCostLine rows, then writes one row per cost
@@ -222,12 +250,19 @@ def apply_to_activity(activity: Activity, input: dict, responsible_user_id: str 
     advance requests so the right user confirms funding. Falls back to the
     activity's responsible_staff_id.
 
+    `precomputed_cost`: when given, skips `cost_for_activity` entirely and uses
+    this ActivityCost as-is — used by Daily Visit Batch pricing, where the cost
+    is computed from a shared daily pool divided across sibling activities
+    rather than from this activity's own input alone. Every other write below
+    (date derivation, line persistence, catalogue provenance, advance-request
+    sync) is reused unchanged.
+
     Returns the ActivityCost (amount + lines) so callers can return a preview in
     the same response as the schedule."""
     fy = input.get("fy") or activity.fy
     catalogue = active_catalogue(fy)
     rates, settings_by_key = _rate_card(catalogue)
-    cost = cost_for_activity(input, rates)
+    cost = precomputed_cost if precomputed_cost is not None else cost_for_activity(input, rates)
 
     catalogue_id = catalogue.id if catalogue else None
     catalogue_version = catalogue.version if catalogue else None

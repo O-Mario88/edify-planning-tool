@@ -446,6 +446,141 @@ Autonomous scan of workflow break exception states, RBAC routes gating checks, a
 </div>
 </div>
 
+<!-- Check 25: School visits scheduled without a Daily Visit Batch -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">25. School visits missing a Daily Visit Batch</span>
+<span class="text-[12px] text-slate-500 block">Staff-conducted school visits should always be priced through a shared day's Daily Visit Batch, never in isolation.</span>
+</div>
+<div class="text-right">
+{% if health.scheduledVisitsMissingBatch > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.scheduledVisitsMissingBatch }} Items</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 26: Daily Visit Batch mixes primary and secondary districts -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">26. Daily Visit Batch mixing primary/secondary districts</span>
+<span class="text-[12px] text-slate-500 block">A single day's batch must never contain both primary and secondary district schools.</span>
+</div>
+<div class="text-right">
+{% if health.mixedDistrictBatches > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.mixedDistrictBatches }} Items</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 27: Secondary districts combined without an approved group -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">27. Secondary districts combined without CD approval</span>
+<span class="text-[12px] text-slate-500 block">A secondary-district batch spanning more than one district must be covered by a single CD/Admin-approved Secondary District Group.</span>
+</div>
+<div class="text-right">
+{% if health.unapprovedSecondaryGroupBatches > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.unapprovedSecondaryGroupBatches }} Items</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 28: Batch-linked activity missing cost-line breakdown -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">28. Daily Visit Batch activity missing cost breakdown</span>
+<span class="text-[12px] text-slate-500 block">Every batch-linked school visit should carry its Transport/Lunch(/Accommodation/Dinner) component lines, not a lump total.</span>
+</div>
+<div class="text-right">
+{% if health.batchActivitiesMissingCostLines > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.batchActivitiesMissingCostLines }} Items</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 29: Daily Visit Batch school count drifted -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">29. Daily Visit Batch school count out of sync</span>
+<span class="text-[12px] text-slate-500 block">The batch's stored school count no longer matches its live active members — a recalculation was skipped.</span>
+</div>
+<div class="text-right">
+{% if health.batchSchoolCountMismatch > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.batchSchoolCountMismatch }} Items</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 30: Under-target batch missing a reason -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">30. Under-target Daily Visit Batch missing a reason</span>
+<span class="text-[12px] text-slate-500 block">A batch scheduled below the CD's daily school-visit target should always carry the staff member's reason.</span>
+</div>
+<div class="text-right">
+{% if health.underTargetBatchesMissingReason > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.underTargetBatchesMissingReason }} Items</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 31: Locked batch changed after approval -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">31. Daily Visit Batch changed after approval</span>
+<span class="text-[12px] text-slate-500 block">A batch whose weekly fund request has already left draft status should never have its member schools change — needs reconciliation.</span>
+</div>
+<div class="text-right">
+{% if health.budgetChangedAfterApprovalBypass > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.budgetChangedAfterApprovalBypass }} Items</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 32: Cost Catalogue missing Daily Visit Batch rates -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">32. Cost Catalogue missing Daily Visit Batch rates</span>
+<span class="text-[12px] text-slate-500 block">The active catalogue must define every primary/secondary daily rate (transport, lunch, accommodation, overnight dinner) used for shared visit-day pricing.</span>
+</div>
+<div class="text-right">
+{% if health.catalogueMissingDailyBatchKeys > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.catalogueMissingDailyBatchKeys }} Items</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 33: Districts missing primary/secondary classification -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">33. Districts missing primary/secondary classification</span>
+<span class="text-[12px] text-slate-500 block">School visits cannot be scheduled in an unclassified district. Classify each district at <a href="/admin-panel/region-district-setup" class="underline hover:no-underline">Region &amp; District Setup</a>.</span>
+</div>
+<div class="text-right">
+{% if health.districtsMissingClassification > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.districtsMissingClassification }} Items</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
 </div>
 </div>
 

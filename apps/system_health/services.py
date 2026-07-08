@@ -10,7 +10,7 @@ from __future__ import annotations
 import os
 
 from django.conf import settings
-from django.db.models import Count, Q, Sum
+from django.db.models import Count, F, Q, Sum
 
 from apps.core.models import DataSource
 from apps.schools.models import School
@@ -324,6 +324,81 @@ def _workflow_issues() -> dict:
         status__in=[ActivityStatus.CLOSED, ActivityStatus.CANCELLED, ActivityStatus.REJECTED], fy=fy
     ).count()
 
+    # ── Daily Visit Batch integrity checks ───────────────────────────────────
+    from apps.daily_visit_batches.models import DailyVisitBatch
+    from apps.daily_visit_batches.pricing import DAILY_BATCH_ELIGIBLE_TYPES, REQUIRED_KEYS
+    from apps.geography.models import District, SecondaryDistrictGroup
+
+    # Districts with no primary/secondary classification yet — the root cause
+    # of most "cannot schedule" errors below; actionable at
+    # /admin-panel/region-district-setup.
+    districts_missing_classification = District.objects.filter(district_type__isnull=True).count()
+
+    # Batch-eligible staff visits scheduled but never assigned a batch.
+    scheduled_visits_missing_batch = scheduled.filter(
+        activity_type__in=DAILY_BATCH_ELIGIBLE_TYPES, delivery_type="staff",
+        school__isnull=False, daily_visit_batch__isnull=True,
+    ).count()
+
+    mixed_district_batches = 0
+    unapproved_secondary_batches = 0
+    batch_count_mismatch = 0
+    budget_changed_after_approval = 0
+    from apps.fund_requests.models import WeeklyFundRequest as _WFR
+    for _batch in DailyVisitBatch.objects.all().only(
+        "id", "district_type", "school_count", "responsible_user", "visit_date"
+    ):
+        _member_activities = _batch.activities.filter(deleted_at__isnull=True).exclude(status="cancelled").select_related("school")
+        _live_district_ids = set()
+        _live_types = set()
+        for _a in _member_activities:
+            if _a.school_id and _a.school.district_id:
+                _live_district_ids.add(_a.school.district_id)
+                if _a.school.district.district_type:
+                    _live_types.add(_a.school.district.district_type)
+        _live_count = len(_member_activities)
+        if len(_live_types) > 1:
+            mixed_district_batches += 1
+        if _batch.district_type == "secondary" and len(_live_district_ids) > 1:
+            _match = (
+                SecondaryDistrictGroup.objects.filter(status="approved")
+                .annotate(n=Count("members__district_id", distinct=True, filter=Q(members__district_id__in=_live_district_ids)))
+                .filter(n=len(_live_district_ids))
+                .exists()
+            )
+            if not _match:
+                unapproved_secondary_batches += 1
+        if _live_count and _live_count != _batch.school_count:
+            batch_count_mismatch += 1
+            is_locked = _WFR.objects.filter(
+                responsible_user=_batch.responsible_user,
+                week_start_date__lte=_batch.visit_date, week_end_date__gte=_batch.visit_date,
+            ).exclude(status="pending_responsible_confirmation").exists()
+            if is_locked:
+                budget_changed_after_approval += 1
+
+    # Batch-linked active activities with zero cost lines.
+    batch_activities_missing_lines = active.filter(
+        daily_visit_batch__isnull=False, deleted_at__isnull=True
+    ).exclude(status="cancelled").annotate(n=Count("schedule_cost_lines")).filter(n=0).count()
+
+    # Under-target batch with no reason recorded.
+    under_target_missing_reason = DailyVisitBatch.objects.filter(
+        school_count__lt=F("required_target_snapshot")
+    ).filter(Q(reason__isnull=True) | Q(reason="")).count()
+
+    # Active Cost Catalogue missing one of the Daily Visit Batch required keys.
+    _all_required_batch_keys = set(REQUIRED_KEYS["primary"]) | set(REQUIRED_KEYS["secondary"])
+    _active_cat = CostCatalogue.objects.filter(is_active=True).order_by("-version").first()
+    if _active_cat:
+        from apps.budget.models import CostSetting as _CostSetting
+        _present_keys = set(
+            _CostSetting.objects.filter(Q(catalogue=_active_cat) | Q(catalogue__isnull=True)).values_list("key", flat=True)
+        )
+        catalogue_missing_batch_keys = len(_all_required_batch_keys - _present_keys)
+    else:
+        catalogue_missing_batch_keys = len(_all_required_batch_keys)
+
     blockers = []
     if unclustered_schools:
         blockers.append(f"{unclustered_schools} school(s) without cluster.")
@@ -400,6 +475,24 @@ def _workflow_issues() -> dict:
         blockers.append(f"{closed_still_in_my_plan} Terminal-status activities still returned by the My Plan feed (feed lacks a status exclusion).")
     if confirmed_wfrs_drifted:
         blockers.append(f"{confirmed_wfrs_drifted} confirmed/approved weekly fund request(s) whose activities changed after approval — needs reconciliation.")
+    if scheduled_visits_missing_batch:
+        blockers.append(f"{scheduled_visits_missing_batch} staff school visit(s) scheduled without a Daily Visit Batch.")
+    if mixed_district_batches:
+        blockers.append(f"{mixed_district_batches} Daily Visit Batch(es) mix primary and secondary district schools.")
+    if unapproved_secondary_batches:
+        blockers.append(f"{unapproved_secondary_batches} secondary-district Daily Visit Batch(es) span districts with no approved group.")
+    if batch_activities_missing_lines:
+        blockers.append(f"{batch_activities_missing_lines} batch-linked activity(ies) have no cost-line breakdown.")
+    if batch_count_mismatch:
+        blockers.append(f"{batch_count_mismatch} Daily Visit Batch(es) have a stale school count (out of sync with live members).")
+    if under_target_missing_reason:
+        blockers.append(f"{under_target_missing_reason} Daily Visit Batch(es) are below the CD daily target with no reason recorded.")
+    if budget_changed_after_approval:
+        blockers.append(f"{budget_changed_after_approval} Daily Visit Batch(es) changed after their weekly fund request left draft status.")
+    if catalogue_missing_batch_keys:
+        blockers.append(f"The active Cost Catalogue is missing {catalogue_missing_batch_keys} Daily Visit Batch rate(s).")
+    if districts_missing_classification:
+        blockers.append(f"{districts_missing_classification} district(s) have no primary/secondary classification — school visits there cannot be scheduled.")
 
     return {
         "unclusteredSchools": unclustered_schools,
@@ -426,6 +519,15 @@ def _workflow_issues() -> dict:
         "activePlanMissingDate": active_plan_missing_date,
         "closedStillInMyPlanFeed": closed_still_in_my_plan,
         "confirmedWeeklyRequestsDrifted": confirmed_wfrs_drifted,
+        "scheduledVisitsMissingBatch": scheduled_visits_missing_batch,
+        "mixedDistrictBatches": mixed_district_batches,
+        "unapprovedSecondaryGroupBatches": unapproved_secondary_batches,
+        "batchActivitiesMissingCostLines": batch_activities_missing_lines,
+        "batchSchoolCountMismatch": batch_count_mismatch,
+        "underTargetBatchesMissingReason": under_target_missing_reason,
+        "budgetChangedAfterApprovalBypass": budget_changed_after_approval,
+        "catalogueMissingDailyBatchKeys": catalogue_missing_batch_keys,
+        "districtsMissingClassification": districts_missing_classification,
         "clean": len(blockers) == 0,
         "blockers": blockers,
     }

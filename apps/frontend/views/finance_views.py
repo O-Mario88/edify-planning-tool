@@ -735,6 +735,17 @@ def initialize_default_catalogue_view(request):
         ("staff_visit_transport_secondary", "Staff visit transport (secondary district)", 25000, "per item"),
         ("training_session_fee", "Facilitation fee", 50000, "per session"),
         ("venue", "Venue cost", 30000, "per day"),
+        # Daily Visit Batch rates: a staff member's daily transport/lunch(/
+        # accommodation/dinner) cost pool, shared and split across every
+        # school scheduled for that same day (not costed per school alone).
+        ("primary_transport_per_day", "Primary district daily transport pool", 50000, "per day"),
+        ("primary_lunch_per_day", "Primary district daily lunch pool", 12000, "per day"),
+        ("secondary_transport_per_day", "Secondary district daily transport pool", 80000, "per day"),
+        ("secondary_lunch_per_day", "Secondary district daily lunch pool", 12000, "per day"),
+        ("secondary_accommodation_per_night", "Secondary district accommodation per night", 40000, "per night"),
+        ("secondary_overnight_dinner_per_day", "Secondary district overnight dinner", 12000, "per day"),
+        ("secondary_breakfast_per_day", "Secondary district breakfast (optional)", 8000, "per day"),
+        ("secondary_incidentals_per_day", "Secondary district incidentals (optional)", 5000, "per day"),
     ]
     for key, label, cost, unit in default_settings:
         CostSetting.objects.get_or_create(

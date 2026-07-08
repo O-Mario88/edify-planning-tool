@@ -101,6 +101,7 @@ INSTALLED_APPS = [
     "apps.notifications",
     "apps.planning",
     "apps.fund_requests",
+    "apps.daily_visit_batches",
     "apps.core_schools",
     "apps.monthly_work_plan",
     "apps.analytics",
