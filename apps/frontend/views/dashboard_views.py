@@ -571,6 +571,7 @@ def dashboard_view(request):
         "budget_snapshot": metrics["budget_snapshot"],
         "execution_summary": metrics["execution_summary"],
         "upcoming_today": metrics["upcoming_today"],
+        "attention_items": metrics.get("attention_items", []),
         
         "use_dark_sidebar": False,
     }
