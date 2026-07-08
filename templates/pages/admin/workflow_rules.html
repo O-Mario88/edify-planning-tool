@@ -3,33 +3,27 @@
 {% block title %}Workflow Rules — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-4xl mx-auto space-y-6 font-sans">
+<div class="p-6 max-w-4xl mx-auto space-y-5 font-sans">
 
-<!-- Header -->
-<div class="flex items-center justify-between border-b border-slate-200 pb-4">
-<div>
-<h1 class="text-[20px] font-semibold text-slate-800 tracking-tight">Workflow & Automation Settings</h1>
-<p class="text-[12px] text-slate-400 font-semibold mt-0.5">Control live validation checks, planning bounds, and automatic budget creation</p>
-</div>
-</div>
+{% include "components/page_header.html" with title="Workflow & Automation Settings" subtitle="Control live validation checks, planning bounds, and automatic budget creation." %}
 
 <!-- Rules Stack -->
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm divide-y divide-slate-100">
+<div class="card p-0 divide-y divide-slate-100">
 {% for rule in rules %}
 <div class="p-5 flex items-center justify-between hover:bg-slate-50/40 transition-colors">
 <div class="space-y-1 pr-6">
 <h3 class="text-[14px] font-semibold text-slate-800">{{ rule.label }}</h3>
-<p class="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Rule Key: {{ rule.key }}</p>
+<p class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">Rule Key: {{ rule.key }}</p>
 </div>
 
 <div>
-<form method="post" action="/admin/workflow-rules">
+<form method="post" action="{% url 'frontend:admin_workflow_rules' %}">
 {% csrf_token %}
 <input type="hidden" name="rule_key" value="{{ rule.key }}">
 <!-- Custom toggle slider switch component matching reference image 5 -->
 <label class="toggle-switch">
-<input 
-type="checkbox" 
+<input
+type="checkbox"
 {% if rule.enabled %}checked{% endif %}
 onchange="this.form.submit()"
 >

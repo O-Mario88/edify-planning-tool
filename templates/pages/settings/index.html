@@ -4,32 +4,27 @@
 {% block title %}Settings — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-4xl mx-auto space-y-6">
+<div class="p-6 max-w-4xl mx-auto space-y-5 font-sans">
 
-<div class="flex items-center justify-between">
-<div>
-<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight">Settings</h1>
-<p class="text-[12px] text-[var(--text-secondary)] mt-1 font-semibold">Your account and workspace preferences</p>
-</div>
-</div>
+{% include "components/page_header.html" with title="Settings" subtitle="Your account and workspace preferences." %}
 
 <!-- Account card -->
-<div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm space-y-4">
-<h2 class="text-[14px] font-semibold text-slate-700 pb-2 border-b border-slate-100">Account</h2>
+<div class="card p-5 space-y-4">
+<h2 class="text-[14px] font-semibold text-slate-800 pb-2 border-b border-slate-100">Account</h2>
 <div class="flex items-center gap-4">
 <div class="h-12 w-12 rounded-full bg-slate-100 text-slate-600 font-semibold flex items-center justify-center text-[16px]">{{ user.name|avatar_initials }}</div>
-<div>
+<div class="min-w-0">
 <p class="text-[14px] font-semibold text-slate-800">{{ user.name }}</p>
 <p class="text-[12px] text-slate-500 font-semibold">{{ user.email }}</p>
 </div>
 </div>
 <dl class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[12px]">
 <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
-<dt class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Active Role</dt>
+<dt class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Active Role</dt>
 <dd class="font-semibold text-slate-800 mt-0.5">{{ user.active_role|replace_underscore }}</dd>
 </div>
 <div class="p-3 rounded-xl bg-slate-50 border border-slate-100">
-<dt class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Account Status</dt>
+<dt class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Account Status</dt>
 <dd class="font-semibold text-slate-800 mt-0.5 capitalize">{{ user.status }}</dd>
 </div>
 </dl>
@@ -39,12 +34,12 @@
 </div>
 
 <!-- Workspace shortcuts -->
-<div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm space-y-3">
-<h2 class="text-[14px] font-semibold text-slate-700 pb-2 border-b border-slate-100">Workspace</h2>
+<div class="card p-5 space-y-3">
+<h2 class="text-[14px] font-semibold text-slate-800 pb-2 border-b border-slate-100">Workspace</h2>
 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[12px]">
-<a href="/notifications" class="p-3 rounded-xl border border-slate-100 hover:border-slate-300 transition-colors block">
-<span class="font-semibold text-slate-800 block">Notifications</span>
-<span class="text-slate-400 font-semibold text-[11px]">Review your alerts and messages</span>
+<a href="/messages" class="p-3 rounded-xl border border-slate-100 hover:border-slate-300 transition-colors block">
+<span class="font-semibold text-slate-800 block">Messages</span>
+<span class="text-slate-400 font-semibold text-[11px]">Review your alerts and requests</span>
 </a>
 <a href="/help" class="p-3 rounded-xl border border-slate-100 hover:border-slate-300 transition-colors block">
 <span class="font-semibold text-slate-800 block">Help Center</span>

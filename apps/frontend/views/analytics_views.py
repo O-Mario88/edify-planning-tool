@@ -756,7 +756,140 @@ def system_health_view(request):
     from apps.system_health.services import report as system_health_report
 
     health = system_health_report()
+
+    ssa_done = health["ssaDone"]
+    schools_total = health["schoolsTotal"]
+    ssa_rate = round(ssa_done / schools_total * 100) if schools_total else 0
+    clustered_rate = (
+        round(health["clustered"] / schools_total * 100) if schools_total else 0
+    )
+    planning_rate = (
+        round(health["planningReady"] / schools_total * 100) if schools_total else 0
+    )
+
+    kpi_strip_items = [
+        {
+            "label": "Total Schools",
+            "value": str(schools_total),
+            "raw_value": schools_total,
+            "helper": f"FY{health['fy']}",
+            "icon": "school",
+            "variant": "info",
+        },
+        {
+            "label": "SSA Done",
+            "value": f"{ssa_rate}%",
+            "raw_value": ssa_rate,
+            "helper": f"{ssa_done} of {schools_total} schools",
+            "icon": "check",
+            "variant": "success" if ssa_rate >= 70 else "warning",
+        },
+        {
+            "label": "Clustered",
+            "value": f"{clustered_rate}%",
+            "raw_value": clustered_rate,
+            "helper": f"{health['clustered']} of {schools_total} schools",
+            "icon": "target",
+            "variant": "success" if clustered_rate >= 70 else "warning",
+        },
+        {
+            "label": "Planning Ready",
+            "value": f"{planning_rate}%",
+            "raw_value": planning_rate,
+            "helper": f"{health['planningReady']} of {schools_total} schools",
+            "icon": "calendar",
+            "variant": "success" if planning_rate >= 70 else "warning",
+        },
+        {
+            "label": "Data Leakage Scan",
+            "value": "Clean" if health["mockDataLeakage"]["clean"] else "Flagged",
+            "raw_value": 1 if health["mockDataLeakage"]["clean"] else 0,
+            "helper": f"{len(health['mockDataLeakage']['violations'])} violation(s)",
+            "icon": "shield",
+            "variant": "success" if health["mockDataLeakage"]["clean"] else "danger",
+        },
+        {
+            "label": "RBAC Gating Scan",
+            "value": "Clean" if health["permissionAudit"]["clean"] else "Flagged",
+            "raw_value": 1 if health["permissionAudit"]["clean"] else 0,
+            "helper": f"{health['permissionAudit']['unguardedCount']} unguarded route(s)",
+            "icon": "shield",
+            "variant": "success" if health["permissionAudit"]["clean"] else "danger",
+        },
+    ]
+
+    by_type = health["bySchoolType"]
+    school_type_has_data = schools_total > 0
+    school_type_chart_options = {
+        "chart": {"type": "donut", "fontFamily": "inherit"},
+        "labels": ["Client", "Core", "Champion"],
+        "series": [by_type["client"], by_type["core"], by_type["champion"]],
+        "colors": ["#3b82f6", "#10b981", "#f59e0b"],
+        "legend": {"show": True, "position": "bottom", "fontSize": "11px"},
+        "dataLabels": {"enabled": False},
+        "stroke": {"width": 2, "colors": ["#ffffff"]},
+        "plotOptions": {
+            "pie": {
+                "donut": {
+                    "size": "72%",
+                    "labels": {
+                        "show": True,
+                        "total": {
+                            "show": True,
+                            "label": "Schools",
+                            "color": "#1e293b",
+                        },
+                    },
+                }
+            }
+        },
+    }
+
+    workflow = health["workflowIssues"]
+    workflow_checks = [
+        ("Schools without cluster", workflow["unclusteredSchools"]),
+        (
+            "Scheduled missing budget lines",
+            workflow["scheduledActivitiesMissingCostLines"],
+        ),
+        ("Stuck in Planning", workflow["stuckInPlanning"]),
+        ("Partner work missing from My Plan", workflow["partnerScheduledMissing"]),
+        ("Completed missing evidence", workflow["completedActivitiesWithoutEvidence"]),
+        (
+            "Completed missing Salesforce ID",
+            workflow["completedActivitiesWithoutActivityCode"],
+        ),
+        ("IA verification skipped", workflow["iaSkipped"]),
+        ("Accounts cleared before IA", workflow["accountsClearanceBeforeIa"]),
+        ("Closed missing NetSuite ID", workflow["netsuiteIdMissing"]),
+        ("Closed missing from analytics", workflow["closedMissingAnalytics"]),
+    ]
+    workflow_has_data = any(count for _label, count in workflow_checks)
+    workflow_chart_options = {
+        "chart": {
+            "type": "bar",
+            "height": 320,
+            "toolbar": {"show": False},
+            "fontFamily": "inherit",
+        },
+        "series": [{"name": "Open items", "data": [c for _l, c in workflow_checks]}],
+        "xaxis": {"categories": [label for label, _c in workflow_checks]},
+        "plotOptions": {
+            "bar": {"borderRadius": 4, "horizontal": True, "barHeight": "55%"}
+        },
+        "colors": ["#f43f5e" if c > 0 else "#10b981" for _l, c in workflow_checks],
+        "legend": {"show": False},
+        "grid": {"borderColor": "#f1f5f9"},
+        "dataLabels": {"enabled": True},
+        "tooltip": {"theme": "light"},
+    }
+
     context = {
         "health": health,
+        "kpi_strip_items": kpi_strip_items,
+        "school_type_chart_options": school_type_chart_options,
+        "school_type_has_data": school_type_has_data,
+        "workflow_chart_options": workflow_chart_options,
+        "workflow_has_data": workflow_has_data,
     }
     return render(request, "pages/system_health/index.html", context)

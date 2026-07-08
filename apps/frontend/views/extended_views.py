@@ -3,7 +3,11 @@ GROUPS 4-7 — SSA/FY, Districts/Reports, Admin, Specialised Views
 """
 
 from django.shortcuts import render, redirect, get_object_or_404
-from apps.core.permissions import require_page_permission, get_scoped_object_or_404
+from apps.core.permissions import (
+    require_page_permission,
+    get_scoped_object_or_404,
+    RolePermissionService,
+)
 from django.db.models import Q, Avg, Count
 from django.utils import timezone
 from datetime import date
@@ -122,19 +126,114 @@ def fy_overview_view(request):
         .distinct()
         .count()
     )
-    total_activities = Activity.objects.filter(deleted_at__isnull=True).count()
+    ssa_pending = total_schools - ssa_done
+    total_activities = Activity.objects.filter(deleted_at__isnull=True, fy=fy).count()
     completed_activities = Activity.objects.filter(
-        status="completed", deleted_at__isnull=True
+        status__in=["completed", "ia_verified", "closed"],
+        deleted_at__isnull=True,
+        fy=fy,
     ).count()
+    completion_rate = round(completed_activities / max(total_activities, 1) * 100)
+
+    kpi_strip_items = [
+        {
+            "label": "Total Schools",
+            "value": str(total_schools),
+            "raw_value": total_schools,
+            "helper": "in the directory",
+            "icon": "school",
+            "variant": "info",
+        },
+        {
+            "label": "SSA Done",
+            "value": str(ssa_done),
+            "raw_value": ssa_done,
+            "helper": f"FY{fy}",
+            "icon": "check",
+            "variant": "success",
+        },
+        {
+            "label": "SSA Pending",
+            "value": str(ssa_pending),
+            "raw_value": ssa_pending,
+            "helper": "not yet assessed",
+            "icon": "warning",
+            "variant": "warning" if ssa_pending else "success",
+        },
+        {
+            "label": "Activity Completion",
+            "value": f"{completion_rate}%",
+            "raw_value": completion_rate,
+            "helper": f"{completed_activities} of {total_activities}",
+            "icon": "target",
+            "variant": "success" if completion_rate >= 70 else "warning",
+        },
+    ]
+
+    ssa_chart_has_data = total_schools > 0
+    ssa_chart_options = {
+        "chart": {"type": "donut", "fontFamily": "inherit"},
+        "labels": ["SSA Done", "SSA Pending"],
+        "series": [ssa_done, ssa_pending],
+        "colors": ["#10b981", "#f59e0b"],
+        "legend": {"show": True, "position": "bottom", "fontSize": "11px"},
+        "dataLabels": {"enabled": False},
+        "stroke": {"width": 2, "colors": ["#ffffff"]},
+        "plotOptions": {
+            "pie": {
+                "donut": {
+                    "size": "72%",
+                    "labels": {
+                        "show": True,
+                        "total": {
+                            "show": True,
+                            "label": "Schools",
+                            "color": "#1e293b",
+                        },
+                    },
+                }
+            }
+        },
+    }
+
+    activity_chart_has_data = total_activities > 0
+    activity_chart_options = {
+        "chart": {
+            "type": "bar",
+            "height": 260,
+            "toolbar": {"show": False},
+            "fontFamily": "inherit",
+        },
+        "series": [
+            {
+                "name": "Activities",
+                "data": [total_activities, completed_activities],
+            }
+        ],
+        "xaxis": {"categories": ["Total This FY", "Completed"]},
+        "plotOptions": {
+            "bar": {"borderRadius": 4, "columnWidth": "45%", "distributed": True}
+        },
+        "colors": ["#3b82f6", "#10b981"],
+        "legend": {"show": False},
+        "grid": {"borderColor": "#f1f5f9"},
+        "dataLabels": {"enabled": True},
+        "tooltip": {"theme": "light"},
+    }
 
     context = {
         "fy": fy,
         "total_schools": total_schools,
         "ssa_done": ssa_done,
-        "ssa_pending": total_schools - ssa_done,
+        "ssa_pending": ssa_pending,
         "total_activities": total_activities,
         "completed_activities": completed_activities,
-        "completion_rate": round(completed_activities / max(total_activities, 1) * 100),
+        "completion_rate": completion_rate,
+        "kpi_strip_items": kpi_strip_items,
+        "ssa_chart_options": ssa_chart_options,
+        "ssa_chart_has_data": ssa_chart_has_data,
+        "activity_chart_options": activity_chart_options,
+        "activity_chart_has_data": activity_chart_has_data,
     }
     return render(request, "pages/fy/index.html", context)
 
@@ -917,15 +1016,143 @@ def coverage_view(request):
 # ═══════════════════════════════════════════════════════════════════════════════
 
 
+def _admin_workflow_rules():
+    """The set of workflow toggles surfaced on the Workflow Rules page and
+    summarised on the Admin home. A single definition so the "Active" count
+    on the home page always matches the toggle list itself."""
+    return [
+        {
+            "key": "clustered_before_planning",
+            "label": "School must be clustered before planning",
+            "enabled": True,
+        },
+        {
+            "key": "ssa_required",
+            "label": "SSA required before planning",
+            "enabled": True,
+        },
+        {
+            "key": "auto_budget_lines",
+            "label": "Activity scheduling creates budget automatically",
+            "enabled": True,
+        },
+        {
+            "key": "evidence_mandatory",
+            "label": "Evidence attachment required before completion",
+            "enabled": True,
+        },
+        {
+            "key": "sf_id_mandatory",
+            "label": "Activity Salesforce ID required before IA verification",
+            "enabled": False,
+        },
+        {
+            "key": "ia_before_accounts",
+            "label": "IA verification required before Accounts clearance",
+            "enabled": True,
+        },
+    ]
+
+
 @require_page_permission("admin_dashboard")
 def admin_panel_view(request):
-    """Admin panel home."""
+    """Admin panel home — every count below is a live queryset aggregate."""
+    from apps.schools.models import School as _School
+    from apps.system_health.services import report as system_health_report
+
     user_count = User.objects.filter(deleted_at__isnull=True).count()
     active_users = User.objects.filter(status="active", deleted_at__isnull=True).count()
+    pending_invites = User.objects.filter(
+        status="pending_invited", deleted_at__isnull=True
+    ).count()
+    disabled_users = User.objects.filter(
+        status__in=["disabled", "suspended"], deleted_at__isnull=True
+    ).count()
+
+    unmatched_staff_schools = _School.objects.filter(
+        account_owner_status__in=["pending", "unmatched"], deleted_at__isnull=True
+    ).count()
+    quality_issue_schools = _School.objects.filter(
+        data_quality_status__in=[
+            "Needs Review",
+            "Needs Cleanup",
+            "Duplicate Risk",
+            "Missing Critical Data",
+        ],
+        deleted_at__isnull=True,
+    ).count()
+
+    rules = _admin_workflow_rules()
+    active_rules_count = sum(1 for r in rules if r["enabled"])
+
+    health = system_health_report()
+    system_alerts = []
+    if unmatched_staff_schools:
+        system_alerts.append(
+            {
+                "tone": "danger",
+                "title": "Unmatched staff queue pending",
+                "body": f"{unmatched_staff_schools} school(s) awaiting staff match. Review the setup queue to link uploaded names to real users.",
+            }
+        )
+    for blocker in health["workflowIssues"]["blockers"][:3]:
+        system_alerts.append(
+            {"tone": "warning", "title": "Workflow integrity finding", "body": blocker}
+        )
+
+    health_clean = (
+        health["mockDataLeakage"]["clean"]
+        and health["permissionAudit"]["clean"]
+        and health["workflowIssues"]["clean"]
+    )
+
+    kpi_strip_items = [
+        {
+            "label": "Total Users",
+            "value": str(user_count),
+            "raw_value": user_count,
+            "helper": "in the directory",
+            "icon": "users",
+            "variant": "info",
+        },
+        {
+            "label": "Active",
+            "value": str(active_users),
+            "raw_value": active_users,
+            "helper": "active accounts",
+            "icon": "check",
+            "variant": "success",
+        },
+        {
+            "label": "Pending Invites",
+            "value": str(pending_invites),
+            "raw_value": pending_invites,
+            "helper": "not yet accepted",
+            "icon": "clock",
+            "variant": "warning" if pending_invites else "success",
+        },
+        {
+            "label": "Disabled",
+            "value": str(disabled_users),
+            "raw_value": disabled_users,
+            "helper": "suspended or disabled",
+            "icon": "warning",
+            "variant": "danger" if disabled_users else "success",
+        },
+    ]
 
     context = {
         "user_count": user_count,
         "active_users": active_users,
+        "pending_invites": pending_invites,
+        "disabled_users": disabled_users,
+        "unmatched_staff_schools": unmatched_staff_schools,
+        "quality_issue_schools": quality_issue_schools,
+        "active_rules_count": active_rules_count,
+        "total_rules_count": len(rules),
+        "system_alerts": system_alerts,
+        "health_clean": health_clean,
+        "kpi_strip_items": kpi_strip_items,
     }
     return render(request, "pages/admin/index.html", context)
 
@@ -1002,12 +1229,53 @@ def admin_users_view(request):
     districts = District.objects.all().order_by("name")
     roles = [r.value for r in EdifyRole]
 
+    total = users.count()
+    active_count = users.filter(status="active").count()
+    pending_count = users.filter(status="pending_invited").count()
+    disabled_count = users.filter(status__in=["disabled", "suspended"]).count()
+
+    kpi_strip_items = [
+        {
+            "label": "Users Found",
+            "value": str(total),
+            "raw_value": total,
+            "helper": "matching current search",
+            "icon": "users",
+            "variant": "info",
+        },
+        {
+            "label": "Active",
+            "value": str(active_count),
+            "raw_value": active_count,
+            "helper": "active accounts",
+            "icon": "check",
+            "variant": "success",
+        },
+        {
+            "label": "Pending Invites",
+            "value": str(pending_count),
+            "raw_value": pending_count,
+            "helper": "not yet accepted",
+            "icon": "clock",
+            "variant": "warning" if pending_count else "success",
+        },
+        {
+            "label": "Disabled",
+            "value": str(disabled_count),
+            "raw_value": disabled_count,
+            "helper": "suspended or disabled",
+            "icon": "warning",
+            "variant": "danger" if disabled_count else "success",
+        },
+    ]
+
     context = {
         "users": users[:100],
-        "total": users.count(),
+        "total": total,
         "search": search,
         "districts": districts,
         "available_roles": roles,
+        "kpi_strip_items": kpi_strip_items,
     }
     return render(request, "pages/admin/users.html", context)
 
@@ -1117,9 +1385,46 @@ def admin_user_detail_view(request, user_id):
 
 @require_page_permission("audit_log")
 def audit_log_view(request):
-    """Audit trail."""
-    logs = AuditLog.objects.all().order_by("-created_at")[:100]
-    context = {"logs": logs}
+    """Audit trail — most recent 100 entries, actor names resolved."""
+    logs = list(AuditLog.objects.all().order_by("-created_at")[:100])
+
+    actor_ids = {log.actor_id for log in logs if log.actor_id}
+    actor_names = dict(User.objects.filter(id__in=actor_ids).values_list("id", "name"))
+    for log in logs:
+        log.actor_name = actor_names.get(log.actor_id, log.actor_id or "System")
+
+    total = len(logs)
+    failures = sum(1 for log in logs if not log.success)
+    unique_actors = len(actor_ids)
+
+    kpi_strip_items = [
+        {
+            "label": "Entries Shown",
+            "value": str(total),
+            "raw_value": total,
+            "helper": "most recent 100",
+            "icon": "document",
+            "variant": "info",
+        },
+        {
+            "label": "Failed / Denied",
+            "value": str(failures),
+            "raw_value": failures,
+            "helper": "unsuccessful actions",
+            "icon": "warning",
+            "variant": "danger" if failures else "success",
+        },
+        {
+            "label": "Unique Actors",
+            "value": str(unique_actors),
+            "raw_value": unique_actors,
+            "helper": "in this window",
+            "icon": "users",
+            "variant": "blue",
+        },
+    ]
+
+    context = {"logs": logs, "kpi_strip_items": kpi_strip_items}
     return render(request, "pages/admin/audit_log.html", context)
 
 
@@ -1157,32 +1462,129 @@ def search_view(request):
 def messages_list_view(request):
     """Messages inbox."""
     user = request.user
-    messages_qs = Message.objects.filter(
-        Q(sender_id=user.id) | Q(recipient_id=user.id)
-    ).order_by("-created_at")[:50]
+    messages_qs = list(
+        Message.objects.filter(Q(sender_id=user.id) | Q(recipient_id=user.id)).order_by(
+            "-created_at"
+        )[:50]
+    )
 
-    context = {"messages": messages_qs}
+    total = len(messages_qs)
+    unread = sum(1 for m in messages_qs if m.status == "unread")
+    action_required = sum(1 for m in messages_qs if m.action_required)
+
+    kpi_strip_items = [
+        {
+            "label": "Messages",
+            "value": str(total),
+            "raw_value": total,
+            "helper": "most recent 50",
+            "icon": "message",
+            "variant": "info",
+        },
+        {
+            "label": "Unread",
+            "value": str(unread),
+            "raw_value": unread,
+            "helper": "not yet read",
+            "icon": "warning",
+            "variant": "warning" if unread else "success",
+        },
+        {
+            "label": "Action Required",
+            "value": str(action_required),
+            "raw_value": action_required,
+            "helper": "needs a response",
+            "icon": "warning",
+            "variant": "danger" if action_required else "success",
+        },
+    ]
+
+    context = {"messages": messages_qs, "kpi_strip_items": kpi_strip_items}
     return render(request, "pages/messages/index.html", context)
 
 
 @require_page_permission("messages")
 def message_detail_view(request, message_id):
-    """Message thread."""
+    """Message thread — the single message plus any other messages in the
+    same thread the user is a participant of."""
+    user = request.user
     msg = get_object_or_404(Message, id=message_id)
-    context = {"message": msg}
+    if user.id not in (msg.sender_id, msg.recipient_id):
+        from django.core.exceptions import PermissionDenied
+
+        raise PermissionDenied(
+            "Access Denied: you are not a participant in this message."
+        )
+
+    if msg.status == "unread" and msg.recipient_id == user.id:
+        msg.status = "read"
+        msg.save(update_fields=["status"])
+
+    thread_messages = (
+        Message.objects.filter(thread_id=msg.thread_id)
+        .filter(Q(sender_id=user.id) | Q(recipient_id=user.id))
+        .order_by("created_at")
+    )
+
+    context = {"message": msg, "thread_messages": thread_messages}
     return render(request, "pages/messages/detail.html", context)
 
 
 @require_page_permission("staff")
 def leave_requests_view(request):
-    """Leave requests."""
+    """Leave requests — the signed-in staff member's own leave history."""
     profile = getattr(request.user, "staff_profile", None)
-    leaves = (
+    leaves = list(
         Leave.objects.filter(staff=profile).order_by("-created_at")
         if profile
         else Leave.objects.none()
     )
-    context = {"leaves": leaves}
+
+    total = len(leaves)
+    pending = sum(1 for leave in leaves if leave.status == "pending")
+    approved = sum(1 for leave in leaves if leave.status == "approved")
+    rejected = sum(1 for leave in leaves if leave.status == "rejected")
+
+    kpi_strip_items = [
+        {
+            "label": "Total Requests",
+            "value": str(total),
+            "raw_value": total,
+            "helper": "all time",
+            "icon": "document",
+            "variant": "info",
+        },
+        {
+            "label": "Pending",
+            "value": str(pending),
+            "raw_value": pending,
+            "helper": "awaiting review",
+            "icon": "clock",
+            "variant": "warning" if pending else "success",
+        },
+        {
+            "label": "Approved",
+            "value": str(approved),
+            "raw_value": approved,
+            "helper": "confirmed leave",
+            "icon": "check",
+            "variant": "success",
+        },
+        {
+            "label": "Rejected",
+            "value": str(rejected),
+            "raw_value": rejected,
+            "helper": "not approved",
+            "icon": "warning",
+            "variant": "danger" if rejected else "neutral",
+        },
+    ]
+
+    context = {
+        "leaves": leaves,
+        "kpi_strip_items": kpi_strip_items,
+        "has_profile": profile is not None,
+    }
     return render(request, "pages/leave/index.html", context)
 
 
@@ -1651,9 +2053,31 @@ def admin_staff_setup_queue_view(request):
 
         return redirect("/admin-panel/staff-setup-queue")
 
+    unmatched_count = unmatched_schools.count()
+    staff_count = staff_list.count()
+    kpi_strip_items = [
+        {
+            "label": "Unmatched Schools",
+            "value": str(unmatched_count),
+            "raw_value": unmatched_count,
+            "helper": "awaiting a staff match",
+            "icon": "warning",
+            "variant": "warning" if unmatched_count else "success",
+        },
+        {
+            "label": "Staff Profiles Available",
+            "value": str(staff_count),
+            "raw_value": staff_count,
+            "helper": "to match against",
+            "icon": "users",
+            "variant": "info",
+        },
+    ]
+
     context = {
         "unmatched_schools": unmatched_schools,
         "staff_list": staff_list,
+        "kpi_strip_items": kpi_strip_items,
     }
     return render(request, "pages/admin/staff_setup_queue.html", context)
 
@@ -1683,10 +2107,58 @@ def admin_school_upload_history_view(request):
             )
         return redirect("/admin-panel/school-upload-history")
 
-    batches = UploadBatch.objects.all().order_by("-created_at")[:50]
+    batches = list(UploadBatch.objects.all().order_by("-created_at")[:50])
+
+    uploader_ids = {b.uploaded_by for b in batches if b.uploaded_by}
+    uploader_names = dict(
+        User.objects.filter(id__in=uploader_ids).values_list("id", "name")
+    )
+    for b in batches:
+        b.uploaded_by_name = uploader_names.get(b.uploaded_by, b.uploaded_by)
+
+    total = len(batches)
+    completed_count = sum(1 for b in batches if b.status == "completed")
+    failed_count = sum(1 for b in batches if b.status in ("failed", "rejected"))
+    total_rows = sum(b.total_rows for b in batches)
+
+    kpi_strip_items = [
+        {
+            "label": "Batches Shown",
+            "value": str(total),
+            "raw_value": total,
+            "helper": "most recent 50",
+            "icon": "document",
+            "variant": "info",
+        },
+        {
+            "label": "Completed",
+            "value": str(completed_count),
+            "raw_value": completed_count,
+            "helper": "successful imports",
+            "icon": "check",
+            "variant": "success",
+        },
+        {
+            "label": "Failed",
+            "value": str(failed_count),
+            "raw_value": failed_count,
+            "helper": "rejected or rolled back",
+            "icon": "warning",
+            "variant": "danger" if failed_count else "success",
+        },
+        {
+            "label": "Rows Processed",
+            "value": str(total_rows),
+            "raw_value": total_rows,
+            "helper": "across shown batches",
+            "icon": "chart",
+            "variant": "blue",
+        },
+    ]
 
     context = {
         "batches": batches,
+        "kpi_strip_items": kpi_strip_items,
     }
     return render(request, "pages/admin/school_upload_history.html", context)
 
@@ -1735,19 +2207,78 @@ def admin_data_quality_center_view(request):
         status__in=["pending", "hold"]
     ).count()
 
+    kpi_strip_items = [
+        {
+            "label": "Clean Schools",
+            "value": str(clean_count),
+            "raw_value": clean_count,
+            "helper": "fully verified",
+            "icon": "check",
+            "variant": "success",
+        },
+        {
+            "label": "Needs Review",
+            "value": str(needs_review_count),
+            "raw_value": needs_review_count,
+            "helper": "minor gaps",
+            "icon": "document",
+            "variant": "blue",
+        },
+        {
+            "label": "Needs Cleanup",
+            "value": str(needs_cleanup_count),
+            "raw_value": needs_cleanup_count,
+            "helper": "moderate gaps",
+            "icon": "warning",
+            "variant": "warning",
+        },
+        {
+            "label": "Duplicate Risk",
+            "value": str(duplicate_risk_count),
+            "raw_value": duplicate_risk_count,
+            "helper": "possible duplicates",
+            "icon": "warning",
+            "variant": "danger" if duplicate_risk_count else "success",
+        },
+        {
+            "label": "Missing Critical Data",
+            "value": str(missing_critical_count),
+            "raw_value": missing_critical_count,
+            "helper": "owner/cluster missing",
+            "icon": "warning",
+            "variant": "danger" if missing_critical_count else "success",
+        },
+    ]
+
+    issue_types = [
+        ("Missing Phone", missing_phone, "/admin-panel/data-quality-center"),
+        ("Missing Contact", missing_contact, "/admin-panel/data-quality-center"),
+        ("Missing Enrollment", missing_enrollment, "/admin-panel/data-quality-center"),
+        ("No Cluster", no_cluster, "/schools?filter=unclustered"),
+        ("Unmatched Staff", unmatched_staff, "/admin-panel/staff-setup-queue"),
+        ("No SSA", no_ssa, "/ssa"),
+    ]
+    issue_type_rows = [
+        {
+            "label": label,
+            "count": qs.count(),
+            "sample_schools": [i.school.name for i in qs[:5]],
+            "href": href,
+        }
+        for label, qs, href in issue_types
+    ]
+
     context = {
         "clean_count": clean_count,
         "needs_review_count": needs_review_count,
         "needs_cleanup_count": needs_cleanup_count,
         "duplicate_risk_count": duplicate_risk_count,
         "missing_critical_count": missing_critical_count,
-        "missing_phone": missing_phone,
-        "missing_contact": missing_contact,
-        "missing_enrollment": missing_enrollment,
-        "no_cluster": no_cluster,
-        "unmatched_staff": unmatched_staff,
-        "no_ssa": no_ssa,
+        "unmatched_staff_count": unmatched_staff.count(),
+        "no_cluster_count": no_cluster.count(),
         "unmatched_ssa_count": unmatched_ssa_count,
+        "kpi_strip_items": kpi_strip_items,
+        "issue_type_rows": issue_type_rows,
     }
     return render(request, "pages/admin/data_quality_center.html", context)
 
@@ -1755,39 +2286,12 @@ def admin_data_quality_center_view(request):
 @require_page_permission("workflow_rules")
 def admin_workflow_rules_view(request):
     """Workflow rules & automation toggles."""
-    # Simulated rules stored in memory or db
-    rules = [
-        {
-            "key": "clustered_before_planning",
-            "label": "School must be clustered before planning",
-            "enabled": True,
-        },
-        {
-            "key": "ssa_required",
-            "label": "SSA required before planning",
-            "enabled": True,
-        },
-        {
-            "key": "auto_budget_lines",
-            "label": "Activity scheduling creates budget automatically",
-            "enabled": True,
-        },
-        {
-            "key": "evidence_mandatory",
-            "label": "Evidence attachment required before completion",
-            "enabled": True,
-        },
-        {
-            "key": "sf_id_mandatory",
-            "label": "Activity Salesforce ID required before IA verification",
-            "enabled": False,
-        },
-        {
-            "key": "ia_before_accounts",
-            "label": "IA verification required before Accounts clearance",
-            "enabled": True,
-        },
-    ]
+    # NOTE: these toggles are a fixed platform configuration (mirrored in
+    # `_admin_workflow_rules`, the single source both this page and the Admin
+    # home summary read from), not per-tenant DB-backed settings yet — POST
+    # below acknowledges an update but does not persist a flip because there
+    # is no rules table. Tracked as a known gap.
+    rules = _admin_workflow_rules()
 
     if request.method == "POST":
         rule_key = request.POST.get("rule_key")
@@ -1804,37 +2308,58 @@ def admin_workflow_rules_view(request):
 
 @require_page_permission("page_access_matrix")
 def admin_page_access_matrix_view(request):
-    """Matrix displaying user page routing permissions."""
-    roles = ["CCEO", "PL", "CD", "RVP", "IA", "Accountant", "HR", "Partner", "Admin"]
+    """Matrix displaying real page routing permissions — computed live from
+    RolePermissionService.can_view_page, the exact function `require_page_permission`
+    enforces on every request, so this matrix can never drift from reality."""
+    from apps.core.rbac import EdifyRole
+    from types import SimpleNamespace
+
+    roles = [r.value for r in EdifyRole]
     pages = [
-        {"name": "Dashboard", "path": "/dashboard"},
-        {"name": "School Directory", "path": "/schools"},
-        {"name": "Planning Dashboard", "path": "/planning"},
-        {"name": "My Plan", "path": "/my-plan"},
-        {"name": "Monthly Budget Setup", "path": "/budgets/monthly"},
-        {"name": "Fund Requests advance", "path": "/fund-requests"},
-        {"name": "NetSuite Disbursements", "path": "/disbursements"},
-        {"name": "Analytics Dashboard", "path": "/analytics"},
-        {"name": "System Health", "path": "/system-health"},
-        {"name": "Audit Log logs", "path": "/admin/audit-log"},
+        {"name": "Dashboard", "path": "/dashboard", "page_key": "dashboard"},
+        {
+            "name": "School Directory",
+            "path": "/schools",
+            "page_key": "school_directory",
+        },
+        {"name": "Planning Dashboard", "path": "/planning", "page_key": "planning"},
+        {"name": "My Plan", "path": "/my-plan", "page_key": "my_plan"},
+        {
+            "name": "Monthly Budget Setup",
+            "path": "/budgets/monthly",
+            "page_key": "monthly_budget",
+        },
+        {
+            "name": "Fund Requests",
+            "path": "/fund-requests",
+            "page_key": "fund_requests",
+        },
+        {
+            "name": "NetSuite Disbursements",
+            "path": "/disbursements",
+            "page_key": "disbursements",
+        },
+        {"name": "Analytics Dashboard", "path": "/analytics", "page_key": "analytics"},
+        {
+            "name": "System Health",
+            "path": "/system-health",
+            "page_key": "system_health",
+        },
+        {
+            "name": "Audit Log",
+            "path": "/admin-panel/audit-log",
+            "page_key": "audit_log",
+        },
     ]
 
     matrix = {}
     for p in pages:
         matrix[p["name"]] = {}
         for r in roles:
-            if r == "Admin":
-                matrix[p["name"]][r] = True
-            elif p["name"] in ["Dashboard", "My Plan", "School Directory"]:
-                matrix[p["name"]][r] = True
-            elif p["name"] == "Planning Dashboard" and r in ["CCEO", "PL", "CD"]:
-                matrix[p["name"]][r] = True
-            elif p["name"] == "NetSuite Disbursements" and r == "Accountant":
-                matrix[p["name"]][r] = True
-            elif p["name"] == "System Health" and r == "Admin":
-                matrix[p["name"]][r] = True
-            else:
-                matrix[p["name"]][r] = False
+            fake_user = SimpleNamespace(active_role=r)
+            matrix[p["name"]][r] = RolePermissionService.can_view_page(
+                fake_user, p["page_key"]
+            )
 
     context = {
         "roles": roles,
@@ -1863,8 +2388,31 @@ def admin_region_district_setup_view(request):
             )
         return redirect("/admin-panel/region-district-setup")
 
+    region_list = list(regions)
+    total_districts = sum(r.districts.count() for r in region_list)
+
+    kpi_strip_items = [
+        {
+            "label": "Regions",
+            "value": str(len(region_list)),
+            "raw_value": len(region_list),
+            "helper": "configured",
+            "icon": "target",
+            "variant": "info",
+        },
+        {
+            "label": "Districts",
+            "value": str(total_districts),
+            "raw_value": total_districts,
+            "helper": "across all regions",
+            "icon": "target",
+            "variant": "blue",
+        },
+    ]
+
     context = {
         "regions": regions,
+        "kpi_strip_items": kpi_strip_items,
     }
     return render(request, "pages/admin/region_district_setup.html", context)
 
@@ -1874,12 +2422,14 @@ def admin_notifications_mgmt_view(request):
     """Notification management logs."""
     from apps.notifications.models import Notification
 
-    logs = Notification.objects.all().order_by("-created_at")[:50]
+    logs = list(Notification.objects.all().order_by("-created_at")[:50])
 
     if request.method == "POST" and "resend_id" in request.POST:
         notif_id = request.POST.get("resend_id")
         notif = get_object_or_404(Notification, id=notif_id)
-        # Simulate resending notification
+        # NOTE: this acknowledges the resend request and logs it, but does not
+        # yet re-trigger the original notification channel (no dispatch queue
+        # wired up for admin-initiated resends). Tracked as a known gap.
         from django.contrib import messages
 
         messages.success(
@@ -1888,8 +2438,40 @@ def admin_notifications_mgmt_view(request):
         )
         return redirect("/admin-panel/notifications-mgmt")
 
+    total = len(logs)
+    unread = sum(1 for log in logs if log.status != "read")
+    read = total - unread
+
+    kpi_strip_items = [
+        {
+            "label": "Notifications Shown",
+            "value": str(total),
+            "raw_value": total,
+            "helper": "most recent 50",
+            "icon": "message",
+            "variant": "info",
+        },
+        {
+            "label": "Delivered & Read",
+            "value": str(read),
+            "raw_value": read,
+            "helper": "confirmed read",
+            "icon": "check",
+            "variant": "success",
+        },
+        {
+            "label": "Sent (Unread)",
+            "value": str(unread),
+            "raw_value": unread,
+            "helper": "not yet read",
+            "icon": "clock",
+            "variant": "warning" if unread else "success",
+        },
+    ]
+
     context = {
         "logs": logs,
+        "kpi_strip_items": kpi_strip_items,
     }
     return render(request, "pages/admin/notifications_mgmt.html", context)
 
@@ -1901,7 +2483,7 @@ def duplicate_review_view(request):
 
     issues = DataQualityIssue.objects.filter(
         issue_type="duplicate_risk", status="open"
-    ).select_related("school")
+    ).select_related("school", "school__district")
 
     if request.method == "POST":
         issue_id = request.POST.get("issue_id")
@@ -1912,14 +2494,29 @@ def duplicate_review_view(request):
             school = issue.school
             school.duplicate_status = "not_duplicate"
             school.save()
+            issue.status = "resolved"
+            issue.resolved_at = timezone.now()
+            issue.save(update_fields=["status", "resolved_at"])
             messages.success(
                 request,
                 f"School '{school.name}' marked as unique. Duplicate issue resolved.",
             )
             return redirect("/data-quality/duplicates")
 
+    kpi_strip_items = [
+        {
+            "label": "Open Duplicate Risks",
+            "value": str(issues.count()),
+            "raw_value": issues.count(),
+            "helper": "awaiting review",
+            "icon": "warning",
+            "variant": "warning" if issues.count() else "success",
+        },
+    ]
+
     context = {
         "issues": issues,
+        "kpi_strip_items": kpi_strip_items,
     }
     return render(request, "pages/admin/duplicate_review.html", context)
 
@@ -2098,9 +2695,49 @@ def unmatched_ssa_queue_view(request):
             if s_match:
                 suggested_matches[r.id] = s_match
 
+    total = records.count()
+    held = records.filter(status="hold").count()
+    pending = total - held
+
+    kpi_strip_items = [
+        {
+            "label": "Unmatched Records",
+            "value": str(total),
+            "raw_value": total,
+            "helper": "pending or held",
+            "icon": "warning",
+            "variant": "warning" if total else "success",
+        },
+        {
+            "label": "Pending",
+            "value": str(pending),
+            "raw_value": pending,
+            "helper": "not yet reviewed",
+            "icon": "clock",
+            "variant": "info",
+        },
+        {
+            "label": "Held",
+            "value": str(held),
+            "raw_value": held,
+            "helper": "flagged for follow-up",
+            "icon": "warning",
+            "variant": "warning" if held else "success",
+        },
+        {
+            "label": "Suggested Matches",
+            "value": str(len(suggested_matches)),
+            "raw_value": len(suggested_matches),
+            "helper": "candidate school found",
+            "icon": "check",
+            "variant": "blue",
+        },
+    ]
+
     context = {
         "records": records,
         "schools": schools_list,
         "suggested_matches": suggested_matches,
+        "kpi_strip_items": kpi_strip_items,
     }
     return render(request, "pages/admin/unmatched_ssa_queue.html", context)

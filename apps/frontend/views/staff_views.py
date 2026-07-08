@@ -145,12 +145,48 @@ def staff_directory_view(request):
         "high_risk": high_risk_count,
     }
 
+    kpi_strip_items = [
+        {
+            "label": "Total Active Staff",
+            "value": str(total_active),
+            "raw_value": total_active,
+            "helper": "active accounts",
+            "icon": "users",
+            "variant": "info",
+        },
+        {
+            "label": "Pending Onboarding",
+            "value": str(pending_onboarding),
+            "raw_value": pending_onboarding,
+            "helper": "not yet complete",
+            "icon": "clock",
+            "variant": "warning" if pending_onboarding else "success",
+        },
+        {
+            "label": "Average Coverage Gap",
+            "value": f"{average_coverage_gap}%",
+            "raw_value": average_coverage_gap,
+            "helper": "schools with no owner",
+            "icon": "chart",
+            "variant": "warning" if average_coverage_gap > 10 else "success",
+        },
+        {
+            "label": "High Risk",
+            "value": str(high_risk_count),
+            "raw_value": high_risk_count,
+            "helper": "> 3 overdue activities",
+            "icon": "warning",
+            "variant": "danger" if high_risk_count else "success",
+        },
+    ]
+
     context = {
         "staff": staff_list,
         "total": total_active,
         "search": search,
         "active_tab": active_tab,
         "kpis": kpis,
+        "kpi_strip_items": kpi_strip_items,
     }
     return render(request, "pages/staff/index.html", context)
 
@@ -211,6 +247,33 @@ def staff_profile_view(request, user_id):
     )
     staff_progress = get_ssa_progress_by_fy(assigned_schools)
 
+    kpi_strip_items = [
+        {
+            "label": "Completed",
+            "value": str(len(completed)),
+            "raw_value": len(completed),
+            "helper": "activities",
+            "icon": "check",
+            "variant": "success",
+        },
+        {
+            "label": "Overdue",
+            "value": str(len(overdue)),
+            "raw_value": len(overdue),
+            "helper": "past due, not completed",
+            "icon": "warning",
+            "variant": "danger" if overdue else "success",
+        },
+        {
+            "label": "Schools Covered",
+            "value": str(len(schools_covered)),
+            "raw_value": len(schools_covered),
+            "helper": "at least one completed visit",
+            "icon": "school",
+            "variant": "info",
+        },
+    ]
+
     context = {
         "member": member,
         "profile": profile,
@@ -221,6 +284,7 @@ def staff_profile_view(request, user_id):
         "schools_covered": list(schools_covered)[:10],
         "initials": member.name[:2].upper() if member.name else "??",
         "staff_progress": staff_progress,
+        "kpi_strip_items": kpi_strip_items,
     }
     return render(request, "pages/staff/detail.html", context)
 
@@ -1038,16 +1102,45 @@ def profile_view(request):
         .order_by("-updated_at")[:5]
     )
 
+    completion_rate = (
+        round(completed / total_activities * 100) if total_activities else 0
+    )
+    kpi_strip_items = [
+        {
+            "label": "Total Activities",
+            "value": str(total_activities),
+            "raw_value": total_activities,
+            "helper": "all time",
+            "icon": "calendar",
+            "variant": "info",
+        },
+        {
+            "label": "Completed",
+            "value": str(completed),
+            "raw_value": completed,
+            "helper": "activities",
+            "icon": "check",
+            "variant": "success",
+        },
+        {
+            "label": "Completion Rate",
+            "value": f"{completion_rate}%",
+            "raw_value": completion_rate,
+            "helper": "completed vs total",
+            "icon": "target",
+            "variant": "success" if completion_rate >= 70 else "warning",
+        },
+    ]
+
     context = {
         "member": user,
         "profile": profile,
         "fy": fy,
         "total_activities": total_activities,
         "completed": completed,
-        "completion_rate": round(completed / total_activities * 100)
-        if total_activities
-        else 0,
+        "completion_rate": completion_rate,
         "recent": recent,
         "initials": user.name[:2].upper() if user.name else "??",
+        "kpi_strip_items": kpi_strip_items,
     }
     return render(request, "pages/profile/index.html", context)

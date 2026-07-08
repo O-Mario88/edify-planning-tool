@@ -3,18 +3,33 @@
 {% block title %}Messages — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6">
+<div class="p-6 max-w-5xl mx-auto space-y-5 font-sans">
 
-<div class="flex items-center justify-between">
-<div>
-<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight">Messages</h1>
-<p class="text-[12px] text-[var(--text-secondary)] mt-1 font-semibold">Edify Operations · Messages</p>
-</div>
-</div>
+{% include "components/page_header.html" with title="Messages" subtitle="Notifications and requests sent to or from you." %}
 
-<div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm">
-{% if messages %}<ul class="divide-y divide-slate-100">{% for m in messages %}<li class="px-5 py-4"><p class="text-[14px] font-bold text-slate-800">{{ m.body|truncatewords:20 }}</p><p class="text-[11px] text-slate-400">{{ m.created_at }}</p></li>{% endfor %}</ul>
-{% else %}<div class="p-12 text-center"><p class="text-[36px] mb-3">💬</p><p class="text-[14px] font-bold text-slate-600">No messages yet</p></div>{% endif %}
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
+
+<div class="card p-0 overflow-hidden">
+{% if messages %}
+<ul class="divide-y divide-slate-100">
+{% for m in messages %}
+<li>
+<a href="/messages/{{ m.id }}" class="flex items-center justify-between gap-3 px-5 py-4 hover:bg-slate-50/60 transition-colors">
+<div class="min-w-0">
+<p class="text-[13px] font-semibold text-slate-800 {% if m.status == 'unread' %}font-semibold{% endif %} truncate">{{ m.body|truncatewords:20 }}</p>
+<p class="text-[11px] text-slate-400 mt-0.5">{{ m.created_at|date:"M d, Y H:i" }}</p>
+</div>
+<div class="flex items-center gap-2 shrink-0">
+{% if m.action_required %}{% include "components/badge.html" with tone="danger" label="Action needed" %}{% endif %}
+{% if m.status == "unread" %}{% include "components/badge.html" with tone="info" label="Unread" dot="true" %}{% else %}{% include "components/badge.html" with tone="neutral" label="Read" %}{% endif %}
+</div>
+</a>
+</li>
+{% endfor %}
+</ul>
+{% else %}
+{% include "components/empty_state.html" with title="No messages yet" message="Messages sent to or from you will appear here." %}
+{% endif %}
 </div>
 
 </div>

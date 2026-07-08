@@ -3,70 +3,57 @@
 {% block title %}My Profile — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-4xl mx-auto space-y-6">
+<div class="p-6 max-w-4xl mx-auto space-y-5 font-sans">
+
+{% include "components/page_header.html" with title="My Profile" subtitle="Account details, activity stats, and role switching." %}
+
 <!-- Hero Card -->
-<div class="bg-gradient-to-br from-indigo-600 to-violet-700 rounded-2xl p-6 text-white shadow-lg">
+<div class="card p-5 bg-gradient-to-br from-[var(--color-edify-primary)] to-slate-800 border-0 text-white">
 <div class="flex items-start gap-5">
-<div class="h-16 w-16 rounded-2xl bg-white/20 text-white font-semibold text-[20px] grid place-items-center shrink-0 backdrop-blur border border-white/30">{{ initials }}</div>
-<div class="flex-1">
-<h1 class="text-[24px] font-semibold tracking-tight">{{ member.name }}</h1>
-<p class="text-indigo-200 text-[12px] font-semibold mt-0.5">{{ member.email }}</p>
+<div class="h-14 w-14 rounded-2xl bg-white/15 text-white font-semibold text-[18px] grid place-items-center shrink-0 border border-white/25">{{ initials }}</div>
+<div class="flex-1 min-w-0">
+<h2 class="text-[18px] font-semibold tracking-tight">{{ member.name }}</h2>
+<p class="text-white/70 text-[12px] font-semibold mt-0.5">{{ member.email }}</p>
 <div class="flex flex-wrap gap-2 mt-3">
 {% for role in member.roles %}
-<span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-white/20 text-white text-[11px] font-bold backdrop-blur">{{ role }}</span>
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full bg-white/15 text-white text-[11px] font-semibold">{{ role }}</span>
 {% endfor %}
 </div>
 </div>
-<div class="text-right">
-<p class="text-[11px] font-bold uppercase tracking-wider text-indigo-300">Active Role</p>
-<p class="text-[14px] font-semibold mt-0.5">{{ member.active_role }}</p>
-<p class="text-[11px] text-indigo-300 mt-1">FY{{ fy }}</p>
+<div class="text-right shrink-0">
+<p class="text-[11px] font-semibold uppercase tracking-wider text-white/60">Active Role</p>
+<p class="text-[13px] font-semibold mt-0.5">{{ member.active_role }}</p>
+<p class="text-[11px] text-white/60 mt-1">FY{{ fy }}</p>
 </div>
 </div>
 </div>
 
 <!-- Stats Strip -->
-<div class="grid grid-cols-3 gap-4">
-<div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm text-center">
-<p class="text-[28px] font-semibold text-indigo-600">{{ total_activities }}</p>
-<p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-1">Total Activities</p>
-</div>
-<div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm text-center">
-<p class="text-[28px] font-semibold text-emerald-600">{{ completed }}</p>
-<p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-1">Completed</p>
-</div>
-<div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm text-center">
-<p class="text-[28px] font-semibold text-violet-600">{{ completion_rate }}%</p>
-<p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mt-1">Completion Rate</p>
-</div>
-</div>
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
 
 <!-- Account Details -->
-<div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm">
+<div class="card p-0 overflow-hidden">
 <div class="px-5 py-4 border-b border-slate-100">
-<h2 class="text-[14px] font-semibold text-slate-700">Account Details</h2>
+<h2 class="text-[14px] font-semibold text-slate-800">Account Details</h2>
 </div>
-<div class="px-5 py-4 space-y-4">
+<div class="px-5 py-4 space-y-3">
 <div class="flex items-center justify-between py-2 border-b border-slate-50">
 <span class="text-[12px] font-semibold text-slate-500">Full Name</span>
-<span class="text-[14px] font-bold text-slate-800">{{ member.name }}</span>
+<span class="text-[13px] font-semibold text-slate-800">{{ member.name }}</span>
 </div>
 <div class="flex items-center justify-between py-2 border-b border-slate-50">
 <span class="text-[12px] font-semibold text-slate-500">Email</span>
-<span class="text-[14px] font-bold text-slate-800">{{ member.email }}</span>
+<span class="text-[13px] font-semibold text-slate-800">{{ member.email }}</span>
 </div>
 <div class="flex items-center justify-between py-2 border-b border-slate-50">
 <span class="text-[12px] font-semibold text-slate-500">Status</span>
-<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-bold">
-<span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-{{ member.status|title }}
-</span>
+{% include "components/badge.html" with tone="success" label=member.status|title dot="true" %}
 </div>
 <div class="flex items-center justify-between py-2">
 <span class="text-[12px] font-semibold text-slate-500">Roles</span>
 <div class="flex gap-1.5">
 {% for role in member.roles %}
-<span class="inline-flex items-center px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-[11px] font-bold">{{ role }}</span>
+{% include "components/badge.html" with tone="info" label=role %}
 {% endfor %}
 </div>
 </div>
@@ -74,36 +61,38 @@
 </div>
 
 <!-- Recent Activity -->
-{% if recent %}
-<div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm">
+<div class="card p-0 overflow-hidden">
 <div class="px-5 py-4 border-b border-slate-100">
-<h2 class="text-[14px] font-semibold text-slate-700">Recent Activity</h2>
+<h2 class="text-[14px] font-semibold text-slate-800">Recent Activity</h2>
 </div>
+{% if recent %}
 <ul class="divide-y divide-slate-100">
 {% for act in recent %}
 <li class="px-5 py-3.5 flex items-center justify-between">
-<div>
-<p class="text-[12px] font-bold text-slate-800">{{ act.activity_type|title }}{% if act.school %} @ {{ act.school.name }}{% endif %}</p>
-<p class="text-[11px] text-slate-400">{{ act.planned_date|default:"No date" }} · {{ act.status }}</p>
+<div class="min-w-0">
+<p class="text-[12.5px] font-semibold text-slate-800">{{ act.activity_type|title }}{% if act.school %} @ {{ act.school.name }}{% endif %}</p>
+<p class="text-[11px] text-slate-400">{{ act.planned_date|default:"No date" }} · {{ act.status|title }}</p>
 </div>
-<a href="/my-plan/{{ act.id }}" class="text-[11px] text-slate-400 hover:text-indigo-600 transition-colors">→</a>
+<a href="/my-plan/{{ act.id }}" class="text-[11px] text-slate-400 hover:text-[var(--color-edify-primary)] transition-colors">View →</a>
 </li>
 {% endfor %}
 </ul>
-</div>
+{% else %}
+{% include "components/empty_state.html" with title="No activity yet" message="Activities you're responsible for will appear here." compact="true" %}
 {% endif %}
+</div>
 
 <!-- Switch Role -->
 {% if request.user.roles|length > 1 %}
-<div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm p-5">
-<h2 class="text-[14px] font-semibold text-slate-700 mb-3">Switch Active Role</h2>
+<div class="card p-5">
+<h2 class="text-[14px] font-semibold text-slate-800 mb-3">Switch Active Role</h2>
 <div class="flex flex-wrap gap-2">
 {% for role in request.user.role_enums %}
 <form action="/auth/switch-role" method="post" class="m-0">
 {% csrf_token %}
 <input type="hidden" name="role" value="{{ role.value }}">
-<button type="submit" class="px-3 py-2 rounded-lg text-[12px] font-bold transition-all
-{% if request.user.active_role == role.value %}bg-indigo-600 text-white{% else %}bg-slate-100 text-slate-600 hover:bg-indigo-50 hover:text-indigo-700{% endif %}">
+<button type="submit" class="px-3 py-2 rounded-xl text-[12px] font-semibold transition-all
+{% if request.user.active_role == role.value %}bg-[var(--color-edify-primary)] text-white{% else %}bg-slate-100 text-slate-600 hover:bg-slate-200{% endif %}">
 {{ role.value }}
 </button>
 </form>

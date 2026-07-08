@@ -3,18 +3,14 @@
 {% block title %}Upload History — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6 font-sans">
+<div class="p-6 max-w-7xl mx-auto space-y-5 font-sans">
 
-<!-- Header -->
-<div class="flex items-center justify-between border-b border-slate-200 pb-4">
-<div>
-<h1 class="text-[20px] font-semibold text-slate-800 tracking-tight">School Upload History</h1>
-<p class="text-[12px] text-slate-400 font-semibold mt-0.5">Audit uploaded school files, successful records, row breakdowns, and rollback status</p>
-</div>
-</div>
+{% include "components/page_header.html" with title="School Upload History" subtitle="Audit uploaded school files, row breakdowns, and rollback status." %}
+
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
 
 <!-- Listings Table -->
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+<div class="card p-0 overflow-hidden">
 <div class="overflow-x-auto">
 <table class="w-full text-[12px] border-collapse">
 <thead>
@@ -30,13 +26,11 @@
 {% for batch in batches %}
 <tr class="hover:bg-slate-50/50 transition-colors">
 <td class="px-5 py-4">
-<span class="font-semibold text-slate-800 block">{{ batch.file_name|default:batch.original_file_name }}</span>
-<span class="text-[11px] text-slate-400 font-bold block mt-0.5">Uploaded at {{ batch.created_at|date:"M d, Y H:i" }} by User ID: {{ batch.uploaded_by }}</span>
+<span class="font-semibold text-slate-800 block">{{ batch.file_name|default:batch.original_file_name|default:"Untitled upload" }}</span>
+<span class="text-[11px] text-slate-400 font-semibold block mt-0.5">Uploaded {{ batch.created_at|date:"M d, Y H:i" }} by {{ batch.uploaded_by_name }}</span>
 </td>
 <td class="px-4 py-4 text-slate-500 font-semibold">
-<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider bg-slate-100 text-slate-700">
-{{ batch.upload_type }}
-</span>
+{% include "components/badge.html" with tone="neutral" label=batch.upload_type|capfirst %}
 <span class="block text-[11px] text-slate-400 mt-1">Source: {{ batch.source }}</span>
 </td>
 <td class="px-4 py-4 font-semibold">
@@ -54,48 +48,39 @@
 </td>
 <td class="px-4 py-4">
 {% if batch.status == 'completed' %}
-<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700">
-<span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-<span>Completed</span>
-</span>
-{% elif batch.status == 'failed' %}
-<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700">
-<span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span>
-<span>Failed / Rolled Back</span>
-</span>
+{% include "components/badge.html" with tone="success" label="Completed" dot="true" %}
+{% elif batch.status == 'failed' or batch.status == 'rejected' %}
+{% include "components/badge.html" with tone="danger" label="Failed / Rolled Back" dot="true" %}
 {% else %}
-<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700">
-<span class="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
-<span>{{ batch.status|capfirst }}</span>
-</span>
+{% include "components/badge.html" with tone="info" label=batch.status|capfirst dot="true" %}
 {% endif %}
 {% if batch.error_summary %}
-<p class="text-[11px] text-slate-400 font-bold mt-1 max-w-[240px] truncate" title="{{ batch.error_summary }}">
+<p class="text-[11px] text-slate-400 font-semibold mt-1 max-w-[240px] truncate" title="{{ batch.error_summary }}">
 {{ batch.error_summary }}
 </p>
 {% endif %}
 </td>
 <td class="px-5 py-4 text-right">
 {% if batch.status == 'completed' %}
-<form method="post" action="/admin/school-upload-history" onsubmit="return confirm('Are you sure you want to rollback all rows created by this file? This will restore original DB records.')">
+<form method="post" action="{% url 'frontend:admin_school_upload_history' %}" onsubmit="return confirm('Are you sure you want to rollback all rows created by this file? This will restore original DB records.')">
 {% csrf_token %}
 <input type="hidden" name="rollback_id" value="{{ batch.id }}">
-<button 
-type="submit" 
-class="px-2.5 py-1 border border-rose-200 hover:border-rose-500 hover:bg-rose-50 text-rose-600 hover:text-rose-800 rounded text-[11px] font-semibold uppercase tracking-wider transition-all focus:outline-none"
+<button
+type="submit"
+class="px-2.5 py-1 border border-rose-200 hover:border-rose-500 hover:bg-rose-50 text-rose-600 hover:text-rose-800 rounded-lg text-[11px] font-semibold uppercase tracking-wider transition-all focus:outline-none"
 >
 Rollback
 </button>
 </form>
 {% else %}
-<span class="text-[11px] text-slate-300 font-bold uppercase tracking-wider">Locked</span>
+<span class="text-[11px] text-slate-300 font-semibold uppercase tracking-wider">Locked</span>
 {% endif %}
 </td>
 </tr>
 {% empty %}
 <tr>
-<td colspan="5" class="px-5 py-8 text-center text-slate-400 font-semibold">
-No upload files have been logged in the system.
+<td colspan="5" class="p-0">
+{% include "components/empty_state.html" with title="No uploads logged" message="School and SSA file batch imports will appear here." %}
 </td>
 </tr>
 {% endfor %}

@@ -1,21 +1,57 @@
 {% extends "layouts/shell.html" %}
+{% load frontend_filters %}
 
 {% block title %}Audit Log — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6">
+<div class="p-6 max-w-7xl mx-auto space-y-5 font-sans">
 
-<div class="flex items-center justify-between">
-<div>
-<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight">Audit Log</h1>
-<p class="text-[12px] text-[var(--text-secondary)] mt-1 font-semibold">Edify Operations · Audit Log</p>
-</div>
-</div>
+{% include "components/page_header.html" with title="Audit Log" subtitle="Tamper-evident trail of security-relevant actions across the platform." %}
 
-<div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm overflow-hidden">
-{% if logs %}<table class="w-full text-[12px]"><thead><tr class="bg-slate-50/60 border-b border-slate-100"><th class="text-left px-5 py-3 text-[11px] font-bold uppercase text-slate-400">Action</th><th class="text-left px-4 py-3 text-[11px] font-bold uppercase text-slate-400">Time</th></tr></thead>
-<tbody class="divide-y divide-slate-100">{% for l in logs %}<tr><td class="px-5 py-3.5 font-bold text-slate-800">{{ l.action }}</td><td class="px-4 py-3.5 text-slate-500">{{ l.created_at }}</td></tr>{% endfor %}</tbody></table>
-{% else %}<div class="p-12 text-center"><p class="text-[36px] mb-3">📋</p><p class="text-[14px] font-bold text-slate-600">No audit records</p></div>{% endif %}
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
+
+<div class="card p-0 overflow-hidden">
+{% if logs %}
+<div class="overflow-x-auto">
+<table class="w-full text-[12px]">
+<thead>
+<tr class="bg-slate-50/60 border-b border-slate-100">
+<th class="text-left px-5 py-3 text-[11px] font-semibold uppercase text-slate-400">Action</th>
+<th class="text-left px-4 py-3 text-[11px] font-semibold uppercase text-slate-400">Subject</th>
+<th class="text-left px-4 py-3 text-[11px] font-semibold uppercase text-slate-400">Actor</th>
+<th class="text-center px-4 py-3 text-[11px] font-semibold uppercase text-slate-400">Result</th>
+<th class="text-left px-4 py-3 text-[11px] font-semibold uppercase text-slate-400">Time</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100">
+{% for l in logs %}
+<tr class="hover:bg-slate-50/50 transition-colors">
+<td class="px-5 py-3.5">
+<span class="font-semibold text-slate-800">{{ l.action|replace_underscore }}</span>
+{% if l.reason %}<p class="text-[11px] text-slate-400 font-medium mt-0.5">{{ l.reason }}</p>{% endif %}
+</td>
+<td class="px-4 py-3.5 text-slate-500 font-medium">
+{% if l.subject_kind %}{{ l.subject_kind }}{% if l.subject_id %} · <span class="font-mono text-[11px]">{{ l.subject_id|slice:":10" }}</span>{% endif %}{% else %}—{% endif %}
+</td>
+<td class="px-4 py-3.5 text-slate-700 font-semibold">
+{{ l.actor_name }}{% if l.actor_role %} <span class="text-slate-400 font-medium">({{ l.actor_role }})</span>{% endif %}
+</td>
+<td class="px-4 py-3.5 text-center">
+{% if l.success %}
+{% include "components/badge.html" with tone="success" label="Success" %}
+{% else %}
+{% include "components/badge.html" with tone="danger" label="Denied" %}
+{% endif %}
+</td>
+<td class="px-4 py-3.5 text-slate-500 font-medium whitespace-nowrap">{{ l.created_at|date:"M d, Y H:i" }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% else %}
+{% include "components/empty_state.html" with title="No audit records" message="Security-relevant actions will be logged here as they happen." %}
+{% endif %}
 </div>
 
 </div>

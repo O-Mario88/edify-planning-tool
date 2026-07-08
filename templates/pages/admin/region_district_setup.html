@@ -3,34 +3,30 @@
 {% block title %}District Setup — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6 font-sans">
+<div class="p-6 max-w-7xl mx-auto space-y-5 font-sans">
 
-<!-- Header -->
-<div class="flex items-center justify-between border-b border-slate-200 pb-4">
-<div>
-<h1 class="text-[20px] font-semibold text-slate-800 tracking-tight">Geographical Location Setup</h1>
-<p class="text-[12px] text-slate-400 font-semibold mt-0.5">Manage administrative levels, regions, districts, and parishes</p>
-</div>
-</div>
+{% include "components/page_header.html" with title="Geographical Location Setup" subtitle="Manage administrative levels, regions, and districts." %}
 
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+{% include "components/kpi_strip.html" with items=kpi_strip_items %}
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
 
 <!-- Left 2 cols: Regional Listing & Districts Table -->
-<div class="lg:col-span-2 space-y-6">
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden p-5 space-y-4">
-<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Active Districts by Region</h3>
+<div class="lg:col-span-2 space-y-5">
+<div class="card p-5 space-y-4">
+<h3 class="text-[14px] font-semibold text-slate-800">Active Districts by Region</h3>
 
 <div class="space-y-4">
 {% for region in regions %}
 <div class="border border-slate-100 rounded-xl p-4 space-y-3">
-<div class="flex items-center justify-between bg-slate-50 px-3 py-2 rounded-lg">
+<div class="flex items-center justify-between bg-slate-50 px-3 py-2 rounded-xl">
 <span class="text-[12px] font-semibold text-slate-800 uppercase tracking-wider">{{ region.name }} Region</span>
 <span class="bg-blue-100 text-blue-800 text-[11px] font-semibold px-2 py-0.5 rounded-full">
-{{ region.districts.count }} District(s)
+{{ region.districts.count }} District{{ region.districts.count|pluralize }}
 </span>
 </div>
 
-<div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[12px] font-bold text-slate-600">
+<div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[12px] font-semibold text-slate-600">
 {% for dist in region.districts.all %}
 <div class="bg-slate-50/50 hover:bg-slate-50 border border-slate-100 rounded-lg p-2 flex items-center justify-between transition-all">
 <span class="truncate">{{ dist.name }}</span>
@@ -41,36 +37,38 @@
 {% endfor %}
 </div>
 </div>
+{% empty %}
+{% include "components/empty_state.html" with title="No regions configured" message="Create a region first before adding districts." %}
 {% endfor %}
 </div>
 </div>
 </div>
 
 <!-- Right 1 col: Add District Form -->
-<div class="space-y-6">
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-4">
-<h3 class="text-[14px] font-semibold text-slate-800 uppercase tracking-wider border-b border-slate-50 pb-2">Add New District</h3>
+<div class="space-y-5">
+<div class="card p-5 space-y-4">
+<h3 class="text-[14px] font-semibold text-slate-800 border-b border-slate-50 pb-2">Add New District</h3>
 
-<form method="post" action="/admin/region-district-setup" class="space-y-4">
+<form method="post" action="{% url 'frontend:admin_region_district_setup' %}" class="space-y-4">
 {% csrf_token %}
 
 <div class="space-y-1">
 <label class="text-[11px] font-semibold uppercase text-slate-400 tracking-wider">District Name</label>
-<input 
-type="text" 
-name="district_name" 
-placeholder="e.g. Mukono" 
+<input
+type="text"
+name="district_name"
+placeholder="e.g. Mukono"
 required
-class="w-full rounded-lg border border-slate-200 px-3 py-2 text-[12px] focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10"
+class="w-full rounded-xl border border-slate-200 px-3 py-2 text-[12px] font-semibold focus:outline-none focus:border-[var(--color-edify-primary)] focus:ring-2 focus:ring-[var(--color-edify-primary)]/10"
 >
 </div>
 
 <div class="space-y-1">
 <label class="text-[11px] font-semibold uppercase text-slate-400 tracking-wider">Region Assignment</label>
-<select 
-name="region_id" 
+<select
+name="region_id"
 required
-class="w-full rounded-lg border border-slate-200 px-3 py-2 text-[12px] bg-white focus:outline-none focus:border-blue-500"
+class="w-full rounded-xl border border-slate-200 px-3 py-2 text-[12px] font-semibold bg-white focus:outline-none focus:border-[var(--color-edify-primary)]"
 >
 <option value="">Select Region...</option>
 {% for region in regions %}
@@ -79,9 +77,9 @@ class="w-full rounded-lg border border-slate-200 px-3 py-2 text-[12px] bg-white 
 </select>
 </div>
 
-<button 
-type="submit" 
-class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-[11px] font-semibold uppercase tracking-wider text-center transition-all focus:outline-none"
+<button
+type="submit"
+class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-xl text-[11px] font-semibold uppercase tracking-wider text-center transition-all focus:outline-none"
 >
 Create District
 </button>
