@@ -3,12 +3,12 @@
 {% block title %}Admin Dashboard — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6 font-sans">
+<div class="px-4 sm:px-6 py-5 space-y-4" style="max-width:1500px;margin:0 auto;">
 
 <!-- Header section -->
 <div class="flex items-center justify-between border-b border-slate-200 pb-4">
 <div>
-<h1 class="text-[20px] font-semibold text-slate-800 tracking-tight flex items-center gap-2">
+<h1 class="text-[21px] font-extrabold tracking-tight flex items-center gap-2">
 <span>Admin Dashboard</span>
 <span class="bg-blue-100 text-blue-800 font-semibold text-[11px] px-2 py-0.5 rounded-full">System Control</span>
 </h1>
@@ -50,17 +50,17 @@ class="flex items-center gap-1.5 px-3 py-2  hover:bg-slate-50 text-slate-600 hov
 </div>
 <div class="grid grid-cols-2 gap-3 text-center">
 <div class="bg-slate-50 rounded-lg p-2.5">
-<p class="text-[18px] font-semibold text-slate-800">{{ user_count }}</p>
+<p class="text-[21px] font-extrabold tracking-tight">{{ user_count }}</p>
 <p class="text-[11px] font-bold text-slate-400 uppercase mt-0.5">Total Users</p>
 </div>
 <div class="bg-emerald-50/50 rounded-lg p-2.5">
-<p class="text-[18px] font-semibold text-emerald-700">{{ active_users }}</p>
+<p class="text-[21px] font-extrabold tracking-tight text-emerald-700">{{ active_users }}</p>
 <p class="text-[11px] font-bold text-emerald-600 uppercase mt-0.5">Active</p>
 </div>
 </div>
 <div class="text-[12px] font-bold text-slate-500 flex justify-between">
-<span>Pending Invites: <strong class="text-slate-700">2</strong></span>
-<span>Suspended: <strong class="text-rose-600">0</strong></span>
+<span>Pending Invites: <strong class="text-slate-700">{{ pending_invites }}</strong></span>
+<span>Suspended: <strong class="text-rose-600">{{ suspended_users }}</strong></span>
 </div>
 </div>
 
@@ -76,11 +76,11 @@ class="flex items-center gap-1.5 px-3 py-2  hover:bg-slate-50 text-slate-600 hov
 </div>
 <div class="grid grid-cols-2 gap-3 text-center">
 <a href="/admin-panel/staff-setup-queue" class="bg-amber-50/50 rounded-lg p-2.5 hover:bg-amber-100/50 transition-all block">
-<p class="text-[18px] font-semibold text-amber-700">Pending</p>
+<p class="text-[21px] font-extrabold tracking-tight text-amber-700">Pending</p>
 <p class="text-[11px] font-bold text-amber-600 uppercase mt-0.5">Unmatched Staff</p>
 </a>
 <a href="/admin-panel/data-quality-center" class="bg-rose-50/50 rounded-lg p-2.5 hover:bg-rose-100/50 transition-all block">
-<p class="text-[18px] font-semibold text-rose-700">Scanner</p>
+<p class="text-[21px] font-extrabold tracking-tight text-rose-700">Scanner</p>
 <p class="text-[11px] font-bold text-rose-600 uppercase mt-0.5">Quality Center</p>
 </a>
 </div>
@@ -99,11 +99,11 @@ class="flex items-center gap-1.5 px-3 py-2  hover:bg-slate-50 text-slate-600 hov
 </div>
 <div class="grid grid-cols-2 gap-3 text-center">
 <a href="/admin-panel/workflow-rules" class="bg-emerald-50/50 rounded-lg p-2.5 hover:bg-emerald-100/50 transition-all block">
-<p class="text-[18px] font-semibold text-emerald-700">Active</p>
+<p class="text-[21px] font-extrabold tracking-tight text-emerald-700">Active</p>
 <p class="text-[11px] font-bold text-emerald-600 uppercase mt-0.5">Workflow Rules</p>
 </a>
 <a href="/system-health" class="bg-blue-50/50 rounded-lg p-2.5 hover:bg-blue-100/50 transition-all block">
-<p class="text-[18px] font-semibold text-blue-700">Integrity</p>
+<p class="text-[21px] font-extrabold tracking-tight text-blue-700">Integrity</p>
 <p class="text-[11px] font-bold text-blue-600 uppercase mt-0.5">System Health</p>
 </a>
 </div>
@@ -187,6 +187,7 @@ class="flex items-center gap-1.5 px-3 py-2  hover:bg-slate-50 text-slate-600 hov
 </h3>
 
 <div class="space-y-3">
+{% if unmatched_staff_schools > 0 %}
 <!-- Alert 1 -->
 <div class="flex gap-3 p-3 bg-rose-50/50 rounded-xl border border-rose-100">
 <svg class="h-4 w-4 text-rose-600 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -194,10 +195,12 @@ class="flex items-center gap-1.5 px-3 py-2  hover:bg-slate-50 text-slate-600 hov
 </svg>
 <div>
 <p class="text-[11px] font-semibold text-rose-800">Unmatched staff queue pending</p>
-<p class="text-[11px] text-rose-600 font-semibold mt-0.5">Please review the setup queue to link school files with real users.</p>
+<p class="text-[11px] text-rose-600 font-semibold mt-0.5">{{ unmatched_staff_schools }} school{{ unmatched_staff_schools|pluralize }} with unmatched staff. Please review the setup queue to link school files with real users.</p>
 </div>
 </div>
+{% endif %}
 
+{% if missing_cost_lines > 0 %}
 <!-- Alert 2 -->
 <div class="flex gap-3 p-3 bg-amber-50/50 rounded-xl border border-amber-100">
 <svg class="h-4 w-4 text-amber-600 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -205,9 +208,22 @@ class="flex items-center gap-1.5 px-3 py-2  hover:bg-slate-50 text-slate-600 hov
 </svg>
 <div>
 <p class="text-[11px] font-semibold text-amber-800">Broken workflow warning</p>
-<p class="text-[11px] text-amber-600 font-semibold mt-0.5">2 activities scheduled are currently missing cost catalogue entries.</p>
+<p class="text-[11px] text-amber-600 font-semibold mt-0.5">{{ missing_cost_lines }} activit{{ missing_cost_lines|pluralize:"y,ies" }} scheduled are currently missing cost catalogue entries.</p>
 </div>
 </div>
+{% endif %}
+
+{% if unmatched_staff_schools == 0 and missing_cost_lines == 0 %}
+<div class="flex gap-3 p-3 bg-emerald-50/50 rounded-xl border border-emerald-100">
+<svg class="h-4 w-4 text-emerald-600 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+</svg>
+<div>
+<p class="text-[11px] font-semibold text-emerald-800">No active alerts</p>
+<p class="text-[11px] text-emerald-600 font-semibold mt-0.5">Staff matching and cost catalogue coverage are both clean.</p>
+</div>
+</div>
+{% endif %}
 </div>
 
 <a 

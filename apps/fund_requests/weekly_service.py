@@ -24,7 +24,9 @@ def parse_date(d_str: str) -> date:
         raise BadRequest(f"Invalid date format: {d_str}") from exc
 
 
-def generate_weekly_fund_request(responsible_user_id: str, week_start_date_str: str) -> WeeklyFundRequest | None:
+def generate_weekly_fund_request(
+    responsible_user_id: str, week_start_date_str: str
+) -> WeeklyFundRequest | None:
     """Generate or update the WeeklyFundRequest for a user and week start date.
 
     Finds all scheduled, non-cancelled activities for that week owned by the user,
@@ -35,21 +37,25 @@ def generate_weekly_fund_request(responsible_user_id: str, week_start_date_str: 
     week_end = week_start + timedelta(days=6)
 
     # 1. Find all scheduled activities for the selected week that are not cancelled
-    lines = ActivityScheduleCostLine.objects.filter(
-        responsible_user=responsible_user_id,
-        planned_date__gte=week_start,
-        planned_date__lte=week_end,
-        activity__scheduled_date__isnull=False,
-    ).exclude(
-        activity__status="cancelled"
-    ).select_related("activity")
+    lines = (
+        ActivityScheduleCostLine.objects.filter(
+            responsible_user=responsible_user_id,
+            planned_date__gte=week_start,
+            planned_date__lte=week_end,
+            activity__scheduled_date__isnull=False,
+        )
+        .exclude(activity__status="cancelled")
+        .select_related("activity")
+    )
 
     total_amount = sum(line.amount for line in lines)
     fy = get_operational_fy(week_start)
 
     with transaction.atomic():
         # Check if request already exists
-        wfr = WeeklyFundRequest.objects.filter(responsible_user=responsible_user_id, week_start_date=week_start).first()
+        wfr = WeeklyFundRequest.objects.filter(
+            responsible_user=responsible_user_id, week_start_date=week_start
+        ).first()
         if not lines.exists():
             # If no lines exist, and there is a draft request, we delete it
             if wfr and wfr.status == "pending_responsible_confirmation":
@@ -57,14 +63,21 @@ def generate_weekly_fund_request(responsible_user_id: str, week_start_date_str: 
                 wfr.delete()
             return None
 
-        # If a request exists and is already confirmed/disbursed, we shouldn't reset its status
-        # but we can update the total amount.
+        # Once a request has left the draft state (submitted, approved,
+        # confirmed for advance, self-funded, disbursed, ...), a later
+        # schedule/reschedule that re-triggers this sync must NEVER silently
+        # rewrite its amount or delete+rebuild its line items — that would
+        # let a newly-scheduled activity mutate a figure someone already
+        # approved or a payment already disbursed against. This function now
+        # fires automatically on every activity schedule (no manual "Generate
+        # Request" step), so this guard is the difference between "auto"
+        # meaning convenient and "auto" meaning finance-unsafe.
+        if wfr and wfr.status != "pending_responsible_confirmation":
+            return wfr
+
         if wfr:
             wfr.total_amount = total_amount
-            # Only update status if it is still a draft/pending
-            if wfr.status == "pending_responsible_confirmation":
-                wfr.status = "pending_responsible_confirmation"
-            wfr.save()
+            wfr.save(update_fields=["total_amount", "updated_at"])
         else:
             wfr = WeeklyFundRequest.objects.create(
                 fy=fy,
@@ -77,29 +90,41 @@ def generate_weekly_fund_request(responsible_user_id: str, week_start_date_str: 
 
         # Sync lines
         wfr.lines.all().delete()
-        WeeklyFundRequestLine.objects.bulk_create([
-            WeeklyFundRequestLine(
-                weekly_fund_request=wfr,
-                activity_budget_line=line,
-                line_item_type=line.line_item_type or "other",
-                description=line.label,
-                quantity=line.quantity,
-                unit_cost=line.unit_cost,
-                total_cost=line.amount,
-                currency=line.currency,
-            )
-            for line in lines
-        ])
+        WeeklyFundRequestLine.objects.bulk_create(
+            [
+                WeeklyFundRequestLine(
+                    weekly_fund_request=wfr,
+                    activity_budget_line=line,
+                    line_item_type=line.line_item_type or "other",
+                    description=line.label,
+                    quantity=line.quantity,
+                    unit_cost=line.unit_cost,
+                    total_cost=line.amount,
+                    currency=line.currency,
+                )
+                for line in lines
+            ]
+        )
 
     return wfr
 
 
-def trigger_generate_for_activity(activity: Activity) -> None:
-    """Convenience helper to auto-trigger weekly request generation on activity schedule/reschedule."""
-    if activity.scheduled_date and activity.responsible_staff_id and activity.status != "cancelled":
+def trigger_generate_for_activity(
+    activity: Activity, responsible_user_id: str | None = None
+) -> None:
+    """Convenience helper to auto-trigger weekly request generation on activity schedule/reschedule.
+
+    responsible_user_id must be the SAME identifier stamped onto the activity's
+    cost lines (User.id). Activity.responsible_staff_id may hold a StaffProfile
+    id instead, in which case the generator's line filter matches nothing and
+    the weekly request silently never materialises — so callers that know the
+    scheduling principal should pass it explicitly.
+    """
+    owner = responsible_user_id or activity.responsible_staff_id
+    if activity.scheduled_date and owner and activity.status != "cancelled":
         planned_date = activity.scheduled_date.date()
         week_start = planned_date - timedelta(days=planned_date.weekday())
-        generate_weekly_fund_request(activity.responsible_staff_id, week_start.isoformat())
+        generate_weekly_fund_request(owner, week_start.isoformat())
 
 
 def list_weekly_requests(query: dict, principal) -> list[dict]:
@@ -116,6 +141,7 @@ def list_weekly_requests(query: dict, principal) -> list[dict]:
         q = Q(responsible_user=principal.user_id)
         if scope.supervised_staff_ids:
             from apps.accounts.models import StaffProfile
+
             supervised_user_ids = StaffProfile.objects.filter(
                 id__in=scope.supervised_staff_ids,
             ).values_list("user_id", flat=True)
@@ -136,6 +162,7 @@ def get_weekly_request(request_id: str, principal) -> dict:
     if not scope.country_scope and wfr.responsible_user != principal.user_id:
         if scope.supervised_staff_ids:
             from apps.accounts.models import StaffProfile
+
             supervised_user_ids = StaffProfile.objects.filter(
                 id__in=scope.supervised_staff_ids,
             ).values_list("user_id", flat=True)
@@ -147,43 +174,315 @@ def get_weekly_request(request_id: str, principal) -> dict:
     return _serialize_request(wfr, include_lines=True)
 
 
+# Approval routing by the OWNER's role — the mandate's finance law: a CCEO's
+# weekly request is approved by their Program Lead; a PL's own field-work
+# request is approved by the Country Director (a PL never self-approves);
+# Project Coordinator / IA / Accountant requests route to the CD as well.
+# CD/Admin-owned requests (rare) carry country authority already and go
+# straight to the accountant queue.
+_ROUTE_TO_PL = ("CCEO",)
+_ROUTE_TO_CD = ("Program Lead", "ProjectCoordinator", "ImpactAssessment", "Accountant")
+_ROUTE_DIRECT = ("CountryDirector", "Admin")
+
+
+def _owner_role(wfr: WeeklyFundRequest) -> str:
+    """The request owner's role, for approval routing. Prefers the role
+    stamped on the request, else the owner User's active role."""
+    if wfr.responsible_role:
+        return wfr.responsible_role
+    from apps.accounts.models import User
+
+    owner = User.objects.filter(id=wfr.responsible_user).first()
+    if not owner:
+        return "CCEO"
+    role = owner.active_role or ""
+    if role:
+        return role
+    return (owner.roles or ["CCEO"])[0]
+
+
+def _submission_status_for(owner_role: str) -> str:
+    if owner_role in _ROUTE_TO_PL:
+        return "submitted_to_pl"
+    if owner_role in _ROUTE_DIRECT:
+        return "confirmed_for_advance"
+    return "submitted_to_cd"
+
+
+def _sync_advances(wfr: WeeklyFundRequest, status: str, advance_type: str) -> None:
+    now = timezone.now()
+    for line in wfr.lines.select_related("activity_budget_line"):
+        adv = line.activity_budget_line.advance_requests.first()
+        if adv:
+            adv.status = status
+            adv.advance_type = advance_type
+            adv.confirmed_at = now
+            adv.save(
+                update_fields=["status", "advance_type", "confirmed_at", "updated_at"]
+            )
+
+
 def request_advance(request_id: str, principal) -> dict:
-    """Confirm the weekly request -> status confirmed_for_advance (Accountant may disburse)."""
+    """The responsible user submits the weekly request for approval.
+
+    Routing (owner's role, not the caller's): CCEO -> submitted_to_pl,
+    PL/PC/IA/Accountant -> submitted_to_cd, CD/Admin -> straight to
+    confirmed_for_advance. Only an APPROVED request reaches the accountant
+    queue — submission alone never does."""
     with transaction.atomic():
-        wfr = WeeklyFundRequest.objects.select_for_update().filter(id=request_id).first()
+        wfr = (
+            WeeklyFundRequest.objects.select_for_update().filter(id=request_id).first()
+        )
         if not wfr:
             raise NotFoundError("Weekly fund request not found.")
-        if wfr.responsible_user != principal.user_id and not getattr(principal, "country_scope", False):
+        if wfr.responsible_user != principal.user_id and not getattr(
+            principal, "country_scope", False
+        ):
             raise Forbidden("Only the owner can confirm this request.")
-        if wfr.status not in ("pending_responsible_confirmation", "not_requested"):
+        if wfr.status not in (
+            "pending_responsible_confirmation",
+            "not_requested",
+            # A returned request is corrected and re-submitted — without these
+            # the returned_* statuses are dead ends with no way back.
+            "returned_by_pl",
+            "returned_by_cd",
+            "returned_by_accountant",
+        ):
             raise BadRequest(f"Cannot request advance in status '{wfr.status}'.")
 
-        wfr.status = "confirmed_for_advance"
+        owner_role = _owner_role(wfr)
+        wfr.status = _submission_status_for(owner_role)
+        wfr.responsible_role = owner_role
         wfr.confirmed_at = timezone.now()
-        wfr.save(update_fields=["status", "confirmed_at", "updated_at"])
+        wfr.save(
+            update_fields=["status", "responsible_role", "confirmed_at", "updated_at"]
+        )
 
-        # Also update linked AdvanceRequests status to keep them in sync
-        for line in wfr.lines.select_related("activity_budget_line"):
-            adv = line.activity_budget_line.advance_requests.first()
-            if adv:
-                adv.status = "confirmed_for_advance"
-                adv.advance_type = "advance"
-                adv.confirmed_at = timezone.now()
-                adv.save(update_fields=["status", "advance_type", "confirmed_at", "updated_at"])
+        if wfr.status == "confirmed_for_advance":
+            _sync_advances(wfr, "confirmed_for_advance", "advance")
+        else:
+            # Confirmed by the owner but not yet approved — the child advances
+            # stay pending so the accountant's advance queue cannot see them
+            # before the approval lands.
+            _sync_advances(wfr, "pending_responsible_confirmation", "advance")
 
+    _audit_weekly(principal, "weekly_fund_request.submit", wfr, {"routed": wfr.status})
+    _notify_weekly_approver(wfr)
     return _serialize_request(wfr)
+
+
+def _require_weekly_approver(wfr: WeeklyFundRequest, principal) -> str:
+    """Validate that the caller may approve/return this request at its current
+    stage. Returns the stage ('pl' or 'cd'). A user can never approve their
+    own request, whatever their role."""
+    if wfr.status not in ("submitted_to_pl", "submitted_to_cd"):
+        raise BadRequest(f"Request is not awaiting approval (status '{wfr.status}').")
+    if wfr.responsible_user == principal.user_id:
+        raise Forbidden("You cannot approve your own fund request.")
+
+    role = getattr(principal, "active_role", "")
+    if wfr.status == "submitted_to_cd":
+        if role not in ("CountryDirector", "Admin"):
+            raise Forbidden("Only the Country Director can act on this request.")
+        return "cd"
+
+    # submitted_to_pl — the PL must actually supervise the owner.
+    if role in ("CountryDirector", "Admin"):
+        return "pl"  # country authority may act in the PL's place
+    if role != "Program Lead":
+        raise Forbidden("Only the owner's Program Lead can act on this request.")
+    from apps.accounts.models import StaffSupervisorAssignment
+
+    supervises = StaffSupervisorAssignment.objects.filter(
+        supervisor__user_id=principal.user_id,
+        supervisee__user_id=wfr.responsible_user,
+    ).exists()
+    if not supervises:
+        raise Forbidden("This request belongs to another Program Lead's team.")
+    return "pl"
+
+
+def approve_weekly_request(request_id: str, principal) -> dict:
+    """PL (for CCEO requests) or CD (for PL/PC/IA requests) approves ->
+    confirmed_for_advance; the request enters the accountant's queue."""
+    with transaction.atomic():
+        wfr = (
+            WeeklyFundRequest.objects.select_for_update().filter(id=request_id).first()
+        )
+        if not wfr:
+            raise NotFoundError("Weekly fund request not found.")
+        stage = _require_weekly_approver(wfr, principal)
+
+        wfr.status = "confirmed_for_advance"
+        wfr.save(update_fields=["status", "updated_at"])
+        _sync_advances(wfr, "confirmed_for_advance", "advance")
+
+    _audit_weekly(principal, "weekly_fund_request.approve", wfr, {"stage": stage})
+    _notify_weekly_owner(
+        wfr,
+        "weekly_fund_request_approved",
+        "Weekly fund request approved",
+        f"Your weekly fund request ({wfr.week_start_date:%b %d} – "
+        f"{wfr.week_end_date:%b %d}) was approved and sent to the Accountant "
+        "for disbursement.",
+    )
+    _notify_weekly_accountants(wfr)
+    return _serialize_request(wfr)
+
+
+def return_weekly_request(request_id: str, data: dict, principal) -> dict:
+    """Approver returns the request for correction -> returned_by_pl/_cd.
+    The owner fixes the underlying schedule and re-submits (request_advance
+    accepts returned_* statuses)."""
+    reason = (data.get("reason") or "").strip()
+    if not reason:
+        raise BadRequest("A return reason is required.")
+    with transaction.atomic():
+        wfr = (
+            WeeklyFundRequest.objects.select_for_update().filter(id=request_id).first()
+        )
+        if not wfr:
+            raise NotFoundError("Weekly fund request not found.")
+        stage = _require_weekly_approver(wfr, principal)
+
+        wfr.status = "returned_by_pl" if stage == "pl" else "returned_by_cd"
+        wfr.save(update_fields=["status", "updated_at"])
+        _sync_advances(wfr, "pending_responsible_confirmation", "advance")
+
+    _audit_weekly(
+        principal, "weekly_fund_request.return", wfr, {"stage": stage, "reason": reason}
+    )
+    _notify_weekly_owner(
+        wfr,
+        "weekly_fund_request_returned",
+        "Weekly fund request returned",
+        f"Your weekly fund request ({wfr.week_start_date:%b %d} – "
+        f"{wfr.week_end_date:%b %d}) was returned for correction. Reason: {reason}",
+    )
+    # The owner's "Fix Fund Request" To-Do derives automatically from the
+    # returned_by_* status (command_center.todo_service._fund_request_todos).
+    return _serialize_request(wfr)
+
+
+def _audit_weekly(principal, action: str, wfr: WeeklyFundRequest, payload: dict):
+    try:
+        from apps.audit.services import log as audit_log
+
+        audit_log(
+            action=action,
+            subject_kind="WeeklyFundRequest",
+            subject_id=wfr.id,
+            actor_id=principal.user_id,
+            actor_role=getattr(principal, "active_role", None),
+            success=True,
+            payload={
+                "week_start": wfr.week_start_date.isoformat(),
+                "total": wfr.total_amount,
+                **payload,
+            },
+        )
+    except Exception:  # noqa: BLE001 - audit must never block the action
+        logger.exception("weekly fund request audit log failed")
+
+
+def _notify_weekly_owner(wfr: WeeklyFundRequest, event: str, title: str, body: str):
+    try:
+        from apps.notifications.services import WorkflowNotificationService
+
+        WorkflowNotificationService.trigger(
+            event_type=event,
+            category="finance",
+            priority="high",
+            title=title,
+            body=body,
+            context_type="WeeklyFundRequest",
+            context_id=wfr.id,
+            recipients=[wfr.responsible_user],
+        )
+    except Exception:  # noqa: BLE001
+        logger.exception("weekly fund request owner notification failed")
+
+
+def _notify_weekly_approver(wfr: WeeklyFundRequest):
+    """Alert whoever must approve the freshly-submitted request."""
+    try:
+        from apps.accounts.models import StaffSupervisorAssignment, User
+        from apps.notifications.services import WorkflowNotificationService
+
+        if wfr.status == "submitted_to_pl":
+            ids = list(
+                StaffSupervisorAssignment.objects.filter(
+                    supervisee__user_id=wfr.responsible_user
+                ).values_list("supervisor__user_id", flat=True)
+            )
+        elif wfr.status == "submitted_to_cd":
+            ids = list(
+                User.objects.filter(
+                    active_role="CountryDirector", is_active=True
+                ).values_list("id", flat=True)
+            )
+        else:
+            return
+        ids = [i for i in ids if i]
+        if not ids:
+            return
+        WorkflowNotificationService.trigger(
+            event_type="weekly_fund_request_submitted",
+            category="finance",
+            priority="high",
+            title="Weekly fund request awaiting your approval",
+            body=f"A weekly fund request ({wfr.week_start_date:%b %d} – "
+            f"{wfr.week_end_date:%b %d}, UGX {wfr.total_amount:,}) needs your review.",
+            context_type="WeeklyFundRequest",
+            context_id=wfr.id,
+            recipients=ids,
+        )
+    except Exception:  # noqa: BLE001
+        logger.exception("weekly fund request approver notification failed")
+
+
+def _notify_weekly_accountants(wfr: WeeklyFundRequest):
+    try:
+        from apps.accounts.models import User
+        from apps.notifications.services import WorkflowNotificationService
+
+        ids = list(
+            User.objects.filter(active_role="Accountant", is_active=True).values_list(
+                "id", flat=True
+            )
+        )
+        if not ids:
+            return
+        WorkflowNotificationService.trigger(
+            event_type="weekly_fund_request_ready",
+            category="finance",
+            priority="high",
+            title="Weekly fund request ready to disburse",
+            body=f"An approved weekly fund request ({wfr.week_start_date:%b %d} – "
+            f"{wfr.week_end_date:%b %d}, UGX {wfr.total_amount:,}) is ready for "
+            "disbursement.",
+            context_type="WeeklyFundRequest",
+            context_id=wfr.id,
+            recipients=ids,
+        )
+    except Exception:  # noqa: BLE001
+        logger.exception("weekly fund request accountant notification failed")
 
 
 def self_funded(request_id: str, principal) -> dict:
     """Elect self-funded reimbursement -> status self_funded."""
     with transaction.atomic():
-        wfr = WeeklyFundRequest.objects.select_for_update().filter(id=request_id).first()
+        wfr = (
+            WeeklyFundRequest.objects.select_for_update().filter(id=request_id).first()
+        )
         if not wfr:
             raise NotFoundError("Weekly fund request not found.")
-        if wfr.responsible_user != principal.user_id and not getattr(principal, "country_scope", False):
+        if wfr.responsible_user != principal.user_id and not getattr(
+            principal, "country_scope", False
+        ):
             raise Forbidden("Only the owner can confirm this request.")
         if wfr.status in ("disbursed", "accounted"):
-            raise BadRequest(f"Cannot change a disbursed request to self-funded.")
+            raise BadRequest("Cannot change a disbursed request to self-funded.")
 
         wfr.status = "self_funded"
         wfr.confirmed_at = timezone.now()
@@ -196,7 +495,14 @@ def self_funded(request_id: str, principal) -> dict:
                 adv.status = "self_funded_pending_reimbursement"
                 adv.advance_type = "self_funded"
                 adv.confirmed_at = timezone.now()
-                adv.save(update_fields=["status", "advance_type", "confirmed_at", "updated_at"])
+                adv.save(
+                    update_fields=[
+                        "status",
+                        "advance_type",
+                        "confirmed_at",
+                        "updated_at",
+                    ]
+                )
 
     return _serialize_request(wfr)
 
@@ -204,13 +510,17 @@ def self_funded(request_id: str, principal) -> dict:
 def not_requested(request_id: str, principal) -> dict:
     """Mark request as not requested yet."""
     with transaction.atomic():
-        wfr = WeeklyFundRequest.objects.select_for_update().filter(id=request_id).first()
+        wfr = (
+            WeeklyFundRequest.objects.select_for_update().filter(id=request_id).first()
+        )
         if not wfr:
             raise NotFoundError("Weekly fund request not found.")
-        if wfr.responsible_user != principal.user_id and not getattr(principal, "country_scope", False):
+        if wfr.responsible_user != principal.user_id and not getattr(
+            principal, "country_scope", False
+        ):
             raise Forbidden("Only the owner can confirm this request.")
         if wfr.status in ("disbursed", "accounted"):
-            raise BadRequest(f"Cannot cancel a disbursed request.")
+            raise BadRequest("Cannot cancel a disbursed request.")
 
         wfr.status = "not_requested"
         wfr.confirmed_at = timezone.now()
@@ -223,7 +533,14 @@ def not_requested(request_id: str, principal) -> dict:
                 adv.status = "not_requested"
                 adv.advance_type = "not_requested"
                 adv.confirmed_at = timezone.now()
-                adv.save(update_fields=["status", "advance_type", "confirmed_at", "updated_at"])
+                adv.save(
+                    update_fields=[
+                        "status",
+                        "advance_type",
+                        "confirmed_at",
+                        "updated_at",
+                    ]
+                )
 
     return _serialize_request(wfr)
 
@@ -231,11 +548,15 @@ def not_requested(request_id: str, principal) -> dict:
 def disburse(request_id: str, data: dict, principal) -> dict:
     """Accountant disburses a confirmed weekly request."""
     with transaction.atomic():
-        wfr = WeeklyFundRequest.objects.select_for_update().filter(id=request_id).first()
+        wfr = (
+            WeeklyFundRequest.objects.select_for_update().filter(id=request_id).first()
+        )
         if not wfr:
             raise NotFoundError("Weekly fund request not found.")
         if wfr.status != "confirmed_for_advance":
-            raise BadRequest("Only a confirmed request can be disbursed by the accountant.")
+            raise BadRequest(
+                "Only a confirmed request can be disbursed by the accountant."
+            )
 
         disbursed_amount = int(data.get("amount", wfr.total_amount))
         now = timezone.now()
@@ -246,7 +567,17 @@ def disburse(request_id: str, data: dict, principal) -> dict:
         wfr.disbursed_by_user_id = principal.user_id
         wfr.disburse_method = data.get("method")
         wfr.disburse_reference = data.get("reference")
-        wfr.save(update_fields=["status", "disbursed_amount", "disbursed_at", "disbursed_by_user_id", "disburse_method", "disburse_reference", "updated_at"])
+        wfr.save(
+            update_fields=[
+                "status",
+                "disbursed_amount",
+                "disbursed_at",
+                "disbursed_by_user_id",
+                "disburse_method",
+                "disburse_reference",
+                "updated_at",
+            ]
+        )
 
         # Also update linked AdvanceRequests status to keep them in sync
         for line in wfr.lines.select_related("activity_budget_line"):
@@ -258,7 +589,17 @@ def disburse(request_id: str, data: dict, principal) -> dict:
                 adv.disbursed_by_user_id = principal.user_id
                 adv.disburse_method = data.get("method")
                 adv.disburse_reference = data.get("reference")
-                adv.save(update_fields=["status", "disbursed_amount", "disbursed_at", "disbursed_by_user_id", "disburse_method", "disburse_reference", "updated_at"])
+                adv.save(
+                    update_fields=[
+                        "status",
+                        "disbursed_amount",
+                        "disbursed_at",
+                        "disbursed_by_user_id",
+                        "disburse_method",
+                        "disburse_reference",
+                        "updated_at",
+                    ]
+                )
 
     return _serialize_request(wfr)
 
@@ -266,7 +607,9 @@ def disburse(request_id: str, data: dict, principal) -> dict:
 def accountant_weekly_queues() -> dict:
     """Return all weekly requests split by status for the accountant dashboard."""
     return {
-        "pending_responsible_confirmation": _list_status("pending_responsible_confirmation"),
+        "pending_responsible_confirmation": _list_status(
+            "pending_responsible_confirmation"
+        ),
         "ready_for_disbursement": _list_status("confirmed_for_advance"),
         "self_funded": _list_status("self_funded"),
         "disbursed": _list_status("disbursed"),
@@ -282,9 +625,18 @@ def _list_status(status: str) -> list[dict]:
 def _serialize_request(wfr: WeeklyFundRequest, include_lines: bool = False) -> dict:
     # Get the user name / details of the responsible owner
     from apps.accounts.models import StaffProfile
-    profile = StaffProfile.objects.filter(user_id=wfr.responsible_user).select_related("user").first()
-    owner_name = profile.user.name if (profile and profile.user) else wfr.responsible_user
-    owner_initials = "".join([part[0].upper() for part in owner_name.split() if part])[:3]
+
+    profile = (
+        StaffProfile.objects.filter(user_id=wfr.responsible_user)
+        .select_related("user")
+        .first()
+    )
+    owner_name = (
+        profile.user.name if (profile and profile.user) else wfr.responsible_user
+    )
+    owner_initials = "".join([part[0].upper() for part in owner_name.split() if part])[
+        :3
+    ]
 
     res = {
         "id": wfr.id,

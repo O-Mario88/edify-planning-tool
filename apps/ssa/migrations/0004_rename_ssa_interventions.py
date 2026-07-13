@@ -67,7 +67,6 @@ def reverse(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("ssa", "0003_alter_ssascore_intervention"),
         ("activities", "0014_alter_activity_focus_intervention_and_more"),

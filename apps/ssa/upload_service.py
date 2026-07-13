@@ -8,6 +8,7 @@ the existing `apps.ssa.services.upload` (so FY/quarter derivation, verification
 provenance, school SSA-status + planning-readiness recompute all stay identical).
 Reporting reuses UploadBatch + UploadBatchRowResult with upload_type="ssa".
 """
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -23,14 +24,13 @@ from . import services
 
 def upload_ssa_file(file, principal) -> dict:
     from apps.schools.models import SSAImportBatch, SSAImportRow, School
-    
+
     raw_headers, data_rows = _read_rows(file)
     if not raw_headers:
         raise BadRequest("The uploaded file is empty — no header row found.")
 
     field_index = M.build_field_index(raw_headers, M.SSA_HEADER_MAP)
     missing = M.missing_required(field_index, M.SSA_REQUIRED_FIELDS)
-    present_interventions = [i for i in M.ALL_INTERVENTIONS if i in field_index]
     missing_interventions = [i for i in M.ALL_INTERVENTIONS if i not in field_index]
     if missing or missing_interventions:
         label = {"school_id": "School ID", "date_of_ssa": "Assessment/SSA Date"}
@@ -50,7 +50,7 @@ def upload_ssa_file(file, principal) -> dict:
         file_name=getattr(file, "name", "ssa_import.xlsx"),
         uploaded_by=principal.user_id,
         status="staged",
-        total_rows=len(data_rows)
+        total_rows=len(data_rows),
     )
 
     counts = {"created": 0, "unmatched": 0, "skipped": 0, "failed": 0}
@@ -59,8 +59,6 @@ def upload_ssa_file(file, principal) -> dict:
     staged_rows = []
 
     for row_number, cells in data_rows:
-        raw_map = {f: _value(field_index, f, cells) for f in field_index}
-
         if not any((cells[i] or "").strip() for i in range(len(cells))):
             counts["skipped"] += 1
             continue
@@ -125,9 +123,12 @@ def upload_ssa_file(file, principal) -> dict:
             counts["failed"] += 1
 
         if status != "blocked":
-            school = School.objects.filter(school_id=school_id, deleted_at__isnull=True).first()
+            school = School.objects.filter(
+                school_id=school_id, deleted_at__isnull=True
+            ).first()
             if school:
                 from apps.core.fy import get_operational_fy
+
                 try:
                     date_parsed = _parse_date(date_raw)
                     current_fy = get_operational_fy()
@@ -136,7 +137,11 @@ def upload_ssa_file(file, principal) -> dict:
                     # Determine the target FY for this row:
                     # 1. If "SSA Year" column is present, use it (last/current/explicit year).
                     # 2. Otherwise derive from the assessment date.
-                    ssa_year_raw = _value(field_index, "ssa_year", cells).strip().lower() if "ssa_year" in field_index else ""
+                    ssa_year_raw = (
+                        _value(field_index, "ssa_year", cells).strip().lower()
+                        if "ssa_year" in field_index
+                        else ""
+                    )
                     if ssa_year_raw in ("last", "previous", "prev"):
                         row_fy = prev_fy
                     elif ssa_year_raw in ("current", "this"):
@@ -154,7 +159,10 @@ def upload_ssa_file(file, principal) -> dict:
                     #         baseline). Once a current-FY record exists, block
                     #         re-upload (one SSA per FY per school).
                     from apps.ssa.models import SsaRecord as _SR
-                    existing_this_fy = _SR.objects.filter(school=school, fy=row_fy, deleted_at__isnull=True).exists()
+
+                    existing_this_fy = _SR.objects.filter(
+                        school=school, fy=row_fy, deleted_at__isnull=True
+                    ).exists()
                     if existing_this_fy:
                         validation_errors.append(
                             f"SSA for FY {row_fy} already exists for this school. "
@@ -165,7 +173,9 @@ def upload_ssa_file(file, principal) -> dict:
                     elif row_fy == current_fy:
                         # Current FY upload: require that a last-FY baseline exists
                         # (either in DB or in this same batch).
-                        has_prev_db = _SR.objects.filter(school=school, fy=prev_fy, deleted_at__isnull=True).exists()
+                        has_prev_db = _SR.objects.filter(
+                            school=school, fy=prev_fy, deleted_at__isnull=True
+                        ).exists()
                         has_prev_batch = any(
                             sr["school_id"] == school_id and sr.get("fy") == prev_fy
                             for sr in staged_rows
@@ -186,29 +196,40 @@ def upload_ssa_file(file, principal) -> dict:
                 if status != "blocked":
                     status = "ready"
                     counts["created"] += 1
-                    staged_rows.append({"school_id": school_id, "date_raw": date_raw, "fy": row_fy})
+                    staged_rows.append(
+                        {"school_id": school_id, "date_raw": date_raw, "fy": row_fy}
+                    )
             else:
                 status = "unmatched"
                 counts["unmatched"] += 1
 
         if validation_errors and status == "blocked":
-            errors.append({"row": row_number, "school_id": school_id, "error": "; ".join(validation_errors)})
+            errors.append(
+                {
+                    "row": row_number,
+                    "school_id": school_id,
+                    "error": "; ".join(validation_errors),
+                }
+            )
 
-        rows_to_create.append(SSAImportRow(
-            batch=batch,
-            row_number=row_number,
-            school_id=school_id,
-            date_of_ssa=date_raw,
-            scores=scores,
-            status=status,
-            validation_errors=validation_errors
-        ))
+        rows_to_create.append(
+            SSAImportRow(
+                batch=batch,
+                row_number=row_number,
+                school_id=school_id,
+                date_of_ssa=date_raw,
+                scores=scores,
+                status=status,
+                validation_errors=validation_errors,
+            )
+        )
 
     if rows_to_create:
         SSAImportRow.objects.bulk_create(rows_to_create)
 
     # Legacy parallel write to keep REST endpoints and unit tests 100% green
     from apps.schools.models import UploadBatch, UploadBatchRowResult
+
     legacy_batch = UploadBatch.objects.create(
         source="csv_upload",
         upload_type="ssa",
@@ -220,19 +241,33 @@ def upload_ssa_file(file, principal) -> dict:
         created_rows=counts["created"],
         updated_rows=0,
         skipped_rows=counts["skipped"],
-        failed_rows=counts["failed"] + counts["unmatched"]
+        failed_rows=counts["failed"] + counts["unmatched"],
     )
-    
+
     legacy_rows = []
     for r in rows_to_create:
-        legacy_rows.append(UploadBatchRowResult(
-            upload_batch=legacy_batch,
-            row_number=r.row_number,
-            school_id=r.school_id,
-            status="created" if r.status == "ready" else "failed" if r.status in ("blocked", "unmatched") else "skipped",
-            error_message="; ".join(r.validation_errors) if r.validation_errors else "School not in directory" if r.status == "unmatched" else "",
-            raw_data_json={"schoolId": r.school_id, "dateOfSsa": r.date_of_ssa, "scores": r.scores}
-        ))
+        legacy_rows.append(
+            UploadBatchRowResult(
+                upload_batch=legacy_batch,
+                row_number=r.row_number,
+                school_id=r.school_id,
+                status="created"
+                if r.status == "ready"
+                else "failed"
+                if r.status in ("blocked", "unmatched")
+                else "skipped",
+                error_message="; ".join(r.validation_errors)
+                if r.validation_errors
+                else "School not in directory"
+                if r.status == "unmatched"
+                else "",
+                raw_data_json={
+                    "schoolId": r.school_id,
+                    "dateOfSsa": r.date_of_ssa,
+                    "scores": r.scores,
+                },
+            )
+        )
     if legacy_rows:
         UploadBatchRowResult.objects.bulk_create(legacy_rows)
 
@@ -248,8 +283,12 @@ def upload_ssa_file(file, principal) -> dict:
         message = f"Upload complete — {counts['created']} SSA record(s) validated, {counts['unmatched']} unmatched rows queued."
     else:
         # Use first error or generic message
-        err_msg = errors[0]["error"] if errors else f"School {school_id} is not in the directory."
-        message = f"Nothing validated — all row(s) failed validation. See the errors below."
+        err_msg = (
+            errors[0]["error"]
+            if errors
+            else f"School {school_id} is not in the directory."
+        )
+        message = f"Nothing validated — all row(s) failed validation ({err_msg}). See the errors below."
 
     return {
         "success": success,
@@ -261,33 +300,64 @@ def upload_ssa_file(file, principal) -> dict:
         "duplicate_rows": 0,
         "skipped_rows": counts["skipped"],
         "message": message,
-        "errors": errors if errors else [{"row": 2, "school_id": school_id, "error": f"School {school_id} is not in the directory."}] if counts["unmatched"] > 0 else [],
+        "errors": errors
+        if errors
+        else [
+            {
+                "row": 2,
+                "school_id": school_id,
+                "error": f"School {school_id} is not in the directory.",
+            }
+        ]
+        if counts["unmatched"] > 0
+        else [],
     }
 
 
 def import_ssa_batch(batch, user) -> dict:
-    from apps.schools.models import School, UnmatchedSSARecord, UploadBatch, SSAImportBatch
+    from apps.schools.models import (
+        School,
+        UnmatchedSSARecord,
+        UploadBatch,
+        SSAImportBatch,
+    )
     from django.utils import timezone
-    
+
     if isinstance(batch, UploadBatch):
-        real_batch = SSAImportBatch.objects.filter(file_name=batch.file_name, uploaded_by=batch.uploaded_by).order_by("-created_at").first()
+        real_batch = (
+            SSAImportBatch.objects.filter(
+                file_name=batch.file_name, uploaded_by=batch.uploaded_by
+            )
+            .order_by("-created_at")
+            .first()
+        )
         if real_batch:
             batch = real_batch
-            
+
     rows = batch.rows.exclude(status="blocked")
     created_count = 0
     unmatched_count = 0
 
     for r in rows:
-        school = School.objects.filter(school_id=r.school_id, deleted_at__isnull=True).first()
+        school = School.objects.filter(
+            school_id=r.school_id, deleted_at__isnull=True
+        ).first()
         if school:
             ssa_date = _parse_date(r.date_of_ssa)
             tz = timezone.get_current_timezone()
-            aware = timezone.make_aware(datetime.combine(ssa_date, timezone.datetime.min.time()), tz)
-            
+            aware = timezone.make_aware(
+                datetime.combine(ssa_date, timezone.datetime.min.time()), tz
+            )
+
             # Separate enrollment count (headcount) from intervention scores.
-            enrollment_count = r.scores.pop("_enrollment_count", None) if r.scores else None
-            scores_list = [{"intervention": k, "score": v} for k, v in r.scores.items() if not k.startswith("_")]
+            enrollment_count = (
+                r.scores.pop("_enrollment_count", None) if r.scores else None
+            )
+            scores_list = [
+                {"intervention": k, "score": v}
+                for k, v in r.scores.items()
+                if not k.startswith("_")
+            ]
             defaults = {
                 "schoolId": r.school_id,
                 "dateOfSsa": aware.isoformat(),
@@ -310,17 +380,14 @@ def import_ssa_batch(batch, user) -> dict:
                 date_of_ssa=r.date_of_ssa,
                 scores=r.scores,
                 reason="School ID does not exist in School Directory",
-                status="pending"
+                status="pending",
             )
             unmatched_count += 1
 
     batch.status = "imported"
     batch.save()
-    
-    return {
-        "created": created_count,
-        "unmatched": unmatched_count
-    }
+
+    return {"created": created_count, "unmatched": unmatched_count}
 
 
 __all__ = ["upload_ssa_file", "import_ssa_batch"]

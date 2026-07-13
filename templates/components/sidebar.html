@@ -1,4 +1,5 @@
 {% load static %}
+{% load frontend_filters %}
 <div class="app-sidebar__brand">
   <!-- Expanded Logo -->
   <div x-show="!collapsed" class="flex flex-col">
@@ -30,6 +31,11 @@
                 {{ item.icon|safe }}
               </div>
               <span class="app-sidebar__item-label" x-show="!collapsed">{{ item.label }}</span>
+              {% if item.url == "/messages" and unread_messages_count > 0 %}
+                <span class="app-sidebar__item-badge app-sidebar__item-badge--blue" x-show="!collapsed">{{ unread_messages_count }}</span>
+              {% elif item.url == "/my-professional-development" and pd_action_required_count > 0 %}
+                <span class="app-sidebar__item-badge app-sidebar__item-badge--blue" x-show="!collapsed">{{ pd_action_required_count }}</span>
+              {% endif %}
             </a>
           {% endfor %}
         </div>
@@ -41,9 +47,9 @@
 <!-- User Profile Area at the bottom -->
 <div class="app-sidebar__footer">
   <div class="app-sidebar__user">
-    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=256&h=256&fit=crop" 
-         alt="User Avatar" 
-         class="app-sidebar__user-avatar">
+    <span class="app-sidebar__user-avatar" style="display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff;background:linear-gradient(135deg,var(--edify-accent),var(--edify-accent-hover));">
+      {{ request.user.name|avatar_initials }}
+    </span>
     <div class="app-sidebar__user-info">
       <span class="app-sidebar__user-name">{% if request.user.is_authenticated %}{{ request.user.name }}{% else %}Guest User{% endif %}</span>
       <span class="app-sidebar__user-role">{% if request.user.is_authenticated %}{{ request.user.active_role }}{% else %}Visitor{% endif %}</span>

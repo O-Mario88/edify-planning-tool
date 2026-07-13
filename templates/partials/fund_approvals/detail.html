@@ -1,0 +1,92 @@
+{% comment %}Selected CCEO fund plan detail. Expects `selected`.{% endcomment %}
+{% if selected %}
+<div class="space-y-5">
+  <!-- Header -->
+  <div class="flex items-start justify-between gap-3 pb-4 border-b border-slate-100">
+    <div class="min-w-0">
+      <h2 class="text-[18px] font-semibold text-slate-800 tracking-tight">{{ selected.name }} — {{ month_label }} Fund Plan</h2>
+      <p class="text-[12px] font-semibold text-slate-400 mt-0.5">{{ selected.district }} · {{ selected.region }}</p>
+      <p class="text-[11.5px] font-semibold text-slate-400 mt-1.5">Plan Period · {{ selected.period }}</p>
+    </div>
+    <div class="text-right shrink-0">
+      {% include "components/badge.html" with tone=selected.status_tone label=selected.status size="sm" %}
+      <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider mt-2">Total Requested</p>
+      <p class="text-[20px] font-bold text-slate-800 tabular-nums leading-none">{{ selected.total_fmt }}</p>
+    </div>
+  </div>
+
+  {% if not selected.valid %}
+  <div class="rounded-xl bg-amber-50 border border-amber-200 p-3">
+    <p class="text-[12px] font-bold text-amber-800 mb-1">Needs Review — resolve before approving:</p>
+    <ul class="space-y-0.5">{% for i in selected.issues %}<li class="text-[11.5px] font-semibold text-amber-700">• {{ i }}</li>{% endfor %}</ul>
+  </div>
+  {% endif %}
+
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
+    <!-- Funding breakdown from planned activities -->
+    <div class="xl:col-span-2">
+      <h3 class="text-[13px] font-semibold text-slate-800 tracking-tight mb-2">Funding Breakdown from Planned Activities</h3>
+      <div class="overflow-x-auto rounded-xl border border-slate-100">
+        <table class="w-full text-left">
+          <thead><tr class="text-[10px] uppercase tracking-wider text-slate-400 font-bold border-b border-slate-100 bg-slate-50/60">
+            <th class="px-3 py-2">Activity Category</th><th class="px-3 py-2 text-center">Planned Qty</th><th class="px-3 py-2 text-right">Unit Cost</th><th class="px-3 py-2 text-right">Total</th>
+          </tr></thead>
+          <tbody class="divide-y divide-slate-50">
+            {% for b in selected.breakdown %}
+            <tr>
+              <td class="px-3 py-2 text-[12px] font-semibold text-slate-700">{{ b.category }}</td>
+              <td class="px-3 py-2 text-[12px] text-slate-500 text-center tabular-nums">{{ b.qty }}</td>
+              <td class="px-3 py-2 text-[12px] text-slate-500 text-right tabular-nums">{{ b.unit_cost }}</td>
+              <td class="px-3 py-2 text-[12px] font-bold text-slate-700 text-right tabular-nums">{{ b.total }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="px-3 py-6 text-center text-[12px] font-semibold text-slate-400">No costed activities this month.</td></tr>
+            {% endfor %}
+          </tbody>
+          <tfoot><tr class="border-t border-slate-100 bg-slate-50/40">
+            <td class="px-3 py-2.5 text-[13px] font-bold text-emerald-700" colspan="3">Total Requested</td>
+            <td class="px-3 py-2.5 text-[13px] font-bold text-emerald-700 text-right tabular-nums">{{ selected.total_fmt }}</td>
+          </tr></tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- Plan snapshot -->
+    <div>
+      <h3 class="text-[13px] font-semibold text-slate-800 tracking-tight mb-2">Plan Snapshot</h3>
+      <div class="rounded-xl border border-slate-100 divide-y divide-slate-50">
+        {% include "partials/fund_approvals/snapshot_row.html" with label="Planned schools by staff" value=selected.snapshot.staff_schools %}
+        {% include "partials/fund_approvals/snapshot_row.html" with label="Partner school visits" value=selected.snapshot.partner_visits %}
+        {% include "partials/fund_approvals/snapshot_row.html" with label="Cluster meetings planned" value=selected.snapshot.cluster_meetings %}
+        {% include "partials/fund_approvals/snapshot_row.html" with label="Trainings planned" value=selected.snapshot.trainings %}
+        {% include "partials/fund_approvals/snapshot_row.html" with label="Total schools covered" value=selected.snapshot.total_schools %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2">
+    <a href="/planning" class="inline-flex items-center justify-center gap-1.5 h-11 rounded-xl border border-emerald-200 bg-emerald-50/50 hover:bg-emerald-50 text-[12.5px] font-bold text-emerald-700 transition-colors">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      View Full Plan
+    </a>
+    <button hx-post="/fund-approvals/action" hx-target="#fund-approval-root" hx-swap="innerHTML"
+            hx-vals='{"action":"approve","cceo":"{{ selected.cceo_user_id }}","fy":"{{ fy }}","month":"{{ month }}"}'
+            {% if not selected.valid %}disabled{% endif %}
+            class="inline-flex items-center justify-center gap-1.5 h-11 rounded-xl text-[12.5px] font-bold text-white transition-colors {% if selected.valid %}bg-emerald-600 hover:bg-emerald-700{% else %}bg-slate-300 cursor-not-allowed{% endif %}">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      Approve
+    </button>
+    <button hx-get="/fund-approvals/return?cceo={{ selected.cceo_user_id }}&name={{ selected.name|urlencode }}&fy={{ fy }}&month={{ month }}" hx-target="#drawer-container" hx-swap="innerHTML"
+            class="inline-flex items-center justify-center gap-1.5 h-11 rounded-xl border border-rose-200 bg-white hover:bg-rose-50 text-[12.5px] font-bold text-rose-600 transition-colors">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+      Return
+    </button>
+  </div>
+</div>
+{% else %}
+<div class="py-16 text-center">
+  <p class="text-[14px] font-semibold text-slate-500">Select a CCEO to review their fund plan</p>
+  <p class="text-[12px] font-medium text-slate-400 mt-1">Each plan is derived from that CCEO's scheduled, costed activities.</p>
+</div>
+{% endif %}

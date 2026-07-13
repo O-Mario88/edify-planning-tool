@@ -4,6 +4,7 @@ Shared domain enums — TextChoices used across multiple apps.
 These mirror the legacy Prisma enums. Cross-domain enums (shared by more than
 one module) live here; single-domain enums can live in their own app.
 """
+
 from __future__ import annotations
 
 from django.db import models
@@ -52,6 +53,11 @@ class ClusterType(models.TextChoices):
     MIXED = "mixed", "Mixed"
 
 
+class DistrictType(models.TextChoices):
+    PRIMARY = "primary", "Primary"
+    SECONDARY = "secondary", "Secondary"
+
+
 class SsaStatus(models.TextChoices):
     NOT_DONE = "not_done", "Not Done"
     SCHEDULED = "scheduled", "Scheduled"
@@ -62,8 +68,14 @@ class SsaStatus(models.TextChoices):
 class PlanningReadiness(models.TextChoices):
     REQUIRES_CLUSTER = "requires_cluster", "Requires Cluster"
     READY_FOR_BASELINE_SSA = "ready_for_baseline_ssa", "SSA Required"
-    READY_FOR_SUPPORT_PLANNING = "ready_for_support_planning", "Ready for Support Planning"
-    READY_FOR_PARTNER_ASSIGNMENT = "ready_for_partner_assignment", "Ready for Partner Assignment"
+    READY_FOR_SUPPORT_PLANNING = (
+        "ready_for_support_planning",
+        "Ready for Support Planning",
+    )
+    READY_FOR_PARTNER_ASSIGNMENT = (
+        "ready_for_partner_assignment",
+        "Ready for Partner Assignment",
+    )
     SCHEDULED = "scheduled", "Scheduled"
     IN_MY_PLAN = "in_my_plan", "In My Plan"
     AWAITING_EVIDENCE = "awaiting_evidence", "Awaiting Evidence"
@@ -76,6 +88,25 @@ class PlanningReadiness(models.TextChoices):
     LOCKED = "locked", "Locked"
     LIMITED = "limited", "Limited"
     READY = "ready", "Ready"
+
+    @classmethod
+    def planning_ready_values(cls) -> list[str]:
+        """States meaning "the school is unblocked/visible in Planning".
+
+        `School.recompute_quality_and_readiness()` (apps/schools/models.py)
+        writes the legacy 3-state vocabulary (READY/LIMITED/LOCKED) under
+        test/pytest but the newer state machine (REQUIRES_CLUSTER/
+        READY_FOR_BASELINE_SSA/READY_FOR_SUPPORT_PLANNING/...) in production —
+        production never persists the literal "ready". Anything counting
+        "planning ready" schools must check both vocabularies, otherwise the
+        count is structurally zero outside tests.
+        """
+        return [
+            cls.READY,
+            cls.LIMITED,
+            cls.READY_FOR_SUPPORT_PLANNING,
+            cls.READY_FOR_BASELINE_SSA,
+        ]
 
 
 class SsaCollectorType(models.TextChoices):
@@ -104,7 +135,10 @@ class ActivityType(models.TextChoices):
     COACHING_VISIT = "coaching_visit", "Coaching Visit"
     IN_SCHOOL_SUPPORT = "in_school_support", "In-school Support"
     TRAINING = "training", "Training"
-    SCHOOL_IMPROVEMENT_TRAINING = "school_improvement_training", "School Improvement Training"
+    SCHOOL_IMPROVEMENT_TRAINING = (
+        "school_improvement_training",
+        "School Improvement Training",
+    )
     CLUSTER_MEETING = "cluster_meeting", "Cluster Meeting"
     CLUSTER_TRAINING = "cluster_training", "Cluster Training"
     SSA_ACTIVITY = "ssa_activity", "SSA Activity"
@@ -113,9 +147,18 @@ class ActivityType(models.TextChoices):
     CORE_VISIT = "core_visit", "Core Visit"
     CORE_TRAINING = "core_training", "Core Training"
     BASELINE_SSA_VISIT = "baseline_ssa_visit", "SSA Visit"
-    SCHOOL_VISIT_SSA_COLLECTION = "school_visit_ssa_collection", "School Visit + SSA Collection"
-    CLUSTER_TRAINING_SSA_COLLECTION = "cluster_training_ssa_collection", "Cluster Training + SSA Collection"
-    CLUSTER_MEETING_SSA_REVIEW = "cluster_meeting_ssa_review", "Cluster Meeting + SSA Review"
+    SCHOOL_VISIT_SSA_COLLECTION = (
+        "school_visit_ssa_collection",
+        "School Visit + SSA Collection",
+    )
+    CLUSTER_TRAINING_SSA_COLLECTION = (
+        "cluster_training_ssa_collection",
+        "Cluster Training + SSA Collection",
+    )
+    CLUSTER_MEETING_SSA_REVIEW = (
+        "cluster_meeting_ssa_review",
+        "Cluster Meeting + SSA Review",
+    )
     PARTNER_SSA_COLLECTION = "partner_ssa_collection", "Partner SSA Collection"
     CORE_ASSESSMENT_VISIT = "core_assessment_visit", "Core Assessment Visit"
 
@@ -134,6 +177,7 @@ class DeliveryType(models.TextChoices):
 
 class ActivityStatus(models.TextChoices):
     """The 21-state activity workflow lifecycle."""
+
     NOT_PLANNED = "not_planned", "Not Planned"
     PLANNED = "planned", "Planned"
     SCHEDULED = "scheduled", "Scheduled"
@@ -190,6 +234,8 @@ class VerificationStatus(models.TextChoices):
 
 class PaymentStatus(models.TextChoices):
     NONE = "none", "None"
+    # Advance funds paid out pre-execution; accountability still open.
+    DISBURSED = "disbursed", "Disbursed"
     PENDING_IA = "pending_ia", "Pending IA"
     IA_CONFIRMED = "ia_confirmed", "IA Confirmed"
     PL_APPROVAL_REQUIRED = "pl_approval_required", "PL Approval Required"
@@ -234,6 +280,7 @@ __all__ = [
     "ClusterStatus",
     "ClusterRecordStatus",
     "ClusterType",
+    "DistrictType",
     "SsaStatus",
     "PlanningReadiness",
     "SsaCollectorType",

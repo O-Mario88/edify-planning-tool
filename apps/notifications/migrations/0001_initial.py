@@ -6,39 +6,95 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Notification',
+            name="Notification",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('recipient_id', models.CharField(max_length=30)),
-                ('recipient_role', models.CharField(blank=True, max_length=64, null=True)),
-                ('title', models.CharField(max_length=255)),
-                ('body', models.TextField(blank=True, null=True)),
-                ('context_type', models.CharField(blank=True, max_length=64, null=True)),
-                ('context_id', models.CharField(blank=True, max_length=30, null=True)),
-                ('target_route', models.CharField(blank=True, max_length=255, null=True)),
-                ('action_label', models.CharField(blank=True, max_length=64, null=True)),
-                ('action_required', models.BooleanField(default=False)),
-                ('priority', models.CharField(choices=[('low', 'Low'), ('normal', 'Normal'), ('high', 'High'), ('urgent', 'Urgent')], default='normal', max_length=16)),
-                ('status', models.CharField(choices=[('unread', 'Unread'), ('read', 'Read'), ('archived', 'Archived')], default='unread', max_length=16)),
-                ('source_event_type', models.CharField(blank=True, max_length=64, null=True)),
-                ('source_event_id', models.CharField(blank=True, max_length=30, null=True)),
-                ('expires_at', models.DateTimeField(blank=True, null=True)),
-                ('read_at', models.DateTimeField(blank=True, null=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("recipient_id", models.CharField(max_length=30)),
+                (
+                    "recipient_role",
+                    models.CharField(blank=True, max_length=64, null=True),
+                ),
+                ("title", models.CharField(max_length=255)),
+                ("body", models.TextField(blank=True, null=True)),
+                (
+                    "context_type",
+                    models.CharField(blank=True, max_length=64, null=True),
+                ),
+                ("context_id", models.CharField(blank=True, max_length=30, null=True)),
+                (
+                    "target_route",
+                    models.CharField(blank=True, max_length=255, null=True),
+                ),
+                (
+                    "action_label",
+                    models.CharField(blank=True, max_length=64, null=True),
+                ),
+                ("action_required", models.BooleanField(default=False)),
+                (
+                    "priority",
+                    models.CharField(
+                        choices=[
+                            ("low", "Low"),
+                            ("normal", "Normal"),
+                            ("high", "High"),
+                            ("urgent", "Urgent"),
+                        ],
+                        default="normal",
+                        max_length=16,
+                    ),
+                ),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("unread", "Unread"),
+                            ("read", "Read"),
+                            ("archived", "Archived"),
+                        ],
+                        default="unread",
+                        max_length=16,
+                    ),
+                ),
+                (
+                    "source_event_type",
+                    models.CharField(blank=True, max_length=64, null=True),
+                ),
+                (
+                    "source_event_id",
+                    models.CharField(blank=True, max_length=30, null=True),
+                ),
+                ("expires_at", models.DateTimeField(blank=True, null=True)),
+                ("read_at", models.DateTimeField(blank=True, null=True)),
             ],
             options={
-                'db_table': 'notification',
-                'ordering': ['-created_at'],
-                'indexes': [models.Index(fields=['recipient_id', 'status'], name='notificatio_recipie_d40309_idx'), models.Index(fields=['source_event_id'], name='notificatio_source__f5a4b0_idx')],
+                "db_table": "notification",
+                "ordering": ["-created_at"],
+                "indexes": [
+                    models.Index(
+                        fields=["recipient_id", "status"],
+                        name="notificatio_recipie_d40309_idx",
+                    ),
+                    models.Index(
+                        fields=["source_event_id"],
+                        name="notificatio_source__f5a4b0_idx",
+                    ),
+                ],
             },
         ),
     ]

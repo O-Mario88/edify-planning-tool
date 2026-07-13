@@ -1,4 +1,5 @@
 """Geography URL routes — /api/geography/*."""
+
 from django.urls import path
 
 from . import views

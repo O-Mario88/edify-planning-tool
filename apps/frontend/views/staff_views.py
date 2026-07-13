@@ -2,6 +2,8 @@
 GROUP 1 — Core Operations Views
 Staff Directory, Staff Profile, Today, Visits, Trainings, Evidence, Targets, My-Team, Notifications, Profile
 """
+
+from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from apps.core.permissions import require_page_permission
 from django.db.models import Q, Count
@@ -18,61 +20,105 @@ from apps.core.fy import get_operational_fy
 
 # ─── STAFF DIRECTORY ──────────────────────────────────────────────────────────
 
+
 @require_page_permission("staff_directory")
 def staff_directory_view(request):
     """Staff directory — all users in the system with role, district, and school count."""
-    fy = get_operational_fy()
     search = request.GET.get("q", "").strip()
     active_tab = request.GET.get("tab", "all")
 
-    staff_qs = User.objects.filter(
-        status="active",
-        deleted_at__isnull=True,
-    ).prefetch_related("staff_profile").order_by("name")
+    staff_qs = (
+        User.objects.filter(
+            status="active",
+            deleted_at__isnull=True,
+        )
+        .prefetch_related("staff_profile")
+        .order_by("name")
+    )
 
     if search:
         staff_qs = staff_qs.filter(
             Q(name__icontains=search) | Q(email__icontains=search)
         )
-        
+
     if active_tab == "cceo":
         staff_qs = staff_qs.filter(roles__contains=["CCEO"])
     elif active_tab == "pl":
-        staff_qs = staff_qs.filter(roles__contains=["ProgramLead"])
+        staff_qs = staff_qs.filter(roles__contains=["Program Lead"])
     elif active_tab == "admin":
-        staff_qs = staff_qs.exclude(roles__contains=["CCEO"]).exclude(roles__contains=["ProgramLead"])
+        staff_qs = staff_qs.exclude(roles__contains=["CCEO"]).exclude(
+            roles__contains=["Program Lead"]
+        )
 
     staff_list = []
-    
+
     # KPIs calculation across all active staff (not filtered by tab)
-    all_staff_qs = User.objects.filter(status="active", deleted_at__isnull=True).prefetch_related("staff_profile")
+    all_staff_qs = User.objects.filter(
+        status="active", deleted_at__isnull=True
+    ).prefetch_related("staff_profile")
     total_active = all_staff_qs.count()
     pending_onboarding = 0
     high_risk_count = 0
-    
-    # We will need to compute this during the loop, but since we are looping filtered list, we should do it separately for the full list if needed, but for performance, we can just do it on the whole list or just approximate.
-    pending_onboarding = StaffProfile.objects.exclude(onboarding_state__in=["active", "complete"]).count()
-    
-    # We can calculate average coverage gap using Activity/SsaRecord if we want, but for now we'll put a placeholder or basic average
-    average_coverage_gap = 12.4
-    
+
+    # StaffOnboardingState choices are only pending/active/suspended — "pending"
+    # is the real state that represents "not yet onboarded".
+    pending_onboarding = StaffProfile.objects.filter(onboarding_state="pending").count()
+
+    # Average coverage gap: % of schools org-wide without a completed SSA for
+    # the current FY (School.current_fy_ssa_status == "done" is the same
+    # source of truth used by apps.clusters.services / apps.analytics.services).
+    from apps.schools.models import School
+
+    all_schools_count = School.objects.filter(deleted_at__isnull=True).count()
+    schools_with_ssa = School.objects.filter(
+        deleted_at__isnull=True, current_fy_ssa_status="done"
+    ).count()
+    average_coverage_gap = (
+        round(100 - (schools_with_ssa / all_schools_count * 100), 1)
+        if all_schools_count
+        else 0.0
+    )
+
     # High risk (overdue > 3) - let's count for all staff
     today = date.today()
-    overdue_counts = Activity.objects.filter(
-        planned_date__lt=today,
-        status__in=["scheduled", "started"],
-        deleted_at__isnull=True
-    ).values('responsible_staff_id').annotate(overdue_count=Count('id'))
-    high_risk_count = sum(1 for item in overdue_counts if item['overdue_count'] > 3)
+    overdue_counts = (
+        Activity.objects.filter(
+            planned_date__lt=today,
+            status__in=["scheduled", "in_progress", "completion_started"],
+            deleted_at__isnull=True,
+        )
+        .values("responsible_staff_id")
+        .annotate(overdue_count=Count("id"))
+    )
+    high_risk_count = sum(1 for item in overdue_counts if item["overdue_count"] > 3)
+
+    # StaffProfile has no location_name — resolve primary_district_id → name in one query.
+    from apps.geography.models import District
+
+    _district_ids = {
+        u.staff_profile.primary_district_id
+        for u in staff_qs
+        if getattr(u, "staff_profile", None) and u.staff_profile.primary_district_id
+    }
+    district_names = (
+        dict(District.objects.filter(id__in=_district_ids).values_list("id", "name"))
+        if _district_ids
+        else {}
+    )
 
     for u in staff_qs:
         profile = getattr(u, "staff_profile", None)
         # Count schools assigned to this staff member
-        school_count = Activity.objects.filter(
-            responsible_staff_id=u.id,
-            deleted_at__isnull=True,
-            activity_type__in=["school_visit", "follow_up_visit", "coaching_visit"]
-        ).values("school_id").distinct().count()
+        school_count = (
+            Activity.objects.filter(
+                responsible_staff_id=u.id,
+                deleted_at__isnull=True,
+                activity_type__in=["school_visit", "follow_up_visit", "coaching_visit"],
+            )
+            .values("school_id")
+            .distinct()
+            .count()
+        )
 
         completed_visits = Activity.objects.filter(
             responsible_staff_id=u.id,
@@ -81,20 +127,26 @@ def staff_directory_view(request):
             deleted_at__isnull=True,
         ).count()
 
-        staff_list.append({
-            "id": u.id,
-            "name": u.name,
-            "email": u.email,
-            "roles": u.roles or [],
-            "active_role": u.active_role,
-            "district": profile.location_name if profile else "Unknown",
-            "status": u.status,
-            "profile_id": profile.id if profile else None,
-            "onboarding_state": getattr(profile, "onboarding_state", "unknown") if profile else "no_profile",
-            "school_count": school_count,
-            "completed_visits": completed_visits,
-            "initials": u.name[:2].upper() if u.name else "??",
-        })
+        staff_list.append(
+            {
+                "id": u.id,
+                "name": u.name,
+                "email": u.email,
+                "roles": u.roles or [],
+                "active_role": u.active_role,
+                "district": district_names.get(profile.primary_district_id, "Unknown")
+                if profile
+                else "Unknown",
+                "status": u.status,
+                "profile_id": profile.id if profile else None,
+                "onboarding_state": getattr(profile, "onboarding_state", "unknown")
+                if profile
+                else "no_profile",
+                "school_count": school_count,
+                "completed_visits": completed_visits,
+                "initials": u.name[:2].upper() if u.name else "??",
+            }
+        )
 
     kpis = {
         "total_active": total_active,
@@ -115,6 +167,7 @@ def staff_directory_view(request):
 
 # ─── STAFF PROFILE DETAIL ─────────────────────────────────────────────────────
 
+
 @require_page_permission("staff")
 def staff_profile_view(request, user_id):
     """Full staff 360° profile — activities, visits, evidence, SSA coverage."""
@@ -123,28 +176,50 @@ def staff_profile_view(request, user_id):
     now = date.today()
 
     # Activities this FY
-    activities = Activity.objects.filter(
-        responsible_staff_id=member.id,
-        deleted_at__isnull=True,
-    ).select_related("school", "cluster").order_by("-planned_date")[:50]
+    activities = (
+        Activity.objects.filter(
+            responsible_staff_id=member.id,
+            fy=fy,
+            deleted_at__isnull=True,
+        )
+        .select_related("school", "cluster")
+        .order_by("-planned_date")[:50]
+    )
 
     completed = [a for a in activities if a.status == "completed"]
-    overdue = [a for a in activities if a.planned_date and a.planned_date < now and a.status in ("scheduled", "started")]
-    upcoming = [a for a in activities if a.planned_date and a.planned_date >= now and a.status == "scheduled"]
+    overdue = [
+        a
+        for a in activities
+        if a.planned_date
+        and a.planned_date < now
+        and a.status in ("scheduled", "in_progress", "completion_started")
+    ]
+    upcoming = [
+        a
+        for a in activities
+        if a.planned_date and a.planned_date >= now and a.status == "scheduled"
+    ]
 
     # Schools covered
-    schools_covered = Activity.objects.filter(
-        responsible_staff_id=member.id,
-        status="completed",
-        activity_type__in=["school_visit", "follow_up_visit", "coaching_visit"],
-        deleted_at__isnull=True,
-    ).values("school_id", "school__name").distinct()
+    schools_covered = (
+        Activity.objects.filter(
+            responsible_staff_id=member.id,
+            status="completed",
+            activity_type__in=["school_visit", "follow_up_visit", "coaching_visit"],
+            deleted_at__isnull=True,
+        )
+        .values("school_id", "school__name")
+        .distinct()
+    )
 
     profile = getattr(member, "staff_profile", None)
 
     from apps.schools.models import School
     from apps.ssa.services import get_ssa_progress_by_fy
-    assigned_schools = School.objects.filter(account_owner_id=member.id, deleted_at__isnull=True)
+
+    assigned_schools = School.objects.filter(
+        account_owner_id=member.id, deleted_at__isnull=True
+    )
     staff_progress = get_ssa_progress_by_fy(assigned_schools)
 
     context = {
@@ -163,6 +238,7 @@ def staff_profile_view(request, user_id):
 
 # ─── TODAY VIEW ───────────────────────────────────────────────────────────────
 
+
 @require_page_permission("dashboard")
 def today_view(request):
     """Today's command center — overdue, today, upcoming, and pending actions."""
@@ -172,27 +248,39 @@ def today_view(request):
     week_end = week_start + timedelta(days=6)
 
     # Overdue activities (past due, not yet completed)
-    overdue = Activity.objects.filter(
-        responsible_staff_id=user.id,
-        planned_date__lt=today,
-        status__in=["scheduled", "started"],
-        deleted_at__isnull=True,
-    ).select_related("school", "cluster").order_by("planned_date")
+    overdue = (
+        Activity.objects.filter(
+            responsible_staff_id=user.id,
+            planned_date__lt=today,
+            status__in=["scheduled", "in_progress", "completion_started"],
+            deleted_at__isnull=True,
+        )
+        .select_related("school", "cluster")
+        .order_by("planned_date")
+    )
 
     # Today's activities
-    today_activities = Activity.objects.filter(
-        responsible_staff_id=user.id,
-        planned_date=today,
-        deleted_at__isnull=True,
-    ).select_related("school", "cluster").order_by("activity_type")
+    today_activities = (
+        Activity.objects.filter(
+            responsible_staff_id=user.id,
+            planned_date=today,
+            deleted_at__isnull=True,
+        )
+        .select_related("school", "cluster")
+        .order_by("activity_type")
+    )
 
     # This week remaining
-    upcoming_week = Activity.objects.filter(
-        responsible_staff_id=user.id,
-        planned_date__range=[today + timedelta(days=1), week_end],
-        status="scheduled",
-        deleted_at__isnull=True,
-    ).select_related("school", "cluster").order_by("planned_date")
+    upcoming_week = (
+        Activity.objects.filter(
+            responsible_staff_id=user.id,
+            planned_date__range=[today + timedelta(days=1), week_end],
+            status="scheduled",
+            deleted_at__isnull=True,
+        )
+        .select_related("school", "cluster")
+        .order_by("planned_date")
+    )
 
     # Evidence missing (completed but no evidence)
     evidence_gap = Activity.objects.filter(
@@ -223,6 +311,7 @@ def today_view(request):
 
 # ─── VISITS LOG ───────────────────────────────────────────────────────────────
 
+
 @require_page_permission("my_plan")
 def visits_log_view(request):
     """All school visits for the current user — filterable by status."""
@@ -232,11 +321,15 @@ def visits_log_view(request):
 
     VISIT_TYPES = ["school_visit", "follow_up_visit", "coaching_visit", "core_visit"]
 
-    visits_qs = Activity.objects.filter(
-        responsible_staff_id=user.id,
-        activity_type__in=VISIT_TYPES,
-        deleted_at__isnull=True,
-    ).select_related("school", "cluster").order_by("-planned_date")
+    visits_qs = (
+        Activity.objects.filter(
+            responsible_staff_id=user.id,
+            activity_type__in=VISIT_TYPES,
+            deleted_at__isnull=True,
+        )
+        .select_related("school", "cluster")
+        .order_by("-planned_date")
+    )
 
     if status_filter:
         visits_qs = visits_qs.filter(status=status_filter)
@@ -247,7 +340,11 @@ def visits_log_view(request):
 
     visits = list(visits_qs[:100])
     completed = sum(1 for v in visits if v.status == "completed")
-    pending = sum(1 for v in visits if v.status in ("scheduled", "started"))
+    pending = sum(
+        1
+        for v in visits
+        if v.status in ("scheduled", "in_progress", "completion_started")
+    )
 
     context = {
         "visits": visits,
@@ -262,6 +359,7 @@ def visits_log_view(request):
 
 # ─── TRAININGS LOG ────────────────────────────────────────────────────────────
 
+
 @require_page_permission("my_plan")
 def trainings_log_view(request):
     """All group training sessions for the current user."""
@@ -271,11 +369,15 @@ def trainings_log_view(request):
 
     TRAINING_TYPES = ["group_training", "cluster_training", "teachers_training"]
 
-    trainings_qs = Activity.objects.filter(
-        responsible_staff_id=user.id,
-        activity_type__in=TRAINING_TYPES,
-        deleted_at__isnull=True,
-    ).select_related("school", "cluster").order_by("-planned_date")
+    trainings_qs = (
+        Activity.objects.filter(
+            responsible_staff_id=user.id,
+            activity_type__in=TRAINING_TYPES,
+            deleted_at__isnull=True,
+        )
+        .select_related("school", "cluster")
+        .order_by("-planned_date")
+    )
 
     if status_filter:
         trainings_qs = trainings_qs.filter(status=status_filter)
@@ -299,6 +401,7 @@ def trainings_log_view(request):
 
 # ─── EVIDENCE GALLERY ─────────────────────────────────────────────────────────
 
+
 @require_page_permission("planning")
 def evidence_gallery_view(request):
     """Evidence gallery — all submitted photos/reports for user's activities."""
@@ -311,9 +414,13 @@ def evidence_gallery_view(request):
         deleted_at__isnull=True,
     ).values_list("id", flat=True)
 
-    evidence_qs = EvidenceRecord.objects.filter(
-        activity__in=user_activity_ids,
-    ).select_related("activity", "activity__school").order_by("-created_at")
+    evidence_qs = (
+        EvidenceRecord.objects.filter(
+            activity__in=user_activity_ids,
+        )
+        .select_related("activity", "activity__school")
+        .order_by("-created_at")
+    )
 
     if kind_filter:
         evidence_qs = evidence_qs.filter(kind=kind_filter)
@@ -340,125 +447,259 @@ def evidence_gallery_view(request):
 
 # ─── MY TARGETS ───────────────────────────────────────────────────────────────
 
+VISIT_TYPES = ["school_visit", "follow_up_visit", "coaching_visit", "core_visit"]
+TRAINING_TYPES = ["group_training", "cluster_training", "teachers_training"]
+_QUARTERS = ["Q1", "Q2", "Q3", "Q4"]
+
+
+def _quarter_completed_counts(activity_types, fy, staff_ids):
+    """Real per-quarter completed-activity counts for this FY, scoped to staff.
+    Accepts one id or an iterable — Activity.responsible_staff_id is canonically
+    a StaffProfile id but legacy rows key it by User.id, so pass both forms."""
+    if isinstance(staff_ids, str):
+        staff_ids = [staff_ids]
+    rows = (
+        Activity.objects.filter(
+            responsible_staff_id__in=list(staff_ids),
+            activity_type__in=activity_types,
+            fy=fy,
+            status="completed",
+            deleted_at__isnull=True,
+        )
+        .values("quarter")
+        .annotate(n=Count("id"))
+    )
+    counts = {q: 0 for q in _QUARTERS}
+    for r in rows:
+        if r["quarter"] in counts:
+            counts[r["quarter"]] = r["n"]
+    return counts
+
+
+def _cumulative_period_row(label, cumulative, target_at_period):
+    """Build one 'Targets by Time Period' row using real cumulative achievement
+    against a straight-line ramp of the annual target (same 25/50/75/100
+    methodology already used by apps.targets.services.time_period)."""
+    if target_at_period:
+        pct = round(cumulative / target_at_period * 100)
+    else:
+        pct = 100 if cumulative else None
+
+    if pct is None:
+        status, status_class = (
+            "No Target",
+            "text-slate-400 bg-slate-50 border-slate-100",
+        )
+    elif pct >= 100:
+        status, status_class = (
+            "Ahead",
+            "text-emerald-600 bg-emerald-50 border-emerald-100",
+        )
+    elif pct >= 90:
+        status, status_class = (
+            "On Track",
+            "text-emerald-600 bg-emerald-50 border-emerald-100",
+        )
+    elif pct >= 50:
+        status, status_class = "Behind", "text-amber-600 bg-amber-50 border-amber-100"
+    else:
+        status, status_class = "Critical", "text-rose-600 bg-rose-50 border-rose-100"
+
+    return {
+        "label": label,
+        "target": target_at_period,
+        "achieved": cumulative,
+        "pct": pct,
+        "status": status,
+        "status_class": status_class,
+    }
+
+
+def _kpi_status(kpi):
+    """Bucket a KPI into on_track / at_risk / off_track / no_target using real
+    values only — no fabricated numbers."""
+    if kpi.get("lower_is_better"):
+        if kpi["value"] == 0:
+            return "on_track"
+        return "at_risk" if kpi["value"] <= 3 else "off_track"
+    if not kpi.get("target"):
+        return "no_target"
+    pct = kpi["value"] / kpi["target"] * 100
+    if pct >= 90:
+        return "on_track"
+    if pct >= 50:
+        return "at_risk"
+    return "off_track"
+
+
 @require_page_permission("my_target")
 def my_targets_view(request):
-    """Personal targets & KPIs for the signed-in CCEO."""
-    user = request.user
-    fy = get_operational_fy()
-    today = date.today()
+    """My Targets — the personal performance operating page.
 
-    # Completed visits this FY
-    VISIT_TYPES = ["school_visit", "follow_up_visit", "coaching_visit", "core_visit"]
-    visits_done = Activity.objects.filter(
-        responsible_staff_id=user.id,
-        activity_type__in=VISIT_TYPES,
-        status="completed",
-        deleted_at__isnull=True,
-    ).count()
+    Monthly-first: the page always defaults to the real current month of the
+    configured financial year; Q1–Q4 and FY Cumulative are derived rollups of
+    validated workflow achievements. Strictly scoped to request.user."""
+    from apps.targets.my_targets import MyTargetQueryService
 
-    # Completed trainings this FY
-    TRAINING_TYPES = ["group_training", "cluster_training", "teachers_training"]
-    trainings_done = Activity.objects.filter(
-        responsible_staff_id=user.id,
-        activity_type__in=TRAINING_TYPES,
-        status="completed",
-        deleted_at__isnull=True,
-    ).count()
+    fy = (request.GET.get("fy") or "").strip() or None
+    raw_month = (request.GET.get("month") or "").strip()
+    month = int(raw_month) if raw_month.isdigit() and 1 <= int(raw_month) <= 12 else None
 
-    # Schools with SSA done
-    from apps.core.scoping import resolve_user_scope
-    scope = resolve_user_scope(user)
-    total_schools = len(scope.school_ids)
-    ssa_done = SsaRecord.objects.filter(
-        school_id__in=scope.school_ids,
-        fy=fy,
-        deleted_at__isnull=True,
-    ).values("school_id").distinct().count()
-
-    # Evidence gap
-    evidence_gap = Activity.objects.filter(
-        responsible_staff_id=user.id,
-        status="completed",
-        evidence__isnull=True,
-        deleted_at__isnull=True,
-    ).count()
-
-    # Week performance
-    week_start = today - timedelta(days=today.weekday())
-    week_end = week_start + timedelta(days=6)
-    week_activities = Activity.objects.filter(
-        responsible_staff_id=user.id,
-        planned_date__range=[week_start, week_end],
-        deleted_at__isnull=True,
-    )
-    week_completed = week_activities.filter(status="completed").count()
-    week_total = week_activities.count()
-
-    kpis = [
-        {
-            "label": "School Visits",
-            "value": visits_done,
-            "target": 200,
-            "unit": "visits",
-            "icon": "school",
-            "color": "indigo",
-        },
-        {
-            "label": "Group Trainings",
-            "value": trainings_done,
-            "target": 48,
-            "unit": "sessions",
-            "icon": "training",
-            "color": "violet",
-        },
-        {
-            "label": "SSA Completed",
-            "value": ssa_done,
-            "target": total_schools,
-            "unit": f"/ {total_schools} schools",
-            "icon": "ssa",
-            "color": "teal",
-        },
-        {
-            "label": "Evidence Gap",
-            "value": evidence_gap,
-            "target": 0,
-            "unit": "pending",
-            "icon": "evidence",
-            "color": "rose",
-            "lower_is_better": True,
-        },
-    ]
+    data = MyTargetQueryService.get_page(request.user, fy=fy, month_of_fy=month)
+    from apps.core.fy import fy_options
 
     context = {
-        "kpis": kpis,
-        "fy": fy,
-        "visits_done": visits_done,
-        "trainings_done": trainings_done,
-        "ssa_done": ssa_done,
-        "total_schools": total_schools,
-        "evidence_gap": evidence_gap,
-        "week_completed": week_completed,
-        "week_total": week_total,
-        "week_start": week_start,
-        "week_end": week_end,
+        **data,
+        "fy_options": fy_options(),
+        "core_tracker_data": _build_core_tracker(request.user),
     }
+    if request.headers.get("HX-Request") == "true":
+        return render(request, "partials/targets/my_body.html", context)
     return render(request, "pages/targets/index.html", context)
 
 
-# ─── MY TEAM (PL VIEW) ────────────────────────────────────────────────────────
+@require_page_permission("my_target")
+def my_targets_area_drawer_view(request):
+    """Target-area detail drawer — every credit and every not-counted reason."""
+    from apps.targets.my_targets import MyTargetQueryService
+    from apps.core.fy import get_operational_fy
+
+    area = (request.GET.get("area") or "").strip()
+    fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
+    raw_month = (request.GET.get("month") or "").strip()
+    month = int(raw_month) if raw_month.isdigit() else 1
+    payload = MyTargetQueryService.area_drawer(request.user, area, fy, month)
+    return render(request, "partials/targets/area_drawer.html",
+                  {**payload, "drawer_size": "lg", "fy": fy, "month": month})
+
+
+@require_page_permission("my_target")
+def my_targets_export_view(request):
+    """Role-scoped CSV export of the signed-in user's target results."""
+    import csv
+
+    from django.http import HttpResponse
+    from django.utils import timezone as _tz
+
+    from apps.core.fy import get_operational_fy
+    from apps.targets.my_targets import MyTargetQueryService, TargetAchievementService
+
+    fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
+    TargetAchievementService.rebuild(request.user, fy)
+    resp = HttpResponse(content_type="text/csv")
+    resp["Content-Disposition"] = f'attachment; filename="my_targets_{fy}.csv"'
+    w = csv.writer(resp)
+    w.writerow([f"My Targets — {request.user.name}", f"FY {fy}",
+                f"Generated {_tz.now():%Y-%m-%d %H:%M} by {request.user.email}"])
+    for row in MyTargetQueryService.export_rows(request.user, fy):
+        w.writerow(row)
+    return resp
+
+
+@require_page_permission("my_target")
+def mscs_submit_view(request):
+    """Submit a Most Significant Change Story (status → Submitted). Only an
+    approved story counts toward the MSCS target."""
+    if request.method != "POST":
+        return redirect("/my-targets")
+    from apps.schools.models import School
+    from apps.targets.models import MostSignificantChangeStory
+
+    title = (request.POST.get("title") or "").strip()
+    narrative = (request.POST.get("narrative") or "").strip()
+    story_date = (request.POST.get("story_date") or "").strip()
+    school_id = (request.POST.get("school_id") or "").strip()
+    if not (title and narrative and story_date):
+        messages.error(request, "Title, story date and narrative are required.")
+        return redirect("/my-targets")
+    school = School.objects.filter(
+        Q(id=school_id) | Q(school_id=school_id), deleted_at__isnull=True
+    ).first() if school_id else None
+    MostSignificantChangeStory.objects.create(
+        user_id=request.user.id, school=school, title=title,
+        narrative=narrative, story_date=story_date, status="submitted",
+    )
+    messages.success(request, "MSCS submitted for review — it counts once approved.")
+    return redirect("/my-targets")
+
+
+def _build_core_tracker(user):
+    """Core School Tracker — the 4-visit + 4-training package per core school
+    in the user's portfolio (kept from the previous My Targets iteration).
+
+    visits_completed/trainings_completed are now maintained in lock-step with
+    each slot's real, mirrored Activity status (see Activity.save() in
+    apps.activities.models + core_schools.services.resync_plan_completion),
+    so they're read directly rather than re-derived from slot status here."""
+    from apps.accounts.models import StaffSchoolAssignment
+    from apps.core_schools.models import CorePlan
+    from apps.schools.models import School
+
+    sp_id = getattr(user, "staff_profile_id", None)
+    if not sp_id:
+        return {"rows": [], "total": 0}
+    school_cuids = list(
+        StaffSchoolAssignment.objects.filter(staff_id=sp_id).values_list("school_id", flat=True)
+    )
+    op_ids = dict(
+        School.objects.filter(id__in=school_cuids).values_list("id", "school_id")
+    )
+    plans = list(CorePlan.objects.filter(school_id__in=list(op_ids.values())).order_by("school_id"))
+    names = dict(
+        School.objects.filter(school_id__in=[p.school_id for p in plans])
+        .values_list("school_id", "name")
+    )
+    rows = []
+    for plan in plans:
+        v_done = min(plan.visits_completed or 0, 4)
+        t_done = min(plan.trainings_completed or 0, 4)
+        total_done = v_done + t_done
+        if total_done >= 8:
+            status, tone = "Complete", "success"
+        elif plan.baseline_average is not None and total_done > 0:
+            status, tone = "On Track", "info"
+        elif plan.baseline_average is not None:
+            status, tone = "Not Started", "neutral"
+        else:
+            status, tone = "Needs Baseline", "warning"
+        rows.append({
+            "school": names.get(plan.school_id, plan.school_id),
+            "baseline": plan.baseline_average,
+            "visits_done": v_done, "trainings_done": t_done,
+            "visit_dots": [i < v_done for i in range(4)],
+            "training_dots": [i < t_done for i in range(4)],
+            "pct": round(total_done / 8 * 100),
+            "status": status, "tone": tone,
+        })
+    rows.sort(key=lambda r: (-r["pct"], r["school"]))
+    return {"rows": rows[:12], "total": len(rows)}
+
 
 @require_page_permission("my_team")
 def my_team_view(request):
     """Program Lead team overview — all CCEOs under the PL with their activity stats."""
+    from apps.accounts.models import StaffSupervisorAssignment
+
     user = request.user
     today = date.today()
 
-    # Get all CCEOs in the system
+    # Get the CCEOs supervised by this PL (StaffSupervisorAssignment is the
+    # "team lens" source of truth — see team_targets_view for the same pattern).
+    sp = getattr(user, "staff_profile", None)
+    supervisee_ids = (
+        list(
+            StaffSupervisorAssignment.objects.filter(supervisor=sp).values_list(
+                "supervisee_id", flat=True
+            )
+        )
+        if sp
+        else []
+    )
     cceos = User.objects.filter(
         roles__contains=["CCEO"],
         status="active",
         deleted_at__isnull=True,
+        staff_profile__id__in=supervisee_ids,
     ).order_by("name")
 
     team_data = []
@@ -471,7 +712,7 @@ def my_team_view(request):
         overdue = Activity.objects.filter(
             responsible_staff_id=cceo.id,
             planned_date__lt=today,
-            status__in=["scheduled", "started"],
+            status__in=["scheduled", "in_progress", "completion_started"],
             deleted_at__isnull=True,
         ).count()
         evidence_gap = Activity.objects.filter(
@@ -480,16 +721,18 @@ def my_team_view(request):
             evidence__isnull=True,
             deleted_at__isnull=True,
         ).count()
-        team_data.append({
-            "id": cceo.id,
-            "name": cceo.name,
-            "email": cceo.email,
-            "initials": cceo.name[:2].upper() if cceo.name else "??",
-            "completed": completed,
-            "overdue": overdue,
-            "evidence_gap": evidence_gap,
-            "risk": "high" if overdue > 3 else "medium" if overdue > 0 else "low",
-        })
+        team_data.append(
+            {
+                "id": cceo.id,
+                "name": cceo.name,
+                "email": cceo.email,
+                "initials": cceo.name[:2].upper() if cceo.name else "??",
+                "completed": completed,
+                "overdue": overdue,
+                "evidence_gap": evidence_gap,
+                "risk": "high" if overdue > 3 else "medium" if overdue > 0 else "low",
+            }
+        )
 
     total_cceos = len(team_data)
     with_overdue = sum(1 for m in team_data if m["overdue"] > 0)
@@ -519,7 +762,7 @@ def my_team_view(request):
             "helper": "CCEOs",
             "icon": "check",
             "variant": "success",
-        }
+        },
     ]
 
     context = {
@@ -532,14 +775,108 @@ def my_team_view(request):
 
 # ─── NOTIFICATIONS ────────────────────────────────────────────────────────────
 
+
+@require_page_permission("dashboard")
+def notifications_page_view(request):
+    """General notifications center dashboard."""
+    user = request.user
+    
+    # Handle bulk/single actions
+    action = request.POST.get("action") or request.GET.get("action")
+    if request.method == "POST":
+        if action == "mark_all_read":
+            Notification.objects.filter(recipient_id=user.id, status="unread").update(
+                status="read", read_at=timezone.now()
+            )
+        elif action == "archive_all_read":
+            Notification.objects.filter(recipient_id=user.id, status="read").update(
+                status="archived"
+            )
+        elif action == "archive_single":
+            notif_id = request.POST.get("notification_id")
+            Notification.objects.filter(id=notif_id, recipient_id=user.id).update(
+                status="archived"
+            )
+            
+    # Filters
+    selected_priority = request.GET.get("priority", "")
+    selected_category = request.GET.get("category", "")
+    selected_status = request.GET.get("status", "all")  # Default to show all except archived by default
+    action_required_only = request.GET.get("action_required") == "true"
+    q = request.GET.get("q", "")
+    
+    qs = Notification.objects.filter(recipient_id=user.id)
+    
+    # Calculate KPIs before filtering
+    kpis = {
+        "total": qs.count(),
+        "unread": qs.filter(status="unread").count(),
+        "action_required": qs.filter(action_required=True, status="unread").count(),
+        "critical": qs.filter(priority="urgent", status="unread").count(),
+    }
+    
+    # Apply status filter
+    if selected_status == "all":
+        qs = qs.exclude(status="archived")
+    else:
+        qs = qs.filter(status=selected_status)
+        
+    if selected_priority:
+        qs = qs.filter(priority=selected_priority)
+    if selected_category:
+        qs = qs.filter(category=selected_category)
+    if action_required_only:
+        qs = qs.filter(action_required=True)
+    if q:
+        from django.db.models import Q
+        qs = qs.filter(Q(title__icontains=q) | Q(body__icontains=q))
+        
+    notifications = qs.order_by("-created_at")[:100]
+    
+    # Get distinct categories
+    categories = list(
+        Notification.objects.filter(recipient_id=user.id)
+        .values_list("category", flat=True)
+        .distinct()
+    )
+    categories = [c for c in categories if c]
+    
+    context = {
+        "notifications": notifications,
+        "kpis": kpis,
+        "selected_priority": selected_priority,
+        "selected_category": selected_category,
+        "selected_status": selected_status,
+        "action_required_only": action_required_only,
+        "q": q,
+        "categories": categories,
+    }
+    return render(request, "pages/notifications/index.html", context)
+
+
+def _get_sorted_drawer_notifications(user) -> list[Notification]:
+    """Helper to get notifications for drawer sorted by Critical/Action-Required first, then latest."""
+    notifs_qs = Notification.objects.filter(recipient_id=user.id).exclude(status="archived")
+    notifs = list(notifs_qs)
+    
+    def sort_key(n):
+        p_val = {"urgent": 0, "high": 1, "normal": 2, "low": 3}.get(n.priority, 2)
+        ar_val = 0 if n.action_required and n.status == "unread" else 1
+        return (p_val, ar_val, -n.created_at.timestamp())
+        
+    notifs.sort(key=sort_key)
+    return notifs[:20]
+
+
 @require_page_permission("dashboard")
 def notification_drawer_view(request):
     """Notification drawer view — loaded via HTMX when clicking notification bell."""
     user = request.user
-    notifs_qs = Notification.objects.filter(recipient_id=user.id).order_by("-created_at")
-    notifs = list(notifs_qs[:20]) # Limit to 20 recent
-    unread_count = Notification.objects.filter(recipient_id=user.id, status="unread").count()
-    
+    notifs = _get_sorted_drawer_notifications(user)
+    unread_count = Notification.objects.filter(
+        recipient_id=user.id, status="unread"
+    ).count()
+
     context = {
         "notifications": notifs,
         "unread_count": unread_count,
@@ -553,17 +890,23 @@ def notification_drawer_view(request):
 def mark_all_notifications_read(request):
     """Mark all unread notifications for the user as read."""
     if request.method == "POST":
-        Notification.objects.filter(recipient_id=request.user.id, status="unread").update(
+        Notification.objects.filter(
+            recipient_id=request.user.id, status="unread"
+        ).update(
             status="read",
             read_at=timezone.now(),
         )
     if request.headers.get("HX-Request") == "true":
         user = request.user
-        notifs = list(Notification.objects.filter(recipient_id=user.id).order_by("-created_at")[:20])
-        return render(request, "partials/notifications/notification_drawer_list.html", {
-            "notifications": notifs,
-            "unread_count": 0,
-        })
+        notifs = _get_sorted_drawer_notifications(user)
+        return render(
+            request,
+            "partials/notifications/notification_drawer_list.html",
+            {
+                "notifications": notifs,
+                "unread_count": 0,
+            },
+        )
     return redirect("/")
 
 
@@ -576,13 +919,19 @@ def mark_notification_read(request, notif_id):
     )
     if request.method == "POST" and request.headers.get("HX-Request") == "true":
         user = request.user
-        notifs = list(Notification.objects.filter(recipient_id=user.id).order_by("-created_at")[:20])
-        unread_count = Notification.objects.filter(recipient_id=user.id, status="unread").count()
-        return render(request, "partials/notifications/notification_drawer_list.html", {
-            "notifications": notifs,
-            "unread_count": unread_count,
-        })
-        
+        notifs = _get_sorted_drawer_notifications(user)
+        unread_count = Notification.objects.filter(
+            recipient_id=user.id, status="unread"
+        ).count()
+        return render(
+            request,
+            "partials/notifications/notification_drawer_list.html",
+            {
+                "notifications": notifs,
+                "unread_count": unread_count,
+            },
+        )
+
     redirect_to = request.GET.get("redirect") or request.POST.get("redirect") or "/"
     return redirect(redirect_to)
 
@@ -590,11 +939,18 @@ def mark_notification_read(request, notif_id):
 @require_page_permission("dashboard")
 def notification_badge_view(request):
     """Return only the notification badge count HTML."""
-    unread_count = Notification.objects.filter(recipient_id=request.user.id, status="unread").count()
-    return render(request, "partials/notifications/notification_badge.html", {"unread_notifications_count": unread_count})
+    unread_count = Notification.objects.filter(
+        recipient_id=request.user.id, status="unread"
+    ).count()
+    return render(
+        request,
+        "partials/notifications/notification_badge.html",
+        {"unread_notifications_count": unread_count},
+    )
 
 
 # ─── USER PROFILE ─────────────────────────────────────────────────────────────
+
 
 @require_page_permission("dashboard")
 def profile_view(request):
@@ -615,10 +971,14 @@ def profile_view(request):
         deleted_at__isnull=True,
     ).count()
 
-    recent = Activity.objects.filter(
-        responsible_staff_id=user.id,
-        deleted_at__isnull=True,
-    ).select_related("school").order_by("-updated_at")[:5]
+    recent = (
+        Activity.objects.filter(
+            responsible_staff_id=user.id,
+            deleted_at__isnull=True,
+        )
+        .select_related("school")
+        .order_by("-updated_at")[:5]
+    )
 
     context = {
         "member": user,
@@ -626,7 +986,9 @@ def profile_view(request):
         "fy": fy,
         "total_activities": total_activities,
         "completed": completed,
-        "completion_rate": round(completed / total_activities * 100) if total_activities else 0,
+        "completion_rate": round(completed / total_activities * 100)
+        if total_activities
+        else 0,
         "recent": recent,
         "initials": user.name[:2].upper() if user.name else "??",
     }
@@ -635,119 +997,247 @@ def profile_view(request):
 
 @require_page_permission("team_targets")
 def team_targets_view(request):
-    """Team targets dashboard resolver."""
-    user = request.user
-    fy = get_operational_fy()
-    today = date.today()
+    """Team Targets — the Program Lead's supervision and recovery cockpit.
 
-    from apps.core.navigation import get_user_role_slug
-    from apps.accounts.models import User, StaffProfile, StaffSupervisorAssignment
-    from apps.targets.performance import staff_metrics_with_targets
+    Aggregates the validated My Targets performance of supervised CCEOs.
+    Strictly PL-scoped (CD/Admin get a country oversight lens). The PL's own
+    performance lives on My Targets, never here."""
+    from apps.core.fy import fy_options
+    from apps.targets.team_targets import PLTeamTargetsService
 
-    role = get_user_role_slug(user)
-    target_users = []
+    fy = (request.GET.get("fy") or "").strip() or None
+    raw_month = (request.GET.get("month") or "").strip()
+    month = int(raw_month) if raw_month.isdigit() and 1 <= int(raw_month) <= 12 else None
 
-    if role == "PL":
-        sp = getattr(user, "staff_profile", None)
-        if sp:
-            supervisee_ids = list(StaffSupervisorAssignment.objects.filter(supervisor=sp).values_list("supervisee_id", flat=True))
-            target_users = User.objects.filter(
-                staff_profile__id__in=supervisee_ids,
-                status="active",
-                deleted_at__isnull=True
-            ).select_related("staff_profile").order_by("name")
-    elif role in ("CD", "ADMIN"):
-        target_users = User.objects.filter(
-            status="active",
-            deleted_at__isnull=True
-        ).exclude(
-            roles__contains=["CountryDirector"]
-        ).exclude(
-            roles__contains=["RegionalVicePresident"]
-        ).select_related("staff_profile").order_by("name")
-    elif role == "HR":
-        target_users = User.objects.filter(
-            status="active",
-            deleted_at__isnull=True,
-            roles__contains=["CCEO"]
-        ) | User.objects.filter(
-            status="active",
-            deleted_at__isnull=True,
-            roles__contains=["Program Lead"]
-        )
-        target_users = target_users.select_related("staff_profile").order_by("name")
-    elif role == "IA":
-        target_users = User.objects.filter(
-            status="active",
-            deleted_at__isnull=True,
-            roles__contains=["ImpactAssessment"]
-        ).select_related("staff_profile").order_by("name")
-    elif role == "ACCOUNTANT":
-        target_users = User.objects.filter(
-            status="active",
-            deleted_at__isnull=True,
-            roles__contains=["Accountant"]
-        ).select_related("staff_profile").order_by("name")
-
-    rows = []
-    for u in target_users:
-        sp = getattr(u, "staff_profile", None)
-        if not sp:
-            continue
-        
-        perf = staff_metrics_with_targets(sp.id, fy)
-        
-        total_target = 0
-        total_achieved = 0
-        
-        for k, card in perf.get("cards", {}).items():
-            total_target += card.get("target", 0)
-            total_achieved += card.get("achieved", 0)
-            
-        achievement_pct = round((total_achieved / total_target * 100), 1) if total_target > 0 else 0.0
-        
-        from apps.activities.models import Activity
-        overdue_act = Activity.objects.filter(
-            responsible_staff_id=sp.id,
-            planned_date__lt=today,
-            status__in=["scheduled", "started"],
-            deleted_at__isnull=True
-        ).count()
-        
-        if overdue_act > 3 or (total_target > 0 and achievement_pct < 40):
-            risk = "High"
-            risk_class = "bg-rose-50 text-rose-700 border-rose-250"
-            next_action = "Supervisor review required"
-        elif overdue_act > 0 or (total_target > 0 and achievement_pct < 70):
-            risk = "Medium"
-            risk_class = "bg-amber-50 text-amber-700 border-amber-250"
-            next_action = "Check workload balance"
-        else:
-            risk = "Low"
-            risk_class = "bg-emerald-50 text-emerald-700 border-emerald-250"
-            next_action = "On track"
-            
-        role_label = u.roles[0] if u.roles else "Staff"
-        
-        rows.append({
-            "name": u.name,
-            "role": role_label,
-            "assigned_targets": total_target,
-            "completed_targets": total_achieved,
-            "achievement_pct": achievement_pct,
-            "overdue_items": overdue_act,
-            "trend": "Stable" if achievement_pct >= 70 else "Needs Support",
-            "risk": risk,
-            "risk_class": risk_class,
-            "next_action": next_action
-        })
-        
-    rows.sort(key=lambda x: x["achievement_pct"], reverse=True)
-    
-    context = {
-        "team_rows": rows,
-        "fy": fy,
-        "total_members": len(rows),
-    }
+    data = PLTeamTargetsService.get_page(request.user, fy=fy, month_of_fy=month)
+    context = {**data, "fy_options": fy_options()}
+    if request.headers.get("HX-Request") == "true":
+        return render(request, "partials/targets/team/body.html", context)
     return render(request, "pages/targets/team.html", context)
 
+
+def _team_member_or_none(request, staff_user_id):
+    """Backend scope guard: the referenced staff member must be in the
+    logged-in supervisor's team. Never trust the URL."""
+    from apps.targets.team_targets import supervised_users
+
+    return next((u for u in supervised_users(request.user) if u.id == staff_user_id), None)
+
+
+@require_page_permission("team_targets")
+def team_targets_staff_drawer_view(request):
+    from django.http import HttpResponseForbidden
+    from apps.targets.fy_calendar import FinancialYearCalendarService as Cal
+    from apps.targets.models import TargetArea
+    from apps.targets.my_targets import MyTargetQueryService
+    from apps.targets.team_targets import PLTeamTargetsService
+
+    member_user = _team_member_or_none(request, (request.GET.get("staff") or "").strip())
+    if member_user is None:
+        return HttpResponseForbidden("Not in your supervised team.")
+    now = Cal.current()
+    fy = (request.GET.get("fy") or "").strip() or now["fy"]
+    raw_month = (request.GET.get("month") or "").strip()
+    month = int(raw_month) if raw_month.isdigit() and 1 <= int(raw_month) <= 12 else (
+        now["month_of_fy"] if fy == now["fy"] else 1)
+    areas = list(TargetArea.objects.filter(active=True).order_by("sort_order"))
+    m_start, m_end = Cal.month_range(fy, month)
+    member = PLTeamTargetsService._member(
+        member_user, areas, fy, month, now["today"], m_start, m_end, fy == now["fy"])
+    # Backfill the portfolio fields get_page normally adds for its members.
+    from apps.accounts.models import StaffSchoolAssignment
+    from apps.activities.models import Activity
+    from apps.schools.models import School
+    from apps.targets.my_targets import COMPLETED_STATUSES, _user_ids
+    from apps.targets.team_targets import SF_REQUIRED_TYPES
+
+    sp_id = getattr(member_user, "staff_profile_id", None)
+    school_pks = StaffSchoolAssignment.objects.filter(staff_id=sp_id).values_list("school_id", flat=True) if sp_id else []
+    districts = sorted({
+        d for d in School.objects.filter(id__in=list(school_pks))
+        .exclude(district__isnull=True).values_list("district__name", flat=True)
+    })
+    member["district_label"] = ", ".join(districts[:2]) or "—"
+    done = Activity.objects.filter(
+        responsible_staff_id__in=_user_ids(member_user), fy=fy,
+        activity_type__in=SF_REQUIRED_TYPES, status__in=COMPLETED_STATUSES,
+        deleted_at__isnull=True,
+    ).exclude(delivery_type="partner")
+    total = done.count()
+    with_sf = done.exclude(salesforce_activity_id__isnull=True).exclude(salesforce_activity_id="").count()
+    member["sf_compliance"] = round(with_sf / total * 100) if total else 100
+    member["core_pct"] = None
+    pipelines = {
+        a.key: MyTargetQueryService._pipeline(member_user, a.key, fy, month)
+        for a in areas
+    }
+    for pa in member["per_area"]:
+        p = pipelines[pa["key"]]
+        pa["scheduled"] = len(p["scheduled"])
+        pa["pending_sf"] = len(p["pending_sf"])
+        pa["ia_pending"] = len(p["ia_pending"])
+        pa["returned"] = len(p["returned"])
+        pa["provisional"] = len(p["provisional"])
+    return render(request, "partials/targets/team/staff_drawer.html", {
+        "m": member, "month_label": Cal.month_label(fy, month),
+        "fy": fy, "month_of_fy": month,
+        "areas": [{"key": a.key, "label": a.label} for a in areas],
+    })
+
+
+@require_page_permission("team_targets")
+def team_targets_matrix_view(request):
+    from apps.targets.team_targets import PLTeamTargetsService
+
+    fy = (request.GET.get("fy") or "").strip() or None
+    data = PLTeamTargetsService.matrix(request.user, fy=fy)
+    return render(request, "partials/targets/team/matrix_drawer.html", data)
+
+
+@require_page_permission("team_targets")
+def team_targets_day_view(request):
+    from django.http import HttpResponseBadRequest
+    from apps.targets.fy_calendar import FinancialYearCalendarService as Cal
+    from apps.targets.team_targets import PLTeamTargetsService
+
+    try:
+        day = date.fromisoformat((request.GET.get("date") or "").strip())
+    except ValueError:
+        return HttpResponseBadRequest("Invalid date.")
+    fy = (request.GET.get("fy") or "").strip() or Cal.current()["fy"]
+    data = PLTeamTargetsService.day_detail(request.user, day, fy)
+    return render(request, "partials/targets/team/day_drawer.html", data)
+
+
+@require_page_permission("team_targets")
+def team_targets_recovery_view(request):
+    """Recovery approval queue: submitted catch-up plans + behind staff."""
+    from apps.targets.fy_calendar import FinancialYearCalendarService as Cal
+    from apps.targets.models import CatchUpPlan
+    from apps.targets.team_targets import PLTeamTargetsService
+
+    data = PLTeamTargetsService.get_page(request.user)
+    plans = list(
+        CatchUpPlan.objects.filter(pl_user_id=request.user.id)
+        .exclude(status__in=["closed"]).select_related("area")
+        .order_by("-created_at")[:30]
+    )
+    names = {m["user_id"]: m["name"] for m in data["members"]}
+    for p in plans:
+        p.staff_name = names.get(p.staff_user_id, "—")
+        p.month_label = Cal.month_label(p.fy, p.month_of_fy)
+    return render(request, "partials/targets/team/recovery_drawer.html", {
+        "plans": plans, "recovery": data["recovery"],
+        "fy": data["fy"], "month_of_fy": data["month_of_fy"],
+        "areas": data["areas"],
+    })
+
+
+@require_page_permission("team_targets")
+def team_targets_sfid_backlog_view(request):
+    """Completed activities missing Activity SF IDs across the team."""
+    from apps.activities.models import Activity
+    from apps.targets.my_targets import COMPLETED_STATUSES, _user_ids
+    from apps.targets.fy_calendar import FinancialYearCalendarService as Cal
+    from apps.targets.team_targets import SF_REQUIRED_TYPES, supervised_users
+
+    team = supervised_users(request.user)
+    ids, names = [], {}
+    for u in team:
+        for i in _user_ids(u):
+            ids.append(i)
+            names[i] = u.name
+    fy = (request.GET.get("fy") or "").strip() or Cal.current()["fy"]
+    acts = Activity.objects.filter(
+        responsible_staff_id__in=ids, fy=fy, deleted_at__isnull=True,
+        activity_type__in=SF_REQUIRED_TYPES, status__in=COMPLETED_STATUSES,
+    ).exclude(delivery_type="partner").filter(
+        Q(salesforce_activity_id__isnull=True) | Q(salesforce_activity_id="")
+    ).select_related("school", "cluster").order_by("planned_date")[:100] if ids else []
+    rows = [{
+        "staff": names.get(a.responsible_staff_id, "—"),
+        "what": a.get_activity_type_display(),
+        "where": a.school.name if a.school_id else (a.cluster.name if a.cluster_id else "—"),
+        "date": a.planned_date,
+    } for a in acts]
+    return render(request, "partials/targets/team/sfid_drawer.html", {"rows": rows, "fy": fy})
+
+
+@require_page_permission("team_targets")
+def team_targets_catchup_create_view(request):
+    from django.http import HttpResponseBadRequest, HttpResponseForbidden
+    from apps.targets.fy_calendar import FinancialYearCalendarService as Cal
+    from apps.targets.team_targets import PLCatchUpPlanService
+
+    if request.method != "POST":
+        return HttpResponseBadRequest("POST required.")
+    staff_user_id = (request.POST.get("staff_user_id") or "").strip()
+    if _team_member_or_none(request, staff_user_id) is None:
+        return HttpResponseForbidden("Not in your supervised team.")
+    now = Cal.current()
+    fy = (request.POST.get("fy") or "").strip() or now["fy"]
+    raw_month = (request.POST.get("month") or "").strip()
+    month = int(raw_month) if raw_month.isdigit() and 1 <= int(raw_month) <= 12 else now["month_of_fy"]
+    school_ids = [x.strip() for x in (request.POST.get("school_ids") or "").split(",") if x.strip()]
+    dates = [x.strip() for x in (request.POST.get("dates") or "").split(",") if x.strip()]
+    try:
+        PLCatchUpPlanService.submit(
+            request.user,
+            staff_user_id=staff_user_id,
+            area_key=(request.POST.get("area") or "school_visits").strip(),
+            fy=fy, month_of_fy=month,
+            count=request.POST.get("count") or len(school_ids) or 0,
+            school_ids=school_ids, planned_dates=dates,
+            note=request.POST.get("note") or "",
+            partner_id=(request.POST.get("partner_id") or "").strip() or None,
+        )
+    except Exception as exc:  # noqa: BLE001
+        return HttpResponseBadRequest(str(exc))
+    messages.success(request, "Catch-up plan submitted for approval.")
+    return redirect("/team-targets")
+
+
+@require_page_permission("team_targets")
+def team_targets_catchup_action_view(request, plan_id):
+    from django.http import HttpResponseBadRequest, HttpResponseForbidden
+    from apps.targets.models import CatchUpPlan
+    from apps.targets.team_targets import PLCatchUpPlanService
+
+    if request.method != "POST":
+        return HttpResponseBadRequest("POST required.")
+    plan = CatchUpPlan.objects.filter(id=plan_id).select_related("area").first()
+    if plan is None or plan.pl_user_id != request.user.id:
+        return HttpResponseForbidden("Not your catch-up plan.")
+    action = (request.POST.get("action") or "").strip()
+    if action == "approve":
+        result = PLCatchUpPlanService.approve(plan, request.user)
+        messages.success(
+            request,
+            f"Catch-up plan approved — {len(result['created'])} activit"
+            f"{'y' if len(result['created']) == 1 else 'ies'} entered Planning.")
+    elif action == "return":
+        PLCatchUpPlanService.return_plan(plan, request.user, request.POST.get("reason") or "")
+        messages.info(request, "Catch-up plan returned.")
+    else:
+        return HttpResponseBadRequest("Unknown action.")
+    return redirect("/team-targets")
+
+
+@require_page_permission("team_targets")
+def team_targets_export_view(request):
+    from django.http import HttpResponse
+    from apps.targets.fy_calendar import FinancialYearCalendarService as Cal
+    from apps.targets.team_targets import PLTeamTargetsService
+    import csv
+
+    fy = (request.GET.get("fy") or "").strip() or Cal.current()["fy"]
+    rows = PLTeamTargetsService.export_rows(request.user, fy=fy)
+    resp = HttpResponse(content_type="text/csv")
+    resp["Content-Disposition"] = f'attachment; filename="team-targets-fy{fy}.csv"'
+    writer = csv.writer(resp)
+    writer.writerow([f"Team Targets — FY {fy}",
+                     f"Generated {timezone.now():%d %b %Y %H:%M}",
+                     f"Supervisor: {request.user.name}"])
+    for row in rows:
+        writer.writerow(row)
+    return resp

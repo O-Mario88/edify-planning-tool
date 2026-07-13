@@ -28,8 +28,8 @@ x-transition:leave-end="translate-x-full"
 <!-- Drawer Header -->
 <div class="flex items-start justify-between border-b border-slate-100 pb-4">
 <div>
-<h2 class="text-[18px] font-semibold text-slate-800 tracking-tight font-sans">Schedule Core Training</h2>
-<p class="text-[11px] text-slate-400 font-semibold mt-1 font-sans">Configure annual support training details for this school.</p>
+<h2 class="text-[18px] font-semibold text-slate-800 tracking-tight ">Schedule Core Training</h2>
+<p class="text-[11px] text-slate-400 font-semibold mt-1 ">Configure annual support training details for this school.</p>
 </div>
 <button 
 @click="open = false; setTimeout(() => document.getElementById('drawer-container').innerHTML = '', 300)"
@@ -46,7 +46,7 @@ class="text-slate-400 hover:text-slate-600 text-[20px] leading-none"
 <form 
 hx-post="/core-schools/schedule-training/action"
 hx-target="#training-form-errors"
-class="space-y-4 text-[12px] font-bold text-slate-700 font-sans"
+class="space-y-4 text-[12px] font-bold text-slate-700 "
 >
 {% csrf_token %}
 <input type="hidden" name="school_id" value="{{ school.school_id }}">
@@ -141,7 +141,7 @@ return parseInt(parts[0]) === this.currentYear &&
 parseInt(parts[2]) === day;
 }
 }"
-class="relative font-sans"
+class="relative "
 >
 <!-- Dropdown Trigger button -->
 <button 
@@ -166,7 +166,7 @@ class="w-full h-10 px-3 flex items-center justify-between rounded-lg border bord
 <div 
 x-show="open"
 @click.outside="open = false"
-class="absolute right-0 mt-1.5 w-[280px] bg-white border border-slate-200 rounded-2xl shadow-xl p-4 z-50 space-y-3 font-sans select-none"
+class="absolute right-0 mt-1.5 w-[280px] bg-white border border-slate-200 rounded-lg shadow-xl p-4 z-50 space-y-3 select-none"
 style="display: none;"
 x-transition:enter="transition ease-out duration-100"
 x-transition:enter-start="opacity-0 transform scale-95"

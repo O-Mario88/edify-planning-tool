@@ -65,7 +65,7 @@ this.clusterName = firstSc.name + " Central Cluster";
 }
 }'
 x-init='$watch("selectedSubCounties", value => autoSuggestName())'
-class="space-y-4 font-sans text-[12px] font-bold text-slate-600"
+class="space-y-4 text-[12px] font-bold text-slate-600"
 >
 <form 
 action="/clusters/create" 
@@ -86,6 +86,9 @@ name="district_id"
 id="district-select"
 x-model="selectedDistrictId"
 @change="selectedSubCounties = []"
+hx-get="{% url 'frontend:eligible_staff_options' %}"
+hx-trigger="change"
+hx-target="#responsible-staff-select"
 class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer" 
 required
 >
@@ -94,6 +97,19 @@ required
 <option value="{{ d.id }}">{{ d.name }}</option>
 {% endfor %}
 </select>
+</div>
+
+<!-- Assigned Staff -->
+<div class="space-y-1">
+<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Assigned Staff</label>
+<select 
+name="responsible_staff_id" 
+id="responsible-staff-select"
+class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+>
+<option value="">-- Select District First --</option>
+</select>
+<p class="text-[11px] text-slate-400 font-semibold mt-1">CCEOs or PLs assigned to schools in this district will automatically load.</p>
 </div>
 
 <!-- Sub-counties Selection Checklist (Optional) -->

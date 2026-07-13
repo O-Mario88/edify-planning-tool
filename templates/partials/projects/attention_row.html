@@ -1,0 +1,5 @@
+{% comment %}Attention-Needed row. Params: label, value (int){% endcomment %}
+<div class="flex items-center justify-between gap-3 py-1.5">
+  <span class="text-[11.5px] font-semibold text-slate-600 leading-snug">{{ label }}</span>
+  <span class="shrink-0 inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-lg text-[12px] font-bold tabular-nums {% if value %}bg-rose-50 text-rose-600{% else %}bg-slate-50 text-slate-400{% endif %}">{{ value }}</span>
+</div>

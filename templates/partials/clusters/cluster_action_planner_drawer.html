@@ -15,7 +15,7 @@ border: 1px solid #cbd5e1 !important;
 }
 .drawer-header {
 border-bottom: none !important;
-background: white !important;
+background:var(--edify-surface) !important;
 padding: 24px 28px 4px 28px !important;
 }
 .drawer-header h3 {
@@ -36,7 +36,7 @@ border: 1.5px solid #cbd5e1 !important;
 border-radius: 10px !important;
 padding: 7px !important;
 color: #475569 !important;
-background: white !important;
+background:var(--edify-surface) !important;
 transition: all 0.2s !important;
 }
 .drawer-close-btn:hover {
@@ -53,7 +53,7 @@ x-data="{
 activityType: '{{ activity_type|default:'training' }}',
 participants: {{ expected_participants|default:25 }}
 }"
-class="space-y-4 font-sans text-[12px] font-bold text-slate-600"
+class="space-y-4 text-[12px] font-bold text-slate-600"
 >
 {% if error_msg %}
 <div class="p-3.5 rounded-xl border border-rose-100 bg-rose-50 text-rose-800 text-[12px] font-semibold flex items-start gap-2">
@@ -197,12 +197,11 @@ required
 <div class="grid grid-cols-2 gap-4">
 <div>
 <label class="block text-[11px] uppercase tracking-wider text-slate-400 mb-1">Purpose for Meeting / Training <span class="text-rose-500">*</span></label>
-<input 
-type="text" 
+<input
+type="text"
 name="purpose"
-placeholder="e.g. Focus on Leadership strategies" 
+placeholder="{{ recommendation.headline|default:'e.g. Focus on Leadership strategies' }}"
 class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold bg-white focus:outline-none text-slate-700"
-value="{{ recommendation.headline|default:'No cluster meetings held this FY' }}"
 required
 >
 </div>
@@ -277,7 +276,7 @@ return parseInt(parts[0]) === this.currentYear &&
 parseInt(parts[2]) === day;
 }
 }"
-class="relative font-sans"
+class="relative "
 >
 <!-- Dropdown Trigger button -->
 <button 
@@ -302,7 +301,7 @@ class="w-full h-10 px-3 flex items-center justify-between rounded-lg border bord
 <div 
 x-show="open"
 @click.outside="open = false"
-class="absolute left-0 mt-1.5 w-[280px] bg-white border border-slate-200 rounded-2xl shadow-xl p-4 z-50 space-y-3 font-sans select-none"
+class="absolute left-0 mt-1.5 w-[280px] bg-white border border-slate-200 rounded-lg shadow-xl p-4 z-50 space-y-3 select-none"
 style="display: none;"
 x-transition:enter="transition ease-out duration-100"
 x-transition:enter-start="opacity-0 transform scale-95"
@@ -399,14 +398,18 @@ disabled
 <div id="planner-cost-preview-container" class="border-t border-slate-100 pt-4">
 {% if cost_preview %}
 {% if not cost_preview.can_schedule %}
-<div class="p-3 bg-rose-50 border border-rose-100 rounded-lg text-rose-800 text-[11px] font-semibold mb-2">
+<div class="p-3 bg-rose-50 border border-rose-100 rounded-lg text-rose-800 text-[11px] font-semibold mb-2 space-y-0.5">
+{% for b in cost_preview.blockers %}
+<div>{{ b }}</div>
+{% empty %}
 Active Cost Catalogue required before cluster activity can be scheduled.
+{% endfor %}
 </div>
 {% else %}
 <div class="space-y-3.5">
 <div class="flex items-center justify-between">
 <span class="block text-[11px] uppercase tracking-wider text-slate-400 font-bold">Cost Preview ({% if activity_type == 'training' %}Group Training{% else %}Cluster Meeting{% endif %})</span>
-<span class="text-[11px] text-slate-400 font-bold uppercase">Ver: 1</span>
+<span class="text-[11px] text-slate-400 font-bold uppercase">Ver: {{ cost_preview.catalogue_version }}</span>
 </div>
 
 <div class="space-y-2 text-[12px] font-semibold text-slate-600">
@@ -433,7 +436,7 @@ Active Cost Catalogue required before cluster activity can be scheduled.
 </div>
 
 <!-- Modal Footer Actions (Schedule & Assign to Partner) -->
-<div class="flex items-center justify-end gap-3" style="position: sticky; bottom: -28px; background: white; z-index: 10; margin-left: -28px; margin-right: -28px; padding: 16px 28px; border-top: 1px solid #edf2f7;">
+<div class="flex items-center justify-end gap-3" style="position: sticky; bottom: -28px; background:var(--edify-surface); z-index: 10; margin-left: -28px; margin-right: -28px; padding: 16px 28px; border-top: 1px solid var(--edify-border);">
 <button 
 type="button" 
 @click="$dispatch('close-drawer')" 

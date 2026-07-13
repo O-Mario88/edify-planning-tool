@@ -1,9 +1,10 @@
 {% extends "layouts/shell.html" %}
+{% load frontend_filters %}
 
 {% block title %}Cleared Ledger - Edify Command Center{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6">
+<div class="px-4 sm:px-6 py-5 space-y-4" style="max-width:1500px;margin:0 auto;">
 
 <!-- Premium Header Pane -->
 <div class="relative overflow-hidden rounded-xl bg-slate-900 text-white p-8 shadow-md border border-slate-800">
@@ -12,7 +13,7 @@
 <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[11px] font-semibold uppercase tracking-widest">
 Permanent Record
 </div>
-<h1 class="text-[32px] font-semibold tracking-tight text-white leading-none">Cleared / Closed Finance Ledger</h1>
+<h1 class="text-[21px] font-extrabold tracking-tight">Cleared / Closed Finance Ledger</h1>
 <p class="text-[14px] text-slate-400 font-medium max-w-xl">
 Archive of all financially closed activities. These records have passed program quality and financial accountability certifications.
 </p>
@@ -22,7 +23,7 @@ Archive of all financially closed activities. These records have passed program 
 <!-- Table Card -->
 <div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
 <div class="overflow-x-auto">
-<table class="w-full text-[12px] font-semibold text-slate-700">
+<table class="w-full text-[12px] font-semibold">
 <thead class="bg-slate-50 border-b border-slate-100 text-[11px] uppercase font-bold text-slate-400">
 <tr>
 <th class="px-6 py-4 text-left">Activity ID</th>
@@ -51,31 +52,33 @@ Archive of all financially closed activities. These records have passed program 
 </td>
 <!-- Type -->
 <td class="px-6 py-4">
-<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold uppercase tracking-wide bg-slate-100 text-slate-700 border border-slate-200/50">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold uppercase tracking-wide bg-slate-100 border border-slate-200/50">
 {{ act.get_activity_type_display }}
 </span>
 </td>
 <!-- Approved -->
-<td class="px-6 py-4 text-center text-slate-700">
-450,000 UGX
+<td class="px-6 py-4 text-center">
+{% if act.completed_snapshot %}{{ act.completed_snapshot.final_budget_amount|currency }} UGX{% else %}&mdash;{% endif %}
 </td>
 <!-- Disbursed -->
-<td class="px-6 py-4 text-center text-slate-700">
-450,000 UGX
+<td class="px-6 py-4 text-center">
+{% if act.completed_snapshot %}{{ act.completed_snapshot.disbursed_amount|currency }} UGX{% else %}&mdash;{% endif %}
 </td>
 <!-- Spend -->
 <td class="px-6 py-4 text-center text-slate-800 font-semibold">
-450,000 UGX
+{% if act.completed_snapshot %}{{ act.completed_snapshot.actual_spend_amount|currency }} UGX{% else %}&mdash;{% endif %}
 </td>
 <!-- Variance -->
 <td class="px-6 py-4 text-center text-slate-500">
-0 UGX
+{% if act.variance is not None %}{{ act.variance|currency }} UGX{% else %}&mdash;{% endif %}
 </td>
 <!-- NetSuite ID -->
 <td class="px-6 py-4 text-center">
+{% if act.completed_snapshot.netsuite_expense_id %}
 <span class="font-mono text-slate-800 bg-slate-50 px-2.5 py-0.5 border border-slate-200 rounded-lg text-[11px]">
-EXP-2200115
+{{ act.completed_snapshot.netsuite_expense_id }}
 </span>
+{% else %}&mdash;{% endif %}
 </td>
 <!-- Closed Date -->
 <td class="px-6 py-4 text-center text-slate-500 font-medium">
@@ -84,7 +87,7 @@ EXP-2200115
 <!-- Actions -->
 <td class="px-6 py-4 text-right">
 <div class="flex items-center justify-end gap-2">
-<a href="/accounts/activities/{{ act.id }}/" class="h-8 px-3 rounded-xl bg-slate-50 text-slate-700 hover:bg-slate-100 hover:text-slate-800 text-[12px] font-semibold flex items-center justify-center transition-colors border border-slate-200/60 shadow-sm">
+<a href="/accounts/activities/{{ act.id }}/" class="h-8 px-3 rounded-xl bg-slate-50 hover:bg-slate-100 hover:text-slate-800 text-[12px] font-semibold flex items-center justify-center transition-colors border border-slate-200/60 shadow-sm">
 Inspect
 </a>
 </div>
@@ -95,7 +98,7 @@ Inspect
 <tr>
 <td colspan="10" class="px-6 py-16 text-center text-[14px] font-semibold text-slate-400 bg-slate-50/20">
 <div class="flex flex-col items-center justify-center gap-3">
-<div class="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 shadow-inner">
+<div class="w-12 h-12 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 shadow-inner">
 <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" /></svg>
 </div>
 <p class="text-slate-400">No closed activities found in cleared ledger archive.</p>

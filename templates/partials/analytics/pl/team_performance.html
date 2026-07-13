@@ -1,0 +1,49 @@
+{% load frontend_filters %}
+<div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-3"
+     x-data="{
+       chart: null,
+       initChart() {
+         if (this.chart) { this.chart.destroy(); }
+         const el = document.querySelector('#plPerformanceChart');
+         if (!el) return;
+         this.chart = new ApexCharts(el, {
+           series: [
+             { name: 'Planned Activities', type: 'column', data: {{ team_performance.planned|safe }} },
+             { name: 'Completed Activities', type: 'column', data: {{ team_performance.completed|safe }} },
+             { name: 'Target Achievement %', type: 'line', data: {{ team_performance.pct|safe }} }
+           ],
+           chart: { height: 260, type: 'line', toolbar: { show: false }, fontFamily: 'Outfit, sans-serif' },
+           stroke: { width: [0, 0, 2.5], curve: 'smooth' },
+           colors: ['#bfdbfe', '#2563eb', '#10b981'],
+           plotOptions: { bar: { columnWidth: '55%', borderRadius: 3 } },
+           dataLabels: { enabled: false },
+           labels: {{ team_performance.labels|safe }},
+           xaxis: { type: 'category', axisBorder: { show: false }, axisTicks: { show: false },
+                    labels: { style: { colors: '#94a3b8', fontSize: '10px', fontWeight: '600' } } },
+           yaxis: [
+             { seriesName: 'Planned Activities', title: { text: 'Activities', style: { color: '#94a3b8', fontSize: '10px' } },
+               labels: { style: { colors: '#94a3b8', fontSize: '10px' } } },
+             { seriesName: 'Completed Activities', show: false },
+             { opposite: true, max: 100, min: 0, title: { text: 'Achievement', style: { color: '#94a3b8', fontSize: '10px' } },
+               labels: { formatter: v => Math.round(v) + '%', style: { colors: '#94a3b8', fontSize: '10px' } } }
+           ],
+           grid: { borderColor: '#94a3b833', strokeDashArray: 4 },
+           legend: { position: 'top', horizontalAlign: 'right', fontSize: '11px', fontWeight: 600, labels: { colors: '#64748b' }, markers: { radius: 12 } },
+           tooltip: { theme: 'dark', shared: true, intersect: false }
+         });
+         this.chart.render();
+       }
+     }" x-init="$nextTick(() => initChart())">
+  <div class="flex items-center justify-between">
+    <div>
+      <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">A. Team Performance Overview</h3>
+      <p class="text-[11px] text-slate-400 font-medium mt-0.5">Planned vs completed activities & target achievement · FY {{ fy }}</p>
+    </div>
+  </div>
+  {% if team_performance.has_target %}{% else %}
+  <p class="text-[10.5px] text-amber-600 font-semibold bg-amber-50 border border-amber-100 rounded-lg px-2.5 py-1 inline-block">
+    Achievement line shows 0 — no annual targets set for this team yet.
+  </p>
+  {% endif %}
+  <div class="h-[260px] w-full" id="plPerformanceChart"></div>
+</div>

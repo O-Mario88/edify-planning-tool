@@ -11,6 +11,7 @@ Prisma applied `deletedAt` filters manually in queries (no middleware). We
 replicate that with a default manager that hides soft-deleted rows, plus a
 `all_objects` (include-deleted) manager for audit/admin/cron that needs them.
 """
+
 from __future__ import annotations
 
 from django.db import models
@@ -65,10 +66,16 @@ class SourcedModel(TimeStampedModel):
     authorization (the RBAC + scope layer is authoritative)."""
 
     source = models.CharField(
-        max_length=32, choices=DataSource.choices, default=DataSource.MANUAL_UPLOAD, db_index=True
+        max_length=32,
+        choices=DataSource.choices,
+        default=DataSource.MANUAL_UPLOAD,
+        db_index=True,
     )
     environment = models.CharField(
-        max_length=16, choices=DataEnvironment.choices, default=DataEnvironment.PRODUCTION, db_index=True
+        max_length=16,
+        choices=DataEnvironment.choices,
+        default=DataEnvironment.PRODUCTION,
+        db_index=True,
     )
 
     class Meta:

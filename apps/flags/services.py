@@ -1,4 +1,5 @@
 """Flags service — CD→PL flag handoff (CD raises; assigned PL acts)."""
+
 from __future__ import annotations
 
 from django.utils import timezone
@@ -12,7 +13,10 @@ from .models import CdFlag
 
 def raise_flag(data: dict, principal) -> dict:
     # Only the CD raises flags.
-    if principal.active_role not in (EdifyRole.COUNTRY_DIRECTOR.value, EdifyRole.ADMIN.value):
+    if principal.active_role not in (
+        EdifyRole.COUNTRY_DIRECTOR.value,
+        EdifyRole.ADMIN.value,
+    ):
         raise BadRequest("Only the Country Director may raise flags.")
     assigned_to = data.get("assignedToUserId")
     if not assigned_to:

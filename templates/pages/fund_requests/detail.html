@@ -4,15 +4,15 @@
 {% block title %}Weekly Request details - Edify Command Center{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-5xl mx-auto space-y-6">
+<div class="px-4 sm:px-6 py-5 space-y-4" style="max-width:1100px;margin:0 auto;">
 <!-- Back Nav & Header -->
 <div>
-<a href="/fund-requests/weekly" class="text-[11px] font-semibold text-[var(--color-edify-primary)] hover:underline uppercase tracking-wider">&larr; Back to Weekly Requests</a>
+<a href="/fund-requests/weekly" class="text-[11px] font-semibold text-[var(--edify-accent)] hover:underline uppercase tracking-wider">&larr; Back to Weekly Requests</a>
 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-2">
 <div>
-<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight">Request Details</h1>
-<p class="text-[12px] text-[var(--text-secondary)] mt-0.5 font-semibold">
-Week: {{ req.weekStartDate }} to {{ req.weekEndDate }} &bull; Owner: <span class="font-semibold text-slate-700">{{ req.responsibleUser }}</span>
+<h1 class="text-[21px] font-extrabold tracking-tight">Request Details</h1>
+<p class="text-[12px] text-[var(--edify-text-muted)] mt-0.5 font-semibold">
+Week: {{ req.weekStartDate }} to {{ req.weekEndDate }} &bull; Owner: <span class="font-semibold">{{ req.responsibleUser }}</span>
 </p>
 </div>
 <span class="inline-flex items-center rounded-full px-3 py-0.5 text-[11px] font-bold uppercase tracking-wider {% if req.status == 'disbursed' %}bg-emerald-50 text-emerald-700 border border-emerald-200{% elif req.status == 'confirmed_for_advance' %}bg-indigo-50 text-indigo-700 border border-indigo-200{% else %}bg-slate-100 text-slate-600{% endif %}">
@@ -24,14 +24,14 @@ Week: {{ req.weekStartDate }} to {{ req.weekEndDate }} &bull; Owner: <span class
 <div class="grid md:grid-cols-3 gap-6 items-start">
 <!-- Main Itemized Lines -->
 <div class="md:col-span-2 space-y-6">
-<div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm overflow-hidden">
-<div class="px-6 py-4 border-b border-[var(--color-edify-divider)] bg-slate-50/50">
+<div class="bg-white rounded-lg border border-[var(--edify-border)] shadow-sm overflow-hidden">
+<div class="px-6 py-4 border-b border-[var(--edify-border)] bg-slate-50/50">
 <h3 class="text-[14px] font-semibold text-slate-800 uppercase tracking-wider">Itemized Line Items</h3>
 </div>
 <div class="overflow-x-auto">
-<table class="w-full text-left text-[12px] font-sans border-collapse">
+<table class="w-full text-left text-[12px] border-collapse">
 <thead>
-<tr class="bg-slate-50/30 border-b border-[var(--color-edify-divider)] text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+<tr class="bg-slate-50/30 border-b border-[var(--edify-border)] text-[11px] font-bold text-slate-400 uppercase tracking-wider">
 <th class="px-4 py-2.5">Line Type</th>
 <th class="px-4 py-2.5">Description</th>
 <th class="px-4 py-2.5">Qty</th>
@@ -39,7 +39,7 @@ Week: {{ req.weekStartDate }} to {{ req.weekEndDate }} &bull; Owner: <span class
 <th class="px-4 py-2.5 text-right">Total</th>
 </tr>
 </thead>
-<tbody class="divide-y divide-[var(--color-edify-divider)]">
+<tbody class="divide-y divide-[var(--edify-border)]">
 {% if req.lines %}
 {% for line in req.lines %}
 <tr class="hover:bg-slate-50/20">
@@ -63,10 +63,10 @@ Week: {{ req.weekStartDate }} to {{ req.weekEndDate }} &bull; Owner: <span class
 
 <!-- Actions Sidebar Panel -->
 <div class="space-y-6">
-<div class="bg-white rounded-2xl border border-[var(--border-card)] p-5 shadow-sm space-y-4">
+<div class="bg-white rounded-lg border border-[var(--edify-border)] p-5 shadow-sm space-y-4">
 <div>
 <p class="text-[11px] uppercase font-bold text-slate-400 tracking-wider">Total Request Amount</p>
-<p class="text-[24px] font-semibold text-[var(--color-edify-primary)] mt-0.5">{{ req.totalAmount|ugx }}</p>
+<p class="text-[24px] font-semibold text-[var(--edify-accent)] mt-0.5">{{ req.totalAmount|ugx }}</p>
 </div>
 
 <!-- Confirm action (CCEO / Owner) -->
@@ -75,7 +75,7 @@ Week: {{ req.weekStartDate }} to {{ req.weekEndDate }} &bull; Owner: <span class
 {% csrf_token %}
 <button 
 type="submit" 
-class="w-full h-10 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[12px] font-semibold transition-colors flex items-center justify-center"
+class="w-full h-10 rounded-lg bg-[var(--edify-accent)] hover:bg-[var(--edify-accent-hover)] text-white text-[12px] font-semibold transition-colors flex items-center justify-center"
 >
 Confirm &amp; Request Advance
 </button>

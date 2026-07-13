@@ -1,4 +1,5 @@
 """Planning service — plan authoring + scheduling + lifecycle."""
+
 from __future__ import annotations
 
 from django.utils import timezone
@@ -24,32 +25,35 @@ def setup(query: dict, principal) -> list[dict]:
             deleted_at__isnull=True,
             fy=fy,
             activity_type="school_improvement_training",
-            school_id__isnull=False
+            school_id__isnull=False,
         ).values_list("school_id", flat=True)
     )
 
     from apps.ssa.models import SsaRecord
-    records = SsaRecord.objects.filter(school__in=schools, fy=fy, deleted_at__isnull=True).prefetch_related("scores")
-    
+
+    records = SsaRecord.objects.filter(
+        school__in=schools, fy=fy, deleted_at__isnull=True
+    ).prefetch_related("scores")
+
     school_weakest = {}
     for r in records:
-        scores = sorted(r.scores.all().values("intervention", "score"), key=lambda s: s["score"])
+        scores = sorted(
+            r.scores.all().values("intervention", "score"), key=lambda s: s["score"]
+        )
         weakest_list = []
         for s in scores[:2]:
             code = s["intervention"]
             label = dict(SsaIntervention.choices).get(code, code)
-            weakest_list.append({
-                "intervention": code,
-                "label": label,
-                "score": s["score"]
-            })
+            weakest_list.append(
+                {"intervention": code, "label": label, "score": s["score"]}
+            )
         school_weakest[r.school_id] = weakest_list
 
     def _serialize_planning_school(school):
         weak = school_weakest.get(school.id, [])
         weakest_area = weak[0]["label"] if len(weak) > 0 else None
         second_weak_area = weak[1]["label"] if len(weak) > 1 else None
-        
+
         return {
             "schoolId": school.school_id,
             "name": school.name,
@@ -62,23 +66,42 @@ def setup(query: dict, principal) -> list[dict]:
             "stage": school.planning_readiness,
             "weakest": weak,
             "weakestArea": weakest_area,
-            "secondWeakArea": second_weak_area
+            "secondWeakArea": second_weak_area,
         }
 
-    not_yet_clustered_list = schools.filter(Q(cluster_id__isnull=True) | Q(cluster_id="")).select_related("sub_county")
-    not_yet_clustered_items = [_serialize_planning_school(s) for s in not_yet_clustered_list]
-    
-    ready_to_plan_list = schools.filter(cluster_id__isnull=False).exclude(cluster_id="").filter(current_fy_ssa_status="done", school_type="client").select_related("sub_county")
+    not_yet_clustered_list = schools.filter(
+        Q(cluster_id__isnull=True) | Q(cluster_id="")
+    ).select_related("sub_county")
+    not_yet_clustered_items = [
+        _serialize_planning_school(s) for s in not_yet_clustered_list
+    ]
+
+    ready_to_plan_list = (
+        schools.filter(cluster_id__isnull=False)
+        .exclude(cluster_id="")
+        .filter(current_fy_ssa_status="done", school_type="client")
+        .select_related("sub_county")
+    )
     ready_to_plan_items = [_serialize_planning_school(s) for s in ready_to_plan_list]
-    
-    core_school_list = schools.filter(cluster_id__isnull=False).exclude(cluster_id="").filter(school_type__in=["core", "champion"]).select_related("sub_county")
+
+    core_school_list = (
+        schools.filter(cluster_id__isnull=False)
+        .exclude(cluster_id="")
+        .filter(school_type__in=["core", "champion"])
+        .select_related("sub_county")
+    )
     core_school_items = [_serialize_planning_school(s) for s in core_school_list]
-    
-    unassessed_list = schools.filter(cluster_id__isnull=False).exclude(cluster_id="").exclude(current_fy_ssa_status="done").select_related("sub_county")
-    
+
+    unassessed_list = (
+        schools.filter(cluster_id__isnull=False)
+        .exclude(cluster_id="")
+        .exclude(current_fy_ssa_status="done")
+        .select_related("sub_county")
+    )
+
     sit_scheduled_items = []
     clustered_ssa_required_items = []
-    
+
     for s in unassessed_list:
         if s.id in sit_scheduled_school_ids:
             sit_scheduled_items.append(_serialize_planning_school(s))
@@ -90,32 +113,32 @@ def setup(query: dict, principal) -> list[dict]:
             "key": "notYetClustered",
             "label": "Not clustered",
             "count": len(not_yet_clustered_items),
-            "items": not_yet_clustered_items
+            "items": not_yet_clustered_items,
         },
         {
             "key": "clusteredSsaRequired",
             "label": "Clustered, SSA required",
             "count": len(clustered_ssa_required_items),
-            "items": clustered_ssa_required_items
+            "items": clustered_ssa_required_items,
         },
         {
             "key": "sitScheduledSsaMissing",
             "label": "SIT scheduled, SSA missing",
             "count": len(sit_scheduled_items),
-            "items": sit_scheduled_items
+            "items": sit_scheduled_items,
         },
         {
             "key": "readyToPlan",
             "label": "Ready to plan",
             "count": len(ready_to_plan_items),
-            "items": ready_to_plan_items
+            "items": ready_to_plan_items,
         },
         {
             "key": "coreSchoolPlanning",
             "label": "Plan core package",
             "count": len(core_school_items),
-            "items": core_school_items
-        }
+            "items": core_school_items,
+        },
     ]
 
 
@@ -134,40 +157,44 @@ def plan_builder(query: dict, principal) -> dict:
 
     # 1. Fetch schools in user scope
     scoped_schools, scope = _scoped_schools(principal)
-    
+
     # 2. Filter schools that are clustered, have a current-FY SSA, and are client type
-    ready_schools = scoped_schools.filter(
-        deleted_at__isnull=True,
-        current_fy_ssa_status="done"
-    ).exclude(cluster_id__isnull=True).exclude(cluster_id="").select_related("district", "sub_county")
-    
+    ready_schools = (
+        scoped_schools.filter(deleted_at__isnull=True, current_fy_ssa_status="done")
+        .exclude(cluster_id__isnull=True)
+        .exclude(cluster_id="")
+        .select_related("district", "sub_county")
+    )
+
     # Prefetch verified/confirmed SsaRecords for current FY for these schools to get weakest areas
     records = SsaRecord.objects.filter(
         school__in=ready_schools,
         fy=fy,
         verification_status="confirmed",
-        deleted_at__isnull=True
+        deleted_at__isnull=True,
     ).prefetch_related("scores")
-    
+
     school_weakest = {}
     school_ssa_score = {}
     for r in records:
-        scores = sorted(r.scores.all().values("intervention", "score"), key=lambda s: s["score"])
+        scores = sorted(
+            r.scores.all().values("intervention", "score"), key=lambda s: s["score"]
+        )
         weakest_list = []
         for s in scores[:2]:
             code = s["intervention"]
             label = dict(SsaIntervention.choices).get(code, code)
-            weakest_list.append({
-                "intervention": code,
-                "label": label,
-                "score": s["score"]
-            })
+            weakest_list.append(
+                {"intervention": code, "label": label, "score": s["score"]}
+            )
         school_weakest[r.school_id] = weakest_list
         school_ssa_score[r.school_id] = r.average_score
 
     # Fetch cluster names
     cluster_ids = set(ready_schools.values_list("cluster_id", flat=True))
-    clusters_in_scope = Cluster.objects.filter(id__in=cluster_ids, deleted_at__isnull=True).select_related("district")
+    clusters_in_scope = Cluster.objects.filter(
+        id__in=cluster_ids, deleted_at__isnull=True
+    ).select_related("district")
     cluster_name_map = {c.id: c.name for c in clusters_in_scope}
 
     serialized_schools = []
@@ -175,23 +202,25 @@ def plan_builder(query: dict, principal) -> dict:
         weak = school_weakest.get(s.id, [])
         weakest_area = weak[0]["label"] if len(weak) > 0 else None
         second_weak_area = weak[1]["label"] if len(weak) > 1 else None
-        
-        serialized_schools.append({
-            "schoolId": s.school_id,
-            "name": s.name,
-            "schoolType": s.school_type,
-            "district": s.district.name if s.district else "",
-            "clusterId": s.cluster_id,
-            "cluster": cluster_name_map.get(s.cluster_id, "—"),
-            "subCounty": s.sub_county.name if s.sub_county else None,
-            "owner": s.account_owner_name_raw or s.account_owner_id or "—",
-            "ssaScore": school_ssa_score.get(s.id),
-            "weakest": weak,
-            "weakestArea": weakest_area,
-            "secondWeakArea": second_weak_area,
-            "planningReadiness": s.planning_readiness,
-            "stage": s.planning_readiness
-        })
+
+        serialized_schools.append(
+            {
+                "schoolId": s.school_id,
+                "name": s.name,
+                "schoolType": s.school_type,
+                "district": s.district.name if s.district else "",
+                "clusterId": s.cluster_id,
+                "cluster": cluster_name_map.get(s.cluster_id, "—"),
+                "subCounty": s.sub_county.name if s.sub_county else None,
+                "owner": s.account_owner_name_raw or s.account_owner_id or "—",
+                "ssaScore": school_ssa_score.get(s.id),
+                "weakest": weak,
+                "weakestArea": weakest_area,
+                "secondWeakArea": second_weak_area,
+                "planningReadiness": s.planning_readiness,
+                "stage": s.planning_readiness,
+            }
+        )
 
     # 3. Calculate cluster statistics dynamically based on member schools' most recent confirmed SSA scores
     serialized_clusters = []
@@ -199,78 +228,99 @@ def plan_builder(query: dict, principal) -> dict:
         # Member schools of this cluster
         member_schools = School.objects.filter(cluster_id=c.id, deleted_at__isnull=True)
         school_count = member_schools.count()
-        
+
         # Most recent confirmed SsaRecord for each member school
-        member_records_qs = SsaRecord.objects.filter(
-            school__in=member_schools,
-            verification_status="confirmed",
-            deleted_at__isnull=True
-        ).prefetch_related("scores").order_by("school_id", "-date_of_ssa")
-        
+        member_records_qs = (
+            SsaRecord.objects.filter(
+                school__in=member_schools,
+                verification_status="confirmed",
+                deleted_at__isnull=True,
+            )
+            .prefetch_related("scores")
+            .order_by("school_id", "-date_of_ssa")
+        )
+
         most_recent_records = {}
         for r in member_records_qs:
             if r.school_id not in most_recent_records:
                 most_recent_records[r.school_id] = r
-                
+
         total_score = 0.0
         record_count = 0
-        
+
         interv_sums = {}
         interv_counts = {}
-        
+
         for r in most_recent_records.values():
             if r.average_score is not None:
                 total_score += r.average_score
                 record_count += 1
             for s in r.scores.all():
-                interv_sums[s.intervention] = interv_sums.get(s.intervention, 0.0) + s.score
+                interv_sums[s.intervention] = (
+                    interv_sums.get(s.intervention, 0.0) + s.score
+                )
                 interv_counts[s.intervention] = interv_counts.get(s.intervention, 0) + 1
-                
+
         average_ssa = round(total_score / record_count, 2) if record_count > 0 else None
-        
+
         weakest_cluster_interv = None
         interv_averages = []
         for code, label in SsaIntervention.choices:
             if code in interv_sums:
                 avg_val = round(interv_sums[code] / interv_counts[code], 2)
-                interv_averages.append({
-                    "intervention": code,
-                    "label": label,
-                    "avg": avg_val
-                })
-        
+                interv_averages.append(
+                    {"intervention": code, "label": label, "avg": avg_val}
+                )
+
         if interv_averages:
             interv_averages.sort(key=lambda x: x["avg"])
             weakest_cluster_interv = {
                 "intervention": interv_averages[0]["intervention"],
                 "label": interv_averages[0]["label"],
-                "avg": interv_averages[0]["avg"]
+                "avg": interv_averages[0]["avg"],
             }
-            
-        serialized_clusters.append({
-            "clusterId": c.id,
-            "clusterName": c.name,
-            "district": c.district.name if c.district else "",
-            "schoolCount": school_count,
-            "averageSsa": average_ssa,
-            "weakest": weakest_cluster_interv
-        })
+
+        serialized_clusters.append(
+            {
+                "clusterId": c.id,
+                "clusterName": c.name,
+                "district": c.district.name if c.district else "",
+                "schoolCount": school_count,
+                "averageSsa": average_ssa,
+                "weakest": weakest_cluster_interv,
+            }
+        )
 
     fy_months = [
-        f"{int(fy) - 1}-10", f"{int(fy) - 1}-11", f"{int(fy) - 1}-12",
-        f"{fy}-01", f"{fy}-02", f"{fy}-03",
-        f"{fy}-04", f"{fy}-05", f"{fy}-06",
-        f"{fy}-07", f"{fy}-08", f"{fy}-09",
+        f"{int(fy) - 1}-10",
+        f"{int(fy) - 1}-11",
+        f"{int(fy) - 1}-12",
+        f"{fy}-01",
+        f"{fy}-02",
+        f"{fy}-03",
+        f"{fy}-04",
+        f"{fy}-05",
+        f"{fy}-06",
+        f"{fy}-07",
+        f"{fy}-08",
+        f"{fy}-09",
     ]
-    plans = MonthlyPlan.objects.filter(owner_staff_id=principal.staff_profile_id, month_iso__in=fy_months)
+    plans = MonthlyPlan.objects.filter(
+        owner_staff_id=principal.staff_profile_id, month_iso__in=fy_months
+    )
     return {
         "fy": fy,
         "plans": [
-            {"id": p.id, "monthIso": p.month_iso, "status": p.status, "activityCount": p.activities.count()}
+            {
+                "id": p.id,
+                "monthIso": p.month_iso,
+                "status": p.status,
+                "activityCount": p.activities.count(),
+            }
             for p in plans
         ],
         "schools": serialized_schools,
-        "clusters": serialized_clusters
+        "clusters": serialized_clusters,
     }
 
 
@@ -283,25 +333,40 @@ def recompute(school_id: str, principal) -> dict:
     if not school:
         raise NotFoundError("School not found.")
     _recompute_readiness(school)
-    return {"ok": True, "schoolId": school_id, "planningReadiness": school.planning_readiness}
+    return {
+        "ok": True,
+        "schoolId": school_id,
+        "planningReadiness": school.planning_readiness,
+    }
 
 
 def list_plans(query: dict, principal) -> list[dict]:
     fy = query.get("fy") or get_operational_fy()
     fy_months = [
-        f"{int(fy) - 1}-10", f"{int(fy) - 1}-11", f"{int(fy) - 1}-12",
-        f"{fy}-01", f"{fy}-02", f"{fy}-03",
-        f"{fy}-04", f"{fy}-05", f"{fy}-06",
-        f"{fy}-07", f"{fy}-08", f"{fy}-09",
+        f"{int(fy) - 1}-10",
+        f"{int(fy) - 1}-11",
+        f"{int(fy) - 1}-12",
+        f"{fy}-01",
+        f"{fy}-02",
+        f"{fy}-03",
+        f"{fy}-04",
+        f"{fy}-05",
+        f"{fy}-06",
+        f"{fy}-07",
+        f"{fy}-08",
+        f"{fy}-09",
     ]
     qs = MonthlyPlan.objects.filter(month_iso__in=fy_months)
-    
+
     if query.get("supervised") == "true" or query.get("team") == "true":
         from apps.accounts.models import StaffSupervisorAssignment
+
         if principal.staff_profile_id:
-            supervised_ids = list(StaffSupervisorAssignment.objects.filter(
-                supervisor_id=principal.staff_profile_id
-            ).values_list("supervisee_id", flat=True))
+            supervised_ids = list(
+                StaffSupervisorAssignment.objects.filter(
+                    supervisor_id=principal.staff_profile_id
+                ).values_list("supervisee_id", flat=True)
+            )
             qs = qs.filter(owner_staff_id__in=supervised_ids)
         else:
             qs = qs.none()
@@ -312,9 +377,16 @@ def list_plans(query: dict, principal) -> list[dict]:
             qs = qs.filter(owner_staff_id=principal.staff_profile_id)
         else:
             qs = qs.none()
-            
-    inc_acts = (query.get("supervised") == "true" or query.get("team") == "true" or query.get("includeActivities") == "true")
-    return [_serialize_plan(p, include_activities=inc_acts) for p in qs.order_by("-month_iso")]
+
+    inc_acts = (
+        query.get("supervised") == "true"
+        or query.get("team") == "true"
+        or query.get("includeActivities") == "true"
+    )
+    return [
+        _serialize_plan(p, include_activities=inc_acts)
+        for p in qs.order_by("-month_iso")
+    ]
 
 
 def get_plan(plan_id: str, principal) -> dict:
@@ -331,14 +403,19 @@ def create_plan(data: dict, principal) -> dict:
     if not month_iso:
         raise BadRequest("monthIso is required (e.g. 2026-05).")
     plan, _ = MonthlyPlan.objects.update_or_create(
-        month_iso=month_iso, owner_staff_id=principal.staff_profile_id,
+        month_iso=month_iso,
+        owner_staff_id=principal.staff_profile_id,
         defaults={"owner_name": principal.name, "status": "draft"},
     )
     for act in data.get("activities", []):
         MonthlyPlanActivity.objects.create(
-            plan=plan, kind=act.get("kind", "visit"), title=act.get("title", ""),
-            week_of_month=act.get("weekOfMonth", 1), school_id=act.get("schoolId"),
-            est_cost_cents=act.get("estCostCents", 0), intervention_area=act.get("interventionArea"),
+            plan=plan,
+            kind=act.get("kind", "visit"),
+            title=act.get("title", ""),
+            week_of_month=act.get("weekOfMonth", 1),
+            school_id=act.get("schoolId"),
+            est_cost_cents=act.get("estCostCents", 0),
+            intervention_area=act.get("interventionArea"),
             delivery_type=act.get("deliveryType"),
         )
     return _serialize_plan(plan, include_activities=True)
@@ -378,6 +455,7 @@ def return_plan(plan_id: str, data: dict, principal) -> dict:
 def schedule_school_visit(data: dict, principal) -> dict:
     """Schedule a school visit activity (delegates to activities.create)."""
     from apps.activities.services import create as create_activity
+
     act_type = data.get("activityType", "school_visit")
     return create_activity({**data, "activityType": act_type}, principal)
 
@@ -385,7 +463,9 @@ def schedule_school_visit(data: dict, principal) -> dict:
 def assign_school_visit_to_partner(data: dict, principal) -> dict:
     from apps.activities.services import create as create_activity
 
-    return create_activity({**data, "activityType": "school_visit", "deliveryType": "partner"}, principal)
+    return create_activity(
+        {**data, "activityType": "school_visit", "deliveryType": "partner"}, principal
+    )
 
 
 def schedule_cluster_training(data: dict, principal) -> dict:
@@ -436,8 +516,13 @@ def _serialize_plan(p: MonthlyPlan, include_activities: bool = False) -> dict:
     if include_activities:
         out["activities"] = [
             {
-                "id": a.id, "kind": a.kind, "title": a.title, "weekOfMonth": a.week_of_month,
-                "schoolId": a.school_id, "estCostCents": a.est_cost_cents, "status": a.status,
+                "id": a.id,
+                "kind": a.kind,
+                "title": a.title,
+                "weekOfMonth": a.week_of_month,
+                "schoolId": a.school_id,
+                "estCostCents": a.est_cost_cents,
+                "status": a.status,
             }
             for a in p.activities.all()
         ]

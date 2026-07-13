@@ -4,45 +4,44 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('accounts', '0004_staffsetupcandidate'),
+        ("accounts", "0004_staffsetupcandidate"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='stafftargetprofile',
-            name='accountability_target',
+            model_name="stafftargetprofile",
+            name="accountability_target",
             field=models.IntegerField(default=0),
         ),
         migrations.AddField(
-            model_name='stafftargetprofile',
-            name='activity_codes_target',
+            model_name="stafftargetprofile",
+            name="activity_codes_target",
             field=models.IntegerField(default=0),
         ),
         migrations.AddField(
-            model_name='stafftargetprofile',
-            name='cluster_meetings_target',
+            model_name="stafftargetprofile",
+            name="cluster_meetings_target",
             field=models.IntegerField(default=0),
         ),
         migrations.AddField(
-            model_name='stafftargetprofile',
-            name='evidence_target',
+            model_name="stafftargetprofile",
+            name="evidence_target",
             field=models.IntegerField(default=0),
         ),
         migrations.AddField(
-            model_name='stafftargetprofile',
-            name='group_trainings_target',
+            model_name="stafftargetprofile",
+            name="group_trainings_target",
             field=models.IntegerField(default=0),
         ),
         migrations.AddField(
-            model_name='stafftargetprofile',
-            name='ia_verified_target',
+            model_name="stafftargetprofile",
+            name="ia_verified_target",
             field=models.IntegerField(default=0),
         ),
         migrations.AddField(
-            model_name='stafftargetprofile',
-            name='ssa_target',
+            model_name="stafftargetprofile",
+            name="ssa_target",
             field=models.IntegerField(default=0),
         ),
     ]

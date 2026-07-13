@@ -6,7 +6,7 @@ hx-target="#core-schools-main-container"
 hx-swap="outerHTML"
 hx-push-url="true"
 @change="if ($event.target.id !== 'core-filters-page-input') { const p = document.getElementById('core-filters-page-input'); if (p) p.value = '1' }"
-class="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-100 shadow-sm font-sans"
+class="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-100 shadow-sm "
 >
 <input type="hidden" name="page" id="core-filters-page-input" value="{{ page_obj.number|default:1 }}">
 <div class="flex flex-wrap items-center gap-2.5 text-[11px] font-bold text-slate-600">

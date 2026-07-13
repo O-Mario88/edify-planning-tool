@@ -7,6 +7,7 @@ are skipped, duplicates are handled (duplicate vs update_existing), the response
 counts are truthful, a zero-saved upload returns success=false, and the saved
 rows are immediately readable from GET /api/schools.
 """
+
 from __future__ import annotations
 
 import io
@@ -32,25 +33,31 @@ class SchoolUploadTest(APITestCase):
         self.region = Region.objects.create(name="Northern")
         self.district = District.objects.create(name="Gulu", region=self.region)
         self.ia = User.objects.create_user(
-            email="ia@upload.test", name="IA Tester",
+            email="ia@upload.test",
+            name="IA Tester",
             roles=[EdifyRole.IMPACT_ASSESSMENT.value],
             active_role=EdifyRole.IMPACT_ASSESSMENT.value,
-            password="x", is_active=True,
+            password="x",
+            is_active=True,
         )
         # A field-staff CCEO named "Aisha Dar" — the upload matches a school's
         # Staff Name to this CCEO (role-aware: only CCEO/PL users auto-link).
         self.cceo = User.objects.create_user(
-            email="cceo@upload.test", name="Aisha Dar",
+            email="cceo@upload.test",
+            name="Aisha Dar",
             roles=[EdifyRole.CCEO.value],
             active_role=EdifyRole.CCEO.value,
-            password="x", is_active=True,
+            password="x",
+            is_active=True,
         )
         self.staff = StaffProfile.objects.create(user=self.cceo, title="CCEO")
         self._auth(self.ia)
 
     # ── helpers ──────────────────────────────────────────────────────────
     def _auth(self, user):
-        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {issue_access_token(user.id, user.active_role)}")
+        self.client.credentials(
+            HTTP_AUTHORIZATION=f"Bearer {issue_access_token(user.id, user.active_role)}"
+        )
 
     def _csv(self, body: str, name="schools.csv"):
         return SimpleUploadedFile(name, body.encode("utf-8"), content_type="text/csv")
@@ -107,12 +114,21 @@ class SchoolUploadTest(APITestCase):
 
         wb = openpyxl.Workbook()
         ws = wb.active
-        ws.append(["School ID", "School Name", "District", "Current Partner Type", "Enrolment"])
+        ws.append(
+            [
+                "School ID",
+                "School Name",
+                "District",
+                "Current Partner Type",
+                "Enrolment",
+            ]
+        )
         ws.append(["SCH-XLSX", "Spreadsheet Primary", "Gulu", "Client", 250])
         buf = io.BytesIO()
         wb.save(buf)
         f = SimpleUploadedFile(
-            "schools.xlsx", buf.getvalue(),
+            "schools.xlsx",
+            buf.getvalue(),
             content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
         res = self._post_and_import(f)
@@ -123,10 +139,10 @@ class SchoolUploadTest(APITestCase):
     def test_missing_required_values_fail_rows(self):
         body = (
             f"{EXACT_HEADERS}\n"
-            ",,No Id School,Gulu,Client,1,,,,\n"            # missing School ID
-            ",SCH-NO-NAME,,Gulu,Client,1,,,,\n"            # missing Name
+            ",,No Id School,Gulu,Client,1,,,,\n"  # missing School ID
+            ",SCH-NO-NAME,,Gulu,Client,1,,,,\n"  # missing Name
             ",SCH-NO-DIST,Has No District,,Client,1,,,,\n"  # missing District
-            ",SCH-OK,Valid Primary,Gulu,Client,100,,,,\n"   # valid
+            ",SCH-OK,Valid Primary,Gulu,Client,100,,,,\n"  # valid
         )
         res = self._post_and_import(self._csv(body))
         self.assertEqual(res.status_code, 200, res.content)
@@ -202,6 +218,7 @@ class SchoolUploadTest(APITestCase):
         self.assertEqual(unmatched.account_owner_status, "matched")
         self.assertEqual(unmatched.account_owner_name_raw, "Ghost Person")
         from apps.accounts.models import User
+
         self.assertTrue(User.objects.filter(name="Ghost Person").exists())
 
     def test_row_results_persisted(self):

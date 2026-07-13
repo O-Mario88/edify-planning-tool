@@ -12,6 +12,7 @@ Key parity notes:
 - `RefreshToken` stores a SHA-256 hash of the rotating refresh token.
 - `StaffProfile` is 1:1 with User and carries the field-staff portfolio links.
 """
+
 from __future__ import annotations
 
 from django.contrib.auth.models import (
@@ -38,13 +39,17 @@ class UserManager(BaseUserManager):
 
     use_in_migrations = True
 
-    def _create_user(self, email, name, *, roles=None, active_role=None, password=None, **extra):
+    def _create_user(
+        self, email, name, *, roles=None, active_role=None, password=None, **extra
+    ):
         if not email:
             raise ValueError("Users must have an email address.")
         email = self.normalize_email(email).lower()
         roles = roles or [EdifyRole.CCEO.value]
         active_role = active_role or roles[0]
-        user = self.model(email=email, name=name, roles=roles, active_role=active_role, **extra)
+        user = self.model(
+            email=email, name=name, roles=roles, active_role=active_role, **extra
+        )
         if password:
             user.set_password(password)
         else:
@@ -53,10 +58,19 @@ class UserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
-    def create_user(self, email, name, *, roles=None, active_role=None, password=None, **extra):
+    def create_user(
+        self, email, name, *, roles=None, active_role=None, password=None, **extra
+    ):
         extra.setdefault("is_staff", False)
         extra.setdefault("is_superuser", False)
-        return self._create_user(email, name, roles=roles, active_role=active_role, password=password, **extra)
+        return self._create_user(
+            email,
+            name,
+            roles=roles,
+            active_role=active_role,
+            password=password,
+            **extra,
+        )
 
     def create_superuser(self, email, name, password=None, **extra):
         extra.setdefault("is_staff", True)
@@ -66,7 +80,12 @@ class UserManager(BaseUserManager):
         extra.setdefault("status", UserStatus.ACTIVE)
         extra.setdefault("is_active", True)
         return self._create_user(
-            email, name, roles=roles, active_role=active_role, password=password, **extra
+            email,
+            name,
+            roles=roles,
+            active_role=active_role,
+            password=password,
+            **extra,
         )
 
 
@@ -85,16 +104,21 @@ class User(AbstractBaseUser, PermissionsMixin, SoftDeleteModel):
     name = models.CharField(max_length=255)
     phone = models.CharField(max_length=64, null=True, blank=True)
     roles = ArrayField(
-        base_field=models.CharField(max_length=64, choices=[(r.value, r.value) for r in EdifyRole]),
+        base_field=models.CharField(
+            max_length=64, choices=[(r.value, r.value) for r in EdifyRole]
+        ),
         default=list,
     )
     active_role = models.CharField(
-        max_length=64, choices=[(r.value, r.value) for r in EdifyRole],
+        max_length=64,
+        choices=[(r.value, r.value) for r in EdifyRole],
         default=EdifyRole.CCEO.value,
     )
     is_active = models.BooleanField(default=True)
     # Lifecycle: invited → active → suspended/disabled. Only `active` may sign in.
-    status = models.CharField(max_length=32, choices=UserStatus.choices, default=UserStatus.ACTIVE)
+    status = models.CharField(
+        max_length=32, choices=UserStatus.choices, default=UserStatus.ACTIVE
+    )
     password_set_at = models.DateTimeField(null=True, blank=True)
     last_login_at = models.DateTimeField(null=True, blank=True)
     # Set True when an admin creates/resets the password. The user must change it on next login.
@@ -167,7 +191,9 @@ class UserInvitation(TimeStampedModel):
     id = CuidField()
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="invitations")
     token_hash = models.CharField(max_length=255, unique=True)
-    invited_by = models.ForeignKey(User, on_delete=models.RESTRICT, related_name="invited_by")
+    invited_by = models.ForeignKey(
+        User, on_delete=models.RESTRICT, related_name="invited_by"
+    )
     expires_at = models.DateTimeField()
     accepted_at = models.DateTimeField(null=True, blank=True)
     revoked_at = models.DateTimeField(null=True, blank=True)
@@ -183,7 +209,9 @@ class RefreshToken(TimeStampedModel):
     session can't be refreshed."""
 
     id = CuidField()
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="refresh_tokens")
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="refresh_tokens"
+    )
     token_hash = models.CharField(max_length=255, unique=True)
     expires_at = models.DateTimeField()
     revoked_at = models.DateTimeField(null=True, blank=True)
@@ -212,12 +240,16 @@ class RolePermission(TimeStampedModel):
     role = models.CharField(
         max_length=64, choices=[(r.value, r.value) for r in EdifyRole]
     )
-    permission = models.ForeignKey(Permission, on_delete=models.CASCADE, related_name="roles")
+    permission = models.ForeignKey(
+        Permission, on_delete=models.CASCADE, related_name="roles"
+    )
 
     class Meta:
         db_table = "role_permission"
         constraints = [
-            models.UniqueConstraint(fields=["role", "permission"], name="uniq_role_permission"),
+            models.UniqueConstraint(
+                fields=["role", "permission"], name="uniq_role_permission"
+            ),
         ]
 
 
@@ -233,14 +265,20 @@ class StaffProfile(SoftDeleteModel):
     schools, supervisor/supervisee, targets, capacity)."""
 
     id = CuidField()
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="staff_profile")
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name="staff_profile"
+    )
     staff_number = models.CharField(max_length=64, null=True, blank=True, unique=True)
     title = models.CharField(max_length=255, null=True, blank=True)
+    department = models.CharField(max_length=128, null=True, blank=True)
+    country = models.CharField(max_length=64, default="Uganda")
     # Plain ref (FK to geography.District); left unenforced at this layer to
     # avoid a hard dependency cycle — geography app may not exist yet.
     primary_district_id = models.CharField(max_length=30, null=True, blank=True)
     onboarding_state = models.CharField(
-        max_length=32, choices=StaffOnboardingState.choices, default=StaffOnboardingState.PENDING
+        max_length=32,
+        choices=StaffOnboardingState.choices,
+        default=StaffOnboardingState.PENDING,
     )
 
     class Meta:
@@ -251,13 +289,19 @@ class StaffSupervisorAssignment(TimeStampedModel):
     """Join supervisee ↔ supervisor (the PL 'team lens' depends on this)."""
 
     id = CuidField()
-    supervisee = models.ForeignKey(StaffProfile, on_delete=models.CASCADE, related_name="supervisor_links")
-    supervisor = models.ForeignKey(StaffProfile, on_delete=models.CASCADE, related_name="supervisee_links")
+    supervisee = models.ForeignKey(
+        StaffProfile, on_delete=models.CASCADE, related_name="supervisor_links"
+    )
+    supervisor = models.ForeignKey(
+        StaffProfile, on_delete=models.CASCADE, related_name="supervisee_links"
+    )
 
     class Meta:
         db_table = "staff_supervisor_assignment"
         constraints = [
-            models.UniqueConstraint(fields=["supervisee", "supervisor"], name="uniq_supervisee_supervisor"),
+            models.UniqueConstraint(
+                fields=["supervisee", "supervisor"], name="uniq_supervisee_supervisor"
+            ),
         ]
         indexes = [models.Index(fields=["supervisor"])]
 
@@ -266,7 +310,9 @@ class StaffGeographyAssignment(TimeStampedModel):
     """Join staff ↔ region/district (RVP region scope, field-staff district scope)."""
 
     id = CuidField()
-    staff = models.ForeignKey(StaffProfile, on_delete=models.CASCADE, related_name="geography_links")
+    staff = models.ForeignKey(
+        StaffProfile, on_delete=models.CASCADE, related_name="geography_links"
+    )
     region_id = models.CharField(max_length=30, null=True, blank=True)
     district_id = models.CharField(max_length=30, null=True, blank=True)
 
@@ -279,13 +325,17 @@ class StaffSchoolAssignment(TimeStampedModel):
     """Join staff ↔ school (portfolio). Own vs team lens derives from this."""
 
     id = CuidField()
-    staff = models.ForeignKey(StaffProfile, on_delete=models.CASCADE, related_name="school_links")
+    staff = models.ForeignKey(
+        StaffProfile, on_delete=models.CASCADE, related_name="school_links"
+    )
     school_id = models.CharField(max_length=30)
 
     class Meta:
         db_table = "staff_school_assignment"
         constraints = [
-            models.UniqueConstraint(fields=["staff", "school_id"], name="uniq_staff_school"),
+            models.UniqueConstraint(
+                fields=["staff", "school_id"], name="uniq_staff_school"
+            ),
         ]
 
 
@@ -294,11 +344,15 @@ class StaffSupportCapacity(TimeStampedModel):
     self-assignment to a NEW school is blocked; partner assignment is the route."""
 
     id = CuidField()
-    staff = models.ForeignKey(StaffProfile, on_delete=models.CASCADE, related_name="support_capacities")
+    staff = models.ForeignKey(
+        StaffProfile, on_delete=models.CASCADE, related_name="support_capacities"
+    )
     fy = models.CharField(max_length=16)
     max_direct_schools_supported = models.IntegerField()
     set_by_user_id = models.CharField(max_length=30)
-    set_by_role = models.CharField(max_length=64, choices=[(r.value, r.value) for r in EdifyRole])
+    set_by_role = models.CharField(
+        max_length=64, choices=[(r.value, r.value) for r in EdifyRole]
+    )
     effective_from = models.DateTimeField(null=True, blank=True)
     effective_to = models.DateTimeField(null=True, blank=True)
     notes = models.TextField(null=True, blank=True)
@@ -307,7 +361,9 @@ class StaffSupportCapacity(TimeStampedModel):
     class Meta:
         db_table = "staff_support_capacity"
         constraints = [
-            models.UniqueConstraint(fields=["staff", "fy"], name="uniq_staff_capacity_fy"),
+            models.UniqueConstraint(
+                fields=["staff", "fy"], name="uniq_staff_capacity_fy"
+            ),
         ]
         indexes = [models.Index(fields=["fy"])]
 
@@ -316,11 +372,15 @@ class AssignmentAudit(TimeStampedModel):
     """Every assignment attempt — allowed or blocked — for accountability."""
 
     id = CuidField()
-    action = models.CharField(max_length=64)  # assign.self | assign.partner | assign.staff
+    action = models.CharField(
+        max_length=64
+    )  # assign.self | assign.partner | assign.staff
     school_id = models.CharField(max_length=30, null=True, blank=True)
     activity_id = models.CharField(max_length=30, null=True, blank=True)
     assigner_id = models.CharField(max_length=30)
-    assigner_role = models.CharField(max_length=64, choices=[(r.value, r.value) for r in EdifyRole])
+    assigner_role = models.CharField(
+        max_length=64, choices=[(r.value, r.value) for r in EdifyRole]
+    )
     assigned_to_type = models.CharField(max_length=16)  # staff | partner
     assigned_staff_id = models.CharField(max_length=30, null=True, blank=True)
     assigned_partner_id = models.CharField(max_length=30, null=True, blank=True)
@@ -343,7 +403,9 @@ class StaffTargetProfile(TimeStampedModel):
     has a target value; 0 means 'not set' for that metric."""
 
     id = CuidField()
-    staff = models.ForeignKey(StaffProfile, on_delete=models.CASCADE, related_name="target_profiles")
+    staff = models.ForeignKey(
+        StaffProfile, on_delete=models.CASCADE, related_name="target_profiles"
+    )
     fy = models.CharField(max_length=16)
     visits_target = models.IntegerField(default=0)
     trainings_target = models.IntegerField(default=0)
@@ -355,11 +417,16 @@ class StaffTargetProfile(TimeStampedModel):
     activity_codes_target = models.IntegerField(default=0)
     ia_verified_target = models.IntegerField(default=0)
     accountability_target = models.IntegerField(default=0)
+    # Portfolio-growth target areas (My Targets: New School / New Core School).
+    new_schools_target = models.IntegerField(default=0)
+    new_core_schools_target = models.IntegerField(default=0)
 
     class Meta:
         db_table = "staff_target_profile"
         constraints = [
-            models.UniqueConstraint(fields=["staff", "fy"], name="uniq_staff_target_fy"),
+            models.UniqueConstraint(
+                fields=["staff", "fy"], name="uniq_staff_target_fy"
+            ),
         ]
 
 
@@ -367,16 +434,27 @@ class Leave(TimeStampedModel):
     """HR leave requests. type/status are plain strings (legacy convention)."""
 
     id = CuidField()
-    staff = models.ForeignKey(StaffProfile, on_delete=models.CASCADE, related_name="leaves")
-    type = models.CharField(max_length=64)  # personal_time_off|sick_leave|maternity_leave|paternity_leave|bereavement_leave
+    staff = models.ForeignKey(
+        StaffProfile, on_delete=models.CASCADE, related_name="leaves"
+    )
+    type = models.CharField(
+        max_length=64
+    )  # personal_time_off|sick_leave|maternity_leave|paternity_leave|bereavement_leave
     start_date = models.CharField(max_length=32)
     end_date = models.CharField(max_length=32)
     days = models.IntegerField()
     days_charged = models.IntegerField(null=True, blank=True)
     hours_covered = models.IntegerField(null=True, blank=True)
     status = models.CharField(max_length=32, default="pending")
+    coverage_status = models.CharField(max_length=32, default="Proposed")
     reason = models.TextField(null=True, blank=True)
-    covering_staff = models.ForeignKey(StaffProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name="leaves_covered")
+    covering_staff = models.ForeignKey(
+        StaffProfile,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="leaves_covered",
+    )
     coverage_notes = models.TextField(null=True, blank=True)
     emergency_contact = models.TextField(null=True, blank=True)
     handover_notes = models.TextField(null=True, blank=True)
@@ -395,7 +473,9 @@ class Leave(TimeStampedModel):
 
 class LeaveTypePolicy(TimeStampedModel):
     id = CuidField()
-    leave_type = models.CharField(max_length=64, unique=True)  # personal_time_off, sick_leave, maternity_leave, paternity_leave, bereavement_leave
+    leave_type = models.CharField(
+        max_length=64, unique=True
+    )  # personal_time_off, sick_leave, maternity_leave, paternity_leave, bereavement_leave
     label = models.CharField(max_length=128)
     annual_entitlement = models.IntegerField(default=21)
     requires_attachment = models.BooleanField(default=False)
@@ -412,7 +492,9 @@ class LeaveTypePolicy(TimeStampedModel):
 
 class LeaveBalance(TimeStampedModel):
     id = CuidField()
-    staff = models.ForeignKey(StaffProfile, on_delete=models.CASCADE, related_name="leave_balances")
+    staff = models.ForeignKey(
+        StaffProfile, on_delete=models.CASCADE, related_name="leave_balances"
+    )
     leave_type = models.CharField(max_length=64)
     year = models.IntegerField(default=2026)
     entitlement = models.IntegerField(default=21)
@@ -425,7 +507,10 @@ class LeaveBalance(TimeStampedModel):
     class Meta:
         db_table = "leave_balance"
         constraints = [
-            models.UniqueConstraint(fields=["staff", "leave_type", "year"], name="uniq_staff_leave_type_year")
+            models.UniqueConstraint(
+                fields=["staff", "leave_type", "year"],
+                name="uniq_staff_leave_type_year",
+            )
         ]
 
     def __str__(self) -> str:
@@ -434,13 +519,21 @@ class LeaveBalance(TimeStampedModel):
 
 class TemporaryCoverageAssignment(TimeStampedModel):
     id = CuidField()
-    leave_request = models.ForeignKey(Leave, on_delete=models.CASCADE, related_name="coverage_assignments")
-    original_staff = models.ForeignKey(StaffProfile, on_delete=models.CASCADE, related_name="coverages_given")
-    covering_staff = models.ForeignKey(StaffProfile, on_delete=models.CASCADE, related_name="coverages_received")
+    leave_request = models.ForeignKey(
+        Leave, on_delete=models.CASCADE, related_name="coverage_assignments"
+    )
+    original_staff = models.ForeignKey(
+        StaffProfile, on_delete=models.CASCADE, related_name="coverages_given"
+    )
+    covering_staff = models.ForeignKey(
+        StaffProfile, on_delete=models.CASCADE, related_name="coverages_received"
+    )
     start_datetime = models.DateTimeField()
     end_datetime = models.DateTimeField()
     scope = models.CharField(max_length=255, default="operational_work")
-    status = models.CharField(max_length=32, default="active")  # active, expired, revoked
+    status = models.CharField(
+        max_length=32, default="active"
+    )  # active, expired, revoked
     created_by_user_id = models.CharField(max_length=30, null=True, blank=True)
     approved_by_user_id = models.CharField(max_length=30, null=True, blank=True)
     revoked_at = models.DateTimeField(null=True, blank=True)
@@ -469,12 +562,26 @@ class CalendarBlock(TimeStampedModel):
     id = CuidField()
     title = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
-    block_type = models.CharField(max_length=64, default="PUBLIC_HOLIDAY")  # PUBLIC_HOLIDAY, BLACKOUT_DATE, STAFF_CONFERENCE, REGIONAL_EVENT, ORG_EVENT, CUSTOM_BLOCK
+    block_type = models.CharField(
+        max_length=64, default="PUBLIC_HOLIDAY"
+    )  # PUBLIC_HOLIDAY, BLACKOUT_DATE, STAFF_CONFERENCE, REGIONAL_EVENT, ORG_EVENT, CUSTOM_BLOCK
     start_date = models.DateField()
     end_date = models.DateField()
     country = models.CharField(max_length=64, default="Uganda")
-    region = models.ForeignKey("geography.Region", on_delete=models.SET_NULL, null=True, blank=True, related_name="calendar_blocks")
-    district = models.ForeignKey("geography.District", on_delete=models.SET_NULL, null=True, blank=True, related_name="calendar_blocks")
+    region = models.ForeignKey(
+        "geography.Region",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="calendar_blocks",
+    )
+    district = models.ForeignKey(
+        "geography.District",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="calendar_blocks",
+    )
     applies_to_all_roles = models.BooleanField(default=True)
     applies_to_roles = models.JSONField(null=True, blank=True)  # List of role strings
     created_by = models.CharField(max_length=30, null=True, blank=True)  # userId
@@ -508,6 +615,7 @@ class Report(TimeStampedModel):
 
 class StaffSetupCandidateStatus(models.TextChoices):
     """Lifecycle of an uploaded staff name that didn't match an existing user."""
+
     PENDING_PROFILE = "pending_profile", "Pending Profile"
     INVITED = "invited", "Invited"
     ACTIVE = "active", "Active"
@@ -529,12 +637,17 @@ class StaffSetupCandidate(TimeStampedModel):
     normalized_name = models.CharField(max_length=255, unique=True)
     source_upload_batch = models.CharField(max_length=30, null=True, blank=True)
     school_count = models.IntegerField(default=0)
-    sample_school_ids = ArrayField(base_field=models.CharField(max_length=30), default=list, blank=True)
-    suggested_role = models.CharField(max_length=32, null=True, blank=True)  # CCEO | PL if inferable
+    sample_school_ids = ArrayField(
+        base_field=models.CharField(max_length=30), default=list, blank=True
+    )
+    suggested_role = models.CharField(
+        max_length=32, null=True, blank=True
+    )  # CCEO | PL if inferable
     email = models.EmailField(null=True, blank=True)
     phone = models.CharField(max_length=64, null=True, blank=True)
     status = models.CharField(
-        max_length=32, choices=StaffSetupCandidateStatus.choices,
+        max_length=32,
+        choices=StaffSetupCandidateStatus.choices,
         default=StaffSetupCandidateStatus.PENDING_PROFILE,
     )
     matched_user_id = models.CharField(max_length=30, null=True, blank=True)

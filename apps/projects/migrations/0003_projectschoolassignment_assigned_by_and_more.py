@@ -4,40 +4,39 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('projects', '0002_project_environment_project_source'),
+        ("projects", "0002_project_environment_project_source"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='projectschoolassignment',
-            name='assigned_by',
+            model_name="projectschoolassignment",
+            name="assigned_by",
             field=models.CharField(blank=True, max_length=30, null=True),
         ),
         migrations.AddField(
-            model_name='projectschoolassignment',
-            name='notes',
+            model_name="projectschoolassignment",
+            name="notes",
             field=models.TextField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='projectschoolassignment',
-            name='participation_type',
+            model_name="projectschoolassignment",
+            name="participation_type",
             field=models.CharField(blank=True, max_length=128, null=True),
         ),
         migrations.AddField(
-            model_name='projectschoolassignment',
-            name='project_type',
+            model_name="projectschoolassignment",
+            name="project_type",
             field=models.CharField(blank=True, max_length=128, null=True),
         ),
         migrations.AddField(
-            model_name='projectschoolassignment',
-            name='start_date',
+            model_name="projectschoolassignment",
+            name="start_date",
             field=models.DateField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='projectschoolassignment',
-            name='support_area',
+            model_name="projectschoolassignment",
+            name="support_area",
             field=models.CharField(blank=True, max_length=255, null=True),
         ),
     ]

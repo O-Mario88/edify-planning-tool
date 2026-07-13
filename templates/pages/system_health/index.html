@@ -3,7 +3,7 @@
 {% block title %}System Health & Integrity - Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6">
+<div class="px-4 sm:px-6 py-5 space-y-4" style="max-width:1500px;margin:0 auto;">
 
 <!-- Premium Header Pane -->
 <div class="relative overflow-hidden rounded-xl bg-slate-900 text-white p-8 shadow-md border border-slate-800">
@@ -14,7 +14,7 @@
 <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-500 text-[11px] font-semibold uppercase tracking-widest">
 System Monitor
 </div>
-<h1 class="text-[32px] font-semibold tracking-tight text-white leading-none">System Health &amp; Integrity</h1>
+<h1 class="text-[21px] font-extrabold tracking-tight">System Health &amp; Integrity</h1>
 <p class="text-[14px] text-slate-400 font-medium max-w-xl">
 Autonomous scan of workflow break exception states, RBAC routes gating checks, and database data leakage audits.
 </p>
@@ -29,7 +29,7 @@ Autonomous scan of workflow break exception states, RBAC routes gating checks, a
 
 <!-- Security Leakage audit -->
 <div class="bg-white rounded-xl border border-slate-100 p-6 shadow-sm space-y-4">
-<h3 class="text-[18px] font-semibold text-slate-800">Data Leakage Scan</h3>
+<h3 class="text-[21px] font-extrabold tracking-tight">Data Leakage Scan</h3>
 
 {% if health.mockDataLeakage.clean %}
 <div class="p-4 bg-emerald-50 text-emerald-800 rounded-xl text-[12px] font-semibold border border-emerald-150">
@@ -49,7 +49,7 @@ Autonomous scan of workflow break exception states, RBAC routes gating checks, a
 
 <!-- RBAC audit -->
 <div class="bg-white rounded-xl border border-slate-100 p-6 shadow-sm space-y-4">
-<h3 class="text-[18px] font-semibold text-slate-800">RBAC Gating Scan</h3>
+<h3 class="text-[21px] font-extrabold tracking-tight">RBAC Gating Scan</h3>
 
 {% if health.permissionAudit.clean %}
 <div class="p-4 bg-emerald-50 text-emerald-800 rounded-xl text-[12px] font-semibold border border-emerald-150">
@@ -78,13 +78,13 @@ Autonomous scan of workflow break exception states, RBAC routes gating checks, a
 <!-- Core workflow breaks checklist -->
 <div class="bg-white rounded-xl border border-slate-100 p-6 shadow-sm space-y-5">
 <div class="flex items-center justify-between border-b border-slate-50 pb-3">
-<h3 class="text-[18px] font-semibold text-slate-800">Operational Exception Ledger</h3>
+<h3 class="text-[21px] font-extrabold tracking-tight">Operational Exception Ledger</h3>
 <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold uppercase tracking-wider bg-slate-900 text-white">
-FY26 Checks
+{{ health.fy }} Checks
 </span>
 </div>
 
-<div class="divide-y divide-slate-55 space-y-3.5">
+<div class="divide-y divide-slate-100 space-y-3.5">
 
 <!-- Check 1: School without cluster -->
 <div class="flex items-center justify-between pt-3">
@@ -236,6 +236,530 @@ FY26 Checks
 </div>
 </div>
 
+<!-- Check 11: Clustered but out of Planning -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">11. Clustered schools excluded from Planning</span>
+<span class="text-[12px] text-slate-500 block">Clustered schools whose readiness state keeps them out of the Planning workspace.</span>
+</div>
+<div class="text-right">
+{% if health.clusteredSchoolsNotInPlanning > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.clusteredSchoolsNotInPlanning }} Schools</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 12: Clustered without cluster link -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">12. Clustered schools missing a cluster link</span>
+<span class="text-[12px] text-slate-500 block">Schools marked clustered with no cluster reference or no cluster assignment row.</span>
+</div>
+<div class="text-right">
+{% if health.clusteredSchoolsMissingAssignment > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.clusteredSchoolsMissingAssignment }} Schools</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 13: Partner-assigned still in Staff Planning -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">13. Partner-assigned schools still in Staff Planning</span>
+<span class="text-[12px] text-slate-500 block">Pending partner assignments whose school still renders actionable in Staff Planning.</span>
+</div>
+<div class="text-right">
+{% if health.partnerAssignedStillInStaffPlanning > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.partnerAssignedStillInStaffPlanning }} Items</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 14: Partner work invisible to partner -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">14. Partner work invisible to any partner</span>
+<span class="text-[12px] text-slate-500 block">Active assignments whose partner has no user account, plus partner activities with no partner set.</span>
+</div>
+<div class="text-right">
+{% if health.partnerAssignmentsInvisibleToPartner > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.partnerAssignmentsInvisibleToPartner }} Items</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 15: Partner scheduled missing from Partner Plan -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">15. Partner-scheduled work missing from Partner Plan</span>
+<span class="text-[12px] text-slate-500 block">Partner-scheduled activities whose assigned partner has no user link to view them.</span>
+</div>
+<div class="text-right">
+{% if health.partnerScheduledMissingFromPartnerPlan > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.partnerScheduledMissingFromPartnerPlan }} Items</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 16: Partner work without staff monitor -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">16. Partner activities with no staff monitor</span>
+<span class="text-[12px] text-slate-500 block">Partner-delivered activities invisible to staff My Plan monitoring.</span>
+</div>
+<div class="text-right">
+{% if health.partnerScheduledMissingMonitoring > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.partnerScheduledMissingMonitoring }} Items</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 17: Staff scheduled without owner -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">17. Scheduled staff activities with no owner</span>
+<span class="text-[12px] text-slate-500 block">Scheduled staff-delivery activities with no responsible staff — in nobody's My Plan.</span>
+</div>
+<div class="text-right">
+{% if health.staffScheduledMissingOwner > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.staffScheduledMissingOwner }} Items</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 18: Cluster activity missing cluster -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">18. Cluster activities not linked to a cluster</span>
+<span class="text-[12px] text-slate-500 block">Cluster meetings/trainings that carry no cluster reference.</span>
+</div>
+<div class="text-right">
+{% if health.clusterActivityMissingCluster > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.clusterActivityMissingCluster }} Items</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 19: Project schools without project activity -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">19. Project schools with no project activity this FY</span>
+<span class="text-[12px] text-slate-500 block">Schools assigned to a project that have no project activity planned — missing from PC planning.</span>
+</div>
+<div class="text-right">
+{% if health.projectSchoolsWithoutProjectActivity > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.projectSchoolsWithoutProjectActivity }} Schools</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 20: Project activities unowned -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">20. Project activities with no responsible staff</span>
+<span class="text-[12px] text-slate-500 block">Project-linked activities that no staff member owns.</span>
+</div>
+<div class="text-right">
+{% if health.projectActivitiesUnowned > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.projectActivitiesUnowned }} Items</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 21: Budget lines missing catalogue -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">21. Budget lines missing a Cost Catalogue reference</span>
+<span class="text-[12px] text-slate-500 block">Cost lines with no catalogue id or version — pricing cannot be audited.</span>
+</div>
+<div class="text-right">
+{% if health.budgetLinesMissingCatalogue > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.budgetLinesMissingCatalogue }} Lines</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 22: Active plan missing date -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">22. Active-plan activities with no planned date</span>
+<span class="text-[12px] text-slate-500 block">Scheduled, partner-scheduled or in-progress activities missing a planned date.</span>
+</div>
+<div class="text-right">
+{% if health.activePlanMissingDate > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.activePlanMissingDate }} Items</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 23: Terminal statuses still in My Plan feed -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">23. Terminal-status activities still in the My Plan feed</span>
+<span class="text-[12px] text-slate-500 block">Terminal-status activities still returned by the My Plan feed (feed lacks a status exclusion).</span>
+</div>
+<div class="text-right">
+{% if health.closedStillInMyPlanFeed > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.closedStillInMyPlanFeed }} Items</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 24: Confirmed weekly fund requests drifted from their activities -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">24. Confirmed weekly requests drifted from their activities</span>
+<span class="text-[12px] text-slate-500 block">Weekly fund requests past the draft stage whose activity budget lines no longer sum to the confirmed total — a schedule change after approval needs reconciliation, not a silent rewrite.</span>
+</div>
+<div class="text-right">
+{% if health.confirmedWeeklyRequestsDrifted > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.confirmedWeeklyRequestsDrifted }} Items</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 25: School visits scheduled without a Daily Visit Batch -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">25. School visits missing a Daily Visit Batch</span>
+<span class="text-[12px] text-slate-500 block">Staff-conducted school visits should always be priced through a shared day's Daily Visit Batch, never in isolation.</span>
+</div>
+<div class="text-right">
+{% if health.scheduledVisitsMissingBatch > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.scheduledVisitsMissingBatch }} Items</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 26: Daily Visit Batch mixes primary and secondary districts -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">26. Daily Visit Batch mixing primary/secondary districts</span>
+<span class="text-[12px] text-slate-500 block">A single day's batch must never contain both primary and secondary district schools.</span>
+</div>
+<div class="text-right">
+{% if health.mixedDistrictBatches > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.mixedDistrictBatches }} Items</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 27: Secondary districts combined without an approved group -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">27. Secondary districts combined without CD approval</span>
+<span class="text-[12px] text-slate-500 block">A secondary-district batch spanning more than one district must be covered by a single CD/Admin-approved Secondary District Group.</span>
+</div>
+<div class="text-right">
+{% if health.unapprovedSecondaryGroupBatches > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.unapprovedSecondaryGroupBatches }} Items</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 28: Batch-linked activity missing cost-line breakdown -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">28. Daily Visit Batch activity missing cost breakdown</span>
+<span class="text-[12px] text-slate-500 block">Every batch-linked school visit should carry its Transport/Lunch(/Accommodation/Dinner) component lines, not a lump total.</span>
+</div>
+<div class="text-right">
+{% if health.batchActivitiesMissingCostLines > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.batchActivitiesMissingCostLines }} Items</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 29: Daily Visit Batch school count drifted -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">29. Daily Visit Batch school count out of sync</span>
+<span class="text-[12px] text-slate-500 block">The batch's stored school count no longer matches its live active members — a recalculation was skipped.</span>
+</div>
+<div class="text-right">
+{% if health.batchSchoolCountMismatch > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.batchSchoolCountMismatch }} Items</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 30: Under-target batch missing a reason -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">30. Under-target Daily Visit Batch missing a reason</span>
+<span class="text-[12px] text-slate-500 block">A batch scheduled below the CD's daily school-visit target should always carry the staff member's reason.</span>
+</div>
+<div class="text-right">
+{% if health.underTargetBatchesMissingReason > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.underTargetBatchesMissingReason }} Items</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 31: Locked batch changed after approval -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">31. Daily Visit Batch changed after approval</span>
+<span class="text-[12px] text-slate-500 block">A batch whose weekly fund request has already left draft status should never have its member schools change — needs reconciliation.</span>
+</div>
+<div class="text-right">
+{% if health.budgetChangedAfterApprovalBypass > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.budgetChangedAfterApprovalBypass }} Items</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 32: Cost Catalogue missing Daily Visit Batch rates -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">32. Cost Catalogue missing Daily Visit Batch rates</span>
+<span class="text-[12px] text-slate-500 block">The active catalogue must define every primary/secondary daily rate (transport, lunch, accommodation, overnight dinner) used for shared visit-day pricing.</span>
+</div>
+<div class="text-right">
+{% if health.catalogueMissingDailyBatchKeys > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.catalogueMissingDailyBatchKeys }} Items</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Check 33: Districts missing primary/secondary classification -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">33. Districts missing primary/secondary classification</span>
+<span class="text-[12px] text-slate-500 block">School visits cannot be scheduled in an unclassified district. Classify each district at <a href="/admin-panel/region-district-setup" class="underline hover:no-underline">Region &amp; District Setup</a>.</span>
+</div>
+<div class="text-right">
+{% if health.districtsMissingClassification > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.districtsMissingClassification }} Items</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<!-- Route Intelligence checks (34–41): route batches vs cost batches, location
+data quality, district-rule violations, working-day overloads. -->
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">34. Planned visit days without a route batch</span>
+<span class="text-[12px] text-slate-500 block">Upcoming staff visit days whose cost batch has no Route Intelligence twin.</span>
+</div>
+<div class="text-right">
+{% if health.routeIntelligence.plannedVisitNoRouteBatch > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.routeIntelligence.plannedVisitNoRouteBatch }} Days</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">35. Schools missing coordinates with weak address data</span>
+<span class="text-[12px] text-slate-500 block">No coordinates, no structured sub-county/parish and no shipping address — route estimates for these schools need a location cleanup.</span>
+</div>
+<div class="text-right">
+{% if health.routeIntelligence.schoolsWeakLocation > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.routeIntelligence.schoolsWeakLocation }} Schools</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">36. Visit days mixing primary and secondary districts</span>
+<span class="text-[12px] text-slate-500 block">Strict rule: no crossing from a primary district to a secondary district on the same day.</span>
+</div>
+<div class="text-right">
+{% if health.routeIntelligence.mixedDistrictRouteDays > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.routeIntelligence.mixedDistrictRouteDays }} Days</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">37. Secondary districts grouped without an approved route group</span>
+<span class="text-[12px] text-slate-500 block">Multiple secondary districts on one day are only allowed inside a CD/Admin-approved Secondary Route Group.</span>
+</div>
+<div class="text-right">
+{% if health.routeIntelligence.ungroupedSecondaryDays > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.routeIntelligence.ungroupedSecondaryDays }} Days</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">38. Route load exceeds the working day</span>
+<span class="text-[12px] text-slate-500 block">Estimated travel + visit + buffer time is more than the 8h field day — reduce schools or split the day.</span>
+</div>
+<div class="text-right">
+{% if health.routeIntelligence.routeLoadExceedsDay > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.routeIntelligence.routeLoadExceedsDay }} Days</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">39. Days below the CD daily target without a reason</span>
+<span class="text-[12px] text-slate-500 block">Fewer schools than the CD's required visits per day and no recorded justification.</span>
+</div>
+<div class="text-right">
+{% if health.routeIntelligence.belowTargetNoReason > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.routeIntelligence.belowTargetNoReason }} Days</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">40. Cost batch and route batch school counts differ</span>
+<span class="text-[12px] text-slate-500 block">The costing twin and the route twin of the same visit day disagree on the school set.</span>
+</div>
+<div class="text-right">
+{% if health.routeIntelligence.costRouteCountMismatch > 0 %}
+<span class="text-rose-600 text-[12px] font-semibold uppercase">{{ health.routeIntelligence.costRouteCountMismatch }} Batches</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+<div class="flex items-center justify-between pt-3">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">41. Scheduled visit days with low location confidence</span>
+<span class="text-[12px] text-slate-500 block">Route estimate may be inaccurate — verify sub-county / coordinates before route approval.</span>
+</div>
+<div class="text-right">
+{% if health.routeIntelligence.lowConfidenceScheduledDays > 0 %}
+<span class="text-amber-600 text-[12px] font-semibold uppercase">{{ health.routeIntelligence.lowConfidenceScheduledDays }} Days</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+
+</div>
+</div>
+
+<!-- Gold Standard UI quality lints (42+): computed live from template/CSS
+source — mock data, emojis, dead links, static charts, theme/responsive. -->
+<div class="bg-white rounded-xl border border-slate-100 p-6 shadow-sm space-y-5">
+<div class="flex items-center justify-between border-b border-slate-50 pb-3">
+<h3 class="text-[21px] font-extrabold tracking-tight">Design System Quality Lints</h3>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-semibold uppercase tracking-wider bg-slate-900 text-white">Gold Standard</span>
+</div>
+<div class="divide-y divide-slate-100 space-y-3.5">
+{% for c in health.uiQuality.checks %}
+<div class="pt-3">
+<div class="flex items-center justify-between">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">{{ forloop.counter|add:41 }}. {{ c.label }}</span>
+<span class="text-[12px] text-slate-500 block">{{ c.fix }}</span>
+</div>
+<div class="text-right shrink-0 pl-3">
+{% if c.count > 0 %}
+<span class="{% if c.severity == 'blocking' %}text-rose-600{% else %}text-amber-600{% endif %} text-[12px] font-semibold uppercase">{{ c.count }} Item{{ c.count|pluralize }}</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+{% if c.items %}
+<div class="mt-1.5 text-[11px] text-slate-400 font-medium space-y-0.5">
+{% for it in c.items|slice:":5" %}<p class="truncate">{{ it }}</p>{% endfor %}
+</div>
+{% endif %}
+</div>
+{% endfor %}
+</div>
+</div>
+
+<!-- Professional Development checks (48+): certificate/NetSuite closure
+gates, self-approval/signoff leaks, stale-queue backlogs — mandate §36. -->
+<div class="bg-white rounded-xl border border-slate-100 p-6 shadow-sm space-y-5">
+<div class="flex items-center justify-between border-b border-slate-50 pb-3">
+<h3 class="text-[21px] font-extrabold tracking-tight">Professional Development</h3>
+</div>
+<div class="divide-y divide-slate-100 space-y-3.5">
+{% for c in health.professionalDevelopment.checks %}
+<div class="pt-3">
+<div class="flex items-center justify-between">
+<div>
+<span class="font-semibold text-[14px] text-slate-900 block">{{ forloop.counter|add:47 }}. {{ c.label }}</span>
+<span class="text-[12px] text-slate-500 block">{{ c.fix }}</span>
+</div>
+<div class="text-right shrink-0 pl-3">
+{% if c.count > 0 %}
+<span class="{% if c.severity == 'blocking' %}text-rose-600{% else %}text-amber-600{% endif %} text-[12px] font-semibold uppercase">{{ c.count }} Item{{ c.count|pluralize }}</span>
+{% else %}
+<span class="text-emerald-600 text-[12px] font-semibold uppercase">&check; Clean</span>
+{% endif %}
+</div>
+</div>
+{% if c.items %}
+<div class="mt-1.5 text-[11px] text-slate-400 font-medium space-y-0.5">
+{% for it in c.items|slice:":5" %}<p class="truncate">{{ it }}</p>{% endfor %}
+</div>
+{% endif %}
+</div>
+{% endfor %}
 </div>
 </div>
 

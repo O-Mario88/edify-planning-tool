@@ -2,7 +2,8 @@
 
 {% block auth_content %}
 {% if error %}
-<div class="p-3 rounded-lg bg-rose-50 border border-rose-200 text-[12px] font-semibold text-rose-700">
+<div class="p-3 rounded-lg text-[12px] font-semibold"
+     style="background:var(--edify-danger-light);border:1px solid var(--edify-danger-border);color:var(--edify-danger);">
 {{ error }}
 </div>
 {% endif %}
@@ -10,29 +11,31 @@
 <form action="/login" method="post" class="space-y-4">
 {% csrf_token %}
 <div>
-<label for="email" class="block text-[11px] font-bold uppercase tracking-wide text-slate-500">Email address</label>
+<label for="email" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--edify-text-muted);display:block;">Email address</label>
 <div class="mt-1">
-<input 
-type="email" 
-name="email" 
-id="email" 
-required 
+<input
+type="email"
+name="email"
+id="email"
+required
 value="{{ email|default:'' }}"
-class="w-full h-10 px-3 rounded-lg border border-[var(--color-edify-border)] text-[12px] focus:outline-none focus:ring-2 focus:ring-[var(--color-edify-primary)]/20"
+class="w-full h-10 px-3 rounded-lg text-[13px] focus:outline-none transition-all"
+style="border:1px solid var(--edify-border);background:var(--edify-surface);color:var(--edify-text);"
 placeholder="cceo@edify.org"
 >
 </div>
 </div>
 
 <div>
-<label for="password" class="block text-[11px] font-bold uppercase tracking-wide text-slate-500">Password</label>
+<label for="password" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--edify-text-muted);display:block;">Password</label>
 <div class="mt-1">
-<input 
-type="password" 
-name="password" 
-id="password" 
-required 
-class="w-full h-10 px-3 rounded-lg border border-[var(--color-edify-border)] text-[12px] focus:outline-none focus:ring-2 focus:ring-[var(--color-edify-primary)]/20"
+<input
+type="password"
+name="password"
+id="password"
+required
+class="w-full h-10 px-3 rounded-lg text-[13px] focus:outline-none transition-all"
+style="border:1px solid var(--edify-border);background:var(--edify-surface);color:var(--edify-text);"
 placeholder="••••••••"
 >
 </div>
@@ -40,22 +43,26 @@ placeholder="••••••••"
 
 <div class="flex items-center justify-between">
 <div class="flex items-center">
-<input 
-id="remember_me" 
-name="remember_me" 
-type="checkbox" 
-class="h-4 w-4 text-[var(--color-edify-primary)] focus:ring-[var(--color-edify-primary)] border-slate-300 rounded"
+<input
+id="remember_me"
+name="remember_me"
+type="checkbox"
+class="h-4 w-4 rounded"
+style="accent-color:var(--edify-accent);"
 >
-<label for="remember_me" class="ml-2 block text-[12px] text-slate-500 font-semibold select-none">
+<label for="remember_me" class="ml-2 block text-[12px] font-semibold select-none" style="color:var(--edify-text-muted);">
 Remember me
 </label>
 </div>
 </div>
 
 <div>
-<button 
-type="submit" 
-class="w-full h-10 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[14px] font-semibold transition-all active:scale-[0.98]"
+<button
+type="submit"
+class="w-full h-10 rounded-lg text-white text-[14px] font-semibold transition-all active:scale-[0.98]"
+style="background:var(--edify-accent);box-shadow:0 1px 3px rgba(37,99,235,.25),inset 0 1px 0 rgba(255,255,255,.15);"
+onmouseover="this.style.background='var(--edify-accent-hover)'"
+onmouseout="this.style.background='var(--edify-accent)'"
 >
 Sign in
 </button>

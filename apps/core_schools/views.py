@@ -1,4 +1,5 @@
 """Core-schools endpoints — /api/core/* (the Core/Champion pipeline)."""
+
 from __future__ import annotations
 
 from rest_framework.permissions import IsAuthenticated
@@ -29,7 +30,9 @@ class CoreCandidateVerifyView(APIView):
     required_permissions = SSA
 
     def post(self, request: Request, school_id: str) -> Response:
-        return Response(services.verify_candidate(school_id, request.data, request.user), status=201)
+        return Response(
+            services.verify_candidate(school_id, request.data, request.user), status=201
+        )
 
 
 class CoreCandidateRejectView(APIView):
@@ -37,7 +40,9 @@ class CoreCandidateRejectView(APIView):
     required_permissions = CREATE
 
     def post(self, request: Request, school_id: str) -> Response:
-        return Response(services.reject_candidate(school_id, request.data, request.user), status=201)
+        return Response(
+            services.reject_candidate(school_id, request.data, request.user), status=201
+        )
 
 
 class CoreCandidateOnboardView(APIView):
@@ -45,7 +50,9 @@ class CoreCandidateOnboardView(APIView):
     required_permissions = CREATE
 
     def post(self, request: Request, school_id: str) -> Response:
-        return Response(services.onboard(school_id, request.data, request.user), status=201)
+        return Response(
+            services.onboard(school_id, request.data, request.user), status=201
+        )
 
 
 class CorePlansListView(APIView):
@@ -66,11 +73,14 @@ class CoreSchoolDetailView(APIView):
 
 class CoreSlotActionView(APIView):
     """Polymorphic slot action: POST /core/slots/:slotId/:action."""
+
     permission_classes = [IsAuthenticated, RequirePermissions]
     required_permissions = VIEW
 
     def post(self, request: Request, slot_id: str, action: str) -> Response:
-        return Response(services.slot_action(slot_id, action, request.data, request.user))
+        return Response(
+            services.slot_action(slot_id, action, request.data, request.user)
+        )
 
 
 class CoreFollowUpScheduleView(APIView):
@@ -78,7 +88,9 @@ class CoreFollowUpScheduleView(APIView):
     required_permissions = VIEW
 
     def post(self, request: Request, plan_id: str) -> Response:
-        return Response(services.schedule_follow_up(plan_id, request.data, request.user))
+        return Response(
+            services.schedule_follow_up(plan_id, request.data, request.user)
+        )
 
 
 class CoreFollowUpSsaView(APIView):
@@ -86,7 +98,9 @@ class CoreFollowUpSsaView(APIView):
     required_permissions = SSA
 
     def post(self, request: Request, plan_id: str) -> Response:
-        return Response(services.upload_follow_up_ssa(plan_id, request.data, request.user))
+        return Response(
+            services.upload_follow_up_ssa(plan_id, request.data, request.user)
+        )
 
 
 class CoreChampionAdvanceView(APIView):

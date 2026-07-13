@@ -9,6 +9,7 @@ Defence in depth: an upload must pass ALL of —
   5) active-content / executable block
 We never trust the client-supplied filename or Content-Type alone.
 """
+
 from __future__ import annotations
 
 import os
@@ -17,8 +18,12 @@ from apps.core.exceptions import BadRequest
 
 
 ALLOWED_MIME_TYPES = {
-    "image/jpeg", "image/png", "image/webp", "image/heic",
-    "application/pdf", "application/msword",
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/heic",
+    "application/pdf",
+    "application/msword",
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     "application/vnd.ms-excel",
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -30,14 +35,40 @@ ALLOWED_MIME_TYPES = {
 
 # Extension -> the content families its bytes are allowed to be.
 EXTENSION_FAMILY = {
-    ".jpg": ["jpeg"], ".jpeg": ["jpeg"], ".png": ["png"], ".webp": ["webp"],
-    ".heic": ["heic"], ".pdf": ["pdf"], ".doc": ["ole"], ".docx": ["zip"],
-    ".xls": ["ole"], ".xlsx": ["zip"], ".csv": ["text"],
+    ".jpg": ["jpeg"],
+    ".jpeg": ["jpeg"],
+    ".png": ["png"],
+    ".webp": ["webp"],
+    ".heic": ["heic"],
+    ".pdf": ["pdf"],
+    ".doc": ["ole"],
+    ".docx": ["zip"],
+    ".xls": ["ole"],
+    ".xlsx": ["zip"],
+    ".csv": ["text"],
 }
 
-BLOCKED_EXTENSIONS = {".svg", ".html", ".htm", ".xhtml", ".xml", ".js", ".mjs",
-                      ".exe", ".bat", ".cmd", ".sh", ".php", ".py", ".jar",
-                      ".zip", ".tar", ".gz", ".7z", ".rar"}  # archives blocked as evidence
+BLOCKED_EXTENSIONS = {
+    ".svg",
+    ".html",
+    ".htm",
+    ".xhtml",
+    ".xml",
+    ".js",
+    ".mjs",
+    ".exe",
+    ".bat",
+    ".cmd",
+    ".sh",
+    ".php",
+    ".py",
+    ".jar",
+    ".zip",
+    ".tar",
+    ".gz",
+    ".7z",
+    ".rar",
+}  # archives blocked as evidence
 
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
 
@@ -56,7 +87,7 @@ def _detect_families(head: bytes) -> list[str]:
     found = []
     for family, sigs in _SIGNATURES.items():
         for offset, sig in sigs:
-            if head[offset:offset + len(sig)] == sig:
+            if head[offset : offset + len(sig)] == sig:
                 found.append(family)
                 break
     # Heuristic text detection.
@@ -69,7 +100,9 @@ def _detect_families(head: bytes) -> list[str]:
     return found
 
 
-def assert_safe_upload(*, original_name: str, mime_type: str, head: bytes, size: int) -> str:
+def assert_safe_upload(
+    *, original_name: str, mime_type: str, head: bytes, size: int
+) -> str:
     """Validate an upload. Returns the normalized extension. Raises BadRequest on
     any failure."""
     if size > MAX_FILE_SIZE:
@@ -101,7 +134,9 @@ _MIME_TO_EXTS = {
     "image/heic": {".heic"},
     "application/pdf": {".pdf"},
     "application/msword": {".doc"},
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {".docx"},
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {
+        ".docx"
+    },
     "application/vnd.ms-excel": {".xls"},
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {".xlsx"},
     "text/csv": {".csv"},

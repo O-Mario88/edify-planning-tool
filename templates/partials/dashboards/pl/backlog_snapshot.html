@@ -1,0 +1,24 @@
+{% load frontend_filters %}
+<div class="overflow-x-auto flex-1">
+  <table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap;">
+    <thead>
+      <tr style="font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--edify-text-subtle);border-bottom:1px solid var(--edify-border);text-align:left;background:var(--edify-surface-muted);">
+        <th style="padding:8px 10px;">Item</th>
+        <th style="padding:8px 10px;text-align:center;">Count</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in backlog_snapshot %}
+      <tr style="border-bottom:1px solid var(--edify-border);"
+          hx-get="/dashboard/pl-drilldown{{ c.link }}&fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML"
+          onmouseover="this.style.background='var(--edify-surface-muted)'"
+          onmouseout="this.style.background='transparent'"
+          style="cursor:pointer;">
+        <td style="padding:7px 10px;font-weight:600;color:var(--edify-text);">{{ c.label }}</td>
+        <td style="padding:7px 10px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums;color:{% if c.tone == 'danger' %}var(--edify-danger){% elif c.tone == 'warning' %}var(--edify-warning){% else %}var(--edify-text){% endif %};">{{ c.value }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<div class="p-3 pt-2"><a href="/analytics/program-lead" style="font-size:11px;font-weight:600;color:var(--edify-accent);text-decoration:none;">View backlog analytics &rarr;</a></div>

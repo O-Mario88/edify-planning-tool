@@ -1,0 +1,56 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% load frontend_filters %}
+
+{% block drawer_title %}{{ day|date:"l, d F Y" }}{% endblock %}
+{% block drawer_subtitle %}Team activity for this day — planned, validated, and blocked{% endblock %}
+
+{% block drawer_body %}
+<div class="space-y-4 text-slate-700">
+
+  {% if completed %}
+  <div>
+    <p class="text-[11px] font-bold uppercase tracking-wider text-emerald-600 mb-1.5">Valid completed ({{ completed|length }})</p>
+    <div class="divide-y divide-slate-50 rounded-xl border border-slate-100">
+      {% for r in completed %}
+      <div class="px-3 py-2 flex items-center justify-between gap-2">
+        <div class="min-w-0"><p class="text-[12px] font-semibold text-slate-700 truncate">{{ r.where }}</p><p class="text-[10px] text-slate-400">{{ r.staff }} · {{ r.what }}</p></div>
+        <span class="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[9.5px] font-bold shrink-0">{{ r.status }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if pending_sf %}
+  <div>
+    <p class="text-[11px] font-bold uppercase tracking-wider text-amber-600 mb-1.5">Completed — Activity SF ID missing ({{ pending_sf|length }})</p>
+    <div class="divide-y divide-slate-50 rounded-xl border border-amber-100 bg-amber-50/40">
+      {% for r in pending_sf %}
+      <div class="px-3 py-2"><p class="text-[12px] font-semibold text-slate-700 truncate">{{ r.where }}</p><p class="text-[10px] text-slate-400">{{ r.staff }} · {{ r.what }}</p></div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if planned %}
+  <div>
+    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Planned / scheduled ({{ planned|length }})</p>
+    <div class="divide-y divide-slate-50 rounded-xl border border-slate-100">
+      {% for r in planned %}
+      <div class="px-3 py-2 flex items-center justify-between gap-2">
+        <div class="min-w-0"><p class="text-[12px] font-semibold text-slate-700 truncate">{{ r.where }}</p><p class="text-[10px] text-slate-400">{{ r.staff }} · {{ r.what }}</p></div>
+        <span class="px-1.5 py-0.5 rounded bg-slate-50 text-slate-500 text-[9.5px] font-bold shrink-0">{{ r.status }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if not completed and not planned and not pending_sf %}
+  <div class="rounded-xl border border-slate-100 bg-slate-50 p-4 text-center">
+    <p class="text-[12px] font-semibold text-slate-500">Nothing planned or completed by the team on this day.</p>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

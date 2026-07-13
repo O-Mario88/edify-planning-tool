@@ -4,17 +4,17 @@
 {% block title %}Cost Catalogue — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6">
+<div class="px-4 sm:px-6 py-5 space-y-4" style="max-width:1500px;margin:0 auto;">
 
 <div class="flex items-center justify-between">
 <div>
-<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight">Cost Catalogue</h1>
-<p class="text-[12px] text-[var(--text-secondary)] mt-1 font-semibold">FY{{ fy }} approved cost items for activity budgeting</p>
+<h1 class="text-[21px] font-extrabold tracking-tight">Cost Catalogue</h1>
+<p class="text-[12px] text-[var(--edify-text-muted)] mt-1 font-semibold">FY{{ fy }} approved cost items for activity budgeting</p>
 </div>
 </div>
 {% if active_catalogue %}
-<div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-center gap-3">
-<span class="text-[20px]">✅</span>
+<div class="bg-emerald-50 border border-emerald-200 rounded-lg p-4 flex items-center gap-3">
+<span class="text-[20px]"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></span>
 <div>
 <p class="text-[14px] font-semibold text-emerald-800">Active Catalogue: {{ active_catalogue }}</p>
 <p class="text-[11px] text-emerald-600">Version {{ active_catalogue.version }} · {{ cost_items|length }} cost items</p>
@@ -22,30 +22,32 @@
 </div>
 {% endif %}
 
-<div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm overflow-hidden">
+<div class="bg-white rounded-lg border border-[var(--edify-border)] shadow-sm overflow-hidden">
 {% if cost_items %}
 <table class="edify-data-table">
 <thead>
 <tr>
 <th>Item</th>
 <th class="text-right">Rate (UGX)</th>
-<th>Unit</th>
+<th></th>
 </tr>
 </thead>
 <tbody>
 {% for c in cost_items %}
-<tr class="hover:bg-slate-50/60">
-<td class="font-bold text-slate-800">{{ c.item_key|title|replace_underscore }}</td>
-<td class="text-right font-semibold text-indigo-600">{{ c.rate|floatformat:0 }}</td>
-<td class="text-slate-500">{{ c.unit|default:"per unit" }}</td>
-</tr>
+{% include "partials/cost_settings/cost_setting_row.html" with c=c mode="view" %}
 {% endfor %}
 </tbody>
 </table>
 {% else %}
 <div class="edify-empty-state py-12">
-<p class="text-[36px] mb-3">⚙</p>
+<p class="text-[36px] mb-3"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10.3 4.3a1.7 1.7 0 013.4 0 1.7 1.7 0 002.6 1.1 1.7 1.7 0 012.4 2.4 1.7 1.7 0 001 2.5 1.7 1.7 0 010 3.4 1.7 1.7 0 00-1 2.6 1.7 1.7 0 01-2.4 2.4 1.7 1.7 0 00-2.6 1 1.7 1.7 0 01-3.4 0 1.7 1.7 0 00-2.5-1 1.7 1.7 0 01-2.4-2.4 1.7 1.7 0 00-1.1-2.6 1.7 1.7 0 010-3.4 1.7 1.7 0 001.1-2.5 1.7 1.7 0 012.4-2.4 1.7 1.7 0 002.5-1.1z"/><circle cx="12" cy="12" r="3"/></svg></p>
 <p class="text-[14px] font-bold text-slate-600">No cost items configured for this FY</p>
+{% if can_initialize %}
+<form method="post" action="/cost-settings/initialize-default" class="mt-4">
+{% csrf_token %}
+<button type="submit" class="h-9 px-4 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[12px] font-bold">Initialize Default Catalogue</button>
+</form>
+{% endif %}
 </div>
 {% endif %}
 </div>

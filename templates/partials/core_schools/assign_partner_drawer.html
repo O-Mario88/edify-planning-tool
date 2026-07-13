@@ -4,11 +4,10 @@
 {% block drawer_subtitle %}Hand off visit or training delivery for this core school to a certified partner.{% endblock %}
 
 {% block drawer_body %}
-<form 
+<form
 hx-post="/core-schools/assign-partner/action"
 hx-target="#partner-form-errors"
-class="space-y-4 text-[12px] font-bold text-slate-600 font-sans"
-@submit="$dispatch('close-drawer')"
+class="space-y-4 text-[12px] font-bold text-slate-600 "
 >
 {% csrf_token %}
 <input type="hidden" name="school_id" value="{{ school.school_id }}">

@@ -5,6 +5,7 @@ When this flag is set (e.g. after an admin sets/resets a password), the user
 is redirected to /change-password on every request until they comply. Only
 /change-password, /logout, /login, and static file requests are exempted.
 """
+
 from django.shortcuts import redirect
 
 

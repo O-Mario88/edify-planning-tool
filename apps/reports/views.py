@@ -1,4 +1,5 @@
 """Reports endpoints — /api/reports/*."""
+
 from __future__ import annotations
 
 from rest_framework.permissions import IsAuthenticated

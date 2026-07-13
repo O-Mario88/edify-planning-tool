@@ -8,6 +8,7 @@ SSA planning gate, cluster-only type rules, Salesforce ID validation, and the
 authoritative payment guards (money never moves before evidence accepted +
 SF ID + IA confirmed).
 """
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -27,15 +28,26 @@ from .salesforce import is_valid_salesforce_id
 
 # Type rules (spec §8).
 CLUSTER_ONLY_TYPES = {
-    "training", "school_improvement_training", "cluster_meeting",
-    "cluster_training", "core_training",
+    "training",
+    "school_improvement_training",
+    "cluster_meeting",
+    "cluster_training",
+    "core_training",
 }
 SCHOOL_VISIT_TYPES = {
-    "school_visit", "follow_up_visit", "coaching_visit", "in_school_support", "core_visit",
+    "school_visit",
+    "follow_up_visit",
+    "coaching_visit",
+    "in_school_support",
+    "core_visit",
 }
 TRAINING_TYPES = {
-    "training", "school_improvement_training", "cluster_meeting",
-    "cluster_training", "ssa_activity", "core_training",
+    "training",
+    "school_improvement_training",
+    "cluster_meeting",
+    "cluster_training",
+    "ssa_activity",
+    "core_training",
 }
 RESCHEDULE_SLIP_LIMIT = 3
 
@@ -103,7 +115,9 @@ def _assert_in_scope(activity: Activity, principal) -> None:
     raise Forbidden("Activity outside your scope.")
 
 
-def _assert_target_in_scope(*, school: School | None, cluster_id: str | None, principal) -> None:
+def _assert_target_in_scope(
+    *, school: School | None, cluster_id: str | None, principal
+) -> None:
     """Validate create-time targets before an Activity exists."""
     scope = resolve_user_scope(principal)
     if scope.country_scope:
@@ -174,7 +188,9 @@ def _costing_input(activity: Activity, data: dict) -> dict:
     }
 
 
-def _apply_schedule_cost_snapshot(activity: Activity, data: dict, principal=None) -> None:
+def _apply_schedule_cost_snapshot(
+    activity: Activity, data: dict, principal=None
+) -> None:
     """Delegate to the central CostingService — the SINGLE cost writer.
 
     All scheduling paths (create, reschedule, partner self-schedule) funnel here.
@@ -185,10 +201,16 @@ def _apply_schedule_cost_snapshot(activity: Activity, data: dict, principal=None
     from apps.budget.costing_service import apply_to_activity
 
     responsible = getattr(principal, "user_id", None) if principal else None
-    apply_to_activity(activity, _costing_input(activity, data), responsible_user_id=responsible)
+    apply_to_activity(
+        activity, _costing_input(activity, data), responsible_user_id=responsible
+    )
 
     from apps.fund_requests.weekly_service import trigger_generate_for_activity
-    trigger_generate_for_activity(activity)
+
+    # Pass the same identifier that was stamped onto the cost lines: for staff
+    # with a StaffProfile, activity.responsible_staff_id holds the profile id
+    # while lines carry User.id — mismatch meant no weekly request was created.
+    trigger_generate_for_activity(activity, responsible_user_id=responsible)
 
 
 # ── Create ───────────────────────────────────────────────────────────────────
@@ -202,22 +224,42 @@ def create(data: dict, principal) -> dict:
     focus = data.get("focusIntervention")
     p_text = data.get("activityPurposeText")
 
-    is_ssa_activity = bool(activity_type in [
-        "baseline_ssa_visit", "school_visit_ssa_collection",
-        "cluster_training_ssa_collection", "cluster_meeting_ssa_review",
-        "partner_ssa_collection", "core_assessment_visit"
-    ] or data.get("ssaCollectionExpected") or data.get("ssa_collection_expected"))
+    is_ssa_activity = bool(
+        activity_type
+        in [
+            "baseline_ssa_visit",
+            "school_visit_ssa_collection",
+            "cluster_training_ssa_collection",
+            "cluster_meeting_ssa_review",
+            "partner_ssa_collection",
+            "core_assessment_visit",
+        ]
+        or data.get("ssaCollectionExpected")
+        or data.get("ssa_collection_expected")
+    )
 
     # Structured purpose validations
     import sys
-    is_testing = 'test' in sys.argv or 'pytest' in sys.modules
+
+    is_testing = "test" in sys.argv or "pytest" in sys.modules
     if not is_testing or data.get("strict_validation"):
-        if activity_type in ["school_visit", "follow_up_visit", "coaching_visit", "in_school_support", "core_visit"]:
+        if activity_type in [
+            "school_visit",
+            "follow_up_visit",
+            "coaching_visit",
+            "in_school_support",
+            "core_visit",
+        ]:
             if not p_text:
                 raise BadRequest("School visit must have a Visit Purpose.")
             if not focus:
                 raise BadRequest("School visit must have a focus intervention.")
-        elif activity_type in ["training", "school_improvement_training", "cluster_training", "core_training"]:
+        elif activity_type in [
+            "training",
+            "school_improvement_training",
+            "cluster_training",
+            "core_training",
+        ]:
             if not p_text:
                 raise BadRequest("Group training must have a Purpose for Meeting.")
             if not focus:
@@ -225,9 +267,15 @@ def create(data: dict, principal) -> dict:
         elif activity_type == "cluster_meeting":
             if not p_text:
                 raise BadRequest("Cluster meeting must have a Purpose for Meeting.")
-            is_operational = p_type in ["planning_meeting", "other_admin", "operational_admin"]
+            is_operational = p_type in [
+                "planning_meeting",
+                "other_admin",
+                "operational_admin",
+            ]
             if not is_operational and not focus:
-                raise BadRequest("Intervention-focused cluster meetings require a focus intervention.")
+                raise BadRequest(
+                    "Intervention-focused cluster meetings require a focus intervention."
+                )
 
     school = None
     if school_id_str:
@@ -240,17 +288,26 @@ def create(data: dict, principal) -> dict:
 
         if purpose and not is_ssa_activity:
             from apps.ssa.models import SsaRecord
-            latest_ssa = SsaRecord.objects.filter(school=school, deleted_at__isnull=True).order_by("-date_of_ssa").first()
+
+            latest_ssa = (
+                SsaRecord.objects.filter(school=school, deleted_at__isnull=True)
+                .order_by("-date_of_ssa")
+                .first()
+            )
             if latest_ssa:
                 score_obj = latest_ssa.scores.filter(intervention=purpose).first()
                 if score_obj:
-                    all_scores = list(latest_ssa.scores.all().values("intervention", "score"))
+                    all_scores = list(
+                        latest_ssa.scores.all().values("intervention", "score")
+                    )
                     sorted_scores = sorted(all_scores, key=lambda s: s["score"])
-                    weakest_interventions = [s["intervention"] for s in sorted_scores[:2]]
-                    
+                    weakest_interventions = [
+                        s["intervention"] for s in sorted_scores[:2]
+                    ]
+
                     is_weak = score_obj.score < 7.0
                     is_in_weakest = purpose in weakest_interventions
-                    
+
                     if not (is_weak or is_in_weakest):
                         raise BadRequest(
                             f"Cannot schedule activity for '{purpose}' — recommendation not justified by SSA scores. "
@@ -260,84 +317,134 @@ def create(data: dict, principal) -> dict:
     if not school and not cluster_id:
         raise BadRequest("Activity must reference a school or cluster")
     _assert_target_in_scope(school=school, cluster_id=cluster_id, principal=principal)
-    if activity_type in CLUSTER_ONLY_TYPES and not cluster_id and activity_type != "core_training":
-        raise BadRequest("Trainings and cluster meetings must be scheduled through a cluster, not on an individual school.")
-    if school and not cluster_id and activity_type not in SCHOOL_VISIT_TYPES and activity_type != "core_training":
-        raise BadRequest("Only school visits may be scheduled directly from a school. Trainings must go through clusters.")
+    if (
+        activity_type in CLUSTER_ONLY_TYPES
+        and not cluster_id
+        and activity_type != "core_training"
+    ):
+        raise BadRequest(
+            "Trainings and cluster meetings must be scheduled through a cluster, not on an individual school."
+        )
+    if (
+        school
+        and not cluster_id
+        and activity_type not in SCHOOL_VISIT_TYPES
+        and activity_type != "core_training"
+    ):
+        raise BadRequest(
+            "Only school visits may be scheduled directly from a school. Trainings must go through clusters."
+        )
 
-    is_partner = data.get("deliveryType") == "partner" or bool(data.get("assignedPartnerId"))
+    is_partner = data.get("deliveryType") == "partner" or bool(
+        data.get("assignedPartnerId")
+    )
     # The "owner" identifier the rest of the app uses for staff attribution.
     # Prefer the StaffProfile CUID (what scoping.resolve_user_scope returns as
     # staff_id); fall back to the User CUID so that users without a StaffProfile
     # (admins, some CCEOs created outside the seed) still get a non-null owner.
     # My Plan's filter must use the SAME identifier — see my_plan/services.py.
     principal_owner_id = principal.staff_profile_id or principal.user_id
-    responsible_staff_id = data.get("responsibleStaffId") or (None if is_partner else principal_owner_id)
+    responsible_staff_id = data.get("responsibleStaffId") or (
+        None if is_partner else principal_owner_id
+    )
     # For partner-delivered activities, also record the scheduling staff member
     # as the monitor so the activity surfaces on THEIR My Plan (the partner
     # branch of My Plan filters by monitored_by_staff_id).
     monitored_by_staff_id = principal_owner_id if is_partner else None
 
-    scheduled_date = _parse_date(data["scheduledDate"]) if data.get("scheduledDate") else None
-    
+    scheduled_date = (
+        _parse_date(data["scheduledDate"]) if data.get("scheduledDate") else None
+    )
+
     if scheduled_date and responsible_staff_id:
         from apps.accounts.models import User
+
         resp_user = User.objects.filter(id=responsible_staff_id).first()
         if resp_user:
             from apps.hr.leave_services import PlanningAvailabilityService
+
             avail = PlanningAvailabilityService.check(resp_user, scheduled_date)
             if avail["status"] == "blocked":
                 raise BadRequest("Scheduling blocked: " + " · ".join(avail["blockers"]))
 
-    fy = get_operational_fy(scheduled_date) if scheduled_date else data.get("fy", get_operational_fy())
-    quarter = get_quarter_for_date(scheduled_date) if scheduled_date else data.get("quarter", get_quarter_for_date())
+    fy = (
+        get_operational_fy(scheduled_date)
+        if scheduled_date
+        else data.get("fy", get_operational_fy())
+    )
+    quarter = (
+        get_quarter_for_date(scheduled_date)
+        if scheduled_date
+        else data.get("quarter", get_quarter_for_date())
+    )
 
     # Central cost gate: block scheduling if the activity cannot be priced from
     # the active CD Cost Catalogue (missing rate / no catalogue / missing
     # participants for training). No activity is ever created with a fake cost.
-    from apps.budget.costing_service import assert_schedulable
+    # Skipped when Daily Visit Batch scheduling calls this per-school with
+    # _skip_cost_snapshot — the batch service already validated pricing
+    # feasibility (compute_daily_pool) against its own catalogue keys before
+    # calling here, and will price + gate this activity itself afterward.
+    if not data.get("_skip_cost_snapshot"):
+        from apps.budget.costing_service import assert_schedulable
 
-    assert_schedulable({
-        "activityType": activity_type,
-        "deliveryType": "partner" if is_partner else "staff",
-        "teachersAttended": data.get("teachersAttended"),
-        "leadersAttended": data.get("leadersAttended"),
-        "otherParticipants": data.get("otherParticipants"),
-        "expectedParticipants": data.get("expectedParticipants"),
-        "districtType": data.get("districtType"),
-        "nights": data.get("nights"),
-        "projectId": data.get("projectId"),
-        "fy": fy,
-        "scheduledDate": data.get("scheduledDate"),
-    })
+        assert_schedulable(
+            {
+                "activityType": activity_type,
+                "deliveryType": "partner" if is_partner else "staff",
+                "teachersAttended": data.get("teachersAttended"),
+                "leadersAttended": data.get("leadersAttended"),
+                "otherParticipants": data.get("otherParticipants"),
+                "expectedParticipants": data.get("expectedParticipants"),
+                "districtType": data.get("districtType"),
+                "nights": data.get("nights"),
+                "projectId": data.get("projectId"),
+                "fy": fy,
+                "scheduledDate": data.get("scheduledDate"),
+            }
+        )
 
-    status = "assigned_to_partner" if is_partner else ("scheduled" if scheduled_date else "planned")
-    activity = Activity.objects.create(
-        activity_type=activity_type,
-        school=school,
-        cluster_id=cluster_id,
-        project_id=data.get("projectId"),
-        fy=fy,
-        quarter=quarter,
-        planned_month=data.get("plannedMonth"),
-        planned_week=data.get("plannedWeek"),
-        responsible_staff_id=responsible_staff_id,
-        monitored_by_staff_id=monitored_by_staff_id,
-        assigned_partner_id=data.get("assignedPartnerId"),
-        delivery_type="partner" if is_partner else "staff",
-        cluster_slot=data.get("clusterSlot"),
-        purpose_intervention=focus or data.get("purposeIntervention"),
-        activity_purpose_text=p_text,
-        purpose_type=p_type,
-        focus_intervention=focus,
-        secondary_focus_interventions=data.get("secondaryFocusInterventions", []),
-        expected_outcome=data.get("expectedOutcome"),
-        scheduled_date=scheduled_date,
-        status=status,
-        salesforce_activity_type=sf_kind(activity_type),
-        ssa_collection_expected=is_ssa_activity,
+    status = (
+        "assigned_to_partner"
+        if is_partner
+        else ("scheduled" if scheduled_date else "planned")
     )
-    _apply_schedule_cost_snapshot(activity, data, principal=principal)
+    # The Activity row and its initial cost snapshot (budget lines + weekly
+    # fund request sync) must succeed or fail together — otherwise a costing
+    # failure right after creation leaves a scheduled Activity persisted with
+    # zero budget lines.
+    with transaction.atomic():
+        activity = Activity.objects.create(
+            activity_type=activity_type,
+            school=school,
+            cluster_id=cluster_id,
+            project_id=data.get("projectId"),
+            fy=fy,
+            quarter=quarter,
+            planned_month=data.get("plannedMonth"),
+            planned_week=data.get("plannedWeek"),
+            responsible_staff_id=responsible_staff_id,
+            monitored_by_staff_id=monitored_by_staff_id,
+            assigned_partner_id=data.get("assignedPartnerId"),
+            delivery_type="partner" if is_partner else "staff",
+            cluster_slot=data.get("clusterSlot"),
+            purpose_intervention=focus or data.get("purposeIntervention"),
+            activity_purpose_text=p_text,
+            purpose_type=p_type,
+            focus_intervention=focus,
+            secondary_focus_interventions=data.get("secondaryFocusInterventions", []),
+            expected_outcome=data.get("expectedOutcome"),
+            scheduled_date=scheduled_date,
+            status=status,
+            salesforce_activity_type=sf_kind(activity_type),
+            ssa_collection_expected=is_ssa_activity,
+        )
+        # Daily Visit Batch scheduling (apps.daily_visit_batches.services) creates
+        # each school's Activity via this function, then prices the whole batch in
+        # one pass afterward — skip the single-activity cost snapshot here so a
+        # school is never priced twice (once alone, once as part of its batch).
+        if not data.get("_skip_cost_snapshot"):
+            _apply_schedule_cost_snapshot(activity, data, principal=principal)
     return _serialize(activity)
 
 
@@ -351,9 +458,16 @@ def _parse_date(value) -> datetime:
 
 
 # ── Lifecycle transitions ────────────────────────────────────────────────────
-def start_completion(activity_id: str, data: dict | None = None, principal=None) -> dict:
+def start_completion(
+    activity_id: str, data: dict | None = None, principal=None
+) -> dict:
     a = _get_in_scope(activity_id, principal)
-    if a.status not in ("scheduled", "in_progress", "partner_scheduled", "assigned_to_partner"):
+    if a.status not in (
+        "scheduled",
+        "in_progress",
+        "partner_scheduled",
+        "assigned_to_partner",
+    ):
         raise BadRequest("Activity must be scheduled before completion can start.")
     a.status = "completion_started"
     a.save(update_fields=["status", "updated_at"])
@@ -364,8 +478,16 @@ def complete(activity_id: str, data: dict, principal) -> dict:
     """Submit completion: evidence present, Salesforce ID validated, attendance
     for trainings, CCEO routes to PL / staff routes to IA."""
     a = _get_in_scope(activity_id, principal)
-    if a.status not in ("completion_started", "in_progress", "evidence_uploaded", "evidence_accepted", "salesforce_id_required"):
-        raise BadRequest("Click Complete first to unlock evidence upload and Activity Code entry.")
+    if a.status not in (
+        "completion_started",
+        "in_progress",
+        "evidence_uploaded",
+        "evidence_accepted",
+        "salesforce_id_required",
+    ):
+        raise BadRequest(
+            "Click Complete first to unlock evidence upload and Activity Code entry."
+        )
 
     # Evidence presence (lazily import to avoid a circular dep with evidence app).
     try:
@@ -376,26 +498,39 @@ def complete(activity_id: str, data: dict, principal) -> dict:
         # then blocks completion honestly.
         evidence_count = 0
     else:
-        evidence_count = EvidenceRecord.objects.filter(activity_id=a.id, quarantined=False).count()
+        evidence_count = EvidenceRecord.objects.filter(
+            activity_id=a.id, quarantined=False
+        ).count()
     if evidence_count == 0:
         raise BadRequest("Upload evidence before submitting completion.")
 
     # SF ID lock after IA confirmation.
     if a.ia_verification_status == "confirmed":
-        raise Forbidden("Salesforce ID is locked after IA confirmation. Ask IA to return the activity to make a correction.")
+        raise Forbidden(
+            "Salesforce ID is locked after IA confirmation. Ask IA to return the activity to make a correction."
+        )
 
     kind = sf_kind(a.activity_type)
     sf_id = (data.get("salesforceId") or "").strip()
     if not is_valid_salesforce_id(sf_id, kind):
-        raise BadRequest(f"{'SV-' if kind == 'visit' else 'TS-'} Salesforce ID required")
+        raise BadRequest(
+            f"{'SV-' if kind == 'visit' else 'TS-'} Salesforce ID required"
+        )
 
     # Trainings require attendance.
-    if kind == "training" and not ((data.get("teachersAttended") or 0) > 0 or (data.get("leadersAttended") or 0) > 0):
-        raise BadRequest("Training completion requires attendance (teachers and/or school leaders)")
+    if kind == "training" and not (
+        (data.get("teachersAttended") or 0) > 0
+        or (data.get("leadersAttended") or 0) > 0
+    ):
+        raise BadRequest(
+            "Training completion requires attendance (teachers and/or school leaders)"
+        )
 
     # Partner evidence must be accepted first.
     if a.delivery_type == "partner" and a.evidence_status != "accepted":
-        raise BadRequest("Partner evidence must be accepted by staff before submission.")
+        raise BadRequest(
+            "Partner evidence must be accepted by staff before submission."
+        )
 
     is_cceo = principal.active_role == "CCEO"
     next_status = "submitted_to_pl" if is_cceo else "awaiting_ia_verification"
@@ -407,14 +542,29 @@ def complete(activity_id: str, data: dict, principal) -> dict:
         a.other_participants = data.get("otherParticipants")
         a.attended_school_ids = data.get("attendedSchoolIds") or []
         a.status = next_status
-        a.evidence_status = "accepted" if a.evidence_status == "none" else a.evidence_status
-        a.save(update_fields=[
-            "salesforce_activity_id", "salesforce_activity_type", "teachers_attended",
-            "leaders_attended", "other_participants", "attended_school_ids", "status", "evidence_status", "updated_at",
-        ])
+        a.evidence_status = (
+            "accepted" if a.evidence_status == "none" else a.evidence_status
+        )
+        a.save(
+            update_fields=[
+                "salesforce_activity_id",
+                "salesforce_activity_type",
+                "teachers_attended",
+                "leaders_attended",
+                "other_participants",
+                "attended_school_ids",
+                "status",
+                "evidence_status",
+                "updated_at",
+            ]
+        )
         ActivityCompletionVerification.objects.update_or_create(
             activity=a,
-            defaults={"salesforce_id": sf_id, "entered_by": principal.user_id, "status": "pending"},
+            defaults={
+                "salesforce_id": sf_id,
+                "entered_by": principal.user_id,
+                "status": "pending",
+            },
         )
     return _serialize(a)
 
@@ -426,7 +576,7 @@ def ia_confirm(activity_id: str, data: dict | None = None, principal=None) -> di
         raise BadRequest("Activity is not awaiting IA verification")
     if a.delivery_type == "partner" and a.evidence_status != "accepted":
         raise Forbidden("Cannot confirm — partner evidence not accepted.")
-        
+
     # For Core activities, perform strict validation:
     if a.activity_type in ("core_visit", "core_training"):
         try:
@@ -434,21 +584,32 @@ def ia_confirm(activity_id: str, data: dict | None = None, principal=None) -> di
         except ImportError:
             evidence_count = 0
         else:
-            evidence_count = EvidenceRecord.objects.filter(activity_id=a.id, quarantined=False).count()
+            evidence_count = EvidenceRecord.objects.filter(
+                activity_id=a.id, quarantined=False
+            ).count()
         if evidence_count == 0:
             raise BadRequest("IA Verification failed: No evidence files uploaded.")
-            
+
         if not a.salesforce_activity_id:
-            raise BadRequest("IA Verification failed: Activity Salesforce ID is missing.")
-            
+            raise BadRequest(
+                "IA Verification failed: Activity Salesforce ID is missing."
+            )
+
         if not a.focus_intervention:
             raise BadRequest("IA Verification failed: Focus intervention not recorded.")
-            
+
         if a.school and a.school.school_type == "core":
             from apps.ssa.models import SsaRecord
-            latest_ssa = SsaRecord.objects.filter(school=a.school, deleted_at__isnull=True).order_by("-date_of_ssa").first()
+
+            latest_ssa = (
+                SsaRecord.objects.filter(school=a.school, deleted_at__isnull=True)
+                .order_by("-date_of_ssa")
+                .first()
+            )
             if not latest_ssa:
-                raise BadRequest("IA Verification failed: No Core Assessment / SSA baseline exists for this school.")
+                raise BadRequest(
+                    "IA Verification failed: No Core Assessment / SSA baseline exists for this school."
+                )
 
     a.status = "ia_verified"
     a.ia_verification_status = "confirmed"
@@ -465,7 +626,16 @@ def ia_confirm(activity_id: str, data: dict | None = None, principal=None) -> di
         # Payment path: partner activities enter the payment queue.
         if a.delivery_type == "partner":
             a.payment_status = "ia_confirmed"
-        a.save(update_fields=["status", "ia_verification_status", "ia_confirmed_at", "ia_confirmed_by", "payment_status", "updated_at"])
+        a.save(
+            update_fields=[
+                "status",
+                "ia_verification_status",
+                "ia_confirmed_at",
+                "ia_confirmed_by",
+                "payment_status",
+                "updated_at",
+            ]
+        )
     return _serialize(a)
 
 
@@ -484,7 +654,14 @@ def ia_return(activity_id: str, data: dict, principal) -> dict:
     a.pl_review_note = reason
     # Activity + verification saved atomically so they cannot diverge.
     with transaction.atomic():
-        a.save(update_fields=["status", "ia_verification_status", "pl_review_note", "updated_at"])
+        a.save(
+            update_fields=[
+                "status",
+                "ia_verification_status",
+                "pl_review_note",
+                "updated_at",
+            ]
+        )
         if hasattr(a, "verification") and a.verification:
             a.verification.status = "returned"
             a.verification.save(update_fields=["status"])
@@ -495,15 +672,19 @@ def ia_return(activity_id: str, data: dict, principal) -> dict:
 def reschedule(activity_id: str, data: dict, principal) -> dict:
     a = _get_in_scope(activity_id, principal)
     if a.reschedule_count >= RESCHEDULE_SLIP_LIMIT:
-        raise BadRequest(f"Reschedule limit reached ({RESCHEDULE_SLIP_LIMIT}). Escalate or convert this activity instead.")
+        raise BadRequest(
+            f"Reschedule limit reached ({RESCHEDULE_SLIP_LIMIT}). Escalate or convert this activity instead."
+        )
     old_date = a.scheduled_date
     new_date = _parse_date(data["scheduledDate"])
-    
+
     if new_date and a.responsible_staff_id:
         from apps.accounts.models import User
+
         resp_user = User.objects.filter(id=a.responsible_staff_id).first()
         if resp_user:
             from apps.hr.leave_services import PlanningAvailabilityService
+
             avail = PlanningAvailabilityService.check(resp_user, new_date)
             if avail["status"] == "blocked":
                 raise BadRequest("Scheduling blocked: " + " · ".join(avail["blockers"]))
@@ -528,19 +709,58 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
         a.status = "partner_scheduled"
     else:
         a.status = "planned" if a.status in ("cancelled", "deferred") else "rescheduled"
-    a.save(update_fields=[
-        "scheduled_date", "fy", "quarter", "planned_month", "planned_week",
-        "reschedule_count", "last_reason", "status", "updated_at",
-    ])
-    # Re-price against the current catalogue so the budget line follows the new
-    # schedule (rates may have changed; participant/period inputs may have too).
-    _apply_schedule_cost_snapshot(a, data, principal=principal)
-    a.save(update_fields=["est_cost_cents", "cost_missing", "updated_at"])
-    
-    if old_date != new_date:
-        from apps.hr.leave_services import LeaveBudgetImpactService
-        LeaveBudgetImpactService.handle_reschedule(a, old_date, new_date, data.get("reason", "Rescheduling"))
-        
+    # The schedule-field save, the batch re-slot / re-price, and the leave
+    # budget-impact rewrite of cost lines are 3 separate writes that must all
+    # land or all roll back — a crash mid-sequence otherwise leaves the
+    # activity's saved schedule out of sync with its budget lines.
+    with transaction.atomic():
+        a.save(
+            update_fields=[
+                "scheduled_date",
+                "fy",
+                "quarter",
+                "planned_month",
+                "planned_week",
+                "reschedule_count",
+                "last_reason",
+                "status",
+                "updated_at",
+            ]
+        )
+        from apps.daily_visit_batches.pricing import DAILY_BATCH_ELIGIBLE_TYPES
+
+        if (
+            a.activity_type in DAILY_BATCH_ELIGIBLE_TYPES
+            and a.delivery_type == "staff"
+            and a.school_id
+        ):
+            # Leave the OLD day's batch (recomputed for its remaining schools,
+            # unless already locked — same rationale as everywhere else: reschedule
+            # is the sanctioned post-approval escape hatch, so it isn't itself
+            # blocked, but a locked batch's other members stay frozen).
+            _detach_from_daily_visit_batch(a)
+            from apps.daily_visit_batches.services import reschedule_within_batch
+
+            reschedule_within_batch(
+                activity=a,
+                new_date=new_date.date(),
+                reason=data.get("reason"),
+                principal=principal,
+            )
+        else:
+            # Re-price against the current catalogue so the budget line follows the
+            # new schedule (rates may have changed; participant/period inputs may
+            # have too).
+            _apply_schedule_cost_snapshot(a, data, principal=principal)
+            a.save(update_fields=["est_cost_cents", "cost_missing", "updated_at"])
+
+        if old_date != new_date:
+            from apps.hr.leave_services import LeaveBudgetImpactService
+
+            LeaveBudgetImpactService.handle_reschedule(
+                a, old_date, new_date, data.get("reason", "Rescheduling")
+            )
+
     return _serialize(a)
 
 
@@ -552,14 +772,22 @@ def reassign(activity_id: str, data: dict, principal) -> dict:
     a.responsible_staff_id = data.get("responsibleStaffId") or a.responsible_staff_id
     if delivery == "partner":
         a.status = "assigned_to_partner"
-    a.save(update_fields=["delivery_type", "assigned_partner_id", "responsible_staff_id", "status", "updated_at"])
+    a.save(
+        update_fields=[
+            "delivery_type",
+            "assigned_partner_id",
+            "responsible_staff_id",
+            "status",
+            "updated_at",
+        ]
+    )
     return _serialize(a)
 
 
 def partner_schedule(activity_id: str, data: dict, principal) -> dict:
     from apps.partners.models import PartnerAssignment
     from apps.core_schools.models import CoreActivitySlot, cslot_id
-    
+
     pa = PartnerAssignment.objects.filter(id=activity_id).first()
     if pa:
         # Create a new Activity for this partner assignment. The multi-step
@@ -568,6 +796,7 @@ def partner_schedule(activity_id: str, data: dict, principal) -> dict:
         # cannot leave a partially-created Activity with an inconsistent
         # PartnerAssignment or un-synced slot.
         from apps.activities.models import Activity
+
         scheduled_date = _parse_date(data["scheduledDate"])
         fy = get_operational_fy(scheduled_date)
         quarter = get_quarter_for_date(scheduled_date)
@@ -579,7 +808,15 @@ def partner_schedule(activity_id: str, data: dict, principal) -> dict:
                 cluster=pa.cluster,
                 fy=fy,
                 quarter=quarter,
-                responsible_staff_id=principal.id,
+                # responsible_staff_id holds a StaffProfile id everywhere else
+                # in the system (see create()'s principal_owner_id convention)
+                # — principal here is the partner's own User, which has no
+                # StaffProfile. Partner-delivered activities leave this unset,
+                # same as activities.services.create() does for
+                # deliveryType="partner" (the field is reserved for
+                # staff-conducted work; assigned_partner_id is the partner
+                # link).
+                responsible_staff_id=None,
                 assigned_partner_id=pa.partner_id,
                 delivery_type="partner",
                 focus_intervention=pa.focus_intervention,
@@ -596,7 +833,11 @@ def partner_schedule(activity_id: str, data: dict, principal) -> dict:
             if pa.school and pa.school.school_type == "core":
                 kind_prefix = "v" if pa.support_type == "Visit" else "t"
                 try:
-                    seq_num = int(pa.visit_number) if pa.visit_number else (int(pa.training_number) if pa.training_number else 1)
+                    seq_num = (
+                        int(pa.visit_number)
+                        if pa.visit_number
+                        else (int(pa.training_number) if pa.training_number else 1)
+                    )
                 except ValueError:
                     seq_num = 1
                 slot_id = cslot_id(pa.school.school_id, kind_prefix, seq_num)
@@ -605,8 +846,14 @@ def partner_schedule(activity_id: str, data: dict, principal) -> dict:
                     slot.status = "Scheduled"
                     slot.activity_id = a.id
                     slot.scheduled_for = scheduled_date
-                    slot.scheduled_month = str(scheduled_date.month) if scheduled_date else None
-                    slot.scheduled_week = min(5, (scheduled_date.day - 1) // 7 + 1) if scheduled_date else None
+                    slot.scheduled_month = (
+                        str(scheduled_date.month) if scheduled_date else None
+                    )
+                    slot.scheduled_week = (
+                        min(5, (scheduled_date.day - 1) // 7 + 1)
+                        if scheduled_date
+                        else None
+                    )
                     slot.save()
 
             _apply_schedule_cost_snapshot(a, data, principal=principal)
@@ -626,21 +873,37 @@ def partner_schedule(activity_id: str, data: dict, principal) -> dict:
         if data.get("plannedWeek") is not None:
             a.planned_week = data["plannedWeek"]
         a.status = "partner_scheduled"
-        a.save(update_fields=["scheduled_date", "fy", "quarter", "planned_month", "planned_week", "status", "updated_at"])
+        a.save(
+            update_fields=[
+                "scheduled_date",
+                "fy",
+                "quarter",
+                "planned_month",
+                "planned_week",
+                "status",
+                "updated_at",
+            ]
+        )
 
         # Update related PartnerAssignment if exists
         from django.db.models import Q
+
         pa_filter = Q()
         if a.school_id:
             pa_filter = Q(school_id=a.school_id)
         elif a.cluster_id:
             pa_filter = Q(cluster_id=a.cluster_id)
-        
+
         if pa_filter:
             pa_rec = PartnerAssignment.objects.filter(
                 pa_filter,
                 partner_id=a.assigned_partner_id,
-                status__in=["assigned", "assigned_to_partner_pending_scheduling"]
+                status__in=[
+                    "assigned",
+                    "pending_scheduling",
+                    "partner_pending_schedule",
+                    "assigned_to_partner_pending_scheduling",
+                ],
             ).first()
             if pa_rec:
                 pa_rec.status = "partner_scheduled"
@@ -653,7 +916,9 @@ def partner_schedule(activity_id: str, data: dict, principal) -> dict:
             slot.status = "Scheduled"
             slot.scheduled_for = new_date
             slot.scheduled_month = str(new_date.month) if new_date else None
-            slot.scheduled_week = min(5, (new_date.day - 1) // 7 + 1) if new_date else None
+            slot.scheduled_week = (
+                min(5, (new_date.day - 1) // 7 + 1) if new_date else None
+            )
             slot.save()
 
         _apply_schedule_cost_snapshot(a, data, principal=principal)
@@ -661,11 +926,29 @@ def partner_schedule(activity_id: str, data: dict, principal) -> dict:
         return _serialize(a)
 
 
+def _detach_from_daily_visit_batch(a: Activity) -> None:
+    """If this activity is part of a Daily Visit Batch and that batch hasn't
+    left draft status yet, detach it and recompute the remaining schools'
+    allocated cost. If the batch is locked, leave it untouched — same
+    rationale as reschedule(): post-approval changes go through the
+    reschedule/cancel escape hatch, not silent batch recompute."""
+    if not a.daily_visit_batch_id:
+        return
+    from apps.daily_visit_batches.services import remove_school
+
+    try:
+        remove_school(activity_id=a.id)
+    except BadRequest:
+        # Batch is locked (left draft) — leave its remaining lines frozen.
+        pass
+
+
 def cancel(activity_id: str, data: dict, principal) -> dict:
     a = _get_in_scope(activity_id, principal)
     a.status = "cancelled"
     a.last_reason = data.get("reason")
     a.save(update_fields=["status", "last_reason", "updated_at"])
+    _detach_from_daily_visit_batch(a)
     return _serialize(a)
 
 
@@ -674,6 +957,7 @@ def defer(activity_id: str, data: dict, principal) -> dict:
     a.status = "deferred"
     a.last_reason = data.get("reason")
     a.save(update_fields=["status", "last_reason", "updated_at"])
+    _detach_from_daily_visit_batch(a)
     return _serialize(a)
 
 
@@ -694,21 +978,25 @@ def payment_queue(principal) -> list[dict]:
     qs = qs.select_related("school")[:200]
     out = []
     for a in qs:
-        out.append({
-            "id": a.id,
-            "activityType": a.activity_type,
-            "salesforceActivityId": a.salesforce_activity_id,
-            "evidenceStatus": a.evidence_status,
-            "iaVerificationStatus": a.ia_verification_status,
-            "paymentStatus": a.payment_status,
-            "school": {"schoolId": a.school.school_id, "name": a.school.name} if a.school_id else None,
-            "ready": (
-                a.evidence_status == "accepted"
-                and bool(a.salesforce_activity_id)
-                and a.ia_verification_status == "confirmed"
-                and a.payment_status != "paid"
-            ),
-        })
+        out.append(
+            {
+                "id": a.id,
+                "activityType": a.activity_type,
+                "salesforceActivityId": a.salesforce_activity_id,
+                "evidenceStatus": a.evidence_status,
+                "iaVerificationStatus": a.ia_verification_status,
+                "paymentStatus": a.payment_status,
+                "school": {"schoolId": a.school.school_id, "name": a.school.name}
+                if a.school_id
+                else None,
+                "ready": (
+                    a.evidence_status == "accepted"
+                    and bool(a.salesforce_activity_id)
+                    and a.ia_verification_status == "confirmed"
+                    and a.payment_status != "paid"
+                ),
+            }
+        )
     return out
 
 
@@ -732,7 +1020,12 @@ def clear_payment(activity_id: str, principal) -> dict:
     a.payment_status = "paid"
     a.status = "completed"
     a.save(update_fields=["payment_status", "status", "updated_at"])
-    return {"ok": True, "id": a.id, "paymentStatus": a.payment_status, "status": a.status}
+    return {
+        "ok": True,
+        "id": a.id,
+        "paymentStatus": a.payment_status,
+        "status": a.status,
+    }
 
 
 def get_activity(activity_id: str, principal) -> dict:
@@ -779,7 +1072,10 @@ def patch_activity(activity_id: str, data: dict, principal) -> dict:
 def calculate_activity_impact(activity: Activity) -> dict:
     """Calculate the pre/post SSA impact of an activity."""
     if not activity.focus_intervention:
-        return {"status": "Not Enough Data", "reason": "No focus intervention selected."}
+        return {
+            "status": "Not Enough Data",
+            "reason": "No focus intervention selected.",
+        }
 
     focus = activity.focus_intervention
     from apps.ssa.models import SsaRecord
@@ -787,28 +1083,45 @@ def calculate_activity_impact(activity: Activity) -> dict:
 
     # If it's a school visit (associated with a specific school)
     if activity.school_id:
-        pre_ssa = SsaRecord.objects.filter(
-            school_id=activity.school_id,
-            date_of_ssa__lt=activity.planned_date,
-            deleted_at__isnull=True
-        ).order_by("-date_of_ssa").first()
+        pre_ssa = (
+            SsaRecord.objects.filter(
+                school_id=activity.school_id,
+                date_of_ssa__lt=activity.planned_date,
+                deleted_at__isnull=True,
+            )
+            .order_by("-date_of_ssa")
+            .first()
+        )
 
-        post_ssa = SsaRecord.objects.filter(
-            school_id=activity.school_id,
-            date_of_ssa__gt=activity.planned_date,
-            deleted_at__isnull=True
-        ).order_by("date_of_ssa").first()
+        post_ssa = (
+            SsaRecord.objects.filter(
+                school_id=activity.school_id,
+                date_of_ssa__gt=activity.planned_date,
+                deleted_at__isnull=True,
+            )
+            .order_by("date_of_ssa")
+            .first()
+        )
 
         if not pre_ssa:
-            return {"status": "Not Enough Data", "reason": "Impact cannot be measured yet because baseline SSA is missing."}
+            return {
+                "status": "Not Enough Data",
+                "reason": "Impact cannot be measured yet because baseline SSA is missing.",
+            }
         if not post_ssa:
-            return {"status": "Not Enough Data", "reason": "Pre or Post SSA is missing."}
+            return {
+                "status": "Not Enough Data",
+                "reason": "Pre or Post SSA is missing.",
+            }
 
         pre_score = pre_ssa.scores.filter(intervention=focus).first()
         post_score = post_ssa.scores.filter(intervention=focus).first()
 
         if not pre_score or not post_score:
-            return {"status": "Not Enough Data", "reason": "Focus intervention score missing in SSA."}
+            return {
+                "status": "Not Enough Data",
+                "reason": "Focus intervention score missing in SSA.",
+            }
 
         delta = round(post_score.score - pre_score.score, 2)
         if delta > 0:
@@ -829,7 +1142,9 @@ def calculate_activity_impact(activity: Activity) -> dict:
 
     # If it's a cluster activity (associated with a cluster)
     elif activity.cluster_id:
-        schools = School.objects.filter(cluster_assignments__cluster_id=activity.cluster_id, deleted_at__isnull=True)
+        schools = School.objects.filter(
+            cluster_assignments__cluster_id=activity.cluster_id, deleted_at__isnull=True
+        )
         improved_count = 0
         declined_count = 0
         no_change_count = 0
@@ -837,17 +1152,25 @@ def calculate_activity_impact(activity: Activity) -> dict:
         counted_schools = 0
 
         for s in schools:
-            pre_ssa = SsaRecord.objects.filter(
-                school=s,
-                date_of_ssa__lt=activity.planned_date,
-                deleted_at__isnull=True
-            ).order_by("-date_of_ssa").first()
+            pre_ssa = (
+                SsaRecord.objects.filter(
+                    school=s,
+                    date_of_ssa__lt=activity.planned_date,
+                    deleted_at__isnull=True,
+                )
+                .order_by("-date_of_ssa")
+                .first()
+            )
 
-            post_ssa = SsaRecord.objects.filter(
-                school=s,
-                date_of_ssa__gt=activity.planned_date,
-                deleted_at__isnull=True
-            ).order_by("date_of_ssa").first()
+            post_ssa = (
+                SsaRecord.objects.filter(
+                    school=s,
+                    date_of_ssa__gt=activity.planned_date,
+                    deleted_at__isnull=True,
+                )
+                .order_by("date_of_ssa")
+                .first()
+            )
 
             if pre_ssa and post_ssa:
                 pre_score = pre_ssa.scores.filter(intervention=focus).first()
@@ -864,7 +1187,10 @@ def calculate_activity_impact(activity: Activity) -> dict:
                         no_change_count += 1
 
         if counted_schools == 0:
-            return {"status": "Not Enough Data", "reason": "No cluster schools had pre/post SSA records."}
+            return {
+                "status": "Not Enough Data",
+                "reason": "No cluster schools had pre/post SSA records.",
+            }
 
         avg_delta = round(total_delta / counted_schools, 2)
         if avg_delta > 0:
@@ -882,7 +1208,10 @@ def calculate_activity_impact(activity: Activity) -> dict:
             "avgDelta": avg_delta,
         }
 
-    return {"status": "Not Enough Data", "reason": "Activity does not have school or cluster link."}
+    return {
+        "status": "Not Enough Data",
+        "reason": "Activity does not have school or cluster link.",
+    }
 
 
 __all__ = [

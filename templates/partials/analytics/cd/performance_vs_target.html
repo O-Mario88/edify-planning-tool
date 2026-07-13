@@ -1,0 +1,56 @@
+{% load frontend_filters %}
+<div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-3"
+     x-data="{
+       chart: null,
+       initChart() {
+         if (this.chart) { this.chart.destroy(); }
+         const el = document.querySelector('#cdPerformanceChart');
+         if (!el) return;
+         const self = this;
+         this.chart = new ApexCharts(el, {
+           series: [
+             { name: 'Planned Activities', type: 'column', data: {{ performance_vs_target.planned|safe }} },
+             { name: 'Completed Activities', type: 'column', data: {{ performance_vs_target.completed|safe }} },
+             { name: 'Target Achievement %', type: 'line', data: {{ performance_vs_target.pct|safe }} }
+           ],
+           chart: { height: 268, type: 'line', toolbar: { show: false }, fontFamily: 'Outfit, sans-serif',
+                    events: { dataPointSelection: (e, ctx, cfg) => {
+                      const m = cfg.dataPointIndex + 1;
+                      window.htmx && window.htmx.ajax('GET',
+                        '/analytics/country-director/drilldown?drill=kpi&month=' + m + '&fy={{ fy }}',
+                        { target: '#drawer-container', swap: 'innerHTML' });
+                    } } },
+           stroke: { width: [0, 0, 2.5], curve: 'smooth' },
+           colors: ['#bfdbfe', '#2563eb', '#2563eb'],
+           plotOptions: { bar: { columnWidth: '55%', borderRadius: 3 } },
+           dataLabels: { enabled: false },
+           labels: {{ performance_vs_target.labels|safe }},
+           xaxis: { type: 'category', axisBorder: { show: false }, axisTicks: { show: false },
+                    labels: { style: { colors: '#94a3b8', fontSize: '10px', fontWeight: '600' } } },
+           yaxis: [
+             { seriesName: 'Planned Activities', title: { text: 'Activities', style: { color: '#94a3b8', fontSize: '10px' } },
+               labels: { style: { colors: '#94a3b8', fontSize: '10px' } } },
+             { seriesName: 'Completed Activities', show: false },
+             { opposite: true, max: 100, min: 0,
+               labels: { formatter: v => Math.round(v) + '%', style: { colors: '#94a3b8', fontSize: '10px' } } }
+           ],
+           grid: { borderColor: '#94a3b833', strokeDashArray: 4 },
+           legend: { position: 'top', horizontalAlign: 'left', fontSize: '11px', fontWeight: 600, labels: { colors: '#64748b' }, markers: { radius: 12 } },
+           tooltip: { theme: 'dark', shared: true, intersect: false }
+         });
+         this.chart.render();
+       }
+     }" x-init="$nextTick(() => initChart())">
+  <div class="flex items-center justify-between">
+    <div>
+      <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">1. Performance vs Target Over Time</h3>
+      <p class="text-[11px] text-slate-400 font-medium mt-0.5">Are teams completing what they planned? · Click a month for the execution breakdown · FY {{ fy }}</p>
+    </div>
+  </div>
+  {% if not performance_vs_target.has_target %}
+  <p class="text-[10.5px] text-amber-600 font-semibold bg-amber-50 border border-amber-100 rounded-lg px-2.5 py-1 inline-block">
+    Achievement line shows 0 — no annual country targets set yet.
+  </p>
+  {% endif %}
+  <div class="h-[268px] w-full" id="cdPerformanceChart"></div>
+</div>

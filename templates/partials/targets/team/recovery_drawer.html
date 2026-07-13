@@ -1,0 +1,62 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% load frontend_filters %}
+
+{% block drawer_title %}Recovery Approval Queue{% endblock %}
+{% block drawer_subtitle %}Catch-up plans awaiting your decision — approval sends activities into Planning{% endblock %}
+
+{% block drawer_body %}
+<div class="space-y-4 text-slate-700">
+
+  {% if plans %}
+  <div class="space-y-2">
+    {% for p in plans %}
+    <div class="rounded-xl border {% if p.status == 'submitted' %}border-amber-200 bg-amber-50/30{% else %}border-slate-100{% endif %} p-3">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <div class="min-w-0">
+          <p class="text-[12px] font-bold text-slate-700">{{ p.staff_name }} · {{ p.area.label }}</p>
+          <p class="text-[10px] text-slate-400 font-semibold">{{ p.month_label }} · {{ p.activities_proposed }} proposed · {{ p.school_ids|length }} school(s){% if p.planned_dates %} · dated (will be scheduled &amp; costed){% endif %}</p>
+          {% if p.note %}<p class="text-[10.5px] text-slate-500 mt-1">{{ p.note }}</p>{% endif %}
+          {% if p.status == 'returned' and p.return_reason %}<p class="text-[10.5px] text-rose-600 font-semibold mt-1">Returned: {{ p.return_reason }}</p>{% endif %}
+        </div>
+        <span class="px-1.5 py-0.5 rounded text-[9.5px] font-bold shrink-0
+                     {% if p.status == 'submitted' %}bg-amber-100 text-amber-700{% elif p.status == 'approved' or p.status == 'scheduled' %}bg-emerald-50 text-emerald-700{% elif p.status == 'returned' %}bg-rose-50 text-rose-700{% else %}bg-slate-50 text-slate-500{% endif %}">{{ p.get_status_display }}</span>
+      </div>
+      {% if p.status == 'submitted' %}
+      <div class="flex items-center gap-2 mt-2">
+        <form method="post" action="/team-targets/catchup/{{ p.id }}/action">{% csrf_token %}
+          <input type="hidden" name="action" value="approve">
+          <button type="submit" class="h-7 px-3 rounded-lg bg-emerald-600 text-white text-[10.5px] font-bold hover:bg-emerald-700">Approve</button>
+        </form>
+        <form method="post" action="/team-targets/catchup/{{ p.id }}/action" class="flex items-center gap-1.5">{% csrf_token %}
+          <input type="hidden" name="action" value="return">
+          <input type="text" name="reason" placeholder="Return reason…" class="h-7 px-2 rounded-lg border border-slate-200 text-[10.5px] w-44">
+          <button type="submit" class="h-7 px-3 rounded-lg border border-slate-200 text-slate-600 text-[10.5px] font-bold hover:bg-slate-50">Return</button>
+        </form>
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="rounded-xl border border-slate-100 bg-slate-50 p-4 text-center">
+    <p class="text-[12px] font-semibold text-slate-500">No catch-up plans yet.</p>
+    <p class="text-[10.5px] text-slate-400 mt-1">Create one from any behind row in Target Recovery Focus.</p>
+  </div>
+  {% endif %}
+
+  {% if recovery %}
+  <div>
+    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Currently behind — candidates for recovery</p>
+    <div class="divide-y divide-slate-50 rounded-xl border border-slate-100">
+      {% for r in recovery|slice:":8" %}
+      <div class="px-3 py-2 flex items-center justify-between gap-2">
+        <div class="min-w-0"><p class="text-[12px] font-semibold text-slate-700 truncate">{{ r.staff }} · {{ r.area }}</p><p class="text-[10px] text-slate-400">gap {{ r.gap }} · {{ r.reason }}</p></div>
+        <span class="px-1.5 py-0.5 rounded text-[9.5px] font-bold shrink-0 {% if r.risk == 'Slightly Behind' %}bg-amber-50 text-amber-700{% else %}bg-rose-50 text-rose-700{% endif %}">{{ r.risk }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

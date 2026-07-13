@@ -7,7 +7,7 @@
 <form 
 x-data="{ frequency: 'weekly', email: 'director@edify.org' }"
 @submit.prevent="alert('Report delivery schedule updated! A sample preview has been sent to ' + email); $dispatch('close-drawer');"
-class="space-y-4 text-[12px] font-sans"
+class="space-y-4 text-[12px] "
 >
 <div class="space-y-1">
 <label class="block font-bold text-slate-700">Recipient Email Address</label>

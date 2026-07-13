@@ -1,0 +1,58 @@
+{% load frontend_filters %}
+<div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-3">
+  <div>
+    <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">4. District SSA Heatmap <span class="text-slate-400 font-medium text-[11px]">(Average SSA Score by Intervention)</span></h3>
+    <p class="text-[11px] text-slate-400 font-medium mt-0.5">Verified annual SSA · click a district for the performance drawer</p>
+  </div>
+
+  <div class="overflow-x-auto -mx-1">
+    <table class="w-full text-[10.5px] border-separate border-spacing-y-1">
+      <thead>
+        <tr class="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">
+          <th class="text-left font-bold pl-1 pb-1">District</th>
+          {% for c in district_heatmap.codes %}<th class="text-center font-bold pb-1 px-1">{{ c }}</th>{% endfor %}
+          <th class="text-center font-bold pb-1 pr-1">Avg</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in district_heatmap.rows %}
+        <tr class="cursor-pointer"
+            hx-get="/analytics/country-director/drilldown?drill=district&id={{ row.id }}&fy={{ fy }}"
+            hx-target="#drawer-container" hx-swap="innerHTML">
+          <td class="text-left pl-1 whitespace-nowrap max-w-[130px]">
+            <span class="block font-semibold text-slate-700 truncate">{{ row.name }}</span>
+            <span class="block text-[8.5px] font-semibold {% if row.low_coverage %}text-amber-500{% else %}text-slate-300{% endif %}">cov {{ row.coverage }}{% if row.low_coverage %} · low{% endif %}</span>
+          </td>
+          {% for cell in row.cells %}
+          <td class="text-center font-bold tabular-nums rounded
+            {% if cell.tone == 'success' %}bg-emerald-100 text-emerald-800
+            {% elif cell.tone == 'lime' %}bg-lime-100 text-lime-800
+            {% elif cell.tone == 'warning' %}bg-amber-100 text-amber-800
+            {% elif cell.tone == 'danger' %}bg-rose-100 text-rose-800
+            {% else %}bg-slate-50 text-slate-300{% endif %} px-1 py-1">
+            {% if cell.pct is not None %}{{ cell.pct|floatformat:0 }}%{% else %}—{% endif %}
+          </td>
+          {% endfor %}
+          <td class="text-center font-extrabold tabular-nums rounded
+            {% if row.avg_tone == 'success' %}bg-emerald-200 text-emerald-900
+            {% elif row.avg_tone == 'lime' %}bg-lime-200 text-lime-900
+            {% elif row.avg_tone == 'warning' %}bg-amber-200 text-amber-900
+            {% elif row.avg_tone == 'danger' %}bg-rose-200 text-rose-900
+            {% else %}bg-slate-100 text-slate-400{% endif %} px-1 py-1">
+            {% if row.avg is not None %}{{ row.avg|floatformat:0 }}%{% else %}—{% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="10" class="text-center text-[12px] text-slate-400 font-medium py-6">No verified annual SSA in scope yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-[9px] font-semibold text-slate-400">
+    <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-sm bg-emerald-100 border border-emerald-200"></span>Strong</span>
+    <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-sm bg-lime-100 border border-lime-200"></span>Improving</span>
+    <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-sm bg-amber-100 border border-amber-200"></span>Weak</span>
+    <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-sm bg-rose-100 border border-rose-200"></span>Critical</span>
+    <span class="ml-auto italic">Darker = lower performance</span>
+  </div>
+</div>

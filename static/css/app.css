@@ -1,25 +1,15 @@
-/* Edify Global App Style Overrides */
+/* Edify Global App Style Overrides — token-driven, theme-aware */
 
-/* Scrollbar tweaks */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(15, 23, 42, 0.08);
-  border-radius: 9999px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(15, 23, 42, 0.18);
-}
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--edify-border-strong); border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--edify-text-subtle); }
 
-/* Global input/select resets to align with the premium design system */
+/* Global input/select — premium defaults */
 select, input[type="text"], input[type="number"], input[type="date"], textarea {
   border: 1px solid var(--edify-border);
-  border-radius: 10px;
+  border-radius: var(--edify-radius-md);
   background-color: var(--edify-surface-muted);
   color: var(--edify-text);
   font-size: 12px;
@@ -27,40 +17,21 @@ select, input[type="text"], input[type="number"], input[type="date"], textarea {
   transition: var(--edify-transition-fast);
   outline: none;
 }
-
 select:focus, input[type="text"]:focus, input[type="number"]:focus, input[type="date"]:focus, textarea:focus {
-  border-color: var(--edify-primary);
+  border-color: var(--edify-accent);
   background-color: var(--edify-surface);
-  box-shadow: 0 0 0 3px rgba(46, 80, 95, 0.08);
+  box-shadow: var(--edify-focus-ring);
 }
 
-/* Premium animation transitions */
-.fade-in {
-  animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
+/* Fade-in animation */
+.fade-in { animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Sidebar Custom items */
-.sidebar-item {
-  color: #94a3b8; /* Cool gray */
-  transition: var(--edify-transition-fast);
-}
-.sidebar-item:hover {
-  color: #ffffff;
-  background-color: rgba(255, 255, 255, 0.06);
-}
-.sidebar-item-active {
-  color: #ffffff;
-  background-color: rgba(255, 255, 255, 0.12);
-  border-left: 3px solid #ffcc00;
-}
-
-/* Glassmorphism panel drawer overlays */
+/* Drawer backdrop */
 .drawer-backdrop {
   backdrop-filter: blur(4px);
-  background-color: rgba(15, 23, 42, 0.4);
+  background-color: var(--edify-scrim);
 }

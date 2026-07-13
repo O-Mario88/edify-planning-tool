@@ -1,19 +1,23 @@
-/* Global Drawer Interaction System Variables & Styles */
+/* ════════════════════════════════════════════════════════════════════════════
+   EDIFY PREMIUM DRAWER SYSTEM
+   Enterprise-grade slide-over drawers with frosted backdrop blur,
+   token-driven surfaces, dark mode support, and premium rounded corners.
+   ════════════════════════════════════════════════════════════════════════════ */
 :root {
-  --drawer-width-sm: 400px;
+  --drawer-width-sm: 420px;
   --drawer-width-md: 580px;
   --drawer-width-lg: 820px;
   --drawer-width-xl: 1120px;
-  --drawer-radius: 20px;
-  --drawer-shadow: 0 20px 50px rgba(15, 30, 60, 0.15);
-  --drawer-backdrop-color: rgba(9, 25, 52, 0.55);
+  --drawer-radius: 16px;
+  --drawer-shadow: 0 24px 64px -12px rgba(15, 23, 42, 0.22), 0 8px 24px -8px rgba(15, 23, 42, 0.12);
+  --drawer-backdrop-color: rgba(15, 23, 42, 0.45);
   --drawer-backdrop-blur: 8px;
-  --drawer-animation-duration: 250ms;
+  --drawer-animation-duration: 300ms;
   --drawer-ease: cubic-bezier(0.16, 1, 0.3, 1);
   --drawer-z-index: 100;
 }
 
-/* Backdrop Overlay */
+/* ── Backdrop — frosted blur over the page ─────────────────────────────── */
 .drawer-backdrop {
   position: fixed;
   inset: 0;
@@ -24,18 +28,17 @@
   opacity: 0;
   transition: opacity var(--drawer-animation-duration) var(--drawer-ease);
 }
-
 .drawer-backdrop.active {
   opacity: 1;
 }
 
-/* Drawer Surface Wrapper */
+/* ── Drawer Surface — premium card with token-driven bg ────────────────── */
 .drawer-surface {
   position: fixed;
   top: 0;
   bottom: 0;
   right: 0;
-  background: #ffffff;
+  background: var(--edify-surface);
   box-shadow: var(--drawer-shadow);
   z-index: calc(var(--drawer-z-index) + 1);
   display: flex;
@@ -43,100 +46,330 @@
   height: 100%;
   width: 100%;
   max-width: var(--drawer-width-md);
-  
-  /* Opening Animations */
+  border-left: 1px solid var(--edify-border);
   transform: translateX(100%) scale(0.98);
   opacity: 0;
   transition: transform var(--drawer-animation-duration) var(--drawer-ease),
               opacity var(--drawer-animation-duration) var(--drawer-ease);
 }
-
 .drawer-surface.active {
   transform: translateX(0) scale(1);
   opacity: 1;
 }
 
-/* Drawer Sizing Options */
+/* Drawer Sizing */
 .drawer-surface.size-sm { max-width: var(--drawer-width-sm); }
 .drawer-surface.size-md { max-width: var(--drawer-width-md); }
 .drawer-surface.size-lg { max-width: var(--drawer-width-lg); }
 .drawer-surface.size-xl { max-width: var(--drawer-width-xl); }
 
-/* Centered Floating Drawer Variant */
+/* ── Centered Floating Modal/Drawer ────────────────────────────────────── */
 .drawer-surface.type-center {
   top: 50%;
   bottom: auto;
   right: 50%;
   transform: translate(50%, -48%) scale(0.96);
-  max-height: 90vh;
+  max-height: 88vh;
   border-radius: var(--drawer-radius);
   height: auto;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--edify-border);
   overflow: hidden;
 }
-
 .drawer-surface.type-center.active {
   transform: translate(50%, -50%) scale(1);
 }
 
-/* Internal Layout */
+/* ── Drawer Header ─────────────────────────────────────────────────────── */
 .drawer-header {
-  padding: 1.5rem;
-  border-bottom: 1px solid #edf2f7;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--edify-border);
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  background: #fcfdfe;
+  background: var(--edify-surface-muted);
+}
+.drawer-header h2,
+.drawer-header h3 {
+  color: var(--edify-text) !important;
 }
 
+/* ── Drawer Body ───────────────────────────────────────────────────────── */
 .drawer-body {
-  padding: 1.5rem;
+  padding: 20px 24px;
   flex: 1;
   overflow-y: auto;
 }
 
+/* ═══ DRAWER CONTENT OVERRIDES ════════════════════════════════════════════
+   Force token-driven styling inside drawers so all 45+ drawer templates
+   automatically get premium styling + dark mode — without editing each one.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Text colors inside drawers */
+.drawer-body h1, .drawer-header h1,
+.drawer-body h2, .drawer-header h2,
+.drawer-body h3, .drawer-header h3,
+.drawer-body h4, .drawer-header h4 { color: var(--edify-text) !important; }
+
+.drawer-body p, .drawer-body span, .drawer-body div { color: var(--edify-text-body, var(--edify-text)); }
+.drawer-body .text-slate-400, .drawer-body .text-slate-500 { color: var(--edify-text-muted) !important; }
+.drawer-body .text-slate-600, .drawer-body .text-slate-700 { color: var(--edify-text) !important; }
+.drawer-body .text-slate-800, .drawer-body .text-slate-900 { color: var(--edify-text) !important; }
+
+/* Cards/sections inside drawers */
+.drawer-body .bg-white,
+.drawer-body .bg-slate-50 {
+  background: var(--edify-surface-muted) !important;
+  border: 1px solid var(--edify-border) !important;
+  border-radius: var(--edify-radius-md) !important;
+  box-shadow: none !important;
+}
+
+/* Table styling inside drawers */
+.drawer-body table { width: 100%; border-collapse: collapse; }
+.drawer-body table thead th {
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--edify-text-subtle) !important;
+  background: var(--edify-surface-muted) !important;
+  border-bottom: 2px solid var(--edify-border) !important;
+  padding: 8px 10px; text-align: left;
+}
+.drawer-body table tbody td {
+  border-bottom: none !important;
+  padding: 7px 10px; font-size: 12px; color: var(--edify-text);
+}
+.drawer-body table tbody tr:nth-child(even) { background: var(--edify-surface-muted); }
+.drawer-body table tbody tr:hover { background: rgba(37,99,235,.06); }
+.dark .drawer-body table tbody tr:nth-child(even) { background: rgba(255,255,255,.025); }
+.dark .drawer-body table tbody tr:hover { background: rgba(59,130,246,.08); }
+
+/* Inputs inside drawers */
+.drawer-body input[type="text"], .drawer-body input[type="email"],
+.drawer-body input[type="password"], .drawer-body input[type="number"],
+.drawer-body input[type="date"], .drawer-body select, .drawer-body textarea {
+  width: 100%; border: 1px solid var(--edify-border);
+  background: var(--edify-surface); border-radius: var(--edify-radius-md);
+  color: var(--edify-text); font-size: 13px; font-family: var(--edify-font-sans);
+  padding: 10px 14px; outline: none;
+  transition: border-color var(--edify-transition-fast), box-shadow var(--edify-transition-fast);
+}
+.drawer-body input:focus, .drawer-body select:focus, .drawer-body textarea:focus {
+  border-color: var(--edify-accent); box-shadow: var(--edify-focus-ring);
+}
+.drawer-body input::placeholder, .drawer-body textarea::placeholder { color: var(--edify-text-subtle); }
+.drawer-body select option { background: var(--edify-surface); color: var(--edify-text); }
+
+/* Labels inside drawers */
+.drawer-body label {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .05em; color: var(--edify-text-muted);
+  display: block; margin-bottom: 6px;
+}
+
+/* Badges inside drawers */
+.drawer-body .badge,
+.drawer-body .inline-flex[class*="rounded"] {
+  background: var(--edify-surface-muted);
+  color: var(--edify-text-muted);
+  border: 1px solid var(--edify-border);
+  font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 4px;
+}
+.drawer-body .text-emerald-600, .drawer-body .text-emerald-700 { color: var(--edify-success) !important; }
+.drawer-body .text-rose-600, .drawer-body .text-rose-700 { color: var(--edify-danger) !important; }
+.drawer-body .text-amber-600, .drawer-body .text-amber-700 { color: var(--edify-warning) !important; }
+.drawer-body .text-blue-600, .drawer-body .text-blue-700 { color: var(--edify-accent) !important; }
+.drawer-body .bg-emerald-50 { background: var(--edify-success-light) !important; }
+.drawer-body .bg-rose-50 { background: var(--edify-danger-light) !important; }
+.drawer-body .bg-amber-50 { background: var(--edify-warning-light) !important; }
+.drawer-body .bg-blue-50 { background: var(--edify-info-light) !important; }
+
+/* Buttons inside drawers */
+.drawer-body .bg-indigo-600, .drawer-body .bg-blue-600 { background: var(--edify-accent) !important; color: #fff !important; }
+.drawer-body .hover\:bg-indigo-700:hover, .drawer-body .hover\:bg-blue-700:hover { background: var(--edify-accent-hover) !important; }
+
+/* Divide lines — kill the grid effect */
+.drawer-body .divide-y > * + * { border-top: none !important; }
+.drawer-body .border-b { border-bottom: 1px solid var(--edify-border) !important; }
+.drawer-body .border-t { border-top: 1px solid var(--edify-border) !important; }
+.drawer-body .border-slate-100, .drawer-body .border-slate-200 { border-color: var(--edify-border) !important; }
+
+/* Dark mode semantic backgrounds */
+.dark .drawer-body .bg-emerald-50 { background: rgba(16,185,129,.12) !important; }
+.dark .drawer-body .bg-rose-50 { background: rgba(239,68,68,.12) !important; }
+.dark .drawer-body .bg-amber-50 { background: rgba(245,158,11,.12) !important; }
+.dark .drawer-body .bg-blue-50 { background: rgba(59,130,246,.12) !important; }
+
+/* ── Drawer Footer ─────────────────────────────────────────────────────── */
 .drawer-footer {
-  padding: 1.25rem 1.5rem;
-  border-top: 1px solid #edf2f7;
-  background: #fcfdfe;
+  padding: 16px 24px;
+  border-top: 1px solid var(--edify-border);
+  background: var(--edify-surface-muted);
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 0.75rem;
+  gap: 12px;
   position: sticky;
   bottom: 0;
 }
 
-/* Close & Action Buttons */
+/* ── Close Button ──────────────────────────────────────────────────────── */
 .drawer-close-btn {
   background: transparent;
   border: none;
-  color: #a0aec0;
+  color: var(--edify-text-muted);
   cursor: pointer;
-  padding: 0.5rem;
-  border-radius: 9999px;
+  padding: 8px;
+  border-radius: var(--edify-radius-pill);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: all var(--edify-transition-fast);
 }
-
 .drawer-close-btn:hover {
-  background: #edf2f7;
-  color: #4a5568;
+  background: var(--edify-surface);
+  color: var(--edify-text);
 }
 
-/* Unsaved Changes Confirmation Banner */
+/* ── Alert Banner (unsaved changes) ────────────────────────────────────── */
 .drawer-alert-banner {
-  background-color: #fffaf0;
-  border: 1px solid #fbd38d;
-  color: #dd6b20;
-  border-radius: 12px;
-  padding: 1rem;
-  margin-bottom: 1.25rem;
+  background-color: var(--edify-warning-light);
+  border: 1px solid var(--edify-warning-border);
+  color: var(--edify-warning);
+  border-radius: var(--edify-radius-md);
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  font-weight: 600;
 }
 
-/* Accessibility: Support prefers-reduced-motion */
+/* ── Drawer Form Inputs — premium polish ───────────────────────────────── */
+.drawer-body input[type="text"],
+.drawer-body input[type="email"],
+.drawer-body input[type="password"],
+.drawer-body input[type="number"],
+.drawer-body input[type="date"],
+.drawer-body select,
+.drawer-body textarea {
+  width: 100%;
+  border: 1px solid var(--edify-border);
+  background: var(--edify-surface);
+  border-radius: var(--edify-radius-md);
+  color: var(--edify-text);
+  font-size: 13px;
+  font-family: var(--edify-font-sans);
+  padding: 10px 14px;
+  outline: none;
+  transition: border-color var(--edify-transition-fast), box-shadow var(--edify-transition-fast);
+}
+.drawer-body input:focus,
+.drawer-body select:focus,
+.drawer-body textarea:focus {
+  border-color: var(--edify-accent);
+  box-shadow: var(--edify-focus-ring);
+}
+.drawer-body label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--edify-text-muted);
+  display: block;
+  margin-bottom: 6px;
+}
+.drawer-body .form-group,
+.drawer-body .form-field {
+  margin-bottom: 16px;
+}
+.drawer-body help-text,
+.drawer-body .text-[10px],
+.drawer-body .text-[11px] {
+  color: var(--edify-text-subtle) !important;
+}
+
+/* ── Right-Top Dropdown Variant (notifications) ────────────────────────── */
+.drawer-surface.type-right_top {
+  position: fixed;
+  top: 64px;
+  right: 16px;
+  bottom: auto;
+  left: auto;
+  width: 400px;
+  max-width: calc(100vw - 32px);
+  max-height: 520px;
+  border-radius: var(--drawer-radius);
+  box-shadow: 0 16px 48px -8px rgba(15, 23, 42, 0.18), 0 4px 12px rgba(15, 23, 42, 0.08);
+  border: 1px solid var(--edify-border);
+  background: var(--edify-surface);
+  height: auto;
+  transform: translateY(-10px) scale(0.95);
+  opacity: 0;
+  transition: transform var(--drawer-animation-duration) var(--drawer-ease),
+              opacity var(--drawer-animation-duration) var(--drawer-ease);
+  overflow: hidden;
+}
+.drawer-surface.type-right_top.active {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+.drawer-backdrop.type-right_top {
+  background-color: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* ── Premium Buttons ───────────────────────────────────────────────────── */
+.btn-premium-primary {
+  background-color: var(--edify-accent) !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: var(--edify-radius-md) !important;
+  font-weight: 600 !important;
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.25), inset 0 1px 0 rgba(255,255,255,0.15) !important;
+  transition: background-color 0.15s ease-in-out !important;
+}
+.btn-premium-primary:hover {
+  background-color: var(--edify-accent-hover) !important;
+}
+.btn-premium-secondary {
+  background-color: var(--edify-surface-muted) !important;
+  color: var(--edify-text) !important;
+  border: 1px solid var(--edify-border) !important;
+  border-radius: var(--edify-radius-md) !important;
+  font-weight: 600 !important;
+  transition: background-color 0.15s ease-in-out !important;
+}
+.btn-premium-secondary:hover {
+  background-color: var(--edify-surface) !important;
+  border-color: var(--edify-border-strong) !important;
+}
+
+/* ── Mobile: bottom sheet ──────────────────────────────────────────────── */
+@media (max-width: 767.98px) {
+  .drawer-surface {
+    right: 0 !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    top: auto !important;
+    height: auto !important;
+    max-height: 88vh !important;
+    max-width: 100% !important;
+    border-radius: var(--drawer-radius) var(--drawer-radius) 0 0 !important;
+    border-left: none !important;
+    transform: translateY(100%) !important;
+  }
+  .drawer-surface.active {
+    transform: translateY(0) !important;
+  }
+  .drawer-surface.type-center {
+    top: auto !important;
+    bottom: 0 !important;
+    right: 0 !important;
+    left: 0 !important;
+    max-width: 100% !important;
+  }
+}
+
+/* ── Accessibility: reduced motion ─────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   .drawer-backdrop,
   .drawer-surface {
@@ -145,83 +378,14 @@
   }
 }
 
-/* Mobile & Bottom Sheet Variant overrides */
-@media (max-width: 768px) {
-  .drawer-surface {
-    right: 0 !important;
-    left: 0 !important;
-    bottom: 0 !important;
-    top: auto !important;
-    height: auto !important;
-    max-height: 85vh !important;
-    max-width: 100% !important;
-    border-radius: var(--drawer-radius) var(--drawer-radius) 0 0 !important;
-    transform: translateY(100%) !important;
-  }
-  
-  .drawer-surface.active {
-    transform: translateY(0) !important;
-  }
-
-  .drawer-surface.type-center {
-    top: auto !important;
-    bottom: 0 !important;
-    right: 0 !important;
-    left: 0 !important;
-  }
+/* ── Dark mode backdrop — deeper blur ──────────────────────────────────── */
+.dark .drawer-backdrop {
+  background-color: rgba(0, 0, 0, 0.60);
 }
-
-/* Right-Top Dropdown/Drawer Variant for Notifications */
-.drawer-surface.type-right_top {
-  position: fixed;
-  top: 75px; /* Floats right below the top navigation bar */
-  right: 20px;
-  bottom: auto;
-  left: auto;
-  width: 380px;
-  max-width: calc(100vw - 40px);
-  max-height: 480px;
-  border-radius: var(--drawer-radius);
-  box-shadow: 0 10px 30px rgba(9, 25, 52, 0.15);
-  border: 1px solid #e2e8f0;
-  height: auto;
-  transform: translateY(-10px) scale(0.95);
-  opacity: 0;
-  transition: transform var(--drawer-animation-duration) var(--drawer-ease),
-              opacity var(--drawer-animation-duration) var(--drawer-ease);
-  overflow: hidden;
+.dark .drawer-surface {
+  border-left-color: var(--edify-border);
 }
-
-.drawer-surface.type-right_top.active {
-  transform: translateY(0) scale(1);
-  opacity: 1;
-}
-
-.drawer-backdrop.type-right_top {
-  background-color: transparent !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-
-/* Custom premium button designs to match reference image */
-.btn-premium-primary {
-  background-color: #2e505f !important;
-  color: #ffffff !important;
-  border: none !important;
-  transition: opacity 0.15s ease-in-out;
-}
-
-.btn-premium-primary:hover {
-  opacity: 0.9 !important;
-}
-
-.btn-premium-secondary {
-  background-color: #f1f5f9 !important;
-  color: #334155 !important;
-  border: none !important;
-  transition: background-color 0.15s ease-in-out;
-}
-
-.btn-premium-secondary:hover {
-  background-color: #e2e8f0 !important;
+.dark .drawer-surface.type-center,
+.dark .drawer-surface.type-right_top {
+  border-color: var(--edify-border);
 }

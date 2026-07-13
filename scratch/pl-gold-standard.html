@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PL Dashboard — Gold Standard · Edify</title>
+<!-- FOUC prevention — apply theme BEFORE CSS renders -->
+<script>
+  (function() {
+    var t = localStorage.getItem('edify_theme') || 'light';
+    var html = document.documentElement;
+    html.classList.add('theme-fade');
+    if (t === 'dark') html.classList.add('dark');
+    html.dataset.theme = t;
+  })();
+</script>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script defer src="https://unpkg.com/alpinejs@3.14.0/dist/cdn.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   EDIFY PREMIUM DESIGN SYSTEM
+   Multi-billion enterprise aesthetic: layered depth, refined color,
+   precise typography, intelligent use of space.
+   ═══════════════════════════════════════════════════════════════ */
+:root {
+  /* ── SURFACES — cool slate page, pristine white cards ── */
+  --bg: #7F95A3;
+  --bg-tint: #728896;
+  --surface: #FFFFFF;
+  --surface-alt: #F6F8FB;
+  --surface-sunken: #F9FAFC;
+  --row-alt: #F9FAFC;
+  --border: #E3E8EF;
+  --border-light: #EFF3F8;
+  --divider: #F0F4F8;
+  /* ── TEXT — precise hierarchy, high contrast ── */
+  --text: #0D1526;
+  --text-heading: #101828;
+  --text-body: #1C2A3E;
+  --text-muted: #5B6B82;
+  --text-light: #8B97AB;
+  --text-faint: #B4BECC;
+  /* ── SEMANTIC — refined, slightly muted for enterprise ── */
+  --success: #069661;  --success-light: #D7F0E5;  --success-deep: #035940;
+  --warning: #C2710C;  --warning-light: #FDF0D9;  --warning-deep: #8A4F08;
+  --danger:  #D12323;  --danger-light:  #FDE2E2;  --danger-deep:  #991818;
+  --info:    #1C5EDD;  --info-light:    #DBE7FB;  --info-deep:    #14419A;
+  --teal:    #0B8C80;  --teal-light:    #D0F1ED;  --teal-deep:    #066760;
+  --purple:  #6E3FD4;  --purple-light:  #EBE0FA;  --purple-deep:  #502BA0;
+  --font: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  /* ── ELEVATION — 4-tier shadow system ── */
+  --sh-xs: 0 1px 2px rgba(16,24,40,.04);
+  --sh-sm: 0 1px 3px rgba(16,24,40,.06), 0 1px 2px rgba(16,24,40,.04);
+  --sh-md: 0 3px 8px -2px rgba(16,24,40,.06), 0 2px 4px -2px rgba(16,24,40,.04);
+  --sh-lg: 0 8px 20px -4px rgba(16,24,40,.08), 0 4px 8px -2px rgba(16,24,40,.05);
+  --sh-xl: 0 16px 36px -6px rgba(16,24,40,.10), 0 6px 12px -4px rgba(16,24,40,.06);
+  --r: 10px; --r-sm: 6px; --r-xs: 4px; --r-pill: 9999px;
+  --ease: cubic-bezier(.4,0,.2,1);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DARK THEME — premium OS-grade dark workspace
+   Every token from :root is remapped. One class change = full theme switch.
+   ═══════════════════════════════════════════════════════════════ */
+:root.dark {
+  --bg: #0E1116;
+  --bg-tint: #14181F;
+  --surface: #1A1F28;
+  --surface-alt: #20262F;
+  --surface-sunken: #161B22;
+  --row-alt: #161B22;
+  --border: #2D3540;
+  --border-light: #252B35;
+  --divider: #222831;
+  /* Text — clean white hierarchy on dark */
+  --text: #E8EDF5;
+  --text-heading: #F0F4FA;
+  --text-body: #C8D2E0;
+  --text-muted: #7A8699;
+  --text-light: #5C6878;
+  --text-faint: #4A5462;
+  /* Semantic — brighter fills, translucent backgrounds, lighter text */
+  --success: #10B981;  --success-light: rgba(16,185,129,.12);  --success-deep: #34D399;
+  --warning: #F59E0B;  --warning-light: rgba(245,158,11,.12);  --warning-deep: #FBBF24;
+  --danger:  #EF4444;  --danger-light:  rgba(239,68,68,.12);   --danger-deep:  #F87171;
+  --info:    #3B82F6;  --info-light:    rgba(59,130,246,.12);  --info-deep:    #60A5FA;
+  --teal:    #14B8A6;  --teal-light:    rgba(20,184,166,.12);  --teal-deep:    #2DD4BF;
+  --purple:  #8B5CF6;  --purple-light:  rgba(139,92,246,.12);  --purple-deep:  #A78BFA;
+  /* Shadows — deeper, more diffuse for dark (pure black) */
+  --sh-xs: 0 1px 2px rgba(0,0,0,.20);
+  --sh-sm: 0 1px 3px rgba(0,0,0,.30), 0 1px 2px rgba(0,0,0,.20);
+  --sh-md: 0 3px 8px -2px rgba(0,0,0,.30), 0 2px 4px -2px rgba(0,0,0,.20);
+  --sh-lg: 0 8px 20px -4px rgba(0,0,0,.40), 0 4px 8px -2px rgba(0,0,0,.25);
+  --sh-xl: 0 16px 36px -6px rgba(0,0,0,.45), 0 6px 12px -4px rgba(0,0,0,.30);
+}
+
+/* Theme transition — smooth switch on all surfaces */
+html.theme-fade, html.theme-fade * { transition: background-color .25s var(--ease), border-color .25s var(--ease), color .25s var(--ease), box-shadow .25s var(--ease) !important; }
+
+html, body { font-family: var(--font); background: var(--bg); color: var(--text); }
+
+/* ── PAGE BACKGROUND — Edify brand sky-blue ── */
+body {
+  background-color: var(--bg);
+  background-attachment: fixed;
+}
+
+/* ═══ TYPOGRAPHY ═══ */
+.t-page    { font-size: 21px; font-weight: 800; line-height: 1.15; color: var(--text-heading); letter-spacing: -.025em; }
+.t-section { font-size: 13px; font-weight: 700; line-height: 1.2; color: var(--text-heading); letter-spacing: -.005em; }
+.t-heading { font-size: 13px; font-weight: 700; line-height: 1.25; color: var(--text-heading); }
+.t-body    { font-size: 12px; font-weight: 400; line-height: 1.4; color: var(--text-body); }
+.t-muted   { font-size: 12px; font-weight: 400; line-height: 1.4; color: var(--text-muted); }
+.t-label   { font-size: 11px; font-weight: 500; line-height: 1.3; color: var(--text-muted); }
+.t-caption { font-size: 10px; font-weight: 500; line-height: 1.25; color: var(--text-light); }
+.t-over    { font-size: 9px; font-weight: 700; line-height: 1.15; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); }
+.t-stat    { font-size: 22px; font-weight: 800; line-height: 1; color: var(--text-heading); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.t-stat-sm { font-size: 16px; font-weight: 800; line-height: 1; color: var(--text-heading); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+
+/* ═══ CARDS — subtle top highlight + layered shadow = real depth ═══ */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--r);
+  box-shadow: var(--sh-sm);
+  position: relative;
+  transition: box-shadow .25s var(--ease), border-color .25s var(--ease), transform .25s var(--ease);
+}
+/* Subtle 1px line at top — white in light, lighter-dark in dark (Stripe trick) */
+.card::before {
+  content: ''; position: absolute; top: 0; left: 1px; right: 1px;
+  height: 1px; background: var(--card-highlight, linear-gradient(90deg, transparent, rgba(255,255,255,.8) 20%, rgba(255,255,255,.8) 80%, transparent));
+  border-radius: var(--r) var(--r) 0 0; pointer-events: none;
+}
+:root.dark { --card-highlight: linear-gradient(90deg, transparent, rgba(255,255,255,.06) 20%, rgba(255,255,255,.06) 80%, transparent); }
+.card-interactive { cursor: pointer; }
+.card-interactive:hover {
+  box-shadow: var(--sh-lg);
+  border-color: var(--border);
+  transform: translateY(-1px);
+}
+
+/* ═══ ICON CHIPS — solid muted fill with subtle ring, not flat gradients ═══ */
+.ic { display: flex; align-items: center; justify-content: center; border-radius: 7px; position: relative; }
+.ic::after { content: ''; position: absolute; inset: 0; border-radius: 7px; box-shadow: inset 0 1px 0 rgba(255,255,255,.3); pointer-events: none; }
+
+/* ═══ BADGES ═══ */
+.badge { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: var(--r-xs); font-size: 10px; font-weight: 600; line-height: 1.2; letter-spacing: .01em; }
+.b-success { background: var(--success-light); color: var(--success-deep); }
+.b-warning { background: var(--warning-light); color: var(--warning-deep); }
+.b-danger  { background: var(--danger-light);  color: var(--danger-deep); }
+.b-info    { background: var(--info-light);    color: var(--info-deep); }
+.b-neutral { background: var(--surface-alt);   color: var(--text-muted); }
+
+/* ═══ TREND ═══ */
+.trend { display: inline-flex; align-items: center; gap: 1px; font-size: 10px; font-weight: 700; }
+.trend-up { color: var(--success); } .trend-down { color: var(--danger); } .trend-flat { color: var(--text-light); }
+
+/* ═══ TABLES ═══ */
+table.tbl { border-collapse: collapse; width: 100%; }
+table.tbl thead th {
+  font-size: 9px; font-weight: 700; color: var(--text-light); letter-spacing: .06em; text-transform: uppercase;
+  padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; line-height: 1.2;
+  background: var(--surface-sunken); white-space: nowrap;
+}
+table.tbl thead th.c { text-align: center; }
+table.tbl tbody td { padding: 7px 10px; border-bottom: 1px solid var(--divider); line-height: 1.3; font-size: 12px; color: var(--text-body); white-space: nowrap; }
+table.tbl tbody td.c { text-align: center; }
+table.tbl tbody tr:nth-child(even) { background: var(--row-alt); }
+table.tbl tbody tr:hover { background: var(--info-light); }
+table.tbl tbody tr:last-child td { border-bottom: none; }
+
+/* ═══ SSA TONAL CELLS — scored out of 10: ≥7 green, 5-6.9 amber, <5 red ═══ */
+.tcell { display: inline-block; min-width: 30px; padding: 2px 6px; border-radius: var(--r-xs); text-align: center; font-size: 10px; font-weight: 700; }
+.tc-success { background: var(--success-light); color: var(--success-deep); }
+.tc-lime    { background: rgba(132,204,22,.14); color: #A3E635; }
+.tc-warning { background: var(--warning-light); color: var(--warning-deep); }
+.tc-danger  { background: var(--danger-light);  color: var(--danger-deep); }
+:root:not(.dark) .tc-lime { background: #E8F5C8; color: #3F6212; }
+
+/* ═══ BUTTONS ═══ */
+.btn-primary { background: var(--info); color: #fff; font-weight: 600; border-radius: var(--r-sm); font-size: 11px; padding: 6px 14px; border: none; cursor: pointer; box-shadow: var(--sh-xs), inset 0 1px 0 rgba(255,255,255,.15); transition: all .15s var(--ease); }
+.btn-primary:hover { background: var(--info-deep); box-shadow: var(--sh-sm); }
+.btn-success { background: var(--success); color: #fff; font-weight: 600; border-radius: var(--r-sm); font-size: 11px; padding: 6px 14px; border: none; cursor: pointer; box-shadow: var(--sh-xs), inset 0 1px 0 rgba(255,255,255,.15); transition: all .15s var(--ease); }
+.btn-success:hover { background: var(--success-deep); box-shadow: var(--sh-sm); }
+.btn-outline { background: var(--surface); color: var(--text-heading); font-weight: 600; border-radius: var(--r-sm); font-size: 11px; padding: 5px 14px; border: 1px solid var(--border); cursor: pointer; transition: all .15s var(--ease); }
+.btn-outline:hover { background: var(--surface-alt); border-color: var(--text-faint); }
+.btn-link { color: var(--info); font-size: 11px; font-weight: 600; text-decoration: none; cursor: pointer; transition: color .15s; }
+.btn-link:hover { color: var(--info-deep); text-decoration: underline; }
+
+/* ═══ DONUT (SVG) — thicker, premium, percentage centered inside ═══ */
+.donut-wrap { position: relative; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.donut { transform: rotate(-90deg); }
+.donut circle { fill: none; stroke-width: 6; }
+.donut .track { stroke: var(--border); }
+.donut .fill { stroke-linecap: round; }
+.donut-pct { position: absolute; font-size: 10px; font-weight: 800; line-height: 1; }
+
+/* ═══ AVATAR ═══ */
+.avatar { border-radius: var(--r-pill); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; flex-shrink: 0; }
+
+/* ═══ SCROLLBAR ═══ */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-thumb { background: var(--text-faint); border-radius: var(--r-pill); }
+::-webkit-scrollbar-thumb:hover { background: var(--text-light); }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* ═══ ROW HELPER — forces equal heights ═══ */
+.row-equal > * { display: flex; flex-direction: column; }
+.row-equal > * > .card-body { flex: 1; }
+
+/* Status dot pulse for live indicators */
+@keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: .5; } }
+.pulse-dot { animation: pulse-dot 2s ease-in-out infinite; }
+
+/* ═══ MOBILE OPTIMIZATIONS ═══ */
+@media (max-width: 640px) {
+  /* KPI cards — tighter, smaller icons, slightly smaller stats */
+  .card.card-interactive.p-3 { padding: 10px; }
+  .card.card-interactive.p-3 .ic { height: 32px; width: 32px; }
+  .card.card-interactive.p-3 .ic svg { height: 14px; width: 14px; }
+  .card.card-interactive.p-3 .t-stat { font-size: 16px !important; }
+  .card.card-interactive.p-3 .t-over { font-size: 8px; }
+  .card.card-interactive.p-3 .t-caption { font-size: 9px; }
+  /* Tables scroll horizontally with smaller text */
+  table.tbl thead th { padding: 6px 6px; font-size: 8px; }
+  table.tbl tbody td { padding: 5px 6px; font-size: 11px; }
+  /* Header band stacks vertically cleanly */
+  .rounded-xl.p-4 { padding: 12px; }
+  /* Donut shrink on mobile */
+  .donut-wrap { transform: scale(.9); }
+}
+
+/* ═══ ACCESSIBILITY — focus rings, ARIA support ═══ */
+*:focus-visible {
+  outline: 2px solid var(--info);
+  outline-offset: 2px;
+  border-radius: var(--r-xs);
+}
+/* Skip outline on elements with their own focus styling */
+button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible {
+  outline: 2px solid var(--info);
+  outline-offset: 1px;
+}
+/* Ensure focus is visible in dark mode too */
+:root.dark *:focus-visible {
+  outline-color: var(--info-deep);
+}
+
+/* ═══ x-cloak — hide Alpine elements until initialized ═══ */
+[x-cloak] { display: none !important; }
+
+/* ═══ THEME-AWARE SHELL SURFACES (not pure tokens — frosted/translucent) ═══ */
+:root {
+  --topbar-bg: rgba(255,255,255,.82);
+  --topbar-border: var(--border-light);
+  --header-band-bg: rgba(255,255,255,.10);
+  --header-band-border: rgba(255,255,255,.15);
+  --header-title: #FFFFFF;
+  --header-subtitle: rgba(255,255,255,.75);
+  --header-pill-bg: rgba(255,255,255,.10);
+  --header-pill-border: rgba(255,255,255,.15);
+  --header-pill-text: #FFFFFF;
+  --header-over-text: rgba(255,255,255,.60);
+}
+:root.dark {
+  --topbar-bg: rgba(26,31,40,.85);
+  --topbar-border: var(--border);
+  --header-band-bg: rgba(255,255,255,.04);
+  --header-band-border: rgba(255,255,255,.08);
+  --header-title: #F0F4FA;
+  --header-subtitle: rgba(200,210,224,.65);
+  --header-pill-bg: rgba(255,255,255,.06);
+  --header-pill-border: rgba(255,255,255,.10);
+  --header-pill-text: #E8EDF5;
+  --header-over-text: rgba(200,210,224,.50);
+  --sidebar-bg: linear-gradient(185deg, #000000 0%, #0A0D12 55%, #080A0E 100%);
+}
+
+/* ═══ TOGGLE — theme switch segmented control ═══ */
+.theme-toggle { display: inline-flex; align-items: center; gap: 2px; padding: 3px; border-radius: 8px; background: var(--surface-alt); border: 1px solid var(--border); }
+.theme-toggle button { display: flex; align-items: center; justify-content: center; width: 28px; height: 24px; border-radius: 5px; color: var(--text-light); cursor: pointer; transition: all .15s var(--ease); background: transparent; border: none; }
+.theme-toggle button:hover { color: var(--text-muted); }
+.theme-toggle button.active { background: var(--surface); color: var(--info); box-shadow: var(--sh-xs); }
+</style>
+</head>
+<body class="h-full antialiased">
+
+<div class="h-full flex overflow-hidden" x-data="{ sidebarOpen: false }">
+  <!-- Mobile sidebar backdrop -->
+  <div x-show="sidebarOpen" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" @click="sidebarOpen = false" class="md:hidden fixed inset-0 z-30" style="background:rgba(0,0,0,.5);backdrop-filter:blur(4px);" x-cloak></div>
+
+  <!-- ════════════════════════════════════════════════════════════
+       SIDEBAR — deep navy, gradient, refined nav
+       ════════════════════════════════════════════════════════════ -->
+  <aside class="flex flex-col w-52 shrink-0 relative z-40 transition-transform duration-200 md:translate-x-0 fixed md:static h-full" :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'" style="background:var(--sidebar-bg, linear-gradient(185deg,#0C1426 0%,#131E36 55%,#0F1A2E 100%));color:#8295B0;box-shadow:4px 0 24px -8px rgba(0,0,0,.25);">
+    <div class="h-12 flex items-center gap-2.5 px-4 shrink-0" style="border-bottom:1px solid rgba(255,255,255,.05);">
+      <div class="h-7 w-7 rounded-lg flex items-center justify-center text-white font-bold text-[13px]" style="background:linear-gradient(135deg,#14B8A6,#0D9488);box-shadow:0 2px 8px -2px rgba(20,184,166,.4);">E</div>
+      <div>
+        <span class="text-white font-bold text-[13px] tracking-tight block leading-none">Edify</span>
+        <span class="text-[9px] font-medium tracking-wide" style="color:#5B6B82">Planning Tool</span>
+      </div>
+    </div>
+    <nav class="flex-1 px-2.5 py-3 space-y-0.5 overflow-y-auto text-[12px]">
+      <a class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-white font-semibold" style="background:linear-gradient(90deg,rgba(28,94,221,.18),rgba(28,94,221,.04));box-shadow:inset 2px 0 0 var(--info);">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-9 9 9M5 10v10h14V10"/></svg>Dashboard</a>
+      <a class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-white/5 transition-colors"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 5a2 2 0 002 2h2a2 2 0 002-2"/></svg>My Plan</a>
+      <a class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-white/5 transition-colors"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>Activities</a>
+      <a class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-white/5 transition-colors"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0v7"/></svg>Schools</a>
+      <a class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-white/5 transition-colors"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7"/></svg>Planning</a>
+      <a class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-white/5 transition-colors"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.7 0-3 .9-3 2s1.3 2 3 2 3 .9 3 2-1.3 2-3 2m0-8V7m0 9v1m9-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Budget</a>
+      <a class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-white/5 transition-colors"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-4m3 4v-6m3 6v-2M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>Reports</a>
+      <a class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-white/5 transition-colors"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6-2a3 3 0 10-2-5.24"/></svg>Staff</a>
+    </nav>
+    <div class="px-2.5 py-2.5 shrink-0 relative" style="border-top:1px solid rgba(255,255,255,.05);" x-data="{ open: false }">
+      <a class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-white/5 transition-colors text-[12px] cursor-pointer" @click="open = !open">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        Settings
+        <svg class="h-3 w-3 ml-auto transition-transform" :class="open ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+      </a>
+      <!-- Settings dropdown panel -->
+      <div x-show="open" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" @click.outside="open = false" @keydown.escape.window="open = false" class="absolute bottom-full left-0 right-0 mb-2 rounded-lg overflow-hidden" style="background:#1A1F28;border:1px solid rgba(255,255,255,.08);box-shadow:0 -8px 24px -4px rgba(0,0,0,.4);" role="menu" aria-label="Settings menu" x-cloak>
+        <div class="px-3 py-2" style="border-bottom:1px solid rgba(255,255,255,.05);">
+          <p class="text-[9px] font-bold tracking-wider uppercase" style="color:#5B6B82;">Appearance</p>
+        </div>
+        <div class="p-2 space-y-1" x-data="{ theme: localStorage.getItem('edify_theme') || 'light' }">
+          <button class="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md transition-colors text-[11px]" :style="theme === 'light' ? 'background:rgba(255,255,255,.06);color:#fff;' : 'color:#8295B0;'" @click="document.documentElement.classList.remove('dark'); localStorage.setItem('edify_theme','light'); theme='light'; window.dispatchEvent(new Event('edify-theme-change'))">
+            <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+            <span class="flex-1 text-left font-semibold">Light</span>
+            <span x-show="theme === 'light'" style="color:#34D399;"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></span>
+          </button>
+          <button class="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md transition-colors text-[11px]" :style="theme === 'dark' ? 'background:rgba(255,255,255,.06);color:#fff;' : 'color:#8295B0;'" @click="document.documentElement.classList.add('dark'); localStorage.setItem('edify_theme','dark'); theme='dark'; window.dispatchEvent(new Event('edify-theme-change'))">
+            <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+            <span class="flex-1 text-left font-semibold">Dark</span>
+            <span x-show="theme === 'dark'" style="color:#34D399;"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></span>
+          </button>
+        </div>
+        <div class="px-3 py-2" style="border-top:1px solid rgba(255,255,255,.05);">
+          <p class="text-[9px] font-bold tracking-wider uppercase mb-1" style="color:#5B6B82;">Language</p>
+          <p class="text-[10px]" style="color:#5B6B82;">Coming soon: English · Español · Français</p>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ════════════════════════════════════════════════════════════
+       MAIN
+       ════════════════════════════════════════════════════════════ -->
+  <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+    <!-- TOPBAR — frosted glass -->
+    <header class="h-12 shrink-0 flex items-center gap-3 px-4 sm:px-6 sticky top-0 z-20" style="background:var(--topbar-bg);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--topbar-border);">
+      <!-- Mobile hamburger -->
+      <button @click="sidebarOpen = true" class="md:hidden h-8 w-8 rounded-lg flex items-center justify-center transition-colors" style="color:var(--text-muted)" aria-label="Open navigation menu">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <div class="relative max-w-xs w-full hidden sm:block">
+        <input placeholder="Search schools, staff, districts…" aria-label="Search schools, staff, districts" class="w-full rounded-md focus:outline-none text-[12px] transition-all" style="background:var(--surface-alt);border:1px solid var(--border);padding:6px 10px 6px 30px;">
+        <svg class="h-3.5 w-3.5 absolute left-2.5 top-[7px]" style="color:var(--text-light)" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      </div>
+      <div class="flex items-center gap-2 shrink-0 ml-auto">
+        <button class="h-8 w-8 rounded-lg flex items-center justify-center relative transition-colors" style="color:var(--text-muted)" aria-label="Notifications (3 unread)" title="Notifications" onmouseover="this.style.background='var(--surface-alt)'" onmouseout="this.style.background='transparent'">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14v-3a6 6 0 00-4-5.7V5a2 2 0 10-4 0v.3C7.7 6.2 6 8.4 6 11v3a2 2 0 01-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1"/></svg>
+          <span class="absolute top-0.5 right-0.5 h-3.5 w-3.5 rounded-full flex items-center justify-center text-white font-bold" style="background:var(--danger);font-size:8px;box-shadow:0 0 0 2px var(--surface);">3</span>
+        </button>
+        <!-- Account profile chip — moved from sidebar bottom -->
+        <button class="flex items-center gap-2 pl-1 pr-2.5 py-1 rounded-lg transition-colors" style="background:var(--surface);border:1px solid var(--border);" aria-label="Account menu — Mario O., Program Lead" onmouseover="this.style.background='var(--surface-alt)'" onmouseout="this.style.background='var(--surface)'">
+          <div class="avatar h-7 w-7 text-[10px]" style="background:linear-gradient(135deg,#1C5EDD,#14419A);">MO</div>
+          <div class="text-left hidden sm:block"><p class="font-bold text-[11px] leading-none" style="color:var(--text-heading);">Mario O.</p><p class="text-[9px] leading-none mt-0.5" style="color:var(--text-muted);">Program Lead</p></div>
+          <svg class="h-3 w-3 ml-0.5" style="color:var(--text-light)" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- ═══ CONTENT ═══ -->
+    <main class="flex-1 overflow-y-auto">
+      <div class="px-4 sm:px-6 py-4 sm:py-5 space-y-4">
+
+        <!-- ═══ HEADER — premium glass band ═══ -->
+        <div class="rounded-xl p-4 flex items-center justify-between gap-3 flex-wrap" style="background:var(--header-band-bg);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--header-band-border);box-shadow:var(--sh-md);">
+          <div>
+            <div class="flex items-center gap-2 mb-1.5">
+              <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full" style="background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.25);">
+                <span class="h-1.5 w-1.5 rounded-full pulse-dot" style="background:#34D399;"></span>
+                <span class="text-[10px] font-bold tracking-wide" style="color:#6EE7B7;">LIVE · FY 2026</span>
+              </span>
+            </div>
+            <h1 style="font-size:21px;font-weight:800;line-height:1.15;letter-spacing:-.025em;color:var(--header-title);text-shadow:0 1px 3px rgba(0,0,0,.15);">Program Lead Dashboard</h1>
+            <p style="font-size:12px;font-weight:400;line-height:1.4;color:var(--header-subtitle);margin-top:2px;">Team execution, approvals, targets, planning quality &amp; operations.</p>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <div class="flex items-center gap-1.5 rounded-md px-2.5 py-1.5" style="background:var(--header-pill-bg);border:1px solid var(--header-pill-border);">
+              <span style="font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--header-over-text);">FY</span>
+              <select class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px]" style="color:var(--header-pill-text);"><option style="color:#000">FY 2025</option><option selected style="color:#000">FY 2026</option></select>
+            </div>
+            <div class="flex items-center gap-1.5 rounded-md px-2.5 py-1.5" style="background:var(--header-pill-bg);border:1px solid var(--header-pill-border);">
+              <span style="font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--header-over-text);">Activity</span>
+              <select class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px]" style="color:var(--header-pill-text);"><option style="color:#000">All</option><option style="color:#000">School Visits</option><option style="color:#000">Trainings</option><option style="color:#000">Cluster Meetings</option><option style="color:#000">Partner</option></select>
+            </div>
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-semibold" style="background:var(--header-pill-bg);border:1px solid var(--header-pill-border);color:var(--header-pill-text);">
+              <span class="h-1.5 w-1.5 rounded-full" style="background:#34D399;"></span>24 CCEOs · 700 schools
+            </span>
+          </div>
+        </div>
+
+        <!-- ═══ KPI STRIP — ALL 8 ═══ -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+          <div class="card card-interactive p-3"><div class="flex items-center gap-2.5"><div class="ic h-9 w-9 shrink-0" style="background:var(--success-light);"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--success);"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div><div class="flex-1 min-w-0"><p class="t-over">Target</p><p class="t-stat mt-1" style="font-size:18px;">78<span class="text-[12px] font-bold" style="color:var(--text-light);">%</span></p><p class="t-caption mt-0.5"><span class="trend trend-up">↑ 6pp</span> vs target</p></div></div></div>
+          <div class="card card-interactive p-3"><div class="flex items-center gap-2.5"><div class="ic h-9 w-9 shrink-0" style="background:var(--info-light);"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--info);"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87"/></svg></div><div class="flex-1 min-w-0"><p class="t-over">On Track</p><p class="t-stat mt-1" style="font-size:18px;">75<span class="text-[12px] font-bold" style="color:var(--text-light);">%</span></p><p class="t-caption mt-0.5">18/24 at pace</p></div></div></div>
+          <div class="card card-interactive p-3"><div class="flex items-center gap-2.5"><div class="ic h-9 w-9 shrink-0" style="background:var(--warning-light);"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--warning);"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/></svg></div><div class="flex-1 min-w-0"><p class="t-over">Awaiting</p><p class="t-stat mt-1" style="font-size:18px;color:var(--warning);">7</p><p class="t-caption mt-0.5">need action</p></div></div></div>
+          <div class="card card-interactive p-3"><div class="flex items-center gap-2.5"><div class="ic h-9 w-9 shrink-0" style="background:var(--info-light);"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--info);"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M3 11h18M5 5h14a1 1 0 011 1v14a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z"/></svg></div><div class="flex-1 min-w-0"><p class="t-over">This Week</p><p class="t-stat mt-1" style="font-size:18px;">42</p><p class="t-caption mt-0.5"><span class="trend trend-flat">→ on plan</span></p></div></div></div>
+          <div class="card card-interactive p-3"><div class="flex items-center gap-2.5"><div class="ic h-9 w-9 shrink-0" style="background:var(--success-light);"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--success);"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4"/></svg></div><div class="flex-1 min-w-0"><p class="t-over">SF Comply</p><p class="t-stat mt-1" style="font-size:18px;">88<span class="text-[12px] font-bold" style="color:var(--text-light);">%</span></p><p class="t-caption mt-0.5"><span class="trend trend-up">↑ 4pp</span> evidence</p></div></div></div>
+          <div class="card card-interactive p-3"><div class="flex items-center gap-2.5"><div class="ic h-9 w-9 shrink-0" style="background:var(--warning-light);"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--warning);"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div><div class="flex-1 min-w-0"><p class="t-over">Backlog</p><p class="t-stat mt-1" style="font-size:18px;color:var(--warning);">23</p><p class="t-caption mt-0.5">overdue/returned</p></div></div></div>
+          <div class="card card-interactive p-3"><div class="flex items-center gap-2.5"><div class="ic h-9 w-9 shrink-0" style="background:var(--purple-light);"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--purple);"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.7 0-3 .9-3 2s1.3 2 3 2 3 .9 3 2-1.3 2-3 2m0-8V7m0 9v1m9-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div><div class="flex-1 min-w-0"><p class="t-over">Mthly Fund</p><p class="t-stat mt-1" style="font-size:15px;">UGX 2.4M</p><p class="t-caption mt-0.5">68% utilized</p></div></div></div>
+          <div class="card card-interactive p-3"><div class="flex items-center gap-2.5"><div class="ic h-9 w-9 shrink-0" style="background:var(--danger-light);"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--danger);"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg></div><div class="flex-1 min-w-0"><p class="t-over">High-Risk</p><p class="t-stat mt-1" style="font-size:18px;color:var(--danger);">12</p><p class="t-caption mt-0.5"><span class="trend trend-down">↑ 3</span> urgent</p></div></div></div>
+        </div>
+
+        <!-- ═══ LEADERSHIP ATTENTION ═══ -->
+        <div>
+          <h2 class="t-section mb-2" style="color:#FFFFFF;">Leadership Attention</h2>
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+            <div class="rounded-lg p-3.5 flex items-start gap-3" style="background:var(--danger-light);border:1px solid rgba(209,35,35,.12);">
+              <div class="ic h-9 w-9 shrink-0" style="background:var(--danger);"><svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6-2a3 3 0 10-2-5.24"/></svg></div>
+              <div class="flex-1 min-w-0"><p class="t-heading" style="color:var(--danger-deep);">Staff Overload Warning</p><p class="t-muted mt-1 text-[11px]">3 staff have &gt;120% workload capacity. Action required to rebalance routes.</p><button class="btn-link mt-1.5 block" style="color:var(--danger);">View Overloaded Staff →</button></div>
+            </div>
+            <div class="rounded-lg p-3.5 flex items-start gap-3" style="background:var(--warning-light);border:1px solid rgba(194,113,12,.12);">
+              <div class="ic h-9 w-9 shrink-0" style="background:var(--warning);"><svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg></div>
+              <div class="flex-1 min-w-0"><p class="t-heading" style="color:var(--warning-deep);">SF ID Backlog Warning</p><p class="t-muted mt-1 text-[11px]">12 Activity SF IDs pending action &gt; 7 days. Compliance risk increasing.</p><button class="btn-link mt-1.5 block" style="color:var(--warning);">Review Backlog →</button></div>
+            </div>
+            <div class="rounded-lg p-3.5 flex items-start gap-3" style="background:var(--danger-light);border:1px solid rgba(209,35,35,.12);">
+              <div class="ic h-9 w-9 shrink-0" style="background:var(--danger);"><svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg></div>
+              <div class="flex-1 min-w-0"><p class="t-heading" style="color:var(--danger-deep);">High-Risk Schools / Regions</p><p class="t-muted mt-1 text-[11px]">12 schools in your portfolio flagged as high risk. Immediate follow-up needed.</p><button class="btn-link mt-1.5 block" style="color:var(--danger);">View High-Risk Schools →</button></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ Team Performance (7) + Personal Targets (5) ═══ -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-3">
+          <div class="card p-4 lg:col-span-7 flex flex-col">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2">
+                <div class="ic h-7 w-7" style="background:var(--info-light);"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--info);"><path stroke-linecap="round" stroke-linejoin="round" d="M7 14l3-3 3 3 4-5M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg></div>
+                <h2 class="t-section">Team Performance Overview</h2>
+              </div>
+              <span class="t-label font-semibold">FY 2026</span>
+            </div>
+            <div class="flex items-center gap-4 mb-2">
+              <span class="flex items-center gap-1.5 t-caption"><span class="h-2 w-2 rounded-sm" style="background:#008000;"></span>Planned</span>
+              <span class="flex items-center gap-1.5 t-caption"><span class="h-2 w-2 rounded-sm" style="background:#2F539B;"></span>Completed</span>
+              <span class="flex items-center gap-1.5 t-caption"><span class="h-2 w-2 rounded-sm" style="background:#EE9A4D;"></span>Verified</span>
+              <span class="flex items-center gap-1.5 t-caption"><span class="h-0.5 w-3 rounded-full" style="background:#F59E0B;"></span>Target %</span>
+            </div>
+            <div id="perfChart" class="w-full flex-1" style="min-height:200px;"></div>
+          </div>
+          <div class="card p-4 lg:col-span-5 flex flex-col">
+            <div class="flex items-center gap-2 mb-3">
+              <div class="ic h-7 w-7" style="background:var(--success-light);"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--success);"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18zm0-4a5 5 0 100-10 5 5 0 000 10z"/></svg></div>
+              <h2 class="t-section">My Personal Targets</h2>
+            </div>
+            <div class="grid grid-cols-2 gap-2.5 flex-1">
+              <div class="flex items-center gap-3 p-2.5 rounded-lg" style="background:var(--surface-alt);">
+                <div class="donut-wrap" style="width:52px;height:52px;">
+                  <svg class="donut" width="52" height="52" viewBox="0 0 52 52"><circle class="track" cx="26" cy="26" r="20"/><circle class="fill" cx="26" cy="26" r="20" stroke="var(--success)" stroke-dasharray="87.9 125.6"/></svg>
+                  <span class="donut-pct" style="color:var(--success-deep);">70%</span>
+                </div>
+                <div><p class="t-over">Visits</p><p class="t-stat-sm" style="font-size:15px;">42<span class="text-[10px] font-bold" style="color:var(--text-light);">/60</span></p></div>
+              </div>
+              <div class="flex items-center gap-3 p-2.5 rounded-lg" style="background:var(--surface-alt);">
+                <div class="donut-wrap" style="width:52px;height:52px;">
+                  <svg class="donut" width="52" height="52" viewBox="0 0 52 52"><circle class="track" cx="26" cy="26" r="20"/><circle class="fill" cx="26" cy="26" r="20" stroke="var(--success)" stroke-dasharray="104.2 125.6"/></svg>
+                  <span class="donut-pct" style="color:var(--success-deep);">83%</span>
+                </div>
+                <div><p class="t-over">Plans</p><p class="t-stat-sm" style="font-size:15px;">10<span class="text-[10px] font-bold" style="color:var(--text-light);">/12</span></p></div>
+              </div>
+              <div class="flex items-center gap-3 p-2.5 rounded-lg" style="background:var(--surface-alt);">
+                <div class="donut-wrap" style="width:52px;height:52px;">
+                  <svg class="donut" width="52" height="52" viewBox="0 0 52 52"><circle class="track" cx="26" cy="26" r="20"/><circle class="fill" cx="26" cy="26" r="20" stroke="var(--warning)" stroke-dasharray="81.6 125.6"/></svg>
+                  <span class="donut-pct" style="color:var(--warning-deep);">65%</span>
+                </div>
+                <div><p class="t-over">Reviews</p><p class="t-stat-sm" style="font-size:15px;">39<span class="text-[10px] font-bold" style="color:var(--text-light);">/60</span></p></div>
+              </div>
+              <div class="flex items-center gap-3 p-2.5 rounded-lg" style="background:var(--surface-alt);">
+                <div class="donut-wrap" style="width:52px;height:52px;">
+                  <svg class="donut" width="52" height="52" viewBox="0 0 52 52"><circle class="track" cx="26" cy="26" r="20"/><circle class="fill" cx="26" cy="26" r="20" stroke="var(--danger)" stroke-dasharray="47.7 125.6"/></svg>
+                  <span class="donut-pct" style="color:var(--danger-deep);">38%</span>
+                </div>
+                <div><p class="t-over">Funds</p><p class="t-stat-sm" style="font-size:15px;">5<span class="text-[10px] font-bold" style="color:var(--text-light);">/13</span></p></div>
+              </div>
+            </div>
+            <div class="pt-3 mt-3" style="border-top:1px solid var(--divider);">
+              <div class="flex items-center justify-between mb-1.5"><span class="t-label font-bold">Overall Achievement</span><span class="t-heading" style="color:var(--success);">68%</span></div>
+              <div class="h-2 w-full rounded-full overflow-hidden" style="background:var(--border-light);"><div class="h-full rounded-full" style="width:68%;background:linear-gradient(90deg,var(--success),#0D9488);"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ CCEO Performance (7) + Approval Queue (5) ═══ -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-3">
+          <div class="card lg:col-span-7 overflow-hidden flex flex-col">
+            <div class="flex items-center justify-between p-4 pb-2">
+              <div class="flex items-center gap-2"><div class="ic h-7 w-7" style="background:var(--info-light);"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--info);"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6-2a3 3 0 10-2-5.24"/></svg></div><h2 class="t-section">CCEO Performance</h2></div>
+            </div>
+            <div class="overflow-x-auto flex-1">
+              <table class="tbl" style="min-width:540px;">
+                <thead><tr><th>CCEO</th><th>Region</th><th class="c">Sch</th><th class="c">Pln</th><th class="c">Verified</th><th class="c">SF</th><th class="c">Bklg</th><th class="c">Route</th><th class="c">Risk</th></tr></thead>
+                <tbody>
+                  <tr class="cursor-pointer"><td><div class="flex items-center gap-2"><span class="avatar h-6 w-6 text-[9px]" style="background:linear-gradient(135deg,#0C1426,#1C2A3E);">GA</span><span class="font-semibold" style="color:var(--text-heading);">Grace Acen</span></div></td><td class="text-[11px]" style="color:var(--text-muted);">Mukono</td><td class="c font-semibold tabular-nums">42</td><td class="c tabular-nums">48</td><td class="c font-semibold tabular-nums" style="color:var(--success);">38 (90%)</td><td class="c tabular-nums" style="color:var(--text-muted);">1</td><td class="c tabular-nums" style="color:var(--text-muted);">2</td><td class="c"><span class="badge b-success">Good</span></td><td class="c"><span class="badge b-success">Low</span></td></tr>
+                  <tr class="cursor-pointer"><td><div class="flex items-center gap-2"><span class="avatar h-6 w-6 text-[9px]" style="background:linear-gradient(135deg,#0C1426,#1C2A3E);">JM</span><span class="font-semibold" style="color:var(--text-heading);">John Mukasa</span></div></td><td class="text-[11px]" style="color:var(--text-muted);">Wakiso</td><td class="c font-semibold tabular-nums">38</td><td class="c tabular-nums">40</td><td class="c font-semibold tabular-nums" style="color:var(--warning);">19 (52%)</td><td class="c tabular-nums" style="color:var(--warning);">3</td><td class="c font-bold tabular-nums" style="color:var(--danger);">6</td><td class="c"><span class="badge b-danger">Poor</span></td><td class="c"><span class="badge b-danger">High</span></td></tr>
+                  <tr class="cursor-pointer"><td><div class="flex items-center gap-2"><span class="avatar h-6 w-6 text-[9px]" style="background:linear-gradient(135deg,#0C1426,#1C2A3E);">SK</span><span class="font-semibold" style="color:var(--text-heading);">Sarah K.</span></div></td><td class="text-[11px]" style="color:var(--text-muted);">Jinja</td><td class="c font-semibold tabular-nums">35</td><td class="c tabular-nums">36</td><td class="c font-semibold tabular-nums" style="color:var(--warning);">21 (61%)</td><td class="c tabular-nums" style="color:var(--text-muted);">2</td><td class="c font-bold tabular-nums" style="color:var(--warning);">4</td><td class="c"><span class="badge b-warning">Avg</span></td><td class="c"><span class="badge b-warning">Watch</span></td></tr>
+                  <tr class="cursor-pointer"><td><div class="flex items-center gap-2"><span class="avatar h-6 w-6 text-[9px]" style="background:linear-gradient(135deg,#0C1426,#1C2A3E);">DO</span><span class="font-semibold" style="color:var(--text-heading);">David O.</span></div></td><td class="text-[11px]" style="color:var(--text-muted);">Mukono</td><td class="c font-semibold tabular-nums">29</td><td class="c tabular-nums">31</td><td class="c font-semibold tabular-nums" style="color:var(--success);">25 (86%)</td><td class="c tabular-nums" style="color:var(--text-muted);">0</td><td class="c tabular-nums" style="color:var(--text-muted);">1</td><td class="c"><span class="badge b-success">Good</span></td><td class="c"><span class="badge b-success">Low</span></td></tr>
+                  <tr class="cursor-pointer"><td><div class="flex items-center gap-2"><span class="avatar h-6 w-6 text-[9px]" style="background:linear-gradient(135deg,#0C1426,#1C2A3E);">PN</span><span class="font-semibold" style="color:var(--text-heading);">Patricia N.</span></div></td><td class="text-[11px]" style="color:var(--text-muted);">Wakiso</td><td class="c font-semibold tabular-nums">31</td><td class="c tabular-nums">33</td><td class="c font-semibold tabular-nums" style="color:var(--success);">26 (84%)</td><td class="c tabular-nums" style="color:var(--text-muted);">1</td><td class="c tabular-nums" style="color:var(--text-muted);">2</td><td class="c"><span class="badge b-success">Good</span></td><td class="c"><span class="badge b-success">Low</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="p-3 pt-2"><button class="btn-link">View all CCEOs performance →</button></div>
+          </div>
+
+          <div class="card overflow-hidden lg:col-span-5 flex flex-col">
+            <div class="flex items-center justify-between p-4 pb-2">
+              <div class="flex items-center gap-2"><div class="ic h-7 w-7" style="background:var(--warning-light);"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--warning);"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/></svg></div><h2 class="t-section">Approval Queue</h2></div>
+              <span class="badge b-warning">7 waiting</span>
+            </div>
+            <div class="overflow-x-auto flex-1">
+              <table class="tbl" style="min-width:440px;">
+                <thead><tr><th>Staff</th><th>Covered</th><th>Issues</th><th class="c">Action</th></tr></thead>
+                <tbody>
+                  <tr><td><div class="flex items-center gap-2"><span class="avatar h-6 w-6 text-[9px]" style="background:linear-gradient(135deg,#0C1426,#1C2A3E);">JM</span><div><p class="font-semibold text-[12px]" style="color:var(--text-heading);">John Mukasa</p><p class="text-[10px]" style="color:var(--text-muted);">Week Jul 10</p></div></div></td><td class="text-[12px] font-semibold tabular-nums" style="color:var(--text-body);">UGX 2.4K</td><td><span class="badge b-warning">Urgent</span></td><td class="c"><div class="inline-flex gap-1.5"><button class="btn-success">Approve</button><button class="btn-outline">Review</button></div></td></tr>
+                  <tr><td><div class="flex items-center gap-2"><span class="avatar h-6 w-6 text-[9px]" style="background:linear-gradient(135deg,#0C1426,#1C2A3E);">GA</span><div><p class="font-semibold text-[12px]" style="color:var(--text-heading);">Grace Acen</p><p class="text-[10px]" style="color:var(--text-muted);">Month Jul</p></div></div></td><td class="text-[12px] font-semibold tabular-nums" style="color:var(--text-body);">8 Activities</td><td><span class="badge b-warning">2 Missing</span></td><td class="c"><div class="inline-flex gap-1.5"><button class="btn-outline">Review Plan</button></div></td></tr>
+                  <tr><td><div class="flex items-center gap-2"><span class="avatar h-6 w-6 text-[9px]" style="background:linear-gradient(135deg,#0C1426,#1C2A3E);">SK</span><div><p class="font-semibold text-[12px]" style="color:var(--text-heading);">Sarah K.</p><p class="text-[10px]" style="color:var(--text-muted);">Week Jul 8</p></div></div></td><td class="text-[12px] font-semibold tabular-nums" style="color:var(--text-body);">UGX 1.8K</td><td><span class="badge b-success">Ready</span></td><td class="c"><div class="inline-flex gap-1.5"><button class="btn-success">Approve</button><button class="btn-outline">Review</button></div></td></tr>
+                  <tr><td><div class="flex items-center gap-2"><span class="avatar h-6 w-6 text-[9px]" style="background:linear-gradient(135deg,#0C1426,#1C2A3E);">DO</span><div><p class="font-semibold text-[12px]" style="color:var(--text-heading);">David O.</p><p class="text-[10px]" style="color:var(--text-muted);">Week Jul 7</p></div></div></td><td class="text-[12px] font-semibold tabular-nums" style="color:var(--text-body);">UGX 3.1K</td><td><span class="badge b-success">Ready</span></td><td class="c"><div class="inline-flex gap-1.5"><button class="btn-success">Approve</button><button class="btn-outline">Review</button></div></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="p-3 pt-2"><button class="btn-link">View all pending approvals →</button></div>
+          </div>
+        </div>
+
+        <!-- ═══ SSA (5) + Urgent Schools (4) + Funding (3) ═══ -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-3">
+          <div class="card p-4 lg:col-span-5 flex flex-col">
+            <div class="flex items-center gap-2 mb-2"><div class="ic h-7 w-7" style="background:var(--teal-light);"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--teal);"><path stroke-linecap="round" stroke-linejoin="round" d="M7 14l3-3 3 3 4-5M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg></div><h2 class="t-section">SSA Intelligence</h2></div>
+            <p class="t-label mb-2">By cluster (score out of 10)</p>
+            <div class="overflow-x-auto flex-1">
+              <table class="tbl" style="min-width:340px;">
+                <thead><tr><th>Cluster</th><th class="c">CB</th><th class="c">WoG</th><th class="c">FH</th><th class="c">Ldr</th><th class="c">LE</th><th class="c">GR</th><th class="c">TE</th><th class="c">Enrl</th></tr></thead>
+                <tbody>
+                  <tr><td class="font-semibold" style="color:var(--text-heading);">Mukono Central</td><td class="c"><span class="tcell tc-success">8.2</span></td><td class="c"><span class="tcell tc-success">7.4</span></td><td class="c"><span class="tcell tc-success">8.8</span></td><td class="c"><span class="tcell tc-warning">6.1</span></td><td class="c"><span class="tcell tc-success">7.6</span></td><td class="c"><span class="tcell tc-success">8.0</span></td><td class="c"><span class="tcell tc-success">7.9</span></td><td class="c"><span class="tcell tc-success">8.3</span></td></tr>
+                  <tr><td class="font-semibold" style="color:var(--text-heading);">Wakiso North</td><td class="c"><span class="tcell tc-warning">5.8</span></td><td class="c"><span class="tcell tc-danger">4.2</span></td><td class="c"><span class="tcell tc-warning">6.4</span></td><td class="c"><span class="tcell tc-warning">5.9</span></td><td class="c"><span class="tcell tc-warning">5.6</span></td><td class="c"><span class="tcell tc-warning">5.2</span></td><td class="c"><span class="tcell tc-warning">6.1</span></td><td class="c"><span class="tcell tc-warning">5.5</span></td></tr>
+                  <tr><td class="font-semibold" style="color:var(--text-heading);">Jinja East</td><td class="c"><span class="tcell tc-success">7.1</span></td><td class="c"><span class="tcell tc-success">7.9</span></td><td class="c"><span class="tcell tc-success">7.3</span></td><td class="c"><span class="tcell tc-success">8.5</span></td><td class="c"><span class="tcell tc-success">7.7</span></td><td class="c"><span class="tcell tc-success">7.2</span></td><td class="c"><span class="tcell tc-success">8.1</span></td><td class="c"><span class="tcell tc-success">7.6</span></td></tr>
+                  <tr><td class="font-semibold" style="color:var(--text-heading);">Mukono South</td><td class="c"><span class="tcell tc-warning">6.3</span></td><td class="c"><span class="tcell tc-warning">5.5</span></td><td class="c"><span class="tcell tc-warning">6.8</span></td><td class="c"><span class="tcell tc-success">7.2</span></td><td class="c"><span class="tcell tc-warning">6.4</span></td><td class="c"><span class="tcell tc-warning">5.9</span></td><td class="c"><span class="tcell tc-warning">6.6</span></td><td class="c"><span class="tcell tc-warning">6.1</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="t-caption mt-2" style="color:var(--text-light);">CB · Christlike Behaviour · WoG · Word of God · FH · Financial Health · Ldr · Leadership · LE · Learning Env · GR · Govt Req · TE · Teaching Env · Enrl · Enrollment</p>
+          </div>
+
+          <div class="card p-4 lg:col-span-4 flex flex-col">
+            <div class="flex items-center gap-2 mb-2"><div class="ic h-7 w-7" style="background:var(--danger-light);"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--danger);"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg></div><h2 class="t-section">Urgent Attention</h2></div>
+            <div class="overflow-x-auto flex-1">
+              <table class="tbl">
+                <thead><tr><th>School</th><th>District</th><th>Issue</th><th>Action</th></tr></thead>
+                <tbody>
+                  <tr><td class="font-semibold" style="color:var(--info);">St. Patrick Primary</td><td class="text-[11px]" style="color:var(--text-muted);">Mukono</td><td><span class="badge b-danger">SSA 3.2</span></td><td class="font-semibold text-[11px]" style="color:var(--info);">Schedule Visit</td></tr>
+                  <tr><td class="font-semibold" style="color:var(--info);">Bright Future Academy</td><td class="text-[11px]" style="color:var(--text-muted);">Wakiso</td><td><span class="badge b-warning">No Visit</span></td><td class="font-semibold text-[11px]" style="color:var(--info);">Assign CCEO</td></tr>
+                  <tr><td class="font-semibold" style="color:var(--info);">Jinja Modern PS</td><td class="text-[11px]" style="color:var(--text-muted);">Jinja</td><td><span class="badge b-danger">No SSA + Visit</span></td><td class="font-semibold text-[11px]" style="color:var(--info);">Priority Visit</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <button class="btn-link mt-2 block">View all schools at risk →</button>
+          </div>
+
+          <div class="card p-4 lg:col-span-3 flex flex-col">
+            <div class="flex items-center gap-2 mb-3"><div class="ic h-7 w-7" style="background:var(--purple-light);"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--purple);"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.7 0-3 .9-3 2s1.3 2 3 2 3 .9 3 2-1.3 2-3 2m0-8V7m0 9v1m9-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div><h2 class="t-section">Funding &amp; Execution</h2></div>
+            <div class="flex items-center gap-3 mb-3 flex-1">
+              <div class="relative h-20 w-20 shrink-0">
+                <div class="absolute inset-0 rounded-full" style="background:conic-gradient(var(--success) 68%, var(--border-light) 0);"></div>
+                <div class="absolute inset-[10px] rounded-full flex flex-col items-center justify-center" style="background:var(--surface);box-shadow:var(--sh-xs);"><span class="t-stat" style="font-size:17px;">68%</span><span class="t-over" style="font-size:7px;">UTIL</span></div>
+              </div>
+              <div class="flex-1 space-y-1.5">
+                <div class="flex items-center justify-between"><span class="t-label flex items-center gap-1.5"><span class="h-2 w-2 rounded-full" style="background:var(--warning);"></span>Pending</span><span class="font-bold text-[12px] tabular-nums">7 <span class="text-[10px] font-normal" style="color:var(--text-light);">(54K)</span></span></div>
+                <div class="flex items-center justify-between"><span class="t-label flex items-center gap-1.5"><span class="h-2 w-2 rounded-full" style="background:var(--success);"></span>Approved</span><span class="font-bold text-[12px] tabular-nums">4 <span class="text-[10px] font-normal" style="color:var(--text-light);">(186K)</span></span></div>
+                <div class="flex items-center justify-between"><span class="t-label flex items-center gap-1.5"><span class="h-2 w-2 rounded-full" style="background:var(--info);"></span>Disbursed</span><span class="font-bold text-[12px] tabular-nums">12 <span class="text-[10px] font-normal" style="color:var(--text-light);">(420K)</span></span></div>
+                <div class="flex items-center justify-between"><span class="t-label flex items-center gap-1.5"><span class="h-2 w-2 rounded-full" style="background:var(--danger);"></span>Returned</span><span class="font-bold text-[12px] tabular-nums">2 <span class="text-[10px] font-normal" style="color:var(--text-light);">(12K)</span></span></div>
+              </div>
+            </div>
+            <p class="t-label" style="color:var(--text-muted);">UGX 186K / 273K approved</p>
+            <button class="btn-link mt-1 block">View finance dashboard →</button>
+          </div>
+        </div>
+
+        <!-- ═══ Team Backlog (6) + Route & Capacity (6) ═══ -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-3">
+          <div class="card overflow-hidden lg:col-span-6 flex flex-col">
+            <div class="flex items-center gap-2 p-4 pb-2"><div class="ic h-7 w-7" style="background:var(--warning-light);"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--warning);"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div><h2 class="t-section">Team Backlog</h2></div>
+            <table class="tbl">
+              <thead><tr><th>Item</th><th class="c">Count</th></tr></thead>
+              <tbody>
+                <tr><td class="font-semibold" style="color:var(--text-heading);">Teams Below Target</td><td class="c"><span class="badge b-danger">6</span></td></tr>
+                <tr><td class="font-semibold" style="color:var(--text-heading);">Overdue SF IDs</td><td class="c"><span class="badge b-warning">12</span></td></tr>
+                <tr><td class="font-semibold" style="color:var(--text-heading);">Funded Not Completed</td><td class="c"><span class="badge b-warning">3</span></td></tr>
+                <tr><td class="font-semibold" style="color:var(--text-heading);">Schools w/ No Visit</td><td class="c font-bold tabular-nums">48</td></tr>
+                <tr><td class="font-semibold" style="color:var(--text-heading);">Schools w/ No Training</td><td class="c font-bold tabular-nums">52</td></tr>
+                <tr><td class="font-semibold" style="color:var(--text-heading);">Neither Visit Nor Training</td><td class="c"><span class="badge b-danger">18</span></td></tr>
+              </tbody>
+            </table>
+            <div class="p-3 pt-2"><button class="btn-link">View backlog analytics →</button></div>
+          </div>
+
+          <div class="card p-4 lg:col-span-6 flex flex-col">
+            <div class="flex items-center gap-2 mb-3"><div class="ic h-7 w-7" style="background:var(--teal-light);"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--teal);"><path stroke-linecap="round" stroke-linejoin="round" d="M17.6 16.6A10 10 0 0021 10a9 9 0 10-18 0 10 10 0 003.4 6.6L12 22z"/><circle cx="12" cy="10" r="2.4"/></svg></div><h2 class="t-section">Smart Route &amp; Capacity</h2></div>
+            <div class="grid grid-cols-4 gap-2 mb-3">
+              <div class="p-2.5 rounded-lg" style="background:var(--surface-alt);border:1px solid var(--border-light);"><p class="t-over">Route Qlty</p><p class="t-stat-sm mt-1" style="font-size:18px;color:var(--success);">84%</p></div>
+              <div class="p-2.5 rounded-lg" style="background:var(--surface-alt);border:1px solid var(--border-light);"><p class="t-over">Overloaded</p><p class="t-stat-sm mt-1" style="font-size:18px;color:var(--warning);">3</p></div>
+              <div class="p-2.5 rounded-lg" style="background:var(--surface-alt);border:1px solid var(--border-light);"><p class="t-over">Leave Confl</p><p class="t-stat-sm mt-1" style="font-size:18px;">1</p></div>
+              <div class="p-2.5 rounded-lg" style="background:var(--surface-alt);border:1px solid var(--border-light);"><p class="t-over">Travel Eff</p><p class="t-stat-sm mt-1" style="font-size:18px;">91%</p></div>
+            </div>
+            <div class="overflow-x-auto flex-1">
+              <table class="tbl">
+                <thead><tr><th>CCEO</th><th>Route</th><th class="c">On-Time</th><th class="c">Eff.</th></tr></thead>
+                <tbody>
+                  <tr><td class="font-semibold" style="color:var(--text-heading);">Grace Acen</td><td><span class="badge b-success">Good</span></td><td class="c tabular-nums">92%</td><td class="c tabular-nums">90%</td></tr>
+                  <tr><td class="font-semibold" style="color:var(--text-heading);">John Mukasa</td><td><span class="badge b-danger">Poor</span></td><td class="c tabular-nums">58%</td><td class="c tabular-nums">61%</td></tr>
+                  <tr><td class="font-semibold" style="color:var(--text-heading);">Sarah K.</td><td><span class="badge b-warning">Avg</span></td><td class="c tabular-nums">74%</td><td class="c tabular-nums">78%</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <button class="btn-link mt-2 block">View route planner →</button>
+          </div>
+        </div>
+
+        <!-- ═══ QUICK ACTIONS ═══ -->
+        <div>
+          <h2 class="t-section mb-2" style="color:#FFFFFF;">Quick Actions</h2>
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            <a class="card card-interactive p-3 flex items-center gap-2.5 cursor-pointer"><div class="ic h-8 w-8 shrink-0" style="background:var(--info-light);"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--info);"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/></svg></div><div><p class="font-bold text-[12px]" style="color:var(--text-heading);">Review Approvals</p><p class="text-[10px]" style="color:var(--text-muted);">7 pending</p></div></a>
+            <a class="card card-interactive p-3 flex items-center gap-2.5 cursor-pointer"><div class="ic h-8 w-8 shrink-0" style="background:var(--warning-light);"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--warning);"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3"/></svg></div><div><p class="font-bold text-[12px]" style="color:var(--text-heading);">Inspect Backlogs</p><p class="text-[10px]" style="color:var(--text-muted);">23 items</p></div></a>
+            <a class="card card-interactive p-3 flex items-center gap-2.5 cursor-pointer"><div class="ic h-8 w-8 shrink-0" style="background:var(--success-light);"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--success);"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4"/></svg></div><div><p class="font-bold text-[12px]" style="color:var(--text-heading);">Team Targets</p><p class="text-[10px]" style="color:var(--text-muted);">Performance &amp; gaps</p></div></a>
+            <a class="card card-interactive p-3 flex items-center gap-2.5 cursor-pointer"><div class="ic h-8 w-8 shrink-0" style="background:var(--teal-light);"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--teal);"><path stroke-linecap="round" stroke-linejoin="round" d="M17.6 16.6A10 10 0 0021 10a9 9 0 10-18 0"/></svg></div><div><p class="font-bold text-[12px]" style="color:var(--text-heading);">Route Planner</p><p class="text-[10px]" style="color:var(--text-muted);">Plan &amp; optimize</p></div></a>
+            <a class="card card-interactive p-3 flex items-center gap-2.5 cursor-pointer"><div class="ic h-8 w-8 shrink-0" style="background:var(--danger-light);"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--danger);"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01"/></svg></div><div><p class="font-bold text-[12px]" style="color:var(--text-heading);">Schools at Risk</p><p class="text-[10px]" style="color:var(--text-muted);">12 schools</p></div></a>
+            <a class="card card-interactive p-3 flex items-center gap-2.5 cursor-pointer"><div class="ic h-8 w-8 shrink-0" style="background:var(--purple-light);"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--purple);"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10"/></svg></div><div><p class="font-bold text-[12px]" style="color:var(--text-heading);">Monthly Planning</p><p class="text-[10px]" style="color:var(--text-muted);">Build &amp; submit</p></div></a>
+          </div>
+        </div>
+
+        <p class="text-center t-label font-medium pt-3 pb-1" style="color:var(--text-faint);">Edify Planning Tool · Gold Standard</p>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+  // ── Chart theme helper — reads live CSS variables so chart adapts to light/dark ──
+  function getChartColors() {
+    var cs = getComputedStyle(document.documentElement);
+    return {
+      text: cs.getPropertyValue('--text-light').trim() || '#8B97AB',
+      grid: cs.getPropertyValue('--divider').trim() || '#F0F4F8',
+      isDark: document.documentElement.classList.contains('dark')
+    };
+  }
+
+  function buildChartOptions() {
+    var c = getChartColors();
+    return {
+      series: [
+        { name: 'Planned', type: 'column', data: [22,25,20,28,24,26,23,28,24,21,25,24] },
+        { name: 'Completed', type: 'column', data: [18,21,19,24,20,22,19,23,20,18,21,21] },
+        { name: 'Verified', type: 'column', data: [15,19,16,21,18,19,17,20,18,16,18,19] },
+        { name: 'Target %', type: 'line', data: [68,76,80,75,75,73,74,72,75,76,72,79] }
+      ],
+      chart: { height: 200, type: 'line', toolbar: { show: false }, fontFamily: 'Inter, sans-serif', animations: { enabled: true, speed: 400, easing: 'easeinout' } },
+      stroke: { width: [0,0,0,2.5], curve: 'smooth' },
+      /* Brand chart colors — green/blue/orange stay consistent across themes */
+      colors: ['#008000', '#2F539B', '#EE9A4D', '#F59E0B'],
+      fill: { opacity: [0.55, .95, .9, 1] },
+      plotOptions: { bar: { columnWidth: '50%', borderRadius: 3, radiusOnLastStackedSeries: true } },
+      dataLabels: { enabled: false },
+      labels: ['Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun','Jul'],
+      xaxis: { type: 'category', axisBorder: { show: false }, axisTicks: { show: false }, labels: { style: { colors: c.text, fontSize: '10px', fontWeight: 600, fontFamily: 'Inter' } } },
+      yaxis: [
+        { seriesName: 'Planned', labels: { style: { colors: c.text, fontSize: '10px', fontFamily: 'Inter' } } },
+        { seriesName: 'Planned', show: false }, { seriesName: 'Planned', show: false },
+        { opposite: true, max: 100, min: 0, labels: { formatter: v => Math.round(v) + '%', style: { colors: c.text, fontSize: '10px', fontFamily: 'Inter' } } }
+      ],
+      grid: { borderColor: c.grid, strokeDasharray: 3, padding: { left: 0, right: 0 }, xaxis: { lines: { show: false } }, yaxis: { lines: { show: true } } },
+      legend: { show: false },
+      tooltip: { theme: c.isDark ? 'dark' : 'light', shared: true, intersect: false, style: { fontSize: '11px', fontFamily: 'Inter' }, marker: { show: true } }
+    };
+  }
+
+  var perfChart = new ApexCharts(document.querySelector('#perfChart'), buildChartOptions());
+  perfChart.render();
+
+  // ── Re-render chart on theme change ──
+  window.addEventListener('edify-theme-change', function() {
+    perfChart.destroy();
+    perfChart = new ApexCharts(document.querySelector('#perfChart'), buildChartOptions());
+    perfChart.render();
+  });
+</script>
+</body>
+</html>

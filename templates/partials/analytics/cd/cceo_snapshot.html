@@ -1,0 +1,47 @@
+{% load frontend_filters %}
+<div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-2 h-full">
+  <div class="flex items-center justify-between">
+    <div>
+      <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">9. CCEO Performance Snapshot</h3>
+      <p class="text-[11px] text-slate-400 font-medium mt-0.5">Field execution — read-only oversight</p>
+    </div>
+    <span class="text-[9.5px] font-bold text-slate-400">{{ cceo_snapshot.total }} CCEOs</span>
+  </div>
+  <div class="overflow-x-auto -mx-1 max-h-[280px] overflow-y-auto">
+    <table class="w-full text-[11px]">
+      <thead class="sticky top-0 bg-white">
+        <tr class="text-[9px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
+          <th class="text-left font-bold py-1.5 pl-1">CCEO</th>
+          <th class="text-right font-bold py-1.5">Done</th>
+          <th class="text-right font-bold py-1.5">SSA Δ</th>
+          <th class="text-right font-bold py-1.5">Overdue</th>
+          <th class="text-left font-bold py-1.5 pl-2 pr-1">Owner PL</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-50">
+        {% for r in cceo_snapshot.rows %}
+        <tr class="cursor-pointer hover:bg-slate-50/60"
+            hx-get="/analytics/country-director/drilldown?drill=cceo&id={{ r.staff_id }}&fy={{ fy }}"
+            hx-target="#drawer-container" hx-swap="innerHTML">
+          <td class="text-left py-1.5 pl-1">
+            <span class="inline-flex items-center gap-1.5">
+              <span class="h-5 w-5 rounded-full bg-slate-100 text-slate-500 text-[8px] font-bold flex items-center justify-center shrink-0">{{ r.initials }}</span>
+              <span class="font-semibold text-slate-700 max-w-[86px] truncate">{{ r.name }}</span>
+            </span>
+          </td>
+          <td class="text-right tabular-nums font-bold text-slate-700 py-1.5">{{ r.completed }}</td>
+          <td class="text-right tabular-nums font-bold py-1.5 {% if r.ssa_improve > 0 %}text-emerald-600{% elif r.ssa_improve < 0 %}text-rose-600{% else %}text-slate-300{% endif %}">
+            {% if r.ssa_improve is not None %}{% if r.ssa_improve > 0 %}▲{% endif %}{{ r.ssa_improve }}{% else %}—{% endif %}
+          </td>
+          <td class="text-right py-1.5">
+            <span class="inline-block min-w-[20px] px-1 rounded text-[10px] font-bold tabular-nums {% if r.risk_tone == 'danger' %}bg-rose-100 text-rose-700{% elif r.risk_tone == 'amber' %}bg-amber-100 text-amber-700{% else %}text-slate-400{% endif %}">{{ r.overdue }}</span>
+          </td>
+          <td class="text-left text-slate-500 py-1.5 pl-2 pr-1 max-w-[80px] truncate">{{ r.owner_pl }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="text-center text-[12px] text-slate-400 font-medium py-6">No CCEOs in scope.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -10,7 +10,7 @@ All caught up!
 {% endblock %}
 
 {% block drawer_body %}
-<div class="space-y-4 font-sans text-[12px] font-semibold text-slate-600">
+<div class="space-y-4 text-[12px] font-semibold text-slate-600">
 
 {% if notifications %}
 <div class="flex items-center justify-between border-b border-slate-100 pb-2 mb-2">
@@ -33,9 +33,18 @@ Mark all as read
 <div id="notification-drawer-container" class="space-y-2 max-h-[380px] overflow-y-auto pr-1">
 {% include "partials/notifications/notification_drawer_list.html" %}
 </div>
+
+<div class="border-t border-slate-100 pt-3 mt-3 flex items-center justify-center">
+  <a 
+    href="/notifications" 
+    class="text-[12px] font-bold text-blue-600 hover:text-blue-700 transition-colors"
+  >
+    View All Notifications
+  </a>
+</div>
 {% else %}
 <div class="py-12 text-center space-y-3">
-<div class="text-[40px] text-slate-300">🔔</div>
+<div class="text-[40px] text-slate-300"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2a2 2 0 01-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg></div>
 <p class="text-slate-400 font-semibold text-[12px]">All caught up!</p>
 <p class="text-slate-400/80 text-[11px]">No notifications to show right now.</p>
 </div>

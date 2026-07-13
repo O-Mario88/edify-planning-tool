@@ -1,0 +1,276 @@
+{% load frontend_filters %}
+<div class="space-y-4">
+
+  {# ── KPI strip (8 cards) ────────────────────────────────────────────── #}
+  <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+    {% for k in kpi_strip_items %}
+    <div class="rounded-lg p-3"
+         style="background:var(--edify-surface);border:1px solid var(--edify-border);box-shadow:var(--edify-shadow-sm);transition:box-shadow .2s,border-color .2s,transform .2s;cursor:pointer;"
+         onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='var(--edify-shadow-lg)';this.style.borderColor='var(--edify-border-strong)'"
+         onmouseout="this.style.transform='';this.style.boxShadow='var(--edify-shadow-sm)';this.style.borderColor='var(--edify-border)'"
+         {% if k.link %}onclick="window.location='/dashboard/pl-drilldown{{ k.link }}&fy={{ fy }}'"{% endif %}>
+      <div class="flex items-center gap-2.5">
+        <div class="h-8 w-8 rounded-md flex items-center justify-center shrink-0"
+             style="background:
+               {% if k.variant == 'success' %}var(--edify-success-light)
+               {% elif k.variant == 'info' %}var(--edify-info-light)
+               {% elif k.variant == 'warning' %}var(--edify-warning-light)
+               {% elif k.variant == 'danger' %}var(--edify-danger-light)
+               {% elif k.variant == 'finance' %}var(--edify-purple-light)
+               {% else %}var(--edify-surface-muted){% endif %};">
+          {% include "partials/analytics/pl/_icon.html" with name=k.icon %}
+        </div>
+        <div class="flex-1 min-w-0">
+          <p style="font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--edify-text-subtle);">{{ k.label }}</p>
+          <p style="font-size:17px;font-weight:800;line-height:1;margin-top:3px;letter-spacing:-.02em;font-variant-numeric:tabular-nums;
+                    color:{% if k.variant == 'danger' %}var(--edify-danger){% elif k.variant == 'warning' %}var(--edify-warning){% else %}var(--edify-text){% endif %};">
+            {{ k.value }}
+          </p>
+          <p style="font-size:10px;color:var(--edify-text-subtle);margin-top:2px;">{{ k.helper }}</p>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {# ── Leadership Attention ───────────────────────────────────────────── #}
+  {% if leadership_attention %}
+  <div>
+    <h2 style="font-size:13px;font-weight:700;color:var(--edify-text);margin-bottom:8px;">Leadership Attention</h2>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+      {% for a in leadership_attention %}
+      <div class="rounded-lg p-3.5 flex items-start gap-3"
+           style="background:
+             {% if a.tone == 'danger' %}var(--edify-danger-light)
+             {% elif a.tone == 'success' %}var(--edify-success-light)
+             {% else %}var(--edify-warning-light){% endif %};
+             border:1px solid
+             {% if a.tone == 'danger' %}rgba(239,68,68,.12)
+             {% elif a.tone == 'success' %}rgba(16,185,129,.12)
+             {% else %}rgba(245,158,11,.12){% endif %};">
+        <div class="h-9 w-9 rounded-md flex items-center justify-center shrink-0"
+             style="background:{% if a.tone == 'danger' %}var(--edify-danger)
+             {% elif a.tone == 'success' %}var(--edify-success)
+             {% else %}var(--edify-warning){% endif %};">
+          {% include "partials/analytics/pl/_icon.html" with name=a.icon %}
+        </div>
+        <div class="flex-1 min-w-0">
+          <p style="font-size:13px;font-weight:700;
+                    color:{% if a.tone == 'danger' %}var(--edify-danger)
+                    {% elif a.tone == 'success' %}var(--edify-success)
+                    {% else %}var(--edify-warning){% endif %};">{{ a.title }}</p>
+          <p style="font-size:11px;color:var(--edify-text-muted);margin-top:4px;line-height:1.4;">{{ a.line1 }}</p>
+          <p style="font-size:11px;color:var(--edify-text-muted);line-height:1.4;">{{ a.line2 }}</p>
+          <a href="/dashboard/pl-drilldown{{ a.link }}&fy={{ fy }}"
+             hx-get="/dashboard/pl-drilldown{{ a.link }}&fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML"
+             style="font-size:11px;font-weight:600;
+                    color:{% if a.tone == 'danger' %}var(--edify-danger)
+                    {% elif a.tone == 'success' %}var(--edify-success)
+                    {% else %}var(--edify-warning){% endif %};
+                    margin-top:6px;display:inline-block;">{{ a.action }} &rarr;</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {# ── Team Performance + Personal Targets ────────────────────────────── #}
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-3">
+    <div class="lg:col-span-7 rounded-lg p-4 flex flex-col"
+         style="background:var(--edify-surface);border:1px solid var(--edify-border);box-shadow:var(--edify-shadow-sm);">
+      <div class="flex items-center justify-between mb-3">
+        <h2 style="font-size:13px;font-weight:700;color:var(--edify-text);">Team Performance Overview</h2>
+        <span style="font-size:11px;font-weight:600;color:var(--edify-text-subtle);">FY {{ fy }}</span>
+      </div>
+      <div id="plDashPerfChart" class="w-full flex-1" style="min-height:200px;"></div>
+    </div>
+    <div class="lg:col-span-5 rounded-lg p-4 flex flex-col"
+         style="background:var(--edify-surface);border:1px solid var(--edify-border);box-shadow:var(--edify-shadow-sm);">
+      <h2 style="font-size:13px;font-weight:700;color:var(--edify-text);margin-bottom:12px;">My Personal Targets</h2>
+      <div class="grid grid-cols-2 gap-2.5 flex-1">
+        {% for c in personal_targets.cards %}
+        <div class="flex items-center gap-2.5 p-2.5 rounded-lg" style="background:var(--edify-surface-muted);">
+          <div>
+            <p style="font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--edify-text-subtle);">{{ c.label }}</p>
+            <p style="font-size:15px;font-weight:800;color:var(--edify-text);font-variant-numeric:tabular-nums;">{{ c.done }}<span style="font-size:10px;font-weight:700;color:var(--edify-text-subtle);">/{{ c.target }}</span></p>
+            <p style="font-size:10px;font-weight:700;color:
+              {% if c.pct >= 80 %}var(--edify-success)
+              {% elif c.pct >= 60 %}var(--edify-warning)
+              {% else %}var(--edify-danger){% endif %};">{{ c.pct }}%</p>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% if personal_targets.has_target %}
+      <div class="pt-3 mt-3" style="border-top:1px solid var(--edify-border);">
+        <div class="flex items-center justify-between mb-1.5">
+          <span style="font-size:11px;font-weight:700;color:var(--edify-text-muted);">Overall Achievement</span>
+          <span style="font-size:13px;font-weight:700;color:var(--edify-success);">{{ personal_targets.overall_pct }}%</span>
+        </div>
+        <div class="h-2 w-full rounded-full overflow-hidden" style="background:var(--edify-border);">
+          <div class="h-full rounded-full" style="width:{{ personal_targets.overall_pct }}%;background:var(--edify-success);"></div>
+        </div>
+      </div>
+      {% else %}
+      <p style="font-size:10px;color:var(--edify-text-subtle);margin-top:8px;">No personal targets configured for this period.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  {# ── CCEO Performance + Approval Queue + Backlog ─────────────────────── #}
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-3">
+    <div class="lg:col-span-7 rounded-lg overflow-hidden flex flex-col"
+         style="background:var(--edify-surface);border:1px solid var(--edify-border);box-shadow:var(--edify-shadow-sm);">
+      <div class="p-4 pb-2"><h2 style="font-size:13px;font-weight:700;color:var(--edify-text);">CCEO Performance</h2></div>
+      <div class="overflow-x-auto flex-1">
+        {% include "partials/dashboards/pl/cceo_performance.html" %}
+      </div>
+      <div class="p-3 pt-2"><a href="/analytics/program-lead" style="font-size:11px;font-weight:600;color:var(--edify-accent);text-decoration:none;">View all CCEOs performance &rarr;</a></div>
+    </div>
+    <div class="lg:col-span-5 rounded-lg overflow-hidden flex flex-col"
+         style="background:var(--edify-surface);border:1px solid var(--edify-border);box-shadow:var(--edify-shadow-sm);">
+      <div class="p-4 pb-2 flex items-center justify-between">
+        <h2 style="font-size:13px;font-weight:700;color:var(--edify-text);">Approval Queue</h2>
+        {% if approval_queue.total %}<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold" style="background:var(--edify-warning-light);color:var(--edify-warning);">{{ approval_queue.total }}</span>{% endif %}
+      </div>
+      {% include "partials/dashboards/pl/approval_queue.html" %}
+    </div>
+  </div>
+
+  {# ── SSA Intelligence + Urgent Schools + Funding ─────────────────────── #}
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-3">
+    <div class="lg:col-span-5 rounded-lg p-4 flex flex-col"
+         style="background:var(--edify-surface);border:1px solid var(--edify-border);box-shadow:var(--edify-shadow-sm);">
+      <h2 style="font-size:13px;font-weight:700;color:var(--edify-text);margin-bottom:4px;">SSA Intelligence</h2>
+      <p style="font-size:11px;color:var(--edify-text-subtle);margin-bottom:8px;">By cluster (score out of 10)</p>
+      {% include "partials/dashboards/pl/ssa_intelligence.html" %}
+    </div>
+    <div class="lg:col-span-4 rounded-lg p-4 flex flex-col"
+         style="background:var(--edify-surface);border:1px solid var(--edify-border);box-shadow:var(--edify-shadow-sm);">
+      <h2 style="font-size:13px;font-weight:700;color:var(--edify-text);margin-bottom:8px;">Schools Needing Urgent Attention</h2>
+      <div class="overflow-x-auto flex-1">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+          <thead>
+            <tr style="font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--edify-text-subtle);padding:8px 10px;border-bottom:1px solid var(--edify-border);text-align:left;background:var(--edify-surface-muted);">
+              <th style="padding:8px 10px;">School</th>
+              <th style="padding:8px 10px;">Issue</th>
+              <th style="padding:8px 10px;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in urgent_schools %}
+            <tr style="border-bottom:1px solid var(--edify-border);">
+              <td style="padding:7px 10px;font-weight:600;color:var(--edify-accent);">{{ r.school }}</td>
+              <td style="padding:7px 10px;"><span class="inline-flex px-2 py-0.5 rounded text-[10px] font-bold" style="background:var(--edify-danger-light);color:var(--edify-danger);">{{ r.issue }}</span></td>
+              <td style="padding:7px 10px;font-size:11px;font-weight:600;color:var(--edify-accent);">{{ r.next_action }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3" style="padding:16px;text-align:center;font-size:12px;color:var(--edify-text-subtle);font-weight:600;">No urgent schools this period.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <a href="/analytics/program-lead" style="font-size:11px;font-weight:600;color:var(--edify-accent);margin-top:8px;display:block;">View all schools at risk &rarr;</a>
+    </div>
+    <div class="lg:col-span-3 rounded-lg p-4 flex flex-col"
+         style="background:var(--edify-surface);border:1px solid var(--edify-border);box-shadow:var(--edify-shadow-sm);">
+      <h2 style="font-size:13px;font-weight:700;color:var(--edify-text);margin-bottom:8px;">Funding &amp; Execution</h2>
+      {% include "partials/dashboards/pl/funding_execution.html" %}
+    </div>
+  </div>
+
+  {# ── Backlog + Route Capacity ────────────────────────────────────────── #}
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-3">
+    <div class="lg:col-span-6 rounded-lg overflow-hidden flex flex-col"
+         style="background:var(--edify-surface);border:1px solid var(--edify-border);box-shadow:var(--edify-shadow-sm);">
+      <div class="p-4 pb-2"><h2 style="font-size:13px;font-weight:700;color:var(--edify-text);">Team Backlog</h2></div>
+      {% include "partials/dashboards/pl/backlog_snapshot.html" %}
+    </div>
+    <div class="lg:col-span-6 rounded-lg p-4 flex flex-col"
+         style="background:var(--edify-surface);border:1px solid var(--edify-border);box-shadow:var(--edify-shadow-sm);">
+      <h2 style="font-size:13px;font-weight:700;color:var(--edify-text);margin-bottom:12px;">Smart Route &amp; Capacity</h2>
+      {% include "partials/dashboards/pl/route_capacity.html" %}
+    </div>
+  </div>
+
+  {# ── Quick Actions ───────────────────────────────────────────────────── #}
+  <div>
+    <h2 style="font-size:13px;font-weight:700;color:var(--edify-text);margin-bottom:8px;">Quick Actions</h2>
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      {% for q in quick_actions %}
+      <a href="{{ q.url }}" class="rounded-lg p-3 flex items-center gap-2.5"
+         style="background:var(--edify-surface);border:1px solid var(--edify-border);box-shadow:var(--edify-shadow-sm);transition:box-shadow .2s,border-color .2s,transform .2s;cursor:pointer;text-decoration:none;"
+         onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='var(--edify-shadow-lg)';this.style.borderColor='var(--edify-border-strong)'"
+         onmouseout="this.style.transform='';this.style.boxShadow='var(--edify-shadow-sm)';this.style.borderColor='var(--edify-border)'">
+        <span class="h-8 w-8 rounded-md flex items-center justify-center shrink-0"
+              style="background:var(--edify-surface-muted);">
+          {% include "partials/analytics/pl/_icon.html" with name=q.icon %}
+        </span>
+        <div>
+          <p style="font-size:12px;font-weight:700;color:var(--edify-text);">{{ q.label }}</p>
+          <p style="font-size:10px;color:var(--edify-text-muted);">{{ q.sub }}</p>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+
+{# ── Team Performance Chart (ApexCharts, theme-aware) ──────────────────── #}
+<script>
+(function() {
+  function getChartTheme() {
+    var isDark = document.documentElement.classList.contains('dark');
+    var cs = getComputedStyle(document.documentElement);
+    return {
+      text: isDark ? '#5C6878' : '#8B97AB',
+      grid: isDark ? '#222831' : '#F0F4F8',
+      isDark: isDark
+    };
+  }
+
+  function buildChart() {
+    var t = getChartTheme();
+    return {
+      series: [
+        { name: 'Planned', type: 'column', data: {{ team_performance.planned|safe }} },
+        { name: 'Completed', type: 'column', data: {{ team_performance.completed|safe }} },
+        { name: 'Verified', type: 'column', data: {{ team_performance.verified|safe }} },
+        { name: 'Target %', type: 'line', data: {{ team_performance.pct|safe }} }
+      ],
+      chart: { height: 200, type: 'line', toolbar: { show: false }, fontFamily: 'Outfit, sans-serif', animations: { enabled: true, speed: 400, easing: 'easeinout' } },
+      stroke: { width: [0,0,0,2.5], curve: 'smooth' },
+      colors: ['#008000', '#2F539B', '#EE9A4D', '#F59E0B'],
+      fill: { opacity: [0.55, .95, .9, 1] },
+      plotOptions: { bar: { columnWidth: '50%', borderRadius: 3 } },
+      dataLabels: { enabled: false },
+      labels: {{ team_performance.labels|safe }},
+      xaxis: { type: 'category', axisBorder: { show: false }, axisTicks: { show: false }, labels: { style: { colors: t.text, fontSize: '10px', fontWeight: 600 } } },
+      yaxis: [
+        { seriesName: 'Planned', labels: { style: { colors: t.text, fontSize: '10px' } } },
+        { seriesName: 'Planned', show: false },
+        { seriesName: 'Planned', show: false },
+        { opposite: true, max: 100, min: 0, labels: { formatter: v => Math.round(v) + '%', style: { colors: t.text, fontSize: '10px' } } }
+      ],
+      grid: { borderColor: t.grid, strokeDasharray: 3, padding: { left: 0, right: 0 } },
+      legend: { show: false },
+      tooltip: { theme: t.isDark ? 'dark' : 'light', shared: true, intersect: false, style: { fontSize: '11px' } }
+    };
+  }
+
+  var chartEl = document.querySelector('#plDashPerfChart');
+  if (chartEl) {
+    var perfChart = new ApexCharts(chartEl, buildChart());
+    perfChart.render();
+
+    // Re-render on theme change
+    window.addEventListener('edify-theme-change', function() {
+      perfChart.destroy();
+      perfChart = new ApexCharts(chartEl, buildChart());
+      perfChart.render();
+    });
+  }
+})();
+</script>

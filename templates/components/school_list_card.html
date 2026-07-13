@@ -1,7 +1,7 @@
 {% load frontend_filters %}
 <div 
   x-data="{ expanded: false }"
-  class="group border border-slate-150 rounded-2xl bg-white shadow-xs p-5 transition-all duration-300 hover:shadow-md hover:border-slate-300 font-sans text-slate-700"
+  class="group border border-slate-150 rounded-lg bg-white shadow-xs p-5 transition-all duration-300 hover:shadow-md hover:border-slate-300 text-slate-700"
   :class="expanded ? 'border-slate-300 bg-slate-50/10' : ''"
 >
   <!-- Card Header Row (Clicking chevron or name expands details) -->
@@ -136,6 +136,14 @@
             <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-bold uppercase bg-rose-50 text-rose-700 border border-rose-150/60 shadow-xs">
               <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
               No Training
+            </span>
+          {% endif %}
+
+          <!-- Project linked badge -->
+          {% if school.project_assignment_count %}
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-bold uppercase bg-blue-50 text-blue-700 border border-blue-150/60 shadow-xs">
+              <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+              Project Linked
             </span>
           {% endif %}
         </div>
@@ -278,7 +286,7 @@
 
     <!-- Core Package Matrix (Visits & Trainings slots detail) if context_page == 'core_matrix' or has visits list -->
     {% if school.visits or school.trainings %}
-      <div class="pt-4 border-t border-slate-100 space-y-3 font-sans">
+      <div class="pt-4 border-t border-slate-100 space-y-3 ">
         <h4 class="text-[11px] uppercase font-bold tracking-wider text-slate-400">Core Service Package slots (Visits &amp; Trainings)</h4>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-[12px]">
@@ -320,7 +328,7 @@
               hx-get="/schools/{{ school.id }}/add-to-cluster" 
               hx-target="#drawer-container"
               hx-swap="innerHTML"
-              style="background-color: #2e505f; color: #ffffff;"
+              style="background-color:var(--edify-primary); color: #ffffff;"
               class="inline-flex items-center justify-center h-8 px-4 text-[12px] font-bold rounded-xl shadow-xs hover:opacity-90 active:scale-95 transition-all text-white cursor-pointer"
             >
               Add to Cluster
@@ -336,7 +344,7 @@
               hx-get="/schools/{{ school.id }}/assign-to-project" 
               hx-target="#drawer-container"
               hx-swap="innerHTML"
-              style="background-color: #1e293b; color: #ffffff;"
+              style="background-color:var(--edify-primary-hover); color: #ffffff;"
               class="inline-flex items-center justify-center h-8 px-4 text-[12px] font-bold rounded-xl shadow-xs hover:opacity-90 active:scale-95 transition-all text-white cursor-pointer"
             >
               Add to Project
@@ -415,28 +423,28 @@
               <button 
                 hx-get="/core-schools/schedule-visit?school_id={% firstof school.school_id school.schoolId %}"
                 hx-target="#drawer-container"
-                class="h-8 px-3 rounded-xl bg-blue-600 text-white text-[11px] font-bold uppercase tracking-wider hover:bg-blue-700 shadow-sm transition-all cursor-pointer font-sans"
+                class="h-8 px-3 rounded-xl bg-blue-600 text-white text-[11px] font-bold uppercase tracking-wider hover:bg-blue-700 shadow-sm transition-all cursor-pointer "
               >
                 Schedule Visit
               </button>
               <button 
                 hx-get="/core-schools/schedule-training?school_id={% firstof school.school_id school.schoolId %}"
                 hx-target="#drawer-container"
-                class="h-8 px-3 rounded-xl border border-slate-200 bg-white text-slate-700 text-[11px] font-bold uppercase tracking-wider hover:bg-slate-50 shadow-sm transition-all cursor-pointer font-sans"
+                class="h-8 px-3 rounded-xl border border-slate-200 bg-white text-slate-700 text-[11px] font-bold uppercase tracking-wider hover:bg-slate-50 shadow-sm transition-all cursor-pointer "
               >
                 Schedule Training
               </button>
               <button 
                 hx-get="/core-schools/assign-partner?school_id={% firstof school.school_id school.schoolId %}"
                 hx-target="#drawer-container"
-                class="h-8 px-3 rounded-xl border border-slate-200 bg-white text-slate-700 text-[11px] font-bold uppercase tracking-wider hover:bg-slate-50 shadow-sm transition-all cursor-pointer font-sans"
+                class="h-8 px-3 rounded-xl border border-slate-200 bg-white text-slate-700 text-[11px] font-bold uppercase tracking-wider hover:bg-slate-50 shadow-sm transition-all cursor-pointer "
               >
                 Assign Partner
               </button>
               <button 
                 hx-get="/core-schools/assessment?school_id={% firstof school.school_id school.schoolId %}"
                 hx-target="#drawer-container"
-                class="h-8 px-3 rounded-xl border border-slate-200 bg-white text-slate-700 text-[11px] font-bold uppercase tracking-wider hover:bg-slate-50 shadow-sm transition-all cursor-pointer font-sans"
+                class="h-8 px-3 rounded-xl border border-slate-200 bg-white text-slate-700 text-[11px] font-bold uppercase tracking-wider hover:bg-slate-50 shadow-sm transition-all cursor-pointer "
               >
                 View Assessment
               </button>

@@ -6,6 +6,7 @@ Audit must NEVER break the primary action: failures are logged + swallowed.
 The request provenance (ip/user-agent/correlationId) is read from the request
 context (contextvars), so callers don't thread it through.
 """
+
 from __future__ import annotations
 
 import logging
@@ -39,31 +40,41 @@ def log(
     try:
         if actor_id:
             try:
-                from apps.accounts.models import TemporaryCoverageAssignment, StaffProfile
+                from apps.accounts.models import (
+                    TemporaryCoverageAssignment,
+                    StaffProfile,
+                )
                 from django.utils import timezone
+
                 now = timezone.now()
                 sp = StaffProfile.objects.filter(user_id=actor_id).first()
                 if sp:
-                    cov = TemporaryCoverageAssignment.objects.filter(
-                        covering_staff=sp,
-                        start_datetime__lte=now,
-                        end_datetime__gte=now,
-                        status="active"
-                    ).select_related("original_staff__user", "leave_request").first()
+                    cov = (
+                        TemporaryCoverageAssignment.objects.filter(
+                            covering_staff=sp,
+                            start_datetime__lte=now,
+                            end_datetime__gte=now,
+                            status="active",
+                        )
+                        .select_related("original_staff__user", "leave_request")
+                        .first()
+                    )
                     if cov:
                         if not payload:
                             payload = {}
                         elif not isinstance(payload, dict):
                             payload = {"original_payload": payload}
-                        payload.update({
-                            "acting_for": {
-                                "staff_profile_id": cov.original_staff.id,
-                                "user_id": cov.original_staff.user.id,
-                                "name": cov.original_staff.user.name,
-                            },
-                            "reason": "Leave Coverage",
-                            "leave_request_id": cov.leave_request.id,
-                        })
+                        payload.update(
+                            {
+                                "acting_for": {
+                                    "staff_profile_id": cov.original_staff.id,
+                                    "user_id": cov.original_staff.user.id,
+                                    "name": cov.original_staff.user.name,
+                                },
+                                "reason": "Leave Coverage",
+                                "leave_request_id": cov.leave_request.id,
+                            }
+                        )
             except Exception as e:
                 logger.error("Failed to intercept audit for coverage: %s", e)
 
@@ -127,10 +138,17 @@ def verify_chain() -> dict:
 
 def _row_to_fields(row: AuditLog) -> CanonicalAuditFields:
     return CanonicalAuditFields(
-        action=row.action, subject_kind=row.subject_kind, subject_id=row.subject_id,
-        actor_id=row.actor_id, actor_role=row.actor_role, success=row.success,
-        reason=row.reason, ip_address=row.ip_address, user_agent=row.user_agent,
-        correlation_id=row.correlation_id, payload=row.payload,
+        action=row.action,
+        subject_kind=row.subject_kind,
+        subject_id=row.subject_id,
+        actor_id=row.actor_id,
+        actor_role=row.actor_role,
+        success=row.success,
+        reason=row.reason,
+        ip_address=row.ip_address,
+        user_agent=row.user_agent,
+        correlation_id=row.correlation_id,
+        payload=row.payload,
     )
 
 

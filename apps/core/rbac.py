@@ -14,6 +14,7 @@ Notes preserved from the legacy matrix:
 - CCEO is the primary cluster-assigning field role (but no CLUSTER_OVERRIDE).
 - PartnerAdmin/PartnerFieldOfficer are minimal (activity complete + planning view).
 """
+
 from __future__ import annotations
 
 from enum import Enum
@@ -106,37 +107,71 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         # operational directory. CD doesn't plan or assign field work; CD flags
         # issues to the PL instead. CD owns the rate card but does NOT approve
         # fund requests (field chain CCEO → PL).
-        P.SCHOOL_VIEW, P.SCHOOL_EDIT, P.CLUSTER_VIEW, P.CLUSTER_ASSIGN, P.CLUSTER_OVERRIDE,
-        P.PLANNING_RECALC, P.SSA_VIEW, P.PLANNING_VIEW,
-        P.EVIDENCE_REVIEW, P.BUDGET_VIEW_SUMMARY, P.BUDGET_VIEW_DETAIL,
+        P.SCHOOL_VIEW,
+        P.SCHOOL_EDIT,
+        P.CLUSTER_VIEW,
+        P.CLUSTER_ASSIGN,
+        P.CLUSTER_OVERRIDE,
+        P.PLANNING_RECALC,
+        P.SSA_VIEW,
+        P.PLANNING_VIEW,
+        P.EVIDENCE_REVIEW,
+        P.BUDGET_VIEW_SUMMARY,
+        P.BUDGET_VIEW_DETAIL,
         P.COST_SETTINGS_MANAGE,
-        P.STAFF_MANAGE, P.USER_MANAGE, P.STAFF_PERFORMANCE_VIEW, P.PARTNER_VIEW,
-        P.PARTNER_MANAGE, P.PROJECT_MANAGE, P.PROJECT_ASSIGN_SCHOOL, P.ANALYTICS_VIEW, P.EXPORT,
+        P.STAFF_MANAGE,
+        P.USER_MANAGE,
+        P.STAFF_PERFORMANCE_VIEW,
+        P.PARTNER_VIEW,
+        P.PARTNER_MANAGE,
+        P.PROJECT_MANAGE,
+        P.PROJECT_ASSIGN_SCHOOL,
+        P.ANALYTICS_VIEW,
+        P.EXPORT,
         P.RECRUITMENT_INTELLIGENCE_VIEW,
         # Full country leadership decision authority.
-        P.LEADERSHIP_ENGINE_VIEW, P.LEADERSHIP_DECISION_REVIEW,
+        P.LEADERSHIP_ENGINE_VIEW,
+        P.LEADERSHIP_DECISION_REVIEW,
         # Full country financial intelligence + reallocation decision authority.
-        P.BUDGET_INTELLIGENCE_VIEW, P.BUDGET_DECISION_REVIEW,
+        P.BUDGET_INTELLIGENCE_VIEW,
+        P.BUDGET_DECISION_REVIEW,
     ],
     EdifyRole.REGIONAL_VICE_PRESIDENT: [
         # No SCHOOL_DIRECTORY_VIEW — summary analytics + recruitment only.
-        P.SCHOOL_VIEW, P.SSA_VIEW,
-        P.BUDGET_VIEW_SUMMARY, P.ANALYTICS_VIEW, P.RECRUITMENT_INTELLIGENCE_VIEW,
+        P.SCHOOL_VIEW,
+        P.SSA_VIEW,
+        P.BUDGET_VIEW_SUMMARY,
+        P.ANALYTICS_VIEW,
+        P.RECRUITMENT_INTELLIGENCE_VIEW,
         # Region/country summary + approval-level decision review.
-        P.LEADERSHIP_ENGINE_VIEW, P.LEADERSHIP_DECISION_REVIEW,
+        P.LEADERSHIP_ENGINE_VIEW,
+        P.LEADERSHIP_DECISION_REVIEW,
         P.BUDGET_INTELLIGENCE_VIEW,  # summary budget view
         P.STAFF_PERFORMANCE_VIEW,  # region staff-performance summary (no PII/email)
     ],
     EdifyRole.COUNTRY_PROGRAM_LEAD: [
-        P.SCHOOL_VIEW, P.SCHOOL_DIRECTORY_VIEW, P.SCHOOL_EDIT, P.CLUSTER_VIEW,
-        P.CLUSTER_ASSIGN, P.SSA_VIEW, P.PLANNING_VIEW, P.PLANNING_CREATE,
-        P.ACTIVITY_ASSIGN, P.ACTIVITY_COMPLETE,
+        P.SCHOOL_VIEW,
+        P.SCHOOL_DIRECTORY_VIEW,
+        P.SCHOOL_EDIT,
+        P.CLUSTER_VIEW,
+        P.CLUSTER_ASSIGN,
+        P.SSA_VIEW,
+        P.PLANNING_VIEW,
+        P.PLANNING_CREATE,
+        P.ACTIVITY_ASSIGN,
+        P.ACTIVITY_COMPLETE,
         # PL approves the monthly fund request + plan rolled up from the CCEOs
         # they supervise (the top of the field approval chain).
-        P.EVIDENCE_REVIEW, P.BUDGET_VIEW_DETAIL, P.BUDGET_APPROVE, P.PARTNER_VIEW,
-        P.ANALYTICS_VIEW, P.EXPORT, P.RECRUITMENT_INTELLIGENCE_VIEW,
+        P.EVIDENCE_REVIEW,
+        P.BUDGET_VIEW_DETAIL,
+        P.BUDGET_APPROVE,
+        P.PARTNER_VIEW,
+        P.ANALYTICS_VIEW,
+        P.EXPORT,
+        P.RECRUITMENT_INTELLIGENCE_VIEW,
         # Supervised-team decision support + review within their scope.
-        P.LEADERSHIP_ENGINE_VIEW, P.LEADERSHIP_DECISION_REVIEW,
+        P.LEADERSHIP_ENGINE_VIEW,
+        P.LEADERSHIP_DECISION_REVIEW,
         P.BUDGET_INTELLIGENCE_VIEW,  # supervised-team budget/fund view
         P.STAFF_PERFORMANCE_VIEW,  # supervised-team roster only (scoped)
         # PL works the operational school directory, including project assignment.
@@ -144,22 +179,41 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
     ],
     EdifyRole.CCEO: [
         # The CCEO is the primary cluster-assigning field role. Not CLUSTER_OVERRIDE.
-        P.SCHOOL_VIEW, P.SCHOOL_DIRECTORY_VIEW, P.CLUSTER_VIEW, P.CLUSTER_ASSIGN,
-        P.SSA_VIEW, P.PLANNING_VIEW, P.PLANNING_CREATE,
-        P.ACTIVITY_ASSIGN, P.ACTIVITY_COMPLETE, P.EVIDENCE_REVIEW, P.PARTNER_VIEW,
+        P.SCHOOL_VIEW,
+        P.SCHOOL_DIRECTORY_VIEW,
+        P.CLUSTER_VIEW,
+        P.CLUSTER_ASSIGN,
+        P.SSA_VIEW,
+        P.PLANNING_VIEW,
+        P.PLANNING_CREATE,
+        P.ACTIVITY_ASSIGN,
+        P.ACTIVITY_COMPLETE,
+        P.EVIDENCE_REVIEW,
+        P.PARTNER_VIEW,
         # CCEO approves the fund requests of the staff they supervise, then
         # submits their own consolidated monthly request up to the PL.
-        P.BUDGET_VIEW_DETAIL, P.BUDGET_APPROVE,
-        P.ANALYTICS_VIEW, P.RECRUITMENT_INTELLIGENCE_VIEW,
+        P.BUDGET_VIEW_DETAIL,
+        P.BUDGET_APPROVE,
+        P.ANALYTICS_VIEW,
+        P.RECRUITMENT_INTELLIGENCE_VIEW,
         P.BUDGET_INTELLIGENCE_VIEW,  # own planned/funded activities view
         # CCEO works the operational school directory, including project assignment.
         P.PROJECT_ASSIGN_SCHOOL,
     ],
     EdifyRole.IMPACT_ASSESSMENT: [
-        P.SCHOOL_VIEW, P.SCHOOL_DIRECTORY_VIEW, P.SCHOOL_UPLOAD,
-        P.SCHOOL_RESOLVE_DUPLICATE, P.CLUSTER_VIEW,
-        P.PLANNING_RECALC, P.SSA_VIEW, P.SSA_UPLOAD, P.EVIDENCE_REVIEW,
-        P.IA_VERIFY, P.ANALYTICS_VIEW, P.EXPORT, P.RECRUITMENT_INTELLIGENCE_VIEW,
+        P.SCHOOL_VIEW,
+        P.SCHOOL_DIRECTORY_VIEW,
+        P.SCHOOL_UPLOAD,
+        P.SCHOOL_RESOLVE_DUPLICATE,
+        P.CLUSTER_VIEW,
+        P.PLANNING_RECALC,
+        P.SSA_VIEW,
+        P.SSA_UPLOAD,
+        P.EVIDENCE_REVIEW,
+        P.IA_VERIFY,
+        P.ANALYTICS_VIEW,
+        P.EXPORT,
+        P.RECRUITMENT_INTELLIGENCE_VIEW,
         P.PARTNER_VIEW,
         # Data-confidence + SSA-impact readiness lens (no decision review authority).
         P.LEADERSHIP_ENGINE_VIEW,
@@ -168,31 +222,49 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
     ],
     EdifyRole.PROGRAM_ACCOUNTANT: [
         # No SCHOOL_DIRECTORY_VIEW — finance/accountability only.
-        P.SCHOOL_VIEW, P.PAYMENT_ACT, P.BUDGET_VIEW_DETAIL,
-        P.ANALYTICS_VIEW, P.EXPORT,
+        P.SCHOOL_VIEW,
+        P.PAYMENT_ACT,
+        P.BUDGET_VIEW_DETAIL,
+        P.ANALYTICS_VIEW,
+        P.EXPORT,
         # Finance-implication view only — no staff/partner decision authority.
         P.LEADERSHIP_ENGINE_VIEW,
         # Finance execution + accountability + finance-decision review.
-        P.BUDGET_INTELLIGENCE_VIEW, P.BUDGET_DECISION_REVIEW,
+        P.BUDGET_INTELLIGENCE_VIEW,
+        P.BUDGET_DECISION_REVIEW,
     ],
     EdifyRole.HUMAN_RESOURCES: [
         # People surfaces only — no SCHOOL_DIRECTORY_VIEW.
-        P.STAFF_MANAGE, P.USER_MANAGE, P.ANALYTICS_VIEW,
-        P.STAFF_PERFORMANCE_VIEW, P.LEAVE_PLANNER_VIEW, P.DAILY_DEBRIEF_VIEW,
+        P.STAFF_MANAGE,
+        P.USER_MANAGE,
+        P.ANALYTICS_VIEW,
+        P.STAFF_PERFORMANCE_VIEW,
+        P.LEAVE_PLANNER_VIEW,
+        P.DAILY_DEBRIEF_VIEW,
         # Staff & HR decision board + review.
-        P.LEADERSHIP_ENGINE_VIEW, P.LEADERSHIP_DECISION_REVIEW,
+        P.LEADERSHIP_ENGINE_VIEW,
+        P.LEADERSHIP_DECISION_REVIEW,
     ],
     EdifyRole.PROJECT_COORDINATOR: [
         # Explicitly granted directory access — assigns project schools.
-        P.SCHOOL_VIEW, P.SCHOOL_DIRECTORY_VIEW, P.PLANNING_VIEW, P.PLANNING_CREATE,
-        P.ACTIVITY_ASSIGN, P.EVIDENCE_REVIEW, P.PROJECT_MANAGE, P.PROJECT_ASSIGN_SCHOOL, P.PARTNER_VIEW,
+        P.SCHOOL_VIEW,
+        P.SCHOOL_DIRECTORY_VIEW,
+        P.PLANNING_VIEW,
+        P.PLANNING_CREATE,
+        P.ACTIVITY_ASSIGN,
+        P.EVIDENCE_REVIEW,
+        P.PROJECT_MANAGE,
+        P.PROJECT_ASSIGN_SCHOOL,
+        P.PARTNER_VIEW,
         P.ANALYTICS_VIEW,
     ],
     EdifyRole.PARTNER_ADMIN: [
-        P.ACTIVITY_COMPLETE, P.PLANNING_VIEW,
+        P.ACTIVITY_COMPLETE,
+        P.PLANNING_VIEW,
     ],
     EdifyRole.PARTNER_FIELD_OFFICER: [
-        P.ACTIVITY_COMPLETE, P.PLANNING_VIEW,
+        P.ACTIVITY_COMPLETE,
+        P.PLANNING_VIEW,
     ],
 }
 

@@ -10,6 +10,7 @@ Computes from real SSA records only:
 No mock data. Every number traces to SsaRecord/SsaScore rows. Improvement
 requires ≥2 SSA records for the SAME school — never compares different schools.
 """
+
 from __future__ import annotations
 
 from django.db.models import Avg, Count
@@ -32,13 +33,16 @@ def _scoped_school_ids(principal) -> list[str]:
     """Resolve the in-scope school PKs for a principal."""
     scope = resolve_user_scope(principal)
     if scope.country_scope or scope.can_view_summary_only:
-        return list(School.objects.filter(deleted_at__isnull=True).values_list("id", flat=True))
+        return list(
+            School.objects.filter(deleted_at__isnull=True).values_list("id", flat=True)
+        )
     if scope.school_ids:
         return scope.school_ids
     return []
 
 
 # ── SSA improvement (per-school delta) ───────────────────────────────────────
+
 
 def ssa_improvement(principal, query: dict) -> dict:
     """Per-school SSA improvement: current FY average vs previous FY average.
@@ -60,15 +64,25 @@ def ssa_improvement(principal, query: dict) -> dict:
     # Current + previous FY averages per school (one query each, grouped).
     curr = dict(
         SsaRecord.objects.filter(
-            school_id__in=school_ids, fy=fy, deleted_at__isnull=True,
+            school_id__in=school_ids,
+            fy=fy,
+            deleted_at__isnull=True,
             verification_status="confirmed",
-        ).values("school_id").annotate(avg=Avg("average_score")).values_list("school_id", "avg")
+        )
+        .values("school_id")
+        .annotate(avg=Avg("average_score"))
+        .values_list("school_id", "avg")
     )
     prev = dict(
         SsaRecord.objects.filter(
-            school_id__in=school_ids, fy=prev_fy, deleted_at__isnull=True,
+            school_id__in=school_ids,
+            fy=prev_fy,
+            deleted_at__isnull=True,
             verification_status="confirmed",
-        ).values("school_id").annotate(avg=Avg("average_score")).values_list("school_id", "avg")
+        )
+        .values("school_id")
+        .annotate(avg=Avg("average_score"))
+        .values_list("school_id", "avg")
     )
 
     improved, declined, no_change = [], [], []
@@ -78,7 +92,11 @@ def ssa_improvement(principal, query: dict) -> dict:
             continue
         delta = round(curr[sid] - prev[sid], 2)
         deltas.append(delta)
-        school = School.objects.filter(id=sid).values("school_id", "name", "district__name").first()
+        school = (
+            School.objects.filter(id=sid)
+            .values("school_id", "name", "district__name")
+            .first()
+        )
         entry = {
             "schoolId": school["school_id"] if school else sid,
             "schoolName": school["name"] if school else "Unknown",
@@ -112,13 +130,22 @@ def ssa_improvement(principal, query: dict) -> dict:
 
 def _empty_improvement(fy: str) -> dict:
     return {
-        "fy": fy, "previousFy": str(int(fy) - 1), "schoolsCompared": 0,
-        "averageDelta": 0, "improvedCount": 0, "declinedCount": 0, "noChangeCount": 0,
-        "improved": [], "declined": [], "improvedSchoolIds": [], "declinedSchoolIds": [],
+        "fy": fy,
+        "previousFy": str(int(fy) - 1),
+        "schoolsCompared": 0,
+        "averageDelta": 0,
+        "improvedCount": 0,
+        "declinedCount": 0,
+        "noChangeCount": 0,
+        "improved": [],
+        "declined": [],
+        "improvedSchoolIds": [],
+        "declinedSchoolIds": [],
     }
 
 
 # ── Intervention-level analytics ────────────────────────────────────────────
+
 
 def intervention_analytics(principal, query: dict) -> dict:
     """Per-intervention averages (current + previous FY) + delta + below-threshold
@@ -132,17 +159,26 @@ def intervention_analytics(principal, query: dict) -> dict:
     out = {}
     for interv in ALL_INTERVENTIONS:
         curr = SsaScore.objects.filter(
-            ssa_record__school_id__in=school_ids, ssa_record__fy=fy,
-            ssa_record__deleted_at__isnull=True, intervention=interv,
+            ssa_record__school_id__in=school_ids,
+            ssa_record__fy=fy,
+            ssa_record__deleted_at__isnull=True,
+            intervention=interv,
         ).aggregate(a=Avg("score"))["a"]
         prev = SsaScore.objects.filter(
-            ssa_record__school_id__in=school_ids, ssa_record__fy=prev_fy,
-            ssa_record__deleted_at__isnull=True, intervention=interv,
+            ssa_record__school_id__in=school_ids,
+            ssa_record__fy=prev_fy,
+            ssa_record__deleted_at__isnull=True,
+            intervention=interv,
         ).aggregate(a=Avg("score"))["a"]
-        delta = round(curr - prev, 2) if (curr is not None and prev is not None) else None
+        delta = (
+            round(curr - prev, 2) if (curr is not None and prev is not None) else None
+        )
         below_threshold = SsaScore.objects.filter(
-            ssa_record__school_id__in=school_ids, ssa_record__fy=fy,
-            ssa_record__deleted_at__isnull=True, intervention=interv, score__lt=5.0,
+            ssa_record__school_id__in=school_ids,
+            ssa_record__fy=fy,
+            ssa_record__deleted_at__isnull=True,
+            intervention=interv,
+            score__lt=5.0,
         ).count()
         out[interv] = {
             "current": round(curr, 2) if curr else None,
@@ -163,20 +199,34 @@ def intervention_analytics(principal, query: dict) -> dict:
 
 # ── District / cluster SSA rollups ──────────────────────────────────────────
 
+
 def district_ssa_rollup(principal, query: dict) -> list[dict]:
     """SSA performance per district: avg score, school count, improved/declined."""
     from apps.ssa.models import SsaRecord
 
     fy = query.get("fy") or get_operational_fy()
     school_ids = _scoped_school_ids(principal)
-    records = SsaRecord.objects.filter(
-        school_id__in=school_ids, fy=fy, deleted_at__isnull=True,
-    ).values("school__district__name").annotate(
-        avg=Avg("average_score"), count=Count("id"),
-    ).order_by("school__district__name")
+    records = (
+        SsaRecord.objects.filter(
+            school_id__in=school_ids,
+            fy=fy,
+            deleted_at__isnull=True,
+        )
+        .values("school__district__name")
+        .annotate(
+            avg=Avg("average_score"),
+            count=Count("id"),
+        )
+        .order_by("school__district__name")
+    )
     return [
-        {"district": r["school__district__name"], "averageScore": round(r["avg"], 2) if r["avg"] else None, "ssaCount": r["count"]}
-        for r in records if r["school__district__name"]
+        {
+            "district": r["school__district__name"],
+            "averageScore": round(r["avg"], 2) if r["avg"] else None,
+            "ssaCount": r["count"],
+        }
+        for r in records
+        if r["school__district__name"]
     ]
 
 
@@ -188,30 +238,44 @@ def cluster_ssa_rollup(principal, query: dict) -> list[dict]:
 
     fy = query.get("fy") or get_operational_fy()
     school_ids = _scoped_school_ids(principal)
-    records = SsaRecord.objects.filter(
-        school_id__in=school_ids, fy=fy, deleted_at__isnull=True,
-        school__cluster_id__isnull=False,
-    ).values("school__cluster_id").annotate(
-        avg=Avg("average_score"), count=Count("id"),
-    ).order_by("-avg")
+    records = (
+        SsaRecord.objects.filter(
+            school_id__in=school_ids,
+            fy=fy,
+            deleted_at__isnull=True,
+            school__cluster_id__isnull=False,
+        )
+        .values("school__cluster_id")
+        .annotate(
+            avg=Avg("average_score"),
+            count=Count("id"),
+        )
+        .order_by("-avg")
+    )
     # Resolve cluster names.
     cluster_ids = [r["school__cluster_id"] for r in records]
-    cluster_names = dict(Cluster.objects.filter(id__in=cluster_ids).values_list("id", "name"))
+    cluster_names = dict(
+        Cluster.objects.filter(id__in=cluster_ids).values_list("id", "name")
+    )
     return [
-        {"clusterId": r["school__cluster_id"], "clusterName": cluster_names.get(r["school__cluster_id"], "Unknown"),
-         "averageScore": round(r["avg"], 2) if r["avg"] else None, "ssaCount": r["count"]}
+        {
+            "clusterId": r["school__cluster_id"],
+            "clusterName": cluster_names.get(r["school__cluster_id"], "Unknown"),
+            "averageScore": round(r["avg"], 2) if r["avg"] else None,
+            "ssaCount": r["count"],
+        }
         for r in records
     ]
 
 
 # ── Decision recommendations ────────────────────────────────────────────────
 
+
 def recommendations(principal, query: dict) -> list[dict]:
     """Role-specific decision recommendations generated from real risk conditions.
 
     Each recommendation has: priority, reason, affectedRecords, suggestedAction,
     link, roleOwner. Generated from live data — no hardcoded recommendations."""
-    fy = query.get("fy") or get_operational_fy()
     school_ids = _scoped_school_ids(principal)
     role = principal.active_role
     recs: list[dict] = []
@@ -221,43 +285,54 @@ def recommendations(principal, query: dict) -> list[dict]:
 
     # 1. Schools without SSA (planning locked) — highest priority.
     from apps.schools.models import School as _S
-    no_ssa = _S.objects.filter(id__in=school_ids, current_fy_ssa_status__in=["not_done", "scheduled"]).count()
+
+    no_ssa = _S.objects.filter(
+        id__in=school_ids, current_fy_ssa_status__in=["not_done", "scheduled"]
+    ).count()
     if no_ssa > 0:
-        recs.append({
-            "priority": "high",
-            "reason": f"{no_ssa} schools have no current-FY SSA — planning is locked for them.",
-            "affectedCount": no_ssa,
-            "suggestedAction": "Upload SSA for these schools to unlock planning.",
-            "link": "/ssa",
-            "roleOwner": "ImpactAssessment",
-        })
+        recs.append(
+            {
+                "priority": "high",
+                "reason": f"{no_ssa} schools have no current-FY SSA — planning is locked for them.",
+                "affectedCount": no_ssa,
+                "suggestedAction": "Upload SSA for these schools to unlock planning.",
+                "link": "/ssa",
+                "roleOwner": "ImpactAssessment",
+            }
+        )
 
     # 2. Schools with declining SSA (need intervention).
     improvement = ssa_improvement(principal, query)
     if improvement["declinedCount"] > 0:
         weakest_interventions = intervention_analytics(principal, query)
         weakest = weakest_interventions.get("weakest", "unknown")
-        recs.append({
-            "priority": "high",
-            "reason": f"{improvement['declinedCount']} schools have declining SSA (avg delta {improvement['averageDelta']:.1f}). Weakest intervention: {weakest}.",
-            "affectedCount": improvement["declinedCount"],
-            "suggestedAction": f"Schedule visits or group training focused on {weakest.replace('_', ' ')} for these schools.",
-            "link": "/schools",
-            "roleOwner": role,
-        })
+        recs.append(
+            {
+                "priority": "high",
+                "reason": f"{improvement['declinedCount']} schools have declining SSA (avg delta {improvement['averageDelta']:.1f}). Weakest intervention: {weakest}.",
+                "affectedCount": improvement["declinedCount"],
+                "suggestedAction": f"Schedule visits or group training focused on {weakest.replace('_', ' ')} for these schools.",
+                "link": "/schools",
+                "roleOwner": role,
+            }
+        )
 
     # 3. Clusters with low SSA averages (need training).
     cluster_rollup = cluster_ssa_rollup(principal, query)
-    weak_clusters = [c for c in cluster_rollup if c["averageScore"] and c["averageScore"] < 5.0]
+    weak_clusters = [
+        c for c in cluster_rollup if c["averageScore"] and c["averageScore"] < 5.0
+    ]
     if weak_clusters:
-        recs.append({
-            "priority": "medium",
-            "reason": f"{len(weak_clusters)} cluster(s) have an average SSA below 5.0.",
-            "affectedCount": len(weak_clusters),
-            "suggestedAction": "Schedule group training for these clusters.",
-            "link": "/clusters",
-            "roleOwner": role,
-        })
+        recs.append(
+            {
+                "priority": "medium",
+                "reason": f"{len(weak_clusters)} cluster(s) have an average SSA below 5.0.",
+                "affectedCount": len(weak_clusters),
+                "suggestedAction": "Schedule group training for these clusters.",
+                "link": "/clusters",
+                "roleOwner": role,
+            }
+        )
 
     # 4. Weakest intervention nationally/regionally.
     interventions = intervention_analytics(principal, query)
@@ -266,14 +341,16 @@ def recommendations(principal, query: dict) -> list[dict]:
         weak_data = interventions["interventions"].get(weakest, {})
         below = weak_data.get("schoolsBelowThreshold", 0)
         if below > 0:
-            recs.append({
-                "priority": "medium",
-                "reason": f"'{weakest.replace('_', ' ').title()}' is the weakest intervention (avg {weak_data.get('current', '?')}) with {below} schools below 5.0.",
-                "affectedCount": below,
-                "suggestedAction": f"Focus training and coaching on {weakest.replace('_', ' ')}.",
-                "link": "/analytics",
-                "roleOwner": role,
-            })
+            recs.append(
+                {
+                    "priority": "medium",
+                    "reason": f"'{weakest.replace('_', ' ').title()}' is the weakest intervention (avg {weak_data.get('current', '?')}) with {below} schools below 5.0.",
+                    "affectedCount": below,
+                    "suggestedAction": f"Focus training and coaching on {weakest.replace('_', ' ')}.",
+                    "link": "/analytics",
+                    "roleOwner": role,
+                }
+            )
 
     # Sort by priority.
     priority_order = {"high": 0, "medium": 1, "low": 2}

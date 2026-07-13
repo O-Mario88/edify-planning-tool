@@ -1,0 +1,22 @@
+{% load frontend_filters %}
+<div class="rounded-xl border border-slate-100 overflow-hidden">
+  <table class="w-full text-left border-collapse">
+    <thead>
+      <tr class="text-[10px] uppercase tracking-wider text-slate-400 font-bold bg-slate-50/60 border-b border-slate-100">
+        <th class="py-2 px-3">School</th><th class="py-2 px-3">District</th><th class="py-2 px-3">Issue</th><th class="py-2 px-3">Next Action</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-50">
+      {% for r in rows %}
+      <tr>
+        <td class="py-2 px-3 text-[11px] font-semibold text-slate-700">{{ r.school }}</td>
+        <td class="py-2 px-3 text-[11px] text-slate-500">{{ r.district }}</td>
+        <td class="py-2 px-3"><span class="inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-100 whitespace-nowrap">{{ r.issue }}</span></td>
+        <td class="py-2 px-3 text-[10.5px] font-bold text-blue-600">{{ r.next_action }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4" class="py-6 text-center text-[12px] text-slate-400 font-semibold">No at-risk schools in this view.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

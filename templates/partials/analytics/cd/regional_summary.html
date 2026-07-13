@@ -1,0 +1,40 @@
+{% load frontend_filters %}
+<div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-3 h-full">
+  <div>
+    <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">11. Regional and District Summary</h3>
+    <p class="text-[11px] text-slate-400 font-medium mt-0.5">Avg SSA by region · trend vs prior annual cycle{% if regional_summary.prev_fy %} (FY {{ regional_summary.latest_fy }} vs {{ regional_summary.prev_fy }}){% endif %}</p>
+  </div>
+
+  {# Choropleth-style region tiles #}
+  <div class="grid grid-cols-2 gap-2">
+    {% for r in regional_summary.rows %}
+    <div class="rounded-lg p-2.5 border cursor-pointer transition-all hover:shadow-sm
+      {% if r.avg_tone == 'success' %}bg-emerald-50 border-emerald-100
+      {% elif r.avg_tone == 'lime' %}bg-lime-50 border-lime-100
+      {% elif r.avg_tone == 'warning' %}bg-amber-50 border-amber-100
+      {% elif r.avg_tone == 'danger' %}bg-rose-50 border-rose-100
+      {% else %}bg-slate-50 border-slate-100{% endif %}"
+      hx-get="/analytics/country-director/drilldown?drill=region&id={{ r.id }}&fy={{ fy }}"
+      hx-target="#drawer-container" hx-swap="innerHTML">
+      <div class="flex items-center justify-between">
+        <p class="text-[10.5px] font-bold text-slate-700 truncate">{{ r.name }}</p>
+        <span class="text-[9px] font-bold tabular-nums {% if r.trend > 0 %}text-emerald-600{% elif r.trend < 0 %}text-rose-600{% else %}text-slate-400{% endif %}">
+          {% if r.trend is not None %}{% if r.trend > 0 %}▲{% elif r.trend < 0 %}▼{% endif %}{{ r.trend }}{% endif %}
+        </span>
+      </div>
+      <p class="text-[19px] font-bold text-slate-800 tabular-nums leading-none mt-1">{% if r.avg_ssa is not None %}{{ r.avg_ssa|floatformat:0 }}%{% else %}—{% endif %}</p>
+      <p class="text-[9px] font-semibold text-slate-400 mt-0.5">{{ r.districts }} district{{ r.districts|pluralize }}</p>
+    </div>
+    {% empty %}
+    <div class="col-span-2 text-center text-[12px] text-slate-400 font-medium py-6">No verified regional SSA yet.</div>
+    {% endfor %}
+  </div>
+
+  <div class="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-[9px] font-semibold text-slate-400 border-t border-slate-50">
+    <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-sm bg-emerald-200"></span>80%+</span>
+    <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-sm bg-lime-200"></span>60–79%</span>
+    <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-sm bg-amber-200"></span>40–59%</span>
+    <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-sm bg-rose-200"></span>&lt;40%</span>
+    <span class="ml-auto italic">Click a region to drill down</span>
+  </div>
+</div>

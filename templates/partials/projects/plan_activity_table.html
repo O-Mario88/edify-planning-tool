@@ -1,0 +1,35 @@
+{% comment %}Project My-Plan activity table. Params: title, rows, empty, readonly{% endcomment %}
+<div class="card overflow-hidden">
+  <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+    <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">{{ title }}{% if readonly %} <span class="text-[9.5px] font-bold text-slate-400 uppercase tracking-wide ml-1 align-middle">Read Only</span>{% endif %}</h2>
+    <span class="text-[11px] font-bold text-slate-400 tabular-nums">{{ rows|length }}</span>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="w-full text-left">
+      <thead>
+        <tr class="text-[10.5px] uppercase tracking-wider text-slate-400 font-bold border-b border-slate-100">
+          <th class="px-5 py-2.5">{% if readonly %}School / Cluster{% else %}School{% endif %}</th>
+          <th class="px-3 py-2.5">Project</th>
+          <th class="px-3 py-2.5">Date</th>
+          <th class="px-3 py-2.5">Purpose</th>
+          {% if readonly %}<th class="px-3 py-2.5">Partner</th><th class="px-3 py-2.5">Evidence</th>{% endif %}
+          <th class="px-3 py-2.5">Status</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-50">
+        {% for r in rows %}
+        <tr class="hover:bg-slate-50/50">
+          <td class="px-5 py-2.5"><span class="text-[12px] font-bold text-slate-700">{{ r.school }}</span><span class="block text-[10px] font-semibold text-slate-400">{{ r.district }}</span></td>
+          <td class="px-3 py-2.5 text-[11.5px] font-semibold text-slate-500 whitespace-nowrap">{{ r.project }}</td>
+          <td class="px-3 py-2.5 text-[11.5px] font-semibold text-slate-500 whitespace-nowrap">{% if r.planned_date %}{{ r.planned_date|date:"M j" }}{% else %}—{% endif %}</td>
+          <td class="px-3 py-2.5 text-[11.5px] font-semibold text-slate-600">{{ r.purpose|truncatechars:30 }}</td>
+          {% if readonly %}<td class="px-3 py-2.5 text-[11.5px] font-semibold text-slate-500 whitespace-nowrap">{{ r.partner }}</td><td class="px-3 py-2.5">{% include "components/badge.html" with tone=r.evidence_tone label=r.evidence size="sm" %}</td>{% endif %}
+          <td class="px-3 py-2.5">{% include "components/badge.html" with tone=r.status_tone label=r.status size="sm" %}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="{% if readonly %}6{% else %}5{% endif %}" class="px-5 py-8 text-center text-[12px] font-semibold text-slate-400">{{ empty }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>

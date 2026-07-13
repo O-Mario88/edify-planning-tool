@@ -96,11 +96,11 @@ Compare Side-by-Side
 <div class="grid grid-cols-2 gap-2 border-t border-slate-100 pt-3">
 <div>
 <span class="text-[11px] text-slate-400 font-bold uppercase block">Planned Date</span>
-<span class="text-[12px] font-semibold text-slate-700 mt-0.5 block">{{ act.planned_date|date:"M d, Y"|default:"N/A" }}</span>
+<span class="text-[12px] font-semibold mt-0.5 block">{{ act.planned_date|date:"M d, Y"|default:"N/A" }}</span>
 </div>
 <div>
 <span class="text-[11px] text-slate-400 font-bold uppercase block">Actual Date</span>
-<span class="text-[12px] font-semibold text-slate-700 mt-0.5 block">{{ act.scheduled_date|date:"M d, Y"|default:"N/A" }}</span>
+<span class="text-[12px] font-semibold mt-0.5 block">{{ act.scheduled_date|date:"M d, Y"|default:"N/A" }}</span>
 </div>
 </div>
 </div>
@@ -138,7 +138,7 @@ Attendance Sheet
 {% if evidence_list %}
 <div class="grid grid-cols-2 gap-4">
 {% for ev in evidence_list %}
-<div class="bg-white p-3 rounded-2xl  shadow-sm space-y-3">
+<div class="bg-white p-3 rounded-lg  shadow-sm space-y-3">
 <div class="flex items-center justify-between border-b border-slate-100 pb-2">
 <span class="text-[11px] font-semibold text-slate-800 truncate max-w-[200px]" title="{{ ev.original_name }}">{{ ev.original_name }}</span>
 <span class="px-1.5 py-0.5 rounded text-[11px] font-semibold uppercase bg-blue-50 text-blue-600 border border-blue-100">{{ ev.kind }}</span>
@@ -164,7 +164,7 @@ Click to Expand Image
 {% endfor %}
 </div>
 {% else %}
-<div class="bg-white p-12 text-center text-slate-400 font-semibold rounded-2xl border border-slate-200">
+<div class="bg-white p-12 text-center text-slate-400 font-semibold rounded-lg border border-slate-200">
 No evidence uploads available for this activity.
 </div>
 {% endif %}
@@ -172,7 +172,7 @@ No evidence uploads available for this activity.
 
 <!-- Tab: SSA Record Details -->
 <div x-show="activeTab === 'ssa'" class="space-y-4">
-<div class="bg-white p-5 rounded-2xl  shadow-sm space-y-4">
+<div class="bg-white p-5 rounded-lg  shadow-sm space-y-4">
 <div class="flex items-center justify-between border-b border-slate-100 pb-3">
 <h3 class="text-[14px] font-semibold text-slate-800">School Self-Assessment Baseline</h3>
 {% if checks.ssa_uploaded %}
@@ -212,7 +212,7 @@ No evidence uploads available for this activity.
 
 <!-- Tab: Attendance Sheet -->
 <div x-show="activeTab === 'attendance'" class="space-y-4">
-<div class="bg-white p-5 rounded-2xl  shadow-sm space-y-4">
+<div class="bg-white p-5 rounded-lg  shadow-sm space-y-4">
 <div class="flex items-center justify-between border-b border-slate-100 pb-3">
 <h3 class="text-[14px] font-semibold text-slate-800">Participant Attendance Verification</h3>
 {% if checks.attendance_valid %}
@@ -287,7 +287,7 @@ Absent
 <label class="flex items-start gap-2.5 p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
 <input type="checkbox" name="evidence_exists" x-model="checklist.evidence_exists" class="mt-0.5 rounded text-[#2563eb] focus:ring-[#2563eb]">
 <div>
-<span class="text-[12px] font-bold text-slate-700 block">Evidence records exist</span>
+<span class="text-[12px] font-bold block">Evidence records exist</span>
 <span class="text-[11px] text-slate-400 block mt-0.5">Physical files/photos uploaded</span>
 </div>
 </label>
@@ -296,7 +296,7 @@ Absent
 <label class="flex items-start gap-2.5 p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
 <input type="checkbox" name="attendance_valid" x-model="checklist.attendance_valid" class="mt-0.5 rounded text-[#2563eb] focus:ring-[#2563eb]">
 <div>
-<span class="text-[12px] font-bold text-slate-700 block">Attendance valid</span>
+<span class="text-[12px] font-bold block">Attendance valid</span>
 <span class="text-[11px] text-slate-400 block mt-0.5">Headcount matches evidence sheet</span>
 </div>
 </label>
@@ -305,7 +305,7 @@ Absent
 <label class="flex items-start gap-2.5 p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
 <input type="checkbox" name="ssa_uploaded" x-model="checklist.ssa_uploaded" class="mt-0.5 rounded text-[#2563eb] focus:ring-[#2563eb]">
 <div>
-<span class="text-[12px] font-bold text-slate-700 block">SSA Baseline uploaded</span>
+<span class="text-[12px] font-bold block">SSA Baseline uploaded</span>
 <span class="text-[11px] text-slate-400 block mt-0.5">Required for Core Schools</span>
 </div>
 </label>
@@ -314,7 +314,7 @@ Absent
 <label class="flex items-start gap-2.5 p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
 <input type="checkbox" name="correct_school" x-model="checklist.correct_school" class="mt-0.5 rounded text-[#2563eb] focus:ring-[#2563eb]">
 <div>
-<span class="text-[12px] font-bold text-slate-700 block">Correct School associated</span>
+<span class="text-[12px] font-bold block">Correct School associated</span>
 <span class="text-[11px] text-slate-400 block mt-0.5">School lookup matches execution</span>
 </div>
 </label>
@@ -323,7 +323,7 @@ Absent
 <label class="flex items-start gap-2.5 p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
 <input type="checkbox" name="correct_cluster" x-model="checklist.correct_cluster" class="mt-0.5 rounded text-[#2563eb] focus:ring-[#2563eb]">
 <div>
-<span class="text-[12px] font-bold text-slate-700 block">Correct Cluster linked</span>
+<span class="text-[12px] font-bold block">Correct Cluster linked</span>
 <span class="text-[11px] text-slate-400 block mt-0.5">Operational cluster is correct</span>
 </div>
 </label>
@@ -332,7 +332,7 @@ Absent
 <label class="flex items-start gap-2.5 p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
 <input type="checkbox" name="correct_intervention" x-model="checklist.correct_intervention" class="mt-0.5 rounded text-[#2563eb] focus:ring-[#2563eb]">
 <div>
-<span class="text-[12px] font-bold text-slate-700 block">Correct focus intervention</span>
+<span class="text-[12px] font-bold block">Correct focus intervention</span>
 <span class="text-[11px] text-slate-400 block mt-0.5">Intervention type is valid</span>
 </div>
 </label>
@@ -341,7 +341,7 @@ Absent
 <label class="flex items-start gap-2.5 p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
 <input type="checkbox" name="sf_id_entered" x-model="checklist.sf_id_entered" class="mt-0.5 rounded text-[#2563eb] focus:ring-[#2563eb]">
 <div>
-<span class="text-[12px] font-bold text-slate-700 block">Salesforce Activity ID linked</span>
+<span class="text-[12px] font-bold block">Salesforce Activity ID linked</span>
 <span class="text-[11px] text-slate-400 block mt-0.5">SV- or TS- format matching</span>
 </div>
 </label>
@@ -350,7 +350,7 @@ Absent
 <label class="flex items-start gap-2.5 p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
 <input type="checkbox" name="duplicate_check_passed" x-model="checklist.duplicate_check_passed" class="mt-0.5 rounded text-[#2563eb] focus:ring-[#2563eb]">
 <div>
-<span class="text-[12px] font-bold text-slate-700 block">Duplicate checks passed</span>
+<span class="text-[12px] font-bold block">Duplicate checks passed</span>
 <span class="text-[11px] text-slate-400 block mt-0.5">No overlap flags found</span>
 </div>
 </label>
@@ -359,7 +359,7 @@ Absent
 <label class="flex items-start gap-2.5 p-2 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors border border-slate-100/60">
 <input type="checkbox" name="analytics_ready" x-model="checklist.analytics_ready" class="mt-0.5 rounded text-[#2563eb] focus:ring-[#2563eb]">
 <div>
-<span class="text-[12px] font-bold text-slate-700 block">Quality is Analytics ready</span>
+<span class="text-[12px] font-bold block">Quality is Analytics ready</span>
 <span class="text-[11px] text-slate-400 block mt-0.5">Certified for official analytics</span>
 </div>
 </label>
@@ -412,7 +412,7 @@ style="display: none;"
 <!-- Multi-select Reasons grid -->
 <div class="max-h-56 overflow-y-auto space-y-1.5  rounded-xl p-2.5 bg-slate-50/50">
 {% for reason in suggested_reasons %}
-<label class="flex items-center gap-2 p-1.5 hover:bg-white rounded cursor-pointer transition-colors text-[12px] font-semibold text-slate-700">
+<label class="flex items-center gap-2 p-1.5 hover:bg-white rounded cursor-pointer transition-colors text-[12px] font-semibold">
 <input type="checkbox" name="reasons" value="{{ reason }}" class="rounded text-rose-600 focus:ring-rose-500">
 <span>{{ reason }}</span>
 </label>
@@ -425,7 +425,7 @@ style="display: none;"
 <textarea 
 name="comment" 
 placeholder="Details of corrections required e.g. Attendance sheet uploaded has only 14 teachers but activity recorded 25 participants."
-class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[12px] focus:bg-white focus:outline-none h-24 resize-none font-semibold text-slate-700"
+class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[12px] focus:bg-white focus:outline-none h-24 resize-none font-semibold"
 ></textarea>
 </div>
 </form>
@@ -460,7 +460,7 @@ class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center jus
 style="display: none;"
 @click="zoomActive = false"
 >
-<div class="max-w-4xl w-full bg-white rounded-2xl overflow-hidden p-2 relative" @click.stop>
+<div class="max-w-4xl w-full bg-white rounded-lg overflow-hidden p-2 relative" @click.stop>
 <button class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-900/60 text-white flex items-center justify-center hover:bg-slate-900 transition-colors" @click="zoomActive = false">
 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
 </button>

@@ -1,10 +1,10 @@
 {% load frontend_filters %}
 <!-- Accountant Insights Grid -->
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4" id="fund-allocation-insights">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
 
 <!-- Highest Cost Staff -->
 <div class="card p-4 flex items-start gap-3 hover:border-slate-300 transition-all">
-<div class="h-9 w-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-[18px] shrink-0">🏆</div>
+<div class="h-9 w-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-[18px] shrink-0"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15a5 5 0 005-5V4H7v6a5 5 0 005 5zm0 0v3m-4 3h8m-9-14H4v2a3 3 0 003 3m10-5h3v2a3 3 0 01-3 3"/></svg></div>
 <div class="space-y-0.5">
 <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Highest Cost Staff</p>
 {% if insights.highest_cost_staff %}
@@ -19,7 +19,7 @@
 
 <!-- Largest Cluster Budget -->
 <div class="card p-4 flex items-start gap-3 hover:border-slate-300 transition-all">
-<div class="h-9 w-9 rounded-xl bg-[#DCFCE7] text-[#16a34a] flex items-center justify-center text-[18px] shrink-0">🏢</div>
+<div class="h-9 w-9 rounded-xl bg-[#DCFCE7] text-[#16a34a] flex items-center justify-center text-[18px] shrink-0"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 21h16M6 21V5a1 1 0 011-1h10a1 1 0 011 1v16M9 8h1m4 0h1M9 12h1m4 0h1M9 16h1m4 0h1"/></svg></div>
 <div class="space-y-0.5">
 <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Largest Cluster Budget</p>
 {% if insights.largest_cluster_budget %}
@@ -34,7 +34,7 @@
 
 <!-- Partner Cost Share -->
 <div class="card p-4 flex items-start gap-3 hover:border-slate-300 transition-all">
-<div class="h-9 w-9 rounded-xl bg-[#E0F2FE] text-[#0284c7] flex items-center justify-center text-[18px] shrink-0">👥</div>
+<div class="h-9 w-9 rounded-xl bg-[#E0F2FE] text-[#0284c7] flex items-center justify-center text-[18px] shrink-0"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6-2a3 3 0 10-2-5.24"/></svg></div>
 <div class="space-y-0.5">
 <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Partner Cost Share</p>
 <p class="text-[14px] font-semibold text-slate-800 tracking-tight leading-tight">{{ insights.partner_cost_share }}%</p>
@@ -47,7 +47,7 @@
 
 <!-- Top Cost Category -->
 <div class="card p-4 flex items-start gap-3 hover:border-slate-300 transition-all">
-<div class="h-9 w-9 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center text-[18px] shrink-0">📈</div>
+<div class="h-9 w-9 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center text-[18px] shrink-0"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 17l6-6 4 4 8-8m0 0h-5m5 0v5"/></svg></div>
 <div class="space-y-0.5">
 <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Top Cost Category</p>
 <p class="text-[14px] font-semibold text-slate-800 tracking-tight leading-tight truncate max-w-[150px]">{{ insights.top_cost_category.name }}</p>
@@ -58,7 +58,7 @@
 
 <!-- Admin Budget Share -->
 <div class="card p-4 flex items-start gap-3 hover:border-slate-300 transition-all">
-<div class="h-9 w-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-[18px] shrink-0">🏛</div>
+<div class="h-9 w-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-[18px] shrink-0"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 21h16M6 21V5a1 1 0 011-1h10a1 1 0 011 1v16M9 8h1m4 0h1M9 12h1m4 0h1M9 16h1m4 0h1"/></svg></div>
 <div class="space-y-0.5">
 <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Admin Budget Share</p>
 <p class="text-[14px] font-semibold text-slate-800 tracking-tight leading-tight">{{ insights.admin_share_pct }}%</p>
@@ -69,7 +69,7 @@
 
 <!-- Average Allocation per Staff -->
 <div class="card p-4 flex items-start gap-3 hover:border-slate-300 transition-all">
-<div class="h-9 w-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-[18px] shrink-0">📋</div>
+<div class="h-9 w-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-[18px] shrink-0"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg></div>
 <div class="space-y-0.5">
 <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Average per Staff</p>
 <p class="text-[14px] font-semibold text-[#2e505f] tracking-tight leading-tight">{{ insights.average_allocation|ugx }}</p>

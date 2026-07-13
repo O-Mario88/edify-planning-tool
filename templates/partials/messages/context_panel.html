@@ -1,0 +1,152 @@
+{% load frontend_filters %}
+{% if selected %}
+<div class="space-y-4" x-data="{ ctxOpen: true }">
+
+  <!-- Workflow Context -->
+  <div class="bg-white rounded-lg border border-slate-100 shadow-sm p-4">
+    <button @click="ctxOpen = !ctxOpen" class="w-full flex items-center justify-between">
+      <span class="inline-flex items-center gap-1.5">
+        <h3 class="text-[13px] font-semibold text-slate-800 tracking-tight">Workflow Context</h3>
+        <svg class="h-3.5 w-3.5 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </span>
+      <svg class="h-4 w-4 text-slate-400 transition-transform" :class="ctxOpen ? '' : 'rotate-180'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/></svg>
+    </button>
+
+    <div x-show="ctxOpen" class="mt-3 space-y-3">
+      <div>
+        <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1.5">Context Type</p>
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <span class="inline-flex px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide bg-emerald-50 text-emerald-700 border border-emerald-100">{{ selected.panel.fields.context_type }}</span>
+          {% if selected.thread.category %}
+          <span class="inline-flex px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide bg-white text-slate-600 border border-slate-200">{{ selected.thread.category }}</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div>
+        <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1.5">Linked Record</p>
+        <div class="flex items-center gap-2.5 p-3 rounded-xl bg-slate-50/70 border border-slate-100">
+          <span class="h-8 w-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+          </span>
+          <p class="text-[12px] font-bold text-slate-800 leading-snug min-w-0">{{ selected.panel.fields.context_label }}</p>
+        </div>
+        {% if selected.thread.linked_items %}
+        <p class="text-[9.5px] uppercase font-bold text-slate-400 tracking-wider mt-2 mb-1">{{ selected.thread.linked_items|length }} linked record{{ selected.thread.linked_items|length|pluralize }}</p>
+        <div class="space-y-1 max-h-[128px] overflow-y-auto pr-0.5">
+          {% for item in selected.thread.linked_items %}
+          <div class="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-50/60 text-[10.5px] font-semibold text-slate-500">
+            <span class="h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0"></span>
+            <span class="truncate">{{ item.label }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="space-y-1.5 text-[11.5px] font-semibold">
+        {% if selected.panel.fields.owner %}
+        <div class="flex justify-between gap-2"><span class="text-slate-400">Owner</span><span class="text-slate-700 text-right">{{ selected.panel.fields.owner }}</span></div>
+        {% endif %}
+        {% if selected.panel.fields.status %}
+        <div class="flex justify-between gap-2 items-center"><span class="text-slate-400">Current Status</span><span class="inline-flex px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-100">{{ selected.panel.fields.status }}</span></div>
+        {% endif %}
+        {% if selected.panel.fields.next_action %}
+        <div class="flex justify-between gap-2"><span class="text-slate-400">Next Action</span><span class="text-slate-700 text-right">{{ selected.panel.fields.next_action }}</span></div>
+        {% endif %}
+        {% if selected.panel.fields.activity_date %}
+        <div class="flex justify-between gap-2"><span class="text-slate-400">Activity Date</span><span class="text-slate-700 text-right">{{ selected.panel.fields.activity_date }}</span></div>
+        {% endif %}
+      </div>
+      {% if selected.panel.actions %}
+      <a href="{{ selected.panel.actions.0.href }}" class="text-[11.5px] font-bold text-blue-600 hover:underline inline-flex items-center gap-1">
+        View Full Record
+        <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Workflow Timeline -->
+  {% if selected.panel.timeline %}
+  <div class="bg-white rounded-lg border border-slate-100 shadow-sm p-4">
+    <span class="inline-flex items-center gap-1.5 mb-3">
+      <h3 class="text-[13px] font-semibold text-slate-800 tracking-tight">Workflow Timeline</h3>
+      <svg class="h-3.5 w-3.5 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    </span>
+    <div class="space-y-0">
+      {% for step in selected.panel.timeline %}
+      <div class="flex items-start gap-2.5 {% if not forloop.last %}pb-4{% endif %} relative">
+        {% if not forloop.last %}
+        <div class="absolute left-[7px] top-4 bottom-0 w-px {% if step.done %}bg-emerald-200{% else %}bg-slate-150{% endif %}"></div>
+        {% endif %}
+        <div class="h-[15px] w-[15px] rounded-full shrink-0 mt-0.5 flex items-center justify-center
+          {% if step.current %}bg-blue-600 ring-4 ring-blue-100{% elif step.done %}bg-emerald-500{% else %}bg-white border-2 border-slate-200{% endif %}">
+          {% if step.done %}<svg class="h-2.5 w-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>{% endif %}
+        </div>
+        <div class="min-w-0">
+          <p class="text-[11.5px] font-bold {% if step.current %}text-blue-700{% elif step.done %}text-slate-700{% else %}text-slate-400{% endif %}">{{ step.label }}</p>
+          {% if step.current %}
+            <p class="text-[10px] font-semibold text-blue-400">Current Step</p>
+          {% elif step.meta %}
+            <p class="text-[10px] font-semibold text-slate-400">{{ step.meta }}</p>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% if selected.panel.actions %}
+    <a href="{{ selected.panel.actions.0.href }}" class="text-[11.5px] font-bold text-blue-600 hover:underline inline-flex items-center gap-1 mt-2">
+      View in Workflow
+      <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+    </a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- Suggested Recipients -->
+  {% if selected.context_suggestions %}
+  <div class="bg-white rounded-lg border border-slate-100 shadow-sm p-4">
+    <span class="inline-flex items-center gap-1.5 mb-2.5">
+      <h3 class="text-[13px] font-semibold text-slate-800 tracking-tight">Suggested Recipients</h3>
+      <svg class="h-3.5 w-3.5 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    </span>
+    <div class="flex flex-wrap gap-1.5">
+      {% for s in selected.context_suggestions %}
+      <span class="inline-flex items-center gap-1.5 pl-1 pr-2 py-1 rounded-full bg-white border border-slate-200 text-[11px] font-semibold text-slate-600 shadow-2xs">
+        <span class="h-5 w-5 rounded-md bg-blue-50 text-blue-700 flex items-center justify-center text-[8.5px] font-black uppercase">{{ s.role|avatar_initials }}</span>
+        {{ s.name }}
+      </span>
+      {% endfor %}
+      <a href="/messages/new/?forward={{ selected.thread.id }}"
+         class="inline-flex items-center px-2.5 py-1 rounded-full border border-dashed border-slate-300 text-[11px] font-bold text-slate-400 hover:text-blue-600 hover:border-blue-300 transition-colors">
+        + Add Others
+      </a>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Quick Actions -->
+  {% if selected.panel.actions %}
+  <div class="bg-white rounded-lg border border-slate-100 shadow-sm p-4">
+    <h3 class="text-[13px] font-semibold text-slate-800 tracking-tight mb-2">Quick Actions</h3>
+    <div class="divide-y divide-slate-50">
+      {% for a in selected.panel.actions %}
+      <a href="{{ a.href }}" class="flex items-center gap-2.5 py-2.5 group">
+        <span class="h-7 w-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-[#2e505f] group-hover:border-slate-200 transition-colors shrink-0">
+          <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+        </span>
+        <span class="text-[12px] font-semibold text-slate-600 group-hover:text-[#2e505f] transition-colors flex-1">{{ a.label }}</span>
+        <svg class="h-3.5 w-3.5 text-slate-300 group-hover:text-[#2e505f] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% else %}
+<div class="bg-white rounded-lg border border-slate-100 shadow-sm p-4">
+  <h3 class="text-[13px] font-semibold text-slate-800 tracking-tight">Workflow Context</h3>
+  <p class="text-[11.5px] text-slate-400 font-semibold mt-2">Select a conversation to see its linked workflow record, timeline, and quick actions.</p>
+</div>
+{% endif %}

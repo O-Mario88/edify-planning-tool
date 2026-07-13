@@ -7,34 +7,62 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('accounts', '0010_leavetypepolicy_publicholiday_leave_attachment_and_more'),
-        ('geography', '0001_initial'),
+        ("accounts", "0010_leavetypepolicy_publicholiday_leave_attachment_and_more"),
+        ("geography", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='CalendarBlock',
+            name="CalendarBlock",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('title', models.CharField(max_length=255)),
-                ('description', models.TextField(blank=True, null=True)),
-                ('block_type', models.CharField(default='PUBLIC_HOLIDAY', max_length=64)),
-                ('start_date', models.DateField()),
-                ('end_date', models.DateField()),
-                ('country', models.CharField(default='Uganda', max_length=64)),
-                ('applies_to_all_roles', models.BooleanField(default=True)),
-                ('applies_to_roles', models.JSONField(blank=True, null=True)),
-                ('created_by', models.CharField(blank=True, max_length=30, null=True)),
-                ('is_active', models.BooleanField(default=True)),
-                ('district', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='calendar_blocks', to='geography.district')),
-                ('region', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='calendar_blocks', to='geography.region')),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("title", models.CharField(max_length=255)),
+                ("description", models.TextField(blank=True, null=True)),
+                (
+                    "block_type",
+                    models.CharField(default="PUBLIC_HOLIDAY", max_length=64),
+                ),
+                ("start_date", models.DateField()),
+                ("end_date", models.DateField()),
+                ("country", models.CharField(default="Uganda", max_length=64)),
+                ("applies_to_all_roles", models.BooleanField(default=True)),
+                ("applies_to_roles", models.JSONField(blank=True, null=True)),
+                ("created_by", models.CharField(blank=True, max_length=30, null=True)),
+                ("is_active", models.BooleanField(default=True)),
+                (
+                    "district",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="calendar_blocks",
+                        to="geography.district",
+                    ),
+                ),
+                (
+                    "region",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="calendar_blocks",
+                        to="geography.region",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'calendar_block',
+                "db_table": "calendar_block",
             },
         ),
     ]

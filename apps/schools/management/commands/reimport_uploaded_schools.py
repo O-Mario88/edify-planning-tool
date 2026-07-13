@@ -23,6 +23,7 @@ Usage:
         --batch-id cmqxfoyyn009rpudjdfqc \
         --alias "Peter Chinyama=Paul Chinyama"
 """
+
 from __future__ import annotations
 
 import logging
@@ -35,7 +36,9 @@ logger = logging.getLogger("edify.management")
 
 
 class Command(BaseCommand):
-    help = "Re-import uploaded school rows that were never persisted to the School table."
+    help = (
+        "Re-import uploaded school rows that were never persisted to the School table."
+    )
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -73,7 +76,9 @@ class Command(BaseCommand):
         alias_map: dict[str, str] = {}
         for a in alias_args:
             if "=" not in a:
-                raise CommandError(f"Invalid alias format '{a}'. Expected OLD_NAME=NEW_NAME")
+                raise CommandError(
+                    f"Invalid alias format '{a}'. Expected OLD_NAME=NEW_NAME"
+                )
             old, new = a.split("=", 1)
             alias_map[old.strip()] = new.strip()
         if alias_map:
@@ -94,7 +99,9 @@ class Command(BaseCommand):
         total_already_present = 0
 
         for batch in batches:
-            self.stdout.write(f"\nBatch {batch.id}  file={batch.file_name}  created_rows={batch.created_rows}")
+            self.stdout.write(
+                f"\nBatch {batch.id}  file={batch.file_name}  created_rows={batch.created_rows}"
+            )
 
             # Only rows marked 'created' or 'updated' that need the actual school
             pending_rows = UploadBatchRowResult.objects.filter(
@@ -145,7 +152,10 @@ class Command(BaseCommand):
                         owner_status = defaults.get("account_owner_status")
                         owner_id = defaults.get("account_owner_id")
 
-                        if owner_status == AccountOwnerStatus.MATCHED.value and owner_id:
+                        if (
+                            owner_status == AccountOwnerStatus.MATCHED.value
+                            and owner_id
+                        ):
                             StaffSchoolAssignment.objects.get_or_create(
                                 staff_id=owner_id, school_id=school.id
                             )
@@ -156,9 +166,7 @@ class Command(BaseCommand):
                     )
                 except Exception as exc:  # noqa: BLE001
                     self.stdout.write(
-                        self.style.ERROR(
-                            f"  ✗ Failed school_id={school_id}: {exc}"
-                        )
+                        self.style.ERROR(f"  ✗ Failed school_id={school_id}: {exc}")
                     )
                     skipped += 1
 
@@ -196,7 +204,9 @@ class Command(BaseCommand):
             d = dict(raw["_defaults"])
             if d.get("last_enrollment_date"):
                 try:
-                    d["last_enrollment_date"] = date.fromisoformat(d["last_enrollment_date"])
+                    d["last_enrollment_date"] = date.fromisoformat(
+                        d["last_enrollment_date"]
+                    )
                 except ValueError:
                     d.pop("last_enrollment_date", None)
             # Re-run alias substitution
@@ -240,14 +250,13 @@ class Command(BaseCommand):
         # Owner matching with alias substitution
         owner_raw = (raw.get("account_owner_name_raw") or "").strip() or None
         if owner_raw and owner_raw in alias_map:
-            self.stdout.write(
-                f"    Alias: '{owner_raw}' → '{alias_map[owner_raw]}'"
-            )
+            self.stdout.write(f"    Alias: '{owner_raw}' → '{alias_map[owner_raw]}'")
             owner_raw = alias_map[owner_raw]
 
         owner_id, owner_status = (None, AccountOwnerStatus.PENDING.value)
         if owner_raw:
             from apps.accounts.staff_matching import match as staff_match
+
             owner_id, owner_status = staff_match(owner_raw)
 
         return {
@@ -276,6 +285,7 @@ class Command(BaseCommand):
             new_name = alias_map[owner_raw]
             self.stdout.write(f"    Alias: '{owner_raw}' → '{new_name}'")
             from apps.accounts.staff_matching import match as staff_match
+
             owner_id, owner_status = staff_match(new_name)
             defaults = dict(defaults)
             defaults["account_owner_name_raw"] = new_name
@@ -286,14 +296,22 @@ class Command(BaseCommand):
     def _resolve_district(self, district_name: str):
         from apps.geography.models import District, GeographyAlias
 
-        d = District.objects.select_related("region").filter(name__iexact=district_name).first()
+        d = (
+            District.objects.select_related("region")
+            .filter(name__iexact=district_name)
+            .first()
+        )
         if not d:
             norm = district_name.strip().lower()
             alias = GeographyAlias.objects.filter(
                 admin_level="district", normalized_alias=norm
             ).first()
             if alias:
-                d = District.objects.select_related("region").filter(id=alias.admin_id).first()
+                d = (
+                    District.objects.select_related("region")
+                    .filter(id=alias.admin_id)
+                    .first()
+                )
         if not d:
             d = (
                 District.objects.select_related("region")

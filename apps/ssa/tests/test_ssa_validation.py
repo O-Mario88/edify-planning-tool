@@ -3,16 +3,16 @@ from apps.geography.models import Region, District
 from apps.schools.models import School
 from apps.ssa.models import SsaRecord, SsaScore
 from apps.accounts.models import User
-from apps.core.exceptions import BadRequest
 from apps.ssa import services as ssa_services
 from apps.ssa.services import get_ssa_progress_by_fy
-from apps.core.fy import get_operational_fy
 
 
 class SsaSequentialValidationTest(APITestCase):
     def setUp(self):
         self.region = Region.objects.create(name="Central Region")
-        self.district = District.objects.create(name="Kampala District", region=self.region)
+        self.district = District.objects.create(
+            name="Kampala District", region=self.region
+        )
         self.school = School.objects.create(
             school_id="SCH-VAL-99",
             name="Validation Academy",
@@ -29,10 +29,12 @@ class SsaSequentialValidationTest(APITestCase):
             is_active=True,
         )
         import os
+
         os.environ["ENFORCE_SSA_SEQUENCE"] = "true"
 
     def tearDown(self):
         import os
+
         if "ENFORCE_SSA_SEQUENCE" in os.environ:
             del os.environ["ENFORCE_SSA_SEQUENCE"]
 
@@ -52,7 +54,7 @@ class SsaSequentialValidationTest(APITestCase):
                 {"intervention": "leadership", "score": 7.0},
                 {"intervention": "enrolment", "score": 5.0},
                 {"intervention": "learning_environment", "score": 8.0},
-            ]
+            ],
         }
 
         # Should succeed — no previous FY record exists, so this is the baseline
@@ -72,11 +74,18 @@ class SsaSequentialValidationTest(APITestCase):
             uploaded_by=self.user.user_id,
         )
         for intervention in [
-            "teaching_environment", "financial_health", "christlike_behaviour",
-            "exposure_to_word_of_god", "government_requirement", "leadership",
-            "enrolment", "learning_environment"
+            "teaching_environment",
+            "financial_health",
+            "christlike_behaviour",
+            "exposure_to_word_of_god",
+            "government_requirement",
+            "leadership",
+            "enrolment",
+            "learning_environment",
         ]:
-            SsaScore.objects.create(ssa_record=prev_record, intervention=intervention, score=7.0)
+            SsaScore.objects.create(
+                ssa_record=prev_record, intervention=intervention, score=7.0
+            )
 
         # 2. Upload current FY SSA (FY 2026)
         data = {
@@ -91,7 +100,7 @@ class SsaSequentialValidationTest(APITestCase):
                 {"intervention": "leadership", "score": 7.0},
                 {"intervention": "enrolment", "score": 5.0},
                 {"intervention": "learning_environment", "score": 8.0},
-            ]
+            ],
         }
 
         result = ssa_services.upload(data, self.user)
@@ -112,8 +121,11 @@ class AttendanceUploadActionTest(APITestCase):
     def setUp(self):
         from apps.clusters.models import Cluster
         from apps.geography.models import Region, District
+
         self.region = Region.objects.create(name="East Region")
-        self.district = District.objects.create(name="Jinja District", region=self.region)
+        self.district = District.objects.create(
+            name="Jinja District", region=self.region
+        )
         self.cluster = Cluster.objects.create(
             name="Test Cluster Jinja",
             region=self.region,
@@ -132,10 +144,16 @@ class AttendanceUploadActionTest(APITestCase):
             district=self.district,
         )
         from apps.clusters.models import SchoolClusterAssignment
-        SchoolClusterAssignment.objects.create(school=self.school1, cluster=self.cluster, assigned_by="test-user")
-        SchoolClusterAssignment.objects.create(school=self.school2, cluster=self.cluster, assigned_by="test-user")
+
+        SchoolClusterAssignment.objects.create(
+            school=self.school1, cluster=self.cluster, assigned_by="test-user"
+        )
+        SchoolClusterAssignment.objects.create(
+            school=self.school2, cluster=self.cluster, assigned_by="test-user"
+        )
 
         from apps.activities.models import Activity
+
         self.activity = Activity.objects.create(
             activity_type="cluster_meeting",
             cluster=self.cluster,
@@ -168,9 +186,13 @@ class AttendanceUploadActionTest(APITestCase):
             "attended_schools": [self.school1.id],
             "notes": "Good session",
         }
-        response = self.client.post(f"/activities/{self.activity.id}/attendance/action", post_data, format="multipart")
+        response = self.client.post(
+            f"/activities/{self.activity.id}/attendance/action",
+            post_data,
+            format="multipart",
+        )
         self.assertEqual(response.status_code, 302)
-        
+
         self.activity.refresh_from_db()
         self.assertEqual(self.activity.status, "completed")
         self.assertEqual(self.activity.teachers_attended, 5)

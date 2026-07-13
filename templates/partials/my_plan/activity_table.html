@@ -1,6 +1,6 @@
 {% load frontend_filters %}
 <div class="overflow-x-auto border border-slate-200/60 rounded-xl bg-white shadow-sm">
-<table class="w-full text-left text-[12px] border-collapse font-sans">
+<table class="w-full text-left text-[12px] border-collapse ">
 <thead>
 <tr class="bg-slate-50/50 text-[11px] font-bold uppercase tracking-wider text-slate-400 border-b ">
 <th class="px-4 py-3 w-[30%]">Activity Details</th>
@@ -28,7 +28,7 @@
 {% endif %}
 {% if act.partner_name %}
 <span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-bold bg-blue-50 text-blue-700 border /30">
-🤝 Partner ({{ act.partner_name }})
+<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6-2a3 3 0 10-2-5.24"/></svg> Partner ({{ act.partner_name }})
 </span>
 {% endif %}
 </div>
@@ -36,11 +36,11 @@
 <!-- Target Entity Name and ID -->
 <p class="font-semibold text-slate-800 text-[14px] leading-tight">
 {% if act.school_name and act.school_name != 'Unknown School' %}
-🏫 {{ act.school_name }} <span class="text-[11px] text-slate-400 font-semibold">(ID: {{ act.school_id }})</span>
+<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0v7m-5-4v4a5 5 0 0010 0v-4"/></svg> {{ act.school_name }} <span class="text-[11px] text-slate-400 font-semibold">(ID: {{ act.school_id }})</span>
 {% elif act.cluster_name %}
-👥 {{ act.cluster_name }}
+<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6-2a3 3 0 10-2-5.24"/></svg> {{ act.cluster_name }}
 {% else %}
-⚙️ {{ act.purpose }}
+<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10.3 4.3a1.7 1.7 0 013.4 0 1.7 1.7 0 002.6 1.1 1.7 1.7 0 012.4 2.4 1.7 1.7 0 001 2.5 1.7 1.7 0 010 3.4 1.7 1.7 0 00-1 2.6 1.7 1.7 0 01-2.4 2.4 1.7 1.7 0 00-2.6 1 1.7 1.7 0 01-3.4 0 1.7 1.7 0 00-2.5-1 1.7 1.7 0 01-2.4-2.4 1.7 1.7 0 00-1.1-2.6 1.7 1.7 0 010-3.4 1.7 1.7 0 001.1-2.5 1.7 1.7 0 012.4-2.4 1.7 1.7 0 002.5-1.1z"/><circle cx="12" cy="12" r="3"/></svg> {{ act.purpose }}
 {% endif %}
 </p>
 
@@ -73,7 +73,7 @@ Role: <span class="text-slate-600">{{ act.execution_role }}</span>
 <!-- Return Message if returned -->
 {% if act.return_reason %}
 <div class="bg-rose-50 border border-rose-100 p-2 rounded-lg text-[11px] text-rose-800 font-bold mt-1.5 space-y-0.5">
-<p>⚠️ Returned by: <span class="font-semibold text-rose-900">{{ act.returned_by }}</span></p>
+<p><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L14.7 3.9a2 2 0 00-3.4 0z"/></svg> Returned by: <span class="font-semibold text-rose-900">{{ act.returned_by }}</span></p>
 <p class="font-normal text-rose-700 italic">"{{ act.return_reason }}"</p>
 </div>
 {% endif %}
@@ -82,7 +82,7 @@ Role: <span class="text-slate-600">{{ act.execution_role }}</span>
 <!-- Column 2: Planned Date -->
 <td class="px-4 py-3.5 text-center">
 <span class="font-bold text-slate-700 text-[12px] bg-slate-50 border border-slate-200/70 px-2 py-1 rounded-md">
-📅 {{ act.planned_date|date:"M j, D"|default:"Unscheduled" }}
+<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M4 11h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z"/></svg> {{ act.planned_date|date:"M j, D"|default:"Unscheduled" }}
 </span>
 </td>
 
@@ -108,7 +108,12 @@ Role: <span class="text-slate-600">{{ act.execution_role }}</span>
 
 <!-- Column 4: Next Action -->
 <td class="px-4 py-3.5 text-right">
-{% if act.next_action.action == 'view_status' %}
+{% if act.execution_role == 'Partner' and not viewer_is_partner %}
+<span class="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Monitoring — partner-owned</span>
+<p class="mt-1">
+<a href="/my-plan/{{ act.id }}" class="text-[11px] font-semibold text-indigo-600 hover:text-indigo-700">View</a>
+</p>
+{% elif act.next_action.action == 'view_status' %}
 <button 
 hx-get="{{ act.next_action.url }}"
 hx-target="#drawer-container"
@@ -127,14 +132,18 @@ class="inline-flex items-center justify-center h-8 px-3 rounded-lg !bg-[#2e505f]
 {{ act.next_action.text }}
 </button>
 {% endif %}
+{% if act.execution_role != 'Partner' or viewer_is_partner %}
 <p class="text-[11px] text-slate-400 font-bold mt-1 uppercase tracking-wider">{{ act.next_action.description }}</p>
+{% endif %}
 </td>
 
 <!-- Column 5: 3-Dot Dropdown -->
 <td class="px-4 py-3.5 text-center relative" x-data="{ open: false }">
-<button 
-@click="open = !open" 
-@click.outside="open = false" 
+<button
+@click="open = !open"
+@click.outside="open = false"
+aria-label="More actions"
+:aria-expanded="open"
 class="text-slate-400 hover:text-slate-700 h-8 w-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
 >
 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -161,24 +170,25 @@ hx-swap="innerHTML"
 @click="open = false"
 class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50"
 >
-<span>🔎</span> View Details
+<span><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 10.5a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z"/></svg></span> View Details
 </button>
 
+{% if act.execution_role != 'Partner' or viewer_is_partner %}
 <!-- Reschedule -->
 {% if act.status != 'completed' %}
-<button 
+<button
 hx-get="/my-plan/{{ act.id }}/reschedule-drawer"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
 @click="open = false"
 class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 text-amber-600 hover:text-amber-700"
 >
-<span>📅</span> Reschedule Activity
+<span><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M4 11h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z"/></svg></span> Reschedule Activity
 </button>
 {% endif %}
 
 <!-- Start Activity -->
-{% if act.status == 'scheduled' %}
+{% if act.status == 'scheduled' or act.status == 'partner_scheduled' or act.status == 'assigned_to_partner' %}
 <button 
 hx-get="/activities/{{ act.id }}/start"
 hx-target="#drawer-container"
@@ -186,7 +196,7 @@ hx-swap="innerHTML"
 @click="open = false"
 class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 text-indigo-600 hover:text-indigo-700"
 >
-<span>🚀</span> Start Activity
+<span><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 17l6-6 4 4 8-8m0 0h-5m5 0v5"/></svg></span> Start Activity
 </button>
 {% endif %}
 
@@ -199,7 +209,7 @@ hx-swap="innerHTML"
 @click="open = false"
 class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 text-emerald-600 hover:text-emerald-700"
 >
-<span>✅</span> Complete Activity
+<span><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></span> Complete Activity
 </button>
 {% endif %}
 
@@ -211,7 +221,7 @@ hx-swap="innerHTML"
 @click="open = false"
 class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50"
 >
-<span>📎</span> Upload Evidence
+<span><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.2 7.4l-6.8 6.8a2 2 0 102.8 2.8l6.8-6.8a4 4 0 10-5.6-5.6L5.5 11.5a6 6 0 108.5 8.5l6-6"/></svg></span> Upload Evidence
 </button>
 
 <!-- Enter Activity SF ID -->
@@ -222,7 +232,7 @@ hx-swap="innerHTML"
 @click="open = false"
 class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50"
 >
-<span>🏷️</span> Enter Activity SF ID
+<span><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M3 5a2 2 0 012-2h5.2a2 2 0 011.4.6l8.2 8.2a2 2 0 010 2.8l-5.2 5.2a2 2 0 01-2.8 0L3.6 11.6A2 2 0 013 10.2V5z"/></svg></span> Enter Activity SF ID
 </button>
 
 <!-- Submit for Review -->
@@ -233,8 +243,14 @@ hx-swap="innerHTML"
 @click="open = false"
 class="w-full text-left flex items-center gap-2 px-3.5 py-2 hover:bg-slate-50 text-blue-600 hover:text-blue-700"
 >
-<span>📤</span> Submit for Review
+<span><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 12V4m0 0L9 7m3-3l3 3M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg></span> Submit for Review
 </button>
+{% else %}
+<!-- Staff viewing partner-owned activity: read-only monitoring -->
+<div class="px-3.5 py-2 text-[11px] text-slate-400 font-bold uppercase tracking-wider">
+Monitoring — partner-owned
+</div>
+{% endif %}
 
 <!-- View Timeline -->
 <button 

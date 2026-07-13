@@ -3,11 +3,11 @@
 {% block title %}Delegated Coverage Access — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6 font-sans">
+<div class="px-4 sm:px-6 py-5 space-y-4" style="max-width:1500px;margin:0 auto;">
 
   <!-- Header -->
   <div class="border-b border-slate-200 pb-4">
-    <h1 class="text-[22px] font-bold text-slate-800 tracking-tight">Temporary Leave Coverage Assignments</h1>
+    <h1 class="text-[21px] font-extrabold tracking-tight">Temporary Leave Coverage Assignments</h1>
     <p class="text-[12px] text-slate-400 font-semibold mt-0.5">Audit temporary delegated permissions and revoke access windows manually</p>
   </div>
 
@@ -27,7 +27,7 @@
   {% endif %}
 
   <!-- Coverage Assignments List -->
-  <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col">
+  <div class="bg-white rounded-lg border border-slate-100 shadow-sm overflow-hidden flex flex-col">
     <div class="p-5 border-b border-slate-100">
       <h3 class="text-[15px] font-bold text-slate-800">Coverage Assignments & Auditing</h3>
     </div>
@@ -91,7 +91,7 @@
           {% empty %}
           <tr>
             <td colspan="7" class="px-5 py-12 text-center text-slate-400">
-              <p class="text-[36px] mb-2">🤝</p>
+              <p class="text-[36px] mb-2"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6-2a3 3 0 10-2-5.24"/></svg></p>
               <p class="font-bold text-[14px]">No coverage assignments configured.</p>
             </td>
           </tr>

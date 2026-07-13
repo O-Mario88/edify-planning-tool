@@ -1,0 +1,317 @@
+{% comment %}Country Monthly Budget root — re-rendered by HTMX on filter/action.
+Consolidates only plan-backed, scheduled, costed activity budgets for the
+month plus the CD Admin Budget from the CD Monthly Admin Plan. No manual
+entry — every amount traces to a scheduled ActivityBudgetLine or the plan.{% endcomment %}
+{% load frontend_filters %}
+<div class="space-y-5">
+
+  {% if action_error %}
+  <div class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-[12px] font-bold text-rose-700">{{ action_error }}</div>
+  {% endif %}
+  {% if action_ok %}
+  <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-[12px] font-bold text-emerald-700">{{ action_ok }}</div>
+  {% endif %}
+
+  <!-- Breadcrumb -->
+  <p class="text-[11.5px] font-semibold text-slate-400">Finance <span class="mx-1 text-slate-300">&rsaquo;</span> <span class="text-slate-500">Country Monthly Budget</span></p>
+
+  <!-- Header -->
+  <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+    <div class="min-w-0">
+      <h1 class="text-[22px] sm:text-[24px] font-semibold text-slate-800 tracking-tight flex items-center gap-2">
+        Country Monthly Budget
+        <svg class="h-4 w-4 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.907c.961 0 1.36 1.246.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.77-.564-.37-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+      </h1>
+      <p class="text-[12px] text-slate-500 font-semibold mt-1">Monthly country budget generated from planned activities across all teams and approved for RVP submission.</p>
+    </div>
+
+    <!-- Filters -->
+    <form id="cb-filters" hx-get="/country-budget" hx-target="#country-budget-root" hx-swap="innerHTML"
+          class="flex flex-wrap items-end gap-2">
+      <label class="block">
+        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Month</span>
+        <select name="month" class="mt-1 h-9 px-2.5 rounded-lg border border-slate-200 text-[12px] font-semibold text-slate-700 bg-white focus:outline-none">
+          <option value="1" {% if month == 1 %}selected{% endif %}>January {{ fy }}</option>
+          <option value="2" {% if month == 2 %}selected{% endif %}>February {{ fy }}</option>
+          <option value="3" {% if month == 3 %}selected{% endif %}>March {{ fy }}</option>
+          <option value="4" {% if month == 4 %}selected{% endif %}>April {{ fy }}</option>
+          <option value="5" {% if month == 5 %}selected{% endif %}>May {{ fy }}</option>
+          <option value="6" {% if month == 6 %}selected{% endif %}>June {{ fy }}</option>
+          <option value="7" {% if month == 7 %}selected{% endif %}>July {{ fy }}</option>
+          <option value="8" {% if month == 8 %}selected{% endif %}>August {{ fy }}</option>
+          <option value="9" {% if month == 9 %}selected{% endif %}>September {{ fy }}</option>
+          <option value="10" {% if month == 10 %}selected{% endif %}>October {{ fy }}</option>
+          <option value="11" {% if month == 11 %}selected{% endif %}>November {{ fy }}</option>
+          <option value="12" {% if month == 12 %}selected{% endif %}>December {{ fy }}</option>
+        </select>
+      </label>
+      <label class="block">
+        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Financial Year</span>
+        <select name="fy" class="mt-1 h-9 px-2.5 rounded-lg border border-slate-200 text-[12px] font-semibold text-slate-700 bg-white focus:outline-none">
+          {% for opt in fy_options %}<option value="{{ opt }}" {% if opt == fy %}selected{% endif %}>FY {{ opt }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="block">
+        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Country / Region</span>
+        <select disabled class="mt-1 h-9 px-2.5 rounded-lg border border-slate-200 text-[12px] font-semibold text-slate-500 bg-slate-50 focus:outline-none">
+          <option>Uganda</option>
+        </select>
+      </label>
+      <label class="block">
+        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Team Scope</span>
+        <select disabled class="mt-1 h-9 px-2.5 rounded-lg border border-slate-200 text-[12px] font-semibold text-slate-500 bg-slate-50 focus:outline-none">
+          <option>All Teams</option>
+        </select>
+      </label>
+      <label class="block">
+        <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">&nbsp;</span>
+        <input type="search" name="q" value="{{ q|default:'' }}" hx-trigger="keyup changed delay:300ms" placeholder="Search staff, activity, school…"
+               class="mt-1 h-9 w-56 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold bg-white focus:outline-none">
+      </label>
+    </form>
+  </div>
+
+  <!-- Top actions -->
+  <div class="flex flex-wrap items-center justify-end gap-2 -mt-2">
+    <a href="/country-budget?export=csv&fy={{ fy }}&month={{ month }}" class="inline-flex items-center gap-1.5 h-9 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-[12px] font-semibold text-slate-600 shadow-sm transition-colors">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+      Export
+    </a>
+    <button hx-get="/country-budget/plan-sources?fy={{ fy }}&month={{ month }}" hx-target="#drawer-container" hx-swap="innerHTML"
+            class="inline-flex items-center gap-1.5 h-9 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-[12px] font-semibold text-slate-600 shadow-sm transition-colors">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      View Plan Sources
+    </button>
+    {% if is_cd %}
+    <button hx-post="/country-budget/action" hx-target="#country-budget-root" hx-swap="innerHTML"
+            hx-vals='{"action":"send_to_rvp","budget_id":"{{ budget_id }}","fy":"{{ fy }}","month":"{{ month }}"}'
+            {% if not can_send_to_rvp %}disabled{% endif %}
+            class="inline-flex items-center gap-1.5 h-9 px-4 rounded-xl text-white text-[12px] font-bold shadow-sm transition-colors {% if can_send_to_rvp %}bg-blue-600 hover:bg-blue-700{% else %}bg-slate-300 cursor-not-allowed{% endif %}">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+      Send to RVP for Approval
+    </button>
+    {% elif is_rvp and can_approve_or_return %}
+    <button hx-post="/country-budget/action" hx-target="#country-budget-root" hx-swap="innerHTML"
+            hx-vals='{"action":"approve","budget_id":"{{ budget_id }}","fy":"{{ fy }}","month":"{{ month }}"}'
+            class="inline-flex items-center gap-1.5 h-9 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-bold shadow-sm transition-colors">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      Approve
+    </button>
+    <button hx-get="/country-budget/return?budget_id={{ budget_id }}&fy={{ fy }}&month={{ month }}" hx-target="#drawer-container" hx-swap="innerHTML"
+            class="inline-flex items-center gap-1.5 h-9 px-4 rounded-xl border border-rose-200 bg-white hover:bg-rose-50 text-[12px] font-bold text-rose-600 shadow-sm transition-colors">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+      Return
+    </button>
+    {% endif %}
+  </div>
+
+  <!-- KPI strip -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+    {% for k in kpis %}
+    <div class="card p-4">
+      <div class="flex items-start justify-between">
+        <div class="h-9 w-9 rounded-xl flex items-center justify-center shrink-0
+          {% if k.variant == 'primary' %}bg-emerald-50 text-emerald-600
+          {% elif k.variant == 'info' %}bg-blue-50 text-blue-600
+          {% elif k.variant == 'success' %}bg-teal-50 text-teal-600
+          {% elif k.variant == 'warning' %}bg-amber-50 text-amber-600
+          {% elif k.variant == 'finance' %}bg-violet-50 text-violet-600
+          {% elif k.variant == 'danger' %}bg-rose-50 text-rose-600
+          {% else %}bg-indigo-50 text-indigo-600{% endif %}">
+          {% include "partials/finance/country_budget/_kpi_icon.html" with variant=k.variant %}
+        </div>
+        {% if k.trend_pct is not None %}
+        <span class="inline-flex items-center gap-0.5 text-[10.5px] font-bold {% if k.trend_up %}text-emerald-600{% else %}text-rose-600{% endif %}">
+          {% if k.trend_up %}&#9650;{% else %}&#9660;{% endif %}{{ k.trend_pct }}%
+        </span>
+        {% endif %}
+      </div>
+      <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mt-2.5">{{ k.label }}</p>
+      <p class="text-[18px] font-bold text-slate-800 tabular-nums leading-tight mt-0.5">{{ k.value }}</p>
+      <div class="flex items-center justify-between mt-1.5">
+        <span class="text-[10.5px] font-semibold text-slate-400">{{ k.helper }}</span>
+        {% if k.sparkline %}
+        <svg class="h-5 w-16 shrink-0" viewBox="0 0 60 20" preserveAspectRatio="none">
+          <polyline points="{{ k.sparkline }}" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"
+            class="{% if k.trend_up == False %}text-rose-400{% else %}text-emerald-400{% endif %}"/>
+        </svg>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Main workspace -->
+  <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
+
+    <!-- LEFT: staff monthly budget table -->
+    <div class="xl:col-span-9 card overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="text-[10px] uppercase tracking-wider text-slate-400 font-bold bg-slate-50/60 border-b border-slate-100">
+              <th class="px-3 py-2 sticky left-0 bg-slate-50/60 z-10" rowspan="2">Staff</th>
+              <th class="px-3 py-2 text-center border-l border-slate-100" colspan="3">Staff Visits</th>
+              <th class="px-3 py-2 text-center border-l border-slate-100" colspan="3">Partner Visits</th>
+              <th class="px-3 py-2 text-center border-l border-slate-100" colspan="3">SSA</th>
+              <th class="px-3 py-2 text-center border-l border-slate-100" colspan="3">Cluster Training</th>
+              <th class="px-3 py-2 text-center border-l border-slate-100" colspan="3">Partner In-School Training</th>
+              <th class="px-3 py-2 text-center border-l border-slate-100" colspan="3">Admin Budget</th>
+              <th class="px-3 py-2 text-right border-l border-slate-100" rowspan="2">Total Monthly<br>Allocation</th>
+              <th class="px-3 py-2 text-center border-l border-slate-100" rowspan="2">Plan Source<br>Status</th>
+            </tr>
+            <tr class="text-[9.5px] uppercase tracking-wider text-slate-400 font-bold bg-slate-50/60 border-b border-slate-100">
+              {% for cat in category_order %}
+              <th class="px-2 py-1.5 text-center border-l border-slate-100">#</th>
+              <th class="px-2 py-1.5 text-center">Cost</th>
+              <th class="px-2 py-1.5 text-right">Total</th>
+              {% endfor %}
+              <th class="px-2 py-1.5 text-center border-l border-slate-100">Planned</th>
+              <th class="px-2 py-1.5 text-center">Allocated</th>
+              <th class="px-2 py-1.5 text-right">Total</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-50">
+            {% for row in staff_rows %}
+            <tr class="hover:bg-slate-50/50 text-[11.5px]">
+              <td class="px-3 py-2 font-bold text-slate-800 sticky left-0 bg-white whitespace-nowrap">{{ row.name }}</td>
+              {% for cat in category_order %}
+              <td class="px-2 py-2 text-center text-slate-500 tabular-nums border-l border-slate-50">{{ row.cats|lookup:cat|lookup:"qty"|default:"—" }}</td>
+              <td class="px-2 py-2 text-center text-slate-500 tabular-nums">{{ row.cats|lookup:cat|lookup:"unit_cost" }}</td>
+              <td class="px-2 py-2 text-right font-semibold text-slate-700 tabular-nums">{{ row.cats|lookup:cat|lookup:"total" }}</td>
+              {% endfor %}
+              <td class="px-2 py-2 text-center text-slate-300 border-l border-slate-50">—</td>
+              <td class="px-2 py-2 text-center text-slate-300">—</td>
+              <td class="px-2 py-2 text-right text-slate-300">UGX 0</td>
+              <td class="px-3 py-2 text-right font-bold text-slate-800 tabular-nums border-l border-slate-50">{{ row.total_fmt }}</td>
+              <td class="px-3 py-2 text-center border-l border-slate-50">
+                {% include "components/badge.html" with tone=row.status_tone label=row.status size="sm" %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="18" class="px-3 py-10 text-center text-[12px] font-semibold text-slate-400">No planned, costed activities for this month yet.</td></tr>
+            {% endfor %}
+
+            <!-- CD Admin Plan row — the only non-activity budget item -->
+            <tr class="text-[11.5px] bg-violet-50/30">
+              <td class="px-3 py-2 font-bold text-violet-800 sticky left-0 bg-violet-50/30 whitespace-nowrap">CD Admin Plan</td>
+              <td class="px-2 py-2 text-center text-slate-300 border-l border-slate-50" colspan="15">—</td>
+              <td class="px-2 py-2 text-center text-slate-300">—</td>
+              <td class="px-2 py-2 text-center text-slate-300">—</td>
+              <td class="px-2 py-2 text-right font-semibold text-violet-700 tabular-nums">{{ admin_row.total_fmt }}</td>
+              <td class="px-3 py-2 text-right font-bold text-violet-800 tabular-nums border-l border-slate-50">{{ admin_row.total_fmt }}</td>
+              <td class="px-3 py-2 text-center border-l border-slate-50">
+                {% if admin_row.lines %}{% include "components/badge.html" with tone="purple" label="Admin Plan" size="sm" %}
+                {% else %}{% include "components/badge.html" with tone="warning" label="Admin Plan Missing" size="sm" %}{% endif %}
+              </td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr class="border-t-2 border-slate-200 bg-slate-50/60 text-[12px] font-bold text-slate-800">
+              <td class="px-3 py-2.5 sticky left-0 bg-slate-50/60">TOTAL</td>
+              <td class="px-2 py-2.5 text-center border-l border-slate-100" colspan="15">&nbsp;</td>
+              <td class="px-2 py-2.5 text-center">—</td>
+              <td class="px-2 py-2.5 text-center">—</td>
+              <td class="px-2 py-2.5 text-right">{{ admin_row.total_fmt }}</td>
+              <td class="px-3 py-2.5 text-right text-emerald-700 border-l border-slate-100">{{ total_monthly_fmt }}</td>
+              <td class="px-3 py-2.5 border-l border-slate-100"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- RIGHT: approval + integrity panel -->
+    <div class="xl:col-span-3 space-y-4">
+      <div class="card p-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-[13px] font-semibold text-slate-800 tracking-tight">Approval Status</h3>
+          {% include "components/badge.html" with tone="info" label=approval_status size="md" %}
+        </div>
+      </div>
+
+      <div class="card p-4">
+        <h3 class="text-[12px] font-semibold text-slate-800 tracking-tight mb-2">Monthly Approval Progress</h3>
+        <div class="flex items-center gap-2">
+          <div class="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden"><div class="h-full rounded-full bg-blue-500" style="width: {{ progress_pct }}%"></div></div>
+          <span class="text-[12px] font-bold text-slate-700 tabular-nums">{{ progress_pct }}%</span>
+        </div>
+        <p class="text-[11px] font-semibold text-slate-400 mt-1.5">
+          {% if status == 'submitted_to_rvp' %}Awaiting RVP review.
+          {% elif status == 'returned_by_rvp' %}Fix the issues below and resubmit.
+          {% elif status == 'approved_by_rvp' or status == 'sent_to_accountant' or status == 'disbursed' %}Approved — ready for disbursement.
+          {% else %}Review budget and send to RVP for approval.{% endif %}
+        </p>
+      </div>
+
+      <div class="card p-4">
+        <h3 class="text-[12px] font-semibold text-slate-800 tracking-tight mb-2.5">Budget Integrity Checks</h3>
+        <ul class="space-y-1.5">
+          {% for c in checks %}
+          <li class="flex items-start gap-1.5 text-[11.5px] font-semibold">
+            {% if c.status == 'passed' %}<span class="text-emerald-500 shrink-0 mt-0.5">&check;</span><span class="text-slate-600">{{ c.label }}</span>
+            {% elif c.status == 'warning' %}<span class="text-amber-500 shrink-0 mt-0.5">&#9888;</span><span class="text-amber-700">{{ c.label }}{% if c.detail %} — {{ c.detail }}{% endif %}</span>
+            {% else %}<span class="text-rose-500 shrink-0 mt-0.5">&times;</span><span class="text-rose-700">{{ c.label }}{% if c.detail %} — {{ c.detail }}{% endif %}</span>{% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <div class="rounded-xl bg-blue-50 border border-blue-100 p-3.5">
+        <p class="text-[11.5px] font-bold text-blue-800 flex items-start gap-1.5">
+          <svg class="h-4 w-4 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span><span class="block mb-0.5">Budgeting Rules</span><span class="font-semibold text-blue-700">Only plan-backed items are included in the monthly budget. CD Admin Budget is the only non-activity exception and must come from your CD Monthly Admin Plan.</span></span>
+        </p>
+      </div>
+
+      <div class="card p-4">
+        <h3 class="text-[12px] font-semibold text-slate-800 tracking-tight mb-2.5">Month Summary</h3>
+        <div class="grid grid-cols-2 gap-2">
+          <div class="rounded-lg bg-amber-50 border border-amber-100 p-2.5"><p class="text-[9.5px] font-bold uppercase text-amber-600">Awaiting Approval</p><p class="text-[13px] font-bold text-amber-800 tabular-nums mt-0.5">{{ month_summary.awaiting_approval }}</p></div>
+          <div class="rounded-lg bg-emerald-50 border border-emerald-100 p-2.5"><p class="text-[9.5px] font-bold uppercase text-emerald-600">Plan-Backed Cost</p><p class="text-[13px] font-bold text-emerald-800 tabular-nums mt-0.5">{{ month_summary.plan_backed_cost }}</p><p class="text-[9.5px] font-semibold text-emerald-500">({{ month_summary.plan_backed_pct }}%)</p></div>
+          <div class="rounded-lg bg-rose-50 border border-rose-100 p-2.5"><p class="text-[9.5px] font-bold uppercase text-rose-600">Admin Budget</p><p class="text-[13px] font-bold text-rose-800 tabular-nums mt-0.5">{{ month_summary.admin_budget }}</p><p class="text-[9.5px] font-semibold text-rose-500">({{ month_summary.admin_pct }}%)</p></div>
+          <div class="rounded-lg bg-slate-50 border border-slate-100 p-2.5"><p class="text-[9.5px] font-bold uppercase text-slate-500">Staff Included</p><p class="text-[13px] font-bold text-slate-800 tabular-nums mt-0.5">{{ month_summary.staff_included }} Staff</p></div>
+        </div>
+      </div>
+
+      <div class="card p-4">
+        <h3 class="text-[12px] font-semibold text-slate-800 tracking-tight mb-2.5">Plan Source Summary</h3>
+        <div class="grid grid-cols-3 gap-2 text-center">
+          {% for s in plan_source_summary %}
+          <div class="flex flex-col items-center gap-1">
+            <div class="h-8 w-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500">
+              {% include "partials/finance/country_budget/_source_icon.html" with icon=s.icon %}
+            </div>
+            <p class="text-[13px] font-bold text-slate-800 tabular-nums leading-none">{{ s.value }}</p>
+            <p class="text-[8.5px] font-semibold text-slate-400 leading-tight">{{ s.label }}</p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom stat cards -->
+  <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+    {% for s in bottom_stats %}
+    <div class="card p-3.5">
+      <div class="flex items-center gap-2">
+        <div class="h-7 w-7 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 shrink-0">
+          {% include "partials/finance/country_budget/_source_icon.html" with icon=s.icon %}
+        </div>
+        <p class="text-[9.5px] font-bold uppercase tracking-wider text-slate-400 leading-tight">{{ s.label }}</p>
+      </div>
+      <p class="text-[15px] font-bold text-slate-800 mt-2 truncate">{{ s.value }}</p>
+      <p class="text-[10.5px] font-semibold text-slate-400">{{ s.sub }}</p>
+      {% if s.helper %}<p class="text-[10px] font-semibold text-slate-300 mt-0.5">{{ s.helper }}</p>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Footer -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pt-2 border-t border-slate-100 text-[10.5px] font-semibold text-slate-400">
+    <p class="flex items-center gap-1"><svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>All amounts are in UGX. All budgeted items must originate from planned activities, except CD Admin Budget which is sourced from the CD Monthly Admin Plan.</p>
+    <p>Last updated: {{ last_updated|date:"M j, Y g:i A" }}</p>
+  </div>
+
+</div>

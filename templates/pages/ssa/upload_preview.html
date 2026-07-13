@@ -3,12 +3,12 @@
 {% block title %}SSA Upload Preview — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6 font-sans" x-data="{ tab: 'ready' }">
+<div class="px-4 sm:px-6 py-5 space-y-4" style="max-width:1500px;margin:0 auto;" x-data="{ tab: 'ready' }">
 
 <!-- Header -->
 <div class="flex items-center justify-between border-b border-slate-200 pb-4">
 <div>
-<h1 class="text-[20px] font-semibold text-slate-800 tracking-tight">Upload Preview</h1>
+<h1 class="text-[21px] font-extrabold tracking-tight">Upload Preview</h1>
 <p class="text-[12px] text-slate-400 font-semibold mt-0.5">Review the parsed SSA assessment rows before confirming import into the directory.</p>
 </div>
 <div class="flex items-center gap-3">
@@ -64,7 +64,7 @@ Blocked Rows ({{ blocked_count }})
 <th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-400">Average Score</th>
 </tr>
 </thead>
-<tbody class="divide-y divide-slate-100 font-semibold text-slate-700">
+<tbody class="divide-y divide-slate-100 font-semibold">
 {% for r in ready_rows %}
 <tr class="hover:bg-slate-50/20">
 <td class="px-4 py-3.5 text-slate-400">{{ r.row_number }}</td>
@@ -96,7 +96,7 @@ Blocked Rows ({{ blocked_count }})
 <th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-400">Message / Warning</th>
 </tr>
 </thead>
-<tbody class="divide-y divide-slate-100 font-semibold text-slate-700">
+<tbody class="divide-y divide-slate-100 font-semibold">
 {% for r in unmatched_rows %}
 <tr class="hover:bg-slate-50/20">
 <td class="px-4 py-3.5 text-slate-400">{{ r.row_number }}</td>
@@ -124,7 +124,7 @@ Blocked Rows ({{ blocked_count }})
 <th class="px-4 py-3 text-[11px] font-semibold uppercase text-slate-400">Errors</th>
 </tr>
 </thead>
-<tbody class="divide-y divide-slate-100 font-semibold text-slate-700">
+<tbody class="divide-y divide-slate-100 font-semibold">
 {% for r in blocked_rows %}
 <tr class="hover:bg-slate-50/20">
 <td class="px-4 py-3.5 text-slate-400">{{ r.row_number }}</td>

@@ -1,21 +1,123 @@
 {% extends "layouts/shell.html" %}
+{% load frontend_filters %}
 
 {% block title %}Messages — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6">
+<div class="p-4 sm:p-6 max-w-7xl mx-auto flex flex-col gap-4 lg:h-full min-h-0 "
+     x-data="{ mobilePane: 'list', composeOpen: false }"
+     @open-compose.window="composeOpen = true">
 
-<div class="flex items-center justify-between">
-<div>
-<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight">Messages</h1>
-<p class="text-[12px] text-[var(--text-secondary)] mt-1 font-semibold">Edify Operations · Messages</p>
-</div>
-</div>
+  <!-- Header -->
+  <div class="flex items-center justify-between gap-4 shrink-0">
+    <div class="min-w-0">
+      <h1 class="text-[22px] sm:text-[21px] font-extrabold tracking-tight">Messages</h1>
+      <p class="text-[12px] text-slate-500 font-semibold mt-1 truncate">Contextual, workflow-linked communication across roles</p>
+    </div>
+    <div class="flex items-center gap-2 shrink-0">
+      <button @click="composeOpen = true"
+              class="hidden md:inline-flex items-center gap-1.5 h-10 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-semibold shadow-sm transition-colors whitespace-nowrap">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        New Message
+      </button>
+      <a href="/settings" aria-label="Message settings"
+         class="h-10 w-10 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors shadow-sm">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      </a>
+    </div>
+  </div>
 
-<div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm">
-{% if messages %}<ul class="divide-y divide-slate-100">{% for m in messages %}<li class="px-5 py-4"><p class="text-[14px] font-bold text-slate-800">{{ m.body|truncatewords:20 }}</p><p class="text-[11px] text-slate-400">{{ m.created_at }}</p></li>{% endfor %}</ul>
-{% else %}<div class="p-12 text-center"><p class="text-[36px] mb-3">💬</p><p class="text-[14px] font-bold text-slate-600">No messages yet</p></div>{% endif %}
-</div>
+  <!-- Filter strip (full width, replaces the KPI strip) -->
+  <div class="bg-white rounded-lg border border-slate-100 shadow-sm p-2.5 flex flex-col lg:flex-row lg:items-center gap-2.5 shrink-0">
+    <div class="flex items-center gap-1 flex-wrap flex-1 min-w-0">
+      {% for key, label in tabs %}
+        <button
+          hx-get="/messages?tab={{ key }}{% if search_q %}&q={{ search_q }}{% endif %}&sort={{ sort }}"
+          hx-target="#thread-list"
+          hx-swap="innerHTML"
+          hx-push-url="true"
+          class="shrink-0 h-8 px-2.5 rounded-lg text-[11px] font-bold transition-all inline-flex items-center gap-1.5 {% if active_tab == key %}bg-blue-50 text-blue-700 ring-1 ring-blue-100{% else %}text-slate-500 hover:bg-slate-50{% endif %}">
+          {{ label }}
+          {% if key == 'all' %}<span class="px-1.5 py-px rounded-md text-[9.5px] {% if active_tab == key %}bg-blue-100 text-blue-700{% else %}bg-slate-100 text-slate-500{% endif %}">{{ tab_counts.all }}</span>
+          {% elif key == 'unread' %}<span class="px-1.5 py-px rounded-md text-[9.5px] {% if active_tab == key %}bg-blue-100 text-blue-700{% else %}bg-slate-100 text-slate-500{% endif %}">{{ tab_counts.unread }}</span>
+          {% elif key == 'assigned' %}<span class="px-1.5 py-px rounded-md text-[9.5px] {% if active_tab == key %}bg-blue-100 text-blue-700{% else %}bg-slate-100 text-slate-500{% endif %}">{{ tab_counts.assigned }}</span>{% endif %}
+        </button>
+      {% endfor %}
+    </div>
 
+    <div class="flex items-center gap-2 shrink-0">
+      <div class="relative flex-1 lg:flex-none lg:w-56">
+        <svg class="h-3.5 w-3.5 text-slate-300 absolute left-2.5 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <input type="search" name="q" value="{{ search_q }}"
+               placeholder="Search threads…"
+               hx-get="/messages?tab={{ active_tab }}&sort={{ sort }}"
+               hx-target="#thread-list"
+               hx-swap="innerHTML"
+               hx-trigger="keyup changed delay:300ms"
+               class="w-full h-8 pl-8 pr-3 bg-slate-50 border border-slate-200 rounded-lg text-[11.5px] font-semibold focus:bg-white focus:border-blue-500 focus:outline-none">
+      </div>
+      <select
+        hx-get="/messages?tab={{ active_tab }}{% if search_q %}&q={{ search_q }}{% endif %}"
+        hx-target="#thread-list"
+        hx-swap="innerHTML"
+        hx-trigger="change"
+        name="sort"
+        class="shrink-0 h-8 px-2 rounded-lg border border-slate-200 text-[11px] font-bold text-slate-600 bg-white focus:outline-none cursor-pointer">
+        <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Sort: Newest</option>
+        <option value="oldest" {% if sort == 'oldest' %}selected{% endif %}>Sort: Oldest</option>
+      </select>
+      <!-- Mobile compose button (desktop uses the header button) -->
+      <button @click="composeOpen = true" aria-label="New message"
+              class="md:hidden shrink-0 h-8 w-8 rounded-lg bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center shadow-sm transition-colors">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Three-panel workspace — dynamically fills the remaining viewport height at lg
+       (flex-1 of the page column) so it fits any desktop screen without a magic offset;
+       stacks and flows naturally below lg. -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5 lg:flex-1 min-h-[460px]">
+
+    <!-- LEFT: thread list / inbox (one card, scrolls internally) -->
+    <div id="left-pane" class="lg:col-span-3 min-h-0"
+         :class="mobilePane === 'list' ? '' : 'hidden lg:block'">
+      <div id="thread-list" class="h-full">
+        {% include "partials/messages/thread_list.html" %}
+      </div>
+    </div>
+
+    <!-- CENTER: conversation (message body) -->
+    <div class="lg:col-span-6 min-h-0" id="conversation-pane"
+         :class="mobilePane === 'thread' ? '' : 'hidden lg:block'">
+      {% include "partials/messages/conversation.html" %}
+    </div>
+
+    <!-- RIGHT: workflow context (scrolls) + message rules (pinned below) -->
+    <div class="lg:col-span-3 min-h-0 flex flex-col gap-4" id="context-pane"
+         :class="mobilePane === 'thread' ? '' : 'hidden lg:flex'">
+      <div id="context-panel-scroll" class="flex-1 min-h-0 overflow-y-auto pr-0.5">
+        {% include "partials/messages/context_panel.html" %}
+      </div>
+      <!-- Message Rules (below the workflow context) -->
+      <div class="shrink-0 bg-white rounded-lg border border-slate-100 shadow-sm p-4">
+        <div class="flex items-center gap-1.5 mb-2.5">
+          <h3 class="text-[13px] font-semibold text-slate-800 tracking-tight">Message Rules</h3>
+          <svg class="h-3.5 w-3.5 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <div class="space-y-1.5">
+          {% for rule in message_rules %}
+          <div class="flex items-start gap-2">
+            <svg class="h-3.5 w-3.5 text-blue-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span class="text-[11px] font-semibold text-slate-600 leading-snug">{{ rule }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Compose popup -->
+  {% include "partials/messages/compose_modal.html" %}
 </div>
 {% endblock %}

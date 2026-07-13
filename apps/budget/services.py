@@ -5,6 +5,7 @@ CD-owned cost-settings CRUD (with append-only version history), the costing
 preview surface, schedule-derived annual budget, weekly fund-request line items,
 and the monthly budget board.
 """
+
 from __future__ import annotations
 
 from django.db import transaction
@@ -60,7 +61,16 @@ def upsert_cost_setting(data: dict, principal) -> dict:
             existing.fy = fy or existing.fy
             existing.version += 1
             existing.created_by = principal.user_id
-            existing.save(update_fields=["label", "unit_cost", "fy", "version", "created_by", "updated_at"])
+            existing.save(
+                update_fields=[
+                    "label",
+                    "unit_cost",
+                    "fy",
+                    "version",
+                    "created_by",
+                    "updated_at",
+                ]
+            )
             CostSettingHistory.objects.create(
                 key=key,
                 label=label,
@@ -74,7 +84,12 @@ def upsert_cost_setting(data: dict, principal) -> dict:
             setting = existing
         else:
             setting = CostSetting.objects.create(
-                key=key, label=label, unit_cost=new_cost, fy=fy, created_by=principal.user_id, version=1
+                key=key,
+                label=label,
+                unit_cost=new_cost,
+                fy=fy,
+                created_by=principal.user_id,
+                version=1,
             )
             CostSettingHistory.objects.create(
                 key=key,
@@ -126,8 +141,15 @@ def cost_preview(data: dict, principal) -> dict:
     return {
         "amount": cost.amount,
         "lines": [
-            {"label": l.label, "key": l.key, "unit": l.unit, "qty": l.qty, "amount": l.amount, "missing": l.missing}
-            for l in cost.lines
+            {
+                "label": line.label,
+                "key": line.key,
+                "unit": line.unit,
+                "qty": line.qty,
+                "amount": line.amount,
+                "missing": line.missing,
+            }
+            for line in cost.lines
         ],
         "costMissing": cost.cost_missing,
         "missingItems": cost.missing_items,
@@ -148,7 +170,11 @@ def from_schedule(principal, query: dict) -> dict:
 
     fy = query.get("fy") or get_operational_fy()
     scope = resolve_user_scope(principal)
-    qs = Activity.objects.filter(deleted_at__isnull=True, fy=fy)
+    qs = (
+        Activity.objects.filter(deleted_at__isnull=True, fy=fy)
+        .exclude(status__in=["cancelled", "rejected"])
+        .exclude(delivery_type="partner", planned_date__isnull=True)
+    )
     if not scope.country_scope:
         if scope.staff_ids:
             qs = qs.filter(responsible_staff_id__in=scope.staff_ids)
@@ -158,8 +184,20 @@ def from_schedule(principal, query: dict) -> dict:
             qs = qs.none()
     activities = list(qs.prefetch_related("schedule_cost_lines"))
 
-    MONTH_LABELS = {1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr", 5: "May", 6: "Jun",
-                     7: "Jul", 8: "Aug", 9: "Sep", 10: "Oct", 11: "Nov", 12: "Dec"}
+    MONTH_LABELS = {
+        1: "Jan",
+        2: "Feb",
+        3: "Mar",
+        4: "Apr",
+        5: "May",
+        6: "Jun",
+        7: "Jul",
+        8: "Aug",
+        9: "Sep",
+        10: "Oct",
+        11: "Nov",
+        12: "Dec",
+    }
 
     total = 0
     scheduled_total = 0
@@ -174,7 +212,13 @@ def from_schedule(principal, query: dict) -> dict:
     staff_amount = staff_count = 0
     partner_amount = partner_count = 0
 
-    TRAINING_TYPES = {"training", "school_improvement_training", "cluster_training", "core_training", "cluster_meeting"}
+    TRAINING_TYPES = {
+        "training",
+        "school_improvement_training",
+        "cluster_training",
+        "core_training",
+        "cluster_meeting",
+    }
 
     for a in activities:
         amount = sum(line.amount for line in a.schedule_cost_lines.all())
@@ -192,13 +236,17 @@ def from_schedule(principal, query: dict) -> dict:
         # By activity type.
         by_type[a.activity_type] = by_type.get(a.activity_type, 0) + amount
         by_type_count[a.activity_type] = by_type_count.get(a.activity_type, 0) + 1
-        # By month (1-12 calendar month). Only activities with a planned month
-        # roll into a month bucket; an activity with no planned_month is unscheduled.
-        if a.planned_month:
-            by_month_amount[a.planned_month] = by_month_amount.get(a.planned_month, 0) + amount
-            by_month_count[a.planned_month] = by_month_count.get(a.planned_month, 0) + 1
+        # By month (1-12 calendar month, from the schedule-time snapshot that
+        # costing_service.apply_to_activity always writes). The legacy
+        # planned_month field is only populated when a caller happens to pass
+        # plannedMonth explicitly and silently under-counts otherwise — a.month
+        # is set reliably, from the same scheduled_date, every time. No month
+        # means unscheduled.
+        if a.month:
+            by_month_amount[a.month] = by_month_amount.get(a.month, 0) + amount
+            by_month_count[a.month] = by_month_count.get(a.month, 0) + 1
             if a.activity_type in TRAINING_TYPES:
-                by_month_trainings[a.planned_month] = by_month_trainings.get(a.planned_month, 0) + 1
+                by_month_trainings[a.month] = by_month_trainings.get(a.month, 0) + 1
         # By delivery.
         if a.delivery_type == "partner":
             partner_amount += amount
@@ -224,33 +272,43 @@ def from_schedule(principal, query: dict) -> dict:
     ]
 
     active_months = [m for m in by_month if m["amount"] > 0]
-    avg_amount = (sum(m["amount"] for m in active_months) / len(active_months)) if active_months else 0
-    
+    avg_amount = (
+        (sum(m["amount"] for m in active_months) / len(active_months))
+        if active_months
+        else 0
+    )
+
     busy_months = []
     slow_months = []
-    
+
     for m in by_month:
         amt = m["amount"]
         if amt > 0:
             if avg_amount > 0 and amt > avg_amount * 1.15:
-                busy_months.append({
-                    "month": m["month"],
-                    "amount": amt,
-                    "count": m["count"],
-                    "insight": f"{m['label']} is a busy month with above-average scheduled activity."
-                })
+                busy_months.append(
+                    {
+                        "month": m["month"],
+                        "amount": amt,
+                        "count": m["count"],
+                        "insight": f"{m['label']} is a busy month with above-average scheduled activity.",
+                    }
+                )
             elif avg_amount > 0 and amt < avg_amount * 0.85:
-                slow_months.append({
-                    "month": m["month"],
-                    "amount": amt,
-                    "count": m["count"],
-                    "insight": f"{m['label']} is a slow month with below-average activity."
-                })
+                slow_months.append(
+                    {
+                        "month": m["month"],
+                        "amount": amt,
+                        "count": m["count"],
+                        "insight": f"{m['label']} is a slow month with below-average activity.",
+                    }
+                )
 
     return {
         "fy": fy,
         "role": scope.active_role,
-        "scope": "country" if scope.country_scope else ("team" if scope.can_view_team else "own"),
+        "scope": "country"
+        if scope.country_scope
+        else ("team" if scope.can_view_team else "own"),
         "total": total,
         "scheduledTotal": scheduled_total,
         "activityCount": len(activities),
@@ -276,23 +334,33 @@ def _by_quarter_from_activities(activities) -> list[dict]:
     amt: dict[str, int] = {}
     cnt: dict[str, int] = {}
     for a in activities:
-        amount = sum(line.amount for line in a.schedule_cost_lines.all()) or a.est_cost_cents
+        amount = (
+            sum(line.amount for line in a.schedule_cost_lines.all()) or a.est_cost_cents
+        )
         q = a.quarter
         amt[q] = amt.get(q, 0) + amount
         cnt[q] = cnt.get(q, 0) + 1
-    return [{"quarter": q, "amount": amt.get(q, 0), "count": cnt.get(q, 0)} for q in ("Q1", "Q2", "Q3", "Q4") if cnt.get(q, 0)]
+    return [
+        {"quarter": q, "amount": amt.get(q, 0), "count": cnt.get(q, 0)}
+        for q in ("Q1", "Q2", "Q3", "Q4")
+        if cnt.get(q, 0)
+    ]
 
 
 def weekly(principal, query: dict) -> dict:
     """Weekly fund-request rollup for a month. Returns the full BeBudgetWeekly contract."""
     from apps.activities.models import Activity
-    
+
     fy = query.get("fy") or get_operational_fy()
     month_val = query.get("month")
     month = int(month_val) if month_val else 1
     scope = resolve_user_scope(principal)
-    
-    qs = Activity.objects.filter(deleted_at__isnull=True, fy=fy, planned_month=month)
+
+    qs = (
+        Activity.objects.filter(deleted_at__isnull=True, fy=fy, month=month)
+        .exclude(status__in=["cancelled", "rejected"])
+        .exclude(delivery_type="partner", planned_date__isnull=True)
+    )
     if not scope.country_scope:
         if scope.staff_ids:
             qs = qs.filter(responsible_staff_id__in=scope.staff_ids)
@@ -300,28 +368,37 @@ def weekly(principal, query: dict) -> dict:
             qs = qs.filter(assigned_partner_id__in=scope.partner_ids)
         else:
             qs = qs.none()
-            
-    activities = list(qs.select_related("school", "cluster").prefetch_related("schedule_cost_lines"))
-    
+
+    activities = list(
+        qs.select_related("school", "cluster").prefetch_related("schedule_cost_lines")
+    )
+
     lines = []
     total_cents = 0
     cost_missing_count = 0
-    
+
     # Weeks rollup: weeks 1 to 5
     week_amounts = {w: 0 for w in range(1, 6)}
     week_counts = {w: 0 for w in range(1, 6)}
-    
+
     for a in activities:
-        amount = sum(line.amount for line in a.schedule_cost_lines.all()) or a.est_cost_cents
+        amount = (
+            sum(line.amount for line in a.schedule_cost_lines.all()) or a.est_cost_cents
+        )
         total_cents += amount
         if a.cost_missing:
             cost_missing_count += 1
-            
-        w = a.planned_week or 1
+
+        # planned_week is only populated when a caller happens to pass
+        # plannedWeek explicitly (same reliability gap as planned_month) —
+        # derive the week-of-month from the reliably-set planned_date instead,
+        # using the same formula the rest of the app already uses for this
+        # (see apps.activities.services / apps.my_plan.services).
+        w = min(5, (a.planned_date.day - 1) // 7 + 1) if a.planned_date else 1
         if w in week_amounts:
             week_amounts[w] += amount
             week_counts[w] += 1
-            
+
         # Serialize cost lines
         cost_lines = [
             {
@@ -330,30 +407,38 @@ def weekly(principal, query: dict) -> dict:
                 "unit": line.unit_cost,
                 "qty": line.qty,
                 "amount": line.amount,
-                "missing": False
+                "missing": False,
             }
             for line in a.schedule_cost_lines.all()
         ]
-        
-        lines.append({
-            "id": a.id,
-            "activityType": a.activity_type,
-            "deliveryType": a.delivery_type,
-            "status": a.status,
-            "month": a.planned_month,
-            "week": a.planned_week,
-            "scheduledDate": a.scheduled_date.isoformat() if a.scheduled_date else None,
-            "place": a.school.name if a.school else (a.cluster.name if a.cluster else ""),
-            "district": a.school.district.name if a.school and a.school.district else "",
-            "staff": a.responsible_staff_id or "",
-            "partner": a.assigned_partner_id or "",
-            "amount": amount,
-            "costMissing": a.cost_missing,
-            "lines": cost_lines,
-            "paymentStatus": a.payment_status,
-            "iaVerificationStatus": a.ia_verification_status,
-        })
-        
+
+        lines.append(
+            {
+                "id": a.id,
+                "activityType": a.activity_type,
+                "deliveryType": a.delivery_type,
+                "status": a.status,
+                "month": a.month,
+                "week": w,
+                "scheduledDate": a.scheduled_date.isoformat()
+                if a.scheduled_date
+                else None,
+                "place": a.school.name
+                if a.school
+                else (a.cluster.name if a.cluster else ""),
+                "district": a.school.district.name
+                if a.school and a.school.district
+                else "",
+                "staff": a.responsible_staff_id or "",
+                "partner": a.assigned_partner_id or "",
+                "amount": amount,
+                "costMissing": a.cost_missing,
+                "lines": cost_lines,
+                "paymentStatus": a.payment_status,
+                "iaVerificationStatus": a.ia_verification_status,
+            }
+        )
+
     weeks = [
         {
             "key": f"W{w}",
@@ -364,7 +449,7 @@ def weekly(principal, query: dict) -> dict:
         }
         for w in range(1, 6)
     ]
-    
+
     return {
         "fy": fy,
         "role": scope.active_role or "",
@@ -382,8 +467,12 @@ def board(principal, query: dict) -> dict:
 
     fy = query.get("fy") or get_operational_fy()
     scope = resolve_user_scope(principal)
-    qs = Activity.objects.filter(deleted_at__isnull=True, fy=fy)
-    
+    qs = (
+        Activity.objects.filter(deleted_at__isnull=True, fy=fy)
+        .exclude(status__in=["cancelled", "rejected"])
+        .exclude(delivery_type="partner", planned_date__isnull=True)
+    )
+
     lens = query.get("lens", "own")
     if not scope.country_scope:
         if lens == "team" and scope.supervised_staff_ids:
@@ -399,23 +488,34 @@ def board(principal, query: dict) -> dict:
 
     total_fy = 0
     cost_missing_count = 0
-    
+
     month_data = {}
     category_data = {}
-    
+
     import datetime
+
     today = datetime.date.today()
     this_week_num = today.isocalendar()[1]
     next_week_num = this_week_num + 1
-    
+
     this_week_total = 0
     next_week_total = 0
     this_month_total = 0
     this_quarter_total = 0
-    
+
     MONTH_NAMES = {
-        1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr", 5: "May", 6: "Jun",
-        7: "Jul", 8: "Aug", 9: "Sep", 10: "Oct", 11: "Nov", 12: "Dec"
+        1: "Jan",
+        2: "Feb",
+        3: "Mar",
+        4: "Apr",
+        5: "May",
+        6: "Jun",
+        7: "Jul",
+        8: "Aug",
+        9: "Sep",
+        10: "Oct",
+        11: "Nov",
+        12: "Dec",
     }
 
     category_groups = {}
@@ -425,21 +525,21 @@ def board(principal, query: dict) -> dict:
         amount = sum(line.amount for line in a.schedule_cost_lines.all())
         if not amount and a.est_cost_cents:
             amount = a.est_cost_cents
-            
+
         total_fy += amount
         if a.cost_missing:
             cost_missing_count += 1
-            
-        m = a.planned_month
+
+        m = a.month
         if m:
             if m not in month_data:
                 month_data[m] = {"amount": 0, "count": 0}
             month_data[m]["amount"] += amount
             month_data[m]["count"] += 1
-            
+
         cat = a.activity_type.replace("_", " ").title()
         category_data[cat] = category_data.get(cat, 0) + amount
-        
+
         if a.scheduled_date:
             act_date = a.scheduled_date.date()
             if act_date.year == today.year:
@@ -448,57 +548,73 @@ def board(principal, query: dict) -> dict:
                     this_week_total += amount
                 elif act_wk == next_week_num:
                     next_week_total += amount
-        
-        if a.planned_month:
-            if a.planned_month == today.month:
+
+        if a.month:
+            if a.month == today.month:
                 this_month_total += amount
-            
-            q_map = {1: "Q1", 2: "Q1", 3: "Q1", 4: "Q2", 5: "Q2", 6: "Q2", 7: "Q3", 8: "Q3", 9: "Q3", 10: "Q4", 11: "Q4", 12: "Q4"}
+
+            q_map = {
+                1: "Q1",
+                2: "Q1",
+                3: "Q1",
+                4: "Q2",
+                5: "Q2",
+                6: "Q2",
+                7: "Q3",
+                8: "Q3",
+                9: "Q3",
+                10: "Q4",
+                11: "Q4",
+                12: "Q4",
+            }
             this_q = q_map.get(today.month, "Q1")
-            if q_map.get(a.planned_month) == this_q:
+            if q_map.get(a.month) == this_q:
                 this_quarter_total += amount
 
         if cat not in category_groups:
             category_groups[cat] = []
-        
+
         resp = a.responsible_staff_id or a.assigned_partner_id or "—"
-        
-        category_groups[cat].append({
-            "index": activity_index,
-            "activity": a.activity_type.replace("_", " ").title(),
-            "schoolCount": 1 if a.school_id else 0,
-            "responsible": resp,
-            "unitCost": amount,
-            "total": amount,
-            "costMissing": a.cost_missing,
-        })
+
+        category_groups[cat].append(
+            {
+                "index": activity_index,
+                "activity": a.activity_type.replace("_", " ").title(),
+                "schoolCount": 1 if a.school_id else 0,
+                "responsible": resp,
+                "unitCost": amount,
+                "total": amount,
+                "costMissing": a.cost_missing,
+            }
+        )
         activity_index += 1
 
     by_category = []
     for cat, amt in category_data.items():
-        by_category.append({
-            "label": cat,
-            "amount": amt,
-            "pct": round(amt / total_fy * 100) if total_fy else 0
-        })
+        by_category.append(
+            {
+                "label": cat,
+                "amount": amt,
+                "pct": round(amt / total_fy * 100) if total_fy else 0,
+            }
+        )
     by_category.sort(key=lambda x: x["amount"], reverse=True)
 
     by_month = []
     for m in range(1, 13):
         m_info = month_data.get(m, {"amount": 0, "count": 0})
-        by_month.append({
-            "month": m,
-            "label": MONTH_NAMES[m],
-            "amount": m_info["amount"],
-            "count": m_info["count"]
-        })
+        by_month.append(
+            {
+                "month": m,
+                "label": MONTH_NAMES[m],
+                "amount": m_info["amount"],
+                "count": m_info["count"],
+            }
+        )
 
     grouped = []
     for cat, rows in category_groups.items():
-        grouped.append({
-            "category": cat,
-            "rows": rows
-        })
+        grouped.append({"category": cat, "rows": rows})
 
     period_total = total_fy
     req_month = query.get("month")
@@ -506,19 +622,54 @@ def board(principal, query: dict) -> dict:
     if req_month:
         period_total = month_data.get(int(req_month), {}).get("amount", 0)
     elif req_quarter:
-        q_months = {"Q1": [10, 11, 12], "Q2": [1, 2, 3], "Q3": [4, 5, 6], "Q4": [7, 8, 9]}.get(req_quarter, [])
+        q_months = {
+            "Q1": [10, 11, 12],
+            "Q2": [1, 2, 3],
+            "Q3": [4, 5, 6],
+            "Q4": [7, 8, 9],
+        }.get(req_quarter, [])
         period_total = sum(month_data.get(m, {}).get("amount", 0) for m in q_months)
 
     role_str = scope.active_role or "CCEO"
-    scope_str = "country" if scope.country_scope else ("team" if scope.can_view_team else "own")
-    view_mode_str = "country_summary" if role_str == "RegionalVicePresident" else ("team" if role_str == "Program Lead" else ("own" if role_str == "CCEO" else "country"))
+    scope_str = (
+        "country" if scope.country_scope else ("team" if scope.can_view_team else "own")
+    )
+    view_mode_str = (
+        "country_summary"
+        if role_str == "RegionalVicePresident"
+        else (
+            "team"
+            if role_str == "Program Lead"
+            else ("own" if role_str == "CCEO" else "country")
+        )
+    )
 
     workflow = [
-        { "step": 1, "label": "Plan & cost from catalogue", "detail": "Staff schedule activities; costs auto-calculated." },
-        { "step": 2, "label": "CCEO → PL review", "detail": "CCEO plans route to Program Lead." },
-        { "step": 3, "label": "PL / IA / Accountant → CD", "detail": "Other roles route to Country Director." },
-        { "step": 4, "label": "CD approval + admin cost", "detail": "CD adds administrative costs." },
-        { "step": 5, "label": "RVP final approval", "detail": "Country consolidation for RVP sign-off." },
+        {
+            "step": 1,
+            "label": "Plan & cost from catalogue",
+            "detail": "Staff schedule activities; costs auto-calculated.",
+        },
+        {
+            "step": 2,
+            "label": "CCEO → PL review",
+            "detail": "CCEO plans route to Program Lead.",
+        },
+        {
+            "step": 3,
+            "label": "PL / IA / Accountant → CD",
+            "detail": "Other roles route to Country Director.",
+        },
+        {
+            "step": 4,
+            "label": "CD approval + admin cost",
+            "detail": "CD adds administrative costs.",
+        },
+        {
+            "step": 5,
+            "label": "RVP final approval",
+            "detail": "Country consolidation for RVP sign-off.",
+        },
     ]
 
     return {
@@ -545,28 +696,11 @@ def board(principal, query: dict) -> dict:
         "grouped": grouped,
         "byCategory": by_category,
         "byMonth": by_month,
-        "workflow": workflow
+        "workflow": workflow,
     }
 
 
 # ── Program + admin budget aggregation (monthly / quarterly / FY) ────────────
-def _program_lines_total(fy: str, *, quarter: str | None = None, month: int | None = None) -> tuple[int, int]:
-    """Sum persisted ActivityScheduleCostLine amounts + count distinct activities
-    for a period. Returns (total, activity_count). Single aggregation query."""
-    from apps.activities.models import ActivityScheduleCostLine
-
-    qs = ActivityScheduleCostLine.objects.filter(
-        activity__deleted_at__isnull=True, activity__fy=fy
-    )
-    if quarter:
-        qs = qs.filter(activity__quarter=quarter)
-    if month is not None:
-        qs = qs.filter(activity__planned_month=month)
-    agg = qs.aggregate(total=Sum("amount"))
-    count = qs.values("activity_id").distinct().count()
-    return int(agg["total"] or 0), count
-
-
 def _admin_lines_total(fy: str, *, month_key: str | None = None) -> int:
     """Sum CD admin budget lines for a period (FY or a month_key 'YYYY-MM')."""
     from apps.monthly_work_plan.models import AdminBudgetLine
@@ -577,23 +711,67 @@ def _admin_lines_total(fy: str, *, month_key: str | None = None) -> int:
     return int(qs.aggregate(total=Sum("total_cost"))["total"] or 0)
 
 
-def get_budget_rollup(fy: str, *, quarter: str | None = None, month: int | None = None) -> dict:
+def get_budget_rollup(
+    fy: str, *, quarter: str | None = None, month: int | None = None
+) -> dict:
     from django.db.models import Sum, Q
     from apps.activities.models import ActivityScheduleCostLine
 
-    qs = ActivityScheduleCostLine.objects.filter(
-        activity__deleted_at__isnull=True, activity__fy=fy
+    qs = (
+        ActivityScheduleCostLine.objects.filter(
+            activity__deleted_at__isnull=True, activity__fy=fy
+        )
+        .exclude(activity__status__in=["cancelled", "rejected"])
+        .exclude(activity__delivery_type="partner", activity__planned_date__isnull=True)
     )
     if quarter:
         qs = qs.filter(activity__quarter=quarter)
     if month is not None:
-        qs = qs.filter(activity__planned_month=month)
+        # `month` here is FY-relative (1=Oct...12=Sep — see monthly_budget()'s
+        # callers), but ActivityScheduleCostLine.month is a calendar month
+        # (set from planned_date in costing_service.apply_to_activity).
+        # Activity.planned_month, which used to be filtered on here, is a
+        # separate legacy field only populated when a caller happens to pass
+        # plannedMonth explicitly, so it silently under-counted real activity.
+        qs = qs.filter(month=_calendar_month_of_fy(fy, month))
 
     agg = qs.aggregate(
         planned=Sum("amount"),
-        requested=Sum("amount", filter=Q(advance_requests__status__in=["pending_responsible_confirmation", "confirmed_for_advance", "submitted_to_accountant", "disbursed", "accountability_pending", "accounted"])),
-        approved=Sum("amount", filter=Q(advance_requests__status__in=["confirmed_for_advance", "submitted_to_accountant", "disbursed", "accountability_pending", "accounted"])),
-        disbursed=Sum("amount", filter=Q(advance_requests__status__in=["disbursed", "accountability_pending", "accounted"])),
+        requested=Sum(
+            "amount",
+            filter=Q(
+                advance_requests__status__in=[
+                    "pending_responsible_confirmation",
+                    "confirmed_for_advance",
+                    "submitted_to_accountant",
+                    "disbursed",
+                    "accountability_pending",
+                    "accounted",
+                ]
+            ),
+        ),
+        approved=Sum(
+            "amount",
+            filter=Q(
+                advance_requests__status__in=[
+                    "confirmed_for_advance",
+                    "submitted_to_accountant",
+                    "disbursed",
+                    "accountability_pending",
+                    "accounted",
+                ]
+            ),
+        ),
+        disbursed=Sum(
+            "amount",
+            filter=Q(
+                advance_requests__status__in=[
+                    "disbursed",
+                    "accountability_pending",
+                    "accounted",
+                ]
+            ),
+        ),
         accounted=Sum("amount", filter=Q(advance_requests__status="accounted")),
     )
 
@@ -615,7 +793,7 @@ def get_budget_rollup(fy: str, *, quarter: str | None = None, month: int | None 
         "cleared": cleared,
         "pending": pending,
         "variance": variance,
-        "activity_count": qs.values("activity_id").distinct().count()
+        "activity_count": qs.values("activity_id").distinct().count(),
     }
 
 
@@ -629,9 +807,13 @@ def monthly_budget(query: dict) -> dict:
     admin_total = _admin_lines_total(fy, month_key=month_key)
     rollup = get_budget_rollup(fy, month=month)
     return {
-        "fy": fy, "month": month, "monthKey": month_key,
-        "programTotal": rollup["planned"], "adminTotal": admin_total,
-        "total": rollup["planned"] + admin_total, "activityCount": rollup["activity_count"],
+        "fy": fy,
+        "month": month,
+        "monthKey": month_key,
+        "programTotal": rollup["planned"],
+        "adminTotal": admin_total,
+        "total": rollup["planned"] + admin_total,
+        "activityCount": rollup["activity_count"],
         "plannedBudget": rollup["planned"],
         "requestedBudget": rollup["requested"],
         "approvedBudget": rollup["approved"],
@@ -654,9 +836,12 @@ def quarterly_budget(query: dict) -> dict:
     )
     rollup = get_budget_rollup(fy, quarter=quarter)
     return {
-        "fy": fy, "quarter": quarter,
-        "programTotal": rollup["planned"], "adminTotal": admin_total,
-        "total": rollup["planned"] + admin_total, "activityCount": rollup["activity_count"],
+        "fy": fy,
+        "quarter": quarter,
+        "programTotal": rollup["planned"],
+        "adminTotal": admin_total,
+        "total": rollup["planned"] + admin_total,
+        "activityCount": rollup["activity_count"],
         "plannedBudget": rollup["planned"],
         "requestedBudget": rollup["requested"],
         "approvedBudget": rollup["approved"],
@@ -683,9 +868,13 @@ def fy_budget(query: dict) -> dict:
         by_quarter[q] = q_rollup["planned"]
 
     by_activity_type = {}
-    type_qs = ActivityScheduleCostLine.objects.filter(
-        activity__deleted_at__isnull=True, activity__fy=fy
-    ).values("activity__activity_type").annotate(total=Sum("amount"))
+    type_qs = (
+        ActivityScheduleCostLine.objects.filter(
+            activity__deleted_at__isnull=True, activity__fy=fy
+        )
+        .values("activity__activity_type")
+        .annotate(total=Sum("amount"))
+    )
     for row in type_qs:
         by_activity_type[row["activity__activity_type"]] = int(row["total"])
 
@@ -711,6 +900,7 @@ def fy_budget(query: dict) -> dict:
 # month_of_fy (1=Oct) → calendar month; quarter → its months-of-fy.
 _FY_START_MONTH = 10  # October
 
+
 def _month_key(fy: str, month_of_fy: int) -> str:
     """month_of_fy (1=Oct) → 'YYYY-MM' calendar key."""
     fy_int = int(fy)
@@ -722,9 +912,17 @@ def _month_key(fy: str, month_of_fy: int) -> str:
     return f"{cal_year:04d}-{cal_month:02d}"
 
 
+def _calendar_month_of_fy(fy: str, month_of_fy: int) -> int:
+    """month_of_fy (1=Oct...12=Sep) -> the calendar month number (1=Jan...12=Dec)
+    that ActivityScheduleCostLine.month/Activity.month actually store."""
+    return int(_month_key(fy, month_of_fy).split("-")[1])
+
+
 def _quarter_months(quarter: str) -> list[int]:
     """Quarter → the 3 months-of-fy it spans (1-based, Oct=1)."""
-    return {"Q1": [1, 2, 3], "Q2": [4, 5, 6], "Q3": [7, 8, 9], "Q4": [10, 11, 12]}[quarter]
+    return {"Q1": [1, 2, 3], "Q2": [4, 5, 6], "Q3": [7, 8, 9], "Q4": [10, 11, 12]}[
+        quarter
+    ]
 
 
 def _activity_to_costable(a) -> dict:

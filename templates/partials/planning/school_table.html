@@ -1,5 +1,5 @@
 <!-- Client Schools Planning Cards Container -->
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden font-sans" id="schools-table-container">
+<div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden " id="schools-table-container">
 
   {% if active_tab == 'clusters' %}
     <!-- Clusters Tab Cards -->
@@ -8,7 +8,7 @@
         {% for c in clusters %}
           <div 
             x-data="{ expanded: false }"
-            class="group border border-slate-150 rounded-2xl bg-white shadow-xs p-5 transition-all duration-300 hover:shadow-md hover:border-slate-300 font-sans text-slate-700"
+            class="group border border-slate-150 rounded-lg bg-white shadow-xs p-5 transition-all duration-300 hover:shadow-md hover:border-slate-300 text-slate-700"
             :class="expanded ? 'border-slate-300 bg-slate-50/10' : ''"
           >
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -119,7 +119,7 @@
           </div>
         {% endfor %}
       {% else %}
-        <div class="px-6 py-12 text-center text-slate-400 font-semibold bg-slate-50/10 rounded-2xl border border-dashed border-slate-200">
+        <div class="px-6 py-12 text-center text-slate-400 font-semibold bg-slate-50/10 rounded-lg border border-dashed border-slate-200">
           No clusters ready to be scheduled.
         </div>
       {% endif %}
@@ -133,7 +133,7 @@
           {% include "components/school_list_card.html" with school=r context_page="planning" can_assign_partner=can_assign_partner %}
         {% endfor %}
       {% else %}
-        <div class="px-6 py-12 text-center text-slate-400 font-semibold bg-slate-50/10 rounded-2xl border border-dashed border-slate-200">
+        <div class="px-6 py-12 text-center text-slate-400 font-semibold bg-slate-50/10 rounded-lg border border-dashed border-slate-200">
           No partner assignments pending.
         </div>
       {% endif %}
@@ -147,7 +147,7 @@
           {% include "components/school_list_card.html" with school=r context_page="planning" can_assign_partner=can_assign_partner %}
         {% endfor %}
       {% else %}
-        <div class="px-6 py-12 text-center text-slate-400 font-semibold bg-slate-50/10 rounded-2xl border border-dashed border-slate-200">
+        <div class="px-6 py-12 text-center text-slate-400 font-semibold bg-slate-50/10 rounded-lg border border-dashed border-slate-200">
           No planning records match your filters.
           <div class="mt-1 text-[11px] text-slate-400 font-normal">Clear filters or adjust your search.</div>
         </div>

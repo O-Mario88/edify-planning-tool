@@ -1,3 +1,5 @@
+import datetime
+
 from django.shortcuts import render
 from apps.core.permissions import require_page_permission
 from django.utils import timezone
@@ -8,8 +10,8 @@ from apps.partners.models import Partner
 from apps.accounts.models import StaffProfile
 from apps.schools.models import School
 from apps.activities.models import Activity
-from apps.ssa.models import SsaRecord
 from apps.analytics.analytics_dashboard_service import AnalyticsDashboardService
+
 
 @require_page_permission("analytics")
 def analytics_dashboard_view(request):
@@ -27,17 +29,21 @@ def analytics_dashboard_view(request):
         "activity_type": request.GET.get("activity_type"),
         "q": request.GET.get("q"),
     }
-    
+
     # 2. Call Service to gather all dashboard datasets
     data = AnalyticsDashboardService.get_analytics_data(request.user, filters)
-    
+
     # 3. Retrieve options list for dropdown filters
     regions = Region.objects.all().order_by("name")
     districts = District.objects.all().order_by("name")
     clusters = Cluster.objects.all().order_by("name")
-    staff_profiles = StaffProfile.objects.filter(deleted_at__isnull=True).select_related("user").order_by("user__name")
+    staff_profiles = (
+        StaffProfile.objects.filter(deleted_at__isnull=True)
+        .select_related("user")
+        .order_by("user__name")
+    )
     partners = Partner.objects.filter(deleted_at__isnull=True).order_by("name")
-    
+
     # 4. Render context
     context = {
         **data,
@@ -46,17 +52,98 @@ def analytics_dashboard_view(request):
         "clusters": clusters,
         "staff_profiles": staff_profiles,
         "partners": partners,
-        
         # Action settings
         "use_dark_sidebar": False,
         "timestamp": timezone.now().strftime("%B %d, %Y %I:%M %p"),
     }
-    
+
     # If HTMX request, render only content cards to swap
     if request.headers.get("HX-Request") == "true":
         return render(request, "partials/analytics/kpi_cards.html", context)
-        
+
     return render(request, "pages/analytics/index.html", context)
+
+
+@require_page_permission("pl_analytics")
+def pl_analytics_view(request):
+    """Program Lead Analytics — the supervised-team decision cockpit.
+
+    Full page on a normal GET; the analytics body partial on an HX-Request so
+    the filter row swaps only `#pl-analytics-body` (charts re-init via Alpine).
+    Everything is scoped to the PL's supervised team by PLAnalyticsService."""
+    from apps.analytics.pl_analytics_service import PLAnalyticsService
+
+    filters = {
+        "district": request.GET.get("district"),
+        "cluster": request.GET.get("cluster"),
+        "cceo": request.GET.get("cceo"),
+        "partner": request.GET.get("partner"),
+        "school_type": request.GET.get("school_type"),
+        "activity_type": request.GET.get("activity_type"),
+        "quarter": request.GET.get("quarter"),
+    }
+    fy = (request.GET.get("fy") or "").strip() or None
+    quarter = (request.GET.get("quarter") or "").strip() or None
+
+    data = PLAnalyticsService.get_dashboard(request.user, fy=fy, quarter=quarter, filters=filters)
+    context = {
+        **data,
+        "timestamp": timezone.now().strftime("%B %d, %Y %I:%M %p"),
+    }
+    if request.headers.get("HX-Request") == "true":
+        return render(request, "partials/analytics/pl/body.html", context)
+    return render(request, "pages/analytics/pl_analytics.html", context)
+
+
+@require_page_permission("pl_analytics")
+def pl_analytics_export_view(request):
+    """CSV export of the PL's at-risk school list — scoped to the supervised
+    portfolio (never another PL's schools)."""
+    import csv
+
+    from django.http import HttpResponse
+
+    from apps.analytics.pl_analytics_service import PLAnalyticsService
+
+    fy = (request.GET.get("fy") or "").strip() or None
+    quarter = (request.GET.get("quarter") or "").strip() or None
+    filters = {
+        "district": request.GET.get("district"),
+        "cluster": request.GET.get("cluster"),
+        "cceo": request.GET.get("cceo"),
+        "school_type": request.GET.get("school_type"),
+    }
+    rows = PLAnalyticsService.export_rows(request.user, fy=fy, quarter=quarter, filters=filters)
+    resp = HttpResponse(content_type="text/csv")
+    resp["Content-Disposition"] = 'attachment; filename="pl_analytics_risk.csv"'
+    w = csv.writer(resp)
+    w.writerow(["School", "District", "Issue", "Last Visit", "Last Training", "Next Action"])
+    for r in rows:
+        w.writerow([r["school"], r["district"], r["issue"], r["last_visit"], r["last_training"], r["next_action"]])
+    return resp
+
+
+@require_page_permission("pl_analytics")
+def pl_analytics_drilldown_view(request):
+    """Role-scoped drill-down drawer for the PL cockpit (district / cluster /
+    CCEO / risk-list / KPI). Renders into the global #drawer-container."""
+    from apps.analytics.pl_analytics_service import PLAnalyticsService, resolve_pl_scope
+
+    drill = (request.GET.get("drill") or "").strip()
+    fy = (request.GET.get("fy") or "").strip() or None
+    quarter = (request.GET.get("quarter") or "").strip() or None
+    filters = {
+        "district": request.GET.get("district"),
+        "cluster": request.GET.get("cluster"),
+        "cceo": request.GET.get("cceo"),
+        "school_type": request.GET.get("school_type"),
+        "activity_type": request.GET.get("activity_type"),
+    }
+    payload = PLAnalyticsService.drilldown(
+        request.user, drill, request.GET, fy=fy, quarter=quarter, filters=filters
+    )
+    context = {"drill": drill, "drawer_size": "lg", **payload}
+    return render(request, "partials/analytics/pl/drilldown.html", context)
 
 
 @require_page_permission("analytics")
@@ -65,117 +152,200 @@ def analytics_drilldown_view(request):
     metric = request.GET.get("metric", "").strip()
     fy = request.GET.get("fy") or get_operational_fy()
     quarter = request.GET.get("quarter") or "Q2"
-    
+
     # Base filter criteria
     activities = Activity.objects.filter(deleted_at__isnull=True, fy=fy)
     schools = School.objects.filter(deleted_at__isnull=True)
-    ssa_records = SsaRecord.objects.filter(deleted_at__isnull=True, fy=fy)
-    
+
     title = "Drilldown Details"
-    description = f"Traceable source records for the selected metric."
+    description = "Traceable source records for the selected metric."
     headers = ["Entity", "Details", "Date", "Status"]
     rows = []
-    
+
     # Query specific data traces
-    if metric == "teachers_trained" or metric == "leaders_trained" or metric == "activities_completed":
+    if (
+        metric == "teachers_trained"
+        or metric == "leaders_trained"
+        or metric == "activities_completed"
+    ):
         title = "Trained Participants / Activities completed"
         description = f"Completed and verified activities for {quarter} FY {fy}."
-        headers = ["Activity Type", "Target Location/School", "Responsible Owner", "Verification Status", "SF Activity ID"]
-        
-        acts = list(activities.filter(quarter=quarter, status__in=["completed", "ia_verified", "accountant_confirmed"]).select_related("school", "cluster")[:100])
+        headers = [
+            "Activity Type",
+            "Target Location/School",
+            "Responsible Owner",
+            "Verification Status",
+            "SF Activity ID",
+        ]
+
+        acts = list(
+            activities.filter(
+                quarter=quarter,
+                status__in=["completed", "ia_verified", "accountant_confirmed"],
+            ).select_related("school", "cluster")[:100]
+        )
         staff_ids = [a.responsible_staff_id for a in acts if a.responsible_staff_id]
-        staff_map = {sp.id: sp.user.name for sp in StaffProfile.objects.filter(id__in=staff_ids).select_related("user")}
-        
+        staff_map = {
+            sp.id: sp.user.name
+            for sp in StaffProfile.objects.filter(id__in=staff_ids).select_related(
+                "user"
+            )
+        }
+
         for a in acts:
-            target = a.school.name if a.school else (a.cluster.name if a.cluster else "-")
-            rows.append({
-                "col1": a.activity_type.replace("_", " ").title(),
-                "col2": target,
-                "col3": staff_map.get(a.responsible_staff_id, "Partner/Staff"),
-                "col4": a.status.replace("_", " ").title(),
-                "col5": a.salesforce_activity_id or "Not Entered",
-            })
-            
+            target = (
+                a.school.name if a.school else (a.cluster.name if a.cluster else "-")
+            )
+            rows.append(
+                {
+                    "col1": a.activity_type.replace("_", " ").title(),
+                    "col2": target,
+                    "col3": staff_map.get(a.responsible_staff_id, "Partner/Staff"),
+                    "col4": a.status.replace("_", " ").title(),
+                    "col5": a.salesforce_activity_id or "Not Entered",
+                }
+            )
+
     elif metric == "schools_impacted":
         title = "Schools Reached"
-        description = f"Distinct school sites with completed program activities in {quarter}."
+        description = (
+            f"Distinct school sites with completed program activities in {quarter}."
+        )
         headers = ["School ID", "School Name", "District", "Type", "Enrollment"]
-        
-        school_ids = activities.filter(quarter=quarter, status__in=["completed", "ia_verified"]).values_list("school_id", flat=True).distinct()
+
+        school_ids = (
+            activities.filter(quarter=quarter, status__in=["completed", "ia_verified"])
+            .values_list("school_id", flat=True)
+            .distinct()
+        )
         for s in schools.filter(id__in=school_ids)[:100]:
-            rows.append({
-                "col1": s.school_id,
-                "col2": s.name,
-                "col3": s.district.name if s.district else "-",
-                "col4": s.school_type.upper(),
-                "col5": f"{s.enrollment:,}",
-            })
-            
+            rows.append(
+                {
+                    "col1": s.school_id,
+                    "col2": s.name,
+                    "col3": s.district.name if s.district else "-",
+                    "col4": s.school_type.upper(),
+                    "col5": f"{s.enrollment:,}",
+                }
+            )
+
     elif metric == "no_ssa":
         title = "Schools without SSA"
-        description = "Active schools lacking current-FY Self-School Assessment reports."
-        headers = ["School ID", "School Name", "District", "Account Owner", "SSA Status"]
-        
-        for s in schools.filter(current_fy_ssa_status__in=["not_done", "scheduled"])[:100]:
-            rows.append({
-                "col1": s.school_id,
-                "col2": s.name,
-                "col3": s.district.name if s.district else "-",
-                "col4": s.account_owner.user.name if s.account_owner else "-",
-                "col5": s.get_current_fy_ssa_status_display(),
-            })
-            
+        description = (
+            "Active schools lacking current-FY Self-School Assessment reports."
+        )
+        headers = [
+            "School ID",
+            "School Name",
+            "District",
+            "Account Owner",
+            "SSA Status",
+        ]
+
+        for s in schools.filter(current_fy_ssa_status__in=["not_done", "scheduled"])[
+            :100
+        ]:
+            rows.append(
+                {
+                    "col1": s.school_id,
+                    "col2": s.name,
+                    "col3": s.district.name if s.district else "-",
+                    "col4": s.account_owner.user.name if s.account_owner else "-",
+                    "col5": s.get_current_fy_ssa_status_display(),
+                }
+            )
+
     elif metric == "not_visited":
         title = "Schools not visited"
         description = "Schools without a completed staff visit in the last 60+ days."
-        headers = ["School ID", "School Name", "District", "Account Owner", "SSA Status"]
-        
+        headers = [
+            "School ID",
+            "School Name",
+            "District",
+            "Account Owner",
+            "SSA Status",
+        ]
+
         sixty_days_ago = timezone.now() - datetime.timedelta(days=60)
-        visited_schools = Activity.objects.filter(
-            deleted_at__isnull=True, activity_type__in=["school_visit", "follow_up_visit", "coaching_visit", "core_visit"], 
-            status__in=["completed", "ia_verified", "accountant_confirmed"], scheduled_date__gte=sixty_days_ago
-        ).values_list("school_id", flat=True).distinct()
-        
+        visited_schools = (
+            Activity.objects.filter(
+                deleted_at__isnull=True,
+                activity_type__in=[
+                    "school_visit",
+                    "follow_up_visit",
+                    "coaching_visit",
+                    "core_visit",
+                ],
+                status__in=["completed", "ia_verified", "accountant_confirmed"],
+                scheduled_date__gte=sixty_days_ago,
+            )
+            .values_list("school_id", flat=True)
+            .distinct()
+        )
+
         for s in schools.exclude(id__in=visited_schools)[:100]:
-            rows.append({
-                "col1": s.school_id,
-                "col2": s.name,
-                "col3": s.district.name if s.district else "-",
-                "col4": s.account_owner.user.name if s.account_owner else "-",
-                "col5": s.get_current_fy_ssa_status_display(),
-            })
-            
+            rows.append(
+                {
+                    "col1": s.school_id,
+                    "col2": s.name,
+                    "col3": s.district.name if s.district else "-",
+                    "col4": s.account_owner.user.name if s.account_owner else "-",
+                    "col5": s.get_current_fy_ssa_status_display(),
+                }
+            )
+
     elif metric == "not_trained":
         title = "Schools not trained"
         description = "Schools that have not participated in any training workshops in this quarter."
-        headers = ["School ID", "School Name", "District", "Account Owner", "SSA Status"]
-        
-        trained_schools = Activity.objects.filter(
-            deleted_at__isnull=True, activity_type__in=["training", "school_improvement_training", "cluster_training", "core_training"], 
-            status__in=["completed", "ia_verified", "accountant_confirmed"], quarter=quarter
-        ).values_list("school_id", flat=True).distinct()
-        
+        headers = [
+            "School ID",
+            "School Name",
+            "District",
+            "Account Owner",
+            "SSA Status",
+        ]
+
+        trained_schools = (
+            Activity.objects.filter(
+                deleted_at__isnull=True,
+                activity_type__in=[
+                    "training",
+                    "school_improvement_training",
+                    "cluster_training",
+                    "core_training",
+                ],
+                status__in=["completed", "ia_verified", "accountant_confirmed"],
+                quarter=quarter,
+            )
+            .values_list("school_id", flat=True)
+            .distinct()
+        )
+
         for s in schools.exclude(id__in=trained_schools)[:100]:
-            rows.append({
-                "col1": s.school_id,
-                "col2": s.name,
-                "col3": s.district.name if s.district else "-",
-                "col4": s.account_owner.user.name if s.account_owner else "-",
-                "col5": s.get_current_fy_ssa_status_display(),
-            })
-            
+            rows.append(
+                {
+                    "col1": s.school_id,
+                    "col2": s.name,
+                    "col3": s.district.name if s.district else "-",
+                    "col4": s.account_owner.user.name if s.account_owner else "-",
+                    "col5": s.get_current_fy_ssa_status_display(),
+                }
+            )
+
     else:
         # Fallback trace listing
         title = f"{metric.replace('_', ' ').title()} Records"
         headers = ["Name / Identifier", "Details", "Month", "Verification Code"]
         for s in schools[:20]:
-            rows.append({
-                "col1": s.name,
-                "col2": s.school_type.title(),
-                "col3": quarter,
-                "col4": s.school_id,
-            })
-            
+            rows.append(
+                {
+                    "col1": s.name,
+                    "col2": s.school_type.title(),
+                    "col3": quarter,
+                    "col4": s.school_id,
+                }
+            )
+
     context = {
         "title": title,
         "description": description,
@@ -201,14 +371,103 @@ def analytics_customize_dashboard_view(request):
     context = {
         "drawer_size": "sm",
     }
-    return render(request, "partials/analytics/customize_dashboard_drawer.html", context)
+    return render(
+        request, "partials/analytics/customize_dashboard_drawer.html", context
+    )
 
 
 @require_page_permission("system_health")
 def system_health_view(request):
     from apps.system_health.services import report as system_health_report
+
     health = system_health_report()
+    # The template reads workflow counts as top-level keys (health.unclusteredSchools
+    # etc.), but report() nests them under workflowIssues — flatten them in.
     context = {
-        "health": health,
+        "health": {**health, **health["workflowIssues"]},
     }
     return render(request, "pages/system_health/index.html", context)
+
+
+# ── Country Director Analytics — national leadership-intelligence cockpit ──────
+def _cd_filters(request):
+    return {
+        "pl": request.GET.get("pl"),
+        "cceo": request.GET.get("cceo"),
+        "district": request.GET.get("district"),
+        "cluster": request.GET.get("cluster"),
+        "partner": request.GET.get("partner"),
+        "activity_type": request.GET.get("activity_type"),
+        "quarter": request.GET.get("quarter"),
+        "month": request.GET.get("month"),
+    }
+
+
+@require_page_permission("cd_analytics")
+def cd_analytics_view(request):
+    """Country Director Analytics — the national leadership cockpit.
+
+    Country-wide intelligence across every PL, CCEO, district, region, partner,
+    cluster and school. Full page on a normal GET; the analytics body partial on
+    an HX-Request so the filter row swaps only `#cd-analytics-body`. The CD sees
+    everything but acts only through oversight workflows — CDAnalyticsService
+    never emits field-execution actions."""
+    from apps.analytics.cd_analytics_service import CDAnalyticsService
+
+    fy = (request.GET.get("fy") or "").strip() or None
+    quarter = (request.GET.get("quarter") or "").strip() or None
+    month = (request.GET.get("month") or "").strip() or None
+    data = CDAnalyticsService.get_dashboard(
+        request.user, fy=fy, quarter=quarter, month=month, filters=_cd_filters(request)
+    )
+    # Month-of-FY labels (FY starts in October).
+    _fy_months = ["Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep"]
+    month_options = [(str(i + 1), lbl) for i, lbl in enumerate(_fy_months)]
+    context = {**data, "month_options": month_options, "month": (month or ""),
+               "timestamp": timezone.now().strftime("%B %d, %Y %I:%M %p")}
+    if request.headers.get("HX-Request") == "true":
+        return render(request, "partials/analytics/cd/body.html", context)
+    return render(request, "pages/analytics/cd_analytics.html", context)
+
+
+@require_page_permission("cd_analytics")
+def cd_analytics_drilldown_view(request):
+    """Oversight-only drill-down drawer for the CD cockpit (PL / CCEO / district /
+    region / partner / cluster / risk / budget). Every payload is read/oversight —
+    it never exposes field-execution actions."""
+    from apps.analytics.cd_analytics_service import CDAnalyticsService
+
+    drill = (request.GET.get("drill") or "").strip()
+    fy = (request.GET.get("fy") or "").strip() or None
+    quarter = (request.GET.get("quarter") or "").strip() or None
+    month = (request.GET.get("month") or "").strip() or None
+    payload = CDAnalyticsService.drilldown(
+        request.user, drill, request.GET, fy=fy, quarter=quarter, month=month, filters=_cd_filters(request)
+    )
+    context = {"drill": drill, "drawer_size": "lg", **payload}
+    return render(request, "partials/analytics/cd/drilldown.html", context)
+
+
+@require_page_permission("cd_analytics")
+def cd_analytics_export_view(request):
+    """CSV export of the CD's country oversight roster (PL performance + risk).
+    Read-only export; respects the CD role gate."""
+    import csv
+
+    from django.http import HttpResponse
+
+    from apps.analytics.cd_analytics_service import CDAnalyticsService
+
+    fy = (request.GET.get("fy") or "").strip() or None
+    quarter = (request.GET.get("quarter") or "").strip() or None
+    month = (request.GET.get("month") or "").strip() or None
+    rows = CDAnalyticsService.export_rows(
+        request.user, fy=fy, quarter=quarter, month=month, filters=_cd_filters(request)
+    )
+    resp = HttpResponse(content_type="text/csv")
+    resp["Content-Disposition"] = 'attachment; filename="cd_analytics_pl_oversight.csv"'
+    w = csv.writer(resp)
+    w.writerow(["PL", "CCEOs Supervised", "Target Achievement %", "Schools at Risk", "Budget Utilization %", "Backlog", "Risk Status"])
+    for r in rows:
+        w.writerow([r["name"], r["cceos"], r["target_pct"], r["schools_at_risk"], r["budget_util"], r["backlog"], r["risk"]])
+    return resp

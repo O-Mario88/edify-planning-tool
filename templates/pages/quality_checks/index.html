@@ -3,18 +3,18 @@
 {% block title %}Quality Checks — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6">
+<div class="px-4 sm:px-6 py-5 space-y-4" style="max-width:1500px;margin:0 auto;">
 
 <div class="flex items-center justify-between">
 <div>
-<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight">Quality Checks</h1>
-<p class="text-[12px] text-[var(--text-secondary)] mt-1 font-semibold">Edify Operations · Quality Checks</p>
+<h1 class="text-[21px] font-extrabold tracking-tight">Quality Checks</h1>
+<p class="text-[12px] text-[var(--edify-text-muted)] mt-1 font-semibold">Edify Operations · Quality Checks</p>
 </div>
 </div>
 
-<div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm">
+<div class="bg-white rounded-lg border border-[var(--edify-border)] shadow-sm">
 {% if flags %}<ul class="divide-y divide-slate-100">{% for f in flags %}<li class="px-5 py-3.5 flex items-center justify-between"><div><p class="text-[14px] font-bold text-slate-800">{{ f.scope_name|default:"Flag" }}</p><p class="text-[11px] text-slate-400">{{ f.raised_by_name|default:"System" }} · {{ f.created_at }}</p></div><span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">{{ f.status }}</span></li>{% endfor %}</ul>
-{% else %}<div class="p-12 text-center"><p class="text-[36px] mb-3">🔍</p><p class="text-[14px] font-bold text-slate-600">No quality flags raised</p></div>{% endif %}
+{% else %}<div class="p-12 text-center"><p class="text-[36px] mb-3"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 10.5a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z"/></svg></p><p class="text-[14px] font-bold text-slate-600">No quality flags raised</p></div>{% endif %}
 </div>
 
 </div>

@@ -158,27 +158,34 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 mt-1 bg-slate-50 focu
 {% elif action == 'confirm_accountability' %}
 <input type="hidden" name="request_id" value="{{ item.id }}">
 
+<!-- Review only: the responsible user entered the NetSuite Code and amounts
+     at submission. Clearing enforces the hard gates server-side (code present
+     + IA verification) — the Accountant never types the code. -->
 <div class="p-3 bg-blue-50 rounded-xl border border-blue-100 text-[12px] leading-relaxed text-blue-800 space-y-1">
-<p class="font-semibold text-blue-900">Submitted Accountability Summary:</p>
-<p>&bull; Disbursed Amount: {{ item.totalAmount|ugx }} UGX</p>
-<p>&bull; Accounted Spent: {{ item.accountedAmount|ugx }} UGX</p>
-<p>&bull; Returned Balance: {{ item.returnedAmount|ugx }} UGX</p>
-<p>&bull; NetSuite ID: {{ item.accountabilityNetsuiteId|default:"None" }}</p>
+<p class="font-semibold text-blue-900">Submitted Accountability Summary</p>
+<p>&bull; Disbursed: {{ item.disbursedTotal|ugx }}</p>
+<p>&bull; Accounted Spent: {{ item.accountedAmount|ugx }}</p>
+<p>&bull; Returned Balance: {{ item.returnedAmount|ugx }}</p>
+<p>&bull; NetSuite Code: <span class="font-bold">{{ item.accountabilityNetsuiteId|default:"Missing" }}</span></p>
+{% if item.varianceNote %}<p>&bull; Variance note: {{ item.varianceNote }}</p>{% endif %}
 </div>
 
-<!-- NetSuite Expense ID (override if needed) -->
-<div>
-<label for="netsuite_id" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">NetSuite Expense / Journal Entry ID</label>
-<input 
-type="text" 
-name="netsuite_id" 
-id="netsuite_id"
-required
-value="{{ item.accountabilityNetsuiteId|default:'' }}"
-placeholder="e.g. JE-887766"
-class="w-full h-10 px-3 rounded-lg border border-slate-200 mt-1 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
->
+{% if item.pendingAdvances %}
+<div class="rounded-xl border border-slate-100 divide-y divide-slate-50">
+{% for adv in item.pendingAdvances %}
+<div class="px-3 py-2 flex items-center justify-between gap-2 text-[11.5px]">
+<span class="font-semibold text-slate-700 truncate">{{ adv.label }}</span>
+<span class="text-slate-500 shrink-0">{{ adv.accounted|ugx }} spent · {{ adv.returned|ugx }} returned · <span class="font-bold text-slate-600">{{ adv.netsuiteId|default:"no code" }}</span></span>
 </div>
+{% endfor %}
+</div>
+{% endif %}
+
+<p class="text-[11px] font-semibold text-slate-400 leading-relaxed">
+Clearing marks this accountability as reviewed and closes the finance loop.
+It is blocked automatically if the NetSuite Code is missing or IA has not
+verified the activity.
+</p>
 
 {% elif action == 'return_correction' %}
 <input type="hidden" name="request_id" value="{{ item.id }}">

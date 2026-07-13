@@ -5,22 +5,33 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('clusters', '0002_cluster_environment_cluster_source'),
-        ('partners', '0003_partnerassignment'),
-        ('schools', '0006_alter_uploadbatch_status'),
+        ("clusters", "0002_cluster_environment_cluster_source"),
+        ("partners", "0003_partnerassignment"),
+        ("schools", "0006_alter_uploadbatch_status"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='partnerassignment',
-            name='cluster',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='partner_assignments', to='clusters.cluster'),
+            model_name="partnerassignment",
+            name="cluster",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="partner_assignments",
+                to="clusters.cluster",
+            ),
         ),
         migrations.AlterField(
-            model_name='partnerassignment',
-            name='school',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='partner_assignments', to='schools.school'),
+            model_name="partnerassignment",
+            name="school",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="partner_assignments",
+                to="schools.school",
+            ),
         ),
     ]

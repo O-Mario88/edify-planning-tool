@@ -4,23 +4,23 @@
 {% block title %}Schedule Activity - Edify Command Center{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-4xl mx-auto space-y-6">
+<div class="px-4 sm:px-6 py-5 space-y-4" style="max-width:1500px;margin:0 auto;">
 <!-- Header -->
 <div>
-<a href="/planning" class="text-[11px] font-semibold text-[var(--color-edify-primary)] hover:underline uppercase tracking-wider">&larr; Back to Planning Dashboard</a>
-<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight mt-2">
+<a href="/planning" class="text-[11px] font-semibold text-[var(--edify-accent)] hover:underline uppercase tracking-wider">&larr; Back to Planning Dashboard</a>
+<h1 class="text-[21px] font-extrabold tracking-tight mt-2">
 {% if action == 'visit' %}Schedule School Visit
 {% elif action == 'training' %}Schedule Group Training
 {% else %}Schedule Cluster Meeting{% endif %}
 </h1>
-<p class="text-[12px] text-[var(--text-secondary)] mt-0.5 font-semibold">
+<p class="text-[12px] text-[var(--edify-text-muted)] mt-0.5 font-semibold">
 Configure activity logistics, purpose, and target interventions. Cost is computed from active CD catalogue.
 </p>
 </div>
 
 <div class="grid md:grid-cols-3 gap-6 items-start">
 <!-- Form Panel -->
-<div class="md:col-span-2 bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm">
+<div class="md:col-span-2 bg-white rounded-lg border border-[var(--edify-border)] p-6 shadow-sm">
 <form 
 method="POST" 
 class="space-y-4"
@@ -39,7 +39,7 @@ hx-trigger="change, keyup delay:400ms"
 name="school_id" 
 id="school_id"
 required
-class="w-full h-10 px-3 rounded-lg border border-[var(--color-edify-border)] text-[12px] bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-[var(--color-edify-primary)]/20"
+class="w-full h-10 px-3 rounded-lg border border-[var(--edify-border)] text-[12px] bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-[var(--edify-accent)]/20"
 >
 <option value="">Select School...</option>
 {% for s in schools %}
@@ -54,7 +54,7 @@ class="w-full h-10 px-3 rounded-lg border border-[var(--color-edify-border)] tex
 name="cluster_id" 
 id="cluster_id"
 required
-class="w-full h-10 px-3 rounded-lg border border-[var(--color-edify-border)] text-[12px] bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-[var(--color-edify-primary)]/20"
+class="w-full h-10 px-3 rounded-lg border border-[var(--edify-border)] text-[12px] bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-[var(--edify-accent)]/20"
 >
 <option value="">Select Cluster...</option>
 {% for c in clusters %}
@@ -72,7 +72,7 @@ type="date"
 name="scheduled_date" 
 id="scheduled_date"
 required
-class="w-full h-10 px-3 rounded-lg border border-[var(--color-edify-border)] text-[12px] bg-slate-50 mt-1 focus:outline-none"
+class="w-full h-10 px-3 rounded-lg border border-[var(--edify-border)] text-[12px] bg-slate-50 mt-1 focus:outline-none"
 >
 </div>
 
@@ -83,7 +83,7 @@ class="w-full h-10 px-3 rounded-lg border border-[var(--color-edify-border)] tex
 name="focus_intervention" 
 id="focus_intervention"
 required
-class="w-full h-10 px-3 rounded-lg border border-[var(--color-edify-border)] text-[12px] bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-[var(--color-edify-primary)]/20"
+class="w-full h-10 px-3 rounded-lg border border-[var(--edify-border)] text-[12px] bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-[var(--edify-accent)]/20"
 >
 <option value="">Select Intervention...</option>
 {% for code, label in interventions %}
@@ -107,7 +107,7 @@ class="w-full h-10 px-3 rounded-lg border border-[var(--color-edify-border)] tex
 name="purpose_type" 
 id="purpose_type"
 required
-class="w-full h-10 px-3 rounded-lg border border-[var(--color-edify-border)] text-[12px] bg-slate-50 mt-1 focus:outline-none"
+class="w-full h-10 px-3 rounded-lg border border-[var(--edify-border)] text-[12px] bg-slate-50 mt-1 focus:outline-none"
 >
 <option value="focus_intervention" selected>Focus Intervention</option>
 <option value="planning_meeting">Planning Meeting</option>
@@ -126,7 +126,7 @@ name="expected_participants"
 id="expected_participants"
 min="1"
 required
-class="w-full h-10 px-3 rounded-lg border border-[var(--color-edify-border)] text-[12px] bg-slate-50 mt-1 focus:outline-none"
+class="w-full h-10 px-3 rounded-lg border border-[var(--edify-border)] text-[12px] bg-slate-50 mt-1 focus:outline-none"
 >
 </div>
 {% endif %}
@@ -138,7 +138,7 @@ class="w-full h-10 px-3 rounded-lg border border-[var(--color-edify-border)] tex
 name="delivery_type" 
 id="delivery_type"
 x-model="delivery"
-class="w-full h-10 px-3 rounded-lg border border-[var(--color-edify-border)] text-[12px] bg-slate-50 mt-1 focus:outline-none"
+class="w-full h-10 px-3 rounded-lg border border-[var(--edify-border)] text-[12px] bg-slate-50 mt-1 focus:outline-none"
 >
 <option value="staff">Internal Field Staff (CCEO)</option>
 <option value="partner">Certified Partner Agency</option>
@@ -149,7 +149,7 @@ class="w-full h-10 px-3 rounded-lg border border-[var(--color-edify-border)] tex
 <select 
 name="assigned_partner_id" 
 id="assigned_partner_id"
-class="w-full h-10 px-3 rounded-lg border border-[var(--color-edify-border)] text-[12px] bg-slate-50 mt-1 focus:outline-none"
+class="w-full h-10 px-3 rounded-lg border border-[var(--edify-border)] text-[12px] bg-slate-50 mt-1 focus:outline-none"
 >
 <option value="">Select Partner...</option>
 {% for p in partners %}
@@ -169,7 +169,7 @@ id="activity_purpose_text"
 required
 rows="2"
 placeholder="What needs to be achieved in this activity?"
-class="w-full p-3 rounded-lg border border-[var(--color-edify-border)] text-[12px] bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-[var(--color-edify-primary)]/20"
+class="w-full p-3 rounded-lg border border-[var(--edify-border)] text-[12px] bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-[var(--edify-accent)]/20"
 ></textarea>
 </div>
 
@@ -182,7 +182,7 @@ id="expected_outcome"
 required
 rows="2"
 placeholder="Target delta or specific checklist outcome..."
-class="w-full p-3 rounded-lg border border-[var(--color-edify-border)] text-[12px] bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-[var(--color-edify-primary)]/20"
+class="w-full p-3 rounded-lg border border-[var(--edify-border)] text-[12px] bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-[var(--edify-accent)]/20"
 ></textarea>
 </div>
 
@@ -192,7 +192,7 @@ class="w-full p-3 rounded-lg border border-[var(--color-edify-border)] text-[12p
 type="submit" 
 hx-post="/planning/schedule?action={{ action }}"
 hx-target="body"
-class="h-10 px-4 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[12px] font-semibold transition-colors"
+class="h-10 px-4 rounded-lg bg-[var(--edify-accent)] hover:bg-[var(--edify-accent-hover)] text-white text-[12px] font-semibold transition-colors"
 >
 Confirm &amp; Schedule Activity
 </button>
@@ -201,7 +201,7 @@ Confirm &amp; Schedule Activity
 </div>
 
 <!-- Live Costing Preview Column -->
-<div id="cost-preview-output" class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm space-y-4">
+<div id="cost-preview-output" class="bg-white rounded-lg border border-[var(--edify-border)] p-6 shadow-sm space-y-4">
 <h3 class="text-[14px] font-semibold text-slate-800">Live Costing Breakdown</h3>
 <p class="text-[12px] text-slate-400 font-semibold leading-relaxed">Fill out target, date, and participants to see itemized UGX rates fetch live from CD catalogue.</p>
 </div>

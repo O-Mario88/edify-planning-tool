@@ -45,20 +45,20 @@ onclick="document.getElementById('drawer-container').innerHTML = ''; document.bo
 <p class="text-[11px] uppercase font-bold text-slate-400">Target Entity</p>
 <p class="font-semibold text-[#2e505f] mt-0.5">
 {% if act.school %}
-🏫 {{ act.school.name }} (ID: {{ act.school.school_id }})
+<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0v7m-5-4v4a5 5 0 0010 0v-4"/></svg> {{ act.school.name }} (ID: {{ act.school.school_id }})
 {% elif act.cluster %}
-👥 {{ act.cluster.name }}
+<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6-2a3 3 0 10-2-5.24"/></svg> {{ act.cluster.name }}
 {% endif %}
 </p>
 </div>
 <div>
 <p class="text-[11px] uppercase font-bold text-slate-400">Planned Date</p>
-<p class="font-bold text-slate-700 mt-0.5">📅 {{ act.planned_date|default:"Unscheduled" }}</p>
+<p class="font-bold text-slate-700 mt-0.5"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3M4 11h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z"/></svg> {{ act.planned_date|default:"Unscheduled" }}</p>
 </div>
 <div>
 <p class="text-[11px] uppercase font-bold text-slate-400">Responsible User / Partner</p>
 <p class="font-bold text-slate-700 mt-0.5">
-👤 {{ act.responsible_staff_name|default:"CCEO User" }}
+<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg> {{ act.responsible_staff_name|default:"CCEO User" }}
 {% if act.delivery_type == 'partner' %}
 <span class="text-blue-600 font-semibold">(Partner Monitored)</span>
 {% endif %}
@@ -194,7 +194,7 @@ No budget lines created.
 <h4 class="text-[11px] uppercase font-bold text-slate-400">Activity SF ID</h4>
 {% if act.salesforce_activity_id %}
 <p class="text-[14px] font-bold text-slate-800 mt-1.5 flex items-center gap-1.5">
-<span class="text-emerald-500">✓</span> {{ act.salesforce_activity_id }}
+<span class="text-emerald-500"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></span> {{ act.salesforce_activity_id }}
 </p>
 {% else %}
 <p class="text-[12px] text-slate-400 font-semibold mt-1">No Activity SF ID uploaded yet.</p>

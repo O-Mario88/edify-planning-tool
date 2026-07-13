@@ -1,0 +1,63 @@
+{% load frontend_filters %}
+<div class="overflow-x-auto flex-1">
+  {% if ssa_matrix.rows %}
+  <table style="width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap;">
+    <thead>
+      <tr style="font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--edify-text-subtle);border-bottom:1px solid var(--edify-border);text-align:left;background:var(--edify-surface-muted);">
+        <th style="padding:8px 10px;">Cluster</th>
+        {% for code in ssa_matrix.codes %}
+        <th style="padding:8px 6px;text-align:center;">{{ code }}</th>
+        {% endfor %}
+        <th style="padding:8px 6px;text-align:center;">Overall</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in ssa_matrix.rows %}
+      <tr style="border-bottom:1px solid var(--edify-border);"
+          onmouseover="this.style.background='var(--edify-surface-muted)'"
+          onmouseout="this.style.background='transparent'">
+        <td style="padding:7px 10px;font-weight:600;color:var(--edify-text);">{{ r.name }}</td>
+        {% for cell in r.cells %}
+        <td style="padding:7px 6px;text-align:center;">
+          <span class="inline-block rounded text-center font-bold"
+                style="min-width:30px;padding:2px 6px;font-size:10px;
+                       background:{% if cell.tone == 'success' %}var(--edify-success-light)
+                       {% elif cell.tone == 'lime' %}rgba(132,204,22,.14)
+                       {% elif cell.tone == 'warning' %}var(--edify-warning-light)
+                       {% elif cell.tone == 'danger' %}var(--edify-danger-light)
+                       {% else %}var(--edify-surface-muted){% endif %};
+                       color:{% if cell.tone == 'success' %}var(--edify-success)
+                       {% elif cell.tone == 'lime' %}#84CC16
+                       {% elif cell.tone == 'warning' %}var(--edify-warning)
+                       {% elif cell.tone == 'danger' %}var(--edify-danger)
+                       {% else %}var(--edify-text-subtle){% endif %};">
+            {% if cell.pct is not None %}{{ cell.pct|floatformat:1 }}{% else %}—{% endif %}
+          </span>
+        </td>
+        {% endfor %}
+        <td style="padding:7px 6px;text-align:center;">
+          <span class="inline-block rounded text-center font-bold"
+                style="min-width:30px;padding:2px 6px;font-size:10px;
+                       background:{% if r.overall_tone == 'success' %}var(--edify-success-light)
+                       {% elif r.overall_tone == 'lime' %}rgba(132,204,22,.14)
+                       {% elif r.overall_tone == 'warning' %}var(--edify-warning-light)
+                       {% elif r.overall_tone == 'danger' %}var(--edify-danger-light)
+                       {% else %}var(--edify-surface-muted){% endif %};
+                       color:{% if r.overall_tone == 'success' %}var(--edify-success)
+                       {% elif r.overall_tone == 'lime' %}#84CC16
+                       {% elif r.overall_tone == 'warning' %}var(--edify-warning)
+                       {% elif r.overall_tone == 'danger' %}var(--edify-danger)
+                       {% else %}var(--edify-text-subtle){% endif %};">
+            {% if r.overall is not None %}{{ r.overall|floatformat:1 }}{% else %}—{% endif %}
+          </span>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="flex items-center justify-center py-8">
+    <p style="font-size:12px;color:var(--edify-text-subtle);font-weight:600;">No verified SSA in your clusters yet.</p>
+  </div>
+  {% endif %}
+</div>

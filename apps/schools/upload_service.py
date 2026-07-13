@@ -8,6 +8,7 @@ module, and each row is validated + saved (or skipped/failed/duplicated) with a
 per-row audit result. A file-level/header error rolls back everything (nothing is
 written); row-level errors never block the valid rows.
 """
+
 from __future__ import annotations
 
 import csv
@@ -129,20 +130,23 @@ def _auto_create_user_from_upload(full_name: str) -> str:
     from apps.accounts.models import User, StaffProfile, UserStatus
     from apps.core.rbac import EdifyRole
     import re
-    
+
     name_clean = full_name.strip()
     if not name_clean:
         return None
-        
+
     # Check if user already exists
-    existing = User.objects.filter(name__iexact=name_clean, deleted_at__isnull=True).first()
+    existing = User.objects.filter(
+        name__iexact=name_clean, deleted_at__isnull=True
+    ).first()
     if existing:
         from apps.accounts.staff_matching import _is_field_staff
+
         profile = StaffProfile.objects.filter(user=existing).first()
         if profile and _is_field_staff(profile):
             return profile.id
         return None
-        
+
     # Generate placeholder email
     normalized_part = re.sub(r"[^a-zA-Z0-9.]", "", name_clean.lower().replace(" ", "."))
     placeholder_email = f"pending.{normalized_part}@edify.org"
@@ -150,7 +154,7 @@ def _auto_create_user_from_upload(full_name: str) -> str:
     while User.objects.filter(email=placeholder_email).exists():
         placeholder_email = f"pending.{normalized_part}.{suffix}@edify.org"
         suffix += 1
-        
+
     # Create User
     user = User.objects.create_user(
         email=placeholder_email,
@@ -159,19 +163,16 @@ def _auto_create_user_from_upload(full_name: str) -> str:
         active_role=EdifyRole.CCEO.value,
         password=None,
         status=UserStatus.PENDING_INVITED,
-        is_active=False
+        is_active=False,
     )
-    
+
     # Create StaffProfile
-    profile = StaffProfile.objects.create(
-        user=user,
-        title="CCEO"
-    )
-    
+    profile = StaffProfile.objects.create(user=user, title="CCEO")
+
     # Create StaffSetupCandidate to track in Admin's queue
     from apps.accounts.models import StaffSetupCandidate, StaffSetupCandidateStatus
     from apps.accounts.staff_matching import normalize_name
-    
+
     norm = normalize_name(name_clean)
     StaffSetupCandidate.objects.get_or_create(
         normalized_name=norm,
@@ -179,12 +180,11 @@ def _auto_create_user_from_upload(full_name: str) -> str:
             "full_name": name_clean,
             "status": StaffSetupCandidateStatus.PENDING_PROFILE,
             "matched_user_id": user.id,
-            "email": placeholder_email
-        }
+            "email": placeholder_email,
+        },
     )
-    
-    return profile.id
 
+    return profile.id
 
 
 def _upsert_staff_candidate(name: str, batch_id: str, school_pk: str) -> None:
@@ -227,7 +227,11 @@ def upload_school_file(file, principal, update_existing: bool = False) -> dict:
     field_index = M.build_field_index(raw_headers, M.SCHOOL_HEADER_MAP)
     missing = M.missing_required(field_index, M.SCHOOL_REQUIRED_FIELDS)
     if missing:
-        label = {"school_id": "School ID", "name": "School Name", "district": "District"}
+        label = {
+            "school_id": "School ID",
+            "name": "School Name",
+            "district": "District",
+        }
         raise BadRequest(
             "Missing required column(s): "
             + ", ".join(label[m] for m in missing)
@@ -239,7 +243,7 @@ def upload_school_file(file, principal, update_existing: bool = False) -> dict:
         file_name=getattr(file, "name", "salesforce_import.xlsx"),
         uploaded_by=principal.user_id,
         status="staged",
-        total_rows=len(data_rows)
+        total_rows=len(data_rows),
     )
 
     counts = {"created": 0, "updated": 0, "skipped": 0, "failed": 0, "duplicate": 0}
@@ -249,7 +253,7 @@ def upload_school_file(file, principal, update_existing: bool = False) -> dict:
 
     for row_number, cells in data_rows:
         raw_map = {f: _value(field_index, f, cells) for f in field_index}
-        
+
         # Fully-blank row → skipped.
         if not any((cells[i] or "").strip() for i in range(len(cells))):
             counts["skipped"] += 1
@@ -289,12 +293,16 @@ def upload_school_file(file, principal, update_existing: bool = False) -> dict:
             district = District.objects.filter(name__iexact=district_name).first()
             if not district:
                 norm = district_name.strip().lower()
-                alias = GeographyAlias.objects.filter(admin_level="district", normalized_alias=norm).first()
+                alias = GeographyAlias.objects.filter(
+                    admin_level="district", normalized_alias=norm
+                ).first()
                 if alias:
                     district = District.objects.filter(id=alias.admin_id).first()
             if not district:
-                district = District.objects.filter(name__icontains=district_name.strip()).first()
-        
+                district = District.objects.filter(
+                    name__icontains=district_name.strip()
+                ).first()
+
         if not district_name and not sub_county_name:
             validation_errors.append("No usable location at all")
             status = "blocked"
@@ -308,7 +316,9 @@ def upload_school_file(file, principal, update_existing: bool = False) -> dict:
 
         # C. Non-blocking warnings / updates
         if status != "blocked":
-            existing = School.objects.filter(school_id=school_id_raw, deleted_at__isnull=True).first()
+            existing = School.objects.filter(
+                school_id=school_id_raw, deleted_at__isnull=True
+            ).first()
             if existing:
                 if update_existing:
                     status = "update"
@@ -318,11 +328,15 @@ def upload_school_file(file, principal, update_existing: bool = False) -> dict:
                     counts["duplicate"] += 1
             else:
                 # Check for potential duplicates by name in DB
-                existing_name = School.objects.filter(name__iexact=name, deleted_at__isnull=True).exists()
+                existing_name = School.objects.filter(
+                    name__iexact=name, deleted_at__isnull=True
+                ).exists()
                 if existing_name:
                     status = "duplicate"
                     counts["duplicate"] += 1
-                    validation_errors.append(f"Possible duplicate name: school with name '{name}' already exists in database")
+                    validation_errors.append(
+                        f"Possible duplicate name: school with name '{name}' already exists in database"
+                    )
                 else:
                     status = "ready"
                     counts["created"] += 1
@@ -330,6 +344,7 @@ def upload_school_file(file, principal, update_existing: bool = False) -> dict:
             # Match account owner to populate staff counts
             if account_owner_name:
                 from apps.accounts.staff_matching import match as staff_match
+
                 owner_id, owner_status = staff_match(account_owner_name)
                 if owner_status in staff_counts:
                     staff_counts[owner_status] += 1
@@ -350,33 +365,42 @@ def upload_school_file(file, principal, update_existing: bool = False) -> dict:
                 pass
 
         if validation_errors and status == "blocked":
-            errors.append({"row": row_number, "school_id": school_id_raw, "error": "; ".join(validation_errors)})
+            errors.append(
+                {
+                    "row": row_number,
+                    "school_id": school_id_raw,
+                    "error": "; ".join(validation_errors),
+                }
+            )
 
-        rows_to_create.append(SchoolImportRow(
-            batch=batch,
-            row_number=row_number,
-            school_id=school_id_raw,
-            name=name,
-            school_type=school_type,
-            district_name=district_name,
-            sub_county_name=sub_county_name,
-            enrollment=enrollment,
-            phone=phone,
-            contact_person=contact_person,
-            director_name=director_name,
-            headteacher_name=headteacher_name,
-            address=address,
-            account_owner_name=account_owner_name,
-            status=status,
-            validation_errors=validation_errors,
-            raw_data=raw_map
-        ))
+        rows_to_create.append(
+            SchoolImportRow(
+                batch=batch,
+                row_number=row_number,
+                school_id=school_id_raw,
+                name=name,
+                school_type=school_type,
+                district_name=district_name,
+                sub_county_name=sub_county_name,
+                enrollment=enrollment,
+                phone=phone,
+                contact_person=contact_person,
+                director_name=director_name,
+                headteacher_name=headteacher_name,
+                address=address,
+                account_owner_name=account_owner_name,
+                status=status,
+                validation_errors=validation_errors,
+                raw_data=raw_map,
+            )
+        )
 
     if rows_to_create:
         SchoolImportRow.objects.bulk_create(rows_to_create)
 
     # Legacy parallel write to keep REST endpoints and unit tests 100% green
     from apps.schools.models import UploadBatch, UploadBatchRowResult
+
     legacy_batch = UploadBatch.objects.create(
         source="csv_upload",
         upload_type="schools",
@@ -389,19 +413,29 @@ def upload_school_file(file, principal, update_existing: bool = False) -> dict:
         updated_rows=counts["updated"],
         skipped_rows=counts["skipped"],
         failed_rows=counts["failed"],
-        duplicate_rows=counts["duplicate"]
+        duplicate_rows=counts["duplicate"],
     )
-    
+
     legacy_rows = []
     for r in rows_to_create:
-        legacy_rows.append(UploadBatchRowResult(
-            upload_batch=legacy_batch,
-            row_number=r.row_number,
-            school_id=r.school_id,
-            status="created" if r.status in ("ready", "duplicate") else "updated" if r.status == "update" else "failed" if r.status == "blocked" else "skipped",
-            error_message="; ".join(r.validation_errors) if r.validation_errors else "",
-            raw_data_json=r.raw_data
-        ))
+        legacy_rows.append(
+            UploadBatchRowResult(
+                upload_batch=legacy_batch,
+                row_number=r.row_number,
+                school_id=r.school_id,
+                status="created"
+                if r.status in ("ready", "duplicate")
+                else "updated"
+                if r.status == "update"
+                else "failed"
+                if r.status == "blocked"
+                else "skipped",
+                error_message="; ".join(r.validation_errors)
+                if r.validation_errors
+                else "",
+                raw_data_json=r.raw_data,
+            )
+        )
     if legacy_rows:
         UploadBatchRowResult.objects.bulk_create(legacy_rows)
 
@@ -430,15 +464,26 @@ def upload_school_file(file, principal, update_existing: bool = False) -> dict:
 
 
 def import_school_batch(batch, user) -> dict:
-    from apps.schools.models import School, SchoolChangeLog, UploadBatch, SchoolImportBatch
+    from apps.schools.models import (
+        School,
+        SchoolChangeLog,
+        UploadBatch,
+        SchoolImportBatch,
+    )
     from apps.geography.models import District, SubCounty
     from apps.accounts.staff_matching import match as staff_match
-    
+
     if isinstance(batch, UploadBatch):
-        real_batch = SchoolImportBatch.objects.filter(file_name=batch.file_name, uploaded_by=batch.uploaded_by).order_by("-created_at").first()
+        real_batch = (
+            SchoolImportBatch.objects.filter(
+                file_name=batch.file_name, uploaded_by=batch.uploaded_by
+            )
+            .order_by("-created_at")
+            .first()
+        )
         if real_batch:
             batch = real_batch
-            
+
     rows = batch.rows.exclude(status="blocked")
     created_count = 0
     updated_count = 0
@@ -452,13 +497,19 @@ def import_school_batch(batch, user) -> dict:
         if r.district_name:
             district = District.objects.filter(name__iexact=r.district_name).first()
             if not district:
-                district = District.objects.filter(name__icontains=r.district_name.strip()).first()
-        
+                district = District.objects.filter(
+                    name__icontains=r.district_name.strip()
+                ).first()
+
         sub_county = None
         if r.sub_county_name and district:
-            sub_county = SubCounty.objects.filter(district=district, name__iexact=r.sub_county_name).first()
+            sub_county = SubCounty.objects.filter(
+                district=district, name__iexact=r.sub_county_name
+            ).first()
             if not sub_county:
-                sub_county = SubCounty.objects.filter(district=district, name__icontains=r.sub_county_name).first()
+                sub_county = SubCounty.objects.filter(
+                    district=district, name__icontains=r.sub_county_name
+                ).first()
 
         owner_id = None
         owner_status = "pending"
@@ -480,8 +531,10 @@ def import_school_batch(batch, user) -> dict:
             except ValueError:
                 pass
 
-        existing = School.objects.filter(school_id=r.school_id, deleted_at__isnull=True).first()
-        
+        existing = School.objects.filter(
+            school_id=r.school_id, deleted_at__isnull=True
+        ).first()
+
         if existing:
             # Upsert mode: do not overwrite good existing data with blanks!
             # Keep history in SchoolChangeLog
@@ -500,36 +553,41 @@ def import_school_batch(batch, user) -> dict:
                 "headteacher_name": r.headteacher_name,
                 "account_owner_name_raw": r.account_owner_name,
                 "account_owner_id": owner_id,
-                "account_owner_status": owner_status
+                "account_owner_status": owner_status,
             }
-            
+
             changes = []
             for field, val in fields_to_update.items():
                 if val is not None and val != "":
                     old_val = getattr(existing, field)
                     if val != old_val:
-                        changes.append(SchoolChangeLog(
-                            school=existing,
-                            field_name=field,
-                            old_value=str(old_val) if old_val is not None else None,
-                            new_value=str(val),
-                            changed_by=user.user_id if hasattr(user, "user_id") else str(user)
-                        ))
+                        changes.append(
+                            SchoolChangeLog(
+                                school=existing,
+                                field_name=field,
+                                old_value=str(old_val) if old_val is not None else None,
+                                new_value=str(val),
+                                changed_by=user.user_id
+                                if hasattr(user, "user_id")
+                                else str(user),
+                            )
+                        )
                         setattr(existing, field, val)
-            
+
             if changes:
                 existing.save()
                 SchoolChangeLog.objects.bulk_create(changes)
             else:
-                existing.save() # trigger save hook for readiness
+                existing.save()  # trigger save hook for readiness
             updated_count += 1
             saved_school = existing
         else:
             region = district.region if district else None
             if not region:
                 from apps.geography.models import Region
+
                 region = Region.objects.first()
-                
+
             saved_school = School.objects.create(
                 school_id=r.school_id,
                 name=r.name,
@@ -546,22 +604,28 @@ def import_school_batch(batch, user) -> dict:
                 headteacher_name=r.headteacher_name,
                 account_owner_name_raw=r.account_owner_name,
                 account_owner_id=owner_id,
-                account_owner_status=owner_status
+                account_owner_status=owner_status,
             )
             created_count += 1
 
         if owner_id and owner_status == "matched":
             from apps.accounts.models import StaffSchoolAssignment
+
             StaffSchoolAssignment.objects.get_or_create(
                 staff_id=owner_id, school_id=saved_school.id
             )
             from apps.accounts.models import StaffProfile
+
             sp = StaffProfile.objects.filter(id=owner_id).select_related("user").first()
-            if sp and sp.user and ("pending." in sp.user.email or sp.user.status == "pending_invited"):
+            if (
+                sp
+                and sp.user
+                and ("pending." in sp.user.email or sp.user.status == "pending_invited")
+            ):
                 _upsert_staff_candidate(r.account_owner_name, batch.id, saved_school.id)
         elif owner_status in ("unmatched", "ambiguous") and r.account_owner_name:
             _upsert_staff_candidate(r.account_owner_name, batch.id, saved_school.id)
-            
+
         q_status = saved_school.data_quality_status
         if q_status == "Clean":
             clean_count += 1
@@ -574,14 +638,14 @@ def import_school_batch(batch, user) -> dict:
 
     batch.status = "imported"
     batch.save()
-    
+
     return {
         "created": created_count,
         "updated": updated_count,
         "clean": clean_count,
         "review": review_count,
         "cleanup": cleanup_count,
-        "duplicate": duplicate_count
+        "duplicate": duplicate_count,
     }
 
 

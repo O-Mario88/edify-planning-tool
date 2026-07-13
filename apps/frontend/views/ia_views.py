@@ -6,45 +6,59 @@ from django.db.models import Q
 
 from apps.core.permissions import require_page_permission, RolePermissionService
 from apps.audit.services import log as audit_log
-from apps.activities.models import Activity, IAVerification, VerificationDecision, DuplicateActivity, VerificationHistory
+from apps.activities.models import (
+    Activity,
+    IAVerification,
+    VerificationDecision,
+    DuplicateActivity,
+    VerificationHistory,
+)
 from apps.activities.ia_services import (
     IAVerificationService,
     DuplicateDetectionService,
     VerificationTimelineService,
     ActivityCertificationService,
-    ActivityReturnService
+    ActivityReturnService,
 )
 from apps.core.enums import ActivityStatus
+
 
 @require_page_permission("ia_verification_queue")
 def ia_verification_queue_view(request):
     """Central queue of activities waiting for verification."""
     activities = Activity.objects.filter(
-        deleted_at__isnull=True,
-        status__in=["awaiting_ia_verification", "submitted"]
+        deleted_at__isnull=True, status="awaiting_ia_verification"
     ).order_by("-updated_at")
-    
+
     # ── KPI Strip Calculation ────────────────────────────────────────────────
     waiting_count = activities.count()
-    
+
     today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
-    verified_today = VerificationHistory.objects.filter(verified_at__gte=today_start).count()
-    
-    returned_today = VerificationDecision.objects.filter(
-        decision="RETURN",
-        decided_at__gte=today_start
+    verified_today = VerificationHistory.objects.filter(
+        verified_at__gte=today_start
     ).count()
-    
+
+    returned_today = VerificationDecision.objects.filter(
+        decision="RETURN", decided_at__gte=today_start
+    ).count()
+
     # Average Verification Time (in hours)
     # We calculate the average time between submission and verification
     avg_hours = 1.8  # Default baseline SLA
-    
+
     ssa_pending = activities.filter(ssa_collection_expected=True).count()
-    duplicate_risks = DuplicateActivity.objects.filter(status="potential").values("activity_id").distinct().count()
-    
+    duplicate_risks = (
+        DuplicateActivity.objects.filter(status="potential")
+        .values("activity_id")
+        .distinct()
+        .count()
+    )
+
     # High Priority: e.g. CORE visits or trainings
-    high_priority = activities.filter(activity_type__in=["core_visit", "core_training", "baseline_ssa_visit"]).count()
-    
+    high_priority = activities.filter(
+        activity_type__in=["core_visit", "core_training", "baseline_ssa_visit"]
+    ).count()
+
     # ── Filtering ────────────────────────────────────────────────────────────
     fy_filter = request.GET.get("fy")
     quarter_filter = request.GET.get("quarter")
@@ -59,15 +73,21 @@ def ia_verification_queue_view(request):
     project_filter = request.GET.get("project")
     core_school_filter = request.GET.get("core_school")
     status_filter = request.GET.get("status")
-    
+
     filtered_qs = activities
-    
+
     if fy_filter:
         filtered_qs = filtered_qs.filter(fy=fy_filter)
     if quarter_filter:
         filtered_qs = filtered_qs.filter(quarter=quarter_filter)
     if month_filter:
-        filtered_qs = filtered_qs.filter(month=month_filter)
+        # Activity stores planned_month (int), not "month".
+        try:
+            filtered_qs = filtered_qs.filter(planned_month=int(month_filter))
+        except (TypeError, ValueError):
+            pass
+    if region_filter:
+        filtered_qs = filtered_qs.filter(school__region_id=region_filter)
     if district_filter:
         filtered_qs = filtered_qs.filter(school__district_id=district_filter)
     if cluster_filter:
@@ -84,19 +104,30 @@ def ia_verification_queue_view(request):
         filtered_qs = filtered_qs.filter(project_id=project_filter)
     if core_school_filter == "true":
         filtered_qs = filtered_qs.filter(school__school_type="core")
-        
+    if status_filter:
+        filtered_qs = filtered_qs.filter(status=status_filter)
+
     # Serialize for template table
     from apps.activities.services import _serialize
+
     serialized_queue = []
     for a in filtered_qs.select_related("school", "cluster"):
         data = _serialize(a)
         # Add quick checks recommendation
         data["has_evidence"] = a.evidence.filter(quarantined=False).exists()
         data["has_sf_id"] = bool(a.salesforce_activity_id)
-        data["has_ssa"] = a.school.ssa_records.filter(deleted_at__isnull=True).exists() if a.school else False
-        data["is_high_priority"] = a.activity_type in ["core_visit", "core_training", "baseline_ssa_visit"]
+        data["has_ssa"] = (
+            a.school.ssa_records.filter(deleted_at__isnull=True).exists()
+            if a.school
+            else False
+        )
+        data["is_high_priority"] = a.activity_type in [
+            "core_visit",
+            "core_training",
+            "baseline_ssa_visit",
+        ]
         serialized_queue.append(data)
-        
+
     kpi_items = [
         {
             "label": "Awaiting Verification",
@@ -146,7 +177,7 @@ def ia_verification_queue_view(request):
             "helper": "Core visits/trainings",
             "icon": "warning",
             "variant": "warning",
-        }
+        },
     ]
 
     context = {
@@ -159,7 +190,7 @@ def ia_verification_queue_view(request):
             "avg_time": f"{avg_hours}h",
             "ssa_pending": ssa_pending,
             "duplicate_risks": duplicate_risks,
-            "high_priority": high_priority
+            "high_priority": high_priority,
         },
         "filters": {
             "fy": fy_filter,
@@ -169,12 +200,12 @@ def ia_verification_queue_view(request):
             "staff": staff_filter,
             "partner": partner_filter,
             "activity_type": type_filter,
-        }
+        },
     }
-    
+
     if request.headers.get("HX-Request") == "true":
         return render(request, "pages/ia/partials/queue_table.html", context)
-        
+
     return render(request, "pages/ia/verification_queue.html", context)
 
 
@@ -182,36 +213,37 @@ def ia_verification_queue_view(request):
 def ia_review_workspace_view(request, activity_id):
     """Premium workspace for verifying a single activity."""
     a = get_object_or_404(Activity, id=activity_id, deleted_at__isnull=True)
-    
+
     # Resolve checks
     checks = IAVerificationService.get_verification_checks(a)
-    
+
     # Run duplicate checks
     dups = DuplicateDetectionService.detect_duplicates(a)
-    
+
     # Fetch evidence records
     from apps.evidence.models import EvidenceRecord
+
     evidence_list = EvidenceRecord.objects.filter(activity_id=a.id, quarantined=False)
-    
+
     # Fetch timeline
     timeline = VerificationTimelineService.get_timeline(a)
-    
+
     # Fetch comments
     verification = IAVerification.objects.filter(activity=a).first()
     comments = verification.comments.all() if verification else []
-    
+
     # Fetch cluster schools for school-level attendance list verification
     cluster_schools = []
     if a.cluster:
         from apps.clusters.models import SchoolClusterAssignment
+
         cluster_schools = [
-            assignment.school 
+            assignment.school
             for assignment in SchoolClusterAssignment.objects.filter(
-                cluster_id=a.cluster_id, 
-                deleted_at__isnull=True
+                cluster_id=a.cluster_id, deleted_at__isnull=True
             ).select_related("school")
         ]
-        
+
     context = {
         "act": a,
         "checks": checks,
@@ -221,11 +253,23 @@ def ia_review_workspace_view(request, activity_id):
         "comments": comments,
         "cluster_schools": cluster_schools,
         "suggested_reasons": [
-            "Evidence missing", "Evidence unclear", "Attendance invalid", "Attendance missing",
-            "SSA missing", "SSA incomplete", "Wrong School", "Wrong Cluster", "Wrong Intervention",
-            "Wrong Activity Type", "Wrong Activity Date", "Duplicate Activity", "Activity SF ID missing",
-            "Activity SF ID invalid", "Poor Data Quality", "Other"
-        ]
+            "Evidence missing",
+            "Evidence unclear",
+            "Attendance invalid",
+            "Attendance missing",
+            "SSA missing",
+            "SSA incomplete",
+            "Wrong School",
+            "Wrong Cluster",
+            "Wrong Intervention",
+            "Wrong Activity Type",
+            "Wrong Activity Date",
+            "Duplicate Activity",
+            "Activity SF ID missing",
+            "Activity SF ID invalid",
+            "Poor Data Quality",
+            "Other",
+        ],
     }
     return render(request, "pages/ia/review_workspace.html", context)
 
@@ -234,10 +278,10 @@ def ia_review_workspace_view(request, activity_id):
 def ia_verify_action(request, activity_id):
     """POST to approve and certify the activity."""
     a = get_object_or_404(Activity, id=activity_id, deleted_at__isnull=True)
-    
+
     if not RolePermissionService.can_verify_ia(request.user, a):
         return HttpResponseForbidden("Access Denied: Unauthorized role.")
-        
+
     if request.method == "POST":
         checklist_data = {
             "evidence_exists": request.POST.get("evidence_exists") == "on",
@@ -247,13 +291,16 @@ def ia_verify_action(request, activity_id):
             "correct_cluster": request.POST.get("correct_cluster") == "on",
             "correct_intervention": request.POST.get("correct_intervention") == "on",
             "sf_id_entered": request.POST.get("sf_id_entered") == "on",
-            "duplicate_check_passed": request.POST.get("duplicate_check_passed") == "on",
+            "duplicate_check_passed": request.POST.get("duplicate_check_passed")
+            == "on",
             "analytics_ready": request.POST.get("analytics_ready") == "on",
         }
-        
+
         try:
-            ActivityCertificationService.certify_activity(a, checklist_data, request.user.user_id)
-            
+            ActivityCertificationService.certify_activity(
+                a, checklist_data, request.user.user_id
+            )
+
             audit_log(
                 action="ia_verify_completion",
                 subject_kind="Activity",
@@ -261,12 +308,15 @@ def ia_verify_action(request, activity_id):
                 actor_id=str(request.user.id),
                 actor_role=request.user.active_role,
                 success=True,
-                payload=checklist_data
+                payload=checklist_data,
             )
-            messages.success(request, f"Activity at {a.school.name if a.school else 'Cluster'} certified successfully!")
+            messages.success(
+                request,
+                f"Activity at {a.school.name if a.school else 'Cluster'} certified successfully!",
+            )
         except Exception as e:
             messages.error(request, f"Verification failed: {e}")
-            
+
     return redirect("/ia/verification/")
 
 
@@ -274,21 +324,23 @@ def ia_verify_action(request, activity_id):
 def ia_return_action(request, activity_id):
     """POST to return activity for correction."""
     a = get_object_or_404(Activity, id=activity_id, deleted_at__isnull=True)
-    
+
     if not RolePermissionService.can_verify_ia(request.user, a):
         return HttpResponseForbidden("Access Denied: Unauthorized role.")
-        
+
     if request.method == "POST":
         reasons = request.POST.getlist("reasons")
         comment = request.POST.get("comment", "").strip()
-        
+
         if not reasons:
             messages.error(request, "Please select at least one return reason.")
             return redirect(f"/ia/verification/{activity_id}/")
-            
+
         try:
-            ActivityReturnService.return_activity(a, reasons, comment, request.user.user_id)
-            
+            ActivityReturnService.return_activity(
+                a, reasons, comment, request.user.user_id
+            )
+
             audit_log(
                 action="ia_return_completion",
                 subject_kind="Activity",
@@ -296,12 +348,14 @@ def ia_return_action(request, activity_id):
                 actor_id=str(request.user.id),
                 actor_role=request.user.active_role,
                 success=True,
-                payload={"reasons": reasons, "comment": comment}
+                payload={"reasons": reasons, "comment": comment},
             )
-            messages.success(request, "Activity returned to owner's plan for correction.")
+            messages.success(
+                request, "Activity returned to owner's plan for correction."
+            )
         except Exception as e:
             messages.error(request, f"Return failed: {e}")
-            
+
     return redirect("/ia/verification/")
 
 
@@ -309,54 +363,55 @@ def ia_return_action(request, activity_id):
 def ia_returned_view(request):
     """History of everything IA has returned."""
     returned_activities = Activity.objects.filter(
-        deleted_at__isnull=True,
-        status=ActivityStatus.RETURNED_BY_IA
+        deleted_at__isnull=True, status=ActivityStatus.RETURNED_BY_IA
     ).order_by("-updated_at")
-    
+
     serialized_returned = []
     for a in returned_activities.select_related("school", "ia_verification"):
         reasons = []
         if hasattr(a, "ia_verification") and a.ia_verification:
             reasons = [rr.reason for rr in a.ia_verification.returned_reasons.all()]
-            
+
         # Resubmitted is true if a CCEO edited and sent back (or if status moved away from returned_by_ia)
         # Since we filter by status=RETURNED_BY_IA, it is currently NOT resubmitted.
-        serialized_returned.append({
-            "id": a.id,
-            "activity_type_label": a.get_activity_type_display(),
-            "school_name": a.school.name if a.school else "Cluster",
-            "responsible_staff_name": a.responsible_staff_id or "N/A",
-            "reasons": ", ".join(reasons) or "None Specified",
-            "date_returned": a.updated_at,
-            "status_label": a.get_status_display(),
-            "resubmitted": False
-        })
-        
-    context = {
-        "returned": serialized_returned
-    }
+        serialized_returned.append(
+            {
+                "id": a.id,
+                "activity_type_label": a.get_activity_type_display(),
+                "school_name": a.school.name if a.school else "Cluster",
+                "responsible_staff_name": a.responsible_staff_id or "N/A",
+                "reasons": ", ".join(reasons) or "None Specified",
+                "date_returned": a.updated_at,
+                "status_label": a.get_status_display(),
+                "resubmitted": False,
+            }
+        )
+
+    context = {"returned": serialized_returned}
     return render(request, "pages/ia/returned_activities.html", context)
 
 
 @require_page_permission("ia_history")
 def ia_history_view(request):
     """Everything IA has verified."""
-    history = VerificationHistory.objects.all().order_by("-verified_at").select_related("activity", "activity__school")
-    
-    context = {
-        "history": history
-    }
+    history = (
+        VerificationHistory.objects.all()
+        .order_by("-verified_at")
+        .select_related("activity", "activity__school")
+    )
+
+    context = {"history": history}
     return render(request, "pages/ia/verification_history.html", context)
 
 
 @require_page_permission("ia_duplicates")
 def ia_duplicates_view(request):
     """Duplicate review queue dashboard."""
-    duplicates = DuplicateActivity.objects.filter(status="potential").select_related("activity", "activity__school", "duplicate_of", "duplicate_of__school")
-    
-    context = {
-        "duplicates": duplicates
-    }
+    duplicates = DuplicateActivity.objects.filter(status="potential").select_related(
+        "activity", "activity__school", "duplicate_of", "duplicate_of__school"
+    )
+
+    context = {"duplicates": duplicates}
     return render(request, "pages/ia/duplicate_review.html", context)
 
 
@@ -365,7 +420,7 @@ def ia_duplicate_action(request, duplicate_id):
     """Handles actions on potential duplicates: merge, ignore, return, flag."""
     dup = get_object_or_404(DuplicateActivity, id=duplicate_id)
     action = request.POST.get("action")
-    
+
     if action == "ignore":
         dup.status = "ignored"
         dup.save(update_fields=["status"])
@@ -377,306 +432,576 @@ def ia_duplicate_action(request, duplicate_id):
     elif action == "return":
         # Return the target activity
         ActivityReturnService.return_activity(
-            dup.activity, 
-            ["Duplicate Activity"], 
-            f"Flagged as duplicate of Activity ID {dup.duplicate_of_id}.", 
-            request.user.user_id
+            dup.activity,
+            ["Duplicate Activity"],
+            f"Flagged as duplicate of Activity ID {dup.duplicate_of_id}.",
+            request.user.user_id,
         )
         dup.status = "resolved"
         dup.save(update_fields=["status"])
         messages.success(request, "Activity returned and duplicate flag resolved.")
-        
+
     return redirect("/ia/duplicates/")
 
 
 @require_page_permission("ia_dashboard")
 def ia_dashboard_view(request):
-    """IA Analytics Dashboard for quality monitoring."""
-    # Compute stats
-    waiting_cnt = Activity.objects.filter(deleted_at__isnull=True, status__in=["awaiting_ia_verification", "submitted"]).count()
-    today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
-    verified_cnt = VerificationHistory.objects.filter(verified_at__gte=today_start).count()
-    returned_cnt = VerificationDecision.objects.filter(decision="RETURN", decided_at__gte=today_start).count()
-    
-    total_completed = Activity.objects.filter(deleted_at__isnull=True, status__in=["completed", "ia_verified", "closed"]).count()
-    total_verified = VerificationHistory.objects.count()
-    
-    sla_percentage = 94.2
-    ssa_coverage = 87.5
+    """IA Analytics Dashboard for quality monitoring — all metrics computed live."""
+    from datetime import timedelta
+
+    from django.db.models import Avg, Count
+    from django.utils.timesince import timesince
+
+    from apps.activities.models import ReturnedReason
+    from apps.accounts.models import User
+    from apps.core.enums import EvidenceKind, SsaIntervention
+    from apps.core.fy import get_operational_fy
+    from apps.evidence.models import EvidenceRecord
+    from apps.geography.models import District
+    from apps.partners.models import Partner
+    from apps.schools.models import School, UploadBatch
+    from apps.ssa.models import SsaRecord, SsaScore
+
+    now = timezone.now()
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    week_start = today_start - timedelta(days=now.weekday())  # Monday of current week
+    week_end = week_start + timedelta(days=6)
+    fy = get_operational_fy()
+
+    PENDING_STATUSES = ["awaiting_ia_verification"]
+    ACHIEVED_STATUSES = ["completed", "ia_verified", "closed"]
+
+    activities = Activity.objects.filter(deleted_at__isnull=True)
+    waiting_qs = activities.filter(status__in=PENDING_STATUSES)
+    waiting_cnt = waiting_qs.count()
+
+    verified_today = VerificationHistory.objects.filter(
+        verified_at__gte=today_start
+    ).count()
+    verified_week = VerificationHistory.objects.filter(
+        verified_at__gte=week_start
+    ).count()
+    returned_today = VerificationDecision.objects.filter(
+        decision="RETURN", decided_at__gte=today_start
+    ).count()
+    returned_open_qs = activities.filter(status="returned_by_ia")
+    returned_open = returned_open_qs.count()
+    returned_open_school_cnt = (
+        returned_open_qs.exclude(school_id__isnull=True).values("school_id").distinct().count()
+    )
     duplicate_risk_cnt = DuplicateActivity.objects.filter(status="potential").count()
-    
+
+    # ── Awaiting Follow-up (Grid Row 5) — real return→correction cycle time,
+    # pairing each RETURN decision with the next APPROVE on the same
+    # verification (a second RETURN before that APPROVE starts a new cycle).
+    decision_rows = list(
+        VerificationDecision.objects.filter(decision__in=("RETURN", "APPROVE"))
+        .order_by("verification_id", "decided_at")
+        .values("verification_id", "decision", "decided_at")
+    )
+    decisions_by_verification = {}
+    for row in decision_rows:
+        decisions_by_verification.setdefault(row["verification_id"], []).append(row)
+    resolution_days = []
+    for rows in decisions_by_verification.values():
+        pending_return_at = None
+        for row in rows:
+            if row["decision"] == "RETURN":
+                pending_return_at = row["decided_at"]
+            elif row["decision"] == "APPROVE" and pending_return_at:
+                resolution_days.append((row["decided_at"] - pending_return_at).total_seconds() / 86400)
+                pending_return_at = None
+    avg_resolution_days = round(sum(resolution_days) / len(resolution_days), 1) if resolution_days else None
+
+    # ── School-derived KPIs ─────────────────────────────────────────────────
+    schools = School.objects.filter(deleted_at__isnull=True)
+    school_total = schools.count()
+    ssa_done_cnt = schools.filter(current_fy_ssa_status="done").count()
+    ssa_scheduled_cnt = schools.filter(
+        current_fy_ssa_status__in=["scheduled", "partner_assigned"]
+    ).count()
+    ssa_not_done_cnt = school_total - ssa_done_cnt - ssa_scheduled_cnt
+    ssa_coverage = round(ssa_done_cnt / school_total * 100, 1) if school_total else 0.0
+
+    quality_avg = schools.aggregate(avg=Avg("data_quality_score"))["avg"]
+    quality_pct = round(quality_avg) if quality_avg is not None else 0
+
+    # ── Header KPI strip counts ─────────────────────────────────────────────
+    missing_sf_id = (
+        activities.filter(status__in=ACHIEVED_STATUSES)
+        .filter(Q(salesforce_activity_id__isnull=True) | Q(salesforce_activity_id=""))
+        .count()
+    )
+    ssa_pending_review = SsaRecord.objects.filter(
+        deleted_at__isnull=True, verification_status="pending"
+    ).count()
+    evidence_pending = EvidenceRecord.objects.filter(
+        quarantined=False, status="uploaded"
+    ).count()
+    uploads_today = (
+        SsaRecord.objects.filter(
+            deleted_at__isnull=True, created_at__gte=today_start
+        ).count()
+        + EvidenceRecord.objects.filter(created_at__gte=today_start).count()
+    )
+
     kpi_items = [
         {
             "label": "Uploaded Today",
-            "value": "1,248",
-            "helper": "▲ 18% vs yesterday",
+            "value": f"{uploads_today:,}",
+            "helper": "Latest uploads",
             "icon": "info",
             "variant": "info",
         },
         {
             "label": "Pending Verification",
-            "value": str(waiting_cnt),
-            "helper": "▲ 12% vs last week",
+            "value": f"{waiting_cnt:,}",
+            "helper": "Awaiting review",
             "icon": "clock",
             "variant": "warning",
         },
         {
             "label": "Verified This Week",
-            "value": "2,917",
-            "helper": "▲ 23% vs last week",
+            "value": f"{verified_week:,}",
+            "helper": "Completed verifications",
             "icon": "check",
             "variant": "success",
         },
         {
             "label": "Returned",
-            "value": "312",
-            "helper": "▲ 5% vs last week",
+            "value": f"{returned_open:,}",
+            "helper": "Awaiting correction",
             "icon": "danger",
             "variant": "danger",
         },
         {
             "label": "Data Quality Score",
-            "value": "86%",
-            "helper": "▲ 4 pts vs last week",
+            "value": f"{quality_pct}%",
+            "helper": "Average quality",
             "icon": "check",
             "variant": "success",
         },
-        {
-            "label": "Salesforce Queue",
-            "value": "1,156",
-            "helper": "Pending sync",
-            "icon": "info",
-            "variant": "info",
-        },
-        {
-            "label": "SSA Submissions",
-            "value": "678",
-            "helper": "Pending review",
-            "icon": "warning",
-            "variant": "warning",
-        },
-        {
-            "label": "Evidence Files",
-            "value": "934",
-            "helper": "Pending review",
-            "icon": "info",
-            "variant": "info",
-        }
     ]
+
+    ssa_scheduled_cnt = schools.filter(
+        current_fy_ssa_status__in=["scheduled", "partner_assigned"]
+    ).count()
+    ssa_not_done_cnt = school_total - ssa_done_cnt - ssa_scheduled_cnt
+    ssa_coverage = round(ssa_done_cnt / school_total * 100, 1) if school_total else 0.0
+
+    quality_avg = schools.aggregate(avg=Avg("data_quality_score"))["avg"]
+    quality_pct = round(quality_avg) if quality_avg is not None else 0
+
+    # ── Header KPI strip counts ─────────────────────────────────────────────
+    missing_sf_id = (
+        activities.filter(status__in=ACHIEVED_STATUSES)
+        .filter(Q(salesforce_activity_id__isnull=True) | Q(salesforce_activity_id=""))
+        .count()
+    )
+    ssa_pending_review = SsaRecord.objects.filter(
+        deleted_at__isnull=True, verification_status="pending"
+    ).count()
+    evidence_pending = EvidenceRecord.objects.filter(
+        quarantined=False, status="uploaded"
+    ).count()
+    uploads_today = (
+        SsaRecord.objects.filter(
+            deleted_at__isnull=True, created_at__gte=today_start
+        ).count()
+        + EvidenceRecord.objects.filter(created_at__gte=today_start).count()
+    )
+
+    # ── Verification work queue (5 most recent pending) ─────────────────────
+    queue_activities = list(
+        waiting_qs.select_related("school", "school__district").order_by("-updated_at")[
+            :5
+        ]
+    )
+    staff_ids = {
+        a.responsible_staff_id for a in queue_activities if a.responsible_staff_id
+    }
+    staff_names = (
+        dict(User.objects.filter(id__in=staff_ids).values_list("id", "name"))
+        if staff_ids
+        else {}
+    )
+    status_classes = {
+        "awaiting_ia_verification": "bg-amber-50 text-amber-700 border-amber-200",
+    }
+    queue_items = [
+        {
+            "record_id": str(a.id)[-8:].upper(),
+            "school": a.school.name if a.school else "Cluster",
+            "district": a.school.district.name
+            if a.school and a.school.district_id
+            else "—",
+            "activity_type": a.get_activity_type_display(),
+            "submitted_by": staff_names.get(
+                a.responsible_staff_id, a.responsible_staff_id or "—"
+            ),
+            "submission_date": timezone.localtime(a.updated_at).strftime(
+                "%d %b %Y %I:%M %p"
+            ),
+            "status": a.get_status_display(),
+            "status_class": status_classes.get(
+                a.status, "bg-slate-50 text-slate-700 border-slate-200"
+            ),
+        }
+        for a in queue_activities
+    ]
+
+    # ── District SSA completion stats (shared by exceptions + leaderboard) ──
+    district_stats = list(
+        District.objects.annotate(
+            total=Count("schools", filter=Q(schools__deleted_at__isnull=True)),
+            done=Count(
+                "schools",
+                filter=Q(
+                    schools__deleted_at__isnull=True,
+                    schools__current_fy_ssa_status="done",
+                ),
+            ),
+        ).filter(total__gt=0)
+    )
+    districts_below_target = sum(1 for d in district_stats if d.done / d.total < 0.5)
+
+    # ── Alerts / Exceptions (only real, non-zero conditions) ────────────────
+    dup_school_cnt = schools.filter(
+        duplicate_status__in=["potential", "confirmed"]
+    ).count()
+    overdue_returns = activities.filter(
+        status="returned_by_ia", updated_at__lt=now - timedelta(days=7)
+    ).count()
+    failed_uploads = UploadBatch.objects.filter(
+        status__in=["failed", "rejected"]
+    ).count()
+    exceptions = [
+        e
+        for e in [
+            {
+                "count": missing_sf_id,
+                "text": "completed/verified activities missing Salesforce IDs",
+                "severity": "error",
+            },
+            {
+                "count": duplicate_risk_cnt,
+                "text": "activities flagged as potential duplicates",
+                "severity": "warning",
+            },
+            {
+                "count": dup_school_cnt,
+                "text": "schools flagged as potential duplicates",
+                "severity": "warning",
+            },
+            {
+                "count": districts_below_target,
+                "text": "districts below 50% SSA completion",
+                "severity": "info",
+            },
+            {
+                "count": overdue_returns,
+                "text": "activities returned for correction over 7 days ago",
+                "severity": "warning",
+            },
+            {
+                "count": failed_uploads,
+                "text": "bulk uploads failed validation",
+                "severity": "error",
+            },
+        ]
+        if e["count"] > 0
+    ]
+
+    # ── Data Quality & Compliance panel ─────────────────────────────────────
+    dq_metrics = [
+        {
+            "label": "Schools Missing SSA",
+            "value": schools.exclude(current_fy_ssa_status="done").count(),
+        },
+        {
+            "label": "Duplicate Records Detected",
+            "value": duplicate_risk_cnt + dup_school_cnt,
+        },
+        {
+            "label": "Schools with Missing Fields",
+            "value": schools.exclude(data_quality_status="Clean").count(),
+        },
+        {"label": "Activities Missing Salesforce IDs", "value": missing_sf_id},
+    ]
+
+    # ── SSA monitoring: lowest-performing interventions (0–10 score scale) ──
+    score_rows = SsaScore.objects.filter(
+        ssa_record__deleted_at__isnull=True, ssa_record__fy=fy
+    )
+    if not score_rows.exists():
+        score_rows = SsaScore.objects.filter(ssa_record__deleted_at__isnull=True)
+    intervention_labels = dict(SsaIntervention.choices)
+    lowest_performing = [
+        {
+            "name": intervention_labels.get(r["intervention"], r["intervention"]),
+            "rate": round(r["avg"] / 10 * 100),
+        }
+        for r in score_rows.values("intervention")
+        .annotate(avg=Avg("score"))
+        .order_by("avg")[:5]
+    ]
+
+    # ── District SSA completion leaderboard (min 5 schools) ─────────────────
+    leaderboard_dc = sorted(
+        (
+            {"name": d.name, "rate": round(d.done / d.total * 100)}
+            for d in district_stats
+            if d.total >= 5
+        ),
+        key=lambda item: -item["rate"],
+    )[:5]
+
+    # ── SSA donuts: school coverage + record review status ──────────────────
+    def _pct(part, whole):
+        return round(part / whole * 100) if whole else 0
+
+    ssa_overview = {
+        "total": school_total,
+        "done": ssa_done_cnt,
+        "done_pct": _pct(ssa_done_cnt, school_total),
+        "scheduled": ssa_scheduled_cnt,
+        "scheduled_pct": _pct(ssa_scheduled_cnt, school_total),
+        "not_done": ssa_not_done_cnt,
+        "not_done_pct": _pct(ssa_not_done_cnt, school_total),
+    }
+    ssa_overview["scheduled_offset"] = -ssa_overview["done_pct"]
+    ssa_overview["not_done_offset"] = -(
+        ssa_overview["done_pct"] + ssa_overview["scheduled_pct"]
+    )
+
+    ssa_records = SsaRecord.objects.filter(deleted_at__isnull=True)
+    ssa_rec_total = ssa_records.count()
+    ssa_rec_confirmed = ssa_records.filter(verification_status="confirmed").count()
+    ssa_rec_pending = ssa_records.filter(verification_status="pending").count()
+    ssa_rec_other = ssa_rec_total - ssa_rec_confirmed - ssa_rec_pending
+    ssa_review = {
+        "total": ssa_rec_total,
+        "confirmed": ssa_rec_confirmed,
+        "confirmed_pct": _pct(ssa_rec_confirmed, ssa_rec_total),
+        "pending": ssa_rec_pending,
+        "pending_pct": _pct(ssa_rec_pending, ssa_rec_total),
+        "other": ssa_rec_other,
+        "other_pct": _pct(ssa_rec_other, ssa_rec_total),
+    }
+
+    # ── Evidence review panel (grouped by kind, split by review status) ─────
+    kind_labels = dict(EvidenceKind.choices)
+    evidence_metrics = [
+        {
+            "category": kind_labels.get(row["kind"], row["kind"]),
+            "submitted": row["submitted"],
+            "verified": row["verified"],
+            "returned": row["returned"],
+            "rejected": row["rejected"],
+        }
+        for row in EvidenceRecord.objects.filter(quarantined=False)
+        .values("kind")
+        .annotate(
+            submitted=Count("id"),
+            verified=Count("id", filter=Q(status="accepted")),
+            returned=Count("id", filter=Q(status="returned")),
+            rejected=Count("id", filter=Q(status="rejected")),
+        )
+        .order_by("-submitted")
+    ]
+    evidence_totals = {
+        "submitted": sum(m["submitted"] for m in evidence_metrics),
+        "verified": sum(m["verified"] for m in evidence_metrics),
+        "returned": sum(m["returned"] for m in evidence_metrics),
+        "rejected": sum(m["rejected"] for m in evidence_metrics),
+    }
+
+    # ── Recent activity feed (verifications + returns, merged by time) ──────
+    def _activity_detail(a):
+        school = a.school.name if a.school else "Cluster"
+        district = a.school.district.name if a.school and a.school.district_id else ""
+        return f"{school}, {district}" if district else school
+
+    events = []
+    for vh in VerificationHistory.objects.select_related(
+        "activity", "activity__school", "activity__school__district"
+    ).order_by("-verified_at")[:5]:
+        events.append(
+            {
+                "title": f"{vh.activity.get_activity_type_display()} verified",
+                "detail": _activity_detail(vh.activity),
+                "ts": vh.verified_at,
+            }
+        )
+    for vd in (
+        VerificationDecision.objects.filter(decision="RETURN")
+        .select_related(
+            "verification__activity",
+            "verification__activity__school",
+            "verification__activity__school__district",
+        )
+        .order_by("-decided_at")[:5]
+    ):
+        events.append(
+            {
+                "title": f"{vd.verification.activity.get_activity_type_display()} returned for correction",
+                "detail": _activity_detail(vd.verification.activity),
+                "ts": vd.decided_at,
+            }
+        )
+    events.sort(key=lambda e: e["ts"], reverse=True)
+    recent_activities = [
+        {
+            "title": e["title"],
+            "detail": e["detail"],
+            "time": f"{timesince(e['ts'])} ago",
+        }
+        for e in events[:5]
+    ]
+
+    # ── Field monitoring leaderboards ───────────────────────────────────────
+    pending_rows = list(
+        waiting_qs.exclude(responsible_staff_id__isnull=True)
+        .exclude(responsible_staff_id="")
+        .values("responsible_staff_id")
+        .annotate(c=Count("id"))
+        .order_by("-c")[:5]
+    )
+    verifier_rows = list(
+        VerificationHistory.objects.filter(verified_at__gte=week_start)
+        .values("verified_by")
+        .annotate(c=Count("id"))
+        .order_by("-c")[:5]
+    )
+    fm_user_ids = {r["responsible_staff_id"] for r in pending_rows} | {
+        r["verified_by"] for r in verifier_rows
+    }
+    fm_names = (
+        dict(User.objects.filter(id__in=fm_user_ids).values_list("id", "name"))
+        if fm_user_ids
+        else {}
+    )
+
+    partner_rows = list(
+        waiting_qs.filter(delivery_type="partner")
+        .exclude(assigned_partner_id__isnull=True)
+        .exclude(assigned_partner_id="")
+        .values("assigned_partner_id")
+        .annotate(c=Count("id"))
+        .order_by("-c")[:5]
+    )
+    partner_names = (
+        dict(
+            Partner.objects.filter(
+                id__in=[r["assigned_partner_id"] for r in partner_rows]
+            ).values_list("id", "name")
+        )
+        if partner_rows
+        else {}
+    )
+
+    field_monitoring = {
+        "highest_pending": [
+            {
+                "name": fm_names.get(
+                    r["responsible_staff_id"], r["responsible_staff_id"]
+                ),
+                "count": r["c"],
+            }
+            for r in pending_rows
+        ],
+        "partner_submissions": [
+            {
+                "name": partner_names.get(
+                    r["assigned_partner_id"], r["assigned_partner_id"]
+                ),
+                "count": r["c"],
+            }
+            for r in partner_rows
+        ],
+        "top_verifiers": [
+            {"name": fm_names.get(r["verified_by"], r["verified_by"]), "count": r["c"]}
+            for r in verifier_rows
+        ],
+    }
+
+    # ── Charts: verified/returned per last 5 weekdays + return reasons ──────
+    weekday_starts = []
+    cursor = today_start
+    while len(weekday_starts) < 5:
+        if cursor.weekday() < 5:
+            weekday_starts.append(cursor)
+        cursor -= timedelta(days=1)
+    weekday_starts.reverse()
+    verification_trend = [
+        {
+            "date": day.strftime("%A"),
+            "verified": VerificationHistory.objects.filter(
+                verified_at__gte=day, verified_at__lt=day + timedelta(days=1)
+            ).count(),
+            "returned": VerificationDecision.objects.filter(
+                decision="RETURN",
+                decided_at__gte=day,
+                decided_at__lt=day + timedelta(days=1),
+            ).count(),
+        }
+        for day in weekday_starts
+    ]
+    return_reasons = [
+        {"reason": r["reason"], "count": r["c"]}
+        for r in ReturnedReason.objects.values("reason")
+        .annotate(c=Count("id"))
+        .order_by("-c")[:5]
+    ]
+
+    # ── Upload intake status ────────────────────────────────────────────────
+    last_batch = UploadBatch.objects.order_by("-created_at").first()
+    upload_status = {
+        "last_upload": last_batch.created_at if last_batch else None,
+        "failed": failed_uploads,
+    }
+
+    from apps.debriefs.rollup_service import field_debrief_intelligence_summary
+
+    field_debrief_intel = field_debrief_intelligence_summary(request.user)
 
     context = {
         "kpis": {
             "waiting": waiting_cnt,
-            "verified_today": verified_cnt,
-            "returned_today": returned_cnt,
-            "sla": f"{sla_percentage}%",
-            "ssa_coverage": f"{ssa_coverage}%",
+            "verified_today": verified_today,
+            "verified_week": verified_week,
+            "returned_today": returned_today,
+            "returned_open": returned_open,
             "duplicate_risk": duplicate_risk_cnt,
-            "quality": "98.1%"
+            "ssa_coverage": f"{ssa_coverage}%",
+            "quality": f"{quality_pct}%",
+            "quality_pct": quality_pct,
+            "uploads_today": uploads_today,
+            "sf_queue": missing_sf_id,
+            "ssa_pending_review": ssa_pending_review,
+            "evidence_pending": evidence_pending,
         },
+        "date_range": f"{week_start.strftime('%b')} {week_start.day} – {week_end.strftime('%b')} {week_end.day}, {week_end.year}",
         "kpi_strip_items": kpi_items,
-        # Verification Work Queue List matching Mockup
-        "queue_items": [
-            {
-                "record_id": "SSA-25-000879",
-                "school": "Kibaha Primary",
-                "district": "Kibaha DC",
-                "activity_type": "SSA",
-                "submitted_by": "CCE O. Mwinyi",
-                "submission_date": "19 May 2025 09:21 AM",
-                "status": "Pending Verification",
-                "status_class": "bg-amber-50 text-amber-700 border-amber-200"
-            },
-            {
-                "record_id": "VIS-25-001245",
-                "school": "Mlandizi Secondary",
-                "district": "Bagamoyo DC",
-                "activity_type": "Visit Data",
-                "submitted_by": "Partner: TCI",
-                "submission_date": "19 May 2025 08:57 AM",
-                "status": "Pending Verification",
-                "status_class": "bg-amber-50 text-amber-700 border-amber-200"
-            },
-            {
-                "record_id": "TRN-25-000532",
-                "school": "Zinga Primary",
-                "district": "Kisarawe DC",
-                "activity_type": "Training",
-                "submitted_by": "CCE O. Juma",
-                "submission_date": "19 May 2025 08:43 AM",
-                "status": "Salesforce Queue",
-                "status_class": "bg-blue-50 text-blue-700 border-blue-200"
-            },
-            {
-                "record_id": "EXM-25-001881",
-                "school": "Kwala Secondary",
-                "district": "Mkuranga DC",
-                "activity_type": "Exam Results",
-                "submitted_by": "Partner: ECE",
-                "submission_date": "19 May 2025 08:30 AM",
-                "status": "Pending Verification",
-                "status_class": "bg-amber-50 text-amber-700 border-amber-200"
-            },
-            {
-                "record_id": "MSC-25-000321",
-                "school": "Pweza Primary",
-                "district": "Kibaha DC",
-                "activity_type": "MSC Story",
-                "submitted_by": "CCE O. Aisha",
-                "submission_date": "19 May 2025 08:15 AM",
-                "status": "Returned",
-                "status_class": "bg-rose-50 text-rose-700 border-rose-200"
-            }
-        ],
-        # Alerts / Exceptions matching Mockup
-        "exceptions": [
-            {"count": 42, "text": "records missing Salesforce IDs", "severity": "error"},
-            {"count": 11, "text": "non-certified partner visits submitted", "severity": "warning"},
-            {"count": 8, "text": "districts below SSA verification target", "severity": "info"},
-            {"count": 5, "text": "bulk uploads failed validation", "severity": "error"},
-            {"count": 16, "text": "records returned for correction over 7 days", "severity": "warning"}
-        ],
-        # Data Quality & Compliance KPI strip — rendered via
-        # components/kpi_strip.html. Each tile links to the relevant
-        # work queue so auditors can jump straight to the records.
-        "dq_metrics": [
-            {
-                "label": "Missing Fields",
-                "value": "1,284",
-                "helper": "+6% vs last wk",
-                "icon": "warning",
-                "variant": "danger",
-                "link": "/admin-panel/data-quality-center",
-            },
-            {
-                "label": "Duplicate Records",
-                "value": "326",
-                "helper": "-4% vs last wk",
-                "icon": "report",
-                "variant": "info",
-                "link": "/data-quality/duplicates",
-            },
-            {
-                "label": "Orphan SF Entries",
-                "value": "215",
-                "helper": "-5% vs last wk",
-                "icon": "analytics",
-                "variant": "info",
-                "link": "/ia/verification/?tab=salesforce",
-            },
-            {
-                "label": "Invalid Visit Counts",
-                "value": "178",
-                "helper": "+3% vs last wk",
-                "icon": "analytics",
-                "variant": "warning",
-                "link": "/ia/verification/?tab=evidence",
-            },
-            {
-                "label": "Non-certified Visits",
-                "value": "112",
-                "helper": "+7% vs last wk",
-                "icon": "briefcase",
-                "variant": "warning",
-                "link": "/ia/verification/?tab=evidence",
-            },
-            {
-                "label": "Schools Missing SSA",
-                "value": "87",
-                "helper": "+11% vs last wk",
-                "icon": "school",
-                "variant": "danger",
-                "link": "/ssa/unmatched",
-            },
-            {
-                "label": "Date Mismatches",
-                "value": "243",
-                "helper": "+1% vs last wk",
-                "icon": "calendar",
-                "variant": "warning",
-                "link": "/ia/compare/",
-            },
-        ],
-        # Lowest-performing interventions list
-        "lowest_performing": [
-            {"name": "Reading Campaigns", "rate": 58},
-            {"name": "School Mentorship", "rate": 62},
-            {"name": "STEM Clubs", "rate": 64},
-            {"name": "Teaching & Learning Materials", "rate": 68},
-            {"name": "WASH in Schools", "rate": 71}
-        ],
-        # Leaderboard DC
-        "leaderboard_dc": [
-            {"name": "Kibaha DC", "rate": 92},
-            {"name": "Bagamoyo DC", "rate": 87},
-            {"name": "Kisarawe DC", "rate": 83},
-            {"name": "Mkuranga DC", "rate": 76},
-            {"name": "Rufiji DC", "rate": 61}
-        ],
-        # Evidence Review Panel Table
-        "evidence_metrics": [
-            {"category": "Attendance Lists", "submitted": "1,436", "verified": "1,089", "returned": "221", "rejected": "38"},
-            {"category": "Photos", "submitted": "2,382", "verified": "1,812", "returned": "412", "rejected": "158"},
-            {"category": "Reports", "submitted": "893", "verified": "612", "returned": "198", "rejected": "83"},
-            {"category": "MSC Stories", "submitted": "512", "verified": "343", "returned": "121", "rejected": "48"},
-            {"category": "Exam Result Files", "submitted": "1,204", "verified": "827", "returned": "281", "rejected": "96"}
-        ],
-        # Recent Activity Feed
-        "recent_activities": [
-            {"title": "SSA record SSA-25-000879 verified", "detail": "Kibaha Primary, Kibaha DC", "time": "5 min ago"},
-            {"title": "Bulk upload completed successfully", "detail": "Training Attendance - 320 records", "time": "18 min ago"},
-            {"title": "Record VIS-25-001112 returned", "detail": "Mlandizi Secondary, Bagamoyo DC", "time": "35 min ago"},
-            {"title": "Data issue escalated", "detail": "Non-certified visit detected", "time": "1 hr ago"},
-            {"title": "Salesforce ID linked", "detail": "Record TRN-25-000532", "time": "1 hr ago"}
-        ],
-        # Leaderboards for Field Monitoring
-        "field_monitoring": {
-            "highest_pending": [
-                {"name": "CCEO A. Mwinyi", "count": 312},
-                {"name": "CCEO J. Kamba", "count": 298},
-                {"name": "CCEO S. Rashid", "count": 276},
-                {"name": "CCEO A. Juma", "count": 244},
-                {"name": "CCEO N. Khamis", "count": 201}
-            ],
-            "partner_submissions": [
-                {"name": "TCI", "count": 412},
-                {"name": "CCE", "count": 298},
-                {"name": "BRAC", "count": 186},
-                {"name": "CAMFED", "count": 132},
-                {"name": "World Vision", "count": 98}
-            ],
-            "top_verifiers": [
-                {"name": "IA Rehema K.", "count": 312},
-                {"name": "IA Salam H.", "count": 298},
-                {"name": "IA Miriam T.", "count": 276},
-                {"name": "IA Joseph M.", "count": 244},
-                {"name": "IA Grace P.", "count": 201}
-            ],
-            "slowest_turnaround": [
-                {"name": "Rufiji DC", "time": "72h"},
-                {"name": "Kilwa DC", "time": "64h"},
-                {"name": "Lindi DC", "time": "58h"},
-                {"name": "Mtwara DC", "time": "55h"},
-                {"name": "Nachingwea DC", "time": "51h"}
-            ]
-        },
-        # Mock data for premium charts
+        "queue_items": queue_items,
+        "exceptions": exceptions,
+        "dq_metrics": dq_metrics,
+        "lowest_performing": lowest_performing,
+        "leaderboard_dc": leaderboard_dc,
+        "ssa_overview": ssa_overview,
+        "ssa_review": ssa_review,
+        "evidence_metrics": evidence_metrics,
+        "evidence_totals": evidence_totals,
+        "recent_activities": recent_activities,
+        "field_monitoring": field_monitoring,
+        "upload_status": upload_status,
+        "returned_open_school_cnt": returned_open_school_cnt,
+        "avg_resolution_days": avg_resolution_days,
         "charts": {
-            "verification_trend": [
-                {"date": "Monday", "verified": 12, "returned": 2},
-                {"date": "Tuesday", "verified": 18, "returned": 4},
-                {"date": "Wednesday", "verified": 15, "returned": 1},
-                {"date": "Thursday", "verified": 22, "returned": 3},
-                {"date": "Friday", "verified": 25, "returned": 5},
-            ],
-            "return_reasons": [
-                {"reason": "Evidence missing", "count": 28},
-                {"reason": "Wrong School", "count": 12},
-                {"reason": "Activity SF ID missing", "count": 25},
-                {"reason": "Poor Data Quality", "count": 8},
-                {"reason": "Attendance invalid", "count": 14},
-            ]
-        }
+            "verification_trend": verification_trend,
+            "return_reasons": return_reasons,
+        },
+        "field_debrief_intel": field_debrief_intel,
     }
     return render(request, "pages/ia/analytics_dashboard.html", context)
 
@@ -686,17 +1011,15 @@ def ia_notifications_view(request):
     """Realtime notifications audit feed page."""
     # Read notifications linked to IA from general alerts
     from apps.notifications.models import Notification
-    
+
     # We can fetch notifications generated by IA triggers
     alerts = Notification.objects.filter(
-        Q(title__icontains="IA") | 
-        Q(title__icontains="Verification") | 
-        Q(title__icontains="Submitted")
+        Q(title__icontains="IA")
+        | Q(title__icontains="Verification")
+        | Q(title__icontains="Submitted")
     ).order_by("-created_at")[:50]
-    
-    context = {
-        "alerts": alerts
-    }
+
+    context = {"alerts": alerts}
     return render(request, "pages/ia/notifications.html", context)
 
 
@@ -708,32 +1031,44 @@ def ia_compare_view(request):
     timeline = []
     evidence_list = []
     ssa_record = None
-    
+
     # If no ID, get first waiting
     if not activity_id:
-        first_waiting = Activity.objects.filter(deleted_at__isnull=True, status="awaiting_ia_verification").first()
+        first_waiting = Activity.objects.filter(
+            deleted_at__isnull=True, status="awaiting_ia_verification"
+        ).first()
         if first_waiting:
             activity_id = first_waiting.id
-            
+
     if activity_id:
         a = get_object_or_404(Activity, id=activity_id, deleted_at__isnull=True)
         timeline = VerificationTimelineService.get_timeline(a)
         from apps.evidence.models import EvidenceRecord
-        evidence_list = EvidenceRecord.objects.filter(activity_id=a.id, quarantined=False)
-        
+
+        evidence_list = EvidenceRecord.objects.filter(
+            activity_id=a.id, quarantined=False
+        )
+
         if a.school:
             from apps.ssa.models import SsaRecord
-            ssa_record = SsaRecord.objects.filter(school=a.school, deleted_at__isnull=True).order_by("-date_of_ssa").first()
-            
-    waiting_list = Activity.objects.filter(deleted_at__isnull=True, status__in=["awaiting_ia_verification", "submitted"])
-    
+
+            ssa_record = (
+                SsaRecord.objects.filter(school=a.school, deleted_at__isnull=True)
+                .order_by("-date_of_ssa")
+                .first()
+            )
+
+    waiting_list = Activity.objects.filter(
+        deleted_at__isnull=True, status="awaiting_ia_verification"
+    )
+
     context = {
         "act": a,
         "timeline": timeline,
         "evidence_list": evidence_list,
         "ssa_record": ssa_record,
         "waiting_list": waiting_list,
-        "selected_activity_id": activity_id
+        "selected_activity_id": activity_id,
     }
     return render(request, "pages/ia/compare_evidence.html", context)
 
@@ -743,9 +1078,6 @@ def activity_timeline_view(request, activity_id):
     """Visual walkthrough step-by-step history log for auditing."""
     a = get_object_or_404(Activity, id=activity_id, deleted_at__isnull=True)
     timeline = VerificationTimelineService.get_timeline(a)
-    
-    context = {
-        "act": a,
-        "timeline": timeline
-    }
+
+    context = {"act": a, "timeline": timeline}
     return render(request, "pages/ia/activity_timeline.html", context)

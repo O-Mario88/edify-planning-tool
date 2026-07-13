@@ -14,6 +14,7 @@ The capability flags (canViewFinancialData, canApprove, …) gate feature
 surfaces. `school_queryset` / `aggregate_school_filter` produce the ORM
 constraints matching the legacy schoolWhere / aggregateSchoolWhere.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -107,7 +108,9 @@ def resolve_user_scope(user) -> UserScope:
             StaffSupervisorAssignment,
         )
     except Exception:  # noqa: BLE001 - accounts may not be ready in some unit contexts
-        StaffGeographyAssignment = StaffSchoolAssignment = StaffSupervisorAssignment = None  # type: ignore
+        StaffGeographyAssignment = StaffSchoolAssignment = StaffSupervisorAssignment = (
+            None  # type: ignore
+        )
 
     if summary_only and staff_id and StaffGeographyAssignment:
         # RVP sees summary performance — scope to assigned region(s). No
@@ -119,24 +122,33 @@ def resolve_user_scope(user) -> UserScope:
     elif country_scope:
         # Country roles are not row-constrained by geography here.
         pass
-    elif role in (EdifyRole.CCEO.value, EdifyRole.COUNTRY_PROGRAM_LEAD.value) and staff_id and StaffSchoolAssignment:
+    elif (
+        role in (EdifyRole.CCEO.value, EdifyRole.COUNTRY_PROGRAM_LEAD.value)
+        and staff_id
+        and StaffSchoolAssignment
+    ):
         from django.utils import timezone
         from apps.accounts.models import TemporaryCoverageAssignment
+
         now = timezone.now()
         active_coverages = TemporaryCoverageAssignment.objects.filter(
             covering_staff_id=staff_id,
             start_datetime__lte=now,
             end_datetime__gte=now,
-            status="active"
+            status="active",
         )
-        covered_staff_ids = list(active_coverages.values_list("original_staff_id", flat=True))
+        covered_staff_ids = list(
+            active_coverages.values_list("original_staff_id", flat=True)
+        )
 
         own_query = Q(staff_id=staff_id)
         if covered_staff_ids:
             own_query |= Q(staff_id__in=covered_staff_ids)
 
         # Own assigned schools (personal field work).
-        own = StaffSchoolAssignment.objects.filter(own_query).values_list("school_id", flat=True)
+        own = StaffSchoolAssignment.objects.filter(own_query).values_list(
+            "school_id", flat=True
+        )
         own_school_ids = _uniq(own)
 
         # PL also supervises CCEOs — their schools form the TEAM lens (distinct
@@ -144,11 +156,15 @@ def resolve_user_scope(user) -> UserScope:
         has_pl_coverage = False
         if covered_staff_ids:
             from apps.accounts.models import StaffProfile
+
             has_pl_coverage = StaffProfile.objects.filter(
-                id__in=covered_staff_ids, user__active_role=EdifyRole.COUNTRY_PROGRAM_LEAD.value
+                id__in=covered_staff_ids,
+                user__active_role=EdifyRole.COUNTRY_PROGRAM_LEAD.value,
             ).exists()
 
-        if (role == EdifyRole.COUNTRY_PROGRAM_LEAD.value or has_pl_coverage) and StaffSupervisorAssignment:
+        if (
+            role == EdifyRole.COUNTRY_PROGRAM_LEAD.value or has_pl_coverage
+        ) and StaffSupervisorAssignment:
             supervisor_query = Q(supervisor_id=staff_id)
             if covered_staff_ids:
                 supervisor_query |= Q(supervisor_id__in=covered_staff_ids)
@@ -174,13 +190,26 @@ def resolve_user_scope(user) -> UserScope:
                 )
                 district_ids = _uniq([s["district_id"] for s in schools])
                 region_ids = _uniq([s["region_id"] for s in schools])
-                cluster_ids = _uniq([s["cluster_id"] for s in schools if s["cluster_id"]])
-                core_school_ids = [s["id"] for s in schools if s["school_type"] == "core"]
+                cluster_ids = _uniq(
+                    [s["cluster_id"] for s in schools if s["cluster_id"]]
+                )
+                core_school_ids = [
+                    s["id"] for s in schools if s["school_type"] == "core"
+                ]
     elif role == EdifyRole.PROJECT_COORDINATOR.value and staff_id:
         try:
             from apps.projects.models import Project, ProjectSchoolAssignment
-            project_ids = list(Project.objects.filter(manager_staff_id=staff_id).values_list("id", flat=True))
-            own_school_ids = list(ProjectSchoolAssignment.objects.filter(project_id__in=project_ids).values_list("school_id", flat=True))
+
+            project_ids = list(
+                Project.objects.filter(manager_staff_id=staff_id).values_list(
+                    "id", flat=True
+                )
+            )
+            own_school_ids = list(
+                ProjectSchoolAssignment.objects.filter(
+                    project_id__in=project_ids
+                ).values_list("school_id", flat=True)
+            )
             school_ids = _uniq(own_school_ids)
             if school_ids:
                 school_model = _get_school_model()
@@ -190,8 +219,12 @@ def resolve_user_scope(user) -> UserScope:
                     )
                     district_ids = _uniq([s["district_id"] for s in schools])
                     region_ids = _uniq([s["region_id"] for s in schools])
-                    cluster_ids = _uniq([s["cluster_id"] for s in schools if s["cluster_id"]])
-                    core_school_ids = [s["id"] for s in schools if s["school_type"] == "core"]
+                    cluster_ids = _uniq(
+                        [s["cluster_id"] for s in schools if s["cluster_id"]]
+                    )
+                    core_school_ids = [
+                        s["id"] for s in schools if s["school_type"] == "core"
+                    ]
         except Exception:
             pass
     elif role in (EdifyRole.PARTNER_ADMIN.value, EdifyRole.PARTNER_FIELD_OFFICER.value):
@@ -200,20 +233,31 @@ def resolve_user_scope(user) -> UserScope:
         if partner_ids:
             try:
                 from apps.partners.models import PartnerAssignment
-                assigned_schools = list(PartnerAssignment.objects.filter(
-                    partner_id__in=partner_ids
-                ).values_list("school_id", flat=True))
+
+                assigned_schools = list(
+                    PartnerAssignment.objects.filter(
+                        partner_id__in=partner_ids
+                    ).values_list("school_id", flat=True)
+                )
                 school_ids = _uniq(assigned_schools)
                 if school_ids:
                     school_model = _get_school_model()
                     if school_model is not None:
                         schools = school_model.objects.filter(id__in=school_ids).values(
-                            "id", "district_id", "region_id", "cluster_id", "school_type"
+                            "id",
+                            "district_id",
+                            "region_id",
+                            "cluster_id",
+                            "school_type",
                         )
                         district_ids = _uniq([s["district_id"] for s in schools])
                         region_ids = _uniq([s["region_id"] for s in schools])
-                        cluster_ids = _uniq([s["cluster_id"] for s in schools if s["cluster_id"]])
-                        core_school_ids = [s["id"] for s in schools if s["school_type"] == "core"]
+                        cluster_ids = _uniq(
+                            [s["cluster_id"] for s in schools if s["cluster_id"]]
+                        )
+                        core_school_ids = [
+                            s["id"] for s in schools if s["school_type"] == "core"
+                        ]
             except Exception:
                 pass
 
@@ -235,11 +279,13 @@ def resolve_user_scope(user) -> UserScope:
         can_view_summary_only=summary_only,
         can_view_school_level_detail=not summary_only,
         can_view_partner_data=has(Permission.PARTNER_VIEW.value),
-        can_view_financial_data=has(Permission.BUDGET_VIEW_DETAIL.value) or has(Permission.PAYMENT_ACT.value),
+        can_view_financial_data=has(Permission.BUDGET_VIEW_DETAIL.value)
+        or has(Permission.PAYMENT_ACT.value),
         can_view_own=bool(own_school_ids) or (not country_scope and not summary_only),
         can_view_team=(role == EdifyRole.COUNTRY_PROGRAM_LEAD.value) or country_scope,
         can_view_country=country_scope,
-        can_approve=has(Permission.BUDGET_APPROVE.value) or has(Permission.IA_VERIFY.value),
+        can_approve=has(Permission.BUDGET_APPROVE.value)
+        or has(Permission.IA_VERIFY.value),
         can_assign=has(Permission.ACTIVITY_ASSIGN.value),
         can_export=has(Permission.EXPORT.value),
     )
@@ -289,6 +335,7 @@ def school_queryset(scope: UserScope):
     qs = school_model.objects.all()
     if scope.active_role == "CountryDirector":
         from django.conf import settings
+
         if not getattr(settings, "ALLOW_CD_OPERATIONAL_PLANNING", False):
             return qs.none()
     if scope.country_scope:

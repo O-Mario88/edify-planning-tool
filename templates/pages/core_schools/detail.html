@@ -3,17 +3,17 @@
 {% block title %}Core School Plan — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6">
+<div class="px-4 sm:px-6 py-5 space-y-4" style="max-width:1500px;margin:0 auto;">
 
 <div class="flex items-center justify-between">
 <div>
-<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight">Core School Plan</h1>
-<p class="text-[12px] text-[var(--text-secondary)] mt-1 font-semibold">Edify Operations · Core School Plan</p>
+<h1 class="text-[21px] font-extrabold tracking-tight">Core School Plan</h1>
+<p class="text-[12px] text-[var(--edify-text-muted)] mt-1 font-semibold">Edify Operations · Core School Plan</p>
 </div>
 </div>
 
-<div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm"><h2 class="text-[18px] font-semibold text-slate-800">Plan: {{ plan.id }}</h2><p class="text-[12px] text-slate-400 mt-1">Status: {{ plan.status }} · School: {{ plan.school_id }}</p></div>
-{% if slots %}<div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm"><div class="px-5 py-4 border-b border-slate-100"><h3 class="text-[14px] font-semibold text-slate-700">Activity Slots</h3></div><ul class="divide-y divide-slate-100">{% for s in slots %}<li class="px-5 py-3.5 flex items-center justify-between"><p class="text-[12px] font-bold text-slate-800">Slot #{{ s.slot_number|default:forloop.counter }} — {{ s.kind|default:"Activity" }}</p><span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">{{ s.status }}</span></li>{% endfor %}</ul></div>{% endif %}
+<div class="bg-white rounded-lg border border-[var(--edify-border)] p-6 shadow-sm"><h2 class="text-[21px] font-extrabold tracking-tight">Plan: {{ plan.id }}</h2><p class="text-[12px] text-slate-400 mt-1">Status: {{ plan.status }} · School: {{ plan.school_id }}</p></div>
+{% if slots %}<div class="bg-white rounded-lg border border-[var(--edify-border)] shadow-sm"><div class="px-5 py-4 border-b border-slate-100"><h3 class="text-[14px] font-semibold">Activity Slots</h3></div><ul class="divide-y divide-slate-100">{% for s in slots %}<li class="px-5 py-3.5 flex items-center justify-between"><p class="text-[12px] font-bold text-slate-800">Slot #{{ s.slot_number|default:forloop.counter }} — {{ s.kind|default:"Activity" }}</p><span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">{{ s.status }}</span></li>{% endfor %}</ul></div>{% endif %}
 
 </div>
 {% endblock %}

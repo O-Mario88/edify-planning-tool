@@ -1,4 +1,5 @@
 """Fund-requests endpoints — /api/fund-requests/*."""
+
 from __future__ import annotations
 
 from rest_framework.permissions import IsAuthenticated
@@ -6,6 +7,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.core.exceptions import BadRequest
 from apps.core.permissions import RequirePermissions
 from apps.core.rbac import Permission
 
@@ -74,16 +76,22 @@ def _action_view(fn, perm):
 ApproveView = _action_view(services.approve, APPROVE)
 ReturnView = _action_view(services.return_request, APPROVE)
 RejectView = _action_view(services.reject, APPROVE)
+
+
 class DisburseView(APIView):
     permission_classes = [IsAuthenticated, RequirePermissions]
     required_permissions = PAYMENT
 
     def post(self, request: Request, request_id: str) -> Response:
         from .models import WeeklyFundRequest
+
         if WeeklyFundRequest.objects.filter(id=request_id).exists():
             from .weekly_service import disburse
+
             return Response(disburse(request_id, request.data, request.user))
         return Response(services.disburse(request_id, request.data, request.user))
+
+
 AccountView = _action_view(services.submit_accountability, VIEW)
 
 
@@ -92,7 +100,11 @@ class AccountApproveView(APIView):
     required_permissions = PAYMENT
 
     def post(self, request: Request, request_id: str) -> Response:
-        return Response(services.review_accountability(request_id, "approve", request.data, request.user))
+        return Response(
+            services.review_accountability(
+                request_id, "approve", request.data, request.user
+            )
+        )
 
 
 class AccountReturnView(APIView):
@@ -100,7 +112,11 @@ class AccountReturnView(APIView):
     required_permissions = PAYMENT
 
     def post(self, request: Request, request_id: str) -> Response:
-        return Response(services.review_accountability(request_id, "return", request.data, request.user))
+        return Response(
+            services.review_accountability(
+                request_id, "return", request.data, request.user
+            )
+        )
 
 
 # ── Weekly advance-request endpoints ─────────────────────────────────────────
@@ -154,13 +170,15 @@ class NotRequestedView(APIView):
 # Accountant actions (PAYMENT permission).
 AdvanceDisburseView = _advance_view(advance_service.disburse, PAYMENT)
 AdvanceAccountView = _advance_view(advance_service.submit_accountability, VIEW)
-AdvanceAccountApproveView = _advance_view(advance_service.approve_accountability, PAYMENT, takes_data=False)
+AdvanceAccountApproveView = _advance_view(
+    advance_service.approve_accountability, PAYMENT, takes_data=False
+)
 AdvanceReimburseSubmitView = _advance_view(advance_service.submit_reimbursement, VIEW)
 AdvanceReimburseView = _advance_view(advance_service.reimburse, PAYMENT)
 
 
 # ── Weekly request endpoints ─────────────────────────────────────────────────
-from apps.core.exceptions import BadRequest
+
 
 class WeeklyGenerateView(APIView):
     permission_classes = [IsAuthenticated, RequirePermissions]
@@ -168,6 +186,7 @@ class WeeklyGenerateView(APIView):
 
     def post(self, request: Request) -> Response:
         from .weekly_service import generate_weekly_fund_request
+
         week_start = request.data.get("weekStartDate")
         user_id = request.data.get("responsibleUser", request.user.user_id)
         if not week_start:
@@ -175,8 +194,11 @@ class WeeklyGenerateView(APIView):
         wfr = generate_weekly_fund_request(user_id, week_start)
         if wfr:
             from .weekly_service import _serialize_request
+
             return Response(_serialize_request(wfr))
-        return Response({"detail": "No activities scheduled for this week."}, status=200)
+        return Response(
+            {"detail": "No activities scheduled for this week."}, status=200
+        )
 
 
 class WeeklyRequestListView(APIView):
@@ -185,6 +207,7 @@ class WeeklyRequestListView(APIView):
 
     def get(self, request: Request) -> Response:
         from .weekly_service import list_weekly_requests, accountant_weekly_queues
+
         if request.query_params.get("queues") == "true":
             return Response(accountant_weekly_queues())
         return Response(list_weekly_requests(_q(request), request.user))
@@ -196,6 +219,7 @@ class WeeklyRequestDetailView(APIView):
 
     def get(self, request: Request, request_id: str) -> Response:
         from .weekly_service import get_weekly_request
+
         return Response(get_weekly_request(request_id, request.user))
 
 
@@ -205,6 +229,7 @@ class WeeklyRequestConfirmView(APIView):
 
     def post(self, request: Request, request_id: str) -> Response:
         from .weekly_service import request_advance
+
         return Response(request_advance(request_id, request.user))
 
 
@@ -214,6 +239,7 @@ class WeeklyRequestSelfFundedView(APIView):
 
     def post(self, request: Request, request_id: str) -> Response:
         from .weekly_service import self_funded
+
         return Response(self_funded(request_id, request.user))
 
 
@@ -223,6 +249,7 @@ class WeeklyRequestNotRequestedView(APIView):
 
     def post(self, request: Request, request_id: str) -> Response:
         from .weekly_service import not_requested
+
         return Response(not_requested(request_id, request.user))
 
 
@@ -232,4 +259,5 @@ class WeeklyRequestDisburseView(APIView):
 
     def post(self, request: Request, request_id: str) -> Response:
         from .weekly_service import disburse
+
         return Response(disburse(request_id, request.data, request.user))

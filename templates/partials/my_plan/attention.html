@@ -1,0 +1,235 @@
+<!-- Attention Region: Returned / Waiting on Approval / Partner Monitoring / Finance Pending -->
+
+<!-- 1. Returned — Needs Correction (rose) -->
+{% if returned_needs_correction %}
+<div class="card overflow-hidden border-rose-200" data-card="returned-needs-correction">
+
+<!-- Card Header -->
+<div class="px-5 py-4 border-b border-rose-200 bg-rose-50/60 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="text-[18px]"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L14.7 3.9a2 2 0 00-3.4 0z"/></svg></span>
+<h2 class="text-[15px] font-semibold text-rose-800 tracking-tight">
+Returned — Needs Correction
+</h2>
+<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-100 text-rose-700 border border-rose-200">
+{{ returned_needs_correction|length }}
+</span>
+</div>
+</div>
+
+<!-- Table Section -->
+<div class="overflow-x-auto">
+<table class="edify-data-table">
+<thead>
+<tr>
+<th>School / Cluster</th>
+<th>Type</th>
+<th>Returned By</th>
+<th>Reason</th>
+<th class="text-right">Action</th>
+</tr>
+</thead>
+<tbody>
+{% for row in returned_needs_correction %}
+<tr>
+<td class="font-semibold text-slate-800 text-[14px]">
+{% if row.school_name and row.school_name != 'Unknown School' %}{{ row.school_name }}{% else %}{{ row.cluster_name }}{% endif %}
+</td>
+<td class="text-slate-600 font-semibold">{{ row.activity_type_label }}</td>
+<td class="font-bold text-rose-700">{{ row.returned_by }}</td>
+<td class="text-rose-700 italic font-semibold">"{{ row.return_reason }}"</td>
+<td class="text-right">
+<button
+hx-get="{{ row.next_action.url }}"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+class="inline-flex items-center justify-center h-8 px-3 rounded-lg !bg-rose-600 !text-white text-[12px] font-semibold hover:bg-rose-700 shadow-sm transition-all"
+>
+{{ row.next_action.text }}
+</button>
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+
+</div>
+{% endif %}
+
+<!-- 2. Waiting on Approval (amber) -->
+{% if waiting_on_approval %}
+<div class="card overflow-hidden border-amber-200" data-card="waiting-on-approval">
+
+<!-- Card Header -->
+<div class="px-5 py-4 border-b border-amber-200 bg-amber-50/60 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="text-[18px]">⏳</span>
+<h2 class="text-[15px] font-semibold text-amber-800 tracking-tight">
+Waiting on Approval
+</h2>
+<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-700 border border-amber-200">
+{{ waiting_on_approval|length }}
+</span>
+</div>
+</div>
+
+<!-- Table Section -->
+<div class="overflow-x-auto">
+<table class="edify-data-table">
+<thead>
+<tr>
+<th>School / Cluster</th>
+<th>Type</th>
+<th>Planned Date</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+{% for row in waiting_on_approval %}
+<tr>
+<td class="font-semibold text-slate-800 text-[14px]">
+{% if row.school_name and row.school_name != 'Unknown School' %}{{ row.school_name }}{% else %}{{ row.cluster_name }}{% endif %}
+</td>
+<td class="text-slate-600 font-semibold">{{ row.activity_type_label }}</td>
+<td class="font-bold text-slate-700">{{ row.planned_date|date:"M j, D"|default:"Unscheduled" }}</td>
+<td>
+<span class="edify-status-badge {{ row.status_class }} px-2 py-0.5 rounded text-[11px]">
+{{ row.status_label }}
+</span>
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+
+</div>
+{% endif %}
+
+<!-- 3. Partner Planned — Monitoring (indigo, read-only; staff monitors only) -->
+{% if partner_monitoring and not viewer_is_partner %}
+<div class="card overflow-hidden border-indigo-200" data-card="partner-planned-monitoring">
+
+<!-- Card Header -->
+<div class="px-5 py-4 border-b border-indigo-200 bg-indigo-50/60 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="text-[18px]"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6-2a3 3 0 10-2-5.24"/></svg></span>
+<h2 class="text-[15px] font-semibold text-indigo-800 tracking-tight">
+Partner Planned — Monitoring
+</h2>
+<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-100 text-indigo-700 border border-indigo-200">
+{{ partner_monitoring|length }}
+</span>
+</div>
+<span class="text-[11px] font-bold uppercase tracking-wider text-indigo-500">Read-only</span>
+</div>
+
+<!-- Table Section -->
+<div class="overflow-x-auto">
+<table class="edify-data-table">
+<thead>
+<tr>
+<th>Partner</th>
+<th>School / Cluster</th>
+<th>Type</th>
+<th>Planned Date</th>
+<th>Focus</th>
+<th>Evidence</th>
+<th class="text-center">SF ID</th>
+<th>IA Status</th>
+<th>Payment</th>
+<th class="text-right"></th>
+</tr>
+</thead>
+<tbody>
+{% for row in partner_monitoring %}
+<tr>
+<td class="font-bold text-indigo-700">{{ row.partner_name }}</td>
+<td class="font-semibold text-slate-800 text-[13px]">
+{% if row.school_name and row.school_name != 'Unknown School' %}{{ row.school_name }}{% else %}{{ row.cluster_name }}{% endif %}
+</td>
+<td class="text-slate-600 font-semibold">{{ row.activity_type_label }}</td>
+<td class="font-bold text-slate-700">{{ row.planned_date|date:"M j, D"|default:"Unscheduled" }}</td>
+<td class="text-slate-600 font-semibold">{{ row.focus_intervention }}</td>
+<td class="text-slate-600 font-semibold">{{ row.evidence_status|default:"—" }}</td>
+<td class="text-center font-bold {% if row.salesforce_activity_id %}text-emerald-600{% else %}text-slate-400{% endif %}">
+{% if row.salesforce_activity_id %}<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>{% else %}—{% endif %}
+</td>
+<td class="text-slate-600 font-semibold">{{ row.ia_verification_status|default:"—" }}</td>
+<td class="text-slate-600 font-semibold">{{ row.payment_status|default:"—" }}</td>
+<td class="text-right">
+<a href="/my-plan/{{ row.id }}" class="btn btn-ghost h-8 text-[11px] shadow-sm">View</a>
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+
+</div>
+{% endif %}
+
+<!-- 4. Finance / Accountability Pending -->
+{% if finance_pending %}
+<div class="card overflow-hidden" data-card="finance-pending">
+
+<!-- Card Header -->
+<div class="px-5 py-4 border-b border-slate-200 bg-slate-50/50 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="text-[18px]"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.7 0-3 .9-3 2s1.3 2 3 2 3 .9 3 2-1.3 2-3 2m0-8V7m0 9v1m9-5a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></span>
+<h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">
+Finance / Accountability Pending
+</h2>
+<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#2e505f]/10 text-[#2e505f] border border-[#2e505f]/20">
+{{ finance_pending|length }}
+</span>
+</div>
+</div>
+
+<!-- Table Section -->
+<div class="overflow-x-auto">
+<table class="edify-data-table">
+<thead>
+<tr>
+<th>School / Cluster</th>
+<th>Type</th>
+<th>Payment Status</th>
+<th class="text-right">Next Action</th>
+</tr>
+</thead>
+<tbody>
+{% for row in finance_pending %}
+<tr>
+<td class="font-semibold text-slate-800 text-[14px]">
+{% if row.school_name and row.school_name != 'Unknown School' %}{{ row.school_name }}{% else %}{{ row.cluster_name }}{% endif %}
+</td>
+<td class="text-slate-600 font-semibold">{{ row.activity_type_label }}</td>
+<td>
+<span class="inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-semibold uppercase border bg-amber-50 text-amber-600 border-amber-150">
+{{ row.payment_status|default:"none" }}
+</span>
+</td>
+<td class="text-right">
+{% if row.execution_role != 'Partner' or viewer_is_partner %}
+<button
+hx-get="{{ row.next_action.url }}"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+class="inline-flex items-center justify-center h-8 px-3 rounded-lg !bg-[#2e505f] !text-white text-[12px] font-semibold hover:bg-opacity-95 shadow-sm transition-all"
+>
+{{ row.next_action.text }}
+</button>
+{% else %}
+<span class="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Monitoring — partner-owned</span>
+{% endif %}
+<p class="text-[11px] text-slate-400 font-bold mt-1 uppercase tracking-wider">{{ row.next_action.description }}</p>
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+
+</div>
+{% endif %}

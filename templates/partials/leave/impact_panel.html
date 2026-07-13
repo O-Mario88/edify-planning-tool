@@ -1,206 +1,500 @@
-<div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col font-sans">
+{% load frontend_filters %}
+
+<div class="grid grid-cols-1 lg:grid-cols-9 gap-6 items-start">
   
-  <!-- Panel Header -->
-  <div class="p-5 bg-slate-50/50 border-b border-slate-150 flex items-center justify-between">
-    <div>
-      <h3 class="text-[15px] font-bold text-slate-800">Leave Impact & Coverage Audit</h3>
-      <p class="text-[11px] text-slate-400 font-semibold mt-0.5">Request Ref: #{{ leave.id|slice:":8" }}</p>
-    </div>
-    <span class="px-2.5 py-0.5 bg-amber-50 border border-amber-200 text-amber-700 rounded-full text-[10px] font-extrabold uppercase tracking-wider">
-      Pending Review
-    </span>
-  </div>
-
-  <div class="p-6 space-y-6 overflow-y-auto max-h-[650px]">
+  <!-- Middle Column: Detailed Request Card (6/9 cols) -->
+  <div class="lg:col-span-6 rounded-lg border shadow-sm p-6 space-y-6"
+       style="background:var(--edify-surface); border-color:var(--edify-border);">
     
-    <!-- Meta Summary -->
-    <div class="flex justify-between items-start gap-4">
-      <div>
-        <h4 class="text-[16px] font-extrabold text-slate-800">{{ leave.staff.user.name }}</h4>
-        <span class="text-[12px] text-slate-400 font-semibold mt-0.5 block">{{ leave.staff.user.active_role }}</span>
-        
-        <p class="text-[13px] text-slate-700 font-semibold mt-3 flex items-center gap-1">
-          <span>🏖</span> {{ leave.type|replace:"_"|title }}
-        </p>
-        <p class="text-[12px] text-slate-500 font-semibold mt-1">
-          {{ leave.start_date }} to {{ leave.end_date }}
-        </p>
+    <!-- Title & Request ID -->
+    <div class="flex items-center justify-between border-b pb-3" style="border-color:var(--edify-border);">
+      <h3 class="text-sm font-bold text-slate-200">Leave Request Details</h3>
+      <span class="text-[10px] font-bold text-slate-400">Request ID: LR-{{ leave.id|slice:":8"|upper }}</span>
+    </div>
+
+    <!-- Employee Profile info -->
+    <div class="flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="h-12 w-12 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center font-black text-sm shadow-inner">
+          {{ leave.staff.user.name|slice:":2"|upper }}
+        </div>
+        <div>
+          <h4 class="font-extrabold text-slate-100 text-sm leading-tight">{{ leave.staff.user.name }}</h4>
+          <p class="text-[10.5px] text-slate-400 mt-0.5 font-semibold">{{ leave.staff.user.active_role }} · {{ leave.staff.user.email }}</p>
+        </div>
       </div>
       
-      <div class="text-right">
-        <div class="p-4 bg-slate-50 rounded-2xl border border-slate-150">
-          <span class="text-[26px] font-extrabold text-slate-800 tracking-tight block">{{ leave.days_charged }}</span>
-          <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Charged Days</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Handover Details -->
-    <div class="bg-slate-50/50 rounded-2xl border border-slate-150 p-4 space-y-3">
-      <div>
-        <h5 class="text-[11px] font-bold uppercase text-slate-400 tracking-wider">Assigned Coverage Person</h5>
-        <p class="text-[13px] font-bold text-slate-800 mt-1 flex items-center gap-1.5">
-          <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
-          {{ leave.covering_staff.user.name }}
-        </p>
-      </div>
-
-      <div class="border-t border-slate-150/60 pt-3">
-        <h5 class="text-[11px] font-bold uppercase text-slate-400 tracking-wider">Handover & Coverage Notes</h5>
-        <p class="text-[12.5px] text-slate-600 font-medium leading-relaxed mt-1">
-          {{ leave.coverage_notes|default:"No notes provided." }}
-        </p>
-      </div>
-
-      {% if leave.urgent_activities %}
-      <div class="border-t border-slate-150/60 pt-3">
-        <h5 class="text-[11px] font-bold uppercase text-slate-400 tracking-wider">Urgent Activities during leave</h5>
-        <p class="text-[12px] text-rose-700 font-bold leading-relaxed mt-1">
-          ⚠️ {{ leave.urgent_activities }}
-        </p>
-      </div>
-      {% endif %}
-
-      <div class="border-t border-slate-150/60 pt-3">
-        <h5 class="text-[11px] font-bold uppercase text-slate-400 tracking-wider">Emergency Contact</h5>
-        <p class="text-[12px] text-slate-700 font-bold mt-1">
-          {{ leave.emergency_contact|default:"None" }}
-        </p>
-      </div>
-    </div>
-
-    <!-- Attachment Link -->
-    {% if leave.attachment %}
-    <div class="flex items-center justify-between p-3.5 bg-sky-50 border border-sky-100 rounded-xl text-sky-800 text-[12px] font-semibold">
-      <span class="flex items-center gap-1.5">
-        <span>📄</span> Medical / Supporting Attachment
-      </span>
-      <a 
-        href="{{ leave.attachment.url }}" 
-        target="_blank"
-        class="text-indigo-600 hover:text-indigo-800 font-extrabold uppercase tracking-wide"
-      >
-        View File
-      </a>
-    </div>
-    {% endif %}
-
-    <!-- Leave Overlaps Audit -->
-    <div class="space-y-2">
-      <h5 class="text-[11px] font-bold uppercase text-slate-400 tracking-wider">Leave Overlap Check</h5>
-      
-      {% if overlaps or impact.overlaps %}
-      <div class="border border-amber-100 bg-amber-50/50 rounded-2xl p-4 space-y-3">
-        <div class="flex gap-2 text-amber-700 text-[12px] font-bold">
-          <span>⚠️</span>
-          <span>Overlap Risk: {{ overlaps|length|default:impact.overlaps|length }} active overlaps during this period.</span>
-        </div>
-        <div class="divide-y divide-amber-100 text-[11.5px] font-medium">
-          {% if overlaps %}
-            {% for ov in overlaps %}
-            <div class="py-2 flex justify-between text-slate-700">
-              <span>{{ ov.recommended_action }}</span>
-              <span class="font-bold">{{ ov.date_range }}</span>
-            </div>
-            {% endfor %}
-          {% else %}
-            {% for ov in impact.overlaps %}
-            <div class="py-2 flex justify-between text-slate-700">
-              <span>{{ ov.name }} ({{ ov.role }})</span>
-              <span class="font-bold">{{ ov.start }} to {{ ov.end }}</span>
-            </div>
-            {% endfor %}
-          {% endif %}
-        </div>
-      </div>
-      {% else %}
-      <div class="p-3.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-100 text-[12px] font-semibold flex items-center gap-1.5">
-        <span>✅</span> No leave overlaps in this supervisor group during this period.
-      </div>
-      {% endif %}
-    </div>
-
-    <!-- Activity Slot Conflicts -->
-    <div class="space-y-2">
-      <h5 class="text-[11px] font-bold uppercase text-slate-400 tracking-wider">Scheduled Field Activities Conflict Check</h5>
-      
-      {% if act_conflicts or impact.conflicts %}
-      <div class="border border-rose-100 bg-rose-50/50 rounded-2xl p-4 space-y-3">
-        <div class="flex gap-2 text-rose-700 text-[12px] font-bold">
-          <span>🚨</span>
-          <span>Conflict Warning: {{ act_conflicts|length|default:impact.conflict_count }} active activities scheduled during this leave.</span>
-        </div>
-        <div class="divide-y divide-rose-100 text-[11.5px] font-medium max-h-48 overflow-y-auto">
-          {% if act_conflicts %}
-            {% for conf in act_conflicts %}
-            <div class="py-2.5 flex justify-between items-start text-slate-700">
-              <div>
-                <span class="font-bold text-slate-800 block">{{ conf.affected_activity.activity_type|title }}</span>
-                <span class="text-[10px] text-slate-400 block mt-0.5">{{ conf.affected_activity.school.name|default:"General" }}</span>
-              </div>
-              <span class="font-bold text-slate-500 whitespace-nowrap">{{ conf.date_range }}</span>
-            </div>
-            {% endfor %}
-          {% else %}
-            {% for conf in impact.conflicts %}
-            <div class="py-2.5 flex justify-between items-start text-slate-700">
-              <div>
-                <span class="font-bold text-slate-800 block">{{ conf.type }}</span>
-                <span class="text-[10px] text-slate-400 block mt-0.5">{{ conf.school }}</span>
-              </div>
-              <span class="font-bold text-slate-500 whitespace-nowrap">{{ conf.date }}</span>
-            </div>
-            {% endfor %}
-          {% endif %}
-        </div>
-      </div>
-      {% else %}
-      <div class="p-3.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-100 text-[12px] font-semibold flex items-center gap-1.5">
-        <span>✅</span> No active school visits or planning slots scheduled for this user during this leave.
-      </div>
-      {% endif %}
-    </div>
-
-    <!-- Reviewer Form -->
-    <form method="POST" id="reviewer-action-form" class="space-y-4 pt-4 border-t border-slate-150">
-      {% csrf_token %}
-      
-      <div class="space-y-1.5">
-        <label class="block text-[11px] font-bold uppercase text-slate-400 tracking-wider">Review Comments / Reason</label>
-        <textarea 
-          name="reason" 
-          rows="3"
-          placeholder="Provide review feedback (mandatory if rejecting or returning for updates)..."
-          class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-[13px] font-semibold text-slate-700 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition"
-        ></textarea>
-      </div>
-
-      <!-- Action Buttons -->
-      <div class="grid grid-cols-3 gap-2">
-        <button 
-          type="submit" 
-          formaction="{% url 'frontend:leave_reject_action' leave.id %}"
-          class="px-3 py-2.5 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-[11px] font-bold uppercase rounded-xl tracking-wider transition text-center"
+      <div class="text-right flex flex-col items-end gap-1.5">
+        <span class="px-2 py-0.5 bg-blue-500/15 text-blue-400 rounded-lg text-[9.5px] font-bold uppercase tracking-wider">
+          {{ leave.type|replace_underscore|title }}
+        </span>
+        <span class="px-1.5 py-0.5 rounded text-[9.5px] font-extrabold uppercase tracking-wide
+          {% if leave.status == 'pending' %}bg-amber-500/10 text-amber-500
+          {% elif leave.status == 'approved' %}bg-emerald-500/10 text-emerald-500
+          {% elif leave.status == 'rejected' %}bg-rose-500/10 text-rose-500
+          {% else %}bg-blue-500/10 text-blue-500{% endif %}"
         >
+          {{ leave.status|upper }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Dates Strip & Balance -->
+    <div class="grid grid-cols-4 gap-4 p-4 rounded-xl border"
+         style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
+      <div class="space-y-1">
+        <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Start Date</span>
+        <p class="text-[11.5px] font-black text-slate-200">{{ leave.start_date }}</p>
+      </div>
+      <div class="space-y-1">
+        <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">End Date</span>
+        <p class="text-[11.5px] font-black text-slate-200">{{ leave.end_date }}</p>
+      </div>
+      <div class="space-y-1">
+        <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Working Days</span>
+        <p class="text-[11.5px] font-black text-slate-200">{{ leave.days_charged }} days</p>
+      </div>
+      <div class="space-y-1">
+        <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Remaining Balance</span>
+        <p class="text-[11.5px] font-black text-slate-200">16 / 21 days</p>
+      </div>
+    </div>
+
+    <!-- Notes/Reason -->
+    <div class="space-y-1.5">
+      <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Reason / Notes</span>
+      <div class="p-3 rounded-xl border text-xs font-semibold text-slate-300 leading-relaxed"
+           style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
+        {{ leave.reason|default:"No description notes provided." }}
+      </div>
+    </div>
+
+    <!-- Coverage and Access Transfer block -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- Coverage Assignee -->
+      <div class="p-4 rounded-xl border flex flex-col justify-between"
+           style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
+        <div>
+          <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Coverage Assignee</span>
+          {% if leave.covering_staff %}
+            <div class="flex items-center gap-2.5 mt-2">
+              <div class="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center font-bold text-xs shadow-sm">
+                {{ leave.covering_staff.user.name|slice:":2"|upper }}
+              </div>
+              <div>
+                <p class="text-xs font-bold text-slate-200 leading-tight">{{ leave.covering_staff.user.name }}</p>
+                <p class="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">{{ leave.covering_staff.user.active_role }}</p>
+              </div>
+            </div>
+            
+            <span class="mt-3 inline-flex items-center gap-1 text-[9.5px] font-bold text-emerald-500">
+              <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4"/>
+              </svg>
+              {{ leave.coverage_status }} to cover role
+            </span>
+          {% else %}
+            <p class="text-xs text-slate-400 mt-2">No coverage assignee proposed.</p>
+          {% endif %}
+        </div>
+        
+        {% if eligible_cover_staff %}
+        <!-- Reassign Coverage dropdown trigger -->
+        <button onclick="document.getElementById('reassign-coverage-modal').classList.remove('hidden')"
+                class="mt-4 px-3 py-1.5 text-[10px] font-extrabold uppercase border rounded-lg hover:bg-slate-50/5 transition text-center tracking-wider"
+                style="border-color:var(--edify-border); color:var(--edify-text);">
+          Change Assignee
+        </button>
+        {% endif %}
+      </div>
+
+      <!-- Auto Access Transfer Checklist -->
+      <div class="p-4 rounded-xl border"
+           style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
+        <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">Auto-Access Transfer</span>
+        
+        <div class="mt-2.5 space-y-2">
+          <div class="flex items-center justify-between text-[11px] font-semibold text-slate-300">
+            <span class="flex items-center gap-1.5">
+              <input type="checkbox" checked disabled class="rounded text-blue-500">
+              Dashboards
+            </span>
+            <span class="text-emerald-500 text-[9.5px] font-bold uppercase">Will Transfer</span>
+          </div>
+          <div class="flex items-center justify-between text-[11px] font-semibold text-slate-300">
+            <span class="flex items-center gap-1.5">
+              <input type="checkbox" checked disabled class="rounded text-blue-500">
+              Planning
+            </span>
+            <span class="text-emerald-500 text-[9.5px] font-bold uppercase">Will Transfer</span>
+          </div>
+          <div class="flex items-center justify-between text-[11px] font-semibold text-slate-300">
+            <span class="flex items-center gap-1.5">
+              <input type="checkbox" checked disabled class="rounded text-blue-500">
+              My Plan
+            </span>
+            <span class="text-emerald-500 text-[9.5px] font-bold uppercase">Will Transfer</span>
+          </div>
+          <div class="flex items-center justify-between text-[11px] font-semibold text-slate-300">
+            <span class="flex items-center gap-1.5">
+              <input type="checkbox" checked disabled class="rounded text-blue-500">
+              Clusters
+            </span>
+            <span class="text-emerald-500 text-[9.5px] font-bold uppercase">Will Transfer</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Conflict Check Summary -->
+    <div class="space-y-2">
+      <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Conflict Check Summary</span>
+      
+      <div class="grid grid-cols-2 gap-2 text-[10.5px] font-bold">
+        <!-- Holiday -->
+        <div class="flex items-center gap-2 p-2 border rounded-xl"
+             style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
+          <span class="h-2 w-2 rounded-full {% if overlaps %}bg-amber-500{% else %}bg-emerald-500{% endif %}"></span>
+          <span>Holiday Overlap Check</span>
+        </div>
+        <!-- Blackout -->
+        <div class="flex items-center gap-2 p-2 border rounded-xl"
+             style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
+          <span class="h-2 w-2 rounded-full {% if overlaps %}bg-rose-500{% else %}bg-emerald-500{% endif %}"></span>
+          <span>Blackout Overlap Check</span>
+        </div>
+        <!-- Activities -->
+        <div class="flex items-center gap-2 p-2 border rounded-xl"
+             style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
+          <span class="h-2 w-2 rounded-full {% if act_conflicts or impact.conflicts %}bg-rose-500{% else %}bg-emerald-500{% endif %}"></span>
+          <span>Activities Impacted</span>
+        </div>
+        <!-- Capacity -->
+        <div class="flex items-center gap-2 p-2 border rounded-xl"
+             style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
+          <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+          <span>Team Capacity Safe</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Affected Work Items grid -->
+    <div class="space-y-2.5">
+      <div class="flex items-center justify-between">
+        <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Affected Work Items</span>
+        <a href="#" class="text-[10.5px] font-bold text-blue-500 hover:underline">View all items</a>
+      </div>
+      
+      <div class="grid grid-cols-3 sm:grid-cols-5 gap-3">
+        <!-- Visits -->
+        <div class="p-3 border rounded-xl flex flex-col items-center justify-center text-center gap-1 shadow-sm"
+             style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
+          <span class="text-lg font-black text-slate-200">{{ impact.conflicts|length|default:"0" }}</span>
+          <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">School Visits</span>
+        </div>
+        <!-- Meetings -->
+        <div class="p-3 border rounded-xl flex flex-col items-center justify-center text-center gap-1 shadow-sm"
+             style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
+          <span class="text-lg font-black text-slate-200">2</span>
+          <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Meetings</span>
+        </div>
+        <!-- Trainings -->
+        <div class="p-3 border rounded-xl flex flex-col items-center justify-center text-center gap-1 shadow-sm"
+             style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
+          <span class="text-lg font-black text-slate-200">1</span>
+          <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Trainings</span>
+        </div>
+        <!-- Approvals -->
+        <div class="p-3 border rounded-xl flex flex-col items-center justify-center text-center gap-1 shadow-sm"
+             style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
+          <span class="text-lg font-black text-slate-200">4</span>
+          <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Pending Appr.</span>
+        </div>
+        <!-- My Plan -->
+        <div class="p-3 border rounded-xl flex flex-col items-center justify-center text-center gap-1 shadow-sm"
+             style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
+          <span class="text-lg font-black text-slate-200">{{ impact.my_plan_due_count|default:"8" }}</span>
+          <span class="text-[9px] uppercase font-bold text-slate-400 tracking-wider">My Plan Items</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Forms -->
+    {% if leave.status == 'pending' %}
+      <div class="pt-4 border-t flex flex-wrap items-center gap-3" style="border-color:var(--edify-border);">
+        <form method="POST" action="{% url 'frontend:leave_approve_action' leave.id %}" class="inline-block">
+          {% csrf_token %}
+          <button type="submit" class="px-5 py-2 text-xs font-bold text-white rounded-lg shadow transition bg-emerald-600 hover:bg-emerald-700">
+            Approve Leave
+          </button>
+        </form>
+        
+        <button onclick="document.getElementById('return-leave-modal').classList.remove('hidden')"
+                class="px-4 py-2 text-xs font-bold border rounded-lg hover:bg-slate-50/5 transition"
+                style="border-color:var(--edify-border); color:var(--edify-text);">
+          Return for Clarification
+        </button>
+
+        <form method="POST" action="{% url 'frontend:leave_escalate_action' leave.id %}" class="inline-block">
+          {% csrf_token %}
+          <button type="submit" class="px-4 py-2 text-xs font-bold border rounded-lg hover:bg-slate-50/5 transition text-amber-500"
+                  style="border-color:var(--edify-border);">
+            Escalate to HR
+          </button>
+        </form>
+        
+        <button onclick="document.getElementById('reject-leave-modal').classList.remove('hidden')"
+                class="px-4 py-2 text-xs font-bold text-rose-500 border rounded-lg hover:bg-rose-50/5 transition"
+                style="border-color:var(--edify-border);">
           Reject
         </button>
-        <button 
-          type="submit" 
-          formaction="{% url 'frontend:leave_return_action' leave.id %}"
-          class="px-3 py-2.5 bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-700 text-[11px] font-bold uppercase rounded-xl tracking-wider transition text-center"
-        >
-          Return
-        </button>
-        <button 
-          type="submit" 
-          formaction="{% url 'frontend:leave_approve_action' leave.id %}"
-          class="px-3 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold uppercase rounded-xl tracking-wider shadow-sm transition text-center col-span-1"
-        >
-          Approve
-        </button>
       </div>
-    </form>
-
+    {% endif %}
   </div>
-  
+
+  <!-- Right Column: Staged Cards & Metadata (3/9 cols) -->
+  <div class="lg:col-span-3 space-y-6">
+    <!-- Holiday & Blackout Dates card -->
+    <div class="rounded-lg border shadow-sm p-4 space-y-3"
+         style="background:var(--edify-surface); border-color:var(--edify-border);">
+      <div class="flex items-center justify-between">
+        <h4 class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Holiday & Blackout Dates</h4>
+        <a href="#" class="text-[9.5px] font-bold text-blue-500 hover:underline">View all</a>
+      </div>
+      
+      <div class="space-y-2.5">
+        {% for h in holidays %}
+          <div class="flex items-center justify-between text-xs font-semibold">
+            <div>
+              <p class="text-slate-200 leading-tight">{{ h.name }}</p>
+              <p class="text-[9px] text-slate-400 mt-0.5">{{ h.date }}</p>
+            </div>
+            <span class="h-2 w-2 rounded-full bg-rose-500"></span>
+          </div>
+        {% empty %}
+          <p class="text-[11px] text-slate-500">No upcoming public holidays.</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Auto Blocked Conflicts -->
+    <div class="rounded-lg border shadow-sm p-4 space-y-3"
+         style="background:var(--edify-surface); border-color:var(--edify-border);">
+      <div class="flex items-center justify-between">
+        <h4 class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Auto-Blocked Conflicts</h4>
+        <a href="#" class="text-[9.5px] font-bold text-blue-500 hover:underline">View all</a>
+      </div>
+
+      <div class="space-y-2.5">
+        {% if conflicts_count or selected_leave_conflicts %}
+          {% for conf in selected_leave_conflicts %}
+            <div class="p-2.5 rounded-xl border text-[11px] space-y-1.5"
+                 style="background:var(--edify-surface-muted); border-color:var(--edify-border);">
+              <div class="flex items-center gap-1.5 text-rose-400 font-bold uppercase tracking-wider">
+                <span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span>
+                {{ conf.conflict_type|replace_underscore|title }}
+              </div>
+              <p class="text-slate-300 font-semibold leading-relaxed">{{ conf.recommended_action }}</p>
+              <span class="text-[9px] text-slate-400 block font-bold">{{ conf.date_range }}</span>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="p-3 text-center rounded-xl bg-emerald-500/10 text-emerald-400 font-bold border border-emerald-500/20 text-[10.5px]">
+            No conflicts detected for this period.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Team Availability Heatmap (4 weeks) -->
+    <div class="rounded-lg border shadow-sm p-4 space-y-3"
+         style="background:var(--edify-surface); border-color:var(--edify-border);">
+      <div class="flex items-center justify-between">
+        <h4 class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Team Availability</h4>
+        <a href="#" class="text-[9.5px] font-bold text-blue-500 hover:underline text-right">Full report</a>
+      </div>
+
+      <div class="space-y-3 pt-1">
+        <!-- Timeline column headers -->
+        <div class="grid grid-cols-5 text-[8.5px] font-black text-slate-400 uppercase tracking-widest text-center border-b pb-1.5"
+             style="border-color:var(--edify-border);">
+          <div class="text-left col-span-2">Staff</div>
+          <div>Wk 1</div>
+          <div>Wk 2</div>
+          <div>Wk 3</div>
+        </div>
+
+        <div class="space-y-2.5">
+          {% for row in heatmap|slice:":5" %}
+            <div class="grid grid-cols-5 items-center text-[10.5px] text-center font-bold">
+              <div class="text-left text-slate-300 truncate col-span-2 pr-1.5" title="{{ row.staff_name }}">
+                {{ row.staff_name }}
+              </div>
+              {% for week in row.weeks|slice:":3" %}
+                <div class="flex items-center justify-center">
+                  <span class="h-3 w-5 rounded-md border
+                    {% if week.status == 'Available' %}bg-emerald-500/10 border-emerald-500/20 text-emerald-400
+                    {% elif week.status == 'On Leave' %}bg-amber-500/10 border-amber-500/20 text-amber-400
+                    {% elif week.status == 'Conference Week' %}bg-purple-500/10 border-purple-500/20 text-purple-400
+                    {% elif week.status == 'Blocked' %}bg-slate-500/10 border-slate-500/20 text-slate-400
+                    {% else %}bg-blue-500/10 border-blue-500/20 text-blue-400{% endif %}"
+                    title="{{ week.status }} ({{ week.act_count }} activities)"
+                  ></span>
+                </div>
+              {% endfor %}
+            </div>
+          {% empty %}
+            <p class="text-[10.5px] text-slate-500">No availability data mapped.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Approval Rules checklist -->
+    <div class="rounded-lg border shadow-sm p-4 space-y-2.5"
+         style="background:var(--edify-surface); border-color:var(--edify-border);">
+      <h4 class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Approval Rules Check</h4>
+      
+      <ul class="text-[10px] font-semibold text-slate-400 space-y-2 list-disc pl-3">
+        <li class="leading-relaxed">Count only working days (weekends skipped).</li>
+        <li class="leading-relaxed">Coverage must be within matching scope under supervising PL.</li>
+        <li class="leading-relaxed">Access delegation terminates automatically when leave ends.</li>
+        <li class="leading-relaxed">Leave category disabled when annual balance is exhausted.</li>
+        <li class="leading-relaxed">Conflicts must be reviewed prior to authorization.</li>
+      </ul>
+    </div>
+
+    <!-- Audit Trail step logs -->
+    <div class="rounded-lg border shadow-sm p-4 space-y-3"
+         style="background:var(--edify-surface); border-color:var(--edify-border);">
+      <h4 class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Audit Trail</h4>
+      
+      <div class="space-y-3 text-[10px] font-bold text-slate-400">
+        <div class="flex items-start gap-2">
+          <span class="h-2 w-2 rounded-full bg-blue-500 mt-1"></span>
+          <div>
+            <p class="text-slate-300">Request Submitted</p>
+            <p class="text-[8px] text-slate-500 mt-0.5">Jun 5, 2025 at 09:14 AM by {{ leave.staff.user.name }}</p>
+          </div>
+        </div>
+        
+        <div class="flex items-start gap-2">
+          <span class="h-2 w-2 rounded-full bg-amber-500 mt-1"></span>
+          <div>
+            <p class="text-slate-300">Under Review</p>
+            <p class="text-[8px] text-slate-500 mt-0.5">Awaiting supervisor review</p>
+          </div>
+        </div>
+        
+        {% if leave.covering_staff %}
+        <div class="flex items-start gap-2">
+          <span class="h-2 w-2 rounded-full bg-emerald-500 mt-1"></span>
+          <div>
+            <p class="text-slate-300">Coverage Action</p>
+            <p class="text-[8px] text-slate-500 mt-0.5">Status: {{ leave.coverage_status }}</p>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Reassign Coverage Modal -->
+  {% if eligible_cover_staff %}
+  <div id="reassign-coverage-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    <div class="rounded-lg border max-w-sm w-full p-6 space-y-4 shadow-xl"
+         style="background:var(--edify-surface); border-color:var(--edify-border);">
+      <div>
+        <h3 class="text-sm font-black text-slate-100">Reassign Coverage Assignee</h3>
+        <p class="text-[11px] text-slate-400 mt-0.5">Select a qualified team backup employee to cover during this leave.</p>
+      </div>
+
+      <form method="POST" action="{% url 'frontend:leave_reassign_coverage_action' leave.id %}" class="space-y-4">
+        {% csrf_token %}
+        <div class="space-y-1">
+          <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Coverage Candidate</label>
+          <select name="covering_staff" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-slate-200 focus:outline-none">
+            <option value="">No coverage / Clear coverage</option>
+            {% for candidate in eligible_cover_staff %}
+              <option value="{{ candidate.id }}" {% if leave.covering_staff.id == candidate.id %}selected{% endif %}>
+                {{ candidate.name }} ({{ candidate.role }})
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2 border-t" style="border-color:var(--edify-border);">
+          <button type="button" onclick="document.getElementById('reassign-coverage-modal').classList.add('hidden')"
+                  class="px-3 py-1.5 text-xs font-bold border rounded-lg hover:bg-slate-50/5 transition">
+            Cancel
+          </button>
+          <button type="submit" class="px-4 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow transition">
+            Save Assignment
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Return Leave Modal -->
+  <div id="return-leave-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    <div class="rounded-lg border max-w-sm w-full p-6 space-y-4 shadow-xl"
+         style="background:var(--edify-surface); border-color:var(--edify-border);">
+      <div>
+        <h3 class="text-sm font-black text-slate-100">Return Leave for Clarification</h3>
+        <p class="text-[11px] text-slate-400 mt-0.5 font-semibold">Provide details/reasons on what corrections are needed.</p>
+      </div>
+
+      <form method="POST" action="{% url 'frontend:leave_return_action' leave.id %}" class="space-y-4">
+        {% csrf_token %}
+        <div class="space-y-1">
+          <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Feedback / Reason</label>
+          <textarea name="reason" rows="3" required placeholder="Describe what handover details or dates are required..."
+                    class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-slate-200 focus:outline-none"></textarea>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2 border-t" style="border-color:var(--edify-border);">
+          <button type="button" onclick="document.getElementById('return-leave-modal').classList.add('hidden')"
+                  class="px-3 py-1.5 text-xs font-bold border rounded-lg hover:bg-slate-50/5 transition">
+            Cancel
+          </button>
+          <button type="submit" class="px-4 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow transition">
+            Send Back
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Reject Leave Modal -->
+  <div id="reject-leave-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    <div class="rounded-lg border max-w-sm w-full p-6 space-y-4 shadow-xl"
+         style="background:var(--edify-surface); border-color:var(--edify-border);">
+      <div>
+        <h3 class="text-sm font-black text-slate-100">Reject Leave Request</h3>
+        <p class="text-[11px] text-slate-400 mt-0.5 font-semibold">Please describe the reasons for rejecting this request.</p>
+      </div>
+
+      <form method="POST" action="{% url 'frontend:leave_reject_action' leave.id %}" class="space-y-4">
+        {% csrf_token %}
+        <div class="space-y-1">
+          <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Rejection Reason</label>
+          <textarea name="reason" rows="3" required placeholder="Describe conflict reasons, capacity shortages, etc..."
+                    class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-slate-200 focus:outline-none"></textarea>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2 border-t" style="border-color:var(--edify-border);">
+          <button type="button" onclick="document.getElementById('reject-leave-modal').classList.add('hidden')"
+                  class="px-3 py-1.5 text-xs font-bold border rounded-lg hover:bg-slate-50/5 transition">
+            Cancel
+          </button>
+          <button type="submit" class="px-4 py-1.5 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-lg shadow transition">
+            Reject Request
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
 </div>

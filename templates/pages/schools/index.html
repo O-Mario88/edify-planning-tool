@@ -5,7 +5,7 @@
 
 {% block shell_content %}
 <div 
-class="p-6 max-w-[1600px] mx-auto space-y-6"
+class="px-4 sm:px-6 py-5 space-y-4" style="max-width:1500px;margin:0 auto;"
 x-data="{ 
 selectedSchools: [], 
 assignClusterOpen: false, 
@@ -34,32 +34,32 @@ actions: true
 <!-- Page Header -->
 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
 <div>
-<h1 class="text-[28px] font-semibold text-slate-800 tracking-tight leading-none font-sans">School Directory</h1>
-<p class="text-[12px] text-[var(--text-secondary)] mt-2 font-semibold font-sans">Manage uploaded schools, ownership, clustering, SSA readiness, and planning status.</p>
+<h1 class="text-[21px] font-extrabold tracking-tight leading-none ">School Directory</h1>
+<p class="text-[12px] text-[var(--edify-text-muted)] mt-2 font-semibold ">Manage uploaded schools, ownership, clustering, SSA readiness, and planning status.</p>
 </div>
 
 <!-- Action buttons -->
-<div class="flex flex-wrap items-center gap-2 font-sans">
-<a href="/schools/upload" class="h-9 px-3.5 rounded-lg border border-[var(--color-edify-border)] hover:bg-slate-50 text-[12px] font-bold text-slate-600 flex items-center gap-2 transition-all">
+<div class="flex flex-wrap items-center gap-2 ">
+<a href="/schools/upload" class="h-9 px-3.5 rounded-lg border border-[var(--edify-border)] hover:bg-slate-50 text-[12px] font-bold text-slate-600 flex items-center gap-2 transition-all">
 <svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
 </svg>
 <span>Upload Schools</span>
 </a>
-<a href="/schools/upload" class="h-9 px-3.5 rounded-lg border border-[var(--color-edify-border)] hover:bg-slate-50 text-[12px] font-bold text-slate-600 flex items-center gap-2 transition-all">
+<a href="/schools/upload" class="h-9 px-3.5 rounded-lg border border-[var(--edify-border)] hover:bg-slate-50 text-[12px] font-bold text-slate-600 flex items-center gap-2 transition-all">
 <svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
 </svg>
 <span>Upload SSA</span>
 </a>
-<button @click="addSchoolOpen = true" class="h-9 px-4 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[12px] font-bold flex items-center gap-1.5 transition-all shadow-sm">
+<button @click="addSchoolOpen = true" class="h-9 px-4 rounded-lg bg-[var(--edify-accent)] hover:bg-[var(--edify-accent-hover)] text-white text-[12px] font-bold flex items-center gap-1.5 transition-all shadow-sm">
 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
 </svg>
 <span>Add School</span>
 </button>
 <div class="relative" x-data="{ open: false }">
-<button @click="open = !open" class="h-9 px-3.5 rounded-lg border border-[var(--color-edify-border)] hover:bg-slate-50 text-[12px] font-bold text-slate-600 flex items-center gap-1.5 transition-all">
+<button @click="open = !open" class="h-9 px-3.5 rounded-lg border border-[var(--edify-border)] hover:bg-slate-50 text-[12px] font-bold text-slate-600 flex items-center gap-1.5 transition-all">
 <svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4a4 4 0 11-8 0 4 4 0 018 0zM4 3h16a1 1 0 011 1v3M4 3a1 1 0 00-1 1v3" />
 </svg>
@@ -67,15 +67,15 @@ actions: true
 <svg class="h-3 w-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
 </button>
 <div x-show="open" @click.outside="open = false" class="absolute right-0 mt-1.5 w-44 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-50 text-[12px] font-semibold" style="display: none;">
-<a href="/schools?export=xlsx" class="block px-4 py-2 text-slate-700 hover:bg-slate-50">Export to Excel (.xlsx)</a>
-<a href="/schools?export=csv" class="block px-4 py-2 text-slate-700 hover:bg-slate-50">Export to CSV (.csv)</a>
+<a href="/schools?export=xlsx" onclick="this.href='/schools?export=xlsx&' + new URLSearchParams(new FormData(document.getElementById('filters-form'))).toString()" class="block px-4 py-2 hover:bg-slate-50">Export to Excel (.xlsx)</a>
+<a href="/schools?export=csv" onclick="this.href='/schools?export=csv&' + new URLSearchParams(new FormData(document.getElementById('filters-form'))).toString()" class="block px-4 py-2 hover:bg-slate-50">Export to CSV (.csv)</a>
 </div>
 </div>
 </div>
 </div>
 
 <!-- Filters Bar -->
-<div class="bg-white rounded-2xl border border-[var(--border-card)] p-4 shadow-sm font-sans">
+<div class="bg-white rounded-lg border border-[var(--edify-border)] p-4 shadow-sm ">
 <form 
 id="filters-form"
 hx-get="/schools" 
@@ -93,14 +93,14 @@ class="space-y-3"
 <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
 <!-- FY Selector -->
 <div>
-<select name="fy" class="w-full h-9 text-[12px] bg-slate-50 font-bold text-slate-700 border border-slate-200 rounded-lg focus:outline-none">
+<select name="fy" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-lg focus:outline-none">
 <option value="2026" {% if selected_fy == '2026' %}selected{% endif %}>FY 2026</option>
 <option value="2025" {% if selected_fy == '2025' %}selected{% endif %}>FY 2025</option>
 </select>
 </div>
 <!-- Region -->
 <div>
-<select name="region" class="w-full h-9 text-[12px] bg-slate-50 font-bold text-slate-700 border border-slate-200 rounded-lg focus:outline-none">
+<select name="region" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-lg focus:outline-none">
 <option value="">Region: All</option>
 {% for r in regions %}
 <option value="{{ r.id }}" {% if selected_region == r.id %}selected{% endif %}>{{ r.name }}</option>
@@ -109,7 +109,7 @@ class="space-y-3"
 </div>
 <!-- District -->
 <div>
-<select name="district" class="w-full h-9 text-[12px] bg-slate-50 font-bold text-slate-700 border border-slate-200 rounded-lg focus:outline-none">
+<select name="district" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-lg focus:outline-none">
 <option value="">District: All</option>
 {% for d in districts %}
 <option value="{{ d.id }}" {% if selected_district == d.id|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>
@@ -118,7 +118,7 @@ class="space-y-3"
 </div>
 <!-- Sub-county -->
 <div>
-<select name="sub_county" class="w-full h-9 text-[12px] bg-slate-50 font-bold text-slate-700 border border-slate-200 rounded-lg focus:outline-none">
+<select name="sub_county" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-lg focus:outline-none">
 <option value="">Sub-county: All</option>
 {% for sc in sub_counties %}
 <option value="{{ sc.id }}" {% if selected_sub_county == sc.id %}selected{% endif %}>{{ sc.name }}</option>
@@ -127,7 +127,7 @@ class="space-y-3"
 </div>
 <!-- School Type -->
 <div>
-<select name="school_type" class="w-full h-9 text-[12px] bg-slate-50 font-bold text-slate-700 border border-slate-200 rounded-lg focus:outline-none">
+<select name="school_type" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-lg focus:outline-none">
 <option value="">School Type: All</option>
 {% for val, label in school_types %}
 <option value="{{ val }}" {% if selected_type == val %}selected{% endif %}>{{ label }}</option>
@@ -136,7 +136,7 @@ class="space-y-3"
 </div>
 <!-- Cluster Status -->
 <div>
-<select name="cluster_status" class="w-full h-9 text-[12px] bg-slate-50 font-bold text-slate-700 border border-slate-200 rounded-lg focus:outline-none">
+<select name="cluster_status" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-lg focus:outline-none">
 <option value="">Cluster Status: All</option>
 <option value="clustered" {% if selected_cluster_status == 'clustered' %}selected{% endif %}>Clustered</option>
 <option value="unclustered" {% if selected_cluster_status == 'unclustered' %}selected{% endif %}>Unclustered</option>
@@ -144,7 +144,7 @@ class="space-y-3"
 </div>
 <!-- Project Status -->
 <div>
-<select name="project_status" class="w-full h-9 text-[12px] bg-slate-50 font-bold text-slate-700 border border-slate-200 rounded-lg focus:outline-none">
+<select name="project_status" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-lg focus:outline-none">
 <option value="">Project Status: All</option>
 <option value="assigned" {% if selected_project_status == 'assigned' %}selected{% endif %}>Assigned</option>
 <option value="unassigned" {% if selected_project_status == 'unassigned' %}selected{% endif %}>Not Assigned</option>
@@ -154,8 +154,8 @@ class="space-y-3"
 
 <div class="flex items-center justify-between pt-1">
 <!-- Clear Filters -->
-<a href="/schools" class="text-[12px] font-semibold text-[var(--color-edify-primary)] hover:underline flex items-center gap-1.5">
-<svg class="h-4 w-4 shrink-0 text-[var(--color-edify-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+<a href="/schools" class="text-[12px] font-semibold text-[var(--edify-accent)] hover:underline flex items-center gap-1.5">
+<svg class="h-4 w-4 shrink-0 text-[var(--edify-accent)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
 </svg>
 <span>Clear Filters</span>
@@ -173,9 +173,9 @@ class="space-y-3"
 <!-- Roster Workspace -->
 <div class="space-y-6">
 <!-- List Headers, Tabs, and Table Container -->
-<div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm overflow-hidden">
+<div class="bg-white rounded-lg border border-[var(--edify-border)] shadow-sm overflow-hidden">
 <!-- Horizontal Tabs Header -->
-<div class="px-6 py-4 border-b border-[var(--color-edify-divider)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 font-sans">
+<div class="px-6 py-4 border-b border-[var(--edify-border)] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 ">
 <!-- Roster Select Tabs Container -->
 <div id="school-tabs-header">
 {% include "partials/schools/tabs.html" %}
@@ -185,7 +185,7 @@ class="space-y-3"
 <div class="relative">
 <button 
 @click="columnSettingsOpen = !columnSettingsOpen" 
-class="h-8 px-3 rounded-lg border border-[var(--color-edify-border)] hover:bg-slate-50 text-[12px] font-bold text-slate-600 flex items-center gap-1.5 transition-colors shrink-0"
+class="h-8 px-3 rounded-lg border border-[var(--edify-border)] hover:bg-slate-50 text-[12px] font-bold text-slate-600 flex items-center gap-1.5 transition-colors shrink-0"
 >
 <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
@@ -202,55 +202,55 @@ style="display: none;"
 >
 <h4 class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider pb-1 border-b border-slate-100">Toggle columns</h4>
 <div class="space-y-1.5 max-h-60 overflow-y-auto">
-<label class="flex items-center gap-2 text-slate-700 cursor-pointer">
+<label class="flex items-center gap-2 cursor-pointer">
 <input type="checkbox" x-model="visibleColumns.id" class="rounded border-slate-300 text-blue-600">
 <span>School ID</span>
 </label>
-<label class="flex items-center gap-2 text-slate-700 cursor-pointer">
+<label class="flex items-center gap-2 cursor-pointer">
 <input type="checkbox" x-model="visibleColumns.name" class="rounded border-slate-300 text-blue-600">
 <span>School Name</span>
 </label>
-<label class="flex items-center gap-2 text-slate-700 cursor-pointer">
+<label class="flex items-center gap-2 cursor-pointer">
 <input type="checkbox" x-model="visibleColumns.district" class="rounded border-slate-300 text-blue-600">
 <span>District</span>
 </label>
-<label class="flex items-center gap-2 text-slate-700 cursor-pointer">
+<label class="flex items-center gap-2 cursor-pointer">
 <input type="checkbox" x-model="visibleColumns.sub_county" class="rounded border-slate-300 text-blue-600">
 <span>Sub-county</span>
 </label>
-<label class="flex items-center gap-2 text-slate-700 cursor-pointer">
+<label class="flex items-center gap-2 cursor-pointer">
 <input type="checkbox" x-model="visibleColumns.type" class="rounded border-slate-300 text-blue-600">
 <span>School Type</span>
 </label>
-<label class="flex items-center gap-2 text-slate-700 cursor-pointer">
+<label class="flex items-center gap-2 cursor-pointer">
 <input type="checkbox" x-model="visibleColumns.staff" class="rounded border-slate-300 text-blue-600">
 <span>Staff</span>
 </label>
-<label class="flex items-center gap-2 text-slate-700 cursor-pointer">
+<label class="flex items-center gap-2 cursor-pointer">
 <input type="checkbox" x-model="visibleColumns.match_status" class="rounded border-slate-300 text-blue-600">
 <span>Match Status</span>
 </label>
-<label class="flex items-center gap-2 text-slate-700 cursor-pointer">
+<label class="flex items-center gap-2 cursor-pointer">
 <input type="checkbox" x-model="visibleColumns.cluster_status" class="rounded border-slate-300 text-blue-600">
 <span>Cluster Status</span>
 </label>
-<label class="flex items-center gap-2 text-slate-700 cursor-pointer">
+<label class="flex items-center gap-2 cursor-pointer">
 <input type="checkbox" x-model="visibleColumns.ssa_status" class="rounded border-slate-300 text-blue-600">
 <span>SSA Status</span>
 </label>
-<label class="flex items-center gap-2 text-slate-700 cursor-pointer">
+<label class="flex items-center gap-2 cursor-pointer">
 <input type="checkbox" x-model="visibleColumns.readiness" class="rounded border-slate-300 text-blue-600">
 <span>Planning Readiness</span>
 </label>
-<label class="flex items-center gap-2 text-slate-700 cursor-pointer">
+<label class="flex items-center gap-2 cursor-pointer">
 <input type="checkbox" x-model="visibleColumns.partner_type" class="rounded border-slate-300 text-blue-600">
 <span>Partner Type</span>
 </label>
-<label class="flex items-center gap-2 text-slate-700 cursor-pointer">
+<label class="flex items-center gap-2 cursor-pointer">
 <input type="checkbox" x-model="visibleColumns.enrollment" class="rounded border-slate-300 text-blue-600">
 <span>Enrollment</span>
 </label>
-<label class="flex items-center gap-2 text-slate-700 cursor-pointer">
+<label class="flex items-center gap-2 cursor-pointer">
 <input type="checkbox" x-model="visibleColumns.enrollment_date" class="rounded border-slate-300 text-blue-600">
 <span>Enrollment Date</span>
 </label>
@@ -279,7 +279,7 @@ x-show="assignClusterOpen"
 class="fixed inset-0 z-50 flex items-center justify-center bg-slate-600/50 backdrop-blur-sm"
 style="display: none;"
 >
-<div @click.outside="assignClusterOpen = false" class="bg-white rounded-2xl border border-slate-200 shadow-md max-w-md w-full p-6 space-y-4 font-sans">
+<div @click.outside="assignClusterOpen = false" class="bg-white rounded-lg border border-slate-200 shadow-md max-w-md w-full p-6 space-y-4 ">
 <div class="flex items-center justify-between border-b border-slate-100 pb-3">
 <h3 class="text-[15px] font-semibold text-slate-800">Assign Cluster to Schools</h3>
 <button @click="assignClusterOpen = false" class="text-slate-400 hover:text-slate-600 text-[18px]">&times;</button>
@@ -315,7 +315,7 @@ x-show="bulkAssignProjectOpen"
 class="fixed inset-0 z-50 flex items-center justify-center bg-slate-600/50 backdrop-blur-sm"
 style="display: none;"
 >
-<div @click.outside="bulkAssignProjectOpen = false" class="bg-white rounded-2xl border border-slate-200 shadow-md max-w-md w-full p-6 space-y-4 font-sans">
+<div @click.outside="bulkAssignProjectOpen = false" class="bg-white rounded-lg border border-slate-200 shadow-md max-w-md w-full p-6 space-y-4 ">
 <div class="flex items-center justify-between border-b border-slate-100 pb-3">
 <h3 class="text-[15px] font-semibold text-slate-800">Assign Project to Schools</h3>
 <button @click="bulkAssignProjectOpen = false" class="text-slate-400 hover:text-slate-600 text-[18px]">&times;</button>
@@ -351,7 +351,7 @@ x-show="matchStaffOpen"
 class="fixed inset-0 z-50 flex items-center justify-center bg-slate-600/50 backdrop-blur-sm"
 style="display: none;"
 >
-<div @click.outside="matchStaffOpen = false" class="bg-white rounded-2xl border border-slate-200 shadow-md max-w-md w-full p-6 space-y-4 font-sans">
+<div @click.outside="matchStaffOpen = false" class="bg-white rounded-lg border border-slate-200 shadow-md max-w-md w-full p-6 space-y-4 ">
 <div class="flex items-center justify-between border-b border-slate-100 pb-3">
 <h3 class="text-[15px] font-semibold text-slate-800">Match Staff to Schools</h3>
 <button @click="matchStaffOpen = false" class="text-slate-400 hover:text-slate-600 text-[18px]">&times;</button>
@@ -387,7 +387,7 @@ x-show="addSchoolOpen"
 class="fixed inset-0 z-50 flex items-center justify-center bg-slate-600/50 backdrop-blur-sm"
 style="display: none;"
 >
-<div @click.outside="addSchoolOpen = false" class="bg-white rounded-2xl border border-slate-200 shadow-md max-w-md w-full p-6 space-y-4 font-sans">
+<div @click.outside="addSchoolOpen = false" class="bg-white rounded-lg border border-slate-200 shadow-md max-w-md w-full p-6 space-y-4 ">
 <div class="flex items-center justify-between border-b border-slate-100 pb-3">
 <h3 class="text-[15px] font-semibold text-slate-800">Add New School</h3>
 <button @click="addSchoolOpen = false" class="text-slate-400 hover:text-slate-600 text-[18px]">&times;</button>

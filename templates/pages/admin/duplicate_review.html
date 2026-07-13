@@ -3,12 +3,12 @@
 {% block title %}Duplicate Review — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6 font-sans">
+<div class="px-4 sm:px-6 py-5 space-y-4" style="max-width:1500px;margin:0 auto;">
 
 <!-- Header -->
 <div class="flex items-center justify-between border-b border-slate-200 pb-4">
 <div>
-<h1 class="text-[20px] font-semibold text-slate-800 tracking-tight">Duplicate Review Queue</h1>
+<h1 class="text-[21px] font-extrabold tracking-tight">Duplicate Review Queue</h1>
 <p class="text-[12px] text-slate-400 font-semibold mt-0.5">Resolve schools with potential name or location duplicate risks.</p>
 </div>
 <a href="/admin-panel/data-quality-center" class="text-[12px] text-slate-500 hover:underline">&larr; Back to Quality Center</a>
@@ -35,7 +35,7 @@
 <span class="text-[11px] text-slate-400 font-bold block mt-0.5">Status: {{ issue.school.duplicate_status }}</span>
 </td>
 <td class="px-4 py-4 text-slate-500 font-semibold">{{ issue.school.district.name }}</td>
-<td class="px-4 py-4 font-mono font-bold text-slate-700">{{ issue.school.school_id }}</td>
+<td class="px-4 py-4 font-mono font-bold">{{ issue.school.school_id }}</td>
 <td class="px-4 py-4 text-slate-500 font-semibold">{{ issue.suggested_fix }}</td>
 <td class="px-5 py-4 text-right">
 <form method="post" action="" class="inline m-0">

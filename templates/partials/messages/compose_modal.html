@@ -1,0 +1,225 @@
+{% load frontend_filters %}
+<!-- Compose popup: centered, backdrop-blurred, positioned slightly above center -->
+<div x-show="composeOpen" x-cloak
+     class="fixed inset-0 z-[60] flex items-start justify-center px-4 pt-[7vh] pb-6"
+     @keydown.escape.window="composeOpen = false"
+     aria-modal="true" role="dialog">
+
+  <!-- Backdrop -->
+  <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-md"
+       x-show="composeOpen" x-transition.opacity
+       @click="composeOpen = false"></div>
+
+  <!-- Modal -->
+  <div class="relative z-10 w-full max-w-[680px] max-h-[86vh] bg-white rounded-lg shadow-2xl border border-slate-200 flex flex-col overflow-hidden"
+       x-show="composeOpen"
+       x-transition:enter="transition ease-out duration-200"
+       x-transition:enter-start="opacity-0 translate-y-3 scale-[0.98]"
+       x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+       x-transition:leave="transition ease-in duration-150"
+       x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+       x-transition:leave-end="opacity-0 translate-y-3 scale-[0.98]"
+       x-data="composeModal()">
+
+    <!-- Header -->
+    <div class="shrink-0 px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="h-9 w-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+        </div>
+        <div>
+          <h2 class="text-[16px] font-semibold text-slate-800 tracking-tight leading-tight">New Message</h2>
+          <p class="text-[11px] font-semibold text-slate-400 leading-tight">Context-linked, sent to registered users</p>
+        </div>
+      </div>
+      <button @click="composeOpen = false" class="h-8 w-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors" aria-label="Close">
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <form method="post" action="/messages/new/" enctype="multipart/form-data"
+          class="flex-1 min-h-0 overflow-y-auto px-5 py-4 space-y-4">
+      {% csrf_token %}
+      <input type="hidden" name="context_type" :value="ctxType">
+      <input type="hidden" name="context_id" :value="ctxId">
+      <template x-for="r in to" :key="r.id"><input type="hidden" name="recipient_ids" :value="r.id"></template>
+      <template x-for="r in cc" :key="r.id"><input type="hidden" name="cc_ids" :value="r.id"></template>
+
+      <!-- Context-required banner -->
+      <div x-show="!ctxId" class="flex items-center gap-2.5 p-3 rounded-xl bg-amber-50 border border-amber-200">
+        <svg class="h-4 w-4 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        <p class="text-[11.5px] font-bold text-amber-800">Context is required — every message links to a workflow record.</p>
+      </div>
+
+      <!-- Context Type + Category -->
+      <div class="grid grid-cols-2 gap-3">
+        <div class="space-y-1">
+          <label class="text-[11px] uppercase font-bold text-slate-400 tracking-wider">Context Type <span class="text-rose-500">*</span></label>
+          <select x-model="ctxTab"
+                  @change="ctxId=''; ctxLabel=''; loadRecords()"
+                  class="w-full h-10 px-3 bg-white border border-slate-200 rounded-xl text-[12.5px] font-semibold text-slate-700 focus:border-blue-500 focus:outline-none cursor-pointer">
+            <option value="" disabled selected>Select…</option>
+            {% for key, label in context_tabs %}<option value="{{ key }}">{{ label }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="space-y-1">
+          <label class="text-[11px] uppercase font-bold text-slate-400 tracking-wider">Category <span class="text-rose-500">*</span></label>
+          <select name="category" x-model="category" required
+                  class="w-full h-10 px-3 bg-white border border-slate-200 rounded-xl text-[12.5px] font-semibold text-slate-700 focus:border-blue-500 focus:outline-none cursor-pointer">
+            <option value="" disabled selected>Select…</option>
+            {% for c in categories %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <!-- Context Record -->
+      <div class="space-y-1">
+        <label class="text-[11px] uppercase font-bold text-slate-400 tracking-wider">Context Record <span class="text-rose-500">*</span></label>
+        <template x-if="ctxId">
+          <div class="h-10 px-3 flex items-center gap-2 rounded-xl border bg-emerald-50/50 border-emerald-200">
+            <svg class="h-4 w-4 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span class="text-[12px] font-bold text-slate-700 truncate flex-1" x-text="ctxLabel"></span>
+            <button type="button" @click="ctxId=''; ctxLabel=''" class="text-slate-400 hover:text-slate-600">&times;</button>
+          </div>
+        </template>
+        <template x-if="!ctxId">
+          <div>
+            <div class="relative">
+              <svg class="h-4 w-4 text-slate-300 absolute left-3 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              <input type="search" placeholder="Search records…" :disabled="!ctxTab"
+                     @keyup.debounce.300ms="loadRecords($event.target.value)"
+                     class="w-full h-10 pl-9 pr-3 bg-white border border-slate-200 rounded-xl text-[12px] font-semibold focus:border-blue-500 focus:outline-none disabled:bg-slate-50 disabled:text-slate-300">
+            </div>
+            <div id="modal-records" class="mt-1.5 space-y-1 max-h-36 overflow-y-auto"></div>
+          </div>
+        </template>
+      </div>
+
+      <!-- Recipients -->
+      <div class="space-y-1">
+        <label class="text-[11px] uppercase font-bold text-slate-400 tracking-wider">Recipients <span class="text-rose-500">*</span></label>
+        <div class="min-h-10 px-2 py-1.5 flex items-center flex-wrap gap-1.5 bg-white border border-slate-200 rounded-xl">
+          <template x-for="r in to" :key="r.id">
+            <span class="inline-flex items-center gap-1 pl-1 pr-1 py-0.5 rounded-full bg-blue-50 border border-blue-100 text-[11px] font-bold text-blue-700">
+              <span class="h-5 w-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[8.5px] font-black" x-text="r.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()"></span>
+              <span x-text="r.name"></span>
+              <button type="button" @click="to = to.filter(x=>x.id!==r.id)" class="text-blue-400 hover:text-blue-600">&times;</button>
+            </span>
+          </template>
+          <select @change="pick($event)"
+                  class="flex-1 min-w-[130px] h-8 text-[12px] font-semibold text-slate-500 bg-transparent border-0 focus:outline-none cursor-pointer">
+            <option value="">Add recipient…</option>
+            {% for r in recipients %}<option value="{{ r.id }}|{{ r.name }}|{{ r.role }}">{{ r.name }} ({{ r.role }})</option>{% endfor %}
+          </select>
+        </div>
+        <div id="modal-suggestions" class="pt-1"></div>
+      </div>
+
+      <!-- Subject -->
+      <div class="space-y-1">
+        <label class="text-[11px] uppercase font-bold text-slate-400 tracking-wider">Subject <span class="text-rose-500">*</span></label>
+        <input type="text" name="subject" x-model="subject" required placeholder="What is this about?"
+               class="w-full h-10 px-3 bg-white border border-slate-200 rounded-xl text-[12.5px] font-semibold placeholder-slate-400 focus:border-blue-500 focus:outline-none">
+      </div>
+
+      <!-- Message -->
+      <div class="space-y-1">
+        <label class="text-[11px] uppercase font-bold text-slate-400 tracking-wider">Message <span class="text-rose-500">*</span></label>
+        <div class="rounded-xl border border-slate-200 overflow-hidden focus-within:border-blue-500 transition-colors">
+          <div class="flex items-center gap-0.5 px-2 py-1.5 bg-slate-50/70 border-b border-slate-100">
+            <button type="button" @click="wrap('**')" class="h-7 w-7 rounded-md hover:bg-slate-200/60 text-slate-500 text-[12px] font-black" title="Bold">B</button>
+            <button type="button" @click="wrap('_')" class="h-7 w-7 rounded-md hover:bg-slate-200/60 text-slate-500 text-[12px] italic font-bold" title="Italic">I</button>
+            <button type="button" @click="wrap('__')" class="h-7 w-7 rounded-md hover:bg-slate-200/60 text-slate-500 text-[12px] font-bold underline" title="Underline">U</button>
+            <span class="w-px h-4 bg-slate-200 mx-1"></span>
+            <button type="button" @click="insertLine('- ')" class="h-7 w-7 rounded-md hover:bg-slate-200/60 text-slate-400 flex items-center justify-center" title="List">
+              <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h.01M4 12h.01M4 18h.01M8 6h12M8 12h12M8 18h12"/></svg>
+            </button>
+            <button type="button" @click="insertLine('> ')" class="h-7 w-7 rounded-md hover:bg-slate-200/60 text-slate-400 flex items-center justify-center" title="Quote">
+              <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+            </button>
+          </div>
+          <textarea name="body" x-model="body" x-ref="editor" rows="4" required placeholder="Type your message…"
+                    class="w-full px-3 py-2.5 bg-white border-0 text-[12.5px] font-medium placeholder-slate-400 focus:outline-none resize-none"></textarea>
+        </div>
+      </div>
+
+      <!-- Attachments -->
+      <div class="space-y-1.5" x-data="{ files: [] }">
+        <label class="text-[11px] uppercase font-bold text-slate-400 tracking-wider">Attachments <span class="normal-case text-slate-300">(Optional)</span></label>
+        <label class="block border-2 border-dashed border-slate-200 rounded-xl p-3.5 text-center cursor-pointer hover:border-blue-300 hover:bg-blue-50/30 transition-colors">
+          <input type="file" name="attachments" multiple class="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg" @change="files = Array.from($event.target.files)">
+          <p class="text-[11.5px] font-bold text-slate-500">Drag &amp; drop or <span class="text-blue-600">browse</span></p>
+          <p class="text-[10px] font-semibold text-slate-400 mt-0.5">PDF, DOCX, XLSX, JPG, PNG · Max 10MB</p>
+        </label>
+        <div class="space-y-1.5">
+          <template x-for="(f, idx) in files" :key="f.name + idx">
+            <div class="flex items-center gap-2 p-2 rounded-lg border border-slate-150 bg-white">
+              <span class="h-7 w-7 rounded-md flex items-center justify-center shrink-0 text-[8.5px] font-black uppercase bg-slate-100 text-slate-500" x-text="f.name.split('.').pop().slice(0,4)"></span>
+              <span class="text-[11px] font-bold text-slate-700 truncate flex-1" x-text="f.name"></span>
+              <span class="text-[10px] font-semibold text-slate-400" x-text="(f.size/1024).toFixed(0)+' KB'"></span>
+            </div>
+          </template>
+        </div>
+      </div>
+    </form>
+
+    <!-- Footer -->
+    <div class="shrink-0 px-5 py-3.5 border-t border-slate-100 flex items-center justify-between gap-2 bg-slate-50/50">
+      <span class="inline-flex items-center gap-1.5 text-[10.5px] font-semibold text-slate-400">
+        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+        Replies inherit this context
+      </span>
+      <div class="flex items-center gap-2">
+        <button type="submit" name="action" value="draft" form="" formnovalidate
+                @click="submitForm('draft')"
+                class="h-9 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-[12px] font-semibold text-slate-600 transition-colors">Save Draft</button>
+        <button type="button" @click="submitForm('send')" :disabled="!canSend"
+                :class="canSend ? 'bg-blue-600 hover:bg-blue-700' : 'bg-slate-300 cursor-not-allowed'"
+                class="h-9 px-5 rounded-xl text-white text-[12px] font-semibold shadow-sm transition-colors inline-flex items-center gap-1.5">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+          Send Message
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function composeModal() {
+  return {
+    ctxTab: '', ctxType: '', ctxId: '', ctxLabel: '',
+    category: '', subject: '', body: '',
+    to: [], cc: [],
+    get canSend() { return !!(this.ctxId && this.to.length && this.category && this.subject.trim() && this.body.trim()); },
+    loadRecords(q) {
+      if (!this.ctxTab) return;
+      htmx.ajax('GET', `/messages/new/records?type=${encodeURIComponent(this.ctxTab)}&q=${encodeURIComponent(q||'')}&target=modal`, '#modal-records');
+    },
+    setRecord(d) {
+      this.ctxType = d.type; this.ctxId = d.id; this.ctxLabel = d.label;
+      htmx.ajax('GET', `/messages/new/suggestions?type=${encodeURIComponent(this.ctxType)}&id=${encodeURIComponent(this.ctxId)}&compact=1`, '#modal-suggestions');
+    },
+    pick(ev) {
+      const v = ev.target.value; ev.target.value = '';
+      if (!v) return;
+      const [id, name, role] = v.split('|');
+      if (!this.to.find(x=>x.id===id)) this.to.push({id, name, role});
+    },
+    addRecipient(r) { if (!this.to.find(x=>x.id===r.id)) this.to.push(r); },
+    wrap(tok) { const t=this.$refs.editor,s=t.selectionStart,e=t.selectionEnd,sel=t.value.slice(s,e)||'text'; t.value=t.value.slice(0,s)+tok+sel+tok+t.value.slice(e); this.body=t.value; t.focus(); },
+    insertLine(p) { const t=this.$refs.editor; t.value+=(t.value&&!t.value.endsWith('\n')?'\n':'')+p; this.body=t.value; t.focus(); },
+    submitForm(action) {
+      if (action === 'send' && !this.canSend) return;
+      const form = this.$el.querySelector('form');
+      const inp = document.createElement('input');
+      inp.type='hidden'; inp.name='action'; inp.value=action;
+      form.appendChild(inp);
+      form.submit();
+    },
+    init() {
+      this.$el.addEventListener('set-modal-record', e => this.setRecord(e.detail));
+      this.$el.addEventListener('add-modal-recipient', e => this.addRecipient(e.detail));
+    },
+  };
+}
+</script>

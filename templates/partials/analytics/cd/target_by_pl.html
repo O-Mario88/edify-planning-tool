@@ -1,0 +1,46 @@
+{% load frontend_filters %}
+<div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-3"
+     x-data="{
+       chart: null,
+       ids: [{% for r in target_by_pl.rows %}'{{ r.id }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+       initChart() {
+         if (this.chart) { this.chart.destroy(); }
+         const el = document.querySelector('#cdTargetPlChart');
+         if (!el) return;
+         const self = this;
+         this.chart = new ApexCharts(el, {
+           series: [
+             { name: 'Target Achievement %', data: [{% for r in target_by_pl.rows %}{{ r.pl_pct }}{% if not forloop.last %},{% endif %}{% endfor %}] },
+             { name: 'CCEO Average %', data: [{% for r in target_by_pl.rows %}{{ r.cceo_avg }}{% if not forloop.last %},{% endif %}{% endfor %}] }
+           ],
+           chart: { height: 268, type: 'bar', toolbar: { show: false }, fontFamily: 'Outfit, sans-serif',
+                    events: { dataPointSelection: (e, ctx, cfg) => {
+                      const id = self.ids[cfg.dataPointIndex];
+                      if (id) window.htmx && window.htmx.ajax('GET',
+                        '/analytics/country-director/drilldown?drill=pl&id=' + id + '&fy={{ fy }}',
+                        { target: '#drawer-container', swap: 'innerHTML' });
+                    } } },
+           colors: ['#1e3a8a', '#93c5fd'],
+           plotOptions: { bar: { columnWidth: '62%', borderRadius: 3, dataLabels: { position: 'top' } } },
+           dataLabels: { enabled: true, offsetY: -16, style: { fontSize: '9px', colors: ['#64748b'] }, formatter: v => v + '%' },
+           labels: [{% for r in target_by_pl.rows %}'{{ r.name|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+           xaxis: { axisBorder: { show: false }, axisTicks: { show: false },
+                    labels: { style: { colors: '#94a3b8', fontSize: '9.5px', fontWeight: '600' }, rotate: 0, hideOverlappingLabels: false } },
+           yaxis: { max: 100, min: 0, labels: { formatter: v => Math.round(v) + '%', style: { colors: '#94a3b8', fontSize: '10px' } } },
+           grid: { borderColor: '#94a3b833', strokeDashArray: 4 },
+           legend: { position: 'top', horizontalAlign: 'left', fontSize: '11px', fontWeight: 600, labels: { colors: '#64748b' }, markers: { radius: 12 } },
+           tooltip: { theme: 'dark', shared: true, intersect: false }
+         });
+         this.chart.render();
+       }
+     }" x-init="$nextTick(() => initChart())">
+  <div>
+    <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">3. Target Achievement by PL and CCEO</h3>
+    <p class="text-[11px] text-slate-400 font-medium mt-0.5">PL vs supervised-CCEO average · click a PL for the performance drawer</p>
+  </div>
+  {% if target_by_pl.rows %}
+  <div class="h-[268px] w-full" id="cdTargetPlChart"></div>
+  {% else %}
+  <div class="h-[268px] flex items-center justify-center text-[12px] text-slate-400 font-medium">No PL portfolios with targets yet.</div>
+  {% endif %}
+</div>

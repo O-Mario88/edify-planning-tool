@@ -9,6 +9,7 @@ Token rules (spec):
 
 This module is the single place that knows how to mint + hash these tokens.
 """
+
 from __future__ import annotations
 
 import hashlib

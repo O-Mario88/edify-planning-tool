@@ -1,4 +1,5 @@
 """Core-schools service — candidates → verify → onboard → slots → champion."""
+
 from __future__ import annotations
 
 
@@ -11,28 +12,59 @@ from apps.core.fy import get_operational_fy
 from apps.schools.models import School
 
 from .models import (
-    CoreActivitySlot, CoreCandidateVerification, CorePlan, CoreSchoolOnboarding,
-    CoreSchoolProfile, cplan_id, cprof_id, cslot_id,
+    CoreActivitySlot,
+    CoreCandidateVerification,
+    CorePlan,
+    CoreSchoolOnboarding,
+    CoreSchoolProfile,
+    cplan_id,
+    cprof_id,
+    cslot_id,
 )
 
 # The 11 polymorphic slot actions.
 SLOT_ACTIONS = {
-    "assign", "schedule", "start", "evidence", "acceptEvidence", "returnEvidence",
-    "complete", "plVerify", "iaVerify", "return", "accountantConfirm",
+    "assign",
+    "schedule",
+    "start",
+    "evidence",
+    "acceptEvidence",
+    "returnEvidence",
+    "complete",
+    "plVerify",
+    "iaVerify",
+    "return",
+    "accountantConfirm",
 }
+
+# Activity statuses that represent the field work as verified/settled done —
+# mirrors the "completed" statusGroup bucket in
+# activities.services.list_activities(), the canonical "is this activity
+# done?" definition already used elsewhere in the app.
+CORE_SLOT_DONE_STATUSES = {"completed", "ia_verified", "accountant_confirmed"}
 
 
 def list_candidates(principal) -> list[dict]:
     """Best-SSA client/potential-core schools → candidate for core onboarding."""
-    qs = School.objects.filter(deleted_at__isnull=True, school_type__in=["client", "potential_core"])
+    qs = School.objects.filter(
+        deleted_at__isnull=True, school_type__in=["client", "potential_core"]
+    )
     out = []
     for s in qs:
-        latest = s.ssa_records.filter(deleted_at__isnull=True).order_by("-date_of_ssa").first()
+        latest = (
+            s.ssa_records.filter(deleted_at__isnull=True)
+            .order_by("-date_of_ssa")
+            .first()
+        )
         if latest and (latest.average_score or 0) >= 7.0:
-            out.append({
-                "schoolId": s.school_id, "name": s.name,
-                "schoolType": s.school_type, "averageScore": latest.average_score,
-            })
+            out.append(
+                {
+                    "schoolId": s.school_id,
+                    "name": s.name,
+                    "schoolType": s.school_type,
+                    "averageScore": latest.average_score,
+                }
+            )
     return out
 
 
@@ -41,13 +73,21 @@ def verify_candidate(school_id: str, data: dict, principal) -> dict:
     school = School.objects.filter(school_id=school_id).first()
     if not school:
         raise NotFoundError("School not found.")
-    latest = school.ssa_records.filter(deleted_at__isnull=True).order_by("-date_of_ssa").first()
+    latest = (
+        school.ssa_records.filter(deleted_at__isnull=True)
+        .order_by("-date_of_ssa")
+        .first()
+    )
     if not latest:
         raise BadRequest("No SSA record to verify against.")
     verification = CoreCandidateVerification.objects.create(
-        school_id=school_id, ssa_record_id=latest.id, verification_id=data.get("verificationId", ""),
-        verified_by_id=principal.user_id, verified_by_name=principal.name,
-        verified_at=timezone.now(), status=data.get("status", "Verified Potential Core"),
+        school_id=school_id,
+        ssa_record_id=latest.id,
+        verification_id=data.get("verificationId", ""),
+        verified_by_id=principal.user_id,
+        verified_by_name=principal.name,
+        verified_at=timezone.now(),
+        status=data.get("status", "Verified Potential Core"),
         comments=data.get("comments"),
     )
     if data.get("status", "Verified Potential Core") != "Rejected":
@@ -65,7 +105,11 @@ def onboard(school_id: str, data: dict, principal) -> dict:
     school = School.objects.filter(school_id=school_id).first()
     if not school:
         raise NotFoundError("School not found.")
-    latest = school.ssa_records.filter(deleted_at__isnull=True).order_by("-date_of_ssa").first()
+    latest = (
+        school.ssa_records.filter(deleted_at__isnull=True)
+        .order_by("-date_of_ssa")
+        .first()
+    )
     baseline_avg = latest.average_score if latest else 0.0
     fy = get_operational_fy()
     plan_id = cplan_id(school_id)
@@ -74,10 +118,13 @@ def onboard(school_id: str, data: dict, principal) -> dict:
         plan, _ = CorePlan.objects.update_or_create(
             id=plan_id,
             defaults={
-                "school_id": school_id, "fy": fy, "status": "Active",
+                "school_id": school_id,
+                "fy": fy,
+                "status": "Active",
                 "baseline_average": baseline_avg,
                 "baseline_ssa_record_id": latest.id if latest else None,
-                "created_by_id": principal.user_id, "created_by_name": principal.name,
+                "created_by_id": principal.user_id,
+                "created_by_name": principal.name,
             },
         )
         CoreSchoolProfile.objects.update_or_create(
@@ -87,11 +134,15 @@ def onboard(school_id: str, data: dict, principal) -> dict:
         CoreSchoolOnboarding.objects.update_or_create(
             school_id=school_id,
             defaults={
-                "core_plan": plan, "fy": fy, "previous_school_type": school.school_type,
+                "core_plan": plan,
+                "fy": fy,
+                "previous_school_type": school.school_type,
                 "baseline_ssa_record_id": latest.id if latest else "",
                 "baseline_average_score": baseline_avg,
-                "onboarded_by_id": principal.user_id, "onboarded_by_name": principal.name,
-                "onboarded_at": timezone.now(), "onboarding_reason": data.get("reason"),
+                "onboarded_by_id": principal.user_id,
+                "onboarded_by_name": principal.name,
+                "onboarded_at": timezone.now(),
+                "onboarding_reason": data.get("reason"),
             },
         )
         # Create the 8 slots (4 visit + 4 training) if not present.
@@ -102,7 +153,8 @@ def onboard(school_id: str, data: dict, principal) -> dict:
                 CoreActivitySlot.objects.get_or_create(
                     id=slot_id,
                     defaults={
-                        "core_plan": plan, "school_id": school_id,
+                        "core_plan": plan,
+                        "school_id": school_id,
                         "intervention": interventions[(seq - 1) % len(interventions)],
                         "activity_type": "visit" if kind == "v" else "training",
                         "sequence_number": seq,
@@ -123,7 +175,10 @@ def get_detail(school_id: str, principal) -> dict:
     if not plan:
         raise NotFoundError("No core plan for this school.")
     data = _serialize_plan(plan)
-    data["slots"] = [_serialize_slot(s) for s in plan.slots.order_by("activity_type", "sequence_number")]
+    data["slots"] = [
+        _serialize_slot(s)
+        for s in plan.slots.order_by("activity_type", "sequence_number")
+    ]
     return data
 
 
@@ -161,7 +216,21 @@ def slot_action(slot_id: str, action: str, data: dict, principal) -> dict:
         slot.returned_reason = data.get("reason")
         slot.status = "Evidence Returned"
     elif action == "complete":
-        slot.salesforce_id = data.get("salesforceId")
+        # §26 — a core slot can only complete with evidence AND an Activity
+        # SF ID on record; IA verification is tracked separately and package
+        # verification counts it before final package completion.
+        sf_id = (data.get("salesforceId") or slot.salesforce_id or "").strip()
+        if not sf_id:
+            raise BadRequest(
+                "Activity SF ID is required before a core slot can complete."
+            )
+        if not (slot.evidence_uri or data.get("evidenceUri")):
+            raise BadRequest(
+                "Evidence must be uploaded before a core slot can complete."
+            )
+        if data.get("evidenceUri"):
+            slot.evidence_uri = data.get("evidenceUri")
+        slot.salesforce_id = sf_id
         slot.teachers = data.get("teachers")
         slot.leaders = data.get("leaders")
         slot.participants = data.get("participants")
@@ -181,6 +250,37 @@ def slot_action(slot_id: str, action: str, data: dict, principal) -> dict:
     return _serialize_slot(slot)
 
 
+def resync_plan_completion(plan: CorePlan) -> None:
+    """Recompute CorePlan.visits_completed/trainings_completed from the actual
+    status of its slots.
+
+    Called from Activity.save() (apps.activities.models) whenever a linked
+    CoreActivitySlot's mirrored status changes — that is the real, reachable
+    completion path (ia_confirm(), clear_payment(), etc. all route through a
+    plain a.save()). slot_action()'s own "complete" branch above is DRF-only
+    and unreachable from any template/frontend, so it can never be the
+    trigger in practice.
+
+    Recomputes from scratch (rather than incrementing) so this is idempotent
+    no matter how many times, or in what order, it gets called.
+    """
+    visits_completed = plan.slots.filter(
+        activity_type="visit", status__in=CORE_SLOT_DONE_STATUSES
+    ).count()
+    trainings_completed = plan.slots.filter(
+        activity_type="training", status__in=CORE_SLOT_DONE_STATUSES
+    ).count()
+    if (
+        plan.visits_completed != visits_completed
+        or plan.trainings_completed != trainings_completed
+    ):
+        plan.visits_completed = visits_completed
+        plan.trainings_completed = trainings_completed
+        plan.save(
+            update_fields=["visits_completed", "trainings_completed", "updated_at"]
+        )
+
+
 def schedule_follow_up(plan_id: str, data: dict, principal) -> dict:
     plan = CorePlan.objects.filter(id=plan_id).first()
     if not plan:
@@ -196,22 +296,36 @@ def upload_follow_up_ssa(plan_id: str, data: dict, principal) -> dict:
     plan = CorePlan.objects.filter(id=plan_id).first()
     if not plan:
         raise NotFoundError("Plan not found.")
-    school = School.objects.filter(school_id=plan.school_id).first()
     from apps.ssa.services import upload as ssa_upload
 
-    record = ssa_upload({"schoolId": plan.school_id, "dateOfSsa": data.get("dateOfSsa"), "scores": data.get("scores", [])}, principal)
+    record = ssa_upload(
+        {
+            "schoolId": plan.school_id,
+            "dateOfSsa": data.get("dateOfSsa"),
+            "scores": data.get("scores", []),
+        },
+        principal,
+    )
     plan.follow_up_ssa_record_id = record["id"]
     plan.follow_up_average = record["averageScore"]
-    
+
     baseline = plan.baseline_average or 0.0
     followup = record["averageScore"] or 0.0
     average_change = followup - baseline
-    
-    completed_slots_count = plan.slots.filter(status__in=["Completed", "Accountant Confirmed", "iaVerify", "ia_verified", "accountant_confirmed"]).count()
+
+    completed_slots_count = plan.slots.filter(
+        status__in=[
+            "Completed",
+            "Accountant Confirmed",
+            "iaVerify",
+            "ia_verified",
+            "accountant_confirmed",
+        ]
+    ).count()
     slots_complete = completed_slots_count >= 8
-    
+
     is_champion_candidate = followup >= 7.5 and average_change > 0.0 and slots_complete
-    
+
     if is_champion_candidate:
         plan.status = "Champion Candidate"
         profile = getattr(plan, "profile", None)
@@ -222,7 +336,7 @@ def upload_follow_up_ssa(plan_id: str, data: dict, principal) -> dict:
         plan.status = "Impact Measured"
 
     plan.save(update_fields=["follow_up_ssa_record_id", "follow_up_average", "status"])
-    
+
     return {
         "ok": True,
         "planId": plan.id,
@@ -250,19 +364,32 @@ def advance_champion(school_id: str, principal) -> dict:
 
 def _serialize_plan(p: CorePlan) -> dict:
     return {
-        "id": p.id, "schoolId": p.school_id, "fy": p.fy, "status": p.status,
-        "visitsTarget": p.visits_target, "trainingsTarget": p.trainings_target,
-        "visitsCompleted": p.visits_completed, "trainingsCompleted": p.trainings_completed,
-        "baselineAverage": p.baseline_average, "followUpAverage": p.follow_up_average,
+        "id": p.id,
+        "schoolId": p.school_id,
+        "fy": p.fy,
+        "status": p.status,
+        "visitsTarget": p.visits_target,
+        "trainingsTarget": p.trainings_target,
+        "visitsCompleted": p.visits_completed,
+        "trainingsCompleted": p.trainings_completed,
+        "baselineAverage": p.baseline_average,
+        "followUpAverage": p.follow_up_average,
     }
 
 
 def _serialize_slot(s: CoreActivitySlot) -> dict:
     return {
-        "id": s.id, "schoolId": s.school_id, "intervention": s.intervention,
-        "activityType": s.activity_type, "sequenceNumber": s.sequence_number,
-        "status": s.status, "owner": s.owner,
-        "assignedStaffId": s.assigned_staff_id, "assignedPartnerId": s.assigned_partner_id,
-        "scheduledMonth": s.scheduled_month, "scheduledWeek": s.scheduled_week,
-        "salesforceId": s.salesforce_id, "completedAt": s.completed_at.isoformat() if s.completed_at else None,
+        "id": s.id,
+        "schoolId": s.school_id,
+        "intervention": s.intervention,
+        "activityType": s.activity_type,
+        "sequenceNumber": s.sequence_number,
+        "status": s.status,
+        "owner": s.owner,
+        "assignedStaffId": s.assigned_staff_id,
+        "assignedPartnerId": s.assigned_partner_id,
+        "scheduledMonth": s.scheduled_month,
+        "scheduledWeek": s.scheduled_week,
+        "salesforceId": s.salesforce_id,
+        "completedAt": s.completed_at.isoformat() if s.completed_at else None,
     }

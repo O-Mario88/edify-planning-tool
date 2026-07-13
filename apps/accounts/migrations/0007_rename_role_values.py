@@ -78,7 +78,9 @@ def _apply(schema_editor, renames):
                     # Postgres ArrayField: swap matching array elements.
                     sql = f'UPDATE "{table}" SET "{column}" = array_replace("{column}", %s, %s)'
                 else:
-                    sql = f'UPDATE "{table}" SET "{column}" = REPLACE("{column}", %s, %s)'
+                    sql = (
+                        f'UPDATE "{table}" SET "{column}" = REPLACE("{column}", %s, %s)'
+                    )
                 cursor.execute(sql, [old, new])
 
 
@@ -92,7 +94,6 @@ def reverse(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         # accounts 0006 has the new schema (AlterField choices). Data rewrite
         # must run after it so recorded state is consistent before rows change.
@@ -103,7 +104,10 @@ class Migration(migrations.Migration):
         ("budget_intelligence", "0001_initial"),
         ("debriefs", "0002_dailydebrief_environment_dailydebrief_source"),
         ("evidence", "0001_initial"),
-        ("fund_requests", "0006_accountabilityrecord_disbursement_financeauditlog_and_more"),
+        (
+            "fund_requests",
+            "0006_accountabilityrecord_disbursement_financeauditlog_and_more",
+        ),
         ("leadership", "0001_initial"),
         ("notifications", "0001_initial"),
         ("targets", "0001_initial"),

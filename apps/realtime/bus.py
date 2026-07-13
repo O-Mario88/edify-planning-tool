@@ -4,6 +4,7 @@ pub/sub. One stream per user; the SSE controller subscribes, the DomainEvent
 seam publishes. Single-process; Redis pub/sub noted as the future swap (only
 this class changes, not its callers).
 """
+
 from __future__ import annotations
 
 import queue

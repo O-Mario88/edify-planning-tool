@@ -1,0 +1,28 @@
+{% load frontend_filters %}
+<div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-3 h-full">
+  <div>
+    <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">13. Operational Risk / Attention Needed</h3>
+    <p class="text-[11px] text-slate-400 font-medium mt-0.5">Real workflow gaps · route follow-up to responsible PL</p>
+  </div>
+  <div class="grid grid-cols-2 gap-2 pt-1">
+    {% for c in operational_risk %}
+    <a href="/analytics/country-director/drilldown{{ c.link }}&fy={{ fy }}"
+       hx-get="/analytics/country-director/drilldown{{ c.link }}&fy={{ fy }}"
+       hx-target="#drawer-container" hx-swap="innerHTML"
+       class="rounded-xl p-3 border flex items-center justify-between gap-2 cursor-pointer transition-all hover:shadow-sm
+       {% if c.tone == 'danger' %}bg-rose-50 border-rose-100
+       {% elif c.tone == 'warning' %}bg-amber-50 border-amber-100
+       {% else %}bg-sky-50 border-sky-100{% endif %}">
+      <div class="min-w-0">
+        <p class="text-[10.5px] font-bold text-slate-700 leading-tight truncate">{{ c.label }}</p>
+        {% if c.aging %}<p class="text-[8.5px] font-semibold text-slate-400 mt-0.5">{{ c.aging }}</p>{% endif %}
+      </div>
+      <span class="shrink-0 px-2 py-0.5 rounded-full text-[12px] font-bold tabular-nums
+        {% if c.tone == 'danger' %}bg-rose-100 text-rose-700
+        {% elif c.tone == 'warning' %}bg-amber-100 text-amber-700
+        {% else %}bg-sky-100 text-sky-700{% endif %}">{{ c.count|intcomma }}</span>
+    </a>
+    {% endfor %}
+  </div>
+  <p class="text-[9.5px] text-slate-400 font-medium">CD creates a To-Do or recommendation for the responsible PL — never direct field scheduling.</p>
+</div>

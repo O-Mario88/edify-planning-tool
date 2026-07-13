@@ -6,11 +6,11 @@ Shared by dev and prod. Environment is read from os.environ so the same
 CORS_ORIGINS, DEMO_LOGIN_PASSWORD, ENABLE_*, etc.). Prod-only gates live in
 prod.py; permissive defaults for local dev live here.
 """
+
 from __future__ import annotations
 
 import os
 from pathlib import Path
-from urllib.parse import urlparse
 
 
 # ── Paths ────────────────────────────────────────────────────────────────────
@@ -18,6 +18,7 @@ from urllib.parse import urlparse
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 import environ
+
 # Load .env file if it exists
 environ.Env.read_env(env_file=str(BASE_DIR / ".env"))
 
@@ -41,7 +42,9 @@ SECRET_KEY = os.environ.get("JWT_SECRET", "dev-only-insecure-secret-change-me")
 
 # DEVELOPMENT default; prod.py overrides to False with a hard gate.
 DEBUG = _truthy(os.environ.get("DEBUG"), fallback=True)
-ALLOWED_HOSTS = [h.strip() for h in os.environ.get("ALLOWED_HOSTS", "*").split(",") if h.strip()]
+ALLOWED_HOSTS = [
+    h.strip() for h in os.environ.get("ALLOWED_HOSTS", "*").split(",") if h.strip()
+]
 
 # The NestJS backend used String @id @default(cuid()) everywhere. We keep the
 # same semantics with a CUID generator so seeded IDs and cross-references stay
@@ -61,14 +64,12 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-
     # Third-party
     "rest_framework",
     "django_filters",
     "corsheaders",
     "drf_spectacular",
     "django_apscheduler",
-
     # Local domain apps — added incrementally as modules land. They must be
     # declared before any app that references them in a FK.
     "apps.core",
@@ -101,8 +102,11 @@ INSTALLED_APPS = [
     "apps.notifications",
     "apps.planning",
     "apps.fund_requests",
+    "apps.daily_visit_batches",
+    "apps.routes",
     "apps.core_schools",
     "apps.monthly_work_plan",
+    "apps.professional_development",
     "apps.analytics",
     "apps.leadership",
     "apps.budget_intelligence",
@@ -167,6 +171,7 @@ _db_url = os.environ.get(
     f"{os.environ.get('POSTGRES_DB', 'edify_pm')}",
 )
 import sys
+
 _is_testing = "test" in sys.argv or "pytest" in sys.modules
 
 # Parse database URL including query parameters (like sslmode=require) using django-environ
@@ -179,9 +184,7 @@ if "OPTIONS" in _db_config:
     if _schema:
         _db_config["OPTIONS"]["options"] = f"-c search_path={_schema}"
 
-DATABASES = {
-    "default": _db_config
-}
+DATABASES = {"default": _db_config}
 
 # Apply default config parameters
 DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
@@ -192,6 +195,7 @@ _redis_url = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0")
 _use_redis = False
 try:
     import redis
+
     _conn = redis.Redis.from_url(_redis_url, socket_timeout=1)
     _conn.ping()
     _use_redis = True
@@ -253,6 +257,13 @@ IS_PRODUCTION = False  # overridden in prod.py
 NODE_ENV = os.environ.get("NODE_ENV", "development")
 PORT = _as_int(os.environ.get("PORT"), 4000)
 
+# Country Directors can open row-level school/cluster/activity records (the
+# role spec gives CD the school and cluster directories + detail views).
+# Set env ALLOW_CD_OPERATIONAL_PLANNING=false to restrict CD to aggregates.
+ALLOW_CD_OPERATIONAL_PLANNING = _truthy(
+    os.environ.get("ALLOW_CD_OPERATIONAL_PLANNING"), fallback=True
+)
+
 # Validation leniency: the NestJS ValidationPipe used whitelist:true WITHOUT
 # forbidNonWhitelisted — extra JSON fields are silently dropped, never 400. We
 # replicate that with serializers that ignore unknown input (see core/serializers).
@@ -290,7 +301,9 @@ REDIS_URL = os.environ.get("REDIS_URL") or None
 
 # Evidence storage — absolute, persistent path in production. Relative dev
 # default is ephemeral (files lost on redeploy), which is fine locally.
-EVIDENCE_STORAGE_DIR = os.environ.get("EVIDENCE_STORAGE_DIR") or str(BASE_DIR / "uploads" / "evidence")
+EVIDENCE_STORAGE_DIR = os.environ.get("EVIDENCE_STORAGE_DIR") or str(
+    BASE_DIR / "uploads" / "evidence"
+)
 
 # JWT / token TTLs (match NestJS defaults).
 JWT_SECRET = os.environ.get("JWT_SECRET", "dev-only-insecure-secret-change-me")
@@ -308,9 +321,7 @@ AUTH_LOCK_MINUTES = _as_int(os.environ.get("AUTH_LOCK_MINUTES"), 15)
 
 # Rate limits.
 RATE_LIMIT_LOGIN_PER_MIN = _as_int(os.environ.get("RATE_LIMIT_LOGIN_PER_MIN"), 10)
-RATE_LIMIT_FORGOT_PER_10MIN = _as_int(
-    os.environ.get("RATE_LIMIT_FORGOT_PER_10MIN"), 4
-)
+RATE_LIMIT_FORGOT_PER_10MIN = _as_int(os.environ.get("RATE_LIMIT_FORGOT_PER_10MIN"), 4)
 
 # Demo / seed credentials (shared contract with the frontend bridge).
 DEMO_LOGIN_PASSWORD = os.environ.get("DEMO_LOGIN_PASSWORD") or "edify"

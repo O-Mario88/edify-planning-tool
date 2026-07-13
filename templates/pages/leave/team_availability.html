@@ -3,12 +3,12 @@
 {% block title %}Team Availability Heatmap — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6 font-sans">
+<div class="px-4 sm:px-6 py-5 space-y-4" style="max-width:1500px;margin:0 auto;">
 
   <!-- Header -->
   <div class="flex items-center justify-between border-b border-slate-200 pb-4">
     <div>
-      <h1 class="text-[22px] font-bold text-slate-800 tracking-tight">Team Availability Heatmap</h1>
+      <h1 class="text-[21px] font-extrabold tracking-tight">Team Availability Heatmap</h1>
       <p class="text-[12px] text-slate-400 font-semibold mt-0.5">Track workload, approved leaves, and calendar blockages for your team over the next 4 weeks</p>
     </div>
     
@@ -18,7 +18,7 @@
   </div>
 
   <!-- Legend & Overview -->
-  <div class="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm space-y-4">
+  <div class="bg-white rounded-lg border border-slate-100 p-5 shadow-sm space-y-4">
     <h3 class="text-[14px] font-bold text-slate-850">Availability Status Legend</h3>
     <div class="flex flex-wrap gap-4 text-[12px] font-semibold">
       <div class="flex items-center gap-2">
@@ -45,7 +45,7 @@
   </div>
 
   <!-- Heatmap Matrix Grid -->
-  <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+  <div class="bg-white rounded-lg border border-slate-100 shadow-sm overflow-hidden">
     <div class="p-5 border-b border-slate-100">
       <h3 class="text-[16px] font-bold text-slate-850">4-Week Heatmap Matrix</h3>
     </div>
@@ -71,7 +71,7 @@
             {% for wk in row.weeks %}
             <td class="px-4 py-4 text-center">
               <div 
-                class="inline-flex flex-col items-center justify-center p-3 rounded-2xl text-white shadow-sm w-full max-w-[120px] transition hover:scale-105"
+                class="inline-flex flex-col items-center justify-center p-3 rounded-lg text-white shadow-sm w-full max-w-[120px] transition hover:scale-105"
                 style="background-color: {% if wk.status == 'Available' %}#10b981{% elif wk.status == 'On Leave' %}#3b82f6{% elif wk.status == 'Blocked' %}#475569{% elif wk.status == 'Conference Week' %}#a855f7{% else %}#f59e0b{% endif %};"
               >
                 <span class="text-[12px] font-extrabold">{{ wk.status }}</span>

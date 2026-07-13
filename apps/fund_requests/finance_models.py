@@ -4,10 +4,15 @@ from apps.core.models import CuidField, TimeStampedModel
 from apps.activities.models import Activity
 from apps.fund_requests.models import FundRequest
 
+
 class Disbursement(TimeStampedModel):
     id = CuidField()
-    activity = models.ForeignKey(Activity, on_delete=models.CASCADE, related_name="disbursements")
-    fund_request = models.ForeignKey(FundRequest, on_delete=models.SET_NULL, null=True, blank=True)
+    activity = models.ForeignKey(
+        Activity, on_delete=models.CASCADE, related_name="disbursements"
+    )
+    fund_request = models.ForeignKey(
+        FundRequest, on_delete=models.SET_NULL, null=True, blank=True
+    )
     amount_disbursed = models.BigIntegerField()  # UGX Cents
     disbursed_at = models.DateTimeField(default=timezone.now)
     disbursed_by = models.CharField(max_length=30)
@@ -21,7 +26,9 @@ class Disbursement(TimeStampedModel):
 
 class PartnerPayment(TimeStampedModel):
     id = CuidField()
-    activity = models.ForeignKey(Activity, on_delete=models.CASCADE, related_name="partner_payments")
+    activity = models.ForeignKey(
+        Activity, on_delete=models.CASCADE, related_name="partner_payments"
+    )
     partner_name = models.CharField(max_length=255)
     amount_paid = models.BigIntegerField()  # UGX Cents
     payment_method = models.CharField(max_length=64)
@@ -36,13 +43,17 @@ class PartnerPayment(TimeStampedModel):
 
 class ReimbursementClaim(TimeStampedModel):
     id = CuidField()
-    activity = models.ForeignKey(Activity, on_delete=models.CASCADE, related_name="reimbursement_claims")
+    activity = models.ForeignKey(
+        Activity, on_delete=models.CASCADE, related_name="reimbursement_claims"
+    )
     staff_id = models.CharField(max_length=30)
     approved_budget = models.BigIntegerField()  # UGX Cents
     amount_advanced = models.BigIntegerField(default=0)  # UGX Cents
     actual_spend = models.BigIntegerField()  # UGX Cents
     reimbursement_amount = models.BigIntegerField()  # UGX Cents
-    status = models.CharField(max_length=32, default="pending")  # pending, approved, paid, returned
+    status = models.CharField(
+        max_length=32, default="pending"
+    )  # pending, approved, paid, returned
     payment_method = models.CharField(max_length=64, null=True, blank=True)
     payment_reference = models.CharField(max_length=128, null=True, blank=True)
     payment_date = models.DateTimeField(null=True, blank=True)
@@ -55,14 +66,18 @@ class ReimbursementClaim(TimeStampedModel):
 
 class AccountabilityRecord(TimeStampedModel):
     id = CuidField()
-    activity = models.ForeignKey(Activity, on_delete=models.CASCADE, related_name="accountability_records")
+    activity = models.ForeignKey(
+        Activity, on_delete=models.CASCADE, related_name="accountability_records"
+    )
     staff_id = models.CharField(max_length=30)
     amount_disbursed = models.BigIntegerField()  # UGX Cents
     actual_spend = models.BigIntegerField()  # UGX Cents
     variance = models.BigIntegerField()  # UGX Cents
     variance_reason = models.TextField(null=True, blank=True)
     netsuite_expense_id = models.CharField(max_length=128, null=True, blank=True)
-    status = models.CharField(max_length=32, default="pending")  # pending, variance_review, cleared, returned
+    status = models.CharField(
+        max_length=32, default="pending"
+    )  # pending, variance_review, cleared, returned
     submitted_at = models.DateTimeField(default=timezone.now)
     reviewed_at = models.DateTimeField(null=True, blank=True)
     reviewed_by = models.CharField(max_length=30, null=True, blank=True)
@@ -74,8 +89,20 @@ class AccountabilityRecord(TimeStampedModel):
 
 class Receipt(TimeStampedModel):
     id = CuidField()
-    accountability_record = models.ForeignKey(AccountabilityRecord, on_delete=models.CASCADE, related_name="receipts", null=True, blank=True)
-    reimbursement_claim = models.ForeignKey(ReimbursementClaim, on_delete=models.CASCADE, related_name="receipts", null=True, blank=True)
+    accountability_record = models.ForeignKey(
+        AccountabilityRecord,
+        on_delete=models.CASCADE,
+        related_name="receipts",
+        null=True,
+        blank=True,
+    )
+    reimbursement_claim = models.ForeignKey(
+        ReimbursementClaim,
+        on_delete=models.CASCADE,
+        related_name="receipts",
+        null=True,
+        blank=True,
+    )
     original_name = models.CharField(max_length=255)
     uri = models.CharField(max_length=512)
     file_size = models.BigIntegerField()
@@ -88,7 +115,9 @@ class Receipt(TimeStampedModel):
 
 class NetSuiteExpenseRecord(TimeStampedModel):
     id = CuidField()
-    activity = models.ForeignKey(Activity, on_delete=models.CASCADE, related_name="netsuite_expenses")
+    activity = models.ForeignKey(
+        Activity, on_delete=models.CASCADE, related_name="netsuite_expenses"
+    )
     netsuite_expense_id = models.CharField(max_length=128, unique=True)
     expense_date = models.DateField()
     amount_entered = models.BigIntegerField()  # UGX Cents
@@ -101,12 +130,16 @@ class NetSuiteExpenseRecord(TimeStampedModel):
 
 class FinanceReturn(TimeStampedModel):
     id = CuidField()
-    activity = models.ForeignKey(Activity, on_delete=models.CASCADE, related_name="finance_returns")
+    activity = models.ForeignKey(
+        Activity, on_delete=models.CASCADE, related_name="finance_returns"
+    )
     returned_to = models.CharField(max_length=30)
     returned_by = models.CharField(max_length=30)
     reason = models.TextField()
     returned_at = models.DateTimeField(default=timezone.now)
-    status = models.CharField(max_length=32, default="pending")  # pending, fixed, resolved
+    status = models.CharField(
+        max_length=32, default="pending"
+    )  # pending, fixed, resolved
 
     class Meta:
         db_table = "finance_return"
@@ -114,13 +147,17 @@ class FinanceReturn(TimeStampedModel):
 
 class VarianceReview(TimeStampedModel):
     id = CuidField()
-    activity = models.ForeignKey(Activity, on_delete=models.CASCADE, related_name="variance_reviews")
+    activity = models.ForeignKey(
+        Activity, on_delete=models.CASCADE, related_name="variance_reviews"
+    )
     budgeted_amount = models.BigIntegerField()  # UGX Cents
     disbursed_amount = models.BigIntegerField()  # UGX Cents
     actual_spend = models.BigIntegerField()  # UGX Cents
     variance = models.BigIntegerField()  # UGX Cents
     reason = models.TextField()
-    status = models.CharField(max_length=32, default="pending")  # pending, approved, refund_required, resolved
+    status = models.CharField(
+        max_length=32, default="pending"
+    )  # pending, approved, refund_required, resolved
     reviewed_by = models.CharField(max_length=30, null=True, blank=True)
     reviewed_at = models.DateTimeField(null=True, blank=True)
 
@@ -130,8 +167,16 @@ class VarianceReview(TimeStampedModel):
 
 class FinanceAuditLog(TimeStampedModel):
     id = CuidField()
-    activity = models.ForeignKey(Activity, on_delete=models.SET_NULL, null=True, blank=True, related_name="finance_audit_logs")
-    event_type = models.CharField(max_length=64)  # e.g., disbursement, partner_paid, reimbursement, accountability_cleared
+    activity = models.ForeignKey(
+        Activity,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="finance_audit_logs",
+    )
+    event_type = models.CharField(
+        max_length=64
+    )  # e.g., disbursement, partner_paid, reimbursement, accountability_cleared
     actor_id = models.CharField(max_length=30)
     actor_role = models.CharField(max_length=64)
     old_value = models.TextField(null=True, blank=True)

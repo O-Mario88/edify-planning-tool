@@ -3,12 +3,19 @@ from __future__ import annotations
 import logging
 from datetime import date, datetime, timedelta
 from django.db import transaction
-from django.db.models import Q, Count
+from django.db.models import Q
 from django.utils import timezone
 
 from apps.accounts.models import (
-    Leave, LeaveTypePolicy, LeaveBalance, TemporaryCoverageAssignment, PublicHoliday,
-    StaffProfile, StaffSupervisorAssignment, StaffSchoolAssignment, User, CalendarBlock
+    Leave,
+    LeaveTypePolicy,
+    LeaveBalance,
+    TemporaryCoverageAssignment,
+    PublicHoliday,
+    StaffProfile,
+    StaffSupervisorAssignment,
+    User,
+    CalendarBlock,
 )
 from apps.core.rbac import EdifyRole
 from apps.core.exceptions import BadRequest, NotFoundError
@@ -43,10 +50,7 @@ def check_staff_availability(staff_id: str, check_date) -> bool:
 
     d_str = d.isoformat()
     return not Leave.objects.filter(
-        staff=sp,
-        status="approved",
-        start_date__lte=d_str,
-        end_date__gte=d_str
+        staff=sp, status="approved", start_date__lte=d_str, end_date__gte=d_str
     ).exists()
 
 
@@ -54,7 +58,12 @@ class WorkingDayCalculator:
     """Calculates leave days charged in working days (Mon-Fri) excluding weekends and public holidays."""
 
     @staticmethod
-    def calculate_working_days(start_date_str: str, end_date_str: str, weekends_count: bool = False, public_holidays_count: bool = False) -> int:
+    def calculate_working_days(
+        start_date_str: str,
+        end_date_str: str,
+        weekends_count: bool = False,
+        public_holidays_count: bool = False,
+    ) -> int:
         """Calculate working days between start_date and end_date (inclusive)."""
         try:
             start_date = date.fromisoformat(start_date_str)
@@ -67,20 +76,26 @@ class WorkingDayCalculator:
 
         working_days = 0
         current_date = start_date
-        
-        # Get list of public holidays in range if we need to skip them
+
+        # Get list of public holidays in range if we need to skip them.
+        # Must match PublicHolidayService.get_holidays_in_range (the same
+        # union of PublicHoliday + CalendarBlock(PUBLIC_HOLIDAY) used by the
+        # preview/conflict-detection surface) — otherwise a holiday added
+        # only via /public-holidays (CalendarBlock) is shown as excluded in
+        # the preview but silently charged against the balance here.
         holidays = set()
         if not public_holidays_count:
             holidays = set(
-                PublicHoliday.objects.filter(date__range=(start_date, end_date))
-                .values_list("date", flat=True)
+                PublicHolidayService.get_holidays_in_range(start_date, end_date)
             )
 
         while current_date <= end_date:
             is_weekend = current_date.weekday() >= 5  # 5=Saturday, 6=Sunday
             is_holiday = current_date in holidays
 
-            if (weekends_count or not is_weekend) and (public_holidays_count or not is_holiday):
+            if (weekends_count or not is_weekend) and (
+                public_holidays_count or not is_holiday
+            ):
                 working_days += 1
 
             current_date += timedelta(days=1)
@@ -116,7 +131,7 @@ class LeaveBalanceService:
                     "used": 0,
                     "pending": 0,
                     "approved": 0,
-                }
+                },
             )
 
     @staticmethod
@@ -139,7 +154,7 @@ class LeaveBalanceService:
                     "approver_role": role,
                     "weekends_count": False,
                     "public_holidays_count": False,
-                }
+                },
             )
 
     @staticmethod
@@ -154,19 +169,19 @@ class LeaveBalanceService:
             # Query leaves for this year and type
             # The start_date contains the year (e.g. "2026-07-08")
             leaves = Leave.objects.filter(
-                staff=staff,
-                type=bal.leave_type,
-                start_date__startswith=str(year)
+                staff=staff, type=bal.leave_type, start_date__startswith=str(year)
             )
 
             approved_days = 0
             pending_days = 0
 
-            for l in leaves:
-                days = l.days_charged if l.days_charged is not None else l.days
-                if l.status == "approved":
+            for leave in leaves:
+                days = (
+                    leave.days_charged if leave.days_charged is not None else leave.days
+                )
+                if leave.status == "approved":
                     approved_days += days
-                elif l.status == "pending":
+                elif leave.status == "pending":
                     pending_days += days
 
             bal.approved = approved_days
@@ -180,31 +195,38 @@ class CoverageAssignmentService:
     """Fetches eligible coverage candidates based on user active role and supervision."""
 
     @staticmethod
-    def get_eligible_coverage_staff(staff: StaffProfile, start_date_str: str, end_date_str: str) -> list[dict]:
+    def get_eligible_coverage_staff(
+        staff: StaffProfile, start_date_str: str, end_date_str: str
+    ) -> list[dict]:
         """Fetch candidates list who can cover this staff during their leave."""
         user = staff.user
         role = user.active_role
-        
+
         # 1. Find all active staff profiles (excluding self)
-        qs = StaffProfile.objects.filter(
-            deleted_at__isnull=True,
-            onboarding_state="active"
-        ).exclude(id=staff.id).select_related("user")
+        qs = (
+            StaffProfile.objects.filter(
+                deleted_at__isnull=True, onboarding_state="active"
+            )
+            .exclude(id=staff.id)
+            .select_related("user")
+        )
 
         # 2. Exclude anyone on approved leave during the same period
         # start_date__lte=end_date and end_date__gte=start_date
         overlapping_leaves = Leave.objects.filter(
             status="approved",
             start_date__lte=end_date_str,
-            end_date__gte=start_date_str
+            end_date__gte=start_date_str,
         ).values_list("staff_id", flat=True)
-        
+
         qs = qs.exclude(id__in=overlapping_leaves)
 
         eligible_candidates = []
 
         # Get supervisor ID mapping if any
-        supervisor_assignment = StaffSupervisorAssignment.objects.filter(supervisee=staff).first()
+        supervisor_assignment = StaffSupervisorAssignment.objects.filter(
+            supervisee=staff
+        ).first()
         supervisor = supervisor_assignment.supervisor if supervisor_assignment else None
 
         if role == EdifyRole.CCEO.value:
@@ -218,11 +240,11 @@ class CoverageAssignmentService:
                     supervisor=supervisor
                 ).values_list("supervisee_id", flat=True)
                 cceo_candidates = cceo_candidates.filter(id__in=peer_ids)
-                
+
                 # Include the PL as an eligible candidate
                 pl_candidate = qs.filter(id=supervisor.id)
                 cceo_candidates = cceo_candidates | pl_candidate
-            
+
             eligible_candidates = list(cceo_candidates)
 
         elif role == EdifyRole.COUNTRY_PROGRAM_LEAD.value:
@@ -231,7 +253,12 @@ class CoverageAssignmentService:
             # - The CD
             # - Senior CCEOs
             # For simplicity, fetch other PLs, CDs
-            pl_candidates = qs.filter(user__active_role__in=[EdifyRole.COUNTRY_PROGRAM_LEAD.value, EdifyRole.COUNTRY_DIRECTOR.value])
+            pl_candidates = qs.filter(
+                user__active_role__in=[
+                    EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+                    EdifyRole.COUNTRY_DIRECTOR.value,
+                ]
+            )
             # Senior CCEOs supervised by this PL (or CD-allowed CCEOs)
             senior_cceos = qs.filter(user__active_role=EdifyRole.CCEO.value)
             if supervisor:
@@ -239,35 +266,52 @@ class CoverageAssignmentService:
                 peer_pl_ids = StaffSupervisorAssignment.objects.filter(
                     supervisor=supervisor
                 ).values_list("supervisee_id", flat=True)
-                pl_candidates = pl_candidates.filter(id__in=peer_pl_ids) | qs.filter(id=supervisor.id)
-            
+                pl_candidates = pl_candidates.filter(id__in=peer_pl_ids) | qs.filter(
+                    id=supervisor.id
+                )
+
             # Supervised CCEOs by this PL can act as senior CCEO cover
             supervised_cceos = StaffSupervisorAssignment.objects.filter(
                 supervisor=staff
             ).values_list("supervisee_id", flat=True)
             senior_cceos = senior_cceos.filter(id__in=supervised_cceos)
-            
+
             eligible_candidates = list(pl_candidates) + list(senior_cceos)
 
         elif role == EdifyRole.COUNTRY_DIRECTOR.value:
             # CD coverage:
             # - RVP
             # - Senior PLs
-            cd_candidates = qs.filter(user__active_role__in=[EdifyRole.REGIONAL_VICE_PRESIDENT.value, EdifyRole.COUNTRY_PROGRAM_LEAD.value])
+            cd_candidates = qs.filter(
+                user__active_role__in=[
+                    EdifyRole.REGIONAL_VICE_PRESIDENT.value,
+                    EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+                ]
+            )
             eligible_candidates = list(cd_candidates)
 
         elif role == EdifyRole.IMPACT_ASSESSMENT.value:
             # IA coverage:
             # - Another IA
             # - CD
-            ia_candidates = qs.filter(user__active_role__in=[EdifyRole.IMPACT_ASSESSMENT.value, EdifyRole.COUNTRY_DIRECTOR.value])
+            ia_candidates = qs.filter(
+                user__active_role__in=[
+                    EdifyRole.IMPACT_ASSESSMENT.value,
+                    EdifyRole.COUNTRY_DIRECTOR.value,
+                ]
+            )
             eligible_candidates = list(ia_candidates)
 
         elif role == EdifyRole.PROGRAM_ACCOUNTANT.value:
             # Accountant coverage:
             # - Another Accountant
             # - CD
-            ac_candidates = qs.filter(user__active_role__in=[EdifyRole.PROGRAM_ACCOUNTANT.value, EdifyRole.COUNTRY_DIRECTOR.value])
+            ac_candidates = qs.filter(
+                user__active_role__in=[
+                    EdifyRole.PROGRAM_ACCOUNTANT.value,
+                    EdifyRole.COUNTRY_DIRECTOR.value,
+                ]
+            )
             eligible_candidates = list(ac_candidates)
 
         else:
@@ -277,11 +321,13 @@ class CoverageAssignmentService:
         # Serialize candidates
         serialized = []
         for sp in eligible_candidates:
-            serialized.append({
-                "id": sp.id,
-                "name": sp.user.name,
-                "role": sp.user.active_role,
-            })
+            serialized.append(
+                {
+                    "id": sp.id,
+                    "name": sp.user.name,
+                    "role": sp.user.active_role,
+                }
+            )
         return serialized
 
 
@@ -298,28 +344,33 @@ class LeaveRequestService:
         emergency_contact = data.get("emergency_contact")
         handover_notes = data.get("handover_notes")
         urgent_activities = data.get("urgent_activities")
-        
+
         # 1. Fetch policy
         policy, _ = LeaveTypePolicy.objects.get_or_create(
             leave_type=leave_type,
-            defaults={"label": leave_type.replace("_", " ").title()}
+            defaults={"label": leave_type.replace("_", " ").title()},
         )
 
         # 2. Calculate working days
         days_charged = WorkingDayCalculator.calculate_working_days(
-            start_date_str, end_date_str, 
-            weekends_count=policy.weekends_count, 
-            public_holidays_count=policy.public_holidays_count
+            start_date_str,
+            end_date_str,
+            weekends_count=policy.weekends_count,
+            public_holidays_count=policy.public_holidays_count,
         )
         hours_covered = WorkingDayCalculator.calculate_working_hours(days_charged)
 
         # 3. Check balance for PTO
         year = int(start_date_str[:4])
-        bal_qs = LeaveBalance.objects.filter(staff=staff, leave_type=leave_type, year=year)
+        bal_qs = LeaveBalance.objects.filter(
+            staff=staff, leave_type=leave_type, year=year
+        )
         if not bal_qs.exists():
             LeaveBalanceService.initialize_balances_for_staff(staff, year)
-            bal_qs = LeaveBalance.objects.filter(staff=staff, leave_type=leave_type, year=year)
-        
+            bal_qs = LeaveBalance.objects.filter(
+                staff=staff, leave_type=leave_type, year=year
+            )
+
         bal = bal_qs.first()
         if bal.remaining < days_charged:
             raise BadRequest(
@@ -340,6 +391,7 @@ class LeaveRequestService:
             calendar_days = days_charged
 
         # 6. Create request
+        cov_status = "Awaiting Acceptance" if covering_staff else "Not Required"
         leave = Leave.objects.create(
             staff=staff,
             type=leave_type,
@@ -349,13 +401,14 @@ class LeaveRequestService:
             days_charged=days_charged,
             hours_covered=hours_covered,
             status="pending",
+            coverage_status=cov_status,
             reason=reason,
             covering_staff=covering_staff,
             coverage_notes=data.get("coverage_notes"),
             emergency_contact=emergency_contact,
             handover_notes=handover_notes,
             urgent_activities=urgent_activities,
-            attachment=attachment_file
+            attachment=attachment_file,
         )
 
         # Recalculate balance to include pending days
@@ -368,16 +421,120 @@ class LeaveApprovalService:
     """Manages reviewing, approving, or rejecting leave requests."""
 
     @staticmethod
+    def is_authorized_approver(reviewer_user: User, leave: Leave) -> bool:
+        """Enforces the strict organizational hierarchy for leave approvals."""
+        if not leave or not reviewer_user:
+            return False
+
+        # No employee may approve their own leave.
+        if leave.staff.user_id == reviewer_user.id:
+            return False
+
+        def normalize_role(r):
+            if not r:
+                return ""
+            r = r.replace(" ", "").replace("_", "").lower()
+            if r in ["cceo"]:
+                return "cceo"
+            if r in ["programlead", "pl"]:
+                return "pl"
+            if r in ["countrydirector", "cd"]:
+                return "cd"
+            if r in ["regionalvicepresident", "rvp"]:
+                return "rvp"
+            if r in ["humanresources", "hr"]:
+                return "hr"
+            if r in ["impactassessment", "ia"]:
+                return "ia"
+            if r in ["accountant", "programaccountant", "acct"]:
+                return "accountant"
+            if r in ["projectcoordinator", "pc"]:
+                return "pc"
+            return r
+
+        rev_role = normalize_role(reviewer_user.active_role)
+
+        # Admin bypass
+        if rev_role == "admin":
+            return True
+
+        reviewer_profile = getattr(reviewer_user, "staff_profile", None)
+        if not reviewer_profile:
+            return False
+
+        from apps.accounts.models import StaffSupervisorAssignment
+        # Check direct supervisor relationship in database
+        direct_supervisor = StaffSupervisorAssignment.objects.filter(
+            supervisee=leave.staff, supervisor=reviewer_profile
+        ).exists()
+
+        staff_role = normalize_role(leave.staff.user.active_role)
+
+        if staff_role == "cceo":
+            # CCEO leave -> PL approval
+            return rev_role == "pl" and direct_supervisor
+
+        elif staff_role == "pl":
+            # PL leave -> CD approval
+            if rev_role == "cd":
+                return direct_supervisor or (reviewer_profile.country == leave.staff.country)
+            return False
+
+        elif staff_role in ["pc", "ia", "accountant", "hr"]:
+            # Check if this is country-level or regional-level HR/staff
+            if direct_supervisor:
+                return rev_role in ["cd", "rvp"]
+            
+            # Fallback by country scoping for CD
+            if rev_role == "cd" and reviewer_profile.country == leave.staff.country:
+                return True
+            # RVP approves regional staff or CD
+            if rev_role == "rvp":
+                return True
+            return False
+
+        elif staff_role == "cd":
+            # CD leave -> RVP approval
+            if rev_role == "rvp":
+                return True
+            return False
+
+        elif staff_role == "rvp":
+            # RVP leave -> Exec/Admin approval (handled by Admin check above)
+            return rev_role in ["admin", "executive"]
+
+        # Default fallback
+        return direct_supervisor
+
+    @staticmethod
     def approve_request(leave_id: str, reviewer_user: User) -> Leave:
         leave = Leave.objects.filter(id=leave_id).first()
         if not leave:
             raise NotFoundError("Leave request not found.")
 
+        # Hierarchy authorization check
+        if not LeaveApprovalService.is_authorized_approver(reviewer_user, leave):
+            raise BadRequest("You are not authorized to approve this leave request.")
+
         with transaction.atomic():
             leave.status = "approved"
             leave.reviewed_by_user_id = reviewer_user.id
             leave.reviewed_at = timezone.now()
-            leave.save(update_fields=["status", "reviewed_by_user_id", "reviewed_at", "updated_at"])
+            
+            if leave.covering_staff:
+                leave.coverage_status = "Approved"
+            else:
+                leave.coverage_status = "Not Required"
+                
+            leave.save(
+                update_fields=[
+                    "status",
+                    "reviewed_by_user_id",
+                    "reviewed_at",
+                    "coverage_status",
+                    "updated_at",
+                ]
+            )
 
             # Recalculate balances
             year = int(leave.start_date[:4])
@@ -387,17 +544,26 @@ class LeaveApprovalService:
             if leave.covering_staff:
                 # Access begins at start date 8:00 AM, ends at end date 5:00 PM
                 start_dt = timezone.make_aware(
-                    datetime.combine(date.fromisoformat(leave.start_date), datetime.min.time().replace(hour=8))
+                    datetime.combine(
+                        date.fromisoformat(leave.start_date),
+                        datetime.min.time().replace(hour=8),
+                    )
                 )
                 end_dt = timezone.make_aware(
-                    datetime.combine(date.fromisoformat(leave.end_date), datetime.min.time().replace(hour=17))
+                    datetime.combine(
+                        date.fromisoformat(leave.end_date),
+                        datetime.min.time().replace(hour=17),
+                    )
                 )
 
                 # Revoke any pre-existing overlapping active coverages for this same leave request
                 TemporaryCoverageAssignment.objects.filter(
-                    leave_request=leave,
-                    status="active"
-                ).update(status="revoked", revoked_at=timezone.now(), revoked_by_user_id=reviewer_user.id)
+                    leave_request=leave, status="active"
+                ).update(
+                    status="revoked",
+                    revoked_at=timezone.now(),
+                    revoked_by_user_id=reviewer_user.id,
+                )
 
                 TemporaryCoverageAssignment.objects.create(
                     leave_request=leave,
@@ -416,18 +582,36 @@ class LeaveApprovalService:
         return leave
 
     @staticmethod
-    def reject_request(leave_id: str, reviewer_user: User, reason: str | None = None) -> Leave:
+    def reject_request(
+        leave_id: str, reviewer_user: User, reason: str | None = None
+    ) -> Leave:
         leave = Leave.objects.filter(id=leave_id).first()
         if not leave:
             raise NotFoundError("Leave request not found.")
 
+        # Hierarchy authorization check
+        if not LeaveApprovalService.is_authorized_approver(reviewer_user, leave):
+            raise BadRequest("You are not authorized to reject this leave request.")
+
         with transaction.atomic():
             leave.status = "rejected"
+            leave.coverage_status = "Cancelled"
             leave.reviewed_by_user_id = reviewer_user.id
             leave.reviewed_at = timezone.now()
             if reason:
-                leave.coverage_notes = f"{leave.coverage_notes or ''}\nRejected reason: {reason}".strip()
-            leave.save(update_fields=["status", "reviewed_by_user_id", "reviewed_at", "coverage_notes", "updated_at"])
+                leave.coverage_notes = (
+                    f"{leave.coverage_notes or ''}\nRejected reason: {reason}".strip()
+                )
+            leave.save(
+                update_fields=[
+                    "status",
+                    "coverage_status",
+                    "reviewed_by_user_id",
+                    "reviewed_at",
+                    "coverage_notes",
+                    "updated_at",
+                ]
+            )
 
             # Recalculate balances
             year = int(leave.start_date[:4])
@@ -441,12 +625,26 @@ class LeaveApprovalService:
         if not leave:
             raise NotFoundError("Leave request not found.")
 
+        # Hierarchy authorization check
+        if not LeaveApprovalService.is_authorized_approver(reviewer_user, leave):
+            raise BadRequest("You are not authorized to return this leave request.")
+
         with transaction.atomic():
             leave.status = "returned"
             leave.reviewed_by_user_id = reviewer_user.id
             leave.reviewed_at = timezone.now()
-            leave.coverage_notes = f"{leave.coverage_notes or ''}\nReturned reason: {reason}".strip()
-            leave.save(update_fields=["status", "reviewed_by_user_id", "reviewed_at", "coverage_notes", "updated_at"])
+            leave.coverage_notes = (
+                f"{leave.coverage_notes or ''}\nReturned reason: {reason}".strip()
+            )
+            leave.save(
+                update_fields=[
+                    "status",
+                    "reviewed_by_user_id",
+                    "reviewed_at",
+                    "coverage_notes",
+                    "updated_at",
+                ]
+            )
 
             # Recalculate balances
             year = int(leave.start_date[:4])
@@ -455,13 +653,42 @@ class LeaveApprovalService:
         return leave
 
     @staticmethod
+    def accept_coverage(leave_id: str, covering_user: User) -> Leave:
+        leave = Leave.objects.filter(id=leave_id).first()
+        if not leave:
+            raise NotFoundError("Leave request not found.")
+        
+        covering_profile = getattr(covering_user, "staff_profile", None)
+        if not leave.covering_staff or not covering_profile or leave.covering_staff.id != covering_profile.id:
+            raise BadRequest("You are not the designated covering employee for this leave request.")
+
+        leave.coverage_status = "Accepted"
+        leave.save(update_fields=["coverage_status", "updated_at"])
+        return leave
+
+    @staticmethod
+    def decline_coverage(leave_id: str, covering_user: User) -> Leave:
+        leave = Leave.objects.filter(id=leave_id).first()
+        if not leave:
+            raise NotFoundError("Leave request not found.")
+        
+        covering_profile = getattr(covering_user, "staff_profile", None)
+        if not leave.covering_staff or not covering_profile or leave.covering_staff.id != covering_profile.id:
+            raise BadRequest("You are not the designated covering employee for this leave request.")
+
+        leave.coverage_status = "Declined"
+        leave.save(update_fields=["coverage_status", "updated_at"])
+        return leave
+
+    @staticmethod
     def notify_coverage(leave: Leave):
         """Create in-app notifications/threads for the team when leave is approved."""
         try:
-            from apps.messaging.models import MessageThread
             # Create a team message thread introducing the coverage
             staff_name = leave.staff.user.name
-            cover_name = leave.covering_staff.user.name if leave.covering_staff else "None"
+            cover_name = (
+                leave.covering_staff.user.name if leave.covering_staff else "None"
+            )
             type_label = leave.type.replace("_", " ").title()
 
             msg_content = (
@@ -479,7 +706,9 @@ class LeaveImpactAnalysisService:
     """Previews affected activities, planning, and fund requests during a leave request period."""
 
     @staticmethod
-    def analyze_impact(staff: StaffProfile, start_date_str: str, end_date_str: str) -> dict:
+    def analyze_impact(
+        staff: StaffProfile, start_date_str: str, end_date_str: str
+    ) -> dict:
         from apps.activities.models import Activity
         from apps.planning.models import MonthlyPlanActivity
         from apps.fund_requests.models import FundRequest, FundRequestStatus
@@ -488,13 +717,12 @@ class LeaveImpactAnalysisService:
         activities = Activity.objects.filter(
             responsible_staff_id=staff.user.id,
             scheduled_date__date__range=(start_date_str, end_date_str),
-            deleted_at__isnull=True
+            deleted_at__isnull=True,
         ).select_related("school", "cluster")
 
         # 2. Planning items owned by the user
         planning_items = MonthlyPlanActivity.objects.filter(
-            assignee_id=staff.id,
-            scheduled_date__range=(start_date_str, end_date_str)
+            assignee_id=staff.id, scheduled_date__range=(start_date_str, end_date_str)
         )
 
         # 3. My Plan items due during leave (incomplete activities)
@@ -508,7 +736,7 @@ class LeaveImpactAnalysisService:
             scheduled_date__date__range=(start_date_str, end_date_str),
             delivery_type="partner",
             status="planned",
-            deleted_at__isnull=True
+            deleted_at__isnull=True,
         )
 
         # 5. IA verification items waiting (if role is IA)
@@ -517,7 +745,7 @@ class LeaveImpactAnalysisService:
             ia_verification_count = Activity.objects.filter(
                 ia_verification_status="pending",
                 status="completed",
-                deleted_at__isnull=True
+                deleted_at__isnull=True,
             ).count()
 
         # 6. Finance items waiting (if role is Accountant)
@@ -530,7 +758,10 @@ class LeaveImpactAnalysisService:
         # 7. Fund requests affected (CCEO / PL)
         fund_requests = FundRequest.objects.filter(
             submitted_by_user_id=staff.user.id,
-            status__in=[FundRequestStatus.SUBMITTED.value, FundRequestStatus.SUBMITTED_TO_PL.value]
+            status__in=[
+                FundRequestStatus.SUBMITTED.value,
+                FundRequestStatus.SUBMITTED_TO_PL.value,
+            ],
         )
 
         # Count metrics
@@ -540,12 +771,19 @@ class LeaveImpactAnalysisService:
         partner_count = partner_assignments.count()
         fund_count = fund_requests.count()
 
-        total_impact = activity_count + planning_count + partner_count + fund_count + ia_verification_count + finance_items_count
+        total_impact = (
+            activity_count
+            + planning_count
+            + partner_count
+            + fund_count
+            + ia_verification_count
+            + finance_items_count
+        )
 
         # Recommendations logic
         recommendation = "Approve with coverage"
         details = "All affected tasks will be temporarily scoped to the cover person."
-        
+
         if due_count > 5:
             recommendation = "Ask user to reschedule activities first"
             details = f"User has {due_count} activities scheduled. Rescheduling is recommended to avoid field overload for the covering person."
@@ -568,12 +806,16 @@ class LeaveImpactAnalysisService:
                 {
                     "id": a.id,
                     "type": a.activity_type.replace("_", " ").title(),
-                    "date": a.scheduled_date.date().isoformat() if a.scheduled_date else "Not set",
-                    "target": a.school.name if a.school else (a.cluster.name if a.cluster else "Unknown"),
+                    "date": a.scheduled_date.date().isoformat()
+                    if a.scheduled_date
+                    else "Not set",
+                    "target": a.school.name
+                    if a.school
+                    else (a.cluster.name if a.cluster else "Unknown"),
                     "status": a.status,
                 }
                 for a in activities[:5]
-            ]
+            ],
         }
 
 
@@ -581,8 +823,17 @@ class CalendarBlockService:
     @staticmethod
     def create_block(data: dict, creator_id: str) -> CalendarBlock:
         from datetime import date
-        s = date.fromisoformat(data["start_date"]) if isinstance(data["start_date"], str) else data["start_date"]
-        e = date.fromisoformat(data["end_date"]) if isinstance(data["end_date"], str) else data["end_date"]
+
+        s = (
+            date.fromisoformat(data["start_date"])
+            if isinstance(data["start_date"], str)
+            else data["start_date"]
+        )
+        e = (
+            date.fromisoformat(data["end_date"])
+            if isinstance(data["end_date"], str)
+            else data["end_date"]
+        )
         return CalendarBlock.objects.create(
             title=data["title"],
             description=data.get("description"),
@@ -595,7 +846,7 @@ class CalendarBlockService:
             applies_to_all_roles=data.get("applies_to_all_roles", True),
             applies_to_roles=data.get("applies_to_roles"),
             created_by=creator_id,
-            is_active=True
+            is_active=True,
         )
 
 
@@ -603,17 +854,36 @@ class PublicHolidayService:
     @staticmethod
     def get_holidays_in_range(start_date, end_date, country="Uganda"):
         from datetime import date
-        s = start_date.date() if isinstance(start_date, datetime) else (date.fromisoformat(start_date) if isinstance(start_date, str) else start_date)
-        e = end_date.date() if isinstance(end_date, datetime) else (date.fromisoformat(end_date) if isinstance(end_date, str) else end_date)
-        
-        p_dates = set(PublicHoliday.objects.filter(date__range=(s, e)).values_list("date", flat=True))
-        
+
+        s = (
+            start_date.date()
+            if isinstance(start_date, datetime)
+            else (
+                date.fromisoformat(start_date)
+                if isinstance(start_date, str)
+                else start_date
+            )
+        )
+        e = (
+            end_date.date()
+            if isinstance(end_date, datetime)
+            else (
+                date.fromisoformat(end_date) if isinstance(end_date, str) else end_date
+            )
+        )
+
+        p_dates = set(
+            PublicHoliday.objects.filter(date__range=(s, e)).values_list(
+                "date", flat=True
+            )
+        )
+
         b_qs = CalendarBlock.objects.filter(
             block_type="PUBLIC_HOLIDAY",
             is_active=True,
             country=country,
             start_date__lte=e,
-            end_date__gte=s
+            end_date__gte=s,
         )
         for b in b_qs:
             curr = max(b.start_date, s)
@@ -621,7 +891,7 @@ class PublicHolidayService:
             while curr <= stop:
                 p_dates.add(curr)
                 curr += timedelta(days=1)
-                
+
         return sorted(list(p_dates))
 
 
@@ -629,16 +899,31 @@ class BlackoutDateService:
     @staticmethod
     def get_blackout_dates_in_range(start_date, end_date, country="Uganda"):
         from datetime import date
-        s = start_date.date() if isinstance(start_date, datetime) else (date.fromisoformat(start_date) if isinstance(start_date, str) else start_date)
-        e = end_date.date() if isinstance(end_date, datetime) else (date.fromisoformat(end_date) if isinstance(end_date, str) else end_date)
-        
+
+        s = (
+            start_date.date()
+            if isinstance(start_date, datetime)
+            else (
+                date.fromisoformat(start_date)
+                if isinstance(start_date, str)
+                else start_date
+            )
+        )
+        e = (
+            end_date.date()
+            if isinstance(end_date, datetime)
+            else (
+                date.fromisoformat(end_date) if isinstance(end_date, str) else end_date
+            )
+        )
+
         b_dates = set()
         b_qs = CalendarBlock.objects.filter(
             block_type="BLACKOUT_DATE",
             is_active=True,
             country=country,
             start_date__lte=e,
-            end_date__gte=s
+            end_date__gte=s,
         )
         for b in b_qs:
             curr = max(b.start_date, s)
@@ -646,115 +931,138 @@ class BlackoutDateService:
             while curr <= stop:
                 b_dates.add(curr)
                 curr += timedelta(days=1)
-                
+
         return sorted(list(b_dates))
 
 
 class LeaveConflictDetectionService:
     @staticmethod
-    def detect(staff_profile: StaffProfile, start_date_str: str, end_date_str: str, cover_profile: StaffProfile | None = None) -> list[dict]:
+    def detect(
+        staff_profile: StaffProfile,
+        start_date_str: str,
+        end_date_str: str,
+        cover_profile: StaffProfile | None = None,
+    ) -> list[dict]:
         from apps.activities.models import Activity
         from datetime import date
+
         s = date.fromisoformat(start_date_str)
         e = date.fromisoformat(end_date_str)
         conflicts = []
 
         activities = Activity.objects.filter(
-            responsible_staff_id=staff_profile.user.id,
-            scheduled_date__range=(s, e)
+            responsible_staff_id=staff_profile.user.id, scheduled_date__range=(s, e)
         ).exclude(status__in=["cancelled", "completed"])
-        
+
         for act in activities:
-            conflicts.append({
-                "conflict_type": "activity_during_leave",
-                "severity": "Critical",
-                "affected_activity": act,
-                "affected_user": staff_profile.user,
-                "date_range": act.scheduled_date.date().isoformat() if act.scheduled_date else "",
-                "recommended_action": "Reschedule or Reassign this activity.",
-                "can_auto_reschedule": True,
-                "can_reassign": True
-            })
+            conflicts.append(
+                {
+                    "conflict_type": "activity_during_leave",
+                    "severity": "Critical",
+                    "affected_activity": act,
+                    "affected_user": staff_profile.user,
+                    "date_range": act.scheduled_date.date().isoformat()
+                    if act.scheduled_date
+                    else "",
+                    "recommended_action": "Reschedule or Reassign this activity.",
+                    "can_auto_reschedule": True,
+                    "can_reassign": True,
+                }
+            )
 
         holidays = PublicHolidayService.get_holidays_in_range(s, e)
         for h in holidays:
-            conflicts.append({
-                "conflict_type": "public_holiday",
-                "severity": "Warning",
-                "affected_activity": None,
-                "affected_user": staff_profile.user,
-                "date_range": h.isoformat(),
-                "recommended_action": "Leave request overlaps with a public holiday.",
-                "can_auto_reschedule": False,
-                "can_reassign": False
-            })
+            conflicts.append(
+                {
+                    "conflict_type": "public_holiday",
+                    "severity": "Warning",
+                    "affected_activity": None,
+                    "affected_user": staff_profile.user,
+                    "date_range": h.isoformat(),
+                    "recommended_action": "Leave request overlaps with a public holiday.",
+                    "can_auto_reschedule": False,
+                    "can_reassign": False,
+                }
+            )
 
         blackouts = BlackoutDateService.get_blackout_dates_in_range(s, e)
         for b in blackouts:
-            conflicts.append({
-                "conflict_type": "blackout_date",
-                "severity": "Critical",
-                "affected_activity": None,
-                "affected_user": staff_profile.user,
-                "date_range": b.isoformat(),
-                "recommended_action": "Requested period includes a blocked organizational date.",
-                "can_auto_reschedule": False,
-                "can_reassign": False
-            })
+            conflicts.append(
+                {
+                    "conflict_type": "blackout_date",
+                    "severity": "Critical",
+                    "affected_activity": None,
+                    "affected_user": staff_profile.user,
+                    "date_range": b.isoformat(),
+                    "recommended_action": "Requested period includes a blocked organizational date.",
+                    "can_auto_reschedule": False,
+                    "can_reassign": False,
+                }
+            )
 
         conferences = CalendarBlock.objects.filter(
             block_type="STAFF_CONFERENCE",
             is_active=True,
             start_date__lte=e,
-            end_date__gte=s
+            end_date__gte=s,
         )
         for conf in conferences:
-            conflicts.append({
-                "conflict_type": "staff_conference",
-                "severity": "Warning",
-                "affected_activity": None,
-                "affected_user": staff_profile.user,
-                "date_range": f"{conf.start_date} to {conf.end_date}",
-                "recommended_action": f"Overlaps with Staff Conference Week: {conf.title}",
-                "can_auto_reschedule": False,
-                "can_reassign": False
-            })
+            conflicts.append(
+                {
+                    "conflict_type": "staff_conference",
+                    "severity": "Warning",
+                    "affected_activity": None,
+                    "affected_user": staff_profile.user,
+                    "date_range": f"{conf.start_date} to {conf.end_date}",
+                    "recommended_action": f"Overlaps with Staff Conference Week: {conf.title}",
+                    "can_auto_reschedule": False,
+                    "can_reassign": False,
+                }
+            )
 
         if cover_profile:
             cover_leaves = Leave.objects.filter(
                 staff=cover_profile,
                 status="approved",
                 start_date__lte=end_date_str,
-                end_date__gte=start_date_str
+                end_date__gte=start_date_str,
             )
             for cl in cover_leaves:
-                conflicts.append({
-                    "conflict_type": "cover_unavailable",
-                    "severity": "Critical",
-                    "affected_activity": None,
-                    "affected_user": cover_profile.user,
-                    "date_range": f"{cl.start_date} to {cl.end_date}",
-                    "recommended_action": "Covering person is also on approved leave during this range.",
-                    "can_auto_reschedule": False,
-                    "can_reassign": False
-                })
+                conflicts.append(
+                    {
+                        "conflict_type": "cover_unavailable",
+                        "severity": "Critical",
+                        "affected_activity": None,
+                        "affected_user": cover_profile.user,
+                        "date_range": f"{cl.start_date} to {cl.end_date}",
+                        "recommended_action": "Covering person is also on approved leave during this range.",
+                        "can_auto_reschedule": False,
+                        "can_reassign": False,
+                    }
+                )
 
-            cover_acts_count = Activity.objects.filter(
-                responsible_staff_id=cover_profile.user.id,
-                scheduled_date__range=(s, e)
-            ).exclude(status__in=["cancelled", "completed"]).count()
-            
+            cover_acts_count = (
+                Activity.objects.filter(
+                    responsible_staff_id=cover_profile.user.id,
+                    scheduled_date__range=(s, e),
+                )
+                .exclude(status__in=["cancelled", "completed"])
+                .count()
+            )
+
             if cover_acts_count > 5:
-                conflicts.append({
-                    "conflict_type": "high_workload_cover",
-                    "severity": "Warning",
-                    "affected_activity": None,
-                    "affected_user": cover_profile.user,
-                    "date_range": f"{start_date_str} to {end_date_str}",
-                    "recommended_action": f"Covering person has high workload ({cover_acts_count} activities) during this period.",
-                    "can_auto_reschedule": False,
-                    "can_reassign": False
-                })
+                conflicts.append(
+                    {
+                        "conflict_type": "high_workload_cover",
+                        "severity": "Warning",
+                        "affected_activity": None,
+                        "affected_user": cover_profile.user,
+                        "date_range": f"{start_date_str} to {end_date_str}",
+                        "recommended_action": f"Covering person has high workload ({cover_acts_count} activities) during this period.",
+                        "can_auto_reschedule": False,
+                        "can_reassign": False,
+                    }
+                )
 
         return conflicts
 
@@ -763,6 +1071,7 @@ class PlanningAvailabilityService:
     @staticmethod
     def check(user: User, check_date) -> dict:
         from datetime import date, datetime
+
         if isinstance(check_date, datetime):
             d = check_date.date()
         elif isinstance(check_date, date):
@@ -771,33 +1080,45 @@ class PlanningAvailabilityService:
             try:
                 d = date.fromisoformat(str(check_date)[:10])
             except ValueError:
-                return {"status": "available", "reasons": [], "blockers": [], "warnings": []}
+                return {
+                    "status": "available",
+                    "reasons": [],
+                    "blockers": [],
+                    "warnings": [],
+                }
 
         blockers = []
         warnings = []
-        
+
         if d.weekday() == 6:
             blockers.append("Scheduling on Sundays is blocked.")
 
         from apps.accounts.models import StaffProfile, Leave
+
         sp = StaffProfile.objects.filter(user=user).first()
         if sp:
             d_str = d.isoformat()
-            if Leave.objects.filter(staff=sp, status="approved", start_date__lte=d_str, end_date__gte=d_str).exists():
+            if Leave.objects.filter(
+                staff=sp, status="approved", start_date__lte=d_str, end_date__gte=d_str
+            ).exists():
                 blockers.append(f"{user.name} is on approved leave on this date.")
-            elif Leave.objects.filter(staff=sp, status="pending", start_date__lte=d_str, end_date__gte=d_str).exists():
-                warnings.append(f"{user.name} has a pending leave request on this date.")
+            elif Leave.objects.filter(
+                staff=sp, status="pending", start_date__lte=d_str, end_date__gte=d_str
+            ).exists():
+                warnings.append(
+                    f"{user.name} has a pending leave request on this date."
+                )
 
         h_blocks = CalendarBlock.objects.filter(
-            is_active=True,
-            start_date__lte=d,
-            end_date__gte=d
+            is_active=True, start_date__lte=d, end_date__gte=d
         )
         for b in h_blocks:
             if b.block_type == "PUBLIC_HOLIDAY":
                 blockers.append(f"This date is a public holiday: {b.title}.")
             elif b.block_type == "BLACKOUT_DATE":
-                blockers.append(f"This date is an organizational blackout date: {b.title}.")
+                blockers.append(
+                    f"This date is an organizational blackout date: {b.title}."
+                )
             elif b.block_type == "STAFF_CONFERENCE":
                 role_restricted = False
                 if b.applies_to_roles and user.active_role not in b.applies_to_roles:
@@ -805,26 +1126,41 @@ class PlanningAvailabilityService:
                 if not b.applies_to_all_roles and not role_restricted:
                     pass
                 else:
-                    blockers.append(f"Staff Conference Week: {b.title} blocks scheduling.")
+                    blockers.append(
+                        f"Staff Conference Week: {b.title} blocks scheduling."
+                    )
             elif b.block_type in ["REGIONAL_EVENT", "ORG_EVENT", "CUSTOM_BLOCK"]:
                 geo_blocked = True
                 if b.region:
                     from apps.accounts.models import StaffGeographyAssignment
-                    if sp and not StaffGeographyAssignment.objects.filter(staff=sp, region=b.region).exists():
+
+                    if (
+                        sp
+                        and not StaffGeographyAssignment.objects.filter(
+                            staff=sp, region=b.region
+                        ).exists()
+                    ):
                         geo_blocked = False
                 if geo_blocked:
                     blockers.append(f"Blocked by calendar event: {b.title}.")
 
         from apps.activities.models import Activity
+
         start_of_week = d - timedelta(days=d.weekday())
         end_of_week = start_of_week + timedelta(days=6)
-        week_count = Activity.objects.filter(
-            responsible_staff_id=user.id,
-            scheduled_date__range=(start_of_week, end_of_week)
-        ).exclude(status__in=["cancelled", "completed"]).count()
-        
+        week_count = (
+            Activity.objects.filter(
+                responsible_staff_id=user.id,
+                scheduled_date__range=(start_of_week, end_of_week),
+            )
+            .exclude(status__in=["cancelled", "completed"])
+            .count()
+        )
+
         if week_count >= 5:
-            warnings.append(f"High workload warning: {user.name} has {week_count} activities scheduled this week.")
+            warnings.append(
+                f"High workload warning: {user.name} has {week_count} activities scheduled this week."
+            )
 
         status = "available"
         if blockers:
@@ -836,47 +1172,60 @@ class PlanningAvailabilityService:
             "status": status,
             "reasons": blockers + warnings,
             "blockers": blockers,
-            "warnings": warnings
+            "warnings": warnings,
         }
 
 
 class LeaveImpactPreviewService:
     @staticmethod
-    def preview_impact(staff_profile: StaffProfile, start_date_str: str, end_date_str: str) -> dict:
+    def preview_impact(
+        staff_profile: StaffProfile, start_date_str: str, end_date_str: str
+    ) -> dict:
         from datetime import date
+
         s = date.fromisoformat(start_date_str)
         e = date.fromisoformat(end_date_str)
-        
+
         calendar_days = (e - s).days + 1
-        working_days = WorkingDayCalculator.calculate_working_days(start_date_str, end_date_str)
-        
+        working_days = WorkingDayCalculator.calculate_working_days(
+            start_date_str, end_date_str
+        )
+
         weekends = 0
         curr = s
         while curr <= e:
             if curr.weekday() >= 5:
                 weekends += 1
             curr += timedelta(days=1)
-            
-        holidays_list = PublicHolidayService.get_holidays_in_range(start_date_str, end_date_str)
+
+        holidays_list = PublicHolidayService.get_holidays_in_range(
+            start_date_str, end_date_str
+        )
         holidays_count = len(holidays_list)
-        
-        blackouts_list = BlackoutDateService.get_blackout_dates_in_range(start_date_str, end_date_str)
+
+        blackouts_list = BlackoutDateService.get_blackout_dates_in_range(
+            start_date_str, end_date_str
+        )
         blackouts_count = len(blackouts_list)
-        
+
         conferences = CalendarBlock.objects.filter(
             block_type="STAFF_CONFERENCE",
             is_active=True,
             start_date__lte=e,
-            end_date__gte=s
+            end_date__gte=s,
         )
         conf_overlap = conferences.exists()
-        
+
         from apps.activities.models import Activity
-        affected_activities_count = Activity.objects.filter(
-            responsible_staff_id=staff_profile.user.id,
-            scheduled_date__range=(s, e)
-        ).exclude(status__in=["cancelled", "completed"]).count()
-        
+
+        affected_activities_count = (
+            Activity.objects.filter(
+                responsible_staff_id=staff_profile.user.id, scheduled_date__range=(s, e)
+            )
+            .exclude(status__in=["cancelled", "completed"])
+            .count()
+        )
+
         return {
             "calendar_days": calendar_days,
             "working_days_charged": working_days,
@@ -884,17 +1233,19 @@ class LeaveImpactPreviewService:
             "public_holidays_skipped": holidays_count,
             "blackout_dates_skipped": blackouts_count,
             "staff_conference_overlap": conf_overlap,
-            "affected_activities_count": affected_activities_count
+            "affected_activities_count": affected_activities_count,
         }
 
 
 class TeamAvailabilityService:
     @staticmethod
-    def get_4week_heatmap(supervisor_profile: StaffProfile | None = None, country_scope: bool = False) -> list[dict]:
+    def get_4week_heatmap(
+        supervisor_profile: StaffProfile | None = None, country_scope: bool = False
+    ) -> list[dict]:
         from datetime import date, timedelta
         from apps.accounts.models import StaffProfile, Leave
         from apps.activities.models import Activity
-        
+
         today = date.today()
         weeks = []
         for i in range(4):
@@ -902,9 +1253,12 @@ class TeamAvailabilityService:
             end = start + timedelta(days=6)
             weeks.append((start, end))
 
-        staff_qs = StaffProfile.objects.filter(deleted_at__isnull=True).select_related("user")
+        staff_qs = StaffProfile.objects.filter(deleted_at__isnull=True).select_related(
+            "user"
+        )
         if supervisor_profile and not country_scope:
             from apps.accounts.models import StaffSupervisorAssignment
+
             supervisee_ids = StaffSupervisorAssignment.objects.filter(
                 supervisor=supervisor_profile
             ).values_list("supervisee_id", flat=True)
@@ -916,35 +1270,39 @@ class TeamAvailabilityService:
                 "staff_name": sp.user.name,
                 "staff_id": sp.id,
                 "role": sp.user.active_role,
-                "weeks": []
+                "weeks": [],
             }
             for start, end in weeks:
                 leaves = Leave.objects.filter(
                     staff=sp,
                     status="approved",
                     start_date__lte=end.isoformat(),
-                    end_date__gte=start.isoformat()
+                    end_date__gte=start.isoformat(),
                 )
-                
+
                 confs = CalendarBlock.objects.filter(
                     block_type="STAFF_CONFERENCE",
                     is_active=True,
                     start_date__lte=end,
-                    end_date__gte=start
+                    end_date__gte=start,
                 )
-                
+
                 blackouts = CalendarBlock.objects.filter(
                     block_type="BLACKOUT_DATE",
                     is_active=True,
                     start_date__lte=end,
-                    end_date__gte=start
+                    end_date__gte=start,
                 )
-                
-                act_count = Activity.objects.filter(
-                    responsible_staff_id=sp.user.id,
-                    scheduled_date__range=(start, end)
-                ).exclude(status__in=["cancelled", "completed"]).count()
-                
+
+                act_count = (
+                    Activity.objects.filter(
+                        responsible_staff_id=sp.user.id,
+                        scheduled_date__range=(start, end),
+                    )
+                    .exclude(status__in=["cancelled", "completed"])
+                    .count()
+                )
+
                 status = "Available"
                 if leaves.exists():
                     status = "On Leave"
@@ -954,28 +1312,74 @@ class TeamAvailabilityService:
                     status = "Blocked"
                 elif act_count >= 5:
                     status = "High Workload"
-                    
-                row["weeks"].append({
-                    "start": start.isoformat(),
-                    "end": end.isoformat(),
-                    "status": status,
-                    "act_count": act_count
-                })
+
+                row["weeks"].append(
+                    {
+                        "start": start.isoformat(),
+                        "end": end.isoformat(),
+                        "status": status,
+                        "act_count": act_count,
+                    }
+                )
             matrix.append(row)
-            
+
         return matrix
 
 
 class LeaveNotificationService:
     @staticmethod
+    def notify_leave_requested(leave: Leave) -> None:
+        """Notify the supervisor and HR that a new leave request needs approval."""
+        from apps.accounts.models import StaffSupervisorAssignment, User
+        from apps.notifications.services import WorkflowNotificationService
+
+        staff = leave.staff
+        supervisor_asgn = StaffSupervisorAssignment.objects.filter(supervisee=staff).first()
+        supervisor = supervisor_asgn.supervisor if supervisor_asgn else None
+
+        body = (
+            f"{staff.user.name if staff.user else 'Staff'} has requested {leave.type.replace('_', ' ')} "
+            f"from {leave.start_date} to {leave.end_date} ({leave.days_charged} working days). "
+            f"Please review and approve or reject this request."
+        )
+
+        recipients = []
+        if supervisor and supervisor.user_id:
+            recipients.append(supervisor.user_id)
+        # Always notify HR so they can track
+        for hr in User.objects.filter(active_role="HumanResources", deleted_at__isnull=True):
+            recipients.append(hr.id)
+        # CD can also see if the staff member is a PL
+        if staff.user and staff.user.active_role == "Program Lead":
+            for cd in User.objects.filter(active_role="CountryDirector", deleted_at__isnull=True):
+                recipients.append(cd.id)
+
+        if not recipients:
+            return
+
+        WorkflowNotificationService.trigger(
+            event_type="leave_requested",
+            category="leave",
+            priority="high",
+            title="Leave Request Needs Approval",
+            body=body,
+            context_type="Leave",
+            context_id=leave.id,
+            recipients=recipients,
+        )
+
+    @staticmethod
     def notify_leave_approved(leave: Leave) -> None:
         from apps.notifications.models import Notification
-        
+
         original_staff = leave.staff
         cover_staff = leave.covering_staff
-        
+
         from apps.accounts.models import StaffSupervisorAssignment
-        supervisor_assignment = StaffSupervisorAssignment.objects.filter(supervisee=original_staff).first()
+
+        supervisor_assignment = StaffSupervisorAssignment.objects.filter(
+            supervisee=original_staff
+        ).first()
         supervisor = supervisor_assignment.supervisor if supervisor_assignment else None
 
         body = (
@@ -988,50 +1392,131 @@ class LeaveNotificationService:
             recipients.append(cover_staff.user.id)
         if supervisor:
             recipients.append(supervisor.user.id)
-            
+
         from apps.accounts.models import User
+
         hr_users = User.objects.filter(active_role="HumanResources")
         for hr in hr_users:
             recipients.append(hr.id)
 
-        recipients = list(set(recipients))
+        from apps.notifications.services import WorkflowNotificationService
+        WorkflowNotificationService.trigger(
+            event_type="leave_approved",
+            category="leave",
+            priority="normal",
+            title="Leave Coverage Activated",
+            body=body,
+            context_type="Leave",
+            context_id=leave.id,
+            recipients=recipients
+        )
 
-        for rid in recipients:
-            Notification.objects.create(
-                recipient_id=rid,
-                title="Leave Coverage Activated",
-                body=body,
-                context_type="Leave",
-                context_id=leave.id,
-                target_route="/personal-time-off/",
-                source_event_type="leave_approved",
-                source_event_id=leave.id
-            )
+    @staticmethod
+    def notify_leave_rejected(leave: Leave, reviewer_name: str, reason: str = "") -> None:
+        """Notify the requesting staff member that their leave was rejected."""
+        from apps.notifications.services import WorkflowNotificationService
+
+        staff = leave.staff
+        if not staff or not staff.user_id:
+            return
+
+        body = (
+            f"Your {leave.type.replace('_', ' ')} request ({leave.start_date} to {leave.end_date}) "
+            f"has been rejected by {reviewer_name}."
+        )
+        if reason:
+            body += f" Reason: {reason}"
+
+        WorkflowNotificationService.trigger(
+            event_type="leave_rejected",
+            category="leave",
+            priority="high",
+            title="Leave Request Rejected",
+            body=body,
+            context_type="Leave",
+            context_id=leave.id,
+            recipients=[staff.user_id],
+        )
+
+    @staticmethod
+    def notify_leave_returned(leave: Leave, reviewer_name: str, reason: str = "") -> None:
+        """Notify the requesting staff member that their leave was returned for correction."""
+        from apps.notifications.services import WorkflowNotificationService
+
+        staff = leave.staff
+        if not staff or not staff.user_id:
+            return
+
+        body = (
+            f"Your {leave.type.replace('_', ' ')} request ({leave.start_date} to {leave.end_date}) "
+            f"has been returned by {reviewer_name} for review. Please update and resubmit."
+        )
+        if reason:
+            body += f" Note: {reason}"
+
+        WorkflowNotificationService.trigger(
+            event_type="leave_returned",
+            category="leave",
+            priority="normal",
+            title="Leave Request Returned for Review",
+            body=body,
+            context_type="Leave",
+            context_id=leave.id,
+            recipients=[staff.user_id],
+        )
 
     @staticmethod
     def notify_conflict_detected(user_id: str, message: str, leave_id: str) -> None:
-        from apps.notifications.models import Notification
-        Notification.objects.create(
-            recipient_id=user_id,
+        from apps.notifications.services import WorkflowNotificationService
+
+        WorkflowNotificationService.trigger(
+            event_type="conflict_detected",
+            category="leave",
+            priority="normal",
             title="Schedule Conflict Detected",
             body=message,
             context_type="Leave",
             context_id=leave_id,
-            target_route="/personal-time-off/",
-            source_event_type="conflict_detected",
-            source_event_id=leave_id
+            recipients=[user_id]
         )
 
     @staticmethod
     def notify_holiday_conflict(user_id: str, message: str) -> None:
-        from apps.notifications.models import Notification
-        Notification.objects.create(
-            recipient_id=user_id,
+        from apps.notifications.services import WorkflowNotificationService
+
+        WorkflowNotificationService.trigger(
+            event_type="holiday_blocked",
+            category="blackout",
+            priority="normal",
             title="Holiday Blocked Scheduling",
             body=message,
             context_type="CalendarBlock",
-            target_route="/planning",
-            source_event_type="holiday_blocked"
+            recipients=[user_id]
+        )
+
+    @staticmethod
+    def notify_leave_coverage_assigned(leave: Leave) -> None:
+        """Notify the coverage employee that they have been proposed to cover a leave request."""
+        from apps.notifications.services import WorkflowNotificationService
+
+        cover = leave.covering_staff
+        if not cover or not cover.user_id:
+            return
+
+        body = (
+            f"You have been proposed by {leave.staff.user.name} to cover their role during their leave "
+            f"from {leave.start_date} to {leave.end_date}. Please accept or decline the request."
+        )
+
+        WorkflowNotificationService.trigger(
+            event_type="leave_coverage_proposed",
+            category="leave",
+            priority="normal",
+            title="Leave Coverage Assignment Proposed",
+            body=body,
+            context_type="Leave",
+            context_id=leave.id,
+            recipients=[cover.user_id],
         )
 
 
@@ -1040,16 +1525,16 @@ class LeaveBudgetImpactService:
     def handle_reschedule(activity, old_date, new_date, reason) -> None:
         if not old_date or not new_date or old_date == new_date:
             return
-            
+
         from apps.activities.models import ActivityScheduleCostLine
         from apps.core.fy import get_operational_fy, get_quarter_for_date
-        
+
         new_fy = get_operational_fy(new_date)
         new_quarter = get_quarter_for_date(new_date)
-        
+
         new_week = new_date.isocalendar()[1]
         old_week = old_date.isocalendar()[1]
-        
+
         cost_lines = ActivityScheduleCostLine.objects.filter(activity=activity)
         for line in cost_lines:
             line.planned_date = new_date
@@ -1058,16 +1543,16 @@ class LeaveBudgetImpactService:
             line.month = new_date.month
             line.quarter = new_quarter
             line.fiscal_year = new_fy
-            
+
             trail = f" [Audit: Rescheduled due to {reason}. Old period: Week {old_week}, New period: Week {new_week}]"
             if line.description:
                 if "Rescheduled due to" not in line.description:
                     line.description = f"{line.description}{trail}"[:255]
             else:
                 line.description = trail.strip()[:255]
-                
+
             line.save()
-            
+
             wfr_line = line.weekly_request_lines.first()
             if wfr_line:
                 wfr_line.week_number = new_week

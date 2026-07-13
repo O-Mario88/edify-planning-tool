@@ -1,12 +1,12 @@
 {% load frontend_filters %}
 
 {% if error %}
-<div class="bg-rose-50 border border-rose-200 rounded-2xl p-5 text-[14px] font-semibold text-rose-700 space-y-2">
+<div class="bg-rose-50 border border-rose-200 rounded-lg p-5 text-[14px] font-semibold text-rose-700 space-y-2">
 <div class="font-semibold text-[15px]">Upload Failed</div>
 <p>{{ error }}</p>
 </div>
 {% else %}
-<div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm space-y-6">
+<div class="bg-white rounded-lg border border-[var(--edify-border)] p-6 shadow-sm space-y-6">
 <div class="flex items-center justify-between border-b border-slate-100 pb-4">
 <div>
 <h3 class="text-[18px] font-semibold text-slate-800 tracking-tight">Upload Execution Report</h3>

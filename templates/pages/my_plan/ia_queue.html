@@ -4,18 +4,18 @@
 {% block title %}IA Verification Queue - Edify Command Center{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6">
+<div class="px-4 sm:px-6 py-5 space-y-4" style="max-width:1500px;margin:0 auto;">
 <!-- Header -->
 <div>
-<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight">IA Verification Queue</h1>
-<p class="text-[12px] text-[var(--text-secondary)] mt-0.5 font-semibold">Verify activity completions, confirm Salesforce records integrity, and close the workflow loop.</p>
+<h1 class="text-[21px] font-extrabold tracking-tight">IA Verification Queue</h1>
+<p class="text-[12px] text-[var(--edify-text-muted)] mt-0.5 font-semibold">Verify activity completions, confirm Salesforce records integrity, and close the workflow loop.</p>
 </div>
 
 <!-- Queue Items list -->
 <div class="grid gap-6">
 {% if queue %}
 {% for act in queue %}
-<div class="bg-white rounded-2xl border border-[var(--border-card)] p-6 shadow-sm flex flex-col md:flex-row md:items-start justify-between gap-6">
+<div class="bg-white rounded-lg border border-[var(--edify-border)] p-6 shadow-sm flex flex-col md:flex-row md:items-start justify-between gap-6">
 <div class="space-y-3 min-w-0 flex-1">
 <div>
 <div class="flex items-center gap-2">
@@ -25,23 +25,23 @@ Salesforce ID: {{ act.salesforceActivityId }}
 </span>
 </div>
 <p class="text-[12px] text-slate-500 font-semibold mt-0.5">
-School: <a href="/schools/{{ act.schoolId }}" class="font-bold hover:underline text-[var(--color-edify-primary)]">{{ act.schoolName }}</a>
+School: <a href="/schools/{{ act.schoolId }}" class="font-bold hover:underline text-[var(--edify-accent)]">{{ act.schoolName }}</a>
 </p>
 </div>
 
 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 border-t border-slate-100/50 pt-2 text-[12px] text-slate-500 font-semibold">
 <div>
 <p class="text-[11px] uppercase font-bold text-slate-400">Planned Date</p>
-<p class="text-slate-700 font-bold mt-0.5">{{ act.scheduledDate }}</p>
+<p class="font-bold mt-0.5">{{ act.scheduledDate }}</p>
 </div>
 <div>
 <p class="text-[11px] uppercase font-bold text-slate-400">Focus Intervention</p>
-<p class="text-slate-700 font-bold mt-0.5 capitalize">{{ act.focusIntervention|replace_underscore }}</p>
+<p class="font-bold mt-0.5 capitalize">{{ act.focusIntervention|replace_underscore }}</p>
 </div>
 {% if act.teachersAttended or act.leadersAttended %}
 <div>
 <p class="text-[11px] uppercase font-bold text-slate-400">Attendance</p>
-<p class="text-slate-700 font-bold mt-0.5">T: {{ act.teachersAttended }} &bull; L: {{ act.leadersAttended }}</p>
+<p class="font-bold mt-0.5">T: {{ act.teachersAttended }} &bull; L: {{ act.leadersAttended }}</p>
 </div>
 {% endif %}
 </div>
@@ -53,7 +53,7 @@ School: <a href="/schools/{{ act.schoolId }}" class="font-bold hover:underline t
 {% csrf_token %}
 <button 
 type="submit" 
-class="w-full h-10 px-4 rounded-lg bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white text-[12px] font-semibold flex items-center justify-center transition-colors"
+class="w-full h-10 px-4 rounded-lg bg-[var(--edify-accent)] hover:bg-[var(--edify-accent-hover)] text-white text-[12px] font-semibold flex items-center justify-center transition-colors"
 >
 Verify &amp; Confirm
 </button>
@@ -91,7 +91,7 @@ Submit Return
 </div>
 {% endfor %}
 {% else %}
-<div class="bg-white rounded-2xl border border-[var(--border-card)] p-12 text-center text-slate-400 font-semibold">
+<div class="bg-white rounded-lg border border-[var(--edify-border)] p-12 text-center text-slate-400 font-semibold">
 No completions awaiting IA verification.
 </div>
 {% endif %}

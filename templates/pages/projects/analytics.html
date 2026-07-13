@@ -1,0 +1,244 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Special Project Analytics — Impact Intelligence{% endblock %}
+
+{% block shell_content %}
+<div class="p-4 sm:p-6 max-w-7xl mx-auto space-y-6 ">
+
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+    <div class="min-w-0">
+      <h1 class="text-[22px] sm:text-[21px] font-extrabold tracking-tight">Special Project Analytics</h1>
+      <p class="text-[12px] text-slate-500 font-semibold mt-1">Impact intelligence — verified SSA movement, partner performance, adoption, and cost discipline across special projects.</p>
+    </div>
+    <div class="flex items-center gap-2 shrink-0">
+      <a href="/projects" class="inline-flex items-center gap-1.5 h-10 px-4 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-[12px] font-semibold text-slate-600 shadow-sm transition-colors whitespace-nowrap">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        Back to Projects
+      </a>
+      <a href="#insights" class="inline-flex items-center gap-1.5 h-10 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-semibold shadow-sm transition-colors whitespace-nowrap">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        Review Recommendations
+      </a>
+    </div>
+  </div>
+
+  {% if not has_projects %}
+  <div class="card p-12">
+    {% include "components/empty_state.html" with title="No special projects in your scope" message="Impact intelligence appears here once projects have assigned schools, verified activities, and before/after SSA records." %}
+  </div>
+  {% else %}
+
+  <!-- KPI strip (real, verified) -->
+  {% include "components/kpi_strip.html" with items=kpis %}
+
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
+
+    <!-- LEFT -->
+    <div class="xl:col-span-2 space-y-6 min-w-0">
+
+      <!-- A/B. Impact Classification -->
+      <div class="card p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">Impact Classification</h2>
+          <span class="text-[11px] font-bold text-slate-400">{{ class_total }} project{{ class_total|pluralize }}</span>
+        </div>
+        <div class="flex h-3 rounded-full overflow-hidden bg-slate-100 mb-4">
+          {% for seg in class_dist %}
+          <div class="{{ seg.color }}" style="width: {{ seg.pct }}%"></div>
+          {% endfor %}
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-x-5 gap-y-2.5">
+          {% for seg in class_dist %}
+          <div class="flex items-center gap-2">
+            <span class="h-2.5 w-2.5 rounded-sm {{ seg.color }} shrink-0"></span>
+            <span class="text-[11.5px] font-semibold text-slate-600 flex-1 truncate">{{ seg.label }}</span>
+            <span class="text-[12px] font-bold text-slate-800 tabular-nums">{{ seg.value }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- C. Annual SSA Performance by Intervention -->
+      <div class="card overflow-hidden">
+        <div class="px-5 py-4 border-b border-slate-100">
+          <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">Annual SSA Performance by Intervention</h2>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left">
+            <thead>
+              <tr class="text-[10.5px] uppercase tracking-wider text-slate-400 font-bold border-b border-slate-100">
+                <th class="px-5 py-2.5">Intervention</th>
+                <th class="px-3 py-2.5 text-center">Projects</th>
+                <th class="px-3 py-2.5 text-center">Schools</th>
+                <th class="px-3 py-2.5 text-center">Avg Delta</th>
+                <th class="px-3 py-2.5">Best</th>
+                <th class="px-3 py-2.5">Worst</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-50">
+              {% for iv in interventions %}
+              <tr class="hover:bg-slate-50/50">
+                <td class="px-5 py-2.5 text-[12px] font-bold">{{ iv.label }}</td>
+                <td class="px-3 py-2.5 text-[12px] text-slate-600 text-center tabular-nums">{{ iv.projects }}</td>
+                <td class="px-3 py-2.5 text-[12px] text-slate-600 text-center tabular-nums">{{ iv.schools }}</td>
+                <td class="px-3 py-2.5 text-center">{% include "partials/projects/delta_pill.html" with delta=iv.delta %}</td>
+                <td class="px-3 py-2.5 text-[11.5px] font-semibold text-slate-500">{{ iv.best }}</td>
+                <td class="px-3 py-2.5 text-[11.5px] font-semibold text-slate-500">{{ iv.worst }}</td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="6" class="px-5 py-10 text-center text-[12px] font-semibold text-slate-400">No verified intervention movement yet — appears once projects have IA-confirmed before/after SSA.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- D. Partner Performance by Project -->
+      <div class="card overflow-hidden">
+        <div class="px-5 py-4 border-b border-slate-100">
+          <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">Partner Performance by Project</h2>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left">
+            <thead>
+              <tr class="text-[10.5px] uppercase tracking-wider text-slate-400 font-bold border-b border-slate-100">
+                <th class="px-5 py-2.5">Partner</th>
+                <th class="px-3 py-2.5">Project</th>
+                <th class="px-3 py-2.5 text-center">Done</th>
+                <th class="px-3 py-2.5 text-center">Target</th>
+                <th class="px-3 py-2.5 text-center">SSA Δ</th>
+                <th class="px-3 py-2.5 text-center">IA</th>
+                <th class="px-3 py-2.5 text-center">Score</th>
+                <th class="px-3 py-2.5">Recommendation</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-50">
+              {% for p in partners %}
+              <tr class="hover:bg-slate-50/50">
+                <td class="px-5 py-2.5 text-[12px] font-bold whitespace-nowrap">{{ p.name }}</td>
+                <td class="px-3 py-2.5 text-[11.5px] font-semibold text-slate-500 whitespace-nowrap">{{ p.project }}</td>
+                <td class="px-3 py-2.5 text-[12px] text-slate-600 text-center tabular-nums">{{ p.completed }}</td>
+                <td class="px-3 py-2.5 text-[12px] text-slate-600 text-center tabular-nums">{{ p.target_achievement }}%</td>
+                <td class="px-3 py-2.5 text-center">{% include "partials/projects/delta_pill.html" with delta=p.delta %}</td>
+                <td class="px-3 py-2.5 text-[12px] text-slate-600 text-center tabular-nums">{{ p.ia_rate }}%</td>
+                <td class="px-3 py-2.5 text-[12px] font-bold text-slate-800 text-center tabular-nums">{{ p.score }}</td>
+                <td class="px-3 py-2.5">{% include "components/badge.html" with tone=p.tone label=p.recommendation size="sm" %}</td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="8" class="px-5 py-10 text-center text-[12px] font-semibold text-slate-400">No partner activity yet — partner performance scores appear as partners deliver and IA verifies.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- F. Project Impact Matrix -->
+      <div class="card overflow-hidden">
+        <div class="px-5 py-4 border-b border-slate-100">
+          <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">Project Impact Matrix</h2>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left">
+            <thead>
+              <tr class="text-[10.5px] uppercase tracking-wider text-slate-400 font-bold border-b border-slate-100">
+                <th class="px-5 py-2.5">Project</th>
+                <th class="px-3 py-2.5">Focus</th>
+                <th class="px-3 py-2.5 text-center">Assigned</th>
+                <th class="px-3 py-2.5 text-center">Supported</th>
+                <th class="px-3 py-2.5 text-center">Baseline</th>
+                <th class="px-3 py-2.5 text-center">Latest</th>
+                <th class="px-3 py-2.5 text-center">SSA Δ</th>
+                <th class="px-3 py-2.5">Classification</th>
+                <th class="px-3 py-2.5">Recommendation</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-50">
+              {% for m in matrix %}
+              <tr class="hover:bg-slate-50/50">
+                <td class="px-5 py-2.5 text-[12px] font-bold whitespace-nowrap">{{ m.name }}</td>
+                <td class="px-3 py-2.5 text-[11px] font-semibold text-slate-500 whitespace-nowrap">{{ m.interventions }}</td>
+                <td class="px-3 py-2.5 text-[12px] text-slate-600 text-center tabular-nums">{{ m.schools_assigned }}</td>
+                <td class="px-3 py-2.5 text-[12px] text-slate-600 text-center tabular-nums">{{ m.schools_supported }}</td>
+                <td class="px-3 py-2.5 text-[12px] text-slate-500 text-center tabular-nums">{{ m.baseline_avg }}</td>
+                <td class="px-3 py-2.5 text-[12px] text-slate-500 text-center tabular-nums">{{ m.latest_avg }}</td>
+                <td class="px-3 py-2.5 text-center">{% include "partials/projects/delta_pill.html" with delta=m.delta %}</td>
+                <td class="px-3 py-2.5">{% include "components/badge.html" with tone=m.tone label=m.classification size="sm" %}</td>
+                <td class="px-3 py-2.5 text-[11.5px] font-semibold text-slate-500 whitespace-nowrap">{{ m.recommendation }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- E. Best / Under Review / Watchlist -->
+      <div class="grid md:grid-cols-3 gap-6">
+        {% include "partials/projects/project_minilist.html" with title="Best Performing" tone="success" rows=best_projects empty="No proven projects yet." %}
+        {% include "partials/projects/project_minilist.html" with title="Under Review" tone="warning" rows=under_review empty="Nothing under review." %}
+        {% include "partials/projects/project_minilist.html" with title="Negative Watchlist" tone="danger" rows=watchlist empty="No negative-impact projects." %}
+      </div>
+
+      <!-- K. Data Quality / IA Verification -->
+      <div class="card p-5">
+        <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight mb-4">Data Quality &amp; IA Verification</h2>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="rounded-xl bg-slate-50/70 border border-slate-100 p-3">
+            <p class="text-[20px] font-bold text-slate-800 tabular-nums leading-none">{{ data_quality.verified_activities }}</p>
+            <p class="text-[10.5px] font-semibold text-slate-400 mt-1">Verified activities</p>
+          </div>
+          <div class="rounded-xl bg-slate-50/70 border border-slate-100 p-3">
+            <p class="text-[20px] font-bold text-slate-800 tabular-nums leading-none">{{ data_quality.verified_ssa }}</p>
+            <p class="text-[10.5px] font-semibold text-slate-400 mt-1">Verified SSA records</p>
+          </div>
+          <div class="rounded-xl bg-slate-50/70 border border-slate-100 p-3">
+            <p class="text-[20px] font-bold text-slate-800 tabular-nums leading-none">{{ data_quality.evidence_completion }}%</p>
+            <p class="text-[10.5px] font-semibold text-slate-400 mt-1">Evidence completion</p>
+          </div>
+          <div class="rounded-xl bg-slate-50/70 border border-slate-100 p-3">
+            <p class="text-[20px] font-bold text-slate-800 tabular-nums leading-none">{{ data_quality.impact_ready }}</p>
+            <p class="text-[10.5px] font-semibold text-slate-400 mt-1">Impact-ready projects</p>
+          </div>
+        </div>
+        <p class="text-[10.5px] font-semibold text-slate-400 mt-3">Impact metrics are calculated from IA-confirmed SSA cycles and verified activity records only. Adoption tracking (spec §5) is a planned enhancement.</p>
+      </div>
+    </div>
+
+    <!-- RIGHT: Insights + Recommendation Engine -->
+    <div class="space-y-6" id="insights">
+      <div class="card p-5">
+        <div class="flex items-center gap-2 mb-3">
+          <svg class="h-4 w-4 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+          <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Recommended Actions</h3>
+        </div>
+        <div class="space-y-2.5">
+          {% for ins in insights %}
+          <div class="rounded-xl border p-3 {% if ins.tone == 'success' %}border-emerald-100 bg-emerald-50/40{% elif ins.tone == 'warning' %}border-amber-100 bg-amber-50/40{% elif ins.tone == 'danger' %}border-rose-100 bg-rose-50/40{% else %}border-blue-100 bg-blue-50/40{% endif %}">
+            <p class="text-[12px] font-bold {% if ins.tone == 'success' %}text-emerald-800{% elif ins.tone == 'warning' %}text-amber-800{% elif ins.tone == 'danger' %}text-rose-800{% else %}text-blue-800{% endif %} leading-snug">{{ ins.title }}</p>
+            {% if ins.detail %}<p class="text-[11px] font-semibold text-slate-500 mt-1 leading-snug">{{ ins.detail }}</p>{% endif %}
+          </div>
+          {% empty %}
+          <p class="text-[12px] font-semibold text-slate-400 py-4 text-center">No recommendations yet — they generate as verified impact data accumulates.</p>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="card p-5">
+        <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight mb-3">Partner Recommendation Engine</h3>
+        <div class="space-y-1.5">
+          {% for r in rec_dist %}
+          <div class="flex items-center justify-between gap-3 py-1.5">
+            <span class="inline-flex items-center gap-2 text-[11.5px] font-semibold text-slate-600">
+              <span class="h-2 w-2 rounded-full shrink-0 {% if r.tone == 'success' %}bg-emerald-500{% elif r.tone == 'warning' %}bg-amber-500{% elif r.tone == 'danger' %}bg-rose-500{% else %}bg-slate-400{% endif %}"></span>
+              {{ r.label }}
+            </span>
+            <span class="shrink-0 inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-lg text-[12px] font-bold tabular-nums {% if r.value %}bg-slate-100{% else %}bg-slate-50 text-slate-400{% endif %}">{{ r.value }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

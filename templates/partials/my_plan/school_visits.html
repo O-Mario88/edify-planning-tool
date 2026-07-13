@@ -4,7 +4,7 @@
 <!-- Card Header -->
 <div class="px-5 py-4 border-b border-slate-200 bg-slate-50/50 flex items-center justify-between">
 <div class="flex items-center gap-2">
-<span class="text-[18px]">🏫</span>
+<span class="text-[18px]"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0v7m-5-4v4a5 5 0 0010 0v-4"/></svg></span>
 <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">
 School Visits Planned for {% if period == 'week' %}This Week{% elif period == 'month' %}This Month{% elif period == 'quarter' %}This Quarter{% else %}This FY{% endif %}
 </h2>
@@ -37,14 +37,15 @@ Open Planning
 {% for row in school_visits %}
 <tr>
 <td class="font-semibold text-slate-800 text-[14px]">{{ row.school_name }}</td>
-<td class="font-semibold text-slate-500">{{ row.district }}</td>
+<td class="font-semibold text-slate-500">{{ row.school_district }}</td>
 <td class="font-bold text-slate-700">{{ row.planned_date|date:"M j, D"|default:"Unscheduled" }}</td>
 <td class="text-slate-600 font-semibold">{{ row.purpose }}</td>
-<td class="font-bold text-slate-700">{{ row.assigned_partner }}</td>
+<td class="font-bold text-slate-700">{{ row.owner }}</td>
 <td>
 <span class="edify-status-badge {{ row.status_class }} px-2 py-0.5 rounded text-[11px]">
 {{ row.status_label }}
 </span>
+{% include "partials/my_plan/row_badges.html" %}
 </td>
 <!-- Include more action menu -->
 {% include "partials/my_plan/activity_row.html" %}
@@ -54,7 +55,7 @@ Open Planning
 </table>
 {% else %}
 <div class="edify-empty-state py-12 flex flex-col items-center justify-center">
-<p class="text-[32px] mb-2">🏫</p>
+<p class="text-[32px] mb-2"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0v7m-5-4v4a5 5 0 0010 0v-4"/></svg></p>
 <p class="text-[14px] font-bold text-slate-500">No school visits planned for this period.</p>
 <a href="/planning" class="btn btn-primary h-9 mt-3 shadow-sm text-[12px]">Open Planning</a>
 </div>

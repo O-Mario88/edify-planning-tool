@@ -1,0 +1,61 @@
+{% load frontend_filters %}
+<div class="space-y-5">
+
+  {# ── KPI strip: 10 country-health cards ───────────────────────────────── #}
+  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+    {% for k in kpi_strip_items %}
+    <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-3.5 block">
+      <div class="flex items-start justify-between">
+        <div class="h-8 w-8 rounded-lg flex items-center justify-center shrink-0
+          {% if k.variant == 'primary' %}bg-blue-50 text-blue-600
+          {% elif k.variant == 'success' %}bg-emerald-50 text-emerald-600
+          {% elif k.variant == 'info' %}bg-sky-50 text-sky-600
+          {% elif k.variant == 'warning' %}bg-amber-50 text-amber-600
+          {% elif k.variant == 'danger' %}bg-rose-50 text-rose-600
+          {% elif k.variant == 'violet' %}bg-violet-50 text-violet-600
+          {% elif k.variant == 'finance' %}bg-violet-50 text-violet-600
+          {% else %}bg-slate-50 text-slate-500{% endif %}">
+          {% include "partials/analytics/pl/_icon.html" with name=k.icon %}
+        </div>
+      </div>
+      <p class="text-[9.5px] font-bold uppercase tracking-wider text-slate-400 mt-2.5 leading-tight">{{ k.label }}</p>
+      <p class="text-[19px] font-bold text-slate-800 tabular-nums leading-tight mt-0.5">{{ k.value }}</p>
+      <p class="text-[10px] font-semibold text-slate-400 mt-0.5">{{ k.helper }}</p>
+    </div>
+    {% endfor %}
+  </div>
+
+  {# ── Row 1 | 2 : Performance vs Target · SSA by Intervention ──────────── #}
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+    {% include "partials/analytics/cd/performance_vs_target.html" %}
+    {% include "partials/analytics/cd/ssa_interventions.html" %}
+  </div>
+
+  {# ── Row 3 | 4 : Target by PL & CCEO · District SSA Heatmap ───────────── #}
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+    {% include "partials/analytics/cd/target_by_pl.html" %}
+    {% include "partials/analytics/cd/district_heatmap.html" %}
+  </div>
+
+  {# ── Row 5 | 6 | 7 : Partner · Cluster · Recommended Actions ──────────── #}
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+    {% include "partials/analytics/cd/partner_performance.html" %}
+    {% include "partials/analytics/cd/cluster_performance.html" %}
+    {% include "partials/analytics/cd/recommended_actions.html" %}
+  </div>
+
+  {# ── Row 8 | 9 | 10 : PL Oversight · CCEO Snapshot · Impact Summary ───── #}
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+    {% include "partials/analytics/cd/pl_oversight.html" %}
+    {% include "partials/analytics/cd/cceo_snapshot.html" %}
+    {% include "partials/analytics/cd/impact_summary.html" %}
+  </div>
+
+  {# ── Row 11 | 12 | 13 : Regional · Budget & Finance · Operational Risk ── #}
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+    {% include "partials/analytics/cd/regional_summary.html" %}
+    {% include "partials/analytics/cd/budget_finance.html" %}
+    {% include "partials/analytics/cd/operational_risk.html" %}
+  </div>
+
+</div>

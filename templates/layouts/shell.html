@@ -72,7 +72,8 @@ class="app-sidebar hidden md:flex"
 <div class="flex items-center gap-4 flex-1">
 <button 
 type="button" 
-class="md:hidden h-9 w-9 flex items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 focus:outline-none" 
+class="md:hidden h-9 w-9 flex items-center justify-center rounded-lg focus:outline-none"
+style="color:var(--edify-text-muted);"
 @click="sidebarOpen = true"
 >
 <span class="sr-only">Open sidebar</span>
@@ -88,9 +89,12 @@ class="md:hidden h-9 w-9 flex items-center justify-center rounded-lg text-slate-
 <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
 </svg>
 </div>
-<input 
-type="text" 
-placeholder="Search schools, staff, districts..." 
+{% if request.path != '/schools' and request.path != '/schools/' %}
+<form method="get" action="/search">
+{% endif %}
+<input
+type="text"
+placeholder="Search schools, staff, districts..."
 {% if request.path == '/schools' or request.path == '/schools/' %}
 id="topbar-search-input"
 name="q"
@@ -100,27 +104,48 @@ hx-target="#schools-table-container"
 hx-trigger="keyup delay:300ms, search"
 hx-include="#filters-form"
 oninput="const p = document.getElementById('filters-page-input'); if (p) p.value = '1'"
+{% else %}
+name="q"
+value="{{ request.GET.q|default:'' }}"
 {% endif %}
-class="h-9 w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-4 text-[13px] font-normal focus:bg-white focus:outline-none transition-all placeholder-slate-400"
+class="h-9 w-full rounded-lg pl-9 pr-4 text-[13px] font-normal focus:outline-none transition-all"
+style="padding-left: 36px; background:var(--edify-surface-muted); border:1px solid var(--edify-border); color:var(--edify-text);"
 >
+{% if request.path != '/schools' and request.path != '/schools/' %}
+</form>
+{% endif %}
 </div>
 </div>
 
 <!-- Header Right Utilities -->
-<div class="flex items-center gap-4 shrink-0">
-<button 
+<div class="flex items-center gap-2 shrink-0">
+<!-- Theme toggle — segmented control (Light / Dark / System) -->
+<div class="theme-toggle" x-data="{ theme: document.documentElement.dataset.themePref || 'system' }" x-cloak>
+  <button :class="theme === 'light' ? 'active' : ''" @click="$store.theme.setTheme('light'); theme='light'" aria-label="Light mode" title="Light mode">
+    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+  </button>
+  <button :class="theme === 'dark' ? 'active' : ''" @click="$store.theme.setTheme('dark'); theme='dark'" aria-label="Dark mode" title="Dark mode">
+    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+  </button>
+  <button :class="theme === 'system' ? 'active' : ''" @click="$store.theme.setTheme('system'); theme='system'" aria-label="System mode (auto)" title="System mode">
+    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+  </button>
+</div>
+
+<button
 hx-get="/notifications/drawer"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
-class="h-9 w-9 rounded-lg hover:bg-slate-50 text-slate-500 flex items-center justify-center relative transition-all focus:outline-none"
+class="h-9 w-9 rounded-lg hover:bg-[var(--edify-surface-muted)] text-[var(--edify-text-muted)] flex items-center justify-center relative transition-all focus:outline-none"
 title="Notifications"
+aria-label="Notifications"
 >
 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
 </svg>
 <div id="notification-badge-container">
 {% if unread_notifications_count > 0 %}
-<span id="notification-badge-count" class="absolute top-1 right-1 h-4 w-4 bg-[#2563eb] text-white text-[11px] font-semibold rounded-full flex items-center justify-center border border-white">
+<span id="notification-badge-count" class="absolute top-1 right-1 h-4 w-4 bg-[var(--edify-accent)] text-white text-[11px] font-semibold rounded-full flex items-center justify-center border border-[var(--edify-surface)]">
 {{ unread_notifications_count }}
 </span>
 {% endif %}
@@ -128,10 +153,11 @@ title="Notifications"
 </button>
 
 <!-- Help icon -->
-<a 
-href="/help" 
-class="h-9 w-9 rounded-lg hover:bg-slate-50 text-slate-500 flex items-center justify-center transition-all"
+<a
+href="/help"
+class="h-9 w-9 rounded-lg hover:bg-[var(--edify-surface-muted)] text-[var(--edify-text-muted)] flex items-center justify-center transition-all"
 title="Help Center"
+aria-label="Help Center"
 >
 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -140,9 +166,12 @@ title="Help Center"
 
 <!-- Initials User Avatar Dropdown -->
 <div class="relative" x-data="{ open: false }">
-<button 
+<button
 @click="open = !open"
-class="h-9 w-9 rounded-full bg-slate-800 text-white text-[12px] font-semibold flex items-center justify-center hover:bg-slate-700 focus:outline-none transition-colors"
+aria-label="Account menu"
+:aria-expanded="open"
+class="h-9 w-9 rounded-full text-white text-[12px] font-semibold flex items-center justify-center focus:outline-none transition-colors"
+style="background:var(--edify-primary);"
 >
 <span>{{ request.user.name|avatar_initials }}</span>
 </button>
@@ -150,37 +179,41 @@ class="h-9 w-9 rounded-full bg-slate-800 text-white text-[12px] font-semibold fl
 <div 
 x-show="open" 
 @click.outside="open = false" 
-class="absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-xl shadow-lg py-1.5 text-[12px] z-50 overflow-hidden"
-style="display: none;"
+class="absolute right-0 mt-2 w-56 rounded-xl shadow-lg py-1.5 text-[12px] z-50 overflow-hidden"
+style="display: none; background:var(--edify-surface); border:1px solid var(--edify-border);"
 >
-<div class="px-4 py-2 border-b border-slate-100">
-<p class="font-semibold text-slate-800">{{ request.user.name|default:"District Admin" }}</p>
-<p class="text-[11px] text-slate-500 font-semibold truncate">{{ request.user.email|default:"admin@district.edify.org" }}</p>
+<div class="px-4 py-2" style="border-bottom:1px solid var(--edify-border);">
+<p class="font-semibold" style="color:var(--edify-text);">{{ request.user.name|default:"District Admin" }}</p>
+<p class="text-[11px] font-semibold truncate" style="color:var(--edify-text-muted);">{{ request.user.email|default:"admin@district.edify.org" }}</p>
 </div>
 
 {% if request.user.role_enums|length > 1 %}
-<div class="px-3 py-1 bg-slate-50 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Switch Active Role</div>
+<div class="px-3 py-1 text-[11px] font-bold uppercase tracking-wider" style="background:var(--edify-surface-muted); color:var(--edify-text-subtle);">Switch Active Role</div>
 {% for r in request.user.role_enums %}
 <form action="/auth/switch-role" method="post" class="m-0">
 {% csrf_token %}
 <input type="hidden" name="role" value="{{ r.value }}">
-<button 
-type="submit" 
-class="w-full text-left px-4 py-1.5 hover:bg-slate-50 font-semibold {% if request.user.active_role == r.value %}text-[#2563eb] font-semibold{% else %}text-slate-600{% endif %}"
+<button
+type="submit"
+class="w-full text-left px-4 py-1.5 hover:bg-[var(--edify-surface-muted)] font-semibold {% if request.user.active_role == r.value %}font-semibold{% else %}{% endif %}"
+{% if request.user.active_role == r.value %}style="color:var(--edify-accent);"{% else %}style="color:var(--edify-text-muted);"{% endif %}
 >
 {{ r.value }}
 </button>
 </form>
 {% endfor %}
-<div class="border-t border-slate-100 my-1.5"></div>
+<div class="my-1.5" style="border-top:1px solid var(--edify-border);"></div>
 {% endif %}
 
-<a href="/profile" class="block px-4 py-1.5 text-slate-700 hover:bg-slate-50 font-semibold">My Profile</a>
-<form action="/logout" method="post" class="m-0 border-t border-slate-100 mt-1">
+<a href="/profile" class="block px-4 py-1.5 hover:bg-[var(--edify-surface-muted)] font-semibold" style="color:var(--edify-text);">My Profile</a>
+<form action="/logout" method="post" class="m-0 mt-1" style="border-top:1px solid var(--edify-border);">
 {% csrf_token %}
-<button 
-type="submit" 
-class="w-full text-left px-4 py-2 text-rose-600 hover:bg-rose-50 font-bold"
+<button
+type="submit"
+class="w-full text-left px-4 py-2 font-bold"
+style="color:var(--edify-danger);"
+onmouseover="this.style.background='var(--edify-danger-light)'"
+onmouseout="this.style.background='transparent'"
 >
 Sign out
 </button>
@@ -191,7 +224,7 @@ Sign out
 </header>
 
 <!-- Main Content Area -->
-<main class="flex-1 overflow-y-auto focus:outline-none relative bg-[var(--bg-page)]">
+<main class="flex-1 overflow-y-auto focus:outline-none relative bg-[var(--edify-bg)]">
 {% block shell_content %}{% endblock %}
 </main>
 </div>

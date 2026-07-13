@@ -1,9 +1,10 @@
 {% extends "layouts/shell.html" %}
+{% load frontend_filters %}
 
 {% block title %}Monthly Fund Request - Edify Command Center{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6">
+<div class="px-4 sm:px-6 py-5 space-y-4" style="max-width:1500px;margin:0 auto;">
 
 <!-- Premium Header Pane -->
 <div class="relative overflow-hidden rounded-xl bg-slate-900 text-white p-8 shadow-md border border-slate-800">
@@ -12,7 +13,7 @@
 <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-500 text-[11px] font-semibold uppercase tracking-widest">
 Country Budget snapshots
 </div>
-<h1 class="text-[32px] font-semibold tracking-tight text-white leading-none">Monthly Country Fund Request</h1>
+<h1 class="text-[21px] font-extrabold tracking-tight">Monthly Country Fund Request</h1>
 <p class="text-[14px] text-slate-400 font-medium max-w-xl">
 Monthly consolidation of scheduled activities, partner allocations, core school visits, and variance adjustments.
 </p>
@@ -22,14 +23,12 @@ Monthly consolidation of scheduled activities, partner allocations, core school 
 <!-- Main grid -->
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 <div class="bg-white rounded-xl border border-slate-100 p-6 shadow-sm space-y-4 md:col-span-2">
-<h3 class="text-[15px] font-semibold text-slate-800 border-b border-slate-50 pb-2">Request Breakdown</h3>
-<div class="space-y-4 text-[12px] font-bold text-slate-700">
-<p class="flex justify-between"><span>Core Activity Budget:</span> <span class="text-slate-800 font-semibold">142,400,000 UGX</span></p>
-<p class="flex justify-between"><span>Partner Budget:</span> <span class="text-slate-800 font-semibold">28,000,000 UGX</span></p>
-<p class="flex justify-between"><span>Core Schools Support Capacity:</span> <span class="text-slate-800 font-semibold">12,500,000 UGX</span></p>
-<p class="flex justify-between"><span>Cluster Mobilisation:</span> <span class="text-slate-800 font-semibold">15,100,000 UGX</span></p>
-<p class="flex justify-between"><span>Reimbursements & Claims:</span> <span class="text-slate-800 font-semibold">12,000,000 UGX</span></p>
-<p class="flex justify-between border-t border-slate-100 pt-3 text-[14px]"><span>Aggregate Request Amount:</span> <span class="text-[#2563eb] font-semibold">210,000,000 UGX</span></p>
+<h3 class="text-[15px] font-semibold text-slate-800 border-b border-slate-50 pb-2">Request Breakdown &mdash; {{ month_label }}</h3>
+<div class="space-y-4 text-[12px] font-bold">
+{% for item in breakdown %}
+<p class="flex justify-between"><span>{{ item.label }}:</span> <span class="text-slate-800 font-semibold">{{ item.amount|currency }} UGX</span></p>
+{% endfor %}
+<p class="flex justify-between border-t border-slate-100 pt-3 text-[14px]"><span>Aggregate Request Amount:</span> <span class="text-[#2563eb] font-semibold">{{ total_requested|currency }} UGX</span></p>
 </div>
 </div>
 
@@ -38,9 +37,6 @@ Monthly consolidation of scheduled activities, partner allocations, core school 
 <p class="text-[12px] text-slate-500 leading-relaxed font-semibold">
 Once submitted, the CD and RVP must authorize this snapshot request before funds are released to country accounts.
 </p>
-<button class="w-full h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-semibold transition-all shadow-md">
-Submit Monthly Request
-</button>
 </div>
 </div>
 </div>

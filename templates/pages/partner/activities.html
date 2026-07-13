@@ -1,32 +1,62 @@
 {% extends "layouts/shell.html" %}
+{% load frontend_filters %}
 
-{% block title %}My Activities — Edify{% endblock %}
+{% block title %}Activities · Partner Portal · Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6">
+<div class="px-4 sm:px-6 py-5 max-w-[1200px] mx-auto space-y-5">
 
-<div class="flex items-center justify-between">
-<div>
-<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight">My Activities</h1>
-<p class="text-[12px] text-[var(--text-secondary)] mt-1 font-semibold">Partner activities view</p>
-</div>
-</div>
+  <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+    <div>
+      <h1 class="text-[21px] font-extrabold tracking-tight">Activity Log</h1>
+      <p class="text-[12.5px] text-slate-500 font-normal mt-1.5">{{ total }} recent activities assigned to your organization.</p>
+    </div>
+    <form method="get" class="flex items-center gap-1.5 bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 text-[11px] font-bold text-slate-500 w-fit">
+      <span class="uppercase tracking-wider text-[10px]">Status</span>
+      <select name="status" onchange="this.form.submit()" class="bg-transparent focus:outline-none cursor-pointer font-semibold">
+        <option value="">All</option>
+        <option value="scheduled" {% if status_filter == 'scheduled' %}selected{% endif %}>Scheduled</option>
+        <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
+        <option value="ia_verified" {% if status_filter == 'ia_verified' %}selected{% endif %}>IA Verified</option>
+      </select>
+    </form>
+  </div>
 
-{% if today_activities|default:activities|default:schools|default:evidence %}
-<div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm">
-<div class="px-5 py-4 border-b border-slate-100"><h2 class="text-[14px] font-semibold text-slate-700">Items</h2></div>
-<ul class="divide-y divide-slate-100">
-{% for item in today_activities|default:activities|default:schools|default:evidence %}
-<li class="px-5 py-3.5 flex items-center justify-between">
-<div>
-<p class="text-[14px] font-bold text-slate-800">{{ item.name|default:item.activity_type|default:item }}</p>
-<p class="text-[11px] text-slate-400">{{ item.planned_date|default:item.created_at|default:"" }}</p>
-</div>
-</li>
-{% endfor %}
-</ul>
-</div>
-{% else %}<div class="p-12 text-center"><p class="text-[36px] mb-3">📝</p><p class="text-[14px] font-bold text-slate-600">No my activities data yet</p></div>{% endif %}
+  <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-2">
+    {% if activities %}
+    <div class="overflow-x-auto -mx-1">
+      <table class="w-full text-[11.5px]">
+        <thead>
+          <tr class="text-[9px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
+            <th class="text-left font-bold py-2 pl-1">School / Cluster</th>
+            <th class="text-left font-bold py-2">Type</th>
+            <th class="text-left font-bold py-2">Date</th>
+            <th class="text-right font-bold py-2 pr-1">Status</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-50">
+          {% for a in activities %}
+          <tr>
+            <td class="text-left font-semibold py-2.5 pl-1">{% if a.school %}{{ a.school.name }}{% elif a.cluster %}{{ a.cluster.name }}{% else %}—{% endif %}</td>
+            <td class="text-left text-slate-500 py-2.5 capitalize">{{ a.activity_type|cut:"_" }}</td>
+            <td class="text-left tabular-nums text-slate-500 py-2.5">{{ a.planned_date|date:"d M Y" }}</td>
+            <td class="text-right py-2.5 pr-1">
+              <span class="px-1.5 py-0.5 rounded text-[9.5px] font-bold
+                {% if a.status == 'completed' or a.status == 'closed' %}bg-emerald-50 text-emerald-700
+                {% elif a.status == 'ia_verified' %}bg-blue-50 text-blue-700
+                {% elif a.status == 'scheduled' %}bg-sky-50 text-sky-700
+                {% elif 'returned' in a.status %}bg-rose-50 text-rose-700
+                {% else %}bg-slate-100 text-slate-600{% endif %}">{{ a.status|cut:"_"|title }}</span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    {% include "components/empty_state.html" with title="No activities yet" message="Activities assigned to your organization will appear here." %}
+    {% endif %}
+  </div>
 
 </div>
 {% endblock %}

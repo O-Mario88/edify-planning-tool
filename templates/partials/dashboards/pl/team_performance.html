@@ -1,0 +1,43 @@
+{% load frontend_filters %}
+<div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-3 h-full"
+     x-data="{
+       chart: null,
+       initChart() {
+         if (this.chart) { this.chart.destroy(); }
+         const el = document.querySelector('#plDashPerfChart');
+         if (!el) return;
+         this.chart = new ApexCharts(el, {
+           series: [
+             { name: 'Planned', type: 'column', data: {{ team_performance.planned|safe }} },
+             { name: 'Completed', type: 'column', data: {{ team_performance.completed|safe }} },
+             { name: 'Verified', type: 'column', data: {{ team_performance.verified|safe }} },
+             { name: 'Target Achievement %', type: 'line', data: {{ team_performance.pct|safe }} }
+           ],
+           chart: { height: 300, type: 'line', toolbar: { show: false }, fontFamily: 'Outfit, sans-serif' },
+           stroke: { width: [0, 0, 0, 2.5], curve: 'smooth' },
+           colors: ['#0f766e', '#0d9488', '#5eead4', '#f59e0b'],
+           plotOptions: { bar: { columnWidth: '62%', borderRadius: 2 } },
+           dataLabels: { enabled: false },
+           labels: {{ team_performance.labels|safe }},
+           xaxis: { type: 'category', axisBorder: { show: false }, axisTicks: { show: false },
+                    labels: { style: { colors: '#94a3b8', fontSize: '10px', fontWeight: 600 } } },
+           yaxis: [
+             { seriesName: 'Planned', title: { text: 'Activities', style: { color: '#94a3b8', fontSize: '10px' } }, labels: { style: { colors: '#94a3b8', fontSize: '10px' } } },
+             { seriesName: 'Planned', show: false }, { seriesName: 'Planned', show: false },
+             { opposite: true, max: 100, min: 0, labels: { formatter: v => Math.round(v) + '%', style: { colors: '#94a3b8', fontSize: '10px' } } }
+           ],
+           grid: { borderColor: '#94a3b833', strokeDashArray: 4 },
+           legend: { position: 'top', horizontalAlign: 'left', fontSize: '11px', fontWeight: 600, labels: { colors: '#64748b' }, markers: { radius: 12 } },
+           tooltip: { theme: 'dark', shared: true, intersect: false }
+         });
+         this.chart.render();
+       }
+     }" x-init="$nextTick(() => initChart())">
+  <div class="flex items-center justify-between">
+    <h2 class="text-[13px] font-bold text-slate-800 tracking-tight flex items-center gap-2">
+      <span class="text-slate-400">{% include "partials/analytics/pl/_icon.html" with name="chart" %}</span>Team Performance Overview
+    </h2>
+    <span class="text-[10.5px] font-semibold text-slate-400">FY {{ fy }}</span>
+  </div>
+  <div class="h-[300px] w-full" id="plDashPerfChart"></div>
+</div>

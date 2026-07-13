@@ -1,4 +1,5 @@
 """Search endpoint — /api/search."""
+
 from __future__ import annotations
 
 from rest_framework.permissions import IsAuthenticated

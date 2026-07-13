@@ -4,7 +4,7 @@
 {% block drawer_subtitle %}Logistical overview, cover area, and school roster.{% endblock %}
 
 {% block drawer_body %}
-<div class="space-y-5 font-sans text-[12px] font-bold text-slate-600">
+<div class="space-y-5 text-[12px] font-bold text-slate-600">
 <!-- Logistics Card -->
 <div class="p-4 bg-slate-50/50 rounded-xl border border-slate-100 grid grid-cols-2 gap-4">
 <div>
@@ -29,7 +29,7 @@
 </div>
 <div class="p-3 bg-emerald-50/40 border border-emerald-100 rounded-xl flex flex-col justify-center items-center">
 <span class="text-[11px] uppercase font-bold text-emerald-600 block leading-none">Status</span>
-<span class="text-[14px] font-semibold text-emerald-700 block mt-1.5 leading-none">Active</span>
+<span class="text-[14px] font-semibold text-emerald-700 block mt-1.5 leading-none capitalize">{{ cluster.status }}</span>
 </div>
 </div>
 

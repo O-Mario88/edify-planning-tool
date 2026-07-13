@@ -3,7 +3,7 @@
 {% block title %}Activity Journey Timeline - Edify Command Center{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-4xl mx-auto space-y-6">
+<div class="px-4 sm:px-6 py-5 space-y-4" style="max-width:1500px;margin:0 auto;">
 
 <!-- Premium Header Pane -->
 <div class="relative overflow-hidden rounded-xl bg-slate-900 text-white p-8 shadow-md border border-slate-800">
@@ -12,7 +12,7 @@
 <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-500 text-[11px] font-semibold uppercase tracking-widest">
 Audit log
 </div>
-<h1 class="text-[32px] font-semibold tracking-tight text-white leading-none">Activity Journey Timeline</h1>
+<h1 class="text-[21px] font-extrabold tracking-tight">Activity Journey Timeline</h1>
 <p class="text-[14px] text-slate-400 font-medium max-w-xl">
 Vertical event timeline for Activity #{{ act.id|slice:":8" }} showing all workflow changes, quality verifications, and finance closures.
 </p>

@@ -1,0 +1,409 @@
+{% load frontend_filters %}
+<div class="space-y-5">
+
+  {# ── KPI strip ──────────────────────────────────────────────────────────── #}
+  <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+    {% for k in kpis %}
+    <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-3.5 min-w-0">
+      <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 leading-tight">{{ k.label }}</p>
+      <p class="text-[22px] font-bold tabular-nums mt-1.5 {% if k.tone == 'danger' %}text-rose-600{% else %}text-slate-800{% endif %}">{{ k.value }}</p>
+      <p class="text-[10px] font-semibold mt-0.5 {% if k.delta is not None and k.delta > 0 %}text-emerald-600{% elif k.delta is not None and k.delta < 0 %}text-rose-600{% else %}text-slate-400{% endif %}">
+        {% if k.delta is not None %}{% if k.delta > 0 %}&uarr; +{{ k.delta }}{% elif k.delta < 0 %}&darr; {{ k.delta }}{% else %}&mdash; 0{% endif %} {% endif %}{{ k.delta_unit }}
+      </p>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+    <div class="lg:col-span-9 space-y-5 min-w-0">
+
+      {# ── What Needs Attention ─────────────────────────────────────────── #}
+      <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-4">
+        <div class="flex items-center gap-2 mb-3">
+          <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 00-4-5.7V5a2 2 0 10-4 0v.3A6 6 0 006 11v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+          <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">What Needs Attention</h2>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 divide-slate-100 gap-y-3">
+          {% for a in attention %}
+          <div class="px-3 {% if not forloop.first %}lg:border-l lg:border-slate-100{% endif %}">
+            <p class="text-[10.5px] font-bold text-slate-500">{{ a.label }}</p>
+            <p class="text-[20px] font-bold tabular-nums mt-1 {% if a.tone == 'danger' %}text-rose-600{% elif a.tone == 'warning' %}text-amber-600{% else %}text-slate-800{% endif %}">{{ a.count }}</p>
+            <p class="text-[9.5px] font-semibold text-slate-400 truncate">{{ a.sub }}</p>
+            {% if a.drill == 'staff' %}
+            <button type="button" @click="staffFilter = 'behind'; document.getElementById('staff-performance').scrollIntoView({behavior:'smooth'})" class="text-[10px] font-bold text-blue-600 hover:underline mt-1">{{ a.action }} &rarr;</button>
+            {% elif a.drill == 'high_risk' %}
+            <button type="button" @click="staffFilter = 'risk'; document.getElementById('staff-performance').scrollIntoView({behavior:'smooth'})" class="text-[10px] font-bold text-blue-600 hover:underline mt-1">{{ a.action }} &rarr;</button>
+            {% elif a.drill == 'core' %}
+            <a href="/core-schools" class="inline-block text-[10px] font-bold text-blue-600 hover:underline mt-1">{{ a.action }} &rarr;</a>
+            {% else %}
+            <button type="button" hx-get="/team-targets/matrix?fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML" class="text-[10px] font-bold text-blue-600 hover:underline mt-1">{{ a.action }} &rarr;</button>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      {# ── Target performance by staff ──────────────────────────────────── #}
+      <div id="staff-performance" class="bg-white rounded-xl border border-slate-100 shadow-sm p-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Target Performance by Staff <span class="text-slate-400 font-medium text-[11px]">({{ month_label }})</span></h2>
+          <div class="flex items-center gap-1 bg-slate-50 rounded-lg p-0.5 text-[10.5px] font-bold">
+            <button type="button" @click="staffFilter='all'" :class="staffFilter==='all' ? 'bg-white shadow-sm text-slate-700' : 'text-slate-400'" class="px-2.5 py-1 rounded-md transition-all">All</button>
+            <button type="button" @click="staffFilter='behind'" :class="staffFilter==='behind' ? 'bg-white shadow-sm text-slate-700' : 'text-slate-400'" class="px-2.5 py-1 rounded-md transition-all">Behind</button>
+            <button type="button" @click="staffFilter='risk'" :class="staffFilter==='risk' ? 'bg-white shadow-sm text-slate-700' : 'text-slate-400'" class="px-2.5 py-1 rounded-md transition-all">High Risk</button>
+          </div>
+        </div>
+        {% if members %}
+        <div class="overflow-x-auto -mx-4 px-4">
+          <table class="w-full min-w-[860px] text-[11.5px]">
+            <thead>
+              <tr class="border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider text-[9.5px] text-left">
+                <th class="py-2 pr-3">Staff Name</th>
+                <th class="py-2 px-2">District</th>
+                <th class="py-2 px-2 text-center">Monthly Tgt</th>
+                <th class="py-2 px-2 text-center">Valid Done</th>
+                <th class="py-2 px-2 text-center">Remaining</th>
+                <th class="py-2 px-2 text-center">Quarter Tgt</th>
+                <th class="py-2 px-2">Achievement</th>
+                <th class="py-2 px-2">Pace Status</th>
+                <th class="py-2 px-2 text-center">SF ID</th>
+                <th class="py-2 px-2 text-center">Core Schools</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-50 font-semibold text-slate-700">
+              {% for m in members %}
+              <tr class="hover:bg-slate-50/50 cursor-pointer"
+                  data-bucket="{% if m.status == 'High Risk' or m.status == 'Critical' %}risk{% elif m.status == 'Slightly Behind' %}behind{% else %}ok{% endif %}"
+                  x-show="staffFilter==='all' || (staffFilter==='behind' && ['behind','risk'].includes($el.dataset.bucket)) || (staffFilter==='risk' && $el.dataset.bucket==='risk')"
+                  hx-get="/team-targets/staff-drawer?staff={{ m.user_id }}&fy={{ fy }}&month={{ month_of_fy }}"
+                  hx-target="#drawer-container" hx-swap="innerHTML">
+                <td class="py-2.5 pr-3">
+                  <div class="flex items-center gap-2 min-w-0">
+                    <span class="h-6 w-6 rounded-full bg-slate-100 text-slate-500 text-[9px] font-bold flex items-center justify-center shrink-0">{{ m.initials }}</span>
+                    <span class="truncate">{{ m.name }}</span>
+                  </div>
+                </td>
+                <td class="py-2.5 px-2 text-slate-500 truncate max-w-[120px]">{{ m.district_label }}</td>
+                <td class="py-2.5 px-2 text-center tabular-nums">{{ m.month_target }}</td>
+                <td class="py-2.5 px-2 text-center tabular-nums text-emerald-600">{{ m.month_achieved }}</td>
+                <td class="py-2.5 px-2 text-center tabular-nums {% if m.remaining %}text-rose-500{% else %}text-slate-400{% endif %}">{{ m.remaining }}</td>
+                <td class="py-2.5 px-2 text-center tabular-nums text-slate-500">{{ m.quarter_target }}</td>
+                <td class="py-2.5 px-2 min-w-[110px]">
+                  <div class="flex items-center gap-1.5">
+                    <div class="h-[6px] w-14 bg-slate-100 rounded-full overflow-hidden shrink-0">
+                      <div class="h-full rounded-full {% if m.tone == 'success' %}bg-emerald-500{% elif m.tone == 'warning' %}bg-amber-500{% else %}bg-rose-400{% endif %}" style="width: {% if m.month_pct %}{% if m.month_pct > 100 %}100{% else %}{{ m.month_pct }}{% endif %}{% else %}0{% endif %}%"></div>
+                    </div>
+                    <span class="tabular-nums text-[11px]">{% if m.month_pct is not None %}{{ m.month_pct }}%{% else %}—{% endif %}</span>
+                  </div>
+                </td>
+                <td class="py-2.5 px-2">
+                  <span class="px-1.5 py-0.5 rounded text-[9.5px] font-bold {% if m.tone == 'success' %}bg-emerald-50 text-emerald-700{% elif m.tone == 'warning' %}bg-amber-50 text-amber-700{% elif m.status == 'Not Assigned' or m.status == 'Not Started' %}bg-slate-50 text-slate-500{% else %}bg-rose-50 text-rose-700{% endif %}">{{ m.status }}</span>
+                </td>
+                <td class="py-2.5 px-2 text-center tabular-nums {% if m.sf_compliance < 90 %}text-amber-600{% else %}text-slate-600{% endif %}">{{ m.sf_compliance }}%</td>
+                <td class="py-2.5 px-2 text-center tabular-nums text-slate-500">{% if m.core_pct is not None %}{{ m.core_pct }}%{% else %}—{% endif %}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <button type="button" hx-get="/team-targets/matrix?fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML"
+                class="mt-2 text-[10.5px] font-bold text-blue-600 hover:underline">View all staff performance &rarr;</button>
+        {% else %}
+        <div class="rounded-xl border border-slate-100 bg-slate-50 p-6 text-center">
+          <p class="text-[12px] font-semibold text-slate-500">No supervised staff found.</p>
+          <p class="text-[10.5px] text-slate-400 mt-1">Team Targets aggregates the CCEOs assigned to you as supervisor — ask HR/Admin to set your supervision assignments.</p>
+        </div>
+        {% endif %}
+      </div>
+
+      {# ── Partner contribution ─────────────────────────────────────────── #}
+      <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Partner Contribution to Team Targets <span class="text-slate-400 font-medium text-[11px]">(FY {{ fy }})</span></h2>
+          <span class="text-[9.5px] font-bold uppercase tracking-wider text-slate-300">Never double-counted into CCEO credit</span>
+        </div>
+        {% if partners %}
+        <div class="overflow-x-auto -mx-4 px-4">
+          <table class="w-full min-w-[760px] text-[11.5px]">
+            <thead>
+              <tr class="border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider text-[9.5px] text-left">
+                <th class="py-2 pr-3">Partner</th>
+                <th class="py-2 px-2">Region</th>
+                <th class="py-2 px-2 text-center">Assigned</th>
+                <th class="py-2 px-2 text-center">Scheduled</th>
+                <th class="py-2 px-2 text-center">Valid Done</th>
+                <th class="py-2 px-2 text-center">Valid Visits</th>
+                <th class="py-2 px-2">Achievement</th>
+                <th class="py-2 px-2 text-center">SF ID</th>
+                <th class="py-2 px-2 text-center">IA Rate</th>
+                <th class="py-2 px-2">Risk</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-50 font-semibold text-slate-700">
+              {% for p in partners %}
+              <tr class="hover:bg-slate-50/50">
+                <td class="py-2.5 pr-3 truncate max-w-[180px]">{{ p.name }}</td>
+                <td class="py-2.5 px-2 text-slate-500">{{ p.region }}</td>
+                <td class="py-2.5 px-2 text-center tabular-nums">{{ p.assigned }}</td>
+                <td class="py-2.5 px-2 text-center tabular-nums text-slate-500">{{ p.scheduled }}</td>
+                <td class="py-2.5 px-2 text-center tabular-nums text-emerald-600">{{ p.valid }}</td>
+                <td class="py-2.5 px-2 text-center tabular-nums">{{ p.valid_visits }}</td>
+                <td class="py-2.5 px-2 min-w-[100px]">
+                  <div class="flex items-center gap-1.5">
+                    <div class="h-[6px] w-12 bg-slate-100 rounded-full overflow-hidden shrink-0">
+                      <div class="h-full rounded-full {% if p.tone == 'success' %}bg-emerald-500{% elif p.tone == 'warning' %}bg-amber-500{% else %}bg-rose-400{% endif %}" style="width: {% if p.pct > 100 %}100{% else %}{{ p.pct }}{% endif %}%"></div>
+                    </div>
+                    <span class="tabular-nums text-[11px]">{{ p.pct }}%</span>
+                  </div>
+                </td>
+                <td class="py-2.5 px-2 text-center tabular-nums">{{ p.sf }}%</td>
+                <td class="py-2.5 px-2 text-center tabular-nums">{{ p.ia }}%</td>
+                <td class="py-2.5 px-2"><span class="px-1.5 py-0.5 rounded text-[9.5px] font-bold {% if p.tone == 'success' %}bg-emerald-50 text-emerald-700{% elif p.tone == 'warning' %}bg-amber-50 text-amber-700{% else %}bg-rose-50 text-rose-700{% endif %}">{{ p.risk }}</span></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="text-[11.5px] text-slate-400 font-medium py-3">No partner-delivered activities assigned by your team this financial year.</p>
+        {% endif %}
+      </div>
+
+      {# ── Key progress · distribution · districts ──────────────────────── #}
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-4 space-y-2.5">
+          <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Key Target Progress <span class="text-slate-400 font-medium text-[10.5px]">(Monthly)</span></h2>
+          {% for k in key_progress %}
+          <div>
+            <div class="flex items-center justify-between text-[11px]">
+              <span class="font-semibold text-slate-600">{{ k.label }}</span>
+              <span class="font-bold text-slate-700 tabular-nums">{{ k.achieved|intcomma }} / {{ k.target|intcomma }}{% if k.pct is not None %} &middot; {{ k.pct }}%{% endif %}</span>
+            </div>
+            <div class="h-[8px] bg-slate-100 rounded-full overflow-hidden mt-1">
+              <div class="h-full rounded-full {% if k.tone == 'success' %}bg-emerald-500{% elif k.tone == 'warning' %}bg-amber-500{% elif k.tone == 'danger' %}bg-rose-400{% else %}bg-slate-300{% endif %}" style="width: {{ k.bar }}%"></div>
+            </div>
+          </div>
+          {% endfor %}
+          <p class="text-[9.5px] text-slate-400 font-medium pt-1">Activity SF ID compliance is a compliance indicator, not a target area.</p>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-4 space-y-2"
+             x-data="{
+               chart: null,
+               initChart() {
+                 if (this.chart) { this.chart.destroy(); }
+                 const el = document.querySelector('#teamDist');
+                 if (!el) return;
+                 this.chart = new ApexCharts(el, {
+                   series: [{% for d in distribution %}{{ d.count }}{% if not forloop.last %},{% endif %}{% endfor %}],
+                   labels: [{% for d in distribution %}'{{ d.label|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+                   chart: { height: 190, type: 'donut', fontFamily: 'Outfit, sans-serif' },
+                   colors: [{% for d in distribution %}{% if d.label == 'On Track' %}'#10b981'{% elif d.label == 'Slightly Behind' %}'#f59e0b'{% elif d.label == 'High Risk' %}'#fb7185'{% else %}'#e11d48'{% endif %}{% if not forloop.last %},{% endif %}{% endfor %}],
+                   dataLabels: { enabled: false },
+                   plotOptions: { pie: { donut: { size: '72%', labels: { show: true,
+                     total: { show: true, label: 'Staff', fontSize: '10px', color: '#94a3b8',
+                              formatter: () => '{{ team_size }}' } } } } },
+                   legend: { position: 'bottom', fontSize: '10.5px', fontWeight: 600, labels: { colors: '#64748b' } },
+                   stroke: { width: 0 },
+                   tooltip: { theme: 'dark' }
+                 });
+                 this.chart.render();
+               }
+             }" x-init="$nextTick(() => initChart())">
+          <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Staff Target Status Distribution</h2>
+          {% if distribution %}
+          <div id="teamDist"></div>
+          {% else %}
+          <p class="text-[11.5px] text-slate-400 font-medium py-4">No staff with assigned targets this month.</p>
+          {% endif %}
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-4 space-y-2.5">
+          <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Districts Most Behind <span class="text-slate-400 font-medium text-[10.5px]">(Achievement %)</span></h2>
+          {% for d in districts_behind %}
+          <div>
+            <div class="flex items-center justify-between text-[11px]">
+              <span class="font-semibold text-slate-600 truncate">{{ d.district }}</span>
+              <span class="font-bold tabular-nums {% if d.pct < 50 %}text-rose-600{% elif d.pct < 80 %}text-amber-600{% else %}text-emerald-600{% endif %}">{{ d.pct }}%</span>
+            </div>
+            <div class="h-[8px] bg-slate-100 rounded-full overflow-hidden mt-1">
+              <div class="h-full rounded-full {% if d.pct < 50 %}bg-rose-400{% elif d.pct < 80 %}bg-amber-500{% else %}bg-emerald-500{% endif %}" style="width: {% if d.pct > 100 %}100{% else %}{{ d.pct }}{% endif %}%"></div>
+            </div>
+            <p class="text-[9.5px] font-semibold text-slate-400 mt-0.5">{{ d.staff }} staff &middot; gap {{ d.gap }} &middot; {{ d.schools }} schools</p>
+          </div>
+          {% empty %}
+          <p class="text-[11.5px] text-slate-400 font-medium py-3">No district data — supervised staff have no school assignments yet.</p>
+          {% endfor %}
+        </div>
+      </div>
+
+      {# ── Target Recovery Focus ────────────────────────────────────────── #}
+      <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Target Recovery Focus <span class="text-slate-400 font-medium text-[11px]">(Requires Immediate Action)</span></h2>
+          <button type="button" hx-get="/team-targets/recovery" hx-target="#drawer-container" hx-swap="innerHTML"
+                  class="h-7 px-2.5 inline-flex items-center gap-1 rounded-lg border border-slate-200 text-[10.5px] font-bold text-slate-600 hover:bg-slate-50">
+            Approval Queue{% if pending_catchups %} <span class="px-1.5 rounded-full bg-rose-100 text-rose-700 tabular-nums">{{ pending_catchups }}</span>{% endif %}
+          </button>
+        </div>
+        {% if recovery %}
+        <div class="overflow-x-auto -mx-4 px-4">
+          <table class="w-full min-w-[860px] text-[11.5px]">
+            <thead>
+              <tr class="border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider text-[9.5px] text-left">
+                <th class="py-2 pr-3">Staff / Target Area</th>
+                <th class="py-2 px-2">District</th>
+                <th class="py-2 px-2 text-center">Gap</th>
+                <th class="py-2 px-2 text-center">Achievement</th>
+                <th class="py-2 px-2">Recommended Action</th>
+                <th class="py-2 px-2">Deadline</th>
+                <th class="py-2 px-2">Risk</th>
+                <th class="py-2 px-2 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-50 font-semibold text-slate-700">
+              {% for r in recovery %}
+              <tr class="hover:bg-slate-50/50">
+                <td class="py-2.5 pr-3">
+                  <div class="flex items-center gap-2 min-w-0">
+                    <span class="h-6 w-6 rounded-full bg-slate-100 text-slate-500 text-[9px] font-bold flex items-center justify-center shrink-0">{{ r.initials }}</span>
+                    <div class="min-w-0"><p class="truncate">{{ r.staff }}</p><p class="text-[9.5px] text-slate-400 font-semibold">{{ r.area }} &middot; {{ r.reason }}</p></div>
+                  </div>
+                </td>
+                <td class="py-2.5 px-2 text-slate-500 truncate max-w-[110px]">{{ r.district }}</td>
+                <td class="py-2.5 px-2 text-center tabular-nums text-rose-600">-{{ r.gap }}</td>
+                <td class="py-2.5 px-2 text-center tabular-nums">{{ r.pct }}%</td>
+                <td class="py-2.5 px-2 text-slate-600">{{ r.recommendation }}</td>
+                <td class="py-2.5 px-2 text-slate-500 whitespace-nowrap">{{ r.deadline }}</td>
+                <td class="py-2.5 px-2"><span class="px-1.5 py-0.5 rounded text-[9.5px] font-bold {% if r.risk == 'Slightly Behind' %}bg-amber-50 text-amber-700{% else %}bg-rose-50 text-rose-700{% endif %}">{{ r.risk }}</span></td>
+                <td class="py-2.5 px-2 text-right whitespace-nowrap">
+                  <button type="button" hx-get="/team-targets/staff-drawer?staff={{ r.staff_user_id }}&fy={{ fy }}&month={{ month_of_fy }}" hx-target="#drawer-container" hx-swap="innerHTML"
+                          class="h-7 px-2 rounded-lg border border-slate-200 text-[10px] font-bold text-slate-600 hover:bg-slate-50">View Plan</button>
+                  {% if r.action_kind == 'catchup' or r.action_kind == 'view_plan' %}
+                  <button type="button" @click="showCatchup = true; catchupStaff = '{{ r.staff_user_id }}'; catchupArea = '{{ r.area_key }}'"
+                          class="h-7 px-2 rounded-lg bg-slate-800 text-white text-[10px] font-bold hover:bg-slate-700">Catch-Up Plan</button>
+                  {% elif r.action_kind == 'sfid' %}
+                  <button type="button" hx-get="/team-targets/sfid-backlog?fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML"
+                          class="h-7 px-2 rounded-lg bg-slate-800 text-white text-[10px] font-bold hover:bg-slate-700">SF ID Backlog</button>
+                  {% else %}
+                  <a href="/planning" class="inline-flex items-center h-7 px-2 rounded-lg bg-slate-800 text-white text-[10px] font-bold hover:bg-slate-700">Rebalance</a>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="rounded-xl border border-slate-100 bg-emerald-50/40 p-4 text-center">
+          <p class="text-[12px] font-semibold text-emerald-700">No staff currently need recovery action.</p>
+          <p class="text-[10.5px] text-slate-400 mt-1">Rows appear here automatically when a supervised CCEO falls behind pace.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    {# ── Right rail ─────────────────────────────────────────────────────── #}
+    <div class="lg:col-span-3 space-y-5 min-w-0">
+
+      <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-4 space-y-2">
+        <h2 class="text-[13px] font-bold text-slate-800 tracking-tight flex items-center gap-1.5">
+          <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          Quick Actions
+        </h2>
+        <button type="button" @click="staffFilter = 'risk'; document.getElementById('staff-performance').scrollIntoView({behavior:'smooth'})"
+                class="w-full h-9 px-3 flex items-center justify-between rounded-lg border border-slate-200 text-[11.5px] font-bold text-slate-600 hover:bg-slate-50 transition-colors">
+          Review High-Risk Staff <span class="text-slate-300">&rsaquo;</span>
+        </button>
+        <a href="/planning" class="w-full h-9 px-3 flex items-center justify-between rounded-lg border border-slate-200 text-[11.5px] font-bold text-slate-600 hover:bg-slate-50 transition-colors">
+          Rebalance Workload <span class="text-slate-300">&rsaquo;</span>
+        </a>
+        <button type="button" hx-get="/team-targets/matrix?fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML"
+                class="w-full h-9 px-3 flex items-center justify-between rounded-lg border border-slate-200 text-[11.5px] font-bold text-slate-600 hover:bg-slate-50 transition-colors">
+          View Team Targets <span class="text-slate-300">&rsaquo;</span>
+        </button>
+        <button type="button" hx-get="/team-targets/recovery" hx-target="#drawer-container" hx-swap="innerHTML"
+                class="w-full h-9 px-3 flex items-center justify-between rounded-lg border border-slate-200 text-[11.5px] font-bold text-slate-600 hover:bg-slate-50 transition-colors">
+          <span>Approve Catch-Up Plan{% if pending_catchups %} <span class="px-1.5 rounded-full bg-rose-100 text-rose-700 text-[9.5px] tabular-nums">{{ pending_catchups }}</span>{% endif %}</span> <span class="text-slate-300">&rsaquo;</span>
+        </button>
+        <button type="button" hx-get="/team-targets/sfid-backlog?fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML"
+                class="w-full h-9 px-3 flex items-center justify-between rounded-lg border border-slate-200 text-[11.5px] font-bold text-slate-600 hover:bg-slate-50 transition-colors">
+          Check Activity SF ID Backlog <span class="text-slate-300">&rsaquo;</span>
+        </button>
+      </div>
+
+      <a href="/debriefs?tab=team" class="block bg-white rounded-xl border border-slate-100 shadow-sm p-4 space-y-2 hover:border-slate-200 transition-colors">
+        <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Field Debrief Intelligence <span class="text-slate-400 font-medium text-[11px]">(last {{ field_debrief_intel.days }} days)</span></h2>
+        <div class="grid grid-cols-2 gap-2 text-center">
+          <div class="rounded-lg bg-slate-50 py-2">
+            <p class="text-[16px] font-bold text-slate-800 tabular-nums">{{ field_debrief_intel.total }}</p>
+            <p class="text-[9.5px] font-semibold text-slate-400">Debriefs Filed</p>
+          </div>
+          <div class="rounded-lg py-2 {% if field_debrief_intel.action_required or field_debrief_intel.escalated %}bg-rose-50{% else %}bg-slate-50{% endif %}">
+            <p class="text-[16px] font-bold tabular-nums {% if field_debrief_intel.action_required or field_debrief_intel.escalated %}text-rose-600{% else %}text-slate-800{% endif %}">{{ field_debrief_intel.action_required|add:field_debrief_intel.escalated }}</p>
+            <p class="text-[9.5px] font-semibold text-slate-400">Need Action</p>
+          </div>
+        </div>
+        {% if field_debrief_intel.top_challenge %}
+        <p class="text-[9.5px] text-slate-400 font-medium">Top challenge: <span class="font-bold text-slate-600">{{ field_debrief_intel.top_challenge }}</span> ({{ field_debrief_intel.top_challenge_count }})</p>
+        {% else %}
+        <p class="text-[9.5px] text-slate-300 font-medium">No field debriefs filed in this window.</p>
+        {% endif %}
+      </a>
+
+      <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-4 space-y-2.5">
+        <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Weekly Pacing <span class="block text-[9.5px] text-slate-400 font-semibold normal-case">{{ pacing.range_label }}</span></h2>
+        <div class="space-y-1 text-[11.5px] font-semibold text-slate-600">
+          <div class="flex justify-between"><span>Completed This Week</span><span class="tabular-nums font-bold text-slate-800">{{ pacing.completed|intcomma }}</span></div>
+          <div class="flex justify-between"><span>Weekly Target</span><span class="tabular-nums font-bold text-slate-800">{{ pacing.target|intcomma }}</span></div>
+          <div class="flex justify-between"><span>Status</span>
+            <span class="font-bold {% if pacing.tone == 'success' %}text-emerald-600{% elif pacing.tone == 'warning' %}text-amber-600{% elif pacing.tone == 'danger' %}text-rose-600{% else %}text-slate-400{% endif %}">{{ pacing.status }}</span></div>
+        </div>
+        <div class="h-[8px] bg-slate-100 rounded-full overflow-hidden">
+          <div class="h-full rounded-full {% if pacing.tone == 'success' %}bg-emerald-500{% elif pacing.tone == 'warning' %}bg-amber-500{% elif pacing.tone == 'danger' %}bg-rose-400{% else %}bg-slate-300{% endif %}" style="width: {{ pacing.pct }}%"></div>
+        </div>
+        <div class="grid grid-cols-7 gap-1 pt-1">
+          {% for d in pacing.days %}
+          <div class="text-center">
+            <p class="text-[8.5px] font-bold uppercase text-slate-300">{{ d.label|slice:":2" }}</p>
+            <div class="mx-auto mt-1 h-6 w-6 rounded-full flex items-center justify-center text-[9px] font-bold
+                        {% if d.is_today %}bg-slate-800 text-white{% elif not d.in_month %}text-slate-200{% elif d.weekend %}bg-slate-50 text-slate-300{% elif d.done %}bg-emerald-100 text-emerald-700{% elif d.future %}border border-slate-200 text-slate-400{% else %}bg-amber-50 text-amber-600{% endif %}">
+              {{ d.num }}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        <p class="text-[9.5px] text-slate-400 font-medium">Weekly target = remaining monthly target across remaining working weeks (holidays and approved leave excluded).</p>
+      </div>
+
+      <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-4 space-y-2">
+        <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">{{ calendar.label }}</h2>
+        <div class="grid grid-cols-7 gap-1 text-center text-[8.5px] font-bold uppercase text-slate-300">
+          <span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span><span>Su</span>
+        </div>
+        {% for week in calendar.weeks %}
+        <div class="grid grid-cols-7 gap-1">
+          {% for d in week %}
+          {% if d %}
+          <button type="button" hx-get="/team-targets/day?date={{ d.iso }}&fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML"
+                  class="h-7 w-full rounded-md text-[10px] font-bold tabular-nums transition-colors
+                         {% if d.today %}bg-slate-800 text-white{% elif d.tone == 'blocked' %}bg-slate-50 text-slate-300{% elif d.tone == 'future' %}text-slate-400 hover:bg-slate-50{% elif d.tone == 'good' %}bg-emerald-50 text-emerald-700 hover:bg-emerald-100{% else %}bg-amber-50 text-amber-600 hover:bg-amber-100{% endif %}">
+            {{ d.day }}
+          </button>
+          {% else %}
+          <span></span>
+          {% endif %}
+          {% endfor %}
+        </div>
+        {% endfor %}
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-[9px] font-semibold text-slate-400">
+          <span class="flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-emerald-400"></span> Validated work</span>
+          <span class="flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-amber-400"></span> No valid credit</span>
+          <span class="flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-slate-300"></span> Weekend / holiday</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="text-[9.5px] text-slate-300 font-semibold text-right">Aggregated from supervised CCEO My Targets ledgers &middot; validated work only &middot; refreshed {{ last_refreshed|date:"d M Y H:i" }}</p>
+</div>

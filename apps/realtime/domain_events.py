@@ -12,6 +12,7 @@ import this directly in the hot path; workflow services call `emit` after a
 successful state change. Best-effort: a failure here logs + swallows so the
 workflow itself succeeds.
 """
+
 from __future__ import annotations
 
 import logging
@@ -43,7 +44,9 @@ def emit(
     action_required?}. `live_user_ids` are the users who should get a realtime
     push (defaults to the notify recipients + the actor)."""
     try:
-        _append_domain_event_log(event_type, subject_kind, subject_id, actor_id, payload)
+        _append_domain_event_log(
+            event_type, subject_kind, subject_id, actor_id, payload
+        )
         _audit(event_type, subject_kind, subject_id, actor_id, actor_role, payload)
         event_id = cuid()
         notified: list[str] = []
@@ -79,15 +82,23 @@ def notify_only(
 ) -> None:
     """Like emit but skips the actor-role/payload audit detail (notify-only)."""
     emit(
-        event_type=event_type, actor_id=actor_id, subject_kind=subject_kind,
-        subject_id=subject_id, notify=notify, live_user_ids=live_user_ids,
+        event_type=event_type,
+        actor_id=actor_id,
+        subject_kind=subject_kind,
+        subject_id=subject_id,
+        notify=notify,
+        live_user_ids=live_user_ids,
     )
 
 
 def users_with_role(role: str) -> list[str]:
     from apps.accounts.models import User
 
-    return list(User.objects.filter(deleted_at__isnull=True, status="active", roles__contains=[role]).values_list("id", flat=True))
+    return list(
+        User.objects.filter(
+            deleted_at__isnull=True, status="active", roles__contains=[role]
+        ).values_list("id", flat=True)
+    )
 
 
 def user_for_staff(staff_profile_id: str | None) -> str | None:
@@ -116,8 +127,12 @@ def _audit(event_type, subject_kind, subject_id, actor_id, actor_role, payload):
         from apps.audit.services import log as audit_log
 
         audit_log(
-            action=event_type, subject_kind=subject_kind, subject_id=subject_id,
-            actor_id=actor_id, actor_role=actor_role, payload=payload,
+            action=event_type,
+            subject_kind=subject_kind,
+            subject_id=subject_id,
+            actor_id=actor_id,
+            actor_role=actor_role,
+            payload=payload,
         )
     except Exception:  # noqa: BLE001
         # The audit app may not be present yet during the build.
@@ -125,21 +140,17 @@ def _audit(event_type, subject_kind, subject_id, actor_id, actor_role, payload):
 
 
 def _create_notification(recipient_id, event_type, event_id, spec):
-    from apps.notifications.models import Notification
+    from apps.notifications.services import WorkflowNotificationService
 
-    Notification.objects.create(
-        recipient_id=recipient_id,
-        recipient_role=spec.get("recipient_role"),
+    WorkflowNotificationService.trigger(
+        event_type=event_type,
+        category=spec.get("category", "general"),
+        priority=spec.get("priority", "normal"),
         title=spec.get("title", event_type),
         body=spec.get("body"),
         context_type=spec.get("context_type"),
-        context_id=spec.get("context_id"),
-        target_route=spec.get("target_route"),
-        action_label=spec.get("action_label"),
-        action_required=bool(spec.get("action_required")),
-        priority=spec.get("priority", "normal"),
-        source_event_type=event_type,
-        source_event_id=event_id,
+        context_id=spec.get("context_id") or event_id,
+        recipients=[recipient_id]
     )
 
 

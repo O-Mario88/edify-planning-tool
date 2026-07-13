@@ -49,12 +49,13 @@ border-color: #94a3b8 !important;
 padding: 4px 28px 28px 28px !important;
 }
 </style>
-<form 
+<form
 hx-post="/planning/assign-partner-action"
 hx-target="#assign-errors"
 class="space-y-4 text-[12px] font-bold text-slate-600"
 >
 {% csrf_token %}
+{% if project_id %}<input type="hidden" name="project_id" value="{{ project_id }}">{% endif %}
 {% if school %}
 <input type="hidden" name="school_id" value="{{ school.school_id }}">
 {% endif %}
@@ -68,7 +69,7 @@ class="space-y-4 text-[12px] font-bold text-slate-600"
 <!-- SSA Recommendation Warning -->
 {% if school and school.current_fy_ssa_status != 'done' %}
 <div class="p-3.5 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl text-[12px] font-bold shadow-sm leading-normal">
-💡 Recommended partner task: Collect SSA baseline first.
+<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9.7 17h4.6M12 3a6 6 0 00-3.5 10.9c.6.5 1 1.2 1.2 2.1h4.6c.2-.9.6-1.6 1.2-2.1A6 6 0 0012 3z"/></svg> Recommended partner task: Collect SSA baseline first.
 </div>
 {% endif %}
 
@@ -199,7 +200,7 @@ return parseInt(parts[0]) === this.currentYear &&
 parseInt(parts[2]) === day;
 }
 }"
-class="relative font-sans"
+class="relative "
 >
 <!-- Dropdown Trigger button -->
 <button 
@@ -224,7 +225,7 @@ class="w-full h-10 px-3 flex items-center justify-between rounded-lg border bord
 <div 
 x-show="open"
 @click.outside="open = false"
-class="absolute left-0 mt-1.5 w-[280px] bg-white border border-slate-200 rounded-2xl shadow-xl p-4 z-50 space-y-3 font-sans select-none"
+class="absolute left-0 mt-1.5 w-[280px] bg-white border border-slate-200 rounded-lg shadow-xl p-4 z-50 space-y-3 select-none"
 style="display: none;"
 x-transition:enter="transition ease-out duration-100"
 x-transition:enter-start="opacity-0 transform scale-95"

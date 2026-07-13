@@ -1,0 +1,75 @@
+{% load frontend_filters %}
+{# Read-only recap of a PD request — reused by reviewer mode and the
+   employee's own post-submission (non-editable) view. Expects `instance`. #}
+<div class="grid grid-cols-2 gap-x-4 gap-y-2 text-[11.5px]">
+  <div><p class="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Employee</p><p class="font-semibold text-slate-700">{{ instance.staff_name }}</p></div>
+  <div><p class="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Position</p><p class="font-semibold text-slate-700">{{ instance.position|default:"—" }}</p></div>
+  <div><p class="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Department</p><p class="font-semibold text-slate-700">{{ instance.department|default:"—" }}</p></div>
+  <div><p class="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Supervisor</p><p class="font-semibold text-slate-700">{{ instance.supervisor_name|default:"Not configured" }}</p></div>
+</div>
+
+<div class="border-t border-slate-100 pt-3 space-y-2">
+  <p class="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Course</p>
+  <p class="text-[13px] font-bold text-slate-800">{{ instance.course_name }}</p>
+  <p class="text-[11.5px] text-slate-500 font-medium">{{ instance.institution }}{% if instance.course_link %} · <a href="{{ instance.course_link }}" target="_blank" rel="noopener" class="text-blue-600 hover:underline">{{ instance.course_link }}</a>{% endif %}</p>
+  <div class="flex flex-wrap items-center gap-1.5">
+    <span class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[9.5px] font-bold">{{ instance.get_course_type_display }}</span>
+    <span class="px-1.5 py-0.5 rounded bg-violet-50 text-violet-700 text-[9.5px] font-bold">{{ instance.course_category }}</span>
+    {% if instance.certification_expected %}<span class="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 text-[9.5px] font-bold">Certificate Expected</span>{% endif %}
+  </div>
+  <p class="text-[11px] text-slate-500 font-medium">{{ instance.start_date|date:"d M Y" }} – {{ instance.end_date|date:"d M Y" }}</p>
+  {% if instance.relevance_to_role %}<p class="text-[11px] text-slate-600"><span class="font-bold text-slate-400">Relevance:</span> {{ instance.relevance_to_role }}</p>{% endif %}
+  {% if instance.skills_to_develop %}<p class="text-[11px] text-slate-600"><span class="font-bold text-slate-400">Skills:</span> {{ instance.skills_to_develop }}</p>{% endif %}
+</div>
+
+<div class="border-t border-slate-100 pt-3 space-y-2">
+  <p class="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Funding</p>
+  <div class="grid grid-cols-2 gap-x-4 gap-y-1.5 text-[11.5px]">
+    <div><span class="text-slate-400 font-medium">Course fee</span> <span class="font-bold text-slate-700 tabular-nums">{{ instance.currency }} {{ instance.course_fee_cents|divide:100|currency }}</span></div>
+    <div><span class="text-slate-400 font-medium">Other costs</span> <span class="font-bold text-slate-700 tabular-nums">{{ instance.currency }} {{ instance.other_costs_cents|divide:100|currency }}</span></div>
+    <div><span class="text-slate-400 font-medium">Employee contribution</span> <span class="font-bold text-slate-700 tabular-nums">{{ instance.currency }} {{ instance.employee_contribution_cents|divide:100|currency }}</span></div>
+    <div><span class="text-slate-400 font-medium">Requested from Edify</span> <span class="font-bold text-slate-700 tabular-nums">{{ instance.currency }} {{ instance.requested_amount_cents|divide:100|currency }}</span></div>
+  </div>
+  <p class="text-[11px] font-semibold text-slate-600">{{ instance.get_funding_type_display }}</p>
+  {% if instance.is_exception %}
+  <div class="rounded-lg bg-amber-50 border border-amber-100 p-2.5">
+    <p class="text-[10.5px] font-bold text-amber-800">Funding exception requested</p>
+    <p class="text-[10.5px] text-amber-700 mt-0.5">{{ instance.exception_reason|default:"No reason provided." }}</p>
+  </div>
+  {% endif %}
+</div>
+
+{% if conflict and conflict.status != 'no_conflict' %}
+<div class="rounded-lg p-2.5 border {% if conflict.status == 'major_conflict' %}bg-rose-50 border-rose-100{% else %}bg-amber-50 border-amber-100{% endif %}">
+  <p class="text-[10.5px] font-bold {% if conflict.status == 'major_conflict' %}text-rose-800{% else %}text-amber-800{% endif %}">
+    {% if conflict.status == 'major_conflict' %}Major schedule conflict{% elif conflict.status == 'supervisor_review_required' %}Schedule conflict — supervisor review required{% else %}Minor schedule conflict{% endif %}
+  </p>
+  <p class="text-[10.5px] {% if conflict.status == 'major_conflict' %}text-rose-700{% else %}text-amber-700{% endif %} mt-0.5">{{ conflict.detail }}</p>
+</div>
+{% endif %}
+
+{% if evidence %}
+<div class="border-t border-slate-100 pt-3 space-y-1.5">
+  <p class="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Enrollment Evidence</p>
+  {% for e in evidence %}
+  <a href="/my-professional-development/evidence/{{ e.id }}" target="_blank" class="flex items-center gap-2 text-[11px] font-semibold text-slate-600 hover:text-blue-600">
+    <svg class="h-3.5 w-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+    {{ e.original_name }} <span class="text-slate-400 font-medium">· {{ e.get_kind_display }}</span>
+    {% if e.status == 'returned' %}<span class="px-1 py-0.5 rounded bg-rose-50 text-rose-600 text-[9px] font-bold">Returned</span>{% endif %}
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if certificates %}
+<div class="border-t border-slate-100 pt-3 space-y-1.5">
+  <p class="text-[9.5px] font-bold uppercase tracking-wider text-slate-400">Certificates</p>
+  {% for c in certificates %}
+  <a href="/my-professional-development/certificate/{{ c.id }}" target="_blank" class="flex items-center gap-2 text-[11px] font-semibold text-slate-600 hover:text-blue-600">
+    <svg class="h-3.5 w-3.5 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15a4 4 0 100-8 4 4 0 000 8z"/><path stroke-linecap="round" stroke-linejoin="round" d="M8.5 12.5L7 21l5-2.5L17 21l-1.5-8.5"/></svg>
+    {{ c.certificate_name|default:c.original_name }}
+    {% if c.status == 'returned' %}<span class="px-1 py-0.5 rounded bg-rose-50 text-rose-600 text-[9px] font-bold">Returned</span>{% elif c.status == 'verified' %}<span class="px-1 py-0.5 rounded bg-emerald-50 text-emerald-600 text-[9px] font-bold">Verified</span>{% endif %}
+  </a>
+  {% endfor %}
+</div>
+{% endif %}

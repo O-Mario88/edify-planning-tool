@@ -3,16 +3,16 @@
 {% block title %}Today — Edify Command Center{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-5xl mx-auto space-y-6">
+<div class="px-4 sm:px-6 py-5 space-y-4" style="max-width:1100px;margin:0 auto;">
 <!-- Header -->
 <div>
-<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight">Today</h1>
-<p class="text-[12px] text-[var(--text-secondary)] mt-1 font-semibold">{{ today|date:"l, j F Y" }} · Work waiting on you right now</p>
+<h1 class="text-[21px] font-extrabold tracking-tight">Today</h1>
+<p class="text-[12px] text-[var(--edify-text-muted)] mt-1 font-semibold">{{ today|date:"l, j F Y" }} · Work waiting on you right now</p>
 </div>
 
 <!-- Overdue Alert -->
 {% if overdue %}
-<div class="bg-rose-50 border border-rose-200 rounded-2xl p-4">
+<div class="bg-rose-50 border border-rose-200 rounded-lg p-4">
 <div class="flex items-center gap-3 mb-3">
 <div class="h-8 w-8 rounded-lg bg-rose-100 grid place-items-center">
 <svg class="h-4 w-4 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
@@ -37,9 +37,9 @@
 {% endif %}
 
 <!-- Today's Activities -->
-<div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm">
+<div class="bg-white rounded-lg border border-[var(--edify-border)] shadow-sm">
 <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-<h2 class="text-[14px] font-semibold text-slate-700">Today's Activities</h2>
+<h2 class="text-[14px] font-semibold">Today's Activities</h2>
 <span class="text-[12px] font-bold text-slate-400">{{ today|date:"j F" }}</span>
 </div>
 {% if today_activities %}
@@ -67,25 +67,25 @@
 {% if act.status == 'completed' %}bg-emerald-50 text-emerald-700{% elif act.status == 'scheduled' %}bg-blue-50 text-blue-700{% else %}bg-amber-50 text-amber-700{% endif %}">
 {{ act.status|title }}
 </span>
-<a href="/my-plan/{{ act.id }}" class="opacity-0 group-hover:opacity-100 text-[11px] font-bold text-[var(--color-edify-primary)] transition-opacity">View →</a>
+<a href="/my-plan/{{ act.id }}" class="opacity-70 group-hover:opacity-100 focus-visible:opacity-100 text-[11px] font-bold text-[var(--edify-accent)] transition-opacity">View →</a>
 </div>
 </li>
 {% endfor %}
 </ul>
 {% else %}
 <div class="p-8 text-center">
-<p class="text-[20px] mb-2">✅</p>
+<p class="text-[20px] mb-2"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></p>
 <p class="text-[14px] font-semibold text-slate-500">No activities scheduled for today</p>
-<a href="/planning" class="mt-3 inline-flex items-center text-[12px] font-bold text-[var(--color-edify-primary)] hover:underline">Schedule an activity →</a>
+<a href="/planning" class="mt-3 inline-flex items-center text-[12px] font-bold text-[var(--edify-accent)] hover:underline">Schedule an activity →</a>
 </div>
 {% endif %}
 </div>
 
 <!-- This Week Upcoming -->
 {% if upcoming_week %}
-<div class="bg-white rounded-2xl border border-[var(--border-card)] shadow-sm">
+<div class="bg-white rounded-lg border border-[var(--edify-border)] shadow-sm">
 <div class="px-5 py-4 border-b border-slate-100">
-<h2 class="text-[14px] font-semibold text-slate-700">Coming This Week</h2>
+<h2 class="text-[14px] font-semibold">Coming This Week</h2>
 </div>
 <ul class="divide-y divide-slate-100">
 {% for act in upcoming_week %}
@@ -103,12 +103,12 @@
 
 <!-- Evidence Gap -->
 {% if evidence_gap %}
-<div class="bg-amber-50 border border-amber-200 rounded-2xl p-4">
-<h3 class="text-[14px] font-semibold text-amber-800 mb-3">📎 Evidence Missing ({{ evidence_gap|length }})</h3>
+<div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
+<h3 class="text-[14px] font-semibold text-amber-800 mb-3"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.2 7.4l-6.8 6.8a2 2 0 102.8 2.8l6.8-6.8a4 4 0 10-5.6-5.6L5.5 11.5a6 6 0 108.5 8.5l6-6"/></svg> Evidence Missing ({{ evidence_gap|length }})</h3>
 <ul class="space-y-2">
 {% for act in evidence_gap %}
 <li class="flex items-center justify-between bg-white rounded-xl px-4 py-2.5 border border-amber-100">
-<p class="text-[12px] font-semibold text-slate-700">{{ act.activity_type|title }}{% if act.school %} @ {{ act.school.name }}{% endif %}</p>
+<p class="text-[12px] font-semibold">{{ act.activity_type|title }}{% if act.school %} @ {{ act.school.name }}{% endif %}</p>
 <a href="/my-plan/{{ act.id }}" class="text-[11px] font-bold text-amber-700 hover:underline">Upload Evidence →</a>
 </li>
 {% endfor %}

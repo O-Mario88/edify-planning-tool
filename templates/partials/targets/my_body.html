@@ -1,0 +1,288 @@
+{% load frontend_filters %}
+<div class="space-y-5">
+
+  {# ── Period progression: Current Month → Q1–Q4 → FY Cumulative ─────────── #}
+  <div class="flex flex-col lg:flex-row items-stretch gap-2">
+    {% for c in period_cards %}
+    <div class="flex-1 bg-white rounded-xl border {% if c.current %}border-blue-200 ring-2 ring-blue-100{% else %}border-slate-100{% endif %} shadow-sm p-3.5 flex flex-col gap-1.5 min-w-0">
+      <div class="flex items-center justify-between">
+        <p class="text-[10px] font-bold uppercase tracking-wider {% if c.current %}text-blue-600{% else %}text-slate-400{% endif %} truncate">{{ c.label }}</p>
+        <span class="text-[8.5px] font-bold uppercase tracking-wider text-slate-300 shrink-0">{{ c.sublabel }}</span>
+      </div>
+      <div class="flex items-center gap-2.5">
+        <div class="relative h-[52px] w-[52px] shrink-0 rounded-full"
+             style="background: conic-gradient({% if c.tone == 'success' %}#10b981{% elif c.tone == 'warning' %}#f59e0b{% elif c.tone == 'danger' %}#f43f5e{% else %}#cbd5e1{% endif %} 0% {{ c.ring }}%, var(--edify-border, #e2e8f0) {{ c.ring }}% 100%);">
+          <div class="absolute inset-[6px] bg-white rounded-full flex items-center justify-center">
+            <span class="text-[12px] font-bold text-slate-800 tabular-nums">{{ c.pct }}%</span>
+          </div>
+        </div>
+        <div class="min-w-0">
+          <p class="text-[11px] font-bold {% if c.tone == 'success' %}text-emerald-600{% elif c.tone == 'warning' %}text-amber-600{% elif c.tone == 'danger' %}text-rose-600{% else %}text-slate-400{% endif %}">{{ c.status }}</p>
+          <p class="text-[11.5px] font-bold text-slate-700 tabular-nums">{{ c.achieved|intcomma }} / {{ c.target|intcomma }}</p>
+          <p class="text-[9px] font-semibold text-slate-400">{% if c.status != 'Not Started' %}pace {{ c.pace }}%{% else %}&nbsp;{% endif %}</p>
+        </div>
+      </div>
+    </div>
+    {% if not forloop.last %}
+    <div class="hidden lg:flex items-center shrink-0 text-slate-300">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7"/></svg>
+    </div>
+    {% endif %}
+    {% endfor %}
+  </div>
+  <div class="flex items-center justify-between -mt-2">
+    <p class="text-[10.5px] text-slate-400 font-medium">Monthly achievements contribute to their quarter; Q1–Q4 roll into the financial year. Validated work only.</p>
+    <button type="button" @click="showRollup = true" class="text-[10.5px] font-bold text-blue-600 hover:text-blue-700 shrink-0">How roll-up works</button>
+  </div>
+
+  {# ── Five target-area cards ─────────────────────────────────────────────── #}
+  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+    {% for a in area_cards %}
+    <div hx-get="/my-targets/area-drawer?area={{ a.key }}&fy={{ fy }}&month={{ month_of_fy }}"
+         hx-target="#drawer-container" hx-swap="innerHTML"
+         class="bg-white rounded-xl border border-slate-100 shadow-sm p-3.5 cursor-pointer hover:border-slate-200 hover:shadow transition-all">
+      <div class="flex items-center justify-between">
+        <p class="text-[10.5px] font-bold text-slate-600 truncate">{{ a.label }}</p>
+        <svg class="h-3 w-3 text-slate-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+      </div>
+      <p class="text-[17px] font-bold text-slate-800 tabular-nums mt-1.5">{{ a.achieved|intcomma }} <span class="text-[12px] text-slate-400">/ {{ a.target|intcomma }}</span></p>
+      <div class="flex items-center justify-between mt-1">
+        <span class="text-[10px] font-bold {% if a.tone == 'success' %}text-emerald-600{% elif a.tone == 'warning' %}text-amber-600{% elif a.tone == 'danger' %}text-rose-600{% else %}text-slate-400{% endif %}">
+          {% if a.pct is not None %}{{ a.pct }}% · {% endif %}{{ a.status }}
+        </span>
+        {% if a.spark_points %}
+        <svg viewBox="0 0 60 20" class="h-5 w-[60px] shrink-0">
+          <polyline points="{{ a.spark_points }}" fill="none" stroke="{% if a.tone == 'danger' %}#f43f5e{% elif a.tone == 'warning' %}#f59e0b{% else %}#10b981{% endif %}" stroke-width="1.6"/>
+        </svg>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {# ── Targets by Time Period matrix ──────────────────────────────────────── #}
+  <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-3">
+    <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Targets by Time Period</h2>
+    <div class="overflow-x-auto">
+      <table class="w-full text-[11px] border-collapse min-w-[860px]">
+        <thead>
+          <tr class="border-b border-slate-100 text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
+            <th class="py-2.5 px-3 text-left sticky left-0 bg-white z-10">Target Area</th>
+            {% for h in matrix_heads %}
+            <th class="py-2 px-2 text-center border-l border-slate-100 {% if forloop.first %}bg-blue-50/40{% endif %}" colspan="3">
+              <span class="block text-slate-600 font-bold">{{ h.label }}</span>
+              <span class="block text-[8.5px] text-slate-400 normal-case">{{ h.sub }}</span>
+            </th>
+            {% endfor %}
+          </tr>
+          <tr class="border-b border-slate-100 text-slate-400 font-bold text-[9.5px] uppercase">
+            <th class="py-1 px-3 sticky left-0 bg-white z-10"></th>
+            {% for h in matrix_heads %}
+            <th class="py-1 text-center border-l border-slate-100">Tgt</th><th class="py-1 text-center">Ach</th><th class="py-1 text-center">%</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-50 font-semibold text-slate-700">
+          {% for row in matrix_rows %}
+          <tr class="hover:bg-slate-50/50 cursor-pointer"
+              hx-get="/my-targets/area-drawer?area={{ row.key }}&fy={{ fy }}&month={{ month_of_fy }}"
+              hx-target="#drawer-container" hx-swap="innerHTML">
+            <td class="py-2.5 px-3 font-semibold text-slate-800 whitespace-nowrap sticky left-0 bg-white z-10">{{ row.label }}</td>
+            {% for cell in row.cells %}
+            <td class="py-2.5 text-center border-l border-slate-50 font-bold text-slate-400 tabular-nums">{{ cell.t }}</td>
+            <td class="py-2.5 text-center font-semibold text-slate-800 tabular-nums">{{ cell.a }}</td>
+            <td class="py-2.5 text-center font-semibold tabular-nums {% if cell.pct == None %}text-slate-300{% elif cell.pct >= 100 %}text-emerald-600{% elif cell.pct >= 60 %}text-amber-600{% else %}text-rose-500{% endif %}">{% if cell.pct != None %}{{ cell.pct }}%{% else %}—{% endif %}</td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+          <tr class="border-t border-slate-100 bg-slate-50/60">
+            <td class="py-2.5 px-3 font-bold text-slate-800 sticky left-0 bg-slate-50 z-10">Overall Progress</td>
+            {% for cell in overall_cells %}
+            <td class="py-2.5 text-center border-l border-slate-100" colspan="3">
+              <span class="font-bold tabular-nums {% if cell.pct >= 70 %}text-emerald-600{% elif cell.pct >= 50 %}text-amber-600{% else %}text-rose-500{% endif %}">{{ cell.pct }}%</span>
+            </td>
+            {% endfor %}
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="text-[9.5px] text-slate-400 font-medium">Weighted overall progress ({% for a in area_cards %}{{ a.label }} {{ a.weight }}%{% if not forloop.last %} · {% endif %}{% endfor %}). Areas without a target are excluded.</p>
+  </div>
+
+  {# ── Charts + focus row ─────────────────────────────────────────────────── #}
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+    <div class="lg:col-span-5 bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-2"
+         x-data="{
+           chart: null,
+           initChart() {
+             if (this.chart) { this.chart.destroy(); }
+             const el = document.querySelector('#myTargetTrend');
+             if (!el) return;
+             this.chart = new ApexCharts(el, {
+               series: [
+                 { name: 'Actual', data: {{ trend.actual_json|safe }} },
+                 { name: 'Expected Target Pace', data: {{ trend.expected_json|safe }} }
+               ],
+               chart: { height: 240, type: 'line', toolbar: { show: false }, fontFamily: 'Outfit, sans-serif' },
+               stroke: { width: [2.5, 2], curve: 'smooth', dashArray: [0, 6] },
+               colors: ['#2563eb', '#94a3b8'],
+               markers: { size: [3, 0] },
+               labels: [{% for l in trend.labels %}'{{ l|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+               xaxis: { axisBorder: { show: false }, axisTicks: { show: false },
+                        labels: { style: { colors: '#94a3b8', fontSize: '9.5px', fontWeight: '600' } } },
+               yaxis: { max: 100, min: 0, labels: { formatter: v => Math.round(v) + '%', style: { colors: '#94a3b8', fontSize: '10px' } } },
+               annotations: { xaxis: [{ x: '{{ trend.current_label|escapejs }}', borderColor: '#2563eb',
+                 label: { text: 'now', style: { color: '#fff', background: '#2563eb', fontSize: '9px' } } }] },
+               grid: { borderColor: '#94a3b833', strokeDashArray: 4 },
+               legend: { position: 'top', horizontalAlign: 'left', fontSize: '11px', fontWeight: 600, labels: { colors: '#64748b' } },
+               tooltip: { theme: 'dark' }
+             });
+             this.chart.render();
+           }
+         }" x-init="$nextTick(() => initChart())">
+      <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Progress Trend <span class="text-slate-400 font-medium text-[11px]">(Cumulative, FY {{ fy }})</span></h2>
+      <div class="h-[240px] w-full" id="myTargetTrend"></div>
+    </div>
+
+    <div class="lg:col-span-3 bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-3">
+      <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Contribution to Roll-up</h2>
+      <div class="space-y-2.5">
+        {% for c in period_cards %}
+        <div>
+          <div class="flex items-center justify-between text-[11px]">
+            <span class="font-semibold {% if c.current %}text-blue-700{% else %}text-slate-600{% endif %}">{% if c.kind == 'month' %}{{ c.label }} (Monthly){% elif c.kind == 'fy' %}FY Cumulative{% else %}{{ c.label }}{% endif %}</span>
+            <span class="font-bold text-slate-700 tabular-nums">{{ c.pct }}%</span>
+          </div>
+          <div class="h-[8px] bg-slate-100 rounded-full overflow-hidden mt-1">
+            <div class="h-full rounded-full {% if c.tone == 'success' %}bg-emerald-500{% elif c.tone == 'warning' %}bg-amber-500{% elif c.tone == 'danger' %}bg-rose-400{% else %}bg-slate-300{% endif %}" style="width: {{ c.ring }}%"></div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="lg:col-span-4 space-y-5">
+      <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-2"
+           x-data="{
+             chart: null,
+             initChart() {
+               if (this.chart) { this.chart.destroy(); }
+               const el = document.querySelector('#myTargetDist');
+               if (!el) return;
+               this.chart = new ApexCharts(el, {
+                 series: [{% for d in distribution %}{{ d.count }}{% if not forloop.last %},{% endif %}{% endfor %}],
+                 labels: [{% for d in distribution %}'{{ d.label|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+                 chart: { height: 170, type: 'donut', fontFamily: 'Outfit, sans-serif' },
+                 colors: [{% for d in distribution %}{% if d.label == 'On Track' %}'#10b981'{% elif d.label == 'At Risk' %}'#f59e0b'{% elif d.label == 'Off Track' %}'#f43f5e'{% elif d.label == 'Complete / Exceeded' %}'#2563eb'{% else %}'#94a3b8'{% endif %}{% if not forloop.last %},{% endif %}{% endfor %}],
+                 dataLabels: { enabled: false },
+                 plotOptions: { pie: { donut: { size: '72%', labels: { show: true,
+                   total: { show: true, label: 'Areas', fontSize: '10px', color: '#94a3b8',
+                            formatter: () => '{{ assigned_count }}' } } } } },
+                 legend: { position: 'right', fontSize: '10.5px', fontWeight: 600, labels: { colors: '#64748b' } },
+                 stroke: { width: 0 },
+                 tooltip: { theme: 'dark' }
+               });
+               this.chart.render();
+             }
+           }" x-init="$nextTick(() => initChart())">
+        <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Performance Distribution</h2>
+        {% if distribution %}
+        <div id="myTargetDist"></div>
+        {% else %}
+        <p class="text-[11.5px] text-slate-400 font-medium py-4">No target areas assigned this month — ask your supervisor to set your monthly targets.</p>
+        {% endif %}
+      </div>
+
+      <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-2">
+        <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Top Areas to Focus</h2>
+        {% if focus %}
+        <div class="divide-y divide-slate-50">
+          {% for f in focus %}
+          <div class="py-2.5 flex items-start gap-2.5">
+            <span class="h-5 w-5 rounded-full bg-slate-100 text-slate-500 text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">{{ forloop.counter }}</span>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center justify-between gap-2">
+                <p class="text-[12px] font-bold text-slate-700">{{ f.area }}</p>
+                <span class="px-1.5 py-0.5 rounded text-[9px] font-bold shrink-0 {% if f.tone == 'danger' %}bg-rose-50 text-rose-700{% else %}bg-amber-50 text-amber-700{% endif %}">{{ f.status }}</span>
+              </div>
+              <p class="text-[10.5px] text-slate-500">{{ f.achieved }} of {{ f.target }} achieved · {{ f.reason }}</p>
+              {% if f.action_url == '?mscs=new' %}
+              <button type="button" @click="showMscs = true" class="text-[10.5px] font-bold text-blue-600 hover:text-blue-700 mt-0.5">{{ f.action_label }} →</button>
+              {% else %}
+              <a href="{{ f.action_url }}" class="inline-block text-[10.5px] font-bold text-blue-600 hover:text-blue-700 mt-0.5">{{ f.action_label }} →</a>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-[11.5px] text-slate-400 font-medium py-3">All assigned areas are on pace — keep executing the plan.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {# ── Core School Tracker (4 visits + 4 trainings per core school) ───────── #}
+  <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-3">
+    <div class="flex items-center justify-between pb-2 border-b border-slate-50">
+      <div>
+        <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Core School Tracker</h2>
+        <p class="text-[11px] text-slate-400 font-medium mt-0.5">The core package per school — baseline assessment, 4 visits and 4 trainings.</p>
+      </div>
+      {% if core_tracker_data.total %}<a href="/core-schools" class="text-[10.5px] font-bold text-blue-600 hover:text-blue-700">{% if core_tracker_data.total > 12 %}All {{ core_tracker_data.total }} core schools →{% else %}Open Core Schools →{% endif %}</a>{% endif %}
+    </div>
+    {% if core_tracker_data.rows %}
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-[11px] border-collapse min-w-[680px]">
+        <thead>
+          <tr class="border-b border-slate-100 text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
+            <th class="py-2 px-3">Core School</th>
+            <th class="py-2 px-3 text-center">Baseline</th>
+            <th class="py-2 px-3">Visits (4)</th>
+            <th class="py-2 px-3">Trainings (4)</th>
+            <th class="py-2 px-3 text-center">Package</th>
+            <th class="py-2 px-3 text-right">Status</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-50 font-semibold text-slate-700">
+          {% for c in core_tracker_data.rows %}
+          <tr class="hover:bg-slate-50/50">
+            <td class="py-2.5 px-3 font-semibold text-slate-800 max-w-[220px] truncate">{{ c.school }}</td>
+            <td class="py-2.5 px-3 text-center tabular-nums {% if c.baseline == None %}text-slate-300{% else %}text-slate-700{% endif %}">{% if c.baseline != None %}{{ c.baseline|floatformat:1 }}/10{% else %}—{% endif %}</td>
+            <td class="py-2.5 px-3">
+              <span class="inline-flex items-center gap-1">
+                {% for done in c.visit_dots %}<span class="h-2.5 w-2.5 rounded-full {% if done %}bg-teal-500{% else %}bg-slate-200{% endif %}"></span>{% endfor %}
+                <span class="text-[10px] text-slate-400 font-bold ml-1 tabular-nums">{{ c.visits_done }}/4</span>
+              </span>
+            </td>
+            <td class="py-2.5 px-3">
+              <span class="inline-flex items-center gap-1">
+                {% for done in c.training_dots %}<span class="h-2.5 w-2.5 rounded-full {% if done %}bg-violet-500{% else %}bg-slate-200{% endif %}"></span>{% endfor %}
+                <span class="text-[10px] text-slate-400 font-bold ml-1 tabular-nums">{{ c.trainings_done }}/4</span>
+              </span>
+            </td>
+            <td class="py-2.5 px-3 text-center">
+              <span class="inline-flex items-center gap-1.5">
+                <span class="w-14 h-[6px] bg-slate-100 rounded-full overflow-hidden"><span class="block h-full rounded-full {% if c.pct >= 100 %}bg-emerald-500{% elif c.pct >= 50 %}bg-teal-500{% elif c.pct > 0 %}bg-amber-500{% else %}bg-slate-200{% endif %}" style="width: {{ c.pct }}%"></span></span>
+                <span class="tabular-nums text-[10.5px] font-bold text-slate-600">{{ c.pct }}%</span>
+              </span>
+            </td>
+            <td class="py-2.5 px-3 text-right">
+              <span class="px-1.5 py-0.5 rounded text-[9.5px] font-bold
+              {% if c.tone == 'success' %}bg-emerald-50 text-emerald-700
+              {% elif c.tone == 'info' %}bg-sky-50 text-sky-700
+              {% elif c.tone == 'warning' %}bg-amber-50 text-amber-700
+              {% else %}bg-slate-100 text-slate-500{% endif %}">{{ c.status }}</span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    {% include "components/empty_state.html" with title="No core schools in your portfolio yet" message="When a school in your portfolio is onboarded as a core school, its assessment + 4 visits + 4 trainings package is tracked here." %}
+    {% endif %}
+  </div>
+
+  <p class="text-[9.5px] text-slate-400 font-medium text-right">Last refreshed {{ last_refreshed|date:"d M Y H:i" }}</p>
+</div>

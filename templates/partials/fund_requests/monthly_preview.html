@@ -1,118 +1,34 @@
 {% load frontend_filters %}
-<!-- Monthly Fund Request Preview Card -->
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-6 font-sans text-slate-700" id="fund-requests-monthly-preview">
-<div class="flex items-center justify-between">
-<div class="flex items-center gap-2">
-<h3 class="text-[15px] font-semibold text-slate-800">Monthly Fund Request — {{ selected_month }} {{ selected_fy }}</h3>
-<span class="inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider bg-purple-50 text-purple-600 border border-purple-100">Preview</span>
-</div>
-</div>
-
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-<!-- Left column: Weekly Totals -->
-<div class="space-y-3">
-<h4 class="text-[12px] font-semibold text-slate-800 uppercase tracking-wider">Weekly Totals ({{ selected_month }})</h4>
-<div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 gap-2">
-{% for wk in monthly_weeks %}
-<div class="bg-slate-50/50 p-2.5 rounded-lg border border-slate-100 flex flex-col justify-between hover:shadow-sm transition-shadow">
-<div>
-<span class="text-[11px] font-bold text-slate-400 block">{{ wk.label }}</span>
-<span class="text-[11px] text-slate-500 font-semibold block mt-0.5">{{ wk.range_str }}</span>
-</div>
-<span class="text-[12px] font-semibold text-slate-800 block mt-2">{{ wk.total|ugx }}</span>
-</div>
-{% endfor %}
-</div>
+<!-- Monthly Summary KPI Strip -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+  {% include "components/kpi_card.html" with label="School Visits" value=monthly_totals_by_type.visits|ugx tone="info" icon="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" %}
+  {% include "components/kpi_card.html" with label="Cluster Trainings" value=monthly_totals_by_type.trainings|ugx tone="success" icon="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" %}
+  {% include "components/kpi_card.html" with label="Cluster Meetings" value=monthly_totals_by_type.meetings|ugx tone="info" icon="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" %}
+  {% include "components/kpi_card.html" with label="Admin Budget (for CD)" value=monthly_totals_by_type.admin|ugx tone="warning" icon="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" %}
+  {% include "components/kpi_card.html" with label="Total Monthly Request" value=monthly_totals_by_type.total|ugx tone="success" icon="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" %}
 </div>
 
-<!-- Center column: Monthly Summary by Activity Type -->
-<div class="space-y-3">
-<h4 class="text-[12px] font-semibold text-slate-800 uppercase tracking-wider">Monthly Summary by Activity Type</h4>
-<div class="grid grid-cols-5 gap-1.5 text-center text-[11px] font-bold text-slate-500">
-<div class="bg-slate-50 p-2 rounded-lg border border-slate-100 flex flex-col justify-between h-[80px]">
-<span class="text-blue-600 block text-[11px]">School Visits</span>
-<span class="text-[12px] font-semibold text-slate-800 block mt-1">{{ monthly_totals_by_type.visits|ugx }}</span>
-</div>
-<div class="bg-slate-50 p-2 rounded-lg border border-slate-100 flex flex-col justify-between h-[80px]">
-<span class="text-purple-600 block text-[11px]">Cluster Trainings</span>
-<span class="text-[12px] font-semibold text-slate-800 block mt-1">{{ monthly_totals_by_type.trainings|ugx }}</span>
-</div>
-<div class="bg-slate-50 p-2 rounded-lg border border-slate-100 flex flex-col justify-between h-[80px]">
-<span class="text-indigo-600 block text-[11px]">Cluster Meetings</span>
-<span class="text-[12px] font-semibold text-slate-800 block mt-1">{{ monthly_totals_by_type.meetings|ugx }}</span>
-</div>
-<div class="bg-slate-50 p-2 rounded-lg border border-slate-100 flex flex-col justify-between h-[80px]">
-<span class="text-orange-600 block text-[11px]">Admin Budget (for CD)</span>
-<span class="text-[12px] font-semibold text-slate-800 block mt-1">{{ monthly_totals_by_type.admin|ugx }}</span>
-</div>
-<div class="bg-blue-50/50 p-2 rounded-lg border border-blue-100 flex flex-col justify-between h-[80px] shadow-sm">
-<span class="text-blue-700 block text-[11px]">Total Monthly Request</span>
-<span class="text-[12px] font-semibold text-blue-800 block mt-1">{{ monthly_totals_by_type.total|ugx }}</span>
-</div>
-</div>
-</div>
+<!-- Monthly Fund Request Preview Card (Weekly Totals) -->
+<div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-4 text-slate-700 mt-6">
+  <div class="flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <h3 class="text-[15px] font-semibold text-slate-800">Monthly Fund Request — {{ selected_month }} {{ selected_fy }}</h3>
+      <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider bg-purple-50 text-purple-600 border border-purple-100">Preview</span>
+    </div>
+  </div>
 
-<!-- Right column: Request Status Stepper -->
-<div class="space-y-3">
-<h4 class="text-[12px] font-semibold text-slate-800 uppercase tracking-wider">Request Status</h4>
-
-<div class="flex items-center justify-between relative mt-4">
-<!-- Connecting Line -->
-<div class="absolute left-3 right-3 top-[14px] h-0.5 bg-slate-100 z-0"></div>
-
-<!-- Step 1: Draft -->
-<div class="flex flex-col items-center z-10 text-center w-16">
-<div class="h-7 w-7 rounded-full flex items-center justify-center text-[11px] font-bold border-2 transition-colors
-{% if step_active >= 1 %}bg-blue-600 border-blue-600 text-white shadow-sm{% else %}bg-white border-slate-200 text-slate-400{% endif %}">
-{% if step_active > 1 %}&check;{% else %}1{% endif %}
-</div>
-<span class="text-[11px] font-bold mt-1.5 {% if step_active == 1 %}text-blue-600{% else %}text-slate-400{% endif %}">Draft</span>
-{% if step_active == 1 %}<span class="text-[11px] font-bold text-slate-400 leading-none">In Progress</span>{% endif %}
-</div>
-
-<!-- Step 2: PL Review -->
-<div class="flex flex-col items-center z-10 text-center w-16">
-<div class="h-7 w-7 rounded-full flex items-center justify-center text-[11px] font-bold border-2 transition-colors
-{% if step_active >= 2 %}bg-blue-600 border-blue-600 text-white shadow-sm{% else %}bg-white border-slate-200 text-slate-400{% endif %}">
-{% if step_active > 2 %}&check;{% else %}2{% endif %}
-</div>
-<span class="text-[11px] font-bold mt-1.5 {% if step_active == 2 %}text-blue-600{% else %}text-slate-400{% endif %}">PL Review</span>
-{% if step_active == 2 %}<span class="text-[11px] font-bold text-slate-400 leading-none">Pending</span>{% endif %}
-</div>
-
-<!-- Step 3: CD Approval -->
-<div class="flex flex-col items-center z-10 text-center w-16">
-<div class="h-7 w-7 rounded-full flex items-center justify-center text-[11px] font-bold border-2 transition-colors
-{% if step_active >= 3 %}bg-blue-600 border-blue-600 text-white shadow-sm{% else %}bg-white border-slate-200 text-slate-400{% endif %}">
-{% if step_active > 3 %}&check;{% else %}3{% endif %}
-</div>
-<span class="text-[11px] font-bold mt-1.5 {% if step_active == 3 %}text-blue-600{% else %}text-slate-400{% endif %}">CD Approval</span>
-{% if step_active == 3 %}<span class="text-[11px] font-bold text-slate-400 leading-none">Pending</span>{% endif %}
-</div>
-
-<!-- Step 4: RVP Approval -->
-<div class="flex flex-col items-center z-10 text-center w-16">
-<div class="h-7 w-7 rounded-full flex items-center justify-center text-[11px] font-bold border-2 transition-colors
-{% if step_active >= 4 %}bg-blue-600 border-blue-600 text-white shadow-sm{% else %}bg-white border-slate-200 text-slate-400{% endif %}">
-{% if step_active > 4 %}&check;{% else %}4{% endif %}
-</div>
-<span class="text-[11px] font-bold mt-1.5 {% if step_active == 4 %}text-blue-600{% else %}text-slate-400{% endif %}">RVP Approval</span>
-{% if step_active == 4 %}<span class="text-[11px] font-bold text-slate-400 leading-none">Pending</span>{% endif %}
-</div>
-
-<!-- Step 5: Accountant Queue -->
-<div class="flex flex-col items-center z-10 text-center w-16">
-<div class="h-7 w-7 rounded-full flex items-center justify-center text-[11px] font-bold border-2 transition-colors
-{% if step_active >= 5 %}bg-blue-600 border-blue-600 text-white shadow-sm{% else %}bg-white border-slate-200 text-slate-400{% endif %}">
-{% if step_active > 5 %}&check;{% else %}5{% endif %}
-</div>
-<span class="text-[11px] font-bold mt-1.5 {% if step_active == 5 %}text-blue-600{% else %}text-slate-400{% endif %}">Accountant Queue</span>
-{% if step_active == 5 %}<span class="text-[11px] font-bold text-slate-400 leading-none">Pending</span>{% endif %}
-</div>
-</div>
-
-</div>
-
-</div>
+  <div class="space-y-3">
+    <h4 class="text-[12px] font-semibold text-slate-800 uppercase tracking-wider">Weekly Totals ({{ selected_month }})</h4>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      {% for wk in monthly_weeks %}
+        <div class="bg-slate-50/50 p-3 rounded-lg border border-slate-100 flex flex-col justify-between hover:shadow-sm transition-shadow">
+          <div>
+            <span class="text-[11px] font-bold text-slate-400 block">{{ wk.label }}</span>
+            <span class="text-[11px] text-slate-500 font-semibold block mt-0.5">{{ wk.range_str }}</span>
+          </div>
+          <span class="text-[14px] font-bold text-slate-800 block mt-3">{{ wk.total|ugx }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
 </div>

@@ -1,0 +1,60 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}To-Do — Edify{% endblock %}
+
+{% block shell_content %}
+<div class="p-4 sm:p-6 max-w-7xl mx-auto space-y-6 "
+     x-data="{ cat: 'all', prio: 'all' }">
+
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+    <div class="min-w-0">
+      <h1 class="text-[22px] sm:text-[21px] font-extrabold tracking-tight">To-Do</h1>
+      <p class="text-[12px] text-slate-500 font-semibold mt-1">Your action queue — generated automatically from workflow state, and auto-closed the moment the underlying action completes.</p>
+    </div>
+  </div>
+
+  <!-- KPI strip -->
+  <div class="grid grid-cols-3 sm:grid-cols-6 gap-3">
+    <div class="card p-3.5"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total</p><p class="text-[22px] font-bold text-slate-800 tabular-nums leading-none mt-1">{{ counts.total }}</p></div>
+    <div class="card p-3.5"><p class="text-[10px] font-bold uppercase tracking-wider text-rose-500">Critical</p><p class="text-[22px] font-bold text-rose-600 tabular-nums leading-none mt-1">{{ counts.critical }}</p></div>
+    <div class="card p-3.5"><p class="text-[10px] font-bold uppercase tracking-wider text-amber-600">Due Today</p><p class="text-[22px] font-bold text-amber-600 tabular-nums leading-none mt-1">{{ counts.due_today }}</p></div>
+    <div class="card p-3.5"><p class="text-[10px] font-bold uppercase tracking-wider text-rose-500">Overdue</p><p class="text-[22px] font-bold text-rose-600 tabular-nums leading-none mt-1">{{ counts.overdue }}</p></div>
+    <div class="card p-3.5"><p class="text-[10px] font-bold uppercase tracking-wider text-blue-600">Waiting on Me</p><p class="text-[22px] font-bold text-blue-600 tabular-nums leading-none mt-1">{{ counts.waiting_me }}</p></div>
+    <div class="card p-3.5"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Blocked</p><p class="text-[22px] font-bold text-slate-600 tabular-nums leading-none mt-1">{{ counts.blocked }}</p></div>
+  </div>
+
+  {% if total %}
+  <!-- Filters -->
+  <div class="flex flex-col lg:flex-row lg:items-center gap-3">
+    <div class="flex items-center gap-1.5 flex-wrap">
+      <button @click="cat='all'" :class="cat==='all' ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-100' : 'text-slate-500 hover:bg-slate-50'" class="h-8 px-3 rounded-lg text-[11.5px] font-bold transition-all">All Categories</button>
+      {% for name, count in categories %}
+      <button @click="cat='{{ name }}'" :class="cat==='{{ name }}' ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-100' : 'text-slate-500 hover:bg-slate-50'" class="h-8 px-3 rounded-lg text-[11.5px] font-bold transition-all inline-flex items-center gap-1.5">{{ name }} <span class="px-1.5 rounded-md text-[10px] bg-slate-100 text-slate-500">{{ count }}</span></button>
+      {% endfor %}
+    </div>
+    <div class="flex items-center gap-1.5 lg:ml-auto">
+      <button @click="prio='all'" :class="prio==='all' ? 'bg-slate-800 text-white' : 'bg-white border border-slate-200 text-slate-500 hover:bg-slate-50'" class="h-8 px-3 rounded-lg text-[11px] font-bold transition-all">All</button>
+      <button @click="prio='critical'" :class="prio==='critical' ? 'bg-rose-500 text-white' : 'bg-white border border-slate-200 text-slate-500 hover:bg-slate-50'" class="h-8 px-3 rounded-lg text-[11px] font-bold transition-all">Critical</button>
+      <button @click="prio='high'" :class="prio==='high' ? 'bg-amber-500 text-white' : 'bg-white border border-slate-200 text-slate-500 hover:bg-slate-50'" class="h-8 px-3 rounded-lg text-[11px] font-bold transition-all">High</button>
+      <button @click="prio='medium'" :class="prio==='medium' ? 'bg-blue-500 text-white' : 'bg-white border border-slate-200 text-slate-500 hover:bg-slate-50'" class="h-8 px-3 rounded-lg text-[11px] font-bold transition-all">Medium</button>
+      <button @click="prio='low'" :class="prio==='low' ? 'bg-slate-500 text-white' : 'bg-white border border-slate-200 text-slate-500 hover:bg-slate-50'" class="h-8 px-3 rounded-lg text-[11px] font-bold transition-all">Low</button>
+    </div>
+  </div>
+
+  <!-- List -->
+  <div class="card px-4 divide-y divide-slate-50">
+    {% for t in todos %}
+    <div x-show="(cat === 'all' || cat === '{{ t.category }}') && (prio === 'all' || prio === '{{ t.priority }}')">
+      {% include "partials/todos/row.html" with t=t %}
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="card p-16 text-center">
+    <p class="text-[15px] font-semibold text-slate-600">You're all caught up <svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4m3 8l2.3-6L15 13l6 2.3-6 2.3L12.7 23l-2.4-5.4L4 15l6-2zM19 3l.9 2.1L22 6l-2.1.9L19 9l-.9-2.1L16 6l2.1-.9L19 3z"/></svg></p>
+    <p class="text-[12px] font-medium text-slate-400 mt-1.5">No actions require you right now. New To-Dos appear automatically as work moves through the pipeline.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

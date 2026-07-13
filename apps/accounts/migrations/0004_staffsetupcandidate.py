@@ -7,33 +7,78 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('accounts', '0003_staffprofile_environment_staffprofile_source_and_more'),
+        ("accounts", "0003_staffprofile_environment_staffprofile_source_and_more"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='StaffSetupCandidate',
+            name="StaffSetupCandidate",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('full_name', models.CharField(max_length=255)),
-                ('normalized_name', models.CharField(max_length=255, unique=True)),
-                ('source_upload_batch', models.CharField(blank=True, max_length=30, null=True)),
-                ('school_count', models.IntegerField(default=0)),
-                ('sample_school_ids', django.contrib.postgres.fields.ArrayField(base_field=models.CharField(max_length=30), blank=True, default=list, size=None)),
-                ('suggested_role', models.CharField(blank=True, max_length=32, null=True)),
-                ('email', models.EmailField(blank=True, max_length=254, null=True)),
-                ('phone', models.CharField(blank=True, max_length=64, null=True)),
-                ('status', models.CharField(choices=[('pending_profile', 'Pending Profile'), ('invited', 'Invited'), ('active', 'Active'), ('merged', 'Merged'), ('ignored', 'Ignored')], default='pending_profile', max_length=32)),
-                ('matched_user_id', models.CharField(blank=True, max_length=30, null=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("full_name", models.CharField(max_length=255)),
+                ("normalized_name", models.CharField(max_length=255, unique=True)),
+                (
+                    "source_upload_batch",
+                    models.CharField(blank=True, max_length=30, null=True),
+                ),
+                ("school_count", models.IntegerField(default=0)),
+                (
+                    "sample_school_ids",
+                    django.contrib.postgres.fields.ArrayField(
+                        base_field=models.CharField(max_length=30),
+                        blank=True,
+                        default=list,
+                        size=None,
+                    ),
+                ),
+                (
+                    "suggested_role",
+                    models.CharField(blank=True, max_length=32, null=True),
+                ),
+                ("email", models.EmailField(blank=True, max_length=254, null=True)),
+                ("phone", models.CharField(blank=True, max_length=64, null=True)),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("pending_profile", "Pending Profile"),
+                            ("invited", "Invited"),
+                            ("active", "Active"),
+                            ("merged", "Merged"),
+                            ("ignored", "Ignored"),
+                        ],
+                        default="pending_profile",
+                        max_length=32,
+                    ),
+                ),
+                (
+                    "matched_user_id",
+                    models.CharField(blank=True, max_length=30, null=True),
+                ),
             ],
             options={
-                'db_table': 'staff_setup_candidate',
-                'ordering': ['-created_at'],
-                'indexes': [models.Index(fields=['status'], name='staff_setup_status_11dfda_idx'), models.Index(fields=['normalized_name'], name='staff_setup_normali_72fe93_idx')],
+                "db_table": "staff_setup_candidate",
+                "ordering": ["-created_at"],
+                "indexes": [
+                    models.Index(
+                        fields=["status"], name="staff_setup_status_11dfda_idx"
+                    ),
+                    models.Index(
+                        fields=["normalized_name"],
+                        name="staff_setup_normali_72fe93_idx",
+                    ),
+                ],
             },
         ),
     ]

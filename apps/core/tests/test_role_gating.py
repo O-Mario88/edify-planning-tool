@@ -4,6 +4,7 @@ from apps.accounts.models import User, StaffProfile, StaffSchoolAssignment
 from apps.geography.models import Region, District
 from apps.schools.models import School
 
+
 class RoleGatingPermissionTest(APITestCase):
     def setUp(self):
         # Setup Geography
@@ -17,7 +18,7 @@ class RoleGatingPermissionTest(APITestCase):
             region=self.region,
             district=self.district,
             enrollment=200,
-            school_type="client"
+            school_type="client",
         )
         self.school_cceo2 = School.objects.create(
             school_id="S-CCEO-2",
@@ -25,7 +26,7 @@ class RoleGatingPermissionTest(APITestCase):
             region=self.region,
             district=self.district,
             enrollment=300,
-            school_type="client"
+            school_type="client",
         )
 
         # Setup CCEO-1 User
@@ -43,8 +44,7 @@ class RoleGatingPermissionTest(APITestCase):
         )
         # Assign School 1 to CCEO 1
         StaffSchoolAssignment.objects.create(
-            staff=self.cceo1_profile,
-            school_id=self.school_cceo1.id
+            staff=self.cceo1_profile, school_id=self.school_cceo1.id
         )
 
         # Setup CCEO-2 User
@@ -62,8 +62,7 @@ class RoleGatingPermissionTest(APITestCase):
         )
         # Assign School 2 to CCEO 2
         StaffSchoolAssignment.objects.create(
-            staff=self.cceo2_profile,
-            school_id=self.school_cceo2.id
+            staff=self.cceo2_profile, school_id=self.school_cceo2.id
         )
 
         # Setup Country Director User (Strategic role)
@@ -80,13 +79,12 @@ class RoleGatingPermissionTest(APITestCase):
             staff_number="ST-1003",
         )
 
-    def test_cd_page_denied_school_directory(self):
-        """Strategic Country Director should be denied access to the School Directory route."""
+    def test_cd_page_allowed_school_directory(self):
+        """Country Director has read access to the School Directory (role spec:
+        CD gets school index + detail views)."""
         self.client.force_login(self.cd_user)
         response = self.client.get("/schools")
-        # Django require_page_permission decorator redirects unauthorized page entries to /dashboard
-        self.assertEqual(response.status_code, 302)
-        self.assertTrue(response.url.endswith("/dashboard"))
+        self.assertEqual(response.status_code, 200)
 
     def test_cd_page_denied_planning_dashboard(self):
         """Strategic Country Director should be denied access to the Planning Dashboard route."""
@@ -109,19 +107,16 @@ class RoleGatingPermissionTest(APITestCase):
         response = self.client.get(f"/schools/{self.school_cceo2.id}/edit-drawer")
         self.assertEqual(response.status_code, 403)
 
-    def test_cd_access_individual_school_denied(self):
-        """A Country Director attempting to view/modify a specific school details drawer directly should be blocked by page decorator (302) or HTMX block (403)."""
+    def test_cd_access_individual_school_records(self):
+        """CD opens row-level school records while ALLOW_CD_OPERATIONAL_PLANNING
+        (default on) is set; with the flag off, can_view_record blocks them."""
         self.client.force_login(self.cd_user)
-        # Standard request -> redirects
         response = self.client.get(f"/schools/{self.school_cceo1.id}/edit-drawer")
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 200)
 
-        # HTMX request -> returns 403 Forbidden
-        response_htmx = self.client.get(
-            f"/schools/{self.school_cceo1.id}/edit-drawer",
-            HTTP_HX_REQUEST="true"
-        )
-        self.assertEqual(response_htmx.status_code, 403)
+        with self.settings(ALLOW_CD_OPERATIONAL_PLANNING=False):
+            response = self.client.get(f"/schools/{self.school_cceo1.id}/edit-drawer")
+            self.assertEqual(response.status_code, 403)
 
     def test_ia_dashboard_redirection_and_blocking(self):
         """Impact Assessment should be redirected to /ia/dashboard/ when accessing /dashboard and blocked from operational views."""
@@ -179,9 +174,10 @@ class RoleGatingPermissionTest(APITestCase):
         # Dashboard renders
         response = self.client.get("/dashboard")
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Regional Executive Dashboard")
+        self.assertContains(response, "Regional Vice President Dashboard")
 
-        # Blocked from school directory
+        # RVP is summary-only by design (aggregates, not row-level records) —
+        # the directory stays blocked even though the role spec mentions it.
         response_schools = self.client.get("/schools")
         self.assertEqual(response_schools.status_code, 302)
 
@@ -199,7 +195,7 @@ class RoleGatingPermissionTest(APITestCase):
         # Dashboard renders
         response = self.client.get("/dashboard")
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "HR & Performance Dashboard")
+        self.assertContains(response, "HR Dashboard")
 
         # Blocked from school directory
         response_schools = self.client.get("/schools")
@@ -245,16 +241,23 @@ class RoleGatingPermissionTest(APITestCase):
     def test_legacy_removed_links_not_in_sidebar(self):
         """Verify that legacy removed links (FY, Calendar, District, School Visits, Group Training, Partner Plan) are not built in sidebar."""
         from apps.core.navigation import build_sidebar_for_user
-        
+
         # Test CCEO sidebar
         sections = build_sidebar_for_user(self.cceo1_user, "/dashboard")
         all_labels = []
         for sec in sections:
             for item in sec["items"]:
                 all_labels.append(item["label"])
-                
+
         # Must not contain removed links
-        for removed in ("FY", "Calendar", "District", "School Visits", "Group Training", "Partner Plan"):
+        for removed in (
+            "FY",
+            "Calendar",
+            "District",
+            "School Visits",
+            "Group Training",
+            "Partner Plan",
+        ):
             self.assertNotIn(removed, all_labels)
 
     def test_partner_plan_redirects_to_unified_my_plan(self):
@@ -271,5 +274,3 @@ class RoleGatingPermissionTest(APITestCase):
         response = self.client.get("/partner/my-plan")
         self.assertEqual(response.status_code, 302)
         self.assertTrue(response.url.endswith("/my-plan"))
-
-

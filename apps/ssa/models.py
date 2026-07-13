@@ -5,6 +5,7 @@ An SSA record holds 8 intervention scores (0–10) for a school on a date. The
 collection source drives QA: staff/IA-collected is auto-verified; partner-
 collected lands `pending` until staff/IA confirm.
 """
+
 from __future__ import annotations
 
 from django.db import models
@@ -17,7 +18,9 @@ class SsaRecord(SoftDeleteModel):
     """One SSA collection for a school (8 intervention scores via SsaScore)."""
 
     id = CuidField()
-    school = models.ForeignKey("schools.School", on_delete=models.CASCADE, related_name="ssa_records")
+    school = models.ForeignKey(
+        "schools.School", on_delete=models.CASCADE, related_name="ssa_records"
+    )
     date_of_ssa = models.DateTimeField()
     fy = models.CharField(max_length=16)
     quarter = models.CharField(max_length=8)  # Q1..Q4
@@ -27,7 +30,9 @@ class SsaRecord(SoftDeleteModel):
     # Salesforce-ready verification of the SSA itself.
     salesforce_id = models.CharField(max_length=128, null=True, blank=True)
     verification_status = models.CharField(
-        max_length=32, choices=VerificationStatus.choices, default=VerificationStatus.PENDING
+        max_length=32,
+        choices=VerificationStatus.choices,
+        default=VerificationStatus.PENDING,
     )
 
     # Collection source + verification provenance (the contract-worthy QA layer).
@@ -59,14 +64,19 @@ class SsaScore(TimeStampedModel):
     """A single intervention score within an SSA record."""
 
     id = CuidField()
-    ssa_record = models.ForeignKey(SsaRecord, on_delete=models.CASCADE, related_name="scores")
+    ssa_record = models.ForeignKey(
+        SsaRecord, on_delete=models.CASCADE, related_name="scores"
+    )
     intervention = models.CharField(max_length=64, choices=SsaIntervention.choices)
     score = models.FloatField()
 
     class Meta:
         db_table = "ssa_score"
         constraints = [
-            models.UniqueConstraint(fields=["ssa_record", "intervention"], name="uniq_ssa_record_intervention"),
+            models.UniqueConstraint(
+                fields=["ssa_record", "intervention"],
+                name="uniq_ssa_record_intervention",
+            ),
         ]
 
 

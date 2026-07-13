@@ -2,7 +2,7 @@
 x-data="{ show: true }" 
 x-show="show" 
 @keydown.escape.window="show = false"
-class="fixed inset-0 z-50 overflow-hidden font-sans select-none"
+class="fixed inset-0 z-50 overflow-hidden select-none"
 >
 <!-- Overlay Backdrop -->
 <div 
@@ -111,10 +111,10 @@ class="rounded-lg p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 trans
 <div class="space-y-1">
 <div class="flex justify-between text-[11px] font-bold text-slate-600">
 <span>Evidence/IA Quality (5% Weight)</span>
-<span class="text-slate-800 font-semibold">100% Validated</span>
+<span class="text-slate-800 font-semibold">{{ metrics.evidence_pct }}% Validated</span>
 </div>
 <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-<div class="bg-blue-600 h-full" style="width: 100%;"></div>
+<div class="bg-blue-600 h-full" style="width: {{ metrics.evidence_pct }}%;"></div>
 </div>
 </div>
 
@@ -141,7 +141,7 @@ class="rounded-lg p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 trans
 <li class="flex items-center justify-between">
 <div class="flex items-center gap-2">
 <span class="{% if metrics.latest_avg >= 8.0 %}text-emerald-500{% else %}text-rose-500{% endif %} text-[14px]">
-{% if metrics.latest_avg >= 8.0 %}✔{% else %}✘{% endif %}
+{% if metrics.latest_avg >= 8.0 %}<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>{% else %}<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18"/></svg>{% endif %}
 </span>
 <span>Latest SSA Average score &ge; 8.0</span>
 </div>
@@ -151,7 +151,7 @@ class="rounded-lg p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 trans
 <li class="flex items-center justify-between">
 <div class="flex items-center gap-2">
 <span class="{% if metrics.lowest_score >= 7.0 %}text-emerald-500{% else %}text-rose-500{% endif %} text-[14px]">
-{% if metrics.lowest_score >= 7.0 %}✔{% else %}✘{% endif %}
+{% if metrics.lowest_score >= 7.0 %}<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>{% else %}<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18"/></svg>{% endif %}
 </span>
 <span>No intervention score below 7.0</span>
 </div>
@@ -161,7 +161,7 @@ class="rounded-lg p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 trans
 <li class="flex items-center justify-between">
 <div class="flex items-center gap-2">
 <span class="{% if metrics.completed_slots >= 8 %}text-emerald-500{% else %}text-rose-500{% endif %} text-[14px]">
-{% if metrics.completed_slots >= 8 %}✔{% else %}✘{% endif %}
+{% if metrics.completed_slots >= 8 %}<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>{% else %}<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18"/></svg>{% endif %}
 </span>
 <span>All 8 package slots (4 Visits + 4 Trainings) Closed</span>
 </div>
@@ -174,7 +174,7 @@ class="rounded-lg p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 trans
 
 <!-- Action Drawer Footer -->
 <div class="bg-slate-50 border-t border-slate-100 p-6 flex items-center justify-between gap-4">
-<form action="{% url 'champion_reject_action' school.school_id %}" method="POST" class="w-1/2">
+<form action="{% url 'frontend:champion_reject_action' school.school_id %}" method="POST" class="w-1/2">
 {% csrf_token %}
 <button 
 type="submit"
@@ -184,7 +184,7 @@ Reject Candidacy
 </button>
 </form>
 
-<form action="{% url 'champion_approve_action' school.school_id %}" method="POST" class="w-1/2">
+<form action="{% url 'frontend:champion_approve_action' school.school_id %}" method="POST" class="w-1/2">
 {% csrf_token %}
 <button 
 type="submit"

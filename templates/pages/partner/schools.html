@@ -1,29 +1,52 @@
 {% extends "layouts/shell.html" %}
+{% load frontend_filters %}
 
-{% block title %}My Schools — Edify{% endblock %}
+{% block title %}Assigned Schools · Partner Portal · Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6">
+<div class="px-4 sm:px-6 py-5 max-w-[1200px] mx-auto space-y-5">
 
-<div class="flex items-center justify-between">
-  <div>
-    <h1 class="text-[24px] font-semibold text-slate-800 tracking-tight">My Schools</h1>
-    <p class="text-[12px] text-[var(--text-secondary)] mt-1 font-semibold">Partner schools view</p>
+  <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+    <div>
+      <h1 class="text-[21px] font-extrabold tracking-tight">Assigned Schools</h1>
+      <p class="text-[12.5px] text-slate-500 font-normal mt-1.5">{{ total }} school(s) your organization works with.</p>
+    </div>
   </div>
-</div>
 
-{% if schools %}
-  <div class="space-y-4">
-    {% for school in schools %}
-      {% include "components/school_list_card.html" with school=school context_page="planning" %}
-    {% endfor %}
+  <div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-2">
+    {% if schools %}
+    <div class="overflow-x-auto -mx-1">
+      <table class="w-full text-[11.5px]">
+        <thead>
+          <tr class="text-[9px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
+            <th class="text-left font-bold py-2 pl-1">School</th>
+            <th class="text-left font-bold py-2">District</th>
+            <th class="text-left font-bold py-2">Sub-county</th>
+            <th class="text-right font-bold py-2">Enrollment</th>
+            <th class="text-right font-bold py-2 pr-1">SSA Status</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-50">
+          {% for s in schools %}
+          <tr>
+            <td class="text-left font-semibold py-2.5 pl-1">{{ s.name }}</td>
+            <td class="text-left text-slate-500 py-2.5">{{ s.district.name|default:"—" }}</td>
+            <td class="text-left text-slate-500 py-2.5">{{ s.sub_county.name|default:"—" }}</td>
+            <td class="text-right tabular-nums text-slate-500 py-2.5">{{ s.enrollment|default:0|intcomma }}</td>
+            <td class="text-right py-2.5 pr-1">
+              <span class="px-1.5 py-0.5 rounded text-[9.5px] font-bold {% if s.current_fy_ssa_status == 'done' %}bg-emerald-50 text-emerald-700{% else %}bg-amber-50 text-amber-700{% endif %}">
+                {{ s.current_fy_ssa_status|cut:"_"|title }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    {% include "components/empty_state.html" with title="No schools assigned yet" message="Schools appear here once activities are assigned to your organization." %}
+    {% endif %}
   </div>
-{% else %}
-  <div class="p-12 text-center">
-    <p class="text-[36px] mb-3">🏫</p>
-    <p class="text-[14px] font-bold text-slate-600">No my schools data yet</p>
-  </div>
-{% endif %}
 
 </div>
 {% endblock %}

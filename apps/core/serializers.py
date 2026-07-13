@@ -7,6 +7,7 @@ dropped, never rejected with a 400. The legacy backend intentionally avoided
 `forbidNonWhitelisted` because the frontend sends best-effort bodies and an
 extra/renamed field must be dropped, not rejected (see edify-api.legacy main.ts).
 """
+
 from __future__ import annotations
 
 from typing import Any

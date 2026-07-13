@@ -13,7 +13,11 @@ computes or persists activity cost. The service:
 Money is integer UGX throughout. The pure engine (costing.py::cost_for_activity)
 is reused unchanged; this service wraps it with catalogue resolution + persistence.
 """
+
 from __future__ import annotations
+
+from django.db import transaction
+from django.db.models import Q
 
 from apps.activities.models import Activity, ActivityScheduleCostLine
 from apps.core.exceptions import BadRequest
@@ -31,7 +35,9 @@ def active_catalogue(fy: str | None = None) -> CostCatalogue | None:
     return qs.order_by("-version").first()
 
 
-def _rate_card(catalogue: CostCatalogue | None) -> tuple[dict[str, int], dict[str, CostSetting]]:
+def _rate_card(
+    catalogue: CostCatalogue | None,
+) -> tuple[dict[str, int], dict[str, CostSetting]]:
     """Return (rates dict, settings-by-key) for pricing.
 
     Prefers rates attached to the active catalogue; MERGES in any unattached
@@ -39,9 +45,21 @@ def _rate_card(catalogue: CostCatalogue | None) -> tuple[dict[str, int], dict[st
     or in tests that create rates directly). This keeps a single source of truth
     — the rate value is always the latest CostSetting for a key — while still
     recognizing the catalogue concept for provenance/versioning."""
-    # Latest setting per key across (catalogue-attached + unattached). A key
-    # attached to the catalogue wins; otherwise the unattached row is used.
-    settings = {s.key: s for s in CostSetting.objects.all()}
+    # Only rates belonging to THIS catalogue (plus unattached back-compat rows)
+    # may price the activity — otherwise the catalogue id/version stamped onto
+    # the budget line would not describe the rates actually used. Unattached
+    # rows load first so a catalogue-attached key always wins.
+    if catalogue is not None:
+        qs = CostSetting.objects.filter(
+            Q(catalogue=catalogue) | Q(catalogue__isnull=True)
+        )
+        settings: dict[str, CostSetting] = {}
+        for s in qs:
+            # Catalogue-attached keys always win; unattached rows only fill gaps.
+            if s.catalogue_id == catalogue.id or s.key not in settings:
+                settings[s.key] = s
+    else:
+        settings = {s.key: s for s in CostSetting.objects.all()}
     rates = {key: s.unit_cost for key, s in settings.items()}
     return rates, settings
 
@@ -50,11 +68,14 @@ def _rate_card(catalogue: CostCatalogue | None) -> tuple[dict[str, int], dict[st
 _KEY_LABEL = {
     "staff_visit_transport_primary": "Staff visit transport (primary district)",
     "staff_visit_transport_secondary": "Staff visit transport (secondary district)",
-    "breakfast": "Breakfast", "lunch": "Lunch", "dinner": "Dinner",
+    "breakfast": "Breakfast",
+    "lunch": "Lunch",
+    "dinner": "Dinner",
     "accommodation": "Accommodation per night",
     "meals_per_participant": "Group training participant meal cost",
     "cluster_meeting_cost": "Cluster meeting participant meal cost",
-    "venue": "Venue cost", "training_session_fee": "Facilitation fee",
+    "venue": "Venue cost",
+    "training_session_fee": "Facilitation fee",
     "mobilisation_per_participant": "Mobilisation cost per participant",
     "partner_visit_lump_sum": "Partner visit rate",
     "partner_training_lump_sum": "Partner training/facilitation rate",
@@ -67,6 +88,14 @@ _KEY_LABEL = {
     "group_training_facilitation_fee": "Group training facilitation fee",
     "cluster_meeting_participant_meal_cost_per_head": "Cluster meeting participant meal cost per head",
     "partner_visit_rate": "Partner visit rate",
+    "primary_transport_per_day": "Primary district daily transport pool",
+    "primary_lunch_per_day": "Primary district daily lunch pool",
+    "secondary_transport_per_day": "Secondary district daily transport pool",
+    "secondary_lunch_per_day": "Secondary district daily lunch pool",
+    "secondary_accommodation_per_night": "Secondary district accommodation per night",
+    "secondary_overnight_dinner_per_day": "Secondary district overnight dinner",
+    "secondary_breakfast_per_day": "Secondary district breakfast (optional)",
+    "secondary_incidentals_per_day": "Secondary district incidentals (optional)",
 }
 
 
@@ -92,13 +121,15 @@ def preview(input: dict) -> dict:
         for k in missing
     ]
     if catalogue is None:
-        blockers.insert(0, "No active CD Cost Catalogue — publish one before scheduling.")
+        blockers.insert(
+            0, "No active CD Cost Catalogue — publish one before scheduling."
+        )
     return {
         "catalogueId": catalogue.id if catalogue else None,
         "catalogueVersion": catalogue.version if catalogue else None,
         "currency": "UGX",
         "amount": int(cost.amount),
-        "lines": [_serialize_line(l) for l in cost.lines],
+        "lines": [_serialize_line(line) for line in cost.lines],
         "costMissing": cost.cost_missing or catalogue is None,
         "missingItems": missing,
         "blockers": blockers,
@@ -118,17 +149,23 @@ def assert_schedulable(input: dict) -> None:
     # Check fiscal year can be calculated
     from apps.core.fy import get_operational_fy
     from datetime import datetime
+
     try:
         dt = datetime.fromisoformat(str(scheduled_date_raw).replace("Z", "+00:00"))
         fy = get_operational_fy(dt)
         if not fy:
             raise ValueError()
     except Exception as exc:
-        raise BadRequest("Fiscal year cannot be calculated from scheduled date.") from exc
+        raise BadRequest(
+            "Fiscal year cannot be calculated from scheduled date."
+        ) from exc
 
     activity_type = input.get("activityType", "")
     is_training = activity_type in {
-        "training", "school_improvement_training", "cluster_training", "core_training",
+        "training",
+        "school_improvement_training",
+        "cluster_training",
+        "core_training",
     }
     is_cluster_meeting = activity_type == "cluster_meeting"
     is_training_like = is_training or is_cluster_meeting
@@ -176,6 +213,21 @@ def _line_item_type(key: str) -> str:
         return "cluster_meeting_participant_meals"
     if key == "partner_visit_rate":
         return "partner_visit"
+    # Daily Visit Batch keys (primary_transport_per_day, secondary_lunch_per_day,
+    # etc.) — explicit branches since the generic substring/exact-match checks
+    # below wouldn't catch lunch/accommodation/dinner/breakfast variants.
+    if key in ("primary_transport_per_day", "secondary_transport_per_day"):
+        return "transport"
+    if key in ("primary_lunch_per_day", "secondary_lunch_per_day"):
+        return "lunch"
+    if key == "secondary_accommodation_per_night":
+        return "accommodation"
+    if key == "secondary_overnight_dinner_per_day":
+        return "dinner"
+    if key == "secondary_breakfast_per_day":
+        return "breakfast"
+    if key == "secondary_incidentals_per_day":
+        return "incidentals"
     if "transport" in key:
         return "transport"
     if key in ("breakfast", "lunch", "dinner", "accommodation"):
@@ -196,7 +248,12 @@ def _line_item_type(key: str) -> str:
 
 
 # ── Persist (the canonical budget-line writer) ───────────────────────────────
-def apply_to_activity(activity: Activity, input: dict, responsible_user_id: str | None = None) -> ActivityCost:
+def apply_to_activity(
+    activity: Activity,
+    input: dict,
+    responsible_user_id: str | None = None,
+    precomputed_cost: ActivityCost | None = None,
+) -> ActivityCost:
     """Price the activity from the active catalogue and PERSIST its budget lines.
 
     Clears any prior ActivityScheduleCostLine rows, then writes one row per cost
@@ -208,12 +265,23 @@ def apply_to_activity(activity: Activity, input: dict, responsible_user_id: str 
     advance requests so the right user confirms funding. Falls back to the
     activity's responsible_staff_id.
 
+    `precomputed_cost`: when given, skips `cost_for_activity` entirely and uses
+    this ActivityCost as-is — used by Daily Visit Batch pricing, where the cost
+    is computed from a shared daily pool divided across sibling activities
+    rather than from this activity's own input alone. Every other write below
+    (date derivation, line persistence, catalogue provenance, advance-request
+    sync) is reused unchanged.
+
     Returns the ActivityCost (amount + lines) so callers can return a preview in
     the same response as the schedule."""
     fy = input.get("fy") or activity.fy
     catalogue = active_catalogue(fy)
     rates, settings_by_key = _rate_card(catalogue)
-    cost = cost_for_activity(input, rates)
+    cost = (
+        precomputed_cost
+        if precomputed_cost is not None
+        else cost_for_activity(input, rates)
+    )
 
     catalogue_id = catalogue.id if catalogue else None
     catalogue_version = catalogue.version if catalogue else None
@@ -248,51 +316,81 @@ def apply_to_activity(activity: Activity, input: dict, responsible_user_id: str 
         activity.quarter = quarter
         activity.fy = fiscal_year
 
-    ActivityScheduleCostLine.objects.filter(activity=activity).delete()
-    
-    # Tag Core activity budget lines
-    tag = None
-    if activity.activity_type == "core_visit":
-        tag = "Core Partner Activity" if activity.delivery_type == "partner" else "Core Visit"
-    elif activity.activity_type == "core_training":
-        tag = "Core Partner Activity" if activity.delivery_type == "partner" else "Core Training"
-        
-    ActivityScheduleCostLine.objects.bulk_create([
-        ActivityScheduleCostLine(
-            activity=activity,
-            cost_setting_key=line.key,
-            label=line.label,
-            unit_cost=0 if line.unit is None else int(line.unit),
-            quantity=int(line.qty),
-            amount=int(line.amount),
-            cost_setting_version=(settings_by_key[line.key].version if line.key in settings_by_key else 1),
-            catalogue_id=catalogue_id,
-            catalogue_version=catalogue_version,
-            line_item_type=_line_item_type(line.key),
-            currency="UGX",
-            description=f"[{tag}] {line.label}" if tag else line.label,
-            total_cost=int(line.amount),
-            planned_date=planned_date,
-            week_start_date=week_start,
-            week_end_date=week_end,
-            month=month,
-            quarter=quarter,
-            fiscal_year=fiscal_year,
-            responsible_user=responsible_user_id or activity.responsible_staff_id,
-            responsible_role=None,
-            school=activity.school,
-            cluster=activity.cluster,
-            partner_id=activity.assigned_partner_id,
-            project_id=activity.project_id,
+    # The clear-and-rebuild of ActivityScheduleCostLine plus the activity's own
+    # cost-field save must succeed or fail together — a crash mid-sequence (e.g.
+    # after the delete but before the bulk_create completes) would otherwise
+    # leave a scheduled Activity with zero budget lines.
+    with transaction.atomic():
+        ActivityScheduleCostLine.objects.filter(activity=activity).delete()
+
+        # Tag Core activity budget lines
+        tag = None
+        if activity.activity_type == "core_visit":
+            tag = (
+                "Core Partner Activity"
+                if activity.delivery_type == "partner"
+                else "Core Visit"
+            )
+        elif activity.activity_type == "core_training":
+            tag = (
+                "Core Partner Activity"
+                if activity.delivery_type == "partner"
+                else "Core Training"
+            )
+
+        ActivityScheduleCostLine.objects.bulk_create(
+            [
+                ActivityScheduleCostLine(
+                    activity=activity,
+                    cost_setting_key=line.key,
+                    label=line.label,
+                    unit_cost=0 if line.unit is None else int(line.unit),
+                    quantity=int(line.qty),
+                    amount=int(line.amount),
+                    cost_setting_version=(
+                        settings_by_key[line.key].version
+                        if line.key in settings_by_key
+                        else 1
+                    ),
+                    catalogue_id=catalogue_id,
+                    catalogue_version=catalogue_version,
+                    line_item_type=_line_item_type(line.key),
+                    currency="UGX",
+                    description=f"[{tag}] {line.label}" if tag else line.label,
+                    total_cost=int(line.amount),
+                    planned_date=planned_date,
+                    week_start_date=week_start,
+                    week_end_date=week_end,
+                    month=month,
+                    quarter=quarter,
+                    fiscal_year=fiscal_year,
+                    responsible_user=responsible_user_id
+                    or activity.responsible_staff_id,
+                    responsible_role=None,
+                    school=activity.school,
+                    cluster=activity.cluster,
+                    partner_id=activity.assigned_partner_id or None,
+                    project_id=activity.project_id,
+                )
+                for line in cost.lines
+            ]
         )
-        for line in cost.lines
-    ])
-    activity.est_cost_cents = int(cost.amount)
-    activity.cost_missing = cost.cost_missing or catalogue is None
-    activity.save(update_fields=[
-        "est_cost_cents", "cost_missing", "planned_date", "week_start_date",
-        "week_end_date", "fiscal_year", "month", "quarter", "fy", "updated_at"
-    ])
+        activity.est_cost_cents = int(cost.amount)
+        activity.cost_missing = cost.cost_missing or catalogue is None
+        activity.save(
+            update_fields=[
+                "est_cost_cents",
+                "cost_missing",
+                "planned_date",
+                "week_start_date",
+                "week_end_date",
+                "fiscal_year",
+                "month",
+                "quarter",
+                "fy",
+                "updated_at",
+            ]
+        )
 
     # Auto-create weekly advance requests from the freshly-written budget lines
     # (the responsible user confirms before the Accountant may disburse). Only

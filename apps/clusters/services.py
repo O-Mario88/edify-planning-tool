@@ -5,6 +5,7 @@ Scope-constrained list, sub-county-unique create, school assignment, eligibility
 recommendations, and per-cluster intelligence. Sub-county uniqueness (§10): one
 active cluster per sub-county by default — a 2nd requires CLUSTER_OVERRIDE.
 """
+
 from __future__ import annotations
 
 from django.db import transaction
@@ -35,15 +36,23 @@ def list_clusters(principal) -> list[dict]:
     """List active/needs_review clusters within scope, with school counts + SSA."""
     scope_q, scope = _scope_filter(principal)
     qs = (
-        Cluster.objects.filter(scope_q, deleted_at__isnull=True, status__in=["active", "needs_review"])
+        Cluster.objects.filter(
+            scope_q, deleted_at__isnull=True, status__in=["active", "needs_review"]
+        )
         .select_related("district", "sub_county")
         .prefetch_related("covered_sub_counties__sub_county")
-        .annotate(school_count=Count("assignments", filter=Q(assignments__school__deleted_at__isnull=True)))
+        .annotate(
+            school_count=Count(
+                "assignments", filter=Q(assignments__school__deleted_at__isnull=True)
+            )
+        )
         .order_by("name")[:1000]  # safety bound
     )
     out = []
     for c in qs:
-        ssa_done = c.assignments.filter(school__deleted_at__isnull=True, school__current_fy_ssa_status="done").count()
+        ssa_done = c.assignments.filter(
+            school__deleted_at__isnull=True, school__current_fy_ssa_status="done"
+        ).count()
         out.append(
             {
                 "id": c.id,
@@ -56,7 +65,9 @@ def list_clusters(principal) -> list[dict]:
                 "responsibleStaffId": c.responsible_staff_id,
                 "clusterLeaderName": c.cluster_leader_name,
                 "clusterLeaderPhone": c.cluster_leader_phone,
-                "subCounties": [x.sub_county.name for x in c.covered_sub_counties.all()],
+                "subCounties": [
+                    x.sub_county.name for x in c.covered_sub_counties.all()
+                ],
                 "subCountyIds": [x.sub_county_id for x in c.covered_sub_counties.all()],
                 "schoolCount": c.school_count,
                 "schoolsWithSsa": ssa_done,
@@ -73,8 +84,12 @@ def _cluster_card(c: Cluster) -> dict:
         "district": c.district.name if c.district_id else None,
         "status": c.status,
         "clusterType": c.cluster_type,
-        "subCounty": ", ".join(sub_counties_list) if sub_counties_list else (
-            (c.sub_county.name if c.sub_county_id else None) or c.sub_county_name or "District-level cluster"
+        "subCounty": ", ".join(sub_counties_list)
+        if sub_counties_list
+        else (
+            (c.sub_county.name if c.sub_county_id else None)
+            or c.sub_county_name
+            or "District-level cluster"
         ),
         "subCounties": sub_counties_list,
         "clusterLeaderName": c.cluster_leader_name,
@@ -97,7 +112,10 @@ def recommendations(school_id: str, principal) -> dict:
     if school.sub_county_id:
         same_sub = list(
             Cluster.objects.filter(active)
-            .filter(Q(sub_county_id=school.sub_county_id) | Q(covered_sub_counties__sub_county_id=school.sub_county_id))
+            .filter(
+                Q(sub_county_id=school.sub_county_id)
+                | Q(covered_sub_counties__sub_county_id=school.sub_county_id)
+            )
             .distinct()
             .select_related("district", "sub_county")
             .prefetch_related("covered_sub_counties__sub_county")
@@ -175,12 +193,19 @@ def create_cluster(data: dict, principal) -> dict:
     needs_review = False
     if sub_ids:
         taken = set(
-            Cluster.objects.filter(deleted_at__isnull=True, status__in=["active", "needs_review"])
-            .filter(Q(sub_county_id__in=sub_ids) | Q(covered_sub_counties__sub_county_id__in=sub_ids))
+            Cluster.objects.filter(
+                deleted_at__isnull=True, status__in=["active", "needs_review"]
+            )
+            .filter(
+                Q(sub_county_id__in=sub_ids)
+                | Q(covered_sub_counties__sub_county_id__in=sub_ids)
+            )
             .values_list("id", flat=True)
         )
         if taken:
-            if Permission.CLUSTER_OVERRIDE.value in scope.permissions and data.get("overrideReason"):
+            if Permission.CLUSTER_OVERRIDE.value in scope.permissions and data.get(
+                "overrideReason"
+            ):
                 needs_review = True
             else:
                 raise BadRequest("An active cluster already covers this sub-county.")
@@ -194,7 +219,9 @@ def create_cluster(data: dict, principal) -> dict:
             sub_county=primary,
             sub_county_name=primary.name if primary else None,
             cluster_type=data.get("clusterType", "mixed"),
-            status=ClusterRecordStatus.NEEDS_REVIEW if needs_review else ClusterRecordStatus.ACTIVE,
+            status=ClusterRecordStatus.NEEDS_REVIEW
+            if needs_review
+            else ClusterRecordStatus.ACTIVE,
             override_reason=data.get("overrideReason"),
             responsible_staff_id=data.get("responsibleStaffId"),
             cluster_leader_name=data.get("clusterLeaderName"),
@@ -202,8 +229,79 @@ def create_cluster(data: dict, principal) -> dict:
         )
         if sub_ids:
             ClusterSubCounty.objects.bulk_create(
-                [ClusterSubCounty(cluster=cluster, sub_county_id=sid) for sid in sub_ids]
+                [
+                    ClusterSubCounty(cluster=cluster, sub_county_id=sid)
+                    for sid in sub_ids
+                ]
             )
+    return _cluster_card(cluster)
+
+
+def update_cluster(cluster_id: str, data: dict, principal) -> dict:
+    """Update an existing cluster details and covered sub-counties."""
+    from apps.core.exceptions import NotFoundError, BadRequest, Forbidden
+    
+    cluster = Cluster.objects.filter(id=cluster_id, deleted_at__isnull=True).first()
+    if not cluster:
+        raise NotFoundError("Cluster not found")
+
+    region_id = data.get("regionId")
+    district_id = data.get("districtId")
+    if district_id:
+        district = District.objects.filter(id=district_id).first()
+        if not district:
+            raise BadRequest("Unknown district")
+        if region_id and district.region_id != region_id:
+            raise BadRequest("district does not belong to region")
+        cluster.district = district
+        if not region_id:
+            region_id = district.region_id
+        cluster.region_id = region_id
+
+    scope = resolve_user_scope(principal)
+    if district_id and not scope.country_scope and district_id not in scope.district_ids:
+        raise Forbidden("District outside your scope")
+
+    if "name" in data:
+        cluster.name = data["name"]
+    if "clusterType" in data:
+        cluster.cluster_type = data["clusterType"]
+    if "clusterLeaderName" in data:
+        cluster.cluster_leader_name = data["clusterLeaderName"]
+    if "clusterLeaderPhone" in data:
+        cluster.cluster_leader_phone = data["clusterLeaderPhone"]
+    if "responsibleStaffId" in data:
+        cluster.responsible_staff_id = data["responsibleStaffId"]
+
+    # Sub-counties
+    if "subCountyIds" in data:
+        sub_ids = list(dict.fromkeys(data["subCountyIds"]))
+        subs = list(SubCounty.objects.filter(id__in=sub_ids))
+        for sc in subs:
+            if sc.district_id != cluster.district_id:
+                raise BadRequest("sub-county does not belong to district")
+        
+        with transaction.atomic():
+            # Delete old joins
+            ClusterSubCounty.objects.filter(cluster=cluster).delete()
+            # Set primary
+            if subs:
+                cluster.sub_county = subs[0]
+                cluster.sub_county_name = subs[0].name
+                # Create new joins
+                ClusterSubCounty.objects.bulk_create(
+                    [
+                        ClusterSubCounty(cluster=cluster, sub_county_id=sid)
+                        for sid in sub_ids
+                    ]
+                )
+            else:
+                cluster.sub_county = None
+                cluster.sub_county_name = None
+            cluster.save()
+    else:
+        cluster.save()
+
     return _cluster_card(cluster)
 
 
@@ -227,6 +325,28 @@ def create_from_school(data: dict, principal) -> dict:
     return create_cluster(payload, principal)
 
 
+def sync_school_cluster_assignment(school, cluster, assigned_by: str):
+    """Ensure exactly one active `SchoolClusterAssignment` row exists for
+    `school`, pointing at `cluster`.
+
+    Deletes any stale row(s) pointing at a different cluster first, inside the
+    same transaction, so a school can never accumulate assignment rows across
+    clusters (which silently inflates old clusters' school counts). Every call
+    site that assigns/reassigns a school to a cluster must go through this
+    helper instead of reimplementing get_or_create/update_or_create itself —
+    see `School.save()`'s automatic re-cluster branch (apps/schools/models.py)
+    for the reference delete+recreate behavior this mirrors.
+    """
+    with transaction.atomic():
+        SchoolClusterAssignment.objects.filter(school=school).exclude(
+            cluster=cluster
+        ).delete()
+        assignment, _ = SchoolClusterAssignment.objects.get_or_create(
+            school=school, cluster=cluster, defaults={"assigned_by": assigned_by}
+        )
+    return assignment
+
+
 def assign_school(school_id: str, data: dict, principal) -> dict:
     """Assign a school to a cluster (POST /schools/:id/cluster + /clusters/assign)."""
     cluster_id = data.get("clusterId")
@@ -238,13 +358,26 @@ def assign_school(school_id: str, data: dict, principal) -> dict:
     cluster = Cluster.objects.filter(id=cluster_id, deleted_at__isnull=True).first()
     if not cluster:
         raise NotFoundError("Cluster not found.")
-    SchoolClusterAssignment.objects.update_or_create(
-        school=school, cluster=cluster, defaults={"assigned_by": principal.user_id}
-    )
-    # Update the school's denormalized cluster pointer + status.
-    school.cluster_id = cluster.id
-    school.cluster_status = "clustered"
-    school.save(update_fields=["cluster_id", "cluster_status", "updated_at"])
+    with transaction.atomic():
+        sync_school_cluster_assignment(school, cluster, principal.user_id)
+        # Update the school's denormalized cluster pointer + status.
+        # School.save() unconditionally recomputes planning_readiness/
+        # data_quality_score/data_quality_status in memory before writing —
+        # update_fields must include them or the recompute is silently
+        # dropped and the school's own readiness badge goes stale relative
+        # to the Data Quality Center.
+        school.cluster_id = cluster.id
+        school.cluster_status = "clustered"
+        school.save(
+            update_fields=[
+                "cluster_id",
+                "cluster_status",
+                "planning_readiness",
+                "data_quality_score",
+                "data_quality_status",
+                "updated_at",
+            ]
+        )
     return {"ok": True, "schoolId": school.school_id, "clusterId": cluster.id}
 
 
@@ -259,26 +392,46 @@ def cluster_schools(cluster_id: str, principal) -> list[dict]:
     if not cluster:
         raise NotFoundError("Cluster not found.")
     schools = (
-        School.objects.filter(cluster_assignments__cluster=cluster, deleted_at__isnull=True)
+        School.objects.filter(
+            cluster_assignments__cluster=cluster, deleted_at__isnull=True
+        )
         .select_related("district", "sub_county", "parish")
         .prefetch_related("ssa_records__scores", "activities")
         .order_by("name")
     )
-    
+
     # Query completed cluster activities to compute attendance rate
     from apps.activities.models import Activity
-    cluster_activities = list(Activity.objects.filter(
-        cluster=cluster,
-        status="completed",
-        activity_type__in=["cluster_meeting", "training", "cluster_training", "core_training"],
-        deleted_at__isnull=True
-    ))
-    total_meetings = sum(1 for a in cluster_activities if a.activity_type == "cluster_meeting")
-    total_trainings = sum(1 for a in cluster_activities if a.activity_type in ["training", "cluster_training", "core_training"])
+
+    cluster_activities = list(
+        Activity.objects.filter(
+            cluster=cluster,
+            status="completed",
+            activity_type__in=[
+                "cluster_meeting",
+                "training",
+                "cluster_training",
+                "core_training",
+            ],
+            deleted_at__isnull=True,
+        )
+    )
+    total_meetings = sum(
+        1 for a in cluster_activities if a.activity_type == "cluster_meeting"
+    )
+    total_trainings = sum(
+        1
+        for a in cluster_activities
+        if a.activity_type in ["training", "cluster_training", "core_training"]
+    )
 
     out = []
     for s in schools:
-        latest_ssa = s.ssa_records.filter(deleted_at__isnull=True).order_by("-date_of_ssa").first()
+        latest_ssa = (
+            s.ssa_records.filter(deleted_at__isnull=True)
+            .order_by("-date_of_ssa")
+            .first()
+        )
         avg_score = None
         weakest_label = "None"
         struggling = []
@@ -292,19 +445,45 @@ def cluster_schools(cluster_id: str, principal) -> list[dict]:
                 weakest_key = scores[0].intervention
                 for idx, x in enumerate(scores):
                     if idx < 3 or x.score < 5.5:
-                        struggling.append(f"{x.get_intervention_display()}: {x.score:.1f}")
+                        struggling.append(
+                            f"{x.get_intervention_display()}: {x.score:.1f}"
+                        )
                 if weakest_key == "leadership":
                     rec_action = "Schedule leadership-focused cluster training."
                 else:
                     rec_action = f"Schedule {weakest_label}-focused school visit."
 
         # Fetch last completed visit
-        last_visit = s.activities.filter(activity_type="school_visit", status="completed", deleted_at__isnull=True).order_by("-planned_date").first()
-        last_visit_date = last_visit.planned_date.strftime("%Y-%m-%d") if last_visit and last_visit.planned_date else "Never"
+        last_visit = (
+            s.activities.filter(
+                activity_type="school_visit",
+                status="completed",
+                deleted_at__isnull=True,
+            )
+            .order_by("-planned_date")
+            .first()
+        )
+        last_visit_date = (
+            last_visit.planned_date.strftime("%Y-%m-%d")
+            if last_visit and last_visit.planned_date
+            else "Never"
+        )
 
         # Fetch last completed training
-        last_training = s.activities.filter(activity_type__in=["training", "school_improvement_training"], status="completed", deleted_at__isnull=True).order_by("-planned_date").first()
-        last_training_date = last_training.planned_date.strftime("%Y-%m-%d") if last_training and last_training.planned_date else "Never"
+        last_training = (
+            s.activities.filter(
+                activity_type__in=["training", "school_improvement_training"],
+                status="completed",
+                deleted_at__isnull=True,
+            )
+            .order_by("-planned_date")
+            .first()
+        )
+        last_training_date = (
+            last_training.planned_date.strftime("%Y-%m-%d")
+            if last_training and last_training.planned_date
+            else "Never"
+        )
 
         # Assigned staff
         assigned_staff = "Unassigned"
@@ -312,31 +491,43 @@ def cluster_schools(cluster_id: str, principal) -> list[dict]:
             assigned_staff = s.account_owner_name_raw or s.account_owner_id
 
         # Calculate school-specific attendance counts
-        attended_meetings = sum(1 for a in cluster_activities if a.activity_type == "cluster_meeting" and s.id in (a.attended_school_ids or []))
-        attended_trainings = sum(1 for a in cluster_activities if a.activity_type in ["training", "cluster_training", "core_training"] and s.id in (a.attended_school_ids or []))
+        attended_meetings = sum(
+            1
+            for a in cluster_activities
+            if a.activity_type == "cluster_meeting"
+            and s.id in (a.attended_school_ids or [])
+        )
+        attended_trainings = sum(
+            1
+            for a in cluster_activities
+            if a.activity_type in ["training", "cluster_training", "core_training"]
+            and s.id in (a.attended_school_ids or [])
+        )
 
-        out.append({
-            "id": s.id,
-            "schoolId": s.school_id,
-            "name": s.name,
-            "district": s.district.name if s.district_id else None,
-            "subCounty": s.sub_county.name if s.sub_county_id else None,
-            "parish": s.parish.name if s.parish_id else None,
-            "schoolType": s.school_type,
-            "assignedStaff": assigned_staff,
-            "currentSsaAverage": avg_score,
-            "weakestSsaIntervention": weakest_label,
-            "topStrugglingInterventions": struggling,
-            "lastVisitDate": last_visit_date,
-            "lastTrainingDate": last_training_date,
-            "planningStatus": s.planning_readiness,
-            "ssaStatus": s.current_fy_ssa_status,
-            "recommendedAction": rec_action,
-            "meetings_attended": attended_meetings,
-            "total_meetings": total_meetings,
-            "trainings_attended": attended_trainings,
-            "total_trainings": total_trainings,
-        })
+        out.append(
+            {
+                "id": s.id,
+                "schoolId": s.school_id,
+                "name": s.name,
+                "district": s.district.name if s.district_id else None,
+                "subCounty": s.sub_county.name if s.sub_county_id else None,
+                "parish": s.parish.name if s.parish_id else None,
+                "schoolType": s.school_type,
+                "assignedStaff": assigned_staff,
+                "currentSsaAverage": avg_score,
+                "weakestSsaIntervention": weakest_label,
+                "topStrugglingInterventions": struggling,
+                "lastVisitDate": last_visit_date,
+                "lastTrainingDate": last_training_date,
+                "planningStatus": s.planning_readiness,
+                "ssaStatus": s.current_fy_ssa_status,
+                "recommendedAction": rec_action,
+                "meetings_attended": attended_meetings,
+                "total_meetings": total_meetings,
+                "trainings_attended": attended_trainings,
+                "total_trainings": total_trainings,
+            }
+        )
     return out
 
 
@@ -345,35 +536,67 @@ def cluster_detail(cluster_id: str, principal) -> dict:
     if not cluster:
         raise NotFoundError("Cluster not found.")
 
-    schools = School.objects.filter(cluster_assignments__cluster=cluster, deleted_at__isnull=True)
+    schools = School.objects.filter(
+        cluster_assignments__cluster=cluster, deleted_at__isnull=True
+    )
     school_count = schools.count()
 
     # Calculate average SSA
     latest_ssas = []
     for s in schools:
-        latest = s.ssa_records.filter(deleted_at__isnull=True).order_by("-date_of_ssa").first()
+        latest = (
+            s.ssa_records.filter(deleted_at__isnull=True)
+            .order_by("-date_of_ssa")
+            .first()
+        )
         if latest and latest.average_score is not None:
             latest_ssas.append(latest.average_score)
     avg_ssa = round(sum(latest_ssas) / len(latest_ssas), 1) if latest_ssas else None
 
     # Last meeting
-    last_meeting = cluster.activities.filter(activity_type="cluster_meeting", status="completed", deleted_at__isnull=True).order_by("-planned_date").first()
-    last_meeting_str = last_meeting.planned_date.strftime("%Y-%m-%d") if last_meeting and last_meeting.planned_date else "Never"
+    last_meeting = (
+        cluster.activities.filter(
+            activity_type="cluster_meeting", status="completed", deleted_at__isnull=True
+        )
+        .order_by("-planned_date")
+        .first()
+    )
+    last_meeting_str = (
+        last_meeting.planned_date.strftime("%Y-%m-%d")
+        if last_meeting and last_meeting.planned_date
+        else "Never"
+    )
 
     # Last training
-    last_training = cluster.activities.filter(activity_type__in=["training", "school_improvement_training"], status="completed", deleted_at__isnull=True).order_by("-planned_date").first()
-    last_training_str = last_training.planned_date.strftime("%Y-%m-%d") if last_training and last_training.planned_date else "Never"
+    last_training = (
+        cluster.activities.filter(
+            activity_type__in=["training", "school_improvement_training"],
+            status="completed",
+            deleted_at__isnull=True,
+        )
+        .order_by("-planned_date")
+        .first()
+    )
+    last_training_str = (
+        last_training.planned_date.strftime("%Y-%m-%d")
+        if last_training and last_training.planned_date
+        else "Never"
+    )
 
     assigned_staff = "Unassigned"
     if cluster.responsible_staff_id:
         from apps.accounts.models import StaffProfile
-        staff = StaffProfile.objects.filter(staff_id=cluster.responsible_staff_id).first()
+
+        staff = StaffProfile.objects.filter(
+            staff_id=cluster.responsible_staff_id
+        ).first()
         if staff:
             assigned_staff = staff.user.name if staff.user else staff.staff_id
 
     return {
         "id": cluster.id,
         "name": cluster.name,
+        "status": cluster.status,
         "district": {"name": cluster.district.name} if cluster.district else None,
         "subCounty": {"name": cluster.sub_county.name} if cluster.sub_county else None,
         "schoolCount": school_count,
@@ -389,14 +612,21 @@ def cluster_weakest_interventions(cluster_id: str, principal) -> list[dict]:
     if not cluster:
         raise NotFoundError("Cluster not found.")
 
-    schools = School.objects.filter(cluster_assignments__cluster=cluster, deleted_at__isnull=True)
+    schools = School.objects.filter(
+        cluster_assignments__cluster=cluster, deleted_at__isnull=True
+    )
 
     # Collect all scores for latest SSAs of the schools
     from apps.core.enums import SsaIntervention
+
     intervention_scores = {key.value: [] for key in SsaIntervention}
 
     for s in schools:
-        latest = s.ssa_records.filter(deleted_at__isnull=True).order_by("-date_of_ssa").first()
+        latest = (
+            s.ssa_records.filter(deleted_at__isnull=True)
+            .order_by("-date_of_ssa")
+            .first()
+        )
         if latest:
             for score in latest.scores.all():
                 if score.score is not None:
@@ -415,13 +645,15 @@ def cluster_weakest_interventions(cluster_id: str, principal) -> list[dict]:
         else:
             rec = f"Schedule {label}-focused cluster training or school visits."
 
-        results.append({
-            "intervention": key.value,
-            "label": label,
-            "avg": avg,
-            "schoolsBelowThreshold": below_count,
-            "recommendedAction": rec,
-        })
+        results.append(
+            {
+                "intervention": key.value,
+                "label": label,
+                "avg": avg,
+                "schoolsBelowThreshold": below_count,
+                "recommendedAction": rec,
+            }
+        )
 
     # Filter out interventions with no scores to prevent ranking empty data, but fallback if empty
     scored = [r for r in results if r["avg"] is not None]
@@ -441,11 +673,18 @@ def cluster_intervention_summary(cluster_id: str, principal) -> list[dict]:
     cluster = Cluster.objects.filter(id=cluster_id, deleted_at__isnull=True).first()
     if not cluster:
         raise NotFoundError("Cluster not found.")
-    schools = School.objects.filter(cluster_assignments__cluster=cluster, deleted_at__isnull=True)
+    schools = School.objects.filter(
+        cluster_assignments__cluster=cluster, deleted_at__isnull=True
+    )
     from apps.core.enums import SsaIntervention
+
     intervention_scores = {key.value: [] for key in SsaIntervention}
     for s in schools:
-        latest = s.ssa_records.filter(deleted_at__isnull=True).order_by("-date_of_ssa").first()
+        latest = (
+            s.ssa_records.filter(deleted_at__isnull=True)
+            .order_by("-date_of_ssa")
+            .first()
+        )
         if latest:
             for score in latest.scores.all():
                 if score.score is not None:
@@ -455,12 +694,14 @@ def cluster_intervention_summary(cluster_id: str, principal) -> list[dict]:
         scores = intervention_scores[key.value]
         avg = round(sum(scores) / len(scores), 1) if scores else 0.0
         below_count = sum(1 for x in scores if x < 5.5)
-        results.append({
-            "intervention": key.value,
-            "label": key.label,
-            "avg": avg,
-            "schoolsBelowThreshold": below_count,
-        })
+        results.append(
+            {
+                "intervention": key.value,
+                "label": key.label,
+                "avg": avg,
+                "schoolsBelowThreshold": below_count,
+            }
+        )
     return results
 
 
@@ -470,8 +711,7 @@ def cluster_activity_impact(cluster_id: str, principal) -> list[dict]:
         raise NotFoundError("Cluster not found.")
 
     activities = cluster.activities.filter(
-        status="completed",
-        deleted_at__isnull=True
+        status="completed", deleted_at__isnull=True
     ).order_by("-planned_date")
 
     from apps.activities.services import calculate_activity_impact
@@ -479,15 +719,17 @@ def cluster_activity_impact(cluster_id: str, principal) -> list[dict]:
     out = []
     for a in activities:
         impact = calculate_activity_impact(a)
-        out.append({
-            "id": a.id,
-            "activityType": a.activity_type,
-            "plannedDate": a.planned_date.isoformat() if a.planned_date else None,
-            "focusIntervention": a.focus_intervention,
-            "activityPurposeText": a.activity_purpose_text,
-            "expectedOutcome": a.expected_outcome,
-            "impact": impact,
-        })
+        out.append(
+            {
+                "id": a.id,
+                "activityType": a.activity_type,
+                "plannedDate": a.planned_date.isoformat() if a.planned_date else None,
+                "focusIntervention": a.focus_intervention,
+                "activityPurposeText": a.activity_purpose_text,
+                "expectedOutcome": a.expected_outcome,
+                "impact": impact,
+            }
+        )
     return out
 
 
@@ -496,7 +738,9 @@ def cluster_intelligence(cluster_id: str, principal) -> dict:
     cluster = Cluster.objects.filter(id=cluster_id, deleted_at__isnull=True).first()
     if not cluster:
         raise NotFoundError("Cluster not found.")
-    schools = School.objects.filter(cluster_assignments__cluster=cluster, deleted_at__isnull=True)
+    schools = School.objects.filter(
+        cluster_assignments__cluster=cluster, deleted_at__isnull=True
+    )
     total = schools.count()
     ssa_done = schools.filter(current_fy_ssa_status="done").count()
     return {
@@ -542,49 +786,87 @@ def cluster_planning(principal) -> list[dict]:
 
     out = []
     for c in clusters:
-        schools = School.objects.filter(cluster_assignments__cluster=c, deleted_at__isnull=True)
+        schools = School.objects.filter(
+            cluster_assignments__cluster=c, deleted_at__isnull=True
+        )
         total_schools = schools.count()
         ssa_done = schools.filter(current_fy_ssa_status="done").count()
         ssa_missing = total_schools - ssa_done
-        ssa_coverage_pct = round((ssa_done / total_schools) * 100, 1) if total_schools > 0 else 0.0
-        
-        ready_for_planning = schools.filter(planning_readiness="ready_for_support_planning").count()
-        needing_baseline = schools.filter(planning_readiness="ready_for_baseline_ssa").count()
+        ssa_coverage_pct = (
+            round((ssa_done / total_schools) * 100, 1) if total_schools > 0 else 0.0
+        )
+
+        ready_for_planning = schools.filter(
+            planning_readiness="ready_for_support_planning"
+        ).count()
+        needing_baseline = schools.filter(
+            planning_readiness="ready_for_baseline_ssa"
+        ).count()
         needing_cleanup = schools.exclude(data_quality_status="Clean").count()
 
         # Activities for this cluster
         acts = Activity.objects.filter(cluster=c, deleted_at__isnull=True)
-        
+
         meetings_completed = acts.filter(
             activity_type__in=["cluster_meeting"],
-            status__in=["ia_verified", "closed", "accountant_confirmed"]
+            status__in=["ia_verified", "closed", "accountant_confirmed"],
         ).count()
-        
+
         meetings_scheduled = acts.filter(
             activity_type__in=["cluster_meeting"],
-            status__in=["scheduled", "partner_scheduled", "assigned_to_partner", "evidence_uploaded", "in_progress", "awaiting_ia_verification"]
+            status__in=[
+                "scheduled",
+                "partner_scheduled",
+                "assigned_to_partner",
+                "evidence_uploaded",
+                "in_progress",
+                "awaiting_ia_verification",
+            ],
         ).count()
 
         trainings_completed = acts.filter(
             activity_type__in=["cluster_training", "school_improvement_training"],
-            status__in=["ia_verified", "closed", "accountant_confirmed"]
+            status__in=["ia_verified", "closed", "accountant_confirmed"],
         ).count()
 
         # Last completed meeting date
-        last_meet = acts.filter(
-            activity_type__in=["cluster_meeting"],
-            status__in=["ia_verified", "closed", "accountant_confirmed"]
-        ).order_by("-scheduled_date").first()
-        last_meeting_date = last_meet.scheduled_date.isoformat() if last_meet and last_meet.scheduled_date else None
+        last_meet = (
+            acts.filter(
+                activity_type__in=["cluster_meeting"],
+                status__in=["ia_verified", "closed", "accountant_confirmed"],
+            )
+            .order_by("-scheduled_date")
+            .first()
+        )
+        last_meeting_date = (
+            last_meet.scheduled_date.isoformat()
+            if last_meet and last_meet.scheduled_date
+            else None
+        )
 
         # Next scheduled meeting date
-        next_meet = acts.filter(
-            activity_type__in=["cluster_meeting"],
-            status__in=["scheduled", "partner_scheduled", "assigned_to_partner", "evidence_uploaded", "in_progress", "awaiting_ia_verification"]
-        ).order_by("scheduled_date").first()
-        next_scheduled_meeting_date = next_meet.scheduled_date.isoformat() if next_meet and next_meet.scheduled_date else None
+        next_meet = (
+            acts.filter(
+                activity_type__in=["cluster_meeting"],
+                status__in=[
+                    "scheduled",
+                    "partner_scheduled",
+                    "assigned_to_partner",
+                    "evidence_uploaded",
+                    "in_progress",
+                    "awaiting_ia_verification",
+                ],
+            )
+            .order_by("scheduled_date")
+            .first()
+        )
+        next_scheduled_meeting_date = (
+            next_meet.scheduled_date.isoformat()
+            if next_meet and next_meet.scheduled_date
+            else None
+        )
 
-        met_this_quarter = (meetings_completed > 0 or meetings_scheduled > 0)
+        met_this_quarter = meetings_completed > 0 or meetings_scheduled > 0
 
         # Schools not visited / trained / neither
         visited_school_ids = set(
@@ -592,7 +874,7 @@ def cluster_planning(principal) -> list[dict]:
                 school__in=schools,
                 activity_type="school_visit",
                 status__in=["ia_verified", "closed", "accountant_confirmed"],
-                deleted_at__isnull=True
+                deleted_at__isnull=True,
             ).values_list("school_id", flat=True)
         )
         schools_not_visited = max(0, total_schools - len(visited_school_ids))
@@ -600,14 +882,20 @@ def cluster_planning(principal) -> list[dict]:
         trained_school_ids = set(
             Activity.objects.filter(
                 school__in=schools,
-                activity_type__in=["school_training", "core_training", "project_activity"],
+                activity_type__in=[
+                    "school_training",
+                    "core_training",
+                    "project_activity",
+                ],
                 status__in=["ia_verified", "closed", "accountant_confirmed"],
-                deleted_at__isnull=True
+                deleted_at__isnull=True,
             ).values_list("school_id", flat=True)
         )
         schools_not_trained = max(0, total_schools - len(trained_school_ids))
 
-        neither_count = max(0, total_schools - len(visited_school_ids.union(trained_school_ids)))
+        neither_count = max(
+            0, total_schools - len(visited_school_ids.union(trained_school_ids))
+        )
 
         if meetings_completed == 0:
             gap_cat = "no_meetings_this_fy"
@@ -635,7 +923,9 @@ def cluster_planning(principal) -> list[dict]:
             recommendation_activity_label = "Schedule Cluster Meeting"
         elif gap_cat == "schools_not_visited":
             recommendation_headline = "Schools need visits"
-            recommendation_reason = f"{schools_not_visited} schools haven't been visited."
+            recommendation_reason = (
+                f"{schools_not_visited} schools haven't been visited."
+            )
             recommendation_activity_label = "Schedule Visit"
         elif gap_cat == "schools_not_trained":
             recommendation_headline = "Schools need training"
@@ -647,7 +937,9 @@ def cluster_planning(principal) -> list[dict]:
                 "id": c.id,
                 "clusterName": c.name,
                 "district": c.district.name if c.district else "",
-                "subCounty": (c.sub_county.name if c.sub_county else "") or c.sub_county_name or "",
+                "subCounty": (c.sub_county.name if c.sub_county else "")
+                or c.sub_county_name
+                or "",
                 "schoolsCount": total_schools,
                 "schoolsWithSsa": ssa_done,
                 "schoolsWithoutSsa": ssa_missing,
@@ -678,81 +970,127 @@ class ClusterDashboardService:
     @staticmethod
     def get_dashboard_data(request, user) -> dict:
         from apps.activities.models import Activity
+
         scope = resolve_user_scope(user)
-        
+
         # 1. Base scoped query
         base_qs = Cluster.objects.filter(deleted_at__isnull=True, status="active")
         if not scope.country_scope and scope.district_ids:
             base_qs = base_qs.filter(district_id__in=scope.district_ids)
-            
+
         # 2. Filters from request
         q = request.GET.get("q", "").strip()
         fy = request.GET.get("fy", "2026").strip()
-        quarter = request.GET.get("quarter", "").strip()
         district_id = request.GET.get("district", "").strip()
         sub_county_id = request.GET.get("sub_county", "").strip()
         staff_id = request.GET.get("staff", "").strip()
         ssa_status = request.GET.get("ssa_status", "").strip()
         cluster_risk = request.GET.get("cluster_risk", "").strip()
         activity_status = request.GET.get("activity_status", "").strip()
-        
+
         # Apply filters to queryset
         filtered_qs = base_qs
         if q:
-            filtered_qs = filtered_qs.filter(Q(name__icontains=q) | Q(district__name__icontains=q))
+            filtered_qs = filtered_qs.filter(
+                Q(name__icontains=q) | Q(district__name__icontains=q)
+            )
         if district_id:
             filtered_qs = filtered_qs.filter(district_id=district_id)
         if sub_county_id:
             filtered_qs = filtered_qs.filter(sub_county_id=sub_county_id)
         if staff_id:
-            filtered_qs = filtered_qs.filter(Q(responsible_staff_id=staff_id) | Q(assignments__school__account_owner_id=staff_id)).distinct()
+            filtered_qs = filtered_qs.filter(
+                Q(responsible_staff_id=staff_id)
+                | Q(assignments__school__account_owner_id=staff_id)
+            ).distinct()
 
         # Get all planning info
         planning_list = cluster_planning(user)
         planning_map = {p["id"]: p for p in planning_list}
-        
+
         # Build Card viewmodels for filtered list
         cards = []
         for c in filtered_qs.select_related("district", "sub_county"):
-            schools = School.objects.filter(cluster_assignments__cluster=c, deleted_at__isnull=True)
+            schools = School.objects.filter(
+                cluster_assignments__cluster=c, deleted_at__isnull=True
+            )
             schools_count = schools.count()
-            
-            assigned_staff_ids = schools.exclude(account_owner_id__isnull=True).exclude(account_owner_id="").values_list("account_owner_id", flat=True).distinct()
+
+            assigned_staff_ids = (
+                schools.exclude(account_owner_id__isnull=True)
+                .exclude(account_owner_id="")
+                .values_list("account_owner_id", flat=True)
+                .distinct()
+            )
             staff_count = len(assigned_staff_ids)
-            
+
             latest_ssas = []
             for s in schools:
-                latest = s.ssa_records.filter(deleted_at__isnull=True).order_by("-date_of_ssa").first()
+                latest = (
+                    s.ssa_records.filter(deleted_at__isnull=True)
+                    .order_by("-date_of_ssa")
+                    .first()
+                )
                 if latest and latest.average_score is not None:
                     latest_ssas.append(latest.average_score)
-            avg_ssa = round(sum(latest_ssas) / len(latest_ssas), 1) if latest_ssas else None
-            
+            avg_ssa = (
+                round(sum(latest_ssas) / len(latest_ssas), 1) if latest_ssas else None
+            )
+
             acts = Activity.objects.filter(cluster=c, deleted_at__isnull=True)
-            
-            last_meeting = acts.filter(activity_type="cluster_meeting", status="completed").order_by("-planned_date").first()
-            last_meeting_date = last_meeting.planned_date.strftime("%d %b %Y") if last_meeting and last_meeting.planned_date else "Never"
-            
-            last_training = acts.filter(activity_type__in=["training", "school_improvement_training", "cluster_training"], status="completed").order_by("-planned_date").first()
-            last_training_date = last_training.planned_date.strftime("%d %b %Y") if last_training and last_training.planned_date else "Never"
-            
-            meeting_count_fy = acts.filter(activity_type="cluster_meeting", status="completed", fy=fy).count()
-            
+
+            last_meeting = (
+                acts.filter(activity_type="cluster_meeting", status="completed")
+                .order_by("-planned_date")
+                .first()
+            )
+            last_meeting_date = (
+                last_meeting.planned_date.strftime("%d %b %Y")
+                if last_meeting and last_meeting.planned_date
+                else "Never"
+            )
+
+            last_training = (
+                acts.filter(
+                    activity_type__in=[
+                        "training",
+                        "school_improvement_training",
+                        "cluster_training",
+                    ],
+                    status="completed",
+                )
+                .order_by("-planned_date")
+                .first()
+            )
+            last_training_date = (
+                last_training.planned_date.strftime("%d %b %Y")
+                if last_training and last_training.planned_date
+                else "Never"
+            )
+
+            meeting_count_fy = acts.filter(
+                activity_type="cluster_meeting", status="completed", fy=fy
+            ).count()
+
             weakest = cluster_weakest_interventions(c.id, user)
             planning_info = planning_map.get(c.id, {})
-            
+
             from apps.frontend.views.cluster_views import get_cluster_risk
+
             risk = get_cluster_risk(c, planning_info, avg_ssa)
-            
+
             if risk == "critical":
                 next_action = "Schedule training"
             elif risk == "needs_attention":
                 next_action = "Monitor progress"
             else:
                 next_action = "Continue support"
-                
+
             # Build sub-county display: show all covered sub-counties, or
             # "District-level cluster" if none selected.
-            covered = list(c.covered_sub_counties.values_list("sub_county__name", flat=True))
+            covered = list(
+                c.covered_sub_counties.values_list("sub_county__name", flat=True)
+            )
             if covered:
                 sub_county_display = ", ".join(covered)
             elif c.sub_county:
@@ -762,59 +1100,85 @@ class ClusterDashboardService:
             else:
                 sub_county_display = "District-level cluster"
 
-            cards.append({
-                "id": c.id,
-                "name": c.name,
-                "district": c.district.name if c.district else "Unknown",
-                "sub_county": sub_county_display,
-                "schools_count": schools_count,
-                "staff_count": staff_count,
-                "avg_ssa": avg_ssa,
-                "last_meeting_date": last_meeting_date,
-                "last_training_date": last_training_date,
-                "weakest_interventions": weakest,
-                "all_intervention_scores": cluster_intervention_summary(c.id, user),
-                "risk": risk,
-                "next_action": next_action,
-                "planning": planning_info,
-                "meeting_count_fy": meeting_count_fy,
-                "cluster_leader_name": c.cluster_leader_name or "Not Assigned",
-                "cluster_leader_phone": c.cluster_leader_phone or "Not Entered",
-            })
-            
+            cards.append(
+                {
+                    "id": c.id,
+                    "name": c.name,
+                    "district": c.district.name if c.district else "Unknown",
+                    "sub_county": sub_county_display,
+                    "schools_count": schools_count,
+                    "staff_count": staff_count,
+                    "avg_ssa": avg_ssa,
+                    "last_meeting_date": last_meeting_date,
+                    "last_training_date": last_training_date,
+                    "weakest_interventions": weakest,
+                    "all_intervention_scores": cluster_intervention_summary(c.id, user),
+                    "risk": risk,
+                    "next_action": next_action,
+                    "planning": planning_info,
+                    "meeting_count_fy": meeting_count_fy,
+                    "cluster_leader_name": c.cluster_leader_name or "Not Assigned",
+                    "cluster_leader_phone": c.cluster_leader_phone or "Not Entered",
+                }
+            )
+
         # Apply calculated filters in Python
         if ssa_status:
             if ssa_status == "done":
-                cards = [c for c in cards if c["planning"].get("schoolsWithSsa", 0) == c["schools_count"]]
+                cards = [
+                    c
+                    for c in cards
+                    if c["planning"].get("schoolsWithSsa", 0) == c["schools_count"]
+                ]
             elif ssa_status == "not_done":
-                cards = [c for c in cards if c["planning"].get("schoolsWithSsa", 0) < c["schools_count"]]
-                
+                cards = [
+                    c
+                    for c in cards
+                    if c["planning"].get("schoolsWithSsa", 0) < c["schools_count"]
+                ]
+
         if cluster_risk:
             cards = [c for c in cards if c["risk"] == cluster_risk]
-            
+
         if activity_status:
             if activity_status == "pending":
-                cards = [c for c in cards if c["planning"].get("meetingsScheduledThisFy", 0) > 0]
+                cards = [
+                    c
+                    for c in cards
+                    if c["planning"].get("meetingsScheduledThisFy", 0) > 0
+                ]
             elif activity_status == "completed":
                 cards = [c for c in cards if c["planning"].get("meetingsThisFy", 0) > 0]
 
         # Calculate KPIs
         total_clusters = len(cards)
         schools_in_clusters = sum(c["schools_count"] for c in cards)
-        without_ssa = sum(1 for c in cards if c["planning"].get("schoolsWithSsa", 0) < c["schools_count"])
-        needing_training = sum(1 for c in cards if c["risk"] == "critical" or (c["avg_ssa"] is not None and c["avg_ssa"] < 5.5))
-        not_met_this_quarter = sum(1 for c in cards if not c["planning"].get("metThisQuarter", True))
-        
+        without_ssa = sum(
+            1
+            for c in cards
+            if c["planning"].get("schoolsWithSsa", 0) < c["schools_count"]
+        )
+        needing_training = sum(
+            1
+            for c in cards
+            if c["risk"] == "critical"
+            or (c["avg_ssa"] is not None and c["avg_ssa"] < 5.5)
+        )
+        not_met_this_quarter = sum(
+            1 for c in cards if not c["planning"].get("metThisQuarter", True)
+        )
+
         ssas = [c["avg_ssa"] for c in cards if c["avg_ssa"] is not None]
         avg_cluster_ssa = round(sum(ssas) / len(ssas), 1) if ssas else 0.0
-        
+
         from apps.core.enums import SsaIntervention
+
         interv_totals = {key.value: [] for key in SsaIntervention}
         for c in cards:
             for item in c["weakest_interventions"]:
                 if item["avg"] is not None:
                     interv_totals[item["intervention"]].append(item["avg"])
-        
+
         weakest_name = "None"
         weakest_avg = 0.0
         lowest_val = 99.0
@@ -826,8 +1190,10 @@ class ClusterDashboardService:
                     lowest_val = avg
                     weakest_name = key.label
                     weakest_avg = round(avg, 1)
-                    
-        pending_activities = sum(c["planning"].get("meetingsScheduledThisFy", 0) for c in cards)
+
+        pending_activities = sum(
+            c["planning"].get("meetingsScheduledThisFy", 0) for c in cards
+        )
 
         kpis = {
             "total_clusters": total_clusters,
@@ -905,7 +1271,7 @@ class ClusterDashboardService:
                 "helper": "This quarter",
                 "icon": "check",
                 "variant": "info",
-            }
+            },
         ]
 
         critical_count = sum(1 for c in cards if c["risk"] == "critical")
@@ -936,29 +1302,35 @@ class ClusterActionPlannerService:
     @staticmethod
     def schedule_activity(data: dict, user) -> dict:
         from apps.activities.services import create as create_activity
-        
+
         # Ensure we have active cost catalogue
         from apps.budget.costing_service import active_catalogue
+
         catalogue = active_catalogue(data.get("fy", "2026"))
         if not catalogue:
-            raise BadRequest("Active Cost Catalogue required before cluster activity can be scheduled.")
-            
+            raise BadRequest(
+                "Active Cost Catalogue required before cluster activity can be scheduled."
+            )
+
         act_dict = create_activity(data, user)
-        
+
         # If assigned partner, make sure PartnerAssignment is created
         partner_id = data.get("assignedPartnerId")
         if partner_id:
             from apps.partners.models import PartnerAssignment
+
             PartnerAssignment.objects.create(
                 cluster_id=data.get("clusterId"),
                 partner_id=partner_id,
-                assigning_staff_id=user.staff_profile.staff_id if hasattr(user, "staff_profile") and user.staff_profile else user.id,
+                assigning_staff_id=user.staff_profile.staff_id
+                if hasattr(user, "staff_profile") and user.staff_profile
+                else user.id,
                 purpose=data.get("activityPurposeText"),
                 focus_intervention=data.get("focusIntervention"),
                 expected_activity_type=data.get("activityType"),
                 status="partner_pending_schedule",
             )
-            
+
         return act_dict
 
 
@@ -966,6 +1338,7 @@ class ClusterImpactService:
     @staticmethod
     def get_impact_data(cluster_id: str, focus_intervention: str, user) -> dict | None:
         from apps.frontend.views.cluster_views import get_cluster_impact_data
+
         return get_cluster_impact_data(cluster_id, focus_intervention, user)
 
 
@@ -977,17 +1350,29 @@ class ClusterRecommendationService:
         if not planning:
             return None
         return {
-            "headline": planning.get("recommendationHeadline", "Continue standard support"),
-            "reason": planning.get("recommendationReason", "Cluster has solid SSA scores and frequent meetings."),
-            "activity_label": planning.get("recommendationActivityLabel", "Schedule Visit"),
-            "focus_intervention": planning.get("recommendationFocusIntervention", "leadership"),
+            "headline": planning.get(
+                "recommendationHeadline", "Continue standard support"
+            ),
+            "reason": planning.get(
+                "recommendationReason",
+                "Cluster has solid SSA scores and frequent meetings.",
+            ),
+            "activity_label": planning.get(
+                "recommendationActivityLabel", "Schedule Visit"
+            ),
+            "focus_intervention": planning.get(
+                "recommendationFocusIntervention", "leadership"
+            ),
         }
 
 
 class ClusterCostPreviewService:
     @staticmethod
-    def preview_cost(activity_type: str, participants: int, cluster_id: str, fy: str = "2026") -> dict:
+    def preview_cost(
+        activity_type: str, participants: int, cluster_id: str, fy: str = "2026"
+    ) -> dict:
         from apps.frontend.views.cluster_views import _get_cost_preview_data
+
         return _get_cost_preview_data(activity_type, participants, cluster_id)
 
 

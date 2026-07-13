@@ -4,14 +4,16 @@
 {% block title %}Fund Disbursement Dashboard — SIPA{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-[1600px] mx-auto space-y-6 text-slate-700 font-sans" 
-x-data="{ 
-allFunds: {{ all_funds_json|safe }}, 
-selectedId: 'FR-2481',
+{{ all_funds|json_script:"all-funds-data" }}
+<div class="px-4 sm:px-6 py-5 space-y-4" style="max-width:1500px;margin:0 auto;color:var(--edify-text);"
+x-data="{
+allFunds: JSON.parse(document.getElementById('all-funds-data').textContent),
+selectedId: null,
 selectedItem: null,
 activeTab: 'breakdown',
 init() {
-this.selectedItem = this.allFunds.find(f => f.id === this.selectedId) || this.allFunds[0];
+this.selectedItem = this.allFunds.find(f => f.id === this.selectedId) || this.allFunds[0] || null;
+if (this.selectedItem) { this.selectedId = this.selectedItem.id; }
 },
 selectFund(id) {
 this.selectedId = id;
@@ -26,7 +28,7 @@ return 'UGX ' + Number(val).toLocaleString();
 <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-100 pb-4">
 <div>
 <div class="flex items-center gap-2">
-<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight leading-none">Fund Disbursement Dashboard</h1>
+<h1 class="text-[21px] font-extrabold tracking-tight">Fund Disbursement Dashboard</h1>
 <span class="text-slate-300 cursor-pointer" title="Reconcile and disburse funds">ⓘ</span>
 </div>
 <p class="text-[12px] text-slate-500 font-bold mt-1.5">Monitor all approved funds, disbursements, balances, and reconciliation across the organization.</p>
@@ -62,19 +64,62 @@ class="h-9 w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 text-[12
 >
 </div>
 
-<button class="h-9 px-3 bg-white border border-slate-200 rounded-xl text-[12px] font-semibold text-slate-600 flex items-center gap-1.5 shadow-sm hover:bg-slate-50">
-📥 Export
-</button>
-
-<button class="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[12px] font-semibold flex items-center gap-1.5 transition-all shadow-sm">
-⚡ Create Disbursement
-</button>
+<a href="/accounts/advances" class="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[12px] font-semibold flex items-center gap-1.5 transition-all shadow-sm">
+<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13 3L4 14h6l-1 7 9-11h-6l1-7z"/></svg> Create Disbursement
+</a>
 </div>
 </div>
 
 
 <!-- ================= TOP KPI STRIP ================= -->
-{% include "components/kpi_strip.html" with items=kpi_strip_items %}
+<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+<!-- Total Funds -->
+<div class="bg-white p-4 rounded-lg border border-slate-100 shadow-sm space-y-1">
+<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total Approved Funds</p>
+<h3 class="text-[21px] font-extrabold tracking-tight leading-none">{{ kpis.total_approved }}</h3>
+<span class="text-[11px] text-emerald-600 font-semibold block pt-1">FY {{ fy }}</span>
+</div>
+
+<!-- Pending Disbursement -->
+<div class="bg-white p-4 rounded-lg border border-slate-100 shadow-sm space-y-1">
+<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Pending Disbursement</p>
+<h3 class="text-[21px] font-extrabold tracking-tight leading-none">{{ kpis.pending_disb }}</h3>
+<span class="text-[11px] text-amber-600 font-bold block pt-1">{{ kpis.pending_disb_count }} request{{ kpis.pending_disb_count|pluralize }} awaiting</span>
+</div>
+
+<!-- Total Disbursed -->
+<div class="bg-white p-4 rounded-lg border border-slate-100 shadow-sm space-y-1">
+<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total Disbursed</p>
+<h3 class="text-[21px] font-extrabold tracking-tight leading-none">{{ kpis.total_disbursed }}</h3>
+<span class="text-[11px] text-blue-600 font-bold block pt-1">{{ kpis.disbursed_count }} disbursement{{ kpis.disbursed_count|pluralize }} made</span>
+</div>
+
+<!-- Awaiting Approval -->
+<div class="bg-white p-4 rounded-lg border border-slate-100 shadow-sm space-y-1">
+<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Awaiting Approvals</p>
+<h3 class="text-[21px] font-extrabold tracking-tight leading-none">{{ kpis.awaiting_approval }}</h3>
+<span class="text-[11px] text-indigo-600 font-bold block pt-1">{{ kpis.awaiting_count }} request{{ kpis.awaiting_count|pluralize }} in chain</span>
+</div>
+
+<!-- Reconciliation Rate -->
+<div class="bg-white p-4 rounded-lg border border-slate-100 shadow-sm space-y-1">
+<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Reconciliation Rate</p>
+<h3 class="text-[21px] font-extrabold tracking-tight leading-none">{{ kpis.recon_rate }}</h3>
+<span class="text-[11px] text-emerald-600 font-semibold block pt-1">{{ kpis.accounted_count }} of {{ kpis.disbursed_count }} accounted</span>
+</div>
+
+<!-- Budget Utilization -->
+<div class="bg-white p-4 rounded-lg border border-slate-100 shadow-sm space-y-1 col-span-2">
+<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Budget Util.</p>
+<div class="flex items-baseline justify-between mt-1">
+<h3 class="text-[21px] font-extrabold tracking-tight leading-none">{{ kpis.budget_util }}</h3>
+<span class="text-[11px] text-slate-400 font-bold">{{ kpis.total_disbursed }} used</span>
+</div>
+<div class="w-full bg-slate-100 h-1.5 rounded-full mt-1 overflow-hidden">
+<div class="bg-teal-500 h-full rounded-full" style="width: {{ kpis.budget_util_pct }}%"></div>
+</div>
+</div>
+</div>
 
 
 <!-- ================= MAIN WORKSPACE GRID ================= -->
@@ -86,7 +131,7 @@ class="h-9 w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 text-[12
 <div class="flex items-center justify-between pb-3 border-b border-slate-100">
 <div class="flex items-center gap-1.5">
 <h2 class="text-[14px] font-semibold text-slate-800 tracking-tight">Consolidated Fund Queue</h2>
-<span class="bg-blue-600 text-white font-semibold rounded-full px-1.5 py-0.5 text-[11px] flex items-center justify-center">42</span>
+<span class="bg-blue-600 text-white font-semibold rounded-full px-1.5 py-0.5 text-[11px] flex items-center justify-center">{{ all_funds|length }}</span>
 </div>
 
 <select class="h-6 px-1.5 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-bold text-slate-500">
@@ -99,22 +144,19 @@ class="h-9 w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 text-[12
 <div 
 @click="selectFund(fund.id)"
 :class="selectedId === fund.id ? 'border-slate-800 bg-slate-50' : 'border-slate-100 bg-white hover:bg-slate-50/50'"
-class="p-3 border rounded-2xl cursor-pointer flex items-center gap-3 transition-all group"
+class="p-3 border rounded-lg cursor-pointer flex items-center gap-3 transition-all group"
 >
 <!-- Initial avatar icon circle -->
 <div class="h-8 w-8 rounded-full bg-slate-100 font-semibold text-slate-600 flex items-center justify-center text-[12px] group-hover:scale-105 transition-transform" x-text="fund.user_name.slice(0,2)"></div>
 
 <div class="flex-1 min-w-0">
-<div class="flex items-center justify-between">
 <h4 class="text-[12px] font-semibold text-slate-800 truncate" x-text="fund.user_name"></h4>
-<span :class="fund.status_class" class="inline-flex items-center rounded-full px-1.5 py-0.5 text-[11px] font-bold border" x-text="fund.status"></span>
-</div>
 <p class="text-[11px] text-slate-500 font-bold mt-0.5 truncate">
 <span x-text="fund.region"></span> &bull; <span x-text="fund.role"></span>
 </p>
-<div class="flex items-center justify-between mt-2">
-<span class="text-[12px] font-semibold text-slate-800" x-text="formatCurrency(fund.requested)"></span>
-<span class="text-[11px] text-slate-400 font-bold" x-text="fund.id"></span>
+<div class="flex items-center justify-between gap-2 mt-2 min-w-0">
+<span class="text-[12px] font-semibold text-slate-800 shrink-0" x-text="formatCurrency(fund.requested)"></span>
+<span :class="fund.status_class" class="inline-block rounded-full px-1.5 py-0.5 text-[10px] font-bold border whitespace-nowrap overflow-hidden text-ellipsis min-w-0" :title="fund.status" x-text="fund.status"></span>
 </div>
 </div>
 </div>
@@ -124,14 +166,7 @@ class="p-3 border rounded-2xl cursor-pointer flex items-center gap-3 transition-
 
 <!-- Pagination -->
 <div class="flex items-center justify-between border-t border-slate-100 pt-4 mt-4 text-[11px] font-bold text-slate-400">
-<span>Showing 1-8 of 42 funds</span>
-<div class="flex items-center gap-1">
-<button class="h-6 w-6 rounded border border-slate-200 flex items-center justify-center hover:bg-slate-50">&lt;</button>
-<button class="h-6 w-6 rounded bg-slate-900 text-white flex items-center justify-center">1</button>
-<button class="h-6 w-6 rounded border border-slate-200 flex items-center justify-center hover:bg-slate-50 text-slate-600">2</button>
-<button class="h-6 w-6 rounded border border-slate-200 flex items-center justify-center hover:bg-slate-50 text-slate-600">3</button>
-<button class="h-6 w-6 rounded border border-slate-200 flex items-center justify-center hover:bg-slate-50 text-slate-600">&gt;</button>
-</div>
+<span>Showing {{ all_funds|length }} fund{{ all_funds|length|pluralize }}</span>
 </div>
 </div>
 
@@ -141,19 +176,19 @@ class="p-3 border rounded-2xl cursor-pointer flex items-center gap-3 transition-
 <!-- Selected Request Title block -->
 <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-3">
 <div class="flex items-center gap-3">
-<div class="h-10 w-10 rounded-full bg-slate-100 font-semibold text-slate-700 flex items-center justify-center text-[14px]" x-text="selectedItem ? selectedItem.user_name.slice(0,2) : ''"></div>
+<div class="h-10 w-10 rounded-full bg-slate-100 font-semibold flex items-center justify-center text-[14px]" x-text="selectedItem ? selectedItem.user_name.slice(0,2) : ''"></div>
 <div>
-<h3 class="text-[18px] font-semibold text-slate-800 leading-none" x-text="selectedItem ? selectedItem.user_name + ' — ' + selectedItem.region + ' Team Fund Plan' : ''"></h3>
+<h3 class="text-[21px] font-extrabold tracking-tight leading-none" x-text="selectedItem ? selectedItem.user_name + ' — ' + selectedItem.region + ' Team Fund Plan' : ''"></h3>
 <p class="text-[11px] text-slate-500 font-bold mt-1.5">
 <span x-text="selectedItem ? selectedItem.role : ''"></span> &bull; <span x-text="selectedItem ? selectedItem.region : ''"></span>
 </p>
 </div>
 </div>
-<span :class="selectedItem ? selectedItem.status_class : ''" class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold border uppercase tracking-wider" x-text="selectedItem ? selectedItem.status : ''"></span>
+<span :class="selectedItem ? selectedItem.status_class : ''" class="inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold border uppercase tracking-wider whitespace-nowrap shrink-0 self-start sm:self-center" x-text="selectedItem ? selectedItem.status : ''"></span>
 </div>
 
 <!-- Request Amounts -->
-<div class="grid grid-cols-2 sm:grid-cols-5 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100 mt-4">
+<div class="grid grid-cols-2 sm:grid-cols-5 gap-3 bg-slate-50 p-4 rounded-lg border border-slate-100 mt-4">
 <div class="space-y-0.5">
 <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">Plan Period</span>
 <span class="text-[11px] font-semibold text-slate-800 block truncate" x-text="selectedItem ? selectedItem.week_start + ' - ' + selectedItem.week_end.slice(-12) : ''"></span>
@@ -182,31 +217,31 @@ class="p-3 border rounded-2xl cursor-pointer flex items-center gap-3 transition-
 <div class="grid grid-cols-5 gap-2 text-center text-[11px] font-semibold">
 <!-- 1: PL -->
 <div class="p-2 border rounded-xl flex flex-col items-center bg-emerald-50 border-emerald-200 text-emerald-700">
-<span class="text-[14px]">✓</span>
+<span class="text-[14px]"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></span>
 <span class="mt-1">PL</span>
 <span class="text-[11px] text-emerald-500 font-bold">Program Lead</span>
 </div>
 <!-- 2: CD -->
 <div :class="selectedItem && selectedItem.cd_approved ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-slate-50 border-slate-200 text-slate-400'" class="p-2 border rounded-xl flex flex-col items-center">
-<span class="text-[14px]" x-text="selectedItem && selectedItem.cd_approved ? '✓' : '●'"></span>
+<span class="text-[14px]" x-text="selectedItem && selectedItem.cd_approved ? '' : '●'"></span>
 <span class="mt-1">CD</span>
 <span class="text-[11px] font-bold" :class="selectedItem && selectedItem.cd_approved ? 'text-emerald-500' : 'text-slate-400'">Country Director</span>
 </div>
 <!-- 3: RVP -->
 <div :class="selectedItem && selectedItem.rvp_approved ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-slate-50 border-slate-200 text-slate-400'" class="p-2 border rounded-xl flex flex-col items-center">
-<span class="text-[14px]" x-text="selectedItem && selectedItem.rvp_approved ? '✓' : '●'"></span>
+<span class="text-[14px]" x-text="selectedItem && selectedItem.rvp_approved ? '' : '●'"></span>
 <span class="mt-1">RVP</span>
 <span class="text-[11px] font-bold" :class="selectedItem && selectedItem.rvp_approved ? 'text-emerald-500' : 'text-slate-400'">Regional VP</span>
 </div>
 <!-- 4: Finance -->
 <div :class="selectedItem && selectedItem.finance_completed ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-slate-50 border-slate-200 text-slate-400'" class="p-2 border rounded-xl flex flex-col items-center">
-<span class="text-[14px]" x-text="selectedItem && selectedItem.finance_completed ? '✓' : '●'"></span>
+<span class="text-[14px]" x-text="selectedItem && selectedItem.finance_completed ? '' : '●'"></span>
 <span class="mt-1">Finance</span>
 <span class="text-[11px] font-bold" :class="selectedItem && selectedItem.finance_completed ? 'text-emerald-500' : 'text-slate-400'">Accountant</span>
 </div>
 <!-- 5: Disbursement -->
 <div :class="selectedItem && selectedItem.disbursed_completed ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-slate-50 border-slate-200 text-slate-400'" class="p-2 border rounded-xl flex flex-col items-center">
-<span class="text-[14px]" x-text="selectedItem && selectedItem.disbursed_completed ? '✓' : '●'"></span>
+<span class="text-[14px]" x-text="selectedItem && selectedItem.disbursed_completed ? '' : '●'"></span>
 <span class="mt-1">Disbursement</span>
 <span class="text-[11px] font-bold" :class="selectedItem && selectedItem.disbursed_completed ? 'text-emerald-500' : 'text-slate-400'">Payment Sent</span>
 </div>
@@ -232,8 +267,8 @@ class="p-3 border rounded-2xl cursor-pointer flex items-center gap-3 transition-
 <th class="pb-2 text-right font-bold">Total (UGX)</th>
 </tr>
 </thead>
-<tbody class="divide-y divide-slate-50 font-semibold text-slate-700">
-<template x-for="line in selectedItem.lines" :key="line.category">
+<tbody class="divide-y divide-slate-50 font-semibold">
+<template x-for="line in (selectedItem ? selectedItem.lines : [])" :key="line.category">
 <tr class="hover:bg-slate-50/50">
 <td class="py-2.5 font-semibold text-slate-800" x-text="line.category"></td>
 <td class="py-2.5 text-center font-bold text-slate-500" x-text="line.quantity || '—'"></td>
@@ -244,23 +279,23 @@ class="p-3 border rounded-2xl cursor-pointer flex items-center gap-3 transition-
 <!-- Bold aggregate summary row -->
 <tr class="border-t border-slate-200 text-slate-800 font-semibold">
 <td class="py-3 font-semibold uppercase tracking-wider" colspan="3">Total</td>
-<td class="py-3 text-right font-semibold" x-text="formatCurrency(selectedItem.approved)"></td>
+<td class="py-3 text-right font-semibold" x-text="selectedItem ? formatCurrency(selectedItem.approved) : ''"></td>
 </tr>
 </tbody>
 </table>
 </div>
 
 <!-- Tab 2: Plan Snapshot -->
-<div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-2 mt-4" x-show="activeTab === 'snapshot'">
+<div class="p-4 bg-slate-50 rounded-lg border border-slate-100 space-y-2 mt-4" x-show="activeTab === 'snapshot'">
 <h4 class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Region Plan Statistics</h4>
-<ul class="text-[12px] font-bold text-slate-700 space-y-1">
-<li class="flex justify-between"><span>🏫 Planned schools by staff</span> <span class="text-slate-800 font-semibold">48</span></li>
-<li class="flex justify-between"><span>🚗 Planned school visits by partners</span> <span class="text-slate-800 font-semibold">27</span></li>
-<li class="flex justify-between"><span>👥 Cluster meetings planned</span> <span class="text-slate-800 font-semibold">6</span></li>
-<li class="flex justify-between"><span>📚 Cluster trainings planned</span> <span class="text-slate-800 font-semibold">8</span></li>
-<li class="flex justify-between"><span>📖 In-school trainings planned</span> <span class="text-slate-800 font-semibold">10</span></li>
-<li class="flex justify-between"><span>🗺️ Total schools covered across districts</span> <span class="text-slate-800 font-semibold">6</span></li>
-<li class="flex justify-between"><span>👤 CCEO plans across the region</span> <span class="text-slate-800 font-semibold">6 plans</span></li>
+<ul class="text-[12px] font-bold space-y-1">
+<li class="flex justify-between"><span><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0v7m-5-4v4a5 5 0 0010 0v-4"/></svg> Planned schools by staff</span> <span class="text-slate-800 font-semibold">48</span></li>
+<li class="flex justify-between"><span><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zm10 0a2 2 0 11-4 0 2 2 0 014 0zM13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10h2m8 0h4m-4 0V8h4l3 4v4h-2"/></svg> Planned school visits by partners</span> <span class="text-slate-800 font-semibold">27</span></li>
+<li class="flex justify-between"><span><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6-2a3 3 0 10-2-5.24"/></svg> Cluster meetings planned</span> <span class="text-slate-800 font-semibold">6</span></li>
+<li class="flex justify-between"><span><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.3C10.5 5.3 8.6 5 6.5 5c-1.1 0-2.2.1-3.2.4v13c1-.3 2.1-.4 3.2-.4 2.1 0 4 .3 5.5 1.3 1.5-1 3.4-1.3 5.5-1.3 1.1 0 2.2.1 3.2.4v-13c-1-.3-2.1-.4-3.2-.4-2.1 0-4 .3-5.5 1.3zm0 0V19"/></svg> Cluster trainings planned</span> <span class="text-slate-800 font-semibold">8</span></li>
+<li class="flex justify-between"><span><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.3C10.5 5.3 8.6 5 6.5 5c-1.1 0-2.2.1-3.2.4v13c1-.3 2.1-.4 3.2-.4 2.1 0 4 .3 5.5 1.3 1.5-1 3.4-1.3 5.5-1.3 1.1 0 2.2.1 3.2.4v-13c-1-.3-2.1-.4-3.2-.4-2.1 0-4 .3-5.5 1.3zm0 0V19"/></svg> In-school trainings planned</span> <span class="text-slate-800 font-semibold">10</span></li>
+<li class="flex justify-between"><span><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.4-2.7a1 1 0 01-.6-.9V4.6a1 1 0 011.4-.9L9 6m0 14l6-2m-6 2V6m6 12l4.6 2.3a1 1 0 001.4-.9V7.6a1 1 0 00-.6-.9L15 4m0 14V4M9 6l6-2"/></svg> Total schools covered across districts</span> <span class="text-slate-800 font-semibold">6</span></li>
+<li class="flex justify-between"><span><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg> CCEO plans across the region</span> <span class="text-slate-800 font-semibold">6 plans</span></li>
 </ul>
 </div>
 
@@ -270,7 +305,7 @@ No documents or receipts attached to this request yet.
 </div>
 
 <!-- Tab 4: History -->
-<div class="p-6 space-y-3 mt-4" x-show="activeTab === 'history'">
+<div class="px-4 sm:px-6 py-5 space-y-3 mt-4" x-show="activeTab === 'history'">
 <div class="flex items-start gap-2.5 text-[12px] font-bold">
 <span class="h-2 w-2 rounded-full bg-emerald-500 mt-1.5 shrink-0"></span>
 <div>
@@ -298,28 +333,12 @@ No documents or receipts attached to this request yet.
 
 <!-- Action buttons -->
 <div class="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4 mt-6">
-<button class="h-9 px-4 border border-slate-200 rounded-xl text-[12px] font-bold text-slate-700 hover:bg-slate-50">
-View Full Plan
-</button>
-
-<form x-bind:action="'/accounts/activities/' + selectedItem.id + '/disburse'" method="POST" class="inline">
+<form x-bind:action="'/accounts/activities/' + (selectedItem ? selectedItem.id : '') + '/disburse'" method="POST" class="inline">
 {% csrf_token %}
 <button type="submit" class="h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[12px] font-semibold shadow-sm transition-all">
 Disburse Funds
 </button>
 </form>
-
-<button class="h-9 px-4 border border-rose-200 rounded-xl text-[12px] font-bold text-rose-600 hover:bg-rose-50">
-Return
-</button>
-
-<button class="h-9 px-4 border border-slate-200 rounded-xl text-[12px] font-bold text-slate-500 hover:bg-slate-50">
-Hold
-</button>
-
-<button class="h-9 px-3 border border-slate-200 rounded-xl text-[12px] font-bold text-slate-700 flex items-center gap-1.5 hover:bg-slate-50">
-📥 Download Voucher
-</button>
 </div>
 </div>
 
@@ -330,15 +349,17 @@ Hold
 <div class="bg-white p-5 rounded-xl  shadow-sm space-y-3">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight pb-2 border-b border-slate-100">This Month Overview</h3>
 <div class="space-y-2 text-[12px] font-bold text-slate-500">
-<div class="flex items-center justify-between"><span>Waiting for Approval</span> <span class="text-slate-800 font-semibold">UGX 524.3M</span></div>
-<div class="flex items-center justify-between text-rose-600"><span>Returned</span> <span class="font-semibold">UGX 98.6M</span></div>
-<div class="flex items-center justify-between text-amber-600"><span>Approved (Not Disbursed)</span> <span class="font-semibold">UGX 742.6M</span></div>
-<div class="flex items-center justify-between text-blue-700"><span>Disbursed</span> <span class="font-semibold">UGX 1.26B</span></div>
-<div class="flex items-center justify-between text-emerald-600"><span>Reconciled</span> <span class="font-semibold">UGX 1.04B</span></div>
+<a href="/accounts/weekly-requests" class="flex items-center justify-between hover:bg-slate-50 -mx-1 px-1 py-0.5 rounded transition-colors"><span>Waiting for Approval</span> <span class="text-slate-800 font-semibold">{{ month_overview.waiting_for_approval }}</span></a>
+<a href="/accounts/returned" class="flex items-center justify-between text-rose-600 hover:bg-rose-50/50 -mx-1 px-1 py-0.5 rounded transition-colors"><span>Returned</span> <span class="font-semibold">{{ month_overview.returned }}</span></a>
+<a href="/accounts/advances" class="flex items-center justify-between text-amber-600 hover:bg-amber-50/50 -mx-1 px-1 py-0.5 rounded transition-colors"><span>Approved (Not Disbursed)</span> <span class="font-semibold">{{ month_overview.approved_not_disbursed }}</span></a>
+<a href="/accounts/accountability" class="flex items-center justify-between text-blue-700 hover:bg-blue-50/50 -mx-1 px-1 py-0.5 rounded transition-colors"><span>Disbursed</span> <span class="font-semibold">{{ month_overview.disbursed }}</span></a>
+<a href="/accounts/cleared" class="flex items-center justify-between text-emerald-600 hover:bg-emerald-50/50 -mx-1 px-1 py-0.5 rounded transition-colors"><span>Reconciled</span> <span class="font-semibold">{{ month_overview.reconciled }}</span></a>
 </div>
-<a href="#" class="text-[11px] font-semibold text-blue-600 hover:underline block pt-2 border-t border-slate-50 text-center uppercase tracking-wider">
-View all activity &rarr;
-</a>
+<div class="flex items-center justify-between gap-2 pt-2 border-t border-slate-50">
+<a href="/accounts/blocked" class="text-[11px] font-semibold text-slate-500 hover:text-rose-600 hover:underline uppercase tracking-wider">Blocked</a>
+<a href="/accounts/variance-review" class="text-[11px] font-semibold text-slate-500 hover:text-amber-600 hover:underline uppercase tracking-wider">Variance</a>
+<a href="/accounts/audit-log" class="text-[11px] font-semibold text-blue-600 hover:underline uppercase tracking-wider">All activity &rarr;</a>
+</div>
 </div>
 
 <!-- Disbursement Status Chart Visual -->
@@ -349,25 +370,27 @@ View all activity &rarr;
 <div class="relative h-24 w-24 flex items-center justify-center shrink-0">
 <svg class="h-full w-full -rotate-90" viewBox="0 0 36 36">
 <path class="text-slate-100" stroke-width="2" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-<!-- Approved: 34% -->
-<path class="text-emerald-500" stroke-dasharray="34, 100" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-<!-- Pending: 30% -->
-<path class="text-amber-500" stroke-dasharray="30, 100" stroke-dashoffset="-34" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-<!-- Disbursed: 29% -->
-<path class="text-blue-500" stroke-dasharray="29, 100" stroke-dashoffset="-64" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-<!-- Returned: 7% -->
-<path class="text-rose-500" stroke-dasharray="7, 100" stroke-dashoffset="-93" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+{% if donut.total %}
+<!-- Approved -->
+<path class="text-emerald-500" stroke-dasharray="{{ donut.approved_pct }}, 100" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+<!-- Pending -->
+<path class="text-amber-500" stroke-dasharray="{{ donut.pending_pct }}, 100" stroke-dashoffset="-{{ donut.pending_offset }}" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+<!-- Disbursed -->
+<path class="text-blue-500" stroke-dasharray="{{ donut.disbursed_pct }}, 100" stroke-dashoffset="-{{ donut.disbursed_offset }}" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+<!-- Returned -->
+<path class="text-rose-500" stroke-dasharray="{{ donut.returned_pct }}, 100" stroke-dashoffset="-{{ donut.returned_offset }}" stroke-width="2" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+{% endif %}
 </svg>
 <div class="absolute flex flex-col justify-center items-center text-center">
-<span class="text-[12px] font-semibold text-slate-800 leading-none">UGX 2.48B</span>
+<span class="text-[12px] font-semibold text-slate-800 leading-none">{{ donut.total_compact }}</span>
 <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wide mt-0.5">Total</span>
 </div>
 </div>
 <div class="text-[11px] space-y-1 font-bold text-slate-500">
-<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-emerald-500"></span> Approved (34%)</div>
-<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-amber-500"></span> Pending (30%)</div>
-<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-blue-500"></span> Disbursed (29%)</div>
-<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-rose-500"></span> Returned (7%)</div>
+<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-emerald-500"></span> Approved ({{ donut.approved_pct }}%)</div>
+<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-amber-500"></span> Pending ({{ donut.pending_pct }}%)</div>
+<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-blue-500"></span> Disbursed ({{ donut.disbursed_pct }}%)</div>
+<div class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-rose-500"></span> Returned ({{ donut.returned_pct }}%)</div>
 </div>
 </div>
 </div>
@@ -377,23 +400,23 @@ View all activity &rarr;
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight pb-2 border-b border-slate-100">Finance &amp; Disbursement Rules</h3>
 <ul class="text-[12px] font-bold text-slate-500 space-y-2.5">
 <li class="flex items-start gap-2">
-<span class="text-emerald-600 shrink-0 font-bold">✓</span>
+<span class="text-emerald-600 shrink-0 font-bold"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></span>
 <span>Disbursements must match approved weekly staff plans exactly.</span>
 </li>
 <li class="flex items-start gap-2">
-<span class="text-emerald-600 shrink-0 font-bold">✓</span>
+<span class="text-emerald-600 shrink-0 font-bold"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></span>
 <span>All disbursements require supporting cost catalogue settings.</span>
 </li>
 <li class="flex items-start gap-2">
-<span class="text-emerald-600 shrink-0 font-bold">✓</span>
+<span class="text-emerald-600 shrink-0 font-bold"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></span>
 <span>Receipts must be submitted within 7 days of field activity.</span>
 </li>
 <li class="flex items-start gap-2">
-<span class="text-emerald-600 shrink-0 font-bold">✓</span>
+<span class="text-emerald-600 shrink-0 font-bold"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></span>
 <span>Return unused funds within plan period limits.</span>
 </li>
 <li class="flex items-start gap-2">
-<span class="text-rose-700 shrink-0 font-bold">⚠️</span>
+<span class="text-rose-700 shrink-0 font-bold"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L14.7 3.9a2 2 0 00-3.4 0z"/></svg></span>
 <span class="text-rose-700">Non-compliance triggers hold on subsequent weekly fund requests.</span>
 </li>
 </ul>
@@ -412,69 +435,27 @@ View all activity &rarr;
 <div>
 <div class="pb-3 border-b border-slate-100 flex items-center justify-between">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Recent Disbursement Activity</h3>
-<a href="#" class="text-[11px] font-semibold text-blue-600 hover:underline">View all activity &rarr;</a>
+<a href="/accounts/audit-log" class="text-[11px] font-semibold text-blue-600 hover:underline">View all activity &rarr;</a>
 </div>
 
 <div class="space-y-3.5 mt-4">
-<!-- Item 1 -->
+{% for item in recent_activity %}
 <div class="flex items-center justify-between text-[12px] font-bold">
 <div class="flex items-center gap-2">
-<span class="h-6 w-6 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-[11px] font-semibold">RW</span>
+<span class="h-6 w-6 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-[11px] font-semibold">{{ item.name|slice:":2"|upper }}</span>
 <div>
-<span class="text-slate-800 block leading-tight">Ruth W. &bull; Eastern Region</span>
-<span class="text-[11px] text-slate-400 font-bold block mt-0.5">Today, 10:24 AM</span>
+<span class="text-slate-800 block leading-tight">{{ item.name }} &bull; {{ item.region }}</span>
+<span class="text-[11px] text-slate-400 font-bold block mt-0.5">{{ item.when }}</span>
 </div>
 </div>
 <div class="text-right">
-<span class="text-slate-800 block">UGX 98.3M</span>
+<span class="text-slate-800 block">{{ item.amount }}</span>
 <span class="text-[11px] text-blue-600 font-semibold uppercase tracking-wide">Disbursed</span>
 </div>
 </div>
-
-<!-- Item 2 -->
-<div class="flex items-center justify-between text-[12px] font-bold">
-<div class="flex items-center gap-2">
-<span class="h-6 w-6 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-[11px] font-semibold">PK</span>
-<div>
-<span class="text-slate-800 block leading-tight">Peter K. &bull; Western Region</span>
-<span class="text-[11px] text-slate-400 font-bold block mt-0.5">Today, 9:45 AM</span>
-</div>
-</div>
-<div class="text-right">
-<span class="text-slate-800 block">UGX 124.7M</span>
-<span class="text-[11px] text-blue-600 font-semibold uppercase tracking-wide">Disbursed</span>
-</div>
-</div>
-
-<!-- Item 3 -->
-<div class="flex items-center justify-between text-[12px] font-bold">
-<div class="flex items-center gap-2">
-<span class="h-6 w-6 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-[11px] font-semibold">SP</span>
-<div>
-<span class="text-slate-800 block leading-tight">Special Project &bull; Digital Learning</span>
-<span class="text-[11px] text-slate-400 font-bold block mt-0.5">Today, 8:15 AM</span>
-</div>
-</div>
-<div class="text-right">
-<span class="text-slate-800 block">UGX 60.0M</span>
-<span class="text-[11px] text-blue-600 font-semibold uppercase tracking-wide">Disbursed</span>
-</div>
-</div>
-
-<!-- Item 4 -->
-<div class="flex items-center justify-between text-[12px] font-bold">
-<div class="flex items-center gap-2">
-<span class="h-6 w-6 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center text-[11px] font-semibold">JO</span>
-<div>
-<span class="text-slate-800 block leading-tight">Joel O. &bull; Karamoja Region</span>
-<span class="text-[11px] text-slate-400 font-bold block mt-0.5">Yesterday, 4:32 PM</span>
-</div>
-</div>
-<div class="text-right">
-<span class="text-slate-800 block">UGX 62.1M</span>
-<span class="text-[11px] text-rose-600 font-semibold uppercase tracking-wide">Returned</span>
-</div>
-</div>
+{% empty %}
+<p class="text-[11px] text-slate-400 font-bold text-center py-6">No disbursements recorded yet.</p>
+{% endfor %}
 </div>
 </div>
 </div>
@@ -484,29 +465,17 @@ View all activity &rarr;
 <div>
 <div class="pb-3 border-b border-slate-100 flex items-center justify-between">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Reconciliation &amp; Proof Tracker</h3>
-<a href="#" class="text-[11px] font-semibold text-blue-600 hover:underline">View reconciliation queue &rarr;</a>
+<a href="/accounts/accountability" class="text-[11px] font-semibold text-blue-600 hover:underline">View reconciliation queue &rarr;</a>
 </div>
 
 <!-- mini status labels -->
-<div class="grid grid-cols-5 gap-2 mt-4 text-center">
+<div class="grid grid-cols-2 gap-2 mt-4 text-center">
 <div class="p-2 bg-slate-50 border border-slate-100 rounded-xl">
-<h4 class="text-[18px] font-semibold text-slate-800 leading-none">26</h4>
+<h4 class="text-[21px] font-extrabold tracking-tight leading-none">{{ recon_stats.awaiting_receipts }}</h4>
 <span class="text-[11px] text-slate-400 font-bold uppercase tracking-wider block mt-1">Awaiting Receipts</span>
 </div>
-<div class="p-2 bg-slate-50 border border-slate-100 rounded-xl">
-<h4 class="text-[18px] font-semibold text-slate-800 leading-none">18</h4>
-<span class="text-[11px] text-slate-400 font-bold uppercase tracking-wider block mt-1">Salesforce Match</span>
-</div>
-<div class="p-2 bg-slate-50 border border-slate-100 rounded-xl">
-<h4 class="text-[18px] font-semibold text-slate-800 leading-none">14</h4>
-<span class="text-[11px] text-slate-400 font-bold uppercase tracking-wider block mt-1">Liquidation</span>
-</div>
-<div class="p-2 bg-slate-50 border border-slate-100 rounded-xl">
-<h4 class="text-[18px] font-semibold text-slate-800 leading-none">9</h4>
-<span class="text-[11px] text-slate-400 font-bold uppercase tracking-wider block mt-1">Partially Accounted</span>
-</div>
 <div class="p-2 bg-emerald-50 border border-emerald-100 rounded-xl">
-<h4 class="text-[18px] font-semibold text-emerald-600 leading-none">124</h4>
+<h4 class="text-[21px] font-extrabold tracking-tight text-emerald-600 leading-none">{{ recon_stats.closed }}</h4>
 <span class="text-[11px] text-emerald-500 font-bold uppercase tracking-wider block mt-1">Closed</span>
 </div>
 </div>
@@ -521,25 +490,17 @@ View all activity &rarr;
 <th class="pb-2 text-right font-bold">Days Outstanding</th>
 </tr>
 </thead>
-<tbody class="divide-y divide-slate-50 font-semibold text-slate-700">
+<tbody class="divide-y divide-slate-50 font-semibold">
+{% for row in recon_pending %}
 <tr class="hover:bg-slate-50/50">
-<td class="py-2.5 font-bold text-slate-800">Sarah M. &bull; Northern Region</td>
-<td class="py-2.5 text-right font-semibold text-slate-800">186,400,000</td>
+<td class="py-2.5 font-bold text-slate-800">{{ row.name }} &bull; {{ row.region }}</td>
+<td class="py-2.5 text-right font-semibold text-slate-800">{{ row.amount|floatformat:"0g" }}</td>
 <td class="py-2.5 text-center"><span class="inline-flex items-center rounded-md bg-amber-50 border border-amber-200 px-1.5 py-0.5 text-[11px] font-bold text-amber-700">Awaiting Receipts</span></td>
-<td class="py-2.5 text-right text-rose-600 font-semibold">6 days</td>
+<td class="py-2.5 text-right {% if row.days > 5 %}text-rose-600{% elif row.days > 3 %}text-amber-600{% else %}text-slate-500{% endif %} font-semibold">{{ row.days }} day{{ row.days|pluralize }}</td>
 </tr>
-<tr class="hover:bg-slate-50/50">
-<td class="py-2.5 font-bold text-slate-800">Grace A. &bull; Central Region</td>
-<td class="py-2.5 text-right font-semibold text-slate-800">86,200,000</td>
-<td class="py-2.5 text-center"><span class="inline-flex items-center rounded-md bg-blue-50 border border-blue-200 px-1.5 py-0.5 text-[11px] font-bold text-blue-700">Salesforce Match</span></td>
-<td class="py-2.5 text-right text-amber-600 font-semibold">4 days</td>
-</tr>
-<tr class="hover:bg-slate-50/50">
-<td class="py-2.5 font-bold text-slate-800">Peter K. &bull; Western Region</td>
-<td class="py-2.5 text-right font-semibold text-slate-800">124,700,000</td>
-<td class="py-2.5 text-center"><span class="inline-flex items-center rounded-md bg-violet-50 border border-violet-200 px-1.5 py-0.5 text-[11px] font-bold text-violet-700">Awaiting Liquidation</span></td>
-<td class="py-2.5 text-right text-slate-500 font-semibold">3 days</td>
-</tr>
+{% empty %}
+<tr><td colspan="4" class="py-6 text-center text-slate-400 font-bold">No disbursed funds awaiting reconciliation.</td></tr>
+{% endfor %}
 </tbody>
 </table>
 </div>
@@ -551,36 +512,29 @@ View all activity &rarr;
 <div>
 <div class="pb-3 border-b border-slate-100 flex items-center justify-between">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Cash Position / Budget Balance</h3>
-<a href="#" class="text-[11px] font-semibold text-blue-600 hover:underline">View cash report &rarr;</a>
+<a href="/accounts/batch-payments" class="text-[11px] font-semibold text-blue-600 hover:underline">View cash report &rarr;</a>
 </div>
 
 <div class="grid grid-cols-2 gap-3 mt-4">
 <!-- 1 -->
-<div class="p-3 bg-slate-50 border border-slate-100 rounded-2xl">
-<span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wide block">Total Available</span>
-<h4 class="text-[18px] font-semibold text-slate-800 leading-none mt-1">UGX 890M</h4>
-<span class="text-[11px] text-slate-400 block mt-1">Available for disbursement</span>
-</div>
-
-<!-- 2 -->
-<div class="p-3 bg-slate-50 border border-slate-100 rounded-2xl">
+<div class="p-3 bg-slate-50 border border-slate-100 rounded-lg">
 <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide block">Committed</span>
-<h4 class="text-[18px] font-semibold text-slate-800 leading-none mt-1">UGX 742.6M</h4>
+<h4 class="text-[21px] font-extrabold tracking-tight leading-none mt-1">{{ kpis.pending_disb }}</h4>
 <span class="text-[11px] text-slate-400 block mt-1">Approved, not disbursed</span>
 </div>
 
-<!-- 3 -->
-<div class="p-3 bg-slate-50 border border-slate-100 rounded-2xl">
+<!-- 2 -->
+<div class="p-3 bg-slate-50 border border-slate-100 rounded-lg">
 <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide block">Pending Requests</span>
-<h4 class="text-[18px] font-semibold text-slate-800 leading-none mt-1">UGX 524.3M</h4>
+<h4 class="text-[21px] font-extrabold tracking-tight leading-none mt-1">{{ kpis.awaiting_approval }}</h4>
 <span class="text-[11px] text-slate-400 block mt-1">Awaiting approval decision</span>
 </div>
 
-<!-- 4 -->
-<div class="p-3 bg-slate-50 border border-slate-100 rounded-2xl">
+<!-- 3 -->
+<div class="p-3 bg-slate-50 border border-slate-100 rounded-lg col-span-2">
 <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wide block">Program Funds</span>
-<h4 class="text-[18px] font-semibold text-slate-800 leading-none mt-1">UGX 1.59B</h4>
-<span class="text-[11px] text-slate-500 block mt-1">64% utilized</span>
+<h4 class="text-[21px] font-extrabold tracking-tight leading-none mt-1">{{ kpis.total_approved }}</h4>
+<span class="text-[11px] text-slate-500 block mt-1">{{ kpis.budget_util_pct }}% utilized</span>
 </div>
 </div>
 </div>

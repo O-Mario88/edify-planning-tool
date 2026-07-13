@@ -1,0 +1,44 @@
+{% load frontend_filters %}
+<div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-3 h-full"
+     x-data="{
+       chart: null,
+       initChart() {
+         if (this.chart) { this.chart.destroy(); }
+         const el = document.querySelector('#plCoreChampionChart');
+         if (!el) return;
+         const labels = {{ core_champion.core.labels|safe }}.length ? {{ core_champion.core.labels|safe }} : {{ core_champion.champion.labels|safe }};
+         this.chart = new ApexCharts(el, {
+           series: [
+             { name: 'Core Schools', data: {{ core_champion.core.series|safe }} },
+             { name: 'Champion Schools', data: {{ core_champion.champion.series|safe }} }
+           ],
+           chart: { height: 210, type: 'line', toolbar: { show: false }, fontFamily: 'Outfit, sans-serif' },
+           stroke: { width: 2.5, curve: 'smooth' },
+           markers: { size: 4, strokeWidth: 0 },
+           colors: ['#2563eb', '#f59e0b'],
+           dataLabels: { enabled: true, style: { fontSize: '9px', fontWeight: 700 }, background: { enabled: false }, formatter: v => Math.round(v) + '%' },
+           labels: labels,
+           xaxis: { type: 'category', axisBorder: { show: false }, axisTicks: { show: false },
+                    labels: { style: { colors: '#94a3b8', fontSize: '10px', fontWeight: 600 } } },
+           yaxis: { min: 0, max: 100, labels: { formatter: v => Math.round(v) + '%', style: { colors: '#94a3b8', fontSize: '10px' } } },
+           grid: { borderColor: '#94a3b833', strokeDashArray: 4 },
+           legend: { position: 'top', horizontalAlign: 'right', fontSize: '11px', fontWeight: 600, labels: { colors: '#64748b' }, markers: { radius: 12 } },
+           tooltip: { theme: 'dark', shared: true, intersect: false }
+         });
+         this.chart.render();
+       }
+     }" x-init="$nextTick(() => initChart())">
+  <div class="flex items-center justify-between">
+    <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">J. Core &amp; Champion School Performance</h3>
+  </div>
+  <div class="flex items-center gap-4 -mt-1">
+    <span class="text-[10.5px] font-semibold text-slate-500"><span class="inline-block h-2 w-2 rounded-full align-middle" style="background:#2563eb"></span> Core Schools <span class="text-slate-400">(n={{ core_champion.core.count }})</span></span>
+    <span class="text-[10.5px] font-semibold text-slate-500"><span class="inline-block h-2 w-2 rounded-full align-middle" style="background:#f59e0b"></span> Champion Schools <span class="text-slate-400">(n={{ core_champion.champion.count }})</span></span>
+  </div>
+  {% if core_champion.core.count or core_champion.champion.count %}
+  <div class="h-[210px] w-full" id="plCoreChampionChart"></div>
+  {% else %}
+  <p class="text-[12px] text-slate-400 font-semibold text-center py-12">No core or champion schools in your portfolio yet.</p>
+  {% endif %}
+  <p class="text-[9.5px] text-slate-400 font-medium">Average verified SSA by annual cycle.</p>
+</div>

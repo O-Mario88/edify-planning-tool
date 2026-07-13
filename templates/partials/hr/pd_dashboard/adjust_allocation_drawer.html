@@ -1,0 +1,44 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% load frontend_filters %}
+
+{% block drawer_title %}Adjust PD Allocation{% endblock %}
+{% block drawer_subtitle %}{{ role_label }} · FY {{ fy }} · {{ country }}{% endblock %}
+
+{% block drawer_body %}
+<div class="space-y-4 text-slate-700">
+  <div class="rounded-lg border border-slate-200 bg-slate-50 p-3 text-[11.5px] font-semibold text-slate-500">
+    {{ staff_count }} staff member{{ staff_count|pluralize }} currently hold{{ staff_count|pluralize:"s," }} the <span class="text-slate-700">{{ role_label }}</span> role in {{ country }}.
+    {% if existing %}Current default is <span class="text-slate-700">{{ existing.currency }} {{ per_staff|intcomma }}</span> per staff for FY {{ fy }}.{% else %}No default has been set for FY {{ fy }} yet.{% endif %}
+  </div>
+
+  <form method="post" action="/cpd-learning/adjust-allocation" class="space-y-3">
+    {% csrf_token %}
+    <input type="hidden" name="role" value="{{ role }}">
+    <input type="hidden" name="fy" value="{{ fy }}">
+    <input type="hidden" name="country" value="{{ country }}">
+
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="text-[10.5px] font-bold text-slate-500 uppercase tracking-wider">Annual Allocation (per staff)</label>
+        <input type="number" name="annual_allocation" min="0" step="1" required value="{{ per_staff|floatformat:0 }}"
+               class="mt-1 w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px]">
+      </div>
+      <div>
+        <label class="text-[10.5px] font-bold text-slate-500 uppercase tracking-wider">Currency</label>
+        <select name="currency" class="mt-1 w-full h-9 px-3 rounded-lg border border-slate-200 text-[12px] bg-white">
+          {% for cur in "UGX,KES,RWF,TZS,USD"|split:"," %}
+          <option value="{{ cur }}" {% if existing.currency == cur or not existing and cur == "UGX" %}selected{% endif %}>{{ cur }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <label class="flex items-start gap-2 text-[11px] font-semibold text-amber-800 bg-amber-50 border border-amber-100 rounded-lg p-2.5">
+      <input type="checkbox" name="apply_to_existing" class="mt-0.5">
+      Also apply this amount now to all {{ staff_count }} current {{ role_label }} staff member{{ staff_count|pluralize }}'s FY {{ fy }} balance. Leave unchecked to only set the default for future staff — existing balances stay unchanged.
+    </label>
+
+    <button type="submit" class="w-full h-9 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-bold transition-colors">Save Allocation</button>
+  </form>
+</div>
+{% endblock %}

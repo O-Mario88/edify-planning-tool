@@ -9,6 +9,7 @@ context through dozens of service call sites.
 Honors an inbound `x-correlation-id` (cross-service tracing) or mints one,
 and echoes it on the response so logs + the error envelope share it.
 """
+
 from __future__ import annotations
 
 import uuid

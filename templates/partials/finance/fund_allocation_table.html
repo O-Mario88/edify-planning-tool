@@ -1,12 +1,12 @@
 {% load frontend_filters %}
 <!-- Allocation Table & Out-of-band updates -->
-<div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden font-sans" id="allocation-table-container">
+<div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden " id="allocation-table-container">
 
 <!-- CD Monthly Admin Plan Blocker/Warnings -->
 {% if not admin_budget_data.exists %}
 <div class="p-4 bg-rose-50 border-b border-rose-150 flex items-center justify-between text-[12px] font-bold text-rose-800">
 <div class="flex items-center gap-2">
-<span class="text-[14px]">⚠️</span>
+<span class="text-[14px]"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L14.7 3.9a2 2 0 00-3.4 0z"/></svg></span>
 <span>No CD Monthly Admin Plan found for this month.</span>
 </div>
 <a href="/work-plan" class="btn btn-ghost border-rose-300 hover:bg-rose-100 text-[11px] h-8 shadow-sm">
@@ -16,7 +16,7 @@ Open CD Monthly Admin Plan
 {% elif not admin_budget_data.approved %}
 <div class="p-4 bg-amber-50 border-b border-amber-150 flex items-center justify-between text-[12px] font-bold text-amber-800">
 <div class="flex items-center gap-2">
-<span class="text-[14px]">🕒</span>
+<span class="text-[14px]"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l2.5 2.5M12 21a9 9 0 100-18 9 9 0 000 18z"/></svg></span>
 <span>Admin Budget exists but is not approved yet. It is marked as draft.</span>
 </div>
 <a href="/work-plan" class="btn btn-ghost border-amber-300 hover:bg-amber-100 text-[11px] h-8 shadow-sm">
@@ -289,7 +289,9 @@ class="h-7 px-2 bg-white border border-slate-200 rounded font-bold cursor-pointe
 
 </div>
 
-<!-- Out-of-band updates -->
+<!-- Out-of-band updates — HTMX refreshes only; on a full page load these
+would render as visible duplicates of the page-level sections. -->
+{% if is_htmx %}
 <div id="fund-allocation-kpis" hx-swap-oob="true">
 {% include "partials/finance/fund_allocation_kpis.html" %}
 </div>
@@ -297,3 +299,4 @@ class="h-7 px-2 bg-white border border-slate-200 rounded font-bold cursor-pointe
 <div id="fund-allocation-insights" hx-swap-oob="true">
 {% include "partials/finance/accountant_insights.html" %}
 </div>
+{% endif %}

@@ -4,7 +4,7 @@
 <!-- Card Header -->
 <div class="px-5 py-4 border-b border-slate-200 bg-slate-50/50 flex items-center justify-between">
 <div class="flex items-center gap-2">
-<span class="text-[18px]">🤝</span>
+<span class="text-[18px]"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6-2a3 3 0 10-2-5.24"/></svg></span>
 <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">
 Cluster Meetings Planned for {% if period == 'week' %}This Week{% elif period == 'month' %}This Month{% elif period == 'quarter' %}This Quarter{% else %}This FY{% endif %}
 </h2>
@@ -41,6 +41,7 @@ Open Planning
 <span class="edify-status-badge {{ row.status_class }} px-2 py-0.5 rounded text-[11px]">
 {{ row.status_label }}
 </span>
+{% include "partials/my_plan/row_badges.html" %}
 </td>
 <!-- Include more action menu -->
 {% include "partials/my_plan/activity_row.html" %}
@@ -50,7 +51,7 @@ Open Planning
 </table>
 {% else %}
 <div class="edify-empty-state py-12 flex flex-col items-center justify-center">
-<p class="text-[32px] mb-2">🤝</p>
+<p class="text-[32px] mb-2"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6-2a3 3 0 10-2-5.24"/></svg></p>
 <p class="text-[14px] font-bold text-slate-500">No cluster meetings planned for this period.</p>
 <a href="/planning" class="btn btn-primary h-9 mt-3 shadow-sm text-[12px]">Open Planning</a>
 </div>

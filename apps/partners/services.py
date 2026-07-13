@@ -1,4 +1,5 @@
 """Partners service — directory + self-service + eligibility."""
+
 from __future__ import annotations
 
 
@@ -57,13 +58,20 @@ def my_activities(principal) -> list[dict]:
         return []
     qs = Activity.objects.filter(
         assigned_partner_id__in=partner_ids, deleted_at__isnull=True
-    ).exclude(status__in=[
-        # Terminal states.
-        "completed", "cancelled", "rejected", "deferred",
-        # Handed off past the partner — PL review / IA verification / payment.
-        "submitted_to_pl", "awaiting_ia_verification", "ia_verified",
-        "accountant_confirmed",
-    ])
+    ).exclude(
+        status__in=[
+            # Terminal states.
+            "completed",
+            "cancelled",
+            "rejected",
+            "deferred",
+            # Handed off past the partner — PL review / IA verification / payment.
+            "submitted_to_pl",
+            "awaiting_ia_verification",
+            "ia_verified",
+            "accountant_confirmed",
+        ]
+    )
     return [serialize_activity(a) for a in qs.select_related("school")]
 
 
@@ -90,15 +98,21 @@ def onboard(data: dict, principal) -> dict:
     """Onboards a new partner. Restricted to Admin, CD, or IA."""
     from apps.core.rbac import EdifyRole
     from apps.core.exceptions import Forbidden
-    
-    allowed = {EdifyRole.ADMIN.value, EdifyRole.COUNTRY_DIRECTOR.value, EdifyRole.IMPACT_ASSESSMENT.value}
+
+    allowed = {
+        EdifyRole.ADMIN.value,
+        EdifyRole.COUNTRY_DIRECTOR.value,
+        EdifyRole.IMPACT_ASSESSMENT.value,
+    }
     user_roles = getattr(principal, "roles", []) or []
     active_role = getattr(principal, "active_role", None)
     if active_role and active_role not in user_roles:
         user_roles = list(user_roles) + [active_role]
-        
+
     if not any(r in allowed for r in user_roles):
-        raise Forbidden("Only Admin, Country Director, or Impact Assessment users can onboard partners.")
+        raise Forbidden(
+            "Only Admin, Country Director, or Impact Assessment users can onboard partners."
+        )
 
     if not data.get("name"):
         raise BadRequest("name is required.")
@@ -128,8 +142,14 @@ def update(partner_id: str, data: dict, principal) -> dict:
     if not p:
         raise NotFoundError("Partner not found.")
     for field_name in (
-        "name", "region_name", "notes", "contact_person", "email", "phone",
-        "contract_status", "certification_status",
+        "name",
+        "region_name",
+        "notes",
+        "contact_person",
+        "email",
+        "phone",
+        "contract_status",
+        "certification_status",
     ):
         camel = _camel(field_name)
         if camel in data:
@@ -147,9 +167,12 @@ def update(partner_id: str, data: dict, principal) -> dict:
 
 
 _CAMEL_MAP = {
-    "region_name": "regionName", "contact_person": "contactPerson",
-    "coverage_districts": "coverageDistricts", "contract_status": "contractStatus",
-    "certification_status": "certificationStatus", "expertise_areas": "expertiseAreas",
+    "region_name": "regionName",
+    "contact_person": "contactPerson",
+    "coverage_districts": "coverageDistricts",
+    "contract_status": "contractStatus",
+    "certification_status": "certificationStatus",
+    "expertise_areas": "expertiseAreas",
     "trains_on": "trainsOn",
 }
 
@@ -158,4 +181,12 @@ def _camel(snake: str) -> str:
     return _CAMEL_MAP.get(snake, snake)
 
 
-__all__ = ["list_partners", "my_partner", "my_activities", "schedule_activity", "eligible", "onboard", "update"]
+__all__ = [
+    "list_partners",
+    "my_partner",
+    "my_activities",
+    "schedule_activity",
+    "eligible",
+    "onboard",
+    "update",
+]

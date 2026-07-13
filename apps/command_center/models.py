@@ -1,4 +1,5 @@
 """Command-center models — recommendation-led home feed + persistent alerts."""
+
 from __future__ import annotations
 
 from django.db import models
@@ -12,7 +13,11 @@ class CommandCenterAlert(TimeStampedModel):
 
     id = CuidField()
     alert_type = models.CharField(max_length=64)
-    severity = models.CharField(max_length=16, choices=NotificationPriority.choices, default=NotificationPriority.HIGH)
+    severity = models.CharField(
+        max_length=16,
+        choices=NotificationPriority.choices,
+        default=NotificationPriority.HIGH,
+    )
     scope = models.CharField(max_length=64, null=True, blank=True)
     context_type = models.CharField(max_length=64, null=True, blank=True)
     context_id = models.CharField(max_length=30, null=True, blank=True)
@@ -35,14 +40,18 @@ class CommandCenterAlertDismissal(TimeStampedModel):
     still unresolved)."""
 
     id = CuidField()
-    alert = models.ForeignKey(CommandCenterAlert, on_delete=models.CASCADE, related_name="dismissals")
+    alert = models.ForeignKey(
+        CommandCenterAlert, on_delete=models.CASCADE, related_name="dismissals"
+    )
     user_id = models.CharField(max_length=30)
     dismissed_until = models.DateTimeField()
 
     class Meta:
         db_table = "command_center_alert_dismissal"
         constraints = [
-            models.UniqueConstraint(fields=["alert", "user_id"], name="uniq_alert_dismissal_user"),
+            models.UniqueConstraint(
+                fields=["alert", "user_id"], name="uniq_alert_dismissal_user"
+            ),
         ]
         indexes = [models.Index(fields=["user_id"])]
 

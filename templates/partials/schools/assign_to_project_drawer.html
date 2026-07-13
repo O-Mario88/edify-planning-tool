@@ -1,10 +1,10 @@
 {% extends "components/drawers/base_drawer.html" %}
 
 {% block drawer_title %}Assign School to Project{% endblock %}
-{% block drawer_subtitle %}Attach this school to a special project for targeted support and impact tracking.{% endblock %}
+{% block drawer_subtitle %}Attach this school to a special project. This creates project planning work and notifies the coordinator — the same engine as normal planning.{% endblock %}
 
 {% block drawer_body %}
-<div class="space-y-6 font-sans">
+<div class="space-y-6 ">
 {% if validation_error %}
 <!-- Validation Error Message -->
 <div class="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-[12px] font-bold">
@@ -57,8 +57,8 @@
 <p class="text-[14px] font-semibold text-slate-700">No active projects available.</p>
 <p class="text-[11px] text-slate-400">Create a project before assigning schools.</p>
 </div>
-<a 
-href="/projects" 
+<a
+href="/projects"
 class="inline-flex h-9 px-4 rounded-xl btn-premium-primary text-white text-[12px] font-bold items-center justify-center transition-all shadow-sm"
 >
 Create Project
@@ -66,8 +66,8 @@ Create Project
 </div>
 {% else %}
 <!-- Form Segment -->
-<form 
-hx-post="/schools/{{ school.id }}/assign-to-project" 
+<form
+hx-post="/schools/{{ school.id }}/assign-to-project"
 hx-target="#drawer-container"
 class="space-y-4"
 >
@@ -75,9 +75,9 @@ class="space-y-4"
 
 <!-- Project Dropdown -->
 <div class="space-y-1">
-<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Select Project</label>
-<select 
-name="project_id" 
+<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Select Project <span class="text-rose-500">*</span></label>
+<select
+name="project_id"
 class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-100"
 required
 >
@@ -92,30 +92,64 @@ required
 <!-- Project Type -->
 <div class="space-y-1">
 <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Project Type</label>
-<input 
-type="text" 
-name="project_type" 
-placeholder="e.g. Technology Support"
+<input
+type="text"
+name="project_type"
+placeholder="e.g. Curriculum Support"
 class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-100"
 >
 </div>
-<!-- Participation Type -->
+<!-- Expected Support Type -->
 <div class="space-y-1">
-<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Participation Type</label>
-<input 
-type="text" 
-name="participation_type" 
-placeholder="e.g. Core Partner"
-class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-100"
+<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Expected Support Type</label>
+<select
+name="participation_type"
+class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-100"
 >
+<option value="">— Select —</option>
+<option value="Staff-led support">Staff-led support</option>
+<option value="Partner-led support">Partner-led support</option>
+<option value="Coaching">Coaching</option>
+<option value="Training">Training</option>
+<option value="Assessment">Assessment</option>
+<option value="Monitoring">Monitoring</option>
+</select>
 </div>
 </div>
 
 <div class="grid grid-cols-2 gap-3">
+<!-- Project Coordinator -->
+<div class="space-y-1">
+<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Project Coordinator</label>
+<select
+name="coordinator_id"
+class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-100"
+>
+<option value="">— Project default —</option>
+{% for c in coordinators %}
+<option value="{{ c.id }}">{{ c.user.name|default:c.id }}</option>
+{% endfor %}
+</select>
+</div>
+<!-- Project Focus Area -->
+<div class="space-y-1">
+<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Project Focus Area</label>
+<select
+name="support_area"
+class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] font-semibold bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-100"
+>
+<option value="">— Select focus area —</option>
+{% for code, label in interventions %}
+<option value="{{ code }}">{{ label }}</option>
+{% endfor %}
+</select>
+</div>
+</div>
+
 <!-- Start Date -->
 <div class="space-y-1">
 <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Start Date</label>
-<div 
+<div
 x-data="{
 open: false,
 selectedDate: '',
@@ -179,15 +213,15 @@ return d.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'nu
 isSelected(day) {
 if (!day || !this.selectedDate) return false;
 let parts = this.selectedDate.split('-');
-return parseInt(parts[0]) === this.currentYear && 
-(parseInt(parts[1]) - 1) === this.currentMonth && 
+return parseInt(parts[0]) === this.currentYear &&
+(parseInt(parts[1]) - 1) === this.currentMonth &&
 parseInt(parts[2]) === day;
 }
 }"
-class="relative font-sans"
+class="relative "
 >
 <!-- Dropdown Trigger button -->
-<button 
+<button
 type="button"
 @click="open = !open"
 class="w-full h-10 px-3 flex items-center justify-between rounded-lg border border-slate-200 text-[12px] font-semibold bg-slate-50 hover:bg-slate-100/50 focus:outline-none transition-colors text-slate-700"
@@ -203,13 +237,13 @@ class="w-full h-10 px-3 flex items-center justify-between rounded-lg border bord
 </svg>
 </button>
 
-<input type="hidden" name="start_date" :value="selectedDate" required>
+<input type="hidden" name="start_date" :value="selectedDate">
 
 <!-- Calendar Popover Card -->
-<div 
+<div
 x-show="open"
 @click.outside="open = false"
-class="absolute left-0 mt-1.5 w-[280px] bg-white border border-slate-200 rounded-2xl shadow-xl p-4 z-50 space-y-3 font-sans select-none"
+class="absolute left-0 mt-1.5 w-[280px] bg-white border border-slate-200 rounded-lg shadow-xl p-4 z-50 space-y-3 select-none"
 style="display: none;"
 x-transition:enter="transition ease-out duration-100"
 x-transition:enter-start="opacity-0 transform scale-95"
@@ -238,7 +272,7 @@ x-transition:leave-end="opacity-0 transform scale-95"
 <div class="grid grid-cols-7 gap-y-1 text-center text-[12px] font-bold">
 <template x-for="(day, index) in days" :key="index">
 <div>
-<button 
+<button
 type="button"
 x-show="day !== null"
 @click="selectDay(day)"
@@ -252,24 +286,13 @@ x-text="day"
 </div>
 </div>
 </div>
-<!-- Expected Support Area -->
-<div class="space-y-1">
-<label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Expected Support Area</label>
-<input 
-type="text" 
-name="support_area" 
-placeholder="e.g. Teacher training"
-class="w-full h-10 px-3 rounded-lg border border-slate-200 text-[12px] bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-100"
->
-</div>
-</div>
 
 <!-- Notes -->
 <div class="space-y-1">
 <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Notes / Objectives</label>
-<textarea 
-name="notes" 
-rows="3" 
+<textarea
+name="notes"
+rows="3"
 placeholder="Targeted impact objectives..."
 class="w-full p-3 rounded-lg border border-slate-200 text-[12px] bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-100 resize-none"
 ></textarea>
@@ -277,18 +300,18 @@ class="w-full p-3 rounded-lg border border-slate-200 text-[12px] bg-slate-50 foc
 
 <!-- Footer Actions -->
 <div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
-<button 
-type="button" 
-@click="open = false; setTimeout(() => document.getElementById('drawer-container').innerHTML = '', 300)"
+<button
+type="button"
+@click="setTimeout(() => document.getElementById('drawer-container').innerHTML = '', 300)"
 class="px-5 h-9 rounded-xl btn-premium-secondary font-bold text-[12px]"
 >
 Cancel
 </button>
-<button 
-type="submit" 
+<button
+type="submit"
 class="px-6 h-9 rounded-xl btn-premium-primary font-bold text-[12px] shadow-sm flex items-center justify-center gap-1.5"
 >
-<span>Assign Project</span>
+<span>Assign to Project</span>
 </button>
 </div>
 </form>

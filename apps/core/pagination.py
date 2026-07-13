@@ -8,6 +8,7 @@ Mirrors `PaginationDto` (1-based page, default 25, max 200; `skip`/`take` are
 derived and explicitly ignored if sent inbound). Response arrays must never be
 null/undefined — the frontend surfaces a DATA_CONTRACT_VIOLATION otherwise.
 """
+
 from __future__ import annotations
 
 from rest_framework.pagination import BasePagination
@@ -37,7 +38,9 @@ class EdifyPagination(BasePagination):
         )
 
         sort_by = request.query_params.get(self.sort_by_query_param)
-        sort_dir = (request.query_params.get(self.sort_dir_query_param) or "asc").lower()
+        sort_dir = (
+            request.query_params.get(self.sort_dir_query_param) or "asc"
+        ).lower()
         if sort_by:
             prefix = "-" if sort_dir == "desc" else ""
             # Defensive: only allow simple field names (no `__`, no relations)
@@ -76,7 +79,14 @@ class EdifyPagination(BasePagination):
         }
 
     @staticmethod
-    def _get_int(request: Request, param: str, *, default: int, minimum: int | None = None, maximum: int | None = None) -> int:
+    def _get_int(
+        request: Request,
+        param: str,
+        *,
+        default: int,
+        minimum: int | None = None,
+        maximum: int | None = None,
+    ) -> int:
         raw = request.query_params.get(param)
         if raw in (None, ""):
             return default
@@ -97,17 +107,19 @@ class EdifyPagination(BasePagination):
         return self._list
 
 
-def make_pagination_window(current_page: int, total_pages: int, window_size: int = 2) -> list[int | str]:
+def make_pagination_window(
+    current_page: int, total_pages: int, window_size: int = 2
+) -> list[int | str]:
     """
     Constructs a sliding-window pagination list of pages.
     e.g., [1, 2, 3, '...', 40] or [1, '...', 9, 10, 11, '...', 40]
     """
     if total_pages <= 7:
         return list(range(1, total_pages + 1))
-        
+
     pages = []
     pages.append(1)
-    
+
     if current_page - window_size > 2:
         pages.append("...")
         for p in range(current_page - window_size, current_page):
@@ -115,10 +127,10 @@ def make_pagination_window(current_page: int, total_pages: int, window_size: int
     else:
         for p in range(2, current_page):
             pages.append(p)
-            
+
     if current_page != 1:
         pages.append(current_page)
-        
+
     if current_page + window_size < total_pages - 1:
         for p in range(current_page + 1, current_page + window_size + 1):
             pages.append(p)
@@ -126,9 +138,8 @@ def make_pagination_window(current_page: int, total_pages: int, window_size: int
     else:
         for p in range(current_page + 1, total_pages):
             pages.append(p)
-            
+
     if total_pages not in pages:
         pages.append(total_pages)
-        
-    return pages
 
+    return pages

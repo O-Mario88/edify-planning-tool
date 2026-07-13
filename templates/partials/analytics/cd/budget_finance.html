@@ -1,0 +1,61 @@
+{% load frontend_filters %}
+<div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-3 h-full"
+     x-data="{ tab: 'quarterly' }">
+  <div class="flex items-start justify-between">
+    <div>
+      <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">12. Budget and Finance Health</h3>
+      <p class="text-[11px] text-slate-400 font-medium mt-0.5">Activity-advance pipeline · FY {{ fy }}</p>
+    </div>
+    <a href="/analytics/country-director/drilldown?drill=budget&fy={{ fy }}"
+       hx-get="/analytics/country-director/drilldown?drill=budget&fy={{ fy }}"
+       hx-target="#drawer-container" hx-swap="innerHTML"
+       class="text-[10px] font-bold text-blue-600 hover:text-blue-700">Review →</a>
+  </div>
+
+  <div class="flex items-center gap-1 bg-slate-50 rounded-lg p-0.5 w-fit text-[10px] font-bold">
+    <button type="button" @click="tab='weekly'" :class="tab==='weekly' ? 'bg-white text-slate-700 shadow-sm' : 'text-slate-400'" class="px-2.5 py-1 rounded-md transition-all">Weekly</button>
+    <button type="button" @click="tab='monthly'" :class="tab==='monthly' ? 'bg-white text-slate-700 shadow-sm' : 'text-slate-400'" class="px-2.5 py-1 rounded-md transition-all">Monthly</button>
+    <button type="button" @click="tab='quarterly'" :class="tab==='quarterly' ? 'bg-white text-slate-700 shadow-sm' : 'text-slate-400'" class="px-2.5 py-1 rounded-md transition-all">Quarterly</button>
+    <button type="button" @click="tab='fy'" :class="tab==='fy' ? 'bg-white text-slate-700 shadow-sm' : 'text-slate-400'" class="px-2.5 py-1 rounded-md transition-all">FY</button>
+  </div>
+
+  <div class="flex items-center gap-4 pt-1">
+    {# Conic-gradient utilization donut #}
+    <div class="relative h-[92px] w-[92px] shrink-0 rounded-full"
+         style="background: conic-gradient(#10b981 0% {{ budget_finance.utilization_pct }}%, var(--edify-border, #e2e8f0) {{ budget_finance.utilization_pct }}% 100%);">
+      <div class="absolute inset-[10px] bg-white rounded-full flex flex-col items-center justify-center">
+        <span class="text-[18px] font-bold text-slate-800 tabular-nums leading-none">{{ budget_finance.utilization_pct }}%</span>
+        <span class="text-[8px] font-semibold text-slate-400 uppercase tracking-wide">Utilized</span>
+      </div>
+    </div>
+    <div class="flex-1 min-w-0">
+      <p class="text-[9.5px] font-semibold text-slate-400">Disbursed of Requested</p>
+      <p class="text-[13px] font-bold text-slate-800 tabular-nums leading-tight">UGX {{ budget_finance.disbursed|intcomma }}</p>
+      <p class="text-[9.5px] font-semibold text-slate-400 mt-1.5">Pipeline Requested</p>
+      <p class="text-[13px] font-bold text-slate-600 tabular-nums leading-tight">UGX {{ budget_finance.requested|intcomma }}</p>
+      {# quarterly mini-bars #}
+      <div class="flex items-end gap-1 h-6 mt-2" x-show="tab==='quarterly' || tab==='fy'">
+        {% for v in budget_finance.quarter_vals %}
+        <div class="flex-1 flex flex-col items-center gap-0.5">
+          <div class="w-full bg-blue-200 rounded-sm" style="height: {% widthratio v budget_finance.requested 24 %}px; min-height:2px;"></div>
+          <span class="text-[7px] font-bold text-slate-400">Q{{ forloop.counter }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="space-y-1 pt-1 border-t border-slate-50">
+    {% for s in budget_finance.statuses %}
+    <div class="flex items-center justify-between text-[11px]">
+      <span class="inline-flex items-center gap-1.5 font-semibold text-slate-500">
+        <span class="h-1.5 w-1.5 rounded-full
+          {% if s.tone == 'success' %}bg-emerald-500{% elif s.tone == 'warning' %}bg-amber-500{% elif s.tone == 'danger' %}bg-rose-500{% else %}bg-sky-500{% endif %}"></span>
+        {{ s.label }}
+      </span>
+      <span class="font-bold text-slate-700 tabular-nums">UGX {{ s.amount|intcomma }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  <p class="text-[9.5px] text-slate-400 font-medium">CD reviews & routes budget — accountant disbursement actions are excluded here.</p>
+</div>

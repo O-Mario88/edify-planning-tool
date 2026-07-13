@@ -5,35 +5,65 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('activities', '0004_activity_fiscal_year_activity_planned_date_and_more'),
+        ("activities", "0004_activity_fiscal_year_activity_planned_date_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='activity',
-            name='activity_purpose_text',
+            model_name="activity",
+            name="activity_purpose_text",
             field=models.TextField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='activity',
-            name='expected_outcome',
+            model_name="activity",
+            name="expected_outcome",
             field=models.TextField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='activity',
-            name='focus_intervention',
-            field=models.CharField(blank=True, choices=[('teaching_and_learning', 'Teaching & Learning'), ('financial_health', 'Financial Health'), ('christlike_behaviour', 'Christlike Behaviour'), ('exposure_to_word_of_god', 'Exposure to Word of God'), ('government_requirements', 'Government Requirements'), ('leadership', 'Leadership'), ('education_technology', 'Education Technology'), ('learning_environment', 'Learning Environment')], max_length=64, null=True),
+            model_name="activity",
+            name="focus_intervention",
+            field=models.CharField(
+                blank=True,
+                choices=[
+                    ("teaching_and_learning", "Teaching & Learning"),
+                    ("financial_health", "Financial Health"),
+                    ("christlike_behaviour", "Christlike Behaviour"),
+                    ("exposure_to_word_of_god", "Exposure to Word of God"),
+                    ("government_requirements", "Government Requirements"),
+                    ("leadership", "Leadership"),
+                    ("education_technology", "Education Technology"),
+                    ("learning_environment", "Learning Environment"),
+                ],
+                max_length=64,
+                null=True,
+            ),
         ),
         migrations.AddField(
-            model_name='activity',
-            name='purpose_type',
+            model_name="activity",
+            name="purpose_type",
             field=models.CharField(blank=True, max_length=64, null=True),
         ),
         migrations.AddField(
-            model_name='activity',
-            name='secondary_focus_interventions',
-            field=django.contrib.postgres.fields.ArrayField(base_field=models.CharField(choices=[('teaching_and_learning', 'Teaching & Learning'), ('financial_health', 'Financial Health'), ('christlike_behaviour', 'Christlike Behaviour'), ('exposure_to_word_of_god', 'Exposure to Word of God'), ('government_requirements', 'Government Requirements'), ('leadership', 'Leadership'), ('education_technology', 'Education Technology'), ('learning_environment', 'Learning Environment')], max_length=64), blank=True, default=list, size=None),
+            model_name="activity",
+            name="secondary_focus_interventions",
+            field=django.contrib.postgres.fields.ArrayField(
+                base_field=models.CharField(
+                    choices=[
+                        ("teaching_and_learning", "Teaching & Learning"),
+                        ("financial_health", "Financial Health"),
+                        ("christlike_behaviour", "Christlike Behaviour"),
+                        ("exposure_to_word_of_god", "Exposure to Word of God"),
+                        ("government_requirements", "Government Requirements"),
+                        ("leadership", "Leadership"),
+                        ("education_technology", "Education Technology"),
+                        ("learning_environment", "Learning Environment"),
+                    ],
+                    max_length=64,
+                ),
+                blank=True,
+                default=list,
+                size=None,
+            ),
         ),
     ]

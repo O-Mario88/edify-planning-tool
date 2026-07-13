@@ -27,6 +27,7 @@ Demo/operational data (local only, --demo):
   - demo role accounts, PLs, CCEOs, super-admin
   - sample schools, SSA, partners, cost settings, projects
 """
+
 from __future__ import annotations
 
 import random
@@ -49,31 +50,53 @@ DEMO_ACCOUNTS = [
     ("accountant@edify.org", "Moses Tindi", EdifyRole.PROGRAM_ACCOUNTANT.value),
     ("hr@edify.org", "Hellen Auma", EdifyRole.HUMAN_RESOURCES.value),
     ("coordinator@edify.org", "Allan Ssentongo", EdifyRole.PROJECT_COORDINATOR.value),
-    ("partner@edify.org", "Literacy Uganda Officer", EdifyRole.PARTNER_FIELD_OFFICER.value),
+    (
+        "partner@edify.org",
+        "Literacy Uganda Officer",
+        EdifyRole.PARTNER_FIELD_OFFICER.value,
+    ),
 ]
 
 # Realistic Uganda geography (reference admin boundaries) — local-test seed only.
 GEOGRAPHY = [
-    {"name": "Northern", "districts": [
-        {"name": "Lira", "subCounties": ["Lira TC", "Aromo", "Ogur"]},
-        {"name": "Gulu", "subCounties": ["Gulu TC", "Bungatira", "Unyama"]},
-        {"name": "Kitgum", "subCounties": ["Kitgum TC", "Namokora", "Mucwini"]},
-    ]},
-    {"name": "Eastern", "districts": [
-        {"name": "Soroti", "subCounties": ["Soroti TC", "Arapai", "Katine"]},
-        {"name": "Mbale", "subCounties": ["Mbale TC", "Bukonde", "Bungokho"]},
-        {"name": "Jinja", "subCounties": ["Jinja TC", "Butagaya", "Budondo"]},
-    ]},
-    {"name": "Western", "districts": [
-        {"name": "Mbarara", "subCounties": ["Mbarara TC", "Bwizibwera", "Kashanyaraazi"]},
-        {"name": "Fort Portal", "subCounties": ["Fort Portal TC", "Kikojo", "Buheesi"]},
-        {"name": "Kasese", "subCounties": ["Kasese TC", "Rukoki", "Bwera"]},
-    ]},
-    {"name": "Central", "districts": [
-        {"name": "Kampala", "subCounties": ["Kampala Central", "Rubaga", "Nakawa"]},
-        {"name": "Mukono", "subCounties": ["Mukono TC", "Ntunga", "Kyampisi"]},
-        {"name": "Wakiso", "subCounties": ["Wakiso TC", "Nangabo", "Ssisa"]},
-    ]},
+    {
+        "name": "Northern",
+        "districts": [
+            {"name": "Lira", "subCounties": ["Lira TC", "Aromo", "Ogur"]},
+            {"name": "Gulu", "subCounties": ["Gulu TC", "Bungatira", "Unyama"]},
+            {"name": "Kitgum", "subCounties": ["Kitgum TC", "Namokora", "Mucwini"]},
+        ],
+    },
+    {
+        "name": "Eastern",
+        "districts": [
+            {"name": "Soroti", "subCounties": ["Soroti TC", "Arapai", "Katine"]},
+            {"name": "Mbale", "subCounties": ["Mbale TC", "Bukonde", "Bungokho"]},
+            {"name": "Jinja", "subCounties": ["Jinja TC", "Butagaya", "Budondo"]},
+        ],
+    },
+    {
+        "name": "Western",
+        "districts": [
+            {
+                "name": "Mbarara",
+                "subCounties": ["Mbarara TC", "Bwizibwera", "Kashanyaraazi"],
+            },
+            {
+                "name": "Fort Portal",
+                "subCounties": ["Fort Portal TC", "Kikojo", "Buheesi"],
+            },
+            {"name": "Kasese", "subCounties": ["Kasese TC", "Rukoki", "Bwera"]},
+        ],
+    },
+    {
+        "name": "Central",
+        "districts": [
+            {"name": "Kampala", "subCounties": ["Kampala Central", "Rubaga", "Nakawa"]},
+            {"name": "Mukono", "subCounties": ["Mukono TC", "Ntunga", "Kyampisi"]},
+            {"name": "Wakiso", "subCounties": ["Wakiso TC", "Nangabo", "Ssisa"]},
+        ],
+    },
 ]
 
 
@@ -85,11 +108,13 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            "--demo", action="store_true",
+            "--demo",
+            action="store_true",
             help="Also seed local-only demo accounts + sample data. Refuses in production.",
         )
         parser.add_argument(
-            "--reset", action="store_true",
+            "--reset",
+            action="store_true",
             help="With --demo: purge operational tables before seeding sample data.",
         )
 
@@ -112,9 +137,11 @@ class Command(BaseCommand):
             self._seed_demo_accounts()
             self._seed_geography()
             self._seed_sample_data()
-            self.stdout.write(self.style.WARNING(
-                "  ⚠ Demo data seeded — LOCAL DEVELOPMENT ONLY. Do NOT deploy this database."
-            ))
+            self.stdout.write(
+                self.style.WARNING(
+                    "  ⚠ Demo data seeded — LOCAL DEVELOPMENT ONLY. Do NOT deploy this database."
+                )
+            )
         else:
             self.stdout.write("  Reference-only seed complete (no demo data).")
         self.stdout.write(self.style.SUCCESS("Seed complete."))
@@ -127,7 +154,8 @@ class Command(BaseCommand):
         for role, perms in ROLE_PERMISSIONS.items():
             for perm in perms:
                 RolePermission.objects.update_or_create(
-                    role=role.value, permission=key_to_perm[perm.value],
+                    role=role.value,
+                    permission=key_to_perm[perm.value],
                 )
         self.stdout.write(
             f"  permissions: {Permission.objects.count()} keys, "
@@ -144,8 +172,13 @@ class Command(BaseCommand):
         for email, name, role in DEMO_ACCOUNTS:
             u, _ = User.objects.update_or_create(
                 email=email,
-                defaults={"name": name, "roles": [role], "active_role": role,
-                          "status": "active", "is_active": True},
+                defaults={
+                    "name": name,
+                    "roles": [role],
+                    "active_role": role,
+                    "status": "active",
+                    "is_active": True,
+                },
             )
             u.set_password(demo_pw)
             u.save()
@@ -155,8 +188,13 @@ class Command(BaseCommand):
         if super_pw:
             u, _ = User.objects.update_or_create(
                 email=SUPER_ADMIN_EMAIL,
-                defaults={"name": "Omario Edwin", "roles": [EdifyRole.ADMIN.value],
-                          "active_role": EdifyRole.ADMIN.value, "status": "active", "is_active": True},
+                defaults={
+                    "name": "Omario Edwin",
+                    "roles": [EdifyRole.ADMIN.value],
+                    "active_role": EdifyRole.ADMIN.value,
+                    "status": "active",
+                    "is_active": True,
+                },
             )
             u.set_password(super_pw)
             u.password_set_at = timezone.now()
@@ -167,28 +205,70 @@ class Command(BaseCommand):
         for i in range(1, 5):
             u, _ = User.objects.update_or_create(
                 email=f"pl{i}@edify.org",
-                defaults={"name": f"Program Lead {i}", "roles": [EdifyRole.COUNTRY_PROGRAM_LEAD.value],
-                          "active_role": EdifyRole.COUNTRY_PROGRAM_LEAD.value, "status": "active", "is_active": True},
+                defaults={
+                    "name": f"Program Lead {i}",
+                    "roles": [EdifyRole.COUNTRY_PROGRAM_LEAD.value],
+                    "active_role": EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+                    "status": "active",
+                    "is_active": True,
+                },
             )
-            u.set_password(demo_pw); u.save()
-            sp, _ = StaffProfile.objects.update_or_create(user=u, defaults={"onboarding_state": "active"})
+            u.set_password(demo_pw)
+            u.save()
+            sp, _ = StaffProfile.objects.update_or_create(
+                user=u, defaults={"onboarding_state": "active"}
+            )
             pls.append(sp)
-        CCEO_NAMES = ["Paul N.", "Moses K.", "Joel T.", "Alfred O.", "Deo M.", "Grace A.", "Esther N.", "Brian S.", "Ruth N.", "Daniel O.", "Grace K.", "James O.", "Simon P.", "Florence A.", "Alex M.", "Robert O.", "Mary A.", "David K.", "John B.", "Sarah N."]
+        CCEO_NAMES = [
+            "Paul N.",
+            "Moses K.",
+            "Joel T.",
+            "Alfred O.",
+            "Deo M.",
+            "Grace A.",
+            "Esther N.",
+            "Brian S.",
+            "Ruth N.",
+            "Daniel O.",
+            "Grace K.",
+            "James O.",
+            "Simon P.",
+            "Florence A.",
+            "Alex M.",
+            "Robert O.",
+            "Mary A.",
+            "David K.",
+            "John B.",
+            "Sarah N.",
+        ]
         cceos = []
         for i in range(20):
             email = "cceo@edify.org" if i == 0 else f"cceo{i}@edify.org"
             name = CCEO_NAMES[i] if i < len(CCEO_NAMES) else f"CCEO {i + 1}"
             u, _ = User.objects.update_or_create(
                 email=email,
-                defaults={"name": name, "roles": [EdifyRole.CCEO.value],
-                          "active_role": EdifyRole.CCEO.value, "status": "active", "is_active": True},
+                defaults={
+                    "name": name,
+                    "roles": [EdifyRole.CCEO.value],
+                    "active_role": EdifyRole.CCEO.value,
+                    "status": "active",
+                    "is_active": True,
+                },
             )
-            u.set_password(demo_pw); u.save()
-            sp, _ = StaffProfile.objects.update_or_create(user=u, defaults={"onboarding_state": "active"})
+            u.set_password(demo_pw)
+            u.save()
+            sp, _ = StaffProfile.objects.update_or_create(
+                user=u, defaults={"onboarding_state": "active"}
+            )
             cceos.append(sp)
         from apps.accounts.models import StaffSupervisorAssignment
-        for cceo in cceos:
-            StaffSupervisorAssignment.objects.get_or_create(supervisee=cceo, supervisor=pls[0])
+
+        # Distribute CCEOs across all PLs (round-robin) so every Program Lead
+        # has a supervised team — the PL Fund Approval / team views need this.
+        for i, cceo in enumerate(cceos):
+            StaffSupervisorAssignment.objects.get_or_create(
+                supervisee=cceo, supervisor=pls[i % len(pls)] if pls else pls[0]
+            )
         self.stdout.write(f"  demo users: {User.objects.count()} (local only).")
 
     # ── Geography (reference admin boundaries — local-test seed) ────────────
@@ -198,7 +278,9 @@ class Command(BaseCommand):
         from django.conf import settings
         from apps.geography.models import Region, District, SubCounty, Parish
 
-        csv_path = Path(settings.BASE_DIR) / "uganda_complete_administrative_mapping.csv"
+        csv_path = (
+            Path(settings.BASE_DIR) / "uganda_complete_administrative_mapping.csv"
+        )
         if not csv_path.exists():
             self.stdout.write(f"  Geography CSV not found at {csv_path}")
             return
@@ -220,12 +302,18 @@ class Command(BaseCommand):
 
                 key = (region_name, district_name)
                 if key not in districts_cache:
-                    district, _ = District.objects.get_or_create(name=district_name, region=region)
+                    district, _ = District.objects.get_or_create(
+                        name=district_name, region=region
+                    )
                     districts_cache[key] = district
                 district = districts_cache[key]
 
-                sub_county, _ = SubCounty.objects.get_or_create(name=sub_county_name, district=district)
-                Parish.objects.get_or_create(name=f"{sub_county_name} Central", sub_county=sub_county)
+                sub_county, _ = SubCounty.objects.get_or_create(
+                    name=sub_county_name, district=district
+                )
+                Parish.objects.get_or_create(
+                    name=f"{sub_county_name} Central", sub_county=sub_county
+                )
 
         self.stdout.write(
             f"  geography: {Region.objects.count()} regions, "
@@ -249,7 +337,7 @@ class Command(BaseCommand):
         Cluster.objects.all().delete()
         Partner.objects.all().delete()
         StaffSchoolAssignment.objects.all().delete()
-        
+
         # Clean up geography to replace with complete scraped dataset
         Parish.objects.all().delete()
         SubCounty.objects.all().delete()
@@ -267,12 +355,21 @@ class Command(BaseCommand):
         districts = list(District.objects.all())
         subs = list(SubCounty.objects.all())
         rnd = random.Random(42)
-        name_frags = ["Primary School", "UMEA Primary School", "Church of Uganda Primary", "Hill Primary"]
+        name_frags = [
+            "Primary School",
+            "UMEA Primary School",
+            "Church of Uganda Primary",
+            "Hill Primary",
+        ]
         from apps.core.rbac import EdifyRole
         from apps.accounts.models import StaffProfile, StaffSchoolAssignment
         from apps.core.enums import AccountOwnerStatus
 
-        cceos = list(StaffProfile.objects.filter(user__active_role=EdifyRole.CCEO.value).order_by("user__email"))
+        cceos = list(
+            StaffProfile.objects.filter(
+                user__active_role=EdifyRole.CCEO.value
+            ).order_by("user__email")
+        )
 
         mukono_district = District.objects.filter(name__iexact="Mukono").first()
         if mukono_district:
@@ -288,9 +385,13 @@ class Command(BaseCommand):
             s = School.objects.create(
                 school_id=f"S-{1000 + i}",
                 name=f"{sc.name} {name_frags[i % len(name_frags)]}",
-                region=d.region, district=d, sub_county=sc,
+                region=d.region,
+                district=d,
+                sub_county=sc,
                 enrollment=rnd.randint(80, 900),
-                school_type=rnd.choices(["client", "core", "champion"], weights=[80, 15, 5])[0],
+                school_type=rnd.choices(
+                    ["client", "core", "champion"], weights=[80, 15, 5]
+                )[0],
                 current_fy_ssa_status="done" if rnd.random() < 0.15 else "not_done",
                 source="local_test_upload",
             )
@@ -301,11 +402,9 @@ class Command(BaseCommand):
                 s.account_owner_name_raw = cceo.user.name
                 s.account_owner_status = AccountOwnerStatus.MATCHED.value
                 s.save()
-                StaffSchoolAssignment.objects.get_or_create(
-                    staff=cceo,
-                    school_id=s.id
-                )
+                StaffSchoolAssignment.objects.get_or_create(staff=cceo, school_id=s.id)
             from apps.ssa.services import _recompute_readiness
+
             _recompute_readiness(s)
         self.stdout.write(f"  sample schools: {School.objects.count()} (local only)")
 
@@ -314,6 +413,7 @@ class Command(BaseCommand):
         from apps.core.enums import SsaIntervention
         from apps.core.fy import get_operational_fy
         from django.utils import timezone
+
         interventions = [i.value for i in SsaIntervention]
         fy = get_operational_fy()
         prev_fy = str(int(fy) - 1)
@@ -323,48 +423,121 @@ class Command(BaseCommand):
                     continue
                 avg = round(score_base + rnd.random() * 4, 1)
                 rec = SsaRecord.objects.create(
-                    school=s, fy=fyyy, quarter="Q1", date_of_ssa=timezone.now(),
-                    average_score=avg, uploaded_by="seed", collector_type="staff",
-                    verification_status="confirmed", verification_source="staff_self_verified",
+                    school=s,
+                    fy=fyyy,
+                    quarter="Q1",
+                    date_of_ssa=timezone.now(),
+                    average_score=avg,
+                    uploaded_by="seed",
+                    collector_type="staff",
+                    verification_status="confirmed",
+                    verification_source="staff_self_verified",
                     source="local_test_upload",
                 )
                 for interv in interventions:
-                    SsaScore.objects.create(ssa_record=rec, intervention=interv,
-                                            score=round(max(0, min(10, avg + rnd.uniform(-1.5, 1.5))), 1))
-        self.stdout.write(f"  sample SSA records: {SsaRecord.objects.count()} (local only)")
+                    SsaScore.objects.create(
+                        ssa_record=rec,
+                        intervention=interv,
+                        score=round(max(0, min(10, avg + rnd.uniform(-1.5, 1.5))), 1),
+                    )
+        self.stdout.write(
+            f"  sample SSA records: {SsaRecord.objects.count()} (local only)"
+        )
 
         partner_user = User.objects.filter(email="partner@edify.org").first()
-        for i, name in enumerate(["Literacy Uganda", "Build Africa", "World Reader", "Pangea Educational", "Room to Read"]):
+        for i, name in enumerate(
+            [
+                "Literacy Uganda",
+                "Build Africa",
+                "World Reader",
+                "Pangea Educational",
+                "Room to Read",
+            ]
+        ):
             Partner.objects.get_or_create(
                 name=name,
-                defaults={"coverage_districts": [d.name for d in districts[:3]],
-                          "is_certified": i % 2 == 0, "active_status": True,
-                          "contract_status": "active", "user": partner_user if i == 0 else None,
-                          "source": "local_test_upload"},
+                defaults={
+                    "coverage_districts": [d.name for d in districts[:3]],
+                    "is_certified": i % 2 == 0,
+                    "active_status": True,
+                    "contract_status": "active",
+                    "user": partner_user if i == 0 else None,
+                    "source": "local_test_upload",
+                },
             )
         self.stdout.write(f"  sample partners: {Partner.objects.count()} (local only)")
 
         rate_card = {
-            "staff_visit_transport_primary": 50000, "lunch": 12000, "breakfast": 8000,
-            "dinner": 12000, "accommodation": 40000, "staff_visit_transport_secondary": 25000,
-            "training_session_fee": 50000, "venue": 30000, "meals_per_participant": 5000,
-            "mobilisation_per_participant": 2000, "cluster_meeting_cost": 10000,
-            "partner_visit_lump_sum": 40000, "partner_training_lump_sum": 16000,
+            "staff_visit_transport_primary": 50000,
+            "lunch": 12000,
+            "breakfast": 8000,
+            "dinner": 12000,
+            "accommodation": 40000,
+            "staff_visit_transport_secondary": 25000,
+            "training_session_fee": 50000,
+            "venue": 30000,
+            "meals_per_participant": 5000,
+            "mobilisation_per_participant": 2000,
+            "cluster_meeting_cost": 10000,
+            "partner_visit_lump_sum": 40000,
+            "partner_training_lump_sum": 16000,
         }
         for key, cost in rate_card.items():
-            CostSetting.objects.update_or_create(key=key, defaults={"label": key.replace("_", " ").title(), "unit_cost": cost})
-        self.stdout.write(f"  sample cost settings: {CostSetting.objects.count()} (local only)")
+            CostSetting.objects.update_or_create(
+                key=key,
+                defaults={"label": key.replace("_", " ").title(), "unit_cost": cost},
+            )
+        self.stdout.write(
+            f"  sample cost settings: {CostSetting.objects.count()} (local only)"
+        )
 
-        for code, name in [("SP-EDTECH", "EdTech Pilot"), ("SP-CCSEL", "CCSEL"), ("SP-DIP", "DIP"), ("SP-ECC", "ECC"), ("SP-UCU", "UCU")]:
-            Project.objects.get_or_create(code=code, defaults={"name": name, "category": "pilot"})
-        self.stdout.write(f"  sample projects: {Project.objects.count()} (local only)")
+        # Link the demo Project Coordinator (Allan Ssentongo) to the sample
+        # projects — with a focus intervention and a school cohort each — so the
+        # Project Coordinator role has a populated Special Projects experience
+        # out of the box (dashboard / planning / my-plan / analytics all scope to
+        # the projects a coordinator manages via Project.manager_staff_id).
+        from apps.accounts.models import StaffProfile
+        from apps.projects.models import ProjectSchoolAssignment
+        from apps.schools.models import School
+
+        coord = User.objects.filter(email="coordinator@edify.org").first()
+        coord_sp = StaffProfile.objects.filter(user=coord).first() if coord else None
+        project_defs = [
+            ("SP-EDTECH", "EdTech Pilot", "learning_environment"),
+            ("SP-CCSEL", "CCSEL", "christlike_behaviour"),
+            ("SP-DIP", "DIP", "leadership"),
+            ("SP-ECC", "ECC", "teaching_environment"),
+            ("SP-UCU", "UCU", "government_requirement"),
+        ]
+        all_schools = list(School.objects.filter(deleted_at__isnull=True)[:25])
+        for idx, (code, name, focus) in enumerate(project_defs):
+            proj, _ = Project.objects.get_or_create(
+                code=code, defaults={"name": name, "category": "pilot"}
+            )
+            changed = []
+            if coord_sp and not proj.manager_staff_id:
+                proj.manager_staff_id = coord_sp.id
+                changed.append("manager_staff_id")
+            if focus and not proj.intervention:
+                proj.intervention = focus
+                changed.append("intervention")
+            if changed:
+                proj.save(update_fields=[*changed, "updated_at"])
+            # Give each project a distinct 5-school cohort.
+            for s in all_schools[idx * 5 : idx * 5 + 5]:
+                ProjectSchoolAssignment.objects.get_or_create(project=proj, school=s)
+        self.stdout.write(
+            f"  sample projects: {Project.objects.count()} "
+            f"(coordinator={'linked' if coord_sp else 'MISSING'}, "
+            f"assignments={ProjectSchoolAssignment.objects.count()})"
+        )
 
         # Seed activities for April 2026 (for Consolidated Fund Allocation dashboard)
         from apps.activities.models import Activity, ActivityScheduleCostLine
         from apps.budget.costing_service import apply_to_activity
         from apps.clusters.models import Cluster
         from datetime import datetime, timezone
-        
+
         schools = list(School.objects.all())
         clusters = []
         for i in range(15):
@@ -372,7 +545,11 @@ class Command(BaseCommand):
             dist = rnd.choice(districts)
             cluster, _ = Cluster.objects.get_or_create(
                 name=cl_name,
-                defaults={"district": dist, "region": dist.region, "status": "clustered"}
+                defaults={
+                    "district": dist,
+                    "region": dist.region,
+                    "status": "clustered",
+                },
             )
             clusters.append(cluster)
 
@@ -384,7 +561,7 @@ class Command(BaseCommand):
             for act_idx in range(13):
                 date_day = rnd.randint(1, 28)
                 scheduled_date = datetime(2026, 4, date_day, 10, 0, tzinfo=timezone.utc)
-                
+
                 if act_idx < 4:
                     # Staff visit
                     act_type = "school_visit"
@@ -405,7 +582,9 @@ class Command(BaseCommand):
                     cluster = None
                 elif act_idx < 11:
                     # Cluster training
-                    act_type = "cluster_meeting"  # maps to 10k cluster meeting cost setting
+                    act_type = (
+                        "cluster_meeting"  # maps to 10k cluster meeting cost setting
+                    )
                     del_type = "staff"
                     school = None
                     cluster = clusters[cceo_idx % len(clusters)]
@@ -415,7 +594,7 @@ class Command(BaseCommand):
                     del_type = "partner"
                     school = schools[(cceo_idx * 10 + act_idx) % len(schools)]
                     cluster = None
-                    
+
                 act = Activity.objects.create(
                     activity_type=act_type,
                     delivery_type=del_type,
@@ -423,18 +602,24 @@ class Command(BaseCommand):
                     cluster=cluster,
                     scheduled_date=scheduled_date,
                     responsible_staff_id=cceo.user.user_id,
-                    status="completed"
+                    status="completed",
                 )
-                
-                apply_to_activity(act, {
-                    "activityType": act_type,
-                    "deliveryType": del_type,
-                    "districtType": "primary",
-                    "teachersAttended": 1,
-                    "leadersAttended": 0,
-                    "otherParticipants": 0,
-                    "nights": 0,
-                    "fy": "2026"
-                }, responsible_user_id=cceo.user.user_id)
 
-        self.stdout.write(f"  sample activities: {Activity.objects.count()} (local only)")
+                apply_to_activity(
+                    act,
+                    {
+                        "activityType": act_type,
+                        "deliveryType": del_type,
+                        "districtType": "primary",
+                        "teachersAttended": 1,
+                        "leadersAttended": 0,
+                        "otherParticipants": 0,
+                        "nights": 0,
+                        "fy": "2026",
+                    },
+                    responsible_user_id=cceo.user.user_id,
+                )
+
+        self.stdout.write(
+            f"  sample activities: {Activity.objects.count()} (local only)"
+        )

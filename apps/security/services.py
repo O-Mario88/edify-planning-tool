@@ -1,4 +1,5 @@
 """Security — data-protection/security dashboard posture."""
+
 from __future__ import annotations
 
 from django.conf import settings
@@ -14,7 +15,9 @@ def summary() -> dict:
         "activeUsers": users.filter(status="active").count(),
         "suspendedUsers": users.filter(status="suspended").count(),
         "mfaEnabledUsers": users.filter(mfa_enabled=True).count(),
-        "fieldEncryptionConfigured": bool(getattr(settings, "FIELD_ENCRYPTION_KEY", "")),
+        "fieldEncryptionConfigured": bool(
+            getattr(settings, "FIELD_ENCRYPTION_KEY", "")
+        ),
         "emailConfigured": getattr(settings, "EMAIL_PROVIDER", "console") == "resend",
         "isProduction": settings.IS_PRODUCTION,
     }

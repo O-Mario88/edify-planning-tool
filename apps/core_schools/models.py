@@ -1,4 +1,5 @@
 """Core-schools models — the Core/Champion pipeline (deterministic IDs)."""
+
 from __future__ import annotations
 
 from django.db import models
@@ -49,7 +50,9 @@ class CoreActivitySlot(TimeStampedModel):
     """One of the 8 core slots (4 visit + 4 training). Deterministic id."""
 
     id = models.CharField(max_length=64, primary_key=True)  # cslot-{schoolId}-v1
-    core_plan = models.ForeignKey(CorePlan, on_delete=models.CASCADE, related_name="slots")
+    core_plan = models.ForeignKey(
+        CorePlan, on_delete=models.CASCADE, related_name="slots"
+    )
     school_id = models.CharField(max_length=64)
     intervention = models.CharField(max_length=64)
     activity_type = models.CharField(max_length=16)  # visit | training
@@ -78,7 +81,10 @@ class CoreActivitySlot(TimeStampedModel):
 
     class Meta:
         db_table = "core_activity_slot"
-        indexes = [models.Index(fields=["core_plan"]), models.Index(fields=["school_id"])]
+        indexes = [
+            models.Index(fields=["core_plan"]),
+            models.Index(fields=["school_id"]),
+        ]
 
 
 class CoreSchoolProfile(TimeStampedModel):
@@ -86,7 +92,9 @@ class CoreSchoolProfile(TimeStampedModel):
 
     id = models.CharField(max_length=64, primary_key=True)  # cprof-{schoolId}
     school_id = models.CharField(max_length=64, unique=True)
-    core_plan = models.OneToOneField(CorePlan, on_delete=models.CASCADE, related_name="profile")
+    core_plan = models.OneToOneField(
+        CorePlan, on_delete=models.CASCADE, related_name="profile"
+    )
     core_start_fy = models.CharField(max_length=16)
     champion_status = models.CharField(max_length=32, default="Not Eligible")
     status = models.CharField(max_length=32, default="Active")
@@ -117,7 +125,9 @@ class CoreSchoolOnboarding(TimeStampedModel):
 
     id = CuidField()
     school_id = models.CharField(max_length=64, unique=True)
-    core_plan = models.OneToOneField(CorePlan, on_delete=models.CASCADE, related_name="onboarding")
+    core_plan = models.OneToOneField(
+        CorePlan, on_delete=models.CASCADE, related_name="onboarding"
+    )
     fy = models.CharField(max_length=16)
     previous_school_type = models.CharField(max_length=32)
     baseline_ssa_record_id = models.CharField(max_length=30)
@@ -133,7 +143,12 @@ class CoreSchoolOnboarding(TimeStampedModel):
 
 
 __all__ = [
-    "cplan_id", "cslot_id", "cprof_id",
-    "CorePlan", "CoreActivitySlot", "CoreSchoolProfile",
-    "CoreCandidateVerification", "CoreSchoolOnboarding",
+    "cplan_id",
+    "cslot_id",
+    "cprof_id",
+    "CorePlan",
+    "CoreActivitySlot",
+    "CoreSchoolProfile",
+    "CoreCandidateVerification",
+    "CoreSchoolOnboarding",
 ]

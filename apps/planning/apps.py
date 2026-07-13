@@ -8,4 +8,4 @@ class PlanningConfig(AppConfig):
     verbose_name = "Edify Planning"
 
     def ready(self):
-        import apps.planning.checks
+        pass

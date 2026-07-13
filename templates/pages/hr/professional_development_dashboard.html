@@ -1,0 +1,96 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Professional Development Dashboard · Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4" style="max-width:1500px;margin:0 auto;">
+
+  <!-- Header -->
+  <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+    <div>
+      <h1 class="text-[21px] font-extrabold tracking-tight" style="color:var(--edify-text);">Professional Development Dashboard</h1>
+      <p class="text-[12.5px] text-slate-400 font-normal mt-1.5">
+        Oversee course tracking, fund accountability, and HR sign-off across every staff member's PD plan — FY {{ fy }}{% if locked_country %} · {{ locked_country }}{% endif %}.
+      </p>
+    </div>
+    <span class="text-[10.5px] font-semibold text-slate-400">Last refreshed {{ last_refreshed|date:"d M Y, H:i" }}</span>
+  </div>
+
+  <!-- Messages notifications -->
+  {% if messages %}
+  <div class="space-y-2">
+  {% for message in messages %}
+    <div class="p-3.5 rounded-xl border text-[12px] font-bold flex items-center justify-between {% if message.tags == 'success' %}bg-emerald-50 text-emerald-800 border-emerald-100{% else %}bg-rose-50 text-rose-800 border-rose-100{% endif %}">
+      <span>{{ message }}</span>
+      <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600">&times;</button>
+    </div>
+  {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Filters -->
+  <form id="pd-filters" hx-get="/cpd-learning" hx-target="#pd-dashboard-body" hx-swap="innerHTML"
+        hx-trigger="change, search" hx-push-url="true"
+        class="rounded-xl border p-3 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5"
+        style="background:var(--edify-surface); border-color:var(--edify-border);">
+    <label class="block">
+      <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Financial Year</span>
+      <select name="fy" class="mt-1 w-full h-9 px-2 rounded-lg border text-[12px] font-semibold focus:outline-none"
+              style="background:var(--edify-surface-muted); border-color:var(--edify-border); color:var(--edify-text);">
+        {% for opt in fy_options %}<option value="{{ opt }}" {% if opt == fy %}selected{% endif %}>FY {{ opt }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="block">
+      <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Country</span>
+      {% if locked_country %}
+      <div class="mt-1 w-full h-9 px-2 rounded-lg border text-[12px] font-semibold flex items-center"
+           style="background:var(--edify-surface-muted); border-color:var(--edify-border); color:var(--edify-text);">{{ locked_country }}</div>
+      {% else %}
+      <select name="country" class="mt-1 w-full h-9 px-2 rounded-lg border text-[12px] font-semibold focus:outline-none"
+              style="background:var(--edify-surface-muted); border-color:var(--edify-border); color:var(--edify-text);">
+        <option value="">All Countries</option>
+        {% for c in country_options %}<option value="{{ c }}" {% if c == country %}selected{% endif %}>{{ c }}</option>{% endfor %}
+      </select>
+      {% endif %}
+    </label>
+    <label class="block">
+      <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Role</span>
+      <select name="role" class="mt-1 w-full h-9 px-2 rounded-lg border text-[12px] font-semibold focus:outline-none"
+              style="background:var(--edify-surface-muted); border-color:var(--edify-border); color:var(--edify-text);">
+        <option value="">All Roles</option>
+        {% for key, label in eligible_roles %}<option value="{{ key }}" {% if key == role_filter %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="block">
+      <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Course Status</span>
+      <select name="status" class="mt-1 w-full h-9 px-2 rounded-lg border text-[12px] font-semibold focus:outline-none"
+              style="background:var(--edify-surface-muted); border-color:var(--edify-border); color:var(--edify-text);">
+        <option value="">All Statuses</option>
+        {% for key, label in status_options %}<option value="{{ key }}" {% if key == status_filter %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="block">
+      <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Reminder Status</span>
+      <select name="reminder" class="mt-1 w-full h-9 px-2 rounded-lg border text-[12px] font-semibold focus:outline-none"
+              style="background:var(--edify-surface-muted); border-color:var(--edify-border); color:var(--edify-text);">
+        <option value="">Any</option>
+        {% for key, label in reminder_options %}<option value="{{ key }}" {% if key == reminder_filter %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="block">
+      <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Search</span>
+      <input type="search" name="q" value="{{ search|default:'' }}" placeholder="Staff or course…"
+             class="mt-1 w-full h-9 px-3 rounded-lg border text-[12px] font-semibold focus:outline-none"
+             style="background:var(--edify-surface-muted); border-color:var(--edify-border); color:var(--edify-text);">
+    </label>
+  </form>
+
+  <div id="pd-dashboard-body">
+    {% include "partials/hr/pd_dashboard/body.html" %}
+  </div>
+
+  <!-- Drawer mount point (Adjust Allocation) -->
+  <div id="pd-drawer-root"></div>
+
+</div>
+{% endblock %}

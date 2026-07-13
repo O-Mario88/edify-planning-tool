@@ -1,0 +1,88 @@
+<div class="flex items-center gap-1 border-b overflow-x-auto" style="border-color:var(--edify-border);">
+  <button type="button" hx-get="/debriefs?partial=table&tab=all" hx-target="#debrief-tracker-wrap" hx-swap="innerHTML"
+    class="px-3 py-2 text-[11.5px] font-bold whitespace-nowrap border-b-2 transition-colors"
+    style="{% if tab == 'all' %}border-color:var(--edify-accent, #2563eb); color:var(--edify-text);{% else %}border-color:transparent; color:var(--edify-text-muted, #94a3b8);{% endif %}">All Debriefs</button>
+  <button type="button" hx-get="/debriefs?partial=table&tab=mine" hx-target="#debrief-tracker-wrap" hx-swap="innerHTML"
+    class="px-3 py-2 text-[11.5px] font-bold whitespace-nowrap border-b-2 transition-colors"
+    style="{% if tab == 'mine' %}border-color:var(--edify-accent, #2563eb); color:var(--edify-text);{% else %}border-color:transparent; color:var(--edify-text-muted, #94a3b8);{% endif %}">My Debriefs</button>
+  <button type="button" hx-get="/debriefs?partial=table&tab=team" hx-target="#debrief-tracker-wrap" hx-swap="innerHTML"
+    class="px-3 py-2 text-[11.5px] font-bold whitespace-nowrap border-b-2 transition-colors"
+    style="{% if tab == 'team' %}border-color:var(--edify-accent, #2563eb); color:var(--edify-text);{% else %}border-color:transparent; color:var(--edify-text-muted, #94a3b8);{% endif %}">Team Debriefs</button>
+  <button type="button" hx-get="/debriefs?partial=table&tab=partner" hx-target="#debrief-tracker-wrap" hx-swap="innerHTML"
+    class="px-3 py-2 text-[11.5px] font-bold whitespace-nowrap border-b-2 transition-colors"
+    style="{% if tab == 'partner' %}border-color:var(--edify-accent, #2563eb); color:var(--edify-text);{% else %}border-color:transparent; color:var(--edify-text-muted, #94a3b8);{% endif %}">Partner Debriefs</button>
+  <button type="button" hx-get="/debriefs?partial=table&tab=escalated" hx-target="#debrief-tracker-wrap" hx-swap="innerHTML"
+    class="px-3 py-2 text-[11.5px] font-bold whitespace-nowrap border-b-2 transition-colors"
+    style="{% if tab == 'escalated' %}border-color:var(--edify-accent, #2563eb); color:var(--edify-text);{% else %}border-color:transparent; color:var(--edify-text-muted, #94a3b8);{% endif %}">Escalated</button>
+  <button type="button" hx-get="/debriefs?partial=table&tab=peer_solutions" hx-target="#debrief-tracker-wrap" hx-swap="innerHTML"
+    class="px-3 py-2 text-[11.5px] font-bold whitespace-nowrap border-b-2 transition-colors"
+    style="{% if tab == 'peer_solutions' %}border-color:var(--edify-accent, #2563eb); color:var(--edify-text);{% else %}border-color:transparent; color:var(--edify-text-muted, #94a3b8);{% endif %}">Peer Solutions</button>
+</div>
+
+<div class="overflow-x-auto mt-3">
+  <table class="w-full text-left text-[11px] font-semibold" style="min-width:920px;">
+    <thead>
+      <tr class="border-b" style="border-color:var(--edify-border);">
+        <th class="py-2 pr-3 text-[10px] text-slate-400 font-extrabold uppercase">Date</th>
+        <th class="py-2 pr-3 text-[10px] text-slate-400 font-extrabold uppercase">Submitted By</th>
+        <th class="py-2 pr-3 text-[10px] text-slate-400 font-extrabold uppercase">Role</th>
+        <th class="py-2 pr-3 text-[10px] text-slate-400 font-extrabold uppercase">Activity Type</th>
+        <th class="py-2 pr-3 text-[10px] text-slate-400 font-extrabold uppercase">School / Cluster / Partner</th>
+        <th class="py-2 pr-3 text-[10px] text-slate-400 font-extrabold uppercase">Status</th>
+        <th class="py-2 pr-3 text-[10px] text-slate-400 font-extrabold uppercase">Debrief Title</th>
+        <th class="py-2 pr-3 text-[10px] text-slate-400 font-extrabold uppercase text-center">Action Required</th>
+        <th class="py-2 text-[10px] text-slate-400 font-extrabold uppercase">Risk Level</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y" style="border-color:var(--edify-border);">
+      {% for r in table_rows %}
+      <tr class="hover:bg-slate-50/5">
+        <td class="py-2.5 pr-3 text-slate-400 whitespace-nowrap tabular-nums">{{ r.date|date:"d M Y" }}</td>
+        <td class="py-2.5 pr-3" style="color:var(--edify-text);">{{ r.submitted_by_name }}</td>
+        <td class="py-2.5 pr-3 text-slate-400">{{ r.submitted_by }}</td>
+        <td class="py-2.5 pr-3 text-slate-400">{{ r.activity_type }}</td>
+        <td class="py-2.5 pr-3 text-slate-400">{{ r.target_label }}</td>
+        <td class="py-2.5 pr-3">
+          <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase whitespace-nowrap
+            {% if r.status_key == 'resolved' or r.status_key == 'closed' %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20
+            {% elif r.status_key == 'action_required' or r.status_key == 'escalated' %}bg-amber-500/10 text-amber-400 border border-amber-500/20
+            {% elif r.status_key == 'restricted_incident' %}bg-rose-500/10 text-rose-400 border border-rose-500/20
+            {% else %}bg-blue-500/10 text-blue-400 border border-blue-500/20{% endif %}">{{ r.status }}</span>
+        </td>
+        <td class="py-2.5 pr-3">
+          <a href="/debriefs/{{ r.id }}" class="font-bold hover:underline" style="color:var(--edify-accent, #2563eb);">{{ r.title }}</a>
+        </td>
+        <td class="py-2.5 pr-3 text-center">
+          {% if r.action_required %}<span class="text-amber-400 font-extrabold text-[10px]">Yes</span>{% else %}<span class="text-slate-500">—</span>{% endif %}
+        </td>
+        <td class="py-2.5">
+          <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase whitespace-nowrap
+            {% if r.risk_level == 'critical' %}bg-rose-500/10 text-rose-400 border border-rose-500/20
+            {% elif r.risk_level == 'none' %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20
+            {% else %}bg-amber-500/10 text-amber-400 border border-amber-500/20{% endif %}">{{ r.risk_label }}</span>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="9" class="py-8 text-center text-slate-400 font-semibold">No Field Debriefs match these filters.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if table_pages > 1 %}
+<div class="flex items-center justify-between pt-3 mt-1 border-t" style="border-color:var(--edify-border);">
+  <span class="text-[10.5px] font-semibold text-slate-400">{{ table_total }} debrief{{ table_total|pluralize }} · Page {{ table_page }} of {{ table_pages }}</span>
+  <div class="flex items-center gap-2">
+    <button type="button" {% if table_page <= 1 %}disabled{% endif %}
+      hx-get="/debriefs?partial=table&tab={{ tab }}&page={{ table_page|add:'-1' }}"
+      hx-target="#debrief-tracker-wrap" hx-swap="innerHTML"
+      class="h-8 px-3 rounded-lg border text-[11px] font-bold disabled:opacity-40 disabled:cursor-not-allowed"
+      style="border-color:var(--edify-border); color:var(--edify-text);">Previous</button>
+    <button type="button" {% if table_page >= table_pages %}disabled{% endif %}
+      hx-get="/debriefs?partial=table&tab={{ tab }}&page={{ table_page|add:'1' }}"
+      hx-target="#debrief-tracker-wrap" hx-swap="innerHTML"
+      class="h-8 px-3 rounded-lg border text-[11px] font-bold disabled:opacity-40 disabled:cursor-not-allowed"
+      style="border-color:var(--edify-border); color:var(--edify-text);">Next</button>
+  </div>
+</div>
+{% endif %}

@@ -5,14 +5,14 @@
 
 {% block shell_content %}
 <div 
-class="p-6 max-w-7xl mx-auto space-y-6 font-sans"
+class="px-4 sm:px-6 py-5 space-y-4" style="max-width:1500px;margin:0 auto;"
 x-data="{ showAddModal: false, tempPassword: '' }"
 >
 
 <!-- Header -->
 <div class="flex items-center justify-between border-b border-slate-200 pb-4">
 <div>
-<h1 class="text-[20px] font-semibold text-slate-800 tracking-tight">User Management</h1>
+<h1 class="text-[21px] font-extrabold tracking-tight">User Management</h1>
 <p class="text-[12px] text-slate-400 font-semibold mt-0.5">Create, invite, and configure active roles and permissions for system users</p>
 </div>
 
@@ -103,7 +103,7 @@ Needs Real Email
 </td>
 <td class="px-4 py-3.5 text-slate-500 font-semibold">{{ u.email }}</td>
 <td class="px-4 py-3.5">
-<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider bg-slate-100 text-slate-700">
+<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wider bg-slate-100">
 {{ u.active_role|default:"CCEO" }}
 </span>
 </td>
@@ -157,15 +157,15 @@ class="fixed inset-0 bg-slate-900/40 backdrop-blur-[2px] transition-opacity"
 <!-- Modal Content -->
 <div class="flex items-center justify-center min-h-screen p-4">
 <div 
-class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-lg relative border border-slate-100 space-y-5"
+class="bg-white rounded-lg max-w-lg w-full p-6 shadow-lg relative border border-slate-100 space-y-5"
 @click.away="showAddModal = false"
 x-transition
 >
 <div class="flex items-center justify-between border-b  pb-3">
-<h3 class="text-[18px] font-semibold text-slate-900 tracking-tight">Provision New System User</h3>
+<h3 class="text-[21px] font-extrabold tracking-tight text-slate-900 tracking-tight">Provision New System User</h3>
 <button 
 @click="showAddModal = false"
-class="text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-slate-100 transition-colors"
+class="text-slate-400 hover:p-1 rounded-lg hover:bg-slate-100 transition-colors"
 >
 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
 </button>
@@ -284,7 +284,7 @@ class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
 <button 
 type="button" 
 @click="showAddModal = false"
-class="h-9 px-4 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 rounded-lg text-[11px] font-semibold uppercase tracking-wider shadow-sm transition-all focus:outline-none"
+class="h-9 px-4 border border-slate-200 bg-white hover:bg-slate-50 rounded-lg text-[11px] font-semibold uppercase tracking-wider shadow-sm transition-all focus:outline-none"
 >
 Cancel
 </button>

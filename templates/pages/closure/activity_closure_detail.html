@@ -3,7 +3,7 @@
 {% block title %}Closure Workspace - Edify Command Center{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6" x-data="{ reopenOpen: false, submittingClose: false, submittingReopen: false }">
+<div class="px-4 sm:px-6 py-5 space-y-4" style="max-width:1500px;margin:0 auto;" x-data="{ reopenOpen: false, submittingClose: false, submittingReopen: false }">
 
 <!-- Back navigation -->
 <div class="flex items-center justify-between">
@@ -211,13 +211,13 @@ style="display: none;"
 name="reason" 
 required
 placeholder="Provide exact reason for reopening..."
-class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-[12px] focus:bg-white focus:border-blue-500 focus:outline-none h-28 resize-none font-semibold text-slate-700"
+class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-[12px] focus:bg-white focus:border-blue-500 focus:outline-none h-28 resize-none font-semibold"
 ></textarea>
 </div>
 
 <div>
 <label class="block text-[11px] uppercase font-bold text-slate-400 mb-1">Category</label>
-<select name="category" class="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[12px] font-bold text-slate-700 px-3 focus:bg-white focus:border-blue-500 focus:outline-none transition-all">
+<select name="category" class="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[12px] font-bold px-3 focus:bg-white focus:border-blue-500 focus:outline-none transition-all">
 <option value="wrong_evidence">Wrong Evidence File</option>
 <option value="wrong_salesforce_id">Wrong Salesforce ID</option>
 <option value="wrong_school">Wrong School Assignment</option>
@@ -243,7 +243,7 @@ class="w-full h-10 rounded-xl text-white font-semibold text-[12px] flex items-ce
 <button 
 @click="reopenOpen = false"
 type="button" 
-class="w-full h-10 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-[12px] flex items-center justify-center transition-all"
+class="w-full h-10 rounded-xl border border-slate-200 hover:bg-slate-50 font-semibold text-[12px] flex items-center justify-center transition-all"
 >
 Cancel
 </button>

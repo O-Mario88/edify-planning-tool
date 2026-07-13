@@ -3,20 +3,20 @@
 {% block title %}Human Resource Dashboard - Edify Command Center{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-[1400px] mx-auto space-y-6">
+<div class="px-4 sm:px-6 py-5 space-y-4" style="max-width:1500px;margin:0 auto;">
 
 <!-- Page Header -->
 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-100 pb-4">
 <div>
-<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight">Human Resource Dashboard</h1>
+<h1 class="text-[21px] font-extrabold tracking-tight">Human Resource Dashboard</h1>
 <p class="text-[12px] text-slate-500 mt-1 font-semibold">Manage personnel, onboarding status, and performance metrics across the organization.</p>
 </div>
 
 <div>
-<button class="btn btn-primary h-9 shadow-sm">
+<a href="/admin-panel/users" class="btn btn-primary h-9 shadow-sm">
 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
 New Staff Member
-</button>
+</a>
 </div>
 </div>
 
@@ -48,9 +48,9 @@ New Staff Member
 <div class="card p-4 flex items-center justify-between">
 <div>
 <p class="text-[11px] text-slate-500 font-bold uppercase tracking-wider">Average Coverage Gap</p>
-<p class="text-[24px] font-semibold text-[var(--color-edify-primary)] mt-1">{{ kpis.average_coverage_gap }}%</p>
+<p class="text-[24px] font-semibold text-[var(--edify-accent)] mt-1">{{ kpis.average_coverage_gap }}%</p>
 </div>
-<div class="h-10 w-10 rounded-full bg-[var(--color-edify-soft)] flex items-center justify-center text-[var(--color-edify-primary)]">
+<div class="h-10 w-10 rounded-full bg-[var(--edify-surface-muted)] flex items-center justify-center text-[var(--edify-accent)]">
 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
 </div>
 </div>
@@ -71,45 +71,45 @@ New Staff Member
 <div class="card">
 
 <!-- Tabs Header -->
-<div class="border-b border-[var(--border-card)] px-2 pt-2">
+<div class="border-b border-[var(--edify-border)] px-2 pt-2">
 <nav class="flex gap-2">
 <a href="?tab=all" class="px-4 py-3 text-[12px] font-bold border-b-2 transition-colors
-{% if active_tab == 'all' %}border-[var(--color-edify-primary)] text-[var(--color-edify-primary)]{% else %}border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300{% endif %}">
+{% if active_tab == 'all' %}border-[var(--edify-accent)] text-[var(--edify-accent)]{% else %}border-transparent text-slate-500 hover:hover:border-slate-300{% endif %}">
 All Staff
 </a>
 <a href="?tab=cceo" class="px-4 py-3 text-[12px] font-bold border-b-2 transition-colors
-{% if active_tab == 'cceo' %}border-[var(--color-edify-primary)] text-[var(--color-edify-primary)]{% else %}border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300{% endif %}">
+{% if active_tab == 'cceo' %}border-[var(--edify-accent)] text-[var(--edify-accent)]{% else %}border-transparent text-slate-500 hover:hover:border-slate-300{% endif %}">
 Field Officers (CCEO)
 </a>
 <a href="?tab=pl" class="px-4 py-3 text-[12px] font-bold border-b-2 transition-colors
-{% if active_tab == 'pl' %}border-[var(--color-edify-primary)] text-[var(--color-edify-primary)]{% else %}border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300{% endif %}">
+{% if active_tab == 'pl' %}border-[var(--edify-accent)] text-[var(--edify-accent)]{% else %}border-transparent text-slate-500 hover:hover:border-slate-300{% endif %}">
 Program Leads
 </a>
 <a href="?tab=admin" class="px-4 py-3 text-[12px] font-bold border-b-2 transition-colors
-{% if active_tab == 'admin' %}border-[var(--color-edify-primary)] text-[var(--color-edify-primary)]{% else %}border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300{% endif %}">
+{% if active_tab == 'admin' %}border-[var(--edify-accent)] text-[var(--edify-accent)]{% else %}border-transparent text-slate-500 hover:hover:border-slate-300{% endif %}">
 Admin & Support
 </a>
 </nav>
 </div>
 
 <!-- Filters Bar -->
-<div class="p-4 border-b border-[var(--border-card)] bg-slate-50/50 flex flex-wrap gap-3 items-center">
+<div class="p-4 border-b border-[var(--edify-border)] bg-slate-50/50 flex flex-wrap gap-3 items-center">
 <form method="get" action="/staff" class="flex gap-3 w-full">
 <input type="hidden" name="tab" value="{{ active_tab }}">
 <div class="relative flex-1 max-w-sm">
 <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-<input type="text" name="q" value="{{ search }}" placeholder="Search by name or email..." class="w-full pl-9 pr-4 h-9 bg-white border border-[var(--border-card)] rounded-lg text-[12px] font-semibold focus:ring-2 focus:ring-[var(--color-edify-primary)] focus:outline-none">
+<input type="text" name="q" value="{{ search }}" placeholder="Search by name or email..." class="w-full pl-9 pr-4 h-9 bg-white border border-[var(--edify-border)] rounded-lg text-[12px] font-semibold focus:ring-2 focus:ring-[var(--edify-accent)] focus:outline-none">
 </div>
-<select class="h-9 rounded-lg border border-[var(--border-card)] bg-white text-[12px] font-semibold px-3 focus:outline-none"><option>Any Status</option></select>
+<select class="h-9 rounded-lg border border-[var(--edify-border)] bg-white text-[12px] font-semibold px-3 focus:outline-none"><option>Any Status</option></select>
 </form>
 </div>
 
 <!-- Table -->
 <div class="overflow-x-auto">
-<table class="w-full text-left border-collapse text-[12px] font-sans">
+<table class="w-full text-left border-collapse text-[12px] ">
 <thead>
-<tr class="border-b border-[var(--border-card)] text-[11px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50/30">
-<th class="px-6 py-4 w-12 text-center"><input type="checkbox" class="rounded text-[var(--color-edify-primary)] focus:ring-[var(--color-edify-primary)] border-slate-300"></th>
+<tr class="border-b border-[var(--edify-border)] text-[11px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50/30">
+<th class="px-6 py-4 w-12 text-center"><input type="checkbox" class="rounded text-[var(--edify-accent)] focus:ring-[var(--edify-accent)] border-slate-300"></th>
 <th class="px-6 py-4">Staff Member</th>
 <th class="px-6 py-4">Role & District</th>
 <th class="px-6 py-4 text-center">Assigned Schools</th>
@@ -118,16 +118,16 @@ Admin & Support
 <th class="px-6 py-4 text-right">Actions</th>
 </tr>
 </thead>
-<tbody class="divide-y divide-[var(--color-edify-divider)]">
+<tbody class="divide-y divide-[var(--edify-border)]">
 {% if staff %}
 {% for s in staff %}
 <tr class="hover:bg-slate-50/50 transition-colors group">
-<td class="px-6 py-4 text-center"><input type="checkbox" class="rounded text-[var(--color-edify-primary)] focus:ring-[var(--color-edify-primary)] border-slate-300"></td>
+<td class="px-6 py-4 text-center"><input type="checkbox" class="rounded text-[var(--edify-accent)] focus:ring-[var(--edify-accent)] border-slate-300"></td>
 <td class="px-6 py-4">
 <div class="flex items-center gap-3">
 <div class="h-9 w-9 rounded-full bg-indigo-100 text-indigo-700 font-bold text-[14px] grid place-items-center shrink-0">{{ s.initials }}</div>
 <div>
-<p class="font-bold text-[var(--color-edify-primary)] text-[14px] leading-tight">{{ s.name }}</p>
+<p class="font-bold text-[var(--edify-accent)] text-[14px] leading-tight">{{ s.name }}</p>
 <p class="text-[11px] text-slate-500 font-semibold mt-0.5">{{ s.email }}</p>
 </div>
 </div>
@@ -136,7 +136,7 @@ Admin & Support
 <p class="font-bold text-slate-800">{{ s.active_role }}</p>
 <p class="text-[12px] text-slate-500 font-semibold">{{ s.district|default:"No District" }}</p>
 </td>
-<td class="px-6 py-4 text-center font-semibold text-slate-700">{{ s.school_count }}</td>
+<td class="px-6 py-4 text-center font-semibold">{{ s.school_count }}</td>
 <td class="px-6 py-4 text-center font-semibold text-emerald-600">{{ s.completed_visits }}</td>
 <td class="px-6 py-4">
 {% if s.onboarding_state == "active" or s.onboarding_state == "complete" %}
@@ -148,7 +148,7 @@ Admin & Support
 {% endif %}
 </td>
 <td class="px-6 py-4 text-right font-semibold">
-<a href="/staff/{{ s.id }}" class="inline-flex items-center justify-center h-8 px-3 rounded-lg border border-[var(--border-card)] bg-white text-[12px] text-slate-600 hover:bg-slate-50 transition-colors">View Profile</a>
+<a href="/staff/{{ s.id }}" class="inline-flex items-center justify-center h-8 px-3 rounded-lg border border-[var(--edify-border)] bg-white text-[12px] text-slate-600 hover:bg-slate-50 transition-colors">View Profile</a>
 </td>
 </tr>
 {% endfor %}
@@ -167,12 +167,8 @@ Admin & Support
 </div>
 
 <!-- Pagination -->
-<div class="p-4 border-t border-[var(--border-card)] flex flex-wrap items-center justify-between text-[12px] font-semibold text-slate-500 bg-slate-50/30 gap-4">
+<div class="p-4 border-t border-[var(--edify-border)] flex flex-wrap items-center justify-between text-[12px] font-semibold text-slate-500 bg-slate-50/30 gap-4">
 <span>Showing 1 to {{ staff|length }} of {{ staff|length }} staff</span>
-<div class="flex gap-1">
-<button class="h-8 px-3 rounded border border-[var(--border-card)] bg-white hover:bg-slate-50 disabled:opacity-50" disabled>Prev</button>
-<button class="h-8 px-3 rounded border border-[var(--border-card)] bg-white hover:bg-slate-50 disabled:opacity-50" disabled>Next</button>
-</div>
 </div>
 </div>
 

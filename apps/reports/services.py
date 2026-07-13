@@ -1,4 +1,5 @@
 """Reports service — saved/generated reports."""
+
 from __future__ import annotations
 
 from apps.accounts.models import Report
@@ -32,7 +33,10 @@ def generate(data: dict, principal) -> dict:
         "schoolsTotal": schools.count(),
         "coreSchools": schools.filter(school_type="core").count(),
         "ssaDone": schools.filter(current_fy_ssa_status="done").count(),
-        "byType": {t: schools.filter(school_type=t).count() for t in ("client", "core", "champion")},
+        "byType": {
+            t: schools.filter(school_type=t).count()
+            for t in ("client", "core", "champion")
+        },
     }
     r = Report.objects.create(
         title=f"{report_type} — FY{fy}",

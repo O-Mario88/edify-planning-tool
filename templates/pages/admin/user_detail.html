@@ -4,7 +4,7 @@
 {% block title %}Manage User: {{ member.name }} — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-4xl mx-auto space-y-6 font-sans text-slate-700 bg-[#f8fafc] min-h-screen">
+<div class="px-4 sm:px-6 py-5 space-y-4" style="max-width:1000px;margin:0 auto;">
 
 <!-- Breadcrumbs & Header -->
 <div class="flex items-center justify-between border-b border-slate-200 pb-4">
@@ -14,7 +14,7 @@
 <span>&bull;</span>
 <span class="text-slate-500">Edit Profile</span>
 </div>
-<h1 class="text-[24px] font-semibold text-slate-900 tracking-tight mt-1">{{ member.name }}</h1>
+<h1 class="text-[21px] font-extrabold tracking-tight mt-1">{{ member.name }}</h1>
 <p class="text-[12px] text-slate-500 mt-1 font-semibold">Configure roles, credentials, and account lifecycle status.</p>
 </div>
 
@@ -52,7 +52,7 @@ Inactive ({{ member.status|capfirst }})
 <!-- Auto-created User Warning Banner -->
 {% if "pending." in member.email and "@edify.org" in member.email %}
 <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3 shadow-sm">
-<div class="text-[20px] text-amber-500 leading-none mt-0.5">⚠️</div>
+<div class="text-[20px] text-amber-500 leading-none mt-0.5"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L14.7 3.9a2 2 0 00-3.4 0z"/></svg></div>
 <div class="space-y-1">
 <h4 class="text-[12px] font-semibold text-amber-800 uppercase tracking-wider">Action Required: Placeholder Email Profile</h4>
 <p class="text-[12px] text-amber-700 font-semibold leading-relaxed">
@@ -238,7 +238,7 @@ Send Invitation Link
 type="submit"
 class="w-full h-9 bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-semibold uppercase tracking-wider rounded-lg shadow-sm transition-all focus:outline-none"
 >
-🔓 Unlock Account
+<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M8 11V7a4 4 0 017.9-.9M6 11h12a1 1 0 011 1v7a2 2 0 01-2 2H7a2 2 0 01-2-2v-7a1 1 0 011-1z"/></svg> Unlock Account
 </button>
 </form>
 {% endif %}
@@ -250,7 +250,7 @@ class="w-full h-9 bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-se
 <input type="hidden" name="action" value="deactivate">
 <button 
 type="submit"
-class="w-full h-9 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-[11px] font-semibold uppercase tracking-wider rounded-lg shadow-sm transition-all focus:outline-none"
+class="w-full h-9 border border-slate-200 bg-white hover:bg-slate-50 text-[11px] font-semibold uppercase tracking-wider rounded-lg shadow-sm transition-all focus:outline-none"
 >
 Deactivate User Account
 </button>
@@ -278,7 +278,7 @@ Activate User Account
 <div class="space-y-3 font-semibold text-[12px] text-slate-600">
 {% if is_locked %}
 <div class="p-3 rounded-lg bg-rose-50 border border-rose-200 text-[11px] font-semibold text-rose-700">
-⚠️ This account is currently <strong>locked</strong> due to too many failed login attempts. Use "Unlock Account" above to restore access.
+<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L14.7 3.9a2 2 0 00-3.4 0z"/></svg> This account is currently <strong>locked</strong> due to too many failed login attempts. Use "Unlock Account" above to restore access.
 </div>
 {% endif %}
 

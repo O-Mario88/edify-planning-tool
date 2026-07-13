@@ -4,20 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('activities', '0008_alter_activity_activity_type'),
+        ("activities", "0008_alter_activity_activity_type"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='activity',
-            name='ssa_collection_expected',
+            model_name="activity",
+            name="ssa_collection_expected",
             field=models.BooleanField(default=False),
         ),
         migrations.AddField(
-            model_name='activity',
-            name='ssa_not_collected_reason',
+            model_name="activity",
+            name="ssa_not_collected_reason",
             field=models.CharField(blank=True, max_length=255, null=True),
         ),
     ]

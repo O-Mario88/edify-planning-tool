@@ -5,7 +5,7 @@
 <p>{{ error_msg }}</p>
 </div>
 {% else %}
-<div class="space-y-2 text-[12px] text-slate-500 font-sans">
+<div class="space-y-2 text-[12px] text-slate-500 ">
 <div class="flex items-center justify-between text-[11px] font-semibold uppercase text-slate-400 tracking-wider">
 <span>Cost Preview ({% if activity_type == 'training' %}Group Training{% else %}Cluster Meeting{% endif %})</span>
 <span class="text-[11px] font-mono text-slate-400">Ver: {{ preview.catalogue_version }}</span>
@@ -18,7 +18,7 @@
 <span>{{ line.label }}</span>
 <div class="flex items-center gap-1.5">
 <span class="text-[11px] text-slate-400 font-bold">{{ line.formula }}</span>
-<span class="font-bold text-slate-700">{{ line.amount|ugx }}</span>
+<span class="font-bold text-slate-700">{% if line.missing %}&mdash;{% else %}{{ line.amount|ugx }}{% endif %}</span>
 </div>
 </div>
 {% endfor %}
@@ -27,12 +27,14 @@
 <div class="border-t border-slate-100 my-1"></div>
 <div class="flex justify-between items-center text-[14px]">
 <span class="font-semibold text-slate-600">Total Estimated Cost</span>
-<span class="font-semibold text-[#2e505f]">{{ preview.amount|ugx }}</span>
+<span class="font-semibold text-[#2e505f]">{% if preview.can_schedule %}{{ preview.amount|ugx }}{% else %}&mdash;{% endif %}</span>
 </div>
 
-{% if not preview.can_schedule %}
-<div class="mt-2 p-2 bg-amber-50 text-amber-800 rounded-lg border border-amber-200 text-[11px] font-bold text-center">
-&#9888; Active Cost Catalogue is required to schedule.
+{% if preview.blockers %}
+<div class="mt-2 p-2 bg-amber-50 text-amber-800 rounded-lg border border-amber-200 text-[11px] font-bold text-center space-y-0.5">
+{% for b in preview.blockers %}
+<div>&#9888; {{ b }}</div>
+{% endfor %}
 </div>
 {% endif %}
 </div>

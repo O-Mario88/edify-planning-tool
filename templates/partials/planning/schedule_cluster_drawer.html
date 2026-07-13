@@ -9,7 +9,7 @@ Configure cluster activity details for {{ cluster.name }}
 {% endblock %}
 
 {% block drawer_body %}
-<form 
+<form
 hx-post="/planning/schedule-action"
 hx-target="#form-errors"
 class="space-y-4 text-[12px] font-bold text-slate-600"
@@ -17,6 +17,9 @@ class="space-y-4 text-[12px] font-bold text-slate-600"
 {% csrf_token %}
 <input type="hidden" name="cluster_id" value="{{ cluster.id }}">
 <input type="hidden" name="activity_type" value="{% if action == 'meeting' %}cluster_meeting{% else %}cluster_training{% endif %}">
+{% if action == 'meeting' %}
+<input type="hidden" name="purpose_type" value="operational_admin">
+{% endif %}
 
 <!-- Form Error Messages container -->
 <div id="form-errors"></div>
@@ -93,7 +96,7 @@ return parseInt(parts[0]) === this.currentYear &&
 parseInt(parts[2]) === day;
 }
 }"
-class="relative font-sans"
+class="relative "
 >
 <!-- Dropdown Trigger button -->
 <button 
@@ -118,7 +121,7 @@ class="w-full h-10 px-3 flex items-center justify-between rounded-lg border bord
 <div 
 x-show="open"
 @click.outside="open = false"
-class="absolute left-0 mt-1.5 w-[280px] bg-white border border-slate-200 rounded-2xl shadow-xl p-4 z-50 space-y-3 font-sans select-none"
+class="absolute left-0 mt-1.5 w-[280px] bg-white border border-slate-200 rounded-lg shadow-xl p-4 z-50 space-y-3 select-none"
 style="display: none;"
 x-transition:enter="transition ease-out duration-100"
 x-transition:enter-start="opacity-0 transform scale-95"
@@ -205,12 +208,30 @@ class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 mt-1 focu
 </div>
 </div>
 
+{% if action != 'meeting' %}
+<!-- Focus Intervention (required for training; meetings default to operational/admin) -->
+<div>
+<label for="focus_intervention" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Primary Focus Intervention</label>
+<select
+name="focus_intervention"
+id="focus_intervention"
+required
+class="w-full h-10 px-3 rounded-lg border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+>
+<option value="">Select Focus Intervention...</option>
+{% for code, label in interventions %}
+<option value="{{ code }}">{{ label }}</option>
+{% endfor %}
+</select>
+</div>
+{% endif %}
+
 <!-- Activity Goal -->
 <div>
-<label for="activity_purpose_text" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Activity Goal / Purpose</label>
-<textarea 
-name="activity_purpose_text" 
-id="activity_purpose_text"
+<label for="activity_goal" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Activity Goal / Purpose</label>
+<textarea
+name="activity_goal"
+id="activity_goal"
 required
 rows="2"
 placeholder="What needs to be achieved in this activity?"

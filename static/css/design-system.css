@@ -46,15 +46,15 @@
   --edify-teal-light: #f0fdfa;
   --edify-teal-border: #99f6e4;
 
-  /* ── NEUTRAL SURFACES & TEXT (slightly-warm, never pure #000/#fff) ─────── */
+  /* ── NEUTRAL SURFACES & TEXT — crisp, high-contrast, enterprise grade ─── */
   --edify-surface: #ffffff;
-  --edify-surface-muted: #f8fafc;
-  --edify-border: #e2e8f0;
+  --edify-surface-muted: #f6f8fb;
+  --edify-border: #e3e8ef;
   --edify-border-strong: #cbd5e1;
-  --edify-text: #0f172a;
-  --edify-text-muted: #64748b;
-  --edify-text-subtle: #94a3b8;
-  --edify-bg: #eaf1f3;
+  --edify-text: #0d1526;
+  --edify-text-muted: #5b6b82;
+  --edify-text-subtle: #8b97ab;
+  --edify-bg: #f1f4f9;
 
   /* Legacy aliases consumed by base.html <style> and some components. */
   --color-edify-primary: var(--edify-primary);
@@ -69,38 +69,39 @@
   --border-strong: var(--edify-border-strong);
 
   /* ── TYPOGRAPHY SCALE ─────────────────────────────────────────────────────
-     One font family (Outfit). Six steps. Every text element must use one.
-       display → page titles (H1)
-       heading → section titles (H2)
-       title   → card/panel titles (H3)
-       body    → default text, table cells, buttons
-       label   → captions, table headers, secondary info
-       micro   → overlines, badges, eyebrow text */
-  --edify-font-sans: 'Outfit', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+     Inter — the enterprise standard for data-dense premium dashboards.
+     Tighter sizes, bolder weights, compact leading.
+       display → page titles (H1) — 21px / 800
+       heading → section titles (H2) — 15px / 700
+       title   → card/panel titles (H3) — 13px / 700
+       body    → default text, table cells — 13px / 400
+       label   → captions, secondary — 11px / 500
+       micro   → overlines, badges — 10px / 700 uppercase */
+  --edify-font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --edify-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
 
-  --edify-text-display-size: 24px;
-  --edify-text-heading-size: 18px;
-  --edify-text-title-size:   15px;
-  --edify-text-body-size:    14px;
-  --edify-text-label-size:   12px;
-  --edify-text-micro-size:   11px;
+  --edify-text-display-size: 21px;
+  --edify-text-heading-size: 15px;
+  --edify-text-title-size:   13px;
+  --edify-text-body-size:    13px;
+  --edify-text-label-size:   11px;
+  --edify-text-micro-size:   10px;
 
-  --edify-text-display-weight: 600;
-  --edify-text-heading-weight: 600;
-  --edify-text-title-weight:   600;
+  --edify-text-display-weight: 800;
+  --edify-text-heading-weight: 700;
+  --edify-text-title-weight:   700;
   --edify-text-body-weight:    400;
   --edify-text-label-weight:   500;
-  --edify-text-micro-weight:   600;
+  --edify-text-micro-weight:   700;
 
-  --edify-text-display-leading: 1.3;
-  --edify-text-heading-leading: 1.35;
-  --edify-text-title-leading:   1.4;
-  --edify-text-body-leading:    1.5;
-  --edify-text-label-leading:   1.4;
+  --edify-text-display-leading: 1.15;
+  --edify-text-heading-leading: 1.2;
+  --edify-text-title-leading:   1.25;
+  --edify-text-body-leading:    1.4;
+  --edify-text-label-leading:   1.3;
   --edify-text-micro-leading:   1.2;
 
-  --edify-text-display-tracking: -0.01em;
+  --edify-text-display-tracking: -0.025em;
   --edify-text-heading-tracking: -0.005em;
   --edify-text-title-tracking: 0;
   --edify-text-body-tracking: 0;
@@ -158,6 +159,101 @@
   --edify-transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --edify-transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);
   --edify-transition-all: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ── THEME-AWARE SHELL SURFACES ──────────────────────────────────────────
+     Frosted glass and translucent panels that adapt to light/dark. These
+     aren't pure tokens — they're composite surface treatments consumed by
+     base.html / shell.html. */
+  --edify-topbar-bg: rgba(255, 255, 255, 0.85);
+  --edify-topbar-border: var(--edify-border);
+  --edify-scrim: rgba(15, 23, 42, 0.55);
+  --edify-focus-ring: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  --edify-sidebar-bg: linear-gradient(185deg, #1e293b 0%, #111827 55%, #0f172a 100%);
+  --edify-sidebar-active: var(--edify-accent);
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   DARK THEME — premium OS-grade dark workspace.
+   Activated by adding `.dark` class to <html> (via FOUC boot script).
+   Every token from :root is remapped — one class change = full theme switch.
+   ════════════════════════════════════════════════════════════════════════════ */
+:root.dark {
+  color-scheme: dark;
+
+  /* Brand — slightly brighter for dark backgrounds */
+  --edify-primary: #3d6fd6;
+  --edify-primary-hover: #2c5bbf;
+  --edify-primary-light: rgba(61, 111, 214, 0.12);
+  --edify-accent: #3b82f6;
+  --edify-accent-hover: #2563eb;
+  --edify-accent-light: rgba(59, 130, 246, 0.10);
+  --edify-accent-border: rgba(59, 130, 246, 0.25);
+
+  /* Semantic — translucent backgrounds, lighter text */
+  --edify-success: #10b981;
+  --edify-success-light: rgba(16, 185, 129, 0.12);
+  --edify-success-border: rgba(16, 185, 129, 0.25);
+
+  --edify-warning: #f59e0b;
+  --edify-warning-light: rgba(245, 158, 11, 0.12);
+  --edify-warning-border: rgba(245, 158, 11, 0.25);
+
+  --edify-danger: #ef4444;
+  --edify-danger-light: rgba(239, 68, 68, 0.12);
+  --edify-danger-border: rgba(239, 68, 68, 0.25);
+
+  --edify-info: #3b82f6;
+  --edify-info-light: rgba(59, 130, 246, 0.12);
+  --edify-info-border: rgba(59, 130, 246, 0.25);
+
+  --edify-purple: #8b5cf6;
+  --edify-purple-light: rgba(139, 92, 246, 0.12);
+  --edify-purple-border: rgba(139, 92, 246, 0.25);
+
+  --edify-teal: #14b8a6;
+  --edify-teal-light: rgba(20, 184, 166, 0.12);
+  --edify-teal-border: rgba(20, 184, 166, 0.25);
+
+  /* Neutral surfaces — deep charcoal, never pure black */
+  --edify-surface: #1a1f28;
+  --edify-surface-muted: #20262f;
+  --edify-border: #2d3540;
+  --edify-border-strong: #3a4452;
+  --edify-text: #e8edf5;
+  --edify-text-muted: #7a8699;
+  --edify-text-subtle: #5c6878;
+  --edify-bg: #0e1116;
+
+  /* Legacy aliases — keep old templates working in dark mode */
+  --color-edify-divider: #222831;
+  --bg-page: var(--edify-bg);
+
+  /* Shadows — deeper with pure black */
+  --edify-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.20), 0 1px 2px rgba(0, 0, 0, 0.15);
+  --edify-shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.30), 0 2px 4px rgba(0, 0, 0, 0.20);
+  --edify-shadow-lg: 0 12px 32px -8px rgba(0, 0, 0, 0.40), 0 4px 8px rgba(0, 0, 0, 0.25);
+  --edify-shadow-drawer: -10px 0 30px -5px rgba(0, 0, 0, 0.50);
+
+  /* Shell surfaces */
+  --edify-topbar-bg: rgba(26, 31, 40, 0.85);
+  --edify-topbar-border: var(--edify-border);
+  --edify-scrim: rgba(0, 0, 0, 0.65);
+  --edify-focus-ring: 0 0 0 3px rgba(59, 130, 246, 0.20);
+  --edify-sidebar-bg: linear-gradient(185deg, #000000 0%, #0a0d12 55%, #080a0e 100%);
+}
+
+/* Smooth theme transition on all surfaces */
+html.theme-fade, html.theme-fade * {
+  transition: background-color 0.25s var(--edify-transition-fast, cubic-bezier(0.4,0,0.2,1)),
+              border-color 0.25s var(--edify-transition-fast, cubic-bezier(0.4,0,0.2,1)),
+              color 0.25s var(--edify-transition-fast, cubic-bezier(0.4,0,0.2,1)) !important;
+}
+
+/* Focus-visible rings — accessible in both themes */
+*:focus-visible {
+  outline: 2px solid var(--edify-accent);
+  outline-offset: 2px;
+  border-radius: var(--edify-radius-sm);
 }
 
 /* ════════════════════════════════════════════════════════════════════════════

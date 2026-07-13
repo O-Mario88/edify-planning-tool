@@ -4,23 +4,23 @@
 {% block title %}Champion School Candidates — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-[1400px] mx-auto space-y-6 font-sans text-slate-700 bg-[#f8fafc] min-h-screen">
+<div class="px-4 sm:px-6 py-5 space-y-4" style="max-width:1500px;margin:0 auto;">
 
 <!-- Breadcrumb & Header -->
 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4">
 <div>
 <div class="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-<a href="{% url 'core_schools' %}" class="hover:text-slate-600 transition-colors">Core Schools</a>
+<a href="{% url 'frontend:core_schools' %}" class="hover:text-slate-600 transition-colors">Core Schools</a>
 <span>&bull;</span>
 <span class="text-slate-500">Champion Pipeline</span>
 </div>
-<h1 class="text-[28px] font-semibold text-slate-900 tracking-tight mt-1">Champion Candidate Queue</h1>
+<h1 class="text-[21px] font-extrabold tracking-tight">Champion Candidate Queue</h1>
 <p class="text-[14px] text-slate-500 font-medium mt-1">Review core schools that have completed their support packages and met the performance benchmarks for graduation.</p>
 </div>
 
 <div>
 <a 
-href="{% url 'champions_list' %}"
+href="{% url 'frontend:champions_list' %}"
 class="bg-[#1e293b] hover:bg-[#0f172a] text-white border border-transparent rounded-lg px-4 py-2 text-[12px] font-semibold shadow-sm flex items-center gap-1.5 transition-all"
 >
 <span>View Graduated Champions</span>
@@ -36,7 +36,7 @@ class="bg-[#1e293b] hover:bg-[#0f172a] text-white border border-transparent roun
 </div>
 
 <div class="overflow-x-auto">
-<table class="w-full text-left text-[12px] border-collapse font-sans">
+<table class="w-full text-left text-[12px] border-collapse ">
 <thead>
 <tr class="text-slate-400 font-semibold uppercase text-[11px] border-b border-slate-100 tracking-wider">
 <th class="py-2.5">School Name</th>
@@ -49,7 +49,7 @@ class="bg-[#1e293b] hover:bg-[#0f172a] text-white border border-transparent roun
 <th class="py-2.5 text-right">Review Action</th>
 </tr>
 </thead>
-<tbody class="divide-y divide-slate-100 text-slate-700 font-semibold">
+<tbody class="divide-y divide-slate-100 font-semibold">
 {% for c in candidates %}
 <tr class="hover:bg-slate-50/40 transition-colors">
 <td class="py-3.5 text-slate-900 font-semibold text-[12px]">{{ c.name }}</td>
@@ -64,7 +64,7 @@ class="bg-[#1e293b] hover:bg-[#0f172a] text-white border border-transparent roun
 </span>
 </td>
 <td class="py-3.5 text-center">
-<span class="inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-bold bg-slate-50 text-slate-700 border border-slate-200">
+<span class="inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-bold bg-slate-50 border border-slate-200">
 {{ c.lowest_score }} ({{ c.lowest_intervention }})
 </span>
 </td>
@@ -75,7 +75,7 @@ class="bg-[#1e293b] hover:bg-[#0f172a] text-white border border-transparent roun
 </td>
 <td class="py-3.5 text-right">
 <button
-hx-get="{% url 'champion_review_drawer' c.school_id %}"
+hx-get="{% url 'frontend:champion_review_drawer' c.school_id %}"
 hx-target="#drawer-container"
 class="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider shadow-sm transition-colors"
 >

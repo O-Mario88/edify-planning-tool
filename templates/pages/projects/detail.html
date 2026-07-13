@@ -3,7 +3,7 @@
 {% block title %}{{ project.name }} — Edify Command Center{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6">
+<div class="px-4 sm:px-6 py-5 space-y-4" style="max-width:1500px;margin:0 auto;">
 
 <!-- Page Header -->
 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-100 pb-4">
@@ -12,7 +12,7 @@
 <span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200">
 Project
 </span>
-<h1 class="text-[24px] font-semibold text-slate-800 tracking-tight leading-tight">{{ project.name }}</h1>
+<h1 class="text-[21px] font-extrabold tracking-tight leading-tight">{{ project.name }}</h1>
 </div>
 <p class="text-[12px] text-slate-500 mt-1 font-semibold">Monitoring and execution tracker for specialized initiative.</p>
 </div>
@@ -30,17 +30,17 @@ Project
 <div class="grid lg:grid-cols-3 gap-6 items-start">
 <div class="lg:col-span-2 space-y-6">
 <div class="card overflow-hidden">
-<div class="px-5 py-4 border-b border-[var(--border-card)] bg-slate-50/50 flex items-center justify-between">
+<div class="px-5 py-4 border-b border-[var(--edify-border)] bg-slate-50/50 flex items-center justify-between">
 <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">Participating Schools</h2>
 <span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">{{ school_assignments|length }} Schools</span>
 </div>
 
-<div class="divide-y divide-[var(--border-card)]">
+<div class="divide-y divide-[var(--edify-border)]">
 {% if school_assignments %}
 {% for sa in school_assignments %}
 <div class="p-4 flex items-center justify-between hover:bg-slate-50/80 transition-colors group">
 <div>
-<h4 class="text-[14px] font-semibold text-slate-800 group-hover:text-[var(--color-edify-primary)] transition-colors">{{ sa.school.name }}</h4>
+<h4 class="text-[14px] font-semibold text-slate-800 group-hover:text-[var(--edify-accent)] transition-colors">{{ sa.school.name }}</h4>
 <p class="text-[12px] text-slate-500 font-semibold mt-0.5">ID: {{ sa.school_id }} &bull; Added to project</p>
 </div>
 <a href="/schools/{{ sa.school_id }}" class="btn btn-smooth h-8 shadow-sm">
@@ -50,7 +50,7 @@ View Profile
 {% endfor %}
 {% else %}
 <div class="p-12 text-center flex flex-col items-center justify-center space-y-3">
-<div class="h-12 w-12 rounded-full bg-slate-50 flex items-center justify-center border border-[var(--border-card)]">
+<div class="h-12 w-12 rounded-full bg-slate-50 flex items-center justify-center border border-[var(--edify-border)]">
 <svg class="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
 </div>
 <p class="text-[14px] font-bold text-slate-500">No schools assigned to this project yet.</p>

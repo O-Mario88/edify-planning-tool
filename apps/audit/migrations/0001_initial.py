@@ -6,54 +6,127 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='AuditLog',
+            name="AuditLog",
             fields=[
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('seq', models.BigIntegerField(blank=True, db_index=True, null=True)),
-                ('action', models.CharField(max_length=128)),
-                ('subject_kind', models.CharField(blank=True, max_length=64, null=True)),
-                ('subject_id', models.CharField(blank=True, max_length=30, null=True)),
-                ('actor_id', models.CharField(blank=True, max_length=30, null=True)),
-                ('actor_role', models.CharField(blank=True, choices=[('CCEO', 'CCEO'), ('CountryProgramLead', 'CountryProgramLead'), ('CountryDirector', 'CountryDirector'), ('RegionalVicePresident', 'RegionalVicePresident'), ('ImpactAssessment', 'ImpactAssessment'), ('ProgramAccountant', 'ProgramAccountant'), ('HumanResources', 'HumanResources'), ('ProjectCoordinator', 'ProjectCoordinator'), ('PartnerAdmin', 'PartnerAdmin'), ('PartnerFieldOfficer', 'PartnerFieldOfficer'), ('Admin', 'Admin')], max_length=64, null=True)),
-                ('payload', models.JSONField(blank=True, null=True)),
-                ('ip_address', models.CharField(blank=True, max_length=128, null=True)),
-                ('user_agent', models.CharField(blank=True, max_length=512, null=True)),
-                ('correlation_id', models.CharField(blank=True, max_length=64, null=True)),
-                ('success', models.BooleanField(default=True)),
-                ('reason', models.CharField(blank=True, max_length=512, null=True)),
-                ('prev_hash', models.CharField(blank=True, max_length=128, null=True)),
-                ('hash', models.CharField(blank=True, max_length=128, null=True)),
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("seq", models.BigIntegerField(blank=True, db_index=True, null=True)),
+                ("action", models.CharField(max_length=128)),
+                (
+                    "subject_kind",
+                    models.CharField(blank=True, max_length=64, null=True),
+                ),
+                ("subject_id", models.CharField(blank=True, max_length=30, null=True)),
+                ("actor_id", models.CharField(blank=True, max_length=30, null=True)),
+                (
+                    "actor_role",
+                    models.CharField(
+                        blank=True,
+                        choices=[
+                            ("CCEO", "CCEO"),
+                            ("CountryProgramLead", "CountryProgramLead"),
+                            ("CountryDirector", "CountryDirector"),
+                            ("RegionalVicePresident", "RegionalVicePresident"),
+                            ("ImpactAssessment", "ImpactAssessment"),
+                            ("ProgramAccountant", "ProgramAccountant"),
+                            ("HumanResources", "HumanResources"),
+                            ("ProjectCoordinator", "ProjectCoordinator"),
+                            ("PartnerAdmin", "PartnerAdmin"),
+                            ("PartnerFieldOfficer", "PartnerFieldOfficer"),
+                            ("Admin", "Admin"),
+                        ],
+                        max_length=64,
+                        null=True,
+                    ),
+                ),
+                ("payload", models.JSONField(blank=True, null=True)),
+                ("ip_address", models.CharField(blank=True, max_length=128, null=True)),
+                ("user_agent", models.CharField(blank=True, max_length=512, null=True)),
+                (
+                    "correlation_id",
+                    models.CharField(blank=True, max_length=64, null=True),
+                ),
+                ("success", models.BooleanField(default=True)),
+                ("reason", models.CharField(blank=True, max_length=512, null=True)),
+                ("prev_hash", models.CharField(blank=True, max_length=128, null=True)),
+                ("hash", models.CharField(blank=True, max_length=128, null=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
             ],
             options={
-                'db_table': 'audit_log',
-                'indexes': [models.Index(fields=['subject_kind', 'subject_id'], name='audit_log_subject_9900c9_idx'), models.Index(fields=['actor_id'], name='audit_log_actor_i_8c3cd6_idx'), models.Index(fields=['created_at'], name='audit_log_created_5a7975_idx'), models.Index(fields=['seq'], name='audit_log_seq_f1f804_idx'), models.Index(fields=['action'], name='audit_log_action_b32d4d_idx'), models.Index(fields=['correlation_id'], name='audit_log_correla_e04bb9_idx')],
+                "db_table": "audit_log",
+                "indexes": [
+                    models.Index(
+                        fields=["subject_kind", "subject_id"],
+                        name="audit_log_subject_9900c9_idx",
+                    ),
+                    models.Index(
+                        fields=["actor_id"], name="audit_log_actor_i_8c3cd6_idx"
+                    ),
+                    models.Index(
+                        fields=["created_at"], name="audit_log_created_5a7975_idx"
+                    ),
+                    models.Index(fields=["seq"], name="audit_log_seq_f1f804_idx"),
+                    models.Index(fields=["action"], name="audit_log_action_b32d4d_idx"),
+                    models.Index(
+                        fields=["correlation_id"], name="audit_log_correla_e04bb9_idx"
+                    ),
+                ],
             },
         ),
         migrations.CreateModel(
-            name='DomainEventLog',
+            name="DomainEventLog",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('event_type', models.CharField(max_length=128)),
-                ('aggregate_type', models.CharField(blank=True, max_length=64, null=True)),
-                ('aggregate_id', models.CharField(blank=True, max_length=30, null=True)),
-                ('actor_id', models.CharField(blank=True, max_length=30, null=True)),
-                ('payload', models.JSONField(blank=True, null=True)),
-                ('processed_at', models.DateTimeField(blank=True, null=True)),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("event_type", models.CharField(max_length=128)),
+                (
+                    "aggregate_type",
+                    models.CharField(blank=True, max_length=64, null=True),
+                ),
+                (
+                    "aggregate_id",
+                    models.CharField(blank=True, max_length=30, null=True),
+                ),
+                ("actor_id", models.CharField(blank=True, max_length=30, null=True)),
+                ("payload", models.JSONField(blank=True, null=True)),
+                ("processed_at", models.DateTimeField(blank=True, null=True)),
             ],
             options={
-                'db_table': 'domain_event_log',
-                'indexes': [models.Index(fields=['event_type'], name='domain_even_event_t_81b11d_idx'), models.Index(fields=['aggregate_type', 'aggregate_id'], name='domain_even_aggrega_29ab8f_idx'), models.Index(fields=['processed_at'], name='domain_even_process_2aa0ab_idx')],
+                "db_table": "domain_event_log",
+                "indexes": [
+                    models.Index(
+                        fields=["event_type"], name="domain_even_event_t_81b11d_idx"
+                    ),
+                    models.Index(
+                        fields=["aggregate_type", "aggregate_id"],
+                        name="domain_even_aggrega_29ab8f_idx",
+                    ),
+                    models.Index(
+                        fields=["processed_at"], name="domain_even_process_2aa0ab_idx"
+                    ),
+                ],
             },
         ),
     ]

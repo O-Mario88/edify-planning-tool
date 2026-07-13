@@ -4,24 +4,24 @@
 {% block title %}Evidence Packet — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-5xl mx-auto space-y-6 font-sans">
+<div class="px-4 sm:px-6 py-5 space-y-4" style="max-width:1100px;margin:0 auto;">
 
 <!-- Back button -->
 <div>
-<a href="/my-plan" class="inline-flex items-center text-[12px] font-bold text-slate-500 hover:text-slate-700 transition-colors">
+<a href="/my-plan" class="inline-flex items-center text-[12px] font-bold text-slate-500 hover:transition-colors">
 <span class="mr-1">&larr;</span> Back to My Plan
 </a>
 </div>
 
 <!-- Header -->
-<div class="bg-white rounded-2xl  p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 shadow-sm">
+<div class="bg-white rounded-lg  p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 shadow-sm">
 <div class="space-y-1">
 <div class="flex items-center gap-2">
 <span class="px-2 py-0.5 rounded text-[11px] font-semibold uppercase bg-indigo-50 text-indigo-700 border border-indigo-150">{{ act.activity_type|replace_underscore }}</span>
 <span class="text-slate-400 font-bold text-[12px]">&bull;</span>
 <span class="text-[12px] text-slate-500 font-semibold">{{ act.planned_date }}</span>
 </div>
-<h1 class="text-[20px] font-semibold text-slate-800 tracking-tight leading-tight">Evidence Proof Packet</h1>
+<h1 class="text-[21px] font-extrabold tracking-tight leading-tight">Evidence Proof Packet</h1>
 {% if act.school %}
 <p class="text-[14px] text-slate-500 font-semibold">School: <strong class="text-slate-700">{{ act.school.name }}</strong> (ID: {{ act.school.school_id }})</p>
 {% endif %}
@@ -56,9 +56,9 @@ Submit for Review
 <div class="lg:col-span-2 space-y-6">
 
 <!-- Files List -->
-<div class="bg-white rounded-2xl  shadow-sm overflow-hidden">
+<div class="bg-white rounded-lg  shadow-sm overflow-hidden">
 <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-<h3 class="text-[14px] font-semibold text-slate-700">Uploaded Evidence Files</h3>
+<h3 class="text-[14px] font-semibold">Uploaded Evidence Files</h3>
 <button 
 hx-get="/activities/{{ act.id }}/evidence"
 hx-target="#drawer-container"
@@ -87,7 +87,7 @@ class="text-[12px] font-semibold text-blue-600 hover:text-blue-700"
 {% endif %}
 </div>
 
-<a href="#" class="btn btn-ghost h-8 px-2.5 text-[11px] font-semibold shadow-sm">
+<a href="/api/evidence/{{ ev.id }}/file?download=1" class="btn btn-ghost h-8 px-2.5 text-[11px] font-semibold shadow-sm">
 Download
 </a>
 </div>
@@ -95,7 +95,7 @@ Download
 </div>
 {% else %}
 <div class="py-12 text-center text-slate-400">
-<p class="text-[32px] mb-1.5">📎</p>
+<p class="text-[32px] mb-1.5"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.2 7.4l-6.8 6.8a2 2 0 102.8 2.8l6.8-6.8a4 4 0 10-5.6-5.6L5.5 11.5a6 6 0 108.5 8.5l6-6"/></svg></p>
 <p class="font-bold text-[14px]">No evidence files uploaded yet.</p>
 <button 
 hx-get="/activities/{{ act.id }}/evidence"
@@ -115,13 +115,13 @@ Upload Evidence
 <div class="space-y-6">
 
 <!-- Checklist -->
-<div class="bg-white rounded-2xl  p-5 shadow-sm space-y-4">
+<div class="bg-white rounded-lg  p-5 shadow-sm space-y-4">
 <h3 class="text-[14px] font-semibold text-slate-800 uppercase tracking-wider">Completeness Checklist</h3>
 
 <div class="space-y-2.5">
 <div class="flex items-center justify-between text-[12px] font-bold">
 <span class="text-slate-500">Activity Completed:</span>
-{% if act.status == 'completed' or act.status == 'submitted' or act.status == 'ia_verified' %}
+{% if act.status == 'completed' or act.status == 'submitted_to_pl' or act.status == 'awaiting_ia_verification' or act.status == 'ia_verified' or act.status == 'accountant_confirmed' %}
 <span class="text-green-600">Yes</span>
 {% else %}
 <span class="text-rose-600">Pending</span>

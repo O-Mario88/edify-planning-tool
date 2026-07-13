@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('accounts', '0008_add_must_change_password'),
+        ("accounts", "0008_add_must_change_password"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='leave',
-            name='coverage_notes',
+            model_name="leave",
+            name="coverage_notes",
             field=models.TextField(blank=True, null=True),
         ),
     ]

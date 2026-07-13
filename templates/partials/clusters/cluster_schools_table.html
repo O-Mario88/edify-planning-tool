@@ -1,5 +1,5 @@
 {% load frontend_filters %}
-<div class="px-4 py-3 bg-slate-50/50 border-b border-slate-100 flex justify-between items-center font-sans">
+<div class="px-4 py-3 bg-slate-50/50 border-b border-slate-100 flex justify-between items-center ">
 <h4 class="text-[12px] font-semibold text-slate-800">Schools in Cluster ({{ schools|length }})</h4>
 <button 
 hx-get="/clusters/{{ cluster_id }}/bulk-assign-drawer"
@@ -14,7 +14,7 @@ Add Schools
 </button>
 </div>
 <div class="overflow-x-auto">
-<table class="edify-data-table w-full text-left text-[12px] border-collapse font-sans">
+<table class="edify-data-table w-full text-left text-[12px] border-collapse ">
 <thead>
 <tr class="border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50/20">
 <th class="px-4 py-3">School ID</th>

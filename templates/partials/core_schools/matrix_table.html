@@ -46,7 +46,7 @@
               {% if num == "..." %}
                 <span class="w-8 text-center text-slate-400 font-bold">...</span>
               {% elif num == page_obj.number %}
-                <span class="h-8 w-8 rounded-lg text-white font-semibold flex items-center justify-center shadow-sm select-none" style="background-color: #2e505f;">{{ num }}</span>
+                <span class="h-8 w-8 rounded-lg text-white font-semibold flex items-center justify-center shadow-sm select-none" style="background-color:var(--edify-primary);">{{ num }}</span>
               {% else %}
                 <button 
                   type="button"

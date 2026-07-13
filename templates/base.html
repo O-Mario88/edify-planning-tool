@@ -6,191 +6,154 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{% block title %}Edify School Improvement Planning{% endblock %}</title>
 
-<!-- Typography: Outfit is the sole typeface. (Source Sans 3 was loaded but
-never used — dropped to remove the wasted network request.) -->
+<!-- FOUC prevention — apply theme BEFORE CSS renders.
+     Reads localStorage preference and applies .dark class immediately. -->
+<script>
+  (function() {
+    var pref = localStorage.getItem('edify_theme') || 'system';
+    var actual;
+    if (pref === 'system') {
+      var h = new Date().getHours();
+      actual = (h >= 19 || h < 6) ? 'dark' : 'light';
+    } else {
+      actual = pref;
+    }
+    var html = document.documentElement;
+    html.classList.add('theme-fade');
+    if (actual === 'dark') html.classList.add('dark');
+    html.dataset.theme = actual;
+    html.dataset.themePref = pref;
+  })();
+</script>
+
+<!-- Typography: Inter — enterprise standard for premium data-dense dashboards. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
 <!-- Compiled Tailwind Styling -->
-<link rel="stylesheet" href="{% static 'css/main.css' %}?v=20260707a">
+<link rel="stylesheet" href="{% static 'css/main.css' %}?v=20260717a">
 
 <!-- Edify Design System — the SINGLE source of truth for tokens.
-All design tokens (color, type, spacing, radius, shadow, motion) live
-here. base.html <style> below only consumes tokens via var(--edify-*). -->
-<link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260705c">
-<link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260707a">
-<link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260705c">
-<link rel="stylesheet" href="{% static 'css/pages.css' %}?v=20260705c">
-<link rel="stylesheet" href="{% static 'css/drawers.css' %}?v=20260705c">
-<link rel="stylesheet" href="{% static 'css/app.css' %}">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css" rel="stylesheet" />
+All design tokens (color, type, spacing, radius, shadow, motion, dark theme)
+live here. Templates consume tokens via var(--edify-*). -->
+<link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260717a">
+<link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260717a">
+<link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260717a">
+<link rel="stylesheet" href="{% static 'css/pages.css' %}?v=20260717a">
+<link rel="stylesheet" href="{% static 'css/drawers.css' %}?v=20260717a">
+<link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260717a">
 
 <style>
-/* base.html consumes tokens defined in design-system.css. No :root here. */
+/* All design tokens live in design-system.css. This block only consumes them.
+   Card elevation, topbar glass, and component styling live in components.css. */
+
+/* Alpine: hide x-cloak elements until Alpine initializes. */
+[x-cloak] { display: none !important; }
+
+/* Body — token-driven, adapts to light/dark automatically. */
 body {
   font-family: var(--edify-font-sans);
-  background-color: #f8fafc;
-  background-image: 
-    radial-gradient(at 0% 0%, rgba(14, 165, 233, 0.05) 0px, transparent 50%),
-    radial-gradient(at 50% 0%, rgba(139, 92, 246, 0.04) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(16, 185, 129, 0.03) 0px, transparent 50%);
-  background-attachment: fixed;
+  background-color: var(--edify-bg);
   color: var(--edify-text);
   font-size: var(--edify-text-body-size);
   line-height: var(--edify-text-body-leading);
   -webkit-font-smoothing: antialiased;
 }
 
-/* Custom scrollbars */
+/* Custom scrollbars — token-driven */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(15, 23, 42, 0.12); border-radius: var(--edify-radius-pill); }
-::-webkit-scrollbar-thumb:hover { background: rgba(15, 23, 42, 0.24); }
+::-webkit-scrollbar-thumb { background: var(--edify-border-strong); border-radius: var(--edify-radius-pill); }
+::-webkit-scrollbar-thumb:hover { background: var(--edify-text-subtle); }
 
-/* Premium card elevation: shadow-only, NO border. A-tier cards float rather
-than look boxed-in — the 1px border was the "cheap" tell. */
-.bg-white.rounded-xl,
-.bg-white.rounded-2xl,
-.card {
-  background-color: rgba(255, 255, 255, 0.9) !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
-  border: 1px solid rgba(226, 232, 240, 0.6) !important;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.01) !important;
-  border-radius: 16px !important;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+/* Hover-revealed row actions stay reachable on touch + keyboard. */
+@media (hover: none) {
+  .group .opacity-0.group-hover\:opacity-100 { opacity: 1 !important; }
 }
-.bg-white.rounded-xl:hover,
-.bg-white.rounded-2xl:hover,
-.card:hover {
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02) !important;
-  transform: translateY(-2px) !important;
-  border-color: rgba(203, 213, 225, 0.8) !important;
-}
+.opacity-0.group-hover\:opacity-100:focus-visible,
+.group:focus-within .opacity-0.group-hover\:opacity-100 { opacity: 1 !important; }
 
-/* Glassmorphism Sticky Header */
-.edify-topbar {
-  background-color: rgba(255, 255, 255, 0.8) !important;
-  backdrop-filter: blur(8px) !important;
-  -webkit-backdrop-filter: blur(8px) !important;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.8) !important;
-  position: sticky !important;
-  top: 0 !important;
-  z-index: 30 !important;
-}
-
-/* Primary buttons map to the accent blue (interactive CTAs). */
+/* Primary buttons map to the accent blue. */
 button.bg-indigo-600, a.bg-indigo-600,
-button.bg-blue-600,a.bg-blue-600,
+button.bg-blue-600, a.bg-blue-600,
 button.bg-indigo-700, a.bg-indigo-700 {
-background-color: var(--edify-accent);
-color: #ffffff;
-font-weight: var(--edify-text-title-weight);
-border-radius: var(--edify-radius-md);
-transition: background-color var(--edify-transition-fast), transform var(--edify-transition-fast);
+  background-color: var(--edify-accent);
+  color: #ffffff;
+  font-weight: var(--edify-text-title-weight);
+  border-radius: var(--edify-radius-md);
+  transition: background-color var(--edify-transition-fast), transform var(--edify-transition-fast);
 }
 button.bg-indigo-600:hover, a.bg-indigo-600:hover,
-button.bg-blue-600:hover,a.bg-blue-600:hover,
+button.bg-blue-600:hover, a.bg-blue-600:hover,
 button.bg-indigo-700:hover, a.bg-indigo-700:hover {
-background-color: var(--edify-accent-hover);
-transform: translateY(-1px);
+  background-color: var(--edify-accent-hover);
+  transform: translateY(-1px);
 }
 
 /* Secondary/outline buttons. */
 button.border-slate-200, a.border-slate-200,
 button.border-slate-300, a.border-slate-300 {
-background-color: var(--edify-surface);
-border: 1px solid var(--edify-border-strong);
-color: var(--edify-accent);
-border-radius: var(--edify-radius-md);
+  background-color: var(--edify-surface);
+  border: 1px solid var(--edify-border-strong);
+  color: var(--edify-accent);
+  border-radius: var(--edify-radius-md);
 }
 button.border-slate-200:hover, a.border-slate-200:hover,
 button.border-slate-300:hover, a.border-slate-300:hover {
-background-color: var(--edify-accent-light);
+  background-color: var(--edify-accent-light);
 }
 
-/* Table headers — use the label type token (12px medium uppercase). */
+/* Table headers. */
 table th {
-color: var(--edify-text-muted);
-font-weight: var(--edify-text-label-weight);
-text-transform: uppercase;
-letter-spacing: var(--edify-text-micro-tracking);
-font-size: var(--edify-text-micro-size);
+  color: var(--edify-text-muted);
+  font-weight: var(--edify-text-label-weight);
+  text-transform: uppercase;
+  letter-spacing: var(--edify-text-micro-tracking);
+  font-size: var(--edify-text-micro-size);
 }
-table tbody tr:hover { background-color: rgba(15, 23, 42, 0.02); }
+table tbody tr:hover { background-color: var(--edify-accent-light); }
 
-/* Form fields — body type, radius-sm, subtle focus ring using accent. */
-input[type="text"], input[type="number"], input[type="email"],
-input[type="password"], select, textarea {
-border: 1px solid var(--edify-border);
-background-color: var(--edify-surface);
-border-radius: var(--edify-radius-md);
-color: var(--edify-text);
-font-size: var(--edify-text-body-size);
-font-family: var(--edify-font-sans);
-padding: 8px 12px;
-outline: none;
-transition: border-color var(--edify-transition-fast), box-shadow var(--edify-transition-fast);
+/* Form fields — :where() keeps specificity zero so Tailwind utilities win. */
+:where(input[type="text"], input[type="number"], input[type="email"],
+input[type="password"], select, textarea) {
+  border: 1px solid var(--edify-border);
+  background-color: var(--edify-surface);
+  border-radius: var(--edify-radius-md);
+  color: var(--edify-text);
+  font-size: var(--edify-text-body-size);
+  font-family: var(--edify-font-sans);
+  padding: 8px 12px;
+  outline: none;
+  transition: border-color var(--edify-transition-fast), box-shadow var(--edify-transition-fast);
 }
 input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus,
 input[type="password"]:focus, select:focus, textarea:focus {
-border-color: var(--edify-accent);
-box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  border-color: var(--edify-accent);
+  box-shadow: var(--edify-focus-ring);
 }
 
-/* Smooth transitions on interactive elements (snappy, not slow). */
+/* Smooth transitions on interactive elements. */
 button, a, select, input, textarea {
-transition-duration: var(--edify-transition-fast);
-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Legacy sidebar (different from the .app-sidebar used in shell.html).
-Kept because some templates still render this older sidebar markup. */
-.edify-sidebar {
-background-color: var(--edify-primary);
-border-right: 1px solid var(--edify-primary-hover);
-}
-.sidebar-nav-header {
-color: var(--edify-text-subtle);
-font-size: var(--edify-text-micro-size);
-font-weight: var(--edify-text-micro-weight);
-letter-spacing: var(--edify-text-micro-tracking);
-text-transform: uppercase;
-}
-.sidebar-item {
-color: var(--edify-text-subtle);
-transition: color var(--edify-transition-fast), background-color var(--edify-transition-fast);
-}
-.sidebar-item:hover {
-color: #ffffff;
-background-color: rgba(255, 255, 255, 0.06);
-}
-.sidebar-icon-container {
-background-color: rgba(255, 255, 255, 0.04);
-color: var(--edify-text-subtle);
-transition: color var(--edify-transition-fast), background-color var(--edify-transition-fast);
-}
-.sidebar-item:hover .sidebar-icon-container {
-color: #ffffff;
-background-color: rgba(255, 255, 255, 0.08);
-}
-.sidebar-item-active {
-background-color: rgba(255, 255, 255, 0.08);
-color: #ffffff;
-border-radius: var(--edify-radius-md);
-border: 1px solid rgba(255, 255, 255, 0.15);
-border-left: 4px solid var(--edify-warning);
-}
-.sidebar-item-active::before { display: none; }
-.sidebar-item-active .sidebar-icon-container {
-color: var(--edify-warning);
-background-color: rgba(245, 158, 12, 0.1);
+  transition-duration: var(--edify-transition-fast);
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 </style>
 
 <!-- HTMX (for fast server-driven partial updates) -->
 <script src="https://unpkg.com/htmx.org@1.9.12" integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2" crossorigin="anonymous"></script>
+<script>
+  // Server-side validation responses (400/403) carry user-facing notices —
+  // e.g. the Daily Visit "reason required" panel and route/scheduling errors.
+  // htmx only swaps 2xx by default, which silently drops those notices; allow
+  // these statuses to swap into their hx-target like any other response.
+  document.addEventListener('htmx:beforeSwap', function (e) {
+    if (e.detail.xhr.status === 400 || e.detail.xhr.status === 403) {
+      e.detail.shouldSwap = true;
+      e.detail.isError = false;
+    }
+  });
+</script>
 
 <!-- Alpine.js Components -->
 <script src="{% static 'js/alpine-components.js' %}"></script>
@@ -198,13 +161,12 @@ background-color: rgba(245, 158, 12, 0.1);
 <!-- Alpine.js (for client-side UI states - dropdown toggles, tabs, sidebars) -->
 <script defer src="https://unpkg.com/alpinejs@3.14.0/dist/cdn.min.js"></script>
 
-<!-- ApexCharts, Flowbite, & FullCalendar JS -->
+<!-- ApexCharts & FullCalendar JS -->
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
 </head>
 <body 
-class="h-full bg-[var(--bg-page)] text-[var(--foreground)] font-sans antialiased"
+class="h-full bg-[var(--edify-bg)] text-[var(--edify-text)] antialiased"
 hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
 >
 {% block content %}{% endblock %}

@@ -1,6 +1,6 @@
 <div class="overflow-x-auto select-none">
 {% if intervention_impact %}
-<table class="w-full border-collapse text-[12px] font-sans text-slate-700">
+<table class="w-full border-collapse text-[12px] text-slate-700">
 <thead>
 <tr class="border-b border-slate-100 bg-slate-50/50 text-[11px] font-semibold uppercase text-slate-400 tracking-wider text-left">
 <th class="px-4 py-3 font-semibold">Intervention</th>
@@ -55,12 +55,16 @@ bg-indigo-50 text-indigo-700 border-indigo-150/60
 </span>
 </td>
 
-<!-- Trend Mini-Sparkline -->
+<!-- Trend Mini-Sparkline (built from real row.trend history) -->
 <td class="px-4 py-3 text-right">
 <div class="inline-block h-[20px] w-[60px]">
+{% if row.trend_path %}
 <svg class="h-full w-full" viewBox="0 0 60 20">
-<path d="M 0 15 Q 15 10 30 12 T 60 4" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round"/>
+<path d="{{ row.trend_path }}" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round"/>
 </svg>
+{% else %}
+<span class="text-[10px] text-slate-300 font-semibold">Not enough data</span>
+{% endif %}
 </div>
 </td>
 </tr>
@@ -68,7 +72,7 @@ bg-indigo-50 text-indigo-700 border-indigo-150/60
 </tbody>
 </table>
 {% else %}
-<div class="p-8 text-center select-none font-sans">
+<div class="p-8 text-center select-none ">
 <span class="text-[32px] block mb-2">⭐</span>
 <p class="text-[14px] font-semibold text-slate-700">No Intervention Impact Data Found</p>
 </div>

@@ -16,3 +16,24 @@ from . import planning_views
 from . import school_views
 from . import ssa_views
 from . import staff_views
+
+__all__ = [
+    "analytics_views",
+    "auth_views",
+    "budget_views",
+    "closure_views",
+    "cluster_views",
+    "core_schools_views",
+    "dashboard_views",
+    "extended_views",
+    "finance_operating_views",
+    "finance_views",
+    "ia_views",
+    "leave_views",
+    "my_plan_views",
+    "partner_views",
+    "planning_views",
+    "school_views",
+    "ssa_views",
+    "staff_views",
+]

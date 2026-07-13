@@ -5,7 +5,7 @@
 {% block drawer_subtitle %}Scheduled activity items for {{ staff_user.name }} in {{ selected_month }} {{ selected_fy }}{% endblock %}
 
 {% block drawer_body %}
-<div class="space-y-5 text-[12px] font-semibold text-slate-700 font-sans">
+<div class="space-y-5 text-[12px] font-semibold text-slate-700 ">
 
 <div class="space-y-2">
 <p class="text-[11px] uppercase font-bold text-slate-400">Activity Items ({{ lines|length }})</p>
@@ -33,9 +33,9 @@
 </td>
 <td class="px-3 py-3 font-bold text-slate-700">
 {% if line.activity.school %}
-🏫 {{ line.activity.school.name }}
+<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0v7m-5-4v4a5 5 0 0010 0v-4"/></svg> {{ line.activity.school.name }}
 {% elif line.activity.cluster %}
-👥 {{ line.activity.cluster.name }}
+<svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6-2a3 3 0 10-2-5.24"/></svg> {{ line.activity.cluster.name }}
 {% else %}
 -
 {% endif %}

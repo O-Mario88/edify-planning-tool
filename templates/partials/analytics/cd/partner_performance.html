@@ -1,0 +1,44 @@
+{% load frontend_filters %}
+<div class="bg-white rounded-xl border border-slate-100 shadow-sm p-5 space-y-2 h-full">
+  <div>
+    <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">5. Performance by Partner</h3>
+    <p class="text-[11px] text-slate-400 font-medium mt-0.5">Impact-weighted · recommendation review</p>
+  </div>
+  <div class="overflow-x-auto -mx-1">
+    <table class="w-full text-[11px]">
+      <thead>
+        <tr class="text-[9px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
+          <th class="text-left font-bold py-1.5 pl-1">Partner</th>
+          <th class="text-right font-bold py-1.5">Tgt %</th>
+          <th class="text-right font-bold py-1.5">Schools</th>
+          <th class="text-right font-bold py-1.5">SSA Δ</th>
+          <th class="text-right font-bold py-1.5 pr-1">Recommendation</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-50">
+        {% for r in partner_performance.rows %}
+        <tr class="cursor-pointer hover:bg-slate-50/60"
+            hx-get="/analytics/country-director/drilldown?drill=partner&id={{ r.id }}&fy={{ fy }}"
+            hx-target="#drawer-container" hx-swap="innerHTML">
+          <td class="text-left font-semibold text-slate-700 py-1.5 pl-1 max-w-[120px] truncate">{{ r.name }}</td>
+          <td class="text-right tabular-nums font-bold text-slate-700 py-1.5">{{ r.target_pct }}%</td>
+          <td class="text-right tabular-nums text-slate-500 py-1.5">{{ r.schools_supported|intcomma }}</td>
+          <td class="text-right tabular-nums font-bold py-1.5 {% if r.ssa_improve > 0 %}text-emerald-600{% elif r.ssa_improve < 0 %}text-rose-600{% else %}text-slate-300{% endif %}">
+            {% if r.ssa_improve is not None %}{% if r.ssa_improve > 0 %}▲{% endif %}{{ r.ssa_improve }}pp{% else %}—{% endif %}
+          </td>
+          <td class="text-right py-1.5 pr-1">
+            <span class="inline-block px-1.5 py-0.5 rounded text-[9px] font-bold whitespace-nowrap
+              {% if r.rec_tone == 'success' %}bg-emerald-50 text-emerald-700
+              {% elif r.rec_tone == 'warning' %}bg-amber-50 text-amber-700
+              {% elif r.rec_tone == 'danger' %}bg-rose-50 text-rose-700
+              {% else %}bg-slate-100 text-slate-500{% endif %}">{{ r.recommendation }}</span>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="text-center text-[12px] text-slate-400 font-medium py-6">No partners configured.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="text-[9.5px] text-slate-400 font-medium pt-1">SSA Δ = annual verified cycle change · "Insufficient Data" = no partner-attributed verified activity yet.</p>
+</div>

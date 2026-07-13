@@ -36,8 +36,8 @@ if env_file.exists():
             os.environ.setdefault(k.strip(), v.strip())
 django.setup()
 
-from django.db import transaction
-from apps.geography.models import Region, District, SubCounty, GeographyAlias
+from django.db import transaction  # noqa: E402 — must follow django.setup()
+from apps.geography.models import Region, District, SubCounty, GeographyAlias  # noqa: E402
 
 # ── Download ──────────────────────────────────────────────────────────────────
 XLSX_URL = (
@@ -80,35 +80,49 @@ def build_combined_df(xlsx_bytes: bytes) -> pd.DataFrame:
     # ── Admin3 — sub-counties (adm3_name) ───────────────────────────────────
     admin3 = xf.parse("uga_admin3", usecols=["adm1_name", "adm2_name", "adm3_name"])
     admin3 = admin3.rename(
-        columns={"adm1_name": "Region", "adm2_name": "District", "adm3_name": "Sub_County"}
+        columns={
+            "adm1_name": "Region",
+            "adm2_name": "District",
+            "adm3_name": "Sub_County",
+        }
     )
     admin3 = admin3.dropna(subset=["Region", "District", "Sub_County"])
-    admin3[["Region", "District", "Sub_County"]] = admin3[["Region", "District", "Sub_County"]].apply(
-        lambda c: c.str.strip()
-    )
+    admin3[["Region", "District", "Sub_County"]] = admin3[
+        ["Region", "District", "Sub_County"]
+    ].apply(lambda c: c.str.strip())
 
     # ── Admin4 — parishes → also used as sub-counties for full coverage ──────
     # adm3_name = sub-county parent (already in admin3)
     # adm4_name = parish = the granular unit Uganda calls "sub-county" in common use
     admin4_sc = xf.parse("uga_admin4", usecols=["adm1_name", "adm2_name", "adm3_name"])
     admin4_sc = admin4_sc.rename(
-        columns={"adm1_name": "Region", "adm2_name": "District", "adm3_name": "Sub_County"}
+        columns={
+            "adm1_name": "Region",
+            "adm2_name": "District",
+            "adm3_name": "Sub_County",
+        }
     )
     admin4_sc = admin4_sc.dropna(subset=["Region", "District", "Sub_County"])
-    admin4_sc[["Region", "District", "Sub_County"]] = admin4_sc[["Region", "District", "Sub_County"]].apply(
-        lambda c: c.str.strip()
-    )
+    admin4_sc[["Region", "District", "Sub_County"]] = admin4_sc[
+        ["Region", "District", "Sub_County"]
+    ].apply(lambda c: c.str.strip())
     admin4_sc = admin4_sc.drop_duplicates()
 
     # Also pull the actual admin4 names (parishes) as sub-county entries
-    admin4_parish = xf.parse("uga_admin4", usecols=["adm1_name", "adm2_name", "adm4_name"])
+    admin4_parish = xf.parse(
+        "uga_admin4", usecols=["adm1_name", "adm2_name", "adm4_name"]
+    )
     admin4_parish = admin4_parish.rename(
-        columns={"adm1_name": "Region", "adm2_name": "District", "adm4_name": "Sub_County"}
+        columns={
+            "adm1_name": "Region",
+            "adm2_name": "District",
+            "adm4_name": "Sub_County",
+        }
     )
     admin4_parish = admin4_parish.dropna(subset=["Region", "District", "Sub_County"])
-    admin4_parish[["Region", "District", "Sub_County"]] = admin4_parish[["Region", "District", "Sub_County"]].apply(
-        lambda c: c.str.strip()
-    )
+    admin4_parish[["Region", "District", "Sub_County"]] = admin4_parish[
+        ["Region", "District", "Sub_County"]
+    ].apply(lambda c: c.str.strip())
     admin4_parish = admin4_parish.drop_duplicates()
 
     # Region normalisation
@@ -131,7 +145,9 @@ def build_combined_df(xlsx_bytes: bytes) -> pd.DataFrame:
     # Union all sub-county sources
     combined = pd.concat([admin3, admin4_sc, admin4_parish], ignore_index=True)
     combined = combined.drop_duplicates(subset=["Region", "District", "Sub_County"])
-    combined = combined.sort_values(["Region", "District", "Sub_County"]).reset_index(drop=True)
+    combined = combined.sort_values(["Region", "District", "Sub_County"]).reset_index(
+        drop=True
+    )
 
     return combined, admin2
 
@@ -144,9 +160,12 @@ def save_csv(df: pd.DataFrame, path: Path) -> None:
 def seed_db(admin2: pd.DataFrame, combined: pd.DataFrame) -> dict:
     regions = {r.name: r for r in Region.objects.all()}
     stats = {
-        "district_created": 0, "district_updated": 0,
-        "subcounty_created": 0, "subcounty_skipped": 0,
-        "alias_created": 0, "region_missing": [],
+        "district_created": 0,
+        "district_updated": 0,
+        "subcounty_created": 0,
+        "subcounty_skipped": 0,
+        "alias_created": 0,
+        "region_missing": [],
     }
 
     with transaction.atomic():
@@ -173,7 +192,12 @@ def seed_db(admin2: pd.DataFrame, combined: pd.DataFrame) -> dict:
             _, a_created = GeographyAlias.objects.get_or_create(
                 admin_level="district",
                 normalized_alias=norm,
-                defaults={"admin_id": district.id, "alias": dname, "source": "HDX-COD-AB", "confidence": "HIGH"},
+                defaults={
+                    "admin_id": district.id,
+                    "alias": dname,
+                    "source": "HDX-COD-AB",
+                    "confidence": "HIGH",
+                },
             )
             if a_created:
                 stats["alias_created"] += 1
@@ -193,8 +217,7 @@ def seed_db(admin2: pd.DataFrame, combined: pd.DataFrame) -> dict:
                 district_cache[(rname, dname)] = district
 
             _, sc_created = SubCounty.objects.get_or_create(
-                name=scname, district=district,
-                defaults={"seeded": True}
+                name=scname, district=district, defaults={"seeded": True}
             )
             if sc_created:
                 stats["subcounty_created"] += 1
@@ -236,11 +259,13 @@ def main():
     if stats["region_missing"]:
         print(f"⚠  Regions not found : {stats['region_missing']}")
 
-    print(f"\n── Final DB counts ──────────────────────────────────")
+    print("\n── Final DB counts ──────────────────────────────────")
     print(f"  Regions    : {Region.objects.count()}")
     print(f"  Districts  : {District.objects.count()}")
     print(f"  SubCounties: {SubCounty.objects.count()}")
-    print(f"  Aliases    : {GeographyAlias.objects.filter(admin_level='district').count()}")
+    print(
+        f"  Aliases    : {GeographyAlias.objects.filter(admin_level='district').count()}"
+    )
     print(f"\nOutput CSV : {OUTPUT_CSV}")
 
 

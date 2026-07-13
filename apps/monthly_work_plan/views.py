@@ -1,4 +1,5 @@
 """Monthly work-plan endpoints — /api/monthly-work-plan-budget/*."""
+
 from __future__ import annotations
 
 from rest_framework.permissions import IsAuthenticated
@@ -40,7 +41,9 @@ class MwpAdminLineAdd(APIView):
     required_permissions = APPROVE
 
     def post(self, request: Request, budget_id: str) -> Response:
-        return Response(services.add_admin_line(budget_id, request.data, request.user), status=201)
+        return Response(
+            services.add_admin_line(budget_id, request.data, request.user), status=201
+        )
 
 
 class MwpAdminLineRemove(APIView):

@@ -1,9 +1,10 @@
 {% extends "layouts/shell.html" %}
+{% load frontend_filters %}
 
 {% block title %}Batch Payments - Edify Command Center{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6" x-data="{ activeTab: 'advances' }">
+<div class="px-4 sm:px-6 py-5 space-y-4" style="max-width:1500px;margin:0 auto;" x-data="{ activeTab: 'advances' }">
 
 <!-- Premium Header Pane -->
 <div class="relative overflow-hidden rounded-xl bg-slate-900 text-white p-8 shadow-md border border-slate-800">
@@ -12,7 +13,7 @@
 <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[11px] font-semibold uppercase tracking-widest">
 Bulk Dispatcher
 </div>
-<h1 class="text-[32px] font-semibold tracking-tight text-white leading-none">Batch Payments Center</h1>
+<h1 class="text-[21px] font-extrabold tracking-tight">Batch Payments Center</h1>
 <p class="text-[14px] text-slate-400 font-medium max-w-xl">
 Execute batch payouts for advances, partner invoices, or staff expenses. Review aggregate volumes and export banking files.
 </p>
@@ -50,9 +51,7 @@ Reimbursements ({{ reimbursements|length }})
 <div x-show="activeTab === 'advances'" class="space-y-4">
 <div class="flex items-center justify-between border-b border-slate-50 pb-3">
 <h3 class="text-[14px] font-semibold text-slate-800">Batch Advances ready for payment file</h3>
-<button class="h-8 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold transition-all shadow-sm">
-Export Bank Payout CSV
-</button>
+<a href="?export=advances" class="h-8 px-3 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold hover:bg-slate-50 flex items-center gap-1.5 shadow-sm"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v8m0 0l-3-3m3 3l3-3M4 13h3l2 3h6l2-3h3M5 21h14a2 2 0 002-2v-6l-2.5-8A2 2 0 0016.6 4H7.4a2 2 0 00-1.9 1.4L3 13v6a2 2 0 002 2z"/></svg> Export Advances CSV</a>
 </div>
 <div class="divide-y divide-slate-50">
 {% for act in advances %}
@@ -64,7 +63,7 @@ Export Bank Payout CSV
 <span class="text-[11px] text-slate-500 block">{{ act.school.name|default:"Cluster-wide" }}</span>
 </div>
 </div>
-<span class="font-semibold text-slate-800 text-[12px]">450,000 UGX</span>
+<span class="font-semibold text-slate-800 text-[12px]">{{ act.amount_ugx|ugx }}</span>
 </div>
 {% empty %}
 <p class="text-[12px] text-slate-400 font-semibold py-8 text-center">No pending advances for batch payment.</p>
@@ -76,9 +75,7 @@ Export Bank Payout CSV
 <div x-show="activeTab === 'partners'" class="space-y-4" style="display: none;">
 <div class="flex items-center justify-between border-b border-slate-50 pb-3">
 <h3 class="text-[14px] font-semibold text-slate-800">Batch Partner Payments ready for payment file</h3>
-<button class="h-8 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold transition-all shadow-sm">
-Export Mobile Money Batch
-</button>
+<a href="?export=partners" class="h-8 px-3 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold hover:bg-slate-50 flex items-center gap-1.5 shadow-sm"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v8m0 0l-3-3m3 3l3-3M4 13h3l2 3h6l2-3h3M5 21h14a2 2 0 002-2v-6l-2.5-8A2 2 0 0016.6 4H7.4a2 2 0 00-1.9 1.4L3 13v6a2 2 0 002 2z"/></svg> Export Partner Payments CSV</a>
 </div>
 <div class="divide-y divide-slate-50">
 {% for act in partners %}
@@ -90,7 +87,7 @@ Export Mobile Money Batch
 <span class="text-[11px] text-slate-500 block">{{ act.get_activity_type_display }}</span>
 </div>
 </div>
-<span class="font-semibold text-slate-800 text-[12px]">600,000 UGX</span>
+<span class="font-semibold text-slate-800 text-[12px]">{{ act.amount_ugx|ugx }}</span>
 </div>
 {% empty %}
 <p class="text-[12px] text-slate-400 font-semibold py-8 text-center">No pending partner payments for batch payout.</p>
@@ -102,9 +99,7 @@ Export Mobile Money Batch
 <div x-show="activeTab === 'reimbursements'" class="space-y-4" style="display: none;">
 <div class="flex items-center justify-between border-b border-slate-50 pb-3">
 <h3 class="text-[14px] font-semibold text-slate-800">Batch Staff Reimbursements ready for payment file</h3>
-<button class="h-8 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold transition-all shadow-sm">
-Export Bank File
-</button>
+<a href="?export=reimbursements" class="h-8 px-3 bg-white border border-slate-200 rounded-lg text-[11px] font-semibold hover:bg-slate-50 flex items-center gap-1.5 shadow-sm"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v8m0 0l-3-3m3 3l3-3M4 13h3l2 3h6l2-3h3M5 21h14a2 2 0 002-2v-6l-2.5-8A2 2 0 0016.6 4H7.4a2 2 0 00-1.9 1.4L3 13v6a2 2 0 002 2z"/></svg> Export Reimbursements CSV</a>
 </div>
 <div class="divide-y divide-slate-50">
 {% for claim in reimbursements %}
@@ -116,7 +111,7 @@ Export Bank File
 <span class="text-[11px] text-slate-500 block">{{ claim.activity.get_activity_type_display }}</span>
 </div>
 </div>
-<span class="font-semibold text-slate-800 text-[12px]">{{ claim.reimbursement_amount }} UGX</span>
+<span class="font-semibold text-slate-800 text-[12px]">{% widthratio claim.reimbursement_amount 100 1 %} UGX</span>
 </div>
 {% empty %}
 <p class="text-[12px] text-slate-400 font-semibold py-8 text-center">No pending reimbursement claims for batch payment.</p>

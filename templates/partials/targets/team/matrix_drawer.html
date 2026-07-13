@@ -1,0 +1,50 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% load frontend_filters %}
+
+{% block drawer_title %}Team Targets Detail Matrix{% endblock %}
+{% block drawer_subtitle %}Every supervised CCEO across all five target areas — monthly, Q1–Q4, FY Cumulative{% endblock %}
+
+{% block drawer_body %}
+<div class="space-y-3 text-slate-700">
+  {% if rows %}
+  <div class="overflow-x-auto rounded-xl border border-slate-100">
+    <table class="w-full min-w-[900px] text-[11px]">
+      <thead>
+        <tr class="border-b border-slate-100 text-slate-400 font-semibold uppercase tracking-wider text-[9.5px]">
+          <th class="py-2 px-3 text-left sticky left-0 bg-white z-10">Staff · Target Area</th>
+          {% for h in heads %}
+          <th class="py-2 px-2 text-center border-l border-slate-100" colspan="3">
+            <span class="block text-slate-600 font-bold">{{ h.label }}</span>
+            <span class="block text-[8px] text-slate-400 normal-case">{{ h.sub }}</span>
+          </th>
+          {% endfor %}
+        </tr>
+        <tr class="border-b border-slate-100 text-slate-400 font-bold text-[9px] uppercase">
+          <th class="py-1 px-3 sticky left-0 bg-white z-10"></th>
+          {% for h in heads %}
+          <th class="py-1 text-center border-l border-slate-100">Tgt</th><th class="py-1 text-center">Ach</th><th class="py-1 text-center">%</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-50 font-semibold text-slate-700">
+        {% for r in rows %}
+        <tr class="hover:bg-slate-50/50">
+          <td class="py-1.5 px-3 sticky left-0 bg-white z-10 whitespace-nowrap">{{ r.staff }} <span class="text-slate-400 font-medium">· {{ r.area }}</span></td>
+          {% for c in r.cells %}
+          <td class="py-1.5 text-center tabular-nums border-l border-slate-50">{{ c.t }}</td>
+          <td class="py-1.5 text-center tabular-nums text-emerald-600">{{ c.a }}</td>
+          <td class="py-1.5 text-center tabular-nums {% if c.pct is None %}text-slate-300{% elif c.pct >= 100 %}text-emerald-600{% elif c.pct >= 60 %}text-amber-600{% else %}text-rose-600{% endif %}">{% if c.pct is not None %}{{ c.pct }}%{% else %}—{% endif %}</td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="text-[9.5px] text-slate-400 font-medium">Quarter and FY values are derived sums of monthly targets and validated achievements — never entered directly.</p>
+  {% else %}
+  <div class="rounded-xl border border-slate-100 bg-slate-50 p-5 text-center">
+    <p class="text-[12px] font-semibold text-slate-500">No supervised staff to display.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

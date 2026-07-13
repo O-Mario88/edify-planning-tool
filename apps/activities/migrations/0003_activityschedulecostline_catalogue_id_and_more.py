@@ -4,30 +4,29 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('activities', '0002_activity_environment_activity_source'),
+        ("activities", "0002_activity_environment_activity_source"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='activityschedulecostline',
-            name='catalogue_id',
+            model_name="activityschedulecostline",
+            name="catalogue_id",
             field=models.CharField(blank=True, max_length=30, null=True),
         ),
         migrations.AddField(
-            model_name='activityschedulecostline',
-            name='catalogue_version',
+            model_name="activityschedulecostline",
+            name="catalogue_version",
             field=models.IntegerField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='activityschedulecostline',
-            name='currency',
-            field=models.CharField(default='UGX', max_length=8),
+            model_name="activityschedulecostline",
+            name="currency",
+            field=models.CharField(default="UGX", max_length=8),
         ),
         migrations.AddField(
-            model_name='activityschedulecostline',
-            name='line_item_type',
+            model_name="activityschedulecostline",
+            name="line_item_type",
             field=models.CharField(blank=True, max_length=64, null=True),
         ),
     ]

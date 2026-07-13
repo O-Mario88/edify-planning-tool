@@ -18,7 +18,7 @@
   display: flex;
   align-items: center;
   gap: 1.5rem;
-  border-bottom: 1.5px solid var(--edify-border, #e2e8f0);
+  border-bottom: 1.5px solid var(--edify-border, var(--edify-border));
   margin-bottom: 1.5rem;
   padding-bottom: 0.1px;
 }
@@ -26,7 +26,7 @@
 .edify-tab-btn {
   padding: 0.5rem 0.25rem 0.75rem 0.25rem;
   border-bottom: 2.5px solid transparent;
-  color: var(--edify-text-muted, #64748b);
+  color: var(--edify-text-muted, var(--edify-text-muted));
   font-weight: 700;
   font-size: 13px;
   transition: var(--edify-transition-all);
@@ -37,12 +37,12 @@
 }
 
 .edify-tab-btn.active {
-  border-bottom-color: var(--edify-primary, #2e505f);
-  color: var(--edify-primary, #2e505f);
+  border-bottom-color: var(--edify-primary, var(--edify-primary));
+  color: var(--edify-primary, var(--edify-primary));
 }
 
 .edify-tab-btn:hover:not(.active) {
-  color: var(--edify-text, #1e293b);
+  color: var(--edify-text, var(--edify-text));
 }
 
 /* Main Dashboard layout and panels */
@@ -62,7 +62,10 @@
 
 .signal-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  /* 220px min lets all three signal cards share one row inside the left
+     column at laptop widths; below ~250px the .signal container query
+     stacks each card's contents vertically, so the tighter min is safe. */
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 14px;
   margin-bottom: 14px;
 }
@@ -72,6 +75,15 @@
   grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
   gap: 14px;
   margin-bottom: 14px;
+  /* Cards size to their own content instead of stretching to the tallest
+     card in the row — avoids large blank interiors in short panels. */
+  align-items: start;
+}
+
+/* An odd trailing panel would otherwise sit beside an empty grid cell;
+   let it use the full row. */
+.panel-grid > :last-child:nth-child(odd) {
+  grid-column: 1 / -1;
 }
 
 .two-col {
@@ -90,15 +102,30 @@
 
 .mini-metrics {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  /* These groups hold exactly four tiles: 2×2 on narrow screens, one row
+     of four on desktop — never a 3+1 orphan row. */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+}
+
+@media (min-width: 1100px) {
+  .mini-metrics {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 .summary-strip {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  /* Four period tiles: 2×2 on narrow screens, one row of four on desktop. */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
   padding: 16px;
+}
+
+@media (min-width: 1100px) {
+  .summary-strip {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 /* KPI Card refinement & responsiveness via container queries */
@@ -192,32 +219,32 @@
 /* Status-themed background and border classes */
 .green-bg {
   background-color: rgba(16, 185, 129, 0.08);
-  color: #10b981;
+  color: var(--edify-success);
   border: 1px solid rgba(16, 185, 129, 0.15);
 }
 .orange-bg {
   background-color: rgba(245, 158, 11, 0.08);
-  color: #f59e0b;
+  color: var(--edify-warning);
   border: 1px solid rgba(245, 158, 11, 0.15);
 }
 .blue-bg {
   background-color: rgba(59, 130, 246, 0.08);
-  color: #3b82f6;
+  color: var(--edify-accent);
   border: 1px solid rgba(59, 130, 246, 0.15);
 }
 .purple-bg {
   background-color: rgba(139, 92, 246, 0.08);
-  color: #8b5cf6;
+  color: var(--edify-purple);
   border: 1px solid rgba(139, 92, 246, 0.15);
 }
 .teal-bg {
   background-color: rgba(20, 184, 166, 0.08);
-  color: #14b8a6;
+  color: var(--edify-teal);
   border: 1px solid rgba(20, 184, 166, 0.15);
 }
 .red-bg {
   background-color: rgba(239, 68, 68, 0.08);
-  color: #ef4444;
+  color: var(--edify-danger);
   border: 1px solid rgba(239, 68, 68, 0.15);
 }
 
@@ -236,9 +263,9 @@
   flex-grow: 1;
   min-width: 0;
 }
-.signal.red { background: linear-gradient(90deg, #fff5f5, #ffffff); }
-.signal.orange { background: linear-gradient(90deg, #fffbeb, #ffffff); }
-.signal.green { background: linear-gradient(90deg, #f0fdf4, #ffffff); }
+.signal.red { background: linear-gradient(90deg, var(--edify-danger-light), var(--edify-surface)); }
+.signal.orange { background: linear-gradient(90deg, var(--edify-warning-light), var(--edify-surface)); }
+.signal.green { background: linear-gradient(90deg, var(--edify-success-light), var(--edify-surface)); }
 
 .signal-icon {
   width: 44px;
@@ -250,20 +277,6 @@
   flex-shrink: 0;
 }
 
-@container (max-width: 250px) {
-  .signal {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 14px;
-  }
-  .signal .spark {
-    margin-left: 0;
-    margin-top: 4px;
-    width: 100%;
-    max-width: 110px;
-  }
-}
 
 /* Panel containers */
 .panel {
@@ -304,7 +317,9 @@
 /* Rows & Interventions alignment */
 .progress-row {
   display: grid;
-  grid-template-columns: 100px 1fr 36px 56px;
+  /* Label column sizes to its text up to 150px so names like
+     "Government Requirement" fit before truncating. */
+  grid-template-columns: minmax(100px, 150px) 1fr 36px 56px;
   gap: 12px;
   align-items: center;
   font-size: 11.5px;
@@ -313,7 +328,7 @@
 
 .intervention {
   display: grid;
-  grid-template-columns: 110px 1fr 28px;
+  grid-template-columns: minmax(110px, 150px) 1fr 28px;
   gap: 12px;
   align-items: center;
   font-size: 11.5px;
@@ -334,7 +349,7 @@
   border-radius: 13px;
   padding: 13px;
   margin-bottom: 10px;
-  background: #ffffff;
+  background: var(--edify-surface);
   transition: var(--edify-transition-all);
 }
 .today-item:hover {
@@ -343,8 +358,8 @@
 }
 
 .today-item.highlight {
-  background: #fffbeb;
-  border-color: #fde68a;
+  background: var(--edify-warning-light);
+  border-color: var(--edify-warning-border);
 }
 
 .spark {
@@ -357,7 +372,7 @@
   border: 1px solid var(--edify-border);
   border-radius: 13px;
   padding: 13px;
-  background: #ffffff;
+  background: var(--edify-surface);
   transition: var(--edify-transition-all);
 }
 .mini:hover {
@@ -377,7 +392,7 @@
   border: 1px solid var(--edify-border);
   border-radius: 13px;
   padding: 14px;
-  background: #ffffff;
+  background: var(--edify-surface);
   display: flex;
   align-items: center;
   gap: 12px;
@@ -412,12 +427,12 @@
   width: 30px;
   margin: 0 auto 8px;
   border-radius: 8px 8px 0 0;
-  background: linear-gradient(180deg, #3b82f6, #2e505f);
+  background: linear-gradient(180deg, var(--edify-accent), var(--edify-primary));
   position: relative;
 }
 
 .bar.light {
-  background: linear-gradient(180deg, #bfdbfe, #93c5fd);
+  background: linear-gradient(180deg, var(--edify-accent-light), var(--edify-accent-border));
 }
 
 .bar em {

@@ -1,4 +1,5 @@
 """Evidence endpoints — /api/evidence/*."""
+
 from __future__ import annotations
 
 from rest_framework.parsers import MultiPartParser
@@ -26,9 +27,15 @@ class EvidenceUploadView(APIView):
         file_obj = request.FILES.get("file")
         activity_id = request.data.get("activityId", "")
         kind = request.data.get("kind", "visit_form")
-        return Response(services.record_upload(
-            principal=request.user, activity_id=activity_id, kind=kind, file_obj=file_obj
-        ), status=201)
+        return Response(
+            services.record_upload(
+                principal=request.user,
+                activity_id=activity_id,
+                kind=kind,
+                file_obj=file_obj,
+            ),
+            status=201,
+        )
 
 
 class EvidenceActivityListView(APIView):

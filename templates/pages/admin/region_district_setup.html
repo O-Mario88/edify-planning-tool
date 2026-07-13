@@ -3,15 +3,25 @@
 {% block title %}District Setup — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="p-6 max-w-7xl mx-auto space-y-6 font-sans">
+<div class="px-4 sm:px-6 py-5 space-y-4" style="max-width:1500px;margin:0 auto;">
 
 <!-- Header -->
 <div class="flex items-center justify-between border-b border-slate-200 pb-4">
 <div>
-<h1 class="text-[20px] font-semibold text-slate-800 tracking-tight">Geographical Location Setup</h1>
+<h1 class="text-[21px] font-extrabold tracking-tight">Geographical Location Setup</h1>
 <p class="text-[12px] text-slate-400 font-semibold mt-0.5">Manage administrative levels, regions, districts, and parishes</p>
 </div>
 </div>
+
+{% if unclassified_count > 0 %}
+<div class="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
+<svg class="h-5 w-5 text-amber-600 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+<div>
+<p class="text-[12px] font-bold text-amber-800">{{ unclassified_count }} district(s) not yet classified as Primary or Secondary</p>
+<p class="text-[11px] text-amber-600 font-semibold mt-0.5">Staff cannot schedule school visits in an unclassified district — Daily Visit Batch costing needs to know whether the day's shared cost pool includes accommodation/overnight dinner. Classify each district below.</p>
+</div>
+</div>
+{% endif %}
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
@@ -30,17 +40,96 @@
 </span>
 </div>
 
-<div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[12px] font-bold text-slate-600">
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[12px] font-bold text-slate-600">
 {% for dist in region.districts.all %}
-<div class="bg-slate-50/50 hover:bg-slate-50 border border-slate-100 rounded-lg p-2 flex items-center justify-between transition-all">
+<div class="bg-slate-50/50 hover:bg-slate-50 border border-slate-100 rounded-lg p-2 flex items-center justify-between gap-2 transition-all">
 <span class="truncate">{{ dist.name }}</span>
-<span class="text-[11px] text-slate-400 font-semibold">ID: {{ dist.id }}</span>
+<form method="post" class="flex items-center gap-1.5 shrink-0">
+{% csrf_token %}
+<input type="hidden" name="action" value="classify_district">
+<input type="hidden" name="district_id" value="{{ dist.id }}">
+<select name="district_type" onchange="this.form.submit()" class="text-[11px] font-bold rounded-md border px-1.5 py-1 focus:outline-none
+{% if dist.district_type == 'secondary' %}border-purple-200 bg-purple-50 text-purple-700
+{% elif dist.district_type == 'primary' %}border-emerald-200 bg-emerald-50 text-emerald-700
+{% else %}border-amber-200 bg-amber-50 text-amber-700{% endif %}">
+<option value="" {% if not dist.district_type %}selected{% endif %}>Unclassified</option>
+<option value="primary" {% if dist.district_type == 'primary' %}selected{% endif %}>Primary</option>
+<option value="secondary" {% if dist.district_type == 'secondary' %}selected{% endif %}>Secondary</option>
+</select>
+</form>
 </div>
 {% empty %}
 <span class="text-[11px] text-slate-400 font-semibold col-span-full">No districts registered in this region.</span>
 {% endfor %}
 </div>
 </div>
+{% endfor %}
+</div>
+</div>
+
+<!-- Secondary District Groups -->
+<div class="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden p-5 space-y-4">
+<div>
+<h3 class="text-[14px] font-semibold text-slate-800 tracking-tight">Secondary District Groups</h3>
+<p class="text-[11px] text-slate-400 font-semibold mt-0.5">Nearby secondary districts can only be combined in one staff member's same-day visit batch if they belong to the same approved group here.</p>
+</div>
+
+<form method="post" class="flex items-center gap-2">
+{% csrf_token %}
+<input type="hidden" name="action" value="create_group">
+<input type="text" name="group_name" required placeholder="e.g. Kitgum Secondary Route" class="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-[12px] focus:outline-none focus:border-blue-500">
+<button type="submit" class="h-9 px-4 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-[11px] font-bold">Create Group</button>
+</form>
+
+<div class="space-y-3">
+{% for group in secondary_groups %}
+<div class="border border-slate-100 rounded-xl p-3 space-y-2">
+<div class="flex items-center justify-between">
+<span class="text-[12px] font-bold text-slate-800">{{ group.name }}</span>
+<div class="flex items-center gap-2">
+{% if group.status == 'approved' %}
+<span class="text-[11px] font-bold uppercase text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-full px-2 py-0.5">Approved</span>
+{% else %}
+<span class="text-[11px] font-bold uppercase text-slate-500 bg-slate-100 border border-slate-200 rounded-full px-2 py-0.5">Draft</span>
+<form method="post" class="inline">
+{% csrf_token %}
+<input type="hidden" name="action" value="approve_group">
+<input type="hidden" name="group_id" value="{{ group.id }}">
+<button type="submit" class="text-[11px] font-bold text-blue-600 hover:underline">Approve</button>
+</form>
+{% endif %}
+</div>
+</div>
+<div class="flex flex-wrap gap-1.5">
+{% for member in group.members.all %}
+<span class="inline-flex items-center gap-1 text-[11px] font-semibold bg-slate-50 border border-slate-200 rounded-full px-2 py-0.5 text-slate-600">
+{{ member.district.name }}
+<form method="post" class="inline">
+{% csrf_token %}
+<input type="hidden" name="action" value="remove_group_member">
+<input type="hidden" name="member_id" value="{{ member.id }}">
+<button type="submit" class="text-slate-400 hover:text-rose-600">&times;</button>
+</form>
+</span>
+{% empty %}
+<span class="text-[11px] text-slate-400">No districts added yet.</span>
+{% endfor %}
+</div>
+<form method="post" class="flex items-center gap-2 pt-1">
+{% csrf_token %}
+<input type="hidden" name="action" value="add_group_member">
+<input type="hidden" name="group_id" value="{{ group.id }}">
+<select name="district_id" required class="flex-1 rounded-lg border border-slate-200 px-2 py-1.5 text-[11px] bg-white">
+<option value="">Add secondary district...</option>
+{% for d in secondary_districts %}
+<option value="{{ d.id }}">{{ d.name }}</option>
+{% endfor %}
+</select>
+<button type="submit" class="h-8 px-3 bg-slate-100 hover:bg-slate-200 rounded-lg text-[11px] font-bold">Add</button>
+</form>
+</div>
+{% empty %}
+<span class="text-[11px] text-slate-400 font-semibold">No Secondary District Groups yet.</span>
 {% endfor %}
 </div>
 </div>
